@@ -251,6 +251,18 @@ void moveFunctions(Module& primary,
 
   // Insert new table elements
   if (newTableElems.size()) {
+    primary.table.exists = true;
+    secondary.table.exists = true;
+    // Update table sizes if necessary
+    size_t tableSize = firstFreeIndex + newTableElems.size();
+    if (primary.table.initial < tableSize) {
+      primary.table.initial = tableSize;
+      secondary.table.initial = tableSize;
+    }
+    if (primary.table.max < tableSize) {
+      primary.table.max = tableSize;
+      secondary.table.max = tableSize;
+    }
     if (lastSegment != nullptr) {
       lastSegment->data.insert(
         lastSegment->data.end(), newTableElems.begin(), newTableElems.end());
@@ -258,17 +270,6 @@ void moveFunctions(Module& primary,
       primary.table.segments.emplace_back(
         builder.makeConst(Literal(int32_t(firstFreeIndex))), newTableElems);
     }
-  }
-
-  // Update table sizes if necessary
-  size_t tableSize = firstFreeIndex + newTableElems.size();
-  if (primary.table.initial < tableSize) {
-    primary.table.initial = tableSize;
-    secondary.table.initial = tableSize;
-  }
-  if (primary.table.max < tableSize) {
-    primary.table.max = tableSize;
-    secondary.table.max = tableSize;
   }
 }
 

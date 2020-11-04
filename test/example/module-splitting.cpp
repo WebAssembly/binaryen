@@ -3,14 +3,17 @@
 
 #include "ir/module-splitting.h"
 #include "ir/stack-utils.h"
+#include "wasm-features.h"
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
+#include "wasm-validator.h"
 #include "wasm.h"
 
 using namespace wasm;
 
 std::unique_ptr<Module> parse(char* module) {
   auto wasm = std::make_unique<Module>();
+  wasm->features = FeatureSet::All;
   try {
     SExpressionParser parser(module);
     Element& root = *parser.root;
@@ -22,12 +25,26 @@ std::unique_ptr<Module> parse(char* module) {
   return wasm;
 }
 
-void do_test(ModuleSplitting::Config config, std::string module) {
+void do_test(std::set<Name> keptFuncs, std::string module) {
+  WasmValidator validator;
+  bool valid;
+
   auto primary = parse(&module.front());
+  valid = validator.validate(*primary);
+  assert(valid && "before invalid!");
 
   std::cout << "Before:\n";
   WasmPrinter::printModule(primary.get());
+
+  ModuleSplitting::Config config;
+  config.primaryFuncs = keptFuncs;
   auto secondary = splitFunctions(*primary, config);
+
+  valid = validator.validate(*primary);
+  assert(valid && "after invalid!");
+  valid = validator.validate(*secondary);
+  assert(valid && "secondary invalid!");
+
   std::cout << "After:\n";
   WasmPrinter::printModule(primary.get());
   std::cout << "Secondary:\n";
@@ -35,23 +52,157 @@ void do_test(ModuleSplitting::Config config, std::string module) {
   std::cout << "\n\n";
 }
 
-void test_split() {
-  std::cout << ";; Test module splitting\n";
-  do_test(ModuleSplitting::Config{{"foo"}, "primary", "placeholder"},
-          R"(
-            (module
-             (memory $mem 0 0)
-             (table $table 2 2 funcref)
-             (elem (i32.const 0) $foo $bar)
-             (export "bar" (func $bar))
-             (func $foo (param i32) (result i32)
-              (drop (call $bar (i32.const 0)))
-             )
-             (func $bar (param i32) (result i32)
-              (drop (call $foo (i32.const 1)))
-             )
-            )
-          )");
-}
+int main() {
+  // Trivial module
+  do_test({}, "(module)");
 
-int main() { test_split(); }
+  // Global stuff
+  do_test({}, R"(
+    (module
+     (memory $mem (shared 3 42))
+     (table $table 3 42 funcref)
+     (global $glob (mut i32) (i32.const 7))
+     (event $e (attr 0) (param i32))
+    ))");
+
+  // Deferred function
+  do_test({}, R"(
+    (module
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred exported function
+  do_test({}, R"(
+    (module
+     (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred exported function already in table
+  do_test({}, R"(
+    (module
+     (table $table 1 funcref)
+     (elem (i32.const 0) $foo)
+     (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred exported function already in table at a weird offset
+  do_test({}, R"(
+    (module
+     (table $table 1000 funcref)
+     (elem (i32.const 42) $foo)
+     (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Non-deferred function
+  do_test({"foo"}, R"(
+    (module
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Non-deferred exported function
+  do_test({"foo"}, R"(
+    (module
+     (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred function calling non-deferred function
+  do_test({"foo"}, R"(
+    (module
+     (func $foo
+      (nop)
+     )
+     (func $bar
+      (call $foo)
+     )
+    ))");
+
+  // Deferred function calling non-deferred function with clashing export name
+  do_test({"foo"}, R"(
+    (module
+     (export "foo" (func $bar))
+     (func $foo
+      (nop)
+     )
+     (func $bar
+      (call $foo)
+     )
+    ))");
+
+  // Non-deferred function calling deferred function
+  do_test({"bar"}, R"(
+    (module
+     (func $foo
+      (nop)
+     )
+     (func $bar
+      (call $foo)
+     )
+    ))");
+
+  // Mixed table 1
+  do_test({"bar", "quux"}, R"(
+    (module
+     (table $table 4 funcref)
+     (elem (i32.const 0) $foo $bar $baz $quux)
+     (func $foo
+      (nop)
+     )
+     (func $bar
+      (nop)
+     )
+     (func $baz
+      (nop)
+     )
+     (func $quux
+      (nop)
+     )
+    ))");
+
+  // Mixed table 2
+  do_test({"baz"}, R"(
+    (module
+     (table $table 4 funcref)
+     (elem (i32.const 0) $foo $bar $baz $quux)
+     (func $foo
+      (nop)
+     )
+     (func $bar
+      (nop)
+     )
+     (func $baz
+      (nop)
+     )
+     (func $quux
+      (nop)
+     )
+    ))");
+
+  // Mutual recursion with table growth
+  do_test({"foo"}, R"(
+    (module
+     (table $table 1 1 funcref)
+     (elem (i32.const 0) $foo)
+     (func $foo (param i32) (result i32)
+      (call $bar (i32.const 0))
+     )
+     (func $bar (param i32) (result i32)
+      (call $foo (i32.const 1))
+     )
+    ))");
+}

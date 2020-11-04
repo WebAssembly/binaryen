@@ -29,10 +29,10 @@ struct Config {
   std::set<Name> primaryFuncs;
   // The namespace from which to import primary functions into the secondary
   // module.
-  Name importNamespace;
+  Name importNamespace = "primary";
   // The namespace from which to import placeholder functions into the primary
   // module.
-  Name placeholderNamespace;
+  Name placeholderNamespace = "placeholder";
 };
 
 std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config);
