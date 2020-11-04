@@ -226,29 +226,68 @@ struct OptimizeInstructions
       {
         Expression *x, *y;
         Binary *outher, *inner;
-        // (C - x) + y  ==>  (y - x) + C,  if can reorder
-        // (C - x) + y  ==>  C - (x - y),  otherwise
-        // where x and y are not consts
+        // x + (y + C)  ==>  (x + y) + C
         if (matches(
               curr,
               binary(
-                &outher, Add, binary(&inner, Sub, ival(), any(&x)), any(&y))) &&
+                &outher, Add, any(&x), binary(&inner, Add, any(&y), ival()))) &&
             !(x->is<Const>() || y->is<Const>())) {
-          // constant on the right more preferable if C == 0,
-          // so let's check first if it's possible.
-          if (canReorder(x, y)) {
-            // swap C and y   ==>   (y - x) + C
-            std::swap(inner->left, outher->right);
-          } else {
-            // swap lhs and rhs   ==>   y + (C - x)
-            std::swap(outher->left, outher->right);
-            // swap C and x   ==>   y + (x - C)
-            std::swap(inner->left, inner->right);
-            // swap y and C   ==>   C + (x - y)
-            std::swap(outher->left, inner->right);
-            // C + (x - y)   ==>   C - (x - y)
-            outher->op = Abstract::getBinary(outher->left->type, Sub);
-          }
+          // swap lhs and rhs  ==>  (y + C) + x
+          std::swap(outher->left, outher->right);
+          // swap y and C  ==>  (C + y) + x
+          std::swap(inner->left, inner->right);
+          // swap C and x  ==>  (x + y) + C
+          std::swap(inner->left, outher->right);
+          return curr;
+        }
+        // x + (y - C)  ==>  (x + y) - C
+        if (matches(
+              curr,
+              binary(
+                &outher, Add, any(&x), binary(&inner, Sub, any(&y), ival()))) &&
+            !(x->is<Const>() || y->is<Const>())) {
+          // swap lhs and rhs  ==>  (y - C) + x
+          std::swap(outher->left, outher->right);
+          // swap y and C  ==>  (C - y) + x
+          std::swap(inner->left, inner->right);
+          // swap C and x  ==>  (x - y) + C
+          std::swap(inner->left, outher->right);
+          // (x - y) + C  ==>  (x + y) + C
+          inner->op = Abstract::getBinary(inner->left->type, Add);
+          // (x - y) + C  ==>  (x + y) - C
+          outher->op = Abstract::getBinary(outher->right->type, Sub);
+          return curr;
+        }
+        // x - (y + C)  ==>  (x - y) - C
+        if (matches(
+              curr,
+              binary(
+                &outher, Sub, any(&x), binary(&inner, Add, any(&y), ival()))) &&
+            !(x->is<Const>() || y->is<Const>())) {
+          // swap lhs and rhs  ==>  (y + C) - x
+          std::swap(outher->left, outher->right);
+          // swap y and C  ==>  (C + y) - x
+          std::swap(inner->left, inner->right);
+          // swap C and x  ==>  (x + y) - C
+          std::swap(inner->left, outher->right);
+          // (x + y) - C  ==>  (x - y) - C
+          inner->op = Abstract::getBinary(inner->left->type, Sub);
+          return curr;
+        }
+        // x - (y - C)  ==>  (x - y) + C
+        if (matches(
+              curr,
+              binary(
+                &outher, Sub, any(&x), binary(&inner, Sub, any(&y), ival()))) &&
+            !(x->is<Const>() || y->is<Const>())) {
+          // swap lhs and rhs  ==>  (y - C) - x
+          std::swap(outher->left, outher->right);
+          // swap y and C  ==>  (C - y) - x
+          std::swap(inner->left, inner->right);
+          // swap C and x  ==>  (x - y) - C
+          std::swap(inner->left, outher->right);
+          // (x - y) - C  ==>  (x - y) + C
+          outher->op = Abstract::getBinary(outher->right->type, Add);
           return curr;
         }
         // x + (C - y)  ==>  (x - y) + C
@@ -277,6 +316,31 @@ struct OptimizeInstructions
           std::swap(inner->left, outher->right);
           // (x - y) - C   ==>   (x + y) - C
           inner->op = Abstract::getBinary(inner->left->type, Add);
+          return curr;
+        }
+        // (C - x) + y  ==>  (y - x) + C,  if can reorder
+        // (C - x) + y  ==>  C - (x - y),  otherwise
+        // where x and y are not consts
+        if (matches(
+              curr,
+              binary(
+                &outher, Add, binary(&inner, Sub, ival(), any(&x)), any(&y))) &&
+            !(x->is<Const>() || y->is<Const>())) {
+          // constant on the right more preferable if C == 0,
+          // so let's check first if it's possible.
+          if (canReorder(x, y)) {
+            // swap C and y   ==>   (y - x) + C
+            std::swap(inner->left, outher->right);
+          } else {
+            // swap lhs and rhs   ==>   y + (C - x)
+            std::swap(outher->left, outher->right);
+            // swap C and x   ==>   y + (x - C)
+            std::swap(inner->left, inner->right);
+            // swap y and C   ==>   C + (x - y)
+            std::swap(outher->left, inner->right);
+            // C + (x - y)   ==>   C - (x - y)
+            outher->op = Abstract::getBinary(outher->left->type, Sub);
+          }
           return curr;
         }
       }
