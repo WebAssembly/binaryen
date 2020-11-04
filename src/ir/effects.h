@@ -65,6 +65,7 @@ struct EffectAnalyzer
   std::unordered_set<Index> localsWritten;
   std::unordered_set<Name> globalsRead;
   std::unordered_set<Name> globalsWritten;
+  std::unordered_set<Name> breakTargets;
   bool readsMemory = false;
   bool writesMemory = false;
   // a load or div/rem, which may trap. we ignore trap differences, so it is ok
@@ -256,8 +257,6 @@ struct EffectAnalyzer
     }
     return hasAnything();
   }
-
-  std::set<Name> breakTargets;
 
   void visitBlock(Block* curr) {
     if (curr->name.is()) {
