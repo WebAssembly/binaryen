@@ -1904,7 +1904,8 @@ private:
           // x + 5 == 7
           //   =>
           //     x == 2
-          if (left->op == Abstract::getBinary(type, Abstract::Add)) {
+          if (left->op == Abstract::getBinary(type, Abstract::Add) ||
+              left->op == Abstract::getBinary(type, Abstract::Sub)) {
             if (auto* leftConst = left->right->dynCast<Const>()) {
               if (auto* rightConst = curr->right->dynCast<Const>()) {
                 return combineRelationalConstants(
