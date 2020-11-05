@@ -495,7 +495,6 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
       (options.optimizeLevel >= 2 || options.shrinkLevel >= 2)) {
     add("inlining-optimizing");
   }
-  add("optimize-instructions-finalize");
   // Optimizations show more functions as duplicate, so run this here in Post.
   // FIXME DWARF updating does not handle merging debug info with merged code.
   if (!preserveDWARF) {
