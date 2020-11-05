@@ -185,12 +185,12 @@ struct OptimizeInstructions
     }
     // we may be able to apply multiple patterns, one may open opportunities
     // that look deeper NB: patterns must not have cycles
-    while (auto* res = handOptimize(curr)) {
-      replaceCurrent(res);
+    while ((curr = handOptimize(curr))) {
+      replaceCurrent(curr);
     }
     if (finalize) {
-      if (auto* res = finalOptimize(curr)) {
-        replaceCurrent(res);
+      if (curr && (curr = finalOptimize(curr))) {
+        replaceCurrent(curr);
       }
     }
   }
@@ -968,27 +968,27 @@ private:
     using namespace Abstract;
     using namespace Match;
 
-    {
-      // Wasm binary encoding uses signed LEBs, which slightly favor negative
-      // numbers: -64 is more efficient than +64 etc., as well as other powers
-      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
-      // theory we could just prefer negative numbers over positive, but that
-      // can have bad effects on gzip compression (as it would mean more
-      // subtractions than the more common additions). TODO: Simplify this by
-      // adding an ival matcher than can bind int64_t vars.
-      Const* c;
-      if (matches(curr, binary(Add, any(), ival(&c)))) {
-        int64_t value = c->value.getInteger();
-        if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-            value == 0x8000000 || value == 0x400000000LL ||
-            value == 0x20000000000LL || value == 0x1000000000000LL ||
-            value == 0x80000000000000LL || value == 0x4000000000000000LL) {
-          c->value = c->value.neg();
-          curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
-          return curr;
-        }
-      }
-    }
+    // {
+    //   // Wasm binary encoding uses signed LEBs, which slightly favor negative
+    //   // numbers: -64 is more efficient than +64 etc., as well as other powers
+    //   // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
+    //   // theory we could just prefer negative numbers over positive, but that
+    //   // can have bad effects on gzip compression (as it would mean more
+    //   // subtractions than the more common additions). TODO: Simplify this by
+    //   // adding an ival matcher than can bind int64_t vars.
+    //   Const* c;
+    //   if (matches(curr, binary(Add, any(), ival(&c)))) {
+    //     int64_t value = c->value.getInteger();
+    //     if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
+    //         value == 0x8000000 || value == 0x400000000LL ||
+    //         value == 0x20000000000LL || value == 0x1000000000000LL ||
+    //         value == 0x80000000000000LL || value == 0x4000000000000000LL) {
+    //       c->value = c->value.neg();
+    //       curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
+    //       return curr;
+    //     }
+    //   }
+    // }
 
     return nullptr;
   }
@@ -2427,7 +2427,7 @@ Pass* createOptimizeInstructionsPass() {
   return new OptimizeInstructions(false);
 }
 
-Pass* createFinalOptimizeInstructionsPass() {
+Pass* createOptimizeInstructionsFinalizePass() {
   return new OptimizeInstructions(true);
 }
 
