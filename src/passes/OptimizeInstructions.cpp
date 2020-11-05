@@ -189,7 +189,7 @@ struct OptimizeInstructions
       }
     } else {
       // we may be able to apply multiple patterns, one may open opportunities
-    // that look deeper NB: patterns must not have cycles
+      // that look deeper NB: patterns must not have cycles
       while ((curr = handOptimize(curr))) {
         replaceCurrent(curr);
       }
