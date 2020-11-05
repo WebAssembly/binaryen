@@ -2,18 +2,14 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "iprintf" (func $iprintf (param i32 i32) (result i32)))
  (memory $0 2)
  (data (i32.const 568) "%d:%d\n\00Result: %d\n\00")
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66128))
- (global $global$1 i32 (i32.const 587))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -86,16 +82,10 @@
  (func $main (param $0 i32) (param $1 i32) (result i32)
   (call $__original_main)
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 19,
   "tableSize": 1,
   "initializers": [
     "__wasm_call_ctors"
@@ -107,11 +97,9 @@
   ],
   "exports": [
     "__wasm_call_ctors",
-    "main",
-    "__growWasmMemory"
+    "main"
   ],
   "namedGlobals": {
-    "__data_end" : "587"
   },
   "invokeFuncs": [
   ],

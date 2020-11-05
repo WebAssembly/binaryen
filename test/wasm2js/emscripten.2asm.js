@@ -1,8 +1,6 @@
-function instantiate(asmLibraryArg, wasmMemory, wasmTable) {
-
+function instantiate(asmLibraryArg, wasmMemory) {
 function asmFunc(global, env, buffer) {
- var memory = env.memory;
- var FUNCTION_TABLE = wasmTable;
+ var FUNCTION_TABLE = env.table;
  var HEAP8 = new global.Int8Array(buffer);
  var HEAP16 = new global.Int16Array(buffer);
  var HEAP32 = new global.Int32Array(buffer);

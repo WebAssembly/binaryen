@@ -630,8 +630,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
       }
 
       default: {
-        std::cerr << "Unhandled type in assert: " << resType << std::endl;
-        abort();
+        Fatal() << "Unhandled type in assert: " << resType;
       }
     }
   } else {
@@ -811,7 +810,7 @@ void AssertionEmitter::emit() {
     }
   )";
 
-  Builder wasmBuilder(sexpBuilder.getAllocator());
+  Builder wasmBuilder(sexpBuilder.getModule());
   Name asmModule = std::string("ret") + ASM_FUNC.str;
   for (size_t i = 0; i < root.size(); ++i) {
     Element& e = *root[i];
@@ -825,7 +824,7 @@ void AssertionEmitter::emit() {
       asmModule = Name(moduleNameS.str().c_str());
       Module wasm;
       options.applyFeatures(wasm);
-      SExpressionWasmBuilder builder(wasm, e);
+      SExpressionWasmBuilder builder(wasm, e, options.profile);
       emitWasm(wasm, out, flags, options.passOptions, funcName);
       continue;
     }
@@ -972,7 +971,8 @@ int main(int argc, const char* argv[]) {
       if (options.debug) {
         std::cerr << "w-parsing..." << std::endl;
       }
-      sexprBuilder = make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0]);
+      sexprBuilder =
+        make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0], options.profile);
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);

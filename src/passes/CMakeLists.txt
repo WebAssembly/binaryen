@@ -25,7 +25,6 @@ set(passes_SOURCES
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
   DWARF.cpp
-  EmscriptenPIC.cpp
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
@@ -39,6 +38,7 @@ set(passes_SOURCES
   LocalCSE.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeLocals.cpp
@@ -61,11 +61,9 @@ set(passes_SOURCES
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
-  RelooperJumpThreading.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
-  ReplaceStackPointer.cpp
   RemoveUnusedBrs.cpp
   RemoveUnusedNames.cpp
   RemoveUnusedModuleElements.cpp
@@ -77,7 +75,6 @@ set(passes_SOURCES
   SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
-  SpillPointers.cpp
   StackCheck.cpp
   SSAify.cpp
   Untee.cpp

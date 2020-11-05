@@ -66,17 +66,30 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     return ret;
   }
   Index visitLocalGet(LocalGet* curr) { return 0; }
-  Index visitLocalSet(LocalSet* curr) { return 1; }
+  Index visitLocalSet(LocalSet* curr) { return 1 + visit(curr->value); }
   Index visitGlobalGet(GlobalGet* curr) { return 1; }
-  Index visitGlobalSet(GlobalSet* curr) { return 2; }
+  Index visitGlobalSet(GlobalSet* curr) { return 2 + visit(curr->value); }
   Index visitLoad(Load* curr) {
     return 1 + visit(curr->ptr) + 10 * curr->isAtomic;
   }
   Index visitStore(Store* curr) {
     return 2 + visit(curr->ptr) + visit(curr->value) + 10 * curr->isAtomic;
   }
-  Index visitAtomicRMW(AtomicRMW* curr) { return 100; }
-  Index visitAtomicCmpxchg(AtomicCmpxchg* curr) { return 100; }
+  Index visitAtomicRMW(AtomicRMW* curr) {
+    return 100 + visit(curr->ptr) + visit(curr->value);
+  }
+  Index visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+    return 100 + visit(curr->ptr) + visit(curr->expected) +
+           visit(curr->replacement);
+  }
+  Index visitAtomicWait(AtomicWait* curr) {
+    return 100 + visit(curr->ptr) + visit(curr->expected) +
+           visit(curr->timeout);
+  }
+  Index visitAtomicNotify(AtomicNotify* curr) {
+    return 100 + visit(curr->ptr) + visit(curr->notifyCount);
+  }
+  Index visitAtomicFence(AtomicFence* curr) { return 100; }
   Index visitConst(Const* curr) { return 1; }
   Index visitUnary(Unary* curr) {
     Index ret = 0;
@@ -157,6 +170,7 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case AnyTrueVecI8x16:
       case AllTrueVecI8x16:
       case BitmaskVecI8x16:
+      case PopcntVecI8x16:
       case AbsVecI16x8:
       case NegVecI16x8:
       case AnyTrueVecI16x8:
@@ -200,7 +214,8 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
       case WidenHighSVecI16x8ToVecI32x4:
       case WidenLowUVecI16x8ToVecI32x4:
       case WidenHighUVecI16x8ToVecI32x4:
-        return 1;
+        ret = 1;
+        break;
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
     }
@@ -210,8 +225,6 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     Index ret = 0;
     switch (curr->op) {
       case AddInt32:
-        ret = 1;
-        break;
       case SubInt32:
         ret = 1;
         break;
@@ -219,44 +232,20 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 2;
         break;
       case DivSInt32:
-        ret = 3;
-        break;
       case DivUInt32:
-        ret = 3;
-        break;
       case RemSInt32:
-        ret = 3;
-        break;
       case RemUInt32:
         ret = 3;
         break;
       case AndInt32:
-        ret = 1;
-        break;
       case OrInt32:
-        ret = 1;
-        break;
       case XorInt32:
-        ret = 1;
-        break;
       case ShlInt32:
-        ret = 1;
-        break;
       case ShrUInt32:
-        ret = 1;
-        break;
       case ShrSInt32:
-        ret = 1;
-        break;
       case RotLInt32:
-        ret = 1;
-        break;
       case RotRInt32:
-        ret = 1;
-        break;
       case AddInt64:
-        ret = 1;
-        break;
       case SubInt64:
         ret = 1;
         break;
@@ -264,44 +253,22 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 2;
         break;
       case DivSInt64:
-        ret = 3;
-        break;
       case DivUInt64:
-        ret = 3;
-        break;
       case RemSInt64:
-        ret = 3;
-        break;
       case RemUInt64:
         ret = 3;
         break;
       case AndInt64:
-        ret = 1;
-        break;
       case OrInt64:
-        ret = 1;
-        break;
       case XorInt64:
         ret = 1;
         break;
       case ShlInt64:
-        ret = 1;
-        break;
       case ShrUInt64:
-        ret = 1;
-        break;
       case ShrSInt64:
-        ret = 1;
-        break;
       case RotLInt64:
-        ret = 1;
-        break;
       case RotRInt64:
-        ret = 1;
-        break;
       case AddFloat32:
-        ret = 1;
-        break;
       case SubFloat32:
         ret = 1;
         break;
@@ -312,17 +279,9 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 3;
         break;
       case CopySignFloat32:
-        ret = 1;
-        break;
       case MinFloat32:
-        ret = 1;
-        break;
       case MaxFloat32:
-        ret = 1;
-        break;
       case AddFloat64:
-        ret = 1;
-        break;
       case SubFloat64:
         ret = 1;
         break;
@@ -333,263 +292,91 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 3;
         break;
       case CopySignFloat64:
-        ret = 1;
-        break;
       case MinFloat64:
-        ret = 1;
-        break;
       case MaxFloat64:
-        ret = 1;
-        break;
-      case LtUInt32:
-        ret = 1;
-        break;
-      case LtSInt32:
-        ret = 1;
-        break;
-      case LeUInt32:
-        ret = 1;
-        break;
-      case LeSInt32:
-        ret = 1;
-        break;
-      case GtUInt32:
-        ret = 1;
-        break;
-      case GtSInt32:
-        ret = 1;
-        break;
-      case GeUInt32:
-        ret = 1;
-        break;
-      case GeSInt32:
-        ret = 1;
-        break;
-      case LtUInt64:
-        ret = 1;
-        break;
-      case LtSInt64:
-        ret = 1;
-        break;
-      case LeUInt64:
-        ret = 1;
-        break;
-      case LeSInt64:
-        ret = 1;
-        break;
-      case GtUInt64:
-        ret = 1;
-        break;
-      case GtSInt64:
-        ret = 1;
-        break;
-      case GeUInt64:
-        ret = 1;
-        break;
-      case GeSInt64:
-        ret = 1;
-        break;
-      case LtFloat32:
-        ret = 1;
-        break;
-      case GtFloat32:
-        ret = 1;
-        break;
-      case LeFloat32:
-        ret = 1;
-        break;
-      case GeFloat32:
-        ret = 1;
-        break;
-      case LtFloat64:
-        ret = 1;
-        break;
-      case GtFloat64:
-        ret = 1;
-        break;
-      case LeFloat64:
-        ret = 1;
-        break;
-      case GeFloat64:
-        ret = 1;
-        break;
       case EqInt32:
-        ret = 1;
-        break;
       case NeInt32:
-        ret = 1;
-        break;
+      case LtUInt32:
+      case LtSInt32:
+      case LeUInt32:
+      case LeSInt32:
+      case GtUInt32:
+      case GtSInt32:
+      case GeUInt32:
+      case GeSInt32:
       case EqInt64:
-        ret = 1;
-        break;
       case NeInt64:
-        ret = 1;
-        break;
+      case LtUInt64:
+      case LtSInt64:
+      case LeUInt64:
+      case LeSInt64:
+      case GtUInt64:
+      case GtSInt64:
+      case GeUInt64:
+      case GeSInt64:
       case EqFloat32:
-        ret = 1;
-        break;
       case NeFloat32:
-        ret = 1;
-        break;
+      case LtFloat32:
+      case GtFloat32:
+      case LeFloat32:
+      case GeFloat32:
       case EqFloat64:
-        ret = 1;
-        break;
       case NeFloat64:
-        ret = 1;
-        break;
+      case LtFloat64:
+      case GtFloat64:
+      case LeFloat64:
+      case GeFloat64:
       case EqVecI8x16:
-        ret = 1;
-        break;
       case NeVecI8x16:
-        ret = 1;
-        break;
       case LtSVecI8x16:
-        ret = 1;
-        break;
       case LtUVecI8x16:
-        ret = 1;
-        break;
       case LeSVecI8x16:
-        ret = 1;
-        break;
       case LeUVecI8x16:
-        ret = 1;
-        break;
       case GtSVecI8x16:
-        ret = 1;
-        break;
       case GtUVecI8x16:
-        ret = 1;
-        break;
       case GeSVecI8x16:
-        ret = 1;
-        break;
       case GeUVecI8x16:
-        ret = 1;
-        break;
       case EqVecI16x8:
-        ret = 1;
-        break;
       case NeVecI16x8:
-        ret = 1;
-        break;
       case LtSVecI16x8:
-        ret = 1;
-        break;
       case LtUVecI16x8:
-        ret = 1;
-        break;
       case LeSVecI16x8:
-        ret = 1;
-        break;
       case LeUVecI16x8:
-        ret = 1;
-        break;
       case GtSVecI16x8:
-        ret = 1;
-        break;
       case GtUVecI16x8:
-        ret = 1;
-        break;
       case GeSVecI16x8:
-        ret = 1;
-        break;
       case GeUVecI16x8:
-        ret = 1;
-        break;
       case EqVecI32x4:
-        ret = 1;
-        break;
       case NeVecI32x4:
-        ret = 1;
-        break;
       case LtSVecI32x4:
-        ret = 1;
-        break;
       case LtUVecI32x4:
-        ret = 1;
-        break;
       case LeSVecI32x4:
-        ret = 1;
-        break;
       case LeUVecI32x4:
-        ret = 1;
-        break;
       case GtSVecI32x4:
-        ret = 1;
-        break;
       case GtUVecI32x4:
-        ret = 1;
-        break;
       case GeSVecI32x4:
-        ret = 1;
-        break;
       case GeUVecI32x4:
-        ret = 1;
-        break;
       case EqVecF32x4:
-        ret = 1;
-        break;
       case NeVecF32x4:
-        ret = 1;
-        break;
       case LtVecF32x4:
-        ret = 1;
-        break;
       case LeVecF32x4:
-        ret = 1;
-        break;
       case GtVecF32x4:
-        ret = 1;
-        break;
       case GeVecF32x4:
-        ret = 1;
-        break;
       case EqVecF64x2:
-        ret = 1;
-        break;
       case NeVecF64x2:
-        ret = 1;
-        break;
       case LtVecF64x2:
-        ret = 1;
-        break;
       case LeVecF64x2:
-        ret = 1;
-        break;
       case GtVecF64x2:
-        ret = 1;
-        break;
       case GeVecF64x2:
-        ret = 1;
-        break;
       case AndVec128:
-        ret = 1;
-        break;
       case OrVec128:
-        ret = 1;
-        break;
       case XorVec128:
-        ret = 1;
-        break;
       case AndNotVec128:
-        ret = 1;
-        break;
       case AddVecI8x16:
-        ret = 1;
-        break;
       case AddSatSVecI8x16:
-        ret = 1;
-        break;
       case AddSatUVecI8x16:
-        ret = 1;
-        break;
       case SubVecI8x16:
-        ret = 1;
-        break;
       case SubSatSVecI8x16:
-        ret = 1;
-        break;
       case SubSatUVecI8x16:
         ret = 1;
         break;
@@ -597,35 +384,15 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 2;
         break;
       case MinSVecI8x16:
-        ret = 1;
-        break;
       case MinUVecI8x16:
-        ret = 1;
-        break;
       case MaxSVecI8x16:
-        ret = 1;
-        break;
       case MaxUVecI8x16:
-        ret = 1;
-        break;
       case AvgrUVecI8x16:
-        ret = 1;
-        break;
       case AddVecI16x8:
-        ret = 1;
-        break;
       case AddSatSVecI16x8:
-        ret = 1;
-        break;
       case AddSatUVecI16x8:
-        ret = 1;
-        break;
       case SubVecI16x8:
-        ret = 1;
-        break;
       case SubSatSVecI16x8:
-        ret = 1;
-        break;
       case SubSatUVecI16x8:
         ret = 1;
         break;
@@ -633,23 +400,16 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 2;
         break;
       case MinSVecI16x8:
-        ret = 1;
-        break;
       case MinUVecI16x8:
-        ret = 1;
-        break;
       case MaxSVecI16x8:
-        ret = 1;
-        break;
       case MaxUVecI16x8:
-        ret = 1;
-        break;
       case AvgrUVecI16x8:
-        ret = 1;
-        break;
+      case Q15MulrSatSVecI16x8:
+      case ExtMulLowSVecI16x8:
+      case ExtMulHighSVecI16x8:
+      case ExtMulLowUVecI16x8:
+      case ExtMulHighUVecI16x8:
       case AddVecI32x4:
-        ret = 1;
-        break;
       case SubVecI32x4:
         ret = 1;
         break;
@@ -657,32 +417,22 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 2;
         break;
       case MinSVecI32x4:
-        ret = 1;
-        break;
       case MinUVecI32x4:
-        ret = 1;
-        break;
       case MaxSVecI32x4:
-        ret = 1;
-        break;
       case MaxUVecI32x4:
-        ret = 1;
-        break;
       case DotSVecI16x8ToVecI32x4:
-        ret = 1;
-        break;
+      case ExtMulLowSVecI32x4:
+      case ExtMulHighSVecI32x4:
+      case ExtMulLowUVecI32x4:
+      case ExtMulHighUVecI32x4:
       case AddVecI64x2:
-        ret = 1;
-        break;
       case SubVecI64x2:
-        ret = 1;
-        break;
       case MulVecI64x2:
-        ret = 1;
-        break;
+      case ExtMulLowSVecI64x2:
+      case ExtMulHighSVecI64x2:
+      case ExtMulLowUVecI64x2:
+      case ExtMulHighUVecI64x2:
       case AddVecF32x4:
-        ret = 1;
-        break;
       case SubVecF32x4:
         ret = 1;
         break;
@@ -693,20 +443,10 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 3;
         break;
       case MinVecF32x4:
-        ret = 1;
-        break;
       case MaxVecF32x4:
-        ret = 1;
-        break;
       case PMinVecF32x4:
-        ret = 1;
-        break;
       case PMaxVecF32x4:
-        ret = 1;
-        break;
       case AddVecF64x2:
-        ret = 1;
-        break;
       case SubVecF64x2:
         ret = 1;
         break;
@@ -717,29 +457,13 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
         ret = 3;
         break;
       case MinVecF64x2:
-        ret = 1;
-        break;
       case MaxVecF64x2:
-        ret = 1;
-        break;
       case PMinVecF64x2:
-        ret = 1;
-        break;
       case PMaxVecF64x2:
-        ret = 1;
-        break;
       case NarrowSVecI16x8ToVecI8x16:
-        ret = 1;
-        break;
       case NarrowUVecI16x8ToVecI8x16:
-        ret = 1;
-        break;
       case NarrowSVecI32x4ToVecI16x8:
-        ret = 1;
-        break;
       case NarrowUVecI32x4ToVecI16x8:
-        ret = 1;
-        break;
       case SwizzleVec8x16:
         ret = 1;
         break;
@@ -749,24 +473,81 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
     return ret + visit(curr->left) + visit(curr->right);
   }
   Index visitSelect(Select* curr) {
-    return 2 + visit(curr->condition) + visit(curr->ifTrue) +
+    return 1 + visit(curr->condition) + visit(curr->ifTrue) +
            visit(curr->ifFalse);
   }
   Index visitDrop(Drop* curr) { return visit(curr->value); }
   Index visitReturn(Return* curr) { return maybeVisit(curr->value); }
-  Index visitHost(Host* curr) { return 100; }
+  Index visitMemorySize(MemorySize* curr) { return 1; }
+  Index visitMemoryGrow(MemoryGrow* curr) { return 100 + visit(curr->delta); }
+  Index visitMemoryInit(MemoryInit* curr) {
+    return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
+  }
+  Index visitMemoryCopy(MemoryCopy* curr) {
+    return 6 + visit(curr->dest) + visit(curr->source) + visit(curr->size);
+  }
+  Index visitMemoryFill(MemoryFill* curr) {
+    return 6 + visit(curr->dest) + visit(curr->value) + visit(curr->size);
+  }
+  Index visitSIMDLoad(SIMDLoad* curr) { return 1 + visit(curr->ptr); }
+  Index visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    return 1 + Index(curr->isStore()) + visit(curr->ptr) + visit(curr->vec);
+  }
+  Index visitSIMDReplace(SIMDReplace* curr) {
+    return 2 + visit(curr->vec) + visit(curr->value);
+  }
+  Index visitSIMDExtract(SIMDExtract* curr) { return 1 + visit(curr->vec); }
+  Index visitSIMDTernary(SIMDTernary* curr) {
+    Index ret = 0;
+    switch (curr->op) {
+      case Bitselect:
+        ret = 1;
+        break;
+      case QFMAF32x4:
+      case QFMSF32x4:
+      case QFMAF64x2:
+      case QFMSF64x2:
+        ret = 2;
+        break;
+    }
+    return ret + visit(curr->a) + visit(curr->b) + visit(curr->c);
+  }
+  Index visitSIMDShift(SIMDShift* curr) {
+    return 1 + visit(curr->vec) + visit(curr->shift);
+  }
+  Index visitSIMDShuffle(SIMDShuffle* curr) {
+    return 1 + visit(curr->left) + visit(curr->right);
+  }
   Index visitRefNull(RefNull* curr) { return 1; }
-  Index visitRefIsNull(RefIsNull* curr) { return 1; }
+  Index visitRefIsNull(RefIsNull* curr) { return 1 + visit(curr->value); }
   Index visitRefFunc(RefFunc* curr) { return 1; }
+  Index visitRefEq(RefEq* curr) {
+    return 1 + visit(curr->left) + visit(curr->right);
+  }
   Index visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
-    return visit(curr->body);
+    return visit(curr->body) + maybeVisit(curr->catchBody);
   }
-  Index visitThrow(Throw* curr) { return 100; }
-  Index visitRethrow(Rethrow* curr) { return 100; }
+  Index visitThrow(Throw* curr) {
+    Index ret = 100;
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
+  Index visitRethrow(Rethrow* curr) { return 100 + visit(curr->exnref); }
   Index visitBrOnExn(BrOnExn* curr) {
     return 1 + visit(curr->exnref) + curr->sent.size();
   }
+  Index visitTupleMake(TupleMake* curr) {
+    Index ret = 0;
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
+  Index visitTupleExtract(TupleExtract* curr) { return visit(curr->tuple); }
+  Index visitPop(Pop* curr) { return 0; }
   Index visitNop(Nop* curr) { return 0; }
   Index visitUnreachable(Unreachable* curr) { return 0; }
 };

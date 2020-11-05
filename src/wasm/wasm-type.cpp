@@ -256,13 +256,14 @@ std::unordered_map<TypeInfo, uintptr_t> indices = {
   {TypeInfo(HeapType(HeapType::FuncKind), true), Type::funcref},
   {TypeInfo({Type::externref}), Type::externref},
   {TypeInfo(HeapType(HeapType::ExternKind), true), Type::externref},
-  // TODO (GC): Add canonical ids
-  // * `(ref null any) == anyref`
-  // * `(ref null eq) == eqref`
-  // * `(ref i31) == i31ref`
-  {TypeInfo({Type::nullref}), Type::nullref}, // TODO (removed)
   {TypeInfo({Type::exnref}), Type::exnref},
   {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
+  {TypeInfo({Type::anyref}), Type::anyref},
+  {TypeInfo(HeapType(HeapType::AnyKind), true), Type::anyref},
+  {TypeInfo({Type::eqref}), Type::eqref},
+  {TypeInfo(HeapType(HeapType::EqKind), true), Type::eqref},
+  {TypeInfo({Type::i31ref}), Type::i31ref},
+  {TypeInfo(HeapType(HeapType::I31Kind), false), Type::i31ref},
 };
 
 } // anonymous namespace
@@ -341,15 +342,33 @@ bool Type::isTuple() const {
 
 bool Type::isRef() const {
   if (isBasic()) {
-    return id >= funcref && id <= exnref;
+    return id >= funcref && id <= i31ref;
   } else {
     return getTypeInfo(*this)->isRef();
   }
 }
 
+bool Type::isFunction() const {
+  if (isBasic()) {
+    return id == funcref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isSignature();
+  }
+}
+
+bool Type::isException() const {
+  if (isBasic()) {
+    return id == exnref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isException();
+  }
+}
+
 bool Type::isNullable() const {
   if (isBasic()) {
-    return id >= funcref && id <= exnref;
+    return id >= funcref && id <= eqref; // except i31ref
   } else {
     return getTypeInfo(*this)->isNullable();
   }
@@ -389,8 +408,10 @@ unsigned Type::getByteSize() const {
         return 16;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         break;
@@ -432,10 +453,13 @@ FeatureSet Type::getFeatures() const {
         return FeatureSet::SIMD;
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
         return FeatureSet::ReferenceTypes;
       case Type::exnref:
         return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
+        return FeatureSet::ReferenceTypes | FeatureSet::GC;
       default:
         return FeatureSet::MVP;
     }
@@ -449,6 +473,31 @@ FeatureSet Type::getFeatures() const {
     return feats;
   }
   return getSingleFeatures(*this);
+}
+
+HeapType Type::getHeapType() const {
+  if (isRef()) {
+    if (isCompound()) {
+      return getTypeInfo(*this)->ref.heapType;
+    }
+    switch (getBasic()) {
+      case funcref:
+        return HeapType::FuncKind;
+      case externref:
+        return HeapType::ExternKind;
+      case exnref:
+        return HeapType::ExnKind;
+      case anyref:
+        return HeapType::AnyKind;
+      case eqref:
+        return HeapType::EqKind;
+      case i31ref:
+        return HeapType::I31Kind;
+      default:
+        break;
+    }
+  }
+  WASM_UNREACHABLE("unexpected type");
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -471,9 +520,9 @@ bool Type::isSubType(Type left, Type right) {
   if (left == right) {
     return true;
   }
-  if (left.isRef() && right.isRef() &&
-      (right == Type::externref || left == Type::nullref)) {
-    return true;
+  if (left.isRef() && right.isRef()) {
+    return right == Type::anyref ||
+           (left == Type::i31ref && right == Type::eqref);
   }
   if (left.isTuple() && right.isTuple()) {
     if (left.size() != right.size()) {
@@ -502,6 +551,21 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (a.size() != b.size()) {
     return Type::none; // a poison value that must not be consumed
   }
+  if (a.isRef()) {
+    if (b.isRef()) {
+      if ((a == Type::i31ref && b == Type::eqref) ||
+          (a == Type::eqref && b == Type::i31ref)) {
+        return Type::eqref;
+      }
+      // The LUB of two different reference types is anyref, which may or may
+      // not be a valid type depending on whether the anyref feature is enabled.
+      // When anyref is disabled, it is possible for the finalization of invalid
+      // code to introduce a use of anyref via this function, but that is not a
+      // problem because it will be caught and rejected by validation.
+      return Type::anyref;
+    }
+    return Type::none;
+  }
   if (a.isTuple()) {
     TypeList types;
     types.resize(a.size());
@@ -513,16 +577,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     }
     return Type(types);
   }
-  if (!a.isRef() || !b.isRef()) {
-    return Type::none;
-  }
-  if (a == Type::nullref) {
-    return b;
-  }
-  if (b == Type::nullref) {
-    return a;
-  }
-  return Type::externref;
+  return Type::none;
 }
 
 Type::Iterator Type::end() const {
@@ -554,8 +609,7 @@ const Type& Type::operator[](size_t index) const {
   }
 }
 
-HeapType::HeapType(const HeapType& other) {
-  kind = other.kind;
+HeapType::HeapType(const HeapType& other) : kind(other.kind) {
   switch (kind) {
     case FuncKind:
     case ExternKind:
@@ -708,11 +762,17 @@ std::ostream& operator<<(std::ostream& os, Type type) {
       case Type::externref:
         os << "externref";
         break;
-      case Type::nullref:
-        os << "nullref";
-        break;
       case Type::exnref:
         os << "exnref";
+        break;
+      case Type::anyref:
+        os << "anyref";
+        break;
+      case Type::eqref:
+        os << "eqref";
+        break;
+      case Type::i31ref:
+        os << "i31ref";
         break;
     }
   } else {

@@ -31,6 +31,7 @@ high chance for set at start of loop
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
+#include <ir/names.h>
 #include <ir/utils.h>
 #include <support/file.h>
 #include <tools/optimization-options.h>
@@ -188,6 +189,9 @@ public:
   void setAllowOOB(bool allowOOB_) { allowOOB = allowOOB_; }
 
   void build() {
+    if (HANG_LIMIT > 0) {
+      prepareHangLimitSupport();
+    }
     if (allowMemory) {
       setupMemory();
     }
@@ -196,6 +200,7 @@ public:
     if (wasm.features.hasExceptionHandling()) {
       setupEvents();
     }
+    modifyInitialFunctions();
     addImportLoggingSupport();
     // keep adding functions until we run out of input
     while (!finishedInput) {
@@ -204,6 +209,9 @@ public:
     }
     if (HANG_LIMIT > 0) {
       addHangLimitSupport();
+    }
+    if (allowMemory) {
+      finalizeMemory();
     }
     finalizeTable();
   }
@@ -241,7 +249,7 @@ private:
   // the memory that we use, a small portion so that we have a good chance of
   // looking at writes (we also look outside of this region with small
   // probability) this should be a power of 2
-  static const int USABLE_MEMORY = 16;
+  const Address USABLE_MEMORY = 16;
 
   // the number of runtime iterations (function calls, loop backbranches) we
   // allow before we stop execution with a trap, to prevent hangs. 0 means
@@ -317,15 +325,23 @@ private:
     options.push_back(type); // includes itself
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
-      case Type::externref:
-        if (wasm.features.hasExceptionHandling()) {
-          options.push_back(Type::exnref);
+      case Type::anyref:
+        if (wasm.features.hasReferenceTypes()) {
+          options.push_back(Type::funcref);
+          options.push_back(Type::externref);
+          if (wasm.features.hasExceptionHandling()) {
+            options.push_back(Type::exnref);
+          }
+          if (wasm.features.hasGC()) {
+            options.push_back(Type::eqref);
+            options.push_back(Type::i31ref);
+          }
         }
-        options.push_back(Type::funcref);
-        // falls through
-      case Type::funcref:
-      case Type::exnref:
-        options.push_back(Type::nullref);
+        break;
+      case Type::eqref:
+        if (wasm.features.hasGC()) {
+          options.push_back(Type::i31ref);
+        }
         break;
       default:
         break;
@@ -376,6 +392,7 @@ private:
     std::vector<Expression*> contents;
     contents.push_back(
       builder.makeLocalSet(0, builder.makeConst(uint32_t(5381))));
+    auto zero = Literal::makeFromInt32(0, wasm.memory.indexType);
     for (Index i = 0; i < USABLE_MEMORY; i++) {
       contents.push_back(builder.makeLocalSet(
         0,
@@ -388,7 +405,7 @@ private:
                                builder.makeConst(uint32_t(5))),
             builder.makeLocalGet(0, Type::i32)),
           builder.makeLoad(
-            1, false, i, 1, builder.makeConst(uint32_t(0)), Type::i32))));
+            1, false, i, 1, builder.makeConst(zero), Type::i32))));
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
@@ -397,21 +414,44 @@ private:
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
-    wasm.addExport(builder.makeExport("memory", "0", ExternalKind::Memory));
+    if (!wasm.getExportOrNull("memory")) {
+      wasm.addExport(builder.makeExport("memory", "0", ExternalKind::Memory));
+    }
   }
 
   void setupTable() {
     wasm.table.exists = true;
+    wasm.table.initial = wasm.table.max = 0;
     wasm.table.segments.emplace_back(builder.makeConst(int32_t(0)));
   }
 
   std::map<Type, std::vector<Name>> globalsByType;
 
   void setupGlobals() {
+    // If there were initial wasm contents, there may be imported globals. That
+    // would be a problem in the fuzzer harness as we'd error if we do not
+    // provide them (and provide the proper type, etc.).
+    // Avoid that, so that all the standard fuzzing infrastructure can always
+    // run the wasm.
+    for (auto& global : wasm.globals) {
+      if (global->imported()) {
+        // Remove import info from imported globals, and give them a simple
+        // initializer.
+        global->module = global->base = Name();
+        global->init = makeConst(global->type);
+      } else {
+        // If the initialization referred to an imported global, it no longer
+        // can point to the same global after we make it a non-imported global
+        // (as wasm doesn't allow that - you can only use an imported one).
+        if (global->init->is<GlobalGet>()) {
+          global->init = makeConst(global->type);
+        }
+      }
+    }
     for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
       auto type = getConcreteType();
       auto* global =
-        builder.makeGlobal(std::string("global$") + std::to_string(index),
+        builder.makeGlobal(Names::getValidGlobalName(wasm, "global$"),
                            type,
                            makeConst(type),
                            Builder::Mutable);
@@ -424,20 +464,87 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       auto* event =
-        builder.makeEvent(std::string("event$") + std::to_string(i),
+        builder.makeEvent(Names::getValidEventName(wasm, "event$"),
                           WASM_EVENT_ATTRIBUTE_EXCEPTION,
                           Signature(getControlFlowType(), Type::none));
       wasm.addEvent(event);
     }
   }
 
-  void finalizeTable() {
-    wasm.table.initial = wasm.table.segments[0].data.size();
-    wasm.table.max =
-      oneIn(2) ? Address(Table::kUnlimitedSize) : wasm.table.initial;
+  void finalizeMemory() {
+    for (auto& segment : wasm.memory.segments) {
+      Address maxOffset = segment.data.size();
+      if (!segment.isPassive) {
+        if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
+          // Using a non-imported global in a segment offset is not valid in
+          // wasm. This can occur due to us making what used to be an imported
+          // global, in initial contents, be not imported any more. To fix that,
+          // replace such invalid things with a constant.
+          // Note that it is still possible in theory to have imported globals
+          // here, as we only do the above for initial contents. While the
+          // fuzzer doesn't do so as of the time of this comment, do a check
+          // for full generality, so that this code essentially does "if this
+          // is invalid wasm, fix it up."
+          if (!wasm.getGlobal(offset->name)->imported()) {
+            // TODO: It would be better to avoid segment overlap so that
+            //       MemoryPacking can run.
+            segment.offset =
+              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+          }
+        }
+        if (auto* offset = segment.offset->dynCast<Const>()) {
+          maxOffset = maxOffset + offset->value.getInteger();
+        }
+      }
+      wasm.memory.initial = std::max(
+        wasm.memory.initial,
+        Address((maxOffset + Memory::kPageSize - 1) / Memory::kPageSize));
+    }
+    wasm.memory.initial = std::max(wasm.memory.initial, USABLE_MEMORY);
+    // Avoid an unlimited memory size, which would make fuzzing very difficult
+    // as different VMs will run out of system memory in different ways.
+    if (wasm.memory.max == Memory::kUnlimitedSize) {
+      wasm.memory.max = wasm.memory.initial;
+    }
+    if (wasm.memory.max <= wasm.memory.initial) {
+      // To allow growth to work (which a testcase may assume), try to make the
+      // maximum larger than the initial.
+      // TODO: scan the wasm for grow instructions?
+      wasm.memory.max =
+        std::min(Address(wasm.memory.initial + 1), Address(Memory::kMaxSize32));
+    }
+    // Avoid an imported memory (which the fuzz harness would need to handle).
+    wasm.memory.module = wasm.memory.base = Name();
   }
 
-  const Name HANG_LIMIT_GLOBAL = "hangLimit";
+  void finalizeTable() {
+    for (auto& segment : wasm.table.segments) {
+      // If the offset is a global that was imported (which is ok) but no
+      // longer is (not ok) we need to change that.
+      if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
+        if (!wasm.getGlobal(offset->name)->imported()) {
+          // TODO: the segments must not overlap...
+          segment.offset =
+            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+        }
+      }
+      Address maxOffset = segment.data.size();
+      if (auto* offset = segment.offset->dynCast<Const>()) {
+        maxOffset = maxOffset + offset->value.getInteger();
+      }
+      wasm.table.initial = std::max(wasm.table.initial, maxOffset);
+    }
+    wasm.table.max =
+      oneIn(2) ? Address(Table::kUnlimitedSize) : wasm.table.initial;
+    // Avoid an imported table (which the fuzz harness would need to handle).
+    wasm.table.module = wasm.table.base = Name();
+  }
+
+  Name HANG_LIMIT_GLOBAL;
+
+  void prepareHangLimitSupport() {
+    HANG_LIMIT_GLOBAL = Names::getValidGlobalName(wasm, "hangLimit");
+  }
 
   void addHangLimitSupport() {
     auto* glob = builder.makeGlobal(HANG_LIMIT_GLOBAL,
@@ -446,15 +553,22 @@ private:
                                     Builder::Mutable);
     wasm.addGlobal(glob);
 
+    Name exportName = "hangLimitInitializer";
+    auto funcName = Names::getValidFunctionName(wasm, exportName);
     auto* func = new Function;
-    func->name = "hangLimitInitializer";
+    func->name = funcName;
     func->sig = Signature(Type::none, Type::none);
-    func->body =
-      builder.makeGlobalSet(glob->name, builder.makeConst(int32_t(HANG_LIMIT)));
+    func->body = builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
+                                       builder.makeConst(int32_t(HANG_LIMIT)));
     wasm.addFunction(func);
 
+    if (wasm.getExportOrNull(exportName)) {
+      // We must export our actual hang limit function - remove anything
+      // previously existing.
+      wasm.removeExport(exportName);
+    }
     auto* export_ = new Export;
-    export_->name = func->name;
+    export_->name = exportName;
     export_->value = func->name;
     export_->kind = ExternalKind::Function;
     wasm.addExport(export_);
@@ -487,41 +601,62 @@ private:
 
   // function generation state
 
-  Function* func = nullptr;
-  std::vector<Expression*> breakableStack; // things we can break to
-  Index labelIndex;
+  struct FunctionCreationContext {
+    TranslateToFuzzReader& parent;
 
-  // a list of things relevant to computing the odds of an infinite loop,
-  // which we try to minimize the risk of
-  std::vector<Expression*> hangStack;
+    Function* func;
 
-  std::map<Type, std::vector<Index>>
-    typeLocals; // type => list of locals with that type
+    std::vector<Expression*> breakableStack; // things we can break to
+    Index labelIndex = 0;
+
+    // a list of things relevant to computing the odds of an infinite loop,
+    // which we try to minimize the risk of
+    std::vector<Expression*> hangStack;
+
+    // type => list of locals with that type
+    std::map<Type, std::vector<Index>> typeLocals;
+
+    FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
+      : parent(parent), func(func) {
+      parent.funcContext = this;
+    }
+
+    ~FunctionCreationContext() {
+      if (parent.HANG_LIMIT > 0) {
+        parent.addHangLimitChecks(func);
+      }
+      assert(breakableStack.empty());
+      assert(hangStack.empty());
+      parent.funcContext = nullptr;
+    }
+  };
+
+  FunctionCreationContext* funcContext = nullptr;
+
+  Index numAddedFunctions = 0;
 
   Function* addFunction() {
     LOGGING_PERCENT = upToSquared(100);
-    Index num = wasm.functions.size();
-    func = new Function;
-    func->name = std::string("func_") + std::to_string(num);
-    assert(typeLocals.empty());
+    auto* func = new Function;
+    func->name = Names::getValidFunctionName(wasm, "func");
+    FunctionCreationContext context(*this, func);
+    assert(funcContext->typeLocals.empty());
     Index numParams = upToSquared(MAX_PARAMS);
     std::vector<Type> params;
     params.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
       auto type = getSingleConcreteType();
-      typeLocals[type].push_back(params.size());
+      funcContext->typeLocals[type].push_back(params.size());
       params.push_back(type);
     }
     func->sig = Signature(Type(params), getControlFlowType());
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
-      typeLocals[type].push_back(params.size() + func->vars.size());
+      funcContext->typeLocals[type].push_back(params.size() +
+                                              func->vars.size());
       func->vars.push_back(type);
     }
-    labelIndex = 0;
-    assert(breakableStack.empty());
-    assert(hangStack.empty());
     // with small chance, make the body unreachable
     auto bodyType = func->sig.results;
     if (oneIn(10)) {
@@ -549,15 +684,11 @@ private:
       fixLabels(func);
     }
     // Add hang limit checks after all other operations on the function body.
-    if (HANG_LIMIT > 0) {
-      addHangLimitChecks(func);
-    }
-    assert(breakableStack.empty());
-    assert(hangStack.empty());
     wasm.addFunction(func);
     // export some, but not all (to allow inlining etc.). make sure to
     // export at least one, though, to keep each testcase interesting
-    if (num == 0 || oneIn(2)) {
+    if ((numAddedFunctions == 0 || oneIn(2)) &&
+        !wasm.getExportOrNull(func->name)) {
       auto* export_ = new Export;
       export_->name = func->name;
       export_->value = func->name;
@@ -568,8 +699,7 @@ private:
     while (oneIn(3) && !finishedInput) {
       wasm.table.segments[0].data.push_back(func->name);
     }
-    // cleanup
-    typeLocals.clear();
+    numAddedFunctions++;
     return func;
   }
 
@@ -666,7 +796,16 @@ private:
 
       void visitExpression(Expression* curr) {
         if (parent.oneIn(10)) {
-          // Replace it!
+          // For constants, perform only a small tweaking in some cases.
+          if (auto* c = curr->dynCast<Const>()) {
+            if (parent.oneIn(2)) {
+              c->value = parent.tweak(c->value);
+              return;
+            }
+          }
+          // TODO: more minor tweaks to immediates, like making a load atomic or
+          // not, changing an offset, etc.
+          // Perform a general replacement.
           // (This is not always valid due to nesting of labels, but
           // we'll fix that up later.)
           replaceCurrent(parent.make(curr->type));
@@ -721,6 +860,8 @@ private:
 
       void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
 
+      void visitBrOnExn(BrOnExn* curr) { replaceIfInvalid(curr->name); }
+
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
           // There is no valid parent, replace with something trivially safe.
@@ -739,17 +880,17 @@ private:
         Index i = controlFlowStack.size() - 1;
         while (1) {
           auto* curr = controlFlowStack[i];
-          if (Block* block = curr->dynCast<Block>()) {
+          if (auto* block = curr->dynCast<Block>()) {
             if (name == block->name) {
               return true;
             }
-          } else if (Loop* loop = curr->dynCast<Loop>()) {
+          } else if (auto* loop = curr->dynCast<Loop>()) {
             if (name == loop->name) {
               return true;
             }
           } else {
-            // an if, ignorable
-            assert(curr->is<If>());
+            // an if or a try, ignorable
+            assert(curr->is<If>() || curr->is<Try>());
           }
           if (i == 0) {
             return false;
@@ -763,10 +904,83 @@ private:
     ReFinalize().walkFunctionInModule(func, &wasm);
   }
 
+  void modifyInitialFunctions() {
+    if (wasm.functions.empty()) {
+      return;
+    }
+    // Pick a chance to fuzz the contents of a function.
+    const int RESOLUTION = 10;
+    auto chance = upTo(RESOLUTION + 1);
+    for (auto& ref : wasm.functions) {
+      auto* func = ref.get();
+      FunctionCreationContext context(*this, func);
+      if (func->imported()) {
+        // We can't allow extra imports, as the fuzzing infrastructure wouldn't
+        // know what to provide.
+        func->module = func->base = Name();
+        func->body = make(func->sig.results);
+      }
+      // Optionally, fuzz the function contents.
+      if (upTo(RESOLUTION) >= chance) {
+        dropToLog(func);
+        // TODO add some locals? and the rest of addFunction's operations?
+        // TODO: interposition, replace initial a(b) with a(RANDOM_THING(b))
+        // TODO: if we add OOB checks after creation, then we can do it on
+        //       initial contents too, and it may be nice to *not* run these
+        //       passes, like we don't run them on new functions. But, we may
+        //       still want to run them some of the time, at least, so that we
+        //       check variations on initial testcases even at the risk of OOB.
+        recombine(func);
+        mutate(func);
+        fixLabels(func);
+      }
+    }
+    // Remove a start function - the fuzzing harness expects code to run only
+    // from exports.
+    wasm.start = Name();
+  }
+
+  // Initial wasm contents may have come from a test that uses the drop pattern:
+  //
+  //  (drop ..something interesting..)
+  //
+  // The dropped interesting thing is optimized to some other interesting thing
+  // by a pass, and we verify it is the expected one. But this does not use the
+  // value in a way the fuzzer can notice. Replace some drops with a logging
+  // operation instead.
+  void dropToLog(Function* func) {
+    // Don't always do this.
+    if (oneIn(2)) {
+      return;
+    }
+    struct Modder : public PostWalker<Modder> {
+      Module& wasm;
+      TranslateToFuzzReader& parent;
+
+      Modder(Module& wasm, TranslateToFuzzReader& parent)
+        : wasm(wasm), parent(parent) {}
+
+      void visitDrop(Drop* curr) {
+        if (parent.isLoggableType(curr->value->type) && parent.oneIn(2)) {
+          replaceCurrent(parent.builder.makeCall(std::string("log-") +
+                                                   curr->value->type.toString(),
+                                                 {curr->value},
+                                                 Type::none));
+        }
+      }
+    };
+    Modder modder(wasm, *this);
+    modder.walk(func->body);
+  }
+
   // the fuzzer external interface sends in zeros (simpler to compare
   // across invocations from JS or wasm-opt etc.). Add invocations in
   // the wasm, so they run everywhere
   void addInvocations(Function* func) {
+    Name name = func->name.str + std::string("_invoker");
+    if (wasm.getFunctionOrNull(name) || wasm.getExportOrNull(name)) {
+      return;
+    }
     std::vector<Expression*> invocations;
     while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
@@ -788,19 +1002,19 @@ private:
       return;
     }
     auto* invoker = new Function;
-    invoker->name = func->name.str + std::string("_invoker");
+    invoker->name = name;
     invoker->sig = Signature(Type::none, Type::none);
     invoker->body = builder.makeBlock(invocations);
     wasm.addFunction(invoker);
     auto* export_ = new Export;
-    export_->name = invoker->name;
-    export_->value = invoker->name;
+    export_->name = name;
+    export_->value = name;
     export_->kind = ExternalKind::Function;
     wasm.addExport(export_);
   }
 
   Name makeLabel() {
-    return std::string("label$") + std::to_string(labelIndex++);
+    return std::string("label$") + std::to_string(funcContext->labelIndex++);
   }
 
   // Weighting for the core make* methods. Some nodes are important enough that
@@ -849,8 +1063,7 @@ private:
   }
 
   Expression* _makeConcrete(Type type) {
-    bool canMakeControlFlow =
-      !type.isTuple() || wasm.features.has(FeatureSet::Multivalue);
+    bool canMakeControlFlow = !type.isTuple() || wasm.features.hasMultivalue();
     using Self = TranslateToFuzzReader;
     FeatureOptions<Expression* (Self::*)(Type)> options;
     using WeightedOption = decltype(options)::WeightedOption;
@@ -885,9 +1098,16 @@ private:
     }
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeRefEq,
+                  &Self::makeI31Get);
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
+    }
+    if (type == Type::i31ref) {
+      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                  &Self::makeI31New);
     }
     return (this->*pick(options))(type);
   }
@@ -958,8 +1178,8 @@ private:
     }
     assert(type == Type::unreachable);
     Expression* ret = nullptr;
-    if (func->sig.results.isConcrete()) {
-      ret = makeTrivial(func->sig.results);
+    if (funcContext->func->sig.results.isConcrete()) {
+      ret = makeTrivial(funcContext->func->sig.results);
     }
     return builder.makeReturn(ret);
   }
@@ -970,7 +1190,7 @@ private:
     auto* ret = builder.makeBlock();
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
-    breakableStack.push_back(ret);
+    funcContext->breakableStack.push_back(ret);
     Index num = upToSquared(BLOCK_FACTOR - 1); // we add another later
     if (nesting >= NESTING_LIMIT / 2) {
       // smaller blocks past the limit
@@ -995,7 +1215,7 @@ private:
     } else {
       ret->list.push_back(make(type));
     }
-    breakableStack.pop_back();
+    funcContext->breakableStack.pop_back();
     if (type.isConcrete()) {
       ret->finalize(type);
     } else {
@@ -1013,8 +1233,8 @@ private:
     auto* ret = wasm.allocator.alloc<Loop>();
     ret->type = type; // so we have it during child creation
     ret->name = makeLabel();
-    breakableStack.push_back(ret);
-    hangStack.push_back(ret);
+    funcContext->breakableStack.push_back(ret);
+    funcContext->hangStack.push_back(ret);
     // either create random content, or do something more targeted
     if (oneIn(2)) {
       ret->body = makeMaybeBlock(type);
@@ -1027,8 +1247,8 @@ private:
       list.push_back(make(type)); // final element, so we have the right type
       ret->body = builder.makeBlock(list, type);
     }
-    breakableStack.pop_back();
-    hangStack.pop_back();
+    funcContext->breakableStack.pop_back();
+    funcContext->hangStack.pop_back();
     ret->finalize(type);
     return ret;
   }
@@ -1060,26 +1280,26 @@ private:
 
   Expression* makeIf(Type type) {
     auto* condition = makeCondition();
-    hangStack.push_back(nullptr);
+    funcContext->hangStack.push_back(nullptr);
     auto* ret =
       buildIf({condition, makeMaybeBlock(type), makeMaybeBlock(type)}, type);
-    hangStack.pop_back();
+    funcContext->hangStack.pop_back();
     return ret;
   }
 
   Expression* makeBreak(Type type) {
-    if (breakableStack.empty()) {
+    if (funcContext->breakableStack.empty()) {
       return makeTrivial(type);
     }
     Expression* condition = nullptr;
     if (type != Type::unreachable) {
-      hangStack.push_back(nullptr);
+      funcContext->hangStack.push_back(nullptr);
       condition = makeCondition();
     }
     // we need to find a proper target to break to; try a few times
     int tries = TRIES;
     while (tries-- > 0) {
-      auto* target = pick(breakableStack);
+      auto* target = pick(funcContext->breakableStack);
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
       if (type.isConcrete()) {
@@ -1089,7 +1309,7 @@ private:
           continue;
         }
         auto* ret = builder.makeBreak(name, make(type), condition);
-        hangStack.pop_back();
+        funcContext->hangStack.pop_back();
         return ret;
       } else if (type == Type::none) {
         if (valueType != Type::none) {
@@ -1097,7 +1317,7 @@ private:
           continue;
         }
         auto* ret = builder.makeBreak(name, nullptr, condition);
-        hangStack.pop_back();
+        funcContext->hangStack.pop_back();
         return ret;
       } else {
         assert(type == Type::unreachable);
@@ -1109,9 +1329,9 @@ private:
         // to a loop, we prefer there to be a condition along the
         // way, to reduce the chance of infinite looping
         size_t conditions = 0;
-        int i = hangStack.size();
+        int i = funcContext->hangStack.size();
         while (--i >= 0) {
-          auto* item = hangStack[i];
+          auto* item = funcContext->hangStack[i];
           if (item == nullptr) {
             conditions++;
           } else if (auto* loop = item->cast<Loop>()) {
@@ -1145,7 +1365,7 @@ private:
     }
     // we failed to find something
     if (type != Type::unreachable) {
-      hangStack.pop_back();
+      funcContext->hangStack.pop_back();
     }
     return makeTrivial(type);
   }
@@ -1155,12 +1375,12 @@ private:
     int tries = TRIES;
     bool isReturn;
     while (tries-- > 0) {
-      Function* target = func;
+      Function* target = funcContext->func;
       if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
         target = pick(wasm.functions).get();
       }
       isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 func->sig.results == target->sig.results;
+                 funcContext->func->sig.results == target->sig.results;
       if (target->sig.results != type && !isReturn) {
         continue;
       }
@@ -1189,7 +1409,7 @@ private:
       // TODO: handle unreachable
       targetFn = wasm.getFunction(data[i]);
       isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 func->sig.results == targetFn->sig.results;
+                 funcContext->func->sig.results == targetFn->sig.results;
       if (targetFn->sig.results == type || isReturn) {
         break;
       }
@@ -1217,7 +1437,7 @@ private:
   }
 
   Expression* makeLocalGet(Type type) {
-    auto& locals = typeLocals[type];
+    auto& locals = funcContext->typeLocals[type];
     if (locals.empty()) {
       return makeConst(type);
     }
@@ -1232,7 +1452,7 @@ private:
     } else {
       valueType = getConcreteType();
     }
-    auto& locals = typeLocals[valueType];
+    auto& locals = funcContext->typeLocals[valueType];
     if (locals.empty()) {
       return makeTrivial(type);
     }
@@ -1244,12 +1464,21 @@ private:
     }
   }
 
+  // Some globals are for internal use, and should not be modified by random
+  // fuzz code.
+  bool isValidGlobal(Name name) { return name != HANG_LIMIT_GLOBAL; }
+
   Expression* makeGlobalGet(Type type) {
     auto it = globalsByType.find(type);
     if (it == globalsByType.end() || it->second.empty()) {
       return makeConst(type);
     }
-    return builder.makeGlobalGet(pick(it->second), type);
+    auto name = pick(it->second);
+    if (isValidGlobal(name)) {
+      return builder.makeGlobalGet(name, type);
+    } else {
+      return makeTrivial(type);
+    }
   }
 
   Expression* makeGlobalSet(Type type) {
@@ -1259,8 +1488,12 @@ private:
     if (it == globalsByType.end() || it->second.empty()) {
       return makeTrivial(Type::none);
     }
-    auto* value = make(type);
-    return builder.makeGlobalSet(pick(it->second), value);
+    auto name = pick(it->second);
+    if (isValidGlobal(name)) {
+      return builder.makeGlobalSet(name, make(type));
+    } else {
+      return makeTrivial(Type::none);
+    }
   }
 
   Expression* makeTupleMake(Type type) {
@@ -1303,13 +1536,18 @@ private:
   }
 
   Expression* makePointer() {
-    auto* ret = make(Type::i32);
+    auto* ret = make(wasm.memory.indexType);
     // with high probability, mask the pointer so it's in a reasonable
     // range. otherwise, most pointers are going to be out of range and
     // most memory ops will just trap
     if (!allowOOB || !oneIn(10)) {
-      ret = builder.makeBinary(
-        AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
+      if (wasm.memory.is64()) {
+        ret = builder.makeBinary(
+          AndInt64, ret, builder.makeConst(int64_t(USABLE_MEMORY - 1)));
+      } else {
+        ret = builder.makeBinary(
+          AndInt32, ret, builder.makeConst(int32_t(USABLE_MEMORY - 1)));
+      }
     }
     return ret;
   }
@@ -1362,8 +1600,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1466,8 +1706,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1495,6 +1737,43 @@ private:
     store->isAtomic = true;
     store->align = store->bytes;
     return store;
+  }
+
+  // Makes a small change to a constant value.
+  Literal tweak(Literal value) {
+    auto type = value.type;
+    if (type.isVector()) {
+      // TODO: tweak each lane?
+      return value;
+    }
+    // +- 1
+    switch (upTo(5)) {
+      case 0:
+        value = value.add(Literal::makeNegOne(type));
+        break;
+      case 1:
+        value = value.add(Literal::makeOne(type));
+        break;
+      default: {
+      }
+    }
+    // For floats, optionally add a non-integer adjustment in +- [-1, 1]
+    if (type.isFloat() && oneIn(2)) {
+      const int RANGE = 1000;
+      auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
+      // adjustment -> [0, 2 * RANGE]
+      auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
+      // adjustment -> [-RANGE, RANGE]
+      adjustment = adjustment.sub(RANGE_LITERAL);
+      // adjustment -> [-1, 1]
+      adjustment = adjustment.div(RANGE_LITERAL);
+      value = value.add(adjustment);
+    }
+    // Flip sign.
+    if (oneIn(2)) {
+      value = value.mul(Literal::makeNegOne(type));
+    }
+    return value;
   }
 
   Literal makeLiteral(Type type) {
@@ -1548,38 +1827,6 @@ private:
       }
     }
 
-    // Optional tweaking of the value by a small adjustment.
-    auto tweak = [this, type](Literal value) {
-      // +- 1
-      switch (upTo(5)) {
-        case 0:
-          value = value.add(Literal::makeFromInt32(-1, type));
-          break;
-        case 1:
-          value = value.add(Literal::makeFromInt32(1, type));
-          break;
-        default: {
-        }
-      }
-      // For floats, optionally add a non-integer adjustment in +- [-1, 1]
-      if (type.isFloat() && oneIn(2)) {
-        const int RANGE = 1000;
-        auto RANGE_LITERAL = Literal::makeFromInt32(RANGE, type);
-        // adjustment -> [0, 2 * RANGE]
-        auto adjustment = Literal::makeFromInt32(upTo(2 * RANGE + 1), type);
-        // adjustment -> [-RANGE, RANGE]
-        adjustment = adjustment.sub(RANGE_LITERAL);
-        // adjustment -> [-1, 1]
-        adjustment = adjustment.div(RANGE_LITERAL);
-        value = value.add(adjustment);
-      }
-      // Flip sign.
-      if (oneIn(2)) {
-        value = value.mul(Literal::makeFromInt32(-1, type));
-      }
-      return value;
-    };
-
     switch (upTo(4)) {
       case 0: {
         // totally random, entire range
@@ -1595,8 +1842,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("invalid type");
@@ -1640,8 +1889,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1682,7 +1933,8 @@ private:
                                     std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f32:
-            value = Literal(pick<float>(0,
+            value = Literal(pick<float>(0.0f,
+                                        -0.0f,
                                         std::numeric_limits<float>::min(),
                                         std::numeric_limits<float>::max(),
                                         std::numeric_limits<int32_t>::min(),
@@ -1693,7 +1945,8 @@ private:
                                         std::numeric_limits<uint64_t>::max()));
             break;
           case Type::f64:
-            value = Literal(pick<double>(0,
+            value = Literal(pick<double>(0.0,
+                                         -0.0,
                                          std::numeric_limits<float>::min(),
                                          std::numeric_limits<float>::max(),
                                          std::numeric_limits<double>::min(),
@@ -1708,8 +1961,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1735,8 +1990,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -1754,16 +2011,19 @@ private:
       // 'func' is the pointer to the last created function and can be null when
       // we set up globals (before we create any functions), in which case we
       // can't use ref.func.
-      if (type == Type::funcref && func && oneIn(2)) {
+      if (type == Type::funcref && funcContext && oneIn(2)) {
         // First set to target to the last created function, and try to select
         // among other existing function if possible
-        Function* target = func;
+        Function* target = funcContext->func;
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
         return builder.makeRefFunc(target->name);
       }
-      return builder.makeRefNull();
+      if (type == Type::i31ref) {
+        return builder.makeI31New(makeConst(Type::i32));
+      }
+      return builder.makeRefNull(type);
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
@@ -1845,8 +2105,10 @@ private:
           }
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
+          case Type::anyref:
+          case Type::eqref:
+          case Type::i31ref:
             return makeTrivial(type);
           case Type::none:
           case Type::unreachable:
@@ -1958,6 +2220,7 @@ private:
             return buildUnary({SplatVecF64x2, make(Type::f64)});
           case 4:
             return buildUnary({pick(NotVec128,
+                                    // TODO: i8x16.popcnt once merged
                                     NegVecI8x16,
                                     NegVecI16x8,
                                     NegVecI32x4,
@@ -1990,8 +2253,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2184,6 +2449,9 @@ private:
                                  MinUVecI8x16,
                                  MaxSVecI8x16,
                                  MaxUVecI8x16,
+                                 // TODO: avgr_u
+                                 // TODO: q15mulr_sat_s
+                                 // TODO: extmul
                                  AddVecI16x8,
                                  AddSatSVecI16x8,
                                  AddSatUVecI16x8,
@@ -2227,8 +2495,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2248,7 +2518,7 @@ private:
 
   Expression* makeSwitch(Type type) {
     assert(type == Type::unreachable);
-    if (breakableStack.empty()) {
+    if (funcContext->breakableStack.empty()) {
       return make(type);
     }
     // we need to find proper targets to break to; try a bunch
@@ -2256,7 +2526,7 @@ private:
     std::vector<Name> names;
     Type valueType = Type::unreachable;
     while (tries-- > 0) {
-      auto* target = pick(breakableStack);
+      auto* target = pick(funcContext->breakableStack);
       auto name = getTargetName(target);
       auto currValueType = getTargetType(target);
       if (names.empty()) {
@@ -2285,8 +2555,9 @@ private:
   }
 
   Expression* makeReturn(Type type) {
-    return builder.makeReturn(
-      func->sig.results.isConcrete() ? make(func->sig.results) : nullptr);
+    return builder.makeReturn(funcContext->func->sig.results.isConcrete()
+                                ? make(funcContext->func->sig.results)
+                                : nullptr);
   }
 
   Expression* makeNop(Type type) {
@@ -2366,17 +2637,13 @@ private:
     auto* ptr = makePointer();
     if (oneIn(2)) {
       auto* value = make(type);
-      return builder.makeAtomicRMW(pick(AtomicRMWOp::Add,
-                                        AtomicRMWOp::Sub,
-                                        AtomicRMWOp::And,
-                                        AtomicRMWOp::Or,
-                                        AtomicRMWOp::Xor,
-                                        AtomicRMWOp::Xchg),
-                                   bytes,
-                                   offset,
-                                   ptr,
-                                   value,
-                                   type);
+      return builder.makeAtomicRMW(
+        pick(RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg),
+        bytes,
+        offset,
+        ptr,
+        value,
+        type);
     } else {
       auto* expected = make(type);
       auto* replacement = make(type);
@@ -2393,6 +2660,7 @@ private:
     if (type != Type::v128) {
       return makeSIMDExtract(type);
     }
+    // TODO: Add SIMDLoadStoreLane once it is generally available
     switch (upTo(7)) {
       case 0:
         return makeUnary(Type::v128);
@@ -2434,8 +2702,10 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::nullref:
       case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2610,14 +2880,29 @@ private:
   Expression* makeRefIsNull(Type type) {
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes());
-    Type refType;
-    if (wasm.features.hasExceptionHandling()) {
-      refType =
-        pick(Type::funcref, Type::externref, Type::nullref, Type::exnref);
-    } else {
-      refType = pick(Type::funcref, Type::externref, Type::nullref);
-    }
-    return builder.makeRefIsNull(make(refType));
+    return builder.makeRefIsNull(make(getReferenceType()));
+  }
+
+  Expression* makeRefEq(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* left = make(getEqReferenceType());
+    auto* right = make(getEqReferenceType());
+    return builder.makeRefEq(left, right);
+  }
+
+  Expression* makeI31New(Type type) {
+    assert(type == Type::i31ref);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* value = make(Type::i32);
+    return builder.makeI31New(value);
+  }
+
+  Expression* makeI31Get(Type type) {
+    assert(type == Type::i32);
+    assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
+    auto* i31 = make(Type::i31ref);
+    return builder.makeI31Get(i31, bool(oneIn(2)));
   }
 
   Expression* makeMemoryInit() {
@@ -2647,7 +2932,7 @@ private:
     }
     Expression* dest = makePointer();
     Expression* source = makePointer();
-    Expression* size = make(Type::i32);
+    Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryCopy(dest, source, size);
   }
 
@@ -2656,8 +2941,8 @@ private:
       return makeTrivial(Type::none);
     }
     Expression* dest = makePointer();
-    Expression* value = makePointer();
-    Expression* size = make(Type::i32);
+    Expression* value = make(Type::i32);
+    Expression* size = make(wasm.memory.indexType);
     return builder.makeMemoryFill(dest, value, size);
   }
 
@@ -2680,15 +2965,37 @@ private:
       FeatureOptions<Type>()
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes,
-             Type::funcref,
-             Type::externref,
-             Type::nullref)
+        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
+             Type::exnref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::anyref,
+             Type::eqref,
+             Type::i31ref));
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
+
+  std::vector<Type> getReferenceTypes() {
+    return items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+             Type::exnref)
+        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+             Type::anyref,
+             Type::eqref,
+             Type::i31ref));
+  }
+
+  Type getReferenceType() { return pick(getReferenceTypes()); }
+
+  std::vector<Type> getEqReferenceTypes() {
+    return items(FeatureOptions<Type>().add(
+      FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref, Type::i31ref));
+  }
+
+  Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
   Type getTupleType() {
     std::vector<Type> elements;
@@ -2725,19 +3032,28 @@ private:
 
   // - funcref cannot be logged because referenced functions can be inlined or
   // removed during optimization
-  // - there's no point in logging externref because it is opaque
+  // - there's no point in logging externref or anyref because these are opaque
   // - don't bother logging tuples
-  std::vector<Type> getLoggableTypes() {
-    return items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-        .add(FeatureSet::SIMD, Type::v128)
-        .add(FeatureSet::ReferenceTypes, Type::nullref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref));
+  std::vector<Type> loggableTypes;
+
+  const std::vector<Type>& getLoggableTypes() {
+    if (loggableTypes.empty()) {
+      loggableTypes = items(
+        FeatureOptions<Type>()
+          .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
+          .add(FeatureSet::SIMD, Type::v128)
+          .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
+               Type::exnref));
+    }
+    return loggableTypes;
   }
 
   Type getLoggableType() { return pick(getLoggableTypes()); }
+
+  bool isLoggableType(Type type) {
+    const auto& types = getLoggableTypes();
+    return std::find(types.begin(), types.end(), type) != types.end();
+  }
 
   // statistical distributions
 

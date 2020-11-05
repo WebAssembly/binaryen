@@ -21,7 +21,6 @@
 
 namespace wasm {
 
-extern Name GROW_WASM_MEMORY;
 extern Name WASM_CALL_CTORS;
 extern Name MEMORY_BASE;
 extern Name TABLE_BASE;
@@ -65,7 +64,6 @@ extern Name EXIT;
 extern Name SHARED;
 extern Name EVENT;
 extern Name ATTR;
-extern Name ASSIGN_GOT_ENTRIES;
 
 } // namespace wasm
 

@@ -117,10 +117,13 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             assert(false && "v128 not implemented yet");
           case Type::funcref:
           case Type::externref:
-          case Type::nullref:
           case Type::exnref:
-            globals[import->name] = {Literal::makeNullref()};
+          case Type::anyref:
+          case Type::eqref:
+            globals[import->name] = {Literal::makeNull(import->type)};
             break;
+          case Type::i31ref:
+            WASM_UNREACHABLE("TODO: i31ref");
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -214,8 +217,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   void tableStore(Address addr, Name entry) override { table[addr] = entry; }
 
-  void growMemory(Address /*oldSize*/, Address newSize) override {
+  bool growMemory(Address /*oldSize*/, Address newSize) override {
+    // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
+    // interpreter.
+    if (newSize > 1024 * 1024 * 1024) {
+      return false;
+    }
     memory.resize(newSize);
+    return true;
   }
 
   void trap(const char* why) override {

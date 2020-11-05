@@ -24,7 +24,9 @@
   )
   (if
    (i32.const 0)
-   (return)
+   (block $out3
+    (return)
+   )
   )
   (block $out4
    (br_table $out4 $out4 $out4 $out4
@@ -41,10 +43,12 @@
   )
   (if
    (i32.const 0)
-   (if
-    (i32.const 0)
-    (unreachable)
-    (unreachable)
+   (block $block4
+    (if
+     (i32.const 0)
+     (unreachable)
+     (unreachable)
+    )
    )
   )
   (if
@@ -69,13 +73,15 @@
   )
   (if
    (i32.const 0)
-   (block $out18
-    (block $in19
-     (br_if $in19
-      (i32.const 1)
+   (block $block11
+    (block $out18
+     (block $in19
+      (br_if $in19
+       (i32.const 1)
+      )
      )
+     (unreachable)
     )
-    (unreachable)
    )
   )
   (block $out20
@@ -96,13 +102,15 @@
   )
   (if
    (i32.const 0)
-   (block $out25
-    (block $in26
-     (br_table $in26 $in26
-      (i32.const 1)
+   (block $block13
+    (block $out25
+     (block $in26
+      (br_table $in26 $in26
+       (i32.const 1)
+      )
      )
+     (unreachable)
     )
-    (unreachable)
    )
   )
   (if
@@ -122,7 +130,7 @@
    (unreachable)
   )
   (block $out29
-   (block
+   (loop $in30
     (br_if $out29
      (i32.const 1)
     )
@@ -131,11 +139,13 @@
   )
   (if
    (i32.const 0)
-   (loop $in32
-    (br_if $in32
-     (i32.const 1)
+   (block $block20
+    (loop $in32
+     (br_if $in32
+      (i32.const 1)
+     )
+     (unreachable)
     )
-    (unreachable)
    )
   )
   (if
@@ -273,8 +283,12 @@
   )
  )
  (func $typed-block-none-then-unreachable (result i32)
-  (return
-   (i32.const 0)
+  (block $top-typed
+   (block $switch$0
+    (return
+     (i32.const 0)
+    )
+   )
   )
  )
  (func $typed-block-remove-br-changes-type (param $$$0 i32) (result i32)
@@ -317,15 +331,19 @@
   )
  )
  (func $unreachable-block-ends-switch (result i32)
-  (block $label$3
-   (nop)
-   (unreachable)
+  (block $label$0
+   (block $label$3
+    (nop)
+    (unreachable)
+   )
   )
  )
  (func $unreachable-block-ends-br_if (result i32)
-  (block $label$2
-   (nop)
-   (unreachable)
+  (block $label$0
+   (block $label$2
+    (nop)
+    (unreachable)
+   )
   )
  )
  (func $unreachable-brs-3 (result i32)
@@ -339,11 +357,15 @@
   (drop
    (i32.const 1)
   )
-  (block
-   (drop
-    (i32.const 4104)
+  (block $label$0
+   (block $label$1
+    (block
+     (drop
+      (i32.const 4104)
+     )
+     (unreachable)
+    )
    )
-   (unreachable)
   )
  )
  (func $call-unreach (param $var$0 i64) (param $var$1 i64) (result i64)
@@ -355,32 +377,36 @@
    (block $label$0 (result i64)
     (local.get $var$1)
    )
-   (block
-    (drop
-     (i64.sub
-      (local.get $var$0)
-      (i64.const 1)
-     )
-    )
+   (block $label$1
     (block
      (drop
-      (block $block (result i64)
-       (local.set $2
-        (local.get $var$0)
-       )
-       (nop)
-       (local.get $2)
+      (i64.sub
+       (local.get $var$0)
+       (i64.const 1)
       )
      )
-     (unreachable)
+     (block
+      (drop
+       (block $block (result i64)
+        (local.set $2
+         (local.get $var$0)
+        )
+        (nop)
+        (local.get $2)
+       )
+      )
+      (unreachable)
+     )
     )
    )
   )
  )
  (func $br-gone-means-block-type-changes-then-refinalize-at-end-is-too-late (param $var$0 i32) (result i32)
-  (block $block
-   (nop)
-   (unreachable)
+  (block $label$0
+   (block $block
+    (nop)
+    (unreachable)
+   )
   )
  )
  (func $br-with-unreachable-value-should-not-give-a-block-a-value (param $var$0 i32) (result i32)
@@ -397,25 +423,31 @@
   )
  )
  (func $replace-br-value-of-i32-with-unreachable (result i32)
-  (block $label$1
-   (nop)
-   (unreachable)
+  (block $label$0
+   (block $label$1
+    (nop)
+    (unreachable)
+   )
   )
  )
  (func $shorten-block-requires-sync-refinalize (param $var$0 i32) (param $var$1 i32)
   (unreachable)
  )
  (func $block-with-type-but-is-unreachable (param $var$0 i32) (result i32)
-  (block $block
-   (nop)
-   (unreachable)
+  (block $label$0
+   (block $block
+    (nop)
+    (unreachable)
+   )
   )
  )
  (func $if-with-type-but-is-unreachable (param $var$0 i32) (result i32)
-  (if
-   (local.get $var$0)
-   (unreachable)
-   (unreachable)
+  (block $label$0
+   (if
+    (local.get $var$0)
+    (unreachable)
+    (unreachable)
+   )
   )
  )
  (func $unreachable-loop
@@ -423,8 +455,10 @@
  )
  (func $br-block-from-unary (result i32)
   (block $label$6 (result i32)
-   (br $label$6
-    (i32.const 8)
+   (block $label$7
+    (br $label$6
+     (i32.const 8)
+    )
    )
   )
  )
@@ -444,19 +478,23 @@
   )
  )
  (func $replace-with-unreachable-affects-parent (param $var$0 f32) (param $var$1 i64)
-  (drop
-   (i64.const 0)
-  )
-  (if
-   (block $block (result i32)
-    (call $replace-with-unreachable-affects-parent
-     (f32.const 1)
-     (i64.const -15917430362925035)
+  (block $top
+   (block
+    (drop
+     (i64.const 0)
     )
-    (i32.const 1)
+    (if
+     (block $block (result i32)
+      (call $replace-with-unreachable-affects-parent
+       (f32.const 1)
+       (i64.const -15917430362925035)
+      )
+      (i32.const 1)
+     )
+     (unreachable)
+     (unreachable)
+    )
    )
-   (unreachable)
-   (unreachable)
   )
  )
  (func $replace-block-changes-later-when-if-goes
@@ -503,6 +541,7 @@
 )
 (module
  (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
  (event $e (attr 0) (param))
  (func $foo
   (nop)
@@ -514,7 +553,7 @@
    )
    (catch
     (drop
-     (exnref.pop)
+     (pop exnref)
     )
    )
   )
@@ -542,12 +581,68 @@
   )
  )
  (func $throw
-  (throw $e
+  (block $label$0
+   (block $label$1
+    (throw $e
+    )
+   )
   )
  )
  (func $rethrow
-  (rethrow
-   (ref.null)
+  (block $label$0
+   (block $label$1
+    (rethrow
+     (ref.null exn)
+    )
+   )
+  )
+ )
+ (func $unnecessary-concrete-block (result i32)
+  (block $foo
+   (nop)
+   (unreachable)
+  )
+ )
+ (func $necessary-concrete-block (result i32)
+  (block $foo (result i32)
+   (br $foo
+    (i32.const 1)
+   )
+  )
+ )
+ (func $unnecessary-concrete-if (result i32)
+  (if
+   (i32.const 0)
+   (return
+    (i32.const 1)
+   )
+   (unreachable)
+  )
+ )
+ (func $unnecessary-concrete-try (result i32)
+  (try
+   (do
+    (unreachable)
+   )
+   (catch
+    (unreachable)
+   )
+  )
+ )
+ (func $note-loss-of-if-children
+  (block $label$1
+   (block $label$2
+    (nop)
+    (unreachable)
+   )
+  )
+ )
+ (func $note-loss-of-non-control-flow-children
+  (block $out
+   (block $block
+    (nop)
+    (unreachable)
+   )
   )
  )
 )

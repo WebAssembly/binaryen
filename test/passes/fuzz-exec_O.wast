@@ -21,18 +21,58 @@
  )
 )
 (module
- (type $f32_=>_none (func (param f32)))
- (type $none_=>_i64 (func (result i64)))
- (import "fuzzing-support" "log-f32" (func $fimport$0 (param f32)))
- (export "func_113" (func $0))
- (func $0 (result i64)
-  (call $fimport$0
-   (f32.div
-    (f32.const -nan:0x23017a) ;; div by 1 can be removed, leaving this nan
-    (f32.const 1)             ;; as it is. wasm semantics allow nan bits to
-   )                          ;; change, but the interpreter should not do so,
-  )                           ;; so that it does not fail on that opt.
-  (i64.const 113)
+ (func "div" (result f32)
+  (f32.div
+   (f32.const -nan:0x23017a)
+   (f32.const 1)
+  )
+ )
+ (func "mul1" (result f32)
+  (f32.mul
+   (f32.const -nan:0x34546d)
+   (f32.const 1)
+  )
+ )
+ (func "mul2" (result f32)
+  (f32.mul
+   (f32.const 1)
+   (f32.const -nan:0x34546d)
+  )
+ )
+ (func "add1" (result f32)
+  (f32.add
+   (f32.const -nan:0x34546d)
+   (f32.const -0)
+  )
+ )
+ (func "add2" (result f32)
+  (f32.add
+   (f32.const -0)
+   (f32.const -nan:0x34546d)
+  )
+ )
+ (func "add3" (result f32)
+  (f32.add
+   (f32.const -nan:0x34546d)
+   (f32.const 0)
+  )
+ )
+ (func "add4" (result f32)
+  (f32.add
+   (f32.const 0)
+   (f32.const -nan:0x34546d)
+  )
+ )
+ (func "sub1" (result f32)
+  (f32.sub
+   (f32.const -nan:0x34546d)
+   (f32.const 0)
+  )
+ )
+ (func "sub2" (result f32)
+  (f32.sub
+   (f32.const -nan:0x34546d)
+   (f32.const -0)
+  )
  )
 )
-

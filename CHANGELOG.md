@@ -14,11 +14,34 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
+
+- Remove old/broken SpollPointers pass.  This pass: Spills values that might be
+  pointers to the C stack. This allows Boehm-style GC to see them properly.
+  This can be revived if needed from git history (#3261).
+
+v98
+---
+
+- Add `--fast-math` mode. (#3155)
+- Initial implementation of "Memory64" proposal (#3130)
+- Lots of changes in support of GC proposal
+
+v97
+---
+
 - Remove asm2wasm, which supported Emscripten's fastcomp backend, after fastcomp
   was removed.
+- The new feature flag `--enable-anyref` enables just the `anyref` type incl.
+  basic subtyping of `externref`, `funcref` and `exnref` (if enabled).
+- Enabling the exception handling or anyref features without also enabling
+  reference types is a validation error now.
+- The `Host` expression and its respective APIs have been refactored into
+  separate `MemorySize` and `MemoryGrow` expressions to align with other memory
+  instructions.
 
 v96
 ---
+
 - Fuzzing: Compare wasm2js to the interpreter (#3026)
 - Fix CountLeadingZeroes on MSVC, which lead to bad optimizations (#3028)
 - Asyncify verbose option (#3022)

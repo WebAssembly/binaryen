@@ -549,3 +549,24 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (table $0 37 funcref)
+ (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
+ (func $0
+  (unreachable)
+  (block
+   (unreachable)
+   (drop
+    (f64.const 1)
+   )
+   (drop
+    (i32.const -32768)
+   )
+   (drop
+    (i32.const 20)
+   )
+  )
+  (unreachable)
+ )
+)

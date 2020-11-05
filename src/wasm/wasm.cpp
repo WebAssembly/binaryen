@@ -45,10 +45,11 @@ const char* SIMD128Feature = "simd128";
 const char* TailCallFeature = "tail-call";
 const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
+const char* GCFeature = "gc";
+const char* Memory64Feature = "memory64";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name GROW_WASM_MEMORY("__growWasmMemory");
 Name WASM_CALL_CTORS("__wasm_call_ctors");
 Name MEMORY_BASE("__memory_base");
 Name TABLE_BASE("__table_base");
@@ -91,7 +92,6 @@ Name EXIT("exit");
 Name SHARED("shared");
 Name EVENT("event");
 Name ATTR("attr");
-Name ASSIGN_GOT_ENTRIES("__assign_got_enties");
 
 // Expressions
 
@@ -144,8 +144,10 @@ const char* getExpressionName(Expression* curr) {
       return "drop";
     case Expression::Id::ReturnId:
       return "return";
-    case Expression::Id::HostId:
-      return "host";
+    case Expression::Id::MemorySizeId:
+      return "memory.size";
+    case Expression::Id::MemoryGrowId:
+      return "memory.grow";
     case Expression::Id::NopId:
       return "nop";
     case Expression::Id::UnreachableId:
@@ -172,6 +174,8 @@ const char* getExpressionName(Expression* curr) {
       return "simd_shift";
     case Expression::Id::SIMDLoadId:
       return "simd_load";
+    case Expression::Id::SIMDLoadStoreLaneId:
+      return "simd_load_store_lane";
     case Expression::Id::MemoryInitId:
       return "memory_init";
     case Expression::Id::DataDropId:
@@ -188,6 +192,8 @@ const char* getExpressionName(Expression* curr) {
       return "ref.is_null";
     case Expression::Id::RefFuncId:
       return "ref.func";
+    case Expression::Id::RefEqId:
+      return "ref.eq";
     case Expression::Id::TryId:
       return "try";
     case Expression::Id::ThrowId:
@@ -200,33 +206,58 @@ const char* getExpressionName(Expression* curr) {
       return "tuple.make";
     case Expression::Id::TupleExtractId:
       return "tuple.extract";
+    case Expression::Id::I31NewId:
+      return "i31.new";
+    case Expression::Id::I31GetId:
+      return "i31.get";
+    case Expression::Id::RefTestId:
+      return "ref.test";
+    case Expression::Id::RefCastId:
+      return "ref.cast";
+    case Expression::Id::BrOnCastId:
+      return "br_on_cast";
+    case Expression::Id::RttCanonId:
+      return "rtt.canon";
+    case Expression::Id::RttSubId:
+      return "rtt.sub";
+    case Expression::Id::StructNewId:
+      return "struct.new";
+    case Expression::Id::StructGetId:
+      return "struct.get";
+    case Expression::Id::StructSetId:
+      return "struct.set";
+    case Expression::Id::ArrayNewId:
+      return "array.new";
+    case Expression::Id::ArrayGetId:
+      return "array.get";
+    case Expression::Id::ArraySetId:
+      return "array.set";
+    case Expression::Id::ArrayLenId:
+      return "array.len";
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
   WASM_UNREACHABLE("invalid expr id");
 }
 
-Literal getSingleLiteralFromConstExpression(Expression* curr) {
-  if (auto* c = curr->dynCast<Const>()) {
-    return c->value;
-  } else if (curr->is<RefNull>()) {
-    return Literal::makeNullref();
-  } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal::makeFuncref(r->func);
-  } else {
-    WASM_UNREACHABLE("Not a constant expression");
-  }
+Literal getLiteralFromConstExpression(Expression* curr) {
+  // TODO: Do we need this function given that Properties::getLiteral
+  // (currently) does the same?
+  assert(Properties::isConstantExpression(curr));
+  return Properties::getLiteral(curr);
 }
 
 Literals getLiteralsFromConstExpression(Expression* curr) {
+  // TODO: Do we need this function given that Properties::getLiterals
+  // (currently) does the same?
   if (auto* t = curr->dynCast<TupleMake>()) {
     Literals values;
     for (auto* operand : t->operands) {
-      values.push_back(getSingleLiteralFromConstExpression(operand));
+      values.push_back(getLiteralFromConstExpression(operand));
     }
     return values;
   } else {
-    return {getSingleLiteralFromConstExpression(curr)};
+    return {getLiteralFromConstExpression(curr)};
   }
 }
 
@@ -644,6 +675,48 @@ Index SIMDLoad::getMemBytes() {
   WASM_UNREACHABLE("unexpected op");
 }
 
+void SIMDLoadStoreLane::finalize() {
+  assert(ptr && vec);
+  type = isLoad() ? Type::v128 : Type::none;
+  if (ptr->type == Type::unreachable || vec->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+Index SIMDLoadStoreLane::getMemBytes() {
+  switch (op) {
+    case LoadLaneVec8x16:
+    case StoreLaneVec8x16:
+      return 1;
+    case LoadLaneVec16x8:
+    case StoreLaneVec16x8:
+      return 2;
+    case LoadLaneVec32x4:
+    case StoreLaneVec32x4:
+      return 4;
+    case LoadLaneVec64x2:
+    case StoreLaneVec64x2:
+      return 8;
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
+
+bool SIMDLoadStoreLane::isStore() {
+  switch (op) {
+    case StoreLaneVec8x16:
+    case StoreLaneVec16x8:
+    case StoreLaneVec32x4:
+    case StoreLaneVec64x2:
+      return true;
+    case LoadLaneVec16x8:
+    case LoadLaneVec32x4:
+    case LoadLaneVec64x2:
+    case LoadLaneVec8x16:
+      return false;
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
+
 Const* Const::set(Literal value_) {
   value = value_;
   type = value.type;
@@ -752,6 +825,7 @@ void Unary::finalize() {
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:
+    case PopcntVecI8x16:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -809,12 +883,6 @@ void Unary::finalize() {
 
 bool Binary::isRelational() {
   switch (op) {
-    case EqFloat64:
-    case NeFloat64:
-    case LtFloat64:
-    case LeFloat64:
-    case GtFloat64:
-    case GeFloat64:
     case EqInt32:
     case NeInt32:
     case LtSInt32:
@@ -841,6 +909,12 @@ bool Binary::isRelational() {
     case LeFloat32:
     case GtFloat32:
     case GeFloat32:
+    case EqFloat64:
+    case NeFloat64:
+    case LtFloat64:
+    case LeFloat64:
+    case GtFloat64:
+    case GeFloat64:
       return true;
     default:
       return false;
@@ -878,25 +952,28 @@ void Drop::finalize() {
   }
 }
 
-void Host::finalize() {
-  switch (op) {
-    case MemorySize: {
-      type = Type::i32;
-      break;
-    }
-    case MemoryGrow: {
-      // if the single operand is not reachable, so are we
-      if (operands[0]->type == Type::unreachable) {
-        type = Type::unreachable;
-      } else {
-        type = Type::i32;
-      }
-      break;
-    }
+void MemorySize::make64() { type = ptrType = Type::i64; }
+void MemorySize::finalize() { type = ptrType; }
+
+void MemoryGrow::make64() { type = ptrType = Type::i64; }
+void MemoryGrow::finalize() {
+  if (delta->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ptrType;
   }
 }
 
-void RefNull::finalize() { type = Type::nullref; }
+void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
+
+void RefNull::finalize(Type type_) {
+  assert(type_ == Type::unreachable || type_.isNullable());
+  type = type_;
+}
+
+void RefNull::finalize() {
+  assert(type == Type::unreachable || type.isNullable());
+}
 
 void RefIsNull::finalize() {
   if (value->type == Type::unreachable) {
@@ -907,6 +984,14 @@ void RefIsNull::finalize() {
 }
 
 void RefFunc::finalize() { type = Type::funcref; }
+
+void RefEq::finalize() {
+  if (left->type == Type::unreachable || right->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
 void Try::finalize() {
   type = Type::getLeastUpperBound(body->type, catchBody->type);
@@ -952,6 +1037,35 @@ void TupleExtract::finalize() {
   }
 }
 
+void I31New::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i31ref;
+  }
+}
+
+void I31Get::finalize() {
+  if (i31->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+// TODO (gc): ref.test
+// TODO (gc): ref.cast
+// TODO (gc): br_on_cast
+// TODO (gc): rtt.canon
+// TODO (gc): rtt.sub
+// TODO (gc): struct.new
+// TODO (gc): struct.get
+// TODO (gc): struct.set
+// TODO (gc): array.new
+// TODO (gc): array.get
+// TODO (gc): array.set
+// TODO (gc): array.len
+
 size_t Function::getNumParams() { return sig.params.size(); }
 
 size_t Function::getNumVars() { return vars.size(); }
@@ -975,6 +1089,11 @@ bool Function::hasLocalName(Index index) const {
 }
 
 Name Function::getLocalName(Index index) { return localNames.at(index); }
+
+void Function::setLocalName(Index index, Name name) {
+  assert(index < getNumLocals());
+  localNames[index] = name;
+}
 
 Name Function::getLocalNameOrDefault(Index index) {
   auto nameIt = localNames.find(index);

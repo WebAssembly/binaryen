@@ -39,8 +39,14 @@ class Literal {
     int32_t i32;
     int64_t i64;
     uint8_t v128[16];
-    Name func; // function name for funcref
+    // funcref function name. `isNull()` indicates a `null` value.
+    Name func;
+    // exnref package. `nullptr` indicates a `null` value.
     std::unique_ptr<ExceptionPackage> exn;
+    // TODO: Literals of type `externref` can only be `null` currently but we
+    // will need to represent extern values eventually, to
+    // 1) run the spec tests and fuzzer with reference types enabled and
+    // 2) avoid bailing out when seeing a reference typed value in precompute
   };
 
 public:
@@ -48,10 +54,7 @@ public:
   const Type type;
 
   Literal() : v128(), type(Type::none) {}
-  explicit Literal(Type type) : v128(), type(type) {
-    assert(type != Type::unreachable && type != Type::funcref &&
-           type != Type::exnref);
-  }
+  explicit Literal(Type type);
   explicit Literal(Type::BasicID typeId) : Literal(Type(typeId)) {}
   explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
@@ -74,14 +77,92 @@ public:
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal() {
-    if (type == Type::exnref) {
+    if (type.isException()) {
       exn.~unique_ptr();
     }
   }
 
   bool isConcrete() const { return type != Type::none; }
   bool isNone() const { return type == Type::none; }
+  bool isNull() const {
+    if (type.isNullable()) {
+      if (type.isFunction()) {
+        return func.isNull();
+      }
+      if (type.isException()) {
+        return !exn;
+      }
+      return true;
+    }
+    return false;
+  }
+  bool isZero() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return i32 == 0;
+      case Type::i64:
+        return i64 == 0LL;
+      case Type::f32:
+        return bit_cast<float>(i32) == 0.0f;
+      case Type::f64:
+        return bit_cast<double>(i64) == 0.0;
+      case Type::v128: {
+        uint8_t zeros[16] = {0};
+        return memcmp(&v128, zeros, 16) == 0;
+      }
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  bool isNegative() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        return i32 < 0;
+      case Type::i64:
+      case Type::f64:
+        return i64 < 0;
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  bool isSignedMin() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return i32 == std::numeric_limits<int32_t>::min();
+      case Type::i64:
+        return i64 == std::numeric_limits<int64_t>::min();
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  bool isSignedMax() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return i32 == std::numeric_limits<int32_t>::max();
+      case Type::i64:
+        return i64 == std::numeric_limits<int64_t>::max();
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  bool isUnsignedMax() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return uint32_t(i32) == std::numeric_limits<uint32_t>::max();
+      case Type::i64:
+        return uint64_t(i64) == std::numeric_limits<uint64_t>::max();
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
 
+  static Literals makeZeros(Type type);
+  static Literals makeOnes(Type type);
+  static Literals makeNegOnes(Type type);
+  static Literal makeZero(Type type);
+  static Literal makeOne(Type type);
+  static Literal makeNegOne(Type type);
   static Literal makeFromInt32(int32_t x, Type type) {
     switch (type.getBasic()) {
       case Type::i32:
@@ -101,14 +182,65 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-
-  static Literals makeZero(Type type);
-  static Literal makeSingleZero(Type type);
-
-  static Literal makeNullref() { return Literal(Type(Type::nullref)); }
-  static Literal makeFuncref(Name func) { return Literal(func.c_str()); }
-  static Literal makeExnref(std::unique_ptr<ExceptionPackage>&& exn) {
+  static Literal makeFromInt64(int64_t x, Type type) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(int32_t(x));
+      case Type::i64:
+        return Literal(int64_t(x));
+      case Type::f32:
+        return Literal(float(x));
+      case Type::f64:
+        return Literal(double(x));
+      case Type::v128:
+        return Literal(
+          std::array<Literal, 2>{{Literal(x), Literal(int64_t(0))}});
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  static Literal makeSignedMin(Type type) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(std::numeric_limits<int32_t>::min());
+      case Type::i64:
+        return Literal(std::numeric_limits<int64_t>::min());
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  static Literal makeSignedMax(Type type) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(std::numeric_limits<int32_t>::max());
+      case Type::i64:
+        return Literal(std::numeric_limits<int64_t>::max());
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  static Literal makeUnsignedMax(Type type) {
+    switch (type.getBasic()) {
+      case Type::i32:
+        return Literal(std::numeric_limits<uint32_t>::max());
+      case Type::i64:
+        return Literal(std::numeric_limits<uint64_t>::max());
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
+  static Literal makeNull(Type type) {
+    assert(type.isNullable());
+    return Literal(type);
+  }
+  static Literal makeFunc(Name func) { return Literal(func.c_str()); }
+  static Literal makeExn(std::unique_ptr<ExceptionPackage>&& exn) {
     return Literal(std::move(exn));
+  }
+  static Literal makeI31(int32_t value) {
+    auto lit = Literal(Type::i31ref);
+    lit.i32 = value & 0x7fffffff;
+    return lit;
   }
 
   Literal castToF32();
@@ -119,6 +251,10 @@ public:
   int32_t geti32() const {
     assert(type == Type::i32);
     return i32;
+  }
+  int32_t geti31(bool signed_ = true) const {
+    assert(type == Type::i31ref);
+    return signed_ ? (i32 << 1) >> 1 : i32;
   }
   int64_t geti64() const {
     assert(type == Type::i64);
@@ -134,7 +270,7 @@ public:
   }
   std::array<uint8_t, 16> getv128() const;
   Name getFunc() const {
-    assert(type == Type::funcref);
+    assert(type.isFunction() && !func.isNull());
     return func;
   }
   ExceptionPackage getExceptionPackage() const;
@@ -171,7 +307,9 @@ public:
   }
 
   int64_t getInteger() const;
+  uint64_t getUnsigned() const;
   double getFloat() const;
+  // Obtains the bits of a basic value typed literal.
   void getBits(uint8_t (&buf)[16]) const;
   // Equality checks for the type and the bits, so a nan float would
   // be compared bitwise (which means that a Literal containing a nan
@@ -362,6 +500,7 @@ public:
   Literal maxSI8x16(const Literal& other) const;
   Literal maxUI8x16(const Literal& other) const;
   Literal avgrUI8x16(const Literal& other) const;
+  Literal popcntI8x16() const;
   Literal absI16x8() const;
   Literal negI16x8() const;
   Literal anyTrueI16x8() const;
@@ -382,6 +521,11 @@ public:
   Literal maxSI16x8(const Literal& other) const;
   Literal maxUI16x8(const Literal& other) const;
   Literal avgrUI16x8(const Literal& other) const;
+  Literal q15MulrSatSI16x8(const Literal& other) const;
+  Literal extMulLowSI16x8(const Literal& other) const;
+  Literal extMulHighSI16x8(const Literal& other) const;
+  Literal extMulLowUI16x8(const Literal& other) const;
+  Literal extMulHighUI16x8(const Literal& other) const;
   Literal absI32x4() const;
   Literal negI32x4() const;
   Literal anyTrueI32x4() const;
@@ -398,6 +542,10 @@ public:
   Literal maxSI32x4(const Literal& other) const;
   Literal maxUI32x4(const Literal& other) const;
   Literal dotSI16x8toI32x4(const Literal& other) const;
+  Literal extMulLowSI32x4(const Literal& other) const;
+  Literal extMulHighSI32x4(const Literal& other) const;
+  Literal extMulLowUI32x4(const Literal& other) const;
+  Literal extMulHighUI32x4(const Literal& other) const;
   Literal negI64x2() const;
   Literal anyTrueI64x2() const;
   Literal allTrueI64x2() const;
@@ -407,6 +555,10 @@ public:
   Literal addI64x2(const Literal& other) const;
   Literal subI64x2(const Literal& other) const;
   Literal mulI64x2(const Literal& other) const;
+  Literal extMulLowSI64x2(const Literal& other) const;
+  Literal extMulHighSI64x2(const Literal& other) const;
+  Literal extMulLowUI64x2(const Literal& other) const;
+  Literal extMulHighUI64x2(const Literal& other) const;
   Literal absF32x4() const;
   Literal negF32x4() const;
   Literal sqrtF32x4() const;
@@ -502,6 +654,12 @@ public:
 struct ExceptionPackage {
   Name event;
   Literals values;
+  bool operator==(const ExceptionPackage& other) const {
+    return event == other.event && values == other.values;
+  }
+  bool operator!=(const ExceptionPackage& other) const {
+    return !(*this == other);
+  }
 };
 
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
@@ -513,14 +671,66 @@ std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
 namespace std {
 template<> struct hash<wasm::Literal> {
   size_t operator()(const wasm::Literal& a) const {
-    uint8_t bytes[16];
-    a.getBits(bytes);
-    int64_t chunks[2];
-    memcpy(chunks, bytes, sizeof(chunks));
     auto digest = wasm::hash(a.type.getID());
-    wasm::rehash(digest, chunks[0]);
-    wasm::rehash(digest, chunks[1]);
-    return digest;
+    auto hashRef = [&]() {
+      assert(a.type.isRef());
+      if (a.isNull()) {
+        return digest;
+      }
+      if (a.type.isFunction()) {
+        wasm::rehash(digest, a.getFunc());
+        return digest;
+      }
+      if (a.type.isException()) {
+        auto exn = a.getExceptionPackage();
+        wasm::rehash(digest, exn.event);
+        wasm::rehash(digest, exn.values);
+        return digest;
+      }
+      // other non-null reference type literals cannot represent concrete
+      // values, i.e. there is no concrete externref, anyref or eqref other than
+      // null.
+      WASM_UNREACHABLE("unexpected type");
+    };
+    if (a.type.isBasic()) {
+      switch (a.type.getBasic()) {
+        case wasm::Type::i32:
+          wasm::rehash(digest, a.geti32());
+          return digest;
+        case wasm::Type::f32:
+          wasm::rehash(digest, a.reinterpreti32());
+          return digest;
+        case wasm::Type::i64:
+          wasm::rehash(digest, a.geti64());
+          return digest;
+        case wasm::Type::f64:
+          wasm::rehash(digest, a.reinterpreti64());
+          return digest;
+        case wasm::Type::v128:
+          uint64_t chunks[2];
+          memcpy(&chunks, a.getv128Ptr(), 16);
+          wasm::rehash(digest, chunks[0]);
+          wasm::rehash(digest, chunks[1]);
+          return digest;
+        case wasm::Type::funcref:
+        case wasm::Type::externref:
+        case wasm::Type::exnref:
+        case wasm::Type::anyref:
+        case wasm::Type::eqref:
+          return hashRef();
+        case wasm::Type::i31ref:
+          wasm::rehash(digest, a.geti31(true));
+          return digest;
+        case wasm::Type::none:
+        case wasm::Type::unreachable:
+          break;
+      }
+    } else if (a.type.isRef()) {
+      return hashRef();
+    } else if (a.type.isRtt()) {
+      WASM_UNREACHABLE("TODO: rtt literals");
+    }
+    WASM_UNREACHABLE("unexpected type");
   }
 };
 template<> struct hash<wasm::Literals> {
@@ -554,8 +764,10 @@ template<> struct less<wasm::Literal> {
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       case wasm::Type::funcref:
       case wasm::Type::externref:
-      case wasm::Type::nullref:
       case wasm::Type::exnref:
+      case wasm::Type::anyref:
+      case wasm::Type::eqref:
+      case wasm::Type::i31ref:
       case wasm::Type::none:
       case wasm::Type::unreachable:
         return false;

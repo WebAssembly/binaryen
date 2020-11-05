@@ -6,18 +6,18 @@ total
  [imports]      : 3       
  [memory-data]  : 28      
  [table-data]   : 429     
- [total]        : 132     
+ [total]        : 129     
  [vars]         : 4       
  binary         : 12      
  block          : 8       
  break          : 3       
  call           : 3       
  call_indirect  : 4       
- const          : 47      
+ const          : 45      
  drop           : 3       
  global.get     : 1       
  global.set     : 1       
- if             : 3       
+ if             : 2       
  load           : 16      
  local.get      : 18      
  local.set      : 7       
@@ -30,7 +30,7 @@ total
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
- (import "env" "memory" (memory $1 256 256))
+ (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 2948) "\03")
  (data (i32.const 6828) "\04")
  (data (i32.const 7028) "\0d\00\00\00\06")
@@ -39,7 +39,7 @@ total
  (data (i32.const 18128) ",I")
  (data (i32.const 18732) "D\1b")
  (data (i32.const 18764) "`\0b")
- (import "env" "table" (table $timport$2 478 478 funcref))
+ (import "env" "table" (table $timport$0 478 478 funcref))
  (elem (i32.const 0) $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $___stdout_write $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE6xsputnEPKci $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE8overflowEi)
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 1))
@@ -71,13 +71,9 @@ total
    (i32.const 2)
   )
   (drop
-   (if (result i32)
-    (call $import$0
-     (i32.const 146)
-     (local.get $0)
-    )
-    (i32.const -1)
-    (i32.const 0)
+   (call $import$0
+    (i32.const 146)
+    (local.get $0)
    )
   )
   (i32.const 1)
@@ -251,18 +247,18 @@ total
  [imports]      : 3       
  [memory-data]  : 28      
  [table-data]   : 429     
- [total]        : 132     
+ [total]        : 129     
  [vars]         : 4       
  binary         : 12      
  block          : 8       
  break          : 3       
  call           : 3       
  call_indirect  : 4       
- const          : 47      
+ const          : 45      
  drop           : 3       
  global.get     : 1       
  global.set     : 1       
- if             : 3       
+ if             : 2       
  load           : 16      
  local.get      : 18      
  local.set      : 7       
@@ -275,7 +271,7 @@ total
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
- (import "env" "memory" (memory $1 256 256))
+ (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 2948) "\03")
  (data (i32.const 6828) "\04")
  (data (i32.const 7028) "\0d\00\00\00\06")
@@ -284,7 +280,7 @@ total
  (data (i32.const 18128) ",I")
  (data (i32.const 18732) "D\1b")
  (data (i32.const 18764) "`\0b")
- (import "env" "table" (table $timport$2 478 478 funcref))
+ (import "env" "table" (table $timport$0 478 478 funcref))
  (elem (i32.const 0) $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $___stdout_write $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE6xsputnEPKci $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $b0 $__ZNSt3__211__stdoutbufIcE8overflowEi)
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
  (global $global$0 (mut i32) (i32.const 1))
@@ -316,13 +312,9 @@ total
    (i32.const 2)
   )
   (drop
-   (if (result i32)
-    (call $import$0
-     (i32.const 146)
-     (local.get $0)
-    )
-    (i32.const -1)
-    (i32.const 0)
+   (call $import$0
+    (i32.const 146)
+    (local.get $0)
    )
   )
   (i32.const 1)

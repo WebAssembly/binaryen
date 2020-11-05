@@ -1,14 +1,6 @@
 import { setTempRet0 } from 'env';
 
-function asmFunc(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
+function asmFunc(global, env) {
  var Math_imul = global.Math.imul;
  var Math_fround = global.Math.fround;
  var Math_abs = global.Math.abs;
@@ -114,8 +106,10 @@ function asmFunc(global, env, buffer) {
  function $13() {
   var $0 = 0, $1_1 = 0, $3_1 = 0;
   block : {
-   $0 = 3;
-   break block;
+   loop_in : while (1) {
+    $0 = 3;
+    break block;
+   };
   }
   return $0 | 0;
  }
@@ -123,9 +117,11 @@ function asmFunc(global, env, buffer) {
  function $14() {
   var $0 = 0, $1_1 = 0, $3_1 = 0;
   block : {
-   dummy();
-   $0 = 4;
-   break block;
+   loop_in : while (1) {
+    dummy();
+    $0 = 4;
+    break block;
+   };
   }
   return $0 | 0;
  }
@@ -133,9 +129,11 @@ function asmFunc(global, env, buffer) {
  function $15() {
   var $0 = 0;
   block : {
-   dummy();
-   $0 = 5;
-   break block;
+   loop_in : while (1) {
+    dummy();
+    $0 = 5;
+    break block;
+   };
   }
   return $0 | 0;
  }
@@ -654,7 +652,6 @@ function asmFunc(global, env, buffer) {
   return $0 | 0;
  }
  
- var FUNCTION_TABLE = [];
  return {
   "type_i32": $1, 
   "type_i64": $2, 
@@ -718,8 +715,22 @@ function asmFunc(global, env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc({Math,Int8Array,Uint8Array,Int16Array,Uint16Array,Int32Array,Uint32Array,Float32Array,Float64Array,NaN,Infinity}, {abort:function() { throw new Error('abort'); },setTempRet0},memasmFunc);
+var retasmFunc = asmFunc({
+    Math,
+    Int8Array,
+    Uint8Array,
+    Int16Array,
+    Uint16Array,
+    Int32Array,
+    Uint32Array,
+    Float32Array,
+    Float64Array,
+    NaN,
+    Infinity
+  }, {
+    abort: function() { throw new Error('abort'); },
+    setTempRet0
+  });
 export var type_i32 = retasmFunc.type_i32;
 export var type_i64 = retasmFunc.type_i64;
 export var type_f32 = retasmFunc.type_f32;

@@ -1,6 +1,5 @@
 (module
  (type $i64_=>_i64 (func (param i64) (result i64)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i64_=>_i64 (func (param i32 i64) (result i64)))
  (table $0 1 1 funcref)
  (elem (i32.const 1) $foo)
@@ -8,7 +7,6 @@
  (global $global$1 i32 (i32.const 658))
  (export "__data_end" (global $global$1))
  (export "dynCall_jj" (func $dynCall_jj))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (func $foo (param $0 i64) (result i64)
   (unreachable)
  )
@@ -18,24 +16,17 @@
    (local.get $fptr)
   )
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 90,
   "tableSize": 1,
   "declares": [
   ],
   "externs": [
   ],
   "exports": [
-    "dynCall_jj",
-    "__growWasmMemory"
+    "dynCall_jj"
   ],
   "namedGlobals": {
     "__data_end" : "658"

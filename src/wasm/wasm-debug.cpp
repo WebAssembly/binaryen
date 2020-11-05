@@ -680,6 +680,8 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
           newAddr = locationUpdater.getNewFuncStart(oldAddr);
         } else if (locationUpdater.hasOldDelimiter(oldAddr)) {
           newAddr = locationUpdater.getNewDelimiter(oldAddr);
+        } else if (locationUpdater.hasOldExprEnd(oldAddr)) {
+          newAddr = locationUpdater.getNewExprEnd(oldAddr);
         }
         if (newAddr && state.needToEmit()) {
           // LLVM sometimes emits the same address more than once. We should
@@ -787,7 +789,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
             tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
             tag == llvm::dwarf::DW_TAG_lexical_block ||
             tag == llvm::dwarf::DW_TAG_label) {
-          newValue = locationUpdater.getNewExprStart(oldValue);
+          newValue = locationUpdater.getNewStart(oldValue);
         } else if (tag == llvm::dwarf::DW_TAG_compile_unit) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
           // Per the DWARF spec, "The base address of a compile unit is

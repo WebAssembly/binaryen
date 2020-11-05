@@ -2,90 +2,71 @@
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "env" "memory" (memory $0 0))
- (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
- (import "env" "table" (table $0 0 funcref))
- (import "env" "__memory_base" (global $gimport$2 i32))
- (import "env" "__table_base" (global $gimport$3 i32))
+ (import "env" "memory" (memory $mimport$0 0))
+ (data (global.get $gimport$0) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
+ (import "env" "__indirect_function_table" (table $timport$0 0 funcref))
+ (import "env" "__memory_base" (global $gimport$0 i32))
+ (import "env" "__table_base" (global $gimport$1 i32))
+ (import "GOT.mem" "external_var" (global $gimport$2 (mut i32)))
+ (import "GOT.func" "puts" (global $gimport$3 (mut i32)))
+ (import "GOT.func" "_Z13print_messagev" (global $gimport$4 (mut i32)))
  (import "env" "puts" (func $puts (param i32) (result i32)))
- (import "env" "g$external_var" (func $g$external_var (result i32)))
- (import "env" "fp$puts$ii" (func $fp$puts$ii (result i32)))
- (import "env" "fp$_Z13print_messagev$i" (func $fp$_Z13print_messagev$i (result i32)))
- (global $gimport$5 (mut i32) (i32.const 0))
- (global $gimport$6 (mut i32) (i32.const 0))
- (global $gimport$7 (mut i32) (i32.const 0))
  (global $global$0 i32 (i32.const 16))
  (global $global$1 i32 (i32.const 20))
+ (export "__post_instantiate" (func $__wasm_call_ctors))
  (export "_Z13print_messagev" (func $print_message\28\29))
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
- (export "__post_instantiate" (func $__post_instantiate))
  (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
  (func $__wasm_apply_relocs
   (i32.store
    (i32.add
-    (global.get $gimport$2)
+    (global.get $gimport$0)
     (i32.const 16)
    )
-   (global.get $gimport$6)
+   (global.get $gimport$3)
   )
   (i32.store
    (i32.add
-    (global.get $gimport$2)
+    (global.get $gimport$0)
     (i32.const 20)
    )
-   (global.get $gimport$7)
+   (global.get $gimport$4)
   )
  )
  (func $print_message\28\29 (result i32)
   (drop
    (call $puts
     (i32.add
-     (global.get $gimport$2)
+     (global.get $gimport$0)
      (i32.const 0)
     )
    )
   )
   (i32.load
-   (global.get $gimport$5)
+   (global.get $gimport$2)
   )
- )
- (func $__assign_got_enties
-  (global.set $gimport$5
-   (call $g$external_var)
-  )
-  (global.set $gimport$6
-   (call $fp$puts$ii)
-  )
-  (global.set $gimport$7
-   (call $fp$_Z13print_messagev$i)
-  )
- )
- (func $__post_instantiate
-  (call $__assign_got_enties)
-  (call $__wasm_call_ctors)
  )
 )
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 0,
   "tableSize": 0,
   "declares": [
-    "puts",
-    "g$external_var",
-    "fp$puts$ii",
-    "fp$_Z13print_messagev$i"
+    "puts"
   ],
   "externs": [
     "___memory_base",
-    "___table_base"
+    "___table_base",
+    "_external_var",
+    "_puts",
+    "__Z13print_messagev"
   ],
   "exports": [
-    "_Z13print_messagev",
-    "__post_instantiate"
+    "__post_instantiate",
+    "_Z13print_messagev"
   ],
   "namedGlobals": {
     "ptr_puts" : "16",

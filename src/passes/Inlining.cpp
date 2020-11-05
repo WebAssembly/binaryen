@@ -17,8 +17,6 @@
 //
 // Inlining.
 //
-// This uses some simple heuristics to decide when to inline.
-//
 // Two versions are provided: inlining and inlining-optimizing. You
 // probably want the optimizing version, which will optimize locations
 // we inlined into, as inlining by itself creates a block to house the
@@ -48,43 +46,45 @@ namespace wasm {
 struct FunctionInfo {
   std::atomic<Index> refs;
   Index size;
-  std::atomic<bool> lightweight;
+  bool hasCalls;
+  bool hasLoops;
   bool usedGlobally; // in a table or export
 
   FunctionInfo() {
     refs = 0;
     size = 0;
-    lightweight = true;
+    hasCalls = false;
+    hasLoops = false;
     usedGlobally = false;
   }
 
   // See pass.h for how defaults for these options were chosen.
   bool worthInlining(PassOptions& options) {
-    // if it's big, it's just not worth doing (TODO: investigate more)
-    if (size > options.inlining.flexibleInlineMaxSize) {
-      return false;
-    }
-    // if it's so small we have a guarantee that after we optimize the
-    // size will not increase, inline it
+    // If it's small enough that we always want to inline such things, do so.
     if (size <= options.inlining.alwaysInlineMaxSize) {
       return true;
     }
-    // if it has one use, then inlining it would likely reduce code size
-    // since we are just moving code around, + optimizing, so worth it
-    // if small enough that we are pretty sure its ok
-    // FIXME: move this check to be first in this function, since we should
-    // return true if oneCallerInlineMaxSize is bigger than
-    // flexibleInlineMaxSize (which it typically should be).
+    // If it has one use, then inlining it would likely reduce code size, at
+    // least for reasonable function sizes.
     if (refs == 1 && !usedGlobally &&
         size <= options.inlining.oneCallerInlineMaxSize) {
       return true;
     }
-    // more than one use, so we can't eliminate it after inlining,
+    // If it's so big that we have no flexible options that could allow it,
+    // do not inline.
+    if (size > options.inlining.flexibleInlineMaxSize) {
+      return false;
+    }
+    // More than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size, and if it's lightweight so a good candidate for
-    // speeding us up.
+    // about size. First, check if it has calls. In that case it is not
+    // likely to speed us up, and also if we want to inline such
+    // functions we would need to be careful to avoid infinite recursion.
+    if (hasCalls) {
+      return false;
+    }
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
-           (lightweight || options.inlining.allowHeavyweight);
+           (!hasLoops || options.inlining.allowFunctionsWithLoops);
   }
 };
 
@@ -101,16 +101,16 @@ struct FunctionInfoScanner
   }
 
   void visitLoop(Loop* curr) {
-    // having a loop is not lightweight
-    (*infos)[getFunction()->name].lightweight = false;
+    // having a loop
+    (*infos)[getFunction()->name].hasLoops = true;
   }
 
   void visitCall(Call* curr) {
     // can't add a new element in parallel
     assert(infos->count(curr->target) > 0);
     (*infos)[curr->target].refs++;
-    // having a call is not lightweight
-    (*infos)[getFunction()->name].lightweight = false;
+    // having a call
+    (*infos)[getFunction()->name].hasCalls = true;
   }
 
   void visitRefFunc(RefFunc* curr) {
@@ -320,7 +320,6 @@ struct Inlining : public Pass {
     PassRunner runner(module);
     FunctionInfoScanner(&infos).run(&runner, module);
     // fill in global uses
-    // anything exported or used in a table should not be inlined
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         infos[ex->value].usedGlobally = true;
@@ -330,6 +329,16 @@ struct Inlining : public Pass {
       for (auto name : segment.data) {
         infos[name].usedGlobally = true;
       }
+    }
+    for (auto& global : module->globals) {
+      if (!global->imported()) {
+        for (auto* ref : FindAll<RefFunc>(global->init).list) {
+          infos[ref->func].usedGlobally = true;
+        }
+      }
+    }
+    if (module->start.is()) {
+      infos[module->start].usedGlobally = true;
     }
   }
 

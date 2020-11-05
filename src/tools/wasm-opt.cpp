@@ -81,6 +81,7 @@ int main(int argc, const char* argv[]) {
   bool fuzzExecAfter = false;
   std::string extraFuzzCommand;
   bool translateToFuzz = false;
+  std::string initialFuzz;
   bool fuzzPasses = false;
   bool fuzzMemory = true;
   bool fuzzOOB = true;
@@ -141,6 +142,13 @@ int main(int argc, const char* argv[]) {
       "fuzzing",
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { translateToFuzz = true; })
+    .add("--initial-fuzz",
+         "-if",
+         "Initial wasm content in translate-to-fuzz (-ttf) mode",
+         Options::Arguments::One,
+         [&initialFuzz](Options* o, const std::string& argument) {
+           initialFuzz = argument;
+         })
     .add("--fuzz-passes",
          "-fp",
          "Pick a random set of passes to run, useful for fuzzing. this depends "
@@ -224,14 +232,21 @@ int main(int argc, const char* argv[]) {
     Fatal() << message;
   };
 
-  if (!translateToFuzz) {
+  // In normal (non-translate-to-fuzz) mode we read the input file. In
+  // translate-to-fuzz mode the input file is the random data, and used later
+  // down in TranslateToFuzzReader, but there is also an optional initial fuzz
+  // file that if it exists we read it, then add more fuzz on top.
+  if (!translateToFuzz || initialFuzz.size()) {
+    std::string inputFile =
+      translateToFuzz ? initialFuzz : options.extra["infile"];
     ModuleReader reader;
     // Enable DWARF parsing if we were asked for debug info, and were not
     // asked to remove it.
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
+    reader.setProfile(options.profile);
     try {
-      reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
+      reader.read(inputFile, wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       std::cerr << '\n';
@@ -252,8 +267,8 @@ int main(int argc, const char* argv[]) {
         exitOnInvalidWasm("error validating input");
       }
     }
-  } else {
-    // translate-to-fuzz
+  }
+  if (translateToFuzz) {
     options.applyFeatures(wasm);
     TranslateToFuzzReader reader(wasm, options.extra["infile"]);
     if (fuzzPasses) {
@@ -376,8 +391,7 @@ int main(int argc, const char* argv[]) {
     auto secondOutput = runCommand(extraFuzzCommand);
     std::cout << "[extra-fuzz-command second output:]\n" << firstOutput << '\n';
     if (firstOutput != secondOutput) {
-      std::cerr << "extra fuzz command output differs\n";
-      abort();
+      Fatal() << "extra fuzz command output differs\n";
     }
   }
   return 0;

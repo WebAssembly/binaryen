@@ -2,9 +2,8 @@
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
- (import "env" "memory" (memory $0 8192))
+ (import "env" "memory" (memory $2 8192))
  (import "env" "emscripten_log" (func $fimport$0 (param i32 i32)))
  (import "env" "emscripten_asm_const_int" (func $fimport$1 (param i32 i32 i32) (result i32)))
  (table $0 159609 funcref)
@@ -14,7 +13,6 @@
  (export "__data_end" (global $global$1))
  (export "dynCall_vii" (func $dynCall_vii))
  (export "dynCall_iiii" (func $dynCall_iiii))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (func $dynCall_vii (param $fptr i32) (param $0 i32) (param $1 i32)
   (call_indirect (type $i32_i32_=>_none)
    (local.get $0)
@@ -30,16 +28,10 @@
    (local.get $fptr)
   )
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 480,
   "tableSize": 159609,
   "declares": [
     "emscripten_log",
@@ -49,8 +41,7 @@
   ],
   "exports": [
     "dynCall_vii",
-    "dynCall_iiii",
-    "__growWasmMemory"
+    "dynCall_iiii"
   ],
   "namedGlobals": {
     "__data_end" : "1048"

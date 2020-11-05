@@ -1,10 +1,10 @@
 (module
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $none_=>_none (func))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $f32_f32_i32_=>_f32 (func (param f32 f32 i32) (result f32)))
  (type $f64_i32_=>_f64 (func (param f64 i32) (result f64)))
  (import "env" "_Z4atoiPKc" (func $atoi\28char\20const*\29 (param i32) (result i32)))
@@ -12,13 +12,10 @@
  (table $0 3 3 funcref)
  (elem (i32.const 1) $address_taken_func\28int\2c\20int\2c\20int\29 $address_taken_func2\28int\2c\20int\2c\20int\29)
  (global $global$0 (mut i32) (i32.const 66112))
- (global $global$1 i32 (i32.const 568))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
  (export "dynCall_viii" (func $dynCall_viii))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (func $__wasm_call_ctors
   (nop)
  )
@@ -120,16 +117,10 @@
    (local.get $fptr)
   )
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 0,
   "tableSize": 3,
   "initializers": [
     "__wasm_call_ctors"
@@ -142,11 +133,9 @@
   "exports": [
     "__wasm_call_ctors",
     "main",
-    "dynCall_viii",
-    "__growWasmMemory"
+    "dynCall_viii"
   ],
   "namedGlobals": {
-    "__data_end" : "568"
   },
   "invokeFuncs": [
   ],

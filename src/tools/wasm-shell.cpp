@@ -74,7 +74,7 @@ struct Operation {
     name = element[i++]->str();
     for (size_t j = i; j < element.size(); j++) {
       Expression* argument = builder.parseExpression(*element[j]);
-      arguments.push_back(getSingleLiteralFromConstExpression(argument));
+      arguments.push_back(getLiteralFromConstExpression(argument));
     }
   }
 
@@ -146,7 +146,7 @@ static void run_asserts(Name moduleName,
       std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
         builder = std::unique_ptr<SExpressionWasmBuilder>(
-          new SExpressionWasmBuilder(wasm, *curr[1]));
+          new SExpressionWasmBuilder(wasm, *curr[1], IRProfile::Normal));
       } catch (const ParseException&) {
         invalid = true;
       }
@@ -192,8 +192,7 @@ static void run_asserts(Name moduleName,
         Colors::red(std::cerr);
         std::cerr << "[should have been invalid]\n";
         Colors::normal(std::cerr);
-        std::cerr << &wasm << '\n';
-        abort();
+        Fatal() << &wasm << '\n';
       }
     } else if (id == INVOKE) {
       assert(wasm);
@@ -222,8 +221,7 @@ static void run_asserts(Name moduleName,
         }
         std::cerr << "seen " << result << ", expected " << expected << '\n';
         if (expected != result) {
-          std::cout << "unexpected, should be identical\n";
-          abort();
+          Fatal() << "unexpected, should be identical\n";
         }
       }
       if (id == ASSERT_TRAP) {
@@ -304,9 +302,9 @@ int main(int argc, const char* argv[]) {
         std::cerr << "BUILDING MODULE [line: " << curr.line << "]\n";
         Colors::normal(std::cerr);
         auto module = wasm::make_unique<Module>();
-        Name moduleName;
         auto builder = wasm::make_unique<SExpressionWasmBuilder>(
-          *module, *root[i], &moduleName);
+          *module, *root[i], IRProfile::Normal);
+        auto moduleName = module->name;
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
         i++;
@@ -314,8 +312,8 @@ int main(int argc, const char* argv[]) {
         bool valid = WasmValidator().validate(*modules[moduleName]);
         if (!valid) {
           WasmPrinter::printModule(modules[moduleName].get());
+          Fatal() << "module failed to validate, see above";
         }
-        assert(valid);
         run_asserts(moduleName,
                     &i,
                     &checked,
@@ -329,7 +327,7 @@ int main(int argc, const char* argv[]) {
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);
-    abort();
+    exit(1);
   }
 
   if (checked) {

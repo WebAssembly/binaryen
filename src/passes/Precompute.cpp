@@ -134,9 +134,12 @@ struct Precompute
             curr->finalize();
             return;
           }
-        } else if (singleValue.type == Type::nullref &&
-                   curr->value->template is<RefNull>()) {
-          return;
+        } else if (singleValue.isNull()) {
+          if (auto* n = curr->value->template dynCast<RefNull>()) {
+            n->finalize(singleValue.type);
+            curr->finalize();
+            return;
+          }
         } else if (singleValue.type == Type::funcref) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
@@ -297,7 +300,8 @@ private:
           Literals curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
-              curr = Literal::makeZero(getFunction()->getLocalType(get->index));
+              curr =
+                Literal::makeZeros(getFunction()->getLocalType(get->index));
             } else {
               // it's a param, so it's hopeless
               values = {};

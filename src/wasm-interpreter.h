@@ -463,6 +463,8 @@ public:
         return value.allTrueI8x16();
       case BitmaskVecI8x16:
         return value.bitmaskI8x16();
+      case PopcntVecI8x16:
+        return value.popcntI8x16();
       case AbsVecI16x8:
         return value.absI16x8();
       case NegVecI16x8:
@@ -876,6 +878,16 @@ public:
         return left.maxUI16x8(right);
       case AvgrUVecI16x8:
         return left.avgrUI16x8(right);
+      case Q15MulrSatSVecI16x8:
+        return left.q15MulrSatSI16x8(right);
+      case ExtMulLowSVecI16x8:
+        return left.extMulLowSI16x8(right);
+      case ExtMulHighSVecI16x8:
+        return left.extMulHighSI16x8(right);
+      case ExtMulLowUVecI16x8:
+        return left.extMulLowUI16x8(right);
+      case ExtMulHighUVecI16x8:
+        return left.extMulHighUI16x8(right);
       case AddVecI32x4:
         return left.addI32x4(right);
       case SubVecI32x4:
@@ -892,12 +904,28 @@ public:
         return left.maxUI32x4(right);
       case DotSVecI16x8ToVecI32x4:
         return left.dotSI16x8toI32x4(right);
+      case ExtMulLowSVecI32x4:
+        return left.extMulLowSI32x4(right);
+      case ExtMulHighSVecI32x4:
+        return left.extMulHighSI32x4(right);
+      case ExtMulLowUVecI32x4:
+        return left.extMulLowUI32x4(right);
+      case ExtMulHighUVecI32x4:
+        return left.extMulHighUI32x4(right);
       case AddVecI64x2:
         return left.addI64x2(right);
       case SubVecI64x2:
         return left.subI64x2(right);
       case MulVecI64x2:
         return left.mulI64x2(right);
+      case ExtMulLowSVecI64x2:
+        return left.extMulLowSI64x2(right);
+      case ExtMulHighSVecI64x2:
+        return left.extMulHighSI64x2(right);
+      case ExtMulLowUVecI64x2:
+        return left.extMulLowUI64x2(right);
+      case ExtMulHighUVecI64x2:
+        return left.extMulHighUI64x2(right);
 
       case AddVecF32x4:
         return left.addF32x4(right);
@@ -1226,7 +1254,8 @@ public:
   Flow visitCallIndirect(CallIndirect* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitLoad(Load* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStore(Store* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitHost(Host* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemorySize(MemorySize* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitMemoryGrow(MemoryGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitMemoryInit(MemoryInit* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE("unimp"); }
@@ -1239,10 +1268,13 @@ public:
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadZero(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    WASM_UNREACHABLE("unimp");
+  }
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
-    return Literal::makeNullref();
+    return Literal::makeNull(curr->type);
   }
   Flow visitRefIsNull(RefIsNull* curr) {
     NOTE_ENTER("RefIsNull");
@@ -1250,14 +1282,29 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    Literal value = flow.getSingleValue();
+    const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    return Literal(value.type == Type::nullref);
+    return Literal(value.isNull());
   }
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
     NOTE_NAME(curr->func);
-    return Literal::makeFuncref(curr->func);
+    return Literal::makeFunc(curr->func);
+  }
+  Flow visitRefEq(RefEq* curr) {
+    NOTE_ENTER("RefEq");
+    Flow flow = visit(curr->left);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto left = flow.getSingleValue();
+    flow = visit(curr->right);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto right = flow.getSingleValue();
+    NOTE_EVAL2(left, right);
+    return Literal(int32_t(left == right));
   }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -1273,7 +1320,7 @@ public:
     for (auto item : arguments) {
       exn->values.push_back(item);
     }
-    throwException(Literal::makeExnref(std::move(exn)));
+    throwException(Literal::makeExn(std::move(exn)));
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -1282,10 +1329,11 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    if (flow.getType() == Type::nullref) {
+    const auto& value = flow.getSingleValue();
+    if (value.isNull()) {
       trap("rethrow: argument is null");
     }
-    throwException(flow.getSingleValue());
+    throwException(value);
     WASM_UNREACHABLE("rethrow");
   }
   Flow visitBrOnExn(BrOnExn* curr) {
@@ -1294,10 +1342,11 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    if (flow.getType() == Type::nullref) {
+    const auto& value = flow.getSingleValue();
+    if (value.isNull()) {
       trap("br_on_exn: argument is null");
     }
-    auto ex = flow.getSingleValue().getExceptionPackage();
+    auto ex = value.getExceptionPackage();
     if (curr->event != ex.event) { // Not taken
       return flow;
     }
@@ -1305,6 +1354,74 @@ public:
     flow.values = ex.values;
     flow.breakTo = curr->name;
     return flow;
+  }
+  Flow visitI31New(I31New* curr) {
+    NOTE_ENTER("I31New");
+    Flow flow = visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    return Literal::makeI31(value.geti32());
+  }
+  Flow visitI31Get(I31Get* curr) {
+    NOTE_ENTER("I31Get");
+    Flow flow = visit(curr->i31);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    return Literal(value.geti31(curr->signed_));
+  }
+  Flow visitRefTest(RefTest* curr) {
+    NOTE_ENTER("RefTest");
+    WASM_UNREACHABLE("TODO (gc): ref.test");
+  }
+  Flow visitRefCast(RefCast* curr) {
+    NOTE_ENTER("RefCast");
+    WASM_UNREACHABLE("TODO (gc): ref.cast");
+  }
+  Flow visitBrOnCast(BrOnCast* curr) {
+    NOTE_ENTER("BrOnCast");
+    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  }
+  Flow visitRttCanon(RttCanon* curr) {
+    NOTE_ENTER("RttCanon");
+    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  }
+  Flow visitRttSub(RttSub* curr) {
+    NOTE_ENTER("RttSub");
+    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  }
+  Flow visitStructNew(StructNew* curr) {
+    NOTE_ENTER("StructNew");
+    WASM_UNREACHABLE("TODO (gc): struct.new");
+  }
+  Flow visitStructGet(StructGet* curr) {
+    NOTE_ENTER("StructGet");
+    WASM_UNREACHABLE("TODO (gc): struct.get");
+  }
+  Flow visitStructSet(StructSet* curr) {
+    NOTE_ENTER("StructSet");
+    WASM_UNREACHABLE("TODO (gc): struct.set");
+  }
+  Flow visitArrayNew(ArrayNew* curr) {
+    NOTE_ENTER("ArrayNew");
+    WASM_UNREACHABLE("TODO (gc): array.new");
+  }
+  Flow visitArrayGet(ArrayGet* curr) {
+    NOTE_ENTER("ArrayGet");
+    WASM_UNREACHABLE("TODO (gc): array.get");
+  }
+  Flow visitArraySet(ArraySet* curr) {
+    NOTE_ENTER("ArraySet");
+    WASM_UNREACHABLE("TODO (gc): array.set");
+  }
+  Flow visitArrayLen(ArrayLen* curr) {
+    NOTE_ENTER("ArrayLen");
+    WASM_UNREACHABLE("TODO (gc): array.len");
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
@@ -1489,8 +1606,12 @@ public:
     NOTE_ENTER("Store");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitHost(Host* curr) {
-    NOTE_ENTER("Host");
+  Flow visitMemorySize(MemorySize* curr) {
+    NOTE_ENTER("MemorySize");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitMemoryGrow(MemoryGrow* curr) {
+    NOTE_ENTER("MemoryGrow");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitMemoryInit(MemoryInit* curr) {
@@ -1535,6 +1656,10 @@ public:
   }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) {
     NOTE_ENTER("SIMDLoadExtend");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    NOTE_ENTER("SIMDLoadStoreLane");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitPop(Pop* curr) {
@@ -1595,7 +1720,7 @@ public:
                                LiteralList& arguments,
                                Type result,
                                SubType& instance) = 0;
-    virtual void growMemory(Address oldSize, Address newSize) = 0;
+    virtual bool growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
     virtual void throwException(Literal exnref) = 0;
 
@@ -1644,8 +1769,10 @@ public:
           return Literal(load128(addr).data());
         case Type::funcref:
         case Type::externref:
-        case Type::nullref:
         case Type::exnref:
+        case Type::anyref:
+        case Type::eqref:
+        case Type::i31ref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1701,8 +1828,10 @@ public:
           break;
         case Type::funcref:
         case Type::externref:
-        case Type::nullref:
         case Type::exnref:
+        case Type::anyref:
+        case Type::eqref:
+        case Type::i31ref:
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");
@@ -1901,7 +2030,7 @@ private:
           locals[i] = {arguments[i]};
         } else {
           assert(function->isVar(i));
-          locals[i] = Literal::makeZero(function->getLocalType(i));
+          locals[i] = Literal::makeZeros(function->getLocalType(i));
         }
       }
     }
@@ -2064,22 +2193,22 @@ private:
       NOTE_EVAL1(loaded);
       auto computed = value.getSingleValue();
       switch (curr->op) {
-        case Add:
+        case RMWAdd:
           computed = loaded.add(computed);
           break;
-        case Sub:
+        case RMWSub:
           computed = loaded.sub(computed);
           break;
-        case And:
+        case RMWAnd:
           computed = loaded.and_(computed);
           break;
-        case Or:
+        case RMWOr:
           computed = loaded.or_(computed);
           break;
-        case Xor:
+        case RMWXor:
           computed = loaded.xor_(computed);
           break;
-        case Xchg:
+        case RMWXchg:
           break;
       }
       instance.doAtomicStore(addr, curr->bytes, computed);
@@ -2275,9 +2404,9 @@ private:
       }
       NOTE_EVAL1(flow);
       Address src = instance.getFinalAddress(
-        curr, flow.getSingleValue(), curr->op == Load32Zero ? 32 : 64);
+        curr, flow.getSingleValue(), curr->getMemBytes());
       auto zero =
-        Literal::makeSingleZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
+        Literal::makeZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
       if (curr->op == Load32Zero) {
         auto val = Literal(instance.externalInterface->load32u(src));
         return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
@@ -2286,37 +2415,111 @@ private:
         return Literal(std::array<Literal, 2>{{val, zero}});
       }
     }
-    Flow visitHost(Host* curr) {
-      NOTE_ENTER("Host");
+    Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+      NOTE_ENTER("SIMDLoadStoreLane");
+      Flow flow = this->visit(curr->ptr);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow);
+      Address addr = instance.getFinalAddress(
+        curr, flow.getSingleValue(), curr->getMemBytes());
+      flow = this->visit(curr->vec);
+      if (flow.breaking()) {
+        return flow;
+      }
+      Literal vec = flow.getSingleValue();
       switch (curr->op) {
-        case MemorySize:
-          return Literal(int32_t(instance.memorySize));
-        case MemoryGrow: {
-          auto fail = Literal(int32_t(-1));
-          Flow flow = this->visit(curr->operands[0]);
-          if (flow.breaking()) {
-            return flow;
+        case LoadLaneVec8x16:
+        case StoreLaneVec8x16: {
+          std::array<Literal, 16> lanes = vec.getLanesUI8x16();
+          if (curr->isLoad()) {
+            lanes[curr->index] =
+              Literal(instance.externalInterface->load8u(addr));
+            return Literal(lanes);
+          } else {
+            instance.externalInterface->store8(addr,
+                                               lanes[curr->index].geti32());
+            return {};
           }
-          int32_t ret = instance.memorySize;
-          uint32_t delta = flow.getSingleValue().geti32();
-          if (delta > uint32_t(-1) / Memory::kPageSize) {
-            return fail;
+        }
+        case LoadLaneVec16x8:
+        case StoreLaneVec16x8: {
+          std::array<Literal, 8> lanes = vec.getLanesUI16x8();
+          if (curr->isLoad()) {
+            lanes[curr->index] =
+              Literal(instance.externalInterface->load16u(addr));
+            return Literal(lanes);
+          } else {
+            instance.externalInterface->store16(addr,
+                                                lanes[curr->index].geti32());
+            return {};
           }
-          if (instance.memorySize >= uint32_t(-1) - delta) {
-            return fail;
+        }
+        case LoadLaneVec32x4:
+        case StoreLaneVec32x4: {
+          std::array<Literal, 4> lanes = vec.getLanesI32x4();
+          if (curr->isLoad()) {
+            lanes[curr->index] =
+              Literal(instance.externalInterface->load32u(addr));
+            return Literal(lanes);
+          } else {
+            instance.externalInterface->store32(addr,
+                                                lanes[curr->index].geti32());
+            return {};
           }
-          uint32_t newSize = instance.memorySize + delta;
-          if (newSize > instance.wasm.memory.max) {
-            return fail;
+        }
+        case StoreLaneVec64x2:
+        case LoadLaneVec64x2: {
+          std::array<Literal, 2> lanes = vec.getLanesI64x2();
+          if (curr->isLoad()) {
+            lanes[curr->index] =
+              Literal(instance.externalInterface->load64u(addr));
+            return Literal(lanes);
+          } else {
+            instance.externalInterface->store64(addr,
+                                                lanes[curr->index].geti64());
+            return {};
           }
-          instance.externalInterface->growMemory(instance.memorySize *
-                                                   Memory::kPageSize,
-                                                 newSize * Memory::kPageSize);
-          instance.memorySize = newSize;
-          return Literal(int32_t(ret));
         }
       }
-      WASM_UNREACHABLE("invalid op");
+      WASM_UNREACHABLE("unexpected op");
+    }
+    Flow visitMemorySize(MemorySize* curr) {
+      NOTE_ENTER("MemorySize");
+      return Literal::makeFromInt64(instance.memorySize,
+                                    instance.wasm.memory.indexType);
+    }
+    Flow visitMemoryGrow(MemoryGrow* curr) {
+      NOTE_ENTER("MemoryGrow");
+      auto indexType = instance.wasm.memory.indexType;
+      auto fail = Literal::makeFromInt64(-1, indexType);
+      Flow flow = this->visit(curr->delta);
+      if (flow.breaking()) {
+        return flow;
+      }
+      Flow ret = Literal::makeFromInt64(instance.memorySize, indexType);
+      uint64_t delta = flow.getSingleValue().getUnsigned();
+      if (delta > uint32_t(-1) / Memory::kPageSize && indexType == Type::i32) {
+        return fail;
+      }
+      if (instance.memorySize >= uint32_t(-1) - delta &&
+          indexType == Type::i32) {
+        return fail;
+      }
+      auto newSize = instance.memorySize + delta;
+      if (newSize > instance.wasm.memory.max) {
+        return fail;
+      }
+      if (!instance.externalInterface->growMemory(
+            instance.memorySize * Memory::kPageSize,
+            newSize * Memory::kPageSize)) {
+        // We failed to grow the memory in practice, even though it was valid
+        // to try to do so.
+        return fail;
+      }
+      instance.memorySize = newSize;
+      return ret;
     }
     Flow visitMemoryInit(MemoryInit* curr) {
       NOTE_ENTER("MemoryInit");
@@ -2339,7 +2542,7 @@ private:
       assert(curr->segment < instance.wasm.memory.segments.size());
       Memory::Segment& segment = instance.wasm.memory.segments[curr->segment];
 
-      Address destVal(uint32_t(dest.getSingleValue().geti32()));
+      Address destVal(dest.getSingleValue().getUnsigned());
       Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
       Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
@@ -2350,12 +2553,11 @@ private:
       if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
         trap("out of bounds segment access in memory.init");
       }
-      if ((uint64_t)destVal + sizeVal >
-          (uint64_t)instance.memorySize * Memory::kPageSize) {
+      if (destVal + sizeVal > instance.memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.init");
       }
       for (size_t i = 0; i < sizeVal; ++i) {
-        Literal addr(uint32_t(destVal + i));
+        Literal addr(destVal + i);
         instance.externalInterface->store8(
           instance.getFinalAddressWithoutOffset(addr, 1),
           segment.data[offsetVal + i]);
@@ -2384,14 +2586,15 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(source);
       NOTE_EVAL1(size);
-      Address destVal(uint32_t(dest.getSingleValue().geti32()));
-      Address sourceVal(uint32_t(source.getSingleValue().geti32()));
-      Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+      Address destVal(dest.getSingleValue().getUnsigned());
+      Address sourceVal(source.getSingleValue().getUnsigned());
+      Address sizeVal(size.getSingleValue().getUnsigned());
 
-      if ((uint64_t)sourceVal + sizeVal >
-            (uint64_t)instance.memorySize * Memory::kPageSize ||
-          (uint64_t)destVal + sizeVal >
-            (uint64_t)instance.memorySize * Memory::kPageSize) {
+      if (sourceVal + sizeVal > instance.memorySize * Memory::kPageSize ||
+          destVal + sizeVal > instance.memorySize * Memory::kPageSize ||
+          // FIXME: better/cheaper way to detect wrapping?
+          sourceVal + sizeVal < sourceVal || sourceVal + sizeVal < sizeVal ||
+          destVal + sizeVal < destVal || destVal + sizeVal < sizeVal) {
         trap("out of bounds segment access in memory.copy");
       }
 
@@ -2406,11 +2609,9 @@ private:
       }
       for (int64_t i = start; i != end; i += step) {
         instance.externalInterface->store8(
-          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)),
-                                                1),
+          instance.getFinalAddressWithoutOffset(Literal(destVal + i), 1),
           instance.externalInterface->load8s(
-            instance.getFinalAddressWithoutOffset(
-              Literal(uint32_t(sourceVal + i)), 1)));
+            instance.getFinalAddressWithoutOffset(Literal(sourceVal + i), 1)));
       }
       return {};
     }
@@ -2431,19 +2632,19 @@ private:
       NOTE_EVAL1(dest);
       NOTE_EVAL1(value);
       NOTE_EVAL1(size);
-      Address destVal(uint32_t(dest.getSingleValue().geti32()));
-      Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+      Address destVal(dest.getSingleValue().getUnsigned());
+      Address sizeVal(size.getSingleValue().getUnsigned());
 
-      if ((uint64_t)destVal + sizeVal >
-          (uint64_t)instance.memorySize * Memory::kPageSize) {
+      // FIXME: cheaper wrapping detection?
+      if (destVal > instance.memorySize * Memory::kPageSize ||
+          sizeVal > instance.memorySize * Memory::kPageSize ||
+          destVal + sizeVal > instance.memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.fill");
       }
       uint8_t val(value.getSingleValue().geti32());
       for (size_t i = 0; i < sizeVal; ++i) {
         instance.externalInterface->store8(
-          instance.getFinalAddressWithoutOffset(Literal(uint32_t(destVal + i)),
-                                                1),
-          val);
+          instance.getFinalAddressWithoutOffset(Literal(destVal + i), 1), val);
       }
       return {};
     }

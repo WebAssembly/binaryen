@@ -33,16 +33,16 @@ namespace wasm {
 
 #define DEBUG_TYPE "writer"
 
-static void readTextData(std::string& input, Module& wasm) {
+static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
   SExpressionParser parser(const_cast<char*>(input.c_str()));
   Element& root = *parser.root;
-  SExpressionWasmBuilder builder(wasm, *root[0]);
+  SExpressionWasmBuilder builder(wasm, *root[0], profile);
 }
 
 void ModuleReader::readText(std::string filename, Module& wasm) {
   BYN_TRACE("reading text from " << filename << "\n");
   auto input(read_file<std::string>(filename, Flags::Text));
-  readTextData(input, wasm);
+  readTextData(input, wasm, profile);
 }
 
 void ModuleReader::readBinaryData(std::vector<char>& input,
@@ -113,7 +113,7 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
     s.write(input.data(), input.size());
     s << '\0';
     std::string input_str = s.str();
-    readTextData(input_str, wasm);
+    readTextData(input_str, wasm, profile);
   }
 }
 

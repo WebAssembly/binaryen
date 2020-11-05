@@ -23,7 +23,7 @@
     (block
      (block $__inlined_func$func_inner
       (local.set $1
-       (ref.null)
+       (ref.null exn)
       )
       (drop
        (block $l0 (result i32)
@@ -44,6 +44,30 @@
     )
     (i32.const 0)
    )
+  )
+ )
+)
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (global $global$0 (mut funcref) (ref.func $0))
+ (func $0 (result i32)
+  (i32.const 1337)
+ )
+ (func $1 (result i32)
+  (block $__inlined_func$0 (result i32)
+   (i32.const 1337)
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (start $0)
+ (func $0
+  (nop)
+ )
+ (func $1
+  (block $__inlined_func$0
+   (nop)
   )
  )
 )

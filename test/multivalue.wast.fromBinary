@@ -6,11 +6,10 @@
  (type $none_=>_f32_i64_i32 (func (result f32 i64 i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32_i64_f32 (func (result i32 i64 f32)))
- (type $none_=>_i32_i64_nullref (func (result i32 i64 nullref)))
  (type $none_=>_f32 (func (result f32)))
  (import "env" "pair" (func $pair (result i32 i64)))
- (global $global$0 (mut i32) (i32.const 0))
- (global $global$1 (mut i64) (i64.const 0))
+ (global $g1 (mut i32) (i32.const 0))
+ (global $g2 (mut i64) (i64.const 0))
  (global $global$2 i32 (i32.const 0))
  (global $global$3 i64 (i64.const 0))
  (func $triple (result i32 i64 f32)
@@ -122,7 +121,7 @@
   (local.get $0)
  )
  (func $reverse (result f32 i64 i32)
-  (local $0 i32)
+  (local $x i32)
   (local $1 i64)
   (local $2 i64)
   (local $3 f32)
@@ -140,7 +139,7 @@
   (local.set $5
    (call $triple)
   )
-  (local.set $0
+  (local.set $x
    (block (result i32)
     (local.set $7
      (tuple.extract 0
@@ -168,7 +167,7 @@
   (drop
    (block (result i32)
     (local.set $9
-     (local.get $0)
+     (local.get $x)
     )
     (drop
      (block (result i64)
@@ -192,7 +191,7 @@
     (drop
      (block (result i32)
       (local.set $11
-       (local.get $0)
+       (local.get $x)
       )
       (local.set $2
        (block (result i64)
@@ -213,7 +212,7 @@
    (local.get $2)
    (block (result i32)
     (local.set $13
-     (local.get $0)
+     (local.get $x)
     )
     (drop
      (block (result i64)
@@ -241,12 +240,12 @@
  )
  (func $global (result i32 i64)
   (local $0 i32)
-  (global.set $global$0
+  (global.set $g1
    (block (result i32)
     (local.set $0
      (i32.const 42)
     )
-    (global.set $global$1
+    (global.set $g2
      (i64.const 7)
     )
     (local.get $0)
@@ -391,19 +390,19 @@
   )
  )
  (func $mv-if (result i32 i64 externref)
-  (local $0 (i32 i64 nullref))
+  (local $0 (i32 i64 externref))
   (local.set $0
-   (if (result i32 i64 nullref)
+   (if (result i32 i64 externref)
     (i32.const 1)
     (tuple.make
      (i32.const 42)
      (i64.const 42)
-     (ref.null)
+     (ref.null extern)
     )
     (tuple.make
      (i32.const 42)
      (i64.const 42)
-     (ref.null)
+     (ref.null extern)
     )
    )
   )

@@ -7,11 +7,9 @@
  (data (i32.const 568) "{ Module.print(\"Hello world\"); }\00{ return $0 + $1; }\00{ Module.print(\"Got \" + $0); }\00")
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66192))
- (global $global$1 i32 (i32.const 652))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
  (func $__wasm_call_ctors
  )
  (func $main (param $0 i32) (param $1 i32) (result i32)
@@ -90,6 +88,6 @@
   )
   (local.get $3)
  )
- ;; custom section "producers", size 157
+ ;; custom section "producers", size 112
 )
 

@@ -10,6 +10,6 @@ console.log("// oneCallerInlineMaxSize=" + binaryen.getOneCallerInlineMaxSize())
 binaryen.setOneCallerInlineMaxSize(33);
 assert(binaryen.getOneCallerInlineMaxSize() == 33);
 
-console.log("// allowHeavyweight=" + binaryen.getAllowHeavyweight());
-binaryen.setAllowHeavyweight(true);
-assert(binaryen.getAllowHeavyweight() == true);
+console.log("// allowInliningFunctionsWithLoops=" + binaryen.getAllowInliningFunctionsWithLoops());
+binaryen.setAllowInliningFunctionsWithLoops(true);
+assert(binaryen.getAllowInliningFunctionsWithLoops() == true);

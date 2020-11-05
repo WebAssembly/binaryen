@@ -29,37 +29,60 @@ namespace wasm {
 
 template<int N> using LaneArray = std::array<Literal, N>;
 
+Literal::Literal(Type type) : type(type) {
+  if (type == Type::i31ref) {
+    // i31ref is special in that it is non-nullable, so we construct with zero
+    i32 = 0;
+  } else {
+    assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+    if (type.isException()) {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    } else {
+      memset(&v128, 0, 16);
+    }
+  }
+}
+
 Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
-  TODO_SINGLE_COMPOUND(type);
-  switch (type.getBasic()) {
-    case Type::i32:
-    case Type::f32:
-      i32 = other.i32;
-      break;
-    case Type::i64:
-    case Type::f64:
-      i64 = other.i64;
-      break;
-    case Type::v128:
-      memcpy(&v128, other.v128, 16);
-      break;
-    case Type::funcref:
-      func = other.func;
-      break;
-    case Type::exnref:
-      // Avoid calling the destructor on an uninitialized value
+  if (type.isException()) {
+    // Avoid calling the destructor on an uninitialized value
+    if (other.exn != nullptr) {
       new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
-      break;
-    case Type::none:
-    case Type::nullref:
-      break;
-    case Type::externref:
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
+    } else {
+      new (&exn) std::unique_ptr<ExceptionPackage>();
+    }
+  } else if (type.isFunction()) {
+    func = other.func;
+  } else {
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+      case Type::i31ref:
+        i32 = other.i32;
+        break;
+      case Type::i64:
+      case Type::f64:
+        i64 = other.i64;
+        break;
+      case Type::v128:
+        memcpy(&v128, other.v128, 16);
+        break;
+      case Type::none:
+        break;
+      case Type::externref:
+      case Type::anyref:
+      case Type::eqref:
+        break; // null
+      case Type::funcref:
+      case Type::exnref:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
+    }
   }
 }
 
@@ -104,22 +127,54 @@ Literal::Literal(const LaneArray<2>& lanes) : type(Type::v128) {
   extractBytes<uint64_t, 2>(v128, lanes);
 }
 
-Literals Literal::makeZero(Type type) {
+Literals Literal::makeZeros(Type type) {
   assert(type.isConcrete());
   Literals zeroes;
   for (const auto& t : type) {
-    zeroes.push_back(makeSingleZero(t));
+    zeroes.push_back(makeZero(t));
   }
   return zeroes;
 }
 
-Literal Literal::makeSingleZero(Type type) {
+Literals Literal::makeOnes(Type type) {
+  assert(type.isConcrete());
+  Literals units;
+  for (const auto& t : type) {
+    units.push_back(makeOne(t));
+  }
+  return units;
+}
+
+Literals Literal::makeNegOnes(Type type) {
+  assert(type.isConcrete());
+  Literals units;
+  for (const auto& t : type) {
+    units.push_back(makeNegOne(t));
+  }
+  return units;
+}
+
+Literal Literal::makeZero(Type type) {
   assert(type.isSingle());
   if (type.isRef()) {
-    return makeNullref();
+    if (type == Type::i31ref) {
+      return makeI31(0);
+    } else {
+      return makeNull(type);
+    }
   } else {
     return makeFromInt32(0, type);
   }
+}
+
+Literal Literal::makeOne(Type type) {
+  assert(type.isNumber());
+  return makeFromInt32(1, type);
+}
+
+Literal Literal::makeNegOne(Type type) {
+  assert(type.isNumber());
+  return makeFromInt32(-1, type);
 }
 
 std::array<uint8_t, 16> Literal::getv128() const {
@@ -130,8 +185,8 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 ExceptionPackage Literal::getExceptionPackage() const {
-  assert(type == Type::exnref);
-  return *exn.get();
+  assert(type.isException() && exn != nullptr);
+  return *exn;
 }
 
 Literal Literal::castToF32() {
@@ -173,6 +228,17 @@ int64_t Literal::getInteger() const {
   }
 }
 
+uint64_t Literal::getUnsigned() const {
+  switch (type.getBasic()) {
+    case Type::i32:
+      return static_cast<uint32_t>(i32);
+    case Type::i64:
+      return i64;
+    default:
+      abort();
+  }
+}
+
 double Literal::getFloat() const {
   switch (type.getBasic()) {
     case Type::f32:
@@ -186,7 +252,6 @@ double Literal::getFloat() const {
 
 void Literal::getBits(uint8_t (&buf)[16]) const {
   memset(buf, 0, 16);
-  TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     case Type::i32:
     case Type::f32:
@@ -199,38 +264,67 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::v128:
       memcpy(buf, &v128, sizeof(v128));
       break;
-    case Type::funcref:
-    case Type::nullref:
-      break;
-    case Type::externref:
-    case Type::exnref:
     case Type::none:
     case Type::unreachable:
+    case Type::funcref:
+    case Type::externref:
+    case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
       WASM_UNREACHABLE("invalid type");
   }
 }
 
 bool Literal::operator==(const Literal& other) const {
-  if (type.isRef() && other.type.isRef()) {
-    if (type == Type::nullref && other.type == Type::nullref) {
-      return true;
-    }
-    if (type == Type::funcref && other.type == Type::funcref &&
-        func == other.func) {
-      return true;
-    }
-    return false;
-  }
   if (type != other.type) {
     return false;
   }
-  if (type == Type::none) {
-    return true;
+  auto compareRef = [&]() {
+    assert(type.isRef());
+    if (isNull() || other.isNull()) {
+      return isNull() == other.isNull();
+    }
+    if (type.isFunction()) {
+      assert(func.is() && other.func.is());
+      return func == other.func;
+    }
+    if (type.isException()) {
+      assert(exn != nullptr && other.exn != nullptr);
+      return *exn == *other.exn;
+    }
+    // other non-null reference type literals cannot represent concrete values,
+    // i.e. there is no concrete externref, anyref or eqref other than null.
+    WASM_UNREACHABLE("unexpected type");
+  };
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::none:
+        return true; // special voided literal
+      case Type::i32:
+      case Type::f32:
+      case Type::i31ref:
+        return i32 == other.i32;
+      case Type::i64:
+      case Type::f64:
+        return i64 == other.i64;
+      case Type::v128:
+        return memcmp(v128, other.v128, 16) == 0;
+      case Type::funcref:
+      case Type::externref:
+      case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+        return compareRef();
+      case Type::unreachable:
+        break;
+    }
+  } else if (type.isRef()) {
+    return compareRef();
+  } else if (type.isRtt()) {
+    WASM_UNREACHABLE("TODO: rtt literals");
   }
-  uint8_t bits[16], other_bits[16];
-  getBits(bits);
-  other.getBits(other_bits);
-  return memcmp(bits, other_bits, 16) == 0;
+  WASM_UNREACHABLE("unexpected type");
 }
 
 bool Literal::operator!=(const Literal& other) const {
@@ -350,15 +444,34 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       literal.printVec128(o, literal.getv128());
       break;
     case Type::funcref:
-      o << "funcref(" << literal.getFunc() << ")";
-      break;
-    case Type::nullref:
-      o << "nullref";
-      break;
-    case Type::exnref:
-      o << "exnref(" << literal.getExceptionPackage() << ")";
+      if (literal.isNull()) {
+        o << "funcref(null)";
+      } else {
+        o << "funcref(" << literal.getFunc() << ")";
+      }
       break;
     case Type::externref:
+      assert(literal.isNull() && "unexpected non-null externref literal");
+      o << "externref(null)";
+      break;
+    case Type::exnref:
+      if (literal.isNull()) {
+        o << "exnref(null)";
+      } else {
+        o << "exnref(" << literal.getExceptionPackage() << ")";
+      }
+      break;
+    case Type::anyref:
+      assert(literal.isNull() && "unexpected non-null anyref literal");
+      o << "anyref(null)";
+      break;
+    case Type::eqref:
+      assert(literal.isNull() && "unexpected non-null eqref literal");
+      o << "eqref(null)";
+      break;
+    case Type::i31ref:
+      o << "i31ref(" << literal.geti31() << ")";
+      break;
     case Type::unreachable:
       WASM_UNREACHABLE("invalid type");
   }
@@ -387,30 +500,30 @@ std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn) {
 
 Literal Literal::countLeadingZeroes() const {
   if (type == Type::i32) {
-    return Literal((int32_t)CountLeadingZeroes(i32));
+    return Literal((int32_t)Bits::countLeadingZeroes(i32));
   }
   if (type == Type::i64) {
-    return Literal((int64_t)CountLeadingZeroes(i64));
+    return Literal((int64_t)Bits::countLeadingZeroes(i64));
   }
   WASM_UNREACHABLE("invalid type");
 }
 
 Literal Literal::countTrailingZeroes() const {
   if (type == Type::i32) {
-    return Literal((int32_t)CountTrailingZeroes(i32));
+    return Literal((int32_t)Bits::countTrailingZeroes(i32));
   }
   if (type == Type::i64) {
-    return Literal((int64_t)CountTrailingZeroes(i64));
+    return Literal((int64_t)Bits::countTrailingZeroes(i64));
   }
   WASM_UNREACHABLE("invalid type");
 }
 
 Literal Literal::popCount() const {
   if (type == Type::i32) {
-    return Literal((int32_t)PopCount(i32));
+    return Literal((int32_t)Bits::popCount(i32));
   }
   if (type == Type::i64) {
-    return Literal((int64_t)PopCount(i64));
+    return Literal((int64_t)Bits::popCount(i64));
   }
   WASM_UNREACHABLE("invalid type");
 }
@@ -582,8 +695,10 @@ Literal Literal::eqz() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -604,8 +719,10 @@ Literal Literal::neg() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -626,8 +743,10 @@ Literal Literal::abs() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -718,6 +837,40 @@ Literal Literal::demote() const {
   return Literal(float(getf64()));
 }
 
+// Wasm has nondeterministic rules for NaN propagation in some operations. For
+// example. f32.neg is deterministic and just flips the sign, even of a NaN, but
+// f32.add is nondeterministic, and if one or more of the inputs is a NaN, then
+//
+//  * if all NaNs are canonical NaNs, the output is some arbitrary canonical NaN
+//  * otherwise the output is some arbitrary arithmetic NaN
+//
+// (canonical = NaN payload is 1000..000; arithmetic: 1???..???, that is, the
+// high bit is 1 and all others can be 0 or 1)
+//
+// For many things we don't need to care, and can just do a normal C++ add for
+// an f32.add, for example - the wasm rules are specified so that things like
+// that just work (in order for such math to be fast). However, for our
+// optimizer, it is useful to "standardize" NaNs when there is nondeterminism.
+// That is, when there are multiple valid outputs, it's nice to emit the same
+// one consistently, so that it doesn't look like the optimization changed
+// something. In other words, if the valid output of an expression is a set of
+// valid NaNs, and after optimization the output is still that same set, then
+// the optimization is valid. And if the interpreter picks the same NaN in both
+// cases from that identical set then nothing looks wrong to the fuzzer.
+template<typename T> static Literal standardizeNaN(T result) {
+  if (!std::isnan(result)) {
+    return Literal(result);
+  }
+  // Pick a simple canonical payload, and positive.
+  if (sizeof(T) == 4) {
+    return Literal(Literal(uint32_t(0x7fc00000u)).reinterpretf32());
+  } else if (sizeof(T) == 8) {
+    return Literal(Literal(uint64_t(0x7ff8000000000000ull)).reinterpretf64());
+  } else {
+    WASM_UNREACHABLE("invalid float");
+  }
+}
+
 Literal Literal::add(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
@@ -725,14 +878,16 @@ Literal Literal::add(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) + uint64_t(other.i64));
     case Type::f32:
-      return Literal(getf32() + other.getf32());
+      return standardizeNaN(getf32() + other.getf32());
     case Type::f64:
-      return Literal(getf64() + other.getf64());
+      return standardizeNaN(getf64() + other.getf64());
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -747,14 +902,16 @@ Literal Literal::sub(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) - uint64_t(other.i64));
     case Type::f32:
-      return Literal(getf32() - other.getf32());
+      return standardizeNaN(getf32() - other.getf32());
     case Type::f64:
-      return Literal(getf64() - other.getf64());
+      return standardizeNaN(getf64() - other.getf64());
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -840,14 +997,16 @@ Literal Literal::mul(const Literal& other) const {
     case Type::i64:
       return Literal(uint64_t(i64) * uint64_t(other.i64));
     case Type::f32:
-      return Literal(getf32() * other.getf32());
+      return standardizeNaN(getf32() * other.getf32());
     case Type::f64:
-      return Literal(getf64() * other.getf64());
+      return standardizeNaN(getf64() * other.getf64());
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -864,10 +1023,8 @@ Literal Literal::div(const Literal& other) const {
         case FP_ZERO:
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
-              return Literal(setQuietNaN(lhs));
             case FP_ZERO:
-              return Literal(
-                std::copysign(std::numeric_limits<float>::quiet_NaN(), sign));
+              return standardizeNaN(lhs / rhs);
             case FP_NORMAL:    // fallthrough
             case FP_SUBNORMAL: // fallthrough
             case FP_INFINITE:
@@ -880,19 +1037,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          // Special-case division by 1. nan / 1 can change nan bits per the
-          // wasm spec, but it is ok to just return that original nan, and we
-          // do that here so that we are consistent with the optimization of
-          // removing the / 1 and leaving just the nan. That is, if we just
-          // do a normal divide and the CPU decides to change the bits, we'd
-          // give a different result on optimized code, which would look like
-          // it was a bad optimization. So out of all the valid results to
-          // return here, return the simplest one that is consistent with
-          // optimization.
-          if (rhs == 1) {
-            return Literal(lhs);
-          }
-          return Literal(lhs / rhs);
+          return standardizeNaN(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
       }
@@ -904,10 +1049,8 @@ Literal Literal::div(const Literal& other) const {
         case FP_ZERO:
           switch (std::fpclassify(lhs)) {
             case FP_NAN:
-              return Literal(setQuietNaN(lhs));
             case FP_ZERO:
-              return Literal(
-                std::copysign(std::numeric_limits<double>::quiet_NaN(), sign));
+              return standardizeNaN(lhs / rhs);
             case FP_NORMAL:    // fallthrough
             case FP_SUBNORMAL: // fallthrough
             case FP_INFINITE:
@@ -920,11 +1063,7 @@ Literal Literal::div(const Literal& other) const {
         case FP_INFINITE: // fallthrough
         case FP_NORMAL:   // fallthrough
         case FP_SUBNORMAL:
-          // See above comment on f32.
-          if (rhs == 1) {
-            return Literal(lhs);
-          }
-          return Literal(lhs / rhs);
+          return standardizeNaN(lhs / rhs);
         default:
           WASM_UNREACHABLE("invalid fp classification");
       }
@@ -1068,9 +1207,9 @@ Literal Literal::shrU(const Literal& other) const {
 Literal Literal::rotL(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
-      return Literal(RotateLeft(uint32_t(i32), uint32_t(other.i32)));
+      return Literal(Bits::rotateLeft(uint32_t(i32), uint32_t(other.i32)));
     case Type::i64:
-      return Literal(RotateLeft(uint64_t(i64), uint64_t(other.i64)));
+      return Literal(Bits::rotateLeft(uint64_t(i64), uint64_t(other.i64)));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1079,9 +1218,9 @@ Literal Literal::rotL(const Literal& other) const {
 Literal Literal::rotR(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
-      return Literal(RotateRight(uint32_t(i32), uint32_t(other.i32)));
+      return Literal(Bits::rotateRight(uint32_t(i32), uint32_t(other.i32)));
     case Type::i64:
-      return Literal(RotateRight(uint64_t(i64), uint64_t(other.i64)));
+      return Literal(Bits::rotateRight(uint64_t(i64), uint64_t(other.i64)));
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1100,8 +1239,10 @@ Literal Literal::eq(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1122,8 +1263,10 @@ Literal Literal::ne(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::nullref:
     case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1267,39 +1410,29 @@ Literal Literal::min(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
+      if (std::isnan(l)) {
+        return standardizeNaN(l);
+      }
+      if (std::isnan(r)) {
+        return standardizeNaN(r);
+      }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
       }
-      auto result = std::min(l, r);
-      bool lnan = std::isnan(l), rnan = std::isnan(r);
-      if (!std::isnan(result) && !lnan && !rnan) {
-        return Literal(result);
-      }
-      if (!lnan && !rnan) {
-        return Literal((int32_t)0x7fc00000).castToF32();
-      }
-      return Literal(lnan ? l : r)
-        .castToI32()
-        .or_(Literal(0xc00000))
-        .castToF32();
+      return Literal(std::min(l, r));
     }
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
+      if (std::isnan(l)) {
+        return standardizeNaN(l);
+      }
+      if (std::isnan(r)) {
+        return standardizeNaN(r);
+      }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? l : r);
       }
-      auto result = std::min(l, r);
-      bool lnan = std::isnan(l), rnan = std::isnan(r);
-      if (!std::isnan(result) && !lnan && !rnan) {
-        return Literal(result);
-      }
-      if (!lnan && !rnan) {
-        return Literal((int64_t)0x7ff8000000000000LL).castToF64();
-      }
-      return Literal(lnan ? l : r)
-        .castToI64()
-        .or_(Literal(int64_t(0x8000000000000LL)))
-        .castToF64();
+      return Literal(std::min(l, r));
     }
     default:
       WASM_UNREACHABLE("unexpected type");
@@ -1310,39 +1443,29 @@ Literal Literal::max(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::f32: {
       auto l = getf32(), r = other.getf32();
+      if (std::isnan(l)) {
+        return standardizeNaN(l);
+      }
+      if (std::isnan(r)) {
+        return standardizeNaN(r);
+      }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
       }
-      auto result = std::max(l, r);
-      bool lnan = std::isnan(l), rnan = std::isnan(r);
-      if (!std::isnan(result) && !lnan && !rnan) {
-        return Literal(result);
-      }
-      if (!lnan && !rnan) {
-        return Literal((int32_t)0x7fc00000).castToF32();
-      }
-      return Literal(lnan ? l : r)
-        .castToI32()
-        .or_(Literal(0xc00000))
-        .castToF32();
+      return Literal(std::max(l, r));
     }
     case Type::f64: {
       auto l = getf64(), r = other.getf64();
+      if (std::isnan(l)) {
+        return standardizeNaN(l);
+      }
+      if (std::isnan(r)) {
+        return standardizeNaN(r);
+      }
       if (l == r && l == 0) {
         return Literal(std::signbit(l) ? r : l);
       }
-      auto result = std::max(l, r);
-      bool lnan = std::isnan(l), rnan = std::isnan(r);
-      if (!std::isnan(result) && !lnan && !rnan) {
-        return Literal(result);
-      }
-      if (!lnan && !rnan) {
-        return Literal((int64_t)0x7ff8000000000000LL).castToF64();
-      }
-      return Literal(lnan ? l : r)
-        .castToI64()
-        .or_(Literal(int64_t(0x8000000000000LL)))
-        .castToF64();
+      return Literal(std::max(l, r));
     }
     default:
       WASM_UNREACHABLE("unexpected type");
@@ -1540,6 +1663,9 @@ Literal Literal::absI32x4() const {
 Literal Literal::negI8x16() const {
   return unary<16, &Literal::getLanesUI8x16, &Literal::neg>(*this);
 }
+Literal Literal::popcntI8x16() const {
+  return unary<16, &Literal::getLanesUI8x16, &Literal::popCount>(*this);
+}
 Literal Literal::negI16x8() const {
   return unary<8, &Literal::getLanesUI16x8, &Literal::neg>(*this);
 }
@@ -1620,7 +1746,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal any_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] != Literal::makeSingleZero(lanes[i].type)) {
+    if (lanes[i] != Literal::makeZero(lanes[i].type)) {
       return Literal(int32_t(1));
     }
   }
@@ -1631,7 +1757,7 @@ template<int Lanes, LaneArray<Lanes> (Literal::*IntoLanes)() const>
 static Literal all_true(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    if (lanes[i] == Literal::makeSingleZero(lanes[i].type)) {
+    if (lanes[i] == Literal::makeZero(lanes[i].type)) {
       return Literal(int32_t(0));
     }
   }
@@ -1984,6 +2110,9 @@ Literal Literal::maxUI16x8(const Literal& other) const {
 Literal Literal::avgrUI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::avgrUInt>(*this, other);
 }
+Literal Literal::q15MulrSatSI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement Q15 rounding, saturating multiplication");
+}
 Literal Literal::addI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);
 }
@@ -2159,6 +2288,43 @@ Literal Literal::widenLowUToVecI32x4() const {
 }
 Literal Literal::widenHighUToVecI32x4() const {
   return widen<4, &Literal::getLanesUI16x8, LaneOrder::High>(*this);
+}
+
+Literal Literal::extMulLowSI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighSI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowUI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighUI16x8(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowSI32x4(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighSI32x4(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowUI32x4(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighUI32x4(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowSI64x2(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighSI64x2(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulLowUI64x2(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+}
+Literal Literal::extMulHighUI64x2(const Literal& other) const {
+  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
 }
 
 Literal Literal::swizzleVec8x16(const Literal& other) const {

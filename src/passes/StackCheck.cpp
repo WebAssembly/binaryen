@@ -36,10 +36,7 @@ namespace wasm {
 static Name STACK_BASE("__stack_base");
 // The limit is the farthest it can grow to, which is the lowest valid address.
 static Name STACK_LIMIT("__stack_limit");
-// Old version, which sets the limit.
-// TODO: remove this
-static Name SET_STACK_LIMIT("__set_stack_limit");
-// New version, which sets the base and the limit.
+// Exported function to set the base and the limit.
 static Name SET_STACK_LIMITS("__set_stack_limits");
 
 static void importStackOverflowHandler(Module& module, Name name) {
@@ -65,14 +62,6 @@ static void addExportedFunction(Module& module, Function* function) {
 
 static void generateSetStackLimitFunctions(Module& module) {
   Builder builder(module);
-  // One-parameter version
-  Function* limitFunc =
-    builder.makeFunction(SET_STACK_LIMIT, Signature(Type::i32, Type::none), {});
-  LocalGet* getArg = builder.makeLocalGet(0, Type::i32);
-  Expression* store = builder.makeGlobalSet(STACK_LIMIT, getArg);
-  limitFunc->body = store;
-  addExportedFunction(module, limitFunc);
-  // Two-parameter version
   Function* limitsFunc = builder.makeFunction(
     SET_STACK_LIMITS, Signature({Type::i32, Type::i32}, Type::none), {});
   LocalGet* getBase = builder.makeLocalGet(0, Type::i32);

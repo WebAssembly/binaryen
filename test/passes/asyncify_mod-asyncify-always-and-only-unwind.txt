@@ -152,52 +152,54 @@
        )
       )
       (block
-       (if
-        (if (result i32)
+       (block
+        (if
+         (if (result i32)
+          (i32.eq
+           (global.get $__asyncify_state)
+           (i32.const 0)
+          )
+          (i32.const 1)
+          (i32.eq
+           (local.get $6)
+           (i32.const 0)
+          )
+         )
+         (block
+          (local.set $7
+           (call $import2)
+          )
+          (if
+           (i32.const 1)
+           (br $__asyncify_unwind
+            (i32.const 0)
+           )
+           (local.set $1
+            (local.get $7)
+           )
+          )
+         )
+        )
+        (if
          (i32.eq
           (global.get $__asyncify_state)
           (i32.const 0)
          )
-         (i32.const 1)
-         (i32.eq
-          (local.get $6)
-          (i32.const 0)
-         )
-        )
-        (block
-         (local.set $7
-          (call $import2)
-         )
-         (if
-          (i32.const 1)
-          (br $__asyncify_unwind
-           (i32.const 0)
+         (block
+          (local.set $temp
+           (local.get $1)
           )
-          (local.set $1
-           (local.get $7)
+          (local.set $2
+           (local.get $temp)
+          )
+          (return
+           (local.get $2)
           )
          )
         )
+        (nop)
+        (nop)
        )
-       (if
-        (i32.eq
-         (global.get $__asyncify_state)
-         (i32.const 0)
-        )
-        (block
-         (local.set $temp
-          (local.get $1)
-         )
-         (local.set $2
-          (local.get $temp)
-         )
-         (return
-          (local.get $2)
-         )
-        )
-       )
-       (nop)
-       (nop)
       )
       (unreachable)
      )

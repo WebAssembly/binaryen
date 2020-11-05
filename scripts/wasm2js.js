@@ -6,12 +6,6 @@ var WebAssembly = {
   Memory: function(opts) {
     return {
       buffer: new ArrayBuffer(opts['initial'] * 64 * 1024),
-      grow: function(amount) {
-        var oldBuffer = this.buffer;
-        var ret = __growWasmMemory(amount);
-        assert(this.buffer !== oldBuffer); // the call should have updated us
-        return ret;
-      }
     };
   },
 
@@ -72,7 +66,7 @@ var WebAssembly = {
     // Additional imports
     asmLibraryArg['__tempMemory__'] = 0; // risky!
     // This will be replaced by the actual wasm2js code.
-    var exports = instantiate(asmLibraryArg, wasmMemory, wasmTable);
+    var exports = instantiate(asmLibraryArg, wasmMemory);
     return {
       'exports': exports
     };
@@ -208,5 +202,3 @@ var asmLibraryArg = {
 };
 
 var wasmMemory = new WebAssembly.Memory({ initial: 1 });
-var wasmTable = new WebAssembly.Table({ initial: 1 });
-

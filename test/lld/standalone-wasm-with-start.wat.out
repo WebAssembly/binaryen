@@ -1,6 +1,5 @@
 (module
  (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (memory $0 2)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $foo)
@@ -11,31 +10,23 @@
  (export "_start" (func $_start))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
- (export "__growWasmMemory" (func $__growWasmMemory))
  (func $_start (result i32)
   (nop)
  )
  (func $foo (result i32)
   (nop)
  )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 8,
   "tableSize": 1,
   "declares": [
   ],
   "externs": [
   ],
   "exports": [
-    "_start",
-    "__growWasmMemory"
+    "_start"
   ],
   "namedGlobals": {
     "__heap_base" : "66112",

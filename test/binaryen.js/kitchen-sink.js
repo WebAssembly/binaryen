@@ -48,44 +48,56 @@ function makeDroppedInt32(x) {
 
 function test_types() {
   console.log("  // BinaryenTypeNone: " + binaryen.none);
-  console.log("  //", binaryen.expandType(binaryen.none));
+  console.log("  //", binaryen.expandType(binaryen.none).join(","));
 
   console.log("  // BinaryenTypeUnreachable: " + binaryen.unreachable);
-  console.log("  //", binaryen.expandType(binaryen.unreachable));
+  console.log("  //", binaryen.expandType(binaryen.unreachable).join(","));
 
   console.log("  // BinaryenTypeInt32: " + binaryen.i32);
-  console.log("  //", binaryen.expandType(binaryen.i32));
+  console.log("  //", binaryen.expandType(binaryen.i32).join(","));
 
   console.log("  // BinaryenTypeInt64: " + binaryen.i64);
-  console.log("  //", binaryen.expandType(binaryen.i64));
+  console.log("  //", binaryen.expandType(binaryen.i64).join(","));
 
   console.log("  // BinaryenTypeFloat32: " + binaryen.f32);
-  console.log("  //", binaryen.expandType(binaryen.f32));
+  console.log("  //", binaryen.expandType(binaryen.f32).join(","));
 
   console.log("  // BinaryenTypeFloat64: " + binaryen.f64);
-  console.log("  //", binaryen.expandType(binaryen.f64));
+  console.log("  //", binaryen.expandType(binaryen.f64).join(","));
 
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
-  console.log("  //", binaryen.expandType(binaryen.v128));
+  console.log("  //", binaryen.expandType(binaryen.v128).join(","));
+
+  console.log("  // BinaryenTypeFuncref: " + binaryen.funcref);
+  console.log("  //", binaryen.expandType(binaryen.funcref).join(","));
 
   console.log("  // BinaryenTypeExternref: " + binaryen.externref);
-  console.log("  //", binaryen.expandType(binaryen.externref));
+  console.log("  //", binaryen.expandType(binaryen.externref).join(","));
 
   console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
-  console.log("  //", binaryen.expandType(binaryen.exnref));
+  console.log("  //", binaryen.expandType(binaryen.exnref).join(","));
+
+  console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
+  console.log("  //", binaryen.expandType(binaryen.anyref).join(","));
+
+  console.log("  // BinaryenTypeEqref: " + binaryen.eqref);
+  console.log("  //", binaryen.expandType(binaryen.eqref).join(","));
+
+  console.log("  // BinaryenTypeI31ref: " + binaryen.i31ref);
+  console.log("  //", binaryen.expandType(binaryen.i31ref).join(","));
 
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-  console.log("  //", binaryen.expandType(i32_pair));
+  console.log("  //", binaryen.expandType(i32_pair).join(","));
 
   var duplicate_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-  console.log("  //", binaryen.expandType(duplicate_pair));
+  console.log("  //", binaryen.expandType(duplicate_pair).join(","));
 
   assert(i32_pair == duplicate_pair);
 
   var f32_pair = binaryen.createType([binaryen.f32, binaryen.f32]);
-  console.log("  //", binaryen.expandType(f32_pair));
+  console.log("  //", binaryen.expandType(f32_pair).join(","));
 }
 
 function test_features() {
@@ -100,6 +112,8 @@ function test_features() {
   console.log("Features.TailCall: " + binaryen.Features.TailCall);
   console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
+  console.log("Features.GC: " + binaryen.Features.GC);
+  console.log("Features.Memory64: " + binaryen.Features.Memory64);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -124,7 +138,8 @@ function test_ids() {
   console.log("SelectId: " + binaryen.SelectId);
   console.log("DropId: " + binaryen.DropId);
   console.log("ReturnId: " + binaryen.ReturnId);
-  console.log("HostId: " + binaryen.HostId);
+  console.log("MemorySizeId: " + binaryen.MemorySizeId);
+  console.log("MemoryGrowId: " + binaryen.MemoryGrowId);
   console.log("NopId: " + binaryen.NopId);
   console.log("UnreachableId: " + binaryen.UnreachableId);
   console.log("AtomicCmpxchgId: " + binaryen.AtomicCmpxchgId);
@@ -141,11 +156,31 @@ function test_ids() {
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
   console.log("MemoryFillId: " + binaryen.MemoryFillId);
+  console.log("PopId: " + binaryen.PopId);
+  console.log("RefNullId: " + binaryen.RefNullId);
+  console.log("RefIsNullId: " + binaryen.RefIsNullId);
+  console.log("RefFuncId: " + binaryen.RefFuncId);
+  console.log("RefEqId: " + binaryen.RefEqId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
   console.log("BrOnExnId: " + binaryen.BrOnExnId);
-  console.log("PopId: " + binaryen.PopId);
+  console.log("TupleMakeId: " + binaryen.TupleMakeId);
+  console.log("TupleExtractId: " + binaryen.TupleExtractId);
+  console.log("I31NewId: " + binaryen.I31NewId);
+  console.log("I31GetId: " + binaryen.I31GetId);
+  console.log("RefTestId: " + binaryen.RefTestId);
+  console.log("RefCastId: " + binaryen.RefCastId);
+  console.log("BrOnCastId: " + binaryen.BrOnCastId);
+  console.log("RttCanonId: " + binaryen.RttCanonId);
+  console.log("RttSubId: " + binaryen.RttSubId);
+  console.log("StructNewId: " + binaryen.StructNewId);
+  console.log("StructGetId: " + binaryen.StructGetId);
+  console.log("StructSetId: " + binaryen.StructSetId);
+  console.log("ArrayNewId: " + binaryen.ArrayNewId);
+  console.log("ArrayGetId: " + binaryen.ArrayGetId);
+  console.log("ArraySetId: " + binaryen.ArraySetId);
+  console.log("ArrayLenId: " + binaryen.ArrayLenId);
 }
 
 function test_core() {
@@ -502,9 +537,13 @@ function test_core() {
     module.return_call_indirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
 
     // Reference types
-    module.ref.is_null(module.ref.null()),
+    module.ref.is_null(module.ref.null(binaryen.externref)),
+    module.ref.is_null(module.ref.null(binaryen.funcref)),
     module.ref.is_null(module.ref.func("kitchen()sinker")),
-    module.select(temp10, module.ref.null(), module.ref.func("kitchen()sinker"), binaryen.funcref),
+    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker"), binaryen.funcref),
+
+    // GC
+    module.ref.eq(module.ref.null(binaryen.eqref), module.ref.null(binaryen.eqref)),
 
     // Exception handling
     module.try(
@@ -561,11 +600,33 @@ function test_core() {
     module.f32.pop(),
     module.f64.pop(),
     module.v128.pop(),
-    module.externref.pop(),
     module.funcref.pop(),
-    module.nullref.pop(),
+    module.externref.pop(),
     module.exnref.pop(),
-    // TODO: Host
+    module.anyref.pop(),
+    module.eqref.pop(),
+    module.i31ref.pop(),
+
+    // Memory
+    module.memory.size(),
+    module.memory.grow(makeInt32(0)),
+
+    // GC
+    module.i31.new(
+      module.i32.const(0)
+    ),
+    module.i31.get_s(
+      module.i31.new(
+        module.i32.const(1)
+      )
+    ),
+    module.i31.get_u(
+      module.i31.new(
+        module.i32.const(2)
+      )
+    ),
+
+    // Other
     module.nop(),
     module.unreachable(),
   ];

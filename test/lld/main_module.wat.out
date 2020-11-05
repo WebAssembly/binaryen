@@ -1,32 +1,25 @@
 (module
- (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "memory" (memory $0 0))
  (data (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
- (import "env" "table" (table $0 1 funcref))
- (elem (global.get $gimport$3) $print_message\28\29)
- (import "env" "__stack_pointer" (global $sp_import i32))
+ (import "env" "__indirect_function_table" (table $timport$1 0 funcref))
+ (import "env" "__stack_pointer" (global $sp (mut i32)))
  (import "env" "__memory_base" (global $gimport$2 i32))
  (import "env" "__table_base" (global $gimport$3 i32))
+ (import "GOT.mem" "external_var" (global $gimport$5 (mut i32)))
+ (import "GOT.func" "puts" (global $gimport$6 (mut i32)))
+ (import "GOT.func" "_Z13print_messagev" (global $gimport$7 (mut i32)))
  (import "env" "puts" (func $puts (param i32) (result i32)))
- (import "env" "g$external_var" (func $g$external_var (result i32)))
- (import "env" "fp$puts$ii" (func $fp$puts$ii (result i32)))
- (global $gimport$5 (mut i32) (i32.const 0))
- (global $gimport$6 (mut i32) (i32.const 0))
- (global $gimport$7 (mut i32) (i32.const 0))
  (global $global$0 i32 (i32.const 16))
  (global $global$1 i32 (i32.const 20))
  (global $global i32 (i32.const 42))
- (global $sp (mut i32) (global.get $sp_import))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "_Z13print_messagev" (func $print_message\28\29))
  (export "ptr_puts" (global $global$0))
  (export "ptr_local_func" (global $global$1))
  (export "__data_end" (global $global))
- (export "dynCall_i" (func $dynCall_i))
- (export "__growWasmMemory" (func $__growWasmMemory))
- (export "__assign_got_enties" (func $__assign_got_enties))
  (func $__wasm_call_ctors
   (call $__wasm_apply_relocs)
  )
@@ -59,56 +52,28 @@
    (global.get $gimport$5)
   )
  )
- (func $__assign_got_enties
-  (global.set $gimport$5
-   (call $g$external_var)
-  )
-  (global.set $gimport$6
-   (call $fp$puts$ii)
-  )
-  (global.set $gimport$7
-   (i32.add
-    (global.get $gimport$3)
-    (i32.const 0)
-   )
-  )
- )
- (func $dynCall_i (param $fptr i32) (result i32)
-  (call_indirect (type $none_=>_i32)
-   (local.get $fptr)
-  )
- )
- (func $__growWasmMemory (param $newSize i32) (result i32)
-  (memory.grow
-   (local.get $newSize)
-  )
- )
 )
 (;
 --BEGIN METADATA --
 {
-  "staticBump": 4294966770,
-  "tableSize": 1,
+  "tableSize": 0,
   "initializers": [
-    "__assign_got_enties",
     "__wasm_call_ctors"
   ],
   "declares": [
-    "puts",
-    "g$external_var",
-    "fp$puts$ii"
+    "puts"
   ],
   "externs": [
     "___stack_pointer",
     "___memory_base",
-    "___table_base"
+    "___table_base",
+    "_external_var",
+    "_puts",
+    "__Z13print_messagev"
   ],
   "exports": [
     "__wasm_call_ctors",
-    "_Z13print_messagev",
-    "dynCall_i",
-    "__growWasmMemory",
-    "__assign_got_enties"
+    "_Z13print_messagev"
   ],
   "namedGlobals": {
     "ptr_puts" : "16",
