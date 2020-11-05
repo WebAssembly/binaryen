@@ -4,9 +4,9 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i64_=>_none (func (param i32 i64)))
  (type $none_=>_none (func))
+ (type $i32_i32_i64_i64_=>_none (func (param i32 i32 i64 i64)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
- (type $i32_i32_i64_i64_=>_none (func (param i32 i32 i64 i64)))
  (type $i32_i64_f32_f64_=>_none (func (param i32 i64 f32 f64)))
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
@@ -4874,21 +4874,9 @@
    )
   )
   (drop
-   (i32.or
-    (i32.shl
-     (local.get $x)
-     (i32.and
-      (local.get $y)
-      (i32.const 31)
-     )
-    )
-    (i32.shr_u
-     (local.get $x)
-     (i32.sub
-      (i32.const 32)
-      (local.get $y)
-     )
-    )
+   (i32.rotl
+    (local.get $x)
+    (local.get $y)
    )
   )
   (drop
@@ -4941,35 +4929,8 @@
   )
   (drop
    (i32.or
+    (local.get $x)
     (i32.shl
-     (local.get $x)
-     (local.get $y)
-    )
-    (i32.shr_u
-     (local.get $x)
-     (i32.and
-      (i32.sub
-       (i32.const 0)
-       (local.get $y)
-      )
-      (i32.const 32)
-     )
-    )
-   )
-  )
-  (drop
-   (i32.or
-    (i32.shl
-     (local.get $y)
-     (i32.and
-      (i32.sub
-       (i32.const 0)
-       (local.get $y)
-      )
-      (i32.const 31)
-     )
-    )
-    (i32.shr_u
      (local.get $x)
      (local.get $y)
     )
@@ -4978,29 +4939,7 @@
   (drop
    (i32.or
     (i32.shl
-     (i32.load
-      (local.get $x)
-     )
-     (i32.and
-      (i32.sub
-       (i32.const 0)
-       (local.get $y)
-      )
-      (i32.const 31)
-     )
-    )
-    (i32.shr_u
-     (i32.load
-      (local.get $x)
-     )
      (local.get $y)
-    )
-   )
-  )
-  (drop
-   (i32.or
-    (i32.shl
-     (local.get $x)
      (i32.sub
       (i32.const 0)
       (local.get $y)
@@ -5008,11 +4947,33 @@
     )
     (i32.shr_u
      (local.get $x)
-     (i32.and
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.or
+    (i32.shl
+     (i32.load
+      (local.get $x)
+     )
+     (i32.sub
+      (i32.const 0)
       (local.get $y)
-      (i32.const 31)
      )
     )
+    (i32.shr_u
+     (i32.load
+      (local.get $x)
+     )
+     (local.get $y)
+    )
+   )
+  )
+  (drop
+   (i32.rotr
+    (local.get $x)
+    (local.get $y)
    )
   )
   (drop

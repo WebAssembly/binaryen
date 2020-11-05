@@ -1362,8 +1362,8 @@ private:
     return nullptr;
   }
 
-  // (x <<  (y &? M)) | (x >>> ((0 - y) & M))   ==>  (i32|i64).rotl(x, y)
-  // (x >>> (y &? M)) | (x  << ((0 - y) & M))   ==>  (i32|i64).rotr(x, y)
+  // (x <<  (y &? M)) | (x >>> ((0 - y) &? M))  ==>  (i32|i64).rotl(x, y)
+  // (x >>> (y &? M)) | (x  << ((0 - y) &? M))  ==>  (i32|i64).rotr(x, y)
   //
   // (x <<  (y &? M)) | (x >>> ((N - y) &? M))  ==>  (i32|i64).rotl(x, y)
   // (x >>> (y &? M)) | (x  << ((N - y) &? M))  ==>  (i32|i64).rotr(x, y)
@@ -1449,68 +1449,23 @@ private:
             }
           }
 
-          bool rightMaskRequired = false;
           Literal literalMask = Literal::makeFromInt32(bitSize - 1, type);
           Expression* leftRight = left->right;
 
-          // canonicalize (x sh (y & M)) to (x sh y)
-          if (auto* leftRightBinary = leftRight->dynCast<Binary>()) {
-            // extract "y" from (y &? M) to "leftRight"
-            if (leftRightBinary->op ==
-                Abstract::getBinary(type, Abstract::And)) {
-              if (auto* leftRightRightConst =
-                    leftRightBinary->right->dynCast<Const>()) {
-                if (leftRightRightConst->value == literalMask) {
-                  leftRight = leftRightBinary->left;
-                  rightMaskRequired = true;
-                }
-              }
-            }
-          }
-
           if (auto* rightRight = right->right->dynCast<Binary>()) {
-            if (!rightMaskRequired) {
-              // only handle case without any masks
-              // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
-              if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
-                if (auto* c = rightRight->left->dynCast<Const>()) {
-                  if (c->value == Literal::makeFromInt32(bitSize, type)) {
-                    if (ExpressionAnalyzer::equal(leftRight,
-                                                  rightRight->right)) {
-                      left->op = Abstract::getBinary(
-                        type, isRotateLeft ? Abstract::RotL : Abstract::RotR);
-                      left->right = leftRight;
-                      return left;
-                    }
-                  }
-                }
-              }
-            }
-
-            // (x << (y &? M)) | (x >>> ((0 - y) & M)) ==> (i32|i64).rotl(x, y)
-            // (x << (y & M))  | (x >>> ((N - y) & M)) ==> (i32|i64).rotl(x, y)
-            if (rightRight->op == Abstract::getBinary(type, Abstract::And)) {
-              if (auto* maskConst = rightRight->right->dynCast<Const>()) {
-                if (maskConst->value == literalMask) {
-                  // check (0 - y) & M or (N - y) & M
-                  if (auto* rightRightLeft =
-                        rightRight->left->dynCast<Binary>()) {
-                    if (rightRightLeft->op ==
-                        Abstract::getBinary(type, Abstract::Sub)) {
-                      if (auto* c = rightRightLeft->left->dynCast<Const>()) {
-                        if (c->value.getInteger() == int64_t(bitSize) ||
-                            c->value.getInteger() == 0LL) {
-                          if (ExpressionAnalyzer::equal(
-                                leftRight, rightRightLeft->right)) {
-                            left->op = Abstract::getBinary(
-                              type,
-                              isRotateLeft ? Abstract::RotL : Abstract::RotR);
-                            left->right = leftRight;
-                            return left;
-                          }
-                        }
-                      }
-                    }
+            // only handle case without any masks
+            // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
+            // (x << y) | (x >>> (0 - y))  ==>  (i32|64).rotl(x, y)
+            if (rightRight->op == Abstract::getBinary(type, Abstract::Sub)) {
+              if (auto* c = rightRight->left->dynCast<Const>()) {
+                if (c->value == Literal::makeFromInt32(bitSize, type) ||
+                    c->value.isZero()) {
+                  if (ExpressionAnalyzer::equal(leftRight,
+                                                rightRight->right)) {
+                    left->op = Abstract::getBinary(
+                      type, isRotateLeft ? Abstract::RotL : Abstract::RotR);
+                    left->right = leftRight;
+                    return left;
                   }
                 }
               }
