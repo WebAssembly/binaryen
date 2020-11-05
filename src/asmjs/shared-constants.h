@@ -54,7 +54,6 @@ extern cashew::IString I32S_DIV;
 extern cashew::IString I32U_DIV;
 extern cashew::IString I32S_REM;
 extern cashew::IString I32U_REM;
-extern cashew::IString GLOBAL_MATH;
 extern cashew::IString ABS;
 extern cashew::IString FLOOR;
 extern cashew::IString CEIL;
