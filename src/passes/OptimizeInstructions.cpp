@@ -1261,12 +1261,6 @@ private:
             replaceCurrent(curr->left);
             return;
           }
-        } else if (curr->op == Abstract::getBinary(type, Abstract::Sub)) {
-          // we must leave a left zero, as it is how we negate ints
-          if (right && right->value.isZero()) {
-            replaceCurrent(curr->left);
-            return;
-          }
         } else if (curr->op == Abstract::getBinary(type, Abstract::Shl)) {
           // shifting a 0 is a 0, or anything by 0 has no effect, all unless the
           // shift has side effects
