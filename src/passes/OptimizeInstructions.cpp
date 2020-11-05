@@ -910,9 +910,15 @@ private:
     };
     // Prefer a const on the right.
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
-      return swap();
+      swap();
     }
-    if (binary->right->is<Const>()) {
+    if (auto* c = binary->right->dynCast<Const>()) {
+      // x - C  ==>   x + (-C)
+      // Prefer use addision operation if constant on the right.
+      if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
+        c->value = c->value.neg();
+        binary->op = Abstract::getBinary(c->type, Abstract::Add);
+      }
       return;
     }
     // Prefer a get on the right.
