@@ -338,6 +338,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       }
       runner.addDefaultOptimizationPasses();
       runner.add("avoid-reinterprets");
+    } else {
+      runner.add("optimize-instructions-finalize");
     }
     // Finally, get the code into the flat form we need for wasm2js itself, and
     // optimize that a little in a way that keeps that property.
@@ -354,7 +356,6 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       runner.add("coalesce-locals");
     }
     runner.add("reorder-locals");
-    runner.add("optimize-instructions-finalize");
     runner.add("vacuum");
     runner.add("remove-unused-module-elements");
     // DCE at the end to make sure all IR nodes have valid types for conversion
