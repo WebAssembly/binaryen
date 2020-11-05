@@ -274,22 +274,22 @@ struct PrintExpressionContents
     prepareColor(o);
     printRMWSize(o, curr->type, curr->bytes);
     switch (curr->op) {
-      case Add:
+      case RMWAdd:
         o << "add";
         break;
-      case Sub:
+      case RMWSub:
         o << "sub";
         break;
-      case And:
+      case RMWAnd:
         o << "and";
         break;
-      case Or:
+      case RMWOr:
         o << "or";
         break;
-      case Xor:
+      case RMWXor:
         o << "xor";
         break;
-      case Xchg:
+      case RMWXchg:
         o << "xchg";
         break;
     }
@@ -498,6 +498,43 @@ struct PrintExpressionContents
     if (curr->align != curr->getMemBytes()) {
       o << " align=" << curr->align;
     }
+  }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case LoadLaneVec8x16:
+        o << "v128.load8_lane";
+        break;
+      case LoadLaneVec16x8:
+        o << "v128.load16_lane";
+        break;
+      case LoadLaneVec32x4:
+        o << "v128.load32_lane";
+        break;
+      case LoadLaneVec64x2:
+        o << "v128.load64_lane";
+        break;
+      case StoreLaneVec8x16:
+        o << "v128.store8_lane";
+        break;
+      case StoreLaneVec16x8:
+        o << "v128.store16_lane";
+        break;
+      case StoreLaneVec32x4:
+        o << "v128.store32_lane";
+        break;
+      case StoreLaneVec64x2:
+        o << "v128.store64_lane";
+        break;
+    }
+    restoreNormalColor(o);
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != curr->getMemBytes()) {
+      o << " align=" << curr->align;
+    }
+    o << " " << int(curr->index);
   }
   void visitMemoryInit(MemoryInit* curr) {
     prepareColor(o);
@@ -736,6 +773,9 @@ struct PrintExpressionContents
         break;
       case BitmaskVecI8x16:
         o << "i8x16.bitmask";
+        break;
+      case PopcntVecI8x16:
+        o << "i8x16.popcnt";
         break;
       case AbsVecI16x8:
         o << "i16x8.abs";
@@ -1317,6 +1357,22 @@ struct PrintExpressionContents
       case AvgrUVecI16x8:
         o << "i16x8.avgr_u";
         break;
+      case Q15MulrSatSVecI16x8:
+        o << "i16x8.q15mulr_sat_s";
+        break;
+      case ExtMulLowSVecI16x8:
+        o << "i16x8.extmul_low_i8x16_s";
+        break;
+      case ExtMulHighSVecI16x8:
+        o << "i16x8.extmul_high_i8x16_s";
+        break;
+      case ExtMulLowUVecI16x8:
+        o << "i16x8.extmul_low_i8x16_u";
+        break;
+      case ExtMulHighUVecI16x8:
+        o << "i16x8.extmul_high_i8x16_u";
+        break;
+
       case AddVecI32x4:
         o << "i32x4.add";
         break;
@@ -1341,6 +1397,19 @@ struct PrintExpressionContents
       case DotSVecI16x8ToVecI32x4:
         o << "i32x4.dot_i16x8_s";
         break;
+      case ExtMulLowSVecI32x4:
+        o << "i32x4.extmul_low_i16x8_s";
+        break;
+      case ExtMulHighSVecI32x4:
+        o << "i32x4.extmul_high_i16x8_s";
+        break;
+      case ExtMulLowUVecI32x4:
+        o << "i32x4.extmul_low_i16x8_u";
+        break;
+      case ExtMulHighUVecI32x4:
+        o << "i32x4.extmul_high_i16x8_u";
+        break;
+
       case AddVecI64x2:
         o << "i64x2.add";
         break;
@@ -1349,6 +1418,18 @@ struct PrintExpressionContents
         break;
       case MulVecI64x2:
         o << "i64x2.mul";
+        break;
+      case ExtMulLowSVecI64x2:
+        o << "i64x2.extmul_low_i32x4_s";
+        break;
+      case ExtMulHighSVecI64x2:
+        o << "i64x2.extmul_high_i32x4_s";
+        break;
+      case ExtMulLowUVecI64x2:
+        o << "i64x2.extmul_low_i32x4_u";
+        break;
+      case ExtMulHighUVecI64x2:
+        o << "i64x2.extmul_high_i32x4_u";
         break;
 
       case AddVecF32x4:
@@ -1906,6 +1987,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ptr);
+    decIndent();
+  }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
+    printFullLine(curr->vec);
     decIndent();
   }
   void visitMemoryInit(MemoryInit* curr) {

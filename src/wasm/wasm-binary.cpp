@@ -865,7 +865,6 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
 void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
   if (func && !func->expressionLocations.empty()) {
     auto& span = binaryLocations.expressions.at(curr);
-    assert(span.end == 0);
     span.end = o.size();
   }
 }
@@ -1214,6 +1213,10 @@ int64_t WasmBinaryBuilder::getS64LEB() {
   ret.read([&]() { return (int8_t)getInt8(); });
   BYN_TRACE("getS64LEB: " << ret.value << " ==>\n");
   return ret.value;
+}
+
+uint64_t WasmBinaryBuilder::getUPtrLEB() {
+  return wasm.memory.is64() ? getU64LEB() : getU32LEB();
 }
 
 Type WasmBinaryBuilder::getType() {
@@ -2580,7 +2583,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::End:
       curr = nullptr;
-      continueControlFlow(BinaryLocations::End, startPos);
+      // Pop the current control flow structure off the stack. If there is none
+      // then this is the "end" of the function itself, which also emits an
+      // "end" byte.
+      if (!controlFlowStack.empty()) {
+        controlFlowStack.pop_back();
+      }
       break;
     case BinaryConsts::Else:
       curr = nullptr;
@@ -2711,6 +2719,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDLoad(curr, opcode)) {
         break;
       }
+      if (maybeVisitSIMDLoadStoreLane(curr, opcode)) {
+        break;
+      }
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
       break;
     }
@@ -2805,22 +2816,12 @@ void WasmBinaryBuilder::startControlFlow(Expression* curr) {
 void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
                                             BinaryLocation pos) {
   if (DWARF && currFunction) {
-    if (controlFlowStack.empty()) {
-      // We reached the end of the function, which is also marked with an
-      // "end", like a control flow structure.
-      assert(id == BinaryLocations::End);
-      assert(pos + 1 == endOfFunction);
-      return;
-    }
     assert(!controlFlowStack.empty());
     auto currControlFlow = controlFlowStack.back();
     // We are called after parsing the byte, so we need to subtract one to
     // get its position.
     currFunction->delimiterLocations[currControlFlow][id] =
       pos - codeSectionLocation;
-    if (id == BinaryLocations::End) {
-      controlFlowStack.pop_back();
-    }
   }
 }
 
@@ -3153,7 +3154,7 @@ void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
     throwError("Alignment must be of a reasonable size");
   }
   alignment = Bits::pow2(rawAlignment);
-  offset = getU32LEB();
+  offset = getUPtrLEB();
 }
 
 bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
@@ -3413,7 +3414,7 @@ bool WasmBinaryBuilder::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
 
   // Set curr to the given opcode, type and size.
 #define SET(opcode, optype, size)                                              \
-  curr->op = opcode;                                                           \
+  curr->op = RMW##opcode;                                                      \
   curr->type = optype;                                                         \
   curr->bytes = size
 
@@ -4306,6 +4307,26 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = AvgrUVecI16x8;
       break;
+    case BinaryConsts::I16x8Q15MulrSatS:
+      curr = allocator.alloc<Binary>();
+      curr->op = Q15MulrSatSVecI16x8;
+      break;
+    case BinaryConsts::I16x8ExtMulLowSI8x16:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowSVecI16x8;
+      break;
+    case BinaryConsts::I16x8ExtMulHighSI8x16:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighSVecI16x8;
+      break;
+    case BinaryConsts::I16x8ExtMulLowUI8x16:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowUVecI16x8;
+      break;
+    case BinaryConsts::I16x8ExtMulHighUI8x16:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighUVecI16x8;
+      break;
     case BinaryConsts::I32x4Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI32x4;
@@ -4338,6 +4359,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = DotSVecI16x8ToVecI32x4;
       break;
+    case BinaryConsts::I32x4ExtMulLowSI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowSVecI32x4;
+      break;
+    case BinaryConsts::I32x4ExtMulHighSI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighSVecI32x4;
+      break;
+    case BinaryConsts::I32x4ExtMulLowUI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowUVecI32x4;
+      break;
+    case BinaryConsts::I32x4ExtMulHighUI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighUVecI32x4;
+      break;
     case BinaryConsts::I64x2Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI64x2;
@@ -4349,6 +4386,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I64x2Mul:
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI64x2;
+      break;
+    case BinaryConsts::I64x2ExtMulLowSI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowSVecI64x2;
+      break;
+    case BinaryConsts::I64x2ExtMulHighSI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighSVecI64x2;
+      break;
+    case BinaryConsts::I64x2ExtMulLowUI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowUVecI64x2;
+      break;
+    case BinaryConsts::I64x2ExtMulHighUI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighUVecI64x2;
       break;
     case BinaryConsts::F32x4Add:
       curr = allocator.alloc<Binary>();
@@ -4474,6 +4527,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::V128Not:
       curr = allocator.alloc<Unary>();
       curr->op = NotVec128;
+      break;
+    case BinaryConsts::I8x16Popcnt:
+      curr = allocator.alloc<Unary>();
+      curr->op = PopcntVecI8x16;
       break;
     case BinaryConsts::I8x16Abs:
       curr = allocator.alloc<Unary>();
@@ -4974,6 +5031,57 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       return false;
   }
   readMemoryAccess(curr->align, curr->offset);
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
+                                                    uint32_t code) {
+  SIMDLoadStoreLaneOp op;
+  size_t lanes;
+  switch (code) {
+    case BinaryConsts::V128Load8Lane:
+      op = LoadLaneVec8x16;
+      lanes = 16;
+      break;
+    case BinaryConsts::V128Load16Lane:
+      op = LoadLaneVec16x8;
+      lanes = 8;
+      break;
+    case BinaryConsts::V128Load32Lane:
+      op = LoadLaneVec32x4;
+      lanes = 4;
+      break;
+    case BinaryConsts::V128Load64Lane:
+      op = LoadLaneVec64x2;
+      lanes = 2;
+      break;
+    case BinaryConsts::V128Store8Lane:
+      op = StoreLaneVec8x16;
+      lanes = 16;
+      break;
+    case BinaryConsts::V128Store16Lane:
+      op = StoreLaneVec16x8;
+      lanes = 8;
+      break;
+    case BinaryConsts::V128Store32Lane:
+      op = StoreLaneVec32x4;
+      lanes = 4;
+      break;
+    case BinaryConsts::V128Store64Lane:
+      op = StoreLaneVec64x2;
+      lanes = 2;
+      break;
+    default:
+      return false;
+  }
+  auto* curr = allocator.alloc<SIMDLoadStoreLane>();
+  curr->op = op;
+  readMemoryAccess(curr->align, curr->offset);
+  curr->index = getLaneIndex(lanes);
+  curr->vec = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;

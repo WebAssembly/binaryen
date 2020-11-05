@@ -45,6 +45,10 @@ struct EffectAnalyzer
     breakTargets.clear();
     walk(ast);
     assert(tryDepth == 0);
+
+    if (ignoreImplicitTraps) {
+      implicitTrap = false;
+    }
   }
 
   // Core effect tracking
@@ -139,8 +143,8 @@ struct EffectAnalyzer
            throws;
   }
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 ||
-           transfersControlFlow() || implicitTrap || danglingPop;
+    return implicitTrap || localsWritten.size() > 0 || danglingPop ||
+           hasGlobalSideEffects() || transfersControlFlow();
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
@@ -160,7 +164,7 @@ struct EffectAnalyzer
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
-        (accessesMemory() && (other.writesMemory || other.calls)) ||
+        ((other.writesMemory || other.calls) && accessesMemory()) ||
         (danglingPop || other.danglingPop)) {
       return true;
     }
@@ -171,7 +175,7 @@ struct EffectAnalyzer
       return true;
     }
     for (auto local : localsWritten) {
-      if (other.localsWritten.count(local) || other.localsRead.count(local)) {
+      if (other.localsRead.count(local) || other.localsWritten.count(local)) {
         return true;
       }
     }
@@ -180,13 +184,13 @@ struct EffectAnalyzer
         return true;
       }
     }
-    if ((accessesGlobal() && other.calls) ||
-        (other.accessesGlobal() && calls)) {
+    if ((other.calls && accessesGlobal()) ||
+        (calls && other.accessesGlobal())) {
       return true;
     }
     for (auto global : globalsWritten) {
-      if (other.globalsWritten.count(global) ||
-          other.globalsRead.count(global)) {
+      if (other.globalsRead.count(global) ||
+          other.globalsWritten.count(global)) {
         return true;
       }
     }
@@ -318,32 +322,24 @@ struct EffectAnalyzer
   void visitLoad(Load* curr) {
     readsMemory = true;
     isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitStore(Store* curr) {
     writesMemory = true;
     isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicRMW(AtomicRMW* curr) {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicWait(AtomicWait* curr) {
     readsMemory = true;
@@ -352,9 +348,7 @@ struct EffectAnalyzer
     // write.
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicNotify(AtomicNotify* curr) {
     // AtomicNotify doesn't strictly write memory, but it does modify the
@@ -363,9 +357,7 @@ struct EffectAnalyzer
     readsMemory = true;
     writesMemory = true;
     isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitAtomicFence(AtomicFence* curr) {
     // AtomicFence should not be reordered with any memory operations, so we set
@@ -381,74 +373,81 @@ struct EffectAnalyzer
   void visitSIMDShift(SIMDShift* curr) {}
   void visitSIMDLoad(SIMDLoad* curr) {
     readsMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    implicitTrap = true;
+  }
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    if (curr->isLoad()) {
+      readsMemory = true;
+    } else {
+      writesMemory = true;
     }
+    implicitTrap = true;
   }
   void visitMemoryInit(MemoryInit* curr) {
     writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitDataDrop(DataDrop* curr) {
     // data.drop does not actually write memory, but it does alter the size of
     // a segment, which can be noticeable later by memory.init, so we need to
     // mark it as having a global side effect of some kind.
     writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitMemoryCopy(MemoryCopy* curr) {
     readsMemory = true;
     writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitMemoryFill(MemoryFill* curr) {
     writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
-    }
+    implicitTrap = true;
   }
   void visitConst(Const* curr) {}
   void visitUnary(Unary* curr) {
-    if (!ignoreImplicitTraps) {
-      switch (curr->op) {
-        case TruncSFloat32ToInt32:
-        case TruncSFloat32ToInt64:
-        case TruncUFloat32ToInt32:
-        case TruncUFloat32ToInt64:
-        case TruncSFloat64ToInt32:
-        case TruncSFloat64ToInt64:
-        case TruncUFloat64ToInt32:
-        case TruncUFloat64ToInt64: {
-          implicitTrap = true;
-          break;
-        }
-        default: {
-        }
+    switch (curr->op) {
+      case TruncSFloat32ToInt32:
+      case TruncSFloat32ToInt64:
+      case TruncUFloat32ToInt32:
+      case TruncUFloat32ToInt64:
+      case TruncSFloat64ToInt32:
+      case TruncSFloat64ToInt64:
+      case TruncUFloat64ToInt32:
+      case TruncUFloat64ToInt64: {
+        implicitTrap = true;
+        break;
+      }
+      default: {
       }
     }
   }
   void visitBinary(Binary* curr) {
-    if (!ignoreImplicitTraps) {
-      switch (curr->op) {
-        case DivSInt32:
-        case DivUInt32:
-        case RemSInt32:
-        case RemUInt32:
-        case DivSInt64:
-        case DivUInt64:
-        case RemSInt64:
-        case RemUInt64: {
+    switch (curr->op) {
+      case DivSInt32:
+      case DivUInt32:
+      case RemSInt32:
+      case RemUInt32:
+      case DivSInt64:
+      case DivUInt64:
+      case RemSInt64:
+      case RemUInt64: {
+        // div and rem may contain implicit trap only if RHS is
+        // non-constant or constant which equal zero or -1 for
+        // signed divisions. Reminder traps only with zero
+        // divider.
+        if (auto* c = curr->right->dynCast<Const>()) {
+          if (c->value.isZero()) {
+            implicitTrap = true;
+          } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
+                     c->value.getInteger() == -1LL) {
+            implicitTrap = true;
+          }
+        } else {
           implicitTrap = true;
-          break;
         }
-        default: {
-        }
+        break;
+      }
+      default: {
       }
     }
   }
@@ -486,15 +485,13 @@ struct EffectAnalyzer
     if (tryDepth == 0) {
       throws = true;
     }
-    if (!ignoreImplicitTraps) { // rethrow traps when the arg is null
-      implicitTrap = true;
-    }
+    // rethrow traps when the arg is null
+    implicitTrap = true;
   }
   void visitBrOnExn(BrOnExn* curr) {
     breakTargets.insert(curr->name);
-    if (!ignoreImplicitTraps) { // br_on_exn traps when the arg is null
-      implicitTrap = true;
-    }
+    // br_on_exn traps when the arg is null
+    implicitTrap = true;
   }
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) { branchesOut = true; }

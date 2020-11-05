@@ -69,14 +69,15 @@ struct InliningOptions {
   // More generally, with 2 items we may have a local.get, but no way to
   // require it to be saved instead of directly consumed.
   Index alwaysInlineMaxSize = 2;
-  // Function size which we inline when functions are lightweight (no loops
-  // and calls) and we are doing aggressive optimisation for speed (-O3).
-  // In particular it's nice that with this limit we can inline the clamp
-  // functions (i32s-div, f64-to-int, etc.), that can affect perf.
-  Index flexibleInlineMaxSize = 20;
   // Function size which we inline when there is only one caller.
   // FIXME: this should logically be higher than flexibleInlineMaxSize.
   Index oneCallerInlineMaxSize = 15;
+  // Function size above which we never inline, ignoring the various flexible
+  // factors (like whether we are optimizing for size or speed) that could
+  // influence us.
+  // This is checked after alwaysInlineMaxSize and oneCallerInlineMaxSize, but
+  // the order normally won't matter.
+  Index flexibleInlineMaxSize = 20;
   // Loops usually mean the function does heavy work, so the call overhead
   // is not significant and we do not inline such functions by default.
   bool allowFunctionsWithLoops = false;
@@ -107,15 +108,15 @@ struct PassOptions {
   // forth (which IEEE floats do not, strictly speaking). This is inspired by
   // gcc/clang's -ffast-math flag.
   bool fastMath = false;
-  // Whether to assume that an imported memory has not been modified. Without
+  // Whether to assume that an imported memory is zero-initialized. Without
   // this, we can do fewer optimizations on memory segments, because if memory
   // *was* modified then the wasm's segments may trample those previous
-  // modifications. If memory was not modified, we can assume it starts as zero,
-  // which allows us to remove zeros from wasm's segments.
+  // modifications. If memory was zero-initialized then we can remove zeros from
+  // the wasm's segments.
   // (This is not a problem if the memory is *not* imported, since then wasm
   // creates it and we know it is all zeros right before the active segments are
   // applied.)
-  bool unmodifiedImportedMemory = false;
+  bool zeroFilledMemory = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
   // Arbitrary string arguments from the commandline, which we forward to

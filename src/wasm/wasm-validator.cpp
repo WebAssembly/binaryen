@@ -317,6 +317,7 @@ public:
   void visitSIMDTernary(SIMDTernary* curr);
   void visitSIMDShift(SIMDShift* curr);
   void visitSIMDLoad(SIMDLoad* curr);
+  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -1264,6 +1265,59 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
 }
 
+void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+  shouldBeTrue(
+    getModule()->memory.exists, curr, "Memory operations require a memory");
+  shouldBeTrue(
+    getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
+  if (curr->isLoad()) {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->type, Type(Type::v128), curr, "loadX_lane must have type v128");
+  } else {
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->type, Type(Type::none), curr, "storeX_lane must have type none");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->ptr->type,
+    indexType(),
+    curr,
+    "loadX_lane or storeX_lane address must match memory index type");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->vec->type,
+    Type(Type::v128),
+    curr,
+    "loadX_lane or storeX_lane vector argument must have type v128");
+  size_t lanes;
+  Type memAlignType = Type::none;
+  switch (curr->op) {
+    case LoadLaneVec8x16:
+    case StoreLaneVec8x16:
+      lanes = 16;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec16x8:
+    case StoreLaneVec16x8:
+      lanes = 8;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec32x4:
+    case StoreLaneVec32x4:
+      lanes = 4;
+      memAlignType = Type::i32;
+      break;
+    case LoadLaneVec64x2:
+    case StoreLaneVec64x2:
+      lanes = 2;
+      memAlignType = Type::i64;
+      break;
+    default:
+      WASM_UNREACHABLE("Unexpected SIMDLoadStoreLane op");
+  }
+  Index bytes = curr->getMemBytes();
+  validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
+  shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
+}
+
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
@@ -1554,6 +1608,11 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MaxSVecI8x16:
     case MaxUVecI8x16:
     case AvgrUVecI8x16:
+    case Q15MulrSatSVecI16x8:
+    case ExtMulLowSVecI16x8:
+    case ExtMulHighSVecI16x8:
+    case ExtMulLowUVecI16x8:
+    case ExtMulHighUVecI16x8:
     case AddVecI16x8:
     case AddSatSVecI16x8:
     case AddSatUVecI16x8:
@@ -1574,9 +1633,17 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case MaxSVecI32x4:
     case MaxUVecI32x4:
     case DotSVecI16x8ToVecI32x4:
+    case ExtMulLowSVecI32x4:
+    case ExtMulHighSVecI32x4:
+    case ExtMulLowUVecI32x4:
+    case ExtMulHighUVecI32x4:
     case AddVecI64x2:
     case SubVecI64x2:
     case MulVecI64x2:
+    case ExtMulLowSVecI64x2:
+    case ExtMulHighSVecI64x2:
+    case ExtMulLowUVecI64x2:
+    case ExtMulHighUVecI64x2:
     case AddVecF32x4:
     case SubVecF32x4:
     case MulVecF32x4:
@@ -1821,6 +1888,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::f64), curr, "expected f64 splat value");
       break;
     case NotVec128:
+    case PopcntVecI8x16:
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:

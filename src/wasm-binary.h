@@ -791,6 +791,15 @@ enum ASTNodes {
   V128Xor = 0x51,
   V128Bitselect = 0x52,
 
+  V128Load8Lane = 0x58,
+  V128Load16Lane = 0x59,
+  V128Load32Lane = 0x5a,
+  V128Load64Lane = 0x5b,
+  V128Store8Lane = 0x5c,
+  V128Store16Lane = 0x5d,
+  V128Store32Lane = 0x5e,
+  V128Store64Lane = 0x5f,
+
   I8x16Abs = 0x60,
   I8x16Neg = 0x61,
   I8x16AnyTrue = 0x62,
@@ -813,6 +822,8 @@ enum ASTNodes {
   I8x16MaxS = 0x78,
   I8x16MaxU = 0x79,
   I8x16AvgrU = 0x7b,
+
+  I8x16Popcnt = 0x7c,
 
   I16x8Abs = 0x80,
   I16x8Neg = 0x81,
@@ -840,6 +851,7 @@ enum ASTNodes {
   I16x8MaxS = 0x98,
   I16x8MaxU = 0x99,
   I16x8AvgrU = 0x9b,
+  I16x8Q15MulrSatS = 0x9c,
 
   I32x4Abs = 0xa0,
   I32x4Neg = 0xa1,
@@ -922,6 +934,19 @@ enum ASTNodes {
   I64x2TruncSatUF64x2 = 0x0101,
   F64x2ConvertSI64x2 = 0x0102,
   F64x2ConvertUI64x2 = 0x0103,
+
+  I16x8ExtMulLowSI8x16 = 0x9a,
+  I16x8ExtMulHighSI8x16 = 0x9d,
+  I16x8ExtMulLowUI8x16 = 0x9e,
+  I16x8ExtMulHighUI8x16 = 0x9f,
+  I32x4ExtMulLowSI16x8 = 0xbb,
+  I32x4ExtMulHighSI16x8 = 0xbd,
+  I32x4ExtMulLowUI16x8 = 0xbe,
+  I32x4ExtMulHighUI16x8 = 0xbf,
+  I64x2ExtMulLowSI32x4 = 0xd2,
+  I64x2ExtMulHighSI32x4 = 0xd3,
+  I64x2ExtMulLowUI32x4 = 0xd6,
+  I64x2ExtMulHighUI32x4 = 0xd7,
 
   // bulk memory opcodes
 
@@ -1288,6 +1313,7 @@ public:
   uint64_t getU64LEB();
   int32_t getS32LEB();
   int64_t getS64LEB();
+  uint64_t getUPtrLEB();
   Type getType();
   HeapType getHeapType();
   Type getConcreteType();
@@ -1486,6 +1512,7 @@ public:
   bool maybeVisitSIMDTernary(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);

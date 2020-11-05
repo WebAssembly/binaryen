@@ -114,6 +114,18 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
+  bool isNegative() const {
+    switch (type.getBasic()) {
+      case Type::i32:
+      case Type::f32:
+        return i32 < 0;
+      case Type::i64:
+      case Type::f64:
+        return i64 < 0;
+      default:
+        WASM_UNREACHABLE("unexpected type");
+    }
+  }
   bool isSignedMin() const {
     switch (type.getBasic()) {
       case Type::i32:
@@ -488,6 +500,7 @@ public:
   Literal maxSI8x16(const Literal& other) const;
   Literal maxUI8x16(const Literal& other) const;
   Literal avgrUI8x16(const Literal& other) const;
+  Literal popcntI8x16() const;
   Literal absI16x8() const;
   Literal negI16x8() const;
   Literal anyTrueI16x8() const;
@@ -508,6 +521,11 @@ public:
   Literal maxSI16x8(const Literal& other) const;
   Literal maxUI16x8(const Literal& other) const;
   Literal avgrUI16x8(const Literal& other) const;
+  Literal q15MulrSatSI16x8(const Literal& other) const;
+  Literal extMulLowSI16x8(const Literal& other) const;
+  Literal extMulHighSI16x8(const Literal& other) const;
+  Literal extMulLowUI16x8(const Literal& other) const;
+  Literal extMulHighUI16x8(const Literal& other) const;
   Literal absI32x4() const;
   Literal negI32x4() const;
   Literal anyTrueI32x4() const;
@@ -524,6 +542,10 @@ public:
   Literal maxSI32x4(const Literal& other) const;
   Literal maxUI32x4(const Literal& other) const;
   Literal dotSI16x8toI32x4(const Literal& other) const;
+  Literal extMulLowSI32x4(const Literal& other) const;
+  Literal extMulHighSI32x4(const Literal& other) const;
+  Literal extMulLowUI32x4(const Literal& other) const;
+  Literal extMulHighUI32x4(const Literal& other) const;
   Literal negI64x2() const;
   Literal anyTrueI64x2() const;
   Literal allTrueI64x2() const;
@@ -533,6 +555,10 @@ public:
   Literal addI64x2(const Literal& other) const;
   Literal subI64x2(const Literal& other) const;
   Literal mulI64x2(const Literal& other) const;
+  Literal extMulLowSI64x2(const Literal& other) const;
+  Literal extMulHighSI64x2(const Literal& other) const;
+  Literal extMulLowUI64x2(const Literal& other) const;
+  Literal extMulHighUI64x2(const Literal& other) const;
   Literal absF32x4() const;
   Literal negF32x4() const;
   Literal sqrtF32x4() const;

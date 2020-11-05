@@ -161,6 +161,7 @@ enum UnaryOp {
   AnyTrueVecI8x16,
   AllTrueVecI8x16,
   BitmaskVecI8x16,
+  PopcntVecI8x16,
   AbsVecI16x8,
   NegVecI16x8,
   AnyTrueVecI16x8,
@@ -392,6 +393,11 @@ enum BinaryOp {
   MaxSVecI16x8,
   MaxUVecI16x8,
   AvgrUVecI16x8,
+  Q15MulrSatSVecI16x8,
+  ExtMulLowSVecI16x8,
+  ExtMulHighSVecI16x8,
+  ExtMulLowUVecI16x8,
+  ExtMulHighUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
@@ -400,9 +406,17 @@ enum BinaryOp {
   MaxSVecI32x4,
   MaxUVecI32x4,
   DotSVecI16x8ToVecI32x4,
+  ExtMulLowSVecI32x4,
+  ExtMulHighSVecI32x4,
+  ExtMulLowUVecI32x4,
+  ExtMulHighUVecI32x4,
   AddVecI64x2,
   SubVecI64x2,
   MulVecI64x2,
+  ExtMulLowSVecI64x2,
+  ExtMulHighSVecI64x2,
+  ExtMulLowUVecI64x2,
+  ExtMulHighUVecI64x2,
   AddVecF32x4,
   SubVecF32x4,
   MulVecF32x4,
@@ -432,7 +446,7 @@ enum BinaryOp {
   InvalidBinary
 };
 
-enum AtomicRMWOp { Add, Sub, And, Or, Xor, Xchg };
+enum AtomicRMWOp { RMWAdd, RMWSub, RMWAnd, RMWOr, RMWXor, RMWXchg };
 
 enum SIMDExtractOp {
   ExtractLaneSVecI8x16,
@@ -481,7 +495,18 @@ enum SIMDLoadOp {
   LoadExtSVec32x2ToVecI64x2,
   LoadExtUVec32x2ToVecI64x2,
   Load32Zero,
-  Load64Zero
+  Load64Zero,
+};
+
+enum SIMDLoadStoreLaneOp {
+  LoadLaneVec8x16,
+  LoadLaneVec16x8,
+  LoadLaneVec32x4,
+  LoadLaneVec64x2,
+  StoreLaneVec8x16,
+  StoreLaneVec16x8,
+  StoreLaneVec32x4,
+  StoreLaneVec64x2,
 };
 
 enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
@@ -545,6 +570,7 @@ public:
     SIMDTernaryId,
     SIMDShiftId,
     SIMDLoadId,
+    SIMDLoadStoreLaneId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -970,6 +996,25 @@ public:
   void finalize();
 };
 
+class SIMDLoadStoreLane
+  : public SpecificExpression<Expression::SIMDLoadStoreLaneId> {
+public:
+  SIMDLoadStoreLane() = default;
+  SIMDLoadStoreLane(MixedArena& allocator) {}
+
+  SIMDLoadStoreLaneOp op;
+  Address offset;
+  Address align;
+  uint8_t index;
+  Expression* ptr;
+  Expression* vec;
+
+  bool isStore();
+  bool isLoad() { return !isStore(); }
+  Index getMemBytes();
+  void finalize();
+};
+
 class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
 public:
   MemoryInit() = default;
@@ -1346,7 +1391,7 @@ struct Importable {
   // If these are set, then this is an import, as module.base
   Name module, base;
 
-  bool imported() { return module.is(); }
+  bool imported() const { return module.is(); }
 
   void setName(Name name_, bool hasExplicitName_) {
     name = name_;
@@ -1381,10 +1426,10 @@ struct BinaryLocations {
   // control flow, have, like 'end' for loop and block. We keep these in a
   // separate map because they are rare and we optimize for the storage space
   // for the common type of instruction which just needs a Span. We implement
-  // this as a simple struct with two elements (as two extra elements is the
-  // maximum currently needed; due to 'catch' and 'end' for try-catch). The
-  // second value may be 0, indicating it is not used.
-  struct DelimiterLocations : public std::array<BinaryLocation, 2> {
+  // this as a simple array with one element at the moment (more elements may
+  // be necessary in the future).
+  // TODO: If we are sure we won't need more, make this a single value?
+  struct DelimiterLocations : public std::array<BinaryLocation, 1> {
     DelimiterLocations() {
       // Ensure zero-initialization.
       for (auto& item : *this) {
@@ -1393,14 +1438,7 @@ struct BinaryLocations {
     }
   };
 
-  enum DelimiterId {
-    // All control flow structures have an end, so use index 0 for that.
-    End = 0,
-    // Use index 1 for all other current things.
-    Else = 1,
-    Catch = 1,
-    Invalid = -1
-  };
+  enum DelimiterId { Else = 0, Catch = 0, Invalid = -1 };
   std::unordered_map<Expression*, DelimiterLocations> delimiters;
 
   // DWARF debug info can refer to multiple interesting positions in a function.

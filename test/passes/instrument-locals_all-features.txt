@@ -242,14 +242,35 @@
     )
    )
   )
-  (local.set $F
-   (pop funcref)
+  (try
+   (do
+    (nop)
+   )
+   (catch
+    (local.set $F
+     (pop funcref)
+    )
+   )
   )
-  (local.set $X
-   (pop externref)
+  (try
+   (do
+    (nop)
+   )
+   (catch
+    (local.set $X
+     (pop externref)
+    )
+   )
   )
-  (local.set $E
-   (pop exnref)
+  (try
+   (do
+    (nop)
+   )
+   (catch
+    (local.set $E
+     (pop exnref)
+    )
+   )
   )
   (drop
    (call $get_v128

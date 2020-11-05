@@ -11,11 +11,9 @@
  (table $0 3 3 funcref)
  (elem (i32.const 1) $address_taken_func\28int\2c\20int\2c\20int\29 $address_taken_func2\28int\2c\20int\2c\20int\29)
  (global $global$0 (mut i32) (i32.const 66112))
- (global $global$1 i32 (i32.const 568))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
  (func $__wasm_call_ctors
  )
  (func $address_taken_func\28int\2c\20int\2c\20int\29 (param $0 i32) (param $1 i32) (param $2 i32)

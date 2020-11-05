@@ -59,3 +59,15 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (start $0)
+ (func $0
+  (nop)
+ )
+ (func $1
+  (block $__inlined_func$0
+   (nop)
+  )
+ )
+)

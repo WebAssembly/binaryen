@@ -159,6 +159,7 @@ BINARYEN_API BinaryenExpressionId BinaryenSIMDShuffleId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDTernaryId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDShiftId(void);
 BINARYEN_API BinaryenExpressionId BinaryenSIMDLoadId(void);
+// TODO: Expose SIMDLoadStoreLane in C and JS APIs
 BINARYEN_API BinaryenExpressionId BinaryenMemoryInitId(void);
 BINARYEN_API BinaryenExpressionId BinaryenDataDropId(void);
 BINARYEN_API BinaryenExpressionId BinaryenMemoryCopyId(void);
@@ -484,6 +485,7 @@ BINARYEN_API BinaryenOp BinaryenOrVec128(void);
 BINARYEN_API BinaryenOp BinaryenXorVec128(void);
 BINARYEN_API BinaryenOp BinaryenAndNotVec128(void);
 BINARYEN_API BinaryenOp BinaryenBitselectVec128(void);
+// TODO: Add i8x16.popcnt to C and JS APIs once merged to the proposal
 BINARYEN_API BinaryenOp BinaryenAbsVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI8x16(void);
@@ -524,6 +526,8 @@ BINARYEN_API BinaryenOp BinaryenMinUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMaxSVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAvgrUVecI16x8(void);
+// TODO: Add i16x8.q15mulr_sat_s to C and JS APIs once merged to the proposal
+// TODO: Add extending multiplications to APIs once they are merged as well
 BINARYEN_API BinaryenOp BinaryenAbsVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVecI32x4(void);

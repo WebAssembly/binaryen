@@ -463,6 +463,8 @@ public:
         return value.allTrueI8x16();
       case BitmaskVecI8x16:
         return value.bitmaskI8x16();
+      case PopcntVecI8x16:
+        return value.popcntI8x16();
       case AbsVecI16x8:
         return value.absI16x8();
       case NegVecI16x8:
@@ -876,6 +878,16 @@ public:
         return left.maxUI16x8(right);
       case AvgrUVecI16x8:
         return left.avgrUI16x8(right);
+      case Q15MulrSatSVecI16x8:
+        return left.q15MulrSatSI16x8(right);
+      case ExtMulLowSVecI16x8:
+        return left.extMulLowSI16x8(right);
+      case ExtMulHighSVecI16x8:
+        return left.extMulHighSI16x8(right);
+      case ExtMulLowUVecI16x8:
+        return left.extMulLowUI16x8(right);
+      case ExtMulHighUVecI16x8:
+        return left.extMulHighUI16x8(right);
       case AddVecI32x4:
         return left.addI32x4(right);
       case SubVecI32x4:
@@ -892,12 +904,28 @@ public:
         return left.maxUI32x4(right);
       case DotSVecI16x8ToVecI32x4:
         return left.dotSI16x8toI32x4(right);
+      case ExtMulLowSVecI32x4:
+        return left.extMulLowSI32x4(right);
+      case ExtMulHighSVecI32x4:
+        return left.extMulHighSI32x4(right);
+      case ExtMulLowUVecI32x4:
+        return left.extMulLowUI32x4(right);
+      case ExtMulHighUVecI32x4:
+        return left.extMulHighUI32x4(right);
       case AddVecI64x2:
         return left.addI64x2(right);
       case SubVecI64x2:
         return left.subI64x2(right);
       case MulVecI64x2:
         return left.mulI64x2(right);
+      case ExtMulLowSVecI64x2:
+        return left.extMulLowSI64x2(right);
+      case ExtMulHighSVecI64x2:
+        return left.extMulHighSI64x2(right);
+      case ExtMulLowUVecI64x2:
+        return left.extMulLowUI64x2(right);
+      case ExtMulHighUVecI64x2:
+        return left.extMulHighUI64x2(right);
 
       case AddVecF32x4:
         return left.addF32x4(right);
@@ -1240,6 +1268,9 @@ public:
   Flow visitSIMDLoadSplat(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSIMDLoadZero(SIMDLoad* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    WASM_UNREACHABLE("unimp");
+  }
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
@@ -1625,6 +1656,10 @@ public:
   }
   Flow visitSIMDLoadExtend(SIMDLoad* curr) {
     NOTE_ENTER("SIMDLoadExtend");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+    NOTE_ENTER("SIMDLoadStoreLane");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitPop(Pop* curr) {
@@ -2158,22 +2193,22 @@ private:
       NOTE_EVAL1(loaded);
       auto computed = value.getSingleValue();
       switch (curr->op) {
-        case Add:
+        case RMWAdd:
           computed = loaded.add(computed);
           break;
-        case Sub:
+        case RMWSub:
           computed = loaded.sub(computed);
           break;
-        case And:
+        case RMWAnd:
           computed = loaded.and_(computed);
           break;
-        case Or:
+        case RMWOr:
           computed = loaded.or_(computed);
           break;
-        case Xor:
+        case RMWXor:
           computed = loaded.xor_(computed);
           break;
-        case Xchg:
+        case RMWXchg:
           break;
       }
       instance.doAtomicStore(addr, curr->bytes, computed);
@@ -2369,7 +2404,7 @@ private:
       }
       NOTE_EVAL1(flow);
       Address src = instance.getFinalAddress(
-        curr, flow.getSingleValue(), curr->op == Load32Zero ? 32 : 64);
+        curr, flow.getSingleValue(), curr->getMemBytes());
       auto zero =
         Literal::makeZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
       if (curr->op == Load32Zero) {
@@ -2379,6 +2414,76 @@ private:
         auto val = Literal(instance.externalInterface->load64u(src));
         return Literal(std::array<Literal, 2>{{val, zero}});
       }
+    }
+    Flow visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+      NOTE_ENTER("SIMDLoadStoreLane");
+      Flow flow = this->visit(curr->ptr);
+      if (flow.breaking()) {
+        return flow;
+      }
+      NOTE_EVAL1(flow);
+      Address addr = instance.getFinalAddress(
+        curr, flow.getSingleValue(), curr->getMemBytes());
+      flow = this->visit(curr->vec);
+      if (flow.breaking()) {
+        return flow;
+      }
+      Literal vec = flow.getSingleValue();
+      switch (curr->op) {
+        case LoadLaneVec8x16:
+        case StoreLaneVec8x16: {
+          std::array<Literal, 16> lanes = vec.getLanesUI8x16();
+          if (curr->isLoad()) {
+            lanes[curr->index] =
+              Literal(instance.externalInterface->load8u(addr));
+            return Literal(lanes);
+          } else {
+            instance.externalInterface->store8(addr,
+                                               lanes[curr->index].geti32());
+            return {};
+          }
+        }
+        case LoadLaneVec16x8:
+        case StoreLaneVec16x8: {
+          std::array<Literal, 8> lanes = vec.getLanesUI16x8();
+          if (curr->isLoad()) {
+            lanes[curr->index] =
+              Literal(instance.externalInterface->load16u(addr));
+            return Literal(lanes);
+          } else {
+            instance.externalInterface->store16(addr,
+                                                lanes[curr->index].geti32());
+            return {};
+          }
+        }
+        case LoadLaneVec32x4:
+        case StoreLaneVec32x4: {
+          std::array<Literal, 4> lanes = vec.getLanesI32x4();
+          if (curr->isLoad()) {
+            lanes[curr->index] =
+              Literal(instance.externalInterface->load32u(addr));
+            return Literal(lanes);
+          } else {
+            instance.externalInterface->store32(addr,
+                                                lanes[curr->index].geti32());
+            return {};
+          }
+        }
+        case StoreLaneVec64x2:
+        case LoadLaneVec64x2: {
+          std::array<Literal, 2> lanes = vec.getLanesI64x2();
+          if (curr->isLoad()) {
+            lanes[curr->index] =
+              Literal(instance.externalInterface->load64u(addr));
+            return Literal(lanes);
+          } else {
+            instance.externalInterface->store64(addr,
+                                                lanes[curr->index].geti64());
+            return {};
+          }
+        }
+      }
+      WASM_UNREACHABLE("unexpected op");
     }
     Flow visitMemorySize(MemorySize* curr) {
       NOTE_ENTER("MemorySize");

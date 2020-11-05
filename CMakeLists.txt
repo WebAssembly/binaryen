@@ -214,6 +214,7 @@ else()
   add_compile_flag("-Wextra")
   add_compile_flag("-Wno-unused-parameter")
   add_compile_flag("-fno-omit-frame-pointer")
+  add_compile_flag("-fno-rtti")
   # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two
   # flags once we resolve the issue.
   add_compile_flag("-Wno-implicit-int-float-conversion")
@@ -221,6 +222,7 @@ else()
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
+    add_compile_flag("-D__STDC_FORMAT_MACROS")
     add_link_flag("-Wl,--stack,8388608")
   elseif(NOT EMSCRIPTEN)
     add_compile_flag("-fPIC")
