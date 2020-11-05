@@ -910,7 +910,7 @@ private:
     };
     // Prefer a const on the right.
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
-      swap();
+      return swap();
     }
     if (auto* c = binary->right->dynCast<Const>()) {
       // x - C  ==>   x + (-C)
@@ -1727,18 +1727,13 @@ private:
       // subtractions than the more common additions). TODO: Simplify this by
       // adding an ival matcher than can bind int64_t vars.
       int64_t value;
-      if ((matches(curr, binary(Add, any(), ival(&value))) ||
-           matches(curr, binary(Sub, any(), ival(&value)))) &&
+      if (matches(curr, binary(Add, any(), ival(&value))) &&
           (value == 0x40 || value == 0x2000 || value == 0x100000 ||
            value == 0x8000000 || value == 0x400000000LL ||
            value == 0x20000000000LL || value == 0x1000000000000LL ||
            value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
         right->value = right->value.neg();
-        if (matches(curr, binary(Add, any(), constant()))) {
-          curr->op = Abstract::getBinary(type, Sub);
-        } else {
-          curr->op = Abstract::getBinary(type, Add);
-        }
+        curr->op = Abstract::getBinary(type, Add);
         return curr;
       }
     }
@@ -1843,13 +1838,6 @@ private:
         curr->right = x;
         return curr;
       }
-      // C1 - (x - C2)  ==>  (C1 + C2) - x
-      if (matches(curr,
-                  binary(Sub, ival(&c1), binary(Sub, any(&x), ival(&c2))))) {
-        left->value = c1->value.add(c2->value);
-        curr->right = x;
-        return curr;
-      }
       // C1 - (C2 - x)  ==>   x + (C1 - C2)
       if (matches(curr,
                   binary(Sub, ival(&c1), binary(Sub, ival(&c2), any(&x))))) {
@@ -1884,17 +1872,14 @@ private:
           // x + 5 == 7
           //   =>
           //     x == 2
-          if (left->op == Abstract::getBinary(type, Abstract::Add) ||
-              left->op == Abstract::getBinary(type, Abstract::Sub)) {
+          if (left->op == Abstract::getBinary(type, Abstract::Add)) {
             if (auto* leftConst = left->right->dynCast<Const>()) {
               if (auto* rightConst = curr->right->dynCast<Const>()) {
                 return combineRelationalConstants(
                   curr, left, leftConst, nullptr, rightConst);
               } else if (auto* rightBinary = curr->right->dynCast<Binary>()) {
                 if (rightBinary->op ==
-                      Abstract::getBinary(type, Abstract::Add) ||
-                    rightBinary->op ==
-                      Abstract::getBinary(type, Abstract::Sub)) {
+                      Abstract::getBinary(type, Abstract::Add)) {
                   if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
                     return combineRelationalConstants(
                       curr, left, leftConst, rightBinary, rightConst);
@@ -2390,6 +2375,10 @@ private:
   }
 
   bool isSymmetricOrRelational(Binary* binary) {
+    if ((binary->op == SubInt32 || binary->op == SubInt64) &&
+        binary->right->is<Const>() && !binary->left->is<Const>()) {
+      return true;
+    }
     if (Properties::isSymmetric(binary) || binary->isRelational()) {
       return true;
     }

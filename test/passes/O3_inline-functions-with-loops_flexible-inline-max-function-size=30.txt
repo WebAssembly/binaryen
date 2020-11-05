@@ -20,15 +20,15 @@
   )
   (i32.add
    (call $fib
-    (i32.sub
+    (i32.add
      (local.get $0)
-     (i32.const 1)
+     (i32.const -1)
     )
    )
    (call $fib
-    (i32.sub
+    (i32.add
      (local.get $0)
-     (i32.const 2)
+     (i32.const -2)
     )
    )
   )
@@ -42,9 +42,9 @@
     )
     (block
      (local.set $0
-      (i32.sub
+      (i32.add
        (local.get $0)
-       (i32.const 1)
+       (i32.const -1)
       )
      )
      (br $L0)
@@ -68,9 +68,9 @@
     )
     (block
      (local.set $0
-      (i32.sub
+      (i32.add
        (local.get $0)
-       (i32.const 1)
+       (i32.const -1)
       )
      )
      (br $L0)

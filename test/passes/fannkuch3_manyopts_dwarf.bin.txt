@@ -5896,11 +5896,11 @@ file_names[  4]:
    ;; code offset: 0x3a0
    (local.tee $8
     ;; code offset: 0x39f
-    (i32.sub
+    (i32.add
      ;; code offset: 0x39b
      (global.get $global$0)
      ;; code offset: 0x39d
-     (i32.const 32)
+     (i32.const -32)
     )
    )
   )

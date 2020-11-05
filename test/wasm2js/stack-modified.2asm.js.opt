@@ -26,7 +26,7 @@ function asmFunc(global, env) {
     $3 = _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE($0_1, $2, $3, $4);
     $4 = i64toi32_i32$HIGH_BITS;
     $1 = $0_1;
-    $0_1 = $0_1 - 1 | 0;
+    $0_1 = $0_1 + -1 | 0;
     $2 = $2 - ($1 >>> 0 < 1) | 0;
     continue;
    }

@@ -3415,7 +3415,16 @@
   )
   (drop
    (i32.eq
-    (i32.sub
+    (i32.add
+     (local.get $x32)
+     (i32.const -30)
+    )
+    (local.get $x32)
+   )
+  )
+  (drop
+   (i32.eq
+    (i32.add
      (local.get $x32)
      (i32.const 30)
     )
@@ -3424,18 +3433,9 @@
   )
   (drop
    (i32.eq
-    (i32.sub
+    (i32.add
      (local.get $x32)
-     (i32.const 30)
-    )
-    (local.get $x32)
-   )
-  )
-  (drop
-   (i32.eq
-    (i32.sub
-     (local.get $x32)
-     (i32.const 10)
+     (i32.const -10)
     )
     (local.get $x32)
    )
@@ -3446,7 +3446,7 @@
  )
  (func $negatives-are-sometimes-better (param $x i32) (param $y i64) (param $z f32)
   (drop
-   (i32.sub
+   (i32.add
     (local.get $x)
     (i32.const -64)
    )
@@ -3458,25 +3458,25 @@
    )
   )
   (drop
-   (i32.sub
+   (i32.add
     (local.get $x)
     (i32.const -8192)
    )
   )
   (drop
-   (i32.sub
+   (i32.add
     (local.get $x)
     (i32.const -1048576)
    )
   )
   (drop
-   (i32.sub
+   (i32.add
     (local.get $x)
     (i32.const -134217728)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -64)
    )
@@ -3488,49 +3488,49 @@
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -8192)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -1048576)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -134217728)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -17179869184)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -2199023255552)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -281474976710656)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -36028797018963968)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
     (i64.const -4611686018427387904)
    )
@@ -4205,15 +4205,15 @@
  )
  (func $rhs-is-neg-one (param $x i32) (param $y i64) (param $fx f32) (param $fy f64)
   (drop
-   (i32.sub
+   (i32.add
     (local.get $x)
-    (i32.const -1)
+    (i32.const 1)
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
-    (i64.const -1)
+    (i64.const 1)
    )
   )
   (drop
