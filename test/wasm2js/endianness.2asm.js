@@ -30,7 +30,8 @@ import { setTempRet0 } from 'env';
     return f32ScratchView[2];
   }
       
-function asmFunc(env, buffer) {
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
  var HEAP32 = new Int32Array(buffer);
@@ -39,6 +40,7 @@ function asmFunc(env, buffer) {
  var HEAPU32 = new Uint32Array(buffer);
  var HEAPF32 = new Float32Array(buffer);
  var HEAPF64 = new Float64Array(buffer);
+ bufferView = HEAPU8;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -661,7 +663,6 @@ function asmFunc(env, buffer) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
    var newHEAP8 = new Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
-   HEAP8 = newHEAP8;
    HEAP8 = new Int8Array(newBuffer);
    HEAP16 = new Int16Array(newBuffer);
    HEAP32 = new Int32Array(newBuffer);
@@ -671,6 +672,7 @@ function asmFunc(env, buffer) {
    HEAPF32 = new Float32Array(newBuffer);
    HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
+   bufferView = HEAPU8;
   }
   return oldPages;
  }
@@ -696,13 +698,10 @@ function asmFunc(env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
+var bufferView;
 var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
     setTempRet0
-  },
-  memasmFunc
-);
+  });
 export var i32_load16_s = retasmFunc.i32_load16_s;
 export var i32_load16_u = retasmFunc.i32_load16_u;
 export var i32_load = retasmFunc.i32_load;

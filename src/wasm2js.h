@@ -383,6 +383,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   ret[1]->push_back(asmFunc);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
 
+  // add memory import
   if (wasm->memory.exists) {
     if (wasm->memory.imported()) {
       // find memory and buffer in imports
@@ -414,8 +415,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
             ValueBuilder::makeName(WASM_MEMORY_GROW))));
       }
     } else {
-      // find memory as third argument
-      ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
+      Ref theVar = ValueBuilder::makeVar();
+      asmFunc[3]->push_back(theVar);
+      ValueBuilder::appendToVar(
+        theVar,
+        BUFFER,
+        ValueBuilder::makeNew(ValueBuilder::makeCall(
+          ValueBuilder::makeName("ArrayBuffer"),
+          ValueBuilder::makeInt(Address::address32_t(wasm->memory.initial.addr *
+                                                     Memory::kPageSize)))));
     }
   }
 
@@ -428,6 +436,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       FUNCTION_TABLE,
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV), wasm->table.base));
   }
+
   // create heaps, etc
   addBasics(asmFunc[3], wasm);
   ModuleUtils::iterImportedFunctions(
@@ -503,6 +512,10 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
     addHeap(HEAPU32, UINT32ARRAY);
     addHeap(HEAPF32, FLOAT32ARRAY);
     addHeap(HEAPF64, FLOAT64ARRAY);
+    ast->push_back(
+      ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
+                               SET,
+                               ValueBuilder::makeName(HEAPU8)));
   }
   // core asm.js imports
   auto addMath = [&](IString name, IString base) {
@@ -2295,12 +2308,6 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
                             IString("set")),
       ValueBuilder::makeName(HEAP8)));
 
-  ValueBuilder::appendToBlock(
-    block,
-    ValueBuilder::makeBinary(ValueBuilder::makeName(HEAP8),
-                             SET,
-                             ValueBuilder::makeName(IString("newHEAP8"))));
-
   auto setHeap = [&](IString name, IString view) {
     ValueBuilder::appendToBlock(
       block,
@@ -2335,7 +2342,15 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
         ValueBuilder::makeDot(ValueBuilder::makeName("memory"),
                               ValueBuilder::makeName(BUFFER)),
         SET,
-        ValueBuilder::makeName(IString("newBuffer"))));
+        ValueBuilder::makeName(BUFFER)));
+  }
+
+  if ((!wasm->memory.segments.empty()) || wasm->features.hasBulkMemory()) {
+    ValueBuilder::appendToBlock(
+      block,
+      ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
+                               SET,
+                               ValueBuilder::makeName(HEAPU8)));
   }
 
   memoryGrowFunc[3]->push_back(
@@ -2369,8 +2384,7 @@ private:
   void emitPostEmscripten();
   void emitPostES6();
 
-  void emitMemory(std::string buffer,
-                  std::function<std::string(std::string)> accessGlobal);
+  void emitMemory(std::function<std::string(std::string)> accessGlobal);
   void emitSpecialSupport();
 };
 
@@ -2406,7 +2420,7 @@ void Wasm2JSGlue::emitPre() {
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
-  out << "function instantiate(asmLibraryArg, wasmMemory) {\n";
+  out << "function instantiate(asmLibraryArg) {\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {
@@ -2445,6 +2459,18 @@ void Wasm2JSGlue::emitPreES6() {
 }
 
 void Wasm2JSGlue::emitPost() {
+  // Create a helper bufferView to access the buffer if we need one. We use it
+  // for creating memory segments if we have any (we may not if the segments are
+  // shipped in a side .mem file, for example), and also in bulk memory
+  // operations.
+  // This will get assigned during `asmFunc` (and potentially re-assigned
+  // during __wasm_memory_grow).
+  // TODO: We should probably just share a single HEAPU8 var.
+  if (wasm.memory.exists &&
+      ((!wasm.memory.segments.empty()) || wasm.features.hasBulkMemory())) {
+    out << "var bufferView;\n";
+  }
+
   if (flags.emscripten) {
     emitPostEmscripten();
   } else {
@@ -2453,13 +2479,13 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  emitMemory("wasmMemory.buffer", [](std::string globalName) {
+  out << "var exports = asmFunc(asmLibraryArg);\n";
+
+  emitMemory([](std::string globalName) {
     return std::string("asmLibraryArg['") + asmangle(globalName) + "']";
   });
 
-  out << "return asmFunc(asmLibraryArg, wasmMemory.buffer)\n"
-      << "\n"
-      << "}";
+  out << "return exports;\n}";
 }
 
 void Wasm2JSGlue::emitPostES6() {
@@ -2469,12 +2495,9 @@ void Wasm2JSGlue::emitPostES6() {
   //
   // Note that the translation here expects that the lower values of this memory
   // can be used for conversions, so make sure there's at least one page.
-  if (wasm.memory.exists) {
+  if (wasm.memory.exists && wasm.memory.imported()) {
     out << "var mem" << moduleName.str << " = new ArrayBuffer("
         << wasm.memory.initial.addr * Memory::kPageSize << ");\n";
-
-    emitMemory(std::string("mem") + moduleName.str,
-               [](std::string globalName) { return globalName; });
   }
 
   // Actually invoke the `asmFunc` generated function, passing in all global
@@ -2510,10 +2533,10 @@ void Wasm2JSGlue::emitPostES6() {
     out << ",\n    " << asmangle(import->base.str);
   });
 
-  if (wasm.memory.exists && !wasm.memory.imported()) {
-    out << "\n  },\n  mem" << moduleName.str << "\n);\n";
-  } else {
-    out << "\n  });\n";
+  out << "\n  });\n";
+
+  if (wasm.memory.exists) {
+    emitMemory([](std::string globalName) { return globalName; });
   }
 
   if (flags.allowAsserts) {
@@ -2546,21 +2569,10 @@ void Wasm2JSGlue::emitPostES6() {
 }
 
 void Wasm2JSGlue::emitMemory(
-  std::string buffer,
   std::function<std::string(std::string)> accessGlobal) {
-  if (!wasm.memory.exists) {
-    return;
-  }
-  // Create a helper bufferView to access the buffer if we need one. We use it
-  // for creating memory segments if we have any (we may not if the segments are
-  // shipped in a side .mem file, for example), and also in bulk memory
-  // operations.
-  if (!wasm.memory.segments.empty() || wasm.features.hasBulkMemory()) {
-    out << "var bufferView = new Uint8Array(" << buffer << ");\n";
-  }
   // If there are no memory segments, we don't need to emit any support code for
   // segment creation.
-  if (wasm.memory.segments.empty()) {
+  if ((!wasm.memory.exists) || wasm.memory.segments.empty()) {
     return;
   }
 

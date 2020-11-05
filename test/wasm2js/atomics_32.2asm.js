@@ -67,7 +67,8 @@
       
   var memorySegments = {};
     
-function asmFunc(env, buffer) {
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(16777216);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
  var HEAP32 = new Int32Array(buffer);
@@ -76,6 +77,7 @@ function asmFunc(env, buffer) {
  var HEAPU32 = new Uint32Array(buffer);
  var HEAPF32 = new Float32Array(buffer);
  var HEAPF64 = new Float64Array(buffer);
+ bufferView = HEAPU8;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -128,8 +130,9 @@ function asmFunc(env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(16777216);
-var bufferView = new Uint8Array(memasmFunc);
+var bufferView;
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -151,8 +154,4 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
   }
   memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "aGVsbG8s");
 memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29ybGQh");
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  },
-  memasmFunc
-);
 export var test = retasmFunc.test;

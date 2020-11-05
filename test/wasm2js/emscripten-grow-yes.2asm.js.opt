@@ -1,4 +1,4 @@
-function instantiate(asmLibraryArg, wasmMemory) {
+function instantiate(asmLibraryArg) {
 function asmFunc(env) {
  var memory = env.memory;
  var buffer = memory.buffer;
@@ -11,6 +11,7 @@ function asmFunc(env) {
  var HEAPU32 = new Uint32Array(buffer);
  var HEAPF32 = new Float32Array(buffer);
  var HEAPF64 = new Float64Array(buffer);
+ bufferView = HEAPU8;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -39,7 +40,6 @@ function asmFunc(env) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
    var newHEAP8 = new Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
-   HEAP8 = newHEAP8;
    HEAP8 = new Int8Array(newBuffer);
    HEAP16 = new Int16Array(newBuffer);
    HEAP32 = new Int32Array(newBuffer);
@@ -49,7 +49,8 @@ function asmFunc(env) {
    HEAPF32 = new Float32Array(newBuffer);
    HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
-   memory.buffer = newBuffer;
+   memory.buffer = buffer;
+   bufferView = HEAPU8;
   }
   return oldPages;
  }
@@ -69,7 +70,8 @@ function asmFunc(env) {
  };
 }
 
-var bufferView = new Uint8Array(wasmMemory.buffer);
+var bufferView;
+var exports = asmFunc(asmLibraryArg);
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -90,6 +92,5 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
     return uint8Array; 
   }
   base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
-return asmFunc(asmLibraryArg, wasmMemory.buffer)
-
+return exports;
 }
