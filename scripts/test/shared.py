@@ -123,7 +123,7 @@ options.binaryen_bin = os.path.normpath(os.path.abspath(options.binaryen_bin))
 # ensure BINARYEN_ROOT is set up
 os.environ['BINARYEN_ROOT'] = os.path.dirname(options.binaryen_bin)
 
-wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe']
+wasm_dis_filenames = ['wasm-dis', 'wasm-dis.exe', 'wasm-dis.js']
 if not any(os.path.isfile(os.path.join(options.binaryen_bin, f))
            for f in wasm_dis_filenames):
     warn('Binaryen not found (or has not been successfully built to bin/ ?')
