@@ -184,6 +184,8 @@ struct OptimizeInstructions
       return;
     }
     if (finalize) {
+      // Perform separated transforms in single pass due to it may contain
+      // mutually exclusive rules
       if ((curr = finalOptimize(curr))) {
         replaceCurrent(curr);
       }
