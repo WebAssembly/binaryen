@@ -1900,17 +1900,14 @@ private:
           // x + 5 == 7
           //   =>
           //     x == 2
-          if (left->op == Abstract::getBinary(type, Abstract::Add) ||
-              left->op == Abstract::getBinary(type, Abstract::Sub)) {
+          if (left->op == Abstract::getBinary(type, Abstract::Add)) {
             if (auto* leftConst = left->right->dynCast<Const>()) {
               if (auto* rightConst = curr->right->dynCast<Const>()) {
                 return combineRelationalConstants(
                   curr, left, leftConst, nullptr, rightConst);
               } else if (auto* rightBinary = curr->right->dynCast<Binary>()) {
                 if (rightBinary->op ==
-                      Abstract::getBinary(type, Abstract::Add) ||
-                    rightBinary->op ==
-                      Abstract::getBinary(type, Abstract::Sub)) {
+                    Abstract::getBinary(type, Abstract::Add)) {
                   if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
                     return combineRelationalConstants(
                       curr, left, leftConst, rightBinary, rightConst);
