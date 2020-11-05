@@ -1718,30 +1718,30 @@ private:
         return curr;
       }
     }
-    {
-      // Wasm binary encoding uses signed LEBs, which slightly favor negative
-      // numbers: -64 is more efficient than +64 etc., as well as other powers
-      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
-      // theory we could just prefer negative numbers over positive, but that
-      // can have bad effects on gzip compression (as it would mean more
-      // subtractions than the more common additions). TODO: Simplify this by
-      // adding an ival matcher than can bind int64_t vars.
-      // int64_t value;
-      // if ((matches(curr, binary(Add, any(), ival(&value))) ||
-      //      matches(curr, binary(Sub, any(), ival(&value)))) &&
-      //     (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-      //      value == 0x8000000 || value == 0x400000000LL ||
-      //      value == 0x20000000000LL || value == 0x1000000000000LL ||
-      //      value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
-      //   right->value = right->value.neg();
-      //   if (matches(curr, binary(Add, any(), constant()))) {
-      //     curr->op = Abstract::getBinary(type, Sub);
-      //   } else {
-      //     curr->op = Abstract::getBinary(type, Add);
-      //   }
-      //   return curr;
-      // }
-    }
+    // {
+    // Wasm binary encoding uses signed LEBs, which slightly favor negative
+    // numbers: -64 is more efficient than +64 etc., as well as other powers
+    // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
+    // theory we could just prefer negative numbers over positive, but that
+    // can have bad effects on gzip compression (as it would mean more
+    // subtractions than the more common additions). TODO: Simplify this by
+    // adding an ival matcher than can bind int64_t vars.
+    // int64_t value;
+    // if ((matches(curr, binary(Add, any(), ival(&value))) ||
+    //      matches(curr, binary(Sub, any(), ival(&value)))) &&
+    //     (value == 0x40 || value == 0x2000 || value == 0x100000 ||
+    //      value == 0x8000000 || value == 0x400000000LL ||
+    //      value == 0x20000000000LL || value == 0x1000000000000LL ||
+    //      value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
+    //   right->value = right->value.neg();
+    //   if (matches(curr, binary(Add, any(), constant()))) {
+    //     curr->op = Abstract::getBinary(type, Sub);
+    //   } else {
+    //     curr->op = Abstract::getBinary(type, Add);
+    //   }
+    //   return curr;
+    // }
+    // }
     {
       double value;
       if (matches(curr, binary(Sub, any(), fval(&value))) && value == 0.0) {
@@ -1884,7 +1884,7 @@ private:
                   curr, left, leftConst, nullptr, rightConst);
               } else if (auto* rightBinary = curr->right->dynCast<Binary>()) {
                 if (rightBinary->op ==
-                      Abstract::getBinary(type, Abstract::Add)) {
+                    Abstract::getBinary(type, Abstract::Add)) {
                   if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
                     return combineRelationalConstants(
                       curr, left, leftConst, rightBinary, rightConst);
