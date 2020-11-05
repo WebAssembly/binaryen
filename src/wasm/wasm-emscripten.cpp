@@ -227,7 +227,6 @@ private:
   void createAsmConst(uint32_t id, std::string code, Signature sig, Name name);
   Signature asmConstSig(Signature baseSig);
   Name nameForImportWithSig(Signature sig, Proxying proxy);
-  void queueImport(Name importName, Signature baseSig);
   void addImports();
   Proxying proxyType(Name name);
 
@@ -340,21 +339,6 @@ Signature AsmConstWalker::asmConstSig(Signature baseSig) {
   return Signature(
     Type(std::vector<Type>(baseSig.params.begin() + 1, baseSig.params.end())),
     baseSig.results);
-}
-
-Name AsmConstWalker::nameForImportWithSig(Signature sig, Proxying proxy) {
-  std::string fixedTarget = EM_ASM_PREFIX.str + std::string("_") +
-                            proxyingSuffix(proxy) +
-                            getSig(sig.results, sig.params);
-  return Name(fixedTarget.c_str());
-}
-
-void AsmConstWalker::queueImport(Name importName, Signature baseSig) {
-  auto import = new Function;
-  import->name = import->base = importName;
-  import->module = ENV;
-  import->sig = baseSig;
-  queuedImports.push_back(std::unique_ptr<Function>(import));
 }
 
 void AsmConstWalker::addImports() {

@@ -18,7 +18,6 @@
 
 namespace wasm {
 
-cashew::IString GLOBAL("global");
 cashew::IString TOPMOST("topmost");
 cashew::IString INT8ARRAY("Int8Array");
 cashew::IString INT16ARRAY("Int16Array");
@@ -30,7 +29,6 @@ cashew::IString FLOAT32ARRAY("Float32Array");
 cashew::IString FLOAT64ARRAY("Float64Array");
 cashew::IString ARRAY_BUFFER("ArrayBuffer");
 cashew::IString ASM_MODULE("asmModule");
-cashew::IString IMPOSSIBLE_CONTINUE("impossible-continue");
 cashew::IString MATH("Math");
 cashew::IString IMUL("imul");
 cashew::IString CLZ32("clz32");

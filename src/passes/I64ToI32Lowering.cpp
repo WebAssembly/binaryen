@@ -22,7 +22,6 @@
 //
 
 #include "abi/js.h"
-#include "asmjs/shared-constants.h"
 #include "emscripten-optimizer/istring.h"
 #include "ir/flat.h"
 #include "ir/iteration.h"

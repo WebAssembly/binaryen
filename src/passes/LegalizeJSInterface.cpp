@@ -30,7 +30,6 @@
 // table even to a signature that is not legal.
 //
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"

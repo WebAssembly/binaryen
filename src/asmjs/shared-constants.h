@@ -21,7 +21,6 @@
 
 namespace wasm {
 
-extern cashew::IString GLOBAL;
 extern cashew::IString TOPMOST;
 extern cashew::IString INT8ARRAY;
 extern cashew::IString INT16ARRAY;
@@ -33,7 +32,6 @@ extern cashew::IString FLOAT32ARRAY;
 extern cashew::IString FLOAT64ARRAY;
 extern cashew::IString ARRAY_BUFFER;
 extern cashew::IString ASM_MODULE;
-extern cashew::IString IMPOSSIBLE_CONTINUE;
 extern cashew::IString MATH;
 extern cashew::IString IMUL;
 extern cashew::IString CLZ32;
