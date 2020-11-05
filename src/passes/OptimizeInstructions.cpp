@@ -1449,9 +1449,6 @@ private:
             }
           }
 
-          Literal literalMask = Literal::makeFromInt32(bitSize - 1, type);
-          Expression* leftRight = left->right;
-
           if (auto* rightRight = right->right->dynCast<Binary>()) {
             // only handle case without any masks
             // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
@@ -1460,11 +1457,11 @@ private:
               if (auto* c = rightRight->left->dynCast<Const>()) {
                 if (c->value == Literal::makeFromInt32(bitSize, type) ||
                     c->value.isZero()) {
-                  if (ExpressionAnalyzer::equal(leftRight,
+                  if (ExpressionAnalyzer::equal(left->right,
                                                 rightRight->right)) {
                     left->op = Abstract::getBinary(
                       type, isRotateLeft ? Abstract::RotL : Abstract::RotR);
-                    left->right = leftRight;
+                    left->right = left->right;
                     return left;
                   }
                 }

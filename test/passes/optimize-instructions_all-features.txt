@@ -4844,6 +4844,12 @@
    )
   )
   (drop
+   (i32.rotr
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (drop
    (i64.rotr
     (local.get $z)
     (local.get $w)
@@ -4968,12 +4974,6 @@
      )
      (local.get $y)
     )
-   )
-  )
-  (drop
-   (i32.rotr
-    (local.get $x)
-    (local.get $y)
    )
   )
   (drop

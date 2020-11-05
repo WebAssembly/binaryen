@@ -5606,6 +5606,24 @@
       )
     ))
 
+    ;; i32.rotl without left mask
+    (drop (i32.or
+      (i32.shl
+        (local.get $x)
+        (i32.sub
+          (i32.const 0)
+          (local.get $y)
+        )
+      )
+      (i32.shr_u
+        (local.get $x)
+        (i32.and
+          (local.get $y)
+          (i32.const 31)
+        )
+      )
+    ))
+
     ;; i64.rotr
     (drop (i64.or
       (i64.shl
@@ -5795,25 +5813,6 @@
             (i32.const 0)
             (local.get $y)
           )
-          (i32.const 31)
-        )
-      )
-    ))
-
-    ;; skip
-    ;; skipped mask for (x << (-y)) part
-    (drop (i32.or
-      (i32.shl
-        (local.get $x)
-        (i32.sub
-          (i32.const 0)
-          (local.get $y)
-        )
-      )
-      (i32.shr_u
-        (local.get $x)
-        (i32.and
-          (local.get $y)
           (i32.const 31)
         )
       )
