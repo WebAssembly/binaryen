@@ -151,15 +151,14 @@ struct OptimizeInstructions
   : public WalkerPass<
       PostWalker<OptimizeInstructions,
                  UnifiedExpressionVisitor<OptimizeInstructions>>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new OptimizeInstructions(finalize); }
 
   bool finalize = false;
   bool fastMath;
 
   OptimizeInstructions(bool finalize) : finalize(finalize) {}
-
-  bool isFunctionParallel() override { return true; }
-
-  Pass* create() override { return new OptimizeInstructions(finalize); }
 
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
