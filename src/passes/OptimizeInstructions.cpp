@@ -1726,16 +1726,21 @@ private:
       // can have bad effects on gzip compression (as it would mean more
       // subtractions than the more common additions). TODO: Simplify this by
       // adding an ival matcher than can bind int64_t vars.
-      int64_t value;
-      if (matches(curr, binary(Add, any(), ival(&value))) &&
-          (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-           value == 0x8000000 || value == 0x400000000LL ||
-           value == 0x20000000000LL || value == 0x1000000000000LL ||
-           value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
-        right->value = right->value.neg();
-        curr->op = Abstract::getBinary(type, Add);
-        return curr;
-      }
+      // int64_t value;
+      // if ((matches(curr, binary(Add, any(), ival(&value))) ||
+      //      matches(curr, binary(Sub, any(), ival(&value)))) &&
+      //     (value == 0x40 || value == 0x2000 || value == 0x100000 ||
+      //      value == 0x8000000 || value == 0x400000000LL ||
+      //      value == 0x20000000000LL || value == 0x1000000000000LL ||
+      //      value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
+      //   right->value = right->value.neg();
+      //   if (matches(curr, binary(Add, any(), constant()))) {
+      //     curr->op = Abstract::getBinary(type, Sub);
+      //   } else {
+      //     curr->op = Abstract::getBinary(type, Add);
+      //   }
+      //   return curr;
+      // }
     }
     {
       double value;

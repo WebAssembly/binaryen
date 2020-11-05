@@ -3448,7 +3448,7 @@
   (drop
    (i32.add
     (local.get $x)
-    (i32.const -64)
+    (i32.const 64)
    )
   )
   (drop
@@ -3460,19 +3460,25 @@
   (drop
    (i32.add
     (local.get $x)
-    (i32.const -8192)
+    (i32.const 8192)
    )
   )
   (drop
    (i32.add
     (local.get $x)
-    (i32.const -1048576)
+    (i32.const 1048576)
    )
   )
   (drop
    (i32.add
     (local.get $x)
-    (i32.const -134217728)
+    (i32.const 134217728)
+   )
+  )
+  (drop
+   (i64.add
+    (local.get $y)
+    (i64.const 64)
    )
   )
   (drop
@@ -3484,55 +3490,49 @@
   (drop
    (i64.add
     (local.get $y)
-    (i64.const -64)
+    (i64.const 8192)
    )
   )
   (drop
    (i64.add
     (local.get $y)
-    (i64.const -8192)
+    (i64.const 1048576)
    )
   )
   (drop
    (i64.add
     (local.get $y)
-    (i64.const -1048576)
+    (i64.const 134217728)
    )
   )
   (drop
    (i64.add
     (local.get $y)
-    (i64.const -134217728)
+    (i64.const 17179869184)
    )
   )
   (drop
    (i64.add
     (local.get $y)
-    (i64.const -17179869184)
+    (i64.const 2199023255552)
    )
   )
   (drop
    (i64.add
     (local.get $y)
-    (i64.const -2199023255552)
+    (i64.const 281474976710656)
    )
   )
   (drop
    (i64.add
     (local.get $y)
-    (i64.const -281474976710656)
+    (i64.const 36028797018963968)
    )
   )
   (drop
    (i64.add
     (local.get $y)
-    (i64.const -36028797018963968)
-   )
-  )
-  (drop
-   (i64.add
-    (local.get $y)
-    (i64.const -4611686018427387904)
+    (i64.const 4611686018427387904)
    )
   )
   (drop
