@@ -3421,26 +3421,20 @@
   )
   (drop
    (i32.eq
-    (i32.add
-     (local.get $x32)
-     (i32.const 10)
-    )
     (i32.sub
      (local.get $x32)
-     (i32.const 20)
+     (i32.const 30)
     )
+    (local.get $x32)
    )
   )
   (drop
    (i32.eq
-    (i32.add
-     (local.get $x32)
-     (i32.const 20)
-    )
     (i32.sub
      (local.get $x32)
-     (i32.const 10)
+     (i32.const 30)
     )
+    (local.get $x32)
    )
   )
   (drop

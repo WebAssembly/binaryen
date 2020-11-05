@@ -1911,7 +1911,9 @@ private:
                   curr, left, leftConst, nullptr, rightConst);
               } else if (auto* rightBinary = curr->right->dynCast<Binary>()) {
                 if (rightBinary->op ==
-                    Abstract::getBinary(type, Abstract::Add)) {
+                      Abstract::getBinary(type, Abstract::Add) ||
+                    rightBinary->op ==
+                      Abstract::getBinary(type, Abstract::Sub)) {
                   if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
                     return combineRelationalConstants(
                       curr, left, leftConst, rightBinary, rightConst);
