@@ -1044,7 +1044,7 @@ struct Reducer
     }
     // It's a number: try to replace it with a 0 or a 1 (trying more values
     // could make sense too, but these handle most cases).
-    auto* c = builder->makeZero(curr->type);
+    auto* c = builder->makeConst(Literal::makeZero(curr->type));
     if (tryToReplaceCurrent(c)) {
       return true;
     }
