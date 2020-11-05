@@ -528,11 +528,8 @@ struct OptimizeInstructions
         }
         // note that both left and right may be consts, but then we let
         // precompute compute the constant result
-      } else if (binary->op == AddInt32 || binary->op == AddInt64) {
-        if (auto* ret = optimizeAddedConstants(binary)) {
-          return ret;
-        }
-      } else if (binary->op == SubInt32 || binary->op == SubInt64) {
+      } else if (binary->op == AddInt32 || binary->op == AddInt64 ||
+                 binary->op == SubInt32 || binary->op == SubInt64) {
         if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
