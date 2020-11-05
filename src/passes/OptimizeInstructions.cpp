@@ -969,7 +969,6 @@ private:
 
     using namespace Abstract;
     using namespace Match;
-
     {
       // Wasm binary encoding uses signed LEBs, which slightly favor negative
       // numbers: -64 is more efficient than +64 etc., as well as other powers
@@ -980,13 +979,23 @@ private:
       // adding an ival matcher than can bind int64_t vars.
       Const* c;
       if (matches(curr, binary(Add, any(), ival(&c)))) {
+        // normalize x + (-C)  ==>   x - C
+        if (curr->cast<Binary>()->op == Abstract::getBinary(c->type, Add) &&
+            c->value.isNegative()) {
+          c->value = c->value.neg();
+          curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
+        }
         int64_t value = c->value.getInteger();
         if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
             value == 0x8000000 || value == 0x400000000LL ||
             value == 0x20000000000LL || value == 0x1000000000000LL ||
             value == 0x80000000000000LL || value == 0x4000000000000000LL) {
           c->value = c->value.neg();
-          curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
+          if (curr->cast<Binary>()->op == Abstract::getBinary(c->type, Add)) {
+            curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
+          } else {
+            curr->cast<Binary>()->op = Abstract::getBinary(c->type, Add);
+          }
           return curr;
         }
       }
