@@ -81,7 +81,7 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
       if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
       if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
-    return uint8Array; 
+    return uint8Array;
   }
   base64DecodeToExistingUint8Array(bufferView, memoryBase, "ZHluYW1pYyBkYXRh");
 var retasmFunc = asmFunc({

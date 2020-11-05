@@ -185,10 +185,10 @@ struct OptimizeInstructions
     }
     // we may be able to apply multiple patterns, one may open opportunities
     // that look deeper NB: patterns must not have cycles
-    Expression* res = nullptr;
+    Expression* res = curr;
     while ((curr = handOptimize(curr))) {
-      replaceCurrent(curr);
       res = curr;
+      replaceCurrent(curr);
     }
     if (finalize) {
       if ((res = finalOptimize(res))) {
