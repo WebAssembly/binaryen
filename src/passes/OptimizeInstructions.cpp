@@ -183,16 +183,15 @@ struct OptimizeInstructions
          !curr->is<Switch>() && !curr->is<If>())) {
       return;
     }
-    // we may be able to apply multiple patterns, one may open opportunities
-    // that look deeper NB: patterns must not have cycles
-    Expression* res = curr;
-    while ((curr = handOptimize(curr))) {
-      res = curr;
-      replaceCurrent(curr);
-    }
     if (finalize) {
-      if ((res = finalOptimize(res))) {
-        replaceCurrent(res);
+      if ((curr = finalOptimize(curr))) {
+        replaceCurrent(curr);
+      }
+    } else {
+      // we may be able to apply multiple patterns, one may open opportunities
+    // that look deeper NB: patterns must not have cycles
+      while ((curr = handOptimize(curr))) {
+        replaceCurrent(curr);
       }
     }
   }

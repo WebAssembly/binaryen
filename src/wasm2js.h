@@ -354,6 +354,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       runner.add("coalesce-locals");
     }
     runner.add("reorder-locals");
+    runner.add("optimize-instructions-finalize");
     runner.add("vacuum");
     runner.add("remove-unused-module-elements");
     // DCE at the end to make sure all IR nodes have valid types for conversion
