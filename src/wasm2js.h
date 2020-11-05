@@ -2382,7 +2382,6 @@ private:
   void emitPostES6();
 
   void emitMemory(std::string buffer,
-                  std::string segmentWriter,
                   std::function<std::string(std::string)> accessGlobal);
   void emitSpecialSupport();
 };
@@ -2466,7 +2465,7 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  emitMemory("wasmMemory.buffer", "writeSegment", [](std::string globalName) {
+  emitMemory("wasmMemory.buffer", [](std::string globalName) {
     return std::string("asmLibraryArg['") + asmangle(globalName) + "']";
   });
 
@@ -2503,7 +2502,6 @@ void Wasm2JSGlue::emitPostES6() {
         << wasm.memory.initial.addr * Memory::kPageSize << ");\n";
 
     emitMemory(std::string("mem") + moduleName.str,
-               std::string("assign") + moduleName.str,
                [](std::string globalName) { return globalName; });
   }
 
@@ -2590,7 +2588,6 @@ void Wasm2JSGlue::emitPostES6() {
 
 void Wasm2JSGlue::emitMemory(
   std::string buffer,
-  std::string segmentWriter,
   std::function<std::string(std::string)> accessGlobal) {
   if (!wasm.memory.exists) {
     return;
