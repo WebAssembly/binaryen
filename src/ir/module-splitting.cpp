@@ -210,7 +210,7 @@ void moveFunctions(Module& primary,
     CallIndirector(const std::set<Name>& secondaryFuncs,
                    const std::map<Name, Signature>& secondarySignatures,
                    std::function<Index(Name)> getIndex,
-                   Builder builder)
+                   Builder& builder)
       : secondaryFuncs(secondaryFuncs),
         secondarySignatures(secondarySignatures), getIndex(getIndex),
         builder(builder) {}
