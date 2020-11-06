@@ -3452,9 +3452,9 @@
    )
   )
   (drop
-   (i32.sub
+   (i32.add
     (local.get $x)
-    (i32.const 64)
+    (i32.const -64)
    )
   )
   (drop
@@ -3482,9 +3482,9 @@
    )
   )
   (drop
-   (i64.sub
+   (i64.add
     (local.get $y)
-    (i64.const 64)
+    (i64.const -64)
    )
   )
   (drop

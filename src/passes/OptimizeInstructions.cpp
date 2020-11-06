@@ -159,13 +159,12 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
       // adding an ival matcher than can bind int64_t vars.
       Const* c;
       if (matches(curr, binary(Add, any(), ival(&c)))) {
-        int64_t value = c->value.getInteger();
         // normalize x + (-C)  ==>   x - C
-        if (value < 0) {
-          value = -value;
+        if (c->value.isNegative()) {
           c->value = c->value.neg();
           curr->op = Abstract::getBinary(c->type, Sub);
         }
+        int64_t value = c->value.getInteger();
         if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
             value == 0x8000000 || value == 0x400000000LL ||
             value == 0x20000000000LL || value == 0x1000000000000LL ||
