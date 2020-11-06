@@ -922,7 +922,7 @@ private:
     }
     if (auto* c = binary->right->dynCast<Const>()) {
       // x - C  ==>   x + (-C)
-      // Prefer use addision operation if constant on the right.
+      // Prefer use addition if there is a constant on the right.
       if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
         c->value = c->value.neg();
         binary->op = Abstract::getBinary(c->type, Abstract::Add);
