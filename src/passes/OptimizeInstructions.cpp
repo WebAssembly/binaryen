@@ -162,6 +162,7 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
         int64_t value = c->value.getInteger();
         // normalize x + (-C)  ==>   x - C
         if (value < 0) {
+          value = -value;
           c->value = c->value.neg();
           curr->op = Abstract::getBinary(c->type, Sub);
         }
