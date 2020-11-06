@@ -1364,21 +1364,21 @@ private:
     return nullptr;
   }
 
-  // (x <<  (y &? M)) <+> (x >>> ((0 - y) &? M))  ==>  (i32|i64).rotl(x, y)
-  // (x >>> (y &? M)) <+> (x  << ((0 - y) &? M))  ==>  (i32|i64).rotr(x, y)
+  // (x <<  (y &? M)) u (x >>> ((0 - y) &? M))  ==>  (i32|i64).rotl(x, y)
+  // (x >>> (y &? M)) u (x  << ((0 - y) &? M))  ==>  (i32|i64).rotr(x, y)
   //
-  // (x <<  (y &? M)) <+> (x >>> ((N - y) &? M))  ==>  (i32|i64).rotl(x, y)
-  // (x >>> (y &? M)) <+> (x  << ((N - y) &? M))  ==>  (i32|i64).rotr(x, y)
+  // (x <<  (y &? M)) u (x >>> ((N - y) &? M))  ==>  (i32|i64).rotl(x, y)
+  // (x >>> (y &? M)) u (x  << ((N - y) &? M))  ==>  (i32|i64).rotr(x, y)
   //
-  // (x <<  C) <+> (x >>> (N - C))  ==>  (i32|i64).rot(l|r)(x, C)
-  // (x >>> C) <+> (x  << (N - C))  ==>  (i32|i64).rot(r|l)(x, C)
+  // (x <<  C) u (x >>> (N - C))  ==>  (i32|i64).rot(l|r)(x, C)
+  // (x >>> C) u (x  << (N - C))  ==>  (i32|i64).rot(r|l)(x, C)
   //
   // where
   //   M   -> (31 | 63), this should already reduced
   //   N   -> (32 | 64),
   //   &?  -> optional bitwise "&",
   //   >>> -> unsigned shift
-  //   <+> -> any binary op of "|", "^", "+"
+  //   u   -> any binary op of "|", "^", "+"
   //
   Expression* combineBitwiseRotation(Binary* binary) {
     using namespace Abstract;
