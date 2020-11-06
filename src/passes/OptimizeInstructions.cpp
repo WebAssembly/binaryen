@@ -1427,46 +1427,52 @@ private:
             }
           }
         } else {
-          if (EffectAnalyzer(getPassOptions(), getModule()->features, binary)
-                .hasSideEffects()) {
-            return nullptr;
-          }
           // canonicalize
           // (x <<>> complex) | (x <<>> y) to (x <<>> y) | (x <<>> complex)
-          if (auto* leftRight = left->right->dynCast<Binary>()) {
-            if (leftRight->op == Abstract::getBinary(type, Sub)) {
-              // swap lhs & rhs around "or".
-              // it's possible due to we already know that
-              // whole binary expression is side free.
-              // (x <<>> (y - z)) | rhs   ==>   rhs | (x <<>> (y - z))
-              std::swap(left, right);
-              std::swap(isRotateLeft, isRotateRight);
-            } else if (leftRight->op == Abstract::getBinary(type, And)) {
-              if (leftRight->right->dynCast<Const>() &&
-                  leftRight->left->dynCast<Binary>()) {
-                // swap lhs & rhs around "or"
-                // (x <<>> ((y op z) & C)) | rhs  ==>
-                //     rhs | (x <<>> ((y op z) & C))
-                std::swap(left, right);
-                std::swap(isRotateLeft, isRotateRight);
-              }
-            }
-          }
-
+          // if (auto* leftRight = left->right->dynCast<Binary>()) {
+          //   if (leftRight->op == Abstract::getBinary(type, Sub)) {
+          //     // swap lhs & rhs around "or".
+          //     // it's possible due to we already know that
+          //     // whole binary expression is side free.
+          //     // (x <<>> (y - z)) | rhs   ==>   rhs | (x <<>> (y - z))
+          //     std::swap(left, right);
+          //     std::swap(isRotateLeft, isRotateRight);
+          //   }
+          // }
           if (auto* rightRight = right->right->dynCast<Binary>()) {
-            // only handle case without any masks
             // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
             // (x << y) | (x >>> (0 - y))  ==>  (i32|64).rotl(x, y)
             if (rightRight->op == Abstract::getBinary(type, Sub)) {
               if (auto* c = rightRight->left->dynCast<Const>()) {
                 if (c->value.isZero() ||
                     c->value == Literal::makeFromInt32(bitSize, type)) {
-                  if (ExpressionAnalyzer::equal(left->right,
+                  if (!EffectAnalyzer(
+                         getPassOptions(), getModule()->features, left)
+                         .hasSideEffects() &&
+                      ExpressionAnalyzer::equal(left->right,
                                                 rightRight->right)) {
                     left->op =
                       Abstract::getBinary(type, isRotateLeft ? RotL : RotR);
-                    left->right = left->right;
                     return left;
+                  }
+                }
+              }
+            }
+          } else if (auto* leftRight = left->right->dynCast<Binary>()) {
+            // (x >>> (N - y)) | (x << y)  ==>  (i32|64).rotl(x, y)
+            // (x >>> (0 - y)) | (x << y)  ==>  (i32|64).rotl(x, y)
+            if (leftRight->op == Abstract::getBinary(type, Sub)) {
+              if (auto* c = leftRight->left->dynCast<Const>()) {
+                if (c->value.isZero() ||
+                    c->value == Literal::makeFromInt32(bitSize, type)) {
+                  if (!EffectAnalyzer(
+                         getPassOptions(), getModule()->features, right)
+                         .hasSideEffects() &&
+                      ExpressionAnalyzer::equal(right->right,
+                                                leftRight->right)) {
+                    right->op =
+                      Abstract::getBinary(type, isRotateLeft ? RotR : RotL);
+                    return right;
                   }
                 }
               }
