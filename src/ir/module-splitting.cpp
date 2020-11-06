@@ -391,12 +391,12 @@ std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
 
   auto ret = initializeSecondary(primary);
   Module& secondary = *ret;
-  shareImportableItems(primary, secondary, config.importNamespace);
   moveFunctions(primary, secondary, secondaryFuncs);
   exportImportPrimaryFunctions(
     primary, secondary, config.primaryFuncs, config.importNamespace);
   setupTablePatching(
     primary, secondary, secondaryFuncs, config.placeholderNamespace);
+  shareImportableItems(primary, secondary, config.importNamespace);
   return ret;
 }
 

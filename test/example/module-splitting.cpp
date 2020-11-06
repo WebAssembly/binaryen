@@ -25,7 +25,7 @@ std::unique_ptr<Module> parse(char* module) {
   return wasm;
 }
 
-void do_test(std::set<Name> keptFuncs, std::string module) {
+void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   WasmValidator validator;
   bool valid;
 
@@ -35,6 +35,18 @@ void do_test(std::set<Name> keptFuncs, std::string module) {
 
   std::cout << "Before:\n";
   WasmPrinter::printModule(primary.get());
+
+  std::cout << "Keeping: ";
+  if (keptFuncs.size()) {
+    auto it = keptFuncs.begin();
+    std::cout << *it++;
+    while (it != keptFuncs.end()) {
+      std::cout << ", " << *it++;
+    }
+  } else {
+    std::cout << "<none>";
+  }
+  std::cout << "\n";
 
   ModuleSplitting::Config config;
   config.primaryFuncs = keptFuncs;
@@ -60,48 +72,31 @@ int main() {
   do_test({}, R"(
     (module
      (memory $mem (shared 3 42))
-     (table $table 3 42 funcref)
+     (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
      (event $e (attr 0) (param i32))
     ))");
 
-  // Deferred function
+  // Imported global stuff
   do_test({}, R"(
     (module
-     (func $foo (param i32) (result i32)
-      (local.get 0)
-     )
+     (import "env" "mem" (memory $mem (shared 3 42)))
+     (import "env" "tab" (table $tab 3 42 funcref))
+     (import "env" "glob" (global $glob (mut i32)))
+     (import "env" "e" (event $e (attr 0) (param i32)))
     ))");
 
-  // Deferred exported function
+  // Exported global stuff
   do_test({}, R"(
     (module
-     (export "foo" (func $foo))
-     (func $foo (param i32) (result i32)
-      (local.get 0)
-     )
-    ))");
-
-  // Deferred exported function already in table
-  do_test({}, R"(
-    (module
-     (table $table 1 funcref)
-     (elem (i32.const 0) $foo)
-     (export "foo" (func $foo))
-     (func $foo (param i32) (result i32)
-      (local.get 0)
-     )
-    ))");
-
-  // Deferred exported function already in table at a weird offset
-  do_test({}, R"(
-    (module
-     (table $table 1000 funcref)
-     (elem (i32.const 42) $foo)
-     (export "foo" (func $foo))
-     (func $foo (param i32) (result i32)
-      (local.get 0)
-     )
+     (memory $mem (shared 3 42))
+     (table $tab 3 42 funcref)
+     (global $glob (mut i32) (i32.const 7))
+     (event $e (attr 0) (param i32))
+     (export "mem" (memory $mem))
+     (export "tab" (table $tab))
+     (export "glob" (global $glob))
+     (export "e" (event $e))
     ))");
 
   // Non-deferred function
@@ -121,14 +116,110 @@ int main() {
      )
     ))");
 
+  // Non-deferred function in table
+  do_test({"foo"}, R"(
+    (module
+     (table $table 1 funcref)
+     (elem (i32.const 0) $foo)
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Non-deferred imported function
+  do_test({"foo"}, R"(
+    (module
+     (import "env" "foo" (func $foo (param i32) (result i32)))
+    ))");
+
+  // Non-deferred exported imported function in table at a weird offset
+  do_test({"foo"}, R"(
+    (module
+     (import "env" "foo" (func $foo (param i32) (result i32)))
+     (table $table 1000 funcref)
+     (elem (i32.const 42) $foo)
+     (export "foo" (func $foo))
+    ))");
+
+  // Deferred function
+  do_test({}, R"(
+    (module
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred exported function
+  do_test({}, R"(
+    (module
+     (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred function in table
+  do_test({}, R"(
+    (module
+     (table $table 1 funcref)
+     (elem (i32.const 0) $foo)
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred exported function in table at a weird offset
+  do_test({}, R"(
+    (module
+     (table $table 1000 funcref)
+     (elem (i32.const 42) $foo)
+     (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Non-deferred function calling non-deferred function
+  do_test({"foo", "bar"}, R"(
+    (module
+     (func $foo
+      (call $bar)
+     )
+     (func $bar
+      (nop)
+     )
+    ))");
+
   // Deferred function calling non-deferred function
+  do_test({"bar"}, R"(
+    (module
+     (func $foo
+      (call $bar)
+     )
+     (func $bar
+      (nop)
+     )
+    ))");
+
+  // Non-deferred function calling deferred function
   do_test({"foo"}, R"(
     (module
      (func $foo
-      (nop)
+      (call $bar)
      )
      (func $bar
-      (call $foo)
+      (nop)
+     )
+    ))");
+
+  // Deferred function calling deferred function
+  do_test({}, R"(
+    (module
+     (func $foo
+      (call $bar)
+     )
+     (func $bar
+      (nop)
      )
     ))");
 
@@ -136,17 +227,6 @@ int main() {
   do_test({"foo"}, R"(
     (module
      (export "foo" (func $bar))
-     (func $foo
-      (nop)
-     )
-     (func $bar
-      (call $foo)
-     )
-    ))");
-
-  // Non-deferred function calling deferred function
-  do_test({"bar"}, R"(
-    (module
      (func $foo
       (nop)
      )
