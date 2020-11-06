@@ -1427,18 +1427,6 @@ private:
             }
           }
         } else {
-          // canonicalize
-          // (x <<>> complex) | (x <<>> y) to (x <<>> y) | (x <<>> complex)
-          // if (auto* leftRight = left->right->dynCast<Binary>()) {
-          //   if (leftRight->op == Abstract::getBinary(type, Sub)) {
-          //     // swap lhs & rhs around "or".
-          //     // it's possible due to we already know that
-          //     // whole binary expression is side free.
-          //     // (x <<>> (y - z)) | rhs   ==>   rhs | (x <<>> (y - z))
-          //     std::swap(left, right);
-          //     std::swap(isRotateLeft, isRotateRight);
-          //   }
-          // }
           if (auto* rightRight = right->right->dynCast<Binary>()) {
             // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
             // (x << y) | (x >>> (0 - y))  ==>  (i32|64).rotl(x, y)
