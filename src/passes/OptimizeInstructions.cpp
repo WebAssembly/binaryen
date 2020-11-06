@@ -221,7 +221,7 @@ struct OptimizeInstructions
     FeatureSet features = getModule()->features;
 
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (isSymmetricOrRelational(binary)) {
+      if (shouldCanonicalize(binary)) {
         canonicalize(binary);
       }
     }
@@ -903,7 +903,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
-    assert(isSymmetricOrRelational(binary));
+    assert(shouldCanonicalize(binary));
     auto swap = [&]() {
       assert(canReorder(binary->left, binary->right));
       if (binary->isRelational()) {
@@ -2397,7 +2397,7 @@ private:
     }
   }
 
-  bool isSymmetricOrRelational(Binary* binary) {
+  bool shouldCanonicalize(Binary* binary) {
     if ((binary->op == SubInt32 || binary->op == SubInt64) &&
         binary->right->is<Const>() && !binary->left->is<Const>()) {
       return true;
