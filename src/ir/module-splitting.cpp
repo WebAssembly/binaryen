@@ -159,7 +159,9 @@ void moveFunctions(Module& primary,
   });
 
   // Keep track of the new items we have to add to the table and where to add
-  // them.
+  // them. We are adding secondary function names to the primary table here, but
+  // they will be replaced with placeholder functions later along with any
+  // references to secondary functions that were already in the table.
   Table::Segment* lastSegment = nullptr;
   Index firstFreeIndex = getFirstFreeTableIndex(primary.table, &lastSegment);
   std::vector<Name> newTableElems;
