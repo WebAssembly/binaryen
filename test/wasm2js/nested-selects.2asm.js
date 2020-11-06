@@ -14,7 +14,7 @@ function asmFunc(global, env) {
  var infinity = global.Infinity;
  function $1($0) {
   $0 = $0 | 0;
-  return (($0 | 0) < (0 | 0) ? -1 : ($0 | 0) > (0 | 0) ? 1 : 0) | 0;
+  return (($0 | 0) < (0 | 0) ? -1 : ($0 | 0) > (0 | 0)) | 0;
  }
  
  return {

@@ -16,12 +16,12 @@ function asmFunc(global, env) {
  var infinity = global.Infinity;
  function $0(x) {
   x = x | 0;
-  return FUNCTION_TABLE[(x ? 1 : 0) | 0]() | 0 | 0;
+  return FUNCTION_TABLE[!!x | 0]() | 0 | 0;
  }
  
  function $1(x) {
   x = x | 0;
-  return FUNCTION_TABLE[(x ? 0 : 1) | 0]() | 0 | 0;
+  return FUNCTION_TABLE[!x | 0]() | 0 | 0;
  }
  
  return {

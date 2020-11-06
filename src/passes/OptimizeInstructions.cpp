@@ -133,6 +133,69 @@ struct LocalScanner : PostWalker<LocalScanner> {
   }
 };
 
+// perform some final optimizations
+struct FinalOptimizer : public WalkerPass<
+      PostWalker<FinalOptimizer,
+                 UnifiedExpressionVisitor<FinalOptimizer>>>{
+  const PassOptions& passOptions;
+
+  FinalOptimizer(const PassOptions& passOptions) : passOptions(passOptions) {}
+
+  void visitExpression(Expression* curr) {
+    // if this contains dead code, don't bother trying to optimize it, the type
+    // might change (if might not be unreachable if just one arm is, for
+    // example). this optimization pass focuses on actually executing code. the
+    // only exceptions are control flow changes
+    if (curr->is<Const>() || curr->is<Call>() || curr->is<Nop>() ||
+        (curr->type == Type::unreachable && !curr->is<Break>() &&
+         !curr->is<Switch>() && !curr->is<If>())) {
+      return;
+    }
+
+    if ((curr = optimize(curr))) {
+      replaceCurrent(curr);
+    }
+  }
+
+  Expression* optimize(Expression* curr) {
+    using namespace Abstract;
+    using namespace Match;
+    {
+      // Wasm binary encoding uses signed LEBs, which slightly favor negative
+      // numbers: -64 is more efficient than +64 etc., as well as other powers
+      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
+      // theory we could just prefer negative numbers over positive, but that
+      // can have bad effects on gzip compression (as it would mean more
+      // subtractions than the more common additions). TODO: Simplify this by
+      // adding an ival matcher than can bind int64_t vars.
+      Const* c;
+      if (matches(curr, binary(Add, any(), ival(&c)))) {
+        // normalize x + (-C)  ==>   x - C
+        if (curr->cast<Binary>()->op == Abstract::getBinary(c->type, Add) &&
+            c->value.isNegative()) {
+          c->value = c->value.neg();
+          curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
+        }
+        int64_t value = c->value.getInteger();
+        if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
+            value == 0x8000000 || value == 0x400000000LL ||
+            value == 0x20000000000LL || value == 0x1000000000000LL ||
+            value == 0x80000000000000LL || value == 0x4000000000000000LL) {
+          c->value = c->value.neg();
+          if (curr->cast<Binary>()->op == Abstract::getBinary(c->type, Add)) {
+            curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
+          } else {
+            curr->cast<Binary>()->op = Abstract::getBinary(c->type, Add);
+          }
+          return curr;
+        }
+      }
+    }
+
+    return nullptr;
+  }
+};
+
 // Create a custom matcher for checking side effects
 template<class Opt> struct PureMatcherKind {};
 template<class Opt>
@@ -170,6 +233,12 @@ struct OptimizeInstructions
     }
     // main walk
     super::doWalkFunction(func);
+    // do final optimizations if finalize is set
+    if (finalize) {
+      FinalOptimizer optimizer(getPassOptions());
+      optimizer.setModule(getModule());
+      optimizer.walkFunction(func);
+    }
   }
 
   void visitExpression(Expression* curr) {
@@ -182,18 +251,10 @@ struct OptimizeInstructions
          !curr->is<Switch>() && !curr->is<If>())) {
       return;
     }
-    if (finalize) {
-      // Perform separated transforms in single pass due to it may contain
-      // mutually exclusive rules
-      if ((curr = finalOptimize(curr))) {
-        replaceCurrent(curr);
-      }
-    } else {
-      // we may be able to apply multiple patterns, one may open opportunities
-      // that look deeper NB: patterns must not have cycles
-      while ((curr = handOptimize(curr))) {
-        replaceCurrent(curr);
-      }
+    // we may be able to apply multiple patterns, one may open opportunities
+    // that look deeper NB: patterns must not have cycles
+    while ((curr = handOptimize(curr))) {
+      replaceCurrent(curr);
     }
   }
 
@@ -959,46 +1020,6 @@ private:
         return maybeSwap();
       }
     }
-  }
-
-  Expression* finalOptimize(Expression* curr) {
-    assert(finalize);
-
-    using namespace Abstract;
-    using namespace Match;
-    {
-      // Wasm binary encoding uses signed LEBs, which slightly favor negative
-      // numbers: -64 is more efficient than +64 etc., as well as other powers
-      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
-      // theory we could just prefer negative numbers over positive, but that
-      // can have bad effects on gzip compression (as it would mean more
-      // subtractions than the more common additions). TODO: Simplify this by
-      // adding an ival matcher than can bind int64_t vars.
-      Const* c;
-      if (matches(curr, binary(Add, any(), ival(&c)))) {
-        // normalize x + (-C)  ==>   x - C
-        if (curr->cast<Binary>()->op == Abstract::getBinary(c->type, Add) &&
-            c->value.isNegative()) {
-          c->value = c->value.neg();
-          curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
-        }
-        int64_t value = c->value.getInteger();
-        if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-            value == 0x8000000 || value == 0x400000000LL ||
-            value == 0x20000000000LL || value == 0x1000000000000LL ||
-            value == 0x80000000000000LL || value == 0x4000000000000000LL) {
-          c->value = c->value.neg();
-          if (curr->cast<Binary>()->op == Abstract::getBinary(c->type, Add)) {
-            curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
-          } else {
-            curr->cast<Binary>()->op = Abstract::getBinary(c->type, Add);
-          }
-          return curr;
-        }
-      }
-    }
-
-    return nullptr;
   }
 
   // Optimize given that the expression is flowing into a boolean context

@@ -189,7 +189,7 @@ function asmFunc(global, env) {
     }
     $2_1 = 5;
    }
-   $3_1 = Math_imul(10, $2_1);
+   $3_1 = Math_imul($2_1, 10);
   }
   return $3_1 | 0;
  }
