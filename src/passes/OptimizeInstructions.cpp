@@ -135,9 +135,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
 
 namespace {
 // perform some final optimizations
-struct FinalOptimizer
-  : public WalkerPass<
-      PostWalker<FinalOptimizer, UnifiedExpressionVisitor<FinalOptimizer>>> {
+struct FinalOptimizer : public PostWalker<FinalOptimizer> {
   const PassOptions& passOptions;
 
   FinalOptimizer(const PassOptions& passOptions) : passOptions(passOptions) {}
