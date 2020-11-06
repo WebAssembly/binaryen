@@ -14,6 +14,66 @@
  * limitations under the License.
  */
 
+// The process of module splitting involves these steps:
+//
+//   1. Create the new secondary module.
+//
+//   2. Export globals, events, tables, and memories from the primary module and
+//      import them in the secondary module.
+//
+//   3. Move the deferred functions from the primary to the secondary module.
+//
+//   4. For any secondary function exported from the primary module, export in
+//      its place a trampoline function that makes an indirect call to its
+//      placeholder function (and eventually to the original secondary
+//      function), allocating a new table slot for the placeholder if necessary.
+//
+//   5. Rewrite direct calls from primary functions to secondary functions to be
+//      indirect calls to their placeholder functions (and eventually to their
+//      original secondary functions), allocating new table slots for the
+//      placeholders if necessary.
+//
+//   6. For each primary function directly called from a secondary function,
+//      export the primary function if it is not already exported and import it
+//      into the secondary module.
+//
+//   7. Replace all references to secondary functions in the primary module's
+//      table segments with references to imported placeholder functions.
+//
+//   8. Create new active table segments in the secondary module that will
+//      replace all the placeholder function references in the table with
+//      references to their corresponding secondary functions upon
+//      instantiation.
+//
+// Functions can be used or referenced three ways in a WebAssembly module: they
+// can be exported, called, or placed in a table. The above procedure introduces
+// a layer of indirection to each of those mechanisms that removes all
+// references to secondary functions from the primary module but restores the
+// original program's semantics once the secondary module is instantiated. As
+// more mechanisms that reference functions are added in the future, such as
+// ref.func instructions, they will have to be modified to use a similar layer
+// of indirection.
+//
+// The code as currently written makes a few assumptions about the module that
+// is being split:
+//
+//   1. It assumes that mutable-globals is allowed. This could be worked around
+//      by introducing wrapper functions for globals and rewriting secondary
+//      code that accesses them, but now that mutable-globals is shipped on all
+//      browsers, hopefully that extra complexity won't be necessary.
+//
+//   2. It assumes that all table segment offsets are constants. This simplifies
+//      the generation of segments to actively patch in the secondary functions
+//      without overwriting any other table slots. This assumption could be
+//      relaxed by 1) having secondary segments re-write primary function slots
+//      as well, 2) allowing addition in segment offsets, or 3) synthesizing a
+//      start function to modify the table instead of using segments.
+//
+//   3. It assumes that each function appears in the table at most once. This
+//      isn't necessarily true in general or even for LLVM output after function
+//      deduplication. Relaxing this assumption would just require slightly more
+//      complex code, so it is a good candidate for a follow up PR.
+
 #include "ir/module-splitting.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
@@ -34,84 +94,6 @@ std::unique_ptr<Module> initializeSecondary(const Module& primary) {
   secondary->features = primary.features;
   secondary->hasFeaturesSection = primary.hasFeaturesSection;
   return secondary;
-}
-
-void shareImportableItems(Module& primary,
-                          Module& secondary,
-                          Name importNamespace) {
-  // Map internal names to (one of) their corresponding export names.
-  std::unordered_map<Name, Name> exports;
-  for (auto& ex : primary.exports) {
-    if (ex->kind != ExternalKind::Function) {
-      exports[ex->value] = ex->name;
-    }
-  }
-
-  auto makeImportExport = [&](Importable& primaryItem,
-                              Importable& secondaryItem,
-                              Name exportName,
-                              ExternalKind kind) {
-    secondaryItem.name = primaryItem.name;
-    secondaryItem.hasExplicitName = primaryItem.hasExplicitName;
-    secondaryItem.module = importNamespace;
-    auto exportIt = exports.find(primaryItem.name);
-    if (exportIt != exports.end()) {
-      secondaryItem.base = exportIt->second;
-    } else {
-      exportName = Names::getValidExportName(primary, exportName);
-      primary.addExport(new Export{exportName, primaryItem.name, kind});
-      secondaryItem.base = exportName;
-    }
-  };
-
-  // TODO: Be more selective by only sharing global items that are actually used
-  // in the secondary module, just like we do for functions.
-
-  auto shareMemory = [&](Memory* memory) {
-    secondary.memory.exists = true;
-    secondary.memory.initial = memory->initial;
-    secondary.memory.max = memory->max;
-    secondary.memory.shared = memory->shared;
-    secondary.memory.indexType = memory->indexType;
-    makeImportExport(*memory, secondary.memory, "memory", ExternalKind::Memory);
-  };
-  ModuleUtils::iterImportedMemories(primary, shareMemory);
-  ModuleUtils::iterDefinedMemories(primary, shareMemory);
-
-  auto shareTable = [&](Table* table) {
-    secondary.table.exists = true;
-    secondary.table.initial = table->initial;
-    secondary.table.max = table->max;
-    makeImportExport(*table, secondary.table, "table", ExternalKind::Table);
-  };
-  ModuleUtils::iterImportedTables(primary, shareTable);
-  ModuleUtils::iterDefinedTables(primary, shareTable);
-
-  auto shareGlobal = [&](Global* global) {
-    assert(primary.features.hasMutableGlobals() &&
-           "TODO: add wrapper functions for disallowed mutable globals");
-    auto secondaryGlobal = std::make_unique<Global>();
-    secondaryGlobal->type = global->type;
-    secondaryGlobal->mutable_ = global->mutable_;
-    secondaryGlobal->init =
-      global->init == nullptr
-        ? nullptr
-        : ExpressionManipulator::copy(global->init, secondary);
-    makeImportExport(*global, *secondaryGlobal, "global", ExternalKind::Global);
-    secondary.addGlobal(std::move(secondaryGlobal));
-  };
-  ModuleUtils::iterImportedGlobals(primary, shareGlobal);
-  ModuleUtils::iterDefinedGlobals(primary, shareGlobal);
-
-  auto shareEvent = [&](Event* event) {
-    auto secondaryEvent = std::make_unique<Event>();
-    secondaryEvent->attribute = event->attribute;
-    secondaryEvent->sig = event->sig;
-    makeImportExport(*event, *secondaryEvent, "event", ExternalKind::Event);
-    secondary.addEvent(std::move(secondaryEvent));
-  };
-  ModuleUtils::iterImportedEvents(primary, shareEvent);
-  ModuleUtils::iterDefinedEvents(primary, shareEvent);
 }
 
 template<class F> void forEachElement(Table& table, F f) {
@@ -169,7 +151,7 @@ void moveFunctions(Module& primary,
   // Initialize `secondaryIndices` with the secondary functions that already
   // have table slots.
   forEachElement(primary.table, [&](Index index, Name elem) {
-    if (secondaryFuncs.find(elem) != secondaryFuncs.end()) {
+    if (secondaryFuncs.count(elem)) {
       addIndex(elem, index);
     }
   });
@@ -199,7 +181,7 @@ void moveFunctions(Module& primary,
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
-        secondaryFuncs.find(ex->value) == secondaryFuncs.end()) {
+        !secondaryFuncs.count(ex->value)) {
       continue;
     }
     Name secondaryFunc = ex->value;
@@ -212,7 +194,7 @@ void moveFunctions(Module& primary,
       args.push_back(builder.makeLocalGet(i, func->sig.params[i]));
     }
     func->body = builder.makeCallIndirect(
-      builder.makeConst(Literal(int32_t(tableIndex))), args, func->sig);
+      builder.makeConst(int32_t(tableIndex)), args, func->sig);
     primary.addFunction(std::move(func));
   }
 
@@ -222,7 +204,7 @@ void moveFunctions(Module& primary,
     const std::set<Name>& secondaryFuncs;
     const std::map<Name, Signature>& secondarySignatures;
     std::function<Index(Name)> getIndex;
-    Builder builder;
+    Builder& builder;
     CallIndirector(const std::set<Name>& secondaryFuncs,
                    const std::map<Name, Signature>& secondarySignatures,
                    std::function<Index(Name)> getIndex,
@@ -231,11 +213,11 @@ void moveFunctions(Module& primary,
         secondarySignatures(secondarySignatures), getIndex(getIndex),
         builder(builder) {}
     void visitCall(Call* curr) {
-      if (secondaryFuncs.find(curr->target) == secondaryFuncs.end()) {
+      if (!secondaryFuncs.count(curr->target)) {
         return;
       }
       replaceCurrent(builder.makeCallIndirect(
-        builder.makeConst(Literal(int32_t(getIndex(curr->target)))),
+        builder.makeConst(int32_t(getIndex(curr->target))),
         curr->operands,
         secondarySignatures.find(curr->target)->second,
         curr->isReturn));
@@ -252,23 +234,20 @@ void moveFunctions(Module& primary,
   // Insert new table elements
   if (newTableElems.size()) {
     primary.table.exists = true;
-    secondary.table.exists = true;
     // Update table sizes if necessary
     size_t tableSize = firstFreeIndex + newTableElems.size();
     if (primary.table.initial < tableSize) {
       primary.table.initial = tableSize;
-      secondary.table.initial = tableSize;
     }
     if (primary.table.max < tableSize) {
       primary.table.max = tableSize;
-      secondary.table.max = tableSize;
     }
     if (lastSegment != nullptr) {
       lastSegment->data.insert(
         lastSegment->data.end(), newTableElems.begin(), newTableElems.end());
     } else {
       primary.table.segments.emplace_back(
-        builder.makeConst(Literal(int32_t(firstFreeIndex))), newTableElems);
+        builder.makeConst(int32_t(firstFreeIndex)), newTableElems);
     }
   }
 }
@@ -278,19 +257,19 @@ void exportImportPrimaryFunctions(Module& primary,
                                   const std::set<Name>& primaryFuncs,
                                   Name importNamespace) {
   // Find primary functions called in the secondary module.
-  ModuleUtils::ParallelFunctionAnalysis<std::set<Name>> callCollector(
-    secondary, [&](Function* func, std::set<Name>& calledPrimaryFuncs) {
+  ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>> callCollector(
+    secondary, [&](Function* func, std::vector<Name>& calledPrimaryFuncs) {
       struct CallCollector : PostWalker<CallCollector> {
         const std::set<Name>& primaryFuncs;
-        std::set<Name>& calledPrimaryFuncs;
+        std::vector<Name>& calledPrimaryFuncs;
         CallCollector(const std::set<Name>& primaryFuncs,
-                      std::set<Name>& calledPrimaryFuncs)
+                      std::vector<Name>& calledPrimaryFuncs)
           : primaryFuncs(primaryFuncs), calledPrimaryFuncs(calledPrimaryFuncs) {
         }
 
         void visitCall(Call* curr) {
-          if (primaryFuncs.find(curr->target) != primaryFuncs.end()) {
-            calledPrimaryFuncs.insert(curr->target);
+          if (primaryFuncs.count(curr->target)) {
+            calledPrimaryFuncs.push_back(curr->target);
           }
         }
       };
@@ -360,7 +339,7 @@ void setupTablePatching(Module& primary,
   Index currBase = 0;
   std::vector<Name> currData;
   auto finishSegment = [&]() {
-    auto* offset = Builder(secondary).makeConst(Literal(int32_t(currBase)));
+    auto* offset = Builder(secondary).makeConst(int32_t(currBase));
     secondary.table.segments.emplace_back(offset, currData);
   };
   if (replacedElems.size()) {
@@ -379,6 +358,82 @@ void setupTablePatching(Module& primary,
   }
 }
 
+void shareImportableItems(Module& primary,
+                          Module& secondary,
+                          Name importNamespace) {
+  // Map internal names to (one of) their corresponding export names. Don't
+  // consider functions because they have already been imported and exported as
+  // necessary.
+  std::unordered_map<Name, Name> exports;
+  for (auto& ex : primary.exports) {
+    if (ex->kind != ExternalKind::Function) {
+      exports[ex->value] = ex->name;
+    }
+  }
+
+  auto makeImportExport = [&](Importable& primaryItem,
+                              Importable& secondaryItem,
+                              Name genericExportName,
+                              ExternalKind kind) {
+    secondaryItem.name = primaryItem.name;
+    secondaryItem.hasExplicitName = primaryItem.hasExplicitName;
+    secondaryItem.module = importNamespace;
+    auto exportIt = exports.find(primaryItem.name);
+    if (exportIt != exports.end()) {
+      secondaryItem.base = exportIt->second;
+    } else {
+      Name exportName = Names::getValidExportName(primary, genericExportName);
+      primary.addExport(new Export{exportName, primaryItem.name, kind});
+      secondaryItem.base = exportName;
+    }
+  };
+
+  // TODO: Be more selective by only sharing global items that are actually used
+  // in the secondary module, just like we do for functions.
+
+  if (primary.memory.exists) {
+    secondary.memory.exists = true;
+    secondary.memory.initial = primary.memory.initial;
+    secondary.memory.max = primary.memory.max;
+    secondary.memory.shared = primary.memory.shared;
+    secondary.memory.indexType = primary.memory.indexType;
+    makeImportExport(
+      primary.memory, secondary.memory, "memory", ExternalKind::Memory);
+  }
+
+  if (primary.table.exists) {
+    secondary.table.exists = true;
+    secondary.table.initial = primary.table.initial;
+    secondary.table.max = primary.table.max;
+    makeImportExport(
+      primary.table, secondary.table, "table", ExternalKind::Table);
+  }
+
+  for (auto& global : primary.globals) {
+    if (global->mutable_) {
+      assert(primary.features.hasMutableGlobals() &&
+             "TODO: add wrapper functions for disallowed mutable globals");
+    }
+    auto secondaryGlobal = std::make_unique<Global>();
+    secondaryGlobal->type = global->type;
+    secondaryGlobal->mutable_ = global->mutable_;
+    secondaryGlobal->init =
+      global->init == nullptr
+        ? nullptr
+        : ExpressionManipulator::copy(global->init, secondary);
+    makeImportExport(*global, *secondaryGlobal, "global", ExternalKind::Global);
+    secondary.addGlobal(std::move(secondaryGlobal));
+  }
+
+  for (auto& event : primary.events) {
+    auto secondaryEvent = std::make_unique<Event>();
+    secondaryEvent->attribute = event->attribute;
+    secondaryEvent->sig = event->sig;
+    makeImportExport(*event, *secondaryEvent, "event", ExternalKind::Event);
+    secondary.addEvent(std::move(secondaryEvent));
+  }
+}
+
 } // anonymous namespace
 
 std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
@@ -391,12 +446,14 @@ std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
 
   auto ret = initializeSecondary(primary);
   Module& secondary = *ret;
+
   moveFunctions(primary, secondary, secondaryFuncs);
   exportImportPrimaryFunctions(
     primary, secondary, config.primaryFuncs, config.importNamespace);
   setupTablePatching(
     primary, secondary, secondaryFuncs, config.placeholderNamespace);
   shareImportableItems(primary, secondary, config.importNamespace);
+
   return ret;
 }
 
