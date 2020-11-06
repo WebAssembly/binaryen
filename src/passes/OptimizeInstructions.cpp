@@ -1428,8 +1428,8 @@ private:
           }
         } else {
           if (auto* rightRight = right->right->dynCast<Binary>()) {
-            // (x << y) | (x >>> (N - y))  ==>  (i32|64).rotl(x, y)
-            // (x << y) | (x >>> (0 - y))  ==>  (i32|64).rotl(x, y)
+            // (x <<>>> y) | (x >>><< (N - y))  ==>  (i32|64).rotl(x, y)
+            // (x <<>>> y) | (x >>><< (0 - y))  ==>  (i32|64).rotl(x, y)
             if (rightRight->op == Abstract::getBinary(type, Sub)) {
               if (auto* c = rightRight->left->dynCast<Const>()) {
                 if (c->value.isZero() ||
@@ -1447,8 +1447,8 @@ private:
               }
             }
           } else if (auto* leftRight = left->right->dynCast<Binary>()) {
-            // (x >>> (N - y)) | (x << y)  ==>  (i32|64).rotl(x, y)
-            // (x >>> (0 - y)) | (x << y)  ==>  (i32|64).rotl(x, y)
+            // (x >>><< (N - y)) | (x <<>>> y)  ==>  (i32|64).rotl(x, y)
+            // (x >>><< (0 - y)) | (x <<>>> y)  ==>  (i32|64).rotl(x, y)
             if (leftRight->op == Abstract::getBinary(type, Sub)) {
               if (auto* c = leftRight->left->dynCast<Const>()) {
                 if (c->value.isZero() ||
