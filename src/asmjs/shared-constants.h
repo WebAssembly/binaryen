@@ -22,10 +22,6 @@
 namespace wasm {
 
 extern cashew::IString GLOBAL;
-extern cashew::IString NAN_;
-extern cashew::IString INFINITY_;
-extern cashew::IString NAN__;
-extern cashew::IString INFINITY__;
 extern cashew::IString TOPMOST;
 extern cashew::IString INT8ARRAY;
 extern cashew::IString INT16ARRAY;
