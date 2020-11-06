@@ -208,14 +208,14 @@ void moveFunctions(Module& primary,
     const std::set<Name>& secondaryFuncs;
     const std::map<Name, Signature>& secondarySignatures;
     std::function<Index(Name)> getIndex;
-    Builder& builder;
+    Builder builder;
     CallIndirector(const std::set<Name>& secondaryFuncs,
                    const std::map<Name, Signature>& secondarySignatures,
                    std::function<Index(Name)> getIndex,
-                   Builder& builder)
+                   Module& primary)
       : secondaryFuncs(secondaryFuncs),
         secondarySignatures(secondarySignatures), getIndex(getIndex),
-        builder(builder) {}
+        builder(primary) {}
     void visitCall(Call* curr) {
       if (!secondaryFuncs.count(curr->target)) {
         return;
@@ -231,8 +231,7 @@ void moveFunctions(Module& primary,
     }
   };
   PassRunner runner(&primary);
-  CallIndirector(
-    secondaryFuncs, secondarySignatures, getIndex, Builder(primary))
+  CallIndirector(secondaryFuncs, secondarySignatures, getIndex, primary)
     .run(&runner, &primary);
 
   // Insert new table elements
@@ -259,7 +258,8 @@ void moveFunctions(Module& primary,
 void exportImportPrimaryFunctions(Module& primary,
                                   Module& secondary,
                                   const std::set<Name>& primaryFuncs,
-                                  Name importNamespace) {
+                                  Name importNamespace,
+                                  const std::string& newExportPrefix) {
   // Find primary functions called in the secondary module.
   ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>> callCollector(
     secondary, [&](Function* func, std::vector<Name>& calledPrimaryFuncs) {
@@ -300,7 +300,8 @@ void exportImportPrimaryFunctions(Module& primary,
     if (exportIt != exportedPrimaryFuncs.end()) {
       exportName = exportIt->second;
     } else {
-      exportName = Names::getValidExportName(primary, primaryFunc);
+      exportName = Names::getValidExportName(
+        primary, newExportPrefix + primaryFunc.c_str());
       primary.addExport(
         new Export{exportName, primaryFunc, ExternalKind::Function});
     }
@@ -364,7 +365,8 @@ void setupTablePatching(Module& primary,
 
 void shareImportableItems(Module& primary,
                           Module& secondary,
-                          Name importNamespace) {
+                          Name importNamespace,
+                          const std::string& newExportPrefix) {
   // Map internal names to (one of) their corresponding export names. Don't
   // consider functions because they have already been imported and exported as
   // necessary.
@@ -377,7 +379,7 @@ void shareImportableItems(Module& primary,
 
   auto makeImportExport = [&](Importable& primaryItem,
                               Importable& secondaryItem,
-                              Name genericExportName,
+                              const std::string& genericExportName,
                               ExternalKind kind) {
     secondaryItem.name = primaryItem.name;
     secondaryItem.hasExplicitName = primaryItem.hasExplicitName;
@@ -386,7 +388,8 @@ void shareImportableItems(Module& primary,
     if (exportIt != exports.end()) {
       secondaryItem.base = exportIt->second;
     } else {
-      Name exportName = Names::getValidExportName(primary, genericExportName);
+      Name exportName =
+        Names::getValidExportName(primary, newExportPrefix + genericExportName);
       primary.addExport(new Export{exportName, primaryItem.name, kind});
       secondaryItem.base = exportName;
     }
@@ -452,11 +455,15 @@ std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
   Module& secondary = *ret;
 
   moveFunctions(primary, secondary, secondaryFuncs);
-  exportImportPrimaryFunctions(
-    primary, secondary, config.primaryFuncs, config.importNamespace);
+  exportImportPrimaryFunctions(primary,
+                               secondary,
+                               config.primaryFuncs,
+                               config.importNamespace,
+                               config.newExportPrefix);
   setupTablePatching(
     primary, secondary, secondaryFuncs, config.placeholderNamespace);
-  shareImportableItems(primary, secondary, config.importNamespace);
+  shareImportableItems(
+    primary, secondary, config.importNamespace, config.newExportPrefix);
 
   return ret;
 }

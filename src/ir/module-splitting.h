@@ -54,6 +54,10 @@ struct Config {
   // The namespace from which to import placeholder functions into the primary
   // module.
   Name placeholderNamespace = "placeholder";
+  // The prefix to attach to the name of any newly created exports. This can be
+  // used to differentiate between "real" exports of the module and exports that
+  // should only be consumed by the secondary module.
+  std::string newExportPrefix = "";
 };
 
 // Returns the new secondary module and modifies the `primary` module in place.

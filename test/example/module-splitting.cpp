@@ -50,6 +50,7 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
 
   ModuleSplitting::Config config;
   config.primaryFuncs = keptFuncs;
+  config.newExportPrefix = "%";
   auto secondary = splitFunctions(*primary, config);
 
   valid = validator.validate(*primary);
@@ -226,7 +227,7 @@ int main() {
   // Deferred function calling non-deferred function with clashing export name
   do_test({"foo"}, R"(
     (module
-     (export "foo" (func $bar))
+     (export "%foo" (func $bar))
      (func $foo
       (nop)
      )

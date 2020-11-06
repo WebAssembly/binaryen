@@ -26,18 +26,18 @@ After:
  (table $tab 3 42 funcref)
  (global $glob (mut i32) (i32.const 7))
  (event $e (attr 0) (param i32))
- (export "memory" (memory $mem))
- (export "table" (table $tab))
- (export "global" (global $glob))
- (export "event" (event $e))
+ (export "%memory" (memory $mem))
+ (export "%table" (table $tab))
+ (export "%global" (global $glob))
+ (export "%event" (event $e))
 )
 Secondary:
 (module
  (type $i32_=>_none (func (param i32)))
- (import "primary" "memory" (memory $mem (shared 3 42)))
- (import "primary" "table" (table $tab 3 42 funcref))
- (import "primary" "global" (global $glob (mut i32)))
- (import "primary" "event" (event $e (attr 0) (param i32)))
+ (import "primary" "%memory" (memory $mem (shared 3 42)))
+ (import "primary" "%table" (table $tab 3 42 funcref))
+ (import "primary" "%global" (global $glob (mut i32)))
+ (import "primary" "%event" (event $e (attr 0) (param i32)))
 )
 
 
@@ -57,18 +57,18 @@ After:
  (import "env" "tab" (table $tab 3 42 funcref))
  (import "env" "glob" (global $glob (mut i32)))
  (import "env" "e" (event $e (attr 0) (param i32)))
- (export "memory" (memory $mem))
- (export "table" (table $tab))
- (export "global" (global $glob))
- (export "event" (event $e))
+ (export "%memory" (memory $mem))
+ (export "%table" (table $tab))
+ (export "%global" (global $glob))
+ (export "%event" (event $e))
 )
 Secondary:
 (module
  (type $i32_=>_none (func (param i32)))
- (import "primary" "memory" (memory $mem (shared 3 42)))
- (import "primary" "table" (table $tab 3 42 funcref))
- (import "primary" "global" (global $glob (mut i32)))
- (import "primary" "event" (event $e (attr 0) (param i32)))
+ (import "primary" "%memory" (memory $mem (shared 3 42)))
+ (import "primary" "%table" (table $tab 3 42 funcref))
+ (import "primary" "%global" (global $glob (mut i32)))
+ (import "primary" "%event" (event $e (attr 0) (param i32)))
 )
 
 
@@ -164,14 +164,14 @@ After:
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (table $table 1 funcref)
  (elem (i32.const 0) $foo)
- (export "table" (table $table))
+ (export "%table" (table $table))
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
  )
 )
 Secondary:
 (module
- (import "primary" "table" (table $table 1 funcref))
+ (import "primary" "%table" (table $table 1 funcref))
 )
 
 
@@ -207,11 +207,11 @@ After:
  (table $table 1000 funcref)
  (elem (i32.const 42) $foo)
  (export "foo" (func $foo))
- (export "table" (table $table))
+ (export "%table" (table $table))
 )
 Secondary:
 (module
- (import "primary" "table" (table $table 1000 funcref))
+ (import "primary" "%table" (table $table 1000 funcref))
 )
 
 
@@ -251,7 +251,7 @@ After:
  (table $0 1 funcref)
  (elem (i32.const 0) $placeholder_0)
  (export "foo" (func $foo))
- (export "table" (table $0))
+ (export "%table" (table $0))
  (func $foo (param $0 i32) (result i32)
   (call_indirect (type $i32_=>_i32)
    (local.get $0)
@@ -262,7 +262,7 @@ After:
 Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "primary" "table" (table $0 1 funcref))
+ (import "primary" "%table" (table $0 1 funcref))
  (elem (i32.const 0) $foo)
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
@@ -286,12 +286,12 @@ After:
  (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
  (table $table 1 funcref)
  (elem (i32.const 0) $placeholder_0)
- (export "table" (table $table))
+ (export "%table" (table $table))
 )
 Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "primary" "table" (table $table 1 funcref))
+ (import "primary" "%table" (table $table 1 funcref))
  (elem (i32.const 0) $foo)
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
@@ -317,7 +317,7 @@ After:
  (table $table 1000 funcref)
  (elem (i32.const 42) $placeholder_42)
  (export "foo" (func $foo))
- (export "table" (table $table))
+ (export "%table" (table $table))
  (func $foo (param $0 i32) (result i32)
   (call_indirect (type $i32_=>_i32)
    (local.get $0)
@@ -328,7 +328,7 @@ After:
 Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "primary" "table" (table $table 1000 funcref))
+ (import "primary" "%table" (table $table 1000 funcref))
  (elem (i32.const 42) $foo)
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
@@ -376,7 +376,7 @@ Keeping: bar
 After:
 (module
  (type $none_=>_none (func))
- (export "bar" (func $bar))
+ (export "%bar" (func $bar))
  (func $bar
   (nop)
  )
@@ -384,7 +384,7 @@ After:
 Secondary:
 (module
  (type $none_=>_none (func))
- (import "primary" "bar" (func $bar))
+ (import "primary" "%bar" (func $bar))
  (func $foo
   (call $bar)
  )
@@ -408,7 +408,7 @@ After:
  (import "placeholder" "0" (func $placeholder_0))
  (table $0 1 funcref)
  (elem (i32.const 0) $placeholder_0)
- (export "table" (table $0))
+ (export "%table" (table $0))
  (func $foo
   (call_indirect (type $none_=>_none)
    (i32.const 0)
@@ -418,7 +418,7 @@ After:
 Secondary:
 (module
  (type $none_=>_none (func))
- (import "primary" "table" (table $0 1 funcref))
+ (import "primary" "%table" (table $0 1 funcref))
  (elem (i32.const 0) $bar)
  (func $bar
   (nop)
@@ -455,7 +455,7 @@ Secondary:
 Before:
 (module
  (type $none_=>_none (func))
- (export "foo" (func $bar))
+ (export "%foo" (func $bar))
  (func $foo
   (nop)
  )
@@ -470,9 +470,9 @@ After:
  (import "placeholder" "0" (func $placeholder_0))
  (table $0 1 funcref)
  (elem (i32.const 0) $placeholder_0)
- (export "foo" (func $bar))
- (export "foo_0" (func $foo))
- (export "table" (table $0))
+ (export "%foo" (func $bar))
+ (export "%foo_0" (func $foo))
+ (export "%table" (table $0))
  (func $foo
   (nop)
  )
@@ -485,9 +485,9 @@ After:
 Secondary:
 (module
  (type $none_=>_none (func))
- (import "primary" "table" (table $0 1 funcref))
+ (import "primary" "%table" (table $0 1 funcref))
  (elem (i32.const 0) $bar)
- (import "primary" "foo_0" (func $foo))
+ (import "primary" "%foo_0" (func $foo))
  (func $bar
   (call $foo)
  )
@@ -520,7 +520,7 @@ After:
  (import "placeholder" "2" (func $placeholder_2))
  (table $table 4 funcref)
  (elem (i32.const 0) $placeholder_0 $bar $placeholder_2 $quux)
- (export "table" (table $table))
+ (export "%table" (table $table))
  (func $bar
   (nop)
  )
@@ -531,7 +531,7 @@ After:
 Secondary:
 (module
  (type $none_=>_none (func))
- (import "primary" "table" (table $table 4 funcref))
+ (import "primary" "%table" (table $table 4 funcref))
  (elem (i32.const 0) $foo)
  (elem (i32.const 2) $baz)
  (func $baz
@@ -570,7 +570,7 @@ After:
  (import "placeholder" "3" (func $placeholder_3))
  (table $table 4 funcref)
  (elem (i32.const 0) $placeholder_0 $placeholder_1 $baz $placeholder_3)
- (export "table" (table $table))
+ (export "%table" (table $table))
  (func $baz
   (nop)
  )
@@ -578,7 +578,7 @@ After:
 Secondary:
 (module
  (type $none_=>_none (func))
- (import "primary" "table" (table $table 4 funcref))
+ (import "primary" "%table" (table $table 4 funcref))
  (elem (i32.const 0) $foo $bar)
  (elem (i32.const 3) $quux)
  (func $bar
@@ -616,8 +616,8 @@ After:
  (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
  (table $table 2 2 funcref)
  (elem (i32.const 0) $foo $placeholder_1)
- (export "foo" (func $foo))
- (export "table" (table $table))
+ (export "%foo" (func $foo))
+ (export "%table" (table $table))
  (func $foo (param $0 i32) (result i32)
   (call_indirect (type $i32_=>_i32)
    (i32.const 0)
@@ -628,9 +628,9 @@ After:
 Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (import "primary" "table" (table $table 2 2 funcref))
+ (import "primary" "%table" (table $table 2 2 funcref))
  (elem (i32.const 1) $bar)
- (import "primary" "foo" (func $foo (param i32) (result i32)))
+ (import "primary" "%foo" (func $foo (param i32) (result i32)))
  (func $bar (param $0 i32) (result i32)
   (call $foo
    (i32.const 1)
