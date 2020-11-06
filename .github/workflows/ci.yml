@@ -12,7 +12,7 @@ on:
 jobs:
 
   cancel:
-    name: auto cancel previus runs
+    name: auto-cancel
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
