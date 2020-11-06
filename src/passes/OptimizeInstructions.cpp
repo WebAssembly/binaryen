@@ -1388,10 +1388,6 @@ private:
 
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (auto* right = binary->right->dynCast<Binary>()) {
-
-        auto features = getModule()->features;
-        int bitSize = type.getByteSize() * 8;
-
         bool isRotateLeft = left->op == Abstract::getBinary(type, Shl) &&
                             right->op == Abstract::getBinary(type, ShrU);
 
@@ -1406,11 +1402,12 @@ private:
           return nullptr;
         }
 
-        if (EffectAnalyzer(getPassOptions(), features, binary)
+        if (EffectAnalyzer(getPassOptions(), getModule()->features, binary)
               .hasSideEffects()) {
           return nullptr;
         }
 
+        int bitSize = type.getByteSize() * 8;
         if (auto* leftRightConst = left->right->dynCast<Const>()) {
           if (auto* rightRightConst = right->right->dynCast<Const>()) {
             // (x  << C1) | (x >>> C2)  ==>  (i32|64).rot(l|r)(x, C)
@@ -1458,8 +1455,8 @@ private:
             // (x << y) | (x >>> (0 - y))  ==>  (i32|64).rotl(x, y)
             if (rightRight->op == Abstract::getBinary(type, Sub)) {
               if (auto* c = rightRight->left->dynCast<Const>()) {
-                if (c->value == Literal::makeFromInt32(bitSize, type) ||
-                    c->value.isZero()) {
+                if (c->value.isZero() ||
+                    c->value == Literal::makeFromInt32(bitSize, type)) {
                   if (ExpressionAnalyzer::equal(left->right,
                                                 rightRight->right)) {
                     left->op =
