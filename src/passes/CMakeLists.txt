@@ -37,6 +37,7 @@ set(passes_SOURCES
   LimitSegments.cpp
   LocalCSE.cpp
   LogExecution.cpp
+  LogFunction.cpp
   LoopInvariantCodeMotion.cpp
   Memory64Lowering.cpp
   MemoryPacking.cpp
