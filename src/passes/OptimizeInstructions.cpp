@@ -1402,14 +1402,14 @@ private:
           return nullptr;
         }
 
-        if (EffectAnalyzer(getPassOptions(), getModule()->features, binary)
-              .hasSideEffects()) {
-          return nullptr;
-        }
-
         int bitSize = type.getByteSize() * 8;
         if (auto* leftRightConst = left->right->dynCast<Const>()) {
           if (auto* rightRightConst = right->right->dynCast<Const>()) {
+            if (EffectAnalyzer(
+                  getPassOptions(), getModule()->features, left->left)
+                  .hasSideEffects()) {
+              return nullptr;
+            }
             // (x  << C1) | (x >>> C2)  ==>  (i32|64).rot(l|r)(x, C)
             // (x >>> C1) | (x  << C2)  ==>  (i32|64).rot(r|l)(x, C)
             int32_t leftShift = Bits::getEffectiveShifts(leftRightConst);
@@ -1427,6 +1427,10 @@ private:
             }
           }
         } else {
+          if (EffectAnalyzer(getPassOptions(), getModule()->features, binary)
+                .hasSideEffects()) {
+            return nullptr;
+          }
           // canonicalize
           // (x <<>> complex) | (x <<>> y) to (x <<>> y) | (x <<>> complex)
           if (auto* leftRight = left->right->dynCast<Binary>()) {
