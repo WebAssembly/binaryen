@@ -1,0 +1,20 @@
+name: Cancel
+on:
+  # If we run CI on all branches then we end up doing duplicate work for
+  # branches which are also PRs.
+  push:
+    branches:
+      - master
+      - kripken/*
+  pull_request:
+
+jobs:
+  cancel:
+    name: auto-cancel-previus
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - uses: styfle/cancel-workflow-action@0.6.0
+        with:
+          workflow_id: CI
+          access_token: ${{ github.token }}
