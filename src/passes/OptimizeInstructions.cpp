@@ -160,10 +160,10 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
       Const* c;
       if (matches(curr, binary(Add, any(), ival(&c)))) {
         // normalize x + (-C)  ==>   x - C
-        if (curr->cast<Binary>()->op == Abstract::getBinary(c->type, Add) &&
+        if (curr->op == Abstract::getBinary(c->type, Add) &&
             c->value.isNegative()) {
           c->value = c->value.neg();
-          curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
+          curr->op = Abstract::getBinary(c->type, Sub);
         }
         int64_t value = c->value.getInteger();
         if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
@@ -171,10 +171,10 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
             value == 0x20000000000LL || value == 0x1000000000000LL ||
             value == 0x80000000000000LL || value == 0x4000000000000000LL) {
           c->value = c->value.neg();
-          if (curr->cast<Binary>()->op == Abstract::getBinary(c->type, Add)) {
-            curr->cast<Binary>()->op = Abstract::getBinary(c->type, Sub);
+          if (curr->op == Abstract::getBinary(c->type, Add)) {
+            curr->op = Abstract::getBinary(c->type, Sub);
           } else {
-            curr->cast<Binary>()->op = Abstract::getBinary(c->type, Add);
+            curr->op = Abstract::getBinary(c->type, Add);
           }
           return curr;
         }
