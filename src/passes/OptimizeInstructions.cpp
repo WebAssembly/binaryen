@@ -133,6 +133,7 @@ struct LocalScanner : PostWalker<LocalScanner> {
   }
 };
 
+namespace {
 // perform some final optimizations
 struct FinalOptimizer
   : public WalkerPass<
@@ -185,6 +186,8 @@ struct FinalOptimizer
     return nullptr;
   }
 };
+
+} // anonymous namespace
 
 // Create a custom matcher for checking side effects
 template<class Opt> struct PureMatcherKind {};
