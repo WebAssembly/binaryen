@@ -108,7 +108,9 @@ template<class F> void forEachElement(Table& table, F f) {
 }
 
 // Return the first free table slot and the segment to which to append new
-// items, if it exists.
+// items, if it exists. Since it is simpler to append a contiguous vector of new
+// elements, this is actually the index after the highest occupied index, rather
+// than the real first free index.
 Index getFirstFreeTableIndex(Table& table, Table::Segment** outSegment) {
   Index firstFreeIndex = 0;
   *outSegment = nullptr;
