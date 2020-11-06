@@ -165,8 +165,8 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
           curr->op = Abstract::getBinary(c->type, Sub);
         }
         int64_t value = c->value.getInteger();
-        if (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-            value == 0x8000000 || value == 0x400000000LL ||
+        if (value == 0x40LL || value == 0x2000LL || value == 0x100000LL ||
+            value == 0x8000000LL || value == 0x400000000LL ||
             value == 0x20000000000LL || value == 0x1000000000000LL ||
             value == 0x80000000000000LL || value == 0x4000000000000000LL) {
           c->value = c->value.neg();
