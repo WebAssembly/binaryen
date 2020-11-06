@@ -14,6 +14,10 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
+    - name: cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -40,6 +44,10 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
+    - name: cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -96,6 +104,10 @@ jobs:
     name: clang
     runs-on: ubuntu-latest
     steps:
+    - name: cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -119,6 +131,10 @@ jobs:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
     steps:
+    - name: cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -143,6 +159,10 @@ jobs:
       CC: "clang"
       CXX: "clang++"
     steps:
+    - name: cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -166,6 +186,10 @@ jobs:
       COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
     steps:
+    - name: cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -186,6 +210,10 @@ jobs:
     name: emscripten
     runs-on: ubuntu-latest
     steps:
+    - name: cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
@@ -210,6 +238,10 @@ jobs:
     name: mingw
     runs-on: windows-latest
     steps:
+    - name: cancel previous runs
+      uses: styfle/cancel-workflow-action@0.6.0
+      with:
+        access_token: ${{ github.token }}
     - uses: actions/setup-python@v1
       with:
         python-version: '3.x'
