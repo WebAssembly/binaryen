@@ -141,23 +141,13 @@ struct FinalOptimizer
 
   FinalOptimizer(const PassOptions& passOptions) : passOptions(passOptions) {}
 
-  void visitExpression(Expression* curr) {
-    // if this contains dead code, don't bother trying to optimize it, the type
-    // might change (if might not be unreachable if just one arm is, for
-    // example). this optimization pass focuses on actually executing code. the
-    // only exceptions are control flow changes
-    if (curr->is<Const>() || curr->is<Call>() || curr->is<Nop>() ||
-        (curr->type == Type::unreachable && !curr->is<Break>() &&
-         !curr->is<Switch>() && !curr->is<If>())) {
-      return;
-    }
-
+  void visitBinary(Binary* curr) {
     if ((curr = optimize(curr))) {
       replaceCurrent(curr);
     }
   }
 
-  Expression* optimize(Expression* curr) {
+  Binary* optimize(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
     {
@@ -216,12 +206,9 @@ struct OptimizeInstructions
                  UnifiedExpressionVisitor<OptimizeInstructions>>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new OptimizeInstructions(finalize); }
+  Pass* create() override { return new OptimizeInstructions; }
 
-  bool finalize = false;
   bool fastMath;
-
-  OptimizeInstructions(bool finalize) : finalize(finalize) {}
 
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
@@ -234,7 +221,7 @@ struct OptimizeInstructions
     // main walk
     super::doWalkFunction(func);
     // do final optimizations if finalize is set
-    if (finalize) {
+    {
       FinalOptimizer optimizer(getPassOptions());
       optimizer.setModule(getModule());
       optimizer.walkFunction(func);
@@ -1274,6 +1261,9 @@ private:
         auto type = curr->type;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
+        // Note that we don't need to handle subtraction:
+        // canonicalization avoids a zero on the right anyhow, and a
+        // zero on the left can't be removed (it is how we negate ints).
         if (curr->op == Abstract::getBinary(type, Abstract::Add)) {
           if (left && left->value.isZero()) {
             replaceCurrent(curr->right);
@@ -2446,12 +2436,6 @@ private:
   }
 };
 
-Pass* createOptimizeInstructionsPass() {
-  return new OptimizeInstructions(false);
-}
-
-Pass* createOptimizeInstructionsFinalizePass() {
-  return new OptimizeInstructions(true);
-}
+Pass* createOptimizeInstructionsPass() { return new OptimizeInstructions; }
 
 } // namespace wasm

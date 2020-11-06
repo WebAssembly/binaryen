@@ -75,7 +75,6 @@ Pass* createNoExitRuntimePass();
 Pass* createOptimizeAddedConstantsPass();
 Pass* createOptimizeAddedConstantsPropagatePass();
 Pass* createOptimizeInstructionsPass();
-Pass* createOptimizeInstructionsFinalizePass();
 Pass* createOptimizeStackIRPass();
 Pass* createPickLoadSignsPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();

@@ -230,9 +230,6 @@ void PassRegistry::registerPasses() {
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
-  registerPass("optimize-instructions-finalize",
-               "optimizes instruction combinations with finalization",
-               createOptimizeInstructionsFinalizePass);
   registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
   registerPass("pick-load-signs",
@@ -466,7 +463,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   } else {
     add("precompute");
   }
-  add("optimize-instructions-finalize");
+  add("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     add("rse"); // after all coalesce-locals, and before a final vacuum
   }
