@@ -46,7 +46,8 @@ namespace ModuleSplitting {
 
 struct Config {
   // The set of functions to keep in the primary module. All others are split
-  // out into the new secondary module. Must include all imported functions.
+  // out into the new secondary module. May or may not include imported
+  // functions, which are always kept in the primary module.
   std::set<Name> primaryFuncs;
   // The namespace from which to import primary functions into the secondary
   // module.

@@ -88,14 +88,6 @@ namespace ModuleSplitting {
 
 namespace {
 
-std::unique_ptr<Module> initializeSecondary(const Module& primary) {
-  // Create the secondary module and copy trivial properties.
-  auto secondary = std::make_unique<Module>();
-  secondary->features = primary.features;
-  secondary->hasFeaturesSection = primary.hasFeaturesSection;
-  return secondary;
-}
-
 template<class F> void forEachElement(Table& table, F f) {
   for (auto& segment : table.segments) {
     assert(segment.offset->is<Const>() &&
@@ -126,11 +118,58 @@ Index getFirstFreeTableIndex(Table& table, Table::Segment** outSegment) {
   return firstFreeIndex;
 }
 
+struct ModuleSplitter {
+  const Config& config;
+  std::unique_ptr<Module> secondaryPtr;
+
+  Module& primary;
+  Module& secondary;
+
+  const std::pair<std::set<Name>, std::set<Name>> classifiedFuncs;
+  const std::set<Name>& primaryFuncs;
+  const std::set<Name>& secondaryFuncs;
+
+  static std::unique_ptr<Module> initSecondary(const Module& primary);
+  static std::pair<std::set<Name>, std::set<Name>>
+  classifyFuncs(const Module& primary, const Config& config);
+
+  ModuleSplitter(Module& primary, const Config& config)
+    : config(config), secondaryPtr(ModuleSplitter::initSecondary(primary)),
+      primary(primary), secondary(*secondaryPtr),
+      classifiedFuncs(ModuleSplitter::classifyFuncs(primary, config)),
+      primaryFuncs(classifiedFuncs.first),
+      secondaryFuncs(classifiedFuncs.second) {}
+
+  void moveFunctions();
+  void exportImportPrimaryFunctions();
+  void setupTablePatching();
+  void shareImportableItems();
+};
+
+std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
+  // Create the secondary module and copy trivial properties.
+  auto secondary = std::make_unique<Module>();
+  secondary->features = primary.features;
+  secondary->hasFeaturesSection = primary.hasFeaturesSection;
+  return secondary;
+}
+
+std::pair<std::set<Name>, std::set<Name>>
+ModuleSplitter::classifyFuncs(const Module& primary, const Config& config) {
+  std::set<Name> primaryFuncs, secondaryFuncs;
+  for (auto& func : primary.functions) {
+    if (func->imported() || config.primaryFuncs.count(func->name)) {
+      primaryFuncs.insert(func->name);
+    } else {
+      secondaryFuncs.insert(func->name);
+    }
+  }
+  return std::make_pair(primaryFuncs, secondaryFuncs);
+}
+
 // Move the secondary functions out of the primary module and return a map from
 // their names to their (eventual) table indices.
-void moveFunctions(Module& primary,
-                   Module& secondary,
-                   const std::set<Name>& secondaryFuncs) {
+void ModuleSplitter::moveFunctions() {
   // Move the specified functions from the primary to the secondary module.
   std::map<Name, Signature> secondarySignatures;
   for (auto funcName : secondaryFuncs) {
@@ -255,11 +294,7 @@ void moveFunctions(Module& primary,
   }
 }
 
-void exportImportPrimaryFunctions(Module& primary,
-                                  Module& secondary,
-                                  const std::set<Name>& primaryFuncs,
-                                  Name importNamespace,
-                                  const std::string& newExportPrefix) {
+void ModuleSplitter::exportImportPrimaryFunctions() {
   // Find primary functions called in the secondary module.
   ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>> callCollector(
     secondary, [&](Function* func, std::vector<Name>& calledPrimaryFuncs) {
@@ -301,12 +336,12 @@ void exportImportPrimaryFunctions(Module& primary,
       exportName = exportIt->second;
     } else {
       exportName = Names::getValidExportName(
-        primary, newExportPrefix + primaryFunc.c_str());
+        primary, config.newExportPrefix + primaryFunc.c_str());
       primary.addExport(
         new Export{exportName, primaryFunc, ExternalKind::Function});
     }
     auto func = std::make_unique<Function>();
-    func->module = importNamespace;
+    func->module = config.importNamespace;
     func->base = exportName;
     func->name = primaryFunc;
     func->sig = primary.getFunction(primaryFunc)->sig;
@@ -314,10 +349,7 @@ void exportImportPrimaryFunctions(Module& primary,
   }
 }
 
-void setupTablePatching(Module& primary,
-                        Module& secondary,
-                        const std::set<Name>& secondaryFuncs,
-                        Name placeholderNamespace) {
+void ModuleSplitter::setupTablePatching() {
   std::map<Index, Name> replacedElems;
   // Replace table references to secondary functions with an imported
   // placeholder that encodes the table index in its name:
@@ -327,7 +359,7 @@ void setupTablePatching(Module& primary,
       replacedElems[index] = elem;
       auto* secondaryFunc = secondary.getFunction(elem);
       auto placeholder = std::make_unique<Function>();
-      placeholder->module = placeholderNamespace;
+      placeholder->module = config.placeholderNamespace;
       placeholder->base = std::to_string(index);
       placeholder->name = Names::getValidFunctionName(
         primary,
@@ -363,10 +395,7 @@ void setupTablePatching(Module& primary,
   }
 }
 
-void shareImportableItems(Module& primary,
-                          Module& secondary,
-                          Name importNamespace,
-                          const std::string& newExportPrefix) {
+void ModuleSplitter::shareImportableItems() {
   // Map internal names to (one of) their corresponding export names. Don't
   // consider functions because they have already been imported and exported as
   // necessary.
@@ -383,13 +412,13 @@ void shareImportableItems(Module& primary,
                               ExternalKind kind) {
     secondaryItem.name = primaryItem.name;
     secondaryItem.hasExplicitName = primaryItem.hasExplicitName;
-    secondaryItem.module = importNamespace;
+    secondaryItem.module = config.importNamespace;
     auto exportIt = exports.find(primaryItem.name);
     if (exportIt != exports.end()) {
       secondaryItem.base = exportIt->second;
     } else {
-      Name exportName =
-        Names::getValidExportName(primary, newExportPrefix + genericExportName);
+      Name exportName = Names::getValidExportName(
+        primary, config.newExportPrefix + genericExportName);
       primary.addExport(new Export{exportName, primaryItem.name, kind});
       secondaryItem.base = exportName;
     }
@@ -444,28 +473,14 @@ void shareImportableItems(Module& primary,
 } // anonymous namespace
 
 std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
-  std::set<Name> secondaryFuncs;
-  for (auto& func : primary.functions) {
-    if (config.primaryFuncs.find(func->name) == config.primaryFuncs.end()) {
-      secondaryFuncs.insert(func->name);
-    }
-  }
+  ModuleSplitter splitter(primary, config);
 
-  auto ret = initializeSecondary(primary);
-  Module& secondary = *ret;
+  splitter.moveFunctions();
+  splitter.exportImportPrimaryFunctions();
+  splitter.setupTablePatching();
+  splitter.shareImportableItems();
 
-  moveFunctions(primary, secondary, secondaryFuncs);
-  exportImportPrimaryFunctions(primary,
-                               secondary,
-                               config.primaryFuncs,
-                               config.importNamespace,
-                               config.newExportPrefix);
-  setupTablePatching(
-    primary, secondary, secondaryFuncs, config.placeholderNamespace);
-  shareImportableItems(
-    primary, secondary, config.importNamespace, config.newExportPrefix);
-
-  return ret;
+  return std::move(splitter.secondaryPtr);
 }
 
 } // namespace ModuleSplitting
