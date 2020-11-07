@@ -140,7 +140,7 @@ struct ModuleSplitter {
       primaryFuncs(classifiedFuncs.first),
       secondaryFuncs(classifiedFuncs.second) {}
 
-  void moveFunctions();
+  void moveSecondaryFunctions();
   void exportImportPrimaryFunctions();
   void setupTablePatching();
   void shareImportableItems();
@@ -167,14 +167,10 @@ ModuleSplitter::classifyFuncs(const Module& primary, const Config& config) {
   return std::make_pair(primaryFuncs, secondaryFuncs);
 }
 
-// Move the secondary functions out of the primary module and return a map from
-// their names to their (eventual) table indices.
-void ModuleSplitter::moveFunctions() {
+void ModuleSplitter::moveSecondaryFunctions() {
   // Move the specified functions from the primary to the secondary module.
-  std::map<Name, Signature> secondarySignatures;
   for (auto funcName : secondaryFuncs) {
     auto* func = primary.getFunction(funcName);
-    secondarySignatures[funcName] = func->sig;
     assert(!func->imported() && "Cannot split off imported functions");
     assert(funcName != primary.start && "Cannot split off start function");
     ModuleUtils::copyFunction(func, secondary);
@@ -231,7 +227,7 @@ void ModuleSplitter::moveFunctions() {
     Index tableIndex = getIndex(secondaryFunc);
     auto func = std::make_unique<Function>();
     func->name = secondaryFunc;
-    func->sig = secondarySignatures[secondaryFunc];
+    func->sig = secondary.getFunction(secondaryFunc)->sig;
     std::vector<Expression*> args;
     for (size_t i = 0, size = func->sig.params.size(); i < size; ++i) {
       args.push_back(builder.makeLocalGet(i, func->sig.params[i]));
@@ -244,25 +240,19 @@ void ModuleSplitter::moveFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
   struct CallIndirector : public WalkerPass<PostWalker<CallIndirector>> {
-    const std::set<Name>& secondaryFuncs;
-    const std::map<Name, Signature>& secondarySignatures;
+    ModuleSplitter& parent;
     std::function<Index(Name)> getIndex;
     Builder builder;
-    CallIndirector(const std::set<Name>& secondaryFuncs,
-                   const std::map<Name, Signature>& secondarySignatures,
-                   std::function<Index(Name)> getIndex,
-                   Module& primary)
-      : secondaryFuncs(secondaryFuncs),
-        secondarySignatures(secondarySignatures), getIndex(getIndex),
-        builder(primary) {}
+    CallIndirector(ModuleSplitter& parent, std::function<Index(Name)> getIndex)
+      : parent(parent), getIndex(getIndex), builder(parent.primary) {}
     void visitCall(Call* curr) {
-      if (!secondaryFuncs.count(curr->target)) {
+      if (!parent.secondaryFuncs.count(curr->target)) {
         return;
       }
       replaceCurrent(builder.makeCallIndirect(
         builder.makeConst(int32_t(getIndex(curr->target))),
         curr->operands,
-        secondarySignatures.find(curr->target)->second,
+        parent.secondary.getFunction(curr->target)->sig,
         curr->isReturn));
     }
     void visitRefFunc(RefFunc* curr) {
@@ -270,8 +260,7 @@ void ModuleSplitter::moveFunctions() {
     }
   };
   PassRunner runner(&primary);
-  CallIndirector(secondaryFuncs, secondarySignatures, getIndex, primary)
-    .run(&runner, &primary);
+  CallIndirector(*this, getIndex).run(&runner, &primary);
 
   // Insert new table elements
   if (newTableElems.size()) {
@@ -475,7 +464,7 @@ void ModuleSplitter::shareImportableItems() {
 std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
   ModuleSplitter splitter(primary, config);
 
-  splitter.moveFunctions();
+  splitter.moveSecondaryFunctions();
   splitter.exportImportPrimaryFunctions();
   splitter.setupTablePatching();
   splitter.shareImportableItems();
