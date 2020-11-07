@@ -182,19 +182,28 @@ struct ModuleSplitter {
 
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::pair<std::set<Name>, std::set<Name>>
-  classifyFuncs(const Module& primary, const Config& config);
+  classifyFunctions(const Module& primary, const Config& config);
+
+  void moveSecondaryFunctions();
+  void thunkExportedSecondaryFunctions();
+  void indirectCallsToSecondaryFunctions();
+  void exportImportCalledPrimaryFunctions();
+  void setupTablePatching();
+  void shareImportableItems();
 
   ModuleSplitter(Module& primary, const Config& config)
     : config(config), secondaryPtr(ModuleSplitter::initSecondary(primary)),
       primary(primary), secondary(*secondaryPtr),
-      classifiedFuncs(ModuleSplitter::classifyFuncs(primary, config)),
+      classifiedFuncs(ModuleSplitter::classifyFunctions(primary, config)),
       primaryFuncs(classifiedFuncs.first),
-      secondaryFuncs(classifiedFuncs.second), tableManager(primary) {}
-
-  void moveSecondaryFunctions();
-  void exportImportPrimaryFunctions();
-  void setupTablePatching();
-  void shareImportableItems();
+      secondaryFuncs(classifiedFuncs.second), tableManager(primary) {
+    moveSecondaryFunctions();
+    thunkExportedSecondaryFunctions();
+    indirectCallsToSecondaryFunctions();
+    exportImportCalledPrimaryFunctions();
+    setupTablePatching();
+    shareImportableItems();
+  }
 };
 
 std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
@@ -206,12 +215,13 @@ std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
 }
 
 std::pair<std::set<Name>, std::set<Name>>
-ModuleSplitter::classifyFuncs(const Module& primary, const Config& config) {
+ModuleSplitter::classifyFunctions(const Module& primary, const Config& config) {
   std::set<Name> primaryFuncs, secondaryFuncs;
   for (auto& func : primary.functions) {
     if (func->imported() || config.primaryFuncs.count(func->name)) {
       primaryFuncs.insert(func->name);
     } else {
+      assert(func->name != primary.start && "The start function must be kept");
       secondaryFuncs.insert(func->name);
     }
   }
@@ -222,12 +232,12 @@ void ModuleSplitter::moveSecondaryFunctions() {
   // Move the specified functions from the primary to the secondary module.
   for (auto funcName : secondaryFuncs) {
     auto* func = primary.getFunction(funcName);
-    assert(!func->imported() && "Cannot split off imported functions");
-    assert(funcName != primary.start && "Cannot split off start function");
     ModuleUtils::copyFunction(func, secondary);
     primary.removeFunction(funcName);
   }
+}
 
+void ModuleSplitter::thunkExportedSecondaryFunctions() {
   // Update exports of secondary functions in the primary module to export
   // wrapper functions that indirectly call the secondary functions. We are
   // adding secondary function names to the primary table here, but they will be
@@ -252,7 +262,9 @@ void ModuleSplitter::moveSecondaryFunctions() {
       builder.makeConst(int32_t(tableIndex)), args, func->sig);
     primary.addFunction(std::move(func));
   }
+}
 
+void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
   struct CallIndirector : public WalkerPass<PostWalker<CallIndirector>> {
@@ -278,7 +290,7 @@ void ModuleSplitter::moveSecondaryFunctions() {
   CallIndirector(*this).run(&runner, &primary);
 }
 
-void ModuleSplitter::exportImportPrimaryFunctions() {
+void ModuleSplitter::exportImportCalledPrimaryFunctions() {
   // Find primary functions called in the secondary module.
   ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>> callCollector(
     secondary, [&](Function* func, std::vector<Name>& calledPrimaryFuncs) {
@@ -339,7 +351,7 @@ void ModuleSplitter::setupTablePatching() {
   // placeholder that encodes the table index in its name:
   // `importNamespace`.`index`.
   forEachElement(primary.table, [&](Index index, Name& elem) {
-    if (secondaryFuncs.find(elem) != secondaryFuncs.end()) {
+    if (secondaryFuncs.count(elem)) {
       replacedElems[index] = elem;
       auto* secondaryFunc = secondary.getFunction(elem);
       auto placeholder = std::make_unique<Function>();
@@ -457,14 +469,7 @@ void ModuleSplitter::shareImportableItems() {
 } // anonymous namespace
 
 std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
-  ModuleSplitter splitter(primary, config);
-
-  splitter.moveSecondaryFunctions();
-  splitter.exportImportPrimaryFunctions();
-  splitter.setupTablePatching();
-  splitter.shareImportableItems();
-
-  return std::move(splitter.secondaryPtr);
+  return std::move(ModuleSplitter(primary, config).secondaryPtr);
 }
 
 } // namespace ModuleSplitting
