@@ -53,16 +53,16 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   config.newExportPrefix = "%";
   auto secondary = splitFunctions(*primary, config);
 
-  valid = validator.validate(*primary);
-  assert(valid && "after invalid!");
-  valid = validator.validate(*secondary);
-  assert(valid && "secondary invalid!");
-
   std::cout << "After:\n";
   WasmPrinter::printModule(primary.get());
   std::cout << "Secondary:\n";
   WasmPrinter::printModule(secondary.get());
   std::cout << "\n\n";
+
+  valid = validator.validate(*primary);
+  assert(valid && "after invalid!");
+  valid = validator.validate(*secondary);
+  assert(valid && "secondary invalid!");
 }
 
 int main() {

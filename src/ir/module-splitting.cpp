@@ -99,23 +99,72 @@ template<class F> void forEachElement(Table& table, F f) {
   }
 }
 
-// Return the first free table slot and the segment to which to append new
-// items, if it exists. Since it is simpler to append a contiguous vector of new
-// elements, this is actually the index after the highest occupied index, rather
-// than the real first free index.
-Index getFirstFreeTableIndex(Table& table, Table::Segment** outSegment) {
-  Index firstFreeIndex = 0;
-  *outSegment = nullptr;
+struct TableSlotManager {
+  Module& module;
+  Table& table;
+  Table::Segment* activeSegment = nullptr;
+  Index activeBase = 0;
+  std::map<Name, Index> funcIndices;
+
+  TableSlotManager(Module& module);
+
+  // Returns the table index for `func`, allocating a new index if necessary.
+  Index getIndex(Name func);
+  void addIndex(Name func, Index index);
+};
+
+void TableSlotManager::addIndex(Name func, Index index) {
+  auto it = funcIndices.insert(std::make_pair(func, index));
+  assert(it.second && "Function already has multiple indices");
+}
+
+TableSlotManager::TableSlotManager(Module& module)
+  : module(module), table(module.table) {
+
+  // Finds the segment with the highest occupied table slot so that new items
+  // can be inserted contiguously at the end of it without accidentally
+  // overwriting any other items. TODO: be more clever about filling gaps in the
+  // table, if that is ever useful.
+  Index maxIndex = 0;
   for (auto& segment : table.segments) {
     assert(segment.offset->is<Const>() &&
            "TODO: handle non-constant segment offsets");
     Index segmentBase = segment.offset->cast<Const>()->value.geti32();
-    if (segmentBase + segment.data.size() > firstFreeIndex) {
-      firstFreeIndex = segmentBase + segment.data.size();
-      *outSegment = &segment;
+    if (segmentBase + segment.data.size() >= maxIndex) {
+      maxIndex = segmentBase + segment.data.size();
+      activeSegment = &segment;
+      activeBase = segmentBase;
     }
   }
-  return firstFreeIndex;
+
+  // Initialize funcIndices with the functions already in the table.
+  forEachElement(table, [&](Index index, Name func) { addIndex(func, index); });
+}
+
+Index TableSlotManager::getIndex(Name func) {
+  auto indexIt = funcIndices.find(func);
+  if (indexIt != funcIndices.end()) {
+    return indexIt->second;
+  }
+
+  // If there are no segments yet, allocate one.
+  if (activeSegment == nullptr) {
+    table.exists = true;
+    assert(table.segments.size() == 0);
+    table.segments.emplace_back(Builder(module).makeConst(int32_t(0)));
+    activeSegment = &table.segments.front();
+  }
+
+  Index newIndex = activeBase + activeSegment->data.size();
+  activeSegment->data.push_back(func);
+  addIndex(func, newIndex);
+  if (table.initial <= newIndex) {
+    table.initial = newIndex + 1;
+  }
+  if (table.max <= newIndex) {
+    table.max = newIndex + 1;
+  }
+  return newIndex;
 }
 
 struct ModuleSplitter {
@@ -129,6 +178,8 @@ struct ModuleSplitter {
   const std::set<Name>& primaryFuncs;
   const std::set<Name>& secondaryFuncs;
 
+  TableSlotManager tableManager;
+
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::pair<std::set<Name>, std::set<Name>>
   classifyFuncs(const Module& primary, const Config& config);
@@ -138,7 +189,7 @@ struct ModuleSplitter {
       primary(primary), secondary(*secondaryPtr),
       classifiedFuncs(ModuleSplitter::classifyFuncs(primary, config)),
       primaryFuncs(classifiedFuncs.first),
-      secondaryFuncs(classifiedFuncs.second) {}
+      secondaryFuncs(classifiedFuncs.second), tableManager(primary) {}
 
   void moveSecondaryFunctions();
   void exportImportPrimaryFunctions();
@@ -177,46 +228,11 @@ void ModuleSplitter::moveSecondaryFunctions() {
     primary.removeFunction(funcName);
   }
 
-  // Map secondary functions to their table indices. Assumes each function
-  // appears at most once in the table.
-  std::map<Name, Index> secondaryIndices;
-  auto addIndex = [&](Name secondaryFunc, Index index) {
-    auto it = secondaryIndices.insert(std::make_pair(secondaryFunc, index));
-    assert(it.second && "Function already has multiple indices");
-  };
-
-  // Initialize `secondaryIndices` with the secondary functions that already
-  // have table slots.
-  forEachElement(primary.table, [&](Index index, Name elem) {
-    if (secondaryFuncs.count(elem)) {
-      addIndex(elem, index);
-    }
-  });
-
-  // Keep track of the new items we have to add to the table and where to add
-  // them. We are adding secondary function names to the primary table here, but
-  // they will be replaced with placeholder functions later along with any
-  // references to secondary functions that were already in the table.
-  Table::Segment* lastSegment = nullptr;
-  Index firstFreeIndex = getFirstFreeTableIndex(primary.table, &lastSegment);
-  std::vector<Name> newTableElems;
-
-  auto getIndex = [&](Name secondaryFunc) {
-    auto indexIt = secondaryIndices.find(secondaryFunc);
-    if (indexIt != secondaryIndices.end()) {
-      return indexIt->second;
-    } else {
-      Index newIndex = firstFreeIndex + newTableElems.size();
-      newTableElems.push_back(secondaryFunc);
-      addIndex(secondaryFunc, newIndex);
-      return newIndex;
-    }
-  };
-
   // Update exports of secondary functions in the primary module to export
-  // wrapper functions that indirectly call the secondary functions. Reuse the
-  // exported function's existing table slot if it exists, otherwise create a
-  // new table slot.
+  // wrapper functions that indirectly call the secondary functions. We are
+  // adding secondary function names to the primary table here, but they will be
+  // replaced with placeholder functions later along with any references to
+  // secondary functions that were already in the table.
   Builder builder(primary);
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function ||
@@ -224,7 +240,7 @@ void ModuleSplitter::moveSecondaryFunctions() {
       continue;
     }
     Name secondaryFunc = ex->value;
-    Index tableIndex = getIndex(secondaryFunc);
+    Index tableIndex = tableManager.getIndex(secondaryFunc);
     auto func = std::make_unique<Function>();
     func->name = secondaryFunc;
     func->sig = secondary.getFunction(secondaryFunc)->sig;
@@ -241,16 +257,15 @@ void ModuleSplitter::moveSecondaryFunctions() {
   // corresponding table indices instead.
   struct CallIndirector : public WalkerPass<PostWalker<CallIndirector>> {
     ModuleSplitter& parent;
-    std::function<Index(Name)> getIndex;
     Builder builder;
-    CallIndirector(ModuleSplitter& parent, std::function<Index(Name)> getIndex)
-      : parent(parent), getIndex(getIndex), builder(parent.primary) {}
+    CallIndirector(ModuleSplitter& parent)
+      : parent(parent), builder(parent.primary) {}
     void visitCall(Call* curr) {
       if (!parent.secondaryFuncs.count(curr->target)) {
         return;
       }
       replaceCurrent(builder.makeCallIndirect(
-        builder.makeConst(int32_t(getIndex(curr->target))),
+        builder.makeConst(int32_t(parent.tableManager.getIndex(curr->target))),
         curr->operands,
         parent.secondary.getFunction(curr->target)->sig,
         curr->isReturn));
@@ -260,27 +275,7 @@ void ModuleSplitter::moveSecondaryFunctions() {
     }
   };
   PassRunner runner(&primary);
-  CallIndirector(*this, getIndex).run(&runner, &primary);
-
-  // Insert new table elements
-  if (newTableElems.size()) {
-    primary.table.exists = true;
-    // Update table sizes if necessary
-    size_t tableSize = firstFreeIndex + newTableElems.size();
-    if (primary.table.initial < tableSize) {
-      primary.table.initial = tableSize;
-    }
-    if (primary.table.max < tableSize) {
-      primary.table.max = tableSize;
-    }
-    if (lastSegment != nullptr) {
-      lastSegment->data.insert(
-        lastSegment->data.end(), newTableElems.begin(), newTableElems.end());
-    } else {
-      primary.table.segments.emplace_back(
-        builder.makeConst(int32_t(firstFreeIndex)), newTableElems);
-    }
-  }
+  CallIndirector(*this).run(&runner, &primary);
 }
 
 void ModuleSplitter::exportImportPrimaryFunctions() {

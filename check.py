@@ -326,7 +326,7 @@ def run_gcc_tests():
         subprocess.check_call(cmd)
         print('run...', output_file)
         actual = subprocess.check_output([os.path.abspath(output_file)]).decode('utf-8')
-        os.remove(output_file)
+        # os.remove(output_file)
         shared.fail_if_not_identical_to_file(actual, expected)
 
 
