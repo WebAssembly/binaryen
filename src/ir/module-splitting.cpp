@@ -301,11 +301,13 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
                       std::vector<Name>& calledPrimaryFuncs)
           : primaryFuncs(primaryFuncs), calledPrimaryFuncs(calledPrimaryFuncs) {
         }
-
         void visitCall(Call* curr) {
           if (primaryFuncs.count(curr->target)) {
             calledPrimaryFuncs.push_back(curr->target);
           }
+        }
+        void visitRefFunc(RefFunc* curr) {
+          assert(false && "TODO: handle ref.func as well");
         }
       };
       CallCollector(primaryFuncs, calledPrimaryFuncs).walkFunction(func);
