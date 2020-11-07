@@ -299,12 +299,12 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         functionCall = WASM_NEAREST_F64;
         break;
 
-      case TruncFloat32:
-        functionCall = WASM_TRUNC_F32;
-        break;
-      case TruncFloat64:
-        functionCall = WASM_TRUNC_F64;
-        break;
+      // case TruncFloat32:
+      //   functionCall = WASM_TRUNC_F32;
+      //   break;
+      // case TruncFloat64:
+      //   functionCall = WASM_TRUNC_F64;
+      //   break;
 
       case PopcntInt64:
         functionCall = WASM_POPCNT64;

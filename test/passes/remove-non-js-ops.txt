@@ -103,12 +103,12 @@
   )
  )
  (func $trunc64 (param $0 f64) (result f64)
-  (call $__wasm_trunc_f64
+  (f64.trunc
    (local.get $0)
   )
  )
  (func $trunc32 (param $0 f32) (result f32)
-  (call $__wasm_trunc_f32
+  (f32.trunc
    (local.get $0)
   )
  )
@@ -1108,34 +1108,6 @@
      (local.get $var$0)
     )
     (local.get $var$1)
-   )
-  )
- )
- (func $__wasm_trunc_f32 (param $var$0 f32) (result f32)
-  (select
-   (f32.ceil
-    (local.get $var$0)
-   )
-   (f32.floor
-    (local.get $var$0)
-   )
-   (f32.lt
-    (local.get $var$0)
-    (f32.const 0)
-   )
-  )
- )
- (func $__wasm_trunc_f64 (param $var$0 f64) (result f64)
-  (select
-   (f64.ceil
-    (local.get $var$0)
-   )
-   (f64.floor
-    (local.get $var$0)
-   )
-   (f64.lt
-    (local.get $var$0)
-    (f64.const 0)
    )
   )
  )
