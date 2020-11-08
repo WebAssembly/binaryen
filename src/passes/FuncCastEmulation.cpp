@@ -28,7 +28,6 @@
 // params must be identical, i.e., the "ABI" must match.
 //
 
-#include <asm_v_wasm.h>
 #include <ir/literal-utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
