@@ -403,6 +403,22 @@ struct OptimizeInstructions
           return c;
         }
       }
+      {
+        // x + fneg(y)   ==>   x - y
+        Binary* bin;
+        Expression* y;
+        if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
+          bin->op = Abstract::getBinary(bin->left->type, Sub);
+          bin->right = y;
+          return bin;
+        }
+        // x - fneg(y)   ==>   x + y
+        if (matches(curr, binary(&bin, Sub, any(), unary(Neg, any(&y))))) {
+          bin->op = Abstract::getBinary(bin->left->type, Add);
+          bin->right = y;
+          return bin;
+        }
+      }
     }
 
     if (auto* select = curr->dynCast<Select>()) {
