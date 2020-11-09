@@ -404,28 +404,6 @@ struct OptimizeInstructions
         }
       }
       {
-        // x + fneg(y)   ==>   x - y
-        Binary* bin;
-        Expression *x, *y;
-        if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
-          bin->op = Abstract::getBinary(bin->left->type, Sub);
-          bin->right = y;
-          return bin;
-        }
-        // fneg(x) + y   ==>   y - x
-        if (matches(curr, binary(&bin, Add, unary(Neg, any(&x)), any(&y))) &&
-            canReorder(x, y)) {
-          bin->op = Abstract::getBinary(bin->left->type, Sub);
-          bin->left = y;
-          bin->right = x;
-          return bin;
-        }
-        // x - fneg(y)   ==>   x + y
-        if (matches(curr, binary(&bin, Sub, any(), unary(Neg, any(&y))))) {
-          bin->op = Abstract::getBinary(bin->left->type, Add);
-          bin->right = y;
-          return bin;
-        }
         // fneg(x) * fneg(y)   ==>   x * y
         // fneg(fneg(x) * y)   ==>   x * y
         // fneg(x * fneg(y))   ==>   x * y
@@ -446,7 +424,6 @@ struct OptimizeInstructions
           bin->right = y;
           return bin;
         }
-
         // fneg(x) / fneg(y)   ==>   x / y
         // fneg(fneg(x) / y)   ==>   x / y
         // fneg(x / fneg(y))   ==>   x / y
@@ -464,6 +441,28 @@ struct OptimizeInstructions
                 Neg,
                 binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y)))))) {
           bin->left = x;
+          bin->right = y;
+          return bin;
+        }
+        // x + fneg(y)   ==>   x - y
+        Binary* bin;
+        Expression *x, *y;
+        if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
+          bin->op = Abstract::getBinary(bin->left->type, Sub);
+          bin->right = y;
+          return bin;
+        }
+        // fneg(x) + y   ==>   y - x
+        if (matches(curr, binary(&bin, Add, unary(Neg, any(&x)), any(&y))) &&
+            canReorder(x, y)) {
+          bin->op = Abstract::getBinary(bin->left->type, Sub);
+          bin->left = y;
+          bin->right = x;
+          return bin;
+        }
+        // x - fneg(y)   ==>   x + y
+        if (matches(curr, binary(&bin, Sub, any(), unary(Neg, any(&y))))) {
+          bin->op = Abstract::getBinary(bin->left->type, Add);
           bin->right = y;
           return bin;
         }
