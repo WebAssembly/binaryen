@@ -404,6 +404,8 @@ struct OptimizeInstructions
         }
       }
       {
+        Binary* bin;
+        Expression *x, *y;
         // fneg(x) * fneg(y)   ==>   x * y
         // fneg(fneg(x) * y)   ==>   x * y
         // fneg(x * fneg(y))   ==>   x * y
@@ -445,8 +447,6 @@ struct OptimizeInstructions
           return bin;
         }
         // x + fneg(y)   ==>   x - y
-        Binary* bin;
-        Expression *x, *y;
         if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
           bin->op = Abstract::getBinary(bin->left->type, Sub);
           bin->right = y;
