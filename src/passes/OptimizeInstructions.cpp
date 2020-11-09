@@ -424,6 +424,15 @@ struct OptimizeInstructions
           bin->right = y;
           return bin;
         }
+        // fneg(x * fval(C))   ==>   x * -C
+        // fneg(x / fval(C))   ==>   x / -C
+        // fneg(fval(C) / y)   ==>   -C / y
+        if (matches(curr, unary(Neg, binary(&bin, Mul, any(), fval(&c)))) ||
+            matches(curr, unary(Neg, binary(&bin, DivS, any(), fval(&c)))) ||
+            matches(curr, unary(Neg, binary(&bin, DivS, fval(&c), any())))) {
+          c->value = c->value.neg();
+          return bin;
+        }
         // fneg(x) * y   ==>   fneg(x * y)
         // x * fneg(y)   ==>   fneg(x * y)
         // fneg(x) / y   ==>   fneg(x / y)
@@ -437,15 +446,6 @@ struct OptimizeInstructions
           bin->right = y;
           return Builder(*getModule())
             .makeUnary(Abstract::getUnary(bin->type, Neg), bin);
-        }
-        // fneg(x * fval(C))   ==>   x * -C
-        // fneg(x / fval(C))   ==>   x / -C
-        // fneg(fval(C) / y)   ==>   -C / y
-        if (matches(curr, unary(Neg, binary(&bin, Mul, any(), fval(&c)))) ||
-            matches(curr, unary(Neg, binary(&bin, DivS, any(), fval(&c)))) ||
-            matches(curr, unary(Neg, binary(&bin, DivS, fval(&c), any())))) {
-          c->value = c->value.neg();
-          return bin;
         }
         // x + fneg(y)   ==>   x - y
         if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
