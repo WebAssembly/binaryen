@@ -1802,6 +1802,13 @@ private:
         curr->right = ExpressionManipulator::copy(x, *getModule());
         return curr;
       }
+      // fneg(x) - fval(C)   ==>   -C - x
+      if (matches(curr, binary(Sub, unary(Neg, any(&x)), fval()))) {
+        right->value = right->value.neg();
+        curr->left = right;
+        curr->right = x;
+        return curr;
+      }
     }
     {
       // x + (-0.0)   ==>   x
