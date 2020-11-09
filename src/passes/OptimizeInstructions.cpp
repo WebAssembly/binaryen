@@ -413,7 +413,8 @@ struct OptimizeInstructions
           return bin;
         }
         // fneg(x) + y   ==>   y - x
-        if (matches(curr, binary(&bin, Add, unary(Neg, any(&x)), any(&y)))) {
+        if (matches(curr, binary(&bin, Add, unary(Neg, any(&x)), any(&y))) &&
+            canReorder(x, y)) {
           bin->op = Abstract::getBinary(bin->left->type, Sub);
           bin->left = y;
           bin->right = x;
@@ -426,13 +427,17 @@ struct OptimizeInstructions
           return bin;
         }
         // fneg(x) * fneg(y)   ==>   x * y
-        if (matches(curr, binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
+        if (matches(
+              curr,
+              binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
           bin->left = x;
           bin->right = y;
           return bin;
         }
         // fneg(x) / fneg(y)   ==>   x / y
-        if (matches(curr, binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
+        if (matches(
+              curr,
+              binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
           bin->left = x;
           bin->right = y;
           return bin;
