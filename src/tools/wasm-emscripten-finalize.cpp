@@ -51,7 +51,6 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   bool DWARF = false;
   bool sideModule = false;
-  bool legacyPIC = true;
   bool legalizeJavaScriptFFI = true;
   bool bigInt = false;
   bool checkStackOverflow = false;
@@ -114,9 +113,7 @@ int main(int argc, const char* argv[]) {
          "",
          "Use new/llvm PIC abi",
          Options::Arguments::Zero,
-         [&legacyPIC](Options* o, const std::string& argument) {
-           legacyPIC = false;
-         })
+         [&](Options* o, const std::string& argument) {})
     .add("--input-source-map",
          "-ism",
          "Consume source map from the specified file",
@@ -228,30 +225,6 @@ int main(int argc, const char* argv[]) {
   BYN_DEBUG_WITH_TYPE("emscripten-dump",
                       WasmPrinter::printModule(&wasm, std::cerr));
 
-  uint32_t dataSize = 0;
-
-  if (!sideModule) {
-    if (globalBase == INVALID_BASE) {
-      Fatal() << "globalBase must be set";
-    }
-    Export* dataEndExport = wasm.getExport("__data_end");
-    if (dataEndExport == nullptr) {
-      Fatal() << "__data_end export not found";
-    }
-    Global* dataEnd = wasm.getGlobal(dataEndExport->value);
-    if (dataEnd == nullptr) {
-      Fatal() << "__data_end global not found";
-    }
-    if (dataEnd->type != Type::i32) {
-      Fatal() << "__data_end global has wrong type";
-    }
-    if (dataEnd->imported()) {
-      Fatal() << "__data_end must not be an imported global";
-    }
-    Const* dataEndConst = dataEnd->init->cast<Const>();
-    dataSize = dataEndConst->value.geti32() - globalBase;
-  }
-
   EmscriptenGlueGenerator generator(wasm);
   generator.standalone = standaloneWasm;
   generator.sideModule = sideModule;
@@ -279,14 +252,6 @@ int main(int argc, const char* argv[]) {
         "__handle_stack_overflow";
     }
     passRunner.add("stack-check");
-  }
-
-  if (legacyPIC) {
-    if (sideModule) {
-      passRunner.add("emscripten-pic");
-    } else {
-      passRunner.add("emscripten-pic-main-module");
-    }
   }
 
   if (!noDynCalls && !standaloneWasm) {
@@ -318,20 +283,13 @@ int main(int argc, const char* argv[]) {
 
   if (sideModule) {
     BYN_TRACE("finalizing as side module\n");
-    generator.generatePostInstantiateFunction();
+    // The emscripten PIC ABI still expects a function named
+    // __post_instantiate to be exported by side module.
+    if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
+      e->name = "__post_instantiate";
+    }
   } else {
     BYN_TRACE("finalizing as regular module\n");
-    if (legacyPIC) {
-      // For side modules these gets called via __post_instantiate
-      if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
-        auto* ex = new Export();
-        ex->value = F->name;
-        ex->name = F->name;
-        ex->kind = ExternalKind::Function;
-        wasm.addExport(ex);
-        initializerFunctions.push_back(F->name);
-      }
-    }
     // Costructors get called from crt1 in wasm standalone mode.
     // Unless there is no entry point.
     if (!standaloneWasm || !wasm.getExportOrNull("_start")) {
@@ -344,7 +302,7 @@ int main(int argc, const char* argv[]) {
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata =
-    generator.generateEmscriptenMetadata(dataSize, initializerFunctions);
+    generator.generateEmscriptenMetadata(initializerFunctions);
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).

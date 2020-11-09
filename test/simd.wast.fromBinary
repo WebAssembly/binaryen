@@ -760,6 +760,36 @@
    (local.get $1)
   )
  )
+ (func $i16x8.q15mulr_sat_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.q15mulr_sat_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.extmul_low_i8x16_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.extmul_low_i8x16_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.extmul_high_i8x16_s (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.extmul_high_i8x16_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.extmul_low_i8x16_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.extmul_low_i8x16_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i16x8.extmul_high_i8x16_u (param $0 v128) (param $1 v128) (result v128)
+  (i16x8.extmul_high_i8x16_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $i32x4.abs (param $0 v128) (result v128)
   (i32x4.abs
    (local.get $0)
@@ -851,6 +881,30 @@
    (local.get $1)
   )
  )
+ (func $i32x4.extmul_low_i16x8_s (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.extmul_low_i16x8_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.extmul_high_i16x8_s (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.extmul_high_i16x8_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.extmul_low_i16x8_u (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.extmul_low_i16x8_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i32x4.extmul_high_i16x8_u (param $0 v128) (param $1 v128) (result v128)
+  (i32x4.extmul_high_i16x8_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $i64x2.neg (param $0 v128) (result v128)
   (i64x2.neg
    (local.get $0)
@@ -898,6 +952,30 @@
  )
  (func $i64x2.mul (param $0 v128) (param $1 v128) (result v128)
   (i64x2.mul
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.extmul_low_i32x4_s (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.extmul_low_i32x4_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.extmul_high_i32x4_s (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.extmul_high_i32x4_s
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.extmul_low_i32x4_u (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.extmul_low_i32x4_u
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (func $i64x2.extmul_high_i32x4_u (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.extmul_high_i32x4_u
    (local.get $0)
    (local.get $1)
   )

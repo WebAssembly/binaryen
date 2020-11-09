@@ -15,7 +15,6 @@
   "emJsFuncs": {
     "noarg": "(void)<::>{ out(\"no args works\"); }"
   },
-  "staticBump": 6664,
   "tableSize": 0,
   "declares": [
   ],

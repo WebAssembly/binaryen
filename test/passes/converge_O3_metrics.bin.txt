@@ -6,18 +6,18 @@ total
  [imports]      : 3       
  [memory-data]  : 28      
  [table-data]   : 429     
- [total]        : 132     
+ [total]        : 129     
  [vars]         : 4       
  binary         : 12      
  block          : 8       
  break          : 3       
  call           : 3       
  call_indirect  : 4       
- const          : 47      
+ const          : 45      
  drop           : 3       
  global.get     : 1       
  global.set     : 1       
- if             : 3       
+ if             : 2       
  load           : 16      
  local.get      : 18      
  local.set      : 7       
@@ -71,13 +71,9 @@ total
    (i32.const 2)
   )
   (drop
-   (if (result i32)
-    (call $import$0
-     (i32.const 146)
-     (local.get $0)
-    )
-    (i32.const -1)
-    (i32.const 0)
+   (call $import$0
+    (i32.const 146)
+    (local.get $0)
    )
   )
   (i32.const 1)
@@ -251,18 +247,18 @@ total
  [imports]      : 3       
  [memory-data]  : 28      
  [table-data]   : 429     
- [total]        : 132     
+ [total]        : 129     
  [vars]         : 4       
  binary         : 12      
  block          : 8       
  break          : 3       
  call           : 3       
  call_indirect  : 4       
- const          : 47      
+ const          : 45      
  drop           : 3       
  global.get     : 1       
  global.set     : 1       
- if             : 3       
+ if             : 2       
  load           : 16      
  local.get      : 18      
  local.set      : 7       
@@ -316,13 +312,9 @@ total
    (i32.const 2)
   )
   (drop
-   (if (result i32)
-    (call $import$0
-     (i32.const 146)
-     (local.get $0)
-    )
-    (i32.const -1)
-    (i32.const 0)
+   (call $import$0
+    (i32.const 146)
+    (local.get $0)
    )
   )
   (i32.const 1)

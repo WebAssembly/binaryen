@@ -59,6 +59,7 @@ Name SET_TEMP_RET0("setTempRet0");
 Name NEW_SIZE("newSize");
 Name MODULE("module");
 Name START("start");
+Name GLOBAL("global");
 Name FUNC("func");
 Name PARAM("param");
 Name RESULT("result");
@@ -92,7 +93,6 @@ Name EXIT("exit");
 Name SHARED("shared");
 Name EVENT("event");
 Name ATTR("attr");
-Name ASSIGN_GOT_ENTRIES("__assign_got_enties");
 
 // Expressions
 

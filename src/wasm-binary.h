@@ -25,8 +25,6 @@
 #include <ostream>
 #include <type_traits>
 
-#include "asm_v_wasm.h"
-#include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "ir/module-utils.h"
 #include "parsing.h"
@@ -851,6 +849,7 @@ enum ASTNodes {
   I16x8MaxS = 0x98,
   I16x8MaxU = 0x99,
   I16x8AvgrU = 0x9b,
+  I16x8Q15MulrSatS = 0x9c,
 
   I32x4Abs = 0xa0,
   I32x4Neg = 0xa1,
@@ -933,6 +932,19 @@ enum ASTNodes {
   I64x2TruncSatUF64x2 = 0x0101,
   F64x2ConvertSI64x2 = 0x0102,
   F64x2ConvertUI64x2 = 0x0103,
+
+  I16x8ExtMulLowSI8x16 = 0x9a,
+  I16x8ExtMulHighSI8x16 = 0x9d,
+  I16x8ExtMulLowUI8x16 = 0x9e,
+  I16x8ExtMulHighUI8x16 = 0x9f,
+  I32x4ExtMulLowSI16x8 = 0xbb,
+  I32x4ExtMulHighSI16x8 = 0xbd,
+  I32x4ExtMulLowUI16x8 = 0xbe,
+  I32x4ExtMulHighUI16x8 = 0xbf,
+  I64x2ExtMulLowSI32x4 = 0xd2,
+  I64x2ExtMulHighSI32x4 = 0xd3,
+  I64x2ExtMulLowUI32x4 = 0xd6,
+  I64x2ExtMulHighUI32x4 = 0xd7,
 
   // bulk memory opcodes
 
@@ -1299,6 +1311,7 @@ public:
   uint64_t getU64LEB();
   int32_t getS32LEB();
   int64_t getS64LEB();
+  uint64_t getUPtrLEB();
   Type getType();
   HeapType getHeapType();
   Type getConcreteType();

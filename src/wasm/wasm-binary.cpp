@@ -1215,6 +1215,10 @@ int64_t WasmBinaryBuilder::getS64LEB() {
   return ret.value;
 }
 
+uint64_t WasmBinaryBuilder::getUPtrLEB() {
+  return wasm.memory.is64() ? getU64LEB() : getU32LEB();
+}
+
 Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
   // Single value types are negative; signature indices are non-negative
@@ -3150,7 +3154,7 @@ void WasmBinaryBuilder::readMemoryAccess(Address& alignment, Address& offset) {
     throwError("Alignment must be of a reasonable size");
   }
   alignment = Bits::pow2(rawAlignment);
-  offset = getU32LEB();
+  offset = getUPtrLEB();
 }
 
 bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
@@ -4303,6 +4307,26 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = AvgrUVecI16x8;
       break;
+    case BinaryConsts::I16x8Q15MulrSatS:
+      curr = allocator.alloc<Binary>();
+      curr->op = Q15MulrSatSVecI16x8;
+      break;
+    case BinaryConsts::I16x8ExtMulLowSI8x16:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowSVecI16x8;
+      break;
+    case BinaryConsts::I16x8ExtMulHighSI8x16:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighSVecI16x8;
+      break;
+    case BinaryConsts::I16x8ExtMulLowUI8x16:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowUVecI16x8;
+      break;
+    case BinaryConsts::I16x8ExtMulHighUI8x16:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighUVecI16x8;
+      break;
     case BinaryConsts::I32x4Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI32x4;
@@ -4335,6 +4359,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = DotSVecI16x8ToVecI32x4;
       break;
+    case BinaryConsts::I32x4ExtMulLowSI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowSVecI32x4;
+      break;
+    case BinaryConsts::I32x4ExtMulHighSI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighSVecI32x4;
+      break;
+    case BinaryConsts::I32x4ExtMulLowUI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowUVecI32x4;
+      break;
+    case BinaryConsts::I32x4ExtMulHighUI16x8:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighUVecI32x4;
+      break;
     case BinaryConsts::I64x2Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecI64x2;
@@ -4346,6 +4386,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I64x2Mul:
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI64x2;
+      break;
+    case BinaryConsts::I64x2ExtMulLowSI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowSVecI64x2;
+      break;
+    case BinaryConsts::I64x2ExtMulHighSI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighSVecI64x2;
+      break;
+    case BinaryConsts::I64x2ExtMulLowUI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulLowUVecI64x2;
+      break;
+    case BinaryConsts::I64x2ExtMulHighUI32x4:
+      curr = allocator.alloc<Binary>();
+      curr->op = ExtMulHighUVecI64x2;
       break;
     case BinaryConsts::F32x4Add:
       curr = allocator.alloc<Binary>();

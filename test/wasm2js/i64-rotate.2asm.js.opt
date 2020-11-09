@@ -1,17 +1,17 @@
 
-function asmFunc(global, env) {
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
+function asmFunc(env) {
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
+ var nan = NaN;
+ var infinity = Infinity;
  var i64toi32_i32$HIGH_BITS = 0;
  function legalstub$1($0, $1, $2, $3, $4, $5) {
   return (__wasm_rotl_i64($0, $1, $2) | 0) == ($4 | 0) & ($5 | 0) == (i64toi32_i32$HIGH_BITS | 0);
@@ -26,7 +26,7 @@ function asmFunc(global, env) {
   $6 = $2 & 63;
   $5 = $6;
   $3 = $5 & 31;
-  if (32 <= $5 >>> 0) {
+  if ($5 >>> 0 >= 32) {
    $3 = -1 >>> $3 | 0
   } else {
    $4 = -1 >>> $3 | 0;
@@ -35,7 +35,7 @@ function asmFunc(global, env) {
   $5 = $3 & $0;
   $3 = $1 & $4;
   $4 = $6 & 31;
-  if (32 <= $6 >>> 0) {
+  if ($6 >>> 0 >= 32) {
    $3 = $5 << $4;
    $6 = 0;
   } else {
@@ -46,7 +46,7 @@ function asmFunc(global, env) {
   $4 = 0 - $2 & 63;
   $3 = $4;
   $2 = $3 & 31;
-  if (32 <= $3 >>> 0) {
+  if ($3 >>> 0 >= 32) {
    $3 = -1 << $2;
    $2 = 0;
   } else {
@@ -56,7 +56,7 @@ function asmFunc(global, env) {
   $0 = $2 & $0;
   $3 = $1 & $3;
   $1 = $4 & 31;
-  if (32 <= $4 >>> 0) {
+  if ($4 >>> 0 >= 32) {
    $2 = 0;
    $0 = $3 >>> $1 | 0;
   } else {
@@ -72,7 +72,7 @@ function asmFunc(global, env) {
   var $3 = 0, $4 = 0, $5 = 0, $6 = 0, $7 = 0;
   $6 = $2 & 63;
   $3 = $6 & 31;
-  if (32 <= $6 >>> 0) {
+  if ($6 >>> 0 >= 32) {
    $4 = -1 << $3;
    $7 = 0;
   } else {
@@ -82,7 +82,7 @@ function asmFunc(global, env) {
   $7 = $7 & $0;
   $3 = $1 & $4;
   $5 = $6 & 31;
-  if (32 <= $6 >>> 0) {
+  if ($6 >>> 0 >= 32) {
    $4 = 0;
    $6 = $3 >>> $5 | 0;
   } else {
@@ -92,7 +92,7 @@ function asmFunc(global, env) {
   $7 = $4;
   $3 = 0 - $2 & 63;
   $5 = $3 & 31;
-  if (32 <= $3 >>> 0) {
+  if ($3 >>> 0 >= 32) {
    $4 = 0;
    $2 = -1 >>> $5 | 0;
   } else {
@@ -102,7 +102,7 @@ function asmFunc(global, env) {
   $0 = $2 & $0;
   $1 = $1 & $4;
   $4 = $3 & 31;
-  if (32 <= $3 >>> 0) {
+  if ($3 >>> 0 >= 32) {
    $2 = $0 << $4;
    $0 = 0;
   } else {
@@ -120,20 +120,7 @@ function asmFunc(global, env) {
  };
 }
 
-var retasmFunc = asmFunc({
-    Math,
-    Int8Array,
-    Uint8Array,
-    Int16Array,
-    Uint16Array,
-    Int32Array,
-    Uint32Array,
-    Float32Array,
-    Float64Array,
-    NaN,
-    Infinity
-  }, {
-    abort: function() { throw new Error('abort'); }
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
   });
 export var rotl = retasmFunc.rotl;
 export var rotr = retasmFunc.rotr;

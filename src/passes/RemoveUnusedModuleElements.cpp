@@ -22,7 +22,6 @@
 
 #include <memory>
 
-#include "asm_v_wasm.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"

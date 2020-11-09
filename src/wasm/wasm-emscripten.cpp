@@ -38,7 +38,6 @@ cashew::IString EM_ASM_PREFIX("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
 
 static Name STACK_INIT("stack$init");
-static Name POST_INSTANTIATE("__post_instantiate");
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
@@ -73,47 +72,6 @@ Global* getStackPointerGlobal(Module& wasm) {
     }
   }
   return nullptr;
-}
-
-// For emscripten SIDE_MODULE we generate a single exported function called
-// __post_instantiate which calls two functions:
-//
-// - __assign_got_enties
-// - __wasm_call_ctors
-//
-// The former is function we generate here which calls imported g$XXX functions
-// order to assign values to any globals imported from GOT.func or GOT.mem.
-// These globals hold address of functions and globals respectively.
-//
-// The later is the constructor function generaed by lld which performs any
-// fixups on the memory section and calls static constructors.
-void EmscriptenGlueGenerator::generatePostInstantiateFunction() {
-  BYN_TRACE("generatePostInstantiateFunction\n");
-  Builder builder(wasm);
-  Function* post_instantiate = builder.makeFunction(
-    POST_INSTANTIATE, std::vector<NameType>{}, Type::none, {});
-  wasm.addFunction(post_instantiate);
-
-  if (Function* F = wasm.getFunctionOrNull(ASSIGN_GOT_ENTRIES)) {
-    // call __assign_got_enties from post_instantiate
-    Expression* call = builder.makeCall(F->name, {}, Type::none);
-    post_instantiate->body = builder.blockify(post_instantiate->body, call);
-  }
-
-  // The names of standard imports/exports used by lld doesn't quite match that
-  // expected by emscripten.
-  // TODO(sbc): Unify these
-  if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-    Expression* call = builder.makeCall(e->value, {}, Type::none);
-    post_instantiate->body = builder.blockify(post_instantiate->body, call);
-    wasm.removeExport(WASM_CALL_CTORS);
-  }
-
-  auto* ex = new Export();
-  ex->value = post_instantiate->name;
-  ex->name = POST_INSTANTIATE;
-  ex->kind = ExternalKind::Function;
-  wasm.addExport(ex);
 }
 
 const Address UNKNOWN_OFFSET(uint32_t(-1));
@@ -269,7 +227,6 @@ private:
   void createAsmConst(uint32_t id, std::string code, Signature sig, Name name);
   Signature asmConstSig(Signature baseSig);
   Name nameForImportWithSig(Signature sig, Proxying proxy);
-  void queueImport(Name importName, Signature baseSig);
   void addImports();
   Proxying proxyType(Name name);
 
@@ -384,21 +341,6 @@ Signature AsmConstWalker::asmConstSig(Signature baseSig) {
     baseSig.results);
 }
 
-Name AsmConstWalker::nameForImportWithSig(Signature sig, Proxying proxy) {
-  std::string fixedTarget = EM_ASM_PREFIX.str + std::string("_") +
-                            proxyingSuffix(proxy) +
-                            getSig(sig.results, sig.params);
-  return Name(fixedTarget.c_str());
-}
-
-void AsmConstWalker::queueImport(Name importName, Signature baseSig) {
-  auto import = new Function;
-  import->name = import->base = importName;
-  import->module = ENV;
-  import->sig = baseSig;
-  queuedImports.push_back(std::unique_ptr<Function>(import));
-}
-
 void AsmConstWalker::addImports() {
   for (auto& import : queuedImports) {
     wasm.addFunction(import.release());
@@ -476,7 +418,7 @@ void printSignatures(std::ostream& o, const std::set<Signature>& c) {
 }
 
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
-  Address staticBump, std::vector<Name> const& initializerFunctions) {
+  std::vector<Name> const& initializerFunctions) {
   bool commaFirst;
   auto nextElement = [&commaFirst]() {
     if (commaFirst) {
@@ -521,7 +463,6 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
     meta << "\n  },\n";
   }
 
-  meta << "  \"staticBump\": " << staticBump << ",\n";
   meta << "  \"tableSize\": " << wasm.table.initial.addr << ",\n";
 
   if (!initializerFunctions.empty()) {

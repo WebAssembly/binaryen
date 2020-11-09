@@ -393,6 +393,11 @@ enum BinaryOp {
   MaxSVecI16x8,
   MaxUVecI16x8,
   AvgrUVecI16x8,
+  Q15MulrSatSVecI16x8,
+  ExtMulLowSVecI16x8,
+  ExtMulHighSVecI16x8,
+  ExtMulLowUVecI16x8,
+  ExtMulHighUVecI16x8,
   AddVecI32x4,
   SubVecI32x4,
   MulVecI32x4,
@@ -401,9 +406,17 @@ enum BinaryOp {
   MaxSVecI32x4,
   MaxUVecI32x4,
   DotSVecI16x8ToVecI32x4,
+  ExtMulLowSVecI32x4,
+  ExtMulHighSVecI32x4,
+  ExtMulLowUVecI32x4,
+  ExtMulHighUVecI32x4,
   AddVecI64x2,
   SubVecI64x2,
   MulVecI64x2,
+  ExtMulLowSVecI64x2,
+  ExtMulHighSVecI64x2,
+  ExtMulLowUVecI64x2,
+  ExtMulHighUVecI64x2,
   AddVecF32x4,
   SubVecF32x4,
   MulVecF32x4,
@@ -1378,7 +1391,7 @@ struct Importable {
   // If these are set, then this is an import, as module.base
   Name module, base;
 
-  bool imported() { return module.is(); }
+  bool imported() const { return module.is(); }
 
   void setName(Name name_, bool hasExplicitName_) {
     name = name_;

@@ -22,7 +22,6 @@
 #include <sstream>
 #include <string>
 
-#include "asmjs/shared-constants.h"
 #include "mixed_arena.h"
 #include "shared-constants.h"
 #include "support/colors.h"
