@@ -59,8 +59,8 @@
 #ifndef DELEGATE_FIELD_CHILD_VECTOR
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {                \
-    DELEGATE_FIELD_CHILD(id, name[i]);                     \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {          \
+    DELEGATE_FIELD_CHILD(id, name[i]);                                         \
   }
 #else
 #error please define DELEGATE_FIELD_CHILD_VECTOR(id, name)
@@ -78,8 +78,8 @@
 #ifndef DELEGATE_FIELD_INT_ARRAY
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_INT_ARRAY(id, name)                                     \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {                \
-    DELEGATE_FIELD_INT(id, name[i]);                       \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {          \
+    DELEGATE_FIELD_INT(id, name[i]);                                           \
   }
 #else
 #error please define DELEGATE_FIELD_INT_ARRAY(id, name)
@@ -111,9 +111,9 @@
 // DELEGATE_FIELD_SCOPE_NAME_USE is called on them.
 #ifndef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                                     \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {                \
-    DELEGATE_FIELD_SCOPE_NAME_USE(id, name[i]);                       \
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                         \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {          \
+    DELEGATE_FIELD_SCOPE_NAME_USE(id, name[i]);                                \
   }
 #else
 #error please define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
