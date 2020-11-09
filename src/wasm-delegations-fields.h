@@ -48,9 +48,9 @@
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, name) DELEGATE_FIELD_CHILD(id, name)
 #endif
 
-// Emits code to handle a list of child pointers.
-#ifndef DELEGATE_FIELD_CHILD_LIST
-#define DELEGATE_FIELD_CHILD_LIST(id, name)
+// Emits code to handle a variable-sized vector of child pointers.
+#ifndef DELEGATE_FIELD_CHILD_VECTOR
+#define DELEGATE_FIELD_CHILD_VECTOR(id, name)
 #endif
 
 // Emits code to handle an integer value (bool, enum, Index, int32, or int64).
@@ -58,7 +58,8 @@
 #define DELEGATE_FIELD_INT(id, name)
 #endif
 
-// Emits code to handle an array of integer values (like a SIMD mask).
+// Emits code to handle a std::array of fixed size of integer values (like a
+// SIMD mask).
 #ifndef DELEGATE_FIELD_INT_ARRAY
 #define DELEGATE_FIELD_INT_ARRAY(id, name)
 #endif
@@ -78,9 +79,10 @@
 #define DELEGATE_FIELD_SCOPE_NAME(id, name)
 #endif
 
-// Emits code to handle a list of scope name (like a switch's targets).
-#ifndef DELEGATE_FIELD_SCOPE_NAME_LIST
-#define DELEGATE_FIELD_SCOPE_NAME_LIST(id, name)
+// Emits code to handle a variable-sized vector of scope names (like a switch's
+// targets).
+#ifndef DELEGATE_FIELD_SCOPE_NAME_VECTOR
+#define DELEGATE_FIELD_SCOPE_NAME_VECTOR(id, name)
 #endif
 
 // Emits code to handle a Signature.
@@ -105,7 +107,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::BlockId: {
     DELEGATE_START(Block);
-    DELEGATE_FIELD_CHILD_LIST(Block, list);
+    DELEGATE_FIELD_CHILD_VECTOR(Block, list);
     DELEGATE_FIELD_SCOPE_NAME(Block, name);
     DELEGATE_END(Block);
     break;
@@ -138,13 +140,13 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(Switch, condition);
     DELEGATE_FIELD_OPTIONAL_CHILD(Switch, value);
     DELEGATE_FIELD_SCOPE_NAME(Switch, default_);
-    DELEGATE_FIELD_SCOPE_NAME_LIST(Switch, targets);
+    DELEGATE_FIELD_SCOPE_NAME_VECTOR(Switch, targets);
     DELEGATE_END();
     break;
   }
   case Expression::Id::CallId: {
     DELEGATE_START(Call);
-    DELEGATE_FIELD_CHILD_LIST(Call, operands);
+    DELEGATE_FIELD_CHILD_VECTOR(Call, operands);
     DELEGATE_FIELD_NAME(Call, target);
     DELEGATE_FIELD_INT(Call, isReturn);
     DELEGATE_END();
@@ -153,7 +155,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::CallIndirectId: {
     DELEGATE_START(CallIndirect);
     DELEGATE_FIELD_CHILD(CallIndirect, target);
-    DELEGATE_FIELD_CHILD_LIST(CallIndirect, operands);
+    DELEGATE_FIELD_CHILD_VECTOR(CallIndirect, operands);
     DELEGATE_FIELD_SIGNATURE(CallIndirect, sig);
     DELEGATE_FIELD_INT(CallIndirect, isReturn);
     DELEGATE_END();
@@ -431,8 +433,8 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ThrowId: {
     DELEGATE_START(Throw);
-    DELEGATE_FIELD_CHILD_LIST(Throw, operands);
-    DELEGATE_FIELD_INT(Throw, event);
+    DELEGATE_FIELD_CHILD_VECTOR(Throw, operands);
+    DELEGATE_FIELD_NAME(Throw, event);
     DELEGATE_END();
     break;
   }
@@ -468,7 +470,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::TupleMakeId: {
     DELEGATE_START(TupleMake);
-    DELEGATE_FIELD_CHILD_LIST(Tuple, operands);
+    DELEGATE_FIELD_CHILD_VECTOR(Tuple, operands);
     DELEGATE_END();
     break;
   }
@@ -571,12 +573,12 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_END
 #undef DELEGATE_FIELD_CHILD
 #undef DELEGATE_FIELD_OPTIONAL_CHILD
-#undef DELEGATE_FIELD_CHILD_LIST
+#undef DELEGATE_FIELD_CHILD_VECTOR
 #undef DELEGATE_FIELD_INT
 #undef DELEGATE_FIELD_INT_ARRAY
 #undef DELEGATE_FIELD_NAME
 #undef DELEGATE_FIELD_SCOPE_NAME
-#undef DELEGATE_FIELD_SCOPE_NAME_LIST
+#undef DELEGATE_FIELD_SCOPE_NAME_VECTOR
 #undef DELEGATE_FIELD_SIGNATURE
 #undef DELEGATE_FIELD_TYPE
 #undef DELEGATE_FIELD_ADDRESS
