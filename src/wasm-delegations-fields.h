@@ -34,12 +34,12 @@
 
 // Emits code at the start of the case for a class.
 #ifndef DELEGATE_START
-#error please define DELEGATE_START(id)
+#define DELEGATE_START(id)
 #endif
 
 // Emits code at the end of the case for a class.
 #ifndef DELEGATE_END
-#error please define DELEGATE_END(id)
+#define DELEGATE_END(id)
 #endif
 
 // Emits code to handle a child pointer.
@@ -50,7 +50,7 @@
 // Emits code to handle an optional child pointer. If this is not defined, then
 // DELEGATE_FIELD_CHILD is called on it.
 #ifndef DELEGATE_FIELD_OPTIONAL_CHILD
-#error please define DELEGATE_FIELD_OPTIONAL_CHILD(id, name) DELEGATE_FIELD_CHILD(id, name)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name) DELEGATE_FIELD_CHILD(id, name)
 #endif
 
 // Emits code to handle a variable-sized vector of child pointers. If this is
@@ -150,7 +150,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::LoopId: {
     DELEGATE_START(Loop);
     DELEGATE_FIELD_CHILD(Loop, body);
-    DELEGATE_FIELD_DELEGATE_FIELD_SCOPE_NAME_DEF(Loop, name);
+    DELEGATE_FIELD_SCOPE_NAME_DEF(Loop, name);
     DELEGATE_END();
     break;
   }
@@ -166,8 +166,8 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Switch);
     DELEGATE_FIELD_CHILD(Switch, condition);
     DELEGATE_FIELD_OPTIONAL_CHILD(Switch, value);
-    DELEGATE_FIELD_DELEGATE_FIELD_SCOPE_NAME_USE(Switch, default_);
-    DELEGATE_FIELD_DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Switch, targets);
+    DELEGATE_FIELD_SCOPE_NAME_USE(Switch, default_);
+    DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Switch, targets);
     DELEGATE_END();
     break;
   }
@@ -474,7 +474,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::BrOnExnId: {
     DELEGATE_START(BrOnExn);
     DELEGATE_FIELD_CHILD(BrOnExn, exnref);
-    DELEGATE_FIELD_DELEGATE_FIELD_SCOPE_NAME_USE(BrOnExn, name);
+    DELEGATE_FIELD_SCOPE_NAME_USE(BrOnExn, name);
     DELEGATE_FIELD_NAME(BrOnExn, event);
     DELEGATE_FIELD_TYPE(BrOnExn, sent);
     DELEGATE_END();
@@ -603,6 +603,7 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_FIELD_CHILD_VECTOR
 #undef DELEGATE_FIELD_INT
 #undef DELEGATE_FIELD_INT_ARRAY
+#undef DELEGATE_FIELD_LITERAL
 #undef DELEGATE_FIELD_NAME
 #undef DELEGATE_FIELD_SCOPE_NAME_DEF
 #undef DELEGATE_FIELD_SCOPE_NAME_USE

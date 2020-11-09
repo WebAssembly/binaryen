@@ -225,7 +225,8 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   for (Index i = 0; i < castLeft->name.size(); i++) {                          \
     if (!compareNames(castLeft->name[i], castRight->name[i])) {                \
       return false;                                                            \
-    }
+    } \
+  }
 
 #include "wasm-delegations-fields.h"
 
@@ -308,24 +309,16 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 
 #define DELEGATE_FIELD_INT(id, name) HASH_FIELD(name)
 #define DELEGATE_FIELD_LITERAL(id, name) HASH_FIELD(name)
-#define DELEGATE_FIELD_NAME(id, name) HASH_FIELD(name)
-#define DELEGATE_FIELD_TYPE(id, name) visitType(cast->name);
+#define DELEGATE_FIELD_SIGNATURE(id, name) HASH_FIELD(name)
 
+#define DELEGATE_FIELD_NAME(id, name) visitNonScopeName(cast->name)
+#define DELEGATE_FIELD_TYPE(id, name) visitType(cast->name);
 #define DELEGATE_FIELD_ADDRESS(id, name) visitAddress(cast->name);
 
-#define DELEGATE_FIELD_SIGNATURE(id, name) visitNonScopeName(cast->name);
-
-#define HASH_LIST(name)                                                        \
-  if (castLeft->name.size() != castRight->name.size()) {                       \
-    return false;                                                              \
-  }                                                                            \
-  for (Index i = 0; i < castLeft->name.size(); i++) {                          \
-    if (castLeft->name[i] != castRight->name[i]) {                             \
-      return false;                                                            \
-    }                                                                          \
+#define DELEGATE_FIELD_INT_ARRAY(id, name) \
+  for (Index i = 0; i < cast->name.size(); i++) {                          \
+    rehash(digest, cast->name[i]); \
   }
-
-#define DELEGATE_FIELD_INT_ARRAY(id, name) HASH_LIST(name)
 
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) noteScopeName(cast->name);
 
