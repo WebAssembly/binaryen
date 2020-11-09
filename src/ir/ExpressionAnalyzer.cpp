@@ -225,7 +225,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   for (Index i = 0; i < castLeft->name.size(); i++) {                          \
     if (!compareNames(castLeft->name[i], castRight->name[i])) {                \
       return false;                                                            \
-    } \
+    }                                                                          \
   }
 
 #include "wasm-delegations-fields.h"
@@ -315,9 +315,9 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 #define DELEGATE_FIELD_TYPE(id, name) visitType(cast->name);
 #define DELEGATE_FIELD_ADDRESS(id, name) visitAddress(cast->name);
 
-#define DELEGATE_FIELD_INT_ARRAY(id, name) \
-  for (Index i = 0; i < cast->name.size(); i++) {                          \
-    rehash(digest, cast->name[i]); \
+#define DELEGATE_FIELD_INT_ARRAY(id, name)                                     \
+  for (Index i = 0; i < cast->name.size(); i++) {                              \
+    rehash(digest, cast->name[i]);                                             \
   }
 
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) noteScopeName(cast->name);
