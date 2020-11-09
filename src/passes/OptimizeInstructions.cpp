@@ -406,45 +406,36 @@ struct OptimizeInstructions
       {
         Binary* bin;
         Expression *x, *y;
+
         // fneg(x) * fneg(y)   ==>   x * y
-        // fneg(fneg(x) * y)   ==>   x * y
-        // fneg(x * fneg(y))   ==>   x * y
         if (matches(
               curr,
-              binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y)))) ||
-            matches(
-              curr,
-              unary(
-                Neg,
-                binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y))))) ||
-            matches(
-              curr,
-              unary(
-                Neg,
-                binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y)))))) {
+              binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
           bin->left = x;
           bin->right = y;
           return bin;
         }
         // fneg(x) / fneg(y)   ==>   x / y
-        // fneg(fneg(x) / y)   ==>   x / y
-        // fneg(x / fneg(y))   ==>   x / y
         if (matches(
               curr,
-              binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y)))) ||
-            matches(
-              curr,
-              unary(Neg,
-                    binary(
-                      &bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) ||
-            matches(
-              curr,
-              unary(Neg,
-                    binary(
-                      &bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y)))))) {
+              binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
           bin->left = x;
           bin->right = y;
           return bin;
+        }
+        // fneg(x) * y   ==>   fneg(x * y)
+        // x * fneg(y)   ==>   fneg(x * y)
+        // fneg(x) / y   ==>   fneg(x / y)
+        // x / fneg(y)   ==>   fneg(x / y)
+        if ((matches(curr, binary(&bin, Mul, unary(Neg, any(&x)), any(&y))) ||
+             matches(curr, binary(&bin, Mul, any(&x), unary(Neg, any(&y)))) ||
+             matches(curr, binary(&bin, DivS, unary(Neg, any(&x)), any(&y))) ||
+             matches(curr, binary(&bin, DivS, any(&x), unary(Neg, any(&y))))) &&
+            !x->is<Const>() && !y->is<Const>()) {
+          bin->left = x;
+          bin->right = y;
+          return Builder(*getModule())
+            .makeUnary(Abstract::getUnary(bin->type, Neg), bin);
         }
         // x + fneg(y)   ==>   x - y
         if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
