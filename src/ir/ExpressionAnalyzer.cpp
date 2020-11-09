@@ -298,12 +298,9 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
   WASM_UNUSED(cast);
 
 // Handle each type of field, comparing it appropriately.
-#define DELEGATE_FIELD_CHILD(id, name) stack.push_back(cast->name);
+#define DELEGATE_GET_FIELD(id, name) cast->name
 
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
-  for (auto* child : cast->name) {                                             \
-    stack.push_back(child);                                                    \
-  }
+#define DELEGATE_FIELD_CHILD(id, name) stack.push_back(cast->name);
 
 #define HASH_FIELD(name) rehash(digest, cast->name);
 
@@ -314,11 +311,6 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 #define DELEGATE_FIELD_NAME(id, name) visitNonScopeName(cast->name)
 #define DELEGATE_FIELD_TYPE(id, name) visitType(cast->name);
 #define DELEGATE_FIELD_ADDRESS(id, name) visitAddress(cast->name);
-
-#define DELEGATE_FIELD_INT_ARRAY(id, name)                                     \
-  for (Index i = 0; i < cast->name.size(); i++) {                              \
-    rehash(digest, cast->name[i]);                                             \
-  }
 
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) noteScopeName(cast->name);
 
