@@ -5,10 +5,10 @@
 
 using namespace wasm;
 
-#define assertEqual(left, right) \
+#define assertEqual(left, right)                                               \
   assert(ExpressionAnalyzer::hash(&left) == ExpressionAnalyzer::hash(&right));
 
-#define assertNotEqual(left, right) \
+#define assertNotEqual(left, right)                                            \
   assert(ExpressionAnalyzer::hash(&left) != ExpressionAnalyzer::hash(&right));
 
 int main() {

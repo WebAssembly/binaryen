@@ -58,10 +58,10 @@
 // them.
 #ifndef DELEGATE_FIELD_CHILD_VECTOR
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name) \
-for (Index i = 0; i < DELEGATE_GET_FIELD(name).size(); i++) { \
-  DELEGATE_FIELD_CHILD(id, DELEGATE_GET_FIELD(name)[i]); \
-}
+#define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
+  for (Index i = 0; i < DELEGATE_GET_FIELD(name).size(); i++) {                \
+    DELEGATE_FIELD_CHILD(id, DELEGATE_GET_FIELD(name)[i]);                     \
+  }
 #else
 #error please define DELEGATE_FIELD_CHILD_VECTOR(id, name)
 #endif
@@ -77,10 +77,10 @@ for (Index i = 0; i < DELEGATE_GET_FIELD(name).size(); i++) { \
 // DELEGATE_FIELD_INT is called on them.
 #ifndef DELEGATE_FIELD_INT_ARRAY
 #ifdef DELEGATE_GET_FIELD
-#define DELEGATE_FIELD_INT_ARRAY(id, name) \
-for (Index i = 0; i < DELEGATE_GET_FIELD(name).size(); i++) { \
-  DELEGATE_FIELD_INT(id, DELEGATE_GET_FIELD(name)[i]); \
-}
+#define DELEGATE_FIELD_INT_ARRAY(id, name)                                     \
+  for (Index i = 0; i < DELEGATE_GET_FIELD(name).size(); i++) {                \
+    DELEGATE_FIELD_INT(id, DELEGATE_GET_FIELD(name)[i]);                       \
+  }
 #else
 #error please define DELEGATE_FIELD_INT_ARRAY(id, name)
 #endif

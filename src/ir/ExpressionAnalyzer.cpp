@@ -162,30 +162,30 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 
 // Create cast versions of it for later operations.
 #define DELEGATE_START(id)                                                     \
-  auto* castLeft = left->cast<id>();                                   \
-  WASM_UNUSED(castLeft);                                                   \
-  auto* castRight = right->cast<id>();                                           \
+  auto* castLeft = left->cast<id>();                                           \
+  WASM_UNUSED(castLeft);                                                       \
+  auto* castRight = right->cast<id>();                                         \
   WASM_UNUSED(castRight);
 
 // Handle each type of field, comparing it appropriately.
 #define DELEGATE_FIELD_CHILD(id, name)                                         \
-  leftStack.push_back(castLeft->name); \
+  leftStack.push_back(castLeft->name);                                         \
   rightStack.push_back(castRight->name);
 
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
-  if (castLeft->name.size() != castRight->name.size()) { \
-    return false; \
-  } \
-  for (auto* child : castLeft->name) { \
-    leftStack.push_back(child); \
-  } \
-  for (auto* child : castRight->name) { \
-    rightStack.push_back(child); \
-  } 
+  if (castLeft->name.size() != castRight->name.size()) {                       \
+    return false;                                                              \
+  }                                                                            \
+  for (auto* child : castLeft->name) {                                         \
+    leftStack.push_back(child);                                                \
+  }                                                                            \
+  for (auto* child : castRight->name) {                                        \
+    rightStack.push_back(child);                                               \
+  }
 
-#define COMPARE_FIELD(name) \
-  if (castLeft->name != castRight->name) { \
-    return false; \
+#define COMPARE_FIELD(name)                                                    \
+  if (castLeft->name != castRight->name) {                                     \
+    return false;                                                              \
   }
 
 #define DELEGATE_FIELD_INT(id, name) COMPARE_FIELD(name)
@@ -195,37 +195,37 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 #define DELEGATE_FIELD_TYPE(id, name) COMPARE_FIELD(name)
 #define DELEGATE_FIELD_ADDRESS(id, name) COMPARE_FIELD(name)
 
-#define COMPARE_LIST(name)                                                  \
-  if (castLeft->name.size() != castRight->name.size()) { \
-    return false; \
-  } \
-  for (Index i = 0; i < castLeft->name.size(); i++) {                      \
-    if (castLeft->name[i] != castRight->name[i]) { \
-      return false; \
-    }                                 \
+#define COMPARE_LIST(name)                                                     \
+  if (castLeft->name.size() != castRight->name.size()) {                       \
+    return false;                                                              \
+  }                                                                            \
+  for (Index i = 0; i < castLeft->name.size(); i++) {                          \
+    if (castLeft->name[i] != castRight->name[i]) {                             \
+      return false;                                                            \
+    }                                                                          \
   }
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) COMPARE_LIST(name)
 
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) \
-  if (castLeft->name.is() != castRight->name.is()) { \
-    return false; \
-  } \
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)                                \
+  if (castLeft->name.is() != castRight->name.is()) {                           \
+    return false;                                                              \
+  }                                                                            \
   rightNames[castLeft->name] = castRight->name;
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) \
-if (!compareNames(castLeft->name, castRight->name)) { \
-  return false; \
-}
-
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name) \
-if (castLeft->name.size() != castRight->name.size()) { \
-  return false; \
-} \
-for (Index i = 0; i < castLeft->name.size(); i++) { \
-  if (!compareNames(castLeft->name[i], castRight->name[i])) { \
-    return false; \
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
+  if (!compareNames(castLeft->name, castRight->name)) {                        \
+    return false;                                                              \
   }
+
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                         \
+  if (castLeft->name.size() != castRight->name.size()) {                       \
+    return false;                                                              \
+  }                                                                            \
+  for (Index i = 0; i < castLeft->name.size(); i++) {                          \
+    if (!compareNames(castLeft->name[i], castRight->name[i])) {                \
+      return false;                                                            \
+    }
 
 #include "wasm-delegations-fields.h"
 
@@ -293,58 +293,50 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 
 // Create cast versions of it for later operations.
 #define DELEGATE_START(id)                                                     \
-  auto* cast = curr->cast<id>();                                   \
-  WASM_UNUSED(cast);                                                   
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
 
 // Handle each type of field, comparing it appropriately.
-#define DELEGATE_FIELD_CHILD(id, name) \
-  stack.push_back(cast->name);
+#define DELEGATE_FIELD_CHILD(id, name) stack.push_back(cast->name);
 
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
-for (auto* child : cast->name) { \
-  stack.push_back(child); \
-}
+  for (auto* child : cast->name) {                                             \
+    stack.push_back(child);                                                    \
+  }
 
-#define HASH_FIELD(name) \
-rehash(digest, cast->name);
+#define HASH_FIELD(name) rehash(digest, cast->name);
 
 #define DELEGATE_FIELD_INT(id, name) HASH_FIELD(name)
 #define DELEGATE_FIELD_LITERAL(id, name) HASH_FIELD(name)
 #define DELEGATE_FIELD_NAME(id, name) HASH_FIELD(name)
-#define DELEGATE_FIELD_TYPE(id, name) \
-  visitType(cast->name);
+#define DELEGATE_FIELD_TYPE(id, name) visitType(cast->name);
 
-#define DELEGATE_FIELD_ADDRESS(id, name) \
-  visitAddress(cast->name);
+#define DELEGATE_FIELD_ADDRESS(id, name) visitAddress(cast->name);
 
-#define DELEGATE_FIELD_SIGNATURE(id, name) \
-  visitNonScopeName(cast->name);
+#define DELEGATE_FIELD_SIGNATURE(id, name) visitNonScopeName(cast->name);
 
-#define HASH_LIST(name)                                                  \
-  if (castLeft->name.size() != castRight->name.size()) { \
-    return false; \
-  } \
-  for (Index i = 0; i < castLeft->name.size(); i++) {                      \
-    if (castLeft->name[i] != castRight->name[i]) { \
-      return false; \
-    }                                 \
+#define HASH_LIST(name)                                                        \
+  if (castLeft->name.size() != castRight->name.size()) {                       \
+    return false;                                                              \
+  }                                                                            \
+  for (Index i = 0; i < castLeft->name.size(); i++) {                          \
+    if (castLeft->name[i] != castRight->name[i]) {                             \
+      return false;                                                            \
+    }                                                                          \
   }
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) HASH_LIST(name)
 
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) \
-  noteScopeName(cast->name);
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) noteScopeName(cast->name);
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) \
-  visitScopeName(cast->name);
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) visitScopeName(cast->name);
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name) \
-for (Index i = 0; i < cast->name.size(); i++) { \
-  visitScopeName(cast->name[i]); \
-}
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                         \
+  for (Index i = 0; i < cast->name.size(); i++) {                              \
+    visitScopeName(cast->name[i]);                                             \
+  }
 
 #include "wasm-delegations-fields.h"
-
     }
 
     void noteScopeName(Name curr) {
