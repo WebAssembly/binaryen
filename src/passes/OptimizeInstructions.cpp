@@ -427,17 +427,42 @@ struct OptimizeInstructions
           return bin;
         }
         // fneg(x) * fneg(y)   ==>   x * y
+        // fneg(fneg(x) * y)   ==>   x * y
+        // fneg(x * fneg(y))   ==>   x * y
         if (matches(
               curr,
-              binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
+              binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y)))) ||
+            matches(
+              curr,
+              unary(
+                Neg,
+                binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y))))) ||
+            matches(
+              curr,
+              unary(
+                Neg,
+                binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y)))))) {
           bin->left = x;
           bin->right = y;
           return bin;
         }
+
         // fneg(x) / fneg(y)   ==>   x / y
+        // fneg(fneg(x) / y)   ==>   x / y
+        // fneg(x / fneg(y))   ==>   x / y
         if (matches(
               curr,
-              binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
+              binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y)))) ||
+            matches(
+              curr,
+              unary(
+                Neg,
+                binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) ||
+            matches(
+              curr,
+              unary(
+                Neg,
+                binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y)))))) {
           bin->left = x;
           bin->right = y;
           return bin;
