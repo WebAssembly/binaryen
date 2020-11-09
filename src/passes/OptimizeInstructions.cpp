@@ -434,14 +434,14 @@ struct OptimizeInstructions
               binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y)))) ||
             matches(
               curr,
-              unary(
-                Neg,
-                binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) ||
+              unary(Neg,
+                    binary(
+                      &bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) ||
             matches(
               curr,
-              unary(
-                Neg,
-                binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y)))))) {
+              unary(Neg,
+                    binary(
+                      &bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y)))))) {
           bin->left = x;
           bin->right = y;
           return bin;
