@@ -5617,9 +5617,41 @@
    )
   )
   (drop
+   (f64.neg
+    (f64.mul
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.neg
+    (f64.mul
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
    (f64.div
     (local.get $x0)
     (local.get $x1)
+   )
+  )
+  (drop
+   (f64.neg
+    (f64.div
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.neg
+    (f64.div
+     (local.get $x0)
+     (local.get $x1)
+    )
    )
   )
   (drop
