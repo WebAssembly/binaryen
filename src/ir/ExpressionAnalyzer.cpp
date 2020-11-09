@@ -316,11 +316,6 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) visitScopeName(cast->name);
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                         \
-  for (Index i = 0; i < cast->name.size(); i++) {                              \
-    visitScopeName(cast->name[i]);                                             \
-  }
-
 #include "wasm-delegations-fields.h"
     }
 

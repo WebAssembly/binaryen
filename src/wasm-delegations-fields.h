@@ -107,9 +107,17 @@
 #endif
 
 // Emits code to handle a variable-sized vector of scope names (like a switch's
-// targets).
+// targets). If this is not defined, and DELEGATE_FIELD is, then
+// DELEGATE_FIELD_SCOPE_NAME_USE is called on them.
 #ifndef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR
+#ifdef DELEGATE_GET_FIELD
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                                     \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {                \
+    DELEGATE_FIELD_SCOPE_NAME_USE(id, name[i]);                       \
+  }
+#else
 #error please define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+#endif
 #endif
 
 // Emits code to handle a Signature.
