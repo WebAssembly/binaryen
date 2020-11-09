@@ -6116,19 +6116,19 @@
       (f64.neg (local.get $x1))
     ))
     ;; -(x / (-y))   ==>   x / y
-    ;; (drop (f64.neg
-    ;;   (f64.div
-    ;;     (local.get $x0)
-    ;;     (f64.neg (local.get $x1))
-    ;;   )
-    ;; ))
-    ;; ;; -((-x) / y)   ==>   x / y
-    ;; (drop (f64.neg
-    ;;   (f64.div
-    ;;     (f64.neg (local.get $x0))
-    ;;     (local.get $x1)
-    ;;   )
-    ;; ))
+    (drop (f64.neg
+      (f64.div
+        (local.get $x0)
+        (f64.neg (local.get $x1))
+      )
+    ))
+    ;; -((-x) / y)   ==>   x / y
+    (drop (f64.neg
+      (f64.div
+        (f64.neg (local.get $x0))
+        (local.get $x1)
+      )
+    ))
 
     ;; (-x) - y   ==>  skip
     (drop (f64.sub
