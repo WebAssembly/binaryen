@@ -5667,6 +5667,24 @@
    )
   )
   (drop
+   (f64.add
+    (local.get $x1)
+    (f64.div
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.add
+    (local.get $x1)
+    (f64.div
+     (local.get $x0)
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
    (f64.div
     (local.get $x0)
     (f64.const 3)

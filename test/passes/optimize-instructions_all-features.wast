@@ -6129,6 +6129,22 @@
         (local.get $x1)
       )
     ))
+    ;; y - ((-x) / y)   ==>   y + x / y
+    (drop (f64.sub
+      (local.get $x1)
+      (f64.div
+        (f64.neg (local.get $x0))
+        (local.get $x1)
+      )
+    ))
+    ;; y - (x / (-y))   ==>   y + x / y
+    (drop (f64.sub
+      (local.get $x1)
+      (f64.div
+        (local.get $x0)
+        (f64.neg (local.get $x1))
+      )
+    ))
     ;; (-x / -3)   ==>   x / 3
     (drop (f64.div
       (f64.neg (local.get $x0))
