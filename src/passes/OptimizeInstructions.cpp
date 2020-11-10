@@ -444,8 +444,7 @@ struct OptimizeInstructions
             !x->is<Const>() && !y->is<Const>()) {
           bin->left = x;
           bin->right = y;
-          return Builder(*getModule())
-            .makeUnary(Abstract::getUnary(bin->type, Neg), bin);
+          return builder.makeUnary(Abstract::getUnary(bin->type, Neg), bin);
         }
         // x + fneg(y)   ==>   x - y
         if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
