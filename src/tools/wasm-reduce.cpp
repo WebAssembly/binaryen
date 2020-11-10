@@ -1039,7 +1039,12 @@ struct Reducer
         builder->makeConstantExpression(Literal::makeZeros(curr->type));
       return tryToReplaceCurrent(n);
     }
-    Const* c = builder->makeConst(int32_t(0));
+    if (!curr->type.isNumber()) {
+      return false;
+    }
+    // It's a number: try to replace it with a 0 or a 1 (trying more values
+    // could make sense too, but these handle most cases).
+    auto* c = builder->makeConst(Literal::makeZero(curr->type));
     if (tryToReplaceCurrent(c)) {
       return true;
     }

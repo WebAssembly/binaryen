@@ -25,7 +25,7 @@
 //   graph (CFG) as input.
 //
 // The final part of the API contains miscellaneous utilities like
-//   debugging/tracing for the API itself.
+//   debugging for the API itself.
 //
 // ---------------
 //

@@ -25,8 +25,6 @@
 #include <ostream>
 #include <type_traits>
 
-#include "asm_v_wasm.h"
-#include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "ir/module-utils.h"
 #include "parsing.h"

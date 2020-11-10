@@ -20,8 +20,6 @@
 #include <cmath>
 #include <limits>
 
-#include "asm_v_wasm.h"
-#include "asmjs/shared-constants.h"
 #include "ir/branch-utils.h"
 #include "shared-constants.h"
 #include "wasm-binary.h"

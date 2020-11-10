@@ -2,83 +2,19 @@
  (type $i32_f32_=>_none (func (param i32 f32)))
  (type $none_=>_none (func))
  (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
- (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
- (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
  (memory $0 256 256)
  (table $0 7 7 funcref)
- (elem (i32.const 0) $pow2 $pow.2 $exc $other_safe $other_unsafe $deep_safe $deep_unsafe)
- (func $pow2
-  (local $x f64)
-  (local $y f64)
-  (local $2 f64)
-  (local $3 f64)
-  (drop
-   (f64.mul
-    (local.tee $2
-     (f64.const 1)
-    )
-    (local.get $2)
-   )
-  )
-  (drop
-   (call $Math_pow
-    (f64.const 1)
-    (f64.const 3)
-   )
-  )
-  (drop
-   (call $Math_pow
-    (f64.const 2)
-    (f64.const 1)
-   )
-  )
-  (local.set $x
-   (f64.const 5)
-  )
-  (drop
-   (f64.mul
-    (local.get $x)
-    (local.get $x)
-   )
-  )
-  (drop
-   (f64.mul
-    (local.tee $y
-     (f64.const 7)
-    )
-    (local.get $y)
-   )
-  )
-  (drop
-   (f64.mul
-    (local.tee $3
-     (f64.const 8)
-    )
-    (local.get $3)
-   )
-  )
- )
- (func $pow.2
-  (drop
-   (f64.sqrt
-    (f64.const 1)
-   )
-  )
-  (drop
-   (call $Math_pow
-    (f64.const 1)
-    (f64.const 0.51)
-   )
-  )
+ (elem (i32.const 0) $f1 $exc $other_safe $other_unsafe $deep_safe $deep_unsafe)
+ (func $f1
+  (nop)
  )
  (func $exc
   (call $other_safe
    (i32.const 42)
    (f32.const 3.141590118408203)
   )
-  (call $invoke_vif
-   (i32.const 4)
+  (call $other_unsafe
    (i32.const 55)
    (f32.const 2.1828181743621826)
   )
@@ -86,8 +22,7 @@
    (i32.const 100)
    (f32.const 1.1109999418258667)
   )
-  (call $invoke_vif
-   (i32.const 6)
+  (call $deep_unsafe
    (i32.const 999)
    (f32.const 1.4140000343322754)
   )
@@ -104,12 +39,7 @@
   (nop)
  )
  (func $other_unsafe (param $0 i32) (param $1 f32)
-  (drop
-   (call $Math_pow
-    (f64.const 1)
-    (f64.const 3)
-   )
-  )
+  (nop)
  )
  (func $deep_safe (param $0 i32) (param $1 f32)
   (call $other_safe
@@ -134,9 +64,7 @@
  (type $none_=>_none (func))
  (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
  (type $i32_f32_=>_none (func (param i32 f32)))
- (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
  (import "env" "glob" (global $glob i32))
- (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
  (memory $0 256 256)
  (table $0 7 7 funcref)
@@ -156,9 +84,7 @@
  (type $none_=>_none (func))
  (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
  (type $i32_f32_=>_none (func (param i32 f32)))
- (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
  (import "env" "glob" (global $glob i32))
- (import "global.Math" "pow" (func $Math_pow (param f64 f64) (result f64)))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
  (memory $0 256 256)
  (table $0 7 7 funcref)

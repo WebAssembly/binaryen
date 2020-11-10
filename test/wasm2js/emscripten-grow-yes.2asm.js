@@ -1,28 +1,28 @@
 function instantiate(asmLibraryArg, wasmMemory) {
-function asmFunc(global, env) {
+function asmFunc(env) {
  var memory = env.memory;
  var buffer = memory.buffer;
  memory.grow = __wasm_memory_grow;
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
+ var HEAP8 = new Int8Array(buffer);
+ var HEAP16 = new Int16Array(buffer);
+ var HEAP32 = new Int32Array(buffer);
+ var HEAPU8 = new Uint8Array(buffer);
+ var HEAPU16 = new Uint16Array(buffer);
+ var HEAPU32 = new Uint32Array(buffer);
+ var HEAPF32 = new Float32Array(buffer);
+ var HEAPF64 = new Float64Array(buffer);
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
+ var nan = NaN;
+ var infinity = Infinity;
  // EMSCRIPTEN_START_FUNCS
 ;
  // EMSCRIPTEN_END_FUNCS
@@ -37,17 +37,17 @@ function asmFunc(global, env) {
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
-   var newHEAP8 = new global.Int8Array(newBuffer);
+   var newHEAP8 = new Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
    HEAP8 = newHEAP8;
-   HEAP8 = new global.Int8Array(newBuffer);
-   HEAP16 = new global.Int16Array(newBuffer);
-   HEAP32 = new global.Int32Array(newBuffer);
-   HEAPU8 = new global.Uint8Array(newBuffer);
-   HEAPU16 = new global.Uint16Array(newBuffer);
-   HEAPU32 = new global.Uint32Array(newBuffer);
-   HEAPF32 = new global.Float32Array(newBuffer);
-   HEAPF64 = new global.Float64Array(newBuffer);
+   HEAP8 = new Int8Array(newBuffer);
+   HEAP16 = new Int16Array(newBuffer);
+   HEAP32 = new Int32Array(newBuffer);
+   HEAPU8 = new Uint8Array(newBuffer);
+   HEAPU16 = new Uint16Array(newBuffer);
+   HEAPU32 = new Uint32Array(newBuffer);
+   HEAPF32 = new Float32Array(newBuffer);
+   HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
    memory.buffer = newBuffer;
   }
@@ -87,24 +87,9 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
       if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
       if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
-    return uint8Array; 
+    return uint8Array;
   }
   base64DecodeToExistingUint8Array(bufferView, 1600, "YWJj");
-return asmFunc({
-    'Int8Array': Int8Array,
-    'Int16Array': Int16Array,
-    'Int32Array': Int32Array,
-    'Uint8Array': Uint8Array,
-    'Uint16Array': Uint16Array,
-    'Uint32Array': Uint32Array,
-    'Float32Array': Float32Array,
-    'Float64Array': Float64Array,
-    'NaN': NaN,
-    'Infinity': Infinity,
-    'Math': Math
-  },
-  asmLibraryArg,
-  wasmMemory.buffer
-)
+return asmFunc(asmLibraryArg, wasmMemory.buffer)
 
 }

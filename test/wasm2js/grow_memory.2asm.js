@@ -1,25 +1,25 @@
 
-function asmFunc(global, env, buffer) {
- var HEAP8 = new global.Int8Array(buffer);
- var HEAP16 = new global.Int16Array(buffer);
- var HEAP32 = new global.Int32Array(buffer);
- var HEAPU8 = new global.Uint8Array(buffer);
- var HEAPU16 = new global.Uint16Array(buffer);
- var HEAPU32 = new global.Uint32Array(buffer);
- var HEAPF32 = new global.Float32Array(buffer);
- var HEAPF64 = new global.Float64Array(buffer);
- var Math_imul = global.Math.imul;
- var Math_fround = global.Math.fround;
- var Math_abs = global.Math.abs;
- var Math_clz32 = global.Math.clz32;
- var Math_min = global.Math.min;
- var Math_max = global.Math.max;
- var Math_floor = global.Math.floor;
- var Math_ceil = global.Math.ceil;
- var Math_sqrt = global.Math.sqrt;
+function asmFunc(env, buffer) {
+ var HEAP8 = new Int8Array(buffer);
+ var HEAP16 = new Int16Array(buffer);
+ var HEAP32 = new Int32Array(buffer);
+ var HEAPU8 = new Uint8Array(buffer);
+ var HEAPU16 = new Uint16Array(buffer);
+ var HEAPU32 = new Uint32Array(buffer);
+ var HEAPF32 = new Float32Array(buffer);
+ var HEAPF64 = new Float64Array(buffer);
+ var Math_imul = Math.imul;
+ var Math_fround = Math.fround;
+ var Math_abs = Math.abs;
+ var Math_clz32 = Math.clz32;
+ var Math_min = Math.min;
+ var Math_max = Math.max;
+ var Math_floor = Math.floor;
+ var Math_ceil = Math.ceil;
+ var Math_sqrt = Math.sqrt;
  var abort = env.abort;
- var nan = global.NaN;
- var infinity = global.Infinity;
+ var nan = NaN;
+ var infinity = Infinity;
  function $0(var$0) {
   var$0 = var$0 | 0;
   return __wasm_memory_grow(var$0 | 0) | 0;
@@ -39,17 +39,17 @@ function asmFunc(global, env, buffer) {
   var newPages = oldPages + pagesToAdd | 0;
   if ((oldPages < newPages) && (newPages < 65536)) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
-   var newHEAP8 = new global.Int8Array(newBuffer);
+   var newHEAP8 = new Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
    HEAP8 = newHEAP8;
-   HEAP8 = new global.Int8Array(newBuffer);
-   HEAP16 = new global.Int16Array(newBuffer);
-   HEAP32 = new global.Int32Array(newBuffer);
-   HEAPU8 = new global.Uint8Array(newBuffer);
-   HEAPU16 = new global.Uint16Array(newBuffer);
-   HEAPU32 = new global.Uint32Array(newBuffer);
-   HEAPF32 = new global.Float32Array(newBuffer);
-   HEAPF64 = new global.Float64Array(newBuffer);
+   HEAP8 = new Int8Array(newBuffer);
+   HEAP16 = new Int16Array(newBuffer);
+   HEAP32 = new Int32Array(newBuffer);
+   HEAPU8 = new Uint8Array(newBuffer);
+   HEAPU16 = new Uint16Array(newBuffer);
+   HEAPU32 = new Uint32Array(newBuffer);
+   HEAPF32 = new Float32Array(newBuffer);
+   HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
   }
   return oldPages;
@@ -74,20 +74,7 @@ function asmFunc(global, env, buffer) {
 
 var memasmFunc = new ArrayBuffer(65536);
 var bufferView = new Uint8Array(memasmFunc);
-var retasmFunc = asmFunc({
-    Math,
-    Int8Array,
-    Uint8Array,
-    Int16Array,
-    Uint16Array,
-    Int32Array,
-    Uint32Array,
-    Float32Array,
-    Float64Array,
-    NaN,
-    Infinity
-  }, {
-    abort: function() { throw new Error('abort'); }
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
   },
   memasmFunc
 );

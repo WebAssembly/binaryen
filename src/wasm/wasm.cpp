@@ -59,6 +59,7 @@ Name SET_TEMP_RET0("setTempRet0");
 Name NEW_SIZE("newSize");
 Name MODULE("module");
 Name START("start");
+Name GLOBAL("global");
 Name FUNC("func");
 Name PARAM("param");
 Name RESULT("result");
