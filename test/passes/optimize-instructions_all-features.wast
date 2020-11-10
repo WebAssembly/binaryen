@@ -6176,6 +6176,14 @@
       (f64.const -3)
     ))
 
+    ;; -(x + (-y))  ==>  -(x - y)
+    (drop (f64.neg
+      (f64.add
+        (local.get $x0)
+        (f64.neg (local.get $x1))
+      )
+    ))
+
     ;; (-x) - y   ==>   skip
     (drop (f64.sub
       (f64.neg (local.get $x0))
