@@ -218,7 +218,6 @@ struct OptimizeInstructions
     }
     // main walk
     super::doWalkFunction(func);
-    // do final optimizations if finalize is set
     {
       FinalOptimizer optimizer(getPassOptions());
       optimizer.setModule(getModule());
