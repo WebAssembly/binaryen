@@ -261,9 +261,9 @@
       (i32.and
        (i32.shr_s
         (i32.shl
-         (i32.add
+         (i32.sub
           (local.get $1)
-          (i32.const -1)
+          (i32.const 1)
          )
          (i32.const 24)
         )
@@ -300,9 +300,9 @@
       (i32.and
        (i32.shr_s
         (i32.shl
-         (i32.add
+         (i32.sub
           (local.get $0)
-          (i32.const -1)
+          (i32.const 1)
          )
          (i32.const 24)
         )

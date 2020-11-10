@@ -2588,7 +2588,7 @@ void Wasm2JSGlue::emitMemory(
     out << R"(
     return uint8Array;)";
   }
-  out << R"( 
+  out << R"(
   }
   )";
 
