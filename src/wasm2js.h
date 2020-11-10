@@ -519,6 +519,7 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
   addMath(MATH_MAX, MAX);
   addMath(MATH_FLOOR, FLOOR);
   addMath(MATH_CEIL, CEIL);
+  addMath(MATH_TRUNC, TRUNC);
   addMath(MATH_SQRT, SQRT);
   // abort function
   Ref abortVar = ValueBuilder::makeVar();
@@ -1613,6 +1614,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ret = ValueBuilder::makeCall(
                 MATH_FLOOR, visit(curr->value, EXPRESSION_RESULT));
               break;
+            case TruncFloat32:
+            case TruncFloat64:
+              ret = ValueBuilder::makeCall(
+                MATH_TRUNC, visit(curr->value, EXPRESSION_RESULT));
+              break;
             case SqrtFloat32:
             case SqrtFloat64:
               ret = ValueBuilder::makeCall(
@@ -1666,8 +1672,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             // TODO: more complex unary conversions
             case NearestFloat32:
             case NearestFloat64:
-            case TruncFloat32:
-            case TruncFloat64:
               WASM_UNREACHABLE(
                 "operation should have been removed in previous passes");
 
