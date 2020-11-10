@@ -6154,10 +6154,22 @@
       )
     ))
 
-    ;; (-x) - y   ==>  skip
+    ;; x - (-3.0)   ==>   x + 3.0
+    (drop (f64.sub
+      (local.get $x0)
+      (f64.const -3)
+    ))
+
+    ;; (-x) - y   ==>   skip
     (drop (f64.sub
       (f64.neg (local.get $x0))
       (local.get $x1)
+    ))
+
+    ;; x + (-3.0)   ==>   skip
+    (drop (f64.add
+      (local.get $x0)
+      (f64.const -3)
     ))
   )
 )
