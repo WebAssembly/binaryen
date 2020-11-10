@@ -250,7 +250,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
 
 // hash an expression, ignoring superficial details like specific internal names
 size_t ExpressionAnalyzer::hash(Expression* curr) {
-  struct Hasher : Visitor<Hasher> {
+  struct Hasher {
     size_t digest = wasm::hash(0);
 
     Index internalCounter = 0;
@@ -259,9 +259,6 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
     ExpressionStack stack;
 
     Hasher(Expression* curr) {
-      static_assert(sizeof(Index) == sizeof(uint32_t),
-                    "wasm64 will need changes here");
-
       stack.push_back(curr);
 
       while (stack.size() > 0) {
