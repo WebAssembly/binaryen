@@ -1053,8 +1053,8 @@ private:
           // }
         }
       } else if (binary->op == RemSInt32) {
-        // bool((signed)x % C_pot)  ==>  bool(x & (C_pot - 1))
-        // bool((signed)x % min_s)  ==>  bool(x & max_s)
+        // bool(i32(x) % C_pot)  ==>  bool(x & (C_pot - 1))
+        // bool(i32(x) % min_s)  ==>  bool(x & max_s)
         if (auto* c = binary->right->dynCast<Const>()) {
           if (c->value.isSignedMin() ||
               Bits::isPowerOf2(c->value.abs().geti32())) {
