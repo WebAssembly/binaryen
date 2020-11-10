@@ -431,8 +431,8 @@ struct OptimizeInstructions
             curr->cast<Binary>()->right = y;
             return curr;
           }
-          // i32(x) <<>> (y & 32)   ==>   x
-          // i64(x) <<>> (y & 64)   ==>   x
+          // i32(x) <<>> (y & C)   ==>   x,  where (C & 31) == 0
+          // i64(x) <<>> (y & C)   ==>   x,  where (C & 63) == 0
           if (((c->type == Type::i32 && (c->value.geti32() & 31) == 0) ||
                (c->type == Type::i64 && (c->value.geti64() & 63LL) == 0LL)) &&
               !effects(y).hasSideEffects()) {
@@ -1051,6 +1051,21 @@ private:
           //   binary->op = XorInt32;
           //   return binary;
           // }
+        }
+      } else if (binary->op == RemSInt32) {
+        // bool(i32(x) % C_pot)  ==>  bool(x & (C_pot - 1))
+        // bool(i32(x) % min_s)  ==>  bool(x & max_s)
+        if (auto* c = binary->right->dynCast<Const>()) {
+          if (c->value.isSignedMin() ||
+              Bits::isPowerOf2(c->value.abs().geti32())) {
+            binary->op = AndInt32;
+            if (c->value.isSignedMin()) {
+              c->value = Literal::makeSignedMax(Type::i32);
+            } else {
+              c->value = c->value.abs().sub(Literal::makeOne(Type::i32));
+            }
+            return binary;
+          }
         }
       }
       if (auto* ext = Properties::getSignExtValue(binary)) {
