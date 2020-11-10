@@ -294,23 +294,6 @@ struct OptimizeInstructions
           // swap C and x  ==>  (x + y) + C
           std::swap(inner->left, outher->right);
         }
-        // x + (y - C)  ==>  (x + y) - C
-        if (matches(
-              curr,
-              binary(
-                &outher, Add, any(&x), binary(&inner, Sub, any(&y), ival()))) &&
-            !(x->is<Const>() || y->is<Const>())) {
-          // swap lhs and rhs  ==>  (y - C) + x
-          std::swap(outher->left, outher->right);
-          // swap y and C  ==>  (C - y) + x
-          std::swap(inner->left, inner->right);
-          // swap C and x  ==>  (x - y) + C
-          std::swap(inner->left, outher->right);
-          // (x - y) + C  ==>  (x + y) + C
-          inner->op = Abstract::getBinary(inner->left->type, Add);
-          // (x - y) + C  ==>  (x + y) - C
-          outher->op = Abstract::getBinary(outher->right->type, Sub);
-        }
         // x - (y + C)  ==>  (x - y) - C
         if (matches(
               curr,
@@ -325,21 +308,6 @@ struct OptimizeInstructions
           std::swap(inner->left, outher->right);
           // (x + y) - C  ==>  (x - y) - C
           inner->op = Abstract::getBinary(inner->left->type, Sub);
-        }
-        // x - (y - C)  ==>  (x - y) + C
-        if (matches(
-              curr,
-              binary(
-                &outher, Sub, any(&x), binary(&inner, Sub, any(&y), ival()))) &&
-            !(x->is<Const>() || y->is<Const>())) {
-          // swap lhs and rhs  ==>  (y - C) - x
-          std::swap(outher->left, outher->right);
-          // swap y and C  ==>  (C - y) - x
-          std::swap(inner->left, inner->right);
-          // swap C and x  ==>  (x - y) - C
-          std::swap(inner->left, outher->right);
-          // (x - y) - C  ==>  (x - y) + C
-          outher->op = Abstract::getBinary(outher->right->type, Add);
         }
         // x + (C - y)  ==>  (x - y) + C
         // where x and y are not consts
@@ -366,28 +334,6 @@ struct OptimizeInstructions
           std::swap(inner->left, outher->right);
           // (x - y) - C   ==>   (x + y) - C
           inner->op = Abstract::getBinary(inner->left->type, Add);
-        }
-        // (x - C) + y  ==> (x + y) - C
-        if (matches(
-              curr,
-              binary(
-                &outher, Add, binary(&inner, Sub, any(&x), ival()), any(&y))) &&
-            !(x->is<Const>() || y->is<Const>())) {
-          // swap C and y   ==>   (x - y) + C
-          std::swap(inner->left, outher->right);
-          // (x - y) + C  ==>  (x + y) + C
-          inner->op = Abstract::getBinary(inner->left->type, Add);
-          // (x + y) + C  ==>  (x + y) - C
-          outher->op = Abstract::getBinary(outher->right->type, Sub);
-        }
-        // (x - C) - y  ==>  (x - y) - C
-        if (matches(
-              curr,
-              binary(
-                &outher, Sub, binary(&inner, Add, any(&x), ival()), any(&y))) &&
-            !(x->is<Const>() || y->is<Const>())) {
-          // swap C and y   ==>   (x - y) - C
-          std::swap(inner->left, outher->right);
         }
         // (x + C) - y  ==>  (x - y) + C
         if (matches(

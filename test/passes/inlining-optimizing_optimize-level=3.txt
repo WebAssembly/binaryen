@@ -5366,8 +5366,8 @@
                                         (local.set $19
                                          (i32.add
                                           (i32.add
-                                           (local.get $8)
                                            (local.get $5)
+                                           (local.get $8)
                                           )
                                           (i32.const 1)
                                          )
