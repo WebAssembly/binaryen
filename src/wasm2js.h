@@ -512,10 +512,12 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
     addHeap(HEAPU32, UINT32ARRAY);
     addHeap(HEAPF32, FLOAT32ARRAY);
     addHeap(HEAPF64, FLOAT64ARRAY);
-    ast->push_back(
-      ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
-                               SET,
-                               ValueBuilder::makeName(HEAPU8)));
+    if ((!wasm->memory.segments.empty()) || wasm->features.hasBulkMemory()) {
+      ast->push_back(
+        ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
+                                 SET,
+                                 ValueBuilder::makeName(HEAPU8)));
+    }
   }
   // core asm.js imports
   auto addMath = [&](IString name, IString base) {
