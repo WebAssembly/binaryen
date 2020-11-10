@@ -54,7 +54,8 @@
 #endif
 
 // Emits code to handle a variable-sized vector of child pointers. If this is
-// not defined, and DELEGATE_FIELD is, then DELEGATE_FIELD_CHILD is called on
+// not defined, and DELEGATE_GET_FIELD is, then DELEGATE_FIELD_CHILD is called
+// on
 // them.
 #ifndef DELEGATE_FIELD_CHILD_VECTOR
 #ifdef DELEGATE_GET_FIELD
@@ -73,7 +74,7 @@
 #endif
 
 // Emits code to handle a std::array of fixed size of integer values (like a
-// SIMD mask). If this is not defined, and DELEGATE_FIELD is, then
+// SIMD mask). If this is not defined, and DELEGATE_GET_FIELD is, then
 // DELEGATE_FIELD_INT is called on them.
 #ifndef DELEGATE_FIELD_INT_ARRAY
 #ifdef DELEGATE_GET_FIELD
@@ -107,7 +108,7 @@
 #endif
 
 // Emits code to handle a variable-sized vector of scope names (like a switch's
-// targets). If this is not defined, and DELEGATE_FIELD is, then
+// targets). If this is not defined, and DELEGATE_GET_FIELD is, then
 // DELEGATE_FIELD_SCOPE_NAME_USE is called on them.
 #ifndef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR
 #ifdef DELEGATE_GET_FIELD
