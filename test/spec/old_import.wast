@@ -54,11 +54,11 @@
 ;; Globals
 
 (module
-  (import "spectest" "global" (global i32))
-  (global (import "spectest" "global") i32)
+  (import "spectest" "global_i32" (global i32))
+  (global (import "spectest" "global_i32") i32)
 
-  (import "spectest" "global" (global $x i32))
-  (global $y (import "spectest" "global") i32)
+  (import "spectest" "global_i32" (global $x i32))
+  (global $y (import "spectest" "global_i32") i32)
 
   (func (export "get-0") (result i32) (global.get 0))
   (func (export "get-1") (result i32) (global.get 1))
@@ -86,9 +86,9 @@
   "type mismatch"
 )
 
-(module (import "spectest" "global" (global i64)))
-(module (import "spectest" "global" (global f32)))
-(module (import "spectest" "global" (global f64)))
+(module (import "spectest" "global_i64" (global i64)))
+(module (import "spectest" "global_i64" (global f32)))
+(module (import "spectest" "global_i64" (global f64)))
 
 
 ;; Tables

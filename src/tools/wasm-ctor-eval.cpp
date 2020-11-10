@@ -24,6 +24,7 @@
 
 #include <memory>
 
+#include "asmjs/shared-constants.h"
 #include "ir/global-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
