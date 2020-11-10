@@ -28,7 +28,7 @@ function asmFunc(global, env, buffer) {
  function main() {
   syscall$6(1 | 0, 2 | 0) | 0;
   syscall$54(3 | 0, 4 | 0) | 0;
-  FUNCTION_TABLE[HEAP32[1030 >> 2] | 0 | 0]();
+  FUNCTION_TABLE[HEAP32[(0 + 1030 | 0) >> 2] | 0 | 0]();
   internal(1 | 0) | 0;
   tabled(1 | 0) | 0;
   exported(1 | 0) | 0;
@@ -47,11 +47,11 @@ function asmFunc(global, env, buffer) {
   HEAP8[128 >> 0] | 0;
   HEAPU16[128 >> 1] | 0;
   HEAP16[128 >> 1] | 0;
-  HEAP32[16 >> 2] = 3;
+  HEAP32[16 >> 2] = 1 + 2 | 0;
   HEAPF32[16 >> 2] = Math_fround(Math_fround(3.0) + Math_fround(4.0));
   HEAPF64[16 >> 3] = 5.0 + 6.0;
-  HEAP8[16 >> 0] = 15;
-  HEAP16[16 >> 1] = 19;
+  HEAP8[16 >> 0] = 7 + 8 | 0;
+  HEAP16[16 >> 1] = 9 + 10 | 0;
   if ((HEAP32[100 >> 2] | 0 | 0) == (1 | 0)) {
    bar()
   }
@@ -67,7 +67,7 @@ function asmFunc(global, env, buffer) {
   if ((HEAP16[116 >> 1] | 0 | 0) < (2 | 0)) {
    bar()
   }
-  if ((HEAPU16[120 >> 1] | 0) >>> 0 < 2 >>> 0) {
+  if ((HEAPU16[120 >> 1] | 0 | 0) < (2 | 0)) {
    bar()
   }
   if ((HEAP16[124 >> 1] | 0) >>> 0 < 3 >>> 0) {
@@ -79,7 +79,7 @@ function asmFunc(global, env, buffer) {
   if ((HEAP8[132 >> 0] | 0 | 0) < (2 | 0)) {
    bar()
   }
-  if ((HEAPU8[136 >> 0] | 0) >>> 0 < 2 >>> 0) {
+  if ((HEAPU8[136 >> 0] | 0 | 0) < (2 | 0)) {
    bar()
   }
   if ((HEAP8[140 >> 0] | 0) >>> 0 < 3 >>> 0) {
@@ -154,7 +154,7 @@ function asmFunc(global, env, buffer) {
  
  function sub_zero(x) {
   x = x | 0;
-  return x + 5 | 0 | 0;
+  return x - -5 | 0 | 0;
  }
  
  function select(x) {

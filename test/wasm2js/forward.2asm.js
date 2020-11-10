@@ -15,7 +15,7 @@ function asmFunc(global, env) {
  function even(n) {
   n = n | 0;
   var $10 = 0;
-  if (!n) {
+  if ((n | 0) == (0 | 0)) {
    $10 = 1
   } else {
    $10 = odd(n - 1 | 0 | 0) | 0
@@ -26,7 +26,7 @@ function asmFunc(global, env) {
  function odd(n) {
   n = n | 0;
   var $10 = 0;
-  if (!n) {
+  if ((n | 0) == (0 | 0)) {
    $10 = 0
   } else {
    $10 = even(n - 1 | 0 | 0) | 0

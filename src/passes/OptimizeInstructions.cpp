@@ -141,8 +141,8 @@ struct FinalOptimizer : public PostWalker<FinalOptimizer> {
   FinalOptimizer(const PassOptions& passOptions) : passOptions(passOptions) {}
 
   void visitBinary(Binary* curr) {
-    if ((curr = optimize(curr))) {
-      replaceCurrent(curr);
+    if (auto* replacement = optimize(curr)) {
+      replaceCurrent(replacement);
     }
   }
 
@@ -220,7 +220,6 @@ struct OptimizeInstructions
     super::doWalkFunction(func);
     {
       FinalOptimizer optimizer(getPassOptions());
-      optimizer.setModule(getModule());
       optimizer.walkFunction(func);
     }
   }
@@ -1258,9 +1257,10 @@ private:
         auto type = curr->type;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
-        // Note that we don't need to handle subtraction:
-        // canonicalization avoids a zero on the right anyhow, and a
-        // zero on the left can't be removed (it is how we negate ints).
+        // Canonicalization prefers an add instead of a subtract wherever
+        // possible. That prevents a subtracted constant on the right,
+        // as it would be added. And for a zero on the left, it can't be
+        // removed (it is how we negate ints).
         if (curr->op == Abstract::getBinary(type, Abstract::Add)) {
           if (left && left->value.isZero()) {
             replaceCurrent(curr->right);

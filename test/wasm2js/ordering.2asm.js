@@ -15,21 +15,18 @@ function asmFunc(global, env) {
  var nan = global.NaN;
  var infinity = global.Infinity;
  function main() {
-  var $27 = 0, wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
+  var wasm2js_i32$0 = 0, wasm2js_i32$1 = 0, wasm2js_i32$2 = 0;
   FUNCTION_TABLE[foo(2 | 0) | 0 | 0](1) | 0;
   FUNCTION_TABLE[4 | 0](foo(3 | 0) | 0) | 0;
   (wasm2js_i32$1 = foo(5 | 0) | 0, wasm2js_i32$0 = bar(6 | 0) | 0 | 0), FUNCTION_TABLE[wasm2js_i32$0](wasm2js_i32$1 | 0) | 0;
   FUNCTION_TABLE[8 | 0](7) | 0;
-  baz(9 | 0) | 0;
-  baz(foo(12 | 0) | 0 | 0) | 0;
-  foo(16 | 0) | 0;
-  baz(15 | 0) | 0;
+  baz((11 ? 9 : 10) | 0) | 0;
+  baz((wasm2js_i32$0 = foo(12 | 0) | 0, wasm2js_i32$1 = 13, wasm2js_i32$2 = 14, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0) | 0;
+  baz((wasm2js_i32$0 = 15, wasm2js_i32$1 = foo(16 | 0) | 0, wasm2js_i32$2 = 17, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0) | 0;
   baz((foo(20 | 0) | 0 ? 18 : 19) | 0) | 0;
   baz((wasm2js_i32$0 = foo(21 | 0) | 0, wasm2js_i32$1 = 22, wasm2js_i32$2 = foo(23 | 0) | 0, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0) | 0;
   baz((wasm2js_i32$0 = 24, wasm2js_i32$1 = foo(25 | 0) | 0, wasm2js_i32$2 = foo(26 | 0) | 0, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0) | 0;
-  $27 = foo(27 | 0) | 0;
-  foo(28 | 0) | 0;
-  baz($27 | 0) | 0;
+  baz((wasm2js_i32$0 = foo(27 | 0) | 0, wasm2js_i32$1 = foo(28 | 0) | 0, wasm2js_i32$2 = 29, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0) | 0;
   baz((wasm2js_i32$0 = foo(30 | 0) | 0, wasm2js_i32$1 = foo(31 | 0) | 0, wasm2js_i32$2 = foo(32 | 0) | 0, wasm2js_i32$2 ? wasm2js_i32$0 : wasm2js_i32$1) | 0) | 0;
  }
  
