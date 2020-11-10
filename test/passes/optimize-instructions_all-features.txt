@@ -5728,6 +5728,30 @@
     (f64.const -3)
    )
   )
+  (drop
+   (f64.neg
+    (f64.add
+     (local.get $x1)
+     (f64.const 3)
+    )
+   )
+  )
+  (drop
+   (f64.neg
+    (f64.sub
+     (local.get $x1)
+     (f64.const 3)
+    )
+   )
+  )
+  (drop
+   (f64.neg
+    (f64.sub
+     (f64.const 3)
+     (local.get $x1)
+    )
+   )
+  )
  )
 )
 (module

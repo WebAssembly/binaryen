@@ -6187,6 +6187,30 @@
       (local.get $x0)
       (f64.const -3)
     ))
+
+    ;; -(x + 3.0)  ==>  skip
+    (drop (f64.neg
+      (f64.add
+        (local.get $x1)
+        (f64.const 3)
+      )
+    ))
+
+    ;; -(x - 3.0)  ==>  skip
+    (drop (f64.neg
+      (f64.sub
+        (local.get $x1)
+        (f64.const 3)
+      )
+    ))
+
+    ;; -(3.0 - x)  ==>  skip
+    (drop (f64.neg
+      (f64.sub
+        (f64.const 3)
+        (local.get $x1)
+      )
+    ))
   )
 )
 (module
