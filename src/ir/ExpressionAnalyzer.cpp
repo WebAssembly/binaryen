@@ -309,6 +309,10 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 #define DELEGATE_FIELD_TYPE(id, name) visitType(cast->name);
 #define DELEGATE_FIELD_ADDRESS(id, name) visitAddress(cast->name);
 
+// Note that we only note the scope name, but do not also visit it. That means
+// that (block $x) and (block) get the same hash. In other words, we only change
+// the hash based on uses of scope names, that is when there is a noticeable
+// difference in break targets.
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) noteScopeName(cast->name);
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) visitScopeName(cast->name);

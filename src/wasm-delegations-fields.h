@@ -43,7 +43,7 @@
 //    DELEGATE_FIELD_CHILD is called.
 //
 // DELEGATE_FIELD_CHILD_VECTOR(id, name) - called for a variable-sized vector of
-//    child pointers. If this isnot defined, and DELEGATE_GET_FIELD is, then
+//    child pointers. If this is not defined, and DELEGATE_GET_FIELD is, then
 //    DELEGATE_FIELD_CHILD is called on them.
 //
 // DELEGATE_FIELD_INT(id, name) - called for an integer field (bool, enum,
