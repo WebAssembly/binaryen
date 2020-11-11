@@ -1936,53 +1936,37 @@ private:
           }
         }
       }
-      // signed(x - y) <=> 0  =>  x <=> y
-      //
+      // x - y == 0  =>  x == y
+      // x - y != 0  =>  x != y
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
       {
+        using namespace Abstract;
         using namespace Match;
 
-        BinaryOp op;
         Binary* inner;
         // unsigned(x - y) > 0    =>   x != y
         if (matches(curr,
-                    binary(Abstract::GtU,
-                           binary(&inner, Abstract::Sub, any(), any()),
-                           ival(0)))) {
-          curr->op = Abstract::getBinary(type, Abstract::Ne);
+                    binary(GtU, binary(&inner, Sub, any(), any()), ival(0)))) {
+          curr->op = Abstract::getBinary(type, Ne);
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
         }
         // unsigned(x - y) <= 0   =>   x == y
         if (matches(curr,
-                    binary(Abstract::LeU,
-                           binary(&inner, Abstract::Sub, any(), any()),
-                           ival(0)))) {
-          curr->op = Abstract::getBinary(type, Abstract::Eq);
+                    binary(LeU, binary(&inner, Sub, any(), any()), ival(0)))) {
+          curr->op = Abstract::getBinary(type, Eq);
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
         }
-        // signed(x - y) <=> 0  =>  x <=> y
-        // if "y" is not signed min constant
+        // x - y == 0  =>  x == y
+        // x - y != 0  =>  x != y
         if (matches(curr,
-                    binary(&op,
-                           binary(&inner, Abstract::Sub, any(), any()),
-                           ival(0))) &&
-            (op == Abstract::getBinary(type, Abstract::Eq) ||
-             op == Abstract::getBinary(type, Abstract::Ne) ||
-             op == Abstract::getBinary(type, Abstract::LeS) ||
-             op == Abstract::getBinary(type, Abstract::LtS) ||
-             op == Abstract::getBinary(type, Abstract::GeS) ||
-             op == Abstract::getBinary(type, Abstract::GtS))) {
-          // if (auto* c = inner->right->dynCast<Const>()) {
-          //   // skip signed(x - min_s) <=> 0 case
-          //   if (c->value.isSignedMin()) {
-          //     return nullptr;
-          //   }
-          // }
+                    binary(Eq, binary(&inner, Sub, any(), any()), ival(0))) ||
+            matches(curr,
+                    binary(Ne, binary(&inner, Sub, any(), any()), ival(0)))) {
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;

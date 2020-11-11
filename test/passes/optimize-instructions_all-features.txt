@@ -4784,14 +4784,20 @@
   )
   (drop
    (i32.gt_s
-    (local.get $x)
-    (local.get $y)
+    (i32.sub
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.const 0)
    )
   )
   (drop
    (i32.ge_s
-    (local.get $x)
-    (local.get $y)
+    (i32.sub
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.const 0)
    )
   )
   (drop
@@ -4808,14 +4814,20 @@
   )
   (drop
    (i32.lt_s
-    (local.get $x)
-    (local.get $y)
+    (i32.sub
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.const 0)
    )
   )
   (drop
    (i32.le_s
-    (local.get $x)
-    (local.get $y)
+    (i32.sub
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.const 0)
    )
   )
   (drop
@@ -4861,19 +4873,25 @@
    )
   )
   (drop
-   (i32.lt_s
-    (block $block (result i32)
-     (i32.const -2147483648)
+   (i32.gt_s
+    (i32.sub
+     (local.get $x)
+     (block $block (result i32)
+      (i32.const -2147483648)
+     )
     )
-    (local.get $x)
+    (i32.const 0)
    )
   )
   (drop
-   (i32.lt_s
-    (block $block30 (result i32)
-     (i32.const -2147483648)
+   (i32.gt_s
+    (i32.sub
+     (local.get $x)
+     (block $block30 (result i32)
+      (i32.const -2147483648)
+     )
     )
-    (local.get $x)
+    (i32.const 0)
    )
   )
  )
