@@ -2731,6 +2731,17 @@
       )
     )
   )
+  (func $zero-ops-special-2 (param $x i32) (result i32)
+    (return
+      (i32.ge_s
+        (i32.sub
+          (local.get $x)
+          (i32.const 2)
+        )
+        (i32.const 0)
+      )
+    )
+  )
   (func $sign-ext-1-and-ne (result i32)
    (select
     (i32.ne
