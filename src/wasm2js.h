@@ -93,8 +93,6 @@ bool isTableExported(Module& wasm) {
 }
 
 bool hasActiveSegments(Module& wasm) {
-  // If there are any active segments, initActiveSegments needs access
-  // to bufferView.
   for (Index i = 0; i < wasm.memory.segments.size(); i++) {
     if (!wasm.memory.segments[i].isPassive) {
       return true;
