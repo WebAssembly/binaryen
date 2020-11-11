@@ -5376,7 +5376,7 @@
       )
       (i32.const 0)
     ))
-    ;; i32(x - 0x80000000) < 0  ->  skip
+    ;; i32(x - { 0x80000000 }) < 0  ->  skip
     (drop (i32.lt_s
       (i32.sub
         (local.get $x)
@@ -5384,7 +5384,7 @@
       )
       (i32.const 0)
     ))
-    ;; i32(x - 0x80000000) >= 0  ->  skip
+    ;; i32(x - { 0x80000000 }) >= 0  ->  skip
     (drop (i32.ge_s
       (i32.sub
         (local.get $x)
@@ -5392,19 +5392,23 @@
       )
       (i32.const 0)
     ))
-    ;; i32(x - 0x80000000) > 0  ->  skip
+    ;; i32(x - { 0x80000000 }) > 0  ->  skip
     (drop (i32.gt_s
       (i32.sub
         (local.get $x)
-        (i32.const 0x80000000)
+        (block (result i32)
+          (i32.const 0x80000000)
+        )
       )
       (i32.const 0)
     ))
-    ;; i32(x - 0x80000000) <= 0  ->  skip
+    ;; i32(x - { 0x80000000 }) <= 0  ->  skip
     (drop (i32.gt_s
       (i32.sub
         (local.get $x)
-        (i32.const 0x80000000)
+        (block (result i32)
+          (i32.const 0x80000000)
+        )
       )
       (i32.const 0)
     ))

@@ -4861,21 +4861,19 @@
    )
   )
   (drop
-   (i32.gt_s
-    (i32.sub
-     (local.get $x)
+   (i32.lt_s
+    (block $block (result i32)
      (i32.const -2147483648)
     )
-    (i32.const 0)
+    (local.get $x)
    )
   )
   (drop
-   (i32.gt_s
-    (i32.sub
-     (local.get $x)
+   (i32.lt_s
+    (block $block30 (result i32)
      (i32.const -2147483648)
     )
-    (i32.const 0)
+    (local.get $x)
    )
   )
  )
