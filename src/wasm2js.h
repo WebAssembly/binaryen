@@ -2546,8 +2546,7 @@ void Wasm2JSGlue::emitPostES6() {
 }
 
 void Wasm2JSGlue::emitMemory(
-  std::string buffer,
-  std::function<std::string(std::string)> accessGlobal) {
+  std::string buffer, std::function<std::string(std::string)> accessGlobal) {
   if (!wasm.memory.exists) {
     return;
   }
