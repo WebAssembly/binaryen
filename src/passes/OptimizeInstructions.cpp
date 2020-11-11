@@ -1272,15 +1272,17 @@ private:
         auto type = curr->type;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
-        // Canonicalization prefers an add instead of a subtract wherever
-        // possible. That prevents a subtracted constant on the right,
-        // as it would be added. And for a zero on the left, it can't be
-        // removed (it is how we negate ints).
         if (curr->op == Abstract::getBinary(type, Abstract::Add)) {
           if (left && left->value.isZero()) {
             replaceCurrent(curr->right);
             return;
           }
+          if (right && right->value.isZero()) {
+            replaceCurrent(curr->left);
+            return;
+          }
+        } else if (curr->op == Abstract::getBinary(type, Abstract::Sub)) {
+          // we must leave a left zero, as it is how we negate ints
           if (right && right->value.isZero()) {
             replaceCurrent(curr->left);
             return;
