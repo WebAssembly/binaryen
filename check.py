@@ -292,7 +292,7 @@ def run_gcc_tests():
         src = os.path.join(shared.get_test_dir('example'), t)
         expected = os.path.join(shared.get_test_dir('example'), '.'.join(t.split('.')[:-1]) + '.txt')
         # build the C file separately
-        libpath = os.path.join(os.path.dirname(shared.options.binaryen_bin),  'lib')
+        libpath = shared.options.binaryen_lib
         extra = [shared.NATIVECC, src, '-c', '-o', 'example.o',
                  '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
         if src.endswith('.cpp'):

@@ -4850,11 +4850,11 @@ file_names[  4]:
        ;; code offset: 0x7d
        (local.tee $4
         ;; code offset: 0x7c
-        (i32.add
+        (i32.sub
          ;; code offset: 0x78
          (local.get $2)
          ;; code offset: 0x7a
-         (i32.const -1)
+         (i32.const 1)
         )
        )
       )
@@ -4912,11 +4912,11 @@ file_names[  4]:
             ;; code offset: 0xaa
             (local.tee $1
              ;; code offset: 0xa9
-             (i32.add
+             (i32.sub
               ;; code offset: 0xa5
               (local.get $2)
               ;; code offset: 0xa7
-              (i32.const -1)
+              (i32.const 1)
              )
             )
             ;; code offset: 0xac
@@ -5020,11 +5020,11 @@ file_names[  4]:
            ;; code offset: 0x101
            (local.set $1
             ;; code offset: 0x100
-            (i32.add
+            (i32.sub
              ;; code offset: 0xfc
              (local.get $6)
              ;; code offset: 0xfe
-             (i32.const -1)
+             (i32.const 1)
             )
            )
            ;; code offset: 0x105
@@ -5102,11 +5102,11 @@ file_names[  4]:
               ;; code offset: 0x13d
               (local.tee $1
                ;; code offset: 0x13c
-               (i32.add
+               (i32.sub
                 ;; code offset: 0x138
                 (local.get $1)
                 ;; code offset: 0x13a
-                (i32.const -1)
+                (i32.const 1)
                )
               )
              )
@@ -5301,7 +5301,7 @@ file_names[  4]:
           )
          )
          ;; code offset: 0x1d5
-         (i32.add
+         (i32.sub
           ;; code offset: 0x1d1
           (local.tee $1
            ;; code offset: 0x1ce
@@ -5311,7 +5311,7 @@ file_names[  4]:
            )
           )
           ;; code offset: 0x1d3
-          (i32.const -1)
+          (i32.const 1)
          )
         )
         ;; code offset: 0x1de
@@ -5379,11 +5379,11 @@ file_names[  4]:
      ;; code offset: 0x20c
      (local.tee $4
       ;; code offset: 0x20b
-      (i32.add
+      (i32.sub
        ;; code offset: 0x207
        (local.get $2)
        ;; code offset: 0x209
-       (i32.const -1)
+       (i32.const 1)
       )
      )
     )
@@ -5432,11 +5432,11 @@ file_names[  4]:
          ;; code offset: 0x233
          (local.tee $1
           ;; code offset: 0x232
-          (i32.add
+          (i32.sub
            ;; code offset: 0x22e
            (local.get $2)
            ;; code offset: 0x230
-           (i32.const -1)
+           (i32.const 1)
           )
          )
          ;; code offset: 0x235
@@ -5530,11 +5530,11 @@ file_names[  4]:
         ;; code offset: 0x282
         (local.set $1
          ;; code offset: 0x281
-         (i32.add
+         (i32.sub
           ;; code offset: 0x27d
           (local.get $7)
           ;; code offset: 0x27f
-          (i32.const -1)
+          (i32.const 1)
          )
         )
         ;; code offset: 0x286
@@ -5612,11 +5612,11 @@ file_names[  4]:
            ;; code offset: 0x2be
            (local.tee $1
             ;; code offset: 0x2bd
-            (i32.add
+            (i32.sub
              ;; code offset: 0x2b9
              (local.get $1)
              ;; code offset: 0x2bb
-             (i32.const -1)
+             (i32.const 1)
             )
            )
           )
@@ -5811,7 +5811,7 @@ file_names[  4]:
        )
       )
       ;; code offset: 0x356
-      (i32.add
+      (i32.sub
        ;; code offset: 0x352
        (local.tee $1
         ;; code offset: 0x34f
@@ -5821,7 +5821,7 @@ file_names[  4]:
         )
        )
        ;; code offset: 0x354
-       (i32.const -1)
+       (i32.const 1)
       )
      )
      ;; code offset: 0x35f
@@ -5965,11 +5965,11 @@ file_names[  4]:
      ;; code offset: 0x3d7
      (local.set $2
       ;; code offset: 0x3d6
-      (i32.add
+      (i32.sub
        ;; code offset: 0x3d2
        (local.get $3)
        ;; code offset: 0x3d4
-       (i32.const -1)
+       (i32.const 1)
       )
      )
      ;; code offset: 0x3db
@@ -6243,11 +6243,11 @@ file_names[  4]:
            ;; code offset: 0x4aa
            (local.tee $0
             ;; code offset: 0x4a9
-            (i32.add
+            (i32.sub
              ;; code offset: 0x4a5
              (local.get $2)
              ;; code offset: 0x4a7
-             (i32.const -1)
+             (i32.const 1)
             )
            )
            ;; code offset: 0x4ac
@@ -6292,11 +6292,11 @@ file_names[  4]:
       ;; code offset: 0x4d2
       (local.set $6
        ;; code offset: 0x4d1
-       (i32.add
+       (i32.sub
         ;; code offset: 0x4cd
         (local.get $6)
         ;; code offset: 0x4cf
-        (i32.const -1)
+        (i32.const 1)
        )
       )
       ;; code offset: 0x4d4
@@ -6417,7 +6417,7 @@ file_names[  4]:
          )
         )
         ;; code offset: 0x532
-        (i32.add
+        (i32.sub
          ;; code offset: 0x52e
          (local.tee $0
           ;; code offset: 0x52b
@@ -6427,7 +6427,7 @@ file_names[  4]:
           )
          )
          ;; code offset: 0x530
-         (i32.const -1)
+         (i32.const 1)
         )
        )
        ;; code offset: 0x53b
@@ -6504,11 +6504,11 @@ file_names[  4]:
           ;; code offset: 0x56c
           (local.tee $0
            ;; code offset: 0x56b
-           (i32.add
+           (i32.sub
             ;; code offset: 0x567
             (local.get $2)
             ;; code offset: 0x569
-            (i32.const -1)
+            (i32.const 1)
            )
           )
           ;; code offset: 0x56e
@@ -6553,11 +6553,11 @@ file_names[  4]:
      ;; code offset: 0x594
      (local.set $6
       ;; code offset: 0x593
-      (i32.add
+      (i32.sub
        ;; code offset: 0x58f
        (local.get $6)
        ;; code offset: 0x591
-       (i32.const -1)
+       (i32.const 1)
       )
      )
      ;; code offset: 0x596
@@ -6678,7 +6678,7 @@ file_names[  4]:
         )
        )
        ;; code offset: 0x5f4
-       (i32.add
+       (i32.sub
         ;; code offset: 0x5f0
         (local.tee $0
          ;; code offset: 0x5ed
@@ -6688,7 +6688,7 @@ file_names[  4]:
          )
         )
         ;; code offset: 0x5f2
-        (i32.const -1)
+        (i32.const 1)
        )
       )
       ;; code offset: 0x5fd
