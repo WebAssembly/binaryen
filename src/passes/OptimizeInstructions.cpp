@@ -1965,17 +1965,16 @@ private:
           curr->left = inner->left;
           return curr;
         }
-        // signed(x - y) <=> 0  =>  x <=> y
+        // x - y == 0  =>  x == y
+        // x - y != 0  =>  x != y
+        // This is not true for signed comparisons like x -y < 0 due to overflow
+        // effects (e.g. 8 - 0x80000000 < 0 is not the same as 8 < 0x80000000).
         if (matches(curr,
                     binary(&op,
                            binary(&inner, Abstract::Sub, any(), any()),
                            ival(0))) &&
             (op == Abstract::getBinary(type, Abstract::Eq) ||
-             op == Abstract::getBinary(type, Abstract::Ne) ||
-             op == Abstract::getBinary(type, Abstract::LeS) ||
-             op == Abstract::getBinary(type, Abstract::LtS) ||
-             op == Abstract::getBinary(type, Abstract::GeS) ||
-             op == Abstract::getBinary(type, Abstract::GtS))) {
+             op == Abstract::getBinary(type, Abstract::Ne))) {
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
