@@ -42,7 +42,6 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
     return ReturnType();                                                       \
   }
 #include "wasm-delegations.h"
-#undef DELEGATE
 
   // Module-level visitors
   ReturnType visitExport(Export* curr) { return ReturnType(); }
@@ -63,8 +62,6 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
       static_cast<CLASS_TO_VISIT*>(curr))
 
 #include "wasm-delegations.h"
-
-#undef DELEGATE
 
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -88,8 +85,6 @@ struct OverriddenVisitor {
 
 #include "wasm-delegations.h"
 
-#undef DELEGATE
-
   ReturnType visit(Expression* curr) {
     assert(curr);
 
@@ -100,8 +95,6 @@ struct OverriddenVisitor {
       static_cast<CLASS_TO_VISIT*>(curr))
 
 #include "wasm-delegations.h"
-
-#undef DELEGATE
 
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -124,8 +117,6 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   }
 
 #include "wasm-delegations.h"
-
-#undef DELEGATE
 };
 
 //
@@ -305,8 +296,6 @@ struct Walker : public VisitorType {
   }
 
 #include "wasm-delegations.h"
-
-#undef DELEGATE
 
   void setModule(Module* module) { currModule = module; }
 
