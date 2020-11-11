@@ -13421,9 +13421,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    setTempRet0 });
 export var type_i32 = retasmFunc.type_i32;
 export var type_i64 = retasmFunc.type_i64;
 export var type_f32 = retasmFunc.type_f32;

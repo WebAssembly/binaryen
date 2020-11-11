@@ -41,7 +41,6 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var exp1 = retasmFunc.exp1;
 export var exp2 = retasmFunc.exp2;

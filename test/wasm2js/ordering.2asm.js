@@ -54,7 +54,6 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    table
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    table });
 export var main = retasmFunc.main;

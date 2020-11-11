@@ -18,8 +18,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 
 
   var scratchBuffer = new ArrayBuffer(16);
@@ -103,8 +102,7 @@ function asmFunc(env) {
 }
 
 var bufferView;
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var fill = retasmFunc.fill;
 export var load8_u = retasmFunc.load8_u;
 
@@ -166,8 +164,7 @@ function asmFunc(env) {
 }
 
 var bufferView;
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -273,8 +270,7 @@ function asmFunc(env) {
 }
 
 var bufferView;
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
@@ -391,8 +387,7 @@ function asmFunc(env) {
 }
 
 var bufferView;
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'

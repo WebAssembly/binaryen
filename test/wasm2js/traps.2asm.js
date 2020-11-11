@@ -729,8 +729,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var no_dce_i32_div_s = retasmFunc.no_dce_i32_div_s;
 export var no_dce_i32_div_u = retasmFunc.no_dce_i32_div_u;
 export var no_dce_i64_div_s = retasmFunc.no_dce_i64_div_s;
@@ -1448,8 +1447,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var no_dce_i32_rem_s = retasmFunc.no_dce_i32_rem_s;
 export var no_dce_i32_rem_u = retasmFunc.no_dce_i32_rem_u;
 export var no_dce_i64_rem_s = retasmFunc.no_dce_i64_rem_s;
@@ -1569,8 +1567,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var no_dce_i32_trunc_f32_s = retasmFunc.no_dce_i32_trunc_f32_s;
 export var no_dce_i32_trunc_f32_u = retasmFunc.no_dce_i32_trunc_f32_u;
 export var no_dce_i32_trunc_f64_s = retasmFunc.no_dce_i32_trunc_f64_s;
@@ -1725,8 +1722,7 @@ function asmFunc(env) {
 }
 
 var bufferView;
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var no_dce_i32_load = retasmFunc.no_dce_i32_load;
 export var no_dce_i32_load16_s = retasmFunc.no_dce_i32_load16_s;
 export var no_dce_i32_load16_u = retasmFunc.no_dce_i32_load16_u;

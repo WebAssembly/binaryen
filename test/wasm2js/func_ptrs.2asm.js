@@ -42,9 +42,8 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    print_i32
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    print_i32 });
 export var one = retasmFunc.one;
 export var two = retasmFunc.two;
 export var three = retasmFunc.three;
@@ -101,8 +100,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var callt = retasmFunc.callt;
 export var callu = retasmFunc.callu;
 
@@ -139,6 +137,5 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var callt = retasmFunc.callt;

@@ -60,5 +60,4 @@ function asmFunc(env) {
 }
 
 var bufferView;
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });

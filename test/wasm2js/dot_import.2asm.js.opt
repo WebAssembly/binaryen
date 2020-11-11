@@ -24,7 +24,6 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    ba_se
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    ba_se });
 export var exported = retasmFunc.exported;

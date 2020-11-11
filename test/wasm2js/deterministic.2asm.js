@@ -43,7 +43,6 @@ function asmFunc(env) {
 
 var bufferView;
 var memasmFunc = new ArrayBuffer(65536);
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    memory: { buffer : memasmFunc }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
+    memory: { buffer: memasmFunc } });
 export var foo = retasmFunc.foo;

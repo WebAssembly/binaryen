@@ -315,8 +315,7 @@ function asmFunc(env) {
  };
 }
 
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
+var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
 export var f32_add = retasmFunc.f32_add;
 export var f32_sub = retasmFunc.f32_sub;
 export var f32_mul = retasmFunc.f32_mul;
