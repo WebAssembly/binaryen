@@ -93,7 +93,7 @@
 #ifndef DELEGATE_FIELD_CHILD_VECTOR
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
-  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {          \
+  for (int i = int((DELEGATE_GET_FIELD(id, name)).size()) - 1; i >= 0; i--) {  \
     DELEGATE_FIELD_CHILD(id, name[i]);                                         \
   }
 #else
