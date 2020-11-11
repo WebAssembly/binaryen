@@ -8,6 +8,7 @@ function asmFunc(env) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -65,7 +66,7 @@ function asmFunc(env) {
  
  function $9(x) {
   x = Math_fround(x);
-  return Math_fround(Math_fround(__wasm_trunc_f32(Math_fround(x))));
+  return Math_fround(Math_fround(Math_trunc(x)));
  }
  
  function $10(x) {
@@ -89,11 +90,6 @@ function asmFunc(env) {
    }
   }
   return Math_fround(var$1);
- }
- 
- function __wasm_trunc_f32(var$0) {
-  var$0 = Math_fround(var$0);
-  return Math_fround(var$0 < Math_fround(0.0) ? Math_fround(Math_ceil(var$0)) : Math_fround(Math_floor(var$0)));
  }
  
  return {
