@@ -1,7 +1,7 @@
 (module
  (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i64_=>_none (func (param i32 i64)))
  (type $none_=>_none (func))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
@@ -2413,17 +2413,6 @@
     (i64.popcnt
      (i64.const 7377)
     )
-   )
-  )
- )
- (func $zero-ops-special-2 (param $x i32) (result i32)
-  (return
-   (i32.ge_s
-    (i32.sub
-     (local.get $x)
-     (i32.const 2)
-    )
-    (i32.const 0)
    )
   )
  )
@@ -4839,6 +4828,18 @@
    (i32.eq
     (local.get $x)
     (local.get $y)
+   )
+  )
+  (drop
+   (i32.ge_s
+    (local.get $x)
+    (i32.const 2)
+   )
+  )
+  (drop
+   (i32.ne
+    (local.get $x)
+    (i32.const -2147483648)
    )
   )
  )

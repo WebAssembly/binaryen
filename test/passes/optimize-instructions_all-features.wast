@@ -2731,17 +2731,6 @@
       )
     )
   )
-  (func $zero-ops-special-2 (param $x i32) (result i32)
-    (return
-      (i32.ge_s
-        (i32.sub
-          (local.get $x)
-          (i32.const 2)
-        )
-        (i32.const 0)
-      )
-    )
-  )
   (func $sign-ext-1-and-ne (result i32)
    (select
     (i32.ne
@@ -5371,6 +5360,30 @@
       )
       (i32.const 0)
     ))
+
+    ;; signed(x) + C <=> 0
+    ;; signed(x) - C <=> 0
+
+    ;; x - 2 >= 0  => x >= 2
+    (drop
+      (i32.ge_s
+        (i32.sub
+          (local.get $x)
+          (i32.const 2)
+        )
+        (i32.const 0)
+      )
+    )
+    ;; x - 0x80000000 > 0  =>  x != -2147483648
+    (drop
+      (i32.gt_s
+        (i32.sub
+          (local.get $x)
+          (i32.const 0x80000000)
+        )
+        (i32.const 0)
+      )
+    )
   )
   (func $unsigned-context (param $x i32) (param $y i64)
     (drop (i32.div_s
