@@ -57,7 +57,7 @@
 //
 // DELEGATE_FIELD_NAME(id, name) - called for a Name.
 //
-// DELEGATE_FIELD_SCOPE_NAME_USE(id, name) - called for a scope name definition
+// DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) - called for a scope name definition
 //    (like a block's name).
 //
 // DELEGATE_FIELD_SCOPE_NAME_USE(id, name) - called for a scope name use (like
