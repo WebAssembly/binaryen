@@ -15,48 +15,81 @@
  */
 
 // Implements a switch on an expression class ID, and has a case for each id
-// in which it runs delegates on the fields and immediates. All the delegates
-// are optional, so you can just provide what you want, and no code will be
-// emitted for the others.
+// in which it runs delegates on the fields and immediates. You should include
+// this file after defining the relevant DELEGATE_* macros.
 //
-// (The only mandatory thing to define is DELEGATE_ID which is the key for the
-// switch.)
+// All defines used here are undefed automatically at the end for you.
 //
-// You can optionally define DELEGATE_GET_FIELD, which should access the field
-// by name. If provided, it will be used where that makes sense. For example, it
-// will be used to access a vector of children, calling each one individually
-// (see DELEGATE_FIELD_CHILD, DELEGATE_FIELD_CHILD_VECTOR).
+// Most of the defines are necessary, and you will get an error if you forget
+// them, but some are optional and some imply others, see below.
+//
+// The defines are as follows:
+//
+// DELEGATE_START(id) - called at the start of a case for an expression class.
+//
+// DELEGATE_END(id) - called at the end of a case.
+//
+// DELEGATE_GET_FIELD(id, name) - called to get a field by its name. This must
+//    know the object on which to get it, so it is just useful for the case
+//    where you operate on a single such object, but in that case it is nice
+//    because then other things can be defined automatically for you, see later.
+//
+// DELEGATE_FIELD_CHILD(id, name) - called for each child field (note: children
+//    are visited in reverse order, which is convenient for walking by pushing
+//    them to a stack first).
+//
+// DELEGATE_FIELD_OPTIONAL_CHILD(id, name) - called for a child that may not be
+//    present (like a Return's value). If you do not define this then
+//    DELEGATE_FIELD_CHILD is called.
+//
+// DELEGATE_FIELD_CHILD_VECTOR(id, name) - called for a variable-sized vector of
+//    child pointers. If this isnot defined, and DELEGATE_GET_FIELD is, then
+//    DELEGATE_FIELD_CHILD is called on them.
+//
+// DELEGATE_FIELD_INT(id, name) - called for an integer field (bool, enum,
+//    Index, int32, or int64).
+//
+// DELEGATE_FIELD_INT_ARRAY(id, name) - called for a std::array of fixed size of
+//    integer values (like a SIMD mask). If this is not defined, and
+//    DELEGATE_GET_FIELD is, then DELEGATE_FIELD_INT is called on them.
+//
+// DELEGATE_FIELD_LITERAL(id, name) - called for a Literal.
+//
+// DELEGATE_FIELD_NAME(id, name) - called for a Name.
+//
+// DELEGATE_FIELD_SCOPE_NAME_USE(id, name) - called for a scope name definition
+//    (like a block's name).
+//
+// DELEGATE_FIELD_SCOPE_NAME_USE(id, name) - called for a scope name use (like
+//    a break's target).
+//
+// DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name) - called for a variable-sized
+//    vector of scope names (like a switch's targets). If this is not defined,
+//    and DELEGATE_GET_FIELD is, then DELEGATE_FIELD_SCOPE_NAME_USE is called on
+//    them.
+//
+// DELEGATE_FIELD_SIGNATURE(id, name) - called for a Signature.
+//
+// DELEGATE_FIELD_TYPE(id, name) - called for a Type.
+//
+// DELEGATE_FIELD_ADDRESS(id, name) - called for an Address.
 
-// All #defines used here are undefed automatically at the end for you.
-//
-// Child pointers are emitted in reverse order (which is convenient for walking
-// by pushing them to a stack first).
-
-// Emits code at the start of the case for a class.
 #ifndef DELEGATE_START
 #define DELEGATE_START(id)
 #endif
 
-// Emits code at the end of the case for a class.
 #ifndef DELEGATE_END
 #define DELEGATE_END(id)
 #endif
 
-// Emits code to handle a child pointer.
 #ifndef DELEGATE_FIELD_CHILD
 #error please define DELEGATE_FIELD_CHILD(id, name)
 #endif
 
-// Emits code to handle an optional child pointer. If this is not defined, then
-// DELEGATE_FIELD_CHILD is called on it.
 #ifndef DELEGATE_FIELD_OPTIONAL_CHILD
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, name) DELEGATE_FIELD_CHILD(id, name)
 #endif
 
-// Emits code to handle a variable-sized vector of child pointers. If this is
-// not defined, and DELEGATE_GET_FIELD is, then DELEGATE_FIELD_CHILD is called
-// on
-// them.
 #ifndef DELEGATE_FIELD_CHILD_VECTOR
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)                                  \
@@ -68,14 +101,10 @@
 #endif
 #endif
 
-// Emits code to handle an integer value (bool, enum, Index, int32, or int64).
 #ifndef DELEGATE_FIELD_INT
 #error please define DELEGATE_FIELD_INT(id, name)
 #endif
 
-// Emits code to handle a std::array of fixed size of integer values (like a
-// SIMD mask). If this is not defined, and DELEGATE_GET_FIELD is, then
-// DELEGATE_FIELD_INT is called on them.
 #ifndef DELEGATE_FIELD_INT_ARRAY
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_INT_ARRAY(id, name)                                     \
@@ -87,29 +116,22 @@
 #endif
 #endif
 
-// Emits code to handle a Literal.
 #ifndef DELEGATE_FIELD_LITERAL
 #error please define DELEGATE_FIELD_LITERAL(id, name)
 #endif
 
-// Emits code to handle a name (like a call target).
 #ifndef DELEGATE_FIELD_NAME
 #error please define DELEGATE_FIELD_NAME(id, name)
 #endif
 
-// Emits code to handle a scope name definition (like a block's name).
 #ifndef DELEGATE_FIELD_SCOPE_NAME_DEF
 #error please define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
 #endif
 
-// Emits code to handle a scope name use (like a br's target).
 #ifndef DELEGATE_FIELD_SCOPE_NAME_USE
 #error please define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
 #endif
 
-// Emits code to handle a variable-sized vector of scope names (like a switch's
-// targets). If this is not defined, and DELEGATE_GET_FIELD is, then
-// DELEGATE_FIELD_SCOPE_NAME_USE is called on them.
 #ifndef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)                         \
@@ -121,17 +143,14 @@
 #endif
 #endif
 
-// Emits code to handle a Signature.
 #ifndef DELEGATE_FIELD_SIGNATURE
 #error please define DELEGATE_FIELD_SIGNATURE(id, name)
 #endif
 
-// Emits code to handle a type.
 #ifndef DELEGATE_FIELD_TYPE
 #error please define DELEGATE_FIELD_TYPE(id, name)
 #endif
 
-// Emits code to handle an address.
 #ifndef DELEGATE_FIELD_ADDRESS
 #error please define DELEGATE_FIELD_ADDRESS(id, name)
 #endif
