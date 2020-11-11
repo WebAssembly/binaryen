@@ -4830,6 +4830,54 @@
     (local.get $y)
    )
   )
+  (drop
+   (i32.eq
+    (local.get $x)
+    (i32.const -2147483648)
+   )
+  )
+  (drop
+   (i32.ne
+    (local.get $x)
+    (i32.const -2147483648)
+   )
+  )
+  (drop
+   (i32.lt_s
+    (i32.sub
+     (local.get $x)
+     (i32.const -2147483648)
+    )
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.ge_s
+    (i32.sub
+     (local.get $x)
+     (i32.const -2147483648)
+    )
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.gt_s
+    (i32.sub
+     (local.get $x)
+     (i32.const -2147483648)
+    )
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.gt_s
+    (i32.sub
+     (local.get $x)
+     (i32.const -2147483648)
+    )
+    (i32.const 0)
+   )
+  )
  )
  (func $unsigned-context (param $x i32) (param $y i64)
   (drop

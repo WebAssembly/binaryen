@@ -1966,6 +1966,7 @@ private:
           return curr;
         }
         // signed(x - y) <=> 0  =>  x <=> y
+        // if "y" is not signed min constant
         if (matches(curr,
                     binary(&op,
                            binary(&inner, Abstract::Sub, any(), any()),
@@ -1976,6 +1977,12 @@ private:
              op == Abstract::getBinary(type, Abstract::LtS) ||
              op == Abstract::getBinary(type, Abstract::GeS) ||
              op == Abstract::getBinary(type, Abstract::GtS))) {
+          // if (auto* c = inner->right->dynCast<Const>()) {
+          //   // skip signed(x - min_s) <=> 0 case
+          //   if (c->value.isSignedMin()) {
+          //     return nullptr;
+          //   }
+          // }
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
