@@ -11,7 +11,6 @@ function asmFunc(env) {
  var HEAPU32 = new Uint32Array(buffer);
  var HEAPF32 = new Float32Array(buffer);
  var HEAPF64 = new Float64Array(buffer);
- bufferView = HEAPU8;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -51,7 +50,6 @@ function asmFunc(env) {
    HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
    memory.buffer = buffer;
-   bufferView = HEAPU8;
   }
   return oldPages;
  }
@@ -61,7 +59,6 @@ function asmFunc(env) {
  };
 }
 
-var bufferView;
 var memasmFunc = new ArrayBuffer(65536);
 var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
     a: { buffer: memasmFunc } });

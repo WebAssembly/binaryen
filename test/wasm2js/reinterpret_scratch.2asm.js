@@ -1,4 +1,5 @@
 
+  var bufferView;
 
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
@@ -27,7 +28,6 @@ function asmFunc(env) {
  var HEAPU32 = new Uint32Array(buffer);
  var HEAPF32 = new Float32Array(buffer);
  var HEAPF64 = new Float64Array(buffer);
- bufferView = HEAPU8;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -51,6 +51,7 @@ function asmFunc(env) {
   return HEAP32[0 >> 2] | 0 | 0;
  }
  
+ bufferView = HEAPU8;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -60,6 +61,11 @@ function asmFunc(env) {
  };
 }
 
+<<<<<<< HEAD
 var bufferView;
 var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
+=======
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
+>>>>>>> master
 export var foo = retasmFunc.foo;

@@ -1587,7 +1587,6 @@ function asmFunc(env) {
  var HEAPU32 = new Uint32Array(buffer);
  var HEAPF32 = new Float32Array(buffer);
  var HEAPF64 = new Float64Array(buffer);
- bufferView = HEAPU8;
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
  var Math_abs = Math.abs;
@@ -1698,7 +1697,6 @@ function asmFunc(env) {
    HEAPF32 = new Float32Array(newBuffer);
    HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
-   bufferView = HEAPU8;
   }
   return oldPages;
  }
@@ -1721,8 +1719,13 @@ function asmFunc(env) {
  };
 }
 
+<<<<<<< HEAD
 var bufferView;
 var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
+=======
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
+>>>>>>> master
 export var no_dce_i32_load = retasmFunc.no_dce_i32_load;
 export var no_dce_i32_load16_s = retasmFunc.no_dce_i32_load16_s;
 export var no_dce_i32_load16_u = retasmFunc.no_dce_i32_load16_u;
