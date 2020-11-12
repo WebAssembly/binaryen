@@ -4861,7 +4861,7 @@
    (i32.gt_s
     (i32.sub
      (local.get $x)
-     (block $block30 (result i32)
+     (block $block29 (result i32)
       (i32.const -2147483648)
      )
     )

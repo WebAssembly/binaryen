@@ -5,6 +5,7 @@ set(ir_SOURCES
   LocalGraph.cpp
   ReFinalize.cpp
   stack-utils.cpp
+  module-splitting.cpp
   ${ir_HEADERS}
 )
 add_library(ir OBJECT ${ir_SOURCES})
