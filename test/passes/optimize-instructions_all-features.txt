@@ -11,8 +11,6 @@
  (type $none_=>_i64 (func (result i64)))
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
- (type $none_=>_anyref (func (result anyref)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
@@ -253,20 +251,6 @@
   )
   (if
    (i32.const 123)
-   (nop)
-  )
-  (if
-   (try (result i32)
-    (do
-     (i32.const 123)
-    )
-    (catch
-     (drop
-      (pop exnref)
-     )
-     (i32.const 456)
-    )
-   )
    (nop)
   )
   (drop
@@ -545,7 +529,7 @@
   )
   (drop
    (i32.and
-    (block $block4 (result i32)
+    (block $block3 (result i32)
      (i32.const -6)
     )
     (local.get $x)
@@ -553,7 +537,7 @@
   )
   (drop
    (i32.and
-    (block $block5 (result i32)
+    (block $block4 (result i32)
      (i32.const 5)
     )
     (loop $loop-in (result i32)
@@ -563,20 +547,20 @@
   )
   (drop
    (i32.and
-    (block $block7 (result i32)
+    (block $block6 (result i32)
      (i32.const 8)
     )
-    (loop $loop-in6 (result i32)
+    (loop $loop-in5 (result i32)
      (i32.const 7)
     )
    )
   )
   (drop
    (i32.and
-    (block $block9 (result i32)
+    (block $block8 (result i32)
      (i32.const 10)
     )
-    (loop $loop-in8 (result i32)
+    (loop $loop-in7 (result i32)
      (call $and-pos1)
      (i32.const 9)
     )
@@ -584,34 +568,34 @@
   )
   (drop
    (i32.and
-    (block $block11 (result i32)
+    (block $block10 (result i32)
      (call $and-pos1)
      (i32.const 12)
     )
-    (loop $loop-in10 (result i32)
+    (loop $loop-in9 (result i32)
      (i32.const 11)
     )
    )
   )
   (drop
    (i32.and
-    (loop $loop-in12 (result i32)
+    (loop $loop-in11 (result i32)
      (call $and-pos1)
      (i32.const 13)
     )
+    (block $block12 (result i32)
+     (call $and-pos1)
+     (i32.const 14)
+    )
+   )
+  )
+  (drop
+   (i32.and
     (block $block13 (result i32)
      (call $and-pos1)
      (i32.const 14)
     )
-   )
-  )
-  (drop
-   (i32.and
-    (block $block14 (result i32)
-     (call $and-pos1)
-     (i32.const 14)
-    )
-    (loop $loop-in15 (result i32)
+    (loop $loop-in14 (result i32)
      (call $and-pos1)
      (i32.const 13)
     )
@@ -619,7 +603,7 @@
   )
   (drop
    (i32.and
-    (block $block16 (result i32)
+    (block $block15 (result i32)
      (i32.const 15)
     )
     (local.get $x)
@@ -627,7 +611,7 @@
   )
   (drop
    (i32.and
-    (block $block17 (result i32)
+    (block $block16 (result i32)
      (i32.const 15)
     )
     (local.get $x)
@@ -4704,16 +4688,6 @@
    (unreachable)
   )
  )
- (func $if-arms-subtype-fold (result anyref)
-  (ref.null extern)
- )
- (func $if-arms-subtype-nofold (result anyref)
-  (if (result anyref)
-   (i32.const 0)
-   (ref.null extern)
-   (ref.null func)
-  )
- )
  (func $optimize-boolean-context (param $x i32) (param $y i32)
   (if
    (local.get $x)
@@ -5012,16 +4986,6 @@
    (i32.ne
     (local.get $x)
     (i32.const 2)
-   )
-  )
-  (drop
-   (i32.extend8_s
-    (local.get $x)
-   )
-  )
-  (drop
-   (i32.extend16_s
-    (local.get $x)
    )
   )
   (drop
@@ -5335,80 +5299,6 @@
    )
   )
  )
- (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
-  (memory.copy
-   (local.get $dst)
-   (local.get $dst)
-   (local.get $sz)
-  )
-  (memory.copy
-   (local.get $dst)
-   (local.get $src)
-   (i32.const 0)
-  )
-  (i32.store8
-   (local.get $dst)
-   (i32.load8_u
-    (local.get $src)
-   )
-  )
-  (i32.store16 align=1
-   (local.get $dst)
-   (i32.load16_u align=1
-    (local.get $src)
-   )
-  )
-  (memory.copy
-   (local.get $dst)
-   (local.get $src)
-   (i32.const 3)
-  )
-  (i32.store align=1
-   (local.get $dst)
-   (i32.load align=1
-    (local.get $src)
-   )
-  )
-  (memory.copy
-   (local.get $dst)
-   (local.get $src)
-   (i32.const 5)
-  )
-  (memory.copy
-   (local.get $dst)
-   (local.get $src)
-   (i32.const 6)
-  )
-  (memory.copy
-   (local.get $dst)
-   (local.get $src)
-   (i32.const 7)
-  )
-  (i64.store align=1
-   (local.get $dst)
-   (i64.load align=1
-    (local.get $src)
-   )
-  )
-  (v128.store align=1
-   (local.get $dst)
-   (v128.load align=1
-    (local.get $src)
-   )
-  )
-  (memory.copy
-   (local.get $dst)
-   (local.get $src)
-   (local.get $sz)
-  )
-  (memory.copy
-   (i32.const 0)
-   (i32.const 0)
-   (i32.load
-    (i32.const 3)
-   )
-  )
- )
  (func $optimize-float-points (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
   (drop
    (f64.mul
@@ -5616,6 +5506,131 @@
     )
     (i32.const 24)
    )
+  )
+ )
+)
+(module
+ (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (memory $0 0)
+ (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+  (memory.copy
+   (local.get $dst)
+   (local.get $dst)
+   (local.get $sz)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 0)
+  )
+  (i32.store8
+   (local.get $dst)
+   (i32.load8_u
+    (local.get $src)
+   )
+  )
+  (i32.store16 align=1
+   (local.get $dst)
+   (i32.load16_u align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 3)
+  )
+  (i32.store align=1
+   (local.get $dst)
+   (i32.load align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 5)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 6)
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (i32.const 7)
+  )
+  (i64.store align=1
+   (local.get $dst)
+   (i64.load align=1
+    (local.get $src)
+   )
+  )
+  (v128.store align=1
+   (local.get $dst)
+   (v128.load align=1
+    (local.get $src)
+   )
+  )
+  (memory.copy
+   (local.get $dst)
+   (local.get $src)
+   (local.get $sz)
+  )
+  (memory.copy
+   (i32.const 0)
+   (i32.const 0)
+   (i32.load
+    (i32.const 3)
+   )
+  )
+ )
+)
+(module
+ (type $none_=>_anyref (func (result anyref)))
+ (func $if-arms-subtype-fold (result anyref)
+  (ref.null extern)
+ )
+ (func $if-arms-subtype-nofold (result anyref)
+  (if (result anyref)
+   (i32.const 0)
+   (ref.null extern)
+   (ref.null func)
+  )
+ )
+)
+(module
+ (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
+ (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)
+  (drop
+   (i32.extend8_s
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.extend16_s
+    (local.get $x)
+   )
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (func $test
+  (if
+   (try (result i32)
+    (do
+     (i32.const 123)
+    )
+    (catch
+     (drop
+      (pop exnref)
+     )
+     (i32.const 456)
+    )
+   )
+   (nop)
   )
  )
 )
