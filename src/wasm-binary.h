@@ -1475,19 +1475,20 @@ public:
   // Gets a block of expressions. If it's just one, return that singleton.
   Expression* getBlockOrSingleton(Type type);
 
+  BreakTarget getBreakTarget(int32_t offset);
+
+  void readMemoryAccess(Address& alignment, Address& offset);
+
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
-  BreakTarget getBreakTarget(int32_t offset);
   void visitBreak(Break* curr, uint8_t code);
   void visitSwitch(Switch* curr);
-
   void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitLocalGet(LocalGet* curr);
   void visitLocalSet(LocalSet* curr, uint8_t code);
   void visitGlobalGet(GlobalGet* curr);
   void visitGlobalSet(GlobalSet* curr);
-  void readMemoryAccess(Address& alignment, Address& offset);
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitNontrappingTrunc(Expression*& out, uint32_t code);
