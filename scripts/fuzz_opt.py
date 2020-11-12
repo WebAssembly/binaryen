@@ -429,7 +429,7 @@ class CompareVMs(TestCaseHandler):
 
             def run(self, wasm, extra_d8_flags=[]):
                 run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
-                return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
+                return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 # INITIAL_CONTENT is disallowed because some initial spec testcases
@@ -453,13 +453,11 @@ class CompareVMs(TestCaseHandler):
             def run(self, wasm):
                 return super(D8Liftoff, self).run(wasm, extra_d8_flags=['--liftoff', '--no-wasm-tier-up'])
 
-
         class D8TurboFan(D8):
             name = 'd8_turbofan'
 
             def run(self, wasm):
                 return super(D8TurboFan, self).run(wasm, extra_d8_flags=['--no-liftoff'])
-
 
         class Wasm2C:
             name = 'wasm2c'
@@ -564,7 +562,7 @@ class CompareVMs(TestCaseHandler):
         vm_results = {}
         for vm in self.vms:
             if vm.can_run(wasm):
-                print(f'[CompareVMs] running {vm.name}') 
+                print(f'[CompareVMs] running {vm.name}')
                 vm_results[vm] = fix_output(vm.run(wasm))
 
         # compare between the vms on this specific input
@@ -783,11 +781,11 @@ class Asyncify(TestCaseHandler):
 
 # The global list of all test case handlers
 testcase_handlers = [
-    #FuzzExec(),
+    FuzzExec(),
     CompareVMs(),
-    #CheckDeterminism(),
-    #Wasm2JS(),
-    #Asyncify(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    Asyncify(),
 ]
 
 
