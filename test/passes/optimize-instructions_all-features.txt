@@ -4837,9 +4837,12 @@
    )
   )
   (drop
-   (i32.ne
-    (local.get $x)
-    (i32.const -2147483648)
+   (i32.gt_s
+    (i32.sub
+     (local.get $x)
+     (i32.const -2147483648)
+    )
+    (i32.const 0)
    )
   )
  )
