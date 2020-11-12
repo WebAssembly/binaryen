@@ -5360,6 +5360,58 @@
       )
       (i32.const 0)
     ))
+    ;; i32(x - 0x80000000) == 0  ->  x == 0x80000000
+    (drop (i32.eq
+      (i32.sub
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - 0x80000000) != 0  ->  x == 0x80000000
+    (drop (i32.ne
+      (i32.sub
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - { 0x80000000 }) < 0  ->  skip
+    (drop (i32.lt_s
+      (i32.sub
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - { 0x80000000 }) >= 0  ->  skip
+    (drop (i32.ge_s
+      (i32.sub
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - { 0x80000000 }) > 0  ->  skip
+    (drop (i32.gt_s
+      (i32.sub
+        (local.get $x)
+        (block (result i32)
+          (i32.const 0x80000000)
+        )
+      )
+      (i32.const 0)
+    ))
+    ;; i32(x - { 0x80000000 }) <= 0  ->  skip
+    (drop (i32.gt_s
+      (i32.sub
+        (local.get $x)
+        (block (result i32)
+          (i32.const 0x80000000)
+        )
+      )
+      (i32.const 0)
+    ))
   )
   (func $unsigned-context (param $x i32) (param $y i64)
     (drop (i32.div_s

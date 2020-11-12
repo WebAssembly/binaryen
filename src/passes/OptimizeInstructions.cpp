@@ -1936,31 +1936,27 @@ private:
           }
         }
       }
-      // signed(x - y) <=> 0  =>  x <=> y
-      //
+      // x - y == 0  =>  x == y
+      // x - y != 0  =>  x != y
       // unsigned(x - y) > 0    =>   x != y
       // unsigned(x - y) <= 0   =>   x == y
       {
+        using namespace Abstract;
         using namespace Match;
 
-        BinaryOp op;
         Binary* inner;
         // unsigned(x - y) > 0    =>   x != y
         if (matches(curr,
-                    binary(Abstract::GtU,
-                           binary(&inner, Abstract::Sub, any(), any()),
-                           ival(0)))) {
-          curr->op = Abstract::getBinary(type, Abstract::Ne);
+                    binary(GtU, binary(&inner, Sub, any(), any()), ival(0)))) {
+          curr->op = Abstract::getBinary(type, Ne);
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
         }
         // unsigned(x - y) <= 0   =>   x == y
         if (matches(curr,
-                    binary(Abstract::LeU,
-                           binary(&inner, Abstract::Sub, any(), any()),
-                           ival(0)))) {
-          curr->op = Abstract::getBinary(type, Abstract::Eq);
+                    binary(LeU, binary(&inner, Sub, any(), any()), ival(0)))) {
+          curr->op = Abstract::getBinary(type, Eq);
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
@@ -1970,11 +1966,9 @@ private:
         // This is not true for signed comparisons like x -y < 0 due to overflow
         // effects (e.g. 8 - 0x80000000 < 0 is not the same as 8 < 0x80000000).
         if (matches(curr,
-                    binary(&op,
-                           binary(&inner, Abstract::Sub, any(), any()),
-                           ival(0))) &&
-            (op == Abstract::getBinary(type, Abstract::Eq) ||
-             op == Abstract::getBinary(type, Abstract::Ne))) {
+                    binary(Eq, binary(&inner, Sub, any(), any()), ival(0))) ||
+            matches(curr,
+                    binary(Ne, binary(&inner, Sub, any(), any()), ival(0)))) {
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
