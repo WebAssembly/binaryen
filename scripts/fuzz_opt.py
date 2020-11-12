@@ -169,6 +169,13 @@ def randomize_fuzz_settings():
     print('randomized settings (NaNs, OOB, legalize, extra V8_OPTS):', NANS, OOB, LEGALIZE, extra_v8_opts)
 
 
+IMPORTANT_INITIAL_CONTENTS = [
+    os.path.join('passes', 'optimize-instructions_all-features.wast'),
+    os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+]
+IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
+
+
 def pick_initial_contents():
     # if we use an initial wasm file's contents as the basis for the
     # fuzzing, then that filename, or None if we start entirely from scratch
@@ -178,7 +185,12 @@ def pick_initial_contents():
     # half the time don't use any initial contents
     if random.random() < 0.5:
         return
-    test_name = random.choice(all_tests)
+    # some of the time use initial contents that are known to be especially
+    # important
+    if random.random() < 0.5:
+        test_name = random.choice(IMPORTANT_INITIAL_CONTENTS)
+    else:
+        test_name = random.choice(all_tests)
     print('initial contents:', test_name)
     assert os.path.exists(test_name)
     # tests that check validation errors are not helpful for us
