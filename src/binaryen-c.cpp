@@ -3822,7 +3822,7 @@ void BinaryenFunctionOptimize(BinaryenFunctionRef func,
                               BinaryenModuleRef module) {
   PassRunner passRunner((Module*)module);
   passRunner.options = globalPassOptions;
-  passRunner.addDefaultOptimizationPasses();
+  passRunner.addDefaultFunctionOptimizationPasses();
   passRunner.runOnFunction((Function*)func);
 }
 void BinaryenFunctionRunPasses(BinaryenFunctionRef func,

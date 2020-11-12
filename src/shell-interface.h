@@ -98,7 +98,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
+      if (import->module == SPECTEST && import->base.startsWith("global_")) {
         TODO_SINGLE_COMPOUND(import->type);
         switch (import->type.getBasic()) {
           case Type::i32:

@@ -133,6 +133,57 @@ struct LocalScanner : PostWalker<LocalScanner> {
   }
 };
 
+namespace {
+// perform some final optimizations
+struct FinalOptimizer : public PostWalker<FinalOptimizer> {
+  const PassOptions& passOptions;
+
+  FinalOptimizer(const PassOptions& passOptions) : passOptions(passOptions) {}
+
+  void visitBinary(Binary* curr) {
+    if (auto* replacement = optimize(curr)) {
+      replaceCurrent(replacement);
+    }
+  }
+
+  Binary* optimize(Binary* curr) {
+    using namespace Abstract;
+    using namespace Match;
+    {
+      Const* c;
+      if (matches(curr, binary(Add, any(), ival(&c)))) {
+        // normalize x + (-C)  ==>   x - C
+        if (c->value.isNegative()) {
+          c->value = c->value.neg();
+          curr->op = Abstract::getBinary(c->type, Sub);
+        }
+        // Wasm binary encoding uses signed LEBs, which slightly favor negative
+        // numbers: -64 is more efficient than +64 etc., as well as other powers
+        // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64.
+        // in theory we could just prefer negative numbers over positive, but
+        // that can have bad effects on gzip compression (as it would mean more
+        // subtractions than the more common additions).
+        int64_t value = c->value.getInteger();
+        if (value == 0x40LL || value == 0x2000LL || value == 0x100000LL ||
+            value == 0x8000000LL || value == 0x400000000LL ||
+            value == 0x20000000000LL || value == 0x1000000000000LL ||
+            value == 0x80000000000000LL || value == 0x4000000000000000LL) {
+          c->value = c->value.neg();
+          if (curr->op == Abstract::getBinary(c->type, Add)) {
+            curr->op = Abstract::getBinary(c->type, Sub);
+          } else {
+            curr->op = Abstract::getBinary(c->type, Add);
+          }
+        }
+        return curr;
+      }
+    }
+    return nullptr;
+  }
+};
+
+} // anonymous namespace
+
 // Create a custom matcher for checking side effects
 template<class Opt> struct PureMatcherKind {};
 template<class Opt>
@@ -167,6 +218,10 @@ struct OptimizeInstructions
     }
     // main walk
     super::doWalkFunction(func);
+    {
+      FinalOptimizer optimizer(getPassOptions());
+      optimizer.walkFunction(func);
+    }
   }
 
   void visitExpression(Expression* curr) {
@@ -210,7 +265,7 @@ struct OptimizeInstructions
     FeatureSet features = getModule()->features;
 
     if (auto* binary = curr->dynCast<Binary>()) {
-      if (isSymmetricOrRelational(binary)) {
+      if (shouldCanonicalize(binary)) {
         canonicalize(binary);
       }
     }
@@ -376,8 +431,8 @@ struct OptimizeInstructions
             curr->cast<Binary>()->right = y;
             return curr;
           }
-          // i32(x) <<>> (y & 32)   ==>   x
-          // i64(x) <<>> (y & 64)   ==>   x
+          // i32(x) <<>> (y & C)   ==>   x,  where (C & 31) == 0
+          // i64(x) <<>> (y & C)   ==>   x,  where (C & 63) == 0
           if (((c->type == Type::i32 && (c->value.geti32() & 31) == 0) ||
                (c->type == Type::i64 && (c->value.geti64() & 63LL) == 0LL)) &&
               !effects(y).hasSideEffects()) {
@@ -517,11 +572,8 @@ struct OptimizeInstructions
         }
         // note that both left and right may be consts, but then we let
         // precompute compute the constant result
-      } else if (binary->op == AddInt32 || binary->op == AddInt64) {
-        if (auto* ret = optimizeAddedConstants(binary)) {
-          return ret;
-        }
-      } else if (binary->op == SubInt32 || binary->op == SubInt64) {
+      } else if (binary->op == AddInt32 || binary->op == AddInt64 ||
+                 binary->op == SubInt32 || binary->op == SubInt64) {
         if (auto* ret = optimizeAddedConstants(binary)) {
           return ret;
         }
@@ -895,7 +947,7 @@ private:
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
   void canonicalize(Binary* binary) {
-    assert(isSymmetricOrRelational(binary));
+    assert(shouldCanonicalize(binary));
     auto swap = [&]() {
       assert(canReorder(binary->left, binary->right));
       if (binary->isRelational()) {
@@ -912,7 +964,13 @@ private:
     if (binary->left->is<Const>() && !binary->right->is<Const>()) {
       return swap();
     }
-    if (binary->right->is<Const>()) {
+    if (auto* c = binary->right->dynCast<Const>()) {
+      // x - C  ==>   x + (-C)
+      // Prefer use addition if there is a constant on the right.
+      if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
+        c->value = c->value.neg();
+        binary->op = Abstract::getBinary(c->type, Abstract::Add);
+      }
       return;
     }
     // Prefer a get on the right.
@@ -993,6 +1051,21 @@ private:
           //   binary->op = XorInt32;
           //   return binary;
           // }
+        }
+      } else if (binary->op == RemSInt32) {
+        // bool(i32(x) % C_pot)  ==>  bool(x & (C_pot - 1))
+        // bool(i32(x) % min_s)  ==>  bool(x & max_s)
+        if (auto* c = binary->right->dynCast<Const>()) {
+          if (c->value.isSignedMin() ||
+              Bits::isPowerOf2(c->value.abs().geti32())) {
+            binary->op = AndInt32;
+            if (c->value.isSignedMin()) {
+              c->value = Literal::makeSignedMax(Type::i32);
+            } else {
+              c->value = c->value.abs().sub(Literal::makeOne(Type::i32));
+            }
+            return binary;
+          }
         }
       }
       if (auto* ext = Properties::getSignExtValue(binary)) {
@@ -1199,17 +1272,15 @@ private:
         auto type = curr->type;
         auto* left = curr->left->dynCast<Const>();
         auto* right = curr->right->dynCast<Const>();
+        // Canonicalization prefers an add instead of a subtract wherever
+        // possible. That prevents a subtracted constant on the right,
+        // as it would be added. And for a zero on the left, it can't be
+        // removed (it is how we negate ints).
         if (curr->op == Abstract::getBinary(type, Abstract::Add)) {
           if (left && left->value.isZero()) {
             replaceCurrent(curr->right);
             return;
           }
-          if (right && right->value.isZero()) {
-            replaceCurrent(curr->left);
-            return;
-          }
-        } else if (curr->op == Abstract::getBinary(type, Abstract::Sub)) {
-          // we must leave a left zero, as it is how we negate ints
           if (right && right->value.isZero()) {
             replaceCurrent(curr->left);
             return;
@@ -1592,9 +1663,27 @@ private:
       curr->type = Type::i32;
       return Builder(*getModule()).makeUnary(ExtendUInt32, curr);
     }
-    // (unsigned)x > -1   ==>   0
+    // (unsigned)x < 0   ==>   i32(0)
+    if (matches(curr, binary(LtU, pure(&left), ival(0)))) {
+      right->value = Literal::makeZero(Type::i32);
+      right->type = Type::i32;
+      return right;
+    }
+    // (unsigned)x <= -1  ==>   i32(1)
+    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
+      right->value = Literal::makeOne(Type::i32);
+      right->type = Type::i32;
+      return right;
+    }
+    // (unsigned)x > -1   ==>   i32(0)
     if (matches(curr, binary(GtU, pure(&left), ival(-1)))) {
       right->value = Literal::makeZero(Type::i32);
+      right->type = Type::i32;
+      return right;
+    }
+    // (unsigned)x >= 0   ==>   i32(1)
+    if (matches(curr, binary(GeU, pure(&left), ival(0)))) {
+      right->value = Literal::makeOne(Type::i32);
       right->type = Type::i32;
       return right;
     }
@@ -1605,6 +1694,76 @@ private:
       curr->op = Abstract::getBinary(type, Ne);
       return curr;
     }
+    // (unsigned)x <= 0   ==>   x == 0
+    if (matches(curr, binary(LeU, any(), ival(0)))) {
+      curr->op = Abstract::getBinary(type, Eq);
+      return curr;
+    }
+    // (unsigned)x > 0   ==>   x != 0
+    if (matches(curr, binary(GtU, any(), ival(0)))) {
+      curr->op = Abstract::getBinary(type, Ne);
+      return curr;
+    }
+    // (unsigned)x >= -1  ==>   x == -1
+    if (matches(curr, binary(GeU, any(), ival(-1)))) {
+      curr->op = Abstract::getBinary(type, Eq);
+      return curr;
+    }
+    {
+      Const* c;
+      // (signed)x < (i32|i64).min_s   ==>   i32(0)
+      if (matches(curr, binary(LtS, pure(&left), ival(&c))) &&
+          c->value.isSignedMin()) {
+        right->value = Literal::makeZero(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+      // (signed)x <= (i32|i64).max_s   ==>   i32(1)
+      if (matches(curr, binary(LeS, pure(&left), ival(&c))) &&
+          c->value.isSignedMax()) {
+        right->value = Literal::makeOne(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+      // (signed)x > (i32|i64).max_s   ==>   i32(0)
+      if (matches(curr, binary(GtS, pure(&left), ival(&c))) &&
+          c->value.isSignedMax()) {
+        right->value = Literal::makeZero(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+      // (signed)x >= (i32|i64).min_s   ==>   i32(1)
+      if (matches(curr, binary(GeS, pure(&left), ival(&c))) &&
+          c->value.isSignedMin()) {
+        right->value = Literal::makeOne(Type::i32);
+        right->type = Type::i32;
+        return right;
+      }
+      // (signed)x < (i32|i64).max_s   ==>   x != (i32|i64).max_s
+      if (matches(curr, binary(LtS, any(), ival(&c))) &&
+          c->value.isSignedMax()) {
+        curr->op = Abstract::getBinary(type, Ne);
+        return curr;
+      }
+      // (signed)x <= (i32|i64).min_s   ==>   x == (i32|i64).min_s
+      if (matches(curr, binary(LeS, any(), ival(&c))) &&
+          c->value.isSignedMin()) {
+        curr->op = Abstract::getBinary(type, Eq);
+        return curr;
+      }
+      // (signed)x > (i32|i64).min_s   ==>   x != (i32|i64).min_s
+      if (matches(curr, binary(GtS, any(), ival(&c))) &&
+          c->value.isSignedMin()) {
+        curr->op = Abstract::getBinary(type, Ne);
+        return curr;
+      }
+      // (signed)x >= (i32|i64).max_s   ==>   x == (i32|i64).max_s
+      if (matches(curr, binary(GeS, any(), ival(&c))) &&
+          c->value.isSignedMax()) {
+        curr->op = Abstract::getBinary(type, Eq);
+        return curr;
+      }
+    }
     // x * -1   ==>   0 - x
     if (matches(curr, binary(Mul, any(&left), ival(-1)))) {
       right->value = Literal::makeZero(type);
@@ -1612,12 +1771,6 @@ private:
       curr->left = right;
       curr->right = left;
       return curr;
-    }
-    // (unsigned)x <= -1   ==>   1
-    if (matches(curr, binary(LeU, pure(&left), ival(-1)))) {
-      right->value = Literal::makeOne(Type::i32);
-      right->type = Type::i32;
-      return right;
     }
     {
       // ~(1 << x) aka (1 << x) ^ -1  ==>  rotl(-2, x)
@@ -1627,30 +1780,6 @@ private:
         right->value = Literal::makeFromInt32(-2, type);
         curr->left = right;
         curr->right = x;
-        return curr;
-      }
-    }
-    {
-      // Wasm binary encoding uses signed LEBs, which slightly favor negative
-      // numbers: -64 is more efficient than +64 etc., as well as other powers
-      // of two 7 bits etc. higher. we therefore prefer x - -64 over x + 64. in
-      // theory we could just prefer negative numbers over positive, but that
-      // can have bad effects on gzip compression (as it would mean more
-      // subtractions than the more common additions). TODO: Simplify this by
-      // adding an ival matcher than can bind int64_t vars.
-      int64_t value;
-      if ((matches(curr, binary(Add, any(), ival(&value))) ||
-           matches(curr, binary(Sub, any(), ival(&value)))) &&
-          (value == 0x40 || value == 0x2000 || value == 0x100000 ||
-           value == 0x8000000 || value == 0x400000000LL ||
-           value == 0x20000000000LL || value == 0x1000000000000LL ||
-           value == 0x80000000000000LL || value == 0x4000000000000000LL)) {
-        right->value = right->value.neg();
-        if (matches(curr, binary(Add, any(), constant()))) {
-          curr->op = Abstract::getBinary(type, Sub);
-        } else {
-          curr->op = Abstract::getBinary(type, Add);
-        }
         return curr;
       }
     }
@@ -1755,24 +1884,11 @@ private:
         curr->right = x;
         return curr;
       }
-      // C1 - (x - C2)  ==>  (C1 + C2) - x
-      if (matches(curr,
-                  binary(Sub, ival(&c1), binary(Sub, any(&x), ival(&c2))))) {
-        left->value = c1->value.add(c2->value);
-        curr->right = x;
-        return curr;
-      }
       // C1 - (C2 - x)  ==>   x + (C1 - C2)
       if (matches(curr,
                   binary(Sub, ival(&c1), binary(Sub, ival(&c2), any(&x))))) {
         left->value = c1->value.sub(c2->value);
-        if (left->value.isNegative()) {
-          // -C1 - (C2 - x)  ==>  x - (C1 - C2)
-          left->value = left->value.neg();
-          curr->op = Abstract::getBinary(type, Sub);
-        } else {
-          curr->op = Abstract::getBinary(type, Add);
-        }
+        curr->op = Abstract::getBinary(type, Add);
         curr->right = x;
         std::swap(curr->left, curr->right);
         return curr;
@@ -1802,17 +1918,14 @@ private:
           // x + 5 == 7
           //   =>
           //     x == 2
-          if (left->op == Abstract::getBinary(type, Abstract::Add) ||
-              left->op == Abstract::getBinary(type, Abstract::Sub)) {
+          if (left->op == Abstract::getBinary(type, Abstract::Add)) {
             if (auto* leftConst = left->right->dynCast<Const>()) {
               if (auto* rightConst = curr->right->dynCast<Const>()) {
                 return combineRelationalConstants(
                   curr, left, leftConst, nullptr, rightConst);
               } else if (auto* rightBinary = curr->right->dynCast<Binary>()) {
                 if (rightBinary->op ==
-                      Abstract::getBinary(type, Abstract::Add) ||
-                    rightBinary->op ==
-                      Abstract::getBinary(type, Abstract::Sub)) {
+                    Abstract::getBinary(type, Abstract::Add)) {
                   if (auto* rightConst = rightBinary->right->dynCast<Const>()) {
                     return combineRelationalConstants(
                       curr, left, leftConst, rightBinary, rightConst);
@@ -2307,7 +2420,11 @@ private:
     }
   }
 
-  bool isSymmetricOrRelational(Binary* binary) {
+  bool shouldCanonicalize(Binary* binary) {
+    if ((binary->op == SubInt32 || binary->op == SubInt64) &&
+        binary->right->is<Const>() && !binary->left->is<Const>()) {
+      return true;
+    }
     if (Properties::isSymmetric(binary) || binary->isRelational()) {
       return true;
     }
@@ -2331,6 +2448,6 @@ private:
   }
 };
 
-Pass* createOptimizeInstructionsPass() { return new OptimizeInstructions(); }
+Pass* createOptimizeInstructionsPass() { return new OptimizeInstructions; }
 
 } // namespace wasm

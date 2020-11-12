@@ -92,6 +92,37 @@ bool isTableExported(Module& wasm) {
   return false;
 }
 
+bool hasActiveSegments(Module& wasm) {
+  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+    if (!wasm.memory.segments[i].isPassive) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool needsBufferView(Module& wasm) {
+  if (!wasm.memory.exists) {
+    return false;
+  }
+
+  // If there are any active segments, initActiveSegments needs access
+  // to bufferView.
+  if (hasActiveSegments(wasm)) {
+    return true;
+  }
+
+  // The special support functions are emitted as part of the JS glue, if we
+  // need them.
+  bool need = false;
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (ABI::wasm2js::isHelper(import->base)) {
+      need = true;
+    }
+  });
+  return need;
+}
+
 IString stringToIString(std::string str) { return IString(str.c_str(), false); }
 
 // Used when taking a wasm name and generating a JS identifier. Each scope here
@@ -381,9 +412,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   Ref ret = ValueBuilder::makeToplevel();
   Ref asmFunc = ValueBuilder::makeFunction(funcName);
   ret[1]->push_back(asmFunc);
-  ValueBuilder::appendArgumentToFunction(asmFunc, GLOBAL);
   ValueBuilder::appendArgumentToFunction(asmFunc, ENV);
 
+  // add memory import
   if (wasm->memory.exists) {
     if (wasm->memory.imported()) {
       // find memory and buffer in imports
@@ -415,8 +446,15 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
             ValueBuilder::makeName(WASM_MEMORY_GROW))));
       }
     } else {
-      // find memory as third argument
-      ValueBuilder::appendArgumentToFunction(asmFunc, BUFFER);
+      Ref theVar = ValueBuilder::makeVar();
+      asmFunc[3]->push_back(theVar);
+      ValueBuilder::appendToVar(
+        theVar,
+        BUFFER,
+        ValueBuilder::makeNew(ValueBuilder::makeCall(
+          ValueBuilder::makeName("ArrayBuffer"),
+          ValueBuilder::makeInt(Address::address32_t(wasm->memory.initial.addr *
+                                                     Memory::kPageSize)))));
     }
   }
 
@@ -429,6 +467,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       FUNCTION_TABLE,
       ValueBuilder::makeDot(ValueBuilder::makeName(ENV), wasm->table.base));
   }
+
   // create heaps, etc
   addBasics(asmFunc[3], wasm);
   ModuleUtils::iterImportedFunctions(
@@ -479,6 +518,18 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS\n"));
   }
 
+  if (needsBufferView(*wasm)) {
+    asmFunc[3]->push_back(
+      ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
+                               SET,
+                               ValueBuilder::makeName(HEAPU8)));
+  }
+  if (hasActiveSegments(*wasm)) {
+    asmFunc[3]->push_back(
+      ValueBuilder::makeCall(ValueBuilder::makeName("initActiveSegments"),
+                             ValueBuilder::makeName(ENV)));
+  }
+
   addTable(asmFunc[3], wasm);
   addStart(asmFunc[3], wasm);
   addExports(asmFunc[3], wasm);
@@ -491,12 +542,10 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
     auto addHeap = [&](IString name, IString view) {
       Ref theVar = ValueBuilder::makeVar();
       ast->push_back(theVar);
-      ValueBuilder::appendToVar(
-        theVar,
-        name,
-        ValueBuilder::makeNew(ValueBuilder::makeCall(
-          ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), view),
-          ValueBuilder::makeName(BUFFER))));
+      ValueBuilder::appendToVar(theVar,
+                                name,
+                                ValueBuilder::makeNew(ValueBuilder::makeCall(
+                                  view, ValueBuilder::makeName(BUFFER))));
     };
     addHeap(HEAP8, INT8ARRAY);
     addHeap(HEAP16, INT16ARRAY);
@@ -512,10 +561,7 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
     Ref theVar = ValueBuilder::makeVar();
     ast->push_back(theVar);
     ValueBuilder::appendToVar(
-      theVar,
-      name,
-      ValueBuilder::makeDot(
-        ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), MATH), base));
+      theVar, name, ValueBuilder::makeDot(ValueBuilder::makeName(MATH), base));
   };
   addMath(MATH_IMUL, IMUL);
   addMath(MATH_FROUND, FROUND);
@@ -525,6 +571,7 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
   addMath(MATH_MAX, MAX);
   addMath(MATH_FLOOR, FLOOR);
   addMath(MATH_CEIL, CEIL);
+  addMath(MATH_TRUNC, TRUNC);
   addMath(MATH_SQRT, SQRT);
   // abort function
   Ref abortVar = ValueBuilder::makeVar();
@@ -537,16 +584,11 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
   // NaN and Infinity variables
   Ref nanVar = ValueBuilder::makeVar();
   ast->push_back(nanVar);
-  ValueBuilder::appendToVar(
-    nanVar,
-    "nan",
-    ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), "NaN"));
+  ValueBuilder::appendToVar(nanVar, "nan", ValueBuilder::makeName("NaN"));
   Ref infinityVar = ValueBuilder::makeVar();
   ast->push_back(infinityVar);
   ValueBuilder::appendToVar(
-    infinityVar,
-    "infinity",
-    ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), "Infinity"));
+    infinityVar, "infinity", ValueBuilder::makeName("Infinity"));
 }
 
 void Wasm2JSBuilder::addFunctionImport(Ref ast, Function* import) {
@@ -1624,6 +1666,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ret = ValueBuilder::makeCall(
                 MATH_FLOOR, visit(curr->value, EXPRESSION_RESULT));
               break;
+            case TruncFloat32:
+            case TruncFloat64:
+              ret = ValueBuilder::makeCall(
+                MATH_TRUNC, visit(curr->value, EXPRESSION_RESULT));
+              break;
             case SqrtFloat32:
             case SqrtFloat64:
               ret = ValueBuilder::makeCall(
@@ -1677,8 +1724,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             // TODO: more complex unary conversions
             case NearestFloat32:
             case NearestFloat64:
-            case TruncFloat32:
-            case TruncFloat64:
               WASM_UNREACHABLE(
                 "operation should have been removed in previous passes");
 
@@ -2293,12 +2338,11 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
 
   Ref newHEAP8 = ValueBuilder::makeVar();
   ValueBuilder::appendToBlock(block, newHEAP8);
-  ValueBuilder::appendToVar(
-    newHEAP8,
-    IString("newHEAP8"),
-    ValueBuilder::makeNew(ValueBuilder::makeCall(
-      ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), INT8ARRAY),
-      ValueBuilder::makeName(IString("newBuffer")))));
+  ValueBuilder::appendToVar(newHEAP8,
+                            IString("newHEAP8"),
+                            ValueBuilder::makeNew(ValueBuilder::makeCall(
+                              ValueBuilder::makeName(INT8ARRAY),
+                              ValueBuilder::makeName(IString("newBuffer")))));
 
   ValueBuilder::appendToBlock(
     block,
@@ -2307,12 +2351,6 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
                             IString("set")),
       ValueBuilder::makeName(HEAP8)));
 
-  ValueBuilder::appendToBlock(
-    block,
-    ValueBuilder::makeBinary(ValueBuilder::makeName(HEAP8),
-                             SET,
-                             ValueBuilder::makeName(IString("newHEAP8"))));
-
   auto setHeap = [&](IString name, IString view) {
     ValueBuilder::appendToBlock(
       block,
@@ -2320,7 +2358,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
         ValueBuilder::makeName(name),
         SET,
         ValueBuilder::makeNew(ValueBuilder::makeCall(
-          ValueBuilder::makeDot(ValueBuilder::makeName(GLOBAL), view),
+          ValueBuilder::makeName(view),
           ValueBuilder::makeName(IString("newBuffer"))))));
   };
 
@@ -2347,7 +2385,15 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
         ValueBuilder::makeDot(ValueBuilder::makeName("memory"),
                               ValueBuilder::makeName(BUFFER)),
         SET,
-        ValueBuilder::makeName(IString("newBuffer"))));
+        ValueBuilder::makeName(BUFFER)));
+  }
+
+  if (needsBufferView(*wasm)) {
+    ValueBuilder::appendToBlock(
+      block,
+      ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
+                               SET,
+                               ValueBuilder::makeName(HEAPU8)));
   }
 
   memoryGrowFunc[3]->push_back(
@@ -2381,9 +2427,7 @@ private:
   void emitPostEmscripten();
   void emitPostES6();
 
-  void emitMemory(std::string buffer,
-                  std::string segmentWriter,
-                  std::function<std::string(std::string)> accessGlobal);
+  void emitMemory();
   void emitSpecialSupport();
 };
 
@@ -2415,11 +2459,12 @@ void Wasm2JSGlue::emitPre() {
         << "}\n\n";
   }
 
+  emitMemory();
   emitSpecialSupport();
 }
 
 void Wasm2JSGlue::emitPreEmscripten() {
-  out << "function instantiate(asmLibraryArg, wasmMemory) {\n";
+  out << "function instantiate(asmLibraryArg) {\n";
 }
 
 void Wasm2JSGlue::emitPreES6() {
@@ -2466,29 +2511,7 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  emitMemory("wasmMemory.buffer", "writeSegment", [](std::string globalName) {
-    return std::string("asmLibraryArg['") + asmangle(globalName) + "']";
-  });
-
-  out << "return asmFunc({\n"
-      << "    'Int8Array': Int8Array,\n"
-      << "    'Int16Array': Int16Array,\n"
-      << "    'Int32Array': Int32Array,\n"
-      << "    'Uint8Array': Uint8Array,\n"
-      << "    'Uint16Array': Uint16Array,\n"
-      << "    'Uint32Array': Uint32Array,\n"
-      << "    'Float32Array': Float32Array,\n"
-      << "    'Float64Array': Float64Array,\n"
-      << "    'NaN': NaN,\n"
-      << "    'Infinity': Infinity,\n"
-      << "    'Math': Math\n"
-      << "  },\n"
-      << "  asmLibraryArg,\n"
-      << "  wasmMemory.buffer\n"
-      << ")"
-      << "\n"
-      << "\n"
-      << "}";
+  out << "  return asmFunc(asmLibraryArg);\n}\n";
 }
 
 void Wasm2JSGlue::emitPostES6() {
@@ -2498,32 +2521,15 @@ void Wasm2JSGlue::emitPostES6() {
   //
   // Note that the translation here expects that the lower values of this memory
   // can be used for conversions, so make sure there's at least one page.
-  if (wasm.memory.exists) {
+  if (wasm.memory.exists && wasm.memory.imported()) {
     out << "var mem" << moduleName.str << " = new ArrayBuffer("
         << wasm.memory.initial.addr * Memory::kPageSize << ");\n";
-
-    emitMemory(std::string("mem") + moduleName.str,
-               std::string("assign") + moduleName.str,
-               [](std::string globalName) { return globalName; });
   }
 
   // Actually invoke the `asmFunc` generated function, passing in all global
   // values followed by all imports
-  out << "var ret" << moduleName.str << " = " << moduleName.str << "({\n"
-      << "    Math,\n"
-      << "    Int8Array,\n"
-      << "    Uint8Array,\n"
-      << "    Int16Array,\n"
-      << "    Uint16Array,\n"
-      << "    Int32Array,\n"
-      << "    Uint32Array,\n"
-      << "    Float32Array,\n"
-      << "    Float64Array,\n"
-      << "    NaN,\n"
-      << "    Infinity\n"
-      << "  }, {\n";
-
-  out << "    abort: function() { throw new Error('abort'); }";
+  out << "var ret" << moduleName.str << " = " << moduleName.str << "(";
+  out << "  { abort: function() { throw new Error('abort'); }";
 
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     // The special helpers are emitted in the glue, see code and comments
@@ -2553,11 +2559,7 @@ void Wasm2JSGlue::emitPostES6() {
     out << ",\n    " << asmangle(import->base.str);
   });
 
-  if (wasm.memory.exists && !wasm.memory.imported()) {
-    out << "\n  },\n  mem" << moduleName.str << "\n);\n";
-  } else {
-    out << "\n  });\n";
-  }
+  out << "\n  });\n";
 
   if (flags.allowAsserts) {
     return;
@@ -2588,28 +2590,35 @@ void Wasm2JSGlue::emitPostES6() {
   }
 }
 
-void Wasm2JSGlue::emitMemory(
-  std::string buffer,
-  std::string segmentWriter,
-  std::function<std::string(std::string)> accessGlobal) {
-  if (!wasm.memory.exists) {
-    return;
+void Wasm2JSGlue::emitMemory() {
+  if (needsBufferView(wasm)) {
+    // Create a helper bufferView to access the buffer if we need one. We use it
+    // for creating memory segments if we have any (we may not if the segments
+    // are shipped in a side .mem file, for example), and also in bulk memory
+    // operations.
+    // This will get assigned during `asmFunc` (and potentially re-assigned
+    // during __wasm_memory_grow).
+    // TODO: We should probably just share a single HEAPU8 var.
+    out << "  var bufferView;\n";
   }
-  // Create a helper bufferView to access the buffer if we need one. We use it
-  // for creating memory segments if we have any (we may not if the segments are
-  // shipped in a side .mem file, for example), and also in bulk memory
-  // operations.
-  if (!wasm.memory.segments.empty() || wasm.features.hasBulkMemory()) {
-    out << "var bufferView = new Uint8Array(" << buffer << ");\n";
-  }
+
   // If there are no memory segments, we don't need to emit any support code for
   // segment creation.
-  if (wasm.memory.segments.empty()) {
+  if ((!wasm.memory.exists) || wasm.memory.segments.empty()) {
     return;
   }
 
+  // If we have passive memory segments, we need to store those.
+  for (auto& seg : wasm.memory.segments) {
+    if (seg.isPassive) {
+      out << "  var memorySegments = {};\n";
+      break;
+    }
+  }
+
   out <<
-    R"(for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
+    R"(  var base64ReverseLookup = new Uint8Array(123/*'z'+1*/);
+  for (var i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
     base64ReverseLookup[97+i] = 26+i; // 'a-z'
@@ -2632,29 +2641,13 @@ void Wasm2JSGlue::emitMemory(
     out << R"(
     return uint8Array;)";
   }
-  out << R"( 
+  out << R"(
   }
-  )";
-
-  auto globalOffset = [&](const Memory::Segment& segment) {
-    if (auto* c = segment.offset->dynCast<Const>()) {
-      return std::to_string(c->value.getInteger());
-    }
-    if (auto* get = segment.offset->dynCast<GlobalGet>()) {
-      auto internalName = get->name;
-      auto importedName = wasm.getGlobal(internalName)->base;
-      return accessGlobal(asmangle(importedName.str));
-    }
-    Fatal() << "non-constant offsets aren't supported yet\n";
-  };
+)";
 
   for (Index i = 0; i < wasm.memory.segments.size(); i++) {
     auto& seg = wasm.memory.segments[i];
-    if (!seg.isPassive) {
-      // Plain active segments are decoded directly into the main memory.
-      out << "base64DecodeToExistingUint8Array(bufferView, "
-          << globalOffset(seg) << ", \"" << base64Encode(seg.data) << "\");\n";
-    } else {
+    if (seg.isPassive) {
       // Fancy passive segments are decoded into typed arrays on the side, for
       // later copying.
       out << "memorySegments[" << i
@@ -2662,6 +2655,32 @@ void Wasm2JSGlue::emitMemory(
           << seg.data.size() << ")"
           << ", 0, \"" << base64Encode(seg.data) << "\");\n";
     }
+  }
+
+  if (hasActiveSegments(wasm)) {
+    auto globalOffset = [&](const Memory::Segment& segment) {
+      if (auto* c = segment.offset->dynCast<Const>()) {
+        return std::to_string(c->value.getInteger());
+      }
+      if (auto* get = segment.offset->dynCast<GlobalGet>()) {
+        auto internalName = get->name;
+        auto importedName = wasm.getGlobal(internalName)->base;
+        return std::string("imports[") + asmangle(importedName.str) + "]";
+      }
+      Fatal() << "non-constant offsets aren't supported yet\n";
+    };
+
+    out << "function initActiveSegments(imports) {\n";
+    for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+      auto& seg = wasm.memory.segments[i];
+      if (!seg.isPassive) {
+        // Plain active segments are decoded directly into the main memory.
+        out << "  base64DecodeToExistingUint8Array(bufferView, "
+            << globalOffset(seg) << ", \"" << base64Encode(seg.data)
+            << "\");\n";
+      }
+    }
+    out << "}\n";
   }
 }
 
@@ -2737,15 +2756,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
   var f64ScratchView = new Float64Array(scratchBuffer);
   )";
 
-  // If we have passive memory segments, or bulk memory operations that operate
-  // on segment indexes, we need to store those.
-  bool needMemorySegmentsList = false;
-  for (auto& seg : wasm.memory.segments) {
-    if (seg.isPassive) {
-      needMemorySegmentsList = true;
-    }
-  }
-
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (import->base == ABI::wasm2js::SCRATCH_STORE_I32) {
       out << R"(
@@ -2784,7 +2794,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
   }
       )";
     } else if (import->base == ABI::wasm2js::MEMORY_INIT) {
-      needMemorySegmentsList = true;
       out << R"(
   function wasm2js_memory_init(segment, dest, offset, size) {
     // TODO: traps on invalid things
@@ -2808,7 +2817,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
   }
       )";
     } else if (import->base == ABI::wasm2js::DATA_DROP) {
-      needMemorySegmentsList = true;
       out << R"(
   function wasm2js_data_drop(segment) {
     // TODO: traps on invalid things
@@ -2878,12 +2886,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
       )";
     }
   });
-
-  if (needMemorySegmentsList) {
-    out << R"(
-  var memorySegments = {};
-    )";
-  }
 
   out << '\n';
 }

@@ -4517,6 +4517,24 @@
       )
       (i32.const 0)
     ))
+    ;; (signed)x % 4 ? 1 : 0
+    (drop (if (result i32)
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 4)
+      )
+      (i32.const 1)
+      (i32.const 0)
+    ))
+    ;; (signed)x % min_s ? 1 : 0
+    (drop (if (result i32)
+      (i32.rem_s
+        (local.get $x)
+        (i32.const 0x80000000)
+      )
+      (i32.const 1)
+      (i32.const 0)
+    ))
   )
   (func $optimize-bitwise-oprations (param $x i32) (param $y i32) (param $z i64) (param $w i64)
     ;; ~(1 << x)  ->  rotl(-2, x)
@@ -4670,6 +4688,7 @@
       (local.get $y)
       (i64.const -1)
     ))
+    ;; (unsigned)x > -1   ==>   0
     (drop (i32.gt_u
       (local.get $x)
       (i32.const -1)
@@ -4706,6 +4725,24 @@
       (i32.const -1)
     ))
     (drop (i64.le_s
+      (local.get $y)
+      (i64.const -1)
+    ))
+    ;; (unsigned)x >= -1   ==>   x == -1
+    (drop (i32.ge_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.ge_u
+      (local.get $y)
+      (i64.const -1)
+    ))
+    ;; (unsigned)x < -1   ==>   x != -1
+    (drop (i32.lt_u
+      (local.get $x)
+      (i32.const -1)
+    ))
+    (drop (i64.lt_u
       (local.get $y)
       (i64.const -1)
     ))
@@ -4784,6 +4821,134 @@
     (drop (i64.div_u
       (local.get $y)
       (i64.const -9223372036854775808)
+    ))
+
+    ;; (unsigned)x >= 0  =>  i32(1)
+    (drop (i32.ge_u
+      (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i64.ge_u
+      (local.get $y)
+      (i64.const 0)
+    ))
+
+    ;; (unsigned)x < 0  =>  i32(0)
+    (drop (i32.lt_u
+      (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i64.lt_u
+      (local.get $y)
+      (i64.const 0)
+    ))
+
+    ;; (unsigned)x > 0  =>  x != 0
+    (drop (i32.gt_u
+      (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i64.gt_u
+      (local.get $y)
+      (i64.const 0)
+    ))
+
+    ;; (unsigned)x <= 0  =>  x == 0
+    (drop (i32.le_u
+      (local.get $x)
+      (i32.const 0)
+    ))
+    (drop (i64.le_u
+      (local.get $y)
+      (i64.const 0)
+    ))
+
+    ;; i32(x) <= 0x7fffffff  =>  i32(1)
+    (drop (i32.le_s
+      (local.get $x)
+      (i32.const 0x7fffffff)
+    ))
+    ;; i64(x) <= 0x7fffffffffffffff  =>  i32(1)
+    (drop (i64.le_s
+      (local.get $y)
+      (i64.const 0x7fffffffffffffff)
+    ))
+
+    ;; i32(x) >= 0x80000000  =>  i32(1)
+    (drop (i32.ge_s
+      (local.get $x)
+      (i32.const 0x80000000)
+    ))
+    ;; i64(x) >= 0x8000000000000000  =>  i32(1)
+    (drop (i64.ge_s
+      (local.get $y)
+      (i64.const 0x8000000000000000)
+    ))
+
+    ;; i32(x) < 0x80000000  =>  0
+    (drop (i32.lt_s
+      (local.get $x)
+      (i32.const 0x80000000)
+    ))
+    ;; i64(x) < 0x8000000000000000  =>  0
+    (drop (i64.lt_s
+      (local.get $y)
+      (i64.const 0x8000000000000000)
+    ))
+
+    ;; i32(x) > 0x7fffffff  =>  0
+    (drop (i32.gt_s
+      (local.get $x)
+      (i32.const 0x7fffffff)
+    ))
+    ;; i64(x) > 0x7fffffffffffffff  =>  0
+    (drop (i64.gt_s
+      (local.get $y)
+      (i64.const 0x7fffffffffffffff)
+    ))
+
+    ;; i32(x) < 0x7fffffff  =>  x != 0x7fffffff
+    (drop (i32.lt_s
+      (local.get $x)
+      (i32.const 0x7fffffff)
+    ))
+    ;; i64(x) < 0x7fffffffffffffff  =>  x != 0x7fffffffffffffff
+    (drop (i64.lt_s
+      (local.get $y)
+      (i64.const 0x7fffffffffffffff)
+    ))
+
+    ;; i32(x) > 0x80000000  =>  x != 0x80000000
+    (drop (i32.gt_s
+      (local.get $x)
+      (i32.const 0x80000000)
+    ))
+    ;; i64(x) > 0x8000000000000000  =>  x != 0x8000000000000000
+    (drop (i64.gt_s
+      (local.get $y)
+      (i64.const 0x8000000000000000)
+    ))
+
+    ;; i32(x) <= 0x80000000  =>  x == 0x80000000
+    (drop (i32.le_s
+      (local.get $x)
+      (i32.const 0x80000000)
+    ))
+    ;; i64(x) <= 0x8000000000000000  =>  x == 0x8000000000000000
+    (drop (i64.le_s
+      (local.get $y)
+      (i64.const 0x8000000000000000)
+    ))
+
+    ;; i32(x) >= 0x7fffffff  =>  x == 0x7fffffff
+    (drop (i32.ge_s
+      (local.get $x)
+      (i32.const 0x7fffffff)
+    ))
+    ;; i64(x) >= 0x7fffffffffffffff  =>  x == 0x7fffffffffffffff
+    (drop (i64.ge_s
+      (local.get $y)
+      (i64.const 0x7fffffffffffffff)
     ))
 
     ;; -x * 1  =>  x * -1

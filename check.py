@@ -286,37 +286,24 @@ def run_gcc_tests():
 
     for t in sorted(os.listdir(shared.get_test_dir('example'))):
         output_file = 'example'
-        cmd = ['-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-pthread', '-o', output_file]
-        if t.endswith('.txt'):
-            # check if there is a trace in the file, if so, we should build it
-            out = subprocess.check_output([os.path.join(shared.options.binaryen_root, 'scripts', 'clean_c_api_trace.py'), os.path.join(shared.get_test_dir('example'), t)])
-            if len(out) == 0:
-                print('  (no trace in ', t, ')')
-                continue
-            print('  (will check trace in ', t, ')')
-            src = 'trace.cpp'
-            with open(src, 'wb') as o:
-                o.write(out)
-            expected = os.path.join(shared.get_test_dir('example'), t + '.txt')
-        else:
-            src = os.path.join(shared.get_test_dir('example'), t)
-            expected = os.path.join(shared.get_test_dir('example'), '.'.join(t.split('.')[:-1]) + '.txt')
-        if src.endswith(('.c', '.cpp')):
-            # build the C file separately
-            libpath = os.path.join(os.path.dirname(shared.options.binaryen_bin),  'lib')
-            extra = [shared.NATIVECC, src, '-c', '-o', 'example.o',
-                     '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
-            if src.endswith('.cpp'):
-                extra += ['-std=c++' + str(shared.cxx_standard)]
-            if os.environ.get('COMPILER_FLAGS'):
-                for f in os.environ.get('COMPILER_FLAGS').split(' '):
-                    extra.append(f)
-            print('build: ', ' '.join(extra))
-            subprocess.check_call(extra)
-            # Link against the binaryen C library DSO, using an executable-relative rpath
-            cmd = ['example.o', '-L' + libpath, '-lbinaryen'] + cmd + ['-Wl,-rpath,' + libpath]
-        else:
+        cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]
+        if not t.endswith(('.c', '.cpp')):
             continue
+        src = os.path.join(shared.get_test_dir('example'), t)
+        expected = os.path.join(shared.get_test_dir('example'), '.'.join(t.split('.')[:-1]) + '.txt')
+        # build the C file separately
+        libpath = shared.options.binaryen_lib
+        extra = [shared.NATIVECC, src, '-c', '-o', 'example.o',
+                 '-I' + os.path.join(shared.options.binaryen_root, 'src'), '-g', '-L' + libpath, '-pthread']
+        if src.endswith('.cpp'):
+            extra += ['-std=c++' + str(shared.cxx_standard)]
+        if os.environ.get('COMPILER_FLAGS'):
+            for f in os.environ.get('COMPILER_FLAGS').split(' '):
+                extra.append(f)
+        print('build: ', ' '.join(extra))
+        subprocess.check_call(extra)
+        # Link against the binaryen C library DSO, using an executable-relative rpath
+        cmd = ['example.o', '-L' + libpath, '-lbinaryen'] + cmd + ['-Wl,-rpath,' + libpath]
         print('  ', t, src, expected)
         if os.environ.get('COMPILER_FLAGS'):
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
