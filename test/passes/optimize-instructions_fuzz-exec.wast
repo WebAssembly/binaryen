@@ -203,4 +203,47 @@
   )
  )
 )
-
+(module
+ (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (func "foo" (param $0 i32)
+  ;; 8 - 0x80000000 < 0
+  ;;
+  ;; is not the same as
+  ;;
+  ;; 8 < 0x80000000
+  ;;
+  ;; because of overflow. the former is true, the latter is false
+  (call $log
+   (i32.le_s
+    (i32.sub
+     (i32.const 8)
+     (block $label$1 (result i32) ;; the block prevents us from optimizing this
+                                  ;; which would avoid the issue. a global or a
+                                  ;; call would do the same, all would make the
+                                  ;; value only visible at runtime
+      (i32.const 0x80000000)
+     )
+    )
+    (i32.const 0)
+   )
+  )
+  ;; for comparison, without the block.
+  (call $log
+   (i32.le_s
+    (i32.sub
+     (i32.const 8)
+     (i32.const 0x80000000)
+    )
+    (i32.const 0)
+   )
+  )
+  ;; for comparison, what X - Y < 0 => X < Y would lead to, which has a
+  ;; different value
+  (call $log
+   (i32.le_s
+    (i32.const 8)
+    (i32.const 0x80000000)
+   )
+  )
+ )
+)

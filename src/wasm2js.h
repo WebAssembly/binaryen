@@ -92,6 +92,37 @@ bool isTableExported(Module& wasm) {
   return false;
 }
 
+bool hasActiveSegments(Module& wasm) {
+  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+    if (!wasm.memory.segments[i].isPassive) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool needsBufferView(Module& wasm) {
+  if (!wasm.memory.exists) {
+    return false;
+  }
+
+  // If there are any active segments, initActiveSegments needs access
+  // to bufferView.
+  if (hasActiveSegments(wasm)) {
+    return true;
+  }
+
+  // The special support functions are emitted as part of the JS glue, if we
+  // need them.
+  bool need = false;
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
+    if (ABI::wasm2js::isHelper(import->base)) {
+      need = true;
+    }
+  });
+  return need;
+}
+
 IString stringToIString(std::string str) { return IString(str.c_str(), false); }
 
 // Used when taking a wasm name and generating a JS identifier. Each scope here
@@ -487,6 +518,18 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     asmFunc[3]->push_back(ValueBuilder::makeName("// EMSCRIPTEN_END_FUNCS\n"));
   }
 
+  if (needsBufferView(*wasm)) {
+    asmFunc[3]->push_back(
+      ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
+                               SET,
+                               ValueBuilder::makeName(HEAPU8)));
+  }
+  if (hasActiveSegments(*wasm)) {
+    asmFunc[3]->push_back(
+      ValueBuilder::makeCall(ValueBuilder::makeName("initActiveSegments"),
+                             ValueBuilder::makeName(ENV)));
+  }
+
   addTable(asmFunc[3], wasm);
   addStart(asmFunc[3], wasm);
   addExports(asmFunc[3], wasm);
@@ -512,12 +555,6 @@ void Wasm2JSBuilder::addBasics(Ref ast, Module* wasm) {
     addHeap(HEAPU32, UINT32ARRAY);
     addHeap(HEAPF32, FLOAT32ARRAY);
     addHeap(HEAPF64, FLOAT64ARRAY);
-    if ((!wasm->memory.segments.empty()) || wasm->features.hasBulkMemory()) {
-      ast->push_back(
-        ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
-                                 SET,
-                                 ValueBuilder::makeName(HEAPU8)));
-    }
   }
   // core asm.js imports
   auto addMath = [&](IString name, IString base) {
@@ -2351,7 +2388,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
         ValueBuilder::makeName(BUFFER)));
   }
 
-  if ((!wasm->memory.segments.empty()) || wasm->features.hasBulkMemory()) {
+  if (needsBufferView(*wasm)) {
     ValueBuilder::appendToBlock(
       block,
       ValueBuilder::makeBinary(ValueBuilder::makeName("bufferView"),
@@ -2390,7 +2427,7 @@ private:
   void emitPostEmscripten();
   void emitPostES6();
 
-  void emitMemory(std::function<std::string(std::string)> accessGlobal);
+  void emitMemory();
   void emitSpecialSupport();
 };
 
@@ -2422,6 +2459,7 @@ void Wasm2JSGlue::emitPre() {
         << "}\n\n";
   }
 
+  emitMemory();
   emitSpecialSupport();
 }
 
@@ -2465,18 +2503,6 @@ void Wasm2JSGlue::emitPreES6() {
 }
 
 void Wasm2JSGlue::emitPost() {
-  // Create a helper bufferView to access the buffer if we need one. We use it
-  // for creating memory segments if we have any (we may not if the segments are
-  // shipped in a side .mem file, for example), and also in bulk memory
-  // operations.
-  // This will get assigned during `asmFunc` (and potentially re-assigned
-  // during __wasm_memory_grow).
-  // TODO: We should probably just share a single HEAPU8 var.
-  if (wasm.memory.exists &&
-      ((!wasm.memory.segments.empty()) || wasm.features.hasBulkMemory())) {
-    out << "var bufferView;\n";
-  }
-
   if (flags.emscripten) {
     emitPostEmscripten();
   } else {
@@ -2485,13 +2511,7 @@ void Wasm2JSGlue::emitPost() {
 }
 
 void Wasm2JSGlue::emitPostEmscripten() {
-  out << "var exports = asmFunc(asmLibraryArg);\n";
-
-  emitMemory([](std::string globalName) {
-    return std::string("asmLibraryArg['") + asmangle(globalName) + "']";
-  });
-
-  out << "return exports;\n}";
+  out << "  return asmFunc(asmLibraryArg);\n}\n";
 }
 
 void Wasm2JSGlue::emitPostES6() {
@@ -2541,10 +2561,6 @@ void Wasm2JSGlue::emitPostES6() {
 
   out << "\n  });\n";
 
-  if (wasm.memory.exists) {
-    emitMemory([](std::string globalName) { return globalName; });
-  }
-
   if (flags.allowAsserts) {
     return;
   }
@@ -2574,16 +2590,35 @@ void Wasm2JSGlue::emitPostES6() {
   }
 }
 
-void Wasm2JSGlue::emitMemory(
-  std::function<std::string(std::string)> accessGlobal) {
+void Wasm2JSGlue::emitMemory() {
+  if (needsBufferView(wasm)) {
+    // Create a helper bufferView to access the buffer if we need one. We use it
+    // for creating memory segments if we have any (we may not if the segments
+    // are shipped in a side .mem file, for example), and also in bulk memory
+    // operations.
+    // This will get assigned during `asmFunc` (and potentially re-assigned
+    // during __wasm_memory_grow).
+    // TODO: We should probably just share a single HEAPU8 var.
+    out << "  var bufferView;\n";
+  }
+
   // If there are no memory segments, we don't need to emit any support code for
   // segment creation.
   if ((!wasm.memory.exists) || wasm.memory.segments.empty()) {
     return;
   }
 
+  // If we have passive memory segments, we need to store those.
+  for (auto& seg : wasm.memory.segments) {
+    if (seg.isPassive) {
+      out << "  var memorySegments = {};\n";
+      break;
+    }
+  }
+
   out <<
-    R"(for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
+    R"(  var base64ReverseLookup = new Uint8Array(123/*'z'+1*/);
+  for (var i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
     base64ReverseLookup[97+i] = 26+i; // 'a-z'
@@ -2608,27 +2643,11 @@ void Wasm2JSGlue::emitMemory(
   }
   out << R"(
   }
-  )";
-
-  auto globalOffset = [&](const Memory::Segment& segment) {
-    if (auto* c = segment.offset->dynCast<Const>()) {
-      return std::to_string(c->value.getInteger());
-    }
-    if (auto* get = segment.offset->dynCast<GlobalGet>()) {
-      auto internalName = get->name;
-      auto importedName = wasm.getGlobal(internalName)->base;
-      return accessGlobal(asmangle(importedName.str));
-    }
-    Fatal() << "non-constant offsets aren't supported yet\n";
-  };
+)";
 
   for (Index i = 0; i < wasm.memory.segments.size(); i++) {
     auto& seg = wasm.memory.segments[i];
-    if (!seg.isPassive) {
-      // Plain active segments are decoded directly into the main memory.
-      out << "base64DecodeToExistingUint8Array(bufferView, "
-          << globalOffset(seg) << ", \"" << base64Encode(seg.data) << "\");\n";
-    } else {
+    if (seg.isPassive) {
       // Fancy passive segments are decoded into typed arrays on the side, for
       // later copying.
       out << "memorySegments[" << i
@@ -2636,6 +2655,32 @@ void Wasm2JSGlue::emitMemory(
           << seg.data.size() << ")"
           << ", 0, \"" << base64Encode(seg.data) << "\");\n";
     }
+  }
+
+  if (hasActiveSegments(wasm)) {
+    auto globalOffset = [&](const Memory::Segment& segment) {
+      if (auto* c = segment.offset->dynCast<Const>()) {
+        return std::to_string(c->value.getInteger());
+      }
+      if (auto* get = segment.offset->dynCast<GlobalGet>()) {
+        auto internalName = get->name;
+        auto importedName = wasm.getGlobal(internalName)->base;
+        return std::string("imports[") + asmangle(importedName.str) + "]";
+      }
+      Fatal() << "non-constant offsets aren't supported yet\n";
+    };
+
+    out << "function initActiveSegments(imports) {\n";
+    for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+      auto& seg = wasm.memory.segments[i];
+      if (!seg.isPassive) {
+        // Plain active segments are decoded directly into the main memory.
+        out << "  base64DecodeToExistingUint8Array(bufferView, "
+            << globalOffset(seg) << ", \"" << base64Encode(seg.data)
+            << "\");\n";
+      }
+    }
+    out << "}\n";
   }
 }
 
@@ -2711,15 +2756,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
   var f64ScratchView = new Float64Array(scratchBuffer);
   )";
 
-  // If we have passive memory segments, or bulk memory operations that operate
-  // on segment indexes, we need to store those.
-  bool needMemorySegmentsList = false;
-  for (auto& seg : wasm.memory.segments) {
-    if (seg.isPassive) {
-      needMemorySegmentsList = true;
-    }
-  }
-
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* import) {
     if (import->base == ABI::wasm2js::SCRATCH_STORE_I32) {
       out << R"(
@@ -2758,7 +2794,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
   }
       )";
     } else if (import->base == ABI::wasm2js::MEMORY_INIT) {
-      needMemorySegmentsList = true;
       out << R"(
   function wasm2js_memory_init(segment, dest, offset, size) {
     // TODO: traps on invalid things
@@ -2782,7 +2817,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
   }
       )";
     } else if (import->base == ABI::wasm2js::DATA_DROP) {
-      needMemorySegmentsList = true;
       out << R"(
   function wasm2js_data_drop(segment) {
     // TODO: traps on invalid things
@@ -2852,12 +2886,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
       )";
     }
   });
-
-  if (needMemorySegmentsList) {
-    out << R"(
-  var memorySegments = {};
-    )";
-  }
 
   out << '\n';
 }

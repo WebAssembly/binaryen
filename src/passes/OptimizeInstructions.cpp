@@ -1963,6 +1963,8 @@ private:
         }
         // x - y == 0  =>  x == y
         // x - y != 0  =>  x != y
+        // This is not true for signed comparisons like x -y < 0 due to overflow
+        // effects (e.g. 8 - 0x80000000 < 0 is not the same as 8 < 0x80000000).
         if (matches(curr,
                     binary(Eq, binary(&inner, Sub, any(), any()), ival(0))) ||
             matches(curr,
