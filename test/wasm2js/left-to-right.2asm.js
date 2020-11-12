@@ -2167,13 +2167,7 @@ function asmFunc(env) {
  };
 }
 
-<<<<<<< HEAD
-var bufferView;
 var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
-=======
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
->>>>>>> master
 export var i32_add = retasmFunc.i32_add;
 export var i32_sub = retasmFunc.i32_sub;
 export var i32_mul = retasmFunc.i32_mul;

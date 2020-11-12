@@ -177,15 +177,8 @@ function asmFunc(env) {
  };
 }
 
-<<<<<<< HEAD
-var bufferView;
 var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
     setTempRet0 });
-=======
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    setTempRet0
-  });
->>>>>>> master
 export var i32_load = retasmFunc.i32_load;
 export var i64_load = retasmFunc.i64_load;
 export var f32_load = retasmFunc.f32_load;

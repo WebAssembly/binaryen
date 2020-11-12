@@ -90,32 +90,6 @@ function asmFunc(env) {
 }
 
 var memasmFunc = new ArrayBuffer(16777216);
-<<<<<<< HEAD
 var retasmFunc = asmFunc({ abort() { throw new Error('abort'); },
     memory: { buffer: memasmFunc } });
-for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
-    base64ReverseLookup[48+i] = 52+i; // '0-9'
-    base64ReverseLookup[65+i] = i; // 'A-Z'
-    base64ReverseLookup[97+i] = 26+i; // 'a-z'
-  }
-  base64ReverseLookup[43] = 62; // '+'
-  base64ReverseLookup[47] = 63; // '/'
-  /** @noinline Inlining this function would mean expanding the base64 string 4x times in the source code, which Closure seems to be happy to do. */
-  function base64DecodeToExistingUint8Array(uint8Array, offset, b64) {
-    var b1, b2, i = 0, j = offset, bLength = b64.length, end = offset + (bLength*3>>2) - (b64[bLength-2] == '=') - (b64[bLength-1] == '=');
-    for (; i < bLength; i += 4) {
-      b1 = base64ReverseLookup[b64.charCodeAt(i+1)];
-      b2 = base64ReverseLookup[b64.charCodeAt(i+2)];
-      uint8Array[j++] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
-      if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
-      if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
-    }
-    return uint8Array;
-  }
-  base64DecodeToExistingUint8Array(bufferView, memoryBase, "ZHluYW1pYyBkYXRh");
-=======
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
-    memory: { buffer : memasmFunc }
-  });
->>>>>>> master
 export var baz = retasmFunc.baz;

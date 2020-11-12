@@ -80,13 +80,7 @@ function asmFunc(env) {
  };
 }
 
-<<<<<<< HEAD
-var bufferView;
 var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
-=======
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
->>>>>>> master
 export var memory = retasmFunc.memory;
 export var f1 = retasmFunc.f1;
 export var f2 = retasmFunc.f2;

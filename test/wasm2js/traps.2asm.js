@@ -1719,13 +1719,7 @@ function asmFunc(env) {
  };
 }
 
-<<<<<<< HEAD
-var bufferView;
 var retasmFunc = asmFunc({ abort() { throw new Error('abort'); } });
-=======
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  });
->>>>>>> master
 export var no_dce_i32_load = retasmFunc.no_dce_i32_load;
 export var no_dce_i32_load16_s = retasmFunc.no_dce_i32_load16_s;
 export var no_dce_i32_load16_u = retasmFunc.no_dce_i32_load16_u;
