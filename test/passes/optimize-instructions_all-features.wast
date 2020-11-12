@@ -284,28 +284,6 @@
       )
       (nop)
     )
-    (if
-      (try (result i32)
-        (do
-          (i32.eqz
-            (i32.eqz
-              (i32.const 123)
-            )
-          )
-        )
-        (catch
-          (drop
-            (pop exnref)
-          )
-          (i32.eqz
-            (i32.eqz
-              (i32.const 456)
-            )
-          )
-        )
-      )
-      (nop)
-    )
     (drop
       (select
         (i32.const 101)
@@ -5180,23 +5158,6 @@
       (unreachable)
     )
   )
-  ;; These functions test if an `if` with subtyped arms is correctly folded
-  ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
-  (func $if-arms-subtype-fold (result anyref)
-    (if (result anyref)
-      (i32.const 0)
-      (ref.null extern)
-      (ref.null extern)
-    )
-  )
-  ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
-  (func $if-arms-subtype-nofold (result anyref)
-    (if (result anyref)
-      (i32.const 0)
-      (ref.null extern)
-      (ref.null func)
-    )
-  )
   (func $optimize-boolean-context (param $x i32) (param $y i32)
     ;; 0 - x   ==>   x
     (if
@@ -5517,8 +5478,6 @@
     (drop (i32.eqz (i32.eqz (i64.eqz (i64.const 1)))))
     (drop (i32.eqz (i32.eqz (i32.ne (local.get $x) (i32.const 2)))))
 
-    (drop (i32.extend8_s (i32.extend8_s (local.get $x))))
-    (drop (i32.extend16_s (i32.extend16_s (local.get $x))))
     (drop (i32.eqz
       (i32.eqz
         (i32.and
@@ -5920,87 +5879,6 @@
       )
     ))
   )
-  (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
-    (memory.copy  ;; skip
-      (local.get $dst)
-      (local.get $dst)
-      (local.get $sz)
-    )
-
-    (memory.copy  ;; skip
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 0)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 1)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 2)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 3)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 4)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 5)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 6)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 7)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 8)
-    )
-
-    (memory.copy
-      (local.get $dst)
-      (local.get $src)
-      (i32.const 16)
-    )
-
-    (memory.copy  ;; skip
-      (local.get $dst)
-      (local.get $src)
-      (local.get $sz)
-    )
-
-    (memory.copy  ;; skip
-      (i32.const 0)
-      (i32.const 0)
-      (i32.load
-        (i32.const 3) ;; side effect
-      )
-    )
-  )
   (func $optimize-float-points (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
     ;; abs(x) * abs(x)   ==>   x * x
     (drop (f64.mul
@@ -6128,6 +6006,7 @@
     ))
   )
 )
+;; atomics
 (module
   (import "env" "memory" (memory $0 (shared 256 256)))
   (func $x
@@ -6142,5 +6021,144 @@
      (i32.const 24)
     )
    )
+  )
+)
+;; bulk memory
+(module
+  (memory 0)
+  (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $dst)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 0)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 1)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 2)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 3)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 4)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 5)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 6)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 7)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 8)
+    )
+
+    (memory.copy
+      (local.get $dst)
+      (local.get $src)
+      (i32.const 16)
+    )
+
+    (memory.copy  ;; skip
+      (local.get $dst)
+      (local.get $src)
+      (local.get $sz)
+    )
+
+    (memory.copy  ;; skip
+      (i32.const 0)
+      (i32.const 0)
+      (i32.load
+        (i32.const 3) ;; side effect
+      )
+    )
+  )
+)
+;; reference types
+(module
+  ;; These functions test if an `if` with subtyped arms is correctly folded
+  ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
+  (func $if-arms-subtype-fold (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null extern)
+      (ref.null extern)
+    )
+  )
+  ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
+  (func $if-arms-subtype-nofold (result anyref)
+    (if (result anyref)
+      (i32.const 0)
+      (ref.null extern)
+      (ref.null func)
+    )
+  )
+)
+;; sign-extensions
+(module
+  (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)
+    (drop (i32.extend8_s (i32.extend8_s (local.get $x))))
+    (drop (i32.extend16_s (i32.extend16_s (local.get $x))))
+  )
+)
+;; exceptions
+(module
+  (func $test
+    (if
+      (try (result i32)
+        (do
+          (i32.eqz
+            (i32.eqz
+              (i32.const 123)
+            )
+          )
+        )
+        (catch
+          (drop
+            (pop exnref)
+          )
+          (i32.eqz
+            (i32.eqz
+              (i32.const 456)
+            )
+          )
+        )
+      )
+      (nop)
+    )
   )
 )
