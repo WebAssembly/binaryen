@@ -778,6 +778,11 @@ struct OptimizeInstructions
       if (auto* ret = deduplicateBinary(binary)) {
         return ret;
       }
+      if (binary->type.isInteger()) {
+        if (auto* ret = optimizeBinaryDistributions(binary)) {
+          return ret;
+        }
+      }
     } else if (auto* unary = curr->dynCast<Unary>()) {
       if (unary->op == EqZInt32) {
         if (auto* inner = unary->value->dynCast<Binary>()) {
@@ -2205,16 +2210,105 @@ private:
     return nullptr;
   }
 
+  // (x op C1) + (x op C2)   ==>   x * (C1' + C2')
+  // (x op C1) - (x op C2)   ==>   x * (C1' - C2')
+  // where op = (`*`|`<<`)
+  // x * y + x * z   ==>   (y + z) * x
+  // x * y - x * z   ==>   (y - z) * x
+  Expression* optimizeBinaryDistributions(Binary* curr) {
+    using namespace Match;
+    assert(curr->type.isInteger());
+
+    Expression* ll = nullptr;
+    Expression* rl = nullptr;
+    Expression* lr = nullptr;
+    Expression* rr = nullptr;
+    Binary* left = nullptr;
+    Binary* right = nullptr;
+    BinaryOp op;
+
+    // canonicalize
+    // (x << C1) op (x << C2)
+    // to
+    // (x * (1 << C1)) op (x * (1 << C2))
+    if (matches(curr,
+                binary(&op,
+                       binary(&left, any(&ll), any(&lr)),
+                       binary(&right, pure(&rl), any(&rr)))) &&
+        (op == Abstract::getBinary(curr->type, Abstract::Add) ||
+         op == Abstract::getBinary(curr->type, Abstract::Sub)) &&
+        ExpressionAnalyzer::equal(ll, rl)) {
+      Const *c1, *c2;
+      if (matches(left, binary(Abstract::Shl, any(), constant(&c1)))) {
+        left->op = Abstract::getBinary(left->type, Abstract::Mul);
+        c1->value = Literal::makeFromInt32(1, left->type).shl(c1->value);
+      }
+      if (matches(right, binary(Abstract::Shl, any(), constant(&c2)))) {
+        right->op = Abstract::getBinary(right->type, Abstract::Mul);
+        c2->value = Literal::makeFromInt32(1, right->type).shl(c2->value);
+      }
+    }
+
+    if (matches(curr,
+                binary(&op,
+                       binary(&left, any(&ll), any(&lr)),
+                       binary(&right, pure(&rl), pure(&rr)))) &&
+        (op == Abstract::getBinary(curr->type, Abstract::Add) ||
+         op == Abstract::getBinary(curr->type, Abstract::Sub))) {
+      // (x * y) op (x * z)
+      // (x * y) op (z * x)
+      if (left->op == right->op &&
+          left->op == Abstract::getBinary(left->type, Abstract::Mul)) {
+        bool eqLLRR = ExpressionAnalyzer::equal(ll, rr);
+        if (eqLLRR || ExpressionAnalyzer::equal(ll, rl)) {
+          if (eqLLRR) {
+            // swap z and x
+            std::swap(rl, rr);
+          }
+          // => (y op z) * x
+          Builder builder(*getModule());
+          return builder.makeBinary(
+            Abstract::getBinary(curr->type, Abstract::Mul),
+            ll,
+            builder.makeBinary(curr->op, lr, rr));
+        }
+        // (z * y) op (x * y)
+        // (x * z) op (y * x)
+        bool eqLRRL = ExpressionAnalyzer::equal(lr, rl);
+        if (eqLRRL || ExpressionAnalyzer::equal(lr, rr)) {
+          if (eqLRRL) {
+            // swap y and z
+            std::swap(rl, rr);
+          }
+          // => (x op z) * y
+          Builder builder(*getModule());
+          return builder.makeBinary(
+            Abstract::getBinary(curr->type, Abstract::Mul),
+            lr,
+            builder.makeBinary(curr->op, ll, rl));
+        }
+      }
+    }
+    return nullptr;
+  }
+
   // given a binary expression with equal children and no side effects in
   // either, we can fold various things
   Expression* optimizeBinaryWithEqualEffectlessChildren(Binary* binary) {
-    // TODO add: perhaps worth doing 2*x if x is quite large?
+    auto type = binary->left->type;
     switch (binary->op) {
+      case AddInt32:
+      case AddInt64: {
+        // x + x  ==>  x * 2
+        binary->op = Abstract::getBinary(type, Abstract::Mul);
+        binary->right = LiteralUtils::makeFromInt32(2, type, *getModule());
+        return binary;
+      }
       case SubInt32:
       case XorInt32:
       case SubInt64:
       case XorInt64:
-        return LiteralUtils::makeZero(binary->left->type, *getModule());
+        return LiteralUtils::makeZero(type, *getModule());
       case NeInt32:
       case LtSInt32:
       case LtUInt32:

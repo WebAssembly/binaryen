@@ -13,6 +13,7 @@
  (type $i32_i64_f32_=>_none (func (param i32 i64 f32)))
  (type $none_=>_anyref (func (result anyref)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $i32_i32_i32_i64_=>_none (func (param i32 i32 i32 i64)))
  (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
  (type $i32_i32_f64_f64_=>_none (func (param i32 i32 f64 f64)))
  (type $i32_i64_f64_i32_=>_none (func (param i32 i64 f64 i32)))
@@ -3588,9 +3589,9 @@
    )
   )
   (drop
-   (i32.add
+   (i32.shl
     (local.get $x)
-    (local.get $x)
+    (i32.const 1)
    )
   )
   (drop
@@ -4691,6 +4692,204 @@
    (i32.ge_s
     (local.get $x)
     (local.get $y)
+   )
+  )
+ )
+ (func $combine-common-subexpressions (param $x i32) (param $y i32) (param $z i32) (param $wx i64)
+  (drop
+   (i32.shl
+    (local.get $x)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i64.shl
+    (local.get $wx)
+    (i64.const 1)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (i32.const 3)
+     (i32.const 2)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i64.mul
+    (i64.add
+     (i64.const 3)
+     (i64.const 2)
+    )
+    (local.get $wx)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (i32.const 3)
+     (i32.const 2)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.sub
+     (i32.const 2)
+     (i32.const 3)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i64.mul
+    (i64.add
+     (i64.const 2)
+     (i64.const 4)
+    )
+    (local.get $wx)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (local.get $y)
+     (local.get $z)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (local.get $x)
+     (local.get $z)
+    )
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (local.get $x)
+     (local.get $z)
+    )
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (local.get $y)
+     (local.get $z)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.shl
+    (i32.mul
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.sub
+     (local.get $y)
+     (local.get $z)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.sub
+     (local.get $x)
+     (local.get $z)
+    )
+    (local.get $y)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.add
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $y)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.mul
+    (i32.sub
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $y)
+    )
+    (local.get $x)
+   )
+  )
+  (drop
+   (i32.add
+    (i32.mul
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.mul
+     (local.get $z)
+     (local.get $z)
+    )
+   )
+  )
+  (drop
+   (i32.add
+    (i32.mul
+     (local.get $x)
+     (local.get $y)
+    )
+    (i32.mul
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.add
+    (i32.mul
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $x)
+    )
+    (i32.mul
+     (i32.load
+      (i32.const 0)
+     )
+     (local.get $x)
+    )
+   )
+  )
+  (drop
+   (i32.sub
+    (i32.shr_u
+     (local.get $x)
+     (i32.const 1)
+    )
+    (i32.mul
+     (local.get $x)
+     (i32.const 3)
+    )
    )
   )
  )

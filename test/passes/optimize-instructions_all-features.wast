@@ -5170,6 +5170,224 @@
     ))
     ;; TODO: more stuff here
   )
+  (func $combine-common-subexpressions (param $x i32) (param $y i32) (param $z i32) (param $wx i64)
+    ;; x + x
+    (drop (i32.add
+      (local.get $x)
+      (local.get $x)
+    ))
+    (drop (i64.add
+      (local.get $wx)
+      (local.get $wx)
+    ))
+    ;; x * 3 + x * 2
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (i32.const 3)
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.const 2)
+      )
+    ))
+    (drop (i64.add
+      (i64.mul
+        (local.get $wx)
+        (i64.const 3)
+      )
+      (i64.mul
+        (local.get $wx)
+        (i64.const 2)
+      )
+    ))
+    ;; (x * 3) + (x << 1)
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (i32.const 3)
+      )
+      (i32.shl
+        (local.get $x)
+        (i32.const 1)
+      )
+    ))
+    ;; (x << 1) - (x * 3)
+    (drop (i32.sub
+      (i32.shl
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.const 3)
+      )
+    ))
+    ;; (wx << 1) + (wx << 2)
+    (drop (i64.add
+      (i64.shl
+        (local.get $wx)
+        (i64.const 1)
+      )
+      (i64.shl
+        (local.get $wx)
+        (i64.const 2)
+      )
+    ))
+    ;; x * y + x * z
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $z)
+      )
+    ))
+    ;; x * y + z * y
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $z)
+        (local.get $y)
+      )
+    ))
+    ;; x * y + y * z
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $y)
+        (local.get $z)
+      )
+    ))
+    ;; x * y + z * x
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $z)
+        (local.get $x)
+      )
+    ))
+    ;; x * y + x * y
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x * y - x * z
+    (drop (i32.sub
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $z)
+      )
+    ))
+    ;; x * y - z * y
+    (drop (i32.sub
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $z)
+        (local.get $y)
+      )
+    ))
+    ;; SE * x + x * y   ->   (SE + y) * x
+    (drop (i32.add
+      (i32.mul
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
+        (local.get $x)
+      )
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+    ))
+    ;; x * SE - y * x   ->   (SE - y) * x
+    (drop (i32.sub
+      (i32.mul
+        (local.get $x)
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
+      )
+      (i32.mul
+        (local.get $y)
+        (local.get $x)
+      )
+    ))
+    ;; x * y + z * z   ->   skip
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $z)
+        (local.get $z)
+      )
+    ))
+    ;; x * y + x * SE   ->   skip
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (local.get $y)
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
+      )
+    ))
+    ;; x * SE + x * SE   ->   skip
+    (drop (i32.add
+      (i32.mul
+        (local.get $x)
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.load
+          (i32.const 0) ;; side effect
+        )
+      )
+    ))
+    ;; (x >> 1) - (x * 3)  ->  skip
+    (drop (i32.sub
+      (i32.shr_u
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.mul
+        (local.get $x)
+        (i32.const 3)
+      )
+    ))
+  )
   (func $select-into-arms (param $x i32) (param $y i32)
     (if
       (select
