@@ -82,7 +82,7 @@ function(binaryen_setup_rpath name)
     set(_install_name_dir INSTALL_NAME_DIR "@rpath")
     set(_install_rpath "@loader_path/../lib")
   elseif(UNIX)
-    set(_install_rpath "\$ORIGIN/../lib")
+    set(_install_rpath "\$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
     if(${CMAKE_SYSTEM_NAME} MATCHES "(FreeBSD|DragonFly)")
       set_property(TARGET ${name} APPEND_STRING PROPERTY
                    LINK_FLAGS " -Wl,-z,origin ")
