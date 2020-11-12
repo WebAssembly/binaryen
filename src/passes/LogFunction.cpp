@@ -16,7 +16,8 @@
 
 //
 // Instruments the Wasm binary with code to log execution at each function
-// entry with an index. This list of functions will be used when we split the wasm later.
+// entry with an index. This list of functions will be used when we split the
+// wasm later.
 //
 // The logging is performed by calling an ffi with an id for each
 // call site. You need to provide the import on the JS side.
@@ -61,7 +62,8 @@ private:
     static Index id = 0;
     Builder builder(*getModule());
     return builder.makeSequence(
-      builder.makeCall(FNLOGGER, {builder.makeConst(int32_t(id++))}, Type::none),
+      builder.makeCall(
+        FNLOGGER, {builder.makeConst(int32_t(id++))}, Type::none),
       curr);
   }
 };
