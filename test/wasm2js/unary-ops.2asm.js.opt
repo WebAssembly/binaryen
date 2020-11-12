@@ -8,6 +8,7 @@ function asmFunc(env) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -26,7 +27,7 @@ function asmFunc(env) {
  function $7($0) {
   $0 = $0 | 0;
   if ($0) {
-   $0 = 31 - Math_clz32($0 + -1 ^ $0) | 0
+   $0 = 31 - Math_clz32($0 - 1 ^ $0) | 0
   } else {
    $0 = 32
   }
@@ -71,8 +72,8 @@ function asmFunc(env) {
  function __wasm_ctz_i64($0, $1_1) {
   var $2 = 0, $3 = 0;
   if ($0 | $1_1) {
-   $2 = $1_1 + -1 | 0;
-   $3 = $0 + -1 | 0;
+   $2 = $1_1 - 1 | 0;
+   $3 = $0 - 1 | 0;
    $2 = ($3 | 0) != -1 ? $2 + 1 | 0 : $2;
    $3 = Math_clz32($0 ^ $3) + 32 | 0;
    $0 = Math_clz32($1_1 ^ $2);

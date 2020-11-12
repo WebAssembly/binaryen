@@ -8,6 +8,7 @@ function asmFunc(env) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -744,6 +745,7 @@ function asmFunc(env) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -1462,6 +1464,7 @@ function asmFunc(env) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -1577,7 +1580,8 @@ export var no_dce_i64_trunc_f32_u = retasmFunc.no_dce_i64_trunc_f32_u;
 export var no_dce_i64_trunc_f64_s = retasmFunc.no_dce_i64_trunc_f64_s;
 export var no_dce_i64_trunc_f64_u = retasmFunc.no_dce_i64_trunc_f64_u;
 
-function asmFunc(env, buffer) {
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
  var HEAP32 = new Int32Array(buffer);
@@ -1594,6 +1598,7 @@ function asmFunc(env, buffer) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -1686,7 +1691,6 @@ function asmFunc(env, buffer) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
    var newHEAP8 = new Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
-   HEAP8 = newHEAP8;
    HEAP8 = new Int8Array(newBuffer);
    HEAP16 = new Int16Array(newBuffer);
    HEAP32 = new Int32Array(newBuffer);
@@ -1718,12 +1722,8 @@ function asmFunc(env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  },
-  memasmFunc
-);
+  });
 export var no_dce_i32_load = retasmFunc.no_dce_i32_load;
 export var no_dce_i32_load16_s = retasmFunc.no_dce_i32_load16_s;
 export var no_dce_i32_load16_u = retasmFunc.no_dce_i32_load16_u;

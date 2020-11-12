@@ -20,6 +20,8 @@
 
 namespace wasm {
 
+static Name IMPOSSIBLE_CONTINUE("impossible-continue");
+
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     o << binaryType(Type::none);

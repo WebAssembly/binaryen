@@ -233,3 +233,41 @@
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
 [LoggingExternalInterface logging nan:0x400000]
+[fuzz-exec] calling foo
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+(module
+ (type $i32_=>_none (func (param i32)))
+ (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (export "foo" (func $0))
+ (func $0 (param $0 i32)
+  (call $log
+   (i32.le_s
+    (i32.sub
+     (i32.const 8)
+     (block $label$1 (result i32)
+      (i32.const -2147483648)
+     )
+    )
+    (i32.const 0)
+   )
+  )
+  (call $log
+   (i32.le_s
+    (i32.const -2147483640)
+    (i32.const 0)
+   )
+  )
+  (call $log
+   (i32.eq
+    (i32.const 8)
+    (i32.const -2147483648)
+   )
+  )
+ )
+)
+[fuzz-exec] calling foo
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]

@@ -1365,6 +1365,31 @@ void test_for_each() {
   BinaryenModuleDispose(module);
 }
 
+void test_func_opt() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenType ii_[2] = {BinaryenTypeInt32(), BinaryenTypeInt32()};
+  BinaryenType ii = BinaryenTypeCreate(ii_, 2);
+  BinaryenExpressionRef x = BinaryenConst(module, BinaryenLiteralInt32(1)),
+                        y = BinaryenConst(module, BinaryenLiteralInt32(3));
+  BinaryenExpressionRef add = BinaryenBinary(module, BinaryenAddInt32(), x, y);
+  BinaryenFunctionRef adder = BinaryenAddFunction(
+    module, "adder", BinaryenTypeNone(), BinaryenTypeInt32(), NULL, 0, add);
+
+  puts("module with a function to optimize:");
+  BinaryenModulePrint(module);
+
+  assert(BinaryenModuleValidate(module));
+
+  BinaryenFunctionOptimize(adder, module);
+
+  assert(BinaryenModuleValidate(module));
+
+  puts("optimized:");
+  BinaryenModulePrint(module);
+
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_types();
   test_features();
@@ -1376,6 +1401,7 @@ int main() {
   test_nonvalid();
   test_color_status();
   test_for_each();
+  test_func_opt();
 
   return 0;
 }

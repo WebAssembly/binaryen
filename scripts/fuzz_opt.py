@@ -118,9 +118,6 @@ def randomize_feature_opts():
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
-ORIGINAL_V8_OPTS = shared.V8_OPTS[:]
-
-
 def randomize_fuzz_settings():
     # a list of the optimizations to run on the wasm
     global FUZZ_OPTS
@@ -150,23 +147,14 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--legalize-js-interface']
     else:
         LEGALIZE = False
-    extra_v8_opts = []
-    # 50% of the time test v8 normally, that is, the same way it runs in
-    # production (which as of 07/15/2020 means baseline, then tier up to
-    # optimizing, but that may change in the future).
-    if random.random() < 0.5:
-        # test either the optimizing compiler or the baseline compiler, with
-        # equal probability. it's useful to do this because the normal tier-up
-        # mode does not check them both equally (typically baseline does not get
-        # enough testing, as we quickly leave it), and also because the tiering
-        # up is nondeterministic (when optimized code becomes ready, we switch
-        # to it)
-        if random.random() < 0.5:
-            extra_v8_opts += ['--no-liftoff']
-        else:
-            extra_v8_opts += ['--liftoff', '--no-wasm-tier-up']
-    shared.V8_OPTS = ORIGINAL_V8_OPTS + extra_v8_opts
-    print('randomized settings (NaNs, OOB, legalize, extra V8_OPTS):', NANS, OOB, LEGALIZE, extra_v8_opts)
+    print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
+
+
+IMPORTANT_INITIAL_CONTENTS = [
+    os.path.join('passes', 'optimize-instructions_all-features.wast'),
+    os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+]
+IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
 
 def pick_initial_contents():
@@ -178,7 +166,12 @@ def pick_initial_contents():
     # half the time don't use any initial contents
     if random.random() < 0.5:
         return
-    test_name = random.choice(all_tests)
+    # some of the time use initial contents that are known to be especially
+    # important
+    if random.random() < 0.5:
+        test_name = random.choice(IMPORTANT_INITIAL_CONTENTS)
+    else:
+        test_name = random.choice(all_tests)
     print('initial contents:', test_name)
     assert os.path.exists(test_name)
     # tests that check validation errors are not helpful for us
@@ -446,9 +439,9 @@ class CompareVMs(TestCaseHandler):
         class D8:
             name = 'd8'
 
-            def run(self, wasm):
+            def run(self, wasm, extra_d8_flags=[]):
                 run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
-                return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + ['--', wasm])
+                return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 # INITIAL_CONTENT is disallowed because some initial spec testcases
@@ -465,6 +458,18 @@ class CompareVMs(TestCaseHandler):
                 # If not legalized, the JS will fail immediately, so no point to
                 # compare to others.
                 return LEGALIZE and not NANS
+
+        class D8Liftoff(D8):
+            name = 'd8_liftoff'
+
+            def run(self, wasm):
+                return super(D8Liftoff, self).run(wasm, extra_d8_flags=['--liftoff', '--no-wasm-tier-up'])
+
+        class D8TurboFan(D8):
+            name = 'd8_turbofan'
+
+            def run(self, wasm):
+                return super(D8TurboFan, self).run(wasm, extra_d8_flags=['--no-liftoff'])
 
         class Wasm2C:
             name = 'wasm2c'
@@ -556,7 +561,8 @@ class CompareVMs(TestCaseHandler):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
-        self.vms = [BinaryenInterpreter(), D8(), Wasm2C(), Wasm2C2Wasm()]
+        self.vms = [BinaryenInterpreter(), D8(), D8Liftoff(), D8TurboFan(),
+                    Wasm2C(), Wasm2C2Wasm()]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
@@ -568,6 +574,7 @@ class CompareVMs(TestCaseHandler):
         vm_results = {}
         for vm in self.vms:
             if vm.can_run(wasm):
+                print(f'[CompareVMs] running {vm.name}')
                 vm_results[vm] = fix_output(vm.run(wasm))
 
         # compare between the vms on this specific input

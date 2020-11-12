@@ -8,6 +8,7 @@ function asmFunc(env) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -20,6 +21,7 @@ function asmFunc(env) {
 var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
   });
 
+  var bufferView;
 
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
@@ -33,7 +35,8 @@ var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
     bufferView.fill(value, dest, dest + size);
   }
       
-function asmFunc(env, buffer) {
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
  var HEAP32 = new Int32Array(buffer);
@@ -50,6 +53,7 @@ function asmFunc(env, buffer) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -66,6 +70,7 @@ function asmFunc(env, buffer) {
   return HEAPU8[$0_1 | 0];
  }
  
+ bufferView = HEAPU8;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -78,7 +83,6 @@ function asmFunc(env, buffer) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
    var newHEAP8 = new Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
-   HEAP8 = newHEAP8;
    HEAP8 = new Int8Array(newBuffer);
    HEAP16 = new Int16Array(newBuffer);
    HEAP32 = new Int32Array(newBuffer);
@@ -88,6 +92,7 @@ function asmFunc(env, buffer) {
    HEAPF32 = new Float32Array(newBuffer);
    HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
+   bufferView = HEAPU8;
   }
   return oldPages;
  }
@@ -98,15 +103,35 @@ function asmFunc(env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  },
-  memasmFunc
-);
+  });
 export var fill = retasmFunc.fill;
 export var load8_u = retasmFunc.load8_u;
 
+  var bufferView;
+  var base64ReverseLookup = new Uint8Array(123/*'z'+1*/);
+  for (var i = 25; i >= 0; --i) {
+    base64ReverseLookup[48+i] = 52+i; // '0-9'
+    base64ReverseLookup[65+i] = i; // 'A-Z'
+    base64ReverseLookup[97+i] = 26+i; // 'a-z'
+  }
+  base64ReverseLookup[43] = 62; // '+'
+  base64ReverseLookup[47] = 63; // '/'
+  /** @noinline Inlining this function would mean expanding the base64 string 4x times in the source code, which Closure seems to be happy to do. */
+  function base64DecodeToExistingUint8Array(uint8Array, offset, b64) {
+    var b1, b2, i = 0, j = offset, bLength = b64.length, end = offset + (bLength*3>>2) - (b64[bLength-2] == '=') - (b64[bLength-1] == '=');
+    for (; i < bLength; i += 4) {
+      b1 = base64ReverseLookup[b64.charCodeAt(i+1)];
+      b2 = base64ReverseLookup[b64.charCodeAt(i+2)];
+      uint8Array[j++] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
+      if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
+      if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
+    }
+    return uint8Array;
+  }
+function initActiveSegments(imports) {
+  base64DecodeToExistingUint8Array(bufferView, 0, "qrvM3Q==");
+}
 
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
@@ -118,7 +143,8 @@ export var load8_u = retasmFunc.load8_u;
     bufferView.copyWithin(dest, source, source + size);
   }
       
-function asmFunc(env, buffer) {
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
  var HEAP32 = new Int32Array(buffer);
@@ -135,6 +161,7 @@ function asmFunc(env, buffer) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -151,6 +178,8 @@ function asmFunc(env, buffer) {
   return HEAPU8[$0_1 | 0];
  }
  
+ bufferView = HEAPU8;
+ initActiveSegments(env);
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -161,9 +190,15 @@ function asmFunc(env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
-for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
+var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
+  });
+export var copy = retasmFunc.copy;
+export var load8_u = retasmFunc.load8_u;
+
+  var bufferView;
+  var memorySegments = {};
+  var base64ReverseLookup = new Uint8Array(123/*'z'+1*/);
+  for (var i = 25; i >= 0; --i) {
     base64ReverseLookup[48+i] = 52+i; // '0-9'
     base64ReverseLookup[65+i] = i; // 'A-Z'
     base64ReverseLookup[97+i] = 26+i; // 'a-z'
@@ -180,16 +215,9 @@ for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i
       if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
       if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
     }
-    return uint8Array; 
+    return uint8Array;
   }
-  base64DecodeToExistingUint8Array(bufferView, 0, "qrvM3Q==");
-var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  },
-  memasmFunc
-);
-export var copy = retasmFunc.copy;
-export var load8_u = retasmFunc.load8_u;
-
+memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM3Q==");
 
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
@@ -201,9 +229,8 @@ export var load8_u = retasmFunc.load8_u;
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
-  var memorySegments = {};
-    
-function asmFunc(env, buffer) {
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
  var HEAP32 = new Int32Array(buffer);
@@ -220,6 +247,7 @@ function asmFunc(env, buffer) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -236,6 +264,7 @@ function asmFunc(env, buffer) {
   return HEAPU8[$0_1 | 0];
  }
  
+ bufferView = HEAPU8;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -248,7 +277,6 @@ function asmFunc(env, buffer) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
    var newHEAP8 = new Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
-   HEAP8 = newHEAP8;
    HEAP8 = new Int8Array(newBuffer);
    HEAP16 = new Int16Array(newBuffer);
    HEAP32 = new Int32Array(newBuffer);
@@ -258,6 +286,7 @@ function asmFunc(env, buffer) {
    HEAPF32 = new Float32Array(newBuffer);
    HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
+   bufferView = HEAPU8;
   }
   return oldPages;
  }
@@ -268,36 +297,13 @@ function asmFunc(env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
-for (var base64ReverseLookup = new Uint8Array(123/*'z'+1*/), i = 25; i >= 0; --i) {
-    base64ReverseLookup[48+i] = 52+i; // '0-9'
-    base64ReverseLookup[65+i] = i; // 'A-Z'
-    base64ReverseLookup[97+i] = 26+i; // 'a-z'
-  }
-  base64ReverseLookup[43] = 62; // '+'
-  base64ReverseLookup[47] = 63; // '/'
-  /** @noinline Inlining this function would mean expanding the base64 string 4x times in the source code, which Closure seems to be happy to do. */
-  function base64DecodeToExistingUint8Array(uint8Array, offset, b64) {
-    var b1, b2, i = 0, j = offset, bLength = b64.length, end = offset + (bLength*3>>2) - (b64[bLength-2] == '=') - (b64[bLength-1] == '=');
-    for (; i < bLength; i += 4) {
-      b1 = base64ReverseLookup[b64.charCodeAt(i+1)];
-      b2 = base64ReverseLookup[b64.charCodeAt(i+2)];
-      uint8Array[j++] = base64ReverseLookup[b64.charCodeAt(i)] << 2 | b1 >> 4;
-      if (j < end) uint8Array[j++] = b1 << 4 | b2 >> 2;
-      if (j < end) uint8Array[j++] = b2 << 6 | base64ReverseLookup[b64.charCodeAt(i+3)];
-    }
-    return uint8Array; 
-  }
-  memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM3Q==");
 var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  },
-  memasmFunc
-);
+  });
 export var init = retasmFunc.init;
 export var load8_u = retasmFunc.load8_u;
 
-function asmFunc(env, buffer) {
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
  var HEAP32 = new Int32Array(buffer);
@@ -314,6 +320,7 @@ function asmFunc(env, buffer) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -340,7 +347,6 @@ function asmFunc(env, buffer) {
    var newBuffer = new ArrayBuffer(Math_imul(newPages, 65536));
    var newHEAP8 = new Int8Array(newBuffer);
    newHEAP8.set(HEAP8);
-   HEAP8 = newHEAP8;
    HEAP8 = new Int8Array(newBuffer);
    HEAP16 = new Int16Array(newBuffer);
    HEAP32 = new Int32Array(newBuffer);
@@ -362,12 +368,8 @@ function asmFunc(env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); }
-  },
-  memasmFunc
-);
+  });
 export var drop_passive = retasmFunc.drop_passive;
 export var init_passive = retasmFunc.init_passive;
 export var drop_active = retasmFunc.drop_active;

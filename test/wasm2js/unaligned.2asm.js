@@ -1,5 +1,6 @@
 import { setTempRet0 } from 'env';
 
+  var bufferView;
 
   var scratchBuffer = new ArrayBuffer(16);
   var i32ScratchView = new Int32Array(scratchBuffer);
@@ -30,7 +31,8 @@ import { setTempRet0 } from 'env';
     f32ScratchView[2] = value;
   }
       
-function asmFunc(env, buffer) {
+function asmFunc(env) {
+ var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
  var HEAP16 = new Int16Array(buffer);
  var HEAP32 = new Int32Array(buffer);
@@ -47,6 +49,7 @@ function asmFunc(env, buffer) {
  var Math_max = Math.max;
  var Math_floor = Math.floor;
  var Math_ceil = Math.ceil;
+ var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var abort = env.abort;
  var nan = NaN;
@@ -157,6 +160,7 @@ function asmFunc(env, buffer) {
   return $0_1 | 0;
  }
  
+ bufferView = HEAPU8;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -173,13 +177,9 @@ function asmFunc(env, buffer) {
  };
 }
 
-var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
     setTempRet0
-  },
-  memasmFunc
-);
+  });
 export var i32_load = retasmFunc.i32_load;
 export var i64_load = retasmFunc.i64_load;
 export var f32_load = retasmFunc.f32_load;

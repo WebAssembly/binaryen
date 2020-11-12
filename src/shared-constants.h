@@ -39,6 +39,7 @@ extern Name PASSIVE;
 extern Name EXPORT;
 extern Name IMPORT;
 extern Name TABLE;
+extern Name GLOBAL;
 extern Name ELEM;
 extern Name LOCAL;
 extern Name TYPE;

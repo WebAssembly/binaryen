@@ -19,28 +19,6 @@
 
 namespace wasm {
 
-Type asmToWasmType(AsmType asmType) {
-  switch (asmType) {
-    case ASM_INT:
-      return Type::i32;
-    case ASM_DOUBLE:
-      return Type::f64;
-    case ASM_FLOAT:
-      return Type::f32;
-    case ASM_INT64:
-      return Type::i64;
-    case ASM_NONE:
-      return Type::none;
-    case ASM_FLOAT32X4:
-    case ASM_FLOAT64X2:
-    case ASM_INT8X16:
-    case ASM_INT16X8:
-    case ASM_INT32X4:
-      return Type::v128;
-  }
-  WASM_UNREACHABLE("invalid type");
-}
-
 AsmType wasmToAsmType(Type type) {
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
@@ -102,10 +80,6 @@ char getSig(Type type) {
   WASM_UNREACHABLE("invalid type");
 }
 
-std::string getSig(Function* func) {
-  return getSig(func->sig.results, func->sig.params);
-}
-
 std::string getSig(Type results, Type params) {
   assert(!results.isTuple());
   std::string sig;
@@ -114,18 +88,6 @@ std::string getSig(Type results, Type params) {
     sig += getSig(param);
   }
   return sig;
-}
-
-Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
-  if (expr->type == Type::f32) {
-    auto conv = allocator.alloc<Unary>();
-    conv->op = PromoteFloat32;
-    conv->value = expr;
-    conv->type = Type::f64;
-    return conv;
-  }
-  assert(expr->type == Type::f64);
-  return expr;
 }
 
 } // namespace wasm

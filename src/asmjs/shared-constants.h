@@ -21,7 +21,6 @@
 
 namespace wasm {
 
-extern cashew::IString GLOBAL;
 extern cashew::IString TOPMOST;
 extern cashew::IString INT8ARRAY;
 extern cashew::IString INT16ARRAY;
@@ -33,7 +32,6 @@ extern cashew::IString FLOAT32ARRAY;
 extern cashew::IString FLOAT64ARRAY;
 extern cashew::IString ARRAY_BUFFER;
 extern cashew::IString ASM_MODULE;
-extern cashew::IString IMPOSSIBLE_CONTINUE;
 extern cashew::IString MATH;
 extern cashew::IString IMUL;
 extern cashew::IString CLZ32;
@@ -57,6 +55,7 @@ extern cashew::IString I32U_REM;
 extern cashew::IString ABS;
 extern cashew::IString FLOOR;
 extern cashew::IString CEIL;
+extern cashew::IString TRUNC;
 extern cashew::IString SQRT;
 extern cashew::IString POW;
 extern cashew::IString I32_TEMP;
@@ -68,8 +67,8 @@ extern cashew::IString STACK_MAX;
 extern cashew::IString INSTRUMENT;
 extern cashew::IString MATH_IMUL;
 extern cashew::IString MATH_ABS;
-extern cashew::IString MATH_CEIL;
 extern cashew::IString MATH_CLZ32;
+extern cashew::IString MATH_CEIL;
 extern cashew::IString MATH_FLOOR;
 extern cashew::IString MATH_TRUNC;
 extern cashew::IString MATH_SQRT;
@@ -91,8 +90,6 @@ extern cashew::IString WASM_FETCH_HIGH_BITS;
 extern cashew::IString INT64_TO_32_HIGH_BITS;
 extern cashew::IString WASM_NEAREST_F32;
 extern cashew::IString WASM_NEAREST_F64;
-extern cashew::IString WASM_TRUNC_F32;
-extern cashew::IString WASM_TRUNC_F64;
 extern cashew::IString WASM_I64_MUL;
 extern cashew::IString WASM_I64_SDIV;
 extern cashew::IString WASM_I64_UDIV;
