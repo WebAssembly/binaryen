@@ -15,15 +15,11 @@
  */
 
 //
-// Instruments the build with code to log execution at each function
-// entry. This list of functions will be used when we split the wasm later.
+// Instruments the Wasm binary with code to log execution at each function
+// entry with an index. This list of functions will be used when we split the wasm later.
 //
 // The logging is performed by calling an ffi with an id for each
-// call site. You need to provide that import on the JS side.
-//
-// This pass is more effective on flat IR (--flatten) since when it
-// instruments say a return, there will be no code run in the return's
-// value.
+// call site. You need to provide the import on the JS side.
 //
 
 #include "asm_v_wasm.h"
