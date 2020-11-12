@@ -99,70 +99,10 @@ public:
     }
   }
 
-  void visitBlock(Block* curr);
-  void visitIf(If* curr);
-  void visitLoop(Loop* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallIndirect(CallIndirect* curr);
-  void visitLocalGet(LocalGet* curr);
-  void visitLocalSet(LocalSet* curr);
-  void visitGlobalGet(GlobalGet* curr);
-  void visitGlobalSet(GlobalSet* curr);
-  void visitLoad(Load* curr);
-  void visitStore(Store* curr);
-  void visitAtomicRMW(AtomicRMW* curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
-  void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicNotify(AtomicNotify* curr);
-  void visitAtomicFence(AtomicFence* curr);
-  void visitSIMDExtract(SIMDExtract* curr);
-  void visitSIMDReplace(SIMDReplace* curr);
-  void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDTernary(SIMDTernary* curr);
-  void visitSIMDShift(SIMDShift* curr);
-  void visitSIMDLoad(SIMDLoad* curr);
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
-  void visitMemoryInit(MemoryInit* curr);
-  void visitDataDrop(DataDrop* curr);
-  void visitMemoryCopy(MemoryCopy* curr);
-  void visitMemoryFill(MemoryFill* curr);
-  void visitConst(Const* curr);
-  void visitUnary(Unary* curr);
-  void visitBinary(Binary* curr);
-  void visitSelect(Select* curr);
-  void visitReturn(Return* curr);
-  void visitMemorySize(MemorySize* curr);
-  void visitMemoryGrow(MemoryGrow* curr);
-  void visitRefNull(RefNull* curr);
-  void visitRefIsNull(RefIsNull* curr);
-  void visitRefFunc(RefFunc* curr);
-  void visitRefEq(RefEq* curr);
-  void visitTry(Try* curr);
-  void visitThrow(Throw* curr);
-  void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
-  void visitNop(Nop* curr);
-  void visitUnreachable(Unreachable* curr);
-  void visitDrop(Drop* curr);
-  void visitPop(Pop* curr);
-  void visitTupleMake(TupleMake* curr);
-  void visitTupleExtract(TupleExtract* curr);
-  void visitI31New(I31New* curr);
-  void visitI31Get(I31Get* curr);
-  void visitRefTest(RefTest* curr);
-  void visitRefCast(RefCast* curr);
-  void visitBrOnCast(BrOnCast* curr);
-  void visitRttCanon(RttCanon* curr);
-  void visitRttSub(RttSub* curr);
-  void visitStructNew(StructNew* curr);
-  void visitStructGet(StructGet* curr);
-  void visitStructSet(StructSet* curr);
-  void visitArrayNew(ArrayNew* curr);
-  void visitArrayGet(ArrayGet* curr);
-  void visitArraySet(ArraySet* curr);
-  void visitArrayLen(ArrayLen* curr);
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
+
+#include "wasm-delegations.h"
 
   void emitResultType(Type type);
   void emitIfElse(If* curr);
