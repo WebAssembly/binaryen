@@ -180,8 +180,8 @@ BinaryenExpressionId BinaryenInvalidId(void) {
 }
 
 #define DELEGATE(CLASS_TO_VISIT)                                               \
-  BinaryenExpressionId Binaryen##CLASS_TO_VISIT##Id(void) { \
-    return Expression::Id::CLASS_TO_VISIT##Id; \
+  BinaryenExpressionId Binaryen##CLASS_TO_VISIT##Id(void) {                    \
+    return Expression::Id::CLASS_TO_VISIT##Id;                                 \
   }
 
 #include "wasm-delegations.h"
