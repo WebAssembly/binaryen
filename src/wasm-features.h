@@ -38,7 +38,8 @@ struct FeatureSet {
     Multivalue = 1 << 9,
     GC = 1 << 10,
     Memory64 = 1 << 11,
-    All = (1 << 12) - 1
+    TypedFunctionReferences = 1 << 12,
+    All = (1 << 13) - 1
   };
 
   static std::string toString(Feature f) {
@@ -67,6 +68,8 @@ struct FeatureSet {
         return "gc";
       case Memory64:
         return "memory64";
+      case TypedFunctionReferences:
+        return "typed-function-references";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }

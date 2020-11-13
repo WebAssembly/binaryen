@@ -504,6 +504,17 @@ struct EffectAnalyzer
   void visitTupleExtract(TupleExtract* curr) {}
   void visitI31New(I31New* curr) {}
   void visitI31Get(I31Get* curr) {}
+  void visitRefCall(RefCall* curr) {
+    calls = true;
+    if (features.hasExceptionHandling() && tryDepth == 0) {
+      throws = true;
+    }
+    if (curr->isReturn) {
+      branchesOut = true;
+    }
+    // traps when the arg is null
+    implicitTrap = true;
+  }
   void visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO (gc): ref.test"); }
   void visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
   void visitBrOnCast(BrOnCast* curr) {

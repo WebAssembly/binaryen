@@ -588,6 +588,7 @@ public:
     TupleExtractId,
     I31NewId,
     I31GetId,
+    RefCallId,
     RefTestId,
     RefCastId,
     BrOnCastId,
@@ -1289,6 +1290,16 @@ public:
 
   Expression* i31;
   bool signed_;
+
+  void finalize();
+};
+
+class RefCall : public SpecificExpression<Expression::RefCallId> {
+public:
+  RefCall(MixedArena& allocator) : operands(allocator) {}
+  ExpressionList operands;
+  Expression* target;
+  bool isReturn = false;
 
   void finalize();
 };

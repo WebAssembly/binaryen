@@ -68,6 +68,8 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     }
   }
 
+//TODO RefCall
+
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
     if (changedTypes) {
