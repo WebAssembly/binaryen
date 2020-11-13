@@ -629,6 +629,17 @@ function wrapModule(module, self = {}) {
     },
     'fill'(dest, value, size) {
       return Module['_BinaryenMemoryFill'](module, dest, value, size);
+    },
+    'atomic': {
+      'notify'(ptr, notifyCount) {
+        return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
+      },
+      'wait32'(ptr, expected, timeout) {
+        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
+      },
+      'wait64'(ptr, expected, timeout) {
+        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
+      }
     }
   }
 
@@ -889,9 +900,6 @@ function wrapModule(module, self = {}) {
           return Module['_BinaryenAtomicCmpxchg'](module, 2, offset, ptr, expected, replacement, Module['i32'])
         },
       },
-      'wait'(ptr, expected, timeout) {
-        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i32']);
-      }
     },
     'pop'() {
       return Module['_BinaryenPop'](module, Module['i32']);
@@ -1193,9 +1201,6 @@ function wrapModule(module, self = {}) {
           return Module['_BinaryenAtomicCmpxchg'](module, 4, offset, ptr, expected, replacement, Module['i64'])
         },
       },
-      'wait'(ptr, expected, timeout) {
-        return Module['_BinaryenAtomicWait'](module, ptr, expected, timeout, Module['i64']);
-      }
     },
     'pop'() {
       return Module['_BinaryenPop'](module, Module['i64']);
@@ -2132,9 +2137,6 @@ function wrapModule(module, self = {}) {
   };
 
   self['atomic'] = {
-    'notify'(ptr, notifyCount) {
-      return Module['_BinaryenAtomicNotify'](module, ptr, notifyCount);
-    },
     'fence'() {
       return Module['_BinaryenAtomicFence'](module);
     }

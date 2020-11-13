@@ -51,7 +51,7 @@
   )
  )
  (func "unaligned_notify" (result i32)
-  (atomic.notify
+  (memory.atomic.notify
    (i32.const 1) ;; unaligned
    (i32.const 1)
   )
@@ -70,7 +70,7 @@
  )
  (func "oob_notify"
   (drop
-   (atomic.notify offset=22
+   (memory.atomic.notify offset=22
     (i32.const -104) ;; illegal address
     (i32.const -72)
    )
