@@ -154,15 +154,15 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::UnreachableId:
       return "unreachable";
     case Expression::Id::AtomicCmpxchgId:
-      return "atomic_cmpxchg";
+      return "atomic.cmpxchg";
     case Expression::Id::AtomicRMWId:
-      return "atomic_rmw";
+      return "atomic.rmw";
     case Expression::Id::AtomicWaitId:
-      return "atomic_wait";
+      return "atomic.wait";
     case Expression::Id::AtomicNotifyId:
-      return "atomic_notify";
+      return "atomic.notify";
     case Expression::Id::AtomicFenceId:
-      return "atomic_fence";
+      return "atomic.fence";
     case Expression::Id::SIMDExtractId:
       return "simd_extract";
     case Expression::Id::SIMDReplaceId:
@@ -178,13 +178,13 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::SIMDLoadStoreLaneId:
       return "simd_load_store_lane";
     case Expression::Id::MemoryInitId:
-      return "memory_init";
+      return "memory.init";
     case Expression::Id::DataDropId:
-      return "data_drop";
+      return "data.drop";
     case Expression::Id::MemoryCopyId:
-      return "memory_copy";
+      return "memory.copy";
     case Expression::Id::MemoryFillId:
-      return "memory_fill";
+      return "memory.fill";
     case Expression::Id::PopId:
       return "pop";
     case Expression::Id::RefNullId:

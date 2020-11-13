@@ -172,14 +172,14 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_OPTIONAL_CHILD(If, ifFalse);
     DELEGATE_FIELD_CHILD(If, ifTrue);
     DELEGATE_FIELD_CHILD(If, condition);
-    DELEGATE_END();
+    DELEGATE_END(If);
     break;
   }
   case Expression::Id::LoopId: {
     DELEGATE_START(Loop);
     DELEGATE_FIELD_CHILD(Loop, body);
     DELEGATE_FIELD_SCOPE_NAME_DEF(Loop, name);
-    DELEGATE_END();
+    DELEGATE_END(Loop);
     break;
   }
   case Expression::Id::BreakId: {
@@ -187,7 +187,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_OPTIONAL_CHILD(Break, condition);
     DELEGATE_FIELD_OPTIONAL_CHILD(Break, value);
     DELEGATE_FIELD_SCOPE_NAME_USE(Break, name);
-    DELEGATE_END();
+    DELEGATE_END(Break);
     break;
   }
   case Expression::Id::SwitchId: {
@@ -196,7 +196,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_OPTIONAL_CHILD(Switch, value);
     DELEGATE_FIELD_SCOPE_NAME_USE(Switch, default_);
     DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Switch, targets);
-    DELEGATE_END();
+    DELEGATE_END(Switch);
     break;
   }
   case Expression::Id::CallId: {
@@ -204,7 +204,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD_VECTOR(Call, operands);
     DELEGATE_FIELD_NAME(Call, target);
     DELEGATE_FIELD_INT(Call, isReturn);
-    DELEGATE_END();
+    DELEGATE_END(Call);
     break;
   }
   case Expression::Id::CallIndirectId: {
@@ -213,33 +213,33 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD_VECTOR(CallIndirect, operands);
     DELEGATE_FIELD_SIGNATURE(CallIndirect, sig);
     DELEGATE_FIELD_INT(CallIndirect, isReturn);
-    DELEGATE_END();
+    DELEGATE_END(CallIndirect);
     break;
   }
   case Expression::Id::LocalGetId: {
     DELEGATE_START(LocalGet);
     DELEGATE_FIELD_INT(LocalGet, index);
-    DELEGATE_END();
+    DELEGATE_END(LocalGet);
     break;
   }
   case Expression::Id::LocalSetId: {
     DELEGATE_START(LocalSet);
     DELEGATE_FIELD_CHILD(LocalSet, value);
     DELEGATE_FIELD_INT(LocalSet, index);
-    DELEGATE_END();
+    DELEGATE_END(LocalSet);
     break;
   }
   case Expression::Id::GlobalGetId: {
     DELEGATE_START(GlobalGet);
     DELEGATE_FIELD_INT(GlobalGet, name);
-    DELEGATE_END();
+    DELEGATE_END(GlobalGet);
     break;
   }
   case Expression::Id::GlobalSetId: {
     DELEGATE_START(GlobalSet);
     DELEGATE_FIELD_CHILD(GlobalSet, value);
     DELEGATE_FIELD_INT(GlobalSet, name);
-    DELEGATE_END();
+    DELEGATE_END(GlobalSet);
     break;
   }
   case Expression::Id::LoadId: {
@@ -250,7 +250,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(Load, offset);
     DELEGATE_FIELD_ADDRESS(Load, align);
     DELEGATE_FIELD_INT(Load, isAtomic);
-    DELEGATE_END();
+    DELEGATE_END(Load);
     break;
   }
   case Expression::Id::StoreId: {
@@ -262,7 +262,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(Store, align);
     DELEGATE_FIELD_INT(Store, isAtomic);
     DELEGATE_FIELD_TYPE(Store, valueType);
-    DELEGATE_END();
+    DELEGATE_END(Store);
     break;
   }
   case Expression::Id::AtomicRMWId: {
@@ -272,7 +272,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_INT(AtomicRMW, op);
     DELEGATE_FIELD_INT(AtomicRMW, bytes);
     DELEGATE_FIELD_ADDRESS(AtomicRMW, offset);
-    DELEGATE_END();
+    DELEGATE_END(AtomicRMW);
     break;
   }
   case Expression::Id::AtomicCmpxchgId: {
@@ -282,7 +282,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr);
     DELEGATE_FIELD_INT(AtomicCmpxchg, bytes);
     DELEGATE_FIELD_ADDRESS(AtomicCmpxchg, offset);
-    DELEGATE_END();
+    DELEGATE_END(AtomicCmpxchgId);
     break;
   }
   case Expression::Id::AtomicWaitId: {
@@ -292,7 +292,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicWait, ptr);
     DELEGATE_FIELD_ADDRESS(AtomicWait, offset);
     DELEGATE_FIELD_TYPE(AtomicWait, expectedType);
-    DELEGATE_END();
+    DELEGATE_END(AtomicWait);
     break;
   }
   case Expression::Id::AtomicNotifyId: {
@@ -300,13 +300,13 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(AtomicNotify, notifyCount);
     DELEGATE_FIELD_CHILD(AtomicNotify, ptr);
     DELEGATE_FIELD_ADDRESS(AtomicNotify, offset);
-    DELEGATE_END();
+    DELEGATE_END(AtomicNotify);
     break;
   }
   case Expression::Id::AtomicFenceId: {
     DELEGATE_START(AtomicFence);
     DELEGATE_FIELD_INT(AtomicFence, order);
-    DELEGATE_END();
+    DELEGATE_END(AtomicFence);
     break;
   }
   case Expression::Id::SIMDExtractId: {
@@ -314,7 +314,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(SIMDExtract, vec);
     DELEGATE_FIELD_INT(SIMDExtract, op);
     DELEGATE_FIELD_INT(SIMDExtract, index);
-    DELEGATE_END();
+    DELEGATE_END(SIMDExtract);
     break;
   }
   case Expression::Id::SIMDReplaceId: {
@@ -323,7 +323,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(SIMDReplace, vec);
     DELEGATE_FIELD_INT(SIMDReplace, op);
     DELEGATE_FIELD_INT(SIMDReplace, index);
-    DELEGATE_END();
+    DELEGATE_END(SIMDReplace);
     break;
   }
   case Expression::Id::SIMDShuffleId: {
@@ -331,7 +331,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(SIMDShuffle, right);
     DELEGATE_FIELD_CHILD(SIMDShuffle, left);
     DELEGATE_FIELD_INT_ARRAY(SIMDShuffle, mask);
-    DELEGATE_END();
+    DELEGATE_END(SIMDShuffle);
     break;
   }
   case Expression::Id::SIMDTernaryId: {
@@ -340,7 +340,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(SIMDTernary, b);
     DELEGATE_FIELD_CHILD(SIMDTernary, a);
     DELEGATE_FIELD_INT(SIMDTernary, op);
-    DELEGATE_END();
+    DELEGATE_END(SIMDTernary);
     break;
   }
   case Expression::Id::SIMDShiftId: {
@@ -348,7 +348,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(SIMDShift, shift);
     DELEGATE_FIELD_CHILD(SIMDShift, vec);
     DELEGATE_FIELD_INT(SIMDShift, op);
-    DELEGATE_END();
+    DELEGATE_END(SIMDShift);
     break;
   }
   case Expression::Id::SIMDLoadId: {
@@ -357,7 +357,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_INT(SIMDLoad, op);
     DELEGATE_FIELD_ADDRESS(SIMDLoad, offset);
     DELEGATE_FIELD_ADDRESS(SIMDLoad, align);
-    DELEGATE_END();
+    DELEGATE_END(SIMDLoad);
     break;
   }
   case Expression::Id::SIMDLoadStoreLaneId: {
@@ -368,7 +368,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, offset);
     DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, align);
     DELEGATE_FIELD_INT(SIMDLoadStoreLane, index);
-    DELEGATE_END();
+    DELEGATE_END(SIMDLoadStoreLane);
     break;
   }
   case Expression::Id::MemoryInitId: {
@@ -377,13 +377,13 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryInit, offset);
     DELEGATE_FIELD_CHILD(MemoryInit, dest);
     DELEGATE_FIELD_INT(MemoryInit, segment);
-    DELEGATE_END();
+    DELEGATE_END(MemoryInit);
     break;
   }
   case Expression::Id::DataDropId: {
     DELEGATE_START(DataDrop);
     DELEGATE_FIELD_INT(DataDrop, segment);
-    DELEGATE_END();
+    DELEGATE_END(DataDrop);
     break;
   }
   case Expression::Id::MemoryCopyId: {
@@ -391,7 +391,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryCopy, size);
     DELEGATE_FIELD_CHILD(MemoryCopy, source);
     DELEGATE_FIELD_CHILD(MemoryCopy, dest);
-    DELEGATE_END();
+    DELEGATE_END(MemoryCopy);
     break;
   }
   case Expression::Id::MemoryFillId: {
@@ -399,20 +399,20 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(MemoryFill, size);
     DELEGATE_FIELD_CHILD(MemoryFill, value);
     DELEGATE_FIELD_CHILD(MemoryFill, dest);
-    DELEGATE_END();
+    DELEGATE_END(MemoryFill);
     break;
   }
   case Expression::Id::ConstId: {
     DELEGATE_START(Const);
     DELEGATE_FIELD_LITERAL(Const, value);
-    DELEGATE_END();
+    DELEGATE_END(Const);
     break;
   }
   case Expression::Id::UnaryId: {
     DELEGATE_START(Unary);
     DELEGATE_FIELD_CHILD(Unary, value);
     DELEGATE_FIELD_INT(Unary, op);
-    DELEGATE_END();
+    DELEGATE_END(Unary);
     break;
   }
   case Expression::Id::BinaryId: {
@@ -420,7 +420,7 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(Binary, right);
     DELEGATE_FIELD_CHILD(Binary, left);
     DELEGATE_FIELD_INT(Binary, op);
-    DELEGATE_END();
+    DELEGATE_END(Binary);
     break;
   }
   case Expression::Id::SelectId: {
@@ -428,75 +428,75 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_CHILD(Select, condition);
     DELEGATE_FIELD_CHILD(Select, ifFalse);
     DELEGATE_FIELD_CHILD(Select, ifTrue);
-    DELEGATE_END();
+    DELEGATE_END(Select);
     break;
   }
   case Expression::Id::DropId: {
     DELEGATE_START(Drop);
     DELEGATE_FIELD_CHILD(Drop, value);
-    DELEGATE_END();
+    DELEGATE_END(Drop);
     break;
   }
   case Expression::Id::ReturnId: {
     DELEGATE_START(Return);
     DELEGATE_FIELD_OPTIONAL_CHILD(Return, value);
-    DELEGATE_END();
+    DELEGATE_END(Return);
     break;
   }
   case Expression::Id::MemorySizeId: {
     DELEGATE_START(MemorySize);
-    DELEGATE_END();
+    DELEGATE_END(MemorySize);
     break;
   }
   case Expression::Id::MemoryGrowId: {
     DELEGATE_START(MemoryGrow);
     DELEGATE_FIELD_CHILD(MemoryGrow, delta);
-    DELEGATE_END();
+    DELEGATE_END(MemoryGrow);
     break;
   }
   case Expression::Id::RefNullId: {
     DELEGATE_START(RefNull);
     DELEGATE_FIELD_TYPE(RefNull, type);
-    DELEGATE_END();
+    DELEGATE_END(RefNull);
     break;
   }
   case Expression::Id::RefIsNullId: {
     DELEGATE_START(RefIsNull);
     DELEGATE_FIELD_CHILD(RefIsNull, value);
-    DELEGATE_END();
+    DELEGATE_END(RefIsNull);
     break;
   }
   case Expression::Id::RefFuncId: {
     DELEGATE_START(RefFunc);
     DELEGATE_FIELD_NAME(RefFunc, func);
-    DELEGATE_END();
+    DELEGATE_END(RefFunc);
     break;
   }
   case Expression::Id::RefEqId: {
     DELEGATE_START(RefEq);
     DELEGATE_FIELD_CHILD(RefEq, right);
     DELEGATE_FIELD_CHILD(RefEq, left);
-    DELEGATE_END();
+    DELEGATE_END(RefEq);
     break;
   }
   case Expression::Id::TryId: {
     DELEGATE_START(Try);
     DELEGATE_FIELD_CHILD(Try, catchBody);
     DELEGATE_FIELD_CHILD(Try, body);
-    DELEGATE_END();
+    DELEGATE_END(Try);
     break;
   }
   case Expression::Id::ThrowId: {
     DELEGATE_START(Throw);
     DELEGATE_FIELD_CHILD_VECTOR(Throw, operands);
     DELEGATE_FIELD_NAME(Throw, event);
-    DELEGATE_END();
+    DELEGATE_END(Throw);
     break;
   }
   case Expression::Id::RethrowId: {
     DELEGATE_START(Rethrow);
     DELEGATE_FIELD_CHILD(Rethrow, exnref);
-    DELEGATE_END();
+    DELEGATE_END(Rethrow);
     break;
   }
   case Expression::Id::BrOnExnId: {
@@ -505,48 +505,48 @@ switch (DELEGATE_ID) {
     DELEGATE_FIELD_SCOPE_NAME_USE(BrOnExn, name);
     DELEGATE_FIELD_NAME(BrOnExn, event);
     DELEGATE_FIELD_TYPE(BrOnExn, sent);
-    DELEGATE_END();
+    DELEGATE_END(BrOnExn);
     break;
   }
   case Expression::Id::NopId: {
     DELEGATE_START(Nop);
-    DELEGATE_END();
+    DELEGATE_END(Nop);
     break;
   }
   case Expression::Id::UnreachableId: {
     DELEGATE_START(Unreachable);
-    DELEGATE_END();
+    DELEGATE_END(Unreachable);
     break;
   }
   case Expression::Id::PopId: {
     DELEGATE_START(Pop);
-    DELEGATE_END();
+    DELEGATE_END(Pop);
     break;
   }
   case Expression::Id::TupleMakeId: {
     DELEGATE_START(TupleMake);
     DELEGATE_FIELD_CHILD_VECTOR(Tuple, operands);
-    DELEGATE_END();
+    DELEGATE_END(TupleMake);
     break;
   }
   case Expression::Id::TupleExtractId: {
     DELEGATE_START(TupleExtract);
     DELEGATE_FIELD_CHILD(TupleExtract, tuple);
     DELEGATE_FIELD_INT(TupleExtract, index);
-    DELEGATE_END();
+    DELEGATE_END(TupleExtract);
     break;
   }
   case Expression::Id::I31NewId: {
     DELEGATE_START(I31New);
     DELEGATE_FIELD_CHILD(I31New, value);
-    DELEGATE_END();
+    DELEGATE_END(I31New);
     break;
   }
   case Expression::Id::I31GetId: {
     DELEGATE_START(I31Get);
     DELEGATE_FIELD_CHILD(I31Get, i31);
     DELEGATE_FIELD_INT(I31Get, signed_);
-    DELEGATE_END();
+    DELEGATE_END(I31Get);
     break;
   }
   case Expression::Id::CallRefId: {
@@ -560,73 +560,73 @@ switch (DELEGATE_ID) {
   case Expression::Id::RefTestId: {
     DELEGATE_START(RefTest);
     WASM_UNREACHABLE("TODO (gc): ref.test");
-    DELEGATE_END();
+    DELEGATE_END(RefTest);
     break;
   }
   case Expression::Id::RefCastId: {
     DELEGATE_START(RefCast);
     WASM_UNREACHABLE("TODO (gc): ref.cast");
-    DELEGATE_END();
+    DELEGATE_END(RefCast);
     break;
   }
   case Expression::Id::BrOnCastId: {
     DELEGATE_START(BrOnCast);
     WASM_UNREACHABLE("TODO (gc): br_on_cast");
-    DELEGATE_END();
+    DELEGATE_END(BrOnCast);
     break;
   }
   case Expression::Id::RttCanonId: {
     DELEGATE_START(RttCanon);
     WASM_UNREACHABLE("TODO (gc): rtt.canon");
-    DELEGATE_END();
+    DELEGATE_END(RttCanon);
     break;
   }
   case Expression::Id::RttSubId: {
     DELEGATE_START(RttSub);
     WASM_UNREACHABLE("TODO (gc): rtt.sub");
-    DELEGATE_END();
+    DELEGATE_END(RttSub);
     break;
   }
   case Expression::Id::StructNewId: {
     DELEGATE_START(StructNew);
     WASM_UNREACHABLE("TODO (gc): struct.new");
-    DELEGATE_END();
+    DELEGATE_END(StructNew);
     break;
   }
   case Expression::Id::StructGetId: {
     DELEGATE_START(StructGet);
     WASM_UNREACHABLE("TODO (gc): struct.get");
-    DELEGATE_END();
+    DELEGATE_END(StructGet);
     break;
   }
   case Expression::Id::StructSetId: {
     DELEGATE_START(StructSet);
     WASM_UNREACHABLE("TODO (gc): struct.set");
-    DELEGATE_END();
+    DELEGATE_END(StructSet);
     break;
   }
   case Expression::Id::ArrayNewId: {
     DELEGATE_START(ArrayNew);
     WASM_UNREACHABLE("TODO (gc): array.new");
-    DELEGATE_END();
+    DELEGATE_END(ArrayNew);
     break;
   }
   case Expression::Id::ArrayGetId: {
     DELEGATE_START(ArrayGet);
     WASM_UNREACHABLE("TODO (gc): array.get");
-    DELEGATE_END();
+    DELEGATE_END(ArrayGet);
     break;
   }
   case Expression::Id::ArraySetId: {
     DELEGATE_START(ArraySet);
     WASM_UNREACHABLE("TODO (gc): array.set");
-    DELEGATE_END();
+    DELEGATE_END(ArraySet);
     break;
   }
   case Expression::Id::ArrayLenId: {
     DELEGATE_START(ArrayLen);
     WASM_UNREACHABLE("TODO (gc): array.len");
-    DELEGATE_END();
+    DELEGATE_END(ArrayLen);
     break;
   }
 }
