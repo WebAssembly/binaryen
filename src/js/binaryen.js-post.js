@@ -2136,7 +2136,7 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenUnreachable'](module);
   };
 
-  self['atomic'] = function() {
+  self['atomic'] = {
     'fence'() {
       return Module['_BinaryenAtomicFence'](module);
     }
