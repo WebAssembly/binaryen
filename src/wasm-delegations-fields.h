@@ -549,12 +549,12 @@ switch (DELEGATE_ID) {
     DELEGATE_END();
     break;
   }
-  case Expression::Id::RefCallId: {
-    DELEGATE_START(RefCall);
-    DELEGATE_FIELD_CHILD(RefCall, target);
-    DELEGATE_FIELD_CHILD_VECTOR(RefCall, operands);
-    DELEGATE_FIELD_INT(RefCall, isReturn);
-    DELEGATE_END();
+  case Expression::Id::CallRefId: {
+    DELEGATE_START(CallRef);
+    DELEGATE_FIELD_CHILD(CallRef, target);
+    DELEGATE_FIELD_CHILD_VECTOR(CallRef, operands);
+    DELEGATE_FIELD_INT(CallRef, isReturn);
+    DELEGATE_END(CallRef);
     break;
   }
   case Expression::Id::RefTestId: {

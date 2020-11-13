@@ -24,7 +24,7 @@ namespace wasm {
 
 // Measure the execution cost of an AST. Very handwave-ey
 
-struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
+struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   CostAnalyzer(Expression* ast) { cost = visit(ast); }
 
   Index cost;
@@ -550,6 +550,13 @@ struct CostAnalyzer : public Visitor<CostAnalyzer, Index> {
   Index visitPop(Pop* curr) { return 0; }
   Index visitNop(Nop* curr) { return 0; }
   Index visitUnreachable(Unreachable* curr) { return 0; }
+  Index visitCallRef(CallRef* curr) {
+    Index ret = 6 + visit(curr->target);
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
 };
 
 } // namespace wasm

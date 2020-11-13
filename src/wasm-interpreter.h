@@ -1375,8 +1375,8 @@ public:
     NOTE_EVAL1(value);
     return Literal(value.geti31(curr->signed_));
   }
-  Flow visitRefCall(RefCall* curr) {
-    NOTE_ENTER("RefCall");
+  Flow visitCallRef(CallRef* curr) {
+    NOTE_ENTER("CallRef");
     WASM_UNREACHABLE("TODO (gc): ref.call");
   }
   Flow visitRefTest(RefTest* curr) {

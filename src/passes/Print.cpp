@@ -1559,7 +1559,7 @@ struct PrintExpressionContents
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
-  void visitRefCall(RefCall* curr) {
+  void visitCallRef(CallRef* curr) {
     if (curr->isReturn) {
       printMedium(o, "return_call_ref");
     } else {
@@ -2221,7 +2221,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->i31);
     decIndent();
   }
-  void visitRefCall(RefCall* curr) {
+  void visitCallRef(CallRef* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
