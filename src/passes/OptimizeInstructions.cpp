@@ -1026,6 +1026,7 @@ private:
     }
     if (auto* c = binary->right->dynCast<Const>()) {
       // x - C  ==>   x + (-C)
+      // x - fval(C)   ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
       if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
         c->value = c->value.neg();
@@ -1844,20 +1845,6 @@ private:
       }
     }
     {
-      double value;
-      if (matches(curr, binary(Sub, any(), fval(&value)))) {
-        // x - (-C)   ==>   x + C
-        if (std::signbit(value)) {
-          curr->op = Abstract::getBinary(type, Add);
-          right->value = right->value.neg();
-          return curr;
-        } else if (fastMath && value == 0.0) {
-          // x - 0.0   ==>   x
-          return curr->left;
-        }
-      }
-    }
-    {
       // x * 2.0  ==>  x + x
       // but we apply this only for simple expressions like
       // local.get and global.get for avoid using extra local
@@ -2481,7 +2468,8 @@ private:
   }
 
   bool shouldCanonicalize(Binary* binary) {
-    if ((binary->op == SubInt32 || binary->op == SubInt64) &&
+    if ((binary->op == SubInt32 || binary->op == SubInt64 ||
+         binary->op == SubFloat32 || binary->op == SubFloat64) &&
         binary->right->is<Const>() && !binary->left->is<Const>()) {
       return true;
     }

@@ -9,7 +9,7 @@
  (export "add2" (func $2))
  (export "add3" (func $2))
  (export "add4" (func $2))
- (export "sub1" (func $1))
+ (export "sub1" (func $2))
  (export "sub2" (func $2))
  (export "mul_neg_one1" (func $9))
  (export "mul_neg_one2" (func $10))
