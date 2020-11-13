@@ -2641,8 +2641,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     }
     case BinaryConsts::CallRef:
-      visitCallRef(
-        (curr = allocator.alloc<CallRef>())->cast<CallRef>());
+      visitCallRef((curr = allocator.alloc<CallRef>())->cast<CallRef>());
       break;
     case BinaryConsts::RetCallRef: {
       auto call = allocator.alloc<CallRef>();

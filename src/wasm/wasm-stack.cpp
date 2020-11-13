@@ -1876,7 +1876,8 @@ void BinaryInstWriter::visitI31Get(I31Get* curr) {
 }
 
 void BinaryInstWriter::visitCallRef(CallRef* curr) {
-  o << int8_t(curr->isReturn ? BinaryConsts::RetCallRef : BinaryConsts::CallRef);
+  o << int8_t(curr->isReturn ? BinaryConsts::RetCallRef
+                             : BinaryConsts::CallRef);
 }
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
