@@ -33,7 +33,6 @@
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/threads.h>
-#include <wasm-s-parser.h>
 #include <wasm.h>
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
