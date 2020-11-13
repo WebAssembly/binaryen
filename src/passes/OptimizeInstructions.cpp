@@ -488,6 +488,12 @@ struct OptimizeInstructions
         // x * fneg(y)   ==>   fneg(x * y)
         // fneg(x) / y   ==>   fneg(x / y)
         // x / fneg(y)   ==>   fneg(x / y)
+        //
+        // this canonicalizations open more up room for next simplifications.
+        // For example:
+        //   (x / -y) *  10.0
+        //  -(x /  y) *  10.0
+        //   (x /  y) * -10.0
         if ((matches(curr, binary(&bin, Mul, unary(Neg, any(&x)), any(&y))) ||
              matches(curr, binary(&bin, Mul, any(&x), unary(Neg, any(&y)))) ||
              matches(curr, binary(&bin, DivS, unary(Neg, any(&x)), any(&y))) ||
