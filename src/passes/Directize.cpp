@@ -70,10 +70,12 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
   void visitCallRef(CallRef* curr) {
     if (auto* ref = curr->target->dynCast<RefFunc>()) {
+      // We know the target!
       replaceCurrent(
         Builder(*getModule())
-          .makeCall(ref->name, curr->operands, curr->type, curr->isReturn));
-    } else if (auto* null = curr->target->dynCast<RefNull>()) {
+          .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+    } else if (curr->target->dynCast<RefNull>()) {
+      // This will definitely trap.
       replaceWithUnreachable(curr);
     }
   }
@@ -89,7 +91,8 @@ private:
   TableUtils::FlatTable* flatTable;
   bool changedTypes = false;
 
-  void replaceWithUnreachable(CallIndirect* call) {
+  template<typename T>
+  void replaceWithUnreachable(T* call) {
     Builder builder(*getModule());
     for (auto*& operand : call->operands) {
       operand = builder.makeDrop(operand);

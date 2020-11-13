@@ -213,7 +213,7 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCallRef(CallRef* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, curr->sig.results);
+      handleReturnCall(curr, curr->target->type);
     }
   }
   void visitLocalGet(LocalGet* curr) {
