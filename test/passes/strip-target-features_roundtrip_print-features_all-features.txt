@@ -10,6 +10,7 @@
 --enable-multivalue
 --enable-gc
 --enable-memory64
+--enable-typed-function-references
 (module
  (type $none_=>_v128_externref (func (result v128 externref)))
  (func $foo (result v128 externref)

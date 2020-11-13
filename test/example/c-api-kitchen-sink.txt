@@ -25,7 +25,7 @@ BinaryenFeatureReferenceTypes: 256
 BinaryenFeatureMultivalue: 512
 BinaryenFeatureGC: 1024
 BinaryenFeatureMemory64: 2048
-BinaryenFeatureAll: 4095
+BinaryenFeatureAll: 8191
 (f32.neg
  (f32.const -33.61199951171875)
 )
