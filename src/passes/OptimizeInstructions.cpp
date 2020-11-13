@@ -19,6 +19,7 @@
 //
 
 #include <algorithm>
+#include <cmath>
 #include <type_traits>
 
 #include <ir/abstract.h>
