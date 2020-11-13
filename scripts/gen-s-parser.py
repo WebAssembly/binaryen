@@ -518,6 +518,9 @@ instructions = [
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
     ("pop",                  "makePop(s)"),
+    # Typed function references instructions
+    ("call_ref",  "makeCallRef(s, /*isReturn=*/false)"),
+    ("return_call_ref", "makeCallRef(s, /*isReturn=*/true)"),
     # GC
     ("ref.eq",               "makeRefEq(s)"),
     ("i31.new",              "makeI31New(s)"),

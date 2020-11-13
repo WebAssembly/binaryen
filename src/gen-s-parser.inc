@@ -107,9 +107,17 @@ switch (op[0]) {
       case '\0':
         if (strcmp(op, "call") == 0) { return makeCall(s, /*isReturn=*/false); }
         goto parse_error;
-      case '_':
-        if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
-        goto parse_error;
+      case '_': {
+        switch (op[5]) {
+          case 'i':
+            if (strcmp(op, "call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/false); }
+            goto parse_error;
+          case 'r':
+            if (strcmp(op, "call_ref") == 0) { return makeCallRef(s, /*isReturn=*/false); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       default: goto parse_error;
     }
   }
@@ -2742,9 +2750,17 @@ switch (op[0]) {
                       case '\0':
                         if (strcmp(op, "return_call") == 0) { return makeCall(s, /*isReturn=*/true); }
                         goto parse_error;
-                      case '_':
-                        if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
-                        goto parse_error;
+                      case '_': {
+                        switch (op[12]) {
+                          case 'i':
+                            if (strcmp(op, "return_call_indirect") == 0) { return makeCallIndirect(s, /*isReturn=*/true); }
+                            goto parse_error;
+                          case 'r':
+                            if (strcmp(op, "return_call_ref") == 0) { return makeCallRef(s, /*isReturn=*/true); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       default: goto parse_error;
                     }
                   }
