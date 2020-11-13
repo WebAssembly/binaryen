@@ -550,15 +550,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitPop(Pop* curr) { return 0; }
   Index visitNop(Nop* curr) { return 0; }
   Index visitUnreachable(Unreachable* curr) { return 0; }
-  Index visitDataDrop(DataDrop* curr) {
-    return 5;
-  }
-  Index visitI31New(I31New* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitI31Get(I31Get* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
+  Index visitDataDrop(DataDrop* curr) { return 5; }
+  Index visitI31New(I31New* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitI31Get(I31Get* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitCallRef(CallRef* curr) {
     Index ret = 6 + visit(curr->target);
     for (auto* child : curr->operands) {
@@ -566,42 +560,18 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     }
     return ret;
   }
-  Index visitRefTest(RefTest* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitRefCast(RefCast* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitBrOnCast(BrOnCast* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitRttCanon(RttCanon* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitRttSub(RttSub* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitStructNew(StructNew* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitStructGet(StructGet* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitStructSet(StructSet* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitArrayNew(ArrayNew* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitArrayGet(ArrayGet* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitArraySet(ArraySet* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
-  Index visitArrayLen(ArrayLen* curr) {
-    WASM_UNREACHABLE("TODO: GC");
-  }
+  Index visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitBrOnCast(BrOnCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitRttCanon(RttCanon* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitRttSub(RttSub* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitStructNew(StructNew* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitStructGet(StructGet* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitStructSet(StructSet* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitArrayGet(ArrayGet* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitArraySet(ArraySet* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitArrayLen(ArrayLen* curr) { WASM_UNREACHABLE("TODO: GC"); }
 };
 
 } // namespace wasm

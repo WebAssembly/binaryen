@@ -564,8 +564,7 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
 
   void visitCall(Call* curr) { handleCall(curr); }
 
-  template<typename T> 
-  void handleNonDirectCall(T* curr) {
+  template<typename T> void handleNonDirectCall(T* curr) {
     FeatureSet features = getModule()->features;
     Block* outer = nullptr;
     for (Index i = 0; i < curr->operands.size(); i++) {
@@ -582,13 +581,9 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     optimize(curr, curr->target, outer);
   }
 
-  void visitCallIndirect(CallIndirect* curr) {
-    handleNonDirectCall(curr);
-  }
+  void visitCallIndirect(CallIndirect* curr) { handleNonDirectCall(curr); }
 
-  void visitCallRef(CallRef* curr) {
-    handleNonDirectCall(curr);
-  }
+  void visitCallRef(CallRef* curr) { handleNonDirectCall(curr); }
 
   void visitThrow(Throw* curr) {
     Block* outer = nullptr;
