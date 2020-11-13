@@ -489,8 +489,8 @@ struct OptimizeInstructions
         // fneg(x) / y   ==>   fneg(x / y)
         // x / fneg(y)   ==>   fneg(x / y)
         //
-        // this canonicalizations open more opportunities for next simplifications.
-        // For example:
+        // this canonicalizations open more opportunities for
+        // next simplifications. For example:
         //   (x / -y) *  10.0
         //  -(x /  y) *  10.0
         //   (x /  y) * -10.0
@@ -2474,8 +2474,7 @@ private:
   }
 
   bool shouldCanonicalize(Binary* binary) {
-    if ((binary->op == SubInt32 || binary->op == SubInt64 ||
-         binary->op == SubFloat32 || binary->op == SubFloat64) &&
+    if (binary->op == Abstract::getBinary(binary->left->type, Abstract::Sub) &&
         binary->right->is<Const>() && !binary->left->is<Const>()) {
       return true;
     }
