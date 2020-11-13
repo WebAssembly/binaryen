@@ -464,15 +464,11 @@ struct OptimizeInstructions
         Expression *x, *y;
 
         // fneg(x) * fneg(y)   ==>   x * y
-        if (matches(
-              curr,
-              binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
-          bin->left = x;
-          bin->right = y;
-          return bin;
-        }
         // fneg(x) / fneg(y)   ==>   x / y
         if (matches(
+              curr,
+              binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y)))) ||
+            matches(
               curr,
               binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
           bin->left = x;
