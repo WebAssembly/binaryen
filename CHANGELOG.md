@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- JS API functions for atomic notify/wait instructions are renamed.
+  - `module.atomic.notify` -> `module.memory.atomic.notify`
+  - `module.i32.atomic.wait` -> `module.memory.atomic.wait32`
+  - `module.i64.atomic.wait` -> `module.memory.atomic.wait64`
 - Remove old/broken SpollPointers pass.  This pass: Spills values that might be
   pointers to the C stack. This allows Boehm-style GC to see them properly.
   This can be revived if needed from git history (#3261).
