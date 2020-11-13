@@ -2021,6 +2021,15 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
+  auto ret = allocator.alloc<CallRef>();
+  parseCallOperands(s, 1, s.size() - 1, ret);
+  ret->target = parseExpression(s[s.size() - 1]);
+  ret->isReturn = isReturn;
+  ret->finalize();
+  return ret;
+}
+
 Expression* SExpressionWasmBuilder::makeI31New(Element& s) {
   auto ret = allocator.alloc<I31New>();
   ret->value = parseExpression(s[1]);
