@@ -331,8 +331,10 @@ template<typename T> struct CallGraphPropertyAnalysis {
         void visitCall(Call* curr) {
           info.callsTo.insert(module->getFunction(curr->target));
         }
-
         void visitCallIndirect(CallIndirect* curr) {
+          info.hasNonDirectCall = true;
+        }
+        void visitCallRef(CallRef* curr) {
           info.hasNonDirectCall = true;
         }
 
