@@ -138,16 +138,16 @@
 
     ;; atomic.wait
     (global.set $g
-      (i32.atomic.wait
+      (memory.atomic.wait32
         (unreachable)
         (i32.const 0)
         (i64.const 0)
       )
     )
 
-    ;; atomic.notify
+    ;; memory.atomic.notify
     (global.set $g
-      (atomic.notify
+      (memory.atomic.notify
         (unreachable)
         (i32.const 0)
       )

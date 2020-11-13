@@ -142,40 +142,40 @@
   (local $1 i64)
   (local $2 i32)
   (drop
-   (i32.atomic.wait
+   (memory.atomic.wait32
     (local.get $0)
     (local.get $2)
     (local.get $1)
    )
   )
   (drop
-   (i32.atomic.wait offset=4
+   (memory.atomic.wait32 offset=4
     (local.get $0)
     (local.get $2)
     (local.get $1)
    )
   )
   (drop
-   (atomic.notify
+   (memory.atomic.notify
     (local.get $0)
     (local.get $2)
    )
   )
   (drop
-   (atomic.notify offset=24
+   (memory.atomic.notify offset=24
     (local.get $0)
     (local.get $2)
    )
   )
   (drop
-   (i64.atomic.wait
+   (memory.atomic.wait64
     (local.get $0)
     (local.get $1)
     (local.get $1)
    )
   )
   (drop
-   (i64.atomic.wait offset=16
+   (memory.atomic.wait64 offset=16
     (local.get $0)
     (local.get $1)
     (local.get $1)
