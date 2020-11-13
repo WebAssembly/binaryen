@@ -1550,6 +1550,7 @@ public:
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);
+  void visitCallRef(CallRef* curr);
 
   void throwError(std::string text);
 
