@@ -3163,10 +3163,11 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
   Load* curr;
   auto allocate = [&]() {
     curr = allocator.alloc<Load>();
-    // The signed field does not matter in some cases (where the size of the load
-    // is equal to the size of the type, in which case we do not extend), but give
-    // it a default value nonetheless, to make hashing and other code simpler, so
-    // that they do not need to consider whether the sign matters or not.
+    // The signed field does not matter in some cases (where the size of the
+    // load is equal to the size of the type, in which case we do not extend),
+    // but give it a default value nonetheless, to make hashing and other code
+    // simpler, so that they do not need to consider whether the sign matters or
+    // not.
     curr->signed_ = false;
   };
   if (!isAtomic) {
