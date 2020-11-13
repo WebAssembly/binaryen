@@ -128,6 +128,7 @@ struct Unit {
   llvm::dwarf::UnitType Type; // Added in DWARF 5
   uint32_t AbbrOffset;
   uint8_t AddrSize;
+  bool AddrSizeChanged = false;  // XXX BINARYEN
   std::vector<Entry> Entries;
 };
 

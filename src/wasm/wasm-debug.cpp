@@ -853,7 +853,8 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
 
 static void updateCompileUnits(const BinaryenDWARFInfo& info,
                                llvm::DWARFYAML::Data& yaml,
-                               LocationUpdater& locationUpdater) {
+                               LocationUpdater& locationUpdater,
+                               bool is64) {
   // The context has the high-level information we need, and the YAML is where
   // we write changes. First, iterate over the compile units.
   size_t compileUnitIndex = 0;
@@ -862,6 +863,13 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
     yaml.CompileUnits,
     [&](const std::unique_ptr<llvm::DWARFUnit>& CU,
         llvm::DWARFYAML::Unit& yamlUnit) {
+      // Our Memory64Lowering pass may change the "architecture" of the DWARF
+      // data. AddrSize will cause all DW_AT_low_pc to be written as 32/64-bit.
+      auto NewAddrSize = is64 ? 8 : 4;
+      if (NewAddrSize != yamlUnit.AddrSize) {
+        yamlUnit.AddrSize = NewAddrSize;
+        yamlUnit.AddrSizeChanged = true;
+      }
       // Process the DIEs in each compile unit.
       iterContextAndYAML(
         CU->dies(),
@@ -1039,7 +1047,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
 
   updateDebugLines(data, locationUpdater);
 
-  updateCompileUnits(info, data, locationUpdater);
+  updateCompileUnits(info, data, locationUpdater, wasm.memory.is64());
 
   updateRanges(data, locationUpdater);
 
