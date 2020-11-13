@@ -1,0 +1,26 @@
+(module
+ (type $none_=>_none (func))
+ (memory $0 16 17)
+ (global $global$0 (mut i32) (i32.const 10))
+ (export "as-br_table-index" (func $0))
+ (export "as-local.set-value" (func $0))
+ (func $0
+  (if
+   (i32.eqz
+    (global.get $global$0)
+   )
+   (return)
+  )
+  (global.set $global$0
+   (i32.sub
+    (global.get $global$0)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (i32.load
+    (i32.const 0)
+   )
+  )
+ )
+)
