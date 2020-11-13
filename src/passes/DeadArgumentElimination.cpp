@@ -139,6 +139,12 @@ struct DAEScanner
     }
   }
 
+  void visitCallRef(CallRef* curr) {
+    if (curr->isReturn) {
+      info->hasTailCalls = true;
+    }
+  }
+
   void visitDrop(Drop* curr) {
     if (auto* call = curr->value->dynCast<Call>()) {
       info->droppedCalls[call] = getCurrentPointer();
