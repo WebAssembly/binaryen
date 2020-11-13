@@ -5330,7 +5330,16 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
     throwError("Invalid flags field in call_indirect");
   }
   curr->target = popNonVoidExpression();
-  auto num = curr->target->params.size();
+  // FIXME ask tlively about this stuff
+  auto type = curr->target->type;
+  if (!type.isRef()) {
+    throwError("Non-ref type for a ref_call");
+  }
+  auto heapType = type->getHeapType();
+  if (!heapType.isSignature()) {
+    throwError("Invalid reference type for a ref_call");
+  }
+  auto num = heapType.getSignature().params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
