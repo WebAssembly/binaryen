@@ -2640,6 +2640,24 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitMemoryGrow(grow);
       break;
     }
+    case BinaryConsts::CallRef:
+      visitCallRef(
+        (curr = allocator.alloc<CallRef>())->cast<CallRef>());
+      break;
+    case BinaryConsts::RetCallFunction: {
+      auto call = allocator.alloc<Call>();
+      call->isReturn = true;
+      curr = call;
+      visitCall(call);
+      break;
+    }
+    case BinaryConsts::RetCallRef: {
+      auto call = allocator.alloc<CallRef>();
+      call->isReturn = true;
+      curr = call;
+      visitCallRef(call);
+      break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -5342,6 +5360,21 @@ bool WasmBinaryBuilder::maybeVisitI31Get(Expression*& out, uint32_t code) {
   curr->finalize();
   out = curr;
   return true;
+}
+
+void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
+  BYN_TRACE("zz node: CallRef\n");
+  auto reserved = getU32LEB();
+  if (reserved != 0) {
+    throwError("Invalid flags field in call_indirect");
+  }
+  curr->target = popNonVoidExpression();
+  auto num = curr->target->params.size();
+  curr->operands.resize(num);
+  for (size_t i = 0; i < num; i++) {
+    curr->operands[num - i - 1] = popNonVoidExpression();
+  }
+  curr->finalize();
 }
 
 bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
