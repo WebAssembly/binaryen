@@ -1056,6 +1056,16 @@ void I31Get::finalize() {
   }
 }
 
+void CallRef::finalize() {
+  handleUnreachableOperands(this);
+  if (isReturn) {
+    type = Type::unreachable;
+  }
+  if (target->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
 // TODO (gc): ref.test
 // TODO (gc): ref.cast
 // TODO (gc): br_on_cast

@@ -1875,6 +1875,10 @@ void BinaryInstWriter::visitI31Get(I31Get* curr) {
     << U32LEB(curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
 }
 
+void BinaryInstWriter::visitCallRef(CallRef* curr) {
+  o << curr->isReturn ? BinaryConsts::RetCallRef : BinaryConsts::CallRef;
+}
+
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
   WASM_UNREACHABLE("TODO (gc): ref.test");
