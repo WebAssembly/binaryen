@@ -42,7 +42,6 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
     return ReturnType();                                                       \
   }
 #include "wasm-delegations.h"
-#undef DELEGATE
 
   // Module-level visitors
   ReturnType visitExport(Export* curr) { return ReturnType(); }
@@ -63,8 +62,6 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
       static_cast<CLASS_TO_VISIT*>(curr))
 
 #include "wasm-delegations.h"
-
-#undef DELEGATE
 
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -88,8 +85,6 @@ struct OverriddenVisitor {
 
 #include "wasm-delegations.h"
 
-#undef DELEGATE
-
   ReturnType visit(Expression* curr) {
     assert(curr);
 
@@ -100,8 +95,6 @@ struct OverriddenVisitor {
       static_cast<CLASS_TO_VISIT*>(curr))
 
 #include "wasm-delegations.h"
-
-#undef DELEGATE
 
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -124,8 +117,6 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
   }
 
 #include "wasm-delegations.h"
-
-#undef DELEGATE
 };
 
 //
@@ -306,8 +297,6 @@ struct Walker : public VisitorType {
 
 #include "wasm-delegations.h"
 
-#undef DELEGATE
-
   void setModule(Module* module) { currModule = module; }
 
   void setFunction(Function* func) { currFunction = func; }
@@ -328,353 +317,34 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
-    switch (curr->_id) {
-      case Expression::Id::InvalidId:
-        abort();
-      case Expression::Id::BlockId: {
-        self->pushTask(SubType::doVisitBlock, currp);
-        auto& list = curr->cast<Block>()->list;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::IfId: {
-        self->pushTask(SubType::doVisitIf, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<If>()->ifFalse);
-        self->pushTask(SubType::scan, &curr->cast<If>()->ifTrue);
-        self->pushTask(SubType::scan, &curr->cast<If>()->condition);
-        break;
-      }
-      case Expression::Id::LoopId: {
-        self->pushTask(SubType::doVisitLoop, currp);
-        self->pushTask(SubType::scan, &curr->cast<Loop>()->body);
-        break;
-      }
-      case Expression::Id::BreakId: {
-        self->pushTask(SubType::doVisitBreak, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Break>()->condition);
-        self->maybePushTask(SubType::scan, &curr->cast<Break>()->value);
-        break;
-      }
-      case Expression::Id::SwitchId: {
-        self->pushTask(SubType::doVisitSwitch, currp);
-        self->pushTask(SubType::scan, &curr->cast<Switch>()->condition);
-        self->maybePushTask(SubType::scan, &curr->cast<Switch>()->value);
-        break;
-      }
-      case Expression::Id::CallId: {
-        self->pushTask(SubType::doVisitCall, currp);
-        auto& list = curr->cast<Call>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::CallIndirectId: {
-        self->pushTask(SubType::doVisitCallIndirect, currp);
-        auto& list = curr->cast<CallIndirect>()->operands;
-        self->pushTask(SubType::scan, &curr->cast<CallIndirect>()->target);
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::LocalGetId: {
-        // TODO: optimize leaves with a direct call?
-        self->pushTask(SubType::doVisitLocalGet, currp);
-        break;
-      }
-      case Expression::Id::LocalSetId: {
-        self->pushTask(SubType::doVisitLocalSet, currp);
-        self->pushTask(SubType::scan, &curr->cast<LocalSet>()->value);
-        break;
-      }
-      case Expression::Id::GlobalGetId: {
-        self->pushTask(SubType::doVisitGlobalGet, currp);
-        break;
-      }
-      case Expression::Id::GlobalSetId: {
-        self->pushTask(SubType::doVisitGlobalSet, currp);
-        self->pushTask(SubType::scan, &curr->cast<GlobalSet>()->value);
-        break;
-      }
-      case Expression::Id::LoadId: {
-        self->pushTask(SubType::doVisitLoad, currp);
-        self->pushTask(SubType::scan, &curr->cast<Load>()->ptr);
-        break;
-      }
-      case Expression::Id::StoreId: {
-        self->pushTask(SubType::doVisitStore, currp);
-        self->pushTask(SubType::scan, &curr->cast<Store>()->value);
-        self->pushTask(SubType::scan, &curr->cast<Store>()->ptr);
-        break;
-      }
-      case Expression::Id::AtomicRMWId: {
-        self->pushTask(SubType::doVisitAtomicRMW, currp);
-        self->pushTask(SubType::scan, &curr->cast<AtomicRMW>()->value);
-        self->pushTask(SubType::scan, &curr->cast<AtomicRMW>()->ptr);
-        break;
-      }
-      case Expression::Id::AtomicCmpxchgId: {
-        self->pushTask(SubType::doVisitAtomicCmpxchg, currp);
-        self->pushTask(SubType::scan,
-                       &curr->cast<AtomicCmpxchg>()->replacement);
-        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->expected);
-        self->pushTask(SubType::scan, &curr->cast<AtomicCmpxchg>()->ptr);
-        break;
-      }
-      case Expression::Id::AtomicWaitId: {
-        self->pushTask(SubType::doVisitAtomicWait, currp);
-        self->pushTask(SubType::scan, &curr->cast<AtomicWait>()->timeout);
-        self->pushTask(SubType::scan, &curr->cast<AtomicWait>()->expected);
-        self->pushTask(SubType::scan, &curr->cast<AtomicWait>()->ptr);
-        break;
-      }
-      case Expression::Id::AtomicNotifyId: {
-        self->pushTask(SubType::doVisitAtomicNotify, currp);
-        self->pushTask(SubType::scan, &curr->cast<AtomicNotify>()->notifyCount);
-        self->pushTask(SubType::scan, &curr->cast<AtomicNotify>()->ptr);
-        break;
-      }
-      case Expression::Id::AtomicFenceId: {
-        self->pushTask(SubType::doVisitAtomicFence, currp);
-        break;
-      }
-      case Expression::Id::SIMDExtractId: {
-        self->pushTask(SubType::doVisitSIMDExtract, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDExtract>()->vec);
-        break;
-      }
-      case Expression::Id::SIMDReplaceId: {
-        self->pushTask(SubType::doVisitSIMDReplace, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDReplace>()->value);
-        self->pushTask(SubType::scan, &curr->cast<SIMDReplace>()->vec);
-        break;
-      }
-      case Expression::Id::SIMDShuffleId: {
-        self->pushTask(SubType::doVisitSIMDShuffle, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDShuffle>()->right);
-        self->pushTask(SubType::scan, &curr->cast<SIMDShuffle>()->left);
-        break;
-      }
-      case Expression::Id::SIMDTernaryId: {
-        self->pushTask(SubType::doVisitSIMDTernary, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->c);
-        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->b);
-        self->pushTask(SubType::scan, &curr->cast<SIMDTernary>()->a);
-        break;
-      }
-      case Expression::Id::SIMDShiftId: {
-        self->pushTask(SubType::doVisitSIMDShift, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDShift>()->shift);
-        self->pushTask(SubType::scan, &curr->cast<SIMDShift>()->vec);
-        break;
-      }
-      case Expression::Id::SIMDLoadId: {
-        self->pushTask(SubType::doVisitSIMDLoad, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDLoad>()->ptr);
-        break;
-      }
-      case Expression::Id::SIMDLoadStoreLaneId: {
-        self->pushTask(SubType::doVisitSIMDLoadStoreLane, currp);
-        self->pushTask(SubType::scan, &curr->cast<SIMDLoadStoreLane>()->vec);
-        self->pushTask(SubType::scan, &curr->cast<SIMDLoadStoreLane>()->ptr);
-        break;
-      }
-      case Expression::Id::MemoryInitId: {
-        self->pushTask(SubType::doVisitMemoryInit, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->size);
-        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->offset);
-        self->pushTask(SubType::scan, &curr->cast<MemoryInit>()->dest);
-        break;
-      }
-      case Expression::Id::DataDropId: {
-        self->pushTask(SubType::doVisitDataDrop, currp);
-        break;
-      }
-      case Expression::Id::MemoryCopyId: {
-        self->pushTask(SubType::doVisitMemoryCopy, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->size);
-        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->source);
-        self->pushTask(SubType::scan, &curr->cast<MemoryCopy>()->dest);
-        break;
-      }
-      case Expression::Id::MemoryFillId: {
-        self->pushTask(SubType::doVisitMemoryFill, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->size);
-        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->value);
-        self->pushTask(SubType::scan, &curr->cast<MemoryFill>()->dest);
-        break;
-      }
-      case Expression::Id::ConstId: {
-        self->pushTask(SubType::doVisitConst, currp);
-        break;
-      }
-      case Expression::Id::UnaryId: {
-        self->pushTask(SubType::doVisitUnary, currp);
-        self->pushTask(SubType::scan, &curr->cast<Unary>()->value);
-        break;
-      }
-      case Expression::Id::BinaryId: {
-        self->pushTask(SubType::doVisitBinary, currp);
-        self->pushTask(SubType::scan, &curr->cast<Binary>()->right);
-        self->pushTask(SubType::scan, &curr->cast<Binary>()->left);
-        break;
-      }
-      case Expression::Id::SelectId: {
-        self->pushTask(SubType::doVisitSelect, currp);
-        self->pushTask(SubType::scan, &curr->cast<Select>()->condition);
-        self->pushTask(SubType::scan, &curr->cast<Select>()->ifFalse);
-        self->pushTask(SubType::scan, &curr->cast<Select>()->ifTrue);
-        break;
-      }
-      case Expression::Id::DropId: {
-        self->pushTask(SubType::doVisitDrop, currp);
-        self->pushTask(SubType::scan, &curr->cast<Drop>()->value);
-        break;
-      }
-      case Expression::Id::ReturnId: {
-        self->pushTask(SubType::doVisitReturn, currp);
-        self->maybePushTask(SubType::scan, &curr->cast<Return>()->value);
-        break;
-      }
-      case Expression::Id::MemorySizeId:
-        self->pushTask(SubType::doVisitMemorySize, currp);
-        break;
-      case Expression::Id::MemoryGrowId:
-        self->pushTask(SubType::doVisitMemoryGrow, currp);
-        self->pushTask(SubType::scan, &curr->cast<MemoryGrow>()->delta);
-        break;
-      case Expression::Id::RefNullId: {
-        self->pushTask(SubType::doVisitRefNull, currp);
-        break;
-      }
-      case Expression::Id::RefIsNullId: {
-        self->pushTask(SubType::doVisitRefIsNull, currp);
-        self->pushTask(SubType::scan, &curr->cast<RefIsNull>()->value);
-        break;
-      }
-      case Expression::Id::RefFuncId: {
-        self->pushTask(SubType::doVisitRefFunc, currp);
-        break;
-      }
-      case Expression::Id::RefEqId: {
-        self->pushTask(SubType::doVisitRefEq, currp);
-        self->pushTask(SubType::scan, &curr->cast<RefEq>()->right);
-        self->pushTask(SubType::scan, &curr->cast<RefEq>()->left);
-        break;
-      }
-      case Expression::Id::TryId: {
-        self->pushTask(SubType::doVisitTry, currp);
-        self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
-        self->pushTask(SubType::scan, &curr->cast<Try>()->body);
-        break;
-      }
-      case Expression::Id::ThrowId: {
-        self->pushTask(SubType::doVisitThrow, currp);
-        auto& list = curr->cast<Throw>()->operands;
-        for (int i = int(list.size()) - 1; i >= 0; i--) {
-          self->pushTask(SubType::scan, &list[i]);
-        }
-        break;
-      }
-      case Expression::Id::RethrowId: {
-        self->pushTask(SubType::doVisitRethrow, currp);
-        self->pushTask(SubType::scan, &curr->cast<Rethrow>()->exnref);
-        break;
-      }
-      case Expression::Id::BrOnExnId: {
-        self->pushTask(SubType::doVisitBrOnExn, currp);
-        self->pushTask(SubType::scan, &curr->cast<BrOnExn>()->exnref);
-        break;
-      }
-      case Expression::Id::NopId: {
-        self->pushTask(SubType::doVisitNop, currp);
-        break;
-      }
-      case Expression::Id::UnreachableId: {
-        self->pushTask(SubType::doVisitUnreachable, currp);
-        break;
-      }
-      case Expression::Id::PopId: {
-        self->pushTask(SubType::doVisitPop, currp);
-        break;
-      }
-      case Expression::Id::TupleMakeId: {
-        self->pushTask(SubType::doVisitTupleMake, currp);
-        auto& operands = curr->cast<TupleMake>()->operands;
-        for (int i = int(operands.size()) - 1; i >= 0; --i) {
-          self->pushTask(SubType::scan, &operands[i]);
-        }
-        break;
-      }
-      case Expression::Id::TupleExtractId: {
-        self->pushTask(SubType::doVisitTupleExtract, currp);
-        self->pushTask(SubType::scan, &curr->cast<TupleExtract>()->tuple);
-        break;
-      }
-      case Expression::Id::I31NewId: {
-        self->pushTask(SubType::doVisitI31New, currp);
-        self->pushTask(SubType::scan, &curr->cast<I31New>()->value);
-        break;
-      }
-      case Expression::Id::I31GetId: {
-        self->pushTask(SubType::doVisitI31Get, currp);
-        self->pushTask(SubType::scan, &curr->cast<I31Get>()->i31);
-        break;
-      }
-      case Expression::Id::RefTestId:
-        self->pushTask(SubType::doVisitRefTest, currp);
-        WASM_UNREACHABLE("TODO (gc): ref.test");
-        break;
-      case Expression::Id::RefCastId:
-        self->pushTask(SubType::doVisitRefCast, currp);
-        WASM_UNREACHABLE("TODO (gc): ref.cast");
-        break;
-      case Expression::Id::BrOnCastId:
-        self->pushTask(SubType::doVisitBrOnCast, currp);
-        WASM_UNREACHABLE("TODO (gc): br_on_cast");
-        break;
-      case Expression::Id::RttCanonId:
-        self->pushTask(SubType::doVisitRttCanon, currp);
-        WASM_UNREACHABLE("TODO (gc): rtt.canon");
-        break;
-      case Expression::Id::RttSubId:
-        self->pushTask(SubType::doVisitRttSub, currp);
-        WASM_UNREACHABLE("TODO (gc): rtt.sub");
-        break;
-      case Expression::Id::StructNewId:
-        self->pushTask(SubType::doVisitStructNew, currp);
-        WASM_UNREACHABLE("TODO (gc): struct.new");
-        break;
-      case Expression::Id::StructGetId:
-        self->pushTask(SubType::doVisitStructGet, currp);
-        WASM_UNREACHABLE("TODO (gc): struct.get");
-        break;
-      case Expression::Id::StructSetId:
-        self->pushTask(SubType::doVisitStructSet, currp);
-        WASM_UNREACHABLE("TODO (gc): struct.set");
-        break;
-      case Expression::Id::ArrayNewId:
-        self->pushTask(SubType::doVisitArrayNew, currp);
-        WASM_UNREACHABLE("TODO (gc): array.new");
-        break;
-      case Expression::Id::ArrayGetId:
-        self->pushTask(SubType::doVisitArrayGet, currp);
-        WASM_UNREACHABLE("TODO (gc): array.get");
-        break;
-      case Expression::Id::ArraySetId:
-        self->pushTask(SubType::doVisitArraySet, currp);
-        WASM_UNREACHABLE("TODO (gc): array.set");
-        break;
-      case Expression::Id::ArrayLenId:
-        self->pushTask(SubType::doVisitArrayLen, currp);
-        WASM_UNREACHABLE("TODO (gc): array.len");
-        break;
-      case Expression::Id::NumExpressionIds:
-        WASM_UNREACHABLE("unexpected expression type");
-    }
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id)                                                     \
+  self->pushTask(SubType::doVisit##id, currp);                                 \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, name) cast->name
+
+#define DELEGATE_FIELD_CHILD(id, name)                                         \
+  self->pushTask(SubType::scan, &cast->name);
+
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)                                \
+  self->maybePushTask(SubType::scan, &cast->name);
+
+#define DELEGATE_FIELD_INT(id, name)
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#define DELEGATE_FIELD_LITERAL(id, name)
+#define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+#define DELEGATE_FIELD_SIGNATURE(id, name)
+#define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_ADDRESS(id, name)
+
+#include "wasm-delegations-fields.h"
   }
 };
 

@@ -77,7 +77,8 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
 #define DELEGATE_FIELD_INT(id, name) COPY_FIELD(name)
 #define DELEGATE_FIELD_LITERAL(id, name) COPY_FIELD(name)
 #define DELEGATE_FIELD_NAME(id, name) COPY_FIELD(name)
-#define DELEGATE_FIELD_SCOPE_NAME(id, name) COPY_FIELD(name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) COPY_FIELD(name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) COPY_FIELD(name)
 #define DELEGATE_FIELD_SIGNATURE(id, name) COPY_FIELD(name)
 #define DELEGATE_FIELD_TYPE(id, name) COPY_FIELD(name)
 #define DELEGATE_FIELD_ADDRESS(id, name) COPY_FIELD(name)
@@ -95,7 +96,7 @@ flexibleCopy(Expression* original, Module& wasm, CustomCopier custom) {
   assert(castCopy->name.size() == castOriginal->name.size());                  \
   COPY_FIELD_LIST(name)
 
-#define DELEGATE_FIELD_SCOPE_NAME_VECTOR(id, name) COPY_VECTOR(name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name) COPY_VECTOR(name)
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) COPY_ARRAY(name)
 

@@ -125,70 +125,11 @@ WASM_DEPRECATED BinaryenType BinaryenUndefined(void);
 typedef uint32_t BinaryenExpressionId;
 
 BINARYEN_API BinaryenExpressionId BinaryenInvalidId(void);
-BINARYEN_API BinaryenExpressionId BinaryenBlockId(void);
-BINARYEN_API BinaryenExpressionId BinaryenIfId(void);
-BINARYEN_API BinaryenExpressionId BinaryenLoopId(void);
-BINARYEN_API BinaryenExpressionId BinaryenBreakId(void);
-BINARYEN_API BinaryenExpressionId BinaryenSwitchId(void);
-BINARYEN_API BinaryenExpressionId BinaryenCallId(void);
-BINARYEN_API BinaryenExpressionId BinaryenCallIndirectId(void);
-BINARYEN_API BinaryenExpressionId BinaryenLocalGetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenLocalSetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenGlobalGetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenGlobalSetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenLoadId(void);
-BINARYEN_API BinaryenExpressionId BinaryenStoreId(void);
-BINARYEN_API BinaryenExpressionId BinaryenConstId(void);
-BINARYEN_API BinaryenExpressionId BinaryenUnaryId(void);
-BINARYEN_API BinaryenExpressionId BinaryenBinaryId(void);
-BINARYEN_API BinaryenExpressionId BinaryenSelectId(void);
-BINARYEN_API BinaryenExpressionId BinaryenDropId(void);
-BINARYEN_API BinaryenExpressionId BinaryenReturnId(void);
-BINARYEN_API BinaryenExpressionId BinaryenMemorySizeId(void);
-BINARYEN_API BinaryenExpressionId BinaryenMemoryGrowId(void);
-BINARYEN_API BinaryenExpressionId BinaryenNopId(void);
-BINARYEN_API BinaryenExpressionId BinaryenUnreachableId(void);
-BINARYEN_API BinaryenExpressionId BinaryenAtomicCmpxchgId(void);
-BINARYEN_API BinaryenExpressionId BinaryenAtomicRMWId(void);
-BINARYEN_API BinaryenExpressionId BinaryenAtomicWaitId(void);
-BINARYEN_API BinaryenExpressionId BinaryenAtomicNotifyId(void);
-BINARYEN_API BinaryenExpressionId BinaryenAtomicFenceId(void);
-BINARYEN_API BinaryenExpressionId BinaryenSIMDExtractId(void);
-BINARYEN_API BinaryenExpressionId BinaryenSIMDReplaceId(void);
-BINARYEN_API BinaryenExpressionId BinaryenSIMDShuffleId(void);
-BINARYEN_API BinaryenExpressionId BinaryenSIMDTernaryId(void);
-BINARYEN_API BinaryenExpressionId BinaryenSIMDShiftId(void);
-BINARYEN_API BinaryenExpressionId BinaryenSIMDLoadId(void);
-// TODO: Expose SIMDLoadStoreLane in C and JS APIs
-BINARYEN_API BinaryenExpressionId BinaryenMemoryInitId(void);
-BINARYEN_API BinaryenExpressionId BinaryenDataDropId(void);
-BINARYEN_API BinaryenExpressionId BinaryenMemoryCopyId(void);
-BINARYEN_API BinaryenExpressionId BinaryenMemoryFillId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRefNullId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRefIsNullId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRefFuncId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRefEqId(void);
-BINARYEN_API BinaryenExpressionId BinaryenTryId(void);
-BINARYEN_API BinaryenExpressionId BinaryenThrowId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRethrowId(void);
-BINARYEN_API BinaryenExpressionId BinaryenBrOnExnId(void);
-BINARYEN_API BinaryenExpressionId BinaryenTupleMakeId(void);
-BINARYEN_API BinaryenExpressionId BinaryenTupleExtractId(void);
-BINARYEN_API BinaryenExpressionId BinaryenPopId(void);
-BINARYEN_API BinaryenExpressionId BinaryenI31NewId(void);
-BINARYEN_API BinaryenExpressionId BinaryenI31GetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRefTestId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRefCastId(void);
-BINARYEN_API BinaryenExpressionId BinaryenBrOnCastId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRttCanonId(void);
-BINARYEN_API BinaryenExpressionId BinaryenRttSubId(void);
-BINARYEN_API BinaryenExpressionId BinaryenStructNewId(void);
-BINARYEN_API BinaryenExpressionId BinaryenStructGetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenStructSetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenArrayNewId(void);
-BINARYEN_API BinaryenExpressionId BinaryenArrayGetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenArraySetId(void);
-BINARYEN_API BinaryenExpressionId BinaryenArrayLenId(void);
+
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  BINARYEN_API BinaryenExpressionId Binaryen##CLASS_TO_VISIT##Id(void);
+
+#include "wasm-delegations.h"
 
 // External kinds (call to get the value of each; you can cache them)
 

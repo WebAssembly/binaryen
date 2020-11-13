@@ -2450,3 +2450,20 @@ validation: 0
   (nop)
  )
 )
+module with a function to optimize:
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (func $adder (result i32)
+  (i32.add
+   (i32.const 1)
+   (i32.const 3)
+  )
+ )
+)
+optimized:
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (func $adder (result i32)
+  (i32.const 4)
+ )
+)

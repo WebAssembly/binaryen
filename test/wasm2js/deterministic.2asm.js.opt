@@ -40,7 +40,6 @@ function asmFunc(env) {
 }
 
 var memasmFunc = new ArrayBuffer(65536);
-var bufferView = new Uint8Array(memasmFunc);
 var retasmFunc = asmFunc(  { abort: function() { throw new Error('abort'); },
     memory: { buffer : memasmFunc }
   });
