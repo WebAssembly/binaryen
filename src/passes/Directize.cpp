@@ -91,8 +91,7 @@ private:
   TableUtils::FlatTable* flatTable;
   bool changedTypes = false;
 
-  template<typename T>
-  void replaceWithUnreachable(T* call) {
+  template<typename T> void replaceWithUnreachable(T* call) {
     Builder builder(*getModule());
     for (auto*& operand : call->operands) {
       operand = builder.makeDrop(operand);
