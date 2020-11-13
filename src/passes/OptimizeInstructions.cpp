@@ -489,7 +489,7 @@ struct OptimizeInstructions
         // fneg(x) / y   ==>   fneg(x / y)
         // x / fneg(y)   ==>   fneg(x / y)
         //
-        // this canonicalizations open more up room for next simplifications.
+        // this canonicalizations open more opportunities for next simplifications.
         // For example:
         //   (x / -y) *  10.0
         //  -(x /  y) *  10.0
