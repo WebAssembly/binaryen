@@ -211,6 +211,8 @@ const char* getExpressionName(Expression* curr) {
       return "i31.new";
     case Expression::Id::I31GetId:
       return "i31.get";
+    case Expression::Id::RefCallId:
+      return "ref.call";
     case Expression::Id::RefTestId:
       return "ref.test";
     case Expression::Id::RefCastId:

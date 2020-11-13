@@ -2198,6 +2198,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitRefCall(RefCall* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitRefTest(RefTest* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

@@ -1559,6 +1559,13 @@ struct PrintExpressionContents
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
+  void visitRefCall(RefCall* curr) {
+    if (curr->isReturn) {
+      printMedium(o, "return_call_ref");
+    } else {
+      printMedium(o, "call_ref");
+    }
+  }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test");
     WASM_UNREACHABLE("TODO (gc): ref.test");
@@ -2212,6 +2219,16 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->i31);
+    decIndent();
+  }
+  void visitRefCall(RefCall* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    for (auto operand : curr->operands) {
+      printFullLine(operand);
+    }
+    printFullLine(curr->target);
     decIndent();
   }
   void visitRefTest(RefTest* curr) {
