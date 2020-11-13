@@ -308,7 +308,9 @@ template<typename T> struct CallGraphPropertyAnalysis {
   struct FunctionInfo {
     std::set<Function*> callsTo;
     std::set<Function*> calledBy;
-    bool hasIndirectCall = false;
+    // A non-direct call is any call that is not direct. That includes
+    // CallIndirect and CallRef.
+    bool hasNonDirectCall = false;
   };
 
   typedef std::map<Function*, T> Map;
@@ -331,7 +333,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
         }
 
         void visitCallIndirect(CallIndirect* curr) {
-          info.hasIndirectCall = true;
+          info.hasNonDirectCall = true;
         }
 
       private:
@@ -354,7 +356,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     }
   }
 
-  enum IndirectCalls { IgnoreIndirectCalls, IndirectCallsHaveProperty };
+  enum NonDirectCalls { IgnoreNonDirectCalls, NonDirectCallsHaveProperty };
 
   // Propagate a property from a function to those that call it.
   //
@@ -365,13 +367,13 @@ template<typename T> struct CallGraphPropertyAnalysis {
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
                      std::function<void(T&, Function*)> addProperty,
-                     IndirectCalls indirectCalls) {
+                     NonDirectCalls nonDirectCalls) {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
       if (hasProperty(map[func.get()]) ||
-          (indirectCalls == IndirectCallsHaveProperty &&
-           map[func.get()].hasIndirectCall)) {
+          (nonDirectCalls == NonDirectCallsHaveProperty &&
+           map[func.get()].hasNonDirectCall)) {
         addProperty(map[func.get()], func.get());
         work.push(func.get());
       }
