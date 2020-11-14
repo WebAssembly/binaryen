@@ -507,6 +507,7 @@ int main(int argc, const char* argv[]) {
     }
   }
 
+  // TODO: move this and others
   options.applyFeatures(wasm);
 
   if (options.passOptions.validate) {
