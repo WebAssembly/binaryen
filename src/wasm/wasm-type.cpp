@@ -522,15 +522,13 @@ bool Type::isSubType(Type left, Type right) {
   }
   if (left.isRef() && right.isRef()) {
     if (right == Type::anyref) {
-      // Everything is a subtype of anyref.
       return true;
     }
-    if (left == Type::i31ref && right == Type::eqref) {
-      // i31 is a subtype of eqref.
+    if ((left == Type::i31ref || left == Type::array || left == Type::struct) && right == Type::eqref) {
       return true;
     }
     if (left.getHeapType().isSignature() && right == Type::funcref) {
-      // All function signatures are subtypes of funcref.
+      // All typed function signatures are subtypes of funcref.
       return true;
     }
     return false;
