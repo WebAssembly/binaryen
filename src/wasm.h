@@ -1301,7 +1301,8 @@ public:
   Expression* target;
   bool isReturn = false;
 
-  void finalize(Type type);
+  void finalize();
+  void finalize(Type type_);
 };
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {

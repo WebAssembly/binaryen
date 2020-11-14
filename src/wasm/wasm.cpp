@@ -1066,6 +1066,11 @@ void CallRef::finalize() {
   }
 }
 
+void CallRef::finalize(Type type_) {
+  type = type_;
+  finalize();
+}
+
 // TODO (gc): ref.test
 // TODO (gc): ref.cast
 // TODO (gc): br_on_cast
