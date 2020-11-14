@@ -5332,18 +5332,14 @@ void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
 
 void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
   BYN_TRACE("zz node: CallRef\n");
-  auto reserved = getU32LEB();
-  if (reserved != 0) {
-    throwError("Invalid flags field in call_indirect");
-  }
   curr->target = popNonVoidExpression();
-  // FIXME ask tlively about this stuff
   auto type = curr->target->type;
   if (!type.isRef()) {
     throwError("Non-ref type for a ref_call");
   }
   auto heapType = type.getHeapType();
   if (!heapType.isSignature()) {
+std::cout << "seeing " << heapType << " : " << type << '\n';
     throwError("Invalid reference type for a ref_call");
   }
   auto sig = heapType.getSignature();
