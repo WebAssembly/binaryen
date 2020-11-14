@@ -205,6 +205,8 @@ int main(int argc, const char* argv[]) {
   }
 
   Module wasm;
+  options.applyFeatures(wasm);
+
   ModuleReader reader;
   reader.setDWARF(DWARF);
   try {
@@ -218,8 +220,6 @@ int main(int argc, const char* argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source map";
   }
-
-  options.applyFeatures(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump",
