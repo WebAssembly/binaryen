@@ -507,21 +507,23 @@ struct OptimizeInstructions
           return builder.makeUnary(Abstract::getUnary(bin->type, Neg), bin);
         }
         // x + fneg(y)   ==>   x - y
-        if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
+        if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y)))) &&
+            !y->is<Const>()) {
           bin->op = Abstract::getBinary(bin->left->type, Sub);
           bin->right = y;
           return bin;
         }
         // fneg(x) + y   ==>   y - x
         if (matches(curr, binary(&bin, Add, unary(Neg, any(&x)), any(&y))) &&
-            canReorder(x, y)) {
+            !x->is<Const>() && canReorder(x, y)) {
           bin->op = Abstract::getBinary(bin->left->type, Sub);
           bin->left = y;
           bin->right = x;
           return bin;
         }
         // x - fneg(y)   ==>   x + y
-        if (matches(curr, binary(&bin, Sub, any(), unary(Neg, any(&y))))) {
+        if (matches(curr, binary(&bin, Sub, any(), unary(Neg, any(&y)))) &&
+            !y->is<Const>()) {
           bin->op = Abstract::getBinary(bin->left->type, Add);
           bin->right = y;
           return bin;

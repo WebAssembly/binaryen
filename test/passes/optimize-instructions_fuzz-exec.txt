@@ -38,15 +38,19 @@
  (export "ignore" (func $3))
  (func $0
   (call $logf32
-   (f32.sub
+   (f32.add
     (f32.const -nan:0x7fff82)
-    (f32.const -nan:0x7ff622)
+    (f32.neg
+     (f32.const -nan:0x7ff622)
+    )
    )
   )
   (call $logf32
-   (f32.add
+   (f32.sub
     (f32.const -nan:0x7fff82)
-    (f32.const -nan:0x7ff622)
+    (f32.neg
+     (f32.const -nan:0x7ff622)
+    )
    )
   )
   (call $logf32
@@ -90,15 +94,19 @@
  )
  (func $1
   (call $logf64
-   (f64.sub
+   (f64.add
     (f64.const -nan:0xfffffffffff82)
-    (f64.const -nan:0xfffffffffa622)
+    (f64.neg
+     (f64.const -nan:0xfffffffffa622)
+    )
    )
   )
   (call $logf64
-   (f64.add
+   (f64.sub
     (f64.const -nan:0xfffffffffff82)
-    (f64.const -nan:0xfffffffffa622)
+    (f64.neg
+     (f64.const -nan:0xfffffffffa622)
+    )
    )
   )
   (call $logf64
@@ -142,39 +150,51 @@
  )
  (func $2
   (call $logf32
-   (f32.sub
-    (f32.const 0)
-    (f32.const -nan:0x7ff622)
-   )
-  )
-  (call $logf32
-   (f32.sub
-    (f32.const -nan:0x7ff622)
+   (f32.add
+    (f32.neg
+     (f32.const -nan:0x7ff622)
+    )
     (f32.const 0)
    )
   )
   (call $logf32
-   (f32.sub
+   (f32.add
+    (f32.const -nan:0x7ff622)
+    (f32.neg
+     (f32.const 0)
+    )
+   )
+  )
+  (call $logf32
+   (f32.add
+    (f32.neg
+     (f32.const -nan:0x7ff622)
+    )
     (f32.const -0)
+   )
+  )
+  (call $logf32
+   (f32.add
     (f32.const -nan:0x7ff622)
+    (f32.neg
+     (f32.const -0)
+    )
    )
   )
   (call $logf32
-   (f32.sub
-    (f32.const -nan:0x7ff622)
-    (f32.const -0)
-   )
-  )
-  (call $logf32
-   (f32.sub
+   (f32.add
+    (f32.neg
+     (f32.const nan:0x7ff622)
+    )
     (f32.const 0)
-    (f32.const nan:0x7ff622)
    )
   )
   (call $logf32
-   (f32.sub
+   (f32.add
     (f32.const nan:0x7ff622)
-    (f32.const 0)
+    (f32.neg
+     (f32.const 0)
+    )
    )
   )
  )
