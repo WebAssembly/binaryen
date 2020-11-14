@@ -95,6 +95,7 @@ struct FeatureSet {
   bool hasMultivalue() const { return (features & Multivalue) != 0; }
   bool hasGC() const { return (features & GC) != 0; }
   bool hasMemory64() const { return (features & Memory64) != 0; }
+  bool hasTypedFunctionReferences() const { return (features & TypedFunctionReferences) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }

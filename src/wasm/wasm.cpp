@@ -1057,7 +1057,6 @@ void I31Get::finalize() {
 }
 
 void CallRef::finalize() {
-  // FIXME: talk to tlively about this.
   type = target->type.getHeapType().getSignature().results;
   handleUnreachableOperands(this);
   if (isReturn) {
