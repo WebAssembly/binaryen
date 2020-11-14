@@ -1869,7 +1869,9 @@ private:
         return curr;
       }
       // fneg(x) - fval(C)   ==>   -C - x
-      if (matches(curr, binary(Sub, unary(Neg, any(&x)), fval()))) {
+      //  if x != C' and C != NaN
+      if (matches(curr, binary(Sub, unary(Neg, any(&x)), fval())) &&
+          !x->is<Const>() && !right->value.isNaN()) {
         right->value = right->value.neg();
         curr->left = right;
         curr->right = x;
