@@ -1889,12 +1889,10 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   auto ret = allocator.alloc<RefFunc>();
   ret->func = func;
   ret->finalize();
-std::cout << "waka ref.func " << ret->type << '\n';
   if (wasm.features.hasTypedFunctionReferences()) {
     // In the presence of typed function refs, we give the reference not just a
     // general funcref, but a specific subtype with the actual signature.
-    ret->type = Type(HeapType(wasm.getFunction(func)->sig), true);
-std::cout << "waka fancy ref.func " << ret->type << '\n';
+    ret->type = Type(HeapType(functionSignatures[func]), true);
   }
   return ret;
 }
