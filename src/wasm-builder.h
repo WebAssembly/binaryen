@@ -745,7 +745,8 @@ public:
     if (type.isNumber()) {
       return makeConst(value);
     }
-    if (type == Type::funcref || (type.isRef() && type.getHeapType().isSignature())) {
+    if (type == Type::funcref ||
+        (type.isRef() && type.getHeapType().isSignature())) {
       if (!value.isNull()) {
         return makeRefFunc(value.getFunc());
       }

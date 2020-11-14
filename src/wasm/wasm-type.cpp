@@ -403,11 +403,8 @@ bool Type::operator<(const Type& other) const {
     TODO_SINGLE_COMPOUND(b);
     WASM_UNREACHABLE("unimplemented type comparison");
   };
-  return std::lexicographical_compare(begin(),
-                                      end(),
-                                      other.begin(),
-                                      other.end(),
-                                      comp);
+  return std::lexicographical_compare(
+    begin(), end(), other.begin(), other.end(), comp);
 }
 
 unsigned Type::getByteSize() const {

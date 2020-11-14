@@ -2035,7 +2035,8 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
   ret->isReturn = isReturn;
   auto heapType = ret->target->type.getHeapType();
   if (!heapType.isSignature()) {
-    throw ParseException("Invalid reference type for a ref_call", s.line, s.col);
+    throw ParseException(
+      "Invalid reference type for a ref_call", s.line, s.col);
   }
   auto sig = heapType.getSignature();
   ret->finalize(sig.results);
