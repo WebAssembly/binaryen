@@ -50,17 +50,9 @@ switch (op[0]) {
           default: goto parse_error;
         }
       }
-      case 't': {
-        switch (op[7]) {
-          case 'f':
-            if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
-            goto parse_error;
-          case 'n':
-            if (strcmp(op, "atomic.notify") == 0) { return makeAtomicNotify(s); }
-            goto parse_error;
-          default: goto parse_error;
-        }
-      }
+      case 't':
+        if (strcmp(op, "atomic.fence") == 0) { return makeAtomicFence(s); }
+        goto parse_error;
       default: goto parse_error;
     }
   }
@@ -1232,9 +1224,6 @@ switch (op[0]) {
                               default: goto parse_error;
                             }
                           }
-                          case 'w':
-                            if (strcmp(op, "i32.atomic.wait") == 0) { return makeAtomicWait(s, Type::i32); }
-                            goto parse_error;
                           default: goto parse_error;
                         }
                       }
@@ -1984,9 +1973,6 @@ switch (op[0]) {
                           default: goto parse_error;
                         }
                       }
-                      case 'w':
-                        if (strcmp(op, "i64.atomic.wait") == 0) { return makeAtomicWait(s, Type::i64); }
-                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
@@ -2684,6 +2670,25 @@ switch (op[0]) {
   }
   case 'm': {
     switch (op[7]) {
+      case 'a': {
+        switch (op[14]) {
+          case 'n':
+            if (strcmp(op, "memory.atomic.notify") == 0) { return makeAtomicNotify(s); }
+            goto parse_error;
+          case 'w': {
+            switch (op[18]) {
+              case '3':
+                if (strcmp(op, "memory.atomic.wait32") == 0) { return makeAtomicWait(s, Type::i32); }
+                goto parse_error;
+              case '6':
+                if (strcmp(op, "memory.atomic.wait64") == 0) { return makeAtomicWait(s, Type::i64); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          default: goto parse_error;
+        }
+      }
       case 'c':
         if (strcmp(op, "memory.copy") == 0) { return makeMemoryCopy(s); }
         goto parse_error;

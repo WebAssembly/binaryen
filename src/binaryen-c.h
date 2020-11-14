@@ -1404,47 +1404,47 @@ BinaryenAtomicCmpxchgSetReplacement(BinaryenExpressionRef expr,
 
 // AtomicWait
 
-// Gets the pointer expression of an `atomic.wait` expression.
+// Gets the pointer expression of an `memory.atomic.wait` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWaitGetPtr(BinaryenExpressionRef expr);
-// Sets the pointer expression of an `atomic.wait` expression.
+// Sets the pointer expression of an `memory.atomic.wait` expression.
 BINARYEN_API void BinaryenAtomicWaitSetPtr(BinaryenExpressionRef expr,
                                            BinaryenExpressionRef ptrExpr);
-// Gets the expression representing the expected value of an `atomic.wait`
-// expression.
+// Gets the expression representing the expected value of an
+// `memory.atomic.wait` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWaitGetExpected(BinaryenExpressionRef expr);
-// Sets the expression representing the expected value of an `atomic.wait`
-// expression.
+// Sets the expression representing the expected value of an
+// `memory.atomic.wait` expression.
 BINARYEN_API void
 BinaryenAtomicWaitSetExpected(BinaryenExpressionRef expr,
                               BinaryenExpressionRef expectedExpr);
-// Gets the timeout expression of an `atomic.wait` expression.
+// Gets the timeout expression of an `memory.atomic.wait` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicWaitGetTimeout(BinaryenExpressionRef expr);
-// Sets the timeout expression of an `atomic.wait` expression.
+// Sets the timeout expression of an `memory.atomic.wait` expression.
 BINARYEN_API void
 BinaryenAtomicWaitSetTimeout(BinaryenExpressionRef expr,
                              BinaryenExpressionRef timeoutExpr);
-// Gets the expected type of an `atomic.wait` expression.
+// Gets the expected type of an `memory.atomic.wait` expression.
 BINARYEN_API BinaryenType
 BinaryenAtomicWaitGetExpectedType(BinaryenExpressionRef expr);
-// Sets the expected type of an `atomic.wait` expression.
+// Sets the expected type of an `memory.atomic.wait` expression.
 BINARYEN_API void BinaryenAtomicWaitSetExpectedType(BinaryenExpressionRef expr,
                                                     BinaryenType expectedType);
 
 // AtomicNotify
 
-// Gets the pointer expression of an `atomic.notify` expression.
+// Gets the pointer expression of an `memory.atomic.notify` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicNotifyGetPtr(BinaryenExpressionRef expr);
-// Sets the pointer expression of an `atomic.notify` expression.
+// Sets the pointer expression of an `memory.atomic.notify` expression.
 BINARYEN_API void BinaryenAtomicNotifySetPtr(BinaryenExpressionRef expr,
                                              BinaryenExpressionRef ptrExpr);
-// Gets the notify count expression of an `atomic.notify` expression.
+// Gets the notify count expression of an `memory.atomic.notify` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenAtomicNotifyGetNotifyCount(BinaryenExpressionRef expr);
-// Sets the notify count expression of an `atomic.notify` expression.
+// Sets the notify count expression of an `memory.atomic.notify` expression.
 BINARYEN_API void
 BinaryenAtomicNotifySetNotifyCount(BinaryenExpressionRef expr,
                                    BinaryenExpressionRef notifyCountExpr);

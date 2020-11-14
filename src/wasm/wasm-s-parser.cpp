@@ -1463,11 +1463,12 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   } else if (type == Type::i64) {
     expectedAlign = 8;
   } else {
-    WASM_UNREACHABLE("Invalid prefix for atomic.wait");
+    WASM_UNREACHABLE("Invalid prefix for memory.atomic.wait");
   }
   size_t i = parseMemAttributes(s, ret->offset, align, expectedAlign);
   if (align != expectedAlign) {
-    throw ParseException("Align of atomic.wait must match size", s.line, s.col);
+    throw ParseException(
+      "Align of memory.atomic.wait must match size", s.line, s.col);
   }
   ret->ptr = parseExpression(s[i]);
   ret->expected = parseExpression(s[i + 1]);
@@ -1482,7 +1483,8 @@ Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   Address align;
   size_t i = parseMemAttributes(s, ret->offset, align, 4);
   if (align != 4) {
-    throw ParseException("Align of atomic.notify must be 4", s.line, s.col);
+    throw ParseException(
+      "Align of memory.atomic.notify must be 4", s.line, s.col);
   }
   ret->ptr = parseExpression(s[i]);
   ret->notifyCount = parseExpression(s[i + 1]);

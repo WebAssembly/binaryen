@@ -201,9 +201,9 @@ instructions = [
     ("i64.extend16_s",      "makeUnary(s, UnaryOp::ExtendS16Int64)"),
     ("i64.extend32_s",      "makeUnary(s, UnaryOp::ExtendS32Int64)"),
     # atomic instructions
-    ("atomic.notify",           "makeAtomicNotify(s)"),
-    ("i32.atomic.wait",         "makeAtomicWait(s, Type::i32)"),
-    ("i64.atomic.wait",         "makeAtomicWait(s, Type::i64)"),
+    ("memory.atomic.notify",    "makeAtomicNotify(s)"),
+    ("memory.atomic.wait32",    "makeAtomicWait(s, Type::i32)"),
+    ("memory.atomic.wait64",    "makeAtomicWait(s, Type::i64)"),
     ("atomic.fence",            "makeAtomicFence(s)"),
     ("i32.atomic.load8_u",      "makeLoad(s, Type::i32, /*isAtomic=*/true)"),
     ("i32.atomic.load16_u",     "makeLoad(s, Type::i32, /*isAtomic=*/true)"),
