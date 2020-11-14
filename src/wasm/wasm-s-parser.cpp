@@ -1892,7 +1892,7 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   if (wasm.features.hasTypedFunctionReferences()) {
     // In the presence of typed function refs, we give the reference not just a
     // general funcref, but a specific subtype with the actual signature.
-    ret->type = Type(HeapType(wasm.getFunction(func)->sig);
+    ret->type = Type(HeapType(wasm.getFunction(func)->sig), true);
   }
   return ret;
 }

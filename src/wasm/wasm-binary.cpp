@@ -5182,6 +5182,11 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   }
   functionRefs[index].push_back(curr); // we don't know function names yet
   curr->finalize();
+  if (wasm.features.hasTypedFunctionReferences()) {
+    // In the presence of typed function refs, we give the reference not just a
+    // general funcref, but a specific subtype with the actual signature.
+    curr->type = Type(HeapType(getFunctionSignatureByIndex(index)), true);
+  }
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
