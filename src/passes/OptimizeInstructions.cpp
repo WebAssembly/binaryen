@@ -481,7 +481,8 @@ struct OptimizeInstructions
         //  if x != C and C != NaN
         if ((matches(curr, unary(Neg, binary(&bin, Mul, any(&x), fval(&c)))) ||
              matches(curr, unary(Neg, binary(&bin, DivS, any(&x), fval(&c)))) ||
-             matches(curr, unary(Neg, binary(&bin, DivS, fval(&c), any(&x))))) &&
+             matches(curr,
+                     unary(Neg, binary(&bin, DivS, fval(&c), any(&x))))) &&
             !c->value.isNaN() && !x->is<Const>()) {
           c->value = c->value.neg();
           return bin;
