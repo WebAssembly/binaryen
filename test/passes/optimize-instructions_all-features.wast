@@ -6167,6 +6167,22 @@
         (local.get $x1)
       )
     ))
+
+    ;; -(nan / C)  ==>  skip
+    (drop (f32.neg
+      (f32.div
+        (f32.const -nan:0x7fffb3)
+        (f32.const 0)
+      )
+    ))
+
+    ;; -(C / nan)  ==>  skip
+    (drop (f32.neg
+      (f32.div
+        (f32.const 1)
+        (f32.const -nan:0x7fffb3)
+      )
+    ))
   )
 )
 ;; atomics
