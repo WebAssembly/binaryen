@@ -462,6 +462,7 @@ struct OptimizeInstructions
         Const* c;
         Binary* bin;
         Expression *x, *y;
+        BinaryOp op;
 
         // fneg(x) * fneg(y)   ==>   x * y
         // fneg(x) / fneg(y)   ==>   x / y
@@ -487,24 +488,23 @@ struct OptimizeInstructions
           c->value = c->value.neg();
           return bin;
         }
-        // fneg(x) * y   ==>   fneg(x * y)
-        // x * fneg(y)   ==>   fneg(x * y)
-        // fneg(x) / y   ==>   fneg(x / y)
-        // x / fneg(y)   ==>   fneg(x / y)
-        //
-        // this canonicalizations open more opportunities for
-        // next simplifications. For example:
-        //   (x / -y) *  10.0
-        //  -(x /  y) *  10.0
-        //   (x /  y) * -10.0
-        if ((matches(curr, binary(&bin, Mul, unary(Neg, any(&x)), any(&y))) ||
-             matches(curr, binary(&bin, Mul, any(&x), unary(Neg, any(&y)))) ||
-             matches(curr, binary(&bin, DivS, unary(Neg, any(&x)), any(&y))) ||
-             matches(curr, binary(&bin, DivS, any(&x), unary(Neg, any(&y))))) &&
-            !x->is<Const>() && !y->is<Const>()) {
+        // (fneg(x) * y) op C   ==>   (x * y) op -C
+        // (x * fneg(y)) op C   ==>   (x * y) op -C
+        // (fneg(x) / y) op C   ==>   (x / y) op -C
+        // (x / fneg(y)) op C   ==>   (x / y) op -C
+        //   where op = `*` `/` or `+`
+        if ((matches(curr, binary(&op, binary(&bin, Mul, unary(Neg, any(&x)), any(&y)), fval(&c))) ||
+             matches(curr, binary(&op, binary(&bin, Mul, any(&x), unary(Neg, any(&y))), fval(&c))) ||
+             matches(curr, binary(&op, binary(&bin, DivS, unary(Neg, any(&x)), any(&y)), fval(&c))) ||
+             matches(curr, binary(&op, binary(&bin, DivS, any(&x), unary(Neg, any(&y))), fval(&c)))) &&
+            op == Abstract::getBinary(bin->type, Mul) &&
+            op == Abstract::getBinary(bin->type, DivS) &&
+            op == Abstract::getBinary(bin->type, Add) &&
+            !x->is<Const>() && !y->is<Const>() && !c->value.isNaN()) {
+          c->value = c->value.neg();
           bin->left = x;
           bin->right = y;
-          return builder.makeUnary(Abstract::getUnary(bin->type, Neg), bin);
+          return curr;
         }
         // x + fneg(y)   ==>   x - y
         if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y)))) &&

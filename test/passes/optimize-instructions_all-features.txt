@@ -5591,39 +5591,17 @@
    )
   )
   (drop
-   (f64.neg
-    (f64.mul
+   (f64.mul
+    (f64.neg
      (local.get $x0)
-     (local.get $x1)
     )
-   )
-  )
-  (drop
-   (f64.neg
-    (f64.mul
-     (local.get $x0)
-     (local.get $x1)
-    )
-   )
-  )
-  (drop
-   (f64.div
-    (local.get $x0)
     (local.get $x1)
    )
   )
   (drop
-   (f64.neg
-    (f64.div
-     (local.get $x0)
-     (local.get $x1)
-    )
-   )
-  )
-  (drop
-   (f64.neg
-    (f64.div
-     (local.get $x0)
+   (f64.mul
+    (local.get $x0)
+    (f64.neg
      (local.get $x1)
     )
    )
@@ -5636,25 +5614,59 @@
   )
   (drop
    (f64.div
-    (local.get $x0)
+    (f64.neg
+     (local.get $x0)
+    )
     (local.get $x1)
    )
   )
   (drop
-   (f64.add
-    (local.get $x1)
-    (f64.div
-     (local.get $x0)
+   (f64.div
+    (local.get $x0)
+    (f64.neg
      (local.get $x1)
     )
    )
   )
   (drop
-   (f64.add
+   (f64.neg
+    (f64.div
+     (local.get $x0)
+     (f64.neg
+      (local.get $x1)
+     )
+    )
+   )
+  )
+  (drop
+   (f64.neg
+    (f64.div
+     (f64.neg
+      (local.get $x0)
+     )
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.sub
+    (local.get $x1)
+    (f64.div
+     (f64.neg
+      (local.get $x0)
+     )
+     (local.get $x1)
+    )
+   )
+  )
+  (drop
+   (f64.sub
     (local.get $x1)
     (f64.div
      (local.get $x0)
-     (local.get $x1)
+     (f64.neg
+      (local.get $x1)
+     )
     )
    )
   )
