@@ -1,0 +1,14 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (func $call-ref
+  (call_ref
+   (ref.func $call-ref)
+  )
+ )
+ (func $call-ref-result (result i32)
+  (call_ref
+   (ref.func $call-ref-result)
+  )
+ )
+)
