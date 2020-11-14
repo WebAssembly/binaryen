@@ -673,7 +673,7 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   functionCounter++;
   Signature sig;
   parseTypeUse(s, i, sig);
-  functionTypes[name] = sig.results;
+  functionSignatures[name] = sig;
 }
 
 size_t SExpressionWasmBuilder::parseFunctionNames(Element& s,
@@ -765,7 +765,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     im->module = importModule;
     im->base = importBase;
     im->sig = sig;
-    functionTypes[name] = sig.results;
+    functionSignatures[name] = sig;
     if (wasm.getFunctionOrNull(im->name)) {
       throw ParseException("duplicate import", s.line, s.col);
     }
@@ -1463,11 +1463,12 @@ Expression* SExpressionWasmBuilder::makeAtomicWait(Element& s, Type type) {
   } else if (type == Type::i64) {
     expectedAlign = 8;
   } else {
-    WASM_UNREACHABLE("Invalid prefix for atomic.wait");
+    WASM_UNREACHABLE("Invalid prefix for memory.atomic.wait");
   }
   size_t i = parseMemAttributes(s, ret->offset, align, expectedAlign);
   if (align != expectedAlign) {
-    throw ParseException("Align of atomic.wait must match size", s.line, s.col);
+    throw ParseException(
+      "Align of memory.atomic.wait must match size", s.line, s.col);
   }
   ret->ptr = parseExpression(s[i]);
   ret->expected = parseExpression(s[i + 1]);
@@ -1482,7 +1483,8 @@ Expression* SExpressionWasmBuilder::makeAtomicNotify(Element& s) {
   Address align;
   size_t i = parseMemAttributes(s, ret->offset, align, 4);
   if (align != 4) {
-    throw ParseException("Align of atomic.notify must be 4", s.line, s.col);
+    throw ParseException(
+      "Align of memory.atomic.notify must be 4", s.line, s.col);
   }
   ret->ptr = parseExpression(s[i]);
   ret->notifyCount = parseExpression(s[i + 1]);
@@ -1771,7 +1773,7 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s, bool isReturn) {
   auto target = getFunctionName(*s[1]);
   auto ret = allocator.alloc<Call>();
   ret->target = target;
-  ret->type = functionTypes[ret->target];
+  ret->type = functionSignatures[ret->target].results;
   parseCallOperands(s, 2, s.size(), ret);
   ret->isReturn = isReturn;
   ret->finalize();
@@ -2442,7 +2444,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     func->setName(name, hasExplicitName);
     func->module = module;
     func->base = base;
-    functionTypes[name] = func->sig.results;
+    functionSignatures[name] = func->sig;
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
     Type type;

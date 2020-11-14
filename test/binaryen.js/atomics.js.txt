@@ -45,21 +45,21 @@
    )
   )
   (drop
-   (i32.atomic.wait
+   (memory.atomic.wait32
     (i32.const 0)
     (i32.const 0)
     (i64.const 0)
    )
   )
   (drop
-   (i64.atomic.wait
+   (memory.atomic.wait64
     (i32.const 0)
     (i64.const 0)
     (i64.const 0)
    )
   )
   (drop
-   (atomic.notify
+   (memory.atomic.notify
     (i32.const 0)
     (i32.const 0)
    )

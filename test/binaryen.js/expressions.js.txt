@@ -128,14 +128,14 @@
 )
 
 # AtomicWait
-(i64.atomic.wait
+(memory.atomic.wait64
  (i32.const 5)
  (i32.const 6)
  (i64.const 7)
 )
 
 # AtomicNotify
-(atomic.notify
+(memory.atomic.notify
  (i32.const 3)
  (i32.const 4)
 )

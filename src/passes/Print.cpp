@@ -317,13 +317,15 @@ struct PrintExpressionContents
   }
   void visitAtomicWait(AtomicWait* curr) {
     prepareColor(o);
-    o << forceConcrete(curr->expectedType) << ".atomic.wait";
+    Type type = forceConcrete(curr->expectedType);
+    assert(type == Type::i32 || type == Type::i64);
+    o << "memory.atomic.wait" << (type == Type::i32 ? "32" : "64");
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
   }
   void visitAtomicNotify(AtomicNotify* curr) {
-    printMedium(o, "atomic.notify");
+    printMedium(o, "memory.atomic.notify");
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }

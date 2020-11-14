@@ -3161,85 +3161,89 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
                                        uint8_t code,
                                        bool isAtomic) {
   Load* curr;
+  auto allocate = [&]() {
+    curr = allocator.alloc<Load>();
+    // The signed field does not matter in some cases (where the size of the
+    // load is equal to the size of the type, in which case we do not extend),
+    // but give it a default value nonetheless, to make hashing and other code
+    // simpler, so that they do not need to consider whether the sign matters or
+    // not.
+    curr->signed_ = false;
+  };
   if (!isAtomic) {
     switch (code) {
       case BinaryConsts::I32LoadMem8S:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 1;
         curr->type = Type::i32;
         curr->signed_ = true;
         break;
       case BinaryConsts::I32LoadMem8U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 1;
         curr->type = Type::i32;
-        curr->signed_ = false;
         break;
       case BinaryConsts::I32LoadMem16S:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 2;
         curr->type = Type::i32;
         curr->signed_ = true;
         break;
       case BinaryConsts::I32LoadMem16U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 2;
         curr->type = Type::i32;
-        curr->signed_ = false;
         break;
       case BinaryConsts::I32LoadMem:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 4;
         curr->type = Type::i32;
         break;
       case BinaryConsts::I64LoadMem8S:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 1;
         curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem8U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 1;
         curr->type = Type::i64;
-        curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem16S:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 2;
         curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem16U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 2;
         curr->type = Type::i64;
-        curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem32S:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 4;
         curr->type = Type::i64;
         curr->signed_ = true;
         break;
       case BinaryConsts::I64LoadMem32U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 4;
         curr->type = Type::i64;
-        curr->signed_ = false;
         break;
       case BinaryConsts::I64LoadMem:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 8;
         curr->type = Type::i64;
         break;
       case BinaryConsts::F32LoadMem:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 4;
         curr->type = Type::f32;
         break;
       case BinaryConsts::F64LoadMem:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 8;
         curr->type = Type::f64;
         break;
@@ -3250,44 +3254,43 @@ bool WasmBinaryBuilder::maybeVisitLoad(Expression*& out,
   } else {
     switch (code) {
       case BinaryConsts::I32AtomicLoad8U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 1;
         curr->type = Type::i32;
         break;
       case BinaryConsts::I32AtomicLoad16U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 2;
         curr->type = Type::i32;
         break;
       case BinaryConsts::I32AtomicLoad:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 4;
         curr->type = Type::i32;
         break;
       case BinaryConsts::I64AtomicLoad8U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 1;
         curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad16U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 2;
         curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad32U:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 4;
         curr->type = Type::i64;
         break;
       case BinaryConsts::I64AtomicLoad:
-        curr = allocator.alloc<Load>();
+        allocate();
         curr->bytes = 8;
         curr->type = Type::i64;
         break;
       default:
         return false;
     }
-    curr->signed_ = false;
     BYN_TRACE("zz node: AtomicLoad\n");
   }
 

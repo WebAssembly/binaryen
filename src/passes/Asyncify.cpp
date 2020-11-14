@@ -677,7 +677,7 @@ public:
                             }
                             info.canChangeState = true;
                           },
-                          scanner.IgnoreIndirectCalls);
+                          scanner.IgnoreNonDirectCalls);
 
     map.swap(scanner.map);
 
@@ -1408,8 +1408,10 @@ struct Asyncify : public Pass {
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports, ",");
-    auto ignoreIndirect = runner->options.getArgumentOrDefault(
-                            "asyncify-ignore-indirect", "") == "";
+    // TODO: consider renaming asyncify-ignore-indirect to
+    //       asyncify-ignore-nondirect, but that could break users.
+    auto ignoreNonDirect = runner->options.getArgumentOrDefault(
+                             "asyncify-ignore-indirect", "") == "";
     std::string removeListInput =
       runner->options.getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
@@ -1462,7 +1464,7 @@ struct Asyncify : public Pass {
     // Scan the module.
     ModuleAnalyzer analyzer(*module,
                             canImportChangeState,
-                            ignoreIndirect,
+                            ignoreNonDirect,
                             removeList,
                             addList,
                             onlyList,
