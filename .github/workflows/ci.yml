@@ -33,6 +33,14 @@ jobs:
         ./scripts/clang-tidy-diff.sh
     - name: gen-s-parser
       run: ./scripts/gen-s-parser.py | diff src/gen-s-parser.inc -
+    - name: generate compilation database
+      run: cmake -G Ninja -DCMAKE_EXPORT_COMPILE_COMMANDS=1 .
+    - name: Include What You Use
+      uses: EmilGedda/include-what-you-use-action@v1
+      with:
+        compilation-database-path: '.'
+        output-format: 'iwyu'
+        no-error: 'false'
 
   build:
     name: build
