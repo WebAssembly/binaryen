@@ -235,7 +235,7 @@ public:
     return Literal(type);
   }
   static Literal makeFunc(Name func, Type type = Type::funcref) {
-    return Literal(func.c_str(), type);
+    return Literal(func, type);
   }
   static Literal makeExn(std::unique_ptr<ExceptionPackage>&& exn) {
     return Literal(std::move(exn));
