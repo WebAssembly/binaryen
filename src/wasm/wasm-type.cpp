@@ -524,7 +524,7 @@ bool Type::isSubType(Type left, Type right) {
     if (right == Type::anyref) {
       return true;
     }
-    if ((left == Type::i31ref || left == Type::array || left == Type::struct) &&
+    if ((left == Type::i31ref || left.getHeapType().isArray() || left.getHeapType().isStruct()) &&
         right == Type::eqref) {
       return true;
     }
