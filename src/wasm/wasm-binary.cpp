@@ -1581,6 +1581,18 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   }
 }
 
+Signature WasmBinaryBuilder::getFunctionSignatureByIndex(Index index) {
+  Signature sig;
+  if (index < functionImports.size()) {
+    return functionImports[index]->sig;
+  }
+  Index adjustedIndex = index - functionImports.size();
+  if (adjustedIndex >= functionSignatures.size()) {
+    throwError("invalid call index");
+  }
+  return functionSignatures[adjustedIndex];
+}
+
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
   size_t total = getU32LEB();
@@ -3052,17 +3064,7 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
 void WasmBinaryBuilder::visitCall(Call* curr) {
   BYN_TRACE("zz node: Call\n");
   auto index = getU32LEB();
-  Signature sig;
-  if (index < functionImports.size()) {
-    auto* import = functionImports[index];
-    sig = import->sig;
-  } else {
-    Index adjustedIndex = index - functionImports.size();
-    if (adjustedIndex >= functionSignatures.size()) {
-      throwError("invalid call index");
-    }
-    sig = functionSignatures[adjustedIndex];
-  }
+  auto sig = getFunctionSignatureByIndex(index);
   auto num = sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
