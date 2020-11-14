@@ -17,11 +17,15 @@
 #ifndef wasm_wasm_emscripten_h
 #define wasm_wasm_emscripten_h
 
-#include "support/file.h"
+#include <string>
+#include <vector>
+
 #include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
+class Output;
+struct Name;
 
 Global* getStackPointerGlobal(Module& wasm);
 

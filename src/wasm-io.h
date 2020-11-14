@@ -21,11 +21,13 @@
 #ifndef wasm_wasm_io_h
 #define wasm_wasm_io_h
 
-#include "parsing.h"
-#include "support/file.h"
+#include <string>
+#include <vector>
+
 #include "wasm.h"
 
 namespace wasm {
+class Output;
 
 class ModuleReader {
 public:

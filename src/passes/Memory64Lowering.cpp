@@ -20,9 +20,14 @@
 //
 // TODO(wvo): make this run in parallel if needed.
 
-#include "ir/bits.h"
+#include <algorithm>
+#include <assert.h>
+#include <vector>
+
 #include "pass.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

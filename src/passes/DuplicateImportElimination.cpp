@@ -20,9 +20,15 @@
 // TODO: non-function imports too
 //
 
+#include <map>
+#include <utility>
+#include <vector>
+
 #include "ir/import-utils.h"
 #include "opt-utils.h"
 #include "pass.h"
+#include "support/name.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

@@ -18,9 +18,18 @@
 #define wasm_literal_h
 
 #include <array>
+#include <assert.h>
+#include <cstdint>
+#include <functional>
+#include <initializer_list>
 #include <iostream>
+#include <limits>
+#include <memory>
+#include <string.h>
+#include <utility>
+#include <vector>
 
-#include "compiler-support.h"
+#include "emscripten-optimizer/istring.h"
 #include "support/hash.h"
 #include "support/name.h"
 #include "support/small_vector.h"

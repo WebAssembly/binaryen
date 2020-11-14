@@ -18,9 +18,13 @@
 // Write out the name list of the module, similar to `nm`.
 //
 
+#include <iostream>
+#include <vector>
+
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/name.h"
 #include "wasm.h"
 
 namespace wasm {

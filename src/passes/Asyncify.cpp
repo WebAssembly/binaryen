@@ -296,17 +296,42 @@
 //      of their original range.
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <set>
+#include <stddef.h>
+#include <stdint.h>
+#include <string>
+#include <type_traits>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include "cfg/cfg-traversal.h"
 #include "cfg/liveness-traversal.h"
-#include "ir/effects.h"
+#include "emscripten-optimizer/istring.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
 #include "pass.h"
 #include "support/file.h"
+#include "support/name.h"
+#include "support/small_vector.h"
+#include "support/sorted_vector.h"
 #include "support/string.h"
+#include "support/utilities.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

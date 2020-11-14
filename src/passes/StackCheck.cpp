@@ -20,12 +20,21 @@
 // shadow stack.
 //
 
-#include "abi/js.h"
+#include <iostream>
+#include <stdint.h>
+#include <string>
+#include <vector>
+
+#include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "pass.h"
-#include "shared-constants.h"
 #include "support/debug.h"
+#include "support/name.h"
+#include "wasm-builder.h"
 #include "wasm-emscripten.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
+#include "wasm.h"
 
 #define DEBUG_TYPE "stack-check"
 

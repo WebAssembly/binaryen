@@ -22,14 +22,28 @@
 #ifndef wasm_wasm2js_h
 #define wasm_wasm2js_h
 
+#include <algorithm>
+#include <assert.h>
 #include <cmath>
-#include <numeric>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <set>
+#include <stdlib.h>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "abi/js.h"
 #include "asm_v_wasm.h"
 #include "asmjs/asmangle.h"
 #include "asmjs/shared-constants.h"
+#include "emscripten-optimizer/istring.h"
 #include "emscripten-optimizer/optimizer.h"
+#include "emscripten-optimizer/parser.h"
+#include "emscripten-optimizer/simple_ast.h"
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
@@ -39,12 +53,19 @@
 #include "ir/names.h"
 #include "ir/table-utils.h"
 #include "ir/utils.h"
+#include "literal.h"
 #include "mixed_arena.h"
-#include "passes/passes.h"
+#include "pass.h"
+#include "shared-constants.h"
 #include "support/base64.h"
 #include "support/file.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
-#include "wasm-io.h"
+#include "wasm-features.h"
+#include "wasm-printing.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 

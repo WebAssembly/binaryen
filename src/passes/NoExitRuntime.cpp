@@ -20,10 +20,18 @@
 // run.
 //
 
+#include <array>
 #include <asmjs/shared-constants.h>
+#include <iosfwd>
 #include <pass.h>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "emscripten-optimizer/istring.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "wasm-traversal.h"
 
 using namespace std;
 

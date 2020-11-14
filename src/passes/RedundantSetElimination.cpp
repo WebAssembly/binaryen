@@ -33,14 +33,24 @@
 // here).
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <cfg/cfg-traversal.h>
-#include <ir/literal-utils.h>
+#include <iostream>
 #include <ir/properties.h>
-#include <ir/utils.h>
+#include <map>
+#include <memory>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
-#include <wasm-builder.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wasm.h>
+
+#include "ir/manipulation.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 

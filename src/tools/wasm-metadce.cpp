@@ -24,17 +24,36 @@
 //       as the outside may call them. In the future we probably want
 //       to refine that.
 
+#include <algorithm>
+#include <assert.h>
+#include <iostream>
+#include <map>
 #include <memory>
+#include <set>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "ir/module-utils.h"
+#include "parsing.h"
 #include "pass.h"
 #include "support/colors.h"
+#include "support/command-line.h"
 #include "support/file.h"
 #include "support/json.h"
+#include "support/name.h"
+#include "support/small_vector.h"
+#include "support/utilities.h"
 #include "tool-options.h"
-#include "wasm-builder.h"
 #include "wasm-io.h"
+#include "wasm-printing.h"
+#include "wasm-traversal.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 
 using namespace wasm;
 

@@ -14,12 +14,24 @@
  * limitations under the License.
  */
 
-#include "ir/iteration.h"
-#include "ir/load-utils.h"
+#include <algorithm>
+#include <assert.h>
+#include <cstdint>
+#include <functional>
+#include <map>
+#include <stddef.h>
+#include <utility>
+#include <vector>
+
+#include "compiler-support.h"
+#include "emscripten-optimizer/istring.h"
 #include "ir/utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
 #include "support/hash.h"
-#include "support/small_vector.h"
+#include "support/name.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

@@ -21,18 +21,36 @@
 // global.
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <functional>
+#include <iostream>
+#include <limits.h>
+#include <map>
+#include <memory>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
 #include "abi/js.h"
-#include "emscripten-optimizer/istring.h"
+#include "asmjs/shared-constants.h"
 #include "ir/flat.h"
 #include "ir/iteration.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "literal.h"
 #include "pass.h"
 #include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
-#include <algorithm>
 
 namespace wasm {
 

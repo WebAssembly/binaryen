@@ -18,15 +18,35 @@
 // Removes branches for which we go to where they go anyhow
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <cstdint>
+#include <ext/alloc_traits.h>
 #include <ir/branch-utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
+#include <limits>
+#include <map>
 #include <parsing.h>
 #include <pass.h>
+#include <set>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "emscripten-optimizer/istring.h"
+#include "ir/manipulation.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

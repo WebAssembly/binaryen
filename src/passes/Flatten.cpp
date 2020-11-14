@@ -18,14 +18,25 @@
 // Flattens code into "Flat IR" form. See ir/flat.h.
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <ir/branch-utils.h>
-#include <ir/effects.h>
-#include <ir/flat.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <set>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "ir/manipulation.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

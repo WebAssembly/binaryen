@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-#include <cassert>
 #include <cmath>
 #include <limits>
+#include <stdint.h>
 
 #include "support/safe_integer.h"
 

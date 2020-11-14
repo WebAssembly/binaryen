@@ -22,12 +22,24 @@
 #ifndef wasm_wasm_s_parser_h
 #define wasm_wasm_s_parser_h
 
+#include <iosfwd>
+#include <map>
+#include <memory>
+#include <stddef.h>
+#include <stdint.h>
+#include <string>
+#include <unordered_map>
+#include <vector>
+
+#include "emscripten-optimizer/istring.h"
 #include "mixed_arena.h"
 #include "parsing.h" // for UniqueNameMapper. TODO: move dependency to cpp file?
-#include "wasm-builder.h"
+#include "support/name.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
+struct NameType;
 
 class SourceLocation {
 public:

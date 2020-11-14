@@ -18,10 +18,23 @@
 // Operations on Stack IR.
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <memory>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include "ir/branch-utils.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
 #include "pass.h"
+#include "support/small_vector.h"
+#include "support/utilities.h"
 #include "wasm-stack.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

@@ -16,18 +16,32 @@
 
 #include "wasm-emscripten.h"
 
+#include <algorithm>
+#include <assert.h>
+#include <map>
+#include <memory>
+#include <set>
 #include <sstream>
+#include <stddef.h>
+#include <stdint.h>
+#include <unordered_map>
+#include <utility>
 
 #include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
-#include "ir/import-utils.h"
-#include "ir/literal-utils.h"
+#include "emscripten-optimizer/istring.h"
+#include "ir/find_all.h"
 #include "ir/module-utils.h"
-#include "ir/table-utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
 #include "shared-constants.h"
 #include "support/debug.h"
-#include "wasm-builder.h"
+#include "support/file.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-features.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 #define DEBUG_TYPE "emscripten"

@@ -24,10 +24,10 @@
 #ifndef wasm_support_archive_h
 #define wasm_support_archive_h
 
+#include <assert.h>
 #include <cstdint>
+#include <string>
 #include <vector>
-
-#include "wasm.h"
 
 class ArchiveMemberHeader;
 

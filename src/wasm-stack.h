@@ -17,11 +17,24 @@
 #ifndef wasm_stack_h
 #define wasm_stack_h
 
+#include <algorithm>
+#include <assert.h>
+#include <map>
+#include <set>
+#include <stddef.h>
+#include <stdint.h>
+#include <utility>
+#include <vector>
+
 #include "ir/branch-utils.h"
+#include "ir/iteration.h"
 #include "ir/properties.h"
-#include "pass.h"
+#include "mixed_arena.h"
+#include "support/name.h"
 #include "wasm-binary.h"
+#include "wasm-builder.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

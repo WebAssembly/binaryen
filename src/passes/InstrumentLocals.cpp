@@ -43,11 +43,19 @@
 //    )
 //   )
 
-#include "asmjs/shared-constants.h"
-#include "shared-constants.h"
+#include <algorithm>
 #include <pass.h>
+#include <stdint.h>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "asmjs/shared-constants.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

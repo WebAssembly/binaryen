@@ -22,22 +22,42 @@
 // startup later.
 //
 
+#include <array>
+#include <assert.h>
+#include <iostream>
+#include <map>
 #include <memory>
+#include <set>
+#include <stdint.h>
+#include <string.h>
+#include <string>
+#include <vector>
 
 #include "asmjs/shared-constants.h"
+#include "emscripten-optimizer/istring.h"
 #include "ir/global-utils.h"
 #include "ir/import-utils.h"
-#include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "parsing.h"
 #include "pass.h"
 #include "support/colors.h"
+#include "support/command-line.h"
 #include "support/file.h"
+#include "support/name.h"
+#include "support/small_vector.h"
+#include "support/threads.h"
+#include "support/utilities.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
+#include "wasm-printing.h"
+#include "wasm-type.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 
 using namespace wasm;
 

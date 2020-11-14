@@ -31,16 +31,23 @@
 // TODO: check if we can minify names to the empty string "", which is even
 //       shorter than one character.
 
+#include <asmjs/shared-constants.h>
+#include <assert.h>
+#include <iostream>
+#include <ir/module-utils.h>
 #include <map>
+#include <memory>
+#include <pass.h>
+#include <set>
+#include <stddef.h>
 #include <string>
 #include <unordered_set>
-
-#include <asmjs/shared-constants.h>
-#include <ir/import-utils.h>
-#include <ir/module-utils.h>
-#include <pass.h>
-#include <shared-constants.h>
+#include <utility>
+#include <vector>
 #include <wasm.h>
+
+#include "emscripten-optimizer/istring.h"
+#include "support/name.h"
 
 namespace wasm {
 

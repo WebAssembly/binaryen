@@ -28,14 +28,34 @@
 // as necessary.
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <ext/alloc_traits.h>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <stddef.h>
+#include <stdint.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include "emscripten-optimizer/istring.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
+#include "literal.h"
 #include "pass.h"
+#include "support/name.h"
 #include "support/space.h"
+#include "support/utilities.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

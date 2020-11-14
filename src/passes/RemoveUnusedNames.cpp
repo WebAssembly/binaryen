@@ -19,8 +19,20 @@
 // merge names when possible (by merging their blocks)
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <map>
 #include <pass.h>
+#include <set>
+#include <vector>
 #include <wasm.h>
+
+#include "emscripten-optimizer/istring.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

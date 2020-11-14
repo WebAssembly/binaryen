@@ -19,7 +19,11 @@
 // alignment 1.
 //
 
+#include <algorithm>
+#include <vector>
+
 #include "pass.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {

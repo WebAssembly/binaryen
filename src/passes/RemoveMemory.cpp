@@ -19,6 +19,7 @@
 //
 
 #include <pass.h>
+#include <vector>
 #include <wasm.h>
 
 namespace wasm {

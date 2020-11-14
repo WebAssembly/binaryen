@@ -22,9 +22,14 @@
 // more effective.
 //
 
+#include <algorithm>
 #include <pass.h>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

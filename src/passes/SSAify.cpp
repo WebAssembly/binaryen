@@ -48,14 +48,19 @@
 // pass.
 //
 
-#include <iterator>
+#include <algorithm>
+#include <assert.h>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
 #include "pass.h"
-#include "support/permutations.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

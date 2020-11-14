@@ -75,11 +75,26 @@
 //      complex code, so it is a good candidate for a follow up PR.
 
 #include "ir/module-splitting.h"
+
+#include <assert.h>
+#include <map>
+#include <stddef.h>
+#include <stdint.h>
+#include <type_traits>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include "emscripten-optimizer/istring.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "literal.h"
 #include "pass.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

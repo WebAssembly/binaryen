@@ -46,16 +46,29 @@
 // removing redundant locals.
 //
 
-#include "ir/equivalent_sets.h"
+#include <algorithm>
+#include <assert.h>
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/find_all.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
+#include <map>
 #include <pass.h>
+#include <set>
+#include <stddef.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <wasm.h>
+
+#include "ir/equivalent_sets.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "wasm-features.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

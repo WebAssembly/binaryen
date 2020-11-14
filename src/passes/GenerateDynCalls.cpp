@@ -22,12 +22,23 @@
 // signature in the indirect function table.
 //
 
-#include "abi/js.h"
+#include <algorithm>
+#include <assert.h>
+#include <memory>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "asm_v_wasm.h"
-#include "ir/import-utils.h"
+#include "asmjs/shared-constants.h"
+#include "emscripten-optimizer/istring.h"
 #include "pass.h"
-#include "support/debug.h"
+#include "support/name.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
+#include "wasm.h"
 
 #define DEBUG_TYPE "generate-dyncalls"
 

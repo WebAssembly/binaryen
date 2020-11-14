@@ -22,8 +22,8 @@
 #define wasm_support_file_h
 
 #include <fstream>
+#include <stddef.h>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace wasm {

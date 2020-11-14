@@ -27,13 +27,21 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <cstddef>
+#include <functional>
 #include <map>
+#include <memory>
+#include <set>
+#include <stdint.h>
 #include <string>
+#include <type_traits>
+#include <unordered_map>
 #include <vector>
 
 #include "literal.h"
 #include "mixed_arena.h"
 #include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
 

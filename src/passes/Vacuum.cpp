@@ -18,14 +18,27 @@
 // Removes obviously unneeded code
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <ir/block-utils.h>
 #include <ir/effects.h>
 #include <ir/literal-utils.h>
 #include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <stddef.h>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "ir/branch-utils.h"
+#include "ir/manipulation.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

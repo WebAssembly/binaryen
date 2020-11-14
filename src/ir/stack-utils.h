@@ -70,7 +70,9 @@
 #ifndef wasm_ir_stack_h
 #define wasm_ir_stack_h
 
-#include "ir/properties.h"
+#include <unordered_map>
+#include <vector>
+
 #include "wasm-type.h"
 #include "wasm.h"
 

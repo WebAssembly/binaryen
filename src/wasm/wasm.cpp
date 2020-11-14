@@ -15,7 +15,13 @@
  */
 
 #include "wasm.h"
+
+#include <iostream>
+#include <utility>
+
+#include "emscripten-optimizer/istring.h"
 #include "ir/branch-utils.h"
+#include "ir/properties.h"
 #include "wasm-printing.h"
 #include "wasm-traversal.h"
 

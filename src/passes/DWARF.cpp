@@ -25,9 +25,9 @@
 
 #include "pass.h"
 #include "wasm-debug.h"
-#include "wasm.h"
 
 namespace wasm {
+class Module;
 
 struct DWARFDump : public Pass {
   void run(PassRunner* runner, Module* module) override {

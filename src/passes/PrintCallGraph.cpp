@@ -19,12 +19,15 @@
 // view .dot files.
 //
 
-#include <iomanip>
+#include <iostream>
 #include <memory>
+#include <set>
+#include <vector>
 
 #include "ir/module-utils.h"
-#include "ir/utils.h"
 #include "pass.h"
+#include "support/name.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {

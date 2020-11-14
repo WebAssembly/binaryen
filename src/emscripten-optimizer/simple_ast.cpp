@@ -16,6 +16,9 @@
 
 #include "simple_ast.h"
 
+#include <iomanip>
+#include <utility>
+
 namespace cashew {
 
 // Ref methods

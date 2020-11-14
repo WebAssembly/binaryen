@@ -16,13 +16,26 @@
 
 #include "wasm-s-parser.h"
 
+#include <algorithm>
+#include <array>
+#include <assert.h>
 #include <cctype>
-#include <cmath>
+#include <cstdint>
+#include <iostream>
 #include <limits>
+#include <new>
+#include <set>
+#include <stdexcept>
+#include <stdlib.h>
+#include <string.h>
+#include <utility>
 
 #include "ir/branch-utils.h"
+#include "literal.h"
 #include "shared-constants.h"
+#include "support/utilities.h"
 #include "wasm-binary.h"
+#include "wasm-builder.h"
 
 #define abort_on(str)                                                          \
   { throw ParseException(std::string("abort_on ") + str); }

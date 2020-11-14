@@ -16,11 +16,22 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <iostream>
 #include <ir/module-utils.h>
+#include <map>
+#include <memory>
 #include <pass.h>
+#include <string.h>
+#include <string>
 #include <support/colors.h>
+#include <utility>
+#include <vector>
 #include <wasm-binary.h>
 #include <wasm.h>
+
+#include "ir/import-utils.h"
+#include "support/name.h"
+#include "wasm-traversal.h"
 
 using namespace std;
 

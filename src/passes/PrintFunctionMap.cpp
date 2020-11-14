@@ -24,7 +24,12 @@
 // 2:baz
 //
 
+#include <iostream>
+#include <memory>
+#include <vector>
+
 #include "pass.h"
+#include "support/name.h"
 #include "wasm.h"
 
 namespace wasm {

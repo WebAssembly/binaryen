@@ -20,6 +20,8 @@
 
 #include "support/path.h"
 
+#include <cstdlib>
+
 namespace wasm {
 
 namespace Path {

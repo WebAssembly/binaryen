@@ -18,7 +18,14 @@
 // with (mostly) just the code you want to debug (function-parallel,
 // non-lto) passes on.
 
+#include <iostream>
+#include <memory>
+#include <vector>
+
+#include "emscripten-optimizer/istring.h"
 #include "pass.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm.h"
 
 namespace wasm {

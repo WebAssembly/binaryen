@@ -25,8 +25,16 @@
 //
 
 #include "wasm-io.h"
+
+#include <fstream>
+#include <iostream>
+#include <memory>
+
 #include "support/debug.h"
+#include "support/file.h"
+#include "support/utilities.h"
 #include "wasm-binary.h"
+#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 
 namespace wasm {

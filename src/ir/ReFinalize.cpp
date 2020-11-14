@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 
+#include <assert.h>
+#include <map>
+#include <utility>
+
 #include "ir/branch-utils.h"
-#include "ir/find_all.h"
 #include "ir/utils.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-builder.h"
+#include "wasm-type.h"
+#include "wasm.h"
 
 namespace wasm {
 

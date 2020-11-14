@@ -16,13 +16,18 @@
 
 #include "literal.h"
 
-#include <cassert>
+#include <algorithm>
 #include <cmath>
+#include <iomanip>
+#include <new>
+#include <stdlib.h>
+#include <type_traits>
 
 #include "emscripten-optimizer/simple_ast.h"
 #include "ir/bits.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
+#include "support/safe_integer.h"
 #include "support/utilities.h"
 
 namespace wasm {

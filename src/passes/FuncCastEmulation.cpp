@@ -28,10 +28,21 @@
 // params must be identical, i.e., the "ABI" must match.
 //
 
+#include <algorithm>
 #include <ir/literal-utils.h>
 #include <pass.h>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

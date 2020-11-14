@@ -22,10 +22,18 @@
 // While sorting, we remove locals that have no uses at all.
 //
 
-#include <memory>
-
+#include <algorithm>
+#include <assert.h>
+#include <map>
 #include <pass.h>
+#include <stddef.h>
+#include <utility>
+#include <vector>
 #include <wasm.h>
+
+#include "support/name.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

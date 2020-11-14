@@ -22,8 +22,17 @@
 // look at all the rest of the code).
 //
 
+#include <algorithm>
+#include <set>
+#include <vector>
+
 #include "ir/module-utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
 #include "pass.h"
+#include "support/name.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

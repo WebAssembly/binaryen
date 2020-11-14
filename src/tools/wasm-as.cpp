@@ -18,14 +18,23 @@
 // wasm2asm console tool
 //
 
+#include <iostream>
+#include <map>
+#include <string>
+
+#include "emscripten-optimizer/istring.h"
+#include "parsing.h"
 #include "support/colors.h"
+#include "support/command-line.h"
 #include "support/file.h"
+#include "support/threads.h"
+#include "support/utilities.h"
+#include "tool-options.h"
+#include "tool-utils.h"
 #include "wasm-io.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
-
-#include "tool-options.h"
-#include "tool-utils.h"
+#include "wasm.h"
 
 using namespace cashew;
 using namespace wasm;

@@ -14,14 +14,23 @@
  * limitations under the License.
  */
 
-#include <array>
+#include <algorithm>
 #include <cassert>
-#include <shared_mutex>
+#include <cstdint>
+#include <ext/alloc_traits.h>
+#include <initializer_list>
+#include <memory>
+#include <mutex>
+#include <new>
 #include <sstream>
+#include <stddef.h>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
-#include "compiler-support.h"
 #include "support/hash.h"
+#include "support/utilities.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
 

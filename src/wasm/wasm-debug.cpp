@@ -15,7 +15,34 @@
  */
 
 #include "wasm-debug.h"
+
+#include <algorithm>
+#include <array>
+#include <assert.h>
+#include <iostream>
+#include <memory>
+#include <stddef.h>
+#include <stdint.h>
+#include <string>
+#include <system_error>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
+#include "support/utilities.h"
 #include "wasm.h"
+#include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/iterator_range.h"
+#include "llvm/BinaryFormat/Dwarf.h"
+#include "llvm/DebugInfo/DIContext.h"
+#include "llvm/DebugInfo/DWARF/DWARFAbbreviationDeclaration.h"
+#include "llvm/DebugInfo/DWARF/DWARFDebugInfoEntry.h"
+#include "llvm/DebugInfo/DWARF/DWARFUnit.h"
+#include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/YAMLTraits.h"
+#include "llvm/Support/raw_ostream.h"
 
 #ifdef BUILD_LLVM_DWARF
 #include "llvm/ObjectYAML/DWARFEmitter.h"
@@ -24,10 +51,6 @@
 
 std::error_code dwarf2yaml(llvm::DWARFContext& DCtx, llvm::DWARFYAML::Data& Y);
 #endif
-
-#include "wasm-binary.h"
-#include "wasm-debug.h"
-#include "wasm.h"
 
 namespace wasm {
 

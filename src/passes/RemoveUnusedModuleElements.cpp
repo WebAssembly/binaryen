@@ -20,11 +20,16 @@
 // remove if unneeded)
 //
 
+#include <algorithm>
 #include <memory>
+#include <set>
+#include <utility>
+#include <vector>
 
 #include "ir/module-utils.h"
-#include "ir/utils.h"
 #include "pass.h"
+#include "support/name.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {

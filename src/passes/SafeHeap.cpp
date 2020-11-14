@@ -20,12 +20,23 @@
 // top of sbrk()-addressible memory, and incorrect alignment notation.
 //
 
+#include <initializer_list>
+#include <stdint.h>
+#include <string>
+#include <vector>
+
 #include "asmjs/shared-constants.h"
+#include "emscripten-optimizer/istring.h"
 #include "ir/bits.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
+#include "mixed_arena.h"
 #include "pass.h"
+#include "support/name.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

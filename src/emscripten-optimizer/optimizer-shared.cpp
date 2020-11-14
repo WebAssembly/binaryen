@@ -14,8 +14,14 @@
  * limitations under the License.
  */
 
-#include <limits>
+#include <assert.h>
+#include <iostream>
+#include <stdint.h>
+#include <stdlib.h>
 
+#include "emscripten-optimizer/istring.h"
+#include "emscripten-optimizer/parser.h"
+#include "emscripten-optimizer/simple_ast.h"
 #include "optimizer.h"
 #include "support/safe_integer.h"
 

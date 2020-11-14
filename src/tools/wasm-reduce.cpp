@@ -23,28 +23,45 @@
 // much more debuggable manner).
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <cstdio>
 #include <cstdlib>
+#include <iostream>
 #include <memory>
+#include <stdint.h>
+#include <string>
+#include <unordered_set>
+#include <vector>
 
+#include "emscripten-optimizer/istring.h"
 #include "ir/branch-utils.h"
 #include "ir/iteration.h"
-#include "ir/literal-utils.h"
 #include "ir/properties.h"
+#include "literal.h"
+#include "mixed_arena.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/name.h"
 #include "support/path.h"
+#include "support/threads.h"
 #include "support/timing.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
 #include "wasm-io.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 #ifdef _WIN32
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
 #include <windows.h>
+
 // Create a string with last error message
 std::string GetLastErrorStdStr() {
   DWORD error = GetLastError();

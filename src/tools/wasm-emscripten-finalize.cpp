@@ -19,19 +19,30 @@
 // Performs Emscripten-specific transforms on .wasm files
 //
 
-#include <exception>
+#include <iostream>
+#include <map>
+#include <stdint.h>
+#include <string>
+#include <vector>
 
 #include "abi/js.h"
-#include "ir/trapping.h"
+#include "emscripten-optimizer/istring.h"
+#include "parsing.h"
+#include "pass.h"
+#include "shared-constants.h"
 #include "support/colors.h"
+#include "support/command-line.h"
 #include "support/debug.h"
 #include "support/file.h"
+#include "support/name.h"
+#include "support/threads.h"
+#include "support/utilities.h"
 #include "tool-options.h"
 #include "wasm-binary.h"
 #include "wasm-emscripten.h"
 #include "wasm-io.h"
 #include "wasm-printing.h"
-#include "wasm-validator.h"
+#include "wasm.h"
 
 #define DEBUG_TYPE "emscripten"
 

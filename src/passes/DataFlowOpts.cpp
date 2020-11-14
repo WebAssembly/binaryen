@@ -24,14 +24,23 @@
 //    --flatten --dfo -Os
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <memory>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
 #include "dataflow/graph.h"
 #include "dataflow/node.h"
 #include "dataflow/users.h"
 #include "dataflow/utils.h"
 #include "ir/flat.h"
-#include "ir/utils.h"
 #include "pass.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

@@ -18,24 +18,47 @@
 // Binaryen C API implementation
 //===============================
 
+#include <algorithm>
+#include <array>
+#include <assert.h>
+#include <ext/alloc_traits.h>
+#include <iostream>
+#include <map>
+#include <memory>
 #include <mutex>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 #include "binaryen-c.h"
 #include "cfg/Relooper.h"
+#include "emscripten-optimizer/simple_ast.h"
+#include "ir/effects.h"
+#include "ir/manipulation.h"
 #include "ir/utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "parsing.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/colors.h"
+#include "support/file.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
 #include "wasm-interpreter.h"
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
+#include "wasm-type.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 #include "wasm2js.h"
-#include <iostream>
-#include <sstream>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>

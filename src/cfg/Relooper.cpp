@@ -16,16 +16,21 @@
 
 #include "Relooper.h"
 
-#include <stdlib.h>
-#include <string.h>
-
+#include <assert.h>
+#include <ext/alloc_traits.h>
+#include <functional>
 #include <list>
-#include <stack>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 
+#include "emscripten-optimizer/istring.h"
 #include "ir/branch-utils.h"
 #include "ir/utils.h"
+#include "mixed_arena.h"
 #include "parsing.h"
+#include "support/hash.h"
+#include "support/utilities.h"
 
 namespace CFG {
 

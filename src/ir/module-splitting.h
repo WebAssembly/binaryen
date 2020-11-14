@@ -38,9 +38,14 @@
 #ifndef wasm_ir_module_splitting_h
 #define wasm_ir_module_splitting_h
 
-#include "wasm.h"
+#include <memory>
+#include <set>
+#include <string>
+
+#include "support/name.h"
 
 namespace wasm {
+class Module;
 
 namespace ModuleSplitting {
 

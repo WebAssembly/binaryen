@@ -30,15 +30,27 @@
 // table even to a signature that is not legal.
 //
 
+#include <atomic>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 #include "asmjs/shared-constants.h"
+#include "emscripten-optimizer/istring.h"
 #include "ir/import-utils.h"
-#include "ir/literal-utils.h"
 #include "ir/utils.h"
+#include "mixed_arena.h"
 #include "pass.h"
 #include "shared-constants.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
-#include <utility>
 
 namespace wasm {
 

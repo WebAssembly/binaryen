@@ -19,17 +19,30 @@
 // AssemblyScript output.
 //
 
-#include "ir/flat.h"
-#include "ir/local-graph.h"
-#include "pass.h"
-#include "wasm-builder.h"
-#include "wasm-traversal.h"
-#include "wasm.h"
+#include <algorithm>
+#include <assert.h>
+#include <map>
+#include <set>
+#include <stdint.h>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include "emscripten-optimizer/istring.h"
+#include "ir/flat.h"
+#include "ir/local-graph.h"
+#include "mixed_arena.h"
+#include "pass.h"
+#include "support/name.h"
+#include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
+#include "wasm.h"
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
-#include "wasm-printing.h"
 #include <iostream>
+
+#include "wasm-printing.h"
 #endif
 
 namespace wasm {

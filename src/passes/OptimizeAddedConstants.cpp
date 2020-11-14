@@ -30,12 +30,27 @@
 // speed, and may lead to code size reductions elsewhere by using fewer locals.
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <ir/local-graph.h>
 #include <ir/local-utils.h>
 #include <ir/parents.h>
+#include <map>
+#include <memory>
 #include <pass.h>
+#include <set>
+#include <stdint.h>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "literal.h"
+#include "support/utilities.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

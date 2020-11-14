@@ -20,9 +20,12 @@
 // parameter.
 //
 
+#include <iosfwd>
+
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "wasm-binary.h"
+#include "wasm-features.h"
 #include "wasm.h"
 
 using namespace std;

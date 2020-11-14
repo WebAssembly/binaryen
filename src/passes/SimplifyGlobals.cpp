@@ -34,13 +34,23 @@
 // further optimization opportunities.
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <atomic>
+#include <map>
+#include <memory>
+#include <set>
+#include <utility>
+#include <vector>
 
 #include "ir/effects.h"
+#include "ir/manipulation.h"
 #include "ir/properties.h"
-#include "ir/utils.h"
+#include "literal.h"
 #include "pass.h"
+#include "support/name.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm {

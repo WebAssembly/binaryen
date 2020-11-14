@@ -20,16 +20,20 @@
 //
 
 #include <asmjs/shared-constants.h>
-#include <ir/import-utils.h>
-#include <ir/localize.h>
-#include <ir/memory-utils.h>
 #include <ir/module-utils.h>
 #include <ir/table-utils.h>
+#include <map>
+#include <memory>
 #include <pass.h>
-#include <shared-constants.h>
-#include <wasm-builder.h>
-#include <wasm-emscripten.h>
+#include <set>
+#include <vector>
 #include <wasm.h>
+
+#include "emscripten-optimizer/istring.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "wasm-traversal.h"
 
 #define DEBUG_TYPE "post-emscripten"
 

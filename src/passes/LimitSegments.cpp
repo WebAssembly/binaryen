@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
+#include <iostream>
+
 #include "ir/memory-utils.h"
 #include "pass.h"
-#include "wasm.h"
+
+namespace wasm {
+class Module;
+} // namespace wasm
 
 using namespace std;
 

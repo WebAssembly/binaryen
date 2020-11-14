@@ -27,15 +27,28 @@
 // looked at.
 //
 
-#include <ir/literal-utils.h>
+#include <algorithm>
 #include <ir/local-graph.h>
 #include <ir/manipulation.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
+#include <map>
 #include <pass.h>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm-interpreter.h>
 #include <wasm.h>
+
+#include "emscripten-optimizer/istring.h"
+#include "literal.h"
+#include "support/name.h"
+#include "support/small_vector.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

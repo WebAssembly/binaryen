@@ -16,8 +16,6 @@
 
 #include "utilities.h"
 
-#include <cassert>
-#include <cstdlib>
 #include <iostream>
 
 #if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)

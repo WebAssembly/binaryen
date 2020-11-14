@@ -14,13 +14,23 @@
  * limitations under the License.
  */
 
-#include <iterator>
-
+#include <algorithm>
+#include <assert.h>
 #include <cfg/cfg-traversal.h>
 #include <ir/find_all.h>
 #include <ir/local-graph.h>
-#include <wasm-builder.h>
-#include <wasm-printing.h>
+#include <map>
+#include <memory>
+#include <set>
+#include <stddef.h>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
+#include "mixed_arena.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm {
 

@@ -26,15 +26,30 @@
 //
 
 #include <algorithm>
+#include <assert.h>
+#include <cstdint>
+#include <ext/alloc_traits.h>
+#include <iostream>
+#include <limits>
+#include <map>
 #include <memory>
+#include <random>
+#include <string>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
+#include "cfg/cfg-traversal.h"
 #include "cfg/liveness-traversal.h"
-#include "ir/utils.h"
+#include "ir/manipulation.h"
+#include "mixed_arena.h"
 #include "pass.h"
 #include "support/learning.h"
+#include "support/name.h"
 #include "support/permutations.h"
-#include "wasm-builder.h"
+#include "support/sorted_vector.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"

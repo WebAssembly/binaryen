@@ -21,11 +21,13 @@
 #ifndef wasm_support_threads_h
 #define wasm_support_threads_h
 
+#include <assert.h>
 #include <atomic>
 #include <condition_variable>
 #include <functional>
 #include <memory>
 #include <mutex>
+#include <stddef.h>
 #include <thread>
 #include <vector>
 

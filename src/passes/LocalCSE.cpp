@@ -35,17 +35,25 @@
 //
 
 #include <algorithm>
-#include <memory>
-
-#include "ir/flat.h"
 #include <ir/cost.h>
 #include <ir/effects.h>
 #include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
 #include <pass.h>
+#include <set>
+#include <stddef.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
 #include <wasm.h>
+
+#include "ir/flat.h"
+#include "ir/utils.h"
+#include "support/hash.h"
+#include "wasm-features.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

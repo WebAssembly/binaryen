@@ -23,15 +23,36 @@
 #ifndef wasm_wasm_interpreter_h
 #define wasm_wasm_interpreter_h
 
+#include <algorithm>
+#include <array>
+#include <assert.h>
 #include <cmath>
+#include <ext/alloc_traits.h>
+#include <iostream>
 #include <limits.h>
-#include <sstream>
+#include <limits>
+#include <map>
+#include <memory>
+#include <sstream> // IWYU pragma: keep
+#include <stddef.h>
+#include <stdint.h>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
+#include "emscripten-optimizer/istring.h"
 #include "ir/module-utils.h"
-#include "support/bits.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "support/name.h"
 #include "support/safe_integer.h"
+#include "support/small_vector.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 #ifdef WASM_INTERPRETER_DEBUG

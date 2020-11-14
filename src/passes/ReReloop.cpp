@@ -21,14 +21,23 @@
 // This pass depends on flatten being run before it.
 //
 
+#include <assert.h>
+#include <deque>
+#include <map>
 #include <memory>
+#include <set>
+#include <utility>
+#include <vector>
 
 #include "cfg/Relooper.h"
 #include "ir/flat.h"
 #include "ir/utils.h"
+#include "mixed_arena.h"
 #include "pass.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
-#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 #ifdef RERELOOP_DEBUG

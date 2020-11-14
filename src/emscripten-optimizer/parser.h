@@ -25,12 +25,15 @@
 #define wasm_parser_h
 
 #include <algorithm>
+#include <assert.h>
 #include <cstdio>
 #include <iostream>
-#include <limits>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <vector>
 
-#include "istring.h"
+#include "emscripten-optimizer/istring.h"
 #include "support/safe_integer.h"
 
 namespace cashew {

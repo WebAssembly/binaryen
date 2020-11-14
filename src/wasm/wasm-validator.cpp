@@ -14,18 +14,45 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+#include <array>
+#include <assert.h>
+#include <atomic>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <memory>
 #include <mutex>
 #include <set>
 #include <sstream>
+#include <stddef.h>
+#include <stdint.h>
+#include <string>
+#include <tuple>
+#include <type_traits>
+#include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
+#include "emscripten-optimizer/istring.h"
 #include "ir/features.h"
 #include "ir/global-utils.h"
+#include "ir/iteration.h"
 #include "ir/module-utils.h"
+#include "ir/properties.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "pass.h"
 #include "support/colors.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-features.h"
 #include "wasm-printing.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 

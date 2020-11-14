@@ -27,10 +27,18 @@
 // similarity ordering here.
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <atomic>
 #include <memory>
-
 #include <pass.h>
+#include <string.h>
+#include <unordered_map>
+#include <vector>
 #include <wasm.h>
+
+#include "support/name.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 

@@ -21,11 +21,11 @@
 #ifndef wasm_wasm_debug_h
 #define wasm_wasm_debug_h
 
-#include <string>
-
-#include "wasm.h"
+#include "support/name.h"
 
 namespace wasm {
+class Module;
+struct BinaryLocations;
 
 namespace Debug {
 

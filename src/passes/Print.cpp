@@ -18,12 +18,35 @@
 // Print out text in s-expression format
 //
 
+#include <algorithm>
+#include <array>
+#include <assert.h>
+#include <ctype.h>
+#include <iostream>
 #include <ir/module-utils.h>
+#include <memory>
 #include <pass.h>
 #include <pretty_printing.h>
+#include <set>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wasm-printing.h>
 #include <wasm-stack.h>
 #include <wasm.h>
+
+#include "emscripten-optimizer/istring.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "support/colors.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

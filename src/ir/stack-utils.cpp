@@ -15,8 +15,16 @@
  */
 
 #include "stack-utils.h"
+
+#include <algorithm>
+#include <assert.h>
+#include <ext/alloc_traits.h>
+#include <stddef.h>
+#include <utility>
+
 #include "ir/iteration.h"
 #include "ir/properties.h"
+#include "mixed_arena.h"
 
 namespace wasm {
 

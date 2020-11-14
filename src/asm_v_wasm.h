@@ -17,11 +17,13 @@
 #ifndef wasm_asm_v_wasm_h
 #define wasm_asm_v_wasm_h
 
+#include <string>
+
 #include "emscripten-optimizer/optimizer.h"
-#include "mixed_arena.h"
-#include "wasm.h"
+#include "wasm-type.h"
 
 namespace wasm {
+class Function;
 
 AsmType wasmToAsmType(Type type);
 

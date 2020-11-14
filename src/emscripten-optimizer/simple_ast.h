@@ -23,19 +23,17 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <ctype.h>
 #include <functional>
-#include <iomanip>
 #include <iostream>
 #include <limits>
-#include <ostream>
-#include <set>
+#include <new>
+#include <stdint.h>
 #include <unordered_map>
-#include <unordered_set>
-#include <vector>
 
+#include "emscripten-optimizer/istring.h"
 #include "mixed_arena.h"
 #include "parser.h"
-#include "snprintf.h"
 #include "support/safe_integer.h"
 
 #define err(str) fprintf(stderr, str "\n");
@@ -44,8 +42,8 @@
 
 namespace cashew {
 
-struct Value;
 struct Ref;
+struct Value;
 
 void dump(const char* str, Ref node, bool pretty = false);
 

@@ -16,6 +16,12 @@
 
 #include "parser.h"
 
+#include <ext/alloc_traits.h>
+#include <memory>
+#include <unordered_map>
+
+#include "emscripten-optimizer/istring.h"
+
 namespace cashew {
 
 // common strings

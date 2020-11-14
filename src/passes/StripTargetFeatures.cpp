@@ -15,6 +15,7 @@
  */
 
 #include "pass.h"
+#include "wasm.h"
 
 namespace wasm {
 

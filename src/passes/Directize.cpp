@@ -20,13 +20,19 @@
 // indirect call's index.
 //
 
-#include <unordered_map>
+#include <algorithm>
+#include <memory>
+#include <vector>
 
 #include "ir/table-utils.h"
 #include "ir/utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
 #include "pass.h"
+#include "support/name.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

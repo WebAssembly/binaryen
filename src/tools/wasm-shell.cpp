@@ -20,17 +20,36 @@
 // interpreter, like assert_* calls, so it can run the spec test suite.
 //
 
+#include <assert.h>
+#include <iostream>
+#include <map>
 #include <memory>
+#include <set>
+#include <stdlib.h>
+#include <string>
+#include <vector>
 
-#include "execution-results.h"
-#include "pass.h"
+#include "compiler-support.h"
+#include "emscripten-optimizer/istring.h"
+#include "ir/module-utils.h"
+#include "literal.h"
+#include "parsing.h"
+#include "shared-constants.h"
 #include "shell-interface.h"
+#include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/name.h"
+#include "support/small_vector.h"
+#include "support/threads.h"
+#include "support/utilities.h"
+#include "wasm-features.h"
 #include "wasm-interpreter.h"
 #include "wasm-printing.h"
 #include "wasm-s-parser.h"
+#include "wasm-type.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 
 using namespace cashew;
 using namespace wasm;

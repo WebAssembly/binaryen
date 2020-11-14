@@ -30,12 +30,19 @@
 //       <= 1 byte to declare the local and 2-3 to use it!
 //
 
+#include <algorithm>
 #include <map>
-
 #include <pass.h>
+#include <utility>
+#include <vector>
 #include <wasm-binary.h>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "literal.h"
+#include "support/utilities.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

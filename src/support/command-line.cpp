@@ -15,6 +15,12 @@
  */
 
 #include "support/command-line.h"
+
+#include <algorithm>
+#include <assert.h>
+#include <iostream>
+#include <stdlib.h>
+
 #include "config.h"
 #include "support/debug.h"
 

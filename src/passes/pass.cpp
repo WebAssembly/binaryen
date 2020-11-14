@@ -14,21 +14,37 @@
  * limitations under the License.
  */
 
+#include <algorithm>
+#include <assert.h>
+#include <atomic>
 #include <chrono>
-#include <sstream>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <stdlib.h>
+#include <string>
+#include <utility>
+#include <vector>
 
 #ifdef __linux__
 #include <unistd.h>
 #endif
 
+#include "emscripten-optimizer/istring.h"
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "passes/passes.h"
 #include "support/colors.h"
+#include "support/name.h"
+#include "support/threads.h"
+#include "support/utilities.h"
 #include "wasm-debug.h"
 #include "wasm-io.h"
+#include "wasm-printing.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 
 namespace wasm {
 

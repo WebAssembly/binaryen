@@ -15,7 +15,10 @@
  */
 
 #include "asm_v_wasm.h"
-#include "wasm.h"
+
+#include <assert.h>
+
+#include "support/utilities.h"
 
 namespace wasm {
 

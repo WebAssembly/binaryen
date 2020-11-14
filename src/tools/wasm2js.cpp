@@ -19,11 +19,21 @@
 //
 
 #include "wasm2js.h"
+
+#include <ext/alloc_traits.h>
+#include <functional>
+#include <new>
+#include <stdint.h>
+
 #include "optimization-options.h"
+#include "parsing.h"
 #include "pass.h"
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/threads.h"
+#include "tools/tool-options.h"
+#include "wasm-io.h"
 #include "wasm-s-parser.h"
 
 using namespace cashew;

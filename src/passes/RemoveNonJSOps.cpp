@@ -33,7 +33,16 @@
 // really useful for fuzzing as it changes the behavior of the program.
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <memory>
 #include <pass.h>
+#include <set>
+#include <stdint.h>
+#include <string>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include <wasm.h>
 
 #include "abi/js.h"
@@ -42,9 +51,15 @@
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
 #include "passes/intrinsics-module.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

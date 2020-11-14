@@ -46,10 +46,20 @@
 // TODO: investigate more
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <ir/local-graph.h>
 #include <pass.h>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

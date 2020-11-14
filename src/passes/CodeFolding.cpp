@@ -55,15 +55,27 @@
 // to the same thing, and after merging it can still reach it).
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <iterator>
+#include <map>
+#include <set>
+#include <stddef.h>
+#include <utility>
+#include <vector>
 
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
+#include "mixed_arena.h"
 #include "pass.h"
+#include "support/name.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

@@ -18,6 +18,9 @@
 // Print out the feature options corresponding to enabled features
 //
 
+#include <iostream>
+#include <string>
+
 #include "pass.h"
 #include "wasm-features.h"
 #include "wasm.h"

@@ -20,13 +20,20 @@
 // generates a check and replaces the result with zero in that case.
 //
 
+#include <assert.h>
+#include <limits>
+#include <memory>
+#include <stdint.h>
+
 #include "asmjs/shared-constants.h"
 #include "ir/trapping.h"
+#include "literal.h"
 #include "mixed_arena.h"
 #include "pass.h"
 #include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
+#include "wasm-traversal.h"
 #include "wasm-type.h"
 #include "wasm.h"
 

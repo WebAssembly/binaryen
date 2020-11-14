@@ -20,12 +20,18 @@
 // identical when finally lowered into concrete wasm code.
 //
 
+#include <cstdint>
+#include <map>
+#include <set>
+#include <utility>
+#include <vector>
+
 #include "ir/function-utils.h"
 #include "ir/hashed.h"
 #include "ir/module-utils.h"
-#include "ir/utils.h"
 #include "opt-utils.h"
 #include "pass.h"
+#include "support/name.h"
 #include "wasm.h"
 
 namespace wasm {

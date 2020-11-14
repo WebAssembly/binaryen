@@ -15,8 +15,18 @@
  */
 
 #include "wasm-stack.h"
+
+#include <array>
+#include <cstdint>
+#include <ext/alloc_traits.h>
+#include <memory>
+#include <stdlib.h>
+#include <type_traits>
+
+#include "emscripten-optimizer/istring.h"
 #include "ir/find_all.h"
-#include "wasm-debug.h"
+#include "literal.h"
+#include "support/utilities.h"
 
 namespace wasm {
 

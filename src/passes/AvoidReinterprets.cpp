@@ -20,11 +20,20 @@
 // beneficial, unless reinterprets are very costly (which is the case
 // with wasm2js).
 
+#include <algorithm>
 #include <ir/local-graph.h>
 #include <ir/properties.h>
+#include <map>
 #include <pass.h>
+#include <set>
+#include <utility>
+#include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

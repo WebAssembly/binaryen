@@ -15,14 +15,43 @@
  */
 
 #include <algorithm>
-#include <fstream>
+#include <array>
+#include <assert.h>
+#include <cstdint>
+#include <ext/alloc_traits.h>
+#include <fstream> // IWYU pragma: keep
+#include <initializer_list>
+#include <iostream>
+#include <limits>
+#include <map>
+#include <memory>
+#include <set>
+#include <stdio.h>
+#include <string.h>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
+#include "compiler-support.h"
+#include "emscripten-optimizer/istring.h"
+#include "ir/import-utils.h"
 #include "ir/module-utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
+#include "parsing.h"
 #include "support/bits.h"
 #include "support/debug.h"
+#include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-binary.h"
+#include "wasm-builder.h"
 #include "wasm-debug.h"
+#include "wasm-features.h"
 #include "wasm-stack.h"
+#include "wasm-type.h"
+#include "wasm.h"
 
 #define DEBUG_TYPE "binary"
 

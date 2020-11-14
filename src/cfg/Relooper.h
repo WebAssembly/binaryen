@@ -26,18 +26,21 @@ USA, 301-312. DOI=10.1145/2048147.2048224
 http://doi.acm.org/10.1145/2048147.2048224
 */
 
-#include <assert.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <deque>
 #include <list>
 #include <map>
 #include <memory>
-#include <set>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string>
+#include <utility>
+#include <vector>
 
+#include "literal.h"
+#include "support/name.h"
 #include "wasm-builder.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace CFG {
@@ -79,8 +82,8 @@ public:
   }
 };
 
-struct Relooper;
 struct Block;
+struct Relooper;
 struct Shape;
 
 // Info about a branching from one block to another
@@ -313,9 +316,9 @@ struct Block {
 //        flow, of course.
 //
 
-struct SimpleShape;
-struct MultipleShape;
 struct LoopShape;
+struct MultipleShape;
+struct SimpleShape;
 
 struct Shape {
   // A unique identifier. Used to identify loops, labels are Lx where x is the

@@ -28,6 +28,7 @@
 // have no side effects.
 //
 
+#include <algorithm>
 #include <ir/iteration.h>
 #include <ir/properties.h>
 #include <ir/type-updating.h>
@@ -35,6 +36,11 @@
 #include <vector>
 #include <wasm-builder.h>
 #include <wasm.h>
+
+#include "mixed_arena.h"
+#include "support/utilities.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 

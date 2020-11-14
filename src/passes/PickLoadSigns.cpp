@@ -14,9 +14,15 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <ir/properties.h>
 #include <pass.h>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wasm.h>
+
+#include "wasm-traversal.h"
 
 namespace wasm {
 

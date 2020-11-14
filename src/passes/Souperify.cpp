@@ -35,14 +35,28 @@
 //    directly, without the need for *-propagate techniques.
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <iostream>
+#include <memory>
+#include <stdlib.h>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
+
 #include "dataflow/graph.h"
 #include "dataflow/node.h"
 #include "dataflow/utils.h"
 #include "ir/flat.h"
 #include "ir/local-graph.h"
-#include "ir/utils.h"
+#include "literal.h"
 #include "pass.h"
-#include "wasm-builder.h"
+#include "support/name.h"
+#include "support/utilities.h"
+#include "wasm-printing.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

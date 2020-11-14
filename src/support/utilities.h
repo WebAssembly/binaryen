@@ -17,15 +17,16 @@
 #ifndef wasm_support_utilities_h
 #define wasm_support_utilities_h
 
-#include "compiler-support.h"
-
 #include <cassert>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <stdlib.h>
 #include <type_traits>
+#include <utility>
 
+#include "compiler-support.h"
 #include "support/bits.h"
 
 namespace wasm {

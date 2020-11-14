@@ -16,8 +16,11 @@
 
 #include "support/archive.h"
 
-#include "support/utilities.h"
 #include <cstring>
+#include <limits>
+#include <stdio.h>
+
+#include "support/utilities.h"
 
 static const char* const magic = "!<arch>\n";
 

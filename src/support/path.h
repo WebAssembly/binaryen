@@ -21,7 +21,6 @@
 #ifndef wasm_support_path_h
 #define wasm_support_path_h
 
-#include <cstdlib>
 #include <string>
 
 namespace wasm {

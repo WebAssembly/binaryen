@@ -15,7 +15,7 @@
  */
 
 #include "support/bits.h"
-#include "../compiler-support.h"
+
 #include "support/utilities.h"
 
 #ifdef _MSC_VER

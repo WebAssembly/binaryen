@@ -14,8 +14,18 @@
  * limitations under the License.
  */
 
-#include "ir/load-utils.h"
-#include "ir/utils.h"
+#include <algorithm>
+#include <assert.h>
+#include <cstdint>
+#include <functional>
+#include <vector>
+
+#include "compiler-support.h"
+#include "ir/manipulation.h"
+#include "mixed_arena.h"
+#include "support/name.h"
+#include "wasm-type.h"
+#include "wasm.h"
 
 namespace wasm {
 

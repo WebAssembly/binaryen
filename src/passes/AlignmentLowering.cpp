@@ -19,9 +19,17 @@
 // that are smaller. This leaves only aligned operations.
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <stdint.h>
+#include <vector>
+
 #include "ir/bits.h"
 #include "pass.h"
+#include "support/utilities.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

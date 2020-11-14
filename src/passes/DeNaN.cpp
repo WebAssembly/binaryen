@@ -22,9 +22,17 @@
 // differ on wasm's nondeterminism around NaNs.
 //
 
+#include <algorithm>
+#include <iostream>
+#include <vector>
+
 #include "ir/properties.h"
+#include "literal.h"
 #include "pass.h"
+#include "support/name.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

@@ -19,8 +19,8 @@
 //
 
 #include <algorithm>
-#include <type_traits>
-
+#include <assert.h>
+#include <cmath>
 #include <ir/abstract.h>
 #include <ir/bits.h>
 #include <ir/cost.h>
@@ -31,10 +31,23 @@
 #include <ir/match.h>
 #include <ir/properties.h>
 #include <ir/utils.h>
+#include <limits>
+#include <memory>
 #include <pass.h>
-#include <support/threads.h>
-#include <wasm-s-parser.h>
+#include <stdint.h>
+#include <type_traits>
+#include <utility>
+#include <vector>
 #include <wasm.h>
+
+#include "emscripten-optimizer/istring.h"
+#include "literal.h"
+#include "support/bits.h"
+#include "support/name.h"
+#include "wasm-builder.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 
 // TODO: Use the new sign-extension opcodes where appropriate. This needs to be
 // conditionalized on the availability of atomics.

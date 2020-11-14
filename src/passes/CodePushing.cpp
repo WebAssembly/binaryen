@@ -19,10 +19,19 @@
 // a location behind a condition, where it might not always execute.
 //
 
+#include <algorithm>
+#include <assert.h>
 #include <ir/effects.h>
 #include <pass.h>
-#include <wasm-builder.h>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <wasm.h>
+
+#include "mixed_arena.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 

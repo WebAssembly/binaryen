@@ -19,7 +19,12 @@
 // removes debug info and other things.
 //
 
+#include <algorithm>
 #include <functional>
+#include <iosfwd>
+#include <memory>
+#include <string>
+#include <vector>
 
 #include "pass.h"
 #include "wasm-binary.h"

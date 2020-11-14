@@ -23,11 +23,9 @@
 
 #include <functional>
 #include <map>
+#include <stddef.h>
 #include <string>
-#include <utility>
 #include <vector>
-
-#include "wasm.h"
 
 namespace wasm {
 

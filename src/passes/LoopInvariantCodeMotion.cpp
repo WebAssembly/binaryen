@@ -22,13 +22,21 @@
 // out expressions may allow moving at least part of a larger whole).
 //
 
-#include <unordered_map>
+#include <algorithm>
+#include <assert.h>
+#include <set>
+#include <unordered_set>
+#include <vector>
 
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
+#include "mixed_arena.h"
 #include "pass.h"
 #include "wasm-builder.h"
+#include "wasm-features.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

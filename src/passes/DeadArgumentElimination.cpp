@@ -34,16 +34,28 @@
 // watch for here).
 //
 
+#include <algorithm>
+#include <assert.h>
+#include <map>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 #include "cfg/cfg-traversal.h"
+#include "emscripten-optimizer/istring.h"
 #include "ir/effects.h"
 #include "ir/module-utils.h"
+#include "literal.h"
+#include "mixed_arena.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
+#include "support/name.h"
 #include "support/sorted_vector.h"
 #include "wasm-builder.h"
+#include "wasm-traversal.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {

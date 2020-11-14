@@ -19,24 +19,32 @@
 // then writes it.
 //
 
-#include <memory>
+#include <algorithm>
+#include <iostream>
+#include <map>
+#include <new>
+#include <stdio.h>
+#include <string>
+#include <vector>
 
 #include "execution-results.h"
 #include "fuzzing.h"
 #include "js-wrapper.h"
 #include "optimization-options.h"
+#include "parsing.h"
 #include "pass.h"
-#include "shell-interface.h"
 #include "spec-wrapper.h"
+#include "support/colors.h"
 #include "support/command-line.h"
 #include "support/debug.h"
-#include "support/file.h"
+#include "support/name.h"
+#include "support/threads.h"
+#include "support/utilities.h"
 #include "wasm-binary.h"
-#include "wasm-interpreter.h"
 #include "wasm-io.h"
 #include "wasm-printing.h"
-#include "wasm-s-parser.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 #include "wasm2c-wrapper.h"
 
 #define DEBUG_TYPE "opt"
