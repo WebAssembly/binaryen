@@ -2033,7 +2033,12 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
   parseCallOperands(s, 1, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
   ret->isReturn = isReturn;
-  ret->finalize();
+  auto heapType = ret->target->type.getHeapType();
+  if (!heapType.isSignature()) {
+    throw ParseException("Invalid reference type for a ref_call", s.line, s.col);
+  }
+  auto sig = heapType.getSignature();
+  ret->finalize(sig.results);
   return ret;
 }
 

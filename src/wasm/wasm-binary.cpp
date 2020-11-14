@@ -5346,12 +5346,13 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
   if (!heapType.isSignature()) {
     throwError("Invalid reference type for a ref_call");
   }
-  auto num = heapType.getSignature().params.size();
+  auto sig = heapType.getSignature();
+  auto num = sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  curr->finalize();
+  curr->finalize(sig.results);
 }
 
 bool WasmBinaryBuilder::maybeVisitI31New(Expression*& out, uint32_t code) {

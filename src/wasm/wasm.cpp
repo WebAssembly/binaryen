@@ -1057,7 +1057,6 @@ void I31Get::finalize() {
 }
 
 void CallRef::finalize() {
-  type = target->type.getHeapType().getSignature().results;
   handleUnreachableOperands(this);
   if (isReturn) {
     type = Type::unreachable;
