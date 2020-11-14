@@ -60,6 +60,7 @@ int main(int argc, const char* argv[]) {
     std::cerr << "parsing binary..." << std::endl;
   }
   Module wasm;
+  wasm.features = FeatureSet::All;
   try {
     ModuleReader().readBinary(options.extra["infile"], wasm, sourceMapFilename);
   } catch (ParseException& p) {
