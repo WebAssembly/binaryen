@@ -529,7 +529,7 @@ bool Type::isSubType(Type left, Type right) {
       // i31 is a subtype of eqref.
       return true;
     }
-    if (right == Type::funcref && left.getHeapType().isSignature()) {
+    if (left.getHeapType().isSignature() && right == Type::funcref) {
       // All function signatures are subtypes of funcref.
       return true;
     }
