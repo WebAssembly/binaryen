@@ -177,7 +177,7 @@ bool WasmSplitOptions::validate() {
     fail("no input file");
   }
   if (instrument) {
-    using Opt = std::pair<const std::string&, const std::string&>;
+    using Opt = std::pair<const std::string&, const std::string>;
     for (auto& opt : {Opt{profileFile, "--profile"},
                       Opt{primaryOutput, "primary output"},
                       Opt{secondaryOutput, "secondary output"},
