@@ -296,13 +296,14 @@ int main(int argc, const char* argv[]) {
     if (!standaloneWasm || !wasm.getExportOrNull("_start")) {
       if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
         if (e->kind == ExternalKind::Function) {
-          // If the initializer does nothing, we don't need it.
           if (!EffectAnalyzer(options.passOptions,
                               wasm.features,
                               wasm.getFunction(e->value)->body)
                  .hasSideEffects()) {
-            // We can also remove the unneeded export (later optimizations can
-            // also remove the function, if it is not used elsewhere).
+            // The initializer exists, but doesn't do anything we could notice.
+            // Remove the export, and don't call it from JS (later
+            // optimizations can also remove the function, if it is not used
+            // elsewhere).
             wasm.removeExport(WASM_CALL_CTORS);
           } else {
             // It is needed; emit it.
