@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2017 WebAssembly Community Group participants
  *
@@ -22,6 +23,7 @@
 #include <exception>
 
 #include "abi/js.h"
+#include "ir/effects.h"
 #include "ir/trapping.h"
 #include "support/colors.h"
 #include "support/debug.h"
@@ -296,7 +298,8 @@ int main(int argc, const char* argv[]) {
       if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
         if (e->kind == ExternalKind::Function) {
           // If the initializer does nothing, we don't need it.
-          if (wasm.getFunction(e->value)->body->is<Nop>()) {
+          std::cerr << wasm.getFunction(e->value)->body << '\n';
+          if (!EffectAnalyzer(options.passOptions, wasm.features, wasm.getFunction(e->value)->body).hasSideEffects()) {
             // We can also remove the unneeded export (later optimizations can
             // also remove the function, if it is not used elsewhere).
             wasm.removeExport(WASM_CALL_CTORS);
