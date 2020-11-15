@@ -299,7 +299,10 @@ int main(int argc, const char* argv[]) {
         if (e->kind == ExternalKind::Function) {
           // If the initializer does nothing, we don't need it.
           std::cerr << wasm.getFunction(e->value)->body << '\n';
-          if (!EffectAnalyzer(options.passOptions, wasm.features, wasm.getFunction(e->value)->body).hasSideEffects()) {
+          if (!EffectAnalyzer(options.passOptions,
+                              wasm.features,
+                              wasm.getFunction(e->value)->body)
+                 .hasSideEffects()) {
             // We can also remove the unneeded export (later optimizations can
             // also remove the function, if it is not used elsewhere).
             wasm.removeExport(WASM_CALL_CTORS);
