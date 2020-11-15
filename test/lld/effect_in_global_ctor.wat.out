@@ -1,0 +1,40 @@
+(module
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "env" "puts" (func $puts (param i32) (result i32)))
+ (memory $0 2)
+ (data (i32.const 568) "Hello, world\00")
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
+ (func $__wasm_call_ctors
+  (drop
+   (call $puts
+    (i32.const 568)
+   )
+  )
+ )
+)
+(;
+--BEGIN METADATA --
+{
+  "tableSize": 0,
+  "initializers": [
+    "__wasm_call_ctors"
+  ],
+  "declares": [
+    "puts"
+  ],
+  "externs": [
+  ],
+  "exports": [
+    "__wasm_call_ctors"
+  ],
+  "namedGlobals": {
+  },
+  "invokeFuncs": [
+  ],
+  "mainReadsParams": 0,
+  "features": [
+  ]
+}
+-- END METADATA --
+;)
