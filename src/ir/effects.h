@@ -138,21 +138,29 @@ struct EffectAnalyzer
     return branchesOut || throws || hasExternalBreakTargets();
   }
 
-  bool hasGlobalSideEffects() const {
-    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
-           throws;
+  // Changes something in globally-stored state.
+  bool writesGlobalState() const {
+    return globalsWritten.size() > 0 || writesMemory || isAtomic || calls;
+  }
+  bool readsGlobalState() const {
+    return globalsRead.size() || readsMemory || isAtomic || calls;
+  }
+
+  // Whether this has any effect that could be noticeable from someone outside
+  // the current function call. That does not include a write to a local, for
+  // example, but  does include any writes to global state as well as trapping
+  // and throwing. Note that this does not consider the return value from the
+  // function (which we do not have access to directly here).
+  bool hasExternallyNoticeableEffects() const {
+    return writesGlobalState() || implicitTrap || throws;
   }
   bool hasSideEffects() const {
-    return implicitTrap || localsWritten.size() > 0 || danglingPop ||
-           hasGlobalSideEffects() || transfersControlFlow();
+    return localsWritten.size() > 0 || danglingPop ||
+           hasExternallyNoticeableEffects() || transfersControlFlow();
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
-           accessesGlobal() || isAtomic;
-  }
-
-  bool noticesGlobalSideEffects() const {
-    return calls || readsMemory || isAtomic || globalsRead.size();
+           accessesGlobal();
   }
 
   // check if we break to anything external from ourselves
@@ -199,14 +207,21 @@ struct EffectAnalyzer
         return true;
       }
     }
-    // we are ok to reorder implicit traps, but not conditionalize them
+    // We are ok to reorder implicit traps, but not conditionalize them.
     if ((implicitTrap && other.transfersControlFlow()) ||
         (other.implicitTrap && transfersControlFlow())) {
       return true;
     }
-    // we can't reorder an implicit trap in a way that alters global state
-    if ((implicitTrap && other.hasGlobalSideEffects()) ||
-        (other.implicitTrap && hasGlobalSideEffects())) {
+    // Note that the above includes disallowing the reordering of a trap with an
+    // exception (as an exception can transfer control flow inside the current
+    // function, so transfersControlFlow would be true) - while we allow the
+    // reordering of traps with each other, we do not reorder exceptions with
+    // anything.
+    assert(!((implicitTrap && other.throws) || (throws && other.implicitTrap)));
+    // We can't reorder an implicit trap in a way that could alter what global
+    // state is modified.
+    if ((implicitTrap && other.writesGlobalState()) ||
+        (other.implicitTrap && writesGlobalState())) {
       return true;
     }
     return false;
