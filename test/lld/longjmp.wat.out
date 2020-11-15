@@ -21,7 +21,6 @@
  (elem (i32.const 1) $fimport$3)
  (global $global$0 (mut i32) (i32.const 66112))
  (export "memory" (memory $0))
- (export "__wasm_call_ctors" (func $0))
  (export "main" (func $2))
  (export "dynCall_vii" (func $dynCall_vii))
  (func $0
@@ -142,9 +141,6 @@
 --BEGIN METADATA --
 {
   "tableSize": 2,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "malloc",
     "saveSetjmp",
@@ -157,7 +153,6 @@
   "externs": [
   ],
   "exports": [
-    "__wasm_call_ctors",
     "main",
     "dynCall_vii"
   ],

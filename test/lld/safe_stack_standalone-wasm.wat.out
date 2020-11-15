@@ -13,7 +13,6 @@
  (global $__stack_base (mut i32) (i32.const 0))
  (global $__stack_limit (mut i32) (i32.const 0))
  (export "memory" (memory $0))
- (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
@@ -175,16 +174,12 @@
 --BEGIN METADATA --
 {
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "printf"
   ],
   "externs": [
   ],
   "exports": [
-    "__wasm_call_ctors",
     "main",
     "__set_stack_limits"
   ],

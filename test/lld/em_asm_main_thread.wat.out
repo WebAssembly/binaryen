@@ -14,7 +14,6 @@
  (global $global$1 i32 (i32.const 66192))
  (global $global$2 i32 (i32.const 652))
  (export "memory" (memory $0))
- (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
  (export "main" (func $main))
@@ -199,16 +198,12 @@
     "621": ["{ Module.print(\"Got \" + $0); }", ["iii"], ["sync_on_main_thread_"]]
   },
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "emscripten_asm_const_int_sync_on_main_thread"
   ],
   "externs": [
   ],
   "exports": [
-    "__wasm_call_ctors",
     "main"
   ],
   "namedGlobals": {

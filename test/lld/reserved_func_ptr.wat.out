@@ -13,7 +13,6 @@
  (elem (i32.const 1) $address_taken_func\28int\2c\20int\2c\20int\29 $address_taken_func2\28int\2c\20int\2c\20int\29)
  (global $global$0 (mut i32) (i32.const 66112))
  (export "memory" (memory $0))
- (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "dynCall_viii" (func $dynCall_viii))
  (func $__wasm_call_ctors
@@ -122,16 +121,12 @@
 --BEGIN METADATA --
 {
   "tableSize": 3,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "_Z4atoiPKc"
   ],
   "externs": [
   ],
   "exports": [
-    "__wasm_call_ctors",
     "main",
     "dynCall_viii"
   ],

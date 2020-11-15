@@ -19,7 +19,6 @@
  (global $global$1 i32 (i32.const 66128))
  (global $global$2 i32 (i32.const 581))
  (export "memory" (memory $0))
- (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__heap_base" (global $global$1))
  (export "__data_end" (global $global$2))
@@ -68,16 +67,12 @@
 --BEGIN METADATA --
 {
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "puts"
   ],
   "externs": [
   ],
   "exports": [
-    "__wasm_call_ctors",
     "main",
     "dynCall_ffd",
     "dynCall_fdd"

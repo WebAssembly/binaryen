@@ -8,7 +8,6 @@
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66192))
  (export "memory" (memory $0))
- (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (func $__wasm_call_ctors
   (nop)
@@ -99,16 +98,12 @@
     "621": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]]
   },
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "emscripten_asm_const_int"
   ],
   "externs": [
   ],
   "exports": [
-    "__wasm_call_ctors",
     "main"
   ],
   "namedGlobals": {

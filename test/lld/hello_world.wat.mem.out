@@ -8,7 +8,6 @@
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66128))
  (export "memory" (memory $0))
- (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (func $__wasm_call_ctors
   (nop)
@@ -29,16 +28,12 @@
 --BEGIN METADATA --
 {
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "puts"
   ],
   "externs": [
   ],
   "exports": [
-    "__wasm_call_ctors",
     "main"
   ],
   "namedGlobals": {

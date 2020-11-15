@@ -1,4 +1,3 @@
-#include <wasm-printing.h>
 /*
  * Copyright 2017 WebAssembly Community Group participants
  *
@@ -298,7 +297,6 @@ int main(int argc, const char* argv[]) {
       if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
         if (e->kind == ExternalKind::Function) {
           // If the initializer does nothing, we don't need it.
-          std::cerr << wasm.getFunction(e->value)->body << '\n';
           if (!EffectAnalyzer(options.passOptions,
                               wasm.features,
                               wasm.getFunction(e->value)->body)
