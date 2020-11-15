@@ -313,7 +313,9 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 // that (block $x) and (block) get the same hash. In other words, we only change
 // the hash based on uses of scope names, that is when there is a noticeable
 // difference in break targets.
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) noteScopeName(cast->name);
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)                                \
+  noteScopeName(cast->name);                                                   \
+  visitScopeName(cast->name);
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) visitScopeName(cast->name);
 
@@ -326,6 +328,9 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
       }
     }
     void visitScopeName(Name curr) {
+      if (curr.isNull()) {
+        return;
+      }
       // Names are relative, we give the same hash for
       // (block $x (br $x))
       // (block $y (br $y))
