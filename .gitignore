@@ -38,6 +38,10 @@ compile_commands.json
 # files commonly related to building out-of-tree
 /build/
 
+# files produced by lit testing
+**/Output
+**/lit.site.cfg.py
+
 # macOS
 .DS_Store
 

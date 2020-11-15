@@ -328,6 +328,18 @@ def run_unittest():
         raise Exception("unittest failed")
 
 
+def run_lit():
+    lit_script = os.path.join(shared.options.binaryen_root, 'scripts', 'lit_wrapper.py')
+    lit_cfg = os.path.join(shared.options.binaryen_build, 'test', 'lit')
+    # lit expects to be run as its own executable
+    cmd = [sys.executable, lit_script, lit_cfg, '-vv']
+    result = subprocess.run(cmd)
+    if result.returncode != 0:
+        shared.num_failures += 1
+    if shared.options.abort_on_first_failure and shared.num_failures:
+        raise Exception("lit test failed")
+
+
 TEST_SUITES = OrderedDict([
     ('help-messages', run_help_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
@@ -345,6 +357,7 @@ TEST_SUITES = OrderedDict([
     ('unit', run_unittest),
     ('binaryenjs', binaryenjs.test_binaryen_js),
     ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
+    ('lit', run_lit),
 ])
 
 

@@ -47,6 +47,9 @@ jobs:
         python-version: '3.x'
     - uses: actions/checkout@v1
 
+    - name: install lit and FileCheck
+      run: pip3 install lit FileCheck
+
     - name: install ninja (linux)
       run: sudo apt-get install ninja-build
       if: matrix.os == 'ubuntu-latest'
@@ -92,7 +95,7 @@ jobs:
         path: out/install
 
     - name: test
-      run: python check.py --binaryen-bin=out/install/bin
+      run: python check.py --binaryen-bin=out/install/bin --binaryen-build=out
 
   build-clang:
     name: clang
@@ -104,6 +107,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install lit and FileCheck
+      run: pip3 install lit FileCheck
     - name: cmake
       run: |
         mkdir -p out
@@ -127,6 +132,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install lit and FileCheck
+      run: pip3 install lit FileCheck
     - name: cmake
       run: |
         mkdir -p out
@@ -151,6 +158,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install lit and FileCheck
+      run: pip3 install lit FileCheck
     - name: cmake
       run: |
         mkdir -p out
@@ -174,6 +183,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
+    - name: install lit and FileCheck
+      run: pip3 install lit FileCheck
     - name: cmake
       run: |
         mkdir -p out

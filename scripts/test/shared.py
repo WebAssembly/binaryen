@@ -55,6 +55,10 @@ def parse_args(args):
               ' If not specified, the environment variable BINARYEN_ROOT= can also'
               ' be used to adjust this.'))
     parser.add_argument(
+        '--binaryen-build', dest='binaryen_build', default='',
+        help=('Specifies a path to the Binaryen build directory. '
+              'Default: parent of `binaryen_bin`'))
+    parser.add_argument(
         '--binaryen-lib', dest='binaryen_lib', default='',
         help=('Specifies a path to where the built Binaryen shared library resides at.'
               ' Default: ./lib relative to bin specified above.'))
@@ -128,6 +132,10 @@ if not options.binaryen_lib:
     options.binaryen_lib = os.path.join(os.path.dirname(options.binaryen_bin),  'lib')
 
 options.binaryen_lib = os.path.normpath(os.path.abspath(options.binaryen_lib))
+
+if not options.binaryen_build:
+    options.binaryen_build = os.path.join(os.path.dirname(options.binaryen_bin))
+options.binaryen_build = os.path.normpath(os.path.abspath(options.binaryen_build))
 
 # ensure BINARYEN_ROOT is set up
 os.environ['BINARYEN_ROOT'] = os.path.dirname(options.binaryen_bin)
