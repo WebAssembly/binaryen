@@ -22,6 +22,7 @@ if [ ! -e "$CLANG_TIDY" ]; then
 fi
 
 CLANG_DIR=$(dirname $(dirname $(readlink -f $CLANG_TIDY)))
+ls $CLANG_DIR
 CLANG_TIDY_DIFF=$CLANG_DIR/share/clang/clang-tidy-diff.py
 if [ ! -e "$CLANG_TIDY_DIFF" ]; then
   echo "Failed to find clang-tidy-diff.py ($CLANG_TIDY_DIFF)"
