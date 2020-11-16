@@ -300,7 +300,7 @@
    )
   )
   (drop
-   (block $l4 (result anyref)
+   (block $l4 (result funcref)
     (drop
      (block $l5
       (global.set $global-mut
