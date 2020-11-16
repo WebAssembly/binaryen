@@ -1099,15 +1099,14 @@ private:
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                  &Self::makeRefEq,
-                  &Self::makeI31Get);
+                  &Self::makeRefEq);
+      // TODO: add GC support for I31Get
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
     }
     if (type == Type::i31ref) {
-      options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                  &Self::makeI31New);
+      // TODO: add GC support for I31New
     }
     return (this->*pick(options))(type);
   }
