@@ -40,6 +40,7 @@
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "ir/module-utils.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -400,10 +401,16 @@ struct DAE : public Pass {
         changed.insert(func.get());
       }
     }
-    if (optimize && !changed.empty()) {
+    if (changed.empty()) {
+      return false;
+    }
+    // We must refinalize the entire module, as RefFuncs to functions that we
+    // changed may have a new type now.
+    ReFinalize().run(runner, module);
+    if (optimize) {
       OptUtils::optimizeAfterInlining(changed, module, runner);
     }
-    return !changed.empty();
+    return true;
   }
 
 private:
