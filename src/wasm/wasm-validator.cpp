@@ -339,6 +339,7 @@ public:
   void visitBrOnExn(BrOnExn* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
+  void visitCallRef(CallRef* curr);
   void visitI31New(I31New* curr);
   void visitI31Get(I31Get* curr);
   void visitRefTest(RefTest* curr);
@@ -2031,9 +2032,9 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
-  shouldBeTrue(curr->value->type.isFunction(),
+  shouldBeTrue(curr->type.isFunction(),
                curr,
-               "ref.func target must be a function reference");
+               "ref.func must have a function reference type");
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -2197,6 +2198,14 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
         "tuple.extract type does not match the type of the extracted element");
     }
   }
+}
+
+void FunctionValidator::visitCallRef(CallRef* curr) {
+  shouldBeTrue(
+    getModule()->features.hasTypedFunctionReferences(), curr, "call_ref requires typed-function-references to be enabled");
+  shouldBeTrue(curr->target->type.isFunction(),
+               curr,
+               "call_ref target must be a function reference");
 }
 
 void FunctionValidator::visitI31New(I31New* curr) {

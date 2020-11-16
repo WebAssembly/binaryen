@@ -2031,7 +2031,7 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
   parseCallOperands(s, 1, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
   ret->isReturn = isReturn;
-  if (!ret->target->isRef()) {
+  if (!ret->target->type.isRef()) {
     throw ParseException("Non-reference type for a ref_call", s.line, s.col);
   }
   auto heapType = ret->target->type.getHeapType();
