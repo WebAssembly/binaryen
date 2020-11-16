@@ -566,10 +566,10 @@ public:
     ret->finalize();
     return ret;
   }
-  RefFunc* makeRefFunc(Name func) {
+  RefFunc* makeRefFunc(Name func, Type type) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
-    ret->finalize();
+    ret->finalize(type);
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {
@@ -748,7 +748,7 @@ public:
     if (type == Type::funcref ||
         (type.isRef() && type.getHeapType().isSignature())) {
       if (!value.isNull()) {
-        return makeRefFunc(value.getFunc());
+        return makeRefFunc(value.getFunc(), type);
       }
       return makeRefNull(type);
     }

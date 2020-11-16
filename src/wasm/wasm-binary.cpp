@@ -5181,12 +5181,9 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
     throwError("ref.func: invalid call index");
   }
   functionRefs[index].push_back(curr); // we don't know function names yet
-  curr->finalize();
-  if (wasm.features.hasTypedFunctionReferences()) {
-    // In the presence of typed function refs, we give the reference not just a
-    // general funcref, but a specific subtype with the actual signature.
-    curr->type = Type(HeapType(getFunctionSignatureByIndex(index)), true);
-  }
+  // To support typed function refs, we give the reference not just a general
+  // funcref, but a specific subtype with the actual signature.
+  curr->finalize(Type(HeapType(getFunctionSignatureByIndex(index)), /* nullable = */ true));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {

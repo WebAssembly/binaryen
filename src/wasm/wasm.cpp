@@ -986,7 +986,12 @@ void RefIsNull::finalize() {
   type = Type::i32;
 }
 
-void RefFunc::finalize() { type = Type::funcref; }
+void RefFunc::finalize() {
+  // No-op. We assume that the full proper typed function type has been applied
+  // previously.
+}
+
+void RefFunc::finalize(Type type_) { type = type; }
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
