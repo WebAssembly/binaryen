@@ -362,7 +362,7 @@ struct ReReloop final : public Pass {
       }
     }
     // TODO: should this be in the relooper itself?
-    ReFinalize().walk(function->body);
+    ReFinalize().walkFunctionInModule(function->body, module);
   }
 };
 
