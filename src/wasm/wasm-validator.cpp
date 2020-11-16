@@ -2201,8 +2201,9 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
 }
 
 void FunctionValidator::visitCallRef(CallRef* curr) {
-  shouldBeTrue(
-    getModule()->features.hasTypedFunctionReferences(), curr, "call_ref requires typed-function-references to be enabled");
+  shouldBeTrue(getModule()->features.hasTypedFunctionReferences(),
+               curr,
+               "call_ref requires typed-function-references to be enabled");
   shouldBeTrue(curr->target->type.isFunction(),
                curr,
                "call_ref target must be a function reference");
