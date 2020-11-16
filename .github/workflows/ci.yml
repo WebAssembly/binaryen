@@ -201,7 +201,8 @@ jobs:
         $HOME/emsdk/emsdk update-tags
         $HOME/emsdk/emsdk install tot
         $HOME/emsdk/emsdk activate tot
-        echo "::add-path::$HOME/emsdk"
+    - name: update path
+      run:  echo "PATH=$PATH:$HOME/emsdk" >> $GITHUB_ENV
     - name: emcc-tests
       run: |
         source $HOME/emsdk/emsdk_env.sh
