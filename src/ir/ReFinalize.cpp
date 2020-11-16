@@ -126,13 +126,7 @@ void ReFinalize::visitMemorySize(MemorySize* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryGrow(MemoryGrow* curr) { curr->finalize(); }
 void ReFinalize::visitRefNull(RefNull* curr) { curr->finalize(); }
 void ReFinalize::visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
-void ReFinalize::visitRefFunc(RefFunc* curr) {
-  // Update the specific function type. This may be necessary if the function we
-  // refer to has changed its signature.
-  assert(getModule());
-  auto sig = getModule()->getFunction(curr->func)->sig;
-  curr->finalize(Type(HeapType(sig), /* nullable = */ true));
-}
+void ReFinalize::visitRefFunc(RefFunc* curr) {}
 void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
