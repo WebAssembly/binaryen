@@ -140,7 +140,7 @@ struct EffectAnalyzer
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return globalsWritten.size() > 0 || writesMemory || isAtomic || calls;
+    return globalsWritten.size() || writesMemory || isAtomic || calls;
   }
   bool readsGlobalState() const {
     return globalsRead.size() || readsMemory || isAtomic || calls;
@@ -148,7 +148,7 @@ struct EffectAnalyzer
 
   // Whether this has any effect that could be noticeable from someone outside
   // the current function call. That does not include a write to a local, for
-  // example, but  does include any writes to global state as well as trapping
+  // example, but does include any writes to global state as well as trapping
   // and throwing. Note that this does not consider the return value from the
   // function (which we do not have access to directly here).
   bool hasExternallyNoticeableEffects() const {
@@ -217,7 +217,7 @@ struct EffectAnalyzer
     // function, so transfersControlFlow would be true) - while we allow the
     // reordering of traps with each other, we do not reorder exceptions with
     // anything.
-    assert(!((implicitTrap && other.throws) || (throws && other.implicitTrap)));
+    assert(!(implicitTrap && other.throws) && !(throws && other.implicitTrap));
     // We can't reorder an implicit trap in a way that could alter what global
     // state is modified.
     if ((implicitTrap && other.writesGlobalState()) ||
