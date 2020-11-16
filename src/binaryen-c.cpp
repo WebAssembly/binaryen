@@ -1187,11 +1187,11 @@ BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
     Builder(*(Module*)module).makeRefIsNull((Expression*)value));
 }
 
-BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
-                                      const char* func,
-                                      BinaryenType type) {
+BinaryenExpressionRef
+BinaryenRefFunc(BinaryenModuleRef module, const char* func, BinaryenType type) {
   Type type_(type);
-  return static_cast<Expression*>(Builder(*(Module*)module).makeRefFunc(func, type_));
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefFunc(func, type_));
 }
 
 BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,

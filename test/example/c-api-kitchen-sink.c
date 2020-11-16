@@ -310,7 +310,8 @@ void test_core() {
                         temp15 = makeInt32(module, 110), temp16 = makeInt64(module, 111);
   BinaryenExpressionRef externrefExpr = BinaryenRefNull(module, BinaryenTypeExternref());
   BinaryenExpressionRef funcrefExpr = BinaryenRefNull(module, BinaryenTypeFuncref());
-  funcrefExpr = BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
+  funcrefExpr =
+    BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
   BinaryenExpressionRef exnrefExpr = BinaryenRefNull(module, BinaryenTypeExnref());
   BinaryenExpressionRef i31refExpr = BinaryenI31New(module, makeInt32(module, 1));
 
@@ -737,15 +738,16 @@ void test_core() {
     BinaryenRefIsNull(module, externrefExpr),
     BinaryenRefIsNull(module, funcrefExpr),
     BinaryenRefIsNull(module, exnrefExpr),
-    BinaryenSelect(module,
-                   temp10,
-                   BinaryenRefNull(module, BinaryenTypeFuncref()),
-                   BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref()),
-                   BinaryenTypeFuncref()),
+    BinaryenSelect(
+      module,
+      temp10,
+      BinaryenRefNull(module, BinaryenTypeFuncref()),
+      BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref()),
+      BinaryenTypeFuncref()),
     // GC
     BinaryenRefEq(module,
-      BinaryenRefNull(module, BinaryenTypeEqref()),
-      BinaryenRefNull(module, BinaryenTypeEqref())),
+                  BinaryenRefNull(module, BinaryenTypeEqref()),
+                  BinaryenRefNull(module, BinaryenTypeEqref())),
     // Exception handling
     BinaryenTry(module, tryBody, catchBody),
     // Atomics
