@@ -991,7 +991,7 @@ void RefFunc::finalize() {
   // previously.
 }
 
-void RefFunc::finalize(Type type_) { type = type; }
+void RefFunc::finalize(Type type_) { type = type_; }
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
