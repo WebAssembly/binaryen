@@ -486,11 +486,17 @@ struct OptimizeInstructions
             }
           }
         }
-        // if the sign-extend input cannot have a sign bit, we don't need it
-        // we also don't need it if it already has an identical-sized sign
-        // extend
-        if (Bits::getMaxBits(ext, this) + extraShifts < bits ||
-            isSignExted(ext, bits)) {
+        // We can in some cases remove part of a sign extend, that is,
+        //   (x << A) >> B   =>   x << (A - B)
+        // If the sign-extend input cannot have a sign bit, we don't need it.
+        if (Bits::getMaxBits(ext, this) + extraShifts < bits) {
+          return removeAlmostSignExt(binary);
+        }
+        // We also don't need it if it already has an identical-sized sign
+        // extend applied to it. That is, if it is already a sign-extended
+        // value, then another sign extend will do nothing. We do need to be
+        // careful of the extra shifts, though.
+        if (isSignExted(ext, bits) && extraShifts == 0) {
           return removeAlmostSignExt(binary);
         }
       } else if (binary->op == EqInt32 || binary->op == NeInt32) {
