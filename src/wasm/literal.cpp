@@ -422,58 +422,61 @@ void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
   prepareMinorColor(o);
-  TODO_SINGLE_COMPOUND(literal.type);
-  switch (literal.type.getBasic()) {
-    case Type::none:
-      o << "?";
-      break;
-    case Type::i32:
-      o << literal.geti32();
-      break;
-    case Type::i64:
-      o << literal.geti64();
-      break;
-    case Type::f32:
-      literal.printFloat(o, literal.getf32());
-      break;
-    case Type::f64:
-      literal.printDouble(o, literal.getf64());
-      break;
-    case Type::v128:
-      o << "i32x4 ";
-      literal.printVec128(o, literal.getv128());
-      break;
-    case Type::funcref:
-      if (literal.isNull()) {
-        o << "funcref(null)";
-      } else {
-        o << "funcref(" << literal.getFunc() << ")";
-      }
-      break;
-    case Type::externref:
-      assert(literal.isNull() && "unexpected non-null externref literal");
-      o << "externref(null)";
-      break;
-    case Type::exnref:
-      if (literal.isNull()) {
-        o << "exnref(null)";
-      } else {
-        o << "exnref(" << literal.getExceptionPackage() << ")";
-      }
-      break;
-    case Type::anyref:
-      assert(literal.isNull() && "unexpected non-null anyref literal");
-      o << "anyref(null)";
-      break;
-    case Type::eqref:
-      assert(literal.isNull() && "unexpected non-null eqref literal");
-      o << "eqref(null)";
-      break;
-    case Type::i31ref:
-      o << "i31ref(" << literal.geti31() << ")";
-      break;
-    case Type::unreachable:
-      WASM_UNREACHABLE("invalid type");
+  if (literal.type.isBasic()) {
+    switch (literal.type.getBasic()) {
+      case Type::none:
+        o << "?";
+        break;
+      case Type::i32:
+        o << literal.geti32();
+        break;
+      case Type::i64:
+        o << literal.geti64();
+        break;
+      case Type::f32:
+        literal.printFloat(o, literal.getf32());
+        break;
+      case Type::f64:
+        literal.printDouble(o, literal.getf64());
+        break;
+      case Type::v128:
+        o << "i32x4 ";
+        literal.printVec128(o, literal.getv128());
+        break;
+      case Type::funcref:
+        if (literal.isNull()) {
+          o << "funcref(null)";
+        } else {
+          o << "funcref(" << literal.getFunc() << ")";
+        }
+        break;
+      case Type::externref:
+        assert(literal.isNull() && "unexpected non-null externref literal");
+        o << "externref(null)";
+        break;
+      case Type::exnref:
+        if (literal.isNull()) {
+          o << "exnref(null)";
+        } else {
+          o << "exnref(" << literal.getExceptionPackage() << ")";
+        }
+        break;
+      case Type::anyref:
+        assert(literal.isNull() && "unexpected non-null anyref literal");
+        o << "anyref(null)";
+        break;
+      case Type::eqref:
+        assert(literal.isNull() && "unexpected non-null eqref literal");
+        o << "eqref(null)";
+        break;
+      case Type::i31ref:
+        o << "i31ref(" << literal.geti31() << ")";
+        break;
+      case Type::unreachable:
+        WASM_UNREACHABLE("invalid type");
+    }
+  } else {
+    o << literal.type;
   }
   restoreNormalColor(o);
   return o;

@@ -121,3 +121,9 @@
   )
  )
 )
+(module
+ (export "func" (func $func))
+ (func $func (result funcref)
+  (ref.func $func)
+ )
+)

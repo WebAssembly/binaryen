@@ -207,3 +207,15 @@
 )
 [fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
+[fuzz-exec] calling func
+[fuzz-exec] note result: func => (ref null (func (result funcref)))
+(module
+ (type $none_=>_funcref (func (result funcref)))
+ (export "func" (func $func))
+ (func $func (result funcref)
+  (ref.func $func)
+ )
+)
+[fuzz-exec] calling func
+[fuzz-exec] note result: func => (ref null (func (result funcref)))
+[fuzz-exec] comparing func
