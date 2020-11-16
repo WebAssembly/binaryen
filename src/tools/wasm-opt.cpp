@@ -218,7 +218,6 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   Module wasm;
-  options.applyFeatures(wasm);
 
   BYN_TRACE("reading...\n");
 
@@ -261,6 +260,8 @@ int main(int argc, const char* argv[]) {
                  "request for silly amounts of memory)";
     }
 
+    options.applyFeatures(wasm);
+
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
         exitOnInvalidWasm("error validating input");
@@ -268,6 +269,7 @@ int main(int argc, const char* argv[]) {
     }
   }
   if (translateToFuzz) {
+    options.applyFeatures(wasm);
     TranslateToFuzzReader reader(wasm, options.extra["infile"]);
     if (fuzzPasses) {
       reader.pickPasses(options);

@@ -99,7 +99,6 @@ int main(int argc, const char* argv[]) {
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
-  options.applyFeatures(wasm);
 
   try {
     if (options.debug) {
@@ -115,6 +114,8 @@ int main(int argc, const char* argv[]) {
     p.dump(std::cerr);
     Fatal() << "error in parsing input";
   }
+
+  options.applyFeatures(wasm);
 
   if (options.extra["validate"] != "none") {
     if (options.debug) {
