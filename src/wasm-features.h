@@ -116,6 +116,9 @@ struct FeatureSet {
   void setMultivalue(bool v = true) { set(Multivalue, v); }
   void setGC(bool v = true) { set(GC, v); }
   void setMemory64(bool v = true) { set(Memory64, v); }
+  void setTypedFunctionReferences(bool v = true) {
+    set(TypedFunctionReferences, v);
+  }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   void enable(const FeatureSet& other) { features |= other.features; }

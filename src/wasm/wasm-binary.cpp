@@ -2485,6 +2485,9 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
         wasm.features.setGC();
       } else if (name == BinaryConsts::UserSections::Memory64Feature) {
         wasm.features.setMemory64();
+      } else if (name ==
+                 BinaryConsts::UserSections::TypedFunctionReferencesFeature) {
+        wasm.features.setTypedFunctionReferences();
       }
     }
   }
