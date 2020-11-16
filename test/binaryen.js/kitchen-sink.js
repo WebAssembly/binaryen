@@ -539,8 +539,8 @@ function test_core() {
     // Reference types
     module.ref.is_null(module.ref.null(binaryen.externref)),
     module.ref.is_null(module.ref.null(binaryen.funcref)),
-    module.ref.is_null(module.ref.func("kitchen()sinker")),
-    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker"), binaryen.funcref),
+    module.ref.is_null(module.ref.func("kitchen()sinker", binaryen.funcref)),
+    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker", binaryen.funcref), binaryen.funcref),
 
     // GC
     module.ref.eq(module.ref.null(binaryen.eqref), module.ref.null(binaryen.eqref)),
