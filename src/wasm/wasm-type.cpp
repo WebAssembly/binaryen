@@ -564,6 +564,10 @@ bool Type::isSubType(Type left, Type right) {
   return false;
 }
 
+static bool isFunctionReference(Type t) {
+  return t == Type::funcref || (t.isRef() && t.getHeapType().isSignature());
+}
+
 Type Type::getLeastUpperBound(Type a, Type b) {
   if (a == b) {
     return a;
@@ -579,6 +583,9 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   }
   if (a.isRef()) {
     if (b.isRef()) {
+      if (isFunctionReference(a) && isFunctionReference(b)) {
+        return Type::funcref;
+      }
       if ((a == Type::i31ref && b == Type::eqref) ||
           (a == Type::eqref && b == Type::i31ref)) {
         return Type::eqref;
