@@ -135,8 +135,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
     Builder builder(*getModule());
     Name import;
     auto type = curr->value->type;
-    if (type.isRef() && type.getHeapType().isSignature()) {
-      // Handle typed function references as untyped funcrefs.
+    if (type.isFunction()) {
       import = set_funcref;
     } else {
       TODO_SINGLE_COMPOUND(curr->value->type);
@@ -155,9 +154,6 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         case Type::v128:
           import = set_v128;
           break;
-        case Type::funcref:
-          import = set_funcref;
-          break;
         case Type::externref:
           import = set_externref;
           break;
@@ -175,7 +171,7 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
           break;
         case Type::unreachable:
           return; // nothing to do here
-        case Type::none:
+        default:
           WASM_UNREACHABLE("unexpected type");
       }
     }

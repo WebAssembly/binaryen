@@ -2031,6 +2031,7 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
+  shouldBeTrue(curr->value->type.isFunction(), curr, "ref.func target must be a function reference");
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
