@@ -74,9 +74,7 @@ struct DAEFunctionInfo {
   // adds the parameter.
   std::atomic<bool> hasUnseenCalls;
 
-  DAEFunctionInfo() {
-    hasUnseenCalls.store(false);
-  }
+  DAEFunctionInfo() { hasUnseenCalls.store(false); }
 };
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
