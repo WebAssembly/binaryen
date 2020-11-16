@@ -1017,6 +1017,9 @@ enum FeaturePrefix {
 
 inline S32LEB binaryType(Type type) {
   int ret = 0;
+  if (type.isFunction()) {
+    return S32LEB(BinaryConsts::EncodedType::funcref);
+  }
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
     // None only used for block signatures. TODO: Separate out?
@@ -1038,9 +1041,6 @@ inline S32LEB binaryType(Type type) {
     case Type::v128:
       ret = BinaryConsts::EncodedType::v128;
       break;
-    case Type::funcref:
-      ret = BinaryConsts::EncodedType::funcref;
-      break;
     case Type::externref:
       ret = BinaryConsts::EncodedType::externref;
       break;
@@ -1056,7 +1056,7 @@ inline S32LEB binaryType(Type type) {
     case Type::i31ref:
       ret = BinaryConsts::EncodedType::i31ref;
       break;
-    case Type::unreachable:
+    default:
       WASM_UNREACHABLE("unexpected type");
   }
   return S32LEB(ret);

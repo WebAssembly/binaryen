@@ -460,6 +460,9 @@ Type Type::reinterpret() const {
 
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
+    if (t != Type::funcref && t.isFunction()) {
+      return FeatureSet::TypedFunctionReferences;
+    }
     TODO_SINGLE_COMPOUND(t);
     switch (t.getBasic()) {
       case Type::v128:
