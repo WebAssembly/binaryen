@@ -1064,6 +1064,9 @@ inline S32LEB binaryType(Type type) {
 
 inline S32LEB binaryHeapType(HeapType type) {
   int ret = 0;
+  if (type.isSignature()) {
+    return S32LEB(BinaryConsts::EncodedHeapType::func);
+  }
   switch (type.kind) {
     case HeapType::FuncKind:
       ret = BinaryConsts::EncodedHeapType::func;
