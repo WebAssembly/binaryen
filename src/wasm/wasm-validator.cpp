@@ -795,10 +795,11 @@ void FunctionValidator::visitCall(Call* curr) {
         curr,
         "calls may only be unreachable if they have unreachable operands");
     } else {
-      shouldBeSubTypeOrFirstIsUnreachable(curr->type,
-                    target->sig.results,
-                    curr,
-                    "call type must match callee return type");
+      shouldBeSubTypeOrFirstIsUnreachable(
+        curr->type,
+        target->sig.results,
+        curr,
+        "call type must match callee return type");
     }
   }
 }
