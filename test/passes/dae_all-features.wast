@@ -161,3 +161,15 @@
     )
   )
 )
+(module
+ (func $0 (param $0 funcref) (param $1 i32) (param $2 f64) (result i64)
+  (nop)
+  (unreachable)
+ )
+ (func "export" (param $0 f32) (result funcref)
+  ;; a ref.func should prevent us from changing the type of a function, as it
+  ;; may escape
+  (ref.func $0)
+ )
+)
+
