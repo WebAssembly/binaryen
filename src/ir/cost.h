@@ -551,8 +551,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitNop(Nop* curr) { return 0; }
   Index visitUnreachable(Unreachable* curr) { return 0; }
   Index visitDataDrop(DataDrop* curr) { return 5; }
-  Index visitI31New(I31New* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitI31Get(I31Get* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitI31New(I31New* curr) { return 3; }
+  Index visitI31Get(I31Get* curr) { return 1; }
   Index visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitBrOnCast(BrOnCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
