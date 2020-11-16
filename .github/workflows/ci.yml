@@ -23,7 +23,8 @@ jobs:
       run: |
         sudo pip3 install flake8==3.7.8
         sudo apt-get install clang-format clang-tidy
-        echo "::add-path::/usr/lib/llvm-8/bin"
+    - name: update path
+      run:  echo "PATH=$PATH:/usr/lib/llvm-8/bin" >> $GITHUB_ENV
     - run: flake8
     - run: ./scripts/clang-format-diff.sh
     - name: clang-tidy
