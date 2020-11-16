@@ -1190,7 +1190,8 @@ BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
                                       const char* func) {
   auto& wasm = *(Module*)module;
-  auto type = Type(HeapType(wasm.getFunction(func)->sig), /* nullable = */ true);
+  auto type =
+    Type(HeapType(wasm.getFunction(func)->sig), /* nullable = */ true);
   return static_cast<Expression*>(Builder(wasm).makeRefFunc(func, type));
 }
 

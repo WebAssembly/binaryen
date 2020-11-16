@@ -177,7 +177,6 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
           return; // nothing to do here
         case Type::none:
           WASM_UNREACHABLE("unexpected type");
-        }
       }
     }
     curr->value = builder.makeCall(import,
