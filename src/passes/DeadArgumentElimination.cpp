@@ -72,7 +72,11 @@ struct DAEFunctionInfo {
   // see inhibits our optimizations, but TODO: an export
   // could be worked around by exporting a thunk that
   // adds the parameter.
-  bool hasUnseenCalls = false;
+  std::atomic<bool> hasUnseenCalls;
+
+  DAEFunctionInfo() {
+    hasUnseenCalls = false;
+  }
 };
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
@@ -149,6 +153,15 @@ struct DAEScanner
     if (auto* call = curr->value->dynCast<Call>()) {
       info->droppedCalls[call] = getCurrentPointer();
     }
+  }
+
+  void visitRefFunc(RefFunc* curr) {
+    // We can't modify another function in parallel.
+    assert((*infoMap).count(curr->func));
+    // Treat a ref.func as an unseen call, preventing us from changing the
+    // function's type. If we did change it, it could be an observable
+    // difference from the outside, if the reference escapes, for example.
+    (*infoMap)[curr->func].hasUnseenCalls = true;
   }
 
   // main entry point
