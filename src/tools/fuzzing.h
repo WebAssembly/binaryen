@@ -2018,7 +2018,8 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        return builder.makeRefFunc(target->name);
+        auto type = Type(HeapType(target->sig), /* nullable = */ true);
+        return builder.makeRefFunc(target->name, type);
       }
       if (type == Type::i31ref) {
         return builder.makeI31New(makeConst(Type::i32));
