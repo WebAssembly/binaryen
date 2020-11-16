@@ -260,8 +260,9 @@ struct DAE : public Pass {
     DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data
     // structure.
-    ModuleUtils::iterDefinedFunctions(
-      *module, [&](Function* func) { infoMap[func->name]; });
+    for (auto& func : module->functions) {
+      infoMap[func->name];
+    }
     // Check the influence of the table and exports.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
