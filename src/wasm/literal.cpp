@@ -422,7 +422,14 @@ void Literal::printVec128(std::ostream& o, const std::array<uint8_t, 16>& v) {
 
 std::ostream& operator<<(std::ostream& o, Literal literal) {
   prepareMinorColor(o);
-  if (literal.type.isBasic()) {
+  if (literal.type.isFunction()) {
+    if (literal.isNull()) {
+      o << "funcref(null)";
+    } else {
+      o << "funcref(" << literal.getFunc() << ")";
+    }
+  } else {
+    TODO_SINGLE_COMPOUND(literal.type);
     switch (literal.type.getBasic()) {
       case Type::none:
         o << "?";
@@ -442,13 +449,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       case Type::v128:
         o << "i32x4 ";
         literal.printVec128(o, literal.getv128());
-        break;
-      case Type::funcref:
-        if (literal.isNull()) {
-          o << "funcref(null)";
-        } else {
-          o << "funcref(" << literal.getFunc() << ")";
-        }
         break;
       case Type::externref:
         assert(literal.isNull() && "unexpected non-null externref literal");
@@ -472,11 +472,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       case Type::i31ref:
         o << "i31ref(" << literal.geti31() << ")";
         break;
-      case Type::unreachable:
+      default:
         WASM_UNREACHABLE("invalid type");
     }
-  } else {
-    o << literal.type;
   }
   restoreNormalColor(o);
   return o;
