@@ -47,6 +47,7 @@ const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
+const char* TypedFunctionReferencesFeature = "typed-function-references";
 } // namespace UserSections
 } // namespace BinaryConsts
 

@@ -799,6 +799,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::UserSections::GCFeature;
       case FeatureSet::Memory64:
         return BinaryConsts::UserSections::Memory64Feature;
+      case FeatureSet::TypedFunctionReferences:
+        return BinaryConsts::UserSections::TypedFunctionReferencesFeature;
       default:
         WASM_UNREACHABLE("unexpected feature flag");
     }

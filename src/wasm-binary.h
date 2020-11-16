@@ -386,6 +386,7 @@ extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 extern const char* GCFeature;
 extern const char* Memory64Feature;
+extern const char* TypedFunctionReferencesFeature;
 
 enum Subsection {
   NameModule = 0,
