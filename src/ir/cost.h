@@ -554,7 +554,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitI31New(I31New* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitI31Get(I31Get* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitCallRef(CallRef* curr) {
-    Index ret = 6 + visit(curr->target);
+    Index ret = 5 + visit(curr->target);
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
