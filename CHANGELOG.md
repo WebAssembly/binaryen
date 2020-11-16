@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- `RefFunc` C and JS API constructors (`BinaryenRefFunc` and `ref.func`
+  respectively) now take an extra `type` parameter, similar to `RefNull`. This
+  is necessary for typed function references support.
 - JS API functions for atomic notify/wait instructions are renamed.
   - `module.atomic.notify` -> `module.memory.atomic.notify`
   - `module.i32.atomic.wait` -> `module.memory.atomic.wait32`
