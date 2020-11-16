@@ -257,10 +257,14 @@
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
+[fuzz-exec] calling do-shift
+[LoggingExternalInterface logging -64]
 (module
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "foo" (func $0))
+ (export "do-shift" (func $2))
  (func $0 (param $0 i32)
   (call $log
    (i32.le_s
@@ -286,8 +290,32 @@
    )
   )
  )
+ (func $shift (param $0 i32)
+  (call $log
+   (i32.shr_s
+    (i32.shl
+     (i32.shr_s
+      (i32.shl
+       (local.get $0)
+       (i32.const 24)
+      )
+      (i32.const 24)
+     )
+     (i32.const 30)
+    )
+    (i32.const 24)
+   )
+  )
+ )
+ (func $2
+  (call $shift
+   (i32.const 65419)
+  )
+ )
 )
 [fuzz-exec] calling foo
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
+[fuzz-exec] calling do-shift
+[LoggingExternalInterface logging -64]
