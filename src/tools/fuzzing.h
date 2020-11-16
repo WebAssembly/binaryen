@@ -2021,7 +2021,7 @@ private:
         return builder.makeRefFunc(target->name, type);
       }
       if (type == Type::i31ref) {
-      // TODO: add GC support for I31New
+        return builder.makeI31New(makeConst(Type::i32));
       }
       return builder.makeRefNull(type);
     }
