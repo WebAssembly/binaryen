@@ -123,7 +123,7 @@ struct ExecutionResults {
     ExecutionResults optimizedResults;
     optimizedResults.get(wasm);
     if (optimizedResults != *this) {
-      std::cout << "[fuzz-exec] optimization passes changed execution results";
+      std::cout << "[fuzz-exec] optimization passes changed results\n";
       exit(1);
     }
   }
