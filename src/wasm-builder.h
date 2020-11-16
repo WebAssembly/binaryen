@@ -928,6 +928,9 @@ public:
     if (curr->type.isTuple()) {
       return makeConstantExpression(Literal::makeZeros(curr->type));
     }
+    if (curr->type.isFunction()) {
+      return ExpressionManipulator::refNull(curr, curr->type);
+    }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
     TODO_SINGLE_COMPOUND(curr->type);
@@ -951,6 +954,7 @@ public:
         break;
       }
       case Type::funcref:
+        WASM_UNREACHABLE("handled above");
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
