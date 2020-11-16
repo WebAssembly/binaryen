@@ -50,14 +50,11 @@ def parse_args(args):
               ' earlier errors.'))
     parser.add_argument(
         '--binaryen-bin', dest='binaryen_bin', default='',
-        help=('Specifies a path to where the built Binaryen executables reside at.'
-              ' Default: bin/ of current directory (i.e. assume an in-tree build).'
+        help=('Specifies the path to the Binaryen executables in the CMake build'
+              ' directory. Default: bin/ of current directory (i.e. assume an'
+              ' in-tree build).'
               ' If not specified, the environment variable BINARYEN_ROOT= can also'
               ' be used to adjust this.'))
-    parser.add_argument(
-        '--binaryen-build', dest='binaryen_build', default='',
-        help=('Specifies a path to the Binaryen build directory. '
-              'Default: parent of `binaryen_bin`'))
     parser.add_argument(
         '--binaryen-lib', dest='binaryen_lib', default='',
         help=('Specifies a path to where the built Binaryen shared library resides at.'
@@ -133,9 +130,7 @@ if not options.binaryen_lib:
 
 options.binaryen_lib = os.path.normpath(os.path.abspath(options.binaryen_lib))
 
-if not options.binaryen_build:
-    options.binaryen_build = os.path.join(os.path.dirname(options.binaryen_bin))
-options.binaryen_build = os.path.normpath(os.path.abspath(options.binaryen_build))
+options.binaryen_build = os.path.dirname(options.binaryen_bin)
 
 # ensure BINARYEN_ROOT is set up
 os.environ['BINARYEN_ROOT'] = os.path.dirname(options.binaryen_bin)

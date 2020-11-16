@@ -95,7 +95,7 @@ jobs:
         path: out/install
 
     - name: test
-      run: python check.py --binaryen-bin=out/install/bin --binaryen-build=out
+      run: python check.py --binaryen-bin=out/bin
 
   build-clang:
     name: clang
