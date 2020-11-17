@@ -1146,7 +1146,7 @@ private:
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
       .add(FeatureSet::Atomics, &Self::makeAtomic)
-    .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
+      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     return (this->*pick(options))(Type::none);
   }
 
