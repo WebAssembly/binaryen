@@ -65,6 +65,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     }
     return ret;
   }
+  Index visitCallRef(CallRef* curr) {
+    Index ret = 5 + visit(curr->target);
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
   Index visitLocalGet(LocalGet* curr) { return 0; }
   Index visitLocalSet(LocalSet* curr) { return 1 + visit(curr->value); }
   Index visitGlobalGet(GlobalGet* curr) { return 1; }
@@ -551,13 +558,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitNop(Nop* curr) { return 0; }
   Index visitUnreachable(Unreachable* curr) { return 0; }
   Index visitDataDrop(DataDrop* curr) { return 5; }
-  Index visitCallRef(CallRef* curr) {
-    Index ret = 5 + visit(curr->target);
-    for (auto* child : curr->operands) {
-      ret += visit(child);
-    }
-    return ret;
-  }
   Index visitI31New(I31New* curr) { return 3 + visit(curr->value); }
   Index visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
   Index visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO: GC"); }
