@@ -3,6 +3,8 @@
 ;; RUN: wasm-opt %s --optimize-instructions -o %t.wasm -g
 ;; RUN: wasm-dis %t.wasm | filecheck %s
 
+;; RUN: not wasm-opt %s --optimize-instructions -o %t.wasm
+
 (module
   (memory 0)
 

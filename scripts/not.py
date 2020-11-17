@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # Copyright 2020 WebAssembly Community Group participants
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,9 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from lit.main import main
+import sys
+import subprocess
 
-# A simple wrapper around `lit`'s main function, since it isn't otherwise
-# exposed.
+# Emulate the `not` tool from LLVM's test infrastructure for use with lit and
+# FileCheck. It succeeds if the given subcommand fails and vice versa.
+def main():
+    cmd = sys.argv[1:]
+    result = subprocess.run(cmd)
+    sys.exit(0 if result.returncode != 0 else 1)
+
 if __name__ == '__main__':
     main()

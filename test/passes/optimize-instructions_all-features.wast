@@ -3,6 +3,33 @@
   (type $0 (func (param i32 i64)))
   (func $f (type $0) (param $i1 i32) (param $i2 i64)
     (drop
+      (i32.and
+        (i32.and
+          (local.get $i1)
+          (i32.const 5)
+        )
+        (i32.const 3)
+      )
+    )
+    (drop
+      (i32.or
+        (i32.or
+          (local.get $i1)
+          (i32.const 1)
+        )
+        (i32.const 2)
+      )
+    )
+    (drop
+      (i32.xor
+        (i32.xor
+          (local.get $i1)
+          (i32.const -2)
+        )
+        (i32.const -5)
+      )
+    )
+    (drop
       (i32.mul
         (i32.mul
           (local.get $i1)
