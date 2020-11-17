@@ -3045,9 +3045,12 @@ private:
     size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
     for (size_t i = 0; i < maxElements; ++i) {
       auto type = getSingleConcreteType();
-      // Don't add non-nullable types into a tuple, as they get spilled into
-      // locals, and locals are nullable.
-      if (!type.isRef() || type.isNullable()) {
+      // Don't add ref types into a tuple for now, as if they are non-nullable
+      // then they can't be spilled into locals. And even if they are nullable,
+      // like a funcref, but we create a subtype that is *not* nullable (like
+      // a ref.func) then that would be the effective type here, and again we'd
+      // have a non-nullable type.
+      if (!type.isRef()) {
         elements.push_back(type);
       }
     }
