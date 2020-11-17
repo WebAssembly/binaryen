@@ -128,6 +128,34 @@ struct ExecutionResults {
     }
   }
 
+  bool areEqual(Literal a, Literal b) {
+    if (a.type.isRef()) {
+      // Don't compare reference types - only their types.
+      // See https://github.com/WebAssembly/binaryen/issues/3378
+      if (a.type != b.type) {
+        std::cout << "ref types not identical! " << a << " != " << b << '\n';
+        return false;
+      }
+    } else if (a != b) {
+      std::cout << "values not identical! " << a << " != " << b << '\n';
+      return false;
+    }
+    return true;
+  }
+
+  bool areEqual(Literals a, Literals b) {
+    if (a.size() != b.size()) {
+      std::cout << "literal counts not identical! " << a << " != " << b << '\n';
+      return false;
+    }
+    for (Index i = 0; i < a.size(); i++) {
+      if (!areEqual(a[i], b[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   bool operator==(ExecutionResults& other) {
     for (auto& iter : other.results) {
       auto name = iter.first;
@@ -136,15 +164,18 @@ struct ExecutionResults {
         return false;
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
-      if (results[name] != other.results[name]) {
-        std::cout << "not identical! " << results[name]
-                  << " != " << other.results[name] << "\n";
+      if (!areEqual(results[name], other.results[name])) {
         return false;
       }
     }
-    if (loggings != other.loggings) {
-      std::cout << "logging not identical!\n";
+    if (loggings.size() != other.loggings.size()) {
+      std::cout << "logging counts not identical!\n";
       return false;
+    }
+    for (Index i = 0; i < loggings.size(); i++) {
+      if (!areEqual(loggings[i], other.loggings[i])) {
+        return false;
+      }
     }
     return true;
   }
