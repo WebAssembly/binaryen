@@ -1441,6 +1441,7 @@ private:
   }
 
   Expression* makeCallRef(Type type) {
+    return makeTrivial(type); // FIXME
     // We need to find a proper function type to call. As a simple hack, try to
     // create a call, and if we found that then we know such a type exists.
     auto* attempt = makeCall(type);
