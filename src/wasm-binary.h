@@ -1168,8 +1168,8 @@ public:
 
   Module* getModule() { return wasm; }
 
-  S32LEB serializeType(Type type);
-  S32LEB serializeHeapType(HeapType type);
+  void writeType(Type type);
+  void writeHeapType(HeapType type);
 
 private:
   Module* wasm;

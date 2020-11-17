@@ -221,7 +221,7 @@ void WasmBinaryWriter::writeTypes() {
     for (auto& sigType : {sig.params, sig.results}) {
       o << U32LEB(sigType.size());
       for (const auto& type : sigType) {
-        o << serializeType(type);
+        writeType(type);
       }
     }
   }
@@ -250,7 +250,7 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one global\n");
     writeImportHeader(global);
     o << U32LEB(int32_t(ExternalKind::Global));
-    o << serializeType(global->type);
+    writeType(global->type);
     o << U32LEB(global->mutable_);
   });
   ModuleUtils::iterImportedEvents(*wasm, [&](Event* event) {
@@ -389,7 +389,7 @@ void WasmBinaryWriter::writeGlobals() {
     BYN_TRACE("write one\n");
     size_t i = 0;
     for (const auto& t : global->type) {
-      o << serializeType(t);
+      writeType(t);
       o << U32LEB(global->mutable_);
       if (global->type.size() == 1) {
         writeExpression(global->init);
@@ -952,7 +952,16 @@ void WasmBinaryWriter::finishUp() {
   }
 }
 
-S32LEB WasmBinaryWriter::serializeType(Type type) {
+void WasmBinaryWriter::writeType(Type type) {
+  if (type.isSignature()) {
+    if (type.isNullable()) {
+      o << S32LEB(BinaryConsts::EncodedType::nullable);
+    } else {
+      o << S32LEB(BinaryConsts::EncodedType::nonnullable);
+    }
+    writeHeapType(type.getHeapType());
+    return;
+  }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
@@ -996,10 +1005,18 @@ S32LEB WasmBinaryWriter::serializeType(Type type) {
     default:
       WASM_UNREACHABLE("unexpected type");
   }
-  return S32LEB(ret);
+  o << S32LEB(ret);
 }
 
-S32LEB WasmBinaryWriter::serializeHeapType(HeapType type) {
+void WasmBinaryWriter::writeHeapType(HeapType type) {
+  if (type.isSignature()) {
+    auto sig = type.getSignature();
+    // FIXME: should this really be using the main indexing of all types, and
+    // not something specific to heap types? The spec overview for typed
+    // function references just
+    o << S32LEB(getTypeIndex(Type(sig)));
+    return;
+  }
   int ret = 0;
   switch (type.kind) {
     case HeapType::FuncKind:
@@ -1025,7 +1042,7 @@ S32LEB WasmBinaryWriter::serializeHeapType(HeapType type) {
     case HeapType::ArrayKind:
       WASM_UNREACHABLE("TODO: compound GC types");
   }
-  return S32LEB(ret); // TODO: Actually encoded as s33
+  o << S32LEB(ret); // TODO: Actually encoded as s33
 }
 
 // reader
