@@ -1757,7 +1757,7 @@ void BinaryInstWriter::visitSelect(Select* curr) {
     o << int8_t(BinaryConsts::SelectWithType) << U32LEB(curr->type.size());
     for (size_t i = 0; i < curr->type.size(); i++) {
       o << parent.serializeType(curr->type != Type::unreachable ? curr->type
-                                                      : Type::none);
+                                                                : Type::none);
     }
   } else {
     o << int8_t(BinaryConsts::Select);
