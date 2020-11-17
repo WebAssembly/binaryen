@@ -2099,6 +2099,34 @@ private:
       }
       return ret;
     }
+    Flow visitCallRef(CallRef* curr) {
+      NOTE_ENTER("CallRef");
+      LiteralList arguments;
+      Flow flow = this->generateArguments(curr->operands, arguments);
+      if (flow.breaking()) {
+        return flow;
+      }
+      Flow target = this->visit(curr->target);
+      if (target.breaking()) {
+        return target;
+      }
+      Name funcName = target.getSingleValue().getFunc();
+      auto* func = instance.wasm.getFunction(funcName);
+      Flow ret;
+      if (func->imported()) {
+        ret.values = instance.externalInterface->callImport(func, arguments);
+      } else {
+        ret.values = instance.callFunctionInternal(funcName, arguments);
+      }
+#ifdef WASM_INTERPRETER_DEBUG
+      std::cout << "(returned to " << scope.function->name << ")\n";
+#endif
+      // TODO: make this a proper tail call (return first)
+      if (curr->isReturn) {
+        ret.breakTo = RETURN_FLOW;
+      }
+      return ret;
+    }
 
     Flow visitLocalGet(LocalGet* curr) {
       NOTE_ENTER("LocalGet");
