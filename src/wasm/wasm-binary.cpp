@@ -5285,7 +5285,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   curr->finalize(
-    Type(HeapType(getFunctionSignatureByIndex(index)), /* nullable = */ true));
+    Type(HeapType(getFunctionSignatureByIndex(index)), /* nullable = */ false));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {

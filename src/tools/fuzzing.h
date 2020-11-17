@@ -1461,7 +1461,7 @@ private:
       // The target doesn't exist yet.
       return makeTrivial(type);
     }
-    auto functionType = Type(HeapType(func->sig), /* nullable = */ true);
+    auto functionType = Type(HeapType(func->sig), /* nullable = */ false);
     return builder.makeCallRef(
       make(functionType), call->operands, type, call->isReturn);
   }
@@ -2048,7 +2048,7 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        auto type = Type(HeapType(target->sig), /* nullable = */ true);
+        auto type = Type(HeapType(target->sig), /* nullable = */ false);
         return builder.makeRefFunc(target->name, type);
       }
       if (type == Type::i31ref) {
