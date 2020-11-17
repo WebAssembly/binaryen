@@ -741,24 +741,29 @@ public:
   // Make a constant expression. This might be a wasm Const, or something
   // else of constant value like ref.null.
   Expression* makeConstantExpression(Literal value) {
-    TODO_SINGLE_COMPOUND(value.type);
-    switch (value.type.getBasic()) {
-      case Type::funcref:
-        if (!value.isNull()) {
-          return makeRefFunc(value.getFunc());
-        }
-        return makeRefNull(value.type);
+    auto type = value.type;
+    if (type.isNumber()) {
+      return makeConst(value);
+    }
+    if (type.isFunction()) {
+      if (!value.isNull()) {
+        return makeRefFunc(value.getFunc(), type);
+      }
+      return makeRefNull(type);
+    }
+    TODO_SINGLE_COMPOUND(type);
+    switch (type.getBasic()) {
       case Type::externref:
       case Type::exnref: // TODO: ExceptionPackage?
       case Type::anyref:
       case Type::eqref:
         assert(value.isNull() && "unexpected non-null reference type literal");
-        return makeRefNull(value.type);
+        return makeRefNull(type);
       case Type::i31ref:
         return makeI31New(makeConst(value.geti31()));
-      default:
-        assert(value.type.isNumber());
-        return makeConst(value);
+      default: {
+        WASM_UNREACHABLE("invalid constant expression");
+      }
     }
   }
 
@@ -923,6 +928,9 @@ public:
     if (curr->type.isTuple()) {
       return makeConstantExpression(Literal::makeZeros(curr->type));
     }
+    if (curr->type.isFunction()) {
+      return ExpressionManipulator::refNull(curr, curr->type);
+    }
     Literal value;
     // TODO: reuse node conditionally when possible for literals
     TODO_SINGLE_COMPOUND(curr->type);
@@ -946,6 +954,7 @@ public:
         break;
       }
       case Type::funcref:
+        WASM_UNREACHABLE("handled above");
       case Type::externref:
       case Type::exnref:
       case Type::anyref:
