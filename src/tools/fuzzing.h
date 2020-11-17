@@ -3040,6 +3040,12 @@ private:
 
   Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
+  Type getMVPType() {
+    return pick(items(
+      FeatureOptions<Type>()
+        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)));
+  }
+
   Type getTupleType() {
     std::vector<Type> elements;
     size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
@@ -3053,6 +3059,9 @@ private:
       if (!type.isRef()) {
         elements.push_back(type);
       }
+    }
+    while (elements.size() < 2) {
+      elements.push_back(getMVPType());
     }
     return Type(elements);
   }
