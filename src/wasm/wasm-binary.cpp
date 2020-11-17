@@ -953,14 +953,17 @@ void WasmBinaryWriter::finishUp() {
 }
 
 void WasmBinaryWriter::writeType(Type type) {
-  if (type.isSignature()) {
-    if (type.isNullable()) {
-      o << S32LEB(BinaryConsts::EncodedType::nullable);
-    } else {
-      o << S32LEB(BinaryConsts::EncodedType::nonnullable);
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (heapType.isSignature()) {
+      if (type.isNullable()) {
+        o << S32LEB(BinaryConsts::EncodedType::nullable);
+      } else {
+        o << S32LEB(BinaryConsts::EncodedType::nonnullable);
+      }
+      writeHeapType(heapType);
+      return;
     }
-    writeHeapType(type.getHeapType());
-    return;
   }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);
@@ -1014,7 +1017,7 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     // FIXME: should this really be using the main indexing of all types, and
     // not something specific to heap types? The spec overview for typed
     // function references just
-    o << S32LEB(getTypeIndex(Type(sig)));
+    o << S32LEB(getTypeIndex(sig));
     return;
   }
   int ret = 0;
