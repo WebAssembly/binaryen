@@ -72,7 +72,9 @@ struct DAEFunctionInfo {
   // see inhibits our optimizations, but TODO: an export
   // could be worked around by exporting a thunk that
   // adds the parameter.
-  bool hasUnseenCalls = false;
+  std::atomic<bool> hasUnseenCalls;
+
+  DAEFunctionInfo() { hasUnseenCalls.store(false); }
 };
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
@@ -145,6 +147,16 @@ struct DAEScanner
     }
   }
 
+  void visitRefFunc(RefFunc* curr) {
+    // We can't modify another function in parallel.
+    assert((*infoMap).count(curr->func));
+    // Treat a ref.func as an unseen call, preventing us from changing the
+    // function's type. If we did change it, it could be an observable
+    // difference from the outside, if the reference escapes, for example.
+    // TODO: look for actual escaping?
+    (*infoMap)[curr->func].hasUnseenCalls.store(true);
+  }
+
   // main entry point
 
   void doWalkFunction(Function* func) {
@@ -154,7 +166,7 @@ struct DAEScanner
       func);
     // If there are relevant params, check if they are used. (If
     // we can't optimize the function anyhow, there's no point.)
-    if (numParams > 0 && !info->hasUnseenCalls) {
+    if (numParams > 0 && !info->hasUnseenCalls.load()) {
       findUnusedParams(func);
     }
   }
@@ -242,17 +254,18 @@ struct DAE : public Pass {
     DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data
     // structure.
-    ModuleUtils::iterDefinedFunctions(
-      *module, [&](Function* func) { infoMap[func->name]; });
+    for (auto& func : module->functions) {
+      infoMap[func->name];
+    }
     // Check the influence of the table and exports.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        infoMap[curr->value].hasUnseenCalls = true;
+        infoMap[curr->value].hasUnseenCalls.store(true);
       }
     }
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
-        infoMap[name].hasUnseenCalls = true;
+        infoMap[name].hasUnseenCalls.store(true);
       }
     }
     // Scan all the functions.
@@ -281,7 +294,7 @@ struct DAE : public Pass {
       auto name = pair.first;
       // We can only optimize if we see all the calls and can modify
       // them.
-      if (infoMap[name].hasUnseenCalls) {
+      if (infoMap[name].hasUnseenCalls.load()) {
         continue;
       }
       auto& calls = pair.second;
@@ -326,6 +339,9 @@ struct DAE : public Pass {
     for (auto& pair : allCalls) {
       auto name = pair.first;
       auto& calls = pair.second;
+      if (infoMap[name].hasUnseenCalls.load()) {
+        continue;
+      }
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
       if (numParams == 0) {
@@ -367,7 +383,7 @@ struct DAE : public Pass {
           continue;
         }
         auto name = func->name;
-        if (infoMap[name].hasUnseenCalls) {
+        if (infoMap[name].hasUnseenCalls.load()) {
           continue;
         }
         if (infoMap[name].hasTailCalls) {
