@@ -94,14 +94,6 @@ struct ExecutionResults {
         if (func->sig.results != Type::none) {
           // this has a result
           Literals ret = run(func, wasm, instance);
-          // We cannot compare funcrefs by name because function names can
-          // change (after duplicate function elimination or roundtripping)
-          // while the function contents are still the same
-          for (Literal& val : ret) {
-            if (val.type == Type::funcref && !val.isNull()) {
-              val = Literal::makeFunc(Name("funcref"));
-            }
-          }
           results[exp->name] = ret;
           // ignore the result if we hit an unreachable and returned no value
           if (ret.size() > 0) {
