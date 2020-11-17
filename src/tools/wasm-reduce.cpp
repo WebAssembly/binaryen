@@ -578,7 +578,10 @@ struct Reducer
           continue; // no conversion
         }
         Expression* fixed = nullptr;
-        TODO_SINGLE_COMPOUND(curr->type);
+        if (!curr->type.isBasic() || !child->type.isBasic()) {
+          // TODO: handle compound types
+          continue;
+        }
         switch (curr->type.getBasic()) {
           case Type::i32: {
             TODO_SINGLE_COMPOUND(child->type);
