@@ -236,10 +236,10 @@ public:
     return call;
   }
   template<typename T>
-  Call* makeCallRef(Expression* target,
-                    const T& args,
-                    Type type,
-                    bool isReturn = false) {
+  CallRef* makeCallRef(Expression* target,
+                       const T& args,
+                       Type type,
+                       bool isReturn = false) {
     auto* call = wasm.allocator.alloc<CallRef>();
     call->type = type;
     call->target = target;
