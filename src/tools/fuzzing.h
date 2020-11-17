@@ -3042,10 +3042,14 @@ private:
 
   Type getTupleType() {
     std::vector<Type> elements;
-    size_t numElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
-    elements.resize(numElements);
-    for (size_t i = 0; i < numElements; ++i) {
-      elements[i] = getSingleConcreteType();
+    size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
+    for (size_t i = 0; i < maxElements; ++i) {
+      auto type = getSingleConcreteType();
+      // Don't add non-nullable types into a tuple, as they get spilled into
+      // locals, and locals are nullable.
+      if (!type.isRef() || type.isNullable()) {
+        elements.push_back(type);
+      }
     }
     return Type(elements);
   }
