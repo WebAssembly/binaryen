@@ -2054,7 +2054,19 @@ private:
       if (type == Type::i31ref) {
         return builder.makeI31New(makeConst(Type::i32));
       }
-      return builder.makeRefNull(type);
+      if (type.isNullable()) {
+        return builder.makeRefNull(type);
+      }
+      // Well this is quite the pickle, we are asked to create a non-nullable
+      // type, and so can't just make a null. Look for an existing thing with
+      // the right type.
+      // TODO: randomize the order
+      for (auto& func : wasm.functions) {
+        if (type == Type(HeapType(func->sig), /* nullable = */ false)) {
+          return builder.makeRefFunc(func->name, type);
+        }
+      }
+      WASM_UNREACHABLE("un-handleable non-nullable type");
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
