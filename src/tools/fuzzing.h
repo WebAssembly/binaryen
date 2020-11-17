@@ -323,28 +323,33 @@ private:
     }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
-    TODO_SINGLE_COMPOUND(type);
-    switch (type.getBasic()) {
-      case Type::anyref:
-        if (wasm.features.hasReferenceTypes()) {
-          options.push_back(Type::funcref);
-          options.push_back(Type::externref);
-          if (wasm.features.hasExceptionHandling()) {
-            options.push_back(Type::exnref);
+    if (type.isFunction()) {
+      // TODO: specific typed function references types
+      options.push_back(Type::funcref);
+    } else {
+      TODO_SINGLE_COMPOUND(type);
+      switch (type.getBasic()) {
+        case Type::anyref:
+          if (wasm.features.hasReferenceTypes()) {
+            options.push_back(Type::funcref);
+            options.push_back(Type::externref);
+            if (wasm.features.hasExceptionHandling()) {
+              options.push_back(Type::exnref);
+            }
+            if (wasm.features.hasGC()) {
+              options.push_back(Type::eqref);
+              options.push_back(Type::i31ref);
+            }
           }
+          break;
+        case Type::eqref:
           if (wasm.features.hasGC()) {
-            options.push_back(Type::eqref);
             options.push_back(Type::i31ref);
           }
-        }
-        break;
-      case Type::eqref:
-        if (wasm.features.hasGC()) {
-          options.push_back(Type::i31ref);
-        }
-        break;
-      default:
-        break;
+          break;
+        default:
+          break;
+      }
     }
     return pick(options);
   }
