@@ -1450,8 +1450,12 @@ private:
     }
     // Convert it into a CallRef.
     auto* call = attempt->cast<Call>();
-    auto sig = wasm.getFunction(call->target)->sig;
-    auto functionType = Type(HeapType(sig), /* nullable = */ true);
+    auto* func = wasm.getFunctionOrNull(call->target);
+    if (!func) {
+      // The target doesn't exist yet.
+      return makeTrivial(type);
+    }
+    auto functionType = Type(HeapType(func->sig), /* nullable = */ true);
     return builder.makeCallRef(
       make(functionType), call->operands, type, call->isReturn);
   }
