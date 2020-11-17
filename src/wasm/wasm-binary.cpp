@@ -1351,6 +1351,10 @@ Type WasmBinaryBuilder::getType() {
       return Type::anyref;
     case BinaryConsts::EncodedType::eqref:
       return Type::eqref;
+    case BinaryConsts::EncodedType::nullable:
+      return Type(getHeapType(), /* nullable = */ true);
+    case BinaryConsts::EncodedType::nonnullable:
+      return Type(getHeapType(), /* nullable = */ false);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     default:
