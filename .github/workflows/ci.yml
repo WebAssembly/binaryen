@@ -47,8 +47,8 @@ jobs:
         python-version: '3.x'
     - uses: actions/checkout@v1
 
-    - name: install lit and FileCheck
-      run: pip3 install lit FileCheck
+    - name: install Python dev dependencies
+      run: pip3 install -r rquirements-dev.txt
 
     - name: install ninja (linux)
       run: sudo apt-get install ninja-build
@@ -107,8 +107,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
-    - name: install lit and FileCheck
-      run: pip3 install lit FileCheck
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
     - name: cmake
       run: |
         mkdir -p out
@@ -132,8 +132,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
-    - name: install lit and FileCheck
-      run: pip3 install lit FileCheck
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
     - name: cmake
       run: |
         mkdir -p out
@@ -158,8 +158,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
-    - name: install lit and FileCheck
-      run: pip3 install lit FileCheck
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
     - name: cmake
       run: |
         mkdir -p out
@@ -183,8 +183,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: install ninja
       run: sudo apt-get install ninja-build
-    - name: install lit and FileCheck
-      run: pip3 install lit FileCheck
+    - name: install Python dev dependencies
+      run: pip3 install -r requirements-dev.txt
     - name: cmake
       run: |
         mkdir -p out

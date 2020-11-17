@@ -4,3 +4,5 @@
 # Install with `pip3 install -r requirements-dev.txt`
 
 flake8==3.7.8
+filecheck==0.0.16
+lit==0.11.0.post1
