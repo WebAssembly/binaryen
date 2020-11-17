@@ -1597,9 +1597,12 @@ public:
     }
     return Flow(NONCONSTANT_FLOW);
   }
-
   Flow visitCallIndirect(CallIndirect* curr) {
     NOTE_ENTER("CallIndirect");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitCallRef(CallRef* curr) {
+    NOTE_ENTER("CallRef");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitLoad(Load* curr) {
