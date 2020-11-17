@@ -17,4 +17,5 @@ for tool_file in os.listdir(bin_dir):
 
 # Also make the `not` command available
 not_file = config.src_root + '/scripts/not.py'
-config.substitutions.append(('not', sys.executable + ' ' + not_file))
+python = sys.executable.replace('\\', '/')
+config.substitutions.append(('not', python + ' ' + not_file))
