@@ -2325,7 +2325,7 @@ void FunctionValidator::visitFunction(Function* curr) {
     shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
   }
   shouldBeTrue(features <= getModule()->features,
-               curr,
+               curr->name,
                "all used types should be allowed");
   if (curr->profile == IRProfile::Poppy) {
     shouldBeTrue(
