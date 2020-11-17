@@ -8,7 +8,7 @@ config.suffixes = ['.wast']
 config.test_source_root = os.path.dirname(__file__)
 config.test_exec_root = os.path.join(config.binaryen_root, 'test')
 
-config.substitutions.extend([
-  ('%wasm-opt', config.binaryen_root + '/bin/wasm-opt'),
-  ('%wasm-dis', config.binaryen_root + '/bin/wasm-dis'),
-])
+# Replace all Binaryen tools with their absolute paths
+bin_dir = os.path.join(config.binaryen_root, 'bin')
+for tool in os.listdir(bin_dir):
+    config.substitutions.append((tool, config.binaryen_root + '/bin/' + tool))

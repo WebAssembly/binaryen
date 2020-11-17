@@ -1,7 +1,7 @@
-;; RUN: %wasm-opt %s --optimize-instructions -S -o - | filecheck %s
+;; RUN: wasm-opt %s --optimize-instructions -S -o - | filecheck %s
 
-;; RUN: %wasm-opt %s --optimize-instructions -o %t.wasm -g
-;; RUN: %wasm-dis %t.wasm | filecheck %s
+;; RUN: wasm-opt %s --optimize-instructions -o %t.wasm -g
+;; RUN: wasm-dis %t.wasm | filecheck %s
 
 (module
   (memory 0)
