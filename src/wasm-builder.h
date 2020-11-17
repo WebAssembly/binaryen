@@ -762,9 +762,8 @@ public:
         return makeRefNull(type);
       case Type::i31ref:
         return makeI31New(makeConst(value.geti31()));
-      default: {
+      default:
         WASM_UNREACHABLE("invalid constant expression");
-      }
     }
   }
 
