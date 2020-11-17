@@ -1079,7 +1079,9 @@ private:
                   WeightedOption{&Self::makeLoop, Important},
                   WeightedOption{&Self::makeBreak, Important},
                   &Self::makeCall,
-                  &Self::makeCallIndirect);
+                  &Self::makeCallIndirect)
+             .add(FeatureSet::TypedFunctionReferences,
+                  &Self::makeCallRef);
     }
     if (type.isSingle()) {
       options
@@ -1139,6 +1141,7 @@ private:
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
       .add(FeatureSet::Atomics, &Self::makeAtomic);
+      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     return (this->*pick(options))(Type::none);
   }
 
@@ -1161,7 +1164,8 @@ private:
                 &Self::makeSelect,
                 &Self::makeSwitch,
                 &Self::makeDrop,
-                &Self::makeReturn);
+                &Self::makeReturn)
+      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     return (this->*pick(options))(Type::unreachable);
   }
 
@@ -1371,7 +1375,6 @@ private:
   }
 
   Expression* makeCall(Type type) {
-    // seems ok, go on
     int tries = TRIES;
     bool isReturn;
     while (tries-- > 0) {
@@ -1392,7 +1395,7 @@ private:
       return builder.makeCall(target->name, args, type, isReturn);
     }
     // we failed to find something
-    return make(type);
+    return makeTrivial(type);
   }
 
   Expression* makeCallIndirect(Type type) {
@@ -1418,7 +1421,7 @@ private:
         i = 0;
       }
       if (i == start) {
-        return make(type);
+        return makeTrivial(type);
       }
     }
     // with high probability, make sure the type is valid  otherwise, most are
@@ -1434,6 +1437,21 @@ private:
       args.push_back(make(type));
     }
     return builder.makeCallIndirect(target, args, targetFn->sig, isReturn);
+  }
+
+  Expression* makeCallRef(Type type) {
+    // We need to find a proper function type to call. As a simple hack, try to
+    // create a call, and if we found that then we know such a type exists.
+    auto* attempt = makeCall(type);
+    if (!attempt->is<Call>()) {
+      // We failed to make a call, return the trivial thing we did make.
+      return attempt;
+    }
+    // Convert it into a CallRef.
+    auto* call = attempt->cast<Call>();
+    auto* sig = wasm.getFunction(call->target)->sig;
+    auto functionType = Type(HeapType(sig), /* nullable = */ true);
+    return builder.makeCallRef(make(functionType), call->args, type, call->isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
