@@ -374,12 +374,25 @@ def run_bynterp(wasm, args):
         del os.environ['BINARYEN_MAX_INTERPRETER_DEPTH']
 
 
-def run_d8_js(js, args=[]):
-    return run_vm([shared.V8] + shared.V8_OPTS + [js] + (['--'] if args else []) + args)
+V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
 
 
-def run_d8_wasm(wasm):
-    return run_d8_js(in_binaryen('scripts', 'fuzz_shell.js'), [wasm])
+# default to running with liftoff enabled, because we need to pick either
+# liftoff or turbofan for consistency (otherwise running the same command twice
+# may have different results due to NaN nondeterminism), and liftoff is faster
+# for small things
+def run_d8_js(js, args=[], liftoff=True):
+    cmd = [shared.V8] + shared.V8_OPTS
+    if liftoff:
+        cmd += V8_LIFTOFF_ARGS
+    cmd += [js]
+    if args:
+        cmd += ['--'] + args
+    return run_vm(cmd)
+
+
+def run_d8_wasm(wasm, liftoff=True):
+    return run_d8_js(in_binaryen('scripts', 'fuzz_shell.js'), [wasm], liftoff=liftoff)
 
 
 class TestCaseHandler:
@@ -463,7 +476,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8_liftoff'
 
             def run(self, wasm):
-                return super(D8Liftoff, self).run(wasm, extra_d8_flags=['--liftoff', '--no-wasm-tier-up'])
+                return super(D8Liftoff, self).run(wasm, extra_d8_flags=V8_LIFTOFF_ARGS)
 
         class D8TurboFan(D8):
             name = 'd8_turbofan'
