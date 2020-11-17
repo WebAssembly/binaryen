@@ -147,9 +147,8 @@ struct EffectAnalyzer
   }
 
   bool hasSideEffects() const {
-    return localsWritten.size() > 0 || danglingPop ||
-           writesGlobalState() || implicitTrap || throws ||
-           transfersControlFlow();
+    return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
+           implicitTrap || throws || transfersControlFlow();
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
