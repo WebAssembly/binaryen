@@ -747,7 +747,8 @@ public:
     }
     if (type.isFunction()) {
       if (!value.isNull()) {
-        return makeRefFunc(value.getFunc(), type);
+        // TODO: with typed function references we need to do more for the type
+        return makeRefFunc(value.getFunc());
       }
       return makeRefNull(type);
     }
