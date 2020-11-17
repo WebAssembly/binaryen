@@ -658,6 +658,10 @@ private:
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
+      if (type.isRef() && !type.isNullable()) {
+        // We can't use a nullable type as a var, which is null-initialized.
+        continue;
+      }
       funcContext->typeLocals[type].push_back(params.size() +
                                               func->vars.size());
       func->vars.push_back(type);
