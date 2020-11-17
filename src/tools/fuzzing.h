@@ -1140,7 +1140,7 @@ private:
            &Self::makeNop,
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
-      .add(FeatureSet::Atomics, &Self::makeAtomic);
+      .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     return (this->*pick(options))(Type::none);
   }
@@ -1450,10 +1450,10 @@ private:
     }
     // Convert it into a CallRef.
     auto* call = attempt->cast<Call>();
-    auto* sig = wasm.getFunction(call->target)->sig;
+    auto sig = wasm.getFunction(call->target)->sig;
     auto functionType = Type(HeapType(sig), /* nullable = */ true);
     return builder.makeCallRef(
-      make(functionType), call->args, type, call->isReturn);
+      make(functionType), call->operands, type, call->isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
