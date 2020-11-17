@@ -1289,7 +1289,7 @@ public:
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");
     NOTE_NAME(curr->func);
-    return Literal::makeFunc(curr->func);
+    return Literal::makeFunc(curr->func, curr->type);
   }
   Flow visitRefEq(RefEq* curr) {
     NOTE_ENTER("RefEq");

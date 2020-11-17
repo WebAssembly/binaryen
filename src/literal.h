@@ -71,7 +71,8 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(Name func) : func(func), type(Type::funcref) {}
+  explicit Literal(Name func, Type type = Type::funcref)
+    : func(func), type(type) {}
   explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
   Literal(const Literal& other);
@@ -233,7 +234,9 @@ public:
     assert(type.isNullable());
     return Literal(type);
   }
-  static Literal makeFunc(Name func) { return Literal(func.c_str()); }
+  static Literal makeFunc(Name func, Type type = Type::funcref) {
+    return Literal(func, type);
+  }
   static Literal makeExn(std::unique_ptr<ExceptionPackage>&& exn) {
     return Literal(std::move(exn));
   }

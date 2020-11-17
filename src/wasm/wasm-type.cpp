@@ -383,15 +383,28 @@ bool Type::isRtt() const {
 }
 
 bool Type::operator<(const Type& other) const {
-  return std::lexicographical_compare(begin(),
-                                      end(),
-                                      other.begin(),
-                                      other.end(),
-                                      [](const Type& a, const Type& b) {
-                                        TODO_SINGLE_COMPOUND(a);
-                                        TODO_SINGLE_COMPOUND(b);
-                                        return a.getBasic() < b.getBasic();
-                                      });
+  auto comp = [](const Type& a, const Type& b) {
+    if (a.isBasic() && b.isBasic()) {
+      return a.getBasic() < b.getBasic();
+    }
+    if (a.isBasic()) {
+      return true;
+    }
+    if (b.isBasic()) {
+      return false;
+    }
+    // Both are compound.
+    auto aHeap = a.getHeapType();
+    auto bHeap = b.getHeapType();
+    if (aHeap.isSignature() && bHeap.isSignature()) {
+      return aHeap.getSignature() < bHeap.getSignature();
+    }
+    TODO_SINGLE_COMPOUND(a);
+    TODO_SINGLE_COMPOUND(b);
+    WASM_UNREACHABLE("unimplemented type comparison");
+  };
+  return std::lexicographical_compare(
+    begin(), end(), other.begin(), other.end(), comp);
 }
 
 unsigned Type::getByteSize() const {
@@ -521,8 +534,21 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isRef() && right.isRef()) {
-    return right == Type::anyref ||
-           (left == Type::i31ref && right == Type::eqref);
+    // Everything is a subtype of anyref.
+    if (right == Type::anyref) {
+      return true;
+    }
+    // Various things are subtypes of eqref.
+    if ((left == Type::i31ref || left.getHeapType().isArray() ||
+         left.getHeapType().isStruct()) &&
+        right == Type::eqref) {
+      return true;
+    }
+    // All typed function signatures are subtypes of funcref.
+    if (left.getHeapType().isSignature() && right == Type::funcref) {
+      return true;
+    }
+    return false;
   }
   if (left.isTuple() && right.isTuple()) {
     if (left.size() != right.size()) {
