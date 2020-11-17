@@ -24,11 +24,11 @@ static Name IMPOSSIBLE_CONTINUE("impossible-continue");
 
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
-    o << binaryType(Type::none);
+    o << parent.serializeType(Type::none);
   } else if (type.isTuple()) {
     o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
   } else {
-    o << binaryType(type);
+    o << parent.serializeType(type);
   }
 }
 
@@ -1756,7 +1756,7 @@ void BinaryInstWriter::visitSelect(Select* curr) {
   if (curr->type.isRef()) {
     o << int8_t(BinaryConsts::SelectWithType) << U32LEB(curr->type.size());
     for (size_t i = 0; i < curr->type.size(); i++) {
-      o << binaryType(curr->type != Type::unreachable ? curr->type
+      o << parent.serializeType(curr->type != Type::unreachable ? curr->type
                                                       : Type::none);
     }
   } else {
@@ -1780,7 +1780,7 @@ void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
   o << int8_t(BinaryConsts::RefNull)
-    << binaryHeapType(curr->type.getHeapType());
+    << parent.serializeHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
@@ -1971,7 +1971,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     o << U32LEB(func->getNumVars());
     for (Index i = varStart; i < varEnd; i++) {
       mappedLocals[std::make_pair(i, 0)] = i;
-      o << U32LEB(1) << binaryType(func->getLocalType(i));
+      o << U32LEB(1) << parent.serializeType(func->getLocalType(i));
     }
     return;
   }
@@ -2000,7 +2000,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   setScratchLocals();
   o << U32LEB(numLocalsByType.size());
   for (auto& typeCount : numLocalsByType) {
-    o << U32LEB(typeCount.second) << binaryType(typeCount.first);
+    o << U32LEB(typeCount.second) << parent.serializeType(typeCount.first);
   }
 }
 

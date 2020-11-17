@@ -346,6 +346,10 @@ enum EncodedType {
   anyref = -0x12, // 0x6e
   // comparable reference type
   eqref = -0x13, // 0x6d
+  // nullable typed function reference type, with parameter
+  nullable = -0x14, // 0x6c
+  // non-nullable typed function reference type, with parameter
+  nonnullable = -0x15, // 0x6b
   // integer reference type
   i31ref = -0x16, // 0x6a
   // exception reference type
@@ -1015,85 +1019,6 @@ enum FeaturePrefix {
 
 } // namespace BinaryConsts
 
-inline S32LEB binaryType(Type type) {
-  int ret = 0;
-  if (type.isFunction()) {
-    return S32LEB(BinaryConsts::EncodedType::funcref);
-  }
-  TODO_SINGLE_COMPOUND(type);
-  switch (type.getBasic()) {
-    // None only used for block signatures. TODO: Separate out?
-    case Type::none:
-      ret = BinaryConsts::EncodedType::Empty;
-      break;
-    case Type::i32:
-      ret = BinaryConsts::EncodedType::i32;
-      break;
-    case Type::i64:
-      ret = BinaryConsts::EncodedType::i64;
-      break;
-    case Type::f32:
-      ret = BinaryConsts::EncodedType::f32;
-      break;
-    case Type::f64:
-      ret = BinaryConsts::EncodedType::f64;
-      break;
-    case Type::v128:
-      ret = BinaryConsts::EncodedType::v128;
-      break;
-    case Type::externref:
-      ret = BinaryConsts::EncodedType::externref;
-      break;
-    case Type::exnref:
-      ret = BinaryConsts::EncodedType::exnref;
-      break;
-    case Type::anyref:
-      ret = BinaryConsts::EncodedType::anyref;
-      break;
-    case Type::eqref:
-      ret = BinaryConsts::EncodedType::eqref;
-      break;
-    case Type::i31ref:
-      ret = BinaryConsts::EncodedType::i31ref;
-      break;
-    default:
-      WASM_UNREACHABLE("unexpected type");
-  }
-  return S32LEB(ret);
-}
-
-inline S32LEB binaryHeapType(HeapType type) {
-  int ret = 0;
-  if (type.isSignature()) {
-    return S32LEB(BinaryConsts::EncodedHeapType::func);
-  }
-  switch (type.kind) {
-    case HeapType::FuncKind:
-      ret = BinaryConsts::EncodedHeapType::func;
-      break;
-    case HeapType::ExternKind:
-      ret = BinaryConsts::EncodedHeapType::extern_;
-      break;
-    case HeapType::ExnKind:
-      ret = BinaryConsts::EncodedHeapType::exn;
-      break;
-    case HeapType::AnyKind:
-      ret = BinaryConsts::EncodedHeapType::any;
-      break;
-    case HeapType::EqKind:
-      ret = BinaryConsts::EncodedHeapType::eq;
-      break;
-    case HeapType::I31Kind:
-      ret = BinaryConsts::EncodedHeapType::i31;
-      break;
-    case HeapType::SignatureKind:
-    case HeapType::StructKind:
-    case HeapType::ArrayKind:
-      WASM_UNREACHABLE("TODO: compound GC types");
-  }
-  return S32LEB(ret); // TODO: Actually encoded as s33
-}
-
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
@@ -1242,6 +1167,9 @@ public:
   void finishUp();
 
   Module* getModule() { return wasm; }
+
+  S32LEB serializeType(Type type);
+  S32LEB serializeHeapType(HeapType type);
 
 private:
   Module* wasm;

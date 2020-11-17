@@ -221,7 +221,7 @@ void WasmBinaryWriter::writeTypes() {
     for (auto& sigType : {sig.params, sig.results}) {
       o << U32LEB(sigType.size());
       for (const auto& type : sigType) {
-        o << binaryType(type);
+        o << serializeType(type);
       }
     }
   }
@@ -250,7 +250,7 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one global\n");
     writeImportHeader(global);
     o << U32LEB(int32_t(ExternalKind::Global));
-    o << binaryType(global->type);
+    o << serializeType(global->type);
     o << U32LEB(global->mutable_);
   });
   ModuleUtils::iterImportedEvents(*wasm, [&](Event* event) {
@@ -389,7 +389,7 @@ void WasmBinaryWriter::writeGlobals() {
     BYN_TRACE("write one\n");
     size_t i = 0;
     for (const auto& t : global->type) {
-      o << binaryType(t);
+      o << serializeType(t);
       o << U32LEB(global->mutable_);
       if (global->type.size() == 1) {
         writeExpression(global->init);
@@ -950,6 +950,82 @@ void WasmBinaryWriter::finishUp() {
       o << (uint8_t)buffer.data[i];
     }
   }
+}
+
+S32LEB WasmBinaryWriter::serializeType(Type type) {
+  int ret = 0;
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
+    // None only used for block signatures. TODO: Separate out?
+    case Type::none:
+      ret = BinaryConsts::EncodedType::Empty;
+      break;
+    case Type::i32:
+      ret = BinaryConsts::EncodedType::i32;
+      break;
+    case Type::i64:
+      ret = BinaryConsts::EncodedType::i64;
+      break;
+    case Type::f32:
+      ret = BinaryConsts::EncodedType::f32;
+      break;
+    case Type::f64:
+      ret = BinaryConsts::EncodedType::f64;
+      break;
+    case Type::v128:
+      ret = BinaryConsts::EncodedType::v128;
+      break;
+    case Type::funcref:
+      ret = BinaryConsts::EncodedType::funcref;
+      break;
+    case Type::externref:
+      ret = BinaryConsts::EncodedType::externref;
+      break;
+    case Type::exnref:
+      ret = BinaryConsts::EncodedType::exnref;
+      break;
+    case Type::anyref:
+      ret = BinaryConsts::EncodedType::anyref;
+      break;
+    case Type::eqref:
+      ret = BinaryConsts::EncodedType::eqref;
+      break;
+    case Type::i31ref:
+      ret = BinaryConsts::EncodedType::i31ref;
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected type");
+  }
+  return S32LEB(ret);
+}
+
+S32LEB WasmBinaryWriter::serializeHeapType(HeapType type) {
+  int ret = 0;
+  switch (type.kind) {
+    case HeapType::FuncKind:
+      ret = BinaryConsts::EncodedHeapType::func;
+      break;
+    case HeapType::ExternKind:
+      ret = BinaryConsts::EncodedHeapType::extern_;
+      break;
+    case HeapType::ExnKind:
+      ret = BinaryConsts::EncodedHeapType::exn;
+      break;
+    case HeapType::AnyKind:
+      ret = BinaryConsts::EncodedHeapType::any;
+      break;
+    case HeapType::EqKind:
+      ret = BinaryConsts::EncodedHeapType::eq;
+      break;
+    case HeapType::I31Kind:
+      ret = BinaryConsts::EncodedHeapType::i31;
+      break;
+    case HeapType::SignatureKind:
+    case HeapType::StructKind:
+    case HeapType::ArrayKind:
+      WASM_UNREACHABLE("TODO: compound GC types");
+  }
+  return S32LEB(ret); // TODO: Actually encoded as s33
 }
 
 // reader
@@ -5342,6 +5418,7 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
   }
   auto heapType = type.getHeapType();
   if (!heapType.isSignature()) {
+    std::cerr << type << '\n';
     throwError("Invalid reference type for a call_ref");
   }
   auto sig = heapType.getSignature();
