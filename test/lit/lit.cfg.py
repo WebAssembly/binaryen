@@ -11,6 +11,7 @@ config.test_exec_root = os.path.join(config.binaryen_root, 'test')
 # Replace all Binaryen tools with their absolute paths
 bin_dir = os.path.join(config.binaryen_root, 'bin')
 for tool in os.listdir(bin_dir):
+    print("substituting " + tool " for " + config.binaryen_root + '/bin/' + tool)
     config.substitutions.append((tool, config.binaryen_root + '/bin/' + tool))
 
 # Also make the `not` command available
