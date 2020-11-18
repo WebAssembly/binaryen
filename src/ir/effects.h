@@ -521,9 +521,7 @@ private:
       parent.implicitTrap = true;
     }
     void visitNop(Nop* curr) {}
-    void visitUnreachable(Unreachable* curr) {
-      parent.branchesOut = true;
-    }
+    void visitUnreachable(Unreachable* curr) { parent.branchesOut = true; }
     void visitPop(Pop* curr) {
       if (parent.catchDepth == 0) {
         parent.danglingPop = true;
