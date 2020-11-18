@@ -1,43 +1,43 @@
 ;; Test that invalid command line option combinations are properly rejected with
 ;; helpful error messages.
 
-# --instrument cannot be used with --profile
+;; --instrument cannot be used with --profile
 ;; RUN: not wasm-split %s --instrument --profile %t 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-PROFILE
 
-# --instrument cannot be used with -o1
+;; --instrument cannot be used with -o1
 ;; RUN: not wasm-split %s --instrument -o1 %t 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-OUT1
 
-# --instrument cannot be used with -o2
+;; --instrument cannot be used with -o2
 ;; RUN: not wasm-split %s --instrument -o2 %t 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-OUT2
 
-# --instrument cannot be used with --import-namespace
+;; --instrument cannot be used with --import-namespace
 ;; RUN: not wasm-split %s --instrument --import-namespace=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-IMPORT-NS
 
-# --instrument cannot be used with --placeholder-namespace
+;; --instrument cannot be used with --placeholder-namespace
 ;; RUN: not wasm-split %s --instrument --placeholder-namespace=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-PLACEHOLDER-NS
 
-# --instrument cannot be used with --export-prefix
+;; --instrument cannot be used with --export-prefix
 ;; RUN: not wasm-split %s --instrument --export-prefix=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-EXPORT-PREFIX
 
-# --instrument cannot be used with --keep-funcs
+;; --instrument cannot be used with --keep-funcs
 ;; RUN: not wasm-split %s --instrument --keep-funcs=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-KEEP-FUNCS
 
-# --instrument cannot be used with --split-funcs
+;; --instrument cannot be used with --split-funcs
 ;; RUN: not wasm-split %s --instrument --split-funcs=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-SPLIT-FUNCS
 
-# --instrument is required to use -o
+;; --instrument is required to use -o
 ;; RUN: not wasm-split %s -o %t 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix NO-INSTRUMENT-OUT
 
-# --instrument is required to use --profile-export
+;; --instrument is required to use --profile-export
 ;; RUN: not wasm-split %s --profile-export=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix NO-INSTRUMENT-PROFILE-EXPORT
 
