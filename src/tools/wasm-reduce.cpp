@@ -1,4 +1,3 @@
-#include <wasm-printing.h>
 /*
  * Copyright 2017 WebAssembly Community Group participants
  *
@@ -367,10 +366,7 @@ struct Reducer
   }
 
   bool writeAndTestReduction(ProgramResult& out) {
-std::cout << "writing...............\n";
-WasmPrinter::printModule(getModule(), std::cout);
-std::cout << '\n';
-      // write the module out
+    // write the module out
     ModuleWriter writer;
     writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
@@ -381,7 +377,6 @@ std::cout << '\n';
     // encode things slightly less efficiently.
     // test it
     out.getFromExecution(command);
-std::cout << "writed!\n";
     return out == expected;
   }
 
