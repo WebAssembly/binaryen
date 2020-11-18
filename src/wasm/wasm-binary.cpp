@@ -493,7 +493,8 @@ uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
 uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) const {
   auto it = typeIndices.find(sig);
   // waka
-  if (it == typeIndices.end()) std::cout << "bad " << sig << '\n';
+  if (it == typeIndices.end())
+    std::cout << "bad " << sig << '\n';
   // waka
   assert(it != typeIndices.end());
   return it->second;
