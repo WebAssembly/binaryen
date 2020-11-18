@@ -795,7 +795,7 @@ void FunctionValidator::visitCall(Call* curr) {
         curr,
         "calls may only be unreachable if they have unreachable operands");
     } else {
-      shouldBeSubTypeOrFirstIsUnreachable(
+      shouldBeEqual(
         curr->type,
         target->sig.results,
         curr,
@@ -2034,6 +2034,9 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
+  shouldBeTrue(!curr->type.isNullable(),
+               curr,
+               "ref.func type must not be nullable");
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
