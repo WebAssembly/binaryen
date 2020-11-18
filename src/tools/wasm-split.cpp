@@ -289,7 +289,7 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
     std::cerr << "warning: not keeping any functions in the primary module\n";
   }
 
-  // If warnings are enabled, check that any functions are being split out
+  // If warnings are enabled, check that any functions are being split out.
   if (!options.quiet) {
     std::set<Name> splitFuncs;
     ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
