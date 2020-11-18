@@ -156,6 +156,7 @@ struct DAEScanner
     // function's type. If we did change it, it could be an observable
     // difference from the outside, if the reference escapes, for example.
     // TODO: look for actual escaping?
+    // TODO: create a thunk for external uses that allow internal optimizations
     (*infoMap)[curr->func].hasUnseenCalls = true;
   }
 
