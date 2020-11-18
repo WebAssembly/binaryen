@@ -479,13 +479,11 @@ struct OptimizeInstructions
         // fneg(x * C)   ==>   x * -C
         // fneg(x / C)   ==>   x / -C
         // fneg(C / x)   ==>   -C / x
-        //  if x != C and C != NaN
         if (fastMath &&
             (matches(curr, unary(Neg, binary(&bin, Mul, any(&x), fval(&c)))) ||
              matches(curr, unary(Neg, binary(&bin, DivS, any(&x), fval(&c)))) ||
              matches(curr,
-                     unary(Neg, binary(&bin, DivS, fval(&c), any(&x))))) &&
-            !c->value.isNaN() && !x->is<Const>()) {
+                     unary(Neg, binary(&bin, DivS, fval(&c), any(&x)))))) {
           c->value = c->value.neg();
           return bin;
         }
