@@ -493,14 +493,26 @@ struct OptimizeInstructions
         // (fneg(x) / y) op C   ==>   (x / y) op -C
         // (x / fneg(y)) op C   ==>   (x / y) op -C
         //   where op = `*` `/` or `+`
-        if ((matches(curr, binary(&op, binary(&bin, Mul, unary(Neg, any(&x)), any(&y)), fval(&c))) ||
-             matches(curr, binary(&op, binary(&bin, Mul, any(&x), unary(Neg, any(&y))), fval(&c))) ||
-             matches(curr, binary(&op, binary(&bin, DivS, unary(Neg, any(&x)), any(&y)), fval(&c))) ||
-             matches(curr, binary(&op, binary(&bin, DivS, any(&x), unary(Neg, any(&y))), fval(&c)))) &&
+        if ((matches(curr,
+                     binary(&op,
+                            binary(&bin, Mul, unary(Neg, any(&x)), any(&y)),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(&op,
+                            binary(&bin, Mul, any(&x), unary(Neg, any(&y))),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(&op,
+                            binary(&bin, DivS, unary(Neg, any(&x)), any(&y)),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(&op,
+                            binary(&bin, DivS, any(&x), unary(Neg, any(&y))),
+                            fval(&c)))) &&
             op == Abstract::getBinary(bin->type, Mul) &&
             op == Abstract::getBinary(bin->type, DivS) &&
-            op == Abstract::getBinary(bin->type, Add) &&
-            !x->is<Const>() && !y->is<Const>() && !c->value.isNaN()) {
+            op == Abstract::getBinary(bin->type, Add) && !x->is<Const>() &&
+            !y->is<Const>() && !c->value.isNaN()) {
           c->value = c->value.neg();
           bin->left = x;
           bin->right = y;
