@@ -39,8 +39,8 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # * multivalue: https://github.com/WebAssembly/binaryen/issues/2770
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
-INPUT_SIZE_MIN = 512
-INPUT_SIZE_MEAN = 512
+INPUT_SIZE_MIN = 1024
+INPUT_SIZE_MEAN = 40 * 1024
 INPUT_SIZE_MAX = 5 * INPUT_SIZE_MEAN
 
 PRINT_WATS = False
