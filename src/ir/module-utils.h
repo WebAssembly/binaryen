@@ -414,6 +414,7 @@ collectSignatures(Module& wasm,
       Counts& counts;
 
       TypeCounter(Counts& counts) : counts(counts) {}
+
       void visitExpression(Expression* curr) {
         if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
@@ -421,6 +422,11 @@ collectSignatures(Module& wasm,
           // TODO: Allow control flow to have input types as well
           if (curr->type.isTuple()) {
             counts[Signature(Type::none, curr->type)]++;
+          }
+        } else if (curr->is<RefNull>() || curr->is<RefFunc>()) {
+          auto heapType = curr->type.getHeapType();
+          if (heapType.isSignature()) {
+            counts[heapType.getSignature()]++;
           }
         }
       }
