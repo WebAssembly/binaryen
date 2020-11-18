@@ -39,11 +39,7 @@ struct LogFunction : public WalkerPass<PostWalker<LogFunction>> {
     if (curr->imported()) {
       return;
     }
-    if (auto* block = curr->body->dynCast<Block>()) {
-      if (!block->list.empty()) {
-        block->list.back() = makeLogCall(block->list.back());
-      }
-    }
+    
     curr->body = makeLogCall(curr->body);
   }
 
