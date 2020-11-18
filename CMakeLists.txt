@@ -278,6 +278,9 @@ add_subdirectory(src/support)
 add_subdirectory(src/wasm)
 add_subdirectory(third_party)
 
+# Configure lit tests
+add_subdirectory(test/lit)
+
 # Object files
 set(binaryen_objs
     $<TARGET_OBJECTS:passes>

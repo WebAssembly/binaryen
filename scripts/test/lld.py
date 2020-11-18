@@ -26,8 +26,6 @@ def args_for_finalize(filename):
         ret += ['--side-module']
     if 'standalone-wasm' in filename:
         ret += ['--standalone-wasm']
-    if 'bigint' in filename:
-        ret += ['--bigint']
     return ret
 
 
