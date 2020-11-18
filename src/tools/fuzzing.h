@@ -1082,14 +1082,13 @@ private:
                 WeightedOption{&Self::makeGlobalGet, Important},
                 WeightedOption{&Self::makeConst, Important});
     if (canMakeControlFlow) {
-      options
-        .add(FeatureSet::MVP,
-             WeightedOption{&Self::makeBlock, Important},
-             WeightedOption{&Self::makeIf, Important},
-             WeightedOption{&Self::makeLoop, Important},
-             WeightedOption{&Self::makeBreak, Important},
-             &Self::makeCall,
-             &Self::makeCallIndirect);
+      options.add(FeatureSet::MVP,
+                  WeightedOption{&Self::makeBlock, Important},
+                  WeightedOption{&Self::makeIf, Important},
+                  WeightedOption{&Self::makeLoop, Important},
+                  WeightedOption{&Self::makeBreak, Important},
+                  &Self::makeCall,
+                  &Self::makeCallIndirect);
     }
     if (type.isSingle()) {
       options
@@ -1156,23 +1155,22 @@ private:
     using Self = TranslateToFuzzReader;
     auto options = FeatureOptions<Expression* (Self::*)(Type)>();
     using WeightedOption = decltype(options)::WeightedOption;
-    options
-      .add(FeatureSet::MVP,
-           WeightedOption{&Self::makeLocalSet, VeryImportant},
-           WeightedOption{&Self::makeBlock, Important},
-           WeightedOption{&Self::makeIf, Important},
-           WeightedOption{&Self::makeLoop, Important},
-           WeightedOption{&Self::makeBreak, Important},
-           WeightedOption{&Self::makeStore, Important},
-           WeightedOption{&Self::makeUnary, Important},
-           WeightedOption{&Self::makeBinary, Important},
-           WeightedOption{&Self::makeUnreachable, Important},
-           &Self::makeCall,
-           &Self::makeCallIndirect,
-           &Self::makeSelect,
-           &Self::makeSwitch,
-           &Self::makeDrop,
-           &Self::makeReturn);
+    options.add(FeatureSet::MVP,
+                WeightedOption{&Self::makeLocalSet, VeryImportant},
+                WeightedOption{&Self::makeBlock, Important},
+                WeightedOption{&Self::makeIf, Important},
+                WeightedOption{&Self::makeLoop, Important},
+                WeightedOption{&Self::makeBreak, Important},
+                WeightedOption{&Self::makeStore, Important},
+                WeightedOption{&Self::makeUnary, Important},
+                WeightedOption{&Self::makeBinary, Important},
+                WeightedOption{&Self::makeUnreachable, Important},
+                &Self::makeCall,
+                &Self::makeCallIndirect,
+                &Self::makeSelect,
+                &Self::makeSwitch,
+                &Self::makeDrop,
+                &Self::makeReturn);
     return (this->*pick(options))(Type::unreachable);
   }
 
