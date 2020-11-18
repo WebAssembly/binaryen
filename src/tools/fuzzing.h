@@ -323,28 +323,33 @@ private:
     }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
-    TODO_SINGLE_COMPOUND(type);
-    switch (type.getBasic()) {
-      case Type::anyref:
-        if (wasm.features.hasReferenceTypes()) {
-          options.push_back(Type::funcref);
-          options.push_back(Type::externref);
-          if (wasm.features.hasExceptionHandling()) {
-            options.push_back(Type::exnref);
+    if (type.isFunction()) {
+      // TODO: specific typed function references types
+      options.push_back(Type::funcref);
+    } else {
+      TODO_SINGLE_COMPOUND(type);
+      switch (type.getBasic()) {
+        case Type::anyref:
+          if (wasm.features.hasReferenceTypes()) {
+            options.push_back(Type::funcref);
+            options.push_back(Type::externref);
+            if (wasm.features.hasExceptionHandling()) {
+              options.push_back(Type::exnref);
+            }
+            if (wasm.features.hasGC()) {
+              options.push_back(Type::eqref);
+              options.push_back(Type::i31ref);
+            }
           }
+          break;
+        case Type::eqref:
           if (wasm.features.hasGC()) {
-            options.push_back(Type::eqref);
             options.push_back(Type::i31ref);
           }
-        }
-        break;
-      case Type::eqref:
-        if (wasm.features.hasGC()) {
-          options.push_back(Type::i31ref);
-        }
-        break;
-      default:
-        break;
+          break;
+        default:
+          break;
+      }
     }
     return pick(options);
   }
@@ -653,6 +658,10 @@ private:
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
+      if (type.isRef() && !type.isNullable()) {
+        // We can't use a nullable type as a var, which is null-initialized.
+        continue;
+      }
       funcContext->typeLocals[type].push_back(params.size() +
                                               func->vars.size());
       func->vars.push_back(type);
@@ -1073,13 +1082,15 @@ private:
                 WeightedOption{&Self::makeGlobalGet, Important},
                 WeightedOption{&Self::makeConst, Important});
     if (canMakeControlFlow) {
-      options.add(FeatureSet::MVP,
-                  WeightedOption{&Self::makeBlock, Important},
-                  WeightedOption{&Self::makeIf, Important},
-                  WeightedOption{&Self::makeLoop, Important},
-                  WeightedOption{&Self::makeBreak, Important},
-                  &Self::makeCall,
-                  &Self::makeCallIndirect);
+      options
+        .add(FeatureSet::MVP,
+             WeightedOption{&Self::makeBlock, Important},
+             WeightedOption{&Self::makeIf, Important},
+             WeightedOption{&Self::makeLoop, Important},
+             WeightedOption{&Self::makeBreak, Important},
+             &Self::makeCall,
+             &Self::makeCallIndirect)
+        .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     }
     if (type.isSingle()) {
       options
@@ -1138,7 +1149,8 @@ private:
            &Self::makeNop,
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
-      .add(FeatureSet::Atomics, &Self::makeAtomic);
+      .add(FeatureSet::Atomics, &Self::makeAtomic)
+      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     return (this->*pick(options))(Type::none);
   }
 
@@ -1146,22 +1158,24 @@ private:
     using Self = TranslateToFuzzReader;
     auto options = FeatureOptions<Expression* (Self::*)(Type)>();
     using WeightedOption = decltype(options)::WeightedOption;
-    options.add(FeatureSet::MVP,
-                WeightedOption{&Self::makeLocalSet, VeryImportant},
-                WeightedOption{&Self::makeBlock, Important},
-                WeightedOption{&Self::makeIf, Important},
-                WeightedOption{&Self::makeLoop, Important},
-                WeightedOption{&Self::makeBreak, Important},
-                WeightedOption{&Self::makeStore, Important},
-                WeightedOption{&Self::makeUnary, Important},
-                WeightedOption{&Self::makeBinary, Important},
-                WeightedOption{&Self::makeUnreachable, Important},
-                &Self::makeCall,
-                &Self::makeCallIndirect,
-                &Self::makeSelect,
-                &Self::makeSwitch,
-                &Self::makeDrop,
-                &Self::makeReturn);
+    options
+      .add(FeatureSet::MVP,
+           WeightedOption{&Self::makeLocalSet, VeryImportant},
+           WeightedOption{&Self::makeBlock, Important},
+           WeightedOption{&Self::makeIf, Important},
+           WeightedOption{&Self::makeLoop, Important},
+           WeightedOption{&Self::makeBreak, Important},
+           WeightedOption{&Self::makeStore, Important},
+           WeightedOption{&Self::makeUnary, Important},
+           WeightedOption{&Self::makeBinary, Important},
+           WeightedOption{&Self::makeUnreachable, Important},
+           &Self::makeCall,
+           &Self::makeCallIndirect,
+           &Self::makeSelect,
+           &Self::makeSwitch,
+           &Self::makeDrop,
+           &Self::makeReturn)
+      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     return (this->*pick(options))(Type::unreachable);
   }
 
@@ -1371,7 +1385,6 @@ private:
   }
 
   Expression* makeCall(Type type) {
-    // seems ok, go on
     int tries = TRIES;
     bool isReturn;
     while (tries-- > 0) {
@@ -1392,7 +1405,7 @@ private:
       return builder.makeCall(target->name, args, type, isReturn);
     }
     // we failed to find something
-    return make(type);
+    return makeTrivial(type);
   }
 
   Expression* makeCallIndirect(Type type) {
@@ -1418,7 +1431,7 @@ private:
         i = 0;
       }
       if (i == start) {
-        return make(type);
+        return makeTrivial(type);
       }
     }
     // with high probability, make sure the type is valid  otherwise, most are
@@ -2018,12 +2031,25 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        return builder.makeRefFunc(target->name);
+        auto type = Type(HeapType(target->sig), /* nullable = */ true);
+        return builder.makeRefFunc(target->name, type);
       }
       if (type == Type::i31ref) {
         return builder.makeI31New(makeConst(Type::i32));
       }
-      return builder.makeRefNull(type);
+      if (type.isNullable()) {
+        return builder.makeRefNull(type);
+      }
+      // Well this is quite the pickle, we are asked to create a non-nullable
+      // type, and so can't just make a null. Look for an existing thing with
+      // the right type.
+      // TODO: randomize the order
+      for (auto& func : wasm.functions) {
+        if (type == Type(HeapType(func->sig), /* nullable = */ true)) {
+          return builder.makeRefFunc(func->name, type);
+        }
+      }
+      WASM_UNREACHABLE("un-handleable non-nullable type");
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
@@ -2997,12 +3023,27 @@ private:
 
   Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
+  Type getMVPType() {
+    return pick(items(FeatureOptions<Type>().add(
+      FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)));
+  }
+
   Type getTupleType() {
     std::vector<Type> elements;
-    size_t numElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
-    elements.resize(numElements);
-    for (size_t i = 0; i < numElements; ++i) {
-      elements[i] = getSingleConcreteType();
+    size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
+    for (size_t i = 0; i < maxElements; ++i) {
+      auto type = getSingleConcreteType();
+      // Don't add ref types into a tuple for now, as if they are non-nullable
+      // then they can't be spilled into locals. And even if they are nullable,
+      // like a funcref, but we create a subtype that is *not* nullable (like
+      // a ref.func) then that would be the effective type here, and again we'd
+      // have a non-nullable type.
+      if (!type.isRef()) {
+        elements.push_back(type);
+      }
+    }
+    while (elements.size() < 2) {
+      elements.push_back(getMVPType());
     }
     return Type(elements);
   }

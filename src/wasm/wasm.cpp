@@ -47,6 +47,7 @@ const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
+const char* TypedFunctionReferencesFeature = "typed-function-references";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -984,7 +985,12 @@ void RefIsNull::finalize() {
   type = Type::i32;
 }
 
-void RefFunc::finalize() { type = Type::funcref; }
+void RefFunc::finalize() {
+  // No-op. We assume that the full proper typed function type has been applied
+  // previously.
+}
+
+void RefFunc::finalize(Type type_) { type = type_; }
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {

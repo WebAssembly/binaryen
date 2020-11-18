@@ -1378,7 +1378,7 @@ console.log("# RefFunc");
   const module = new binaryen.Module();
 
   var func = "a";
-  const theRefFunc = binaryen.RefFunc(module.ref.func(func));
+  const theRefFunc = binaryen.RefFunc(module.ref.func(func, binaryen.funcref));
   assert(theRefFunc instanceof binaryen.RefFunc);
   assert(theRefFunc instanceof binaryen.Expression);
   assert(theRefFunc.func === func);
