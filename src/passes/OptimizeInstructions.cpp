@@ -480,7 +480,8 @@ struct OptimizeInstructions
         // fneg(x / C)   ==>   x / -C
         // fneg(C / x)   ==>   -C / x
         //  if x != C and C != NaN
-        if ((matches(curr, unary(Neg, binary(&bin, Mul, any(&x), fval(&c)))) ||
+        if (fastMath &&
+            (matches(curr, unary(Neg, binary(&bin, Mul, any(&x), fval(&c)))) ||
              matches(curr, unary(Neg, binary(&bin, DivS, any(&x), fval(&c)))) ||
              matches(curr,
                      unary(Neg, binary(&bin, DivS, fval(&c), any(&x))))) &&
