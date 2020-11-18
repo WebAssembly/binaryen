@@ -444,8 +444,7 @@ private:
           parent.implicitTrap = true;
           break;
         }
-        default: {
-        }
+        default: {}
       }
     }
     void visitBinary(Binary* curr) {
@@ -474,8 +473,7 @@ private:
           }
           break;
         }
-        default: {
-        }
+        default: {}
       }
     }
     void visitSelect(Select* curr) {}
