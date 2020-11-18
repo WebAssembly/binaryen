@@ -71,11 +71,16 @@ public:
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
+  // A trap, either from an unreachable instruction, or from an implicit trap
+  // that we do not ignore (see below).
+  // Note that we ignore trap differences, so it is ok to reorder traps with
+  // each other, but it is not ok to remove them or reorder them with other
+  // effects in a noticeable way.
   bool trap = false;
-  // a load or div/rem, which may trap. we ignore trap differences, so it is ok
-  // to reorder these, but we can't remove them, as they count as side effects,
-  // and we can't move them in a way that would cause other noticeable (global)
-  // side effects
+  // A trap from an instruction like a load or div/rem, which may trap on corner
+  // cases. If we do not ignore implicit traps then these are counted as a trap,
+  // and normally you would look at the "trap" property and not "implicitTrap"
+  // (unless you specifically care about the type of the trap).
   bool implicitTrap = false;
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
