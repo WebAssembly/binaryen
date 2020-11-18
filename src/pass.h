@@ -268,10 +268,6 @@ class Pass {
 public:
   virtual ~Pass() = default;
 
-  // Override this to perform preparation work before the pass runs.
-  // This will be called before the pass is run on a module.
-  virtual void prepareToRun(PassRunner* runner, Module* module) {}
-
   // Implement this with code to run the pass on the whole module
   virtual void run(PassRunner* runner, Module* module) {
     WASM_UNREACHABLE("unimplemented");
