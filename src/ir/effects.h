@@ -77,11 +77,14 @@ public:
   // each other, but it is not ok to remove them or reorder them with other
   // effects in a noticeable way.
   bool trap = false;
+
+private:
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap,
-  // and normally you would look at the "trap" property and not "implicitTrap"
-  // (unless you specifically care about the type of the trap).
+  // and so this field is private and just for internal use.
   bool implicitTrap = false;
+
+public:
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
