@@ -30,6 +30,8 @@ using namespace wasm;
 
 namespace {
 
+const std::string DEFAULT_PROFILE_EXPORT("__write_profile");
+
 std::set<Name> parseNameList(const std::string& list) {
   std::set<Name> names;
   std::istringstream stream(list);
@@ -45,7 +47,7 @@ struct WasmSplitOptions : ToolOptions {
   bool instrument = false;
 
   std::string profileFile;
-  std::string profileExport = "__write_profile";
+  std::string profileExport = DEFAULT_PROFILE_EXPORT;
 
   std::set<Name> keepFuncs;
   std::set<Name> splitFuncs;
@@ -198,6 +200,9 @@ bool WasmSplitOptions::validate() {
     if (output.size()) {
       fail(
         "must provide separate primary and secondary output with -o1 and -o2");
+    }
+    if (profileExport != DEFAULT_PROFILE_EXPORT) {
+      fail("--profile-export must be used with --instrument");
     }
   }
 
