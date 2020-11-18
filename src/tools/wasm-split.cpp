@@ -238,10 +238,6 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
     p.dump(std::cerr);
     std::cerr << '\n';
     Fatal() << "error parsing wasm";
-  } catch (MapParseException& p) {
-    p.dump(std::cerr);
-    std::cerr << '\n';
-    Fatal() << "error parsing wasm source map";
   } catch (std::bad_alloc&) {
     Fatal() << "error building module, std::bad_alloc (possibly invalid "
                "request for silly amounts of memory)";
