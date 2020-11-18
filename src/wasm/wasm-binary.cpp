@@ -1014,9 +1014,6 @@ void WasmBinaryWriter::writeType(Type type) {
 void WasmBinaryWriter::writeHeapType(HeapType type) {
   if (type.isSignature()) {
     auto sig = type.getSignature();
-    // FIXME: should this really be using the main indexing of all types, and
-    // not something specific to heap types? The spec overview for typed
-    // function references just
     o << S32LEB(getTypeIndex(sig));
     return;
   }
