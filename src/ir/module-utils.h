@@ -440,6 +440,14 @@ collectSignatures(Module& wasm,
   Counts counts;
   for (auto& curr : wasm.functions) {
     counts[curr->sig]++;
+    for (auto type : curr->vars) {
+      if (type.isRef()) {
+        auto heapType = type.getHeapType();
+        if (heapType.isSignature()) {
+          counts[heapType.getSignature()]++;
+        }
+      }
+    }
   }
   for (auto& curr : wasm.events) {
     counts[curr->sig]++;
