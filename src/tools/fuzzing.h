@@ -1465,7 +1465,7 @@ private:
       // The target doesn't exist yet.
       return makeTrivial(type);
     }
-    auto functionType = Type(HeapType(func->sig), /* nullable = */ false);
+    auto functionType = Type(HeapType(func->sig), /* nullable = */ true);
     return builder.makeCallRef(
       make(functionType), call->operands, type, call->isReturn);
   }
@@ -2052,7 +2052,7 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        auto type = Type(HeapType(target->sig), /* nullable = */ false);
+        auto type = Type(HeapType(target->sig), /* nullable = */ true);
         return builder.makeRefFunc(target->name, type);
       }
       if (type == Type::i31ref) {
@@ -2066,7 +2066,7 @@ private:
       // the right type.
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
-        if (type == Type(HeapType(func->sig), /* nullable = */ false)) {
+        if (type == Type(HeapType(func->sig), /* nullable = */ true)) {
           return builder.makeRefFunc(func->name, type);
         }
       }

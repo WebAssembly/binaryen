@@ -1354,7 +1354,9 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::nullable:
       return Type(getHeapType(), /* nullable = */ true);
     case BinaryConsts::EncodedType::nonnullable:
-      return Type(getHeapType(), /* nullable = */ false);
+      // FIXME: support non-nullable types. search for all "nullable = "
+      //        comments.
+      return Type(getHeapType(), /* nullable = */ true);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     default:
@@ -5289,7 +5291,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   curr->finalize(
-    Type(HeapType(getFunctionSignatureByIndex(index)), /* nullable = */ false));
+    Type(HeapType(getFunctionSignatureByIndex(index)), /* nullable = */ true));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {

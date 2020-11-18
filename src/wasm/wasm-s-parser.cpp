@@ -1893,7 +1893,7 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   ret->finalize(
-    Type(HeapType(functionSignatures[func]), /* nullable = */ false));
+    Type(HeapType(functionSignatures[func]), /* nullable = */ true));
   return ret;
 }
 

@@ -2034,8 +2034,7 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
-  shouldBeTrue(
-    !curr->type.isNullable(), curr, "ref.func type must not be nullable");
+  // TODO: check for nullability.
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -2324,9 +2323,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
     shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
-    shouldBeFalse(var.isRef() && !var.isNullable(),
-                  curr,
-                  "reference type vars must be nullable");
+    // TODO: check for nullability
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
