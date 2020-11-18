@@ -2030,6 +2030,10 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
+  shouldBeTrue(curr->type.isFunction(),
+               curr,
+               "ref.func must have a function reference type");
+  // TODO: check for non-nullability
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -2311,7 +2315,7 @@ void FunctionValidator::visitFunction(Function* curr) {
     shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
   }
   shouldBeTrue(features <= getModule()->features,
-               curr,
+               curr->name,
                "all used types should be allowed");
   if (curr->profile == IRProfile::Poppy) {
     shouldBeTrue(
