@@ -167,8 +167,17 @@ struct DAEScanner
     info = &((*infoMap)[func->name]);
     CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(
       func);
-    // If there are relevant params, check if they are used.
-    if (numParams > 0) {
+    // If there are relevant params, check if they are used. If we can't
+    // optimize the function anyhow, there's no point (note that our check here
+    // is technically racy - another thread could update hasUnseenCalls to true
+    // around when we check it - but that just means that we might or might not
+    // do some extra work, as we'll ignore the results later if we have unseen
+    // calls. That is, the check for hasUnseenCalls here is just a minor
+    // optimization to avoid pointless work. We can avoid that work if either
+    // we know there is an unseen call before the parallel analysis that we are
+    // part of, say if we are exported, or if another parallel function finds a
+    // RefFunc to us and updates it before we check it).
+    if (numParams > 0 && !info->hasUnseenCalls) {
       findUnusedParams();
     }
   }
