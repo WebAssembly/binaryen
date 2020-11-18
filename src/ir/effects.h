@@ -111,7 +111,7 @@ public:
   // caught in the function at all, which would mean control flow cannot be
   // transferred inside the function, but this expression does not know that).
   bool transfersControlFlow() const {
-    return branchesOut || throws || trap || hasExternalBreakTargets();
+    return branchesOut || throws || hasExternalBreakTargets();
   }
 
   // Changes something in globally-stored state.
