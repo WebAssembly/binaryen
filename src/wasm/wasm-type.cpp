@@ -579,6 +579,9 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   }
   if (a.isRef()) {
     if (b.isRef()) {
+      if (a.isFunction() && b.isFunction()) {
+        return Type::funcref;
+      }
       if ((a == Type::i31ref && b == Type::eqref) ||
           (a == Type::eqref && b == Type::i31ref)) {
         return Type::eqref;

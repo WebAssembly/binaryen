@@ -25,6 +25,7 @@ CMakeFiles
 *.o
 *.obj
 compile_commands.json
+test/lit/lit.site.cfg.py
 
 # files related to bulding in-tree on windows
 /.vs/
