@@ -94,14 +94,6 @@ struct ExecutionResults {
         if (func->sig.results != Type::none) {
           // this has a result
           Literals ret = run(func, wasm, instance);
-          // We cannot compare funcrefs by name because function names can
-          // change (after duplicate function elimination or roundtripping)
-          // while the function contents are still the same
-          for (Literal& val : ret) {
-            if (val.type == Type::funcref && !val.isNull()) {
-              val = Literal::makeFunc(Name("funcref"));
-            }
-          }
           results[exp->name] = ret;
           // ignore the result if we hit an unreachable and returned no value
           if (ret.size() > 0) {
@@ -129,14 +121,21 @@ struct ExecutionResults {
   }
 
   bool areEqual(Literal a, Literal b) {
+    if (a.type != b.type) {
+      std::cout << "types not identical! " << a << " != " << b << '\n';
+      return false;
+    }
     if (a.type.isRef()) {
-      // Don't compare reference types - only their types.
-      // See https://github.com/WebAssembly/binaryen/issues/3378
-      if (a.type != b.type) {
-        std::cout << "ref types not identical! " << a << " != " << b << '\n';
-        return false;
-      }
-    } else if (a != b) {
+      // Don't compare references - only their types. There are several issues
+      // here that we can't fully handle, see
+      // https://github.com/WebAssembly/binaryen/issues/3378, but the core issue
+      // is that we are comparing results between two separate wasm modules (and
+      // a separate instance of each) - we can't really identify an identical
+      // reference between such things. We can only compare things structurally,
+      // for which we compare the types.
+      return true;
+    }
+    if (a != b) {
       std::cout << "values not identical! " << a << " != " << b << '\n';
       return false;
     }

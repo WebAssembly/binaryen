@@ -2034,7 +2034,7 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
-  // TODO: check for nullability.
+  // TODO: check for non-nullability
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
