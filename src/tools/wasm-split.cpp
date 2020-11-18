@@ -231,7 +231,6 @@ void WasmSplitOptions::parse(int argc, const char* argv[]) {
 
 void parseInput(Module& wasm, const WasmSplitOptions& options) {
   ModuleReader reader;
-  reader.setDWARF(false);
   reader.setProfile(options.profile);
   try {
     reader.read(options.input, wasm);
