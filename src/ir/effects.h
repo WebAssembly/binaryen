@@ -111,7 +111,7 @@ public:
   // caught in the function at all, which would mean control flow cannot be
   // transferred inside the function, but this expression does not know that).
   bool transfersControlFlow() const {
-    return branchesOut || throws || hasExternalBreakTargets();
+    return branchesOut || throws || trap || hasExternalBreakTargets();
   }
 
   // Changes something in globally-stored state.
@@ -525,7 +525,6 @@ private:
     }
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) {
-      parent.branchesOut = true;
       parent.trap = true;
     }
     void visitPop(Pop* curr) {
