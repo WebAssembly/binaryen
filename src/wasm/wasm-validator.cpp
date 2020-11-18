@@ -2323,6 +2323,9 @@ void FunctionValidator::visitFunction(Function* curr) {
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
     shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
+    shouldBeFalse(var.isRef() && !var.isNullable(),
+                  curr,
+                  "reference type vars must be nullable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
