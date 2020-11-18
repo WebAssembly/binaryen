@@ -464,11 +464,13 @@ collectSignatures(Module& wasm,
     auto sig = pair.first;
     depthOfDependencies[sig] = 0;
     toVisit.insert(sig);
-    for (const Type& type : {sig.params, sig.results}) {
-      if (type.isRef()) {
-        auto heapType = type.getHeapType();
-        if (heapType.isSignature()) {
-          isDependencyOf[heapType.getSignature()].insert(sig);
+    for (Type type : {sig.params, sig.results}) {
+      for (auto subType : type) {
+        if (subType.isRef()) {
+          auto heapType = subType.getHeapType();
+          if (heapType.isSignature()) {
+            isDependencyOf[heapType.getSignature()].insert(sig);
+          }
         }
       }
     }
@@ -480,6 +482,9 @@ collectSignatures(Module& wasm,
     // Anything that depends on this has a depth of dependencies equal to this
     // signature's, plus this signature itself.
     auto newDepth = depthOfDependencies[sig] + 1;
+    if (newDepth > counts.size()) {
+      Fatal() << "Cyclic signatures detected, cannot sort them.";
+    }
     for (auto& other : isDependencyOf[sig]) {
       if (depthOfDependencies[other] < newDepth) {
         // We found something new to propagate.
@@ -493,8 +498,8 @@ collectSignatures(Module& wasm,
   std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
                                                    counts.end());
   std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    if (depthOfDependencies[a.first] != depthOfDependencies[a.first]) {
-      return depthOfDependencies[a.first] < depthOfDependencies[a.first];
+    if (depthOfDependencies[a.first] != depthOfDependencies[b.first]) {
+      return depthOfDependencies[a.first] < depthOfDependencies[b.first];
     }
     if (a.second != b.second) {
       return a.second > b.second;
