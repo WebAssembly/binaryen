@@ -3045,9 +3045,8 @@ private:
   Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
   Type getMVPType() {
-    return pick(items(
-      FeatureOptions<Type>()
-        .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)));
+    return pick(items(FeatureOptions<Type>().add(
+      FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)));
   }
 
   Type getTupleType() {

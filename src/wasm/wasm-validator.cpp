@@ -796,11 +796,10 @@ void FunctionValidator::visitCall(Call* curr) {
         curr,
         "calls may only be unreachable if they have unreachable operands");
     } else {
-      shouldBeEqual(
-        curr->type,
-        target->sig.results,
-        curr,
-        "call type must match callee return type");
+      shouldBeEqual(curr->type,
+                    target->sig.results,
+                    curr,
+                    "call type must match callee return type");
     }
   }
 }
@@ -2035,9 +2034,8 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
-  shouldBeTrue(!curr->type.isNullable(),
-               curr,
-               "ref.func type must not be nullable");
+  shouldBeTrue(
+    !curr->type.isNullable(), curr, "ref.func type must not be nullable");
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
