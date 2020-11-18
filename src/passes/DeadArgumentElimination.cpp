@@ -169,11 +169,11 @@ struct DAEScanner
       func);
     // If there are relevant params, check if they are used.
     if (numParams > 0) {
-      findUnusedParams(func);
+      findUnusedParams();
     }
   }
 
-  void findUnusedParams(Function* func) {
+  void findUnusedParams() {
     // Flow the incoming parameter values, see if they reach a read.
     // Once we've seen a parameter at a block, we need never consider it there
     // again.
