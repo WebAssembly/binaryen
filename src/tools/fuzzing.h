@@ -1089,8 +1089,7 @@ private:
              WeightedOption{&Self::makeLoop, Important},
              WeightedOption{&Self::makeBreak, Important},
              &Self::makeCall,
-             &Self::makeCallIndirect)
-        .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
+             &Self::makeCallIndirect);
     }
     if (type.isSingle()) {
       options
@@ -1149,8 +1148,7 @@ private:
            &Self::makeNop,
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
-      .add(FeatureSet::Atomics, &Self::makeAtomic)
-      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
+      .add(FeatureSet::Atomics, &Self::makeAtomic);
     return (this->*pick(options))(Type::none);
   }
 
@@ -1174,8 +1172,7 @@ private:
            &Self::makeSelect,
            &Self::makeSwitch,
            &Self::makeDrop,
-           &Self::makeReturn)
-      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
+           &Self::makeReturn);
     return (this->*pick(options))(Type::unreachable);
   }
 
