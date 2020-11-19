@@ -464,7 +464,8 @@ FeatureSet Type::getFeatures() const {
       // Strictly speaking, typed function references require the typed function
       // references feature, however, we use these types internally regardless
       // of the presence of features (in particular, since during load of the
-      // wasm we don't know the features yet, so we apply the "higher" types).
+      // wasm we don't know the features yet, so we apply the more refined
+      // types).
       return FeatureSet::ReferenceTypes;
     }
     TODO_SINGLE_COMPOUND(t);
