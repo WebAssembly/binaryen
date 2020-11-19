@@ -511,9 +511,9 @@ struct OptimizeInstructions
                      binary(&op,
                             binary(&bin, DivS, any(&x), unary(Neg, any(&y))),
                             fval(&c)))) &&
-            op == Abstract::getBinary(bin->type, Mul) &&
-            op == Abstract::getBinary(bin->type, DivS) &&
-            op == Abstract::getBinary(bin->type, Add) && !x->is<Const>() &&
+            (op == Abstract::getBinary(bin->type, Mul) ||
+             op == Abstract::getBinary(bin->type, DivS) ||
+             op == Abstract::getBinary(bin->type, Add)) && !x->is<Const>() &&
             !y->is<Const>() && !c->value.isNaN()) {
           c->value = c->value.neg();
           bin->left = x;
