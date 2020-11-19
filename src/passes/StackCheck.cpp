@@ -133,9 +133,10 @@ struct StackCheck : public Pass {
     }
 
     // Pick appropriate names.
-    STACK_BASE = Names::getValidGlobalName(*module,"__stack_base");
-    STACK_LIMIT = Names::getValidGlobalName(*module,"__stack_limit");
-    SET_STACK_LIMITS = Names::getValidFunctionName(*module,"__set_stack_limits");
+    STACK_BASE = Names::getValidGlobalName(*module, "__stack_base");
+    STACK_LIMIT = Names::getValidGlobalName(*module, "__stack_limit");
+    SET_STACK_LIMITS =
+      Names::getValidFunctionName(*module, "__set_stack_limits");
 
     Name handler;
     auto handlerName =
