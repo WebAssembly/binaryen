@@ -479,6 +479,9 @@ struct OptimizeInstructions
         // fneg(x * C)   ==>   x * -C
         // fneg(x / C)   ==>   x / -C
         // fneg(C / x)   ==>   -C / x
+        //
+        // TODO: using `fastMath` is not necessary, but due to fuzzer can't
+        // flexible handle sign of NaNs we use it here.
         if (fastMath &&
             (matches(curr, unary(Neg, binary(&bin, Mul, any(&x), fval(&c)))) ||
              matches(curr, unary(Neg, binary(&bin, DivS, any(&x), fval(&c)))) ||
