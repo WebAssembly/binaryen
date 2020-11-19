@@ -1388,7 +1388,8 @@ console.log("# RefFunc");
   assert(theRefFunc.func === func);
   theRefFunc.type = binaryen.f64;
   theRefFunc.finalize();
-  assert(theRefFunc.type === binaryen.funcref);
+  // TODO The type is a subtype of funcref, but we can't check that in the JS
+  //      API atm.
 
   console.log(theRefFunc.toText());
   assert(
