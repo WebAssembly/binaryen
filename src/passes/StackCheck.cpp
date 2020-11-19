@@ -32,14 +32,6 @@
 
 namespace wasm {
 
-// The base is where the stack begins. As it goes down, that is the highest
-// valid address.
-static Name STACK_BASE;
-// The limit is the farthest it can grow to, which is the lowest valid address.
-static Name STACK_LIMIT;
-// Exported function to set the base and the limit.
-static Name SET_STACK_LIMITS;
-
 static void importStackOverflowHandler(Module& module, Name name) {
   ImportInfo info(module);
 
@@ -125,6 +117,14 @@ private:
 };
 
 struct StackCheck : public Pass {
+  // The base is where the stack begins. As it goes down, that is the highest
+  // valid address.
+  Name STACK_BASE;
+  // The limit is the farthest it can grow to, which is the lowest valid address.
+  Name STACK_LIMIT;
+  // Exported function to set the base and the limit.
+  Name SET_STACK_LIMITS;
+
   void run(PassRunner* runner, Module* module) override {
     Global* stackPointer = getStackPointerGlobal(*module);
     if (!stackPointer) {
