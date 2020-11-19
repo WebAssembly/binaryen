@@ -1689,7 +1689,7 @@ Signature WasmBinaryBuilder::getFunctionSignatureByIndex(Index index) {
   }
   Index adjustedIndex = index - functionImports.size();
   if (adjustedIndex >= functionSignatures.size()) {
-    throwError("invalid call index");
+    throwError("invalid function index");
   }
   return functionSignatures[adjustedIndex];
 }
