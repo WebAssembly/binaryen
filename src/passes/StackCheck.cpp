@@ -120,7 +120,8 @@ struct StackCheck : public Pass {
   // The base is where the stack begins. As it goes down, that is the highest
   // valid address.
   Name STACK_BASE;
-  // The limit is the farthest it can grow to, which is the lowest valid address.
+  // The limit is the farthest it can grow to, which is the lowest valid
+  // address.
   Name STACK_LIMIT;
   // Exported function to set the base and the limit.
   Name SET_STACK_LIMITS;
