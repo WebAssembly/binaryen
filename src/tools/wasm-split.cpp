@@ -329,7 +329,7 @@ void Instrumenter::instrumentFuncs() {
   //       (global.set $monotonic_counter
   //         (i32.add
   //           (global.get $monotonic_counter)
-  //           (i32.const)
+  //           (i32.const 1)
   //         )
   //       )
   //       (global.set $timestamp
@@ -344,7 +344,7 @@ void Instrumenter::instrumentFuncs() {
       builder.makeIf(
         builder.makeUnary(EqZInt32,
                           builder.makeGlobalGet(*globalIt, Type::i32)),
-        builder.blockify(
+        builder.makeSequence(
           builder.makeGlobalSet(
             counterGlobal,
             builder.makeBinary(AddInt32,
@@ -404,7 +404,7 @@ void Instrumenter::addProfileExport() {
     offset += 4;
   }
 
-  writeProfile->body = builder.blockify(
+  writeProfile->body = builder.makeSequence(
     builder.makeIf(builder.makeBinary(GeUInt32, getSize(), profileSizeConst()),
                    writeData),
     profileSizeConst());
