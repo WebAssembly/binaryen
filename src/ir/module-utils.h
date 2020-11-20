@@ -416,7 +416,7 @@ collectSignatures(Module& wasm,
       TypeCounter(Counts& counts) : counts(counts) {}
 
       void visitExpression(Expression* curr) {
-        if (curr->is<RefNull>()) {
+        if (curr->is<RefNull>() || curr->is<RefFunc>()) {
           auto heapType = curr->type.getHeapType();
           if (heapType.isSignature()) {
             counts[heapType.getSignature()]++;
@@ -425,7 +425,7 @@ collectSignatures(Module& wasm,
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
           // TODO: Allow control flow to have input types as well
-          if (curr->type.isTuple()) {
+          if (!curr->type.isBasic()) {
             counts[Signature(Type::none, curr->type)]++;
           }
         }
