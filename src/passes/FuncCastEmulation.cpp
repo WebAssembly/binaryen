@@ -209,12 +209,12 @@ private:
     for (Index i = 0; i < NUM_PARAMS; i++) {
       thunkParams.push_back(Type::i64);
     }
-    auto* thunkFunc =
+    auto thunkFunc =
       builder.makeFunction(thunk,
                            Signature(Type(thunkParams), Type::i64),
                            {}, // no vars
                            toABI(call, module));
-    module->addFunction(thunkFunc);
+    module->addFunction(std::move(thunkFunc));
     return thunk;
   }
 };

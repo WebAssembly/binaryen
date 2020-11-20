@@ -41,11 +41,11 @@ public:
 
   // make* functions, other globals
 
-  Function* makeFunction(Name name,
-                         Signature sig,
-                         std::vector<Type>&& vars,
-                         Expression* body = nullptr) {
-    auto* func = new Function;
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                Signature sig,
+                                                std::vector<Type>&& vars,
+                                                Expression* body = nullptr) {
+    auto func = std::make_unique<Function>();
     func->name = name;
     func->sig = sig;
     func->body = body;
@@ -53,12 +53,12 @@ public:
     return func;
   }
 
-  Function* makeFunction(Name name,
-                         std::vector<NameType>&& params,
-                         Type resultType,
-                         std::vector<NameType>&& vars,
-                         Expression* body = nullptr) {
-    auto* func = new Function;
+  static std::unique_ptr<Function> makeFunction(Name name,
+                                                std::vector<NameType>&& params,
+                                                Type resultType,
+                                                std::vector<NameType>&& vars,
+                                                Expression* body = nullptr) {
+    auto func = std::make_unique<Function>();
     func->name = name;
     func->body = body;
     std::vector<Type> paramVec;
@@ -78,12 +78,34 @@ public:
     return func;
   }
 
-  Export* makeExport(Name name, Name value, ExternalKind kind) {
-    auto* export_ = new Export();
+  static std::unique_ptr<Export>
+  makeExport(Name name, Name value, ExternalKind kind) {
+    auto export_ = std::make_unique<Export>();
     export_->name = name;
     export_->value = value;
     export_->kind = kind;
     return export_;
+  }
+
+  enum Mutability { Mutable, Immutable };
+
+  static std::unique_ptr<Global>
+  makeGlobal(Name name, Type type, Expression* init, Mutability mutable_) {
+    auto glob = std::make_unique<Global>();
+    glob->name = name;
+    glob->type = type;
+    glob->init = init;
+    glob->mutable_ = mutable_ == Mutable;
+    return glob;
+  }
+
+  static std::unique_ptr<Event>
+  makeEvent(Name name, uint32_t attribute, Signature sig) {
+    auto event = std::make_unique<Event>();
+    event->name = name;
+    event->attribute = attribute;
+    event->sig = sig;
+    return event;
   }
 
   // IR nodes
@@ -968,28 +990,6 @@ public:
         return ExpressionManipulator::unreachable(curr);
     }
     return makeConst(value);
-  }
-
-  // Module-level helpers
-
-  enum Mutability { Mutable, Immutable };
-
-  static Global*
-  makeGlobal(Name name, Type type, Expression* init, Mutability mutable_) {
-    auto* glob = new Global;
-    glob->name = name;
-    glob->type = type;
-    glob->init = init;
-    glob->mutable_ = mutable_ == Mutable;
-    return glob;
-  }
-
-  static Event* makeEvent(Name name, uint32_t attribute, Signature sig) {
-    auto* event = new Event;
-    event->name = name;
-    event->attribute = attribute;
-    event->sig = sig;
-    return event;
   }
 };
 
