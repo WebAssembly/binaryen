@@ -264,7 +264,7 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
 // Add a global monotonic counter and a timestamp global for each function, code
 // at the beginning of each function to set its timestamp, and a new exported
 // function for dumping the profile data.
-struct FuncInstrumentor : public Pass {
+struct Instrumenter : public Pass {
   PassRunner* runner = nullptr;
   Module* wasm = nullptr;
 
@@ -274,7 +274,7 @@ struct FuncInstrumentor : public Pass {
   Name counterGlobal;
   std::vector<Name> functionGlobals;
 
-  FuncInstrumentor(const std::string& profileExport, uint64_t moduleHash);
+  Instrumenter(const std::string& profileExport, uint64_t moduleHash);
 
   void run(PassRunner* runner, Module* wasm) override;
   void addGlobals();
@@ -282,11 +282,11 @@ struct FuncInstrumentor : public Pass {
   void addProfileExport();
 };
 
-FuncInstrumentor::FuncInstrumentor(const std::string& profileExport,
-                                   uint64_t moduleHash)
+Instrumenter::Instrumenter(const std::string& profileExport,
+                           uint64_t moduleHash)
   : profileExport(profileExport), moduleHash(moduleHash) {}
 
-void FuncInstrumentor::run(PassRunner* runner, Module* wasm) {
+void Instrumenter::run(PassRunner* runner, Module* wasm) {
   this->runner = runner;
   this->wasm = wasm;
   addGlobals();
@@ -294,7 +294,7 @@ void FuncInstrumentor::run(PassRunner* runner, Module* wasm) {
   addProfileExport();
 }
 
-void FuncInstrumentor::addGlobals() {
+void Instrumenter::addGlobals() {
   // Create fresh global names
   counterGlobal = Names::getValidGlobalName(*wasm, "monotonic_counter");
   functionGlobals.reserve(wasm->functions.size());
@@ -319,7 +319,7 @@ void FuncInstrumentor::addGlobals() {
   }
 }
 
-void FuncInstrumentor::instrumentFuncs() {
+void Instrumenter::instrumentFuncs() {
   // Inject the following code at the beginning of each function to advance the
   // monotonic counter and set the function's timestamp if it hasn't already
   // been set.
@@ -358,7 +358,7 @@ void FuncInstrumentor::instrumentFuncs() {
   });
 }
 
-void FuncInstrumentor::addProfileExport() {
+void Instrumenter::addProfileExport() {
   // Create and export a function to dump the profile into a given memory
   // buffer. The function takes the available address and buffer size as
   // arguments and returns the total size of the profile. It only actually
@@ -441,8 +441,7 @@ void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   // TODO: calculate module hash.
   uint64_t moduleHash = 0;
   PassRunner runner(&wasm, options.passOptions);
-  runner.add(
-    std::make_unique<FuncInstrumentor>(options.profileExport, moduleHash));
+  runner.add(std::make_unique<Instrumenter>(options.profileExport, moduleHash));
   runner.run();
 
   // Write the output modules
