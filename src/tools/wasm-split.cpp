@@ -295,7 +295,7 @@ void Instrumenter::run(PassRunner* runner, Module* wasm) {
 }
 
 void Instrumenter::addGlobals() {
-  // Create fresh global names
+  // Create fresh global names (over-reserves, but that's ok)
   counterGlobal = Names::getValidGlobalName(*wasm, "monotonic_counter");
   functionGlobals.reserve(wasm->functions.size());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
@@ -373,10 +373,7 @@ void Instrumenter::addProfileExport() {
   // Calculate the size of the profile:
   //   8 bytes module hash +
   //   4 bytes for the timestamp for each function
-  size_t numDefinedFunctions = 0;
-  ModuleUtils::iterDefinedFunctions(*wasm,
-                                    [&](Function*) { numDefinedFunctions++; });
-  const size_t profileSize = 8 + 4 * numDefinedFunctions;
+  const size_t profileSize = 8 + 4 * functionGlobals.size();
 
   // Create the function body
   Builder builder(*wasm);
