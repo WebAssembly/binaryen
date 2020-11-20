@@ -540,7 +540,7 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
       type = stringToType(s[i]->str());
     } else {
       type = elementToType(*s[i]);
-      if (type.isTuple()) {
+      if (elementStartsWith(s, PARAM) && type.isTuple()) {
         throw ParseException(
           "params may not have tuple types", s[i]->line, s[i]->col);
       }
