@@ -5,7 +5,7 @@
     (call_ref (ref.func $call-ref))
   )
   (func $call-ref-more (param i32) (result i32)
-    (call_ref (ref.func $call-ref-more))
+    (call_ref (i32.const 42) (ref.func $call-ref-more))
   )
   (func $call_from-param (param $f (ref $i32-i32)) (result i32)
     (call_ref (i32.const 42) (local.get $f))
