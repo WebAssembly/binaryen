@@ -1050,8 +1050,8 @@ private:
       return swap();
     }
     if (auto* c = binary->right->dynCast<Const>()) {
-      // x - C  ==>   x + (-C)
-      // x - fval(C)   ==>   x + (-C)
+      // x - ival(C)  ==>   x + (-C)
+      // x - fval(C)  ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
       if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
         c->value = c->value.neg();
