@@ -140,7 +140,7 @@ struct ToolOptions : public Options {
     return *this;
   }
 
-  void applyFeatures(Module& module) {
+  void applyFeatures(Module& module) const {
     if (hasFeatureOptions) {
       if (!detectFeatures && module.hasFeaturesSection) {
         FeatureSet optionsFeatures = FeatureSet::MVP;
