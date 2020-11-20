@@ -422,9 +422,10 @@ collectSignatures(Module& wasm,
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
           maybeNote(curr->type);
-          // Also add a tuple type.
-          // TODO: Allow control flow to have input types as well
-          counts[Signature(Type::none, curr->type)]++;
+          if (curr->type.isTuple()) {
+            // TODO: Allow control flow to have input types as well
+            counts[Signature(Type::none, curr->type)]++;
+          }
         }
       }
 
