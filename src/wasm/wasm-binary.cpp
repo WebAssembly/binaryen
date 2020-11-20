@@ -1351,9 +1351,7 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::nullable:
       return Type(getHeapType(), /* nullable = */ true);
     case BinaryConsts::EncodedType::nonnullable:
-      // FIXME: support non-nullable types. search for all "nullable = "
-      //        comments.
-      return Type(getHeapType(), /* nullable = */ true);
+      return Type(getHeapType(), /* nullable = */ false);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     default:
