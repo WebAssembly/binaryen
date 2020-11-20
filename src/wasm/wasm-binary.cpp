@@ -1474,11 +1474,11 @@ void WasmBinaryBuilder::readImports() {
           throwError("invalid function index " + std::to_string(index) + " / " +
                      std::to_string(signatures.size()));
         }
-        auto* curr = builder.makeFunction(name, signatures[index], {});
+        auto curr = builder.makeFunction(name, signatures[index], {});
         curr->module = module;
         curr->base = base;
-        wasm.addFunction(curr);
-        functionImports.push_back(curr);
+        functionImports.push_back(curr.get());
+        wasm.addFunction(std::move(curr));
         break;
       }
       case ExternalKind::Table: {
@@ -1524,15 +1524,15 @@ void WasmBinaryBuilder::readImports() {
         Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
-        auto* curr =
+        auto curr =
           builder.makeGlobal(name,
                              type,
                              nullptr,
                              mutable_ ? Builder::Mutable : Builder::Immutable);
         curr->module = module;
         curr->base = base;
-        wasm.addGlobal(curr);
-        globalImports.push_back(curr);
+        globalImports.push_back(curr.get());
+        wasm.addGlobal(std::move(curr));
         break;
       }
       case ExternalKind::Event: {
@@ -1543,10 +1543,10 @@ void WasmBinaryBuilder::readImports() {
           throwError("invalid event index " + std::to_string(index) + " / " +
                      std::to_string(signatures.size()));
         }
-        auto* curr = builder.makeEvent(name, attribute, signatures[index]);
+        auto curr = builder.makeEvent(name, attribute, signatures[index]);
         curr->module = module;
         curr->base = base;
-        wasm.addEvent(curr);
+        wasm.addEvent(std::move(curr));
         break;
       }
       default: {
@@ -2065,8 +2065,8 @@ void WasmBinaryBuilder::processNames() {
   for (auto* func : functions) {
     wasm.addFunction(func);
   }
-  for (auto* global : globals) {
-    wasm.addGlobal(global);
+  for (auto& global : globals) {
+    wasm.addGlobal(std::move(global));
   }
 
   // now that we have names, apply things
@@ -3123,7 +3123,7 @@ void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
     if (adjustedIndex >= globals.size()) {
       throwError("invalid global index");
     }
-    auto* glob = globals[adjustedIndex];
+    auto& glob = globals[adjustedIndex];
     curr->name = glob->name;
     curr->type = glob->type;
   }
