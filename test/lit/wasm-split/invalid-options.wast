@@ -33,7 +33,7 @@
 ;; RUN: not wasm-split %s --instrument --split-funcs=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-SPLIT-FUNCS
 
-;; --instrument is required to use -o
+;; --instrument requires -o1 and -o2 rather than -o
 ;; RUN: not wasm-split %s -o %t 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix NO-INSTRUMENT-OUT
 
