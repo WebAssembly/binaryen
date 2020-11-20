@@ -1,5 +1,4 @@
 (module
- (type $none_=>_none (func))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_i64_=>_i64 (func (param i32 i32 i64) (result i64)))
  (type $i32_i32_f32_=>_f32 (func (param i32 i32 f32) (result f32)))
@@ -11,6 +10,7 @@
  (type $i32_i32_anyref_=>_anyref (func (param i32 i32 anyref) (result anyref)))
  (type $i32_i32_eqref_=>_eqref (func (param i32 i32 eqref) (result eqref)))
  (type $i32_i32_i31ref_=>_i31ref (func (param i32 i32 i31ref) (result i31ref)))
+ (type $none_=>_none (func))
  (import "env" "get_i32" (func $get_i32 (param i32 i32 i32) (result i32)))
  (import "env" "get_i64" (func $get_i64 (param i32 i32 i64) (result i64)))
  (import "env" "get_f32" (func $get_f32 (param i32 i32 f32) (result f32)))
