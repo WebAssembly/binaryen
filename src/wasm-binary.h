@@ -1362,7 +1362,7 @@ public:
   Index endOfFunction = -1;
 
   // we store globals here before wasm.addGlobal after we know their names
-  std::vector<Global*> globals;
+  std::vector<std::unique_ptr<Global>> globals;
   // we store global imports here before wasm.addGlobalImport after we know
   // their names
   std::vector<Global*> globalImports;
