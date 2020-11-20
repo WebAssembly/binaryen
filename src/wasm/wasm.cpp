@@ -73,6 +73,7 @@ Name TABLE("table");
 Name ELEM("elem");
 Name LOCAL("local");
 Name TYPE("type");
+Name REF("ref");
 Name CALL("call");
 Name CALL_INDIRECT("call_indirect");
 Name BLOCK("block");

@@ -539,7 +539,10 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
     if (s[i]->isStr()) {
       type = stringToType(s[i]->str());
     } else {
-      if (elementStartsWith(s, PARAM)) {
+      // Params may not have tuple types. They look like (i32 f64) etc. But
+      // there are valid types that are lists, such as references, which look
+      // like (ref ..)
+      if (elementStartsWith(s, PARAM) && !elementStartsWith(*s[i], REF)) {
         throw ParseException(
           "params may not have tuple types", s[i]->line, s[i]->col);
       }
