@@ -1572,9 +1572,9 @@ private:
         builder.makeIf(builder.makeBinary(GtUInt32, stackPos, stackEnd),
                        builder.makeUnreachable()));
       body->finalize();
-      auto* func = builder.makeFunction(
+      auto func = builder.makeFunction(
         name, Signature(Type(params), Type::none), {}, body);
-      module->addFunction(func);
+      module->addFunction(std::move(func));
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };
 

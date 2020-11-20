@@ -454,24 +454,24 @@ private:
     }
     for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
       auto type = getConcreteType();
-      auto* global =
+      auto global =
         builder.makeGlobal(Names::getValidGlobalName(wasm, "global$"),
                            type,
                            makeConst(type),
                            Builder::Mutable);
-      wasm.addGlobal(global);
       globalsByType[type].push_back(global->name);
+      wasm.addGlobal(std::move(global));
     }
   }
 
   void setupEvents() {
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
-      auto* event =
+      auto event =
         builder.makeEvent(Names::getValidEventName(wasm, "event$"),
                           WASM_EVENT_ATTRIBUTE_EXCEPTION,
                           Signature(getControlFlowType(), Type::none));
-      wasm.addEvent(event);
+      wasm.addEvent(std::move(event));
     }
   }
 
@@ -551,11 +551,11 @@ private:
   }
 
   void addHangLimitSupport() {
-    auto* glob = builder.makeGlobal(HANG_LIMIT_GLOBAL,
-                                    Type::i32,
-                                    builder.makeConst(int32_t(HANG_LIMIT)),
-                                    Builder::Mutable);
-    wasm.addGlobal(glob);
+    auto glob = builder.makeGlobal(HANG_LIMIT_GLOBAL,
+                                   Type::i32,
+                                   builder.makeConst(int32_t(HANG_LIMIT)),
+                                   Builder::Mutable);
+    wasm.addGlobal(std::move(glob));
 
     Name exportName = "hangLimitInitializer";
     auto funcName = Names::getValidFunctionName(wasm, exportName);
