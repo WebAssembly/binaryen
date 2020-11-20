@@ -417,16 +417,22 @@ collectSignatures(Module& wasm,
 
       void visitExpression(Expression* curr) {
         if (curr->is<RefNull>() || curr->is<RefFunc>()) {
-          auto heapType = curr->type.getHeapType();
-          if (heapType.isSignature()) {
-            counts[heapType.getSignature()]++;
-          }
+          maybeNote(curr->type);
         } else if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
+          maybeNote(curr->type);
+          // Also add a tuple type.
           // TODO: Allow control flow to have input types as well
-          if (!curr->type.isBasic()) {
-            counts[Signature(Type::none, curr->type)]++;
+          counts[Signature(Type::none, curr->type)]++;
+        }
+      }
+
+      void maybeNote(Type type) {
+        if (!type.isBasic()) {
+          auto heapType = type.getHeapType();
+          if (heapType.isSignature()) {
+            counts[heapType.getSignature()]++;
           }
         }
       }
