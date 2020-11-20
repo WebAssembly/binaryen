@@ -416,15 +416,12 @@ collectSignatures(Module& wasm,
       TypeCounter(Counts& counts) : counts(counts) {}
 
       void visitExpression(Expression* curr) {
-        // A signature type could be anywhere.
-        if (curr->type.isRef()) {
+        if (curr->is<RefNull>()) {
           auto heapType = curr->type.getHeapType();
           if (heapType.isSignature()) {
             counts[heapType.getSignature()]++;
           }
-        }
-        // Specific places also have a special signature.
-        if (auto* call = curr->dynCast<CallIndirect>()) {
+        } else if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
           // TODO: Allow control flow to have input types as well
