@@ -305,12 +305,12 @@ void Instrumenter::addGlobals() {
 
   // Create and add new globals
   auto addGlobal = [&](Name name) {
-    auto global = std::make_unique<Global>();
-    global->name = name;
+    auto global = Builder::makeGlobal(
+      name,
+      Type::i32,
+      Builder(*wasm).makeConst(Literal::makeZero(Type::i32)),
+      Builder::Mutable);
     global->hasExplicitName = true;
-    global->type = Type::i32;
-    global->init = Builder(*wasm).makeConst(Literal::makeZero(Type::i32));
-    global->mutable_ = true;
     wasm->addGlobal(std::move(global));
   };
   addGlobal(counterGlobal);
@@ -363,10 +363,10 @@ void Instrumenter::addProfileExport() {
   // buffer. The function takes the available address and buffer size as
   // arguments and returns the total size of the profile. It only actually
   // writes the profile if the given space is sufficient to hold it.
-  auto writeProfile = std::make_unique<Function>();
-  writeProfile->name = Names::getValidFunctionName(*wasm, profileExport);
+  auto name = Names::getValidFunctionName(*wasm, profileExport);
+  auto writeProfile = Builder::makeFunction(
+    name, Signature({Type::i32, Type::i32}, Type::i32), {});
   writeProfile->hasExplicitName = true;
-  writeProfile->sig = Signature({Type::i32, Type::i32}, Type::i32);
   writeProfile->setLocalName(0, "addr");
   writeProfile->setLocalName(1, "size");
 
@@ -410,13 +410,9 @@ void Instrumenter::addProfileExport() {
     profileSizeConst());
 
   // Create an export for the function
-  auto ex = std::make_unique<Export>();
-  ex->name = profileExport;
-  ex->value = writeProfile->name;
-  ex->kind = ExternalKind::Function;
-
   wasm->addFunction(std::move(writeProfile));
-  wasm->addExport(std::move(ex));
+  wasm->addExport(
+    Builder::makeExport(profileExport, name, ExternalKind::Function));
 
   // Also make sure there is a memory with enough pages to write into
   size_t pages = (profileSize + Memory::kPageSize - 1) / Memory::kPageSize;
@@ -441,8 +437,7 @@ void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   // TODO: calculate module hash.
   uint64_t moduleHash = 0;
   PassRunner runner(&wasm, options.passOptions);
-  runner.add(std::make_unique<Instrumenter>(options.profileExport, moduleHash));
-  runner.run();
+  Instrumenter(options.profileExport, moduleHash).run(&runner, &wasm);
 
   // Write the output modules
   ModuleWriter writer;
