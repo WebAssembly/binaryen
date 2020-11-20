@@ -44,6 +44,7 @@ extern Name ELEM;
 extern Name LOCAL;
 extern Name TYPE;
 extern Name REF;
+extern Name NULL_;
 extern Name CALL;
 extern Name CALL_IMPORT;
 extern Name CALL_INDIRECT;

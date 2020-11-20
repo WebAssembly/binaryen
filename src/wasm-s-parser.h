@@ -77,6 +77,11 @@ public:
   Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
+  // comparisons
+  bool operator==(Name name) {
+    return isStr() && str() == name;
+  }
+
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
   void dump();
@@ -144,6 +149,7 @@ private:
 
   UniqueNameMapper nameMapper;
 
+  // Given a function signature type's name, return the signature
   Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
   Name getGlobalName(Element& s);
