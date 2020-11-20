@@ -476,9 +476,9 @@ collectSignatures(Module& wasm,
     depthOfDependencies[sig] = 0;
     toVisit.insert(sig);
     for (Type type : {sig.params, sig.results}) {
-      for (auto subType : type) {
-        if (subType.isRef()) {
-          auto heapType = subType.getHeapType();
+      for (auto element : type) {
+        if (element.isRef()) {
+          auto heapType = element.getHeapType();
           if (heapType.isSignature()) {
             isDependencyOf[heapType.getSignature()].insert(sig);
           }

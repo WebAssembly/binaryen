@@ -52,30 +52,30 @@ static void importStackOverflowHandler(Module& module, Name name) {
   }
 }
 
-static void addExportedFunction(Module& module, Function* function) {
-  module.addFunction(function);
-  auto export_ = new Export;
-  export_->name = export_->value = function->name;
-  export_->kind = ExternalKind::Function;
-  module.addExport(export_);
+static void addExportedFunction(Module& module,
+                                std::unique_ptr<Function> function) {
+  auto export_ =
+    Builder::makeExport(function->name, function->name, ExternalKind::Function);
+  module.addFunction(std::move(function));
+  module.addExport(std::move(export_));
 }
 
 static void generateSetStackLimitFunctions(Module& module) {
   Builder builder(module);
-  Function* limitsFunc = builder.makeFunction(
+  auto limitsFunc = builder.makeFunction(
     SET_STACK_LIMITS, Signature({Type::i32, Type::i32}, Type::none), {});
   LocalGet* getBase = builder.makeLocalGet(0, Type::i32);
   Expression* storeBase = builder.makeGlobalSet(STACK_BASE, getBase);
   LocalGet* getLimit = builder.makeLocalGet(1, Type::i32);
   Expression* storeLimit = builder.makeGlobalSet(STACK_LIMIT, getLimit);
   limitsFunc->body = builder.makeBlock({storeBase, storeLimit});
-  addExportedFunction(module, limitsFunc);
+  addExportedFunction(module, std::move(limitsFunc));
 }
 
 struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
-  EnforceStackLimits(Global* stackPointer,
-                     Global* stackBase,
-                     Global* stackLimit,
+  EnforceStackLimits(const Global* stackPointer,
+                     const std::unique_ptr<Global>& stackBase,
+                     const std::unique_ptr<Global>& stackLimit,
                      Builder& builder,
                      Name handler)
     : stackPointer(stackPointer), stackBase(stackBase), stackLimit(stackLimit),
@@ -127,9 +127,9 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
   }
 
 private:
-  Global* stackPointer;
-  Global* stackBase;
-  Global* stackLimit;
+  const Global* stackPointer;
+  const std::unique_ptr<Global>& stackBase;
+  const std::unique_ptr<Global>& stackLimit;
   Builder& builder;
   Name handler;
 };
@@ -151,21 +151,20 @@ struct StackCheck : public Pass {
     }
 
     Builder builder(*module);
-    Global* stackBase = builder.makeGlobal(STACK_BASE,
-                                           stackPointer->type,
-                                           builder.makeConst(int32_t(0)),
-                                           Builder::Mutable);
-    module->addGlobal(stackBase);
+    auto stackBase = builder.makeGlobal(STACK_BASE,
+                                        stackPointer->type,
+                                        builder.makeConst(int32_t(0)),
+                                        Builder::Mutable);
 
-    Global* stackLimit = builder.makeGlobal(STACK_LIMIT,
-                                            stackPointer->type,
-                                            builder.makeConst(int32_t(0)),
-                                            Builder::Mutable);
-    module->addGlobal(stackLimit);
-
+    auto stackLimit = builder.makeGlobal(STACK_LIMIT,
+                                         stackPointer->type,
+                                         builder.makeConst(int32_t(0)),
+                                         Builder::Mutable);
     PassRunner innerRunner(module);
     EnforceStackLimits(stackPointer, stackBase, stackLimit, builder, handler)
       .run(&innerRunner, module);
+    module->addGlobal(std::move(stackBase));
+    module->addGlobal(std::move(stackLimit));
     generateSetStackLimitFunctions(*module);
   }
 };

@@ -959,15 +959,13 @@ void WasmBinaryWriter::finishUp() {
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (heapType.isSignature()) {
-      if (type.isNullable()) {
-        o << S32LEB(BinaryConsts::EncodedType::nullable);
-      } else {
-        o << S32LEB(BinaryConsts::EncodedType::nonnullable);
-      }
-      writeHeapType(heapType);
-      return;
+    if (type.isNullable()) {
+      o << S32LEB(BinaryConsts::EncodedType::nullable);
+    } else {
+      o << S32LEB(BinaryConsts::EncodedType::nonnullable);
     }
+    writeHeapType(heapType);
+    return;
   }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);
@@ -1018,9 +1016,6 @@ void WasmBinaryWriter::writeType(Type type) {
 void WasmBinaryWriter::writeHeapType(HeapType type) {
   if (type.isSignature()) {
     auto sig = type.getSignature();
-    // FIXME: should this really be using the main indexing of all types, and
-    // not something specific to heap types? The spec overview for typed
-    // function references just
     o << S32LEB(getTypeIndex(sig));
     return;
   }
@@ -1358,9 +1353,7 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::nullable:
       return Type(getHeapType(), /* nullable = */ true);
     case BinaryConsts::EncodedType::nonnullable:
-      // FIXME: support non-nullable types. search for all "nullable = "
-      //        comments.
-      return Type(getHeapType(), /* nullable = */ true);
+      return Type(getHeapType(), /* nullable = */ false);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     default:
@@ -1582,11 +1575,11 @@ void WasmBinaryBuilder::readImports() {
           throwError("invalid function index " + std::to_string(index) + " / " +
                      std::to_string(signatures.size()));
         }
-        auto* curr = builder.makeFunction(name, signatures[index], {});
+        auto curr = builder.makeFunction(name, signatures[index], {});
         curr->module = module;
         curr->base = base;
-        wasm.addFunction(curr);
-        functionImports.push_back(curr);
+        functionImports.push_back(curr.get());
+        wasm.addFunction(std::move(curr));
         break;
       }
       case ExternalKind::Table: {
@@ -1632,15 +1625,15 @@ void WasmBinaryBuilder::readImports() {
         Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
-        auto* curr =
+        auto curr =
           builder.makeGlobal(name,
                              type,
                              nullptr,
                              mutable_ ? Builder::Mutable : Builder::Immutable);
         curr->module = module;
         curr->base = base;
-        wasm.addGlobal(curr);
-        globalImports.push_back(curr);
+        globalImports.push_back(curr.get());
+        wasm.addGlobal(std::move(curr));
         break;
       }
       case ExternalKind::Event: {
@@ -1651,10 +1644,10 @@ void WasmBinaryBuilder::readImports() {
           throwError("invalid event index " + std::to_string(index) + " / " +
                      std::to_string(signatures.size()));
         }
-        auto* curr = builder.makeEvent(name, attribute, signatures[index]);
+        auto curr = builder.makeEvent(name, attribute, signatures[index]);
         curr->module = module;
         curr->base = base;
-        wasm.addEvent(curr);
+        wasm.addEvent(std::move(curr));
         break;
       }
       default: {
@@ -1696,7 +1689,7 @@ Signature WasmBinaryBuilder::getFunctionSignatureByIndex(Index index) {
   }
   Index adjustedIndex = index - functionImports.size();
   if (adjustedIndex >= functionSignatures.size()) {
-    throwError("invalid call index");
+    throwError("invalid function index");
   }
   return functionSignatures[adjustedIndex];
 }
@@ -2185,8 +2178,8 @@ void WasmBinaryBuilder::processNames() {
   for (auto* func : functions) {
     wasm.addFunction(func);
   }
-  for (auto* global : globals) {
-    wasm.addGlobal(global);
+  for (auto& global : globals) {
+    wasm.addGlobal(std::move(global));
   }
 
   // now that we have names, apply things
@@ -3246,7 +3239,7 @@ void WasmBinaryBuilder::visitGlobalGet(GlobalGet* curr) {
     if (adjustedIndex >= globals.size()) {
       throwError("invalid global index");
     }
-    auto* glob = globals[adjustedIndex];
+    auto& glob = globals[adjustedIndex];
     curr->name = glob->name;
     curr->type = glob->type;
   }

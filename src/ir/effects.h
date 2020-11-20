@@ -71,10 +71,14 @@ public:
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
-  // a load or div/rem, which may trap. we ignore trap differences, so it is ok
-  // to reorder these, but we can't remove them, as they count as side effects,
-  // and we can't move them in a way that would cause other noticeable (global)
-  // side effects
+  // A trap, either from an unreachable instruction, or from an implicit trap
+  // that we do not ignore (see below).
+  // Note that we ignore trap differences, so it is ok to reorder traps with
+  // each other, but it is not ok to remove them or reorder them with other
+  // effects in a noticeable way.
+  bool trap = false;
+  // A trap from an instruction like a load or div/rem, which may trap on corner
+  // cases. If we do not ignore implicit traps then these are counted as a trap.
   bool implicitTrap = false;
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
@@ -120,7 +124,7 @@ public:
 
   bool hasSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
-           implicitTrap || throws || transfersControlFlow();
+           trap || throws || transfersControlFlow();
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
@@ -172,8 +176,8 @@ public:
       }
     }
     // We are ok to reorder implicit traps, but not conditionalize them.
-    if ((implicitTrap && other.transfersControlFlow()) ||
-        (other.implicitTrap && transfersControlFlow())) {
+    if ((trap && other.transfersControlFlow()) ||
+        (other.trap && transfersControlFlow())) {
       return true;
     }
     // Note that the above includes disallowing the reordering of a trap with an
@@ -181,11 +185,11 @@ public:
     // function, so transfersControlFlow would be true) - while we allow the
     // reordering of traps with each other, we do not reorder exceptions with
     // anything.
-    assert(!((implicitTrap && other.throws) || (throws && other.implicitTrap)));
+    assert(!((trap && other.throws) || (throws && other.trap)));
     // We can't reorder an implicit trap in a way that could alter what global
     // state is modified.
-    if ((implicitTrap && other.writesGlobalState()) ||
-        (other.implicitTrap && writesGlobalState())) {
+    if ((trap && other.writesGlobalState()) ||
+        (other.trap && writesGlobalState())) {
       return true;
     }
     return false;
@@ -196,6 +200,7 @@ public:
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
+    trap = trap || other.trap;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
     throws = throws || other.throws;
@@ -519,7 +524,7 @@ private:
       parent.implicitTrap = true;
     }
     void visitNop(Nop* curr) {}
-    void visitUnreachable(Unreachable* curr) { parent.branchesOut = true; }
+    void visitUnreachable(Unreachable* curr) { parent.trap = true; }
     void visitPop(Pop* curr) {
       if (parent.catchDepth == 0) {
         parent.danglingPop = true;
@@ -660,6 +665,8 @@ private:
 
     if (ignoreImplicitTraps) {
       implicitTrap = false;
+    } else if (implicitTrap) {
+      trap = true;
     }
   }
 };
