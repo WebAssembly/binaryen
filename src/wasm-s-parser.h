@@ -82,6 +82,11 @@ public:
     return isStr() && str() == name;
   }
 
+  template<typename T>
+  bool operator!=(T t) {
+    return !(*this == t);
+  }
+
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
   void dump();

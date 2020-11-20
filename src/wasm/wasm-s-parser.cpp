@@ -926,22 +926,25 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
     return stringToType(s.str(), false, false);
   }
   auto& list = s.list();
-  if (lize.size() > 0 && elementStartsWith(s, REF)) {
+  auto size = list.size();
+  if (size > 0 && elementStartsWith(s, REF)) {
     // It's a reference. It should be in the form
     //   (ref $name)
     // or
     //   (ref null $name)
-    if ((list.size() != 2 && list.size != 3) || !list[1]->isStr()) {
+    if ((size != 2 && size != 3) || !list[1]->isStr()) {
       throw ParseException(std::string("invalid reference type"), s.line, s.col);
     }
     bool nullable = false;
-    if (list.size() == 3) {
-      if (list[i] != NULL_) {
+    size_t i = 1;
+    if (size == 3) {
+      if (*list[1] != NULL_) {
         throw ParseException(std::string("invalid reference type qualifier"), s.line, s.col);
       }
       nullable = true;
+      i++;
     }
-    auto sig = getFunctionSignature(*s[1]);
+    auto sig = getFunctionSignature(*s[i]);
     return Type(HeapType(sig), nullable);
   }
   // It's a tuple.
