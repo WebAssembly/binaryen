@@ -429,7 +429,7 @@ collectSignatures(Module& wasm,
       }
 
       void maybeNote(Type type) {
-        if (!type.isBasic()) {
+        if (type.isRef()) {
           auto heapType = type.getHeapType();
           if (heapType.isSignature()) {
             counts[heapType.getSignature()]++;
