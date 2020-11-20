@@ -514,7 +514,7 @@ struct OptimizeInstructions
             (op == Abstract::getBinary(bin->type, Mul) ||
              op == Abstract::getBinary(bin->type, DivS) ||
              op == Abstract::getBinary(bin->type, Add)) &&
-            !x->is<Const>() && !y->is<Const>() && !c->value.isNaN()) {
+            !x->is<Const>() && !y->is<Const>()) {
           c->value = c->value.neg();
           bin->left = x;
           bin->right = y;
@@ -1051,10 +1051,9 @@ private:
     }
     if (auto* c = binary->right->dynCast<Const>()) {
       // x - C  ==>   x + (-C)
-      // x - fval(C)   ==>   x + (-C) if C != NaN
+      // x - fval(C)   ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
-      if (binary->op == Abstract::getBinary(c->type, Abstract::Sub) &&
-          !c->value.isNaN()) {
+      if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
         c->value = c->value.neg();
         binary->op = Abstract::getBinary(c->type, Abstract::Add);
       }
