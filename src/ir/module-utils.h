@@ -416,7 +416,7 @@ collectSignatures(Module& wasm,
       TypeCounter(Counts& counts) : counts(counts) {}
 
       void visitExpression(Expression* curr) {
-        if (curr->is<RefNull>() || curr->is<RefFunc>()) {
+        if (curr->is<RefNull>()) {
           maybeNote(curr->type);
         } else if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
