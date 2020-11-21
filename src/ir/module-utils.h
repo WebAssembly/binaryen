@@ -465,6 +465,10 @@ collectSignatures(Module& wasm,
       counts[innerPair.first] += innerPair.second;
     }
   }
+
+  // TODO: recursively traverse each reference type, which may have a child type
+  //       this is itself a reference type.
+
   // We must sort all the dependencies of a signature before it. For example,
   // (func (param (ref (func)))) must appear after (func). To do that, find the
   // depth of dependencies of each signature. For example, if A depends on B

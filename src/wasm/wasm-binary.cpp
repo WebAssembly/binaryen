@@ -960,6 +960,7 @@ void WasmBinaryWriter::finishUp() {
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
+    // TODO: fully handle non-signature reference types (GC), and in reading
     if (heapType.isSignature()) {
       if (type.isNullable()) {
         o << S32LEB(BinaryConsts::EncodedType::nullable);
