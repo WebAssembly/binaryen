@@ -960,13 +960,15 @@ void WasmBinaryWriter::finishUp() {
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (type.isNullable()) {
-      o << S32LEB(BinaryConsts::EncodedType::nullable);
-    } else {
-      o << S32LEB(BinaryConsts::EncodedType::nonnullable);
+    if (heapType.isSignature()) {
+      if (type.isNullable()) {
+        o << S32LEB(BinaryConsts::EncodedType::nullable);
+      } else {
+        o << S32LEB(BinaryConsts::EncodedType::nonnullable);
+      }
+      writeHeapType(heapType);
+      return;
     }
-    writeHeapType(heapType);
-    return;
   }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);
