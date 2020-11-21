@@ -2031,17 +2031,20 @@ private:
       if (type == Type::i31ref) {
         return builder.makeI31New(makeConst(Type::i32));
       }
-      if (type.isNullable()) {
+      if (oneIn(2) && type.isNullable()) {
         return builder.makeRefNull(type);
       }
-      // Well this is quite the pickle, we are asked to create a non-nullable
-      // type, and so can't just make a null. Look for an existing thing with
-      // the right type.
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
+        // FIXME: RefFunc type should be non-nullable, but we emit nullable
+        //        types for now.
         if (type == Type(HeapType(func->sig), /* nullable = */ true)) {
           return builder.makeRefFunc(func->name, type);
         }
+      }
+      // We failed to find a function, so create a null reference if we can.
+      if (type.isNullable()) {
+        return builder.makeRefNull(type);
       }
       WASM_UNREACHABLE("un-handleable non-nullable type");
     }
@@ -2992,6 +2995,7 @@ private:
              Type::anyref,
              Type::eqref,
              Type::i31ref));
+    // TODO: emit typed function references types
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
@@ -3027,12 +3031,9 @@ private:
     size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
     for (size_t i = 0; i < maxElements; ++i) {
       auto type = getSingleConcreteType();
-      // Don't add ref types into a tuple for now, as if they are non-nullable
-      // then they can't be spilled into locals. And even if they are nullable,
-      // like a funcref, but we create a subtype that is *not* nullable (like
-      // a ref.func) then that would be the effective type here, and again we'd
-      // have a non-nullable type.
-      if (!type.isRef()) {
+      // Don't add a non-nullable type into a tuple, as currently we can't spill
+      // them into locals (that would require a "let").
+      if (!type.isNullable()) {
         elements.push_back(type);
       }
     }
