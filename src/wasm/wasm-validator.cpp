@@ -407,6 +407,12 @@ private:
     size_t align, Type type, Index bytes, bool isAtomic, Expression* curr);
   void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
 
+  template<typename T> void validateReturnCall(T* curr) {
+    shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
+                 curr,
+                 "return_call* requires tail calls to be enabled");
+  }
+
   template<typename T>
   void validateCallParamsAndResult(T* curr, Signature sig) {
     if (!shouldBeTrue(curr->operands.size() == sig.params.size(),
@@ -436,12 +442,11 @@ private:
         curr,
         "return_call* callee return type must match caller return type");
     } else {
-      if (curr->type != Type::unreachable) {
-        shouldBeEqual(curr->type,
-                      sig.results,
-                      curr,
-                      "call* type must match callee return type");
-      }
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->type,
+        sig.results,
+        curr,
+        "call* type must match callee return type");
     }
   }
 
@@ -787,9 +792,7 @@ void FunctionValidator::visitSwitch(Switch* curr) {
 }
 
 void FunctionValidator::visitCall(Call* curr) {
-  shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
-               curr,
-               "return_call requires tail calls to be enabled");
+  validateReturnCall(curr);
   if (!info.validateGlobally) {
     return;
   }
@@ -801,9 +804,7 @@ void FunctionValidator::visitCall(Call* curr) {
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
-  shouldBeTrue(!curr->isReturn || getModule()->features.hasTailCall(),
-               curr,
-               "return_call_indirect requires tail calls to be enabled");
+  validateReturnCall(curr);
   shouldBeEqualOrFirstIsUnreachable(curr->target->type,
                                     Type(Type::i32),
                                     curr,
@@ -2153,6 +2154,7 @@ void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
 }
 
 void FunctionValidator::visitCallRef(CallRef* curr) {
+  validateReturnCall(curr);
   shouldBeTrue(getModule()->features.hasTypedFunctionReferences(),
                curr,
                "call_ref requires typed-function-references to be enabled");

@@ -1272,6 +1272,7 @@ public:
     WASM_UNREACHABLE("unimp");
   }
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitCallRef(CallRef* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
     return Literal::makeNull(curr->type);
@@ -1374,10 +1375,6 @@ public:
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     return Literal(value.geti31(curr->signed_));
-  }
-  Flow visitCallRef(CallRef* curr) {
-    NOTE_ENTER("CallRef");
-    WASM_UNREACHABLE("TODO (gc): ref.call");
   }
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");

@@ -1,11 +1,16 @@
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
- (type $(ref (func (param i32) (result i32)))_=>_i32 (func (param (ref (func (param i32) (result i32)))) (result i32)))
  (type $(ref null (func (param i32) (result i32)))_=>_i32 (func (param (ref null (func (param i32) (result i32)))) (result i32)))
+ (type $(ref (func (param i32) (result i32)))_=>_i32 (func (param (ref (func (param i32) (result i32)))) (result i32)))
  (func $call-ref
   (call_ref
+   (ref.func $call-ref)
+  )
+ )
+ (func $return-call-ref
+  (return_call_ref
    (ref.func $call-ref)
   )
  )

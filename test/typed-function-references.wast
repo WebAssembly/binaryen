@@ -4,6 +4,9 @@
   (func $call-ref
     (call_ref (ref.func $call-ref))
   )
+  (func $return-call-ref
+    (return_call_ref (ref.func $call-ref))
+  )
   (func $call-ref-more (param i32) (result i32)
     (call_ref (i32.const 42) (ref.func $call-ref-more))
   )
