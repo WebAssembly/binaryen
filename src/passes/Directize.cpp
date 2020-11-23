@@ -74,9 +74,6 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
       replaceCurrent(
         Builder(*getModule())
           .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
-    } else if (curr->target->dynCast<RefNull>()) {
-      // This will definitely trap.
-      replaceWithUnreachable(curr);
     }
   }
 
