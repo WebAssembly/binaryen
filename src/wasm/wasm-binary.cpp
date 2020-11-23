@@ -492,11 +492,12 @@ uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
 
 uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) const {
   auto it = typeIndices.find(sig);
-  // waka
-  if (it == typeIndices.end())
-    std::cout << "bad " << sig << '\n';
-  // waka
-  assert(it != typeIndices.end());
+#ifndef NDEBUG
+  if (it == typeIndices.end()) {
+    std::cout << "Missing signature: " << sig << '\n';
+    assert(0);
+  }
+#endif
   return it->second;
 }
 
@@ -959,13 +960,16 @@ void WasmBinaryWriter::finishUp() {
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (type.isNullable()) {
-      o << S32LEB(BinaryConsts::EncodedType::nullable);
-    } else {
-      o << S32LEB(BinaryConsts::EncodedType::nonnullable);
+    // TODO: fully handle non-signature reference types (GC), and in reading
+    if (heapType.isSignature()) {
+      if (type.isNullable()) {
+        o << S32LEB(BinaryConsts::EncodedType::nullable);
+      } else {
+        o << S32LEB(BinaryConsts::EncodedType::nonnullable);
+      }
+      writeHeapType(heapType);
+      return;
     }
-    writeHeapType(heapType);
-    return;
   }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);

@@ -416,20 +416,24 @@ collectSignatures(Module& wasm,
       TypeCounter(Counts& counts) : counts(counts) {}
 
       void visitExpression(Expression* curr) {
-        // A signature type could be anywhere.
-        if (curr->type.isRef()) {
-          auto heapType = curr->type.getHeapType();
-          if (heapType.isSignature()) {
-            counts[heapType.getSignature()]++;
-          }
-        }
-        // Specific places also have a special signature.
-        if (auto* call = curr->dynCast<CallIndirect>()) {
+        if (curr->is<RefNull>()) {
+          maybeNote(curr->type);
+        } else if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
-          // TODO: Allow control flow to have input types as well
+          maybeNote(curr->type);
           if (curr->type.isTuple()) {
+            // TODO: Allow control flow to have input types as well
             counts[Signature(Type::none, curr->type)]++;
+          }
+        }
+      }
+
+      void maybeNote(Type type) {
+        if (type.isRef()) {
+          auto heapType = type.getHeapType();
+          if (heapType.isSignature()) {
+            counts[heapType.getSignature()]++;
           }
         }
       }
@@ -461,6 +465,10 @@ collectSignatures(Module& wasm,
       counts[innerPair.first] += innerPair.second;
     }
   }
+
+  // TODO: recursively traverse each reference type, which may have a child type
+  //       this is itself a reference type.
+
   // We must sort all the dependencies of a signature before it. For example,
   // (func (param (ref (func)))) must appear after (func). To do that, find the
   // depth of dependencies of each signature. For example, if A depends on B

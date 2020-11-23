@@ -1,5 +1,4 @@
 (module
- (type $none_=>_none (func))
  (type $none_=>_anyref (func (result anyref)))
  (type $anyref_=>_none (func (param anyref)))
  (type $funcref_=>_none (func (param funcref)))
@@ -8,6 +7,7 @@
  (type $exnref_=>_none (func (param exnref)))
  (type $none_=>_externref (func (result externref)))
  (type $none_=>_exnref (func (result exnref)))
+ (type $none_=>_none (func))
  (type $externref_=>_funcref (func (param externref) (result funcref)))
  (import "env" "import_global" (global $gimport$0 externref))
  (import "env" "import_func" (func $fimport$0 (param externref) (result funcref)))
