@@ -216,7 +216,7 @@
   (call_ref
    (local.get $x)
    (local.get $y)
-   (func.ref $foo)
+   (ref.func $foo)
   )
  )
 )
