@@ -122,15 +122,6 @@ public:
       return;
     }
 
-    // Before parallelism, create all passes on the main thread here, to ensure
-    // prepareToRun() is called for each pass before we start to optimize
-    // functions.
-    {
-      PassRunner passRunner(wasm, passOptions);
-      addPrePasses(passRunner);
-      passRunner.addDefaultFunctionOptimizationPasses();
-    }
-
     // prepare work list
     endMarker = new Function();
     list = new std::atomic<Function*>[numFunctions];

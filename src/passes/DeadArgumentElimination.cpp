@@ -72,7 +72,11 @@ struct DAEFunctionInfo {
   // see inhibits our optimizations, but TODO: an export
   // could be worked around by exporting a thunk that
   // adds the parameter.
-  bool hasUnseenCalls = false;
+  // This is atomic so that we can write to it from any function at any time
+  // during the parallel analysis phase which is run in DAEScanner.
+  std::atomic<bool> hasUnseenCalls;
+
+  DAEFunctionInfo() { hasUnseenCalls = false; }
 };
 
 typedef std::unordered_map<Name, DAEFunctionInfo> DAEFunctionInfoMap;
@@ -145,6 +149,17 @@ struct DAEScanner
     }
   }
 
+  void visitRefFunc(RefFunc* curr) {
+    // We can't modify another function in parallel.
+    assert((*infoMap).count(curr->func));
+    // Treat a ref.func as an unseen call, preventing us from changing the
+    // function's type. If we did change it, it could be an observable
+    // difference from the outside, if the reference escapes, for example.
+    // TODO: look for actual escaping?
+    // TODO: create a thunk for external uses that allow internal optimizations
+    (*infoMap)[curr->func].hasUnseenCalls = true;
+  }
+
   // main entry point
 
   void doWalkFunction(Function* func) {
@@ -152,14 +167,22 @@ struct DAEScanner
     info = &((*infoMap)[func->name]);
     CFGWalker<DAEScanner, Visitor<DAEScanner>, DAEBlockInfo>::doWalkFunction(
       func);
-    // If there are relevant params, check if they are used. (If
-    // we can't optimize the function anyhow, there's no point.)
+    // If there are relevant params, check if they are used. If we can't
+    // optimize the function anyhow, there's no point (note that our check here
+    // is technically racy - another thread could update hasUnseenCalls to true
+    // around when we check it - but that just means that we might or might not
+    // do some extra work, as we'll ignore the results later if we have unseen
+    // calls. That is, the check for hasUnseenCalls here is just a minor
+    // optimization to avoid pointless work. We can avoid that work if either
+    // we know there is an unseen call before the parallel analysis that we are
+    // part of, say if we are exported, or if another parallel function finds a
+    // RefFunc to us and updates it before we check it).
     if (numParams > 0 && !info->hasUnseenCalls) {
-      findUnusedParams(func);
+      findUnusedParams();
     }
   }
 
-  void findUnusedParams(Function* func) {
+  void findUnusedParams() {
     // Flow the incoming parameter values, see if they reach a read.
     // Once we've seen a parameter at a block, we need never consider it there
     // again.
@@ -242,8 +265,9 @@ struct DAE : public Pass {
     DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data
     // structure.
-    ModuleUtils::iterDefinedFunctions(
-      *module, [&](Function* func) { infoMap[func->name]; });
+    for (auto& func : module->functions) {
+      infoMap[func->name];
+    }
     // Check the influence of the table and exports.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
@@ -326,6 +350,9 @@ struct DAE : public Pass {
     for (auto& pair : allCalls) {
       auto name = pair.first;
       auto& calls = pair.second;
+      if (infoMap[name].hasUnseenCalls) {
+        continue;
+      }
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
       if (numParams == 0) {
