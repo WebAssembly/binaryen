@@ -120,7 +120,7 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
   for (const auto& param : sig.params) {
     params.emplace_back(std::to_string(p++), param);
   }
-  Function* f = builder.makeFunction(name, std::move(params), sig.results, {});
+  auto f = builder.makeFunction(name, std::move(params), sig.results, {});
   Expression* fptr = builder.makeLocalGet(0, Type::i32);
   std::vector<Expression*> args;
   Index i = 0;
@@ -130,8 +130,8 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
   Expression* call = builder.makeCallIndirect(fptr, args, sig);
   f->body = call;
 
-  wasm->addFunction(f);
-  exportFunction(*wasm, f->name, true);
+  wasm->addFunction(std::move(f));
+  exportFunction(*wasm, name, true);
 }
 
 Pass* createGenerateDynCallsPass() { return new GenerateDynCalls(false); }

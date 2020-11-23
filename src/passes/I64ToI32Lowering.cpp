@@ -113,11 +113,10 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
       }
       originallyI64Globals.insert(curr->name);
       curr->type = Type::i32;
-      auto* high = builder->makeGlobal(makeHighName(curr->name),
-                                       Type::i32,
-                                       builder->makeConst(int32_t(0)),
-                                       Builder::Mutable);
-      module->addGlobal(high);
+      auto high = builder->makeGlobal(makeHighName(curr->name),
+                                      Type::i32,
+                                      builder->makeConst(int32_t(0)),
+                                      Builder::Mutable);
       if (curr->imported()) {
         Fatal() << "TODO: imported i64 globals";
       } else {
@@ -134,6 +133,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
         }
         curr->init->type = Type::i32;
       }
+      module->addGlobal(std::move(high));
     }
 
     // For functions that return 64-bit values, we use this global variable

@@ -116,7 +116,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           // binaries have implicit traps
           if (auto* unary = curr->dynCast<Unary>()) {
             EffectAnalyzer tester(getPassOptions(), features);
-            tester.visitUnary(unary);
+            tester.visit(unary);
             if (tester.hasSideEffects()) {
               return curr;
             }
@@ -129,7 +129,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
             }
           } else if (auto* binary = curr->dynCast<Binary>()) {
             EffectAnalyzer tester(getPassOptions(), features);
-            tester.visitBinary(binary);
+            tester.visit(binary);
             if (tester.hasSideEffects()) {
               return curr;
             }
