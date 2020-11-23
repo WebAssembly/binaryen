@@ -1025,6 +1025,8 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
   }
   int ret = 0;
   switch (type.kind) {
+    case HeapType::InvalidKind:
+      WASM_UNREACHABLE("invalid heap type");
     case HeapType::FuncKind:
       ret = BinaryConsts::EncodedHeapType::func;
       break;

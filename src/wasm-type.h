@@ -331,6 +331,7 @@ struct Array {
 
 struct HeapType {
   enum Kind {
+    InvalidKind,
     FuncKind,
     ExternKind,
     ExnKind,
@@ -394,6 +395,37 @@ struct Rtt {
   }
   bool operator!=(const Rtt& other) const { return !(*this == other); }
   std::string toString() const;
+};
+
+// TypeBuilder - allows for the construction of recursive types. Contains a
+// table of `n` mutable HeapTypes and can construct temporary types that are
+// backed by those HeapTypes, refering to them by reference. Those temporary
+// types are owned by the TypeBuilder and should only be used in the
+// construction of HeapTypes to insert into the TypeBuilder. Temporary types
+// should never be used in the construction of normal Types, only other
+// temporary types.
+struct TypeBuilder {
+  std::vector<HeapType> heapTypes;
+
+  struct Impl;
+  std::unique_ptr<Impl> impl;
+
+  TypeBuilder(size_t n);
+  ~TypeBuilder();
+
+  TypeBuilder(TypeBuilder& other) = delete;
+  TypeBuilder(TypeBuilder&& other) = delete;
+  TypeBuilder& operator=(TypeBuilder&) = delete;
+
+  HeapType& operator[](size_t i) { return heapTypes[i]; }
+
+  Type getTempTupleType(const Tuple&);
+  Type getTempRefType(size_t i, bool nullable);
+  Type getTempRttType(size_t i, uint32_t depth);
+
+  // Canonicalizes all of the heap types in-place. May only be called once all
+  // of the heap types have been initialized.
+  void build();
 };
 
 std::ostream& operator<<(std::ostream&, Type);

@@ -19,6 +19,7 @@
 #include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "compiler-support.h"
 #include "support/hash.h"
@@ -32,25 +33,44 @@ struct TypeInfo {
     TupleKind,
     RefKind,
     RttKind,
+    TempRefKind,
+    TempRttKind,
   } kind;
   struct Ref {
     HeapType heapType;
     bool nullable;
   };
+  struct TempRef {
+    HeapType* heapType;
+    bool nullable;
+  };
+  struct TempRtt {
+    uint32_t depth;
+    HeapType* heapType;
+  };
   union {
     Tuple tuple;
     Ref ref;
     Rtt rtt;
+    TempRef tempRef;
+    TempRtt tempRtt;
   };
 
   TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
   TypeInfo(Tuple&& tuple) : kind(TupleKind), tuple(std::move(tuple)) {}
+  TypeInfo(std::initializer_list<Type> list) : kind(TupleKind), tuple(list) {}
+
   TypeInfo(const HeapType& heapType, bool nullable)
     : kind(RefKind), ref{heapType, nullable} {}
   TypeInfo(HeapType&& heapType, bool nullable)
     : kind(RefKind), ref{std::move(heapType), nullable} {}
+
   TypeInfo(const Rtt& rtt) : kind(RttKind), rtt(rtt) {}
   TypeInfo(Rtt&& rtt) : kind(RttKind), rtt(std::move(rtt)) {}
+
+  TypeInfo(const TempRef& tempRef) : kind(TempRefKind), tempRef(tempRef) {}
+  TypeInfo(const TempRtt& tempRtt) : kind(TempRttKind), tempRtt(tempRtt) {}
+
   TypeInfo(const TypeInfo& other) {
     kind = other.kind;
     switch (kind) {
@@ -62,6 +82,12 @@ struct TypeInfo {
         return;
       case RttKind:
         new (&rtt) auto(other.rtt);
+        return;
+      case TempRefKind:
+        new (&tempRef) auto(other.tempRef);
+        return;
+      case TempRttKind:
+        new (&tempRtt) auto(other.tempRtt);
         return;
     }
     WASM_UNREACHABLE("unexpected kind");
@@ -80,15 +106,30 @@ struct TypeInfo {
         rtt.~Rtt();
         return;
       }
+      case TempRefKind: {
+        tempRef.~TempRef();
+        return;
+      }
+      case TempRttKind: {
+        tempRtt.~TempRtt();
+        return;
+      }
     }
     WASM_UNREACHABLE("unexpected kind");
   }
 
   constexpr bool isTuple() const { return kind == TupleKind; }
-  constexpr bool isRef() const { return kind == RefKind; }
-  constexpr bool isRtt() const { return kind == RttKind; }
+  constexpr bool isRef() const {
+    return kind == RefKind || kind == TempRefKind;
+  }
+  constexpr bool isRtt() const {
+    return kind == RttKind || kind == TempRttKind;
+  }
 
-  bool isNullable() const { return kind == RefKind && ref.nullable; }
+  bool isNullable() const {
+    return (kind == RefKind && ref.nullable) ||
+           (kind == TempRefKind && tempRef.nullable);
+  }
 
   bool operator==(const TypeInfo& other) const {
     if (kind != other.kind) {
@@ -102,6 +143,12 @@ struct TypeInfo {
                ref.nullable == other.ref.nullable;
       case RttKind:
         return rtt == other.rtt;
+      case TempRefKind:
+        return tempRef.heapType == other.tempRef.heapType &&
+               tempRef.nullable == other.tempRef.nullable;
+      case TempRttKind:
+        return tempRtt.depth == other.tempRtt.depth &&
+               tempRtt.heapType == other.tempRtt.heapType;
     }
     WASM_UNREACHABLE("unexpected kind");
   }
@@ -163,6 +210,16 @@ public:
         wasm::rehash(digest, info.rtt);
         return digest;
       }
+      case wasm::TypeInfo::TempRefKind: {
+        wasm::rehash(digest, info.tempRef.heapType);
+        wasm::rehash(digest, info.tempRef.nullable);
+        return digest;
+      }
+      case wasm::TypeInfo::TempRttKind: {
+        wasm::rehash(digest, info.tempRtt.depth);
+        wasm::rehash(digest, info.tempRtt.heapType);
+        return digest;
+      }
     }
     WASM_UNREACHABLE("unexpected kind");
   }
@@ -200,6 +257,7 @@ size_t hash<wasm::Array>::operator()(const wasm::Array& array) const {
 size_t hash<wasm::HeapType>::operator()(const wasm::HeapType& heapType) const {
   auto digest = wasm::hash(heapType.kind);
   switch (heapType.kind) {
+    case wasm::HeapType::InvalidKind:
     case wasm::HeapType::FuncKind:
     case wasm::HeapType::ExternKind:
     case wasm::HeapType::AnyKind:
@@ -300,6 +358,8 @@ struct TypeStore {
   Type makeType(const HeapType& heapType, bool nullable) {
 #ifndef NDEBUG
     switch (heapType.kind) {
+      case HeapType::InvalidKind:
+        WASM_UNREACHABLE("Invalid heap type");
       case HeapType::FuncKind:
       case HeapType::ExternKind:
       case HeapType::AnyKind:
@@ -322,6 +382,14 @@ struct TypeStore {
   }
 
   Type makeType(const Rtt& rtt) { return Type(canonicalize(TypeInfo(rtt))); }
+
+  Type makeType(const TypeInfo::TempRef& tempRef) {
+    return Type(canonicalize(TypeInfo(tempRef)));
+  }
+
+  Type makeType(const TypeInfo::TempRtt& tempRtt) {
+    return Type(canonicalize(TypeInfo(tempRtt)));
+  }
 };
 
 TypeStore globalTypeStore;
@@ -516,7 +584,13 @@ FeatureSet Type::getFeatures() const {
 HeapType Type::getHeapType() const {
   if (isRef()) {
     if (isCompound()) {
-      return getTypeInfo(*this)->ref.heapType;
+      auto* info = getTypeInfo(*this);
+      if (info->kind == TypeInfo::RefKind) {
+        return info->ref.heapType;
+      } else {
+        assert(info->kind == TypeInfo::TempRefKind);
+        return *info->tempRef.heapType;
+      }
     }
     switch (getBasic()) {
       case funcref:
@@ -665,6 +739,7 @@ const Type& Type::operator[](size_t index) const {
 
 HeapType::HeapType(const HeapType& other) : kind(other.kind) {
   switch (kind) {
+    case InvalidKind:
     case FuncKind:
     case ExternKind:
     case AnyKind:
@@ -687,6 +762,7 @@ HeapType::HeapType(const HeapType& other) : kind(other.kind) {
 
 HeapType::~HeapType() {
   switch (kind) {
+    case InvalidKind:
     case FuncKind:
     case ExternKind:
     case AnyKind:
@@ -711,6 +787,8 @@ bool HeapType::operator==(const HeapType& other) const {
     return false;
   }
   switch (kind) {
+    case InvalidKind:
+      WASM_UNREACHABLE("Invalid heap type");
     case FuncKind:
     case ExternKind:
     case AnyKind:
@@ -909,6 +987,8 @@ std::ostream& operator<<(std::ostream& os, Array array) {
 
 std::ostream& operator<<(std::ostream& os, HeapType heapType) {
   switch (heapType.kind) {
+    case wasm::HeapType::InvalidKind:
+      return os << "invalid";
     case wasm::HeapType::FuncKind:
       return os << "func";
     case wasm::HeapType::ExternKind:
@@ -950,8 +1030,229 @@ std::ostream& operator<<(std::ostream& os, TypeInfo info) {
     case TypeInfo::RttKind: {
       return os << info.rtt;
     }
+    case TypeInfo::TempRefKind: {
+      os << "(temp ref ";
+      if (info.tempRef.nullable) {
+        os << "null ";
+      }
+      return os << *info.tempRef.heapType << ")";
+    }
+    case TypeInfo::TempRttKind: {
+      return os << "(temp rtt " << info.tempRtt.depth << " "
+                << *info.tempRtt.heapType << ")";
+    }
   }
   WASM_UNREACHABLE("unexpected kind");
+}
+
+struct TypeBuilder::Impl {
+  TypeStore store;
+};
+
+TypeBuilder::TypeBuilder(size_t n) {
+  impl = std::make_unique<TypeBuilder::Impl>();
+  heapTypes.reserve(n);
+  for (; n > 0; --n) {
+    heapTypes.emplace_back(HeapType::InvalidKind);
+  }
+}
+
+TypeBuilder::~TypeBuilder() = default;
+
+Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
+  return impl->store.makeType(tuple);
+}
+
+Type TypeBuilder::getTempRefType(size_t i, bool nullable) {
+  assert(i < heapTypes.size() && "Index out of bounds");
+  return impl->store.makeType(TypeInfo::TempRef{&heapTypes[i], nullable});
+}
+
+Type TypeBuilder::getTempRttType(size_t i, uint32_t depth) {
+  assert(i < heapTypes.size() && "Index out of bounds");
+  return impl->store.makeType(TypeInfo::TempRtt{depth, &heapTypes[i]});
+}
+
+// Implements the algorithm to canonicalize the HeapTypes in a TypeBuilder
+struct Canonicalizer {
+  TypeBuilder& builder;
+  std::unordered_set<Type> scanned;
+  std::vector<Type*> scanList;
+  std::vector<Type*> visitList;
+  std::unordered_map<Type, std::unordered_set<Type>> reaches;
+  std::unordered_map<Type, Type> replacements;
+
+  Canonicalizer(TypeBuilder& builder);
+  void noteChild(Type parent, Type& child);
+  void scanHeapType(Type parent, HeapType& ht);
+  void scanType(Type& type);
+  void makeReachabilityFixpoint();
+  void canonicalize(Type& type);
+};
+
+// Each heap type the user has created either has no dependencies on the other
+// temporary heap types, in which case it already uses canonical types and does
+// not need to be changed, or it does depend on some other temporary heap type,
+// in which case it must contain a temporary type. Replacing all temporary types
+// in-place is therefore sufficient to canonicalize all of the heap types in the
+// builder.
+//
+// Recursive heap types must reach themselves through some recursive type that
+// refers dirctly to the heap type in question. Finding all recursive types is
+// therefore sufficient to identify all the recursive heap types.
+Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
+  // Traverse the type graph reachable from the heap types, calculating
+  // reachability and collecting a list of types that need to be canonicalized.
+  // We must scan in depth-first order so that we can do a postorder traversal
+  // later.
+  for (auto& ht : builder.heapTypes) {
+    scanHeapType(Type::none, ht);
+    while (scanList.size() != 0) {
+      Type* curr = scanList.back();
+      scanList.pop_back();
+      scanType(*curr);
+    }
+  }
+
+  // Check for recursive types. TODO: pre-canonicalize these into their minimal
+  // finite representations.
+  makeReachabilityFixpoint();
+  for (auto& reach : reaches) {
+    if (reach.second.count(reach.first) != 0) {
+      WASM_UNREACHABLE("TODO: support recursive types");
+    }
+  }
+
+  // Visit the types in reverse postorder, replacing them with their
+  // canonicalized versions.
+  for (auto it = visitList.rbegin(); it != visitList.rend(); ++it) {
+    canonicalize(**it);
+  }
+}
+
+void Canonicalizer::noteChild(Type parent, Type& child) {
+  if (parent != Type::none) {
+    reaches[parent].insert(child);
+  }
+  scanList.push_back(&child);
+}
+
+void Canonicalizer::scanHeapType(Type parent, HeapType& ht) {
+  switch (ht.kind) {
+    case HeapType::InvalidKind:
+      WASM_UNREACHABLE("invalid heap type");
+    case HeapType::FuncKind:
+    case HeapType::ExternKind:
+    case HeapType::ExnKind:
+    case HeapType::AnyKind:
+    case HeapType::EqKind:
+    case HeapType::I31Kind:
+      break;
+    case HeapType::SignatureKind:
+      if (ht.signature.params != Type::none) {
+        noteChild(parent, ht.signature.params);
+      }
+      if (ht.signature.results != Type::none) {
+        noteChild(parent, ht.signature.results);
+      }
+      break;
+    case HeapType::StructKind:
+      for (auto& field : ht.struct_.fields) {
+        noteChild(parent, field.type);
+      }
+      break;
+    case HeapType::ArrayKind:
+      noteChild(parent, ht.array.element.type);
+      break;
+  }
+};
+
+void Canonicalizer::scanType(Type& type) {
+  if (type.isBasic() || scanned.count(type)) {
+    return;
+  }
+  scanned.insert(type);
+  visitList.push_back(&type);
+
+  auto* info = getTypeInfo(type);
+  switch (info->kind) {
+    case TypeInfo::TupleKind:
+      for (auto& child : info->tuple.types) {
+        noteChild(type, child);
+      }
+      break;
+    case TypeInfo::RefKind:
+      scanHeapType(type, info->ref.heapType);
+      break;
+    case TypeInfo::RttKind:
+      scanHeapType(type, info->rtt.heapType);
+      break;
+    case TypeInfo::TempRefKind:
+      scanHeapType(type, *info->tempRef.heapType);
+      break;
+    case TypeInfo::TempRttKind:
+      scanHeapType(type, *info->tempRtt.heapType);
+      break;
+  }
+}
+
+void Canonicalizer::makeReachabilityFixpoint() {
+  // Naively calculate the transitive closure of the reachability graph.
+  bool changed;
+  do {
+    changed = false;
+    for (auto& entry : reaches) {
+      auto& reachable = entry.second;
+      std::unordered_set<Type> nextReachable;
+      for (auto& other : reachable) {
+        auto& otherReaches = reaches[other];
+        nextReachable.insert(otherReaches.begin(), otherReaches.end());
+      }
+      size_t oldSize = reachable.size();
+      reachable.insert(nextReachable.begin(), nextReachable.end());
+      if (reachable.size() != oldSize) {
+        changed = true;
+      }
+    }
+  } while (changed);
+}
+
+void Canonicalizer::canonicalize(Type& type) {
+  auto it = replacements.find(type);
+  if (it != replacements.end()) {
+    type = it->second;
+  } else {
+    assert(type.isCompound());
+    auto info = *getTypeInfo(type);
+    // Translate temporary types into permanent types by giving them ownership
+    // of their corresponding heap types.
+    switch (info.kind) {
+      case TypeInfo::TempRefKind:
+        info = TypeInfo(*info.tempRef.heapType, info.tempRef.nullable);
+        break;
+      case TypeInfo::TempRttKind:
+        info = TypeInfo(Rtt{info.tempRtt.depth, *info.tempRtt.heapType});
+        break;
+      default:
+        break;
+    }
+    // Get the globally canonicalized version of the type
+    Type replacement(globalTypeStore.canonicalize(info));
+    replacements[type] = replacement;
+    type = replacement;
+  }
+}
+
+void TypeBuilder::build() {
+#ifndef NDEBUG
+  // Assert that all of the heap types have been initialized.
+  for (auto& ht : heapTypes) {
+    assert(ht.kind != HeapType::InvalidKind &&
+           "Unexpected uninitialized heap type");
+  }
+#endif
+
+  Canonicalizer(*this);
 }
 
 } // namespace wasm
