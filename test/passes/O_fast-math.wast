@@ -84,4 +84,25 @@
    )
   )
  )
+ (func "sub_neg_zero1" (param $x f64) (result f64)
+  ;; -0.0 - x   ==>   -x
+  (f64.sub
+   (f64.const -0)
+   (local.get $x)
+  )
+ )
+ (func "sub_neg_zero2" (param $x f32) (result f32)
+  ;; -0.0 - x   ==>   -x
+  (f32.sub
+   (f32.const -0)
+   (local.get $x)
+  )
+ )
+ (func "sub_neg_zero3" (param $x f64) (result f64)
+  ;; skip
+  (f64.sub
+   (f64.const 0)
+   (local.get $x)
+  )
+ )
 )
