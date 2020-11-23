@@ -77,6 +77,16 @@ public:
   Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
+  // comparisons
+  bool operator==(Name name) {
+    return isStr() && str() == name;
+  }
+
+  template<typename T>
+  bool operator!=(T t) {
+    return !(*this == t);
+  }
+
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
   void dump();

@@ -539,11 +539,11 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
     if (s[i]->isStr()) {
       type = stringToType(s[i]->str());
     } else {
-      if (elementStartsWith(s, PARAM)) {
+      type = elementToType(*s[i]);
+      if (elementStartsWith(s, PARAM) && type.isTuple()) {
         throw ParseException(
           "params may not have tuple types", s[i]->line, s[i]->col);
       }
-      type = elementToType(*s[i]);
     }
     namedParams.emplace_back(name, type);
   }
@@ -925,10 +925,32 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
   if (s.isStr()) {
     return stringToType(s.str(), false, false);
   }
-  auto& tuple = s.list();
+  auto& list = s.list();
+  auto size = list.size();
+  if (size > 0 && elementStartsWith(s, REF)) {
+    // It's a reference. It should be in the form
+    //   (ref $name)
+    // or
+    //   (ref null $name)
+    if ((size != 2 && size != 3) || !list[1]->isStr()) {
+      throw ParseException(std::string("invalid reference type"), s.line, s.col);
+    }
+    bool nullable = false;
+    size_t i = 1;
+    if (size == 3) {
+      if (*list[1] != NULL_) {
+        throw ParseException(std::string("invalid reference type qualifier"), s.line, s.col);
+      }
+      nullable = true;
+      i++;
+    }
+    auto sig = getFunctionSignature(*s[i]);
+    return Type(HeapType(sig), nullable);
+  }
+  // It's a tuple.
   std::vector<Type> types;
   for (size_t i = 0; i < s.size(); ++i) {
-    types.push_back(stringToType(tuple[i]->str()));
+    types.push_back(stringToType(list[i]->str()));
   }
   return Type(types);
 }
