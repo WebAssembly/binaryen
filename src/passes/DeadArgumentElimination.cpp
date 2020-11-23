@@ -277,12 +277,12 @@ struct DAE : public Pass {
     // Check the influence of the table and exports.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
-        infoMap[curr->value].hasUnseenCalls.store(true);
+        infoMap[curr->value].hasUnseenCalls = true;
       }
     }
     for (auto& segment : module->table.segments) {
       for (auto name : segment.data) {
-        infoMap[name].hasUnseenCalls.store(true);
+        infoMap[name].hasUnseenCalls = true;
       }
     }
     // Scan all the functions.
@@ -311,7 +311,7 @@ struct DAE : public Pass {
       auto name = pair.first;
       // We can only optimize if we see all the calls and can modify
       // them.
-      if (infoMap[name].hasUnseenCalls.load()) {
+      if (infoMap[name].hasUnseenCalls) {
         continue;
       }
       auto& calls = pair.second;
@@ -400,7 +400,7 @@ struct DAE : public Pass {
           continue;
         }
         auto name = func->name;
-        if (infoMap[name].hasUnseenCalls.load()) {
+        if (infoMap[name].hasUnseenCalls) {
           continue;
         }
         if (infoMap[name].hasTailCalls) {

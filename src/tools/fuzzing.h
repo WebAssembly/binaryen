@@ -1455,23 +1455,6 @@ private:
 
   Expression* makeCallRef(Type type) {
     return makeTrivial(type); // FIXME
-    // We need to find a proper function type to call. As a simple hack, try to
-    // create a call, and if we found that then we know such a type exists.
-    auto* attempt = makeCall(type);
-    if (!attempt->is<Call>()) {
-      // We failed to make a call, return the trivial thing we did make.
-      return attempt;
-    }
-    // Convert it into a CallRef.
-    auto* call = attempt->cast<Call>();
-    auto* func = wasm.getFunctionOrNull(call->target);
-    if (!func) {
-      // The target doesn't exist yet.
-      return makeTrivial(type);
-    }
-    auto functionType = Type(HeapType(func->sig), /* nullable = */ true);
-    return builder.makeCallRef(
-      make(functionType), call->operands, type, call->isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
