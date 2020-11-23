@@ -2160,7 +2160,8 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
                curr,
                "call_ref target must be a function reference");
   if (curr->target->type != Type::unreachable) {
-    validateCallParamsAndResult(curr, curr->target->type.getHeapType().getSignature());
+    validateCallParamsAndResult(
+      curr, curr->target->type.getHeapType().getSignature());
   }
 }
 
