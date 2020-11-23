@@ -78,14 +78,9 @@ public:
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
   // comparisons
-  bool operator==(Name name) {
-    return isStr() && str() == name;
-  }
+  bool operator==(Name name) { return isStr() && str() == name; }
 
-  template<typename T>
-  bool operator!=(T t) {
-    return !(*this == t);
-  }
+  template<typename T> bool operator!=(T t) { return !(*this == t); }
 
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
