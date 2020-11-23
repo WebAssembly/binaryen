@@ -1890,7 +1890,10 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   auto func = getFunctionName(*s[1]);
   auto ret = allocator.alloc<RefFunc>();
   ret->func = func;
-  ret->finalize();
+  // To support typed function refs, we give the reference not just a general
+  // funcref, but a specific subtype with the actual signature.
+  ret->finalize(
+    Type(HeapType(functionSignatures[func]), /* nullable = */ true));
   return ret;
 }
 

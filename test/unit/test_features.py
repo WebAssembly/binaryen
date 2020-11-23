@@ -408,5 +408,6 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-reference-types',
             '--enable-multivalue',
             '--enable-gc',
-            '--enable-memory64'
+            '--enable-memory64',
+            '--enable-typed-function-references',
         ], p2.stdout.splitlines())

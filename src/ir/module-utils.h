@@ -414,13 +414,26 @@ collectSignatures(Module& wasm,
       Counts& counts;
 
       TypeCounter(Counts& counts) : counts(counts) {}
+
       void visitExpression(Expression* curr) {
-        if (auto* call = curr->dynCast<CallIndirect>()) {
+        if (curr->is<RefNull>()) {
+          maybeNote(curr->type);
+        } else if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
-          // TODO: Allow control flow to have input types as well
+          maybeNote(curr->type);
           if (curr->type.isTuple()) {
+            // TODO: Allow control flow to have input types as well
             counts[Signature(Type::none, curr->type)]++;
+          }
+        }
+      }
+
+      void maybeNote(Type type) {
+        if (type.isRef()) {
+          auto heapType = type.getHeapType();
+          if (heapType.isSignature()) {
+            counts[heapType.getSignature()]++;
           }
         }
       }
@@ -434,6 +447,14 @@ collectSignatures(Module& wasm,
   Counts counts;
   for (auto& curr : wasm.functions) {
     counts[curr->sig]++;
+    for (auto type : curr->vars) {
+      if (type.isRef()) {
+        auto heapType = type.getHeapType();
+        if (heapType.isSignature()) {
+          counts[heapType.getSignature()]++;
+        }
+      }
+    }
   }
   for (auto& curr : wasm.events) {
     counts[curr->sig]++;
@@ -444,10 +465,61 @@ collectSignatures(Module& wasm,
       counts[innerPair.first] += innerPair.second;
     }
   }
+
+  // TODO: recursively traverse each reference type, which may have a child type
+  //       this is itself a reference type.
+
+  // We must sort all the dependencies of a signature before it. For example,
+  // (func (param (ref (func)))) must appear after (func). To do that, find the
+  // depth of dependencies of each signature. For example, if A depends on B
+  // which depends on C, then A's depth is 2, B's is 1, and C's is 0 (assuming
+  // no other dependencies).
+  Counts depthOfDependencies;
+  std::unordered_map<Signature, std::unordered_set<Signature>> isDependencyOf;
+  // To calculate the depth of dependencies, we'll do a flow analysis, visiting
+  // each signature as we find out new things about it.
+  std::set<Signature> toVisit;
+  for (auto& pair : counts) {
+    auto sig = pair.first;
+    depthOfDependencies[sig] = 0;
+    toVisit.insert(sig);
+    for (Type type : {sig.params, sig.results}) {
+      for (auto element : type) {
+        if (element.isRef()) {
+          auto heapType = element.getHeapType();
+          if (heapType.isSignature()) {
+            isDependencyOf[heapType.getSignature()].insert(sig);
+          }
+        }
+      }
+    }
+  }
+  while (!toVisit.empty()) {
+    auto iter = toVisit.begin();
+    auto sig = *iter;
+    toVisit.erase(iter);
+    // Anything that depends on this has a depth of dependencies equal to this
+    // signature's, plus this signature itself.
+    auto newDepth = depthOfDependencies[sig] + 1;
+    if (newDepth > counts.size()) {
+      Fatal() << "Cyclic signatures detected, cannot sort them.";
+    }
+    for (auto& other : isDependencyOf[sig]) {
+      if (depthOfDependencies[other] < newDepth) {
+        // We found something new to propagate.
+        depthOfDependencies[other] = newDepth;
+        toVisit.insert(other);
+      }
+    }
+  }
+  // Sort by frequency and then simplicity, and also keeping every signature
+  // before things that depend on it.
   std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
                                                    counts.end());
   std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    // order by frequency then simplicity
+    if (depthOfDependencies[a.first] != depthOfDependencies[b.first]) {
+      return depthOfDependencies[a.first] < depthOfDependencies[b.first];
+    }
     if (a.second != b.second) {
       return a.second > b.second;
     }

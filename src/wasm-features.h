@@ -38,7 +38,8 @@ struct FeatureSet {
     Multivalue = 1 << 9,
     GC = 1 << 10,
     Memory64 = 1 << 11,
-    All = (1 << 12) - 1
+    TypedFunctionReferences = 1 << 12,
+    All = (1 << 13) - 1
   };
 
   static std::string toString(Feature f) {
@@ -67,6 +68,8 @@ struct FeatureSet {
         return "gc";
       case Memory64:
         return "memory64";
+      case TypedFunctionReferences:
+        return "typed-function-references";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -92,6 +95,9 @@ struct FeatureSet {
   bool hasMultivalue() const { return (features & Multivalue) != 0; }
   bool hasGC() const { return (features & GC) != 0; }
   bool hasMemory64() const { return (features & Memory64) != 0; }
+  bool hasTypedFunctionReferences() const {
+    return (features & TypedFunctionReferences) != 0;
+  }
   bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
@@ -110,6 +116,9 @@ struct FeatureSet {
   void setMultivalue(bool v = true) { set(Multivalue, v); }
   void setGC(bool v = true) { set(GC, v); }
   void setMemory64(bool v = true) { set(Memory64, v); }
+  void setTypedFunctionReferences(bool v = true) {
+    set(TypedFunctionReferences, v);
+  }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
   void enable(const FeatureSet& other) { features |= other.features; }

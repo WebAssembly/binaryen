@@ -460,6 +460,14 @@ Type Type::reinterpret() const {
 
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
+    if (t != Type::funcref && t.isFunction()) {
+      // Strictly speaking, typed function references require the typed function
+      // references feature, however, we use these types internally regardless
+      // of the presence of features (in particular, since during load of the
+      // wasm we don't know the features yet, so we apply the more refined
+      // types).
+      return FeatureSet::ReferenceTypes;
+    }
     TODO_SINGLE_COMPOUND(t);
     switch (t.getBasic()) {
       case Type::v128:

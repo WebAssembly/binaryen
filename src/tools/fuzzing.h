@@ -321,6 +321,10 @@ private:
       }
       return Type(types);
     }
+    if (type.isFunction() && type != Type::funcref) {
+      // TODO: specific typed function references types.
+      return type;
+    }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
     TODO_SINGLE_COMPOUND(type);
@@ -653,6 +657,10 @@ private:
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
+      if (type.isRef() && !type.isNullable()) {
+        // We can't use a nullable type as a var, which is null-initialized.
+        continue;
+      }
       funcContext->typeLocals[type].push_back(params.size() +
                                               func->vars.size());
       func->vars.push_back(type);
@@ -1371,7 +1379,6 @@ private:
   }
 
   Expression* makeCall(Type type) {
-    // seems ok, go on
     int tries = TRIES;
     bool isReturn;
     while (tries-- > 0) {
@@ -1392,7 +1399,7 @@ private:
       return builder.makeCall(target->name, args, type, isReturn);
     }
     // we failed to find something
-    return make(type);
+    return makeTrivial(type);
   }
 
   Expression* makeCallIndirect(Type type) {
@@ -1418,7 +1425,7 @@ private:
         i = 0;
       }
       if (i == start) {
-        return make(type);
+        return makeTrivial(type);
       }
     }
     // with high probability, make sure the type is valid  otherwise, most are
@@ -2018,12 +2025,28 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        return builder.makeRefFunc(target->name);
+        auto type = Type(HeapType(target->sig), /* nullable = */ true);
+        return builder.makeRefFunc(target->name, type);
       }
       if (type == Type::i31ref) {
         return builder.makeI31New(makeConst(Type::i32));
       }
-      return builder.makeRefNull(type);
+      if (oneIn(2) && type.isNullable()) {
+        return builder.makeRefNull(type);
+      }
+      // TODO: randomize the order
+      for (auto& func : wasm.functions) {
+        // FIXME: RefFunc type should be non-nullable, but we emit nullable
+        //        types for now.
+        if (type == Type(HeapType(func->sig), /* nullable = */ true)) {
+          return builder.makeRefFunc(func->name, type);
+        }
+      }
+      // We failed to find a function, so create a null reference if we can.
+      if (type.isNullable()) {
+        return builder.makeRefNull(type);
+      }
+      WASM_UNREACHABLE("un-handleable non-nullable type");
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
@@ -2972,6 +2995,7 @@ private:
              Type::anyref,
              Type::eqref,
              Type::i31ref));
+    // TODO: emit typed function references types
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
@@ -2997,12 +3021,24 @@ private:
 
   Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
 
+  Type getMVPType() {
+    return pick(items(FeatureOptions<Type>().add(
+      FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)));
+  }
+
   Type getTupleType() {
     std::vector<Type> elements;
-    size_t numElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
-    elements.resize(numElements);
-    for (size_t i = 0; i < numElements; ++i) {
-      elements[i] = getSingleConcreteType();
+    size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
+    for (size_t i = 0; i < maxElements; ++i) {
+      auto type = getSingleConcreteType();
+      // Don't add a non-nullable type into a tuple, as currently we can't spill
+      // them into locals (that would require a "let").
+      if (!type.isNullable()) {
+        elements.push_back(type);
+      }
+    }
+    while (elements.size() < 2) {
+      elements.push_back(getMVPType());
     }
     return Type(elements);
   }
