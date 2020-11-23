@@ -496,47 +496,19 @@ struct OptimizeInstructions
       } else if (binary->op == EqInt32 || binary->op == NeInt32) {
         if (auto* c = binary->right->dynCast<Const>()) {
           if (auto* ext = Properties::getSignExtValue(binary->left)) {
-            // we are comparing a sign extend to a constant, which means we can
-            // use a cheaper zext
+            // We are comparing a sign extend to a constant, which means we can
+            // use a cheaper zero-extend in some cases. That is,
+            //  (x << S) >> S ==/!= C    =>    x & T ==/!= C
+            // where S and T are the matching values for sign/zero extend of the
+            // same size. For example, for an effective 8-bit value:
+            //  (x << 8) >> 8 ==/!= C    =>    x & 255 ==/!= C
+            // This is true if C's higher bits (beyond the size here, that is,
+            // the upper 24 bits in this example) are all zero.
             auto bits = Properties::getSignExtBits(binary->left);
-            binary->left = makeZeroExt(ext, bits);
-            // when we replace the sign-ext of the non-constant with a zero-ext,
-            // we are forcing the high bits to be all zero, instead of all zero
-            // or all one depending on the sign bit. so we may be changing the
-            // high bits from all one to all zero:
-            //  * if the constant value's higher bits are mixed, then it can't
-            //    be equal anyhow
-            //  * if they are all zero, we may get a false true if the
-            //    non-constant's upper bits were one. this can only happen if
-            //    the non-constant's sign bit is set, so this false true is a
-            //    risk only if the constant's sign bit is set (otherwise,
-            //    false). But a constant with a sign bit but with upper bits
-            //    zero is impossible to be equal to a sign-extended value
-            //    anyhow, so the entire thing is false.
-            //  * if they were all one, we may get a false false, if the only
-            //    difference is in those upper bits. that means we are equal on
-            //    the other bits, including the sign bit. so we can just mask
-            //    off the upper bits in the constant value, in this case,
-            //    forcing them to zero like we do in the zero-extend.
-            int32_t constValue = c->value.geti32();
-            auto upperConstValue = constValue & ~Bits::lowBitMask(bits);
-            uint32_t count = Bits::popCount(upperConstValue);
-            auto constSignBit = constValue & (1 << (bits - 1));
-            if ((count > 0 && count < 32 - bits) ||
-                (constSignBit && count == 0)) {
-              // mixed or [zero upper const bits with sign bit set]; the
-              // compared values can never be identical, so force something
-              // definitely impossible even after zext
-              assert(bits < 32);
-              c->value = Literal(int32_t(0x80000000));
-              // TODO: if no side effects, we can just replace it all with 1 or
-              // 0
-            } else {
-              // otherwise, they are all ones, so we can mask them off as
-              // mentioned before
-              c->value = c->value.and_(Literal(Bits::lowBitMask(bits)));
+            if ((c->value.geti32() & ~Bits::lowBitMask(bits)) == 0) {
+              binary->left = makeZeroExt(ext, bits);
+              return binary;
             }
-            return binary;
           }
         } else if (auto* left = Properties::getSignExtValue(binary->left)) {
           if (auto* right = Properties::getSignExtValue(binary->right)) {
