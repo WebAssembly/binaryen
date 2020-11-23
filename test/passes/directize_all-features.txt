@@ -215,10 +215,9 @@
   (unreachable)
  )
  (func $bar (param $x i32) (param $y i32)
-  (call_ref
+  (call $foo
    (local.get $x)
    (local.get $y)
-   (ref.func $foo)
   )
  )
 )
