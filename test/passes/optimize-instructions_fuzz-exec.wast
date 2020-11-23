@@ -249,7 +249,7 @@
  (func $shift (param $0 i32)
   (call $log
    ;; x << 24 >> 24 << 30 >> 24 - the extra shifts make it invalid to do the
-   ;; optimization of not repeated a sign-extend. That is, this would be valid
+   ;; optimization of not repeating a sign-extend. That is, this would be valid
    ;; if the 30 were replaced by a 24.
    (i32.shr_s
     (i32.shl
