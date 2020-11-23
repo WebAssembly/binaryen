@@ -41,6 +41,9 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   FunctionDirectizer(TableUtils::FlatTable* flatTable) : flatTable(flatTable) {}
 
   void visitCallIndirect(CallIndirect* curr) {
+    if (!flatTable) {
+      return;
+    }
     if (auto* c = curr->target->dynCast<Const>()) {
       Index index = c->value.geti32();
       // If the index is invalid, or the type is wrong, we can
@@ -101,23 +104,29 @@ private:
 
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    TableUtils::FlatTable flatTable(module->table);
+    TableUtils::FlatTable* usedFlatTable = &flatTable;
     if (!module->table.exists) {
-      return;
-    }
-    if (module->table.imported()) {
-      return;
-    }
-    for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Table) {
-        return;
+      usedFlatTable = nullptr;
+    } else if (module->table.imported()) {
+      usedFlatTable = nullptr;
+    } else {
+      for (auto& ex : module->exports) {
+        if (ex->kind == ExternalKind::Table) {
+          usedFlatTable = nullptr;
+        }
+      }
+      if (!flatTable.valid) {
+        usedFlatTable = nullptr;
       }
     }
-    TableUtils::FlatTable flatTable(module->table);
-    if (!flatTable.valid) {
+    // Without typed function references, all we can do is optimize table
+    // accesses, so if we can't do that, stop.
+    if (!usedFlatTable && !module->features.hasTypedFunctionReferences()) {
       return;
     }
     // The table exists and is constant, so this is possible.
-    FunctionDirectizer(&flatTable).run(runner, module);
+    FunctionDirectizer(usedFlatTable).run(runner, module);
   }
 };
 
