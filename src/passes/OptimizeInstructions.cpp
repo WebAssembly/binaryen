@@ -502,11 +502,37 @@ struct OptimizeInstructions
             // where S and T are the matching values for sign/zero extend of the
             // same size. For example, for an effective 8-bit value:
             //  (x << 8) >> 8 ==/!= C    =>    x & 255 ==/!= C
-            // This is true if C's higher bits (beyond the size here, that is,
-            // the upper 24 bits in this example) are all zero.
+            //
+            // This is obviously true if C's higher bits (beyond the relevant
+            // size, that is, the upper 24 bits in this example) are all zero.
             auto bits = Properties::getSignExtBits(binary->left);
-            if ((c->value.geti32() & ~Bits::lowBitMask(bits)) == 0) {
+            uint32_t right = c->value.geti32();
+            if (Bits::popCount(right >> uint32_t(bits)) == 0) {
               binary->left = makeZeroExt(ext, bits);
+              return binary;
+            }
+            // If C's higher bits are all ones, and C's sign bit is set, then we
+            // can also do this by removing the higher bits on both sides, that
+            // is, zero-extending them both. This works because if x was not
+            // signed then it was different due to the sign bit before, and
+            // still will be. And if x was signed then it would have all ones in
+            // its higher bits, matching C's, so we can remove all the identical
+            // bits before comparing.
+            if (Bits::popCount(right >> uint32_t(bits - 1)) ==
+                int(32 - bits + 1)) {
+              binary->left = makeZeroExt(ext, bits);
+              c->value = c->value.and_(Literal(Bits::lowBitMask(bits)));
+              return binary;
+            }
+            // Otherwise, if C's higher bits are mixed, then we know the result
+            // should always be false - as no sign-extend can result in a mixed
+            // set of higher bits, they are all either 0 or 1. In this case we
+            // can zero-extend the left side, and can simplify the right side to
+            // a simple value with mixed higher bits.
+            if (Bits::popCount(right >> uint32_t(bits)) !=
+                int(32 - bits)) {
+              binary->left = makeZeroExt(ext, bits);
+              c->value = Literal(int32_t(0x80000000));
               return binary;
             }
           }
