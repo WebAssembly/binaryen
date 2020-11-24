@@ -129,7 +129,7 @@ struct Directize : public Pass {
       return;
     }
     // The table exists and is constant, so this is possible.
-    FunctionDirectizer(canOptimizeCallIndirect ? usedFlatTable : nullptr)
+    FunctionDirectizer(canOptimizeCallIndirect ? &usedFlatTable : nullptr)
       .run(runner, module);
   }
 };
