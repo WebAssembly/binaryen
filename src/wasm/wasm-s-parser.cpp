@@ -2767,7 +2767,9 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
 }
 
 Signature SExpressionWasmBuilder::parseInlineFunctionSignature(Element& s) {
-  assert(*s[0] == FUNC);
+  if (*s[0] != FUNC) {
+    throw ParseException("invalid inline function signature", s.line, s.col);
+  }
   std::vector<Type> params;
   std::vector<Type> results;
   for (size_t k = 1; k < s.size(); k++) {

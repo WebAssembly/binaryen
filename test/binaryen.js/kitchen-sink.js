@@ -169,6 +169,7 @@ function test_ids() {
   console.log("TupleExtractId: " + binaryen.TupleExtractId);
   console.log("I31NewId: " + binaryen.I31NewId);
   console.log("I31GetId: " + binaryen.I31GetId);
+  console.log("CallRefId: " + binaryen.CallRefId);
   console.log("RefTestId: " + binaryen.RefTestId);
   console.log("RefCastId: " + binaryen.RefCastId);
   console.log("BrOnCastId: " + binaryen.BrOnCastId);

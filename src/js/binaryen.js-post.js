@@ -99,6 +99,7 @@ function initializeConstants() {
     'Pop',
     'I31New',
     'I31Get',
+    'CallRef',
     'RefTest',
     'RefCast',
     'BrOnCast',
