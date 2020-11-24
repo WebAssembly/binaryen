@@ -932,17 +932,15 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
     //   (ref $name)
     // or
     //   (ref null $name)
+    // and also $name can be the expanded structure of the type and not a name,
+    // so something like (ref (func (result i32))), etc.
     if (size != 2 && size != 3) {
       throw ParseException(
-        std::string("invalid reference type"), s.line, s.col);
+        std::string("invalid reference type size"), s.line, s.col);
     }
-    if (size == 2 && !list[1]->isStr()) {
+    if (size == 3 && *list[1] != NULL_) {
       throw ParseException(
-        std::string("invalid reference type"), s.line, s.col);
-    }
-    if (size == 3 && (*list[1] != NULL_ || !list[2]->isStr())) {
-      throw ParseException(
-        std::string("invalid reference type"), s.line, s.col);
+        std::string("invalid reference type qualifier"), s.line, s.col);
     }
     bool nullable = false;
     size_t i = 1;
@@ -950,7 +948,19 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
       nullable = true;
       i++;
     }
-    auto sig = getFunctionSignature(*s[i]);
+    Signature sig;
+    auto& last = *s[i];
+    if (last.isStr()) {
+      // A string name of a signature.
+      sig = getFunctionSignature(last);
+    } else {
+      // A signature written out in full in-line.
+      if (*last[0] != FUNC) {
+        throw ParseException(
+          std::string("invalid reference type type"), s.line, s.col);
+      }
+      sig = parseInlineFunctionSignature(last);
+    }
     return Type(HeapType(sig), nullable);
   }
   // It's a tuple.
@@ -2756,9 +2766,24 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
   wasm.table.segments.push_back(segment);
 }
 
-void SExpressionWasmBuilder::parseType(Element& s) {
+Signature SExpressionWasmBuilder::parseInlineFunctionSignature(Element& s) {
+  assert(*s[0] == FUNC);
   std::vector<Type> params;
   std::vector<Type> results;
+  for (size_t k = 1; k < s.size(); k++) {
+    Element& curr = *s[k];
+    if (elementStartsWith(curr, PARAM)) {
+      auto newParams = parseParamOrLocal(curr);
+      params.insert(params.end(), newParams.begin(), newParams.end());
+    } else if (elementStartsWith(curr, RESULT)) {
+      auto newResults = parseResults(curr);
+      results.insert(results.end(), newResults.begin(), newResults.end());
+    }
+  }
+  return Signature(Type(params), Type(results));
+}
+
+void SExpressionWasmBuilder::parseType(Element& s) {
   size_t i = 1;
   if (s[i]->isStr()) {
     std::string name = s[i]->str().str;
@@ -2768,18 +2793,7 @@ void SExpressionWasmBuilder::parseType(Element& s) {
     signatureIndices[name] = signatures.size();
     i++;
   }
-  Element& func = *s[i];
-  for (size_t k = 1; k < func.size(); k++) {
-    Element& curr = *func[k];
-    if (elementStartsWith(curr, PARAM)) {
-      auto newParams = parseParamOrLocal(curr);
-      params.insert(params.end(), newParams.begin(), newParams.end());
-    } else if (elementStartsWith(curr, RESULT)) {
-      auto newResults = parseResults(curr);
-      results.insert(results.end(), newResults.begin(), newResults.end());
-    }
-  }
-  signatures.emplace_back(Type(params), Type(results));
+  signatures.emplace_back(parseInlineFunctionSignature(*s[i]));
 }
 
 void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {

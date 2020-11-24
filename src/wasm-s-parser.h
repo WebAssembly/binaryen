@@ -295,6 +295,7 @@ private:
   void parseTable(Element& s, bool preParseImport = false);
   void parseElem(Element& s);
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
+  Signature parseInlineFunctionSignature(Element& s);
   void parseType(Element& s);
   void parseEvent(Element& s, bool preParseImport = false);
 
