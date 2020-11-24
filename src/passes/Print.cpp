@@ -87,7 +87,7 @@ struct SigName {
 };
 
 std::ostream& operator<<(std::ostream& os, SigName sigName) {
-  std::function<void (Type)> printType = [&](Type type) {
+  std::function<void(Type)> printType = [&](Type type) {
     if (type == Type::none) {
       os << "none";
     } else {
