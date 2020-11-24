@@ -796,8 +796,8 @@ class RoundtripText(TestCaseHandler):
     frequency = 1  # FIXME
 
     def handle(self, wasm):
-        run([in_bin('wasm-opt'), wasm, '-o', 'a.wast'])
-        run([in_bin('wasm-opt'), 'a.wast'])
+        run([in_bin('wasm-dis'), wasm, '-o', 'a.wast'])
+        run([in_bin('wasm-opt'), 'a.wast'] + FEATURE_OPTS)
 
 
 # The global list of all test case handlers
