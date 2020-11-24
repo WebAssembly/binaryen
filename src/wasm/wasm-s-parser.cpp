@@ -947,10 +947,6 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
     bool nullable = false;
     size_t i = 1;
     if (size == 3) {
-      if (*list[1] != NULL_) {
-        throw ParseException(
-          std::string("invalid reference type qualifier"), s.line, s.col);
-      }
       nullable = true;
       i++;
     }
