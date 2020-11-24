@@ -394,6 +394,9 @@ bool Type::operator<(const Type& other) const {
       return false;
     }
     // Both are compound.
+    if (a.isNullable() != b.isNullable()) {
+      return a.isNullable();
+    }
     auto aHeap = a.getHeapType();
     auto bHeap = b.getHeapType();
     if (aHeap.isSignature() && bHeap.isSignature()) {
