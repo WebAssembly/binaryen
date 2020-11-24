@@ -1089,7 +1089,8 @@ private:
              WeightedOption{&Self::makeBreak, Important},
              &Self::makeCall,
              &Self::makeCallIndirect)
-        .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+        .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
+             &Self::makeCallRef);
     }
     if (type.isSingle()) {
       options
@@ -1149,7 +1150,8 @@ private:
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
       .add(FeatureSet::Atomics, &Self::makeAtomic)
-      .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+      .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
+           &Self::makeCallRef);
     return (this->*pick(options))(Type::none);
   }
 
@@ -1174,7 +1176,8 @@ private:
            &Self::makeSwitch,
            &Self::makeDrop,
            &Self::makeReturn)
-      .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+      .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
+           &Self::makeCallRef);
     return (this->*pick(options))(Type::unreachable);
   }
 
