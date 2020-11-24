@@ -1449,7 +1449,29 @@ private:
   }
 
   Expression* makeCallRef(Type type) {
-    return makeTrivial(type); // FIXME
+    // look for a call target with the right type
+    Function* target;
+    bool isReturn;
+    while (1) {
+      // TODO: handle unreachable
+      target = wasm.functions[upTo(wasm.functions.size())].get();
+      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
+                 funcContext->func->sig.results == target->sig.results;
+      if (target->sig.results == type || isReturn) {
+        break;
+      }
+      i++;
+      if (i == TRIES) {
+        return makeTrivial(type);
+      }
+    }
+    std::vector<Expression*> args;
+    for (const auto& type : target->sig.params) {
+      args.push_back(make(type));
+    }
+    auto targetType = Type(HeapType(target->sig), /* nullable = */ true);
+    // TODO: half the time make a completely random item with that type.
+    return builder.makeCallRef(builder.makeRefFunc(target->name, targetType), args, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
