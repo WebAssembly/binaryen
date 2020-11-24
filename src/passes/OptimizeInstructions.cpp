@@ -529,8 +529,7 @@ struct OptimizeInstructions
             // set of higher bits, they are all either 0 or 1. In this case we
             // can zero-extend the left side, and can simplify the right side to
             // a simple value with mixed higher bits.
-            if (Bits::popCount(right >> uint32_t(bits)) !=
-                int(32 - bits)) {
+            if (Bits::popCount(right >> uint32_t(bits)) != int(32 - bits)) {
               binary->left = makeZeroExt(ext, bits);
               c->value = Literal(int32_t(0x80000000));
               return binary;
