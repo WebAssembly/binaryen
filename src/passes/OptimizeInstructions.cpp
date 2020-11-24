@@ -494,7 +494,10 @@ struct OptimizeInstructions
         // (x * fneg(y)) op C   ==>   (x * y) op -C
         // (fneg(x) / y) op C   ==>   (x / y) op -C
         // (x / fneg(y)) op C   ==>   (x / y) op -C
-        //   where op = `*` `/` or `+`
+        //
+        // where op = `*` `/` or `+`.
+        // `x` and `y` is not constants due to this may conflict
+        //  with `-x / C` or `-x * C` rules.
         if ((matches(curr,
                      binary(&op,
                             binary(&bin, Mul, unary(Neg, any(&x)), any(&y)),
