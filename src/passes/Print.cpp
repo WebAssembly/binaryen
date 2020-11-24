@@ -87,14 +87,35 @@ struct SigName {
 };
 
 std::ostream& operator<<(std::ostream& os, SigName sigName) {
-  auto printType = [&](Type type) {
+  std::function<void (Type)> printType = [&](Type type) {
     if (type == Type::none) {
       os << "none";
     } else {
       auto sep = "";
       for (const auto& t : type) {
-        os << sep << t;
+        os << sep;
         sep = "_";
+        if (t.isRef()) {
+          auto heapType = t.getHeapType();
+          if (heapType.isSignature()) {
+            auto sig = heapType.getSignature();
+            os << "ref";
+            if (t.isNullable()) {
+              os << "_null";
+            }
+            os << "<";
+            for (auto s : sig.params) {
+              printType(s);
+            }
+            os << "_>_";
+            for (auto s : sig.results) {
+              printType(s);
+            }
+            os << ">";
+            continue;
+          }
+        }
+        os << t;
       }
     }
   };
