@@ -532,10 +532,7 @@ struct OptimizeInstructions
             if (Bits::popCount(right >> uint32_t(bits)) != int(32 - bits)) {
               Builder builder(*getModule());
               c->value = Literal::makeZero(c->type);
-              return builder.makeSequence(
-                builder.makeDrop(ext),
-                c
-              );
+              return builder.makeSequence(builder.makeDrop(ext), c);
             }
           }
         } else if (auto* left = Properties::getSignExtValue(binary->left)) {
