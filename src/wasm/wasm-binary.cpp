@@ -5440,6 +5440,12 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
   BYN_TRACE("zz node: CallRef\n");
   curr->target = popNonVoidExpression();
   auto type = curr->target->type;
+  if (type == Type::unreachable) {
+    // If our input is unreachable, then we cannot even find out how many inputs
+    // we have, and just set ourselves to unreachable as well.
+    curr->finalize(type);
+    return;
+  }
   if (!type.isRef()) {
     throwError("Non-ref type for a call_ref: " + type.toString());
   }
