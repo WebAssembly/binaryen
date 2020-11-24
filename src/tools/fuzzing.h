@@ -1452,6 +1452,7 @@ private:
     // look for a call target with the right type
     Function* target;
     bool isReturn;
+    size_t i = 0;
     while (1) {
       // TODO: handle unreachable
       target = wasm.functions[upTo(wasm.functions.size())].get();
@@ -1471,7 +1472,7 @@ private:
     }
     auto targetType = Type(HeapType(target->sig), /* nullable = */ true);
     // TODO: half the time make a completely random item with that type.
-    return builder.makeCallRef(builder.makeRefFunc(target->name, targetType), args, isReturn);
+    return builder.makeCallRef(builder.makeRefFunc(target->name, targetType), args, type, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
