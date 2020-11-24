@@ -107,7 +107,7 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
             for (auto s : sig.params) {
               printType(s);
             }
-            os << "_>_";
+            os << "_->_";
             for (auto s : sig.results) {
               printType(s);
             }
