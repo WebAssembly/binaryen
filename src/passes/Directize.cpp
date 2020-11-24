@@ -88,10 +88,12 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
+  // If null, then we cannot optimize call_indirects.
   TableUtils::FlatTable* flatTable;
+
   bool changedTypes = false;
 
-  template<typename T> void replaceWithUnreachable(T* call) {
+  void replaceWithUnreachable(CallIndirect* call) {
     Builder builder(*getModule());
     for (auto*& operand : call->operands) {
       operand = builder.makeDrop(operand);
@@ -104,29 +106,30 @@ private:
 
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    bool canOptimizeCallIndirect = true;
     TableUtils::FlatTable flatTable(module->table);
-    TableUtils::FlatTable* usedFlatTable = &flatTable;
     if (!module->table.exists) {
-      usedFlatTable = nullptr;
+      canOptimizeCallIndirect = false;
     } else if (module->table.imported()) {
-      usedFlatTable = nullptr;
+      canOptimizeCallIndirect = false;
     } else {
       for (auto& ex : module->exports) {
         if (ex->kind == ExternalKind::Table) {
-          usedFlatTable = nullptr;
+          canOptimizeCallIndirect = false;
         }
       }
       if (!flatTable.valid) {
-        usedFlatTable = nullptr;
+        canOptimizeCallIndirect = false;
       }
     }
     // Without typed function references, all we can do is optimize table
     // accesses, so if we can't do that, stop.
-    if (!usedFlatTable && !module->features.hasTypedFunctionReferences()) {
+    if (!canOptimizeCallIndirect = false &&
+        !module->features.hasTypedFunctionReferences()) {
       return;
     }
     // The table exists and is constant, so this is possible.
-    FunctionDirectizer(usedFlatTable).run(runner, module);
+    FunctionDirectizer(canOptimizeCallIndirect ? usedFlatTable : nullptr).run(runner, module);
   }
 };
 
