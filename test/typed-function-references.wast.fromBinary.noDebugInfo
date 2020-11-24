@@ -2,8 +2,8 @@
  (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
- (type $ref_null<i32_->_i32>_=>_i32 (func (param (ref null (func (param i32) (result i32)))) (result i32)))
  (type $ref<i32_->_i32>_=>_i32 (func (param (ref (func (param i32) (result i32)))) (result i32)))
+ (type $ref_null<i32_->_i32>_=>_i32 (func (param (ref null (func (param i32) (result i32)))) (result i32)))
  (func $0
   (call_ref
    (ref.func $0)
