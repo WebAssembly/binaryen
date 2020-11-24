@@ -124,8 +124,8 @@ struct Directize : public Pass {
     }
     // Without typed function references, all we can do is optimize table
     // accesses, so if we can't do that, stop.
-    if (!canOptimizeCallIndirect =
-          false && !module->features.hasTypedFunctionReferences()) {
+    if (!canOptimizeCallIndirect
+        && !module->features.hasTypedFunctionReferences()) {
       return;
     }
     // The table exists and is constant, so this is possible.
