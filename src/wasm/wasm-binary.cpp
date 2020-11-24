@@ -5441,11 +5441,11 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
   curr->target = popNonVoidExpression();
   auto type = curr->target->type;
   if (!type.isRef()) {
-    throwError("Non-ref type for a call_ref");
+    throwError("Non-ref type for a call_ref: " + type.toString());
   }
   auto heapType = type.getHeapType();
   if (!heapType.isSignature()) {
-    throwError("Invalid reference type for a call_ref");
+    throwError("Invalid reference type for a call_ref: " + type.toString());
   }
   auto sig = heapType.getSignature();
   auto num = sig.params.size();
