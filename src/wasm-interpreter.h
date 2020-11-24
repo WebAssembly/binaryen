@@ -2110,6 +2110,10 @@ private:
       if (target.breaking()) {
         return target;
       }
+      if (target.getSingleValue().isNull()) {
+        // TODO: remove this when we fully support non-nullable types
+        trap("null target in call_ref");
+      }
       Name funcName = target.getSingleValue().getFunc();
       auto* func = instance.wasm.getFunction(funcName);
       Flow ret;
