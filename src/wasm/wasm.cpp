@@ -73,6 +73,8 @@ Name TABLE("table");
 Name ELEM("elem");
 Name LOCAL("local");
 Name TYPE("type");
+Name REF("ref");
+Name NULL_("null");
 Name CALL("call");
 Name CALL_INDIRECT("call_indirect");
 Name BLOCK("block");
@@ -212,6 +214,8 @@ const char* getExpressionName(Expression* curr) {
       return "i31.new";
     case Expression::Id::I31GetId:
       return "i31.get";
+    case Expression::Id::CallRefId:
+      return "call_ref";
     case Expression::Id::RefTestId:
       return "ref.test";
     case Expression::Id::RefCastId:
@@ -1058,6 +1062,21 @@ void I31Get::finalize() {
   } else {
     type = Type::i32;
   }
+}
+
+void CallRef::finalize() {
+  handleUnreachableOperands(this);
+  if (isReturn) {
+    type = Type::unreachable;
+  }
+  if (target->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void CallRef::finalize(Type type_) {
+  type = type_;
+  finalize();
 }
 
 // TODO (gc): ref.test

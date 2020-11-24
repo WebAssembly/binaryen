@@ -972,6 +972,11 @@ enum ASTNodes {
   Rethrow = 0x09,
   BrOnExn = 0x0a,
 
+  // typed function references opcodes
+
+  CallRef = 0x14,
+  RetCallRef = 0x15,
+
   // gc opcodes
 
   RefEq = 0xd5,
@@ -1479,6 +1484,7 @@ public:
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);
+  void visitCallRef(CallRef* curr);
 
   void throwError(std::string text);
 

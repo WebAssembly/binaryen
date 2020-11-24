@@ -41,6 +41,9 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   FunctionDirectizer(TableUtils::FlatTable* flatTable) : flatTable(flatTable) {}
 
   void visitCallIndirect(CallIndirect* curr) {
+    if (!flatTable) {
+      return;
+    }
     if (auto* c = curr->target->dynCast<Const>()) {
       Index index = c->value.geti32();
       // If the index is invalid, or the type is wrong, we can
@@ -68,6 +71,15 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     }
   }
 
+  void visitCallRef(CallRef* curr) {
+    if (auto* ref = curr->target->dynCast<RefFunc>()) {
+      // We know the target!
+      replaceCurrent(
+        Builder(*getModule())
+          .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+    }
+  }
+
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
     if (changedTypes) {
@@ -76,7 +88,9 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
+  // If null, then we cannot optimize call_indirects.
   TableUtils::FlatTable* flatTable;
+
   bool changedTypes = false;
 
   void replaceWithUnreachable(CallIndirect* call) {
@@ -92,23 +106,31 @@ private:
 
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    bool canOptimizeCallIndirect = true;
+    TableUtils::FlatTable flatTable(module->table);
     if (!module->table.exists) {
-      return;
-    }
-    if (module->table.imported()) {
-      return;
-    }
-    for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Table) {
-        return;
+      canOptimizeCallIndirect = false;
+    } else if (module->table.imported()) {
+      canOptimizeCallIndirect = false;
+    } else {
+      for (auto& ex : module->exports) {
+        if (ex->kind == ExternalKind::Table) {
+          canOptimizeCallIndirect = false;
+        }
+      }
+      if (!flatTable.valid) {
+        canOptimizeCallIndirect = false;
       }
     }
-    TableUtils::FlatTable flatTable(module->table);
-    if (!flatTable.valid) {
+    // Without typed function references, all we can do is optimize table
+    // accesses, so if we can't do that, stop.
+    if (!canOptimizeCallIndirect &&
+        !module->features.hasTypedFunctionReferences()) {
       return;
     }
     // The table exists and is constant, so this is possible.
-    FunctionDirectizer(&flatTable).run(runner, module);
+    FunctionDirectizer(canOptimizeCallIndirect ? &flatTable : nullptr)
+      .run(runner, module);
   }
 };
 

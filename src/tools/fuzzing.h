@@ -1081,13 +1081,15 @@ private:
                 WeightedOption{&Self::makeGlobalGet, Important},
                 WeightedOption{&Self::makeConst, Important});
     if (canMakeControlFlow) {
-      options.add(FeatureSet::MVP,
-                  WeightedOption{&Self::makeBlock, Important},
-                  WeightedOption{&Self::makeIf, Important},
-                  WeightedOption{&Self::makeLoop, Important},
-                  WeightedOption{&Self::makeBreak, Important},
-                  &Self::makeCall,
-                  &Self::makeCallIndirect);
+      options
+        .add(FeatureSet::MVP,
+             WeightedOption{&Self::makeBlock, Important},
+             WeightedOption{&Self::makeIf, Important},
+             WeightedOption{&Self::makeLoop, Important},
+             WeightedOption{&Self::makeBreak, Important},
+             &Self::makeCall,
+             &Self::makeCallIndirect)
+        .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     }
     if (type.isSingle()) {
       options
@@ -1146,7 +1148,8 @@ private:
            &Self::makeNop,
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
-      .add(FeatureSet::Atomics, &Self::makeAtomic);
+      .add(FeatureSet::Atomics, &Self::makeAtomic)
+      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     return (this->*pick(options))(Type::none);
   }
 
@@ -1154,22 +1157,24 @@ private:
     using Self = TranslateToFuzzReader;
     auto options = FeatureOptions<Expression* (Self::*)(Type)>();
     using WeightedOption = decltype(options)::WeightedOption;
-    options.add(FeatureSet::MVP,
-                WeightedOption{&Self::makeLocalSet, VeryImportant},
-                WeightedOption{&Self::makeBlock, Important},
-                WeightedOption{&Self::makeIf, Important},
-                WeightedOption{&Self::makeLoop, Important},
-                WeightedOption{&Self::makeBreak, Important},
-                WeightedOption{&Self::makeStore, Important},
-                WeightedOption{&Self::makeUnary, Important},
-                WeightedOption{&Self::makeBinary, Important},
-                WeightedOption{&Self::makeUnreachable, Important},
-                &Self::makeCall,
-                &Self::makeCallIndirect,
-                &Self::makeSelect,
-                &Self::makeSwitch,
-                &Self::makeDrop,
-                &Self::makeReturn);
+    options
+      .add(FeatureSet::MVP,
+           WeightedOption{&Self::makeLocalSet, VeryImportant},
+           WeightedOption{&Self::makeBlock, Important},
+           WeightedOption{&Self::makeIf, Important},
+           WeightedOption{&Self::makeLoop, Important},
+           WeightedOption{&Self::makeBreak, Important},
+           WeightedOption{&Self::makeStore, Important},
+           WeightedOption{&Self::makeUnary, Important},
+           WeightedOption{&Self::makeBinary, Important},
+           WeightedOption{&Self::makeUnreachable, Important},
+           &Self::makeCall,
+           &Self::makeCallIndirect,
+           &Self::makeSelect,
+           &Self::makeSwitch,
+           &Self::makeDrop,
+           &Self::makeReturn)
+      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
     return (this->*pick(options))(Type::unreachable);
   }
 
@@ -1441,6 +1446,10 @@ private:
       args.push_back(make(type));
     }
     return builder.makeCallIndirect(target, args, targetFn->sig, isReturn);
+  }
+
+  Expression* makeCallRef(Type type) {
+    return makeTrivial(type); // FIXME
   }
 
   Expression* makeLocalGet(Type type) {

@@ -2760,6 +2760,16 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitMemoryGrow(grow);
       break;
     }
+    case BinaryConsts::CallRef:
+      visitCallRef((curr = allocator.alloc<CallRef>())->cast<CallRef>());
+      break;
+    case BinaryConsts::RetCallRef: {
+      auto call = allocator.alloc<CallRef>();
+      call->isReturn = true;
+      curr = call;
+      visitCallRef(call);
+      break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -5424,6 +5434,26 @@ void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
   // refinalized without the module.
   curr->sent = event->sig.params;
   curr->finalize();
+}
+
+void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
+  BYN_TRACE("zz node: CallRef\n");
+  curr->target = popNonVoidExpression();
+  auto type = curr->target->type;
+  if (!type.isRef()) {
+    throwError("Non-ref type for a call_ref: " + type.toString());
+  }
+  auto heapType = type.getHeapType();
+  if (!heapType.isSignature()) {
+    throwError("Invalid reference type for a call_ref: " + type.toString());
+  }
+  auto sig = heapType.getSignature();
+  auto num = sig.params.size();
+  curr->operands.resize(num);
+  for (size_t i = 0; i < num; i++) {
+    curr->operands[num - i - 1] = popNonVoidExpression();
+  }
+  curr->finalize(sig.results);
 }
 
 bool WasmBinaryBuilder::maybeVisitI31New(Expression*& out, uint32_t code) {

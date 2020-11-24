@@ -1,0 +1,46 @@
+(module
+ (type $none_=>_none (func))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $ref_null<i32_->_i32>_=>_i32 (func (param (ref null (func (param i32) (result i32)))) (result i32)))
+ (type $ref<i32_->_i32>_=>_i32 (func (param (ref (func (param i32) (result i32)))) (result i32)))
+ (func $0
+  (call_ref
+   (ref.func $0)
+  )
+ )
+ (func $1
+  (return_call_ref
+   (ref.func $0)
+  )
+ )
+ (func $2 (param $0 i32) (result i32)
+  (call_ref
+   (i32.const 42)
+   (ref.func $2)
+  )
+ )
+ (func $3 (param $0 (ref (func (param i32) (result i32)))) (result i32)
+  (call_ref
+   (i32.const 42)
+   (local.get $0)
+  )
+ )
+ (func $4 (param $0 (ref null (func (param i32) (result i32)))) (result i32)
+  (call_ref
+   (i32.const 42)
+   (local.get $0)
+  )
+ )
+ (func $5 (result i32)
+  (local $0 (ref null (func (param i32) (result i32))))
+  (local.set $0
+   (ref.func $2)
+  )
+  (call_ref
+   (i32.const 42)
+   (local.get $0)
+  )
+ )
+)
+

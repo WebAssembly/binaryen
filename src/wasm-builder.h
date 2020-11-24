@@ -257,6 +257,19 @@ public:
     call->finalize();
     return call;
   }
+  template<typename T>
+  CallRef* makeCallRef(Expression* target,
+                       const T& args,
+                       Type type,
+                       bool isReturn = false) {
+    auto* call = wasm.allocator.alloc<CallRef>();
+    call->type = type;
+    call->target = target;
+    call->operands.set(args);
+    call->isReturn = isReturn;
+    call->finalize();
+    return call;
+  }
   LocalGet* makeLocalGet(Index index, Type type) {
     auto* ret = wasm.allocator.alloc<LocalGet>();
     ret->index = index;

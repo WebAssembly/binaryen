@@ -87,14 +87,35 @@ struct SigName {
 };
 
 std::ostream& operator<<(std::ostream& os, SigName sigName) {
-  auto printType = [&](Type type) {
+  std::function<void(Type)> printType = [&](Type type) {
     if (type == Type::none) {
       os << "none";
     } else {
       auto sep = "";
       for (const auto& t : type) {
-        os << sep << t;
+        os << sep;
         sep = "_";
+        if (t.isRef()) {
+          auto heapType = t.getHeapType();
+          if (heapType.isSignature()) {
+            auto sig = heapType.getSignature();
+            os << "ref";
+            if (t.isNullable()) {
+              os << "_null";
+            }
+            os << "<";
+            for (auto s : sig.params) {
+              printType(s);
+            }
+            os << "_->_";
+            for (auto s : sig.results) {
+              printType(s);
+            }
+            os << ">";
+            continue;
+          }
+        }
+        os << t;
       }
     }
   };
@@ -1561,6 +1582,13 @@ struct PrintExpressionContents
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
+  void visitCallRef(CallRef* curr) {
+    if (curr->isReturn) {
+      printMedium(o, "return_call_ref");
+    } else {
+      printMedium(o, "call_ref");
+    }
+  }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test");
     WASM_UNREACHABLE("TODO (gc): ref.test");
@@ -2214,6 +2242,16 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->i31);
+    decIndent();
+  }
+  void visitCallRef(CallRef* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    for (auto operand : curr->operands) {
+      printFullLine(operand);
+    }
+    printFullLine(curr->target);
     decIndent();
   }
   void visitRefTest(RefTest* curr) {
