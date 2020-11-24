@@ -205,6 +205,20 @@
 )
 (module
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (func $signed-comparison-to-unsigned
+  (call $log
+   (i32.eq               ;; should be false
+    (i32.shr_s           ;; 0x0000006b after the sign-extend
+     (i32.shl
+      (i32.const -25749) ;; 0xffff9b6b
+      (i32.const 24)
+     )
+     (i32.const 24)
+    )
+    (i32.const -149) ;;     0xffffff6b
+   )
+  )
+ )
  (func "foo" (param $0 i32)
   ;; 8 - 0x80000000 < 0
   ;;

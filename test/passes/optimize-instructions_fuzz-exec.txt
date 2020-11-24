@@ -259,9 +259,24 @@
 [LoggingExternalInterface logging 0]
 (module
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
- (export "foo" (func $0))
- (func $0 (param $0 i32)
+ (export "foo" (func $1))
+ (func $signed-comparison-to-unsigned
+  (call $log
+   (i32.eq
+    (i32.shr_s
+     (i32.shl
+      (i32.const -25749)
+      (i32.const 24)
+     )
+     (i32.const 24)
+    )
+    (i32.const -149)
+   )
+  )
+ )
+ (func $1 (param $0 i32)
   (call $log
    (i32.le_s
     (i32.sub
