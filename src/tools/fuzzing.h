@@ -1472,7 +1472,8 @@ private:
     }
     auto targetType = Type(HeapType(target->sig), /* nullable = */ true);
     // TODO: half the time make a completely random item with that type.
-    return builder.makeCallRef(builder.makeRefFunc(target->name, targetType), args, type, isReturn);
+    return builder.makeCallRef(
+      builder.makeRefFunc(target->name, targetType), args, type, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
