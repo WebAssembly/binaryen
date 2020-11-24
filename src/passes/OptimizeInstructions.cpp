@@ -121,7 +121,6 @@ struct LocalScanner : PostWalker<LocalScanner> {
   Index getMaxBitsForLocal(LocalGet* get) { return getBitsForType(get->type); }
 
   Index getBitsForType(Type type) {
-    TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
       case Type::i32:
         return 32;
