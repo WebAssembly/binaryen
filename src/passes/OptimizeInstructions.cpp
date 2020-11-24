@@ -524,12 +524,13 @@ struct OptimizeInstructions
               c->value = c->value.and_(Literal(Bits::lowBitMask(bits)));
               return binary;
             }
-            // Otherwise, if C's higher bits are mixed, then we know the result
-            // should always be false - as no sign-extend can result in a mixed
+            // Otherwise, if C's higher bits are mixed, then we know the two
+            // sides can never be equal, as no sign-extend can result in a mixed
             // set of higher bits, they are all either 0 or 1.
             if (Bits::popCount(right >> uint32_t(bits)) != int(32 - bits)) {
               Builder builder(*getModule());
-              c->value = Literal::makeZero(c->type);
+              // The result is either always true, or always false.
+              c->value = Literal::makeFromInt32(binary->op == NeInt32, c->type);
               return builder.makeSequence(builder.makeDrop(ext), c);
             }
           }

@@ -275,6 +275,22 @@
     (i32.const -149)
    )
   )
+  (call $log
+   (block (result i32)
+    (drop
+     (i32.const -25749)
+    )
+    (i32.const 0)
+   )
+  )
+  (call $log
+   (block (result i32)
+    (drop
+     (i32.const -25749)
+    )
+    (i32.const 1)
+   )
+  )
  )
  (func $1 (param $0 i32)
   (call $log

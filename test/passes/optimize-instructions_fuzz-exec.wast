@@ -215,7 +215,34 @@
      )
      (i32.const 24)
     )
-    (i32.const -149) ;;     0xffffff6b
+    (i32.const -149)     ;; 0xffffff6b - high bits are set, but not sign bit
+   )
+  )
+  ;; the same, with mixed high bits. mixed bits mean the two sides can never be
+  ;; equal, so the eq is always false
+  (call $log
+   (i32.eq
+    (i32.shr_s
+     (i32.shl
+      (i32.const -25749)
+      (i32.const 24)
+     )
+     (i32.const 24)
+    )
+    (i32.const 0xffffeb)
+   )
+  )
+  ;; the same, with !=, so the result is always true
+  (call $log
+   (i32.ne
+    (i32.shr_s
+     (i32.shl
+      (i32.const -25749)
+      (i32.const 24)
+     )
+     (i32.const 24)
+    )
+    (i32.const 0xffffeb)
    )
   )
  )
