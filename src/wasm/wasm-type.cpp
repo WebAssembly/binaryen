@@ -98,8 +98,8 @@ struct TypeInfo {
       case TupleKind:
         return tuple == other.tuple;
       case RefKind:
-        return ref.heapType == other.ref.heapType &&
-               ref.nullable == other.ref.nullable;
+        // TODO: compare nullability as well, once we properly support that
+        return ref.heapType == other.ref.heapType;
       case RttKind:
         return rtt == other.rtt;
     }
@@ -557,6 +557,11 @@ bool Type::isSubType(Type left, Type right) {
     }
     // All typed function signatures are subtypes of funcref.
     if (left.getHeapType().isSignature() && right == Type::funcref) {
+      return true;
+    }
+    // Until we handle full nullability, consider nullable and non-nullable
+    // types to all be subtypes of each other - effectively, they are equal.
+    if (left.getHeapType() == right.getHeapType()) {
       return true;
     }
     return false;

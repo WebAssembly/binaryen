@@ -2082,7 +2082,13 @@ private:
       if (type.isNullable()) {
         return builder.makeRefNull(type);
       }
-      WASM_UNREACHABLE("un-handleable non-nullable type");
+      // Last resort: create a function.
+      auto* func = new Function;
+      func->name = Names::getValidFunctionName(wasm, "ref_func_target");
+      func->sig = type.getHeapType().getSignature();
+      func->body = builder.makeUnreachable();
+      wasm.addFunction(func);
+      return builder.makeRefFunc(func->name, type);
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
