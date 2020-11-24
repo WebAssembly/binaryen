@@ -5445,7 +5445,6 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
   }
   auto heapType = type.getHeapType();
   if (!heapType.isSignature()) {
-    std::cerr << type << '\n';
     throwError("Invalid reference type for a call_ref");
   }
   auto sig = heapType.getSignature();
