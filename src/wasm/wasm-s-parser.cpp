@@ -932,10 +932,18 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
     //   (ref $name)
     // or
     //   (ref null $name)
-    if ((size != 2 && size != 3) || !list[1]->isStr()) {
+    if (size != 2 && size != 3) {
       throw ParseException(
         std::string("invalid reference type"), s.line, s.col);
     }
+    if (size == 2 && !list[1]->isStr()) {
+      throw ParseException(
+        std::string("invalid reference type"), s.line, s.col);
+    }
+    if (size == 3 && (*list[1] != NULL_ || !list[2]->isStr())) {
+      throw ParseException(
+        std::string("invalid reference type"), s.line, s.col);
+}
     bool nullable = false;
     size_t i = 1;
     if (size == 3) {
