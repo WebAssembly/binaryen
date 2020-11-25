@@ -116,6 +116,12 @@ public:
   bool isNullable() const;
   bool isRtt() const;
 
+  // Scans the type tree rooted at `type`, first calling `noteRecursion` on the
+  // root of any cycles, then calling `VisitType` on each type in the tree in
+  // reverse postorder.
+  void walk(std::function<void(const Type&)> noteRecursion,
+            std::function<void(const Type&)> visitType);
+
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
     for (const auto& type : *this) {

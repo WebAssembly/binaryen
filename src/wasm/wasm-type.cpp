@@ -16,6 +16,7 @@
 
 #include <array>
 #include <cassert>
+#include <set>
 #include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
@@ -387,6 +388,71 @@ bool Type::isRtt() const {
     return false;
   } else {
     return getTypeInfo(*this)->isRtt();
+  }
+}
+
+void Type::walk(std::function<void(const Type&)> noteRecursion,
+                std::function<void(const Type&)> visitType) {
+  std::set<Type> scanned;
+  std::vector<Type*> scanList = {this};
+  std::vector<Type*> visitList;
+
+  auto scanHeapType = [&](HeapType& ht) {
+    switch (ht.kind) {
+      case HeapType::FuncKind:
+      case HeapType::ExternKind:
+      case HeapType::ExnKind:
+      case HeapType::AnyKind:
+      case HeapType::EqKind:
+      case HeapType::I31Kind:
+        break;
+      case HeapType::SignatureKind:
+        scanList.push_back(&ht.signature.params);
+        scanList.push_back(&ht.signature.results);
+        break;
+      case HeapType::StructKind:
+        for (auto& field : ht.struct_.fields) {
+          scanList.push_back(&field.type);
+        }
+        break;
+      case HeapType::ArrayKind:
+        scanList.push_back(&ht.array.element.type);
+        break;
+    }
+  };
+
+  // Scan the type tree, noting recursion when we find it
+  while (scanList.size() != 0) {
+    Type* curr = scanList.back();
+    scanList.erase(scanList.end() - 1);
+    if (scanned.count(*curr) != 0) {
+      noteRecursion(*curr);
+      continue;
+    }
+    scanned.insert(*curr);
+    visitList.push_back(curr);
+    if (curr->isCompound()) {
+      auto* info = (TypeInfo*)curr->getID();
+      switch (info->kind) {
+        case TypeInfo::TupleKind:
+          for (auto& child : info->tuple.types) {
+            scanList.push_back(&child);
+          }
+          break;
+        case TypeInfo::RefKind:
+          scanHeapType(info->ref.heapType);
+          break;
+        case TypeInfo::RttKind:
+          scanHeapType(info->rtt.heapType);
+          break;
+      }
+    }
+  }
+
+  // Visit each type in the tree in reverse postorder
+  while (visitList.size() != 0) {
+    visitType(*visitList.back());
+    visitList.erase(visitList.end() - 1);
   }
 }
 
