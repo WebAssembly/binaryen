@@ -98,8 +98,8 @@ struct TypeInfo {
       case TupleKind:
         return tuple == other.tuple;
       case RefKind:
-        return ref.heapType == other.ref.heapType && ref.nullable ==
-                 other.nullable;
+        return ref.heapType == other.ref.heapType &&
+               ref.nullable == other.ref.nullable;
       case RttKind:
         return rtt == other.rtt;
     }
