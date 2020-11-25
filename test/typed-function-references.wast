@@ -31,6 +31,13 @@
   (func $type-only-in-tuple-local
     (local $x (i32 (ref null (func (result anyref))) f64))
   )
+  (func $type-only-in-tuple-block
+    (drop
+      (block (result i32 (ref null (func (result anyref f32 anyref f32))) f64)
+        (unreachable)
+      )
+    )
+  )
   (func $nested-type-only-there (result (ref (func (result (ref (func (param i32 i32 i32 i32 i32)))))))
     (unreachable)
   )
