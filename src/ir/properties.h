@@ -133,8 +133,8 @@ inline Literals getLiterals(const Expression* curr) {
 // that is extended, otherwise nullptr
 inline Expression* getSignExtValue(Expression* curr) {
   using namespace Match;
-  int32_t leftShift, rightShift;
-  Expression* extended;
+  int32_t leftShift = 0, rightShift = 0;
+  Expression* extended = nullptr;
   if (matches(curr,
               binary(ShrSInt32,
                      binary(ShlInt32, any(&extended), i32(&leftShift)),
@@ -157,8 +157,8 @@ inline Index getSignExtBits(Expression* curr) {
 // useful (e.g. if we can remove the signext)
 inline Expression* getAlmostSignExt(Expression* curr) {
   using namespace Match;
-  int32_t leftShift, rightShift;
-  Expression* extended;
+  int32_t leftShift = 0, rightShift = 0;
+  Expression* extended = nullptr;
   if (matches(curr,
               binary(ShrSInt32,
                      binary(ShlInt32, any(&extended), i32(&leftShift)),
@@ -185,8 +185,8 @@ inline Index getAlmostSignExtBits(Expression* curr, Index& extraLeftShifts) {
 // that is extended, otherwise nullptr
 inline Expression* getZeroExtValue(Expression* curr) {
   using namespace Match;
-  int32_t mask;
-  Expression* extended;
+  int32_t mask = 0;
+  Expression* extended = nullptr;
   if (matches(curr, binary(AndInt32, i32(&mask), any(&extended))) &&
       Bits::getMaskedBits(mask) != 0) {
     return extended;
