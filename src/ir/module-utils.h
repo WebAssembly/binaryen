@@ -402,7 +402,17 @@ inline void
 collectSignatures(Module& wasm,
                   std::vector<Signature>& signatures,
                   std::unordered_map<Signature, Index>& sigIndices) {
-  using Counts = std::unordered_map<Signature, size_t>;
+  struct Counts : public std::unordered_map<Signature, size_t> {
+    void note(Signature sig) { (*this)[sig]++; }
+    void maybeNote(Type type) {
+      if (type.isRef()) {
+        auto heapType = type.getHeapType();
+        if (heapType.isSignature()) {
+          note(heapType.getSignature());
+        }
+      }
+    }
+  };
 
   // Collect the signature use counts for a single function
   auto updateCounts = [&](Function* func, Counts& counts) {
@@ -417,23 +427,14 @@ collectSignatures(Module& wasm,
 
       void visitExpression(Expression* curr) {
         if (curr->is<RefNull>()) {
-          maybeNote(curr->type);
+          counts.maybeNote(curr->type);
         } else if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
-          maybeNote(curr->type);
+          counts.maybeNote(curr->type);
           if (curr->type.isTuple()) {
             // TODO: Allow control flow to have input types as well
-            counts[Signature(Type::none, curr->type)]++;
-          }
-        }
-      }
-
-      void maybeNote(Type type) {
-        if (type.isRef()) {
-          auto heapType = type.getHeapType();
-          if (heapType.isSignature()) {
-            counts[heapType.getSignature()]++;
+            counts.note(Signature(Type::none, curr->type));
           }
         }
       }
@@ -448,10 +449,10 @@ collectSignatures(Module& wasm,
   for (auto& curr : wasm.functions) {
     counts[curr->sig]++;
     for (auto type : curr->vars) {
-      if (type.isRef()) {
-        auto heapType = type.getHeapType();
-        if (heapType.isSignature()) {
-          counts[heapType.getSignature()]++;
+      counts.maybeNote(type);
+      if (type.isTuple()) {
+        for (auto t : type) {
+          counts.maybeNote(t);
         }
       }
     }
@@ -466,8 +467,36 @@ collectSignatures(Module& wasm,
     }
   }
 
-  // TODO: recursively traverse each reference type, which may have a child type
-  //       this is itself a reference type.
+  // Recursively traverse each reference type, which may have a child type that
+  // is itself a reference type. This reflects an appearance in the binary
+  // format that is in the type section itself.
+  // As we do this we may find more and more signatures, as nested children of
+  // previous ones. Each such signature will appear in the type section once, so
+  // we just need to visit it once.
+  // TODO: handle struct and array fields
+  std::unordered_set<Signature> newSigs;
+  for (auto& pair : counts) {
+    newSigs.insert(pair.first);
+  }
+  while (!newSigs.empty()) {
+    auto iter = newSigs.begin();
+    auto sig = *iter;
+    newSigs.erase(iter);
+    for (Type type : {sig.params, sig.results}) {
+      for (auto element : type) {
+        if (element.isRef()) {
+          auto heapType = element.getHeapType();
+          if (heapType.isSignature()) {
+            auto sig = heapType.getSignature();
+            if (!counts.count(sig)) {
+              newSigs.insert(sig);
+            }
+            counts[sig]++;
+          }
+        }
+      }
+    }
+  }
 
   // We must sort all the dependencies of a signature before it. For example,
   // (func (param (ref (func)))) must appear after (func). To do that, find the

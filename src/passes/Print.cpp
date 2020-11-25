@@ -103,15 +103,21 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
             if (t.isNullable()) {
               os << "_null";
             }
-            os << "<";
+            os << "[";
+            auto subsep = "";
             for (auto s : sig.params) {
+              os << subsep;
+              subsep = "_";
               printType(s);
             }
             os << "_->_";
+            subsep = "";
             for (auto s : sig.results) {
+              os << subsep;
+              subsep = "_";
               printType(s);
             }
-            os << ">";
+            os << "]";
             continue;
           }
         }

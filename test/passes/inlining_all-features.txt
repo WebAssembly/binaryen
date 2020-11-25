@@ -71,3 +71,18 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (export "func_36_invoker" (func $1))
+ (func $1
+  (block $__inlined_func$0
+   (block
+    (call_ref
+     (ref.null (func))
+    )
+    (br $__inlined_func$0)
+   )
+   (br $__inlined_func$0)
+  )
+ )
+)

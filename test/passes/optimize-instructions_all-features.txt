@@ -5698,3 +5698,10 @@
   )
  )
 )
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $ref_null[i32_->_i32]_=>_i32 (func (param (ref null (func (param i32) (result i32)))) (result i32)))
+ (func $call_from-param (param $f (ref null (func (param i32) (result i32)))) (result i32)
+  (unreachable)
+ )
+)

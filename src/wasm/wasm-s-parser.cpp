@@ -536,14 +536,10 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
     }
     localIndex++;
     Type type;
-    if (s[i]->isStr()) {
-      type = stringToType(s[i]->str());
-    } else {
-      type = elementToType(*s[i]);
-      if (elementStartsWith(s, PARAM) && type.isTuple()) {
-        throw ParseException(
-          "params may not have tuple types", s[i]->line, s[i]->col);
-      }
+    type = elementToType(*s[i]);
+    if (elementStartsWith(s, PARAM) && type.isTuple()) {
+      throw ParseException(
+        "params may not have tuple types", s[i]->line, s[i]->col);
     }
     namedParams.emplace_back(name, type);
   }
@@ -555,7 +551,7 @@ std::vector<Type> SExpressionWasmBuilder::parseResults(Element& s) {
   assert(elementStartsWith(s, RESULT));
   std::vector<Type> types;
   for (size_t i = 1; i < s.size(); i++) {
-    types.push_back(stringToType(s[i]->str()));
+    types.push_back(elementToType(*s[i]));
   }
   return types;
 }
@@ -923,7 +919,7 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
 
 Type SExpressionWasmBuilder::elementToType(Element& s) {
   if (s.isStr()) {
-    return stringToType(s.str(), false, false);
+    return stringToType(s.str());
   }
   auto& list = s.list();
   auto size = list.size();
@@ -942,7 +938,8 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
       throw ParseException(
         std::string("invalid reference type qualifier"), s.line, s.col);
     }
-    bool nullable = false;
+    // FIXME: for now, force all inputs to be nullable
+    bool nullable = true;
     size_t i = 1;
     if (size == 3) {
       nullable = true;
@@ -966,7 +963,7 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
   // It's a tuple.
   std::vector<Type> types;
   for (size_t i = 0; i < s.size(); ++i) {
-    types.push_back(stringToType(list[i]->str()));
+    types.push_back(elementToType(*list[i]));
   }
   return Type(types);
 }
@@ -1911,9 +1908,30 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   if (s.size() != 2) {
     throw ParseException("invalid heap type reference", s.line, s.col);
   }
-  auto heapType = stringToHeapType(s[1]->str());
   auto ret = allocator.alloc<RefNull>();
-  ret->finalize(heapType);
+  if (s[1]->isStr()) {
+    // For example, this parses
+    //  (ref.null func)
+    ret->finalize(stringToHeapType(s[1]->str()));
+  } else {
+    // To parse a heap type, create an element around it, and call that method.
+    // That is, given (func) we wrap to (ref (func)).
+    // For example, this parses
+    //  (ref.null (func (param i32)))
+    // TODO add a helper method, but this is the only user atm, and we are
+    // waiting on https://github.com/WebAssembly/function-references/issues/42
+    Element wrapper(wasm.allocator);
+    auto& list = wrapper.list();
+    list.resize(3);
+    Element ref(wasm.allocator);
+    ref.setString(REF, false, false);
+    Element null(wasm.allocator);
+    null.setString(NULL_, false, false);
+    list[0] = &ref;
+    list[1] = &null;
+    list[2] = s[1];
+    ret->finalize(elementToType(wrapper));
+  }
   return ret;
 }
 

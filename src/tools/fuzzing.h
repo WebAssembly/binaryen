@@ -1089,7 +1089,8 @@ private:
              WeightedOption{&Self::makeBreak, Important},
              &Self::makeCall,
              &Self::makeCallIndirect)
-        .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
+        .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
+             &Self::makeCallRef);
     }
     if (type.isSingle()) {
       options
@@ -1149,7 +1150,8 @@ private:
            &Self::makeGlobalSet)
       .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
       .add(FeatureSet::Atomics, &Self::makeAtomic)
-      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
+      .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
+           &Self::makeCallRef);
     return (this->*pick(options))(Type::none);
   }
 
@@ -1174,7 +1176,8 @@ private:
            &Self::makeSwitch,
            &Self::makeDrop,
            &Self::makeReturn)
-      .add(FeatureSet::TypedFunctionReferences, &Self::makeCallRef);
+      .add(FeatureSet::TypedFunctionReferences | FeatureSet::ReferenceTypes,
+           &Self::makeCallRef);
     return (this->*pick(options))(Type::unreachable);
   }
 
@@ -1449,7 +1452,32 @@ private:
   }
 
   Expression* makeCallRef(Type type) {
-    return makeTrivial(type); // FIXME
+    // look for a call target with the right type
+    Function* target;
+    bool isReturn;
+    size_t i = 0;
+    while (1) {
+      if (i == TRIES || wasm.functions.empty()) {
+        // We can't find a proper target, give up.
+        return makeTrivial(type);
+      }
+      // TODO: handle unreachable
+      target = wasm.functions[upTo(wasm.functions.size())].get();
+      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
+                 funcContext->func->sig.results == target->sig.results;
+      if (target->sig.results == type || isReturn) {
+        break;
+      }
+      i++;
+    }
+    std::vector<Expression*> args;
+    for (const auto& type : target->sig.params) {
+      args.push_back(make(type));
+    }
+    auto targetType = Type(HeapType(target->sig), /* nullable = */ true);
+    // TODO: half the time make a completely random item with that type.
+    return builder.makeCallRef(
+      builder.makeRefFunc(target->name, targetType), args, type, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
@@ -2055,7 +2083,13 @@ private:
       if (type.isNullable()) {
         return builder.makeRefNull(type);
       }
-      WASM_UNREACHABLE("un-handleable non-nullable type");
+      // Last resort: create a function.
+      auto* func = wasm.addFunction(builder.makeFunction(
+        Names::getValidFunctionName(wasm, "ref_func_target"),
+        type.getHeapType().getSignature(),
+        {},
+        builder.makeUnreachable()));
+      return builder.makeRefFunc(func->name, type);
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;

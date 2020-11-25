@@ -2110,6 +2110,9 @@ private:
       if (target.breaking()) {
         return target;
       }
+      if (target.getSingleValue().isNull()) {
+        trap("null target in call_ref");
+      }
       Name funcName = target.getSingleValue().getFunc();
       auto* func = instance.wasm.getFunction(funcName);
       Flow ret;

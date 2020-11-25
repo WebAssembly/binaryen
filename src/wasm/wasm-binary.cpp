@@ -1357,7 +1357,8 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::nullable:
       return Type(getHeapType(), /* nullable = */ true);
     case BinaryConsts::EncodedType::nonnullable:
-      return Type(getHeapType(), /* nullable = */ false);
+      // FIXME: for now, force all inputs to be nullable
+      return Type(getHeapType(), /* nullable = */ true);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     default:
@@ -5291,6 +5292,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   functionRefs[index].push_back(curr); // we don't know function names yet
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
+  // FIXME: for now, emit a nullable type here
   curr->finalize(
     Type(HeapType(getFunctionSignatureByIndex(index)), /* nullable = */ true));
 }
@@ -5440,6 +5442,12 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
   BYN_TRACE("zz node: CallRef\n");
   curr->target = popNonVoidExpression();
   auto type = curr->target->type;
+  if (type == Type::unreachable) {
+    // If our input is unreachable, then we cannot even find out how many inputs
+    // we have, and just set ourselves to unreachable as well.
+    curr->finalize(type);
+    return;
+  }
   if (!type.isRef()) {
     throwError("Non-ref type for a call_ref: " + type.toString());
   }

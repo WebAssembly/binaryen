@@ -58,3 +58,16 @@
   (call $0)
  )
 )
+;; inline a return_call_ref
+(module
+ (type $none_=>_none (func))
+ (export "func_36_invoker" (func $1))
+ (func $0
+  (return_call_ref
+   (ref.null (func))
+  )
+ )
+ (func $1
+  (call $0)
+ )
+)
