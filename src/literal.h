@@ -230,7 +230,7 @@ public:
     }
   }
   static Literal makeNull(Type type) {
-    // TODO: assert on non-nullability when we support that
+    // TODO: assert on nullability when we support that
     return Literal(type);
   }
   static Literal makeFunc(Name func, Type type = Type::funcref) {

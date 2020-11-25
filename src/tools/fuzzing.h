@@ -1457,6 +1457,10 @@ private:
     bool isReturn;
     size_t i = 0;
     while (1) {
+      if (i == TRIES || wasm.functions.empty()) {
+        // We can't find a proper target, give up.
+        return makeTrivial(type);
+      }
       // TODO: handle unreachable
       target = wasm.functions[upTo(wasm.functions.size())].get();
       isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
@@ -1465,9 +1469,6 @@ private:
         break;
       }
       i++;
-      if (i == TRIES) {
-        return makeTrivial(type);
-      }
     }
     std::vector<Expression*> args;
     for (const auto& type : target->sig.params) {
