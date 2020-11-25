@@ -450,21 +450,28 @@ Name SExpressionWasmBuilder::getFunctionName(Element& s) {
 }
 
 Signature SExpressionWasmBuilder::getFunctionSignature(Element& s) {
+  auto handleHeapType = [&](HeapType heapType) {
+    if (!heapType.isSignature()) {
+      throw ParseException(
+        "expected signature type", s.line, s.col);
+    }
+    return heapType.getSignature();
+  };
   if (s.dollared()) {
     auto it = signatureIndices.find(s.str().str);
     if (it == signatureIndices.end()) {
       throw ParseException(
         "unknown function type in getFunctionSignature", s.line, s.col);
     }
-    return signatures[it->second];
+    return handleHeapType(heapTypes[it->second]);
   } else {
     // index
     size_t offset = atoi(s.str().c_str());
-    if (offset >= signatures.size()) {
+    if (offset >= heapTypes.size()) {
       throw ParseException(
         "unknown function type in getFunctionSignature", s.line, s.col);
     }
-    return signatures[offset];
+    return handleHeapType(heapTypes[offset]);
   }
 }
 
@@ -626,9 +633,10 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
   }
 
   // Add implicitly defined type to global list so it has an index
-  if (std::find(signatures.begin(), signatures.end(), functionSignature) ==
-      signatures.end()) {
-    signatures.push_back(functionSignature);
+  auto heapType = HeapType(functionSignature);
+  if (std::find(heapTypes.begin(), heapTypes.end(), heapType) ==
+      heapTypes.end()) {
+    heapTypes.push_back(heapType);
   }
 
   // If only (type) is specified, populate `namedParams`
@@ -2810,10 +2818,10 @@ void SExpressionWasmBuilder::parseType(Element& s) {
     if (signatureIndices.find(name) != signatureIndices.end()) {
       throw ParseException("duplicate function type", s.line, s.col);
     }
-    signatureIndices[name] = signatures.size();
+    signatureIndices[name] = heapTypes.size();
     i++;
   }
-  signatures.emplace_back(parseInlineFunctionSignature(*s[i]));
+  heapTypes.emplace_back(HeapType(parseInlineFunctionSignature(*s[i])));
 }
 
 void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
