@@ -15,7 +15,7 @@
  */
 
 //
-// FIle helpers.
+// File helpers.
 //
 
 #ifndef wasm_support_file_h
