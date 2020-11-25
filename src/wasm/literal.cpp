@@ -35,7 +35,7 @@ Literal::Literal(Type type) : type(type) {
     i32 = 0;
   } else {
     assert(type != Type::unreachable);
-    // TODO: assert on nullability when we support that
+    assert(type.isNullable());
     if (type.isException()) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     } else {
