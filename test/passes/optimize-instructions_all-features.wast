@@ -6165,6 +6165,8 @@
 ;; typed function references
 (module
   (type $i32-i32 (func (param i32) (result i32)))
+  ;; this function has a reference parameter. we analyze parameters, and should
+  ;; not be confused by a type that has no bit size, in particular
   (func $call_from-param (param $f (ref null $i32-i32)) (result i32)
     (unreachable)
   )
