@@ -1916,9 +1916,10 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   } else {
     // To parse a heap type, create an element around it, and call that method.
     // That is, given (func) we wrap to (ref (func)).
-    // TODO add a helper method, but this is the only user atm.
     // For example, this parses
     //  (ref.null (func (param i32)))
+    // TODO add a helper method, but this is the only user atm, and we are
+    // waiting on https://github.com/WebAssembly/function-references/issues/42
     Element wrapper(wasm.allocator);
     auto& list = wrapper.list();
     list.resize(3);
