@@ -1916,11 +1916,14 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
     // TODO add a helper method, but this is the only user atm.
     Element wrapper(wasm.allocator);
     auto& list = wrapper.list();
-    list.resize(2);
+    list.resize(3);
     Element ref(wasm.allocator);
     ref.setString(REF, false, false);
+    Element null(wasm.allocator);
+    null.setString(NULL_, false, false);
     list[0] = &ref;
-    list[1] = s[1];
+    list[1] = &null;
+    list[2] = s[1];
     ret->finalize(elementToType(wrapper));
   }
   return ret;
