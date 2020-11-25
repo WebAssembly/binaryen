@@ -496,8 +496,6 @@ struct OptimizeInstructions
         // (x / fneg(y)) op C   ==>   (x / y) op -C
         //
         // where op = `*` `/` or `+`.
-        // `x` and `y` is not constants due to this may conflict
-        //  with `-x / C` or `-x * C` rules.
         if ((matches(curr,
                      binary(&op,
                             binary(&bin, Mul, unary(Neg, any(&x)), any(&y)),
@@ -516,8 +514,7 @@ struct OptimizeInstructions
                             fval(&c)))) &&
             (op == Abstract::getBinary(bin->type, Mul) ||
              op == Abstract::getBinary(bin->type, DivS) ||
-             op == Abstract::getBinary(bin->type, Add)) &&
-            !x->is<Const>() && !y->is<Const>()) {
+             op == Abstract::getBinary(bin->type, Add))) {
           c->value = c->value.neg();
           bin->left = x;
           bin->right = y;
