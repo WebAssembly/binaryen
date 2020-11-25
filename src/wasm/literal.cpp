@@ -34,8 +34,7 @@ Literal::Literal(Type type) : type(type) {
     // i31ref is special in that it is non-nullable, so we construct with zero
     i32 = 0;
   } else {
-    assert(type != Type::unreachable);
-    assert(type.isNullable());
+    assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
     if (type.isException()) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     } else {
