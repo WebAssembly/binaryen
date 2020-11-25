@@ -105,7 +105,7 @@ inline Literal getLiteral(const Expression* curr) {
   } else if (auto* n = curr->dynCast<RefNull>()) {
     return Literal(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal(r->func);
+    return Literal(r->func, r->type);
   } else if (auto* i = curr->dynCast<I31New>()) {
     if (auto* c = i->value->dynCast<Const>()) {
       return Literal::makeI31(c->value.geti32());
