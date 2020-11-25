@@ -2788,7 +2788,6 @@ Signature SExpressionWasmBuilder::parseInlineFunctionSignature(Element& s) {
     Element& curr = *s[k];
     if (elementStartsWith(curr, PARAM)) {
       auto newParams = parseParamOrLocal(curr);
-      
       params.insert(params.end(), newParams.begin(), newParams.end());
     } else if (elementStartsWith(curr, RESULT)) {
       auto newResults = parseResults(curr);
