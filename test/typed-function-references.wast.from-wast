@@ -2,10 +2,14 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_none (func))
  (type $none_=>_eqref (func (result eqref)))
+ (type $i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_anyref (func (result anyref)))
  (type $ref_null<i32_->_i32>_=>_i32 (func (param (ref null (func (param i32) (result i32)))) (result i32)))
  (type $ref<i32_->_i32>_=>_i32 (func (param (ref (func (param i32) (result i32)))) (result i32)))
  (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null (func (result eqref))))))
+ (type $none_=>_ref<i32i32i32i32i32_->_> (func (result (ref (func (param i32 i32 i32 i32 i32))))))
+ (type $none_=>_ref<_->_ref<i32i32i32i32i32_->_>> (func (result (ref (func (result (ref (func (param i32 i32 i32 i32 i32)))))))))
  (func $call-ref
   (call_ref
    (ref.func $call-ref)
@@ -46,5 +50,12 @@
  )
  (func $ref-in-sig (param $0 f64) (result (ref null (func (result eqref))))
   (ref.null (func (result eqref)))
+ )
+ (func $type-only-in-tuple-local
+  (local $x (i32 (ref null (func (result anyref))) f64))
+  (nop)
+ )
+ (func $nested-type-only-there (result (ref (func (result (ref (func (param i32 i32 i32 i32 i32)))))))
+  (unreachable)
  )
 )

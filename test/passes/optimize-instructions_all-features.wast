@@ -6162,3 +6162,10 @@
     )
   )
 )
+;; typed function references
+(module
+  (type $i32-i32 (func (param i32) (result i32)))
+  (func $call_from-param (param $f (ref null $i32-i32)) (result i32)
+    (unreachable)
+  )
+)
