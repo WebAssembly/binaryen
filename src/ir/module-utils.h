@@ -445,17 +445,17 @@ collectSignatures(Module& wasm,
 
   // Collect all the counts.
   Counts counts;
+  auto maybeAdd = [&](Type type) {
+    if (type.isRef()) {
+      auto heapType = type.getHeapType();
+      if (heapType.isSignature()) {
+        counts[heapType.getSignature()]++;
+      }
+    }
+  };
   for (auto& curr : wasm.functions) {
     counts[curr->sig]++;
     for (auto type : curr->vars) {
-      auto maybeAdd = [&](Type type) {
-        if (type.isRef()) {
-          auto heapType = type.getHeapType();
-          if (heapType.isSignature()) {
-            counts[heapType.getSignature()]++;
-          }
-        }
-      };
       maybeAdd(type);
       if (type.isTuple()) {
         for (auto t : type) {
@@ -480,6 +480,7 @@ collectSignatures(Module& wasm,
   // As we do this we may find more and more signatures, as nested children of
   // previous ones. Each such signature will appear in the type section once, so
   // we just need to visit it once.
+  // TODO: handle struct and array fields
   std::unordered_set<Signature> newSigs;
   for (auto& pair : counts) {
     newSigs.insert(pair.first);

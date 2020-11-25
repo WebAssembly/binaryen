@@ -2083,11 +2083,11 @@ private:
         return builder.makeRefNull(type);
       }
       // Last resort: create a function.
-      auto* func = new Function;
-      func->name = Names::getValidFunctionName(wasm, "ref_func_target");
-      func->sig = type.getHeapType().getSignature();
-      func->body = builder.makeUnreachable();
-      wasm.addFunction(func);
+      auto* func = wasm.addFunction(builder.makeFunction(
+        Names::getValidFunctionName(wasm, "ref_func_target"),
+        type.getHeapType().getSignature(),
+        {},
+        builder.makeUnreachable()));
       return builder.makeRefFunc(func->name, type);
     }
     if (type.isTuple()) {

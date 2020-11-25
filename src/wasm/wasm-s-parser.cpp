@@ -1909,11 +1909,15 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   }
   auto ret = allocator.alloc<RefNull>();
   if (s[1]->isStr()) {
+    // For example, this parses
+    //  (ref.null func)
     ret->finalize(stringToHeapType(s[1]->str()));
   } else {
     // To parse a heap type, create an element around it, and call that method.
     // That is, given (func) we wrap to (ref (func)).
     // TODO add a helper method, but this is the only user atm.
+    // For example, this parses
+    //  (ref.null (func (param i32)))
     Element wrapper(wasm.allocator);
     auto& list = wrapper.list();
     list.resize(3);
