@@ -1,9 +1,11 @@
 (module
- (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_eqref (func (result eqref)))
  (type $none_=>_i32 (func (result i32)))
  (type $ref_null<i32_->_i32>_=>_i32 (func (param (ref null (func (param i32) (result i32)))) (result i32)))
  (type $ref<i32_->_i32>_=>_i32 (func (param (ref (func (param i32) (result i32)))) (result i32)))
+ (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null (func (result eqref))))))
  (func $call-ref
   (call_ref
    (ref.func $call-ref)
@@ -41,6 +43,9 @@
    (i32.const 42)
    (local.get $f)
   )
+ )
+ (func $ref-in-sig (param $0 f64) (result (ref null (func (result eqref))))
+  (ref.null (func (result eqref)))
  )
 )
 
