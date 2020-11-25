@@ -536,14 +536,10 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
     }
     localIndex++;
     Type type;
-    if (s[i]->isStr()) {
-      type = stringToType(s[i]->str());
-    } else {
-      type = elementToType(*s[i]);
-      if (elementStartsWith(s, PARAM) && type.isTuple()) {
-        throw ParseException(
-          "params may not have tuple types", s[i]->line, s[i]->col);
-      }
+    type = elementToType(*s[i]);
+    if (elementStartsWith(s, PARAM) && type.isTuple()) {
+      throw ParseException(
+        "params may not have tuple types", s[i]->line, s[i]->col);
     }
     namedParams.emplace_back(name, type);
   }
@@ -555,7 +551,7 @@ std::vector<Type> SExpressionWasmBuilder::parseResults(Element& s) {
   assert(elementStartsWith(s, RESULT));
   std::vector<Type> types;
   for (size_t i = 1; i < s.size(); i++) {
-    types.push_back(stringToType(s[i]->str()));
+    types.push_back(elementToType(*s[i]));
   }
   return types;
 }
@@ -923,7 +919,7 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
 
 Type SExpressionWasmBuilder::elementToType(Element& s) {
   if (s.isStr()) {
-    return stringToType(s.str(), false, false);
+    return stringToType(s.str());
   }
   auto& list = s.list();
   auto size = list.size();
@@ -966,7 +962,7 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
   // It's a tuple.
   std::vector<Type> types;
   for (size_t i = 0; i < s.size(); ++i) {
-    types.push_back(stringToType(list[i]->str()));
+    types.push_back(elementToType(*list[i]));
   }
   return Type(types);
 }
@@ -2776,6 +2772,7 @@ Signature SExpressionWasmBuilder::parseInlineFunctionSignature(Element& s) {
     Element& curr = *s[k];
     if (elementStartsWith(curr, PARAM)) {
       auto newParams = parseParamOrLocal(curr);
+      
       params.insert(params.end(), newParams.begin(), newParams.end());
     } else if (elementStartsWith(curr, RESULT)) {
       auto newResults = parseResults(curr);
