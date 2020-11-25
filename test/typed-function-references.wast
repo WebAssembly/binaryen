@@ -27,6 +27,13 @@
   )
 )
 (module
- ;; inline ref type in result
- (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null (func (result eqref))))))
+  ;; inline ref type in result
+  (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null (func (result eqref))))))
+
+  (func $type-only-in-tuple-local
+    (local $x (i32 (ref null (func (result (f32)))) f64))
+  )
+  (func $nested-type-only-there (result (ref (func (result (ref (func (param i32 i32 i32)))))))
+    (unreachable)
+  )
 )
