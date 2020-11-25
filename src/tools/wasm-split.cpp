@@ -359,6 +359,21 @@ void Instrumenter::instrumentFuncs() {
   });
 }
 
+// wasm-split profile format::
+//
+// The wasm-split profile is a binary format designed to be simple to produce
+// and consume. It is comprised of:
+//
+//   1. An 8-byte module hash
+//
+//   2. A 4-byte timestamp for each defined function
+//
+// The module hash is meant to guard against bugs where the module that was
+// instrumented and the module that is being split are different. The timestamps
+// are non-zero for functions that were called during the instrumented run and 0
+// otherwise. Functions with smaller non-zero timestamps were called earlier in
+// the instrumented run than funtions with larger timestamps.
+
 void Instrumenter::addProfileExport() {
   // Create and export a function to dump the profile into a given memory
   // buffer. The function takes the available address and buffer size as
@@ -446,6 +461,7 @@ void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   writer.write(wasm, options.output);
 }
 
+// See "wasm-split profile format" above for more information.
 std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
   auto profileData =
     read_file<std::vector<char>>(options.profileFile, Flags::Binary);
