@@ -187,7 +187,7 @@ inline Expression* getZeroExtValue(Expression* curr) {
   using namespace Match;
   int32_t mask = 0;
   Expression* extended = nullptr;
-  if (matches(curr, binary(AndInt32, i32(&mask), any(&extended))) &&
+  if (matches(curr, binary(AndInt32, any(&extended), i32(&mask))) &&
       Bits::getMaskedBits(mask) != 0) {
     return extended;
   }
