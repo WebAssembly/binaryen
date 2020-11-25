@@ -232,105 +232,113 @@ namespace wasm {
 
 namespace {
 
-std::mutex mutex;
+struct TypeStore {
+  std::mutex mutex;
 
-// Track unique_ptrs for constructed types to avoid leaks
-std::vector<std::unique_ptr<TypeInfo>> constructedTypes;
+  // Track unique_ptrs for constructed types to avoid leaks
+  std::vector<std::unique_ptr<TypeInfo>> constructedTypes;
 
-// Maps from constructed types to the canonical Type ID.
-std::unordered_map<TypeInfo, uintptr_t> indices = {
-  // If a Type is constructed from a list of types, the list of types becomes
-  // implicitly converted to a TypeInfo before canonicalizing its id. This is
-  // also the case if a list of just one type is provided, even though such a
-  // list of types will be canonicalized to the BasicID of the single type. As
-  // such, the following entries are solely placeholders to enable the lookup
-  // of lists of just one type to the BasicID of the single type.
-  {TypeInfo(Tuple()), Type::none},
-  {TypeInfo({Type::unreachable}), Type::unreachable},
-  {TypeInfo({Type::i32}), Type::i32},
-  {TypeInfo({Type::i64}), Type::i64},
-  {TypeInfo({Type::f32}), Type::f32},
-  {TypeInfo({Type::f64}), Type::f64},
-  {TypeInfo({Type::v128}), Type::v128},
-  {TypeInfo({Type::funcref}), Type::funcref},
-  {TypeInfo(HeapType(HeapType::FuncKind), true), Type::funcref},
-  {TypeInfo({Type::externref}), Type::externref},
-  {TypeInfo(HeapType(HeapType::ExternKind), true), Type::externref},
-  {TypeInfo({Type::exnref}), Type::exnref},
-  {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
-  {TypeInfo({Type::anyref}), Type::anyref},
-  {TypeInfo(HeapType(HeapType::AnyKind), true), Type::anyref},
-  {TypeInfo({Type::eqref}), Type::eqref},
-  {TypeInfo(HeapType(HeapType::EqKind), true), Type::eqref},
-  {TypeInfo({Type::i31ref}), Type::i31ref},
-  {TypeInfo(HeapType(HeapType::I31Kind), false), Type::i31ref},
+  // Maps from constructed types to the canonical Type ID.
+  std::unordered_map<TypeInfo, uintptr_t> indices = {
+    // If a Type is constructed from a list of types, the list of types becomes
+    // implicitly converted to a TypeInfo before canonicalizing its id. This is
+    // also the case if a list of just one type is provided, even though such a
+    // list of types will be canonicalized to the BasicID of the single type. As
+    // such, the following entries are solely placeholders to enable the lookup
+    // of lists of just one type to the BasicID of the single type.
+    {TypeInfo(Tuple()), Type::none},
+    {TypeInfo({Type::unreachable}), Type::unreachable},
+    {TypeInfo({Type::i32}), Type::i32},
+    {TypeInfo({Type::i64}), Type::i64},
+    {TypeInfo({Type::f32}), Type::f32},
+    {TypeInfo({Type::f64}), Type::f64},
+    {TypeInfo({Type::v128}), Type::v128},
+    {TypeInfo({Type::funcref}), Type::funcref},
+    {TypeInfo(HeapType(HeapType::FuncKind), true), Type::funcref},
+    {TypeInfo({Type::externref}), Type::externref},
+    {TypeInfo(HeapType(HeapType::ExternKind), true), Type::externref},
+    {TypeInfo({Type::exnref}), Type::exnref},
+    {TypeInfo(HeapType(HeapType::ExnKind), true), Type::exnref},
+    {TypeInfo({Type::anyref}), Type::anyref},
+    {TypeInfo(HeapType(HeapType::AnyKind), true), Type::anyref},
+    {TypeInfo({Type::eqref}), Type::eqref},
+    {TypeInfo(HeapType(HeapType::EqKind), true), Type::eqref},
+    {TypeInfo({Type::i31ref}), Type::i31ref},
+    {TypeInfo(HeapType(HeapType::I31Kind), false), Type::i31ref},
+  };
+
+  uintptr_t canonicalize(const TypeInfo& info) {
+    std::lock_guard<std::mutex> lock(mutex);
+    auto indexIt = indices.find(info);
+    if (indexIt != indices.end()) {
+      return indexIt->second;
+    }
+    auto ptr = std::make_unique<TypeInfo>(info);
+    auto id = uintptr_t(ptr.get());
+    constructedTypes.push_back(std::move(ptr));
+    assert(id > Type::_last_basic_id);
+    indices[info] = id;
+    return id;
+  }
+
+  Type makeType(const Tuple& tuple) {
+    auto& types = tuple.types;
+#ifndef NDEBUG
+    for (Type t : types) {
+      assert(t.isSingle());
+    }
+#endif
+    if (types.size() == 0) {
+      return Type::none;
+    }
+    if (types.size() == 1) {
+      return types[0];
+    }
+    return Type(canonicalize(TypeInfo(tuple)));
+  }
+
+  Type makeType(const HeapType& heapType, bool nullable) {
+#ifndef NDEBUG
+    switch (heapType.kind) {
+      case HeapType::FuncKind:
+      case HeapType::ExternKind:
+      case HeapType::AnyKind:
+      case HeapType::EqKind:
+      case HeapType::I31Kind:
+      case HeapType::ExnKind:
+      case HeapType::SignatureKind:
+        break;
+      case HeapType::StructKind:
+        for (Field f : heapType.struct_.fields) {
+          assert(f.type.isSingle());
+        }
+        break;
+      case HeapType::ArrayKind:
+        assert(heapType.array.element.type.isSingle());
+        break;
+    }
+#endif
+    return Type(canonicalize(TypeInfo(heapType, nullable)));
+  }
+
+  Type makeType(const Rtt& rtt) { return Type(canonicalize(TypeInfo(rtt))); }
 };
+
+TypeStore globalTypeStore;
+
+TypeInfo* getTypeInfo(const Type& type) { return (TypeInfo*)type.getID(); }
 
 } // anonymous namespace
 
-static uintptr_t canonicalize(const TypeInfo& info) {
-  std::lock_guard<std::mutex> lock(mutex);
-  auto indexIt = indices.find(info);
-  if (indexIt != indices.end()) {
-    return indexIt->second;
-  }
-  auto ptr = std::make_unique<TypeInfo>(info);
-  auto id = uintptr_t(ptr.get());
-  constructedTypes.push_back(std::move(ptr));
-  assert(id > Type::_last_basic_id);
-  indices[info] = id;
-  return id;
-}
-
-static TypeInfo* getTypeInfo(const Type& type) {
-  return (TypeInfo*)type.getID();
-}
-
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
-Type::Type(const Tuple& tuple) {
-  auto& types = tuple.types;
-#ifndef NDEBUG
-  for (Type t : types) {
-    assert(t.isSingle());
-  }
-#endif
-  if (types.size() == 0) {
-    id = none;
-    return;
-  }
-  if (types.size() == 1) {
-    *this = types[0];
-    return;
-  }
-  id = canonicalize(TypeInfo(tuple));
-}
+Type::Type(const Tuple& tuple) { *this = globalTypeStore.makeType(tuple); }
 
 Type::Type(const HeapType& heapType, bool nullable) {
-#ifndef NDEBUG
-  switch (heapType.kind) {
-    case HeapType::FuncKind:
-    case HeapType::ExternKind:
-    case HeapType::AnyKind:
-    case HeapType::EqKind:
-    case HeapType::I31Kind:
-    case HeapType::ExnKind:
-    case HeapType::SignatureKind:
-      break;
-    case HeapType::StructKind:
-      for (Field f : heapType.struct_.fields) {
-        assert(f.type.isSingle());
-      }
-      break;
-    case HeapType::ArrayKind:
-      assert(heapType.array.element.type.isSingle());
-      break;
-  }
-#endif
-  id = canonicalize(TypeInfo(heapType, nullable));
+  *this = globalTypeStore.makeType(heapType, nullable);
 }
 
-Type::Type(const Rtt& rtt) { id = canonicalize(TypeInfo(rtt)); }
+Type::Type(const Rtt& rtt) { *this = globalTypeStore.makeType(rtt); }
 
 bool Type::isTuple() const {
   if (isBasic()) {
