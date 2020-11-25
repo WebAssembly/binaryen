@@ -973,12 +973,10 @@ void MemoryGrow::finalize() {
 void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
 
 void RefNull::finalize(Type type_) {
-  assert(type_ == Type::unreachable || type_.isNullable());
   type = type_;
 }
 
 void RefNull::finalize() {
-  assert(type == Type::unreachable || type.isNullable());
 }
 
 void RefIsNull::finalize() {

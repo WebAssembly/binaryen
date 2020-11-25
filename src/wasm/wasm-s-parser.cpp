@@ -1907,9 +1907,22 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   if (s.size() != 2) {
     throw ParseException("invalid heap type reference", s.line, s.col);
   }
-  auto heapType = stringToHeapType(s[1]->str());
   auto ret = allocator.alloc<RefNull>();
-  ret->finalize(heapType);
+  if (s[1]->isStr()) {
+    ret->finalize(stringToHeapType(s[1]->str()));
+  } else {
+    // To parse a heap type, create an element around it, and call that method.
+    // That is, given (func) we wrap to (ref (func)).
+    // TODO add a helper method, but this is the only user atm.
+    Element wrapper(wasm.allocator);
+    auto& list = wrapper.list();
+    list.resize(2);
+    Element ref(wasm.allocator);
+    ref.setString(REF, false, false);
+    list[0] = &ref;
+    list[1] = s[1];
+    ret->finalize(elementToType(wrapper));
+  }
   return ret;
 }
 
