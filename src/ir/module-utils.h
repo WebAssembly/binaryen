@@ -402,7 +402,17 @@ inline void
 collectSignatures(Module& wasm,
                   std::vector<Signature>& signatures,
                   std::unordered_map<Signature, Index>& sigIndices) {
-  using Counts = std::unordered_map<Signature, size_t>;
+  struct Counts : public std::unordered_map<Signature, size_t> {
+    void note(Signature sig) { (*this)[sig]++; }
+    void maybeNote(Type type) {
+      if (type.isRef()) {
+        auto heapType = type.getHeapType();
+        if (heapType.isSignature()) {
+          note(heapType.getSignature());
+        }
+      }
+    }
+  };
 
   // Collect the signature use counts for a single function
   auto updateCounts = [&](Function* func, Counts& counts) {
@@ -417,23 +427,14 @@ collectSignatures(Module& wasm,
 
       void visitExpression(Expression* curr) {
         if (curr->is<RefNull>()) {
-          maybeNote(curr->type);
+          counts.maybeNote(curr->type);
         } else if (auto* call = curr->dynCast<CallIndirect>()) {
           counts[call->sig]++;
         } else if (Properties::isControlFlowStructure(curr)) {
-          maybeNote(curr->type);
+          counts.maybeNote(curr->type);
           if (curr->type.isTuple()) {
             // TODO: Allow control flow to have input types as well
-            counts[Signature(Type::none, curr->type)]++;
-          }
-        }
-      }
-
-      void maybeNote(Type type) {
-        if (type.isRef()) {
-          auto heapType = type.getHeapType();
-          if (heapType.isSignature()) {
-            counts[heapType.getSignature()]++;
+            counts.note(Signature(Type::none, curr->type));
           }
         }
       }
@@ -445,21 +446,13 @@ collectSignatures(Module& wasm,
 
   // Collect all the counts.
   Counts counts;
-  auto maybeAdd = [&](Type type) {
-    if (type.isRef()) {
-      auto heapType = type.getHeapType();
-      if (heapType.isSignature()) {
-        counts[heapType.getSignature()]++;
-      }
-    }
-  };
   for (auto& curr : wasm.functions) {
     counts[curr->sig]++;
     for (auto type : curr->vars) {
-      maybeAdd(type);
+      counts.maybeNote(type);
       if (type.isTuple()) {
         for (auto t : type) {
-          maybeAdd(t);
+          counts.maybeNote(t);
         }
       }
     }
