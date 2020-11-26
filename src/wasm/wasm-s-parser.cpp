@@ -48,8 +48,7 @@ int unhex(char c) {
 
 namespace wasm {
 
-static Name STRUCT("struct"),
-            FIELD("field");
+static Name STRUCT("struct"), FIELD("field");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -455,8 +454,7 @@ Name SExpressionWasmBuilder::getFunctionName(Element& s) {
 Signature SExpressionWasmBuilder::getFunctionSignature(Element& s) {
   auto handleHeapType = [&](HeapType heapType) {
     if (!heapType.isSignature()) {
-      throw ParseException(
-        "expected signature type", s.line, s.col);
+      throw ParseException("expected signature type", s.line, s.col);
     }
     return heapType.getSignature();
   };
