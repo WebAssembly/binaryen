@@ -2822,15 +2822,19 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
       if (t.size() != 2 && t.size() != 3) {
         throw ParseException("invalid field size", s.line, s.col);
       }
-      size_t l = 1;
       if (t.size() == 3) {
-        l = 2;
-        if (!t[l]->isStr()) {
+        if (!t[1]->isStr()) {
           throw ParseException("invalid field name", s.line, s.col);
         }
         // TODO: save the name of the field.
       }
-      fields.emplace_back(elementToType(*t[l]), mutable_);
+      Element* last = t[t.size() - 1];
+      // The last element may also be (mut (..)).
+      if (last->isList() && *(*last)[0] == MUT) {
+        mutable_ = true;
+        last = (*last)[1];
+      }
+      fields.emplace_back(elementToType(*last), mutable_);
     }
     return Struct(fields);
   }
