@@ -953,20 +953,14 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
       nullable = true;
       i++;
     }
-    Signature sig;
     auto& last = *s[i];
     if (last.isStr()) {
       // A string name of a signature.
-      sig = getFunctionSignature(last);
+      return Type(getFunctionSignature(last), nullable);
     } else {
       // A signature written out in full in-line.
-      if (*last[0] != FUNC) {
-        throw ParseException(
-          std::string("invalid reference type type"), s.line, s.col);
-      }
-      sig = parseInlineFunctionSignature(last);
+      return Type(parseHeapType(last), nullable);
     }
-    return Type(HeapType(sig), nullable);
   }
   // It's a tuple.
   std::vector<Type> types;
@@ -2792,7 +2786,7 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
   wasm.table.segments.push_back(segment);
 }
 
-Signature SExpressionWasmBuilder::parseInlineFunctionSignature(Element& s) {
+HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
   if (*s[0] != FUNC) {
     throw ParseException("invalid inline function signature", s.line, s.col);
   }
@@ -2821,7 +2815,7 @@ void SExpressionWasmBuilder::parseType(Element& s) {
     signatureIndices[name] = heapTypes.size();
     i++;
   }
-  heapTypes.emplace_back(HeapType(parseInlineFunctionSignature(*s[i])));
+  heapTypes.emplace_back(parseHeapType(*s[i]));
 }
 
 void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {

@@ -4,6 +4,11 @@
 ;; initializer for i31ref types globals, which isn't yet specified.
 
 (module
+  (type $struct.A (struct
+    (field $x i32)
+    (field $y f64)
+  ))
+
   ;; Test global initializer expressions
   (global $global_anyref (mut anyref) (ref.null any))
   (global $global_eqref (mut eqref) (ref.null eq))
