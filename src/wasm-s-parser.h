@@ -152,8 +152,6 @@ private:
 
   UniqueNameMapper nameMapper;
 
-  // Given a function signature type's name, return the signature
-  Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
   Name getGlobalName(Element& s);
   Name getEventName(Element& s);

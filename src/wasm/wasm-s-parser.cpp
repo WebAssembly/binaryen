@@ -451,31 +451,6 @@ Name SExpressionWasmBuilder::getFunctionName(Element& s) {
   }
 }
 
-Signature SExpressionWasmBuilder::getFunctionSignature(Element& s) {
-  auto handleHeapType = [&](HeapType heapType) {
-    if (!heapType.isSignature()) {
-      throw ParseException("expected signature type", s.line, s.col);
-    }
-    return heapType.getSignature();
-  };
-  if (s.dollared()) {
-    auto it = heapTypeIndices.find(s.str().str);
-    if (it == heapTypeIndices.end()) {
-      throw ParseException(
-        "unknown function type in getFunctionSignature", s.line, s.col);
-    }
-    return handleHeapType(heapTypes[it->second]);
-  } else {
-    // index
-    size_t offset = atoi(s.str().c_str());
-    if (offset >= heapTypes.size()) {
-      throw ParseException(
-        "unknown function type in getFunctionSignature", s.line, s.col);
-    }
-    return handleHeapType(heapTypes[offset]);
-  }
-}
-
 Name SExpressionWasmBuilder::getGlobalName(Element& s) {
   if (s.dollared()) {
     return s.str();
@@ -572,7 +547,7 @@ Signature SExpressionWasmBuilder::parseTypeRef(Element& s) {
   if (s.size() != 2) {
     throw ParseException("invalid type reference", s.line, s.col);
   }
-  return getFunctionSignature(*s[1]);
+  return parseHeapType(*s[1]).getSignature();
 }
 
 // Prases typeuse, a reference to a type definition. It is in the form of either
@@ -954,14 +929,7 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
       nullable = true;
       i++;
     }
-    auto& last = *s[i];
-    if (last.isStr()) {
-      // A string name of a signature.
-      return Type(getFunctionSignature(last), nullable);
-    } else {
-      // A signature written out in full in-line.
-      return Type(parseHeapType(last), nullable);
-    }
+    return Type(parseHeapType(*s[i]), nullable);
   }
   // It's a tuple.
   std::vector<Type> types;
@@ -2788,6 +2756,30 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
 }
 
 HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
+  if (s.isStr()) {
+    auto handleHeapType = [&](HeapType heapType) {
+      if (!heapType.isSignature()) {
+        throw ParseException("expected signature type", s.line, s.col);
+      }
+      return heapType;
+    };
+    if (s.dollared()) {
+      auto it = heapTypeIndices.find(s.str().str);
+      if (it == heapTypeIndices.end()) {
+        throw ParseException(
+          "unknown dollared function type", s.line, s.col);
+      }
+      return handleHeapType(heapTypes[it->second]);
+    } else {
+      // index
+      size_t offset = atoi(s.str().c_str());
+      if (offset >= heapTypes.size()) {
+        throw ParseException(
+          "unknown indexed function type", s.line, s.col);
+      }
+      return handleHeapType(heapTypes[offset]);
+    }
+  }
   if (*s[0] == FUNC) {
     std::vector<Type> params;
     std::vector<Type> results;
