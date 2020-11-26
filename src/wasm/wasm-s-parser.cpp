@@ -2806,14 +2806,29 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
     FieldList fields;
     for (size_t k = 1; k < s.size(); k++) {
       auto& t = *s[k];
+      bool mutable_ = false;
+      if (t.isStr()) {
+        // t is a simple string name like "i32"
+        fields.emplace_back(elementToType(t), mutable_);
+        continue;
+      }
+      // t is a tuple, containing either
+      //   (field TYPE)
+      // or
+      //   (field $name TYPE)
       if (*t[0] != FIELD) {
         throw ParseException("invalid struct field", s.line, s.col);
       }
-      bool mutable_ = false;
+      if (t.size() != 2 && t.size() != 3) {
+        throw ParseException("invalid field size", s.line, s.col);
+      }
       size_t l = 1;
-      if (t[l]->isStr()) {
+      if (t.size() == 3) {
+        l = 2;
+        if (!t[l]->isStr()) {
+          throw ParseException("invalid field name", s.line, s.col);
+        }
         // TODO: save the name of the field.
-        l++;
       }
       fields.emplace_back(elementToType(*t[l]), mutable_);
     }
