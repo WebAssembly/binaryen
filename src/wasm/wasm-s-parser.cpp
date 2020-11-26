@@ -547,7 +547,11 @@ Signature SExpressionWasmBuilder::parseTypeRef(Element& s) {
   if (s.size() != 2) {
     throw ParseException("invalid type reference", s.line, s.col);
   }
-  return parseHeapType(*s[1]).getSignature();
+  auto heapType = parseHeapType(*s[1]);
+  if (!heapType.isSignature()) {
+    throw ParseException("expected signature type", s.line, s.col);
+  }
+  return heapType.getSignature();
 }
 
 // Prases typeuse, a reference to a type definition. It is in the form of either
@@ -2757,19 +2761,14 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
 
 HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
   if (s.isStr()) {
-    auto handleHeapType = [&](HeapType heapType) {
-      if (!heapType.isSignature()) {
-        throw ParseException("expected signature type", s.line, s.col);
-      }
-      return heapType;
-    };
+    // It's a string.
     if (s.dollared()) {
       auto it = heapTypeIndices.find(s.str().str);
       if (it == heapTypeIndices.end()) {
         throw ParseException(
           "unknown dollared function type", s.line, s.col);
       }
-      return handleHeapType(heapTypes[it->second]);
+      return heapTypes[it->second];
     } else {
       // index
       size_t offset = atoi(s.str().c_str());
@@ -2777,9 +2776,10 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
         throw ParseException(
           "unknown indexed function type", s.line, s.col);
       }
-      return handleHeapType(heapTypes[offset]);
+      return heapTypes[offset];
     }
   }
+  // It's a list.
   if (*s[0] == FUNC) {
     std::vector<Type> params;
     std::vector<Type> results;
