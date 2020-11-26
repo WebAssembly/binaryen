@@ -48,6 +48,9 @@ int unhex(char c) {
 
 namespace wasm {
 
+static Name STRUCT("struct"),
+            FIELD("field");
+
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
 static void
@@ -2787,22 +2790,38 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
 }
 
 HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
-  if (*s[0] != FUNC) {
-    throw ParseException("invalid inline function signature", s.line, s.col);
-  }
-  std::vector<Type> params;
-  std::vector<Type> results;
-  for (size_t k = 1; k < s.size(); k++) {
-    Element& curr = *s[k];
-    if (elementStartsWith(curr, PARAM)) {
-      auto newParams = parseParamOrLocal(curr);
-      params.insert(params.end(), newParams.begin(), newParams.end());
-    } else if (elementStartsWith(curr, RESULT)) {
-      auto newResults = parseResults(curr);
-      results.insert(results.end(), newResults.begin(), newResults.end());
+  if (*s[0] == FUNC) {
+    std::vector<Type> params;
+    std::vector<Type> results;
+    for (size_t k = 1; k < s.size(); k++) {
+      Element& curr = *s[k];
+      if (elementStartsWith(curr, PARAM)) {
+        auto newParams = parseParamOrLocal(curr);
+        params.insert(params.end(), newParams.begin(), newParams.end());
+      } else if (elementStartsWith(curr, RESULT)) {
+        auto newResults = parseResults(curr);
+        results.insert(results.end(), newResults.begin(), newResults.end());
+      }
     }
+    return Signature(Type(params), Type(results));
+  } else if (*s[0] == STRUCT) {
+    FieldList fields;
+    for (size_t k = 1; k < s.size(); k++) {
+      auto& t = *s[k];
+      if (*t[0] != FIELD) {
+        throw ParseException("invalid struct field", s.line, s.col);
+      }
+      bool mutable_ = false;
+      size_t l = 1;
+      if (t[l]->isStr()) {
+        // TODO: save the name of the field.
+        l++;
+      }
+      fields.emplace_back(elementToType(*t[l]), mutable_);
+    }
+    return Struct(fields);
   }
-  return Signature(Type(params), Type(results));
+  throw ParseException("invalid heap type", s.line, s.col);
 }
 
 void SExpressionWasmBuilder::parseType(Element& s) {
