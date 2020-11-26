@@ -2765,16 +2765,14 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
     if (s.dollared()) {
       auto it = heapTypeIndices.find(s.str().str);
       if (it == heapTypeIndices.end()) {
-        throw ParseException(
-          "unknown dollared function type", s.line, s.col);
+        throw ParseException("unknown dollared function type", s.line, s.col);
       }
       return heapTypes[it->second];
     } else {
       // index
       size_t offset = atoi(s.str().c_str());
       if (offset >= heapTypes.size()) {
-        throw ParseException(
-          "unknown indexed function type", s.line, s.col);
+        throw ParseException("unknown indexed function type", s.line, s.col);
       }
       return heapTypes[offset];
     }
