@@ -459,8 +459,8 @@ Signature SExpressionWasmBuilder::getFunctionSignature(Element& s) {
     return heapType.getSignature();
   };
   if (s.dollared()) {
-    auto it = signatureIndices.find(s.str().str);
-    if (it == signatureIndices.end()) {
+    auto it = heapTypeIndices.find(s.str().str);
+    if (it == heapTypeIndices.end()) {
       throw ParseException(
         "unknown function type in getFunctionSignature", s.line, s.col);
     }
@@ -2845,10 +2845,10 @@ void SExpressionWasmBuilder::parseType(Element& s) {
   size_t i = 1;
   if (s[i]->isStr()) {
     std::string name = s[i]->str().str;
-    if (signatureIndices.find(name) != signatureIndices.end()) {
+    if (heapTypeIndices.find(name) != heapTypeIndices.end()) {
       throw ParseException("duplicate function type", s.line, s.col);
     }
-    signatureIndices[name] = heapTypes.size();
+    heapTypeIndices[name] = heapTypes.size();
     i++;
   }
   heapTypes.emplace_back(parseHeapType(*s[i]));
