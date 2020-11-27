@@ -287,4 +287,41 @@
    )
   )
  )
+ ;; similar, but with the value compared to having the sign bit set but no
+ ;; upper bits
+ (func $compare-maybe-signed-eq (param $0 i32) (result i32)
+  (i32.eq
+   (i32.shr_s
+    (i32.shl
+     (local.get $0)
+     (i32.const 24)
+    )
+    (i32.const 24)
+   )
+   (i32.const 128)
+  )
+ )
+ (func "call-compare-maybe-signed-eq" (result i32)
+  (call $compare-maybe-signed-eq
+   (i32.const 128)
+  )
+ )
+ ;; the same with !=
+ (func $compare-maybe-signed-ne (param $0 i32) (result i32)
+  (i32.ne
+   (i32.shr_s
+    (i32.shl
+     (local.get $0)
+     (i32.const 24)
+    )
+    (i32.const 24)
+   )
+   (i32.const 128)
+  )
+ )
+ (func "call-compare-maybe-signed-ne" (result i32)
+  (call $compare-maybe-signed-ne
+   (i32.const 128)
+  )
+ )
 )

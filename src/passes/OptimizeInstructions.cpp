@@ -503,31 +503,38 @@ struct OptimizeInstructions
             // same size. For example, for an effective 8-bit value:
             //  (x << 8) >> 8 ==/!= C    =>    x & 255 ==/!= C
             //
-            // This is obviously true if C's higher bits (beyond the relevant
-            // size, that is, the upper 24 bits in this example) are all zero.
+            // The key thing to track here are the upper bits plus the sign bit;
+            // call those the "relevant bits". This is crucial because x is
+            // sign-extended, that is, its effective sign bit is spread to all
+            // the upper bits, which means that the relevant bits on the left
+            // side are either all 0, or all 1.
             auto bits = Properties::getSignExtBits(binary->left);
             uint32_t right = c->value.geti32();
-            if (Bits::popCount(right >> uint32_t(bits)) == 0) {
+            uint32_t numRelevantBits = 32 - bits + 1;
+            uint32_t setRelevantBits =
+              Bits::popCount(right >> uint32_t(bits - 1));
+            // If all the relevant bits on C are zero
+            // then we can mask off the high bits instead of sign-extending x.
+            // This is valid because if x is signed, then the comparison was
+            // false before (signed vs unsigned value), and will still be false
+            // as the sign bit will remain to cause a difference. And if x is
+            // unsigned then the upper bits would be zero anyhow.
+            if (setRelevantBits == 0) {
               binary->left = makeZeroExt(ext, bits);
               return binary;
-            }
-            // If C's higher bits are all ones, and C's sign bit is set, then we
-            // can also do this by removing the higher bits on both sides, that
-            // is, zero-extending them both. This works because if x was not
-            // signed then it was different due to the sign bit before, and
-            // still will be. And if x was signed then it would have all ones in
-            // its higher bits, matching C's, so we can remove all the identical
-            // bits before comparing.
-            if (Bits::popCount(right >> uint32_t(bits - 1)) ==
-                int(32 - bits + 1)) {
+            } else if (setRelevantBits == numRelevantBits) {
+              // If all those bits are one, then we can do something similar if
+              // we also zero-extend on the right as well. This is valid
+              // because, as in the previous case, the sign bit differentiates
+              // the two sides when they are different, and if the sign bit is
+              // identical, then the upper bits don't matter, so masking them
+              // off both sides is fine.
               binary->left = makeZeroExt(ext, bits);
               c->value = c->value.and_(Literal(Bits::lowBitMask(bits)));
               return binary;
-            }
-            // Otherwise, if C's higher bits are mixed, then we know the two
-            // sides can never be equal, as no sign-extend can result in a mixed
-            // set of higher bits, they are all either 0 or 1.
-            if (Bits::popCount(right >> uint32_t(bits)) != int(32 - bits)) {
+            } else {
+              // Otherwise, C's relevant bits are mixed, and then the two sides
+              // can never be equal, as the left side's bits cannot be mixed.
               Builder builder(*getModule());
               // The result is either always true, or always false.
               c->value = Literal::makeFromInt32(binary->op == NeInt32, c->type);
