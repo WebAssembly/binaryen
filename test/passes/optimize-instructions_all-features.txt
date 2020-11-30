@@ -5561,9 +5561,11 @@
    )
   )
   (drop
-   (f64.add
+   (f64.sub
     (local.get $x0)
-    (local.get $x1)
+    (f64.neg
+     (local.get $x1)
+    )
    )
   )
   (drop

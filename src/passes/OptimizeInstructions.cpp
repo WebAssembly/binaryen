@@ -514,7 +514,7 @@ struct OptimizeInstructions
                             fval(&c)))) &&
             (op == Abstract::getBinary(bin->type, Mul) ||
              op == Abstract::getBinary(bin->type, DivS) ||
-             op == Abstract::getBinary(bin->type, Add))) {
+             (fastMath && op == Abstract::getBinary(bin->type, Add)))) {
           c->value = c->value.neg();
           bin->left = x;
           bin->right = y;
@@ -536,8 +536,8 @@ struct OptimizeInstructions
           return bin;
         }
         // x - fneg(y)   ==>   x + y
-        if (matches(curr, binary(&bin, Sub, any(), unary(Neg, any(&y)))) &&
-            !y->is<Const>()) {
+        if (fastMath &&
+            matches(curr, binary(&bin, Sub, any(), unary(Neg, any(&y))))) {
           bin->op = Abstract::getBinary(bin->left->type, Add);
           bin->right = y;
           return bin;
