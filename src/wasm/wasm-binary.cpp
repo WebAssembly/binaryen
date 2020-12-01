@@ -1121,7 +1121,7 @@ void WasmBinaryBuilder::read() {
         readMemory();
         break;
       case BinaryConsts::Section::Type:
-        readSignatures();
+        readTypes();
         break;
       case BinaryConsts::Section::Import:
         readImports();
@@ -1324,11 +1324,11 @@ Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
   // Single value types are negative; signature indices are non-negative
   if (type >= 0) {
-    // TODO: Handle block input types properly
-    if (size_t(type) >= signatures.size()) {
+    // TODO: Handle block input types properly.
+    if (size_t(type) >= types.size()) {
       throwError("invalid signature index: " + std::to_string(type));
     }
-    return signatures[type].results;
+    return Type(types[type], /* nullable = */ true);
   }
   switch (type) {
     // None only used for block signatures. TODO: Separate out?
@@ -1371,10 +1371,10 @@ HeapType WasmBinaryBuilder::getHeapType() {
   int type = getS32LEB(); // TODO: Actually encoded as s33
   // Single heap types are negative; heap type indices are non-negative
   if (type >= 0) {
-    if (size_t(type) >= signatures.size()) {
+    if (size_t(type) >= types.size()) {
       throwError("invalid signature index: " + std::to_string(type));
     }
-    return HeapType(signatures[type]);
+    return types[type];
   }
   switch (type) {
     case BinaryConsts::EncodedHeapType::func:
@@ -1485,8 +1485,8 @@ void WasmBinaryBuilder::readMemory() {
                      Memory::kUnlimitedSize);
 }
 
-void WasmBinaryBuilder::readSignatures() {
-  BYN_TRACE("== readSignatures\n");
+void WasmBinaryBuilder::readTypes() {
+  BYN_TRACE("== readTypes\n");
   size_t numTypes = getU32LEB();
   BYN_TRACE("num: " << numTypes << std::endl);
   for (size_t i = 0; i < numTypes; i++) {
@@ -1507,7 +1507,7 @@ void WasmBinaryBuilder::readSignatures() {
     for (size_t j = 0; j < numResults; j++) {
       results.push_back(getConcreteType());
     }
-    signatures.emplace_back(Type(params), Type(results));
+    types.emplace_back(Signature(Type(params), Type(results)));
   }
 }
 
@@ -1576,11 +1576,7 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Function: {
         Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
-        if (index >= signatures.size()) {
-          throwError("invalid function index " + std::to_string(index) + " / " +
-                     std::to_string(signatures.size()));
-        }
-        auto curr = builder.makeFunction(name, signatures[index], {});
+        auto curr = builder.makeFunction(name, getSignatureByTypeIndex(index), {});
         curr->module = module;
         curr->base = base;
         functionImports.push_back(curr.get());
@@ -1645,11 +1641,7 @@ void WasmBinaryBuilder::readImports() {
         Name name(std::string("eimport$") + std::to_string(eventCounter++));
         auto attribute = getU32LEB();
         auto index = getU32LEB();
-        if (index >= signatures.size()) {
-          throwError("invalid event index " + std::to_string(index) + " / " +
-                     std::to_string(signatures.size()));
-        }
-        auto curr = builder.makeEvent(name, attribute, signatures[index]);
+        auto curr = builder.makeEvent(name, attribute, getSignatureByTypeIndex(index));
         curr->module = module;
         curr->base = base;
         wasm.addEvent(std::move(curr));
@@ -1680,14 +1672,11 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto index = getU32LEB();
-    if (index >= signatures.size()) {
-      throwError("invalid function type index for function");
-    }
-    functionSignatures.push_back(signatures[index]);
+    functionSignatures.push_back(getSignatureByTypeIndex(index));
   }
 }
 
-Signature WasmBinaryBuilder::getFunctionSignatureByIndex(Index index) {
+Signature WasmBinaryBuilder::getFunctionSignatureByFunctionIndex(Index index) {
   Signature sig;
   if (index < functionImports.size()) {
     return functionImports[index]->sig;
@@ -1697,6 +1686,18 @@ Signature WasmBinaryBuilder::getFunctionSignatureByIndex(Index index) {
     throwError("invalid function index");
   }
   return functionSignatures[adjustedIndex];
+}
+
+Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
+  if (index >= types.size()) {
+    throwError("invalid type index " + std::to_string(index) + " / " +
+               std::to_string(types.size()));
+  }
+  auto heapType = types[index];
+  if (!heapType.isSignature()) {
+    throwError("invalid event type " + heapType.toString());
+  }
+  return heapType.getSignature();
 }
 
 void WasmBinaryBuilder::readFunctions() {
@@ -2352,12 +2353,8 @@ void WasmBinaryBuilder::readEvents() {
     BYN_TRACE("read one\n");
     auto attribute = getU32LEB();
     auto typeIndex = getU32LEB();
-    if (typeIndex >= signatures.size()) {
-      throwError("invalid event index " + std::to_string(typeIndex) + " / " +
-                 std::to_string(signatures.size()));
-    }
     wasm.addEvent(Builder::makeEvent(
-      "event$" + std::to_string(i), attribute, signatures[typeIndex]));
+      "event$" + std::to_string(i), attribute, getSignatureByTypeIndex(typeIndex)));
   }
 }
 
@@ -3173,7 +3170,7 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
 void WasmBinaryBuilder::visitCall(Call* curr) {
   BYN_TRACE("zz node: Call\n");
   auto index = getU32LEB();
-  auto sig = getFunctionSignatureByIndex(index);
+  auto sig = getFunctionSignatureByFunctionIndex(index);
   auto num = sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
@@ -3187,10 +3184,7 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
   BYN_TRACE("zz node: CallIndirect\n");
   auto index = getU32LEB();
-  if (index >= signatures.size()) {
-    throwError("bad call_indirect function index");
-  }
-  curr->sig = signatures[index];
+  curr->sig = getSignatureByTypeIndex(index);
   auto reserved = getU32LEB();
   if (reserved != 0) {
     throwError("Invalid flags field in call_indirect");
@@ -5294,7 +5288,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   // funcref, but a specific subtype with the actual signature.
   // FIXME: for now, emit a nullable type here
   curr->finalize(
-    Type(HeapType(getFunctionSignatureByIndex(index)), /* nullable = */ true));
+    Type(HeapType(getFunctionSignatureByFunctionIndex(index)), /* nullable = */ true));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
