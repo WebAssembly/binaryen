@@ -791,6 +791,15 @@ class Asyncify(TestCaseHandler):
         return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
 
 
+# Check that the text format round-trips without error.
+class RoundtripText(TestCaseHandler):
+    frequency = 0.05
+
+    def handle(self, wasm):
+        run([in_bin('wasm-dis'), wasm, '-o', 'a.wast'])
+        run([in_bin('wasm-opt'), 'a.wast'] + FEATURE_OPTS)
+
+
 # The global list of all test case handlers
 testcase_handlers = [
     FuzzExec(),
@@ -798,6 +807,7 @@ testcase_handlers = [
     CheckDeterminism(),
     Wasm2JS(),
     Asyncify(),
+    RoundtripText()
 ]
 
 

@@ -24,11 +24,11 @@ static Name IMPOSSIBLE_CONTINUE("impossible-continue");
 
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
-    o << binaryType(Type::none);
+    parent.writeType(Type::none);
   } else if (type.isTuple()) {
     o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
   } else {
-    o << binaryType(type);
+    parent.writeType(type);
   }
 }
 
@@ -1756,8 +1756,8 @@ void BinaryInstWriter::visitSelect(Select* curr) {
   if (curr->type.isRef()) {
     o << int8_t(BinaryConsts::SelectWithType) << U32LEB(curr->type.size());
     for (size_t i = 0; i < curr->type.size(); i++) {
-      o << binaryType(curr->type != Type::unreachable ? curr->type
-                                                      : Type::none);
+      parent.writeType(curr->type != Type::unreachable ? curr->type
+                                                       : Type::none);
     }
   } else {
     o << int8_t(BinaryConsts::Select);
@@ -1779,8 +1779,8 @@ void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
 }
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
-  o << int8_t(BinaryConsts::RefNull)
-    << binaryHeapType(curr->type.getHeapType());
+  o << int8_t(BinaryConsts::RefNull);
+  parent.writeHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
@@ -1875,6 +1875,11 @@ void BinaryInstWriter::visitI31Get(I31Get* curr) {
     << U32LEB(curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
 }
 
+void BinaryInstWriter::visitCallRef(CallRef* curr) {
+  o << int8_t(curr->isReturn ? BinaryConsts::RetCallRef
+                             : BinaryConsts::CallRef);
+}
+
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
   WASM_UNREACHABLE("TODO (gc): ref.test");
@@ -1966,7 +1971,8 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     o << U32LEB(func->getNumVars());
     for (Index i = varStart; i < varEnd; i++) {
       mappedLocals[std::make_pair(i, 0)] = i;
-      o << U32LEB(1) << binaryType(func->getLocalType(i));
+      o << U32LEB(1);
+      parent.writeType(func->getLocalType(i));
     }
     return;
   }
@@ -1995,7 +2001,8 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   setScratchLocals();
   o << U32LEB(numLocalsByType.size());
   for (auto& typeCount : numLocalsByType) {
-    o << U32LEB(typeCount.second) << binaryType(typeCount.first);
+    o << U32LEB(typeCount.second);
+    parent.writeType(typeCount.first);
   }
 }
 

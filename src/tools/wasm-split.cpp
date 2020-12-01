@@ -20,6 +20,7 @@
 #include "ir/module-splitting.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "support/file.h"
 #include "support/name.h"
 #include "support/utilities.h"
 #include "tool-options.h"
@@ -358,6 +359,21 @@ void Instrumenter::instrumentFuncs() {
   });
 }
 
+// wasm-split profile format::
+//
+// The wasm-split profile is a binary format designed to be simple to produce
+// and consume. It is comprised of:
+//
+//   1. An 8-byte module hash
+//
+//   2. A 4-byte timestamp for each defined function
+//
+// The module hash is meant to guard against bugs where the module that was
+// instrumented and the module that is being split are different. The timestamps
+// are non-zero for functions that were called during the instrumented run and 0
+// otherwise. Functions with smaller non-zero timestamps were called earlier in
+// the instrumented run than funtions with larger timestamps.
+
 void Instrumenter::addProfileExport() {
   // Create and export a function to dump the profile into a given memory
   // buffer. The function takes the available address and buffer size as
@@ -423,6 +439,8 @@ void Instrumenter::addProfileExport() {
       wasm->memory.max = pages;
     }
   }
+
+  // TODO: export the memory if it is not already exported.
 }
 
 void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
@@ -443,12 +461,51 @@ void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   writer.write(wasm, options.output);
 }
 
+// See "wasm-split profile format" above for more information.
+std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
+  auto profileData =
+    read_file<std::vector<char>>(options.profileFile, Flags::Binary);
+  size_t i = 0;
+  auto readi32 = [&]() {
+    if (i + 4 > profileData.size()) {
+      Fatal() << "Unexpected end of profile data";
+    }
+    uint32_t i32 = 0;
+    i32 |= uint32_t(profileData[i++]);
+    i32 |= uint32_t(profileData[i++]) << 8;
+    i32 |= uint32_t(profileData[i++]) << 16;
+    i32 |= uint32_t(profileData[i++]) << 24;
+    return i32;
+  };
+
+  // TODO: Read and compare the 8-byte module hash. Just skip it for now.
+  readi32();
+  readi32();
+
+  std::set<Name> keptFuncs;
+  ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
+    uint32_t timestamp = readi32();
+    // TODO: provide an option to set the timestamp threshold. For now, kee the
+    // function if the profile shows it being run at all.
+    if (timestamp > 0) {
+      keptFuncs.insert(func->name);
+    }
+  });
+
+  if (i != profileData.size()) {
+    // TODO: Handle concatenated profile data.
+    Fatal() << "Unexpected extra profile data";
+  }
+
+  return keptFuncs;
+}
+
 void splitModule(Module& wasm, const WasmSplitOptions& options) {
   std::set<Name> keepFuncs;
 
   if (options.profileFile.size()) {
     // Use the profile to initialize `keepFuncs`
-    Fatal() << "TODO: implement reading profiles\n";
+    keepFuncs = readProfile(wasm, options);
   }
 
   // Add in the functions specified with --keep-funcs

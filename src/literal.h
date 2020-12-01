@@ -71,8 +71,7 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(Name func, Type type = Type::funcref)
-    : func(func), type(type) {}
+  explicit Literal(Name func, Type type) : func(func), type(type) {}
   explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
   Literal(const Literal& other);

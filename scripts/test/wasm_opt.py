@@ -57,7 +57,8 @@ def test_wasm_opt():
         passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
         if os.path.exists(passes_file):
             passname = open(passes_file).read().strip()
-        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
+        passes = [p for p in passname.split('_') if p != 'noprint']
+        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passes]
         actual = ''
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0
@@ -171,7 +172,8 @@ def update_wasm_opt_tests():
         passes_file = os.path.join(shared.get_test_dir('passes'), passname + '.passes')
         if os.path.exists(passes_file):
             passname = open(passes_file).read().strip()
-        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passname.split('_')]
+        passes = [p for p in passname.split('_') if p != 'noprint']
+        opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p) for p in passes]
         actual = ''
         for module, asserts in support.split_wast(t):
             assert len(asserts) == 0

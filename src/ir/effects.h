@@ -534,6 +534,17 @@ private:
     void visitTupleExtract(TupleExtract* curr) {}
     void visitI31New(I31New* curr) {}
     void visitI31Get(I31Get* curr) {}
+    void visitCallRef(CallRef* curr) {
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws = true;
+      }
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+      // traps when the arg is null
+      parent.implicitTrap = true;
+    }
     void visitRefTest(RefTest* curr) {
       WASM_UNREACHABLE("TODO (gc): ref.test");
     }

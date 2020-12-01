@@ -1272,6 +1272,7 @@ public:
     WASM_UNREACHABLE("unimp");
   }
   Flow visitPop(Pop* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitCallRef(CallRef* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefNull(RefNull* curr) {
     NOTE_ENTER("RefNull");
     return Literal::makeNull(curr->type);
@@ -1593,9 +1594,12 @@ public:
     }
     return Flow(NONCONSTANT_FLOW);
   }
-
   Flow visitCallIndirect(CallIndirect* curr) {
     NOTE_ENTER("CallIndirect");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitCallRef(CallRef* curr) {
+    NOTE_ENTER("CallRef");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitLoad(Load* curr) {
@@ -2089,6 +2093,37 @@ private:
       Type type = curr->isReturn ? scope.function->sig.results : curr->type;
       Flow ret = instance.externalInterface->callTable(
         index, curr->sig, arguments, type, *instance.self());
+      // TODO: make this a proper tail call (return first)
+      if (curr->isReturn) {
+        ret.breakTo = RETURN_FLOW;
+      }
+      return ret;
+    }
+    Flow visitCallRef(CallRef* curr) {
+      NOTE_ENTER("CallRef");
+      LiteralList arguments;
+      Flow flow = this->generateArguments(curr->operands, arguments);
+      if (flow.breaking()) {
+        return flow;
+      }
+      Flow target = this->visit(curr->target);
+      if (target.breaking()) {
+        return target;
+      }
+      if (target.getSingleValue().isNull()) {
+        trap("null target in call_ref");
+      }
+      Name funcName = target.getSingleValue().getFunc();
+      auto* func = instance.wasm.getFunction(funcName);
+      Flow ret;
+      if (func->imported()) {
+        ret.values = instance.externalInterface->callImport(func, arguments);
+      } else {
+        ret.values = instance.callFunctionInternal(funcName, arguments);
+      }
+#ifdef WASM_INTERPRETER_DEBUG
+      std::cout << "(returned to " << scope.function->name << ")\n";
+#endif
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
         ret.breakTo = RETURN_FLOW;

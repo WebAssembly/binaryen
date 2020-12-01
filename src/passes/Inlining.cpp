@@ -211,6 +211,12 @@ struct Updater : public PostWalker<Updater> {
       handleReturnCall(curr, curr->sig.results);
     }
   }
+  void visitCallRef(CallRef* curr) {
+    if (curr->isReturn) {
+      handleReturnCall(curr,
+                       curr->target->type.getHeapType().getSignature().results);
+    }
+  }
   void visitLocalGet(LocalGet* curr) {
     curr->index = localMapping[curr->index];
   }

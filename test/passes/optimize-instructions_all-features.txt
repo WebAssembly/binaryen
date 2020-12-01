@@ -896,21 +896,19 @@
    )
   )
   (drop
-   (i32.eq
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $0)
-     (i32.const 255)
     )
-    (i32.const -2147483648)
+    (i32.const 0)
    )
   )
   (drop
-   (i32.eq
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $0)
-     (i32.const 255)
     )
-    (i32.const 107)
+    (i32.const 0)
    )
   )
   (drop
@@ -1458,30 +1456,27 @@
  )
  (func $sign-ext-ne (param $0 i32) (param $1 i32)
   (drop
-   (i32.ne
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $0)
-     (i32.const 255)
     )
-    (i32.const -2147483648)
+    (i32.const 1)
    )
   )
   (drop
-   (i32.ne
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $0)
-     (i32.const 255)
     )
-    (i32.const -2147483648)
+    (i32.const 1)
    )
   )
   (drop
-   (i32.ne
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $0)
-     (i32.const 255)
     )
-    (i32.const 107)
+    (i32.const 1)
    )
   )
   (drop
@@ -2176,21 +2171,19 @@
  )
  (func $fuzz-comp-impossible (param $x i32)
   (drop
-   (i32.eq
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $x)
-     (i32.const 65535)
     )
-    (i32.const -2147483648)
+    (i32.const 0)
    )
   )
   (drop
-   (i32.eq
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $x)
-     (i32.const 255)
     )
-    (i32.const -2147483648)
+    (i32.const 0)
    )
   )
   (drop
@@ -2203,30 +2196,27 @@
    )
   )
   (drop
-   (i32.eq
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $x)
-     (i32.const 255)
     )
-    (i32.const -2147483648)
+    (i32.const 0)
    )
   )
   (drop
-   (i32.eq
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $x)
-     (i32.const 255)
     )
-    (i32.const -2147483648)
+    (i32.const 0)
    )
   )
   (drop
-   (i32.eq
-    (i32.and
+   (block (result i32)
+    (drop
      (local.get $x)
-     (i32.const 255)
     )
-    (i32.const -2147483648)
+    (i32.const 0)
    )
   )
   (drop
@@ -2401,13 +2391,10 @@
   )
  )
  (func $sign-ext-1-and-ne (result i32)
-  (i32.ne
-   (i32.and
-    (call $sign-ext-1-and-ne)
-    (i32.const 2147483647)
-   )
-   (i32.const -2147483648)
+  (drop
+   (call $sign-ext-1-and-ne)
   )
+  (i32.const 1)
  )
  (func $neg-shifts-and-255 (result i32)
   (i32.and
@@ -5910,5 +5897,12 @@
    )
    (nop)
   )
+ )
+)
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $ref_null[i32_->_i32]_=>_i32 (func (param (ref null (func (param i32) (result i32)))) (result i32)))
+ (func $call_from-param (param $f (ref null (func (param i32) (result i32)))) (result i32)
+  (unreachable)
  )
 )

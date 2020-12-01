@@ -536,14 +536,10 @@ SExpressionWasmBuilder::parseParamOrLocal(Element& s, size_t& localIndex) {
     }
     localIndex++;
     Type type;
-    if (s[i]->isStr()) {
-      type = stringToType(s[i]->str());
-    } else {
-      if (elementStartsWith(s, PARAM)) {
-        throw ParseException(
-          "params may not have tuple types", s[i]->line, s[i]->col);
-      }
-      type = elementToType(*s[i]);
+    type = elementToType(*s[i]);
+    if (elementStartsWith(s, PARAM) && type.isTuple()) {
+      throw ParseException(
+        "params may not have tuple types", s[i]->line, s[i]->col);
     }
     namedParams.emplace_back(name, type);
   }
@@ -555,7 +551,7 @@ std::vector<Type> SExpressionWasmBuilder::parseResults(Element& s) {
   assert(elementStartsWith(s, RESULT));
   std::vector<Type> types;
   for (size_t i = 1; i < s.size(); i++) {
-    types.push_back(stringToType(s[i]->str()));
+    types.push_back(elementToType(*s[i]));
   }
   return types;
 }
@@ -923,12 +919,51 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
 
 Type SExpressionWasmBuilder::elementToType(Element& s) {
   if (s.isStr()) {
-    return stringToType(s.str(), false, false);
+    return stringToType(s.str());
   }
-  auto& tuple = s.list();
+  auto& list = s.list();
+  auto size = list.size();
+  if (size > 0 && elementStartsWith(s, REF)) {
+    // It's a reference. It should be in the form
+    //   (ref $name)
+    // or
+    //   (ref null $name)
+    // and also $name can be the expanded structure of the type and not a name,
+    // so something like (ref (func (result i32))), etc.
+    if (size != 2 && size != 3) {
+      throw ParseException(
+        std::string("invalid reference type size"), s.line, s.col);
+    }
+    if (size == 3 && *list[1] != NULL_) {
+      throw ParseException(
+        std::string("invalid reference type qualifier"), s.line, s.col);
+    }
+    // FIXME: for now, force all inputs to be nullable
+    bool nullable = true;
+    size_t i = 1;
+    if (size == 3) {
+      nullable = true;
+      i++;
+    }
+    Signature sig;
+    auto& last = *s[i];
+    if (last.isStr()) {
+      // A string name of a signature.
+      sig = getFunctionSignature(last);
+    } else {
+      // A signature written out in full in-line.
+      if (*last[0] != FUNC) {
+        throw ParseException(
+          std::string("invalid reference type type"), s.line, s.col);
+      }
+      sig = parseInlineFunctionSignature(last);
+    }
+    return Type(HeapType(sig), nullable);
+  }
+  // It's a tuple.
   std::vector<Type> types;
   for (size_t i = 0; i < s.size(); ++i) {
-    types.push_back(stringToType(tuple[i]->str()));
+    types.push_back(elementToType(*list[i]));
   }
   return Type(types);
 }
@@ -1873,9 +1908,30 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   if (s.size() != 2) {
     throw ParseException("invalid heap type reference", s.line, s.col);
   }
-  auto heapType = stringToHeapType(s[1]->str());
   auto ret = allocator.alloc<RefNull>();
-  ret->finalize(heapType);
+  if (s[1]->isStr()) {
+    // For example, this parses
+    //  (ref.null func)
+    ret->finalize(stringToHeapType(s[1]->str()));
+  } else {
+    // To parse a heap type, create an element around it, and call that method.
+    // That is, given (func) we wrap to (ref (func)).
+    // For example, this parses
+    //  (ref.null (func (param i32)))
+    // TODO add a helper method, but this is the only user atm, and we are
+    // waiting on https://github.com/WebAssembly/function-references/issues/42
+    Element wrapper(wasm.allocator);
+    auto& list = wrapper.list();
+    list.resize(3);
+    Element ref(wasm.allocator);
+    ref.setString(REF, false, false);
+    Element null(wasm.allocator);
+    null.setString(NULL_, false, false);
+    list[0] = &ref;
+    list[1] = &null;
+    list[2] = s[1];
+    ret->finalize(elementToType(wrapper));
+  }
   return ret;
 }
 
@@ -1890,7 +1946,10 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   auto func = getFunctionName(*s[1]);
   auto ret = allocator.alloc<RefFunc>();
   ret->func = func;
-  ret->finalize();
+  // To support typed function refs, we give the reference not just a general
+  // funcref, but a specific subtype with the actual signature.
+  ret->finalize(
+    Type(HeapType(functionSignatures[func]), /* nullable = */ true));
   return ret;
 }
 
@@ -2020,6 +2079,24 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   ret->index = atoi(s[1]->str().c_str());
   ret->tuple = parseExpression(s[2]);
   ret->finalize();
+  return ret;
+}
+
+Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
+  auto ret = allocator.alloc<CallRef>();
+  parseCallOperands(s, 1, s.size() - 1, ret);
+  ret->target = parseExpression(s[s.size() - 1]);
+  ret->isReturn = isReturn;
+  if (!ret->target->type.isRef()) {
+    throw ParseException("Non-reference type for a call_ref", s.line, s.col);
+  }
+  auto heapType = ret->target->type.getHeapType();
+  if (!heapType.isSignature()) {
+    throw ParseException(
+      "Invalid reference type for a call_ref", s.line, s.col);
+  }
+  auto sig = heapType.getSignature();
+  ret->finalize(sig.results);
   return ret;
 }
 
@@ -2707,9 +2784,26 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
   wasm.table.segments.push_back(segment);
 }
 
-void SExpressionWasmBuilder::parseType(Element& s) {
+Signature SExpressionWasmBuilder::parseInlineFunctionSignature(Element& s) {
+  if (*s[0] != FUNC) {
+    throw ParseException("invalid inline function signature", s.line, s.col);
+  }
   std::vector<Type> params;
   std::vector<Type> results;
+  for (size_t k = 1; k < s.size(); k++) {
+    Element& curr = *s[k];
+    if (elementStartsWith(curr, PARAM)) {
+      auto newParams = parseParamOrLocal(curr);
+      params.insert(params.end(), newParams.begin(), newParams.end());
+    } else if (elementStartsWith(curr, RESULT)) {
+      auto newResults = parseResults(curr);
+      results.insert(results.end(), newResults.begin(), newResults.end());
+    }
+  }
+  return Signature(Type(params), Type(results));
+}
+
+void SExpressionWasmBuilder::parseType(Element& s) {
   size_t i = 1;
   if (s[i]->isStr()) {
     std::string name = s[i]->str().str;
@@ -2719,18 +2813,7 @@ void SExpressionWasmBuilder::parseType(Element& s) {
     signatureIndices[name] = signatures.size();
     i++;
   }
-  Element& func = *s[i];
-  for (size_t k = 1; k < func.size(); k++) {
-    Element& curr = *func[k];
-    if (elementStartsWith(curr, PARAM)) {
-      auto newParams = parseParamOrLocal(curr);
-      params.insert(params.end(), newParams.begin(), newParams.end());
-    } else if (elementStartsWith(curr, RESULT)) {
-      auto newResults = parseResults(curr);
-      results.insert(results.end(), newResults.begin(), newResults.end());
-    }
-  }
-  signatures.emplace_back(Type(params), Type(results));
+  signatures.emplace_back(parseInlineFunctionSignature(*s[i]));
 }
 
 void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
