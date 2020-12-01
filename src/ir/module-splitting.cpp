@@ -105,7 +105,7 @@ struct TableSlotManager {
   struct Slot {
     // If `global` is empty, then this slot is at a statically known index.
     Name global;
-    Index index;
+    Index index = 0;
 
     // Generate code to compute the index of this table slot
     Expression* makeExpr(Module& module);
@@ -113,7 +113,7 @@ struct TableSlotManager {
   Module& module;
   Table& table;
   Table::Segment* activeSegment = nullptr;
-  Slot activeBase = {"", 0};
+  Slot activeBase;
   std::map<Name, Slot> funcIndices;
 
   TableSlotManager(Module& module);
@@ -125,13 +125,13 @@ struct TableSlotManager {
 
 Expression* TableSlotManager::Slot::makeExpr(Module& module) {
   Builder builder(module);
+  auto makeIndex = [&]() { return builder.makeConst(int32_t(index)); };
   if (global) {
     Expression* getBase = builder.makeGlobalGet(global, Type::i32);
     return index == 0 ? getBase
-                      : builder.makeBinary(
-                          AddInt32, getBase, builder.makeConst(int32_t(index)));
+                      : builder.makeBinary(AddInt32, getBase, makeIndex());
   } else {
-    return builder.makeConst(int32_t(index));
+    return makeIndex();
   }
 }
 
@@ -299,7 +299,8 @@ void ModuleSplitter::exportImportFunction(Name funcName) {
       Builder::makeExport(exportName, funcName, ExternalKind::Function));
     exportedPrimaryFuncs[funcName] = exportName;
   }
-  // Import the function it is not already imported into the secondary module.
+  // Import the function if it is not already imported into the secondary
+  // module.
   if (secondary.getFunctionOrNull(funcName) == nullptr) {
     auto func =
       Builder::makeFunction(funcName, primary.getFunction(funcName)->sig, {});
