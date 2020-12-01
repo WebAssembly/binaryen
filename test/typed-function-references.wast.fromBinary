@@ -40,7 +40,7 @@
   )
  )
  (func $call_from-local-null (result i32)
-  (local $f (ref null (func (param i32) (result i32))))
+  (local $f $i32_=>_i32)
   (local.set $f
    (ref.func $call-ref-more)
   )
@@ -55,12 +55,12 @@
  (func $type-only-in-tuple-local
   (local $x i32)
   (local $1 f64)
-  (local $2 (ref null (func (result anyref))))
+  (local $2 $none_=>_anyref)
   (nop)
  )
  (func $type-only-in-tuple-block
   (local $0 (i32 (ref null (func (result anyref f32 anyref f32))) f64))
-  (local $1 (ref null (func (result anyref f32 anyref f32))))
+  (local $1 $none_=>_anyref_f32_anyref_f32)
   (local $2 i32)
   (local.set $0
    (block $label$1 (result i32 (ref null (func (result anyref f32 anyref f32))) f64)

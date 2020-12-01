@@ -40,7 +40,7 @@
   )
  )
  (func $call_from-local-null (result i32)
-  (local $f (ref null (func (param i32) (result i32))))
+  (local $f $i32_=>_i32)
   (local.set $f
    (ref.func $call-ref-more)
   )

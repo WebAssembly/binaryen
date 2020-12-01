@@ -133,6 +133,24 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
   return os;
 }
 
+// Wrapper for printing type names when they are available. When not, the basic
+// type name (i32, etc.) is used.
+struct TypeName {
+  Type type;
+  TypeName(Type type) : type(type) {}
+};
+
+std::ostream& operator<<(std::ostream& os, TypeName typeName) {
+  auto type = typeName.type;
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (heapType.isSignature()) {
+      return os << SigName(heapType.getSignature());
+    }
+  } 
+  return os << SExprType(typeName.type);
+}
+
 } // anonymous namespace
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
@@ -2452,7 +2470,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o)
-        << ' ' << SExprType(curr->getLocalType(i)) << ')';
+        << ' ' << TypeName(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.
