@@ -961,7 +961,7 @@ void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
     auto heapType = type.getHeapType();
     // TODO: fully handle non-signature reference types (GC), and in reading
-    if (heapType.isSignature() || heapType.isStruct() || heapType.isArray()) {
+    if (heapType.isSignature()) {
       if (type.isNullable()) {
         o << S32LEB(BinaryConsts::EncodedType::nullable);
       } else {
@@ -1121,7 +1121,7 @@ void WasmBinaryBuilder::read() {
         readMemory();
         break;
       case BinaryConsts::Section::Type:
-        readTypes();
+        readSignatures();
         break;
       case BinaryConsts::Section::Import:
         readImports();
@@ -1322,13 +1322,13 @@ uint64_t WasmBinaryBuilder::getUPtrLEB() {
 
 Type WasmBinaryBuilder::getType() {
   int type = getS32LEB();
-  // Single value types are negative; heap type indices are non-negative
+  // Single value types are negative; signature indices are non-negative
   if (type >= 0) {
     // TODO: Handle block input types properly
-    if (size_t(type) >= types.size()) {
+    if (size_t(type) >= signatures.size()) {
       throwError("invalid signature index: " + std::to_string(type));
     }
-    return types[type];
+    return signatures[type].results;
   }
   switch (type) {
     // None only used for block signatures. TODO: Separate out?

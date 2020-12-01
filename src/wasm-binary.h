@@ -1175,8 +1175,8 @@ private:
   Module* wasm;
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
-  std::unordered_map<HeapType, Index> typeIndices;
-  std::vector<HeapType> types;
+  std::unordered_map<Signature, Index> typeIndices;
+  std::vector<Signature> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;
@@ -1220,8 +1220,8 @@ class WasmBinaryBuilder {
 
   std::set<BinaryConsts::Section> seenSections;
 
-  // All types present in the type section
-  std::vector<HeapType> types;
+  // All signatures present in the type section
+  std::vector<Signature> signatures;
 
 public:
   WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
@@ -1261,7 +1261,7 @@ public:
   void readHeader();
   void readStart();
   void readMemory();
-  void readTypes();
+  void readSignatures();
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
