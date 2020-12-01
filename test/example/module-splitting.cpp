@@ -127,6 +127,17 @@ int main() {
      )
     ))");
 
+  // Non-deferred function in table at non-const offset
+  do_test({"foo"}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (table $table 1 funcref)
+     (elem (global.get $base) $foo)
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
   // Non-deferred imported function
   do_test({"foo"}, R"(
     (module
@@ -139,6 +150,16 @@ int main() {
      (import "env" "foo" (func $foo (param i32) (result i32)))
      (table $table 1000 funcref)
      (elem (i32.const 42) $foo)
+     (export "foo" (func $foo))
+    ))");
+
+  // Non-deferred exported imported function in table at a non-const offset
+  do_test({"foo"}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (import "env" "foo" (func $foo (param i32) (result i32)))
+     (table $table 1000 funcref)
+     (elem (global.get $base) $foo)
      (export "foo" (func $foo))
     ))");
 
@@ -175,6 +196,31 @@ int main() {
      (table $table 1000 funcref)
      (elem (i32.const 42) $foo)
      (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred exported function in table at a non-const offset
+  do_test({}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (table $table 1000 funcref)
+     (elem (global.get $base) $foo)
+     (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred exported function in table at an offset from a non-const base
+  do_test({"null"}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (table $table 1000 funcref)
+     (elem (global.get $base) $null $foo)
+     (export "foo" (func $foo))
+     (func $null)
      (func $foo (param i32) (result i32)
       (local.get 0)
      )
@@ -255,11 +301,51 @@ int main() {
      )
     ))");
 
+  // Mixed table 1 with non-const offset
+  do_test({"bar", "quux"}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (table $table 4 funcref)
+     (elem (global.get $base) $foo $bar $baz $quux)
+     (func $foo
+      (nop)
+     )
+     (func $bar
+      (nop)
+     )
+     (func $baz
+      (nop)
+     )
+     (func $quux
+      (nop)
+     )
+    ))");
+
   // Mixed table 2
   do_test({"baz"}, R"(
     (module
      (table $table 4 funcref)
      (elem (i32.const 0) $foo $bar $baz $quux)
+     (func $foo
+      (nop)
+     )
+     (func $bar
+      (nop)
+     )
+     (func $baz
+      (nop)
+     )
+     (func $quux
+      (nop)
+     )
+    ))");
+
+  // Mixed table 2 with non-const offset
+  do_test({"baz"}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (table $table 4 funcref)
+     (elem (global.get $base) $foo $bar $baz $quux)
      (func $foo
       (nop)
      )

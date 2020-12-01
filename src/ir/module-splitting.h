@@ -19,16 +19,20 @@
 // functions to a new secondary module and rewriting the primary module to call
 // them indirectly. Until the secondary module is instantiated, those indirect
 // calls will go to placeholder functions newly imported into the primary
-// module. The import names of the placeholder functions are the table indexes
-// they are placed at. The secondary module imports all of its dependencies from
-// the primary module.
+// module. If the primary module has a single segment with a non-constant
+// offset, the placeholder function import names are the offsets from that base
+// global of the corresponding functions in the table. Otherwise, the
+// placeholder import names are the absolute table indices of the corresponding
+// functions. The secondary module imports all of its dependencies from the
+// primary module.
 //
 // This code currently makes a few assumptions about the modules that will be
 // split and will fail assertions if those assumptions are not true.
 //
 //   1) It assumes that mutable-globals are allowed.
 //
-//   2) It assumes that all table segment offsets are constants.
+//   2) It assumes that either all segment offsets are constants or there is
+//      exactly one segment that may have a non-constant offset.
 //
 //   3) It assumes that each function appears in the table at most once.
 //
