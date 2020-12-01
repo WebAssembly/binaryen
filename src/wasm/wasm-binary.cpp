@@ -1694,7 +1694,7 @@ Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
   }
   auto heapType = types[index];
   if (!heapType.isSignature()) {
-    throwError("invalid event type " + heapType.toString());
+    throwError("invalid signature type " + heapType.toString());
   }
   return heapType.getSignature();
 }
