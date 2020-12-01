@@ -515,10 +515,10 @@ struct OptimizeInstructions
               Bits::popCount(right >> uint32_t(bits - 1));
             // If all the relevant bits on C are zero
             // then we can mask off the high bits instead of sign-extending x.
-            // This is valid because if x is signed, then the comparison was
-            // false before (signed vs unsigned value), and will still be false
+            // This is valid because if x is negative, then the comparison was
+            // false before (negative vs positive), and will still be false
             // as the sign bit will remain to cause a difference. And if x is
-            // unsigned then the upper bits would be zero anyhow.
+            // positive then the upper bits would be zero anyhow.
             if (setRelevantBits == 0) {
               binary->left = makeZeroExt(ext, bits);
               return binary;
