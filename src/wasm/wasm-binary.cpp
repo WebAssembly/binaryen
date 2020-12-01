@@ -1573,7 +1573,8 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Function: {
         Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
-        auto curr = builder.makeFunction(name, getSignatureByTypeIndex(index), {});
+        auto curr =
+          builder.makeFunction(name, getSignatureByTypeIndex(index), {});
         curr->module = module;
         curr->base = base;
         functionImports.push_back(curr.get());
@@ -1638,7 +1639,8 @@ void WasmBinaryBuilder::readImports() {
         Name name(std::string("eimport$") + std::to_string(eventCounter++));
         auto attribute = getU32LEB();
         auto index = getU32LEB();
-        auto curr = builder.makeEvent(name, attribute, getSignatureByTypeIndex(index));
+        auto curr =
+          builder.makeEvent(name, attribute, getSignatureByTypeIndex(index));
         curr->module = module;
         curr->base = base;
         wasm.addEvent(std::move(curr));
@@ -2350,8 +2352,9 @@ void WasmBinaryBuilder::readEvents() {
     BYN_TRACE("read one\n");
     auto attribute = getU32LEB();
     auto typeIndex = getU32LEB();
-    wasm.addEvent(Builder::makeEvent(
-      "event$" + std::to_string(i), attribute, getSignatureByTypeIndex(typeIndex)));
+    wasm.addEvent(Builder::makeEvent("event$" + std::to_string(i),
+                                     attribute,
+                                     getSignatureByTypeIndex(typeIndex)));
   }
 }
 
@@ -5284,8 +5287,8 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   // FIXME: for now, emit a nullable type here
-  curr->finalize(
-    Type(HeapType(getFunctionSignatureByFunctionIndex(index)), /* nullable = */ true));
+  curr->finalize(Type(HeapType(getFunctionSignatureByFunctionIndex(index)),
+                      /* nullable = */ true));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
