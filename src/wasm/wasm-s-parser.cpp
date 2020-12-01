@@ -614,8 +614,7 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
 
   // Add implicitly defined type to global list so it has an index
   auto heapType = HeapType(functionSignature);
-  if (std::find(types.begin(), types.end(), heapType) ==
-      types.end()) {
+  if (std::find(types.begin(), types.end(), heapType) == types.end()) {
     types.push_back(heapType);
   }
 
