@@ -501,7 +501,7 @@ struct OptimizeInstructions
             //  (x << S) >> S ==/!= C    =>    x & T ==/!= C
             // where S and T are the matching values for sign/zero extend of the
             // same size. For example, for an effective 8-bit value:
-            //  (x << 8) >> 8 ==/!= C    =>    x & 255 ==/!= C
+            //  (x << 24) >> 24 ==/!= C    =>    x & 255 ==/!= C
             //
             // The key thing to track here are the upper bits plus the sign bit;
             // call those the "relevant bits". This is crucial because x is
