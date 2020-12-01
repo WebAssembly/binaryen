@@ -1675,7 +1675,7 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   }
 }
 
-Signature WasmBinaryBuilder::getFunctionSignatureByFunctionIndex(Index index) {
+Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
   Signature sig;
   if (index < functionImports.size()) {
     return functionImports[index]->sig;
@@ -3170,7 +3170,7 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
 void WasmBinaryBuilder::visitCall(Call* curr) {
   BYN_TRACE("zz node: Call\n");
   auto index = getU32LEB();
-  auto sig = getFunctionSignatureByFunctionIndex(index);
+  auto sig = getSignatureByFunctionIndex(index);
   auto num = sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
@@ -5287,7 +5287,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   // FIXME: for now, emit a nullable type here
-  curr->finalize(Type(HeapType(getFunctionSignatureByFunctionIndex(index)),
+  curr->finalize(Type(HeapType(getSignatureByFunctionIndex(index)),
                       /* nullable = */ true));
 }
 

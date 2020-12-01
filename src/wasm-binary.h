@@ -1279,7 +1279,7 @@ public:
   std::vector<Signature> functionSignatures;
 
   void readFunctionSignatures();
-  Signature getFunctionSignatureByFunctionIndex(Index index);
+  Signature getSignatureByFunctionIndex(Index index);
   Signature getSignatureByTypeIndex(Index index);
 
   size_t nextLabel;
