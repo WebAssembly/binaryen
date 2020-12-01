@@ -119,8 +119,8 @@ class SExpressionWasmBuilder {
   IRProfile profile;
 
   // The main list of types declared in the module
-  std::vector<HeapType> heapTypes;
-  std::unordered_map<std::string, size_t> heapTypeIndices;
+  std::vector<HeapType> types;
+  std::unordered_map<std::string, size_t> typeIndices;
 
   std::vector<Name> functionNames;
   std::vector<Name> globalNames;

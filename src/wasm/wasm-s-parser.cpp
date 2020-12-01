@@ -614,9 +614,9 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
 
   // Add implicitly defined type to global list so it has an index
   auto heapType = HeapType(functionSignature);
-  if (std::find(heapTypes.begin(), heapTypes.end(), heapType) ==
-      heapTypes.end()) {
-    heapTypes.push_back(heapType);
+  if (std::find(types.begin(), types.end(), heapType) ==
+      types.end()) {
+    types.push_back(heapType);
   }
 
   // If only (type) is specified, populate `namedParams`
@@ -2763,18 +2763,18 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
   if (s.isStr()) {
     // It's a string.
     if (s.dollared()) {
-      auto it = heapTypeIndices.find(s.str().str);
-      if (it == heapTypeIndices.end()) {
+      auto it = typeIndices.find(s.str().str);
+      if (it == typeIndices.end()) {
         throw ParseException("unknown dollared function type", s.line, s.col);
       }
-      return heapTypes[it->second];
+      return types[it->second];
     } else {
       // index
       size_t offset = atoi(s.str().c_str());
-      if (offset >= heapTypes.size()) {
+      if (offset >= types.size()) {
         throw ParseException("unknown indexed function type", s.line, s.col);
       }
-      return heapTypes[offset];
+      return types[offset];
     }
   }
   // It's a list.
@@ -2835,13 +2835,13 @@ void SExpressionWasmBuilder::parseType(Element& s) {
   size_t i = 1;
   if (s[i]->isStr()) {
     std::string name = s[i]->str().str;
-    if (heapTypeIndices.find(name) != heapTypeIndices.end()) {
+    if (typeIndices.find(name) != typeIndices.end()) {
       throw ParseException("duplicate function type", s.line, s.col);
     }
-    heapTypeIndices[name] = heapTypes.size();
+    typeIndices[name] = types.size();
     i++;
   }
-  heapTypes.emplace_back(parseHeapType(*s[i]));
+  types.emplace_back(parseHeapType(*s[i]));
 }
 
 void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
