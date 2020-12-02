@@ -15,7 +15,7 @@
 ;; CHECK-SAME: The split module must be the original module that was instrumented
 ;; CHECK-SAME: to generate the profile.
 
-;; Check that the matcing module succeeds
+;; Check that the matching module succeeds
 ;; RUN: wasm-split %s --profile=%t.prof -o1 %t.1.wasm -o2 %t.2.wasm
 
 (module
