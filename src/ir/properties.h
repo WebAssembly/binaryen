@@ -132,6 +132,10 @@ inline Literals getLiterals(const Expression* curr) {
 // Check if an expression is a sign-extend, and if so, returns the value
 // that is extended, otherwise nullptr
 inline Expression* getSignExtValue(Expression* curr) {
+  // We only care about i32s here, and ignore i64s, unreachables, etc.
+  if (curr->type != Type::i32) {
+    return nullptr;
+  }
   using namespace Match;
   int32_t leftShift = 0, rightShift = 0;
   Expression* extended = nullptr;
