@@ -449,25 +449,6 @@ Name SExpressionWasmBuilder::getFunctionName(Element& s) {
   }
 }
 
-Signature SExpressionWasmBuilder::getFunctionSignature(Element& s) {
-  if (s.dollared()) {
-    auto it = signatureIndices.find(s.str().str);
-    if (it == signatureIndices.end()) {
-      throw ParseException(
-        "unknown function type in getFunctionSignature", s.line, s.col);
-    }
-    return signatures[it->second];
-  } else {
-    // index
-    size_t offset = atoi(s.str().c_str());
-    if (offset >= signatures.size()) {
-      throw ParseException(
-        "unknown function type in getFunctionSignature", s.line, s.col);
-    }
-    return signatures[offset];
-  }
-}
-
 Name SExpressionWasmBuilder::getGlobalName(Element& s) {
   if (s.dollared()) {
     return s.str();
@@ -564,7 +545,11 @@ Signature SExpressionWasmBuilder::parseTypeRef(Element& s) {
   if (s.size() != 2) {
     throw ParseException("invalid type reference", s.line, s.col);
   }
-  return getFunctionSignature(*s[1]);
+  auto heapType = parseHeapType(*s[1]);
+  if (!heapType.isSignature()) {
+    throw ParseException("expected signature type", s.line, s.col);
+  }
+  return heapType.getSignature();
 }
 
 // Prases typeuse, a reference to a type definition. It is in the form of either
@@ -626,9 +611,9 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
   }
 
   // Add implicitly defined type to global list so it has an index
-  if (std::find(signatures.begin(), signatures.end(), functionSignature) ==
-      signatures.end()) {
-    signatures.push_back(functionSignature);
+  auto heapType = HeapType(functionSignature);
+  if (std::find(types.begin(), types.end(), heapType) == types.end()) {
+    types.push_back(heapType);
   }
 
   // If only (type) is specified, populate `namedParams`
@@ -945,20 +930,7 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
       nullable = true;
       i++;
     }
-    Signature sig;
-    auto& last = *s[i];
-    if (last.isStr()) {
-      // A string name of a signature.
-      sig = getFunctionSignature(last);
-    } else {
-      // A signature written out in full in-line.
-      if (*last[0] != FUNC) {
-        throw ParseException(
-          std::string("invalid reference type type"), s.line, s.col);
-      }
-      sig = parseInlineFunctionSignature(last);
-    }
-    return Type(HeapType(sig), nullable);
+    return Type(parseHeapType(*s[i]), nullable);
   }
   // It's a tuple.
   std::vector<Type> types;
@@ -2784,36 +2756,54 @@ void SExpressionWasmBuilder::parseInnerElem(Element& s,
   wasm.table.segments.push_back(segment);
 }
 
-Signature SExpressionWasmBuilder::parseInlineFunctionSignature(Element& s) {
-  if (*s[0] != FUNC) {
-    throw ParseException("invalid inline function signature", s.line, s.col);
-  }
-  std::vector<Type> params;
-  std::vector<Type> results;
-  for (size_t k = 1; k < s.size(); k++) {
-    Element& curr = *s[k];
-    if (elementStartsWith(curr, PARAM)) {
-      auto newParams = parseParamOrLocal(curr);
-      params.insert(params.end(), newParams.begin(), newParams.end());
-    } else if (elementStartsWith(curr, RESULT)) {
-      auto newResults = parseResults(curr);
-      results.insert(results.end(), newResults.begin(), newResults.end());
+HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
+  if (s.isStr()) {
+    // It's a string.
+    if (s.dollared()) {
+      auto it = typeIndices.find(s.str().str);
+      if (it == typeIndices.end()) {
+        throw ParseException("unknown dollared function type", s.line, s.col);
+      }
+      return types[it->second];
+    } else {
+      // index
+      size_t offset = atoi(s.str().c_str());
+      if (offset >= types.size()) {
+        throw ParseException("unknown indexed function type", s.line, s.col);
+      }
+      return types[offset];
     }
   }
-  return Signature(Type(params), Type(results));
+  // It's a list.
+  if (*s[0] == FUNC) {
+    std::vector<Type> params;
+    std::vector<Type> results;
+    for (size_t k = 1; k < s.size(); k++) {
+      Element& curr = *s[k];
+      if (elementStartsWith(curr, PARAM)) {
+        auto newParams = parseParamOrLocal(curr);
+        params.insert(params.end(), newParams.begin(), newParams.end());
+      } else if (elementStartsWith(curr, RESULT)) {
+        auto newResults = parseResults(curr);
+        results.insert(results.end(), newResults.begin(), newResults.end());
+      }
+    }
+    return Signature(Type(params), Type(results));
+  }
+  throw ParseException("invalid heap type", s.line, s.col);
 }
 
 void SExpressionWasmBuilder::parseType(Element& s) {
   size_t i = 1;
   if (s[i]->isStr()) {
     std::string name = s[i]->str().str;
-    if (signatureIndices.find(name) != signatureIndices.end()) {
+    if (typeIndices.find(name) != typeIndices.end()) {
       throw ParseException("duplicate function type", s.line, s.col);
     }
-    signatureIndices[name] = signatures.size();
+    typeIndices[name] = types.size();
     i++;
   }
-  signatures.emplace_back(parseInlineFunctionSignature(*s[i]));
+  types.emplace_back(parseHeapType(*s[i]));
 }
 
 void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
