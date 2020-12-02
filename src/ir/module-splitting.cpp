@@ -160,7 +160,7 @@ TableSlotManager::TableSlotManager(Module& module)
     Index maxIndex = 0;
     for (auto& segment : table.segments) {
       assert(segment.offset->is<Const>() &&
-             "Unexpected non-const segment offset");
+             "Unexpected non-const segment offset with multiple segments");
       Index segmentBase = segment.offset->cast<Const>()->value.geti32();
       if (segmentBase + segment.data.size() >= maxIndex) {
         maxIndex = segmentBase + segment.data.size();
@@ -237,12 +237,12 @@ struct ModuleSplitter {
   void shareImportableItems();
 
   ModuleSplitter(Module& primary, const Config& config)
-    : config(config), secondaryPtr(ModuleSplitter::initSecondary(primary)),
-      primary(primary), secondary(*secondaryPtr),
-      classifiedFuncs(ModuleSplitter::classifyFunctions(primary, config)),
+    : config(config), secondaryPtr(initSecondary(primary)), primary(primary),
+      secondary(*secondaryPtr),
+      classifiedFuncs(classifyFunctions(primary, config)),
       primaryFuncs(classifiedFuncs.first),
       secondaryFuncs(classifiedFuncs.second), tableManager(primary),
-      exportedPrimaryFuncs(ModuleSplitter::initExportedPrimaryFuncs(primary)) {
+      exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)) {
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
     indirectCallsToSecondaryFunctions();
@@ -457,13 +457,12 @@ void ModuleSplitter::setupTablePatching() {
          i < primarySeg.data.size() && replacement != replacedElems.end();
          ++i) {
       if (replacement->first == i) {
+        // primarySeg.data[i] is a placeholder, so use the secondary function.
         secondaryElems.push_back(replacement->second);
+        ++replacement;
       } else {
         exportImportFunction(primarySeg.data[i]);
         secondaryElems.push_back(primarySeg.data[i]);
-      }
-      if (replacement->first == i) {
-        ++replacement;
       }
     }
 

@@ -360,6 +360,21 @@ int main() {
      )
     ))");
 
+  // `foo` is exported both because it is called by `bar` and because it is in a
+  // table gap
+  do_test({"foo"}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (table $table 2 funcref)
+     (elem (global.get $base) $foo $bar)
+     (func $foo
+      (nop)
+     )
+     (func $bar
+      (call $foo)
+     )
+    ))");
+
   // Mutual recursion with table growth
   do_test({"foo"}, R"(
     (module
