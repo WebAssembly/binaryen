@@ -518,7 +518,7 @@ struct OptimizeInstructions
                             fval(&c)))) &&
             (op == Abstract::getBinary(bin->type, Mul) ||
              op == Abstract::getBinary(bin->type, DivS) ||
-             op == Abstract::getBinary(bin->type, Add))) {
+             (fastMath && op == Abstract::getBinary(bin->type, Add)))) {
           if (fastMath && op == Abstract::getBinary(bin->type, Add)) {
             // (x / fneg(y)) + C   ==>   C - (x / y)
             // (x * fneg(y)) + C   ==>   C - (x * y)
