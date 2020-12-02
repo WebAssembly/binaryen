@@ -47,6 +47,7 @@ const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
+const char* TypedFunctionReferencesFeature = "typed-function-references";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -72,6 +73,8 @@ Name TABLE("table");
 Name ELEM("elem");
 Name LOCAL("local");
 Name TYPE("type");
+Name REF("ref");
+Name NULL_("null");
 Name CALL("call");
 Name CALL_INDIRECT("call_indirect");
 Name BLOCK("block");
@@ -211,6 +214,8 @@ const char* getExpressionName(Expression* curr) {
       return "i31.new";
     case Expression::Id::I31GetId:
       return "i31.get";
+    case Expression::Id::CallRefId:
+      return "call_ref";
     case Expression::Id::RefTestId:
       return "ref.test";
     case Expression::Id::RefCastId:
@@ -968,12 +973,10 @@ void MemoryGrow::finalize() {
 void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
 
 void RefNull::finalize(Type type_) {
-  assert(type_ == Type::unreachable || type_.isNullable());
   type = type_;
 }
 
 void RefNull::finalize() {
-  assert(type == Type::unreachable || type.isNullable());
 }
 
 void RefIsNull::finalize() {
@@ -984,7 +987,12 @@ void RefIsNull::finalize() {
   type = Type::i32;
 }
 
-void RefFunc::finalize() { type = Type::funcref; }
+void RefFunc::finalize() {
+  // No-op. We assume that the full proper typed function type has been applied
+  // previously.
+}
+
+void RefFunc::finalize(Type type_) { type = type_; }
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
@@ -1052,6 +1060,21 @@ void I31Get::finalize() {
   } else {
     type = Type::i32;
   }
+}
+
+void CallRef::finalize() {
+  handleUnreachableOperands(this);
+  if (isReturn) {
+    type = Type::unreachable;
+  }
+  if (target->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void CallRef::finalize(Type type_) {
+  type = type_;
+  finalize();
 }
 
 // TODO (gc): ref.test

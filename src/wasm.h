@@ -588,6 +588,7 @@ public:
     TupleExtractId,
     I31NewId,
     I31GetId,
+    CallRefId,
     RefTestId,
     RefCastId,
     BrOnCastId,
@@ -1198,6 +1199,7 @@ public:
   Name func;
 
   void finalize();
+  void finalize(Type type_);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
@@ -1291,6 +1293,17 @@ public:
   bool signed_;
 
   void finalize();
+};
+
+class CallRef : public SpecificExpression<Expression::CallRefId> {
+public:
+  CallRef(MixedArena& allocator) : operands(allocator) {}
+  ExpressionList operands;
+  Expression* target;
+  bool isReturn = false;
+
+  void finalize();
+  void finalize(Type type_);
 };
 
 class RefTest : public SpecificExpression<Expression::RefTestId> {

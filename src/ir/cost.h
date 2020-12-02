@@ -65,6 +65,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     }
     return ret;
   }
+  Index visitCallRef(CallRef* curr) {
+    Index ret = 5 + visit(curr->target);
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
   Index visitLocalGet(LocalGet* curr) { return 0; }
   Index visitLocalSet(LocalSet* curr) { return 1 + visit(curr->value); }
   Index visitGlobalGet(GlobalGet* curr) { return 1; }

@@ -87,14 +87,41 @@ struct SigName {
 };
 
 std::ostream& operator<<(std::ostream& os, SigName sigName) {
-  auto printType = [&](Type type) {
+  std::function<void(Type)> printType = [&](Type type) {
     if (type == Type::none) {
       os << "none";
     } else {
       auto sep = "";
       for (const auto& t : type) {
-        os << sep << t;
+        os << sep;
         sep = "_";
+        if (t.isRef()) {
+          auto heapType = t.getHeapType();
+          if (heapType.isSignature()) {
+            auto sig = heapType.getSignature();
+            os << "ref";
+            if (t.isNullable()) {
+              os << "_null";
+            }
+            os << "[";
+            auto subsep = "";
+            for (auto s : sig.params) {
+              os << subsep;
+              subsep = "_";
+              printType(s);
+            }
+            os << "_->_";
+            subsep = "";
+            for (auto s : sig.results) {
+              os << subsep;
+              subsep = "_";
+              printType(s);
+            }
+            os << "]";
+            continue;
+          }
+        }
+        os << t;
       }
     }
   };
@@ -104,6 +131,33 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
   os << "_=>_";
   printType(sigName.sig.results);
   return os;
+}
+
+// Wrapper for printing a type when we try to print the type name as much as
+// possible. For example, for a signature we will print the signature's name,
+// not its contents.
+struct TypeName {
+  Type type;
+  TypeName(Type type) : type(type) {}
+};
+
+std::ostream& operator<<(std::ostream& os, TypeName typeName) {
+  auto type = typeName.type;
+  if (type.isRef() && !type.isBasic()) {
+    os << "(ref ";
+    if (type.isNullable()) {
+      os << "null ";
+    }
+    auto heapType = type.getHeapType();
+    if (heapType.isSignature()) {
+      os << SigName(heapType.getSignature());
+    } else {
+      os << heapType;
+    }
+    os << ')';
+    return os;
+  }
+  return os << SExprType(typeName.type);
 }
 
 } // anonymous namespace
@@ -1561,6 +1615,13 @@ struct PrintExpressionContents
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
+  void visitCallRef(CallRef* curr) {
+    if (curr->isReturn) {
+      printMedium(o, "return_call_ref");
+    } else {
+      printMedium(o, "call_ref");
+    }
+  }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test");
     WASM_UNREACHABLE("TODO (gc): ref.test");
@@ -2216,6 +2277,16 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->i31);
     decIndent();
   }
+  void visitCallRef(CallRef* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    for (auto operand : curr->operands) {
+      printFullLine(operand);
+    }
+    printFullLine(curr->target);
+    decIndent();
+  }
   void visitRefTest(RefTest* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
@@ -2284,11 +2355,23 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (curr.params.size() > 0) {
       o << maybeSpace;
-      o << ParamType(curr.params);
+      o << "(param ";
+      auto sep = "";
+      for (auto type : curr.params) {
+        o << sep << TypeName(type);
+        sep = " ";
+      }
+      o << ')';
     }
     if (curr.results.size() > 0) {
       o << maybeSpace;
-      o << ResultType(curr.results);
+      o << "(result ";
+      auto sep = "";
+      for (auto type : curr.results) {
+        o << sep << TypeName(type);
+        sep = " ";
+      }
+      o << ')';
     }
     o << ")";
   }
@@ -2394,7 +2477,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << '(';
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
-        o << ' ' << param << ')';
+        o << ' ' << TypeName(param) << ')';
         ++i;
       }
     }
@@ -2408,7 +2491,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o)
-        << ' ' << SExprType(curr->getLocalType(i)) << ')';
+        << ' ' << TypeName(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.

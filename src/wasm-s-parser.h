@@ -77,6 +77,11 @@ public:
   Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
+  // comparisons
+  bool operator==(Name name) { return isStr() && str() == name; }
+
+  template<typename T> bool operator!=(T t) { return !(*this == t); }
+
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
   void dump();
@@ -144,6 +149,7 @@ private:
 
   UniqueNameMapper nameMapper;
 
+  // Given a function signature type's name, return the signature
   Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
   Name getGlobalName(Element& s);
@@ -246,6 +252,7 @@ private:
   Expression* makeBrOnExn(Element& s);
   Expression* makeTupleMake(Element& s);
   Expression* makeTupleExtract(Element& s);
+  Expression* makeCallRef(Element& s, bool isReturn);
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
   Expression* makeRefTest(Element& s);
@@ -288,6 +295,7 @@ private:
   void parseTable(Element& s, bool preParseImport = false);
   void parseElem(Element& s);
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
+  Signature parseInlineFunctionSignature(Element& s);
   void parseType(Element& s);
   void parseEvent(Element& s, bool preParseImport = false);
 

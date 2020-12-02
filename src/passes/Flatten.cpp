@@ -17,6 +17,8 @@
 //
 // Flattens code into "Flat IR" form. See ir/flat.h.
 //
+// TODO: handle non-nullability
+//
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>

@@ -74,8 +74,8 @@ static void generateSetStackLimitFunctions(Module& module) {
 
 struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
   EnforceStackLimits(const Global* stackPointer,
-                     const std::unique_ptr<Global>& stackBase,
-                     const std::unique_ptr<Global>& stackLimit,
+                     const Global* stackBase,
+                     const Global* stackLimit,
                      Builder& builder,
                      Name handler)
     : stackPointer(stackPointer), stackBase(stackBase), stackLimit(stackLimit),
@@ -128,8 +128,8 @@ struct EnforceStackLimits : public WalkerPass<PostWalker<EnforceStackLimits>> {
 
 private:
   const Global* stackPointer;
-  const std::unique_ptr<Global>& stackBase;
-  const std::unique_ptr<Global>& stackLimit;
+  const Global* stackBase;
+  const Global* stackLimit;
   Builder& builder;
   Name handler;
 };
@@ -161,7 +161,8 @@ struct StackCheck : public Pass {
                                          builder.makeConst(int32_t(0)),
                                          Builder::Mutable);
     PassRunner innerRunner(module);
-    EnforceStackLimits(stackPointer, stackBase, stackLimit, builder, handler)
+    EnforceStackLimits(
+      stackPointer, stackBase.get(), stackLimit.get(), builder, handler)
       .run(&innerRunner, module);
     module->addGlobal(std::move(stackBase));
     module->addGlobal(std::move(stackLimit));
