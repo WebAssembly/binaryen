@@ -133,8 +133,9 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
   return os;
 }
 
-// Wrapper for printing type names when they are available. When not, the basic
-// type name (i32, etc.) is used.
+// Wrapper for printing a type when we try to print the type name as much as
+// possible. For example, for a signature we will print the signature's name,
+// not its contents.
 struct TypeName {
   Type type;
   TypeName(Type type) : type(type) {}
@@ -142,11 +143,19 @@ struct TypeName {
 
 std::ostream& operator<<(std::ostream& os, TypeName typeName) {
   auto type = typeName.type;
-  if (type.isRef()) {
+  if (type.isRef() && !type.isBasic()) {
+    os << "(ref ";
+    if (type.isNullable()) {
+      os << "null ";
+    }
     auto heapType = type.getHeapType();
     if (heapType.isSignature()) {
-      return os << SigName(heapType.getSignature());
+      os << SigName(heapType.getSignature());
+    } else {
+      os << heapType;
     }
+    os << ')';
+    return os;
   } 
   return os << SExprType(typeName.type);
 }
@@ -2456,7 +2465,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << '(';
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
-        o << ' ' << param << ')';
+        o << ' ' << TypeName(param) << ')';
         ++i;
       }
     }

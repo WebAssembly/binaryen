@@ -27,20 +27,20 @@
    (ref.func $call-ref-more)
   )
  )
- (func $call_from-param (param $f (ref null (func (param i32) (result i32)))) (result i32)
+ (func $call_from-param (param $f (ref null $i32_=>_i32)) (result i32)
   (call_ref
    (i32.const 42)
    (local.get $f)
   )
  )
- (func $call_from-param-null (param $f (ref null (func (param i32) (result i32)))) (result i32)
+ (func $call_from-param-null (param $f (ref null $i32_=>_i32)) (result i32)
   (call_ref
    (i32.const 42)
    (local.get $f)
   )
  )
  (func $call_from-local-null (result i32)
-  (local $f $i32_=>_i32)
+  (local $f (ref null $i32_=>_i32))
   (local.set $f
    (ref.func $call-ref-more)
   )
