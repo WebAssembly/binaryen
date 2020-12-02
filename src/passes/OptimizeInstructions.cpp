@@ -496,8 +496,10 @@ struct OptimizeInstructions
         // (x * fneg(y)) op C   ==>   (x * y) op -C
         // (fneg(x) / y) op C   ==>   (x / y) op -C
         // (x / fneg(y)) op C   ==>   (x / y) op -C
+        // (x * fneg(y))  + C   ==>   C - (x * y)
+        // (x / fneg(y))  + C   ==>   C - (x / y)
         //
-        // where op = `*` `/` or `+`.
+        // where op = `*` or `/`
         if ((matches(curr,
                      binary(&op,
                             binary(&bin, Mul, unary(Neg, any(&x)), any(&y)),
@@ -516,8 +518,15 @@ struct OptimizeInstructions
                             fval(&c)))) &&
             (op == Abstract::getBinary(bin->type, Mul) ||
              op == Abstract::getBinary(bin->type, DivS) ||
-             (fastMath && op == Abstract::getBinary(bin->type, Add)))) {
-          c->value = c->value.neg();
+             op == Abstract::getBinary(bin->type, Add))) {
+          if (fastMath && op == Abstract::getBinary(bin->type, Add)) {
+            // (x / fneg(y)) + C   ==>   C - (x / y)
+            // (x * fneg(y)) + C   ==>   C - (x * y)
+            curr->cast<Binary>()->op = Abstract::getBinary(bin->type, Sub);
+            std::swap(curr->cast<Binary>()->left, curr->cast<Binary>()->right);
+          } else {
+            c->value = c->value.neg();
+          }
           bin->left = x;
           bin->right = y;
           return curr;
