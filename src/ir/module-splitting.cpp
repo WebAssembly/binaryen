@@ -175,7 +175,7 @@ TableSlotManager::TableSlotManager(Module& module)
   });
 }
 
-auto TableSlotManager::getSlot(Name func) -> Slot {
+TableSlotManager::Slot TableSlotManager::getSlot(Name func) {
   auto slotIt = funcIndices.find(func);
   if (slotIt != funcIndices.end()) {
     return slotIt->second;
