@@ -133,6 +133,33 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
   return os;
 }
 
+// Wrapper for printing a type when we try to print the type name as much as
+// possible. For example, for a signature we will print the signature's name,
+// not its contents.
+struct TypeName {
+  Type type;
+  TypeName(Type type) : type(type) {}
+};
+
+std::ostream& operator<<(std::ostream& os, TypeName typeName) {
+  auto type = typeName.type;
+  if (type.isRef() && !type.isBasic()) {
+    os << "(ref ";
+    if (type.isNullable()) {
+      os << "null ";
+    }
+    auto heapType = type.getHeapType();
+    if (heapType.isSignature()) {
+      os << SigName(heapType.getSignature());
+    } else {
+      os << heapType;
+    }
+    os << ')';
+    return os;
+  }
+  return os << SExprType(typeName.type);
+}
+
 } // anonymous namespace
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
@@ -2328,11 +2355,23 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (curr.params.size() > 0) {
       o << maybeSpace;
-      o << ParamType(curr.params);
+      o << "(param ";
+      auto sep = "";
+      for (auto type : curr.params) {
+        o << sep << TypeName(type);
+        sep = " ";
+      }
+      o << ')';
     }
     if (curr.results.size() > 0) {
       o << maybeSpace;
-      o << ResultType(curr.results);
+      o << "(result ";
+      auto sep = "";
+      for (auto type : curr.results) {
+        o << sep << TypeName(type);
+        sep = " ";
+      }
+      o << ')';
     }
     o << ")";
   }
@@ -2438,7 +2477,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << '(';
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
-        o << ' ' << param << ')';
+        o << ' ' << TypeName(param) << ')';
         ++i;
       }
     }
@@ -2452,7 +2491,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o)
-        << ' ' << SExprType(curr->getLocalType(i)) << ')';
+        << ' ' << TypeName(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.
