@@ -66,7 +66,8 @@ def update_example_tests():
             with open(expected, 'wb') as o:
                 o.write(actual)
         finally:
-            os.remove(output_file)
+            pass
+            # os.remove(output_file)
 
 
 def update_wasm_dis_tests():

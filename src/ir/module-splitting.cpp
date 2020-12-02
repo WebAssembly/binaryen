@@ -126,7 +126,7 @@ struct TableSlotManager {
 Expression* TableSlotManager::Slot::makeExpr(Module& module) {
   Builder builder(module);
   auto makeIndex = [&]() { return builder.makeConst(int32_t(index)); };
-  if (global.is()) {
+  if (global.size()) {
     Expression* getBase = builder.makeGlobalGet(global, Type::i32);
     return index == 0 ? getBase
                       : builder.makeBinary(AddInt32, getBase, makeIndex());
@@ -434,7 +434,7 @@ void ModuleSplitter::setupTablePatching() {
     return;
   }
 
-  if (tableManager.activeBase.global.is()) {
+  if (tableManager.activeBase.global.size()) {
     assert(primary.table.segments.size() == 1 &&
            "Unexpected number of segments with non-const base");
     assert(secondary.table.segments.size() == 0);
