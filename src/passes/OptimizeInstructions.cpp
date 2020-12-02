@@ -468,9 +468,9 @@ struct OptimizeInstructions
 
     if (auto* binary = curr->dynCast<Binary>()) {
       if (auto* ext = Properties::getAlmostSignExt(binary)) {
-        Index extraShifts;
-        auto bits = Properties::getAlmostSignExtBits(binary, extraShifts);
-        if (extraShifts == 0) {
+        Index extraLeftShifts;
+        auto bits = Properties::getAlmostSignExtBits(binary, extraLeftShifts);
+        if (extraLeftShifts == 0) {
           if (auto* load =
                 Properties::getFallthrough(ext, getPassOptions(), features)
                   ->dynCast<Load>()) {
@@ -488,11 +488,17 @@ struct OptimizeInstructions
             }
           }
         }
-        // if the sign-extend input cannot have a sign bit, we don't need it
-        // we also don't need it if it already has an identical-sized sign
-        // extend
-        if (Bits::getMaxBits(ext, this) + extraShifts < bits ||
-            isSignExted(ext, bits)) {
+        // We can in some cases remove part of a sign extend, that is,
+        //   (x << A) >> B   =>   x << (A - B)
+        // If the sign-extend input cannot have a sign bit, we don't need it.
+        if (Bits::getMaxBits(ext, this) + extraLeftShifts < bits) {
+          return removeAlmostSignExt(binary);
+        }
+        // We also don't need it if it already has an identical-sized sign
+        // extend applied to it. That is, if it is already a sign-extended
+        // value, then another sign extend will do nothing. We do need to be
+        // careful of the extra shifts, though.
+        if (isSignExted(ext, bits) && extraLeftShifts == 0) {
           return removeAlmostSignExt(binary);
         }
       } else if (binary->op == EqInt32 || binary->op == NeInt32) {
