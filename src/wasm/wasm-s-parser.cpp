@@ -48,8 +48,6 @@ int unhex(char c) {
 
 namespace wasm {
 
-static Name STRUCT("struct"), FIELD("field");
-
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
 static void
@@ -2791,41 +2789,6 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
       }
     }
     return Signature(Type(params), Type(results));
-  } else if (*s[0] == STRUCT) {
-    FieldList fields;
-    for (size_t k = 1; k < s.size(); k++) {
-      auto& t = *s[k];
-      bool mutable_ = false;
-      if (t.isStr()) {
-        // t is a simple string name like "i32"
-        fields.emplace_back(elementToType(t), mutable_);
-        continue;
-      }
-      // t is a tuple, containing either
-      //   (field TYPE)
-      // or
-      //   (field $name TYPE)
-      if (*t[0] != FIELD) {
-        throw ParseException("invalid struct field", s.line, s.col);
-      }
-      if (t.size() != 2 && t.size() != 3) {
-        throw ParseException("invalid field size", s.line, s.col);
-      }
-      if (t.size() == 3) {
-        if (!t[1]->isStr()) {
-          throw ParseException("invalid field name", s.line, s.col);
-        }
-        // TODO: save the name of the field.
-      }
-      Element* last = t[t.size() - 1];
-      // The last element may also be (mut (..)).
-      if (last->isList() && *(*last)[0] == MUT) {
-        mutable_ = true;
-        last = (*last)[1];
-      }
-      fields.emplace_back(elementToType(*last), mutable_);
-    }
-    return Struct(fields);
   }
   throw ParseException("invalid heap type", s.line, s.col);
 }
