@@ -156,7 +156,7 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
     }
     os << ')';
     return os;
-  } 
+  }
   return os << SExprType(typeName.type);
 }
 
