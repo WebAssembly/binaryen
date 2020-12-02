@@ -635,6 +635,13 @@ struct LocationUpdater {
   }
 };
 
+// A tombstone value is a value that is placed where something used to exist,
+// but no longer does, like a reference to a function that was DCE'd out during
+// linking. In theory the value can be any invalid location, and tools will
+// basically ignore it.
+// Earlier LLVM used to use 0 there, and newer versions use -1 or -2 depending
+// on the DWARF section. For now, support them all, but TODO stop supporting 0,
+// as there are apparently some possible corner cases where 0 is a valid value.
 static bool isTombstone(uint32_t x) {
   return x == 0 || x == uint32_t(-1) || x == uint32_t(-2);
 }
