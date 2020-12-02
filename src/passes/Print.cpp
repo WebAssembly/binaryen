@@ -2355,11 +2355,23 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (curr.params.size() > 0) {
       o << maybeSpace;
-      o << ParamType(curr.params);
+      o << "(param ";
+      auto sep = "";
+      for (auto type : curr.params) {
+        o << sep << TypeName(type);
+        sep = " ";
+      }
+      o << ')';
     }
     if (curr.results.size() > 0) {
       o << maybeSpace;
-      o << ResultType(curr.results);
+      o << "(result ";
+      auto sep = "";
+      for (auto type : curr.results) {
+        o << sep << TypeName(type);
+        sep = " ";
+      }
+      o << ')';
     }
     o << ")";
   }
