@@ -117,8 +117,11 @@ class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
   IRProfile profile;
-  std::vector<Signature> signatures;
-  std::unordered_map<std::string, size_t> signatureIndices;
+
+  // The main list of types declared in the module
+  std::vector<HeapType> types;
+  std::unordered_map<std::string, size_t> typeIndices;
+
   std::vector<Name> functionNames;
   std::vector<Name> globalNames;
   std::vector<Name> eventNames;
@@ -149,8 +152,6 @@ private:
 
   UniqueNameMapper nameMapper;
 
-  // Given a function signature type's name, return the signature
-  Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
   Name getGlobalName(Element& s);
   Name getEventName(Element& s);
@@ -295,7 +296,10 @@ private:
   void parseTable(Element& s, bool preParseImport = false);
   void parseElem(Element& s);
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
-  Signature parseInlineFunctionSignature(Element& s);
+
+  // Parses something like (func ..), (array ..), (struct)
+  HeapType parseHeapType(Element& s);
+
   void parseType(Element& s);
   void parseEvent(Element& s, bool preParseImport = false);
 

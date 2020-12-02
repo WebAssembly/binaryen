@@ -1220,8 +1220,8 @@ class WasmBinaryBuilder {
 
   std::set<BinaryConsts::Section> seenSections;
 
-  // All signatures present in the type section
-  std::vector<Signature> signatures;
+  // All types defined in the type section
+  std::vector<HeapType> types;
 
 public:
   WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
@@ -1261,7 +1261,7 @@ public:
   void readHeader();
   void readStart();
   void readMemory();
-  void readSignatures();
+  void readTypes();
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
@@ -1279,7 +1279,8 @@ public:
   std::vector<Signature> functionSignatures;
 
   void readFunctionSignatures();
-  Signature getFunctionSignatureByIndex(Index index);
+  Signature getSignatureByFunctionIndex(Index index);
+  Signature getSignatureByTypeIndex(Index index);
 
   size_t nextLabel;
 
