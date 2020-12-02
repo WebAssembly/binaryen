@@ -359,7 +359,7 @@ void Instrumenter::instrumentFuncs() {
   });
 }
 
-// wasm-split profile format::
+// wasm-split profile format:
 //
 // The wasm-split profile is a binary format designed to be simple to produce
 // and consume. It is comprised of:
@@ -443,14 +443,23 @@ void Instrumenter::addProfileExport() {
   // TODO: export the memory if it is not already exported.
 }
 
+uint64_t hashFile(const std::string& filename) {
+  auto contents(read_file<std::vector<char>>(filename, Flags::Binary));
+  size_t digest = 0;
+  // Don't use `hash` or `rehash` - they aren't deterministic between executions
+  for (char c : contents) {
+    hash_combine(digest, c);
+  }
+  return uint64_t(digest);
+}
+
 void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   // Check that the profile export name is not already taken
   if (wasm.getExportOrNull(options.profileExport) != nullptr) {
     Fatal() << "error: Export " << options.profileExport << " already exists.";
   }
 
-  // TODO: calculate module hash.
-  uint64_t moduleHash = 0;
+  uint64_t moduleHash = hashFile(options.input);
   PassRunner runner(&wasm, options.passOptions);
   Instrumenter(options.profileExport, moduleHash).run(&runner, &wasm);
 
@@ -471,16 +480,21 @@ std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
       Fatal() << "Unexpected end of profile data";
     }
     uint32_t i32 = 0;
-    i32 |= uint32_t(profileData[i++]);
-    i32 |= uint32_t(profileData[i++]) << 8;
-    i32 |= uint32_t(profileData[i++]) << 16;
-    i32 |= uint32_t(profileData[i++]) << 24;
+    i32 |= uint32_t(uint8_t(profileData[i++]));
+    i32 |= uint32_t(uint8_t(profileData[i++])) << 8;
+    i32 |= uint32_t(uint8_t(profileData[i++])) << 16;
+    i32 |= uint32_t(uint8_t(profileData[i++])) << 24;
     return i32;
   };
 
-  // TODO: Read and compare the 8-byte module hash. Just skip it for now.
-  readi32();
-  readi32();
+  // Read and compare the 8-byte module hash.
+  uint64_t expected = readi32();
+  expected |= uint64_t(readi32()) << 32;
+  if (expected != hashFile(options.input)) {
+    Fatal() << "error: checksum in profile does not match module checksum. "
+            << "The split module must be the original module that was "
+            << "instrumented to generate the profile.";
+  }
 
   std::set<Name> keptFuncs;
   ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {

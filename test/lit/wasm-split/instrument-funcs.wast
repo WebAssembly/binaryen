@@ -59,7 +59,7 @@
 ;; CHECK-NEXT:     (block
 ;; CHECK-NEXT:       (i64.store align=1
 ;; CHECK-NEXT:         (local.get $addr)
-;; CHECK-NEXT:         (i64.const 0)
+;; CHECK-NEXT:         (i64.const {{.*}})
 ;; CHECK-NEXT:       )
 ;; CHECK-NEXT:       (i32.store offset=8 align=1
 ;; CHECK-NEXT:         (local.get $addr)
