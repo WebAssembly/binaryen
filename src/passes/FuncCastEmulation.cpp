@@ -30,9 +30,9 @@
 
 #include <ir/literal-utils.h>
 #include <pass.h>
+#include <string>
 #include <wasm-builder.h>
 #include <wasm.h>
-#include <string>
 
 namespace wasm {
 
@@ -129,9 +129,12 @@ struct ParallelFuncCastEmulation
   : public WalkerPass<PostWalker<ParallelFuncCastEmulation>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new ParallelFuncCastEmulation(ABIType, num_params); }
+  Pass* create() override {
+    return new ParallelFuncCastEmulation(ABIType, num_params);
+  }
 
-  ParallelFuncCastEmulation(Signature ABIType, unsigned int num_params) : ABIType(ABIType), num_params(num_params) {}
+  ParallelFuncCastEmulation(Signature ABIType, unsigned int num_params)
+    : ABIType(ABIType), num_params(num_params) {}
 
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->operands.size() > num_params) {
