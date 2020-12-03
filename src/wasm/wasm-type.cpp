@@ -759,7 +759,7 @@ bool Field::operator<(const Field& other) const {
     return false;
   }
   if (type == Type::i32) {
-    return packed < other.packed;
+    return packedType < other.packedType;
   }
   // They are equal, so they are not <.
   return false;
