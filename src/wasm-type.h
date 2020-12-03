@@ -33,13 +33,13 @@ namespace wasm {
 
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
-  // comparison of the ids. For basic types the `id` is just the `BasicID`
+  // comparison of the ids. For basic types the `id` is just the `BasicType`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
   uintptr_t id;
 
 public:
-  enum BasicID : uint32_t {
+  enum BasicType : uint32_t {
     none,
     unreachable,
     i32,
@@ -58,8 +58,8 @@ public:
 
   Type() = default;
 
-  // BasicID can be implicitly upgraded to Type
-  constexpr Type(BasicID id) : id(id){};
+  // BasicType can be implicitly upgraded to Type
+  constexpr Type(BasicType id) : id(id){};
 
   // But converting raw uint32_t is more dangerous, so make it explicit
   explicit Type(uint64_t id) : id(id){};
@@ -131,18 +131,18 @@ public:
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
   constexpr uint64_t getID() const { return id; }
-  constexpr BasicID getBasic() const {
+  constexpr BasicType getBasic() const {
     assert(isBasic() && "Basic type expected");
-    return static_cast<BasicID>(id);
+    return static_cast<BasicType>(id);
   }
 
-  // (In)equality must be defined for both Type and BasicID because it is
+  // (In)equality must be defined for both Type and BasicType because it is
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
   bool operator==(const Type& other) const { return id == other.id; }
-  bool operator==(const BasicID& otherId) const { return id == otherId; }
+  bool operator==(const BasicType& otherId) const { return id == otherId; }
   bool operator!=(const Type& other) const { return id != other.id; }
-  bool operator!=(const BasicID& otherId) const { return id != otherId; }
+  bool operator!=(const BasicType& otherId) const { return id != otherId; }
 
   // Order types by some notion of simplicity
   bool operator<(const Type& other) const;

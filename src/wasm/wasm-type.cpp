@@ -243,9 +243,9 @@ struct TypeStore {
     // If a Type is constructed from a list of types, the list of types becomes
     // implicitly converted to a TypeInfo before canonicalizing its id. This is
     // also the case if a list of just one type is provided, even though such a
-    // list of types will be canonicalized to the BasicID of the single type. As
-    // such, the following entries are solely placeholders to enable the lookup
-    // of lists of just one type to the BasicID of the single type.
+    // list of types will be canonicalized to the BasicType of the single type.
+    // As such, the following entries are solely placeholders to enable the
+    // lookup of lists of just one type to the BasicType of the single type.
     {TypeInfo(Tuple()), Type::none},
     {TypeInfo({Type::unreachable}), Type::unreachable},
     {TypeInfo({Type::i32}), Type::i32},

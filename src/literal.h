@@ -55,7 +55,7 @@ public:
 
   Literal() : v128(), type(Type::none) {}
   explicit Literal(Type type);
-  explicit Literal(Type::BasicID typeId) : Literal(Type(typeId)) {}
+  explicit Literal(Type::BasicType type) : Literal(Type(type)) {}
   explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(int64_t init) : i64(init), type(Type::i64) {}
