@@ -469,20 +469,25 @@ inline void collectHeapTypes(Module& wasm,
   }
   // A generic utility to traverse the child types of a type.
   // TODO: work with tlively to refactor this to a shared place
-  auto walkChildren = [&](std::function<void(Type)> callback) {
+  auto walkRelevantChildren = [&](HeapType type, std::function<void(HeapType)> callback) {
+    auto callIfRelevant = [&](Type type) {
+      if (counts.isRelevant(type)) {
+        callback(type.getHeapType());
+      }
+    };
     if (type.isSignature()) {
       auto sig = type.getSignature();
       for (Type type : {sig.params, sig.results}) {
         for (auto element : type) {
-          callback(element);
+          callIfRelevant(element);
         }
       }
     } else if (type.isArray()) {
-      callback(type.getArray().element.type);
+      callIfRelevant(type.getArray().element.type);
     } else if (type.isStruct()) {
       auto fields = type.getStruct().fields;
       for (auto field : fields) {
-        callback(field.type);
+        callIfRelevant(field.type);
       }
     }
   };
@@ -501,13 +506,11 @@ inline void collectHeapTypes(Module& wasm,
     auto iter = newTypes.begin();
     auto type = *iter;
     newTypes.erase(iter);
-    walkChildren(type, [&](Type type) {
-      if (counts.isRelevant(type)) {
-        if (!counts.count(type)) {
-          newTypes.insert(type);
-        }
-        counts.note(type);
+    walkRelevantChildren(type, [&](HeapType type) {
+      if (!counts.count(type)) {
+        newTypes.insert(type);
       }
+      counts.note(type);
     });
   }
 
@@ -525,10 +528,8 @@ inline void collectHeapTypes(Module& wasm,
     auto type = pair.first;
     depthOfDependencies[type] = 0;
     toVisit.insert(type);
-    walkChildren(type, [&](Type type) {
-      if (counts.isRelevant(type)) {
-        isDependencyOf[type.getHeapType()].insert(type);
-      }
+    walkRelevantChildren(type, [&](HeapType childType) {
+      isDependencyOf[childType].insert(type); // XXX flip?
     });
   }
   while (!toVisit.empty()) {

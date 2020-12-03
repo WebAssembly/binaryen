@@ -316,6 +316,7 @@ struct Struct {
   Struct(FieldList&& fields) : fields(std::move(fields)) {}
   bool operator==(const Struct& other) const { return fields == other.fields; }
   bool operator!=(const Struct& other) const { return !(*this == other); }
+  bool operator<(const Struct& other) const { return fields < other.fields; }
   std::string toString() const;
 };
 
@@ -326,6 +327,7 @@ struct Array {
   Array(Field&& element) : element(std::move(element)) {}
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
+  bool operator<(const Struct& other) const { return element < other.element; }
   std::string toString() const;
 };
 
@@ -378,6 +380,7 @@ struct HeapType {
 
   bool operator==(const HeapType& other) const;
   bool operator!=(const HeapType& other) const { return !(*this == other); }
+  bool operator<(const HeapType& other) const;
   HeapType& operator=(const HeapType& other);
   std::string toString() const;
 };
