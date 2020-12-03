@@ -469,7 +469,8 @@ inline void collectHeapTypes(Module& wasm,
   }
   // A generic utility to traverse the child types of a type.
   // TODO: work with tlively to refactor this to a shared place
-  auto walkRelevantChildren = [&](HeapType type, std::function<void(HeapType)> callback) {
+  auto walkRelevantChildren = [&](HeapType type,
+                                  std::function<void(HeapType)> callback) {
     auto callIfRelevant = [&](Type type) {
       if (counts.isRelevant(type)) {
         callback(type.getHeapType());
