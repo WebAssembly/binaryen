@@ -2702,15 +2702,15 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       printName(curr->name, o);
     }
     incIndent();
-    std::vector<Signature> signatures;
-    std::unordered_map<Signature, Index> indices;
-    ModuleUtils::collectSignatures(*curr, signatures, indices);
-    for (auto sig : signatures) {
+    std::vector<HeapType> types;
+    std::unordered_map<HeapType, Index> indices;
+    ModuleUtils::collectHeapTypes(*curr, types, indices);
+    for (auto type : types) {
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
-      o << SigName(sig) << ' ';
-      handleSignature(sig);
+      o << TypeName(type) << ' ';
+      handleType(type);
       o << ")" << maybeNewLine;
     }
     ModuleUtils::iterImportedMemories(
