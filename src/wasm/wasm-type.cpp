@@ -745,6 +745,26 @@ HeapType& HeapType::operator=(const HeapType& other) {
   return *this;
 }
 
+bool Field::operator<(const Field& other) const {
+  if (type < other.type) {
+    return true;
+  }
+  if (other.type < type) {
+    return false;
+  }
+  if (mutable_ < other.mutable_) {
+    return true;
+  }
+  if (other.mutable_ < mutable_) {
+    return false;
+  }
+  if (type == Type::i32) {
+    return packed < other.packed;
+  }
+  // They are equal, so they are not <.
+  return false;
+}
+
 namespace {
 
 std::ostream&

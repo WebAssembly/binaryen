@@ -304,6 +304,7 @@ struct Field {
            mutable_ == other.mutable_;
   }
   bool operator!=(const Field& other) const { return !(*this == other); }
+  bool operator<(const Field& other) const;
   std::string toString() const;
 };
 
@@ -327,7 +328,7 @@ struct Array {
   Array(Field&& element) : element(std::move(element)) {}
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
-  bool operator<(const Struct& other) const { return element < other.element; }
+  bool operator<(const Array& other) const { return element < other.element; }
   std::string toString() const;
 };
 
