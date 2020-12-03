@@ -406,7 +406,6 @@ inline void collectHeapTypes(Module& wasm,
   struct Counts : public std::unordered_map<HeapType, size_t> {
     bool isRelevant(Type type) { return !type.isBasic() && type.isRef(); }
     void note(HeapType type) { (*this)[type]++; }
-    void note(Signature sig) { note(HeapType(sig)); }
     void maybeNote(Type type) {
       if (isRelevant(type)) {
         note(type.getHeapType());
