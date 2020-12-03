@@ -2394,7 +2394,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (type.isSignature()) {
       handleSignature(type.getSignature());
     } else {
-      WASM_UNREACHABLE("bad heap type");
+      WASM_UNREACHABLE("unsupported heap type");
     }
   }
   void visitExport(Export* curr) {
