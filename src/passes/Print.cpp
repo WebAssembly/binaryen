@@ -172,6 +172,7 @@ std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
   } else {
     os << type;
   }
+  return os;
 }
 
 } // anonymous namespace
