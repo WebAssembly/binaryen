@@ -158,7 +158,7 @@ public:
   FeatureSet getFeatures() const;
 
   // Gets the heap type corresponding to this type
-  HeapType getHeapType() const;
+  const HeapType& getHeapType() const;
 
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
@@ -365,12 +365,12 @@ struct HeapType {
     return signature;
   }
   bool isStruct() const { return kind == StructKind; }
-  Struct getStruct() const {
+  const Struct& getStruct() const {
     assert(isStruct() && "Not a struct");
     return struct_;
   }
   bool isArray() const { return kind == ArrayKind; }
-  Array getArray() const {
+  const Array& getArray() const {
     assert(isArray() && "Not an array");
     return array;
   }

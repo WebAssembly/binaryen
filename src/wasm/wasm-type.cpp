@@ -513,24 +513,34 @@ FeatureSet Type::getFeatures() const {
   return getSingleFeatures(*this);
 }
 
-HeapType Type::getHeapType() const {
+// getHeapType() returns a const HeapType&, so we need a canonical object to
+// return for the basic types, so that we don't create a temporary copy on each
+// call.
+namespace statics {
+static HeapType funcHeapType(HeapType::FuncKind),
+  externHeapType(HeapType::ExternKind), exnHeapType(HeapType::ExnKind),
+  anyHeapType(HeapType::AnyKind), eqHeapType(HeapType::EqKind),
+  i31HeapType(HeapType::I31Kind);
+}
+
+const HeapType& Type::getHeapType() const {
   if (isRef()) {
     if (isCompound()) {
       return getTypeInfo(*this)->ref.heapType;
     }
     switch (getBasic()) {
       case funcref:
-        return HeapType::FuncKind;
+        return statics::funcHeapType;
       case externref:
-        return HeapType::ExternKind;
+        return statics::externHeapType;
       case exnref:
-        return HeapType::ExnKind;
+        return statics::exnHeapType;
       case anyref:
-        return HeapType::AnyKind;
+        return statics::anyHeapType;
       case eqref:
-        return HeapType::EqKind;
+        return statics::eqHeapType;
       case i31ref:
-        return HeapType::I31Kind;
+        return statics::i31HeapType;
       default:
         break;
     }
