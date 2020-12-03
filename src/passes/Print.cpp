@@ -2390,38 +2390,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     o << ")";
   }
-  void handleFieldBody(const Field& field) {
-    if (field.mutable_) {
-      o << "(mut ";
-    }
-    o << TypeName(field.type);
-    if (field.mutable_) {
-      o << ')';
-    }
-  }
-  void handleArray(const Array& curr) {
-    o << "(array ";
-    handleFieldBody(curr.element);
-    o << ')';
-  }
-  void handleStruct(const Struct& curr) {
-    o << "(struct";
-    auto sep = "";
-    for (auto field : curr.fields) {
-      o << sep << "(field ";
-      handleFieldBody(field);
-      o << ')';
-      sep = " ";
-    }
-    o << ')';
-  }
   void handleHeapType(HeapType type) {
     if (type.isSignature()) {
       handleSignature(type.getSignature());
-    } else if (type.isArray()) {
-      handleArray(type.getArray());
-    } else if (type.isStruct()) {
-      handleStruct(type.getStruct());
     } else {
       WASM_UNREACHABLE("bad heap type");
     }
