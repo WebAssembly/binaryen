@@ -513,24 +513,29 @@ FeatureSet Type::getFeatures() const {
   return getSingleFeatures(*this);
 }
 
-HeapType Type::getHeapType() const {
+static HeapType funcHeapType(HeapType::FuncKind),
+  externHeapType(HeapType::ExternKind), exnHeapType(HeapType::ExnKind),
+  anyHeapType(HeapType::AnyKind), eqHeapType(HeapType::EqKind),
+  i31HeapType(HeapType::I31Kind);
+
+const HeapType& Type::getHeapType() const {
   if (isRef()) {
     if (isCompound()) {
       return getTypeInfo(*this)->ref.heapType;
     }
     switch (getBasic()) {
       case funcref:
-        return HeapType::FuncKind;
+        return funcHeapType;
       case externref:
-        return HeapType::ExternKind;
+        return externHeapType;
       case exnref:
-        return HeapType::ExnKind;
+        return exnHeapType;
       case anyref:
-        return HeapType::AnyKind;
+        return anyHeapType;
       case eqref:
-        return HeapType::EqKind;
+        return eqHeapType;
       case i31ref:
-        return HeapType::I31Kind;
+        return i31HeapType;
       default:
         break;
     }
