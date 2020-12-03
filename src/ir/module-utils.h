@@ -392,29 +392,32 @@ template<typename T> struct CallGraphPropertyAnalysis {
   }
 };
 
-// Helper function for collecting the type signatures used in a module
+// Helper function for collecting all the types that are declared in a module,
+// which means the HeapTypes (that are non-basic, that is, not eqref etc., which
+// do not need to be defined).
 //
-// Used when emitting or printing a module to give signatures canonical
-// indices. Signatures are sorted in order of decreasing frequency to minize the
+// Used when emitting or printing a module to give HeapTypes canonical
+// indices. HeapTypes are sorted in order of decreasing frequency to minize the
 // size of their collective encoding. Both a vector mapping indices to
-// signatures and a map mapping signatures to indices are produced.
+// HeapTypes and a map mapping HeapTypes to indices are produced.
 inline void
-collectSignatures(Module& wasm,
-                  std::vector<Signature>& signatures,
-                  std::unordered_map<Signature, Index>& sigIndices) {
-  struct Counts : public std::unordered_map<Signature, size_t> {
-    void note(Signature sig) { (*this)[sig]++; }
+collectHeapTypes(Module& wasm,
+                 std::vector<HeapType>& types,
+                 std::unordered_map<HeapType, Index>& typeIndices) {
+  struct Counts : public std::unordered_map<HeapType, size_t> {
+    bool isRelevant(Type type) {
+      return !type.isBasic() && type.isRef();
+    }
+    void note(HeapType type) { (*this)[type]++; }
+    void note(Signature sig) { note(HeapType(sig)); }
     void maybeNote(Type type) {
-      if (type.isRef()) {
-        auto heapType = type.getHeapType();
-        if (heapType.isSignature()) {
-          note(heapType.getSignature());
-        }
+      if (isRelevant(type)) {
+        note(type.getHeapType());
       }
     }
   };
 
-  // Collect the signature use counts for a single function
+  // Collect the type use counts for a single function
   auto updateCounts = [&](Function* func, Counts& counts) {
     if (func->imported()) {
       return;
@@ -429,7 +432,7 @@ collectSignatures(Module& wasm,
         if (curr->is<RefNull>()) {
           counts.maybeNote(curr->type);
         } else if (auto* call = curr->dynCast<CallIndirect>()) {
-          counts[call->sig]++;
+          counts.note(call->sig);
         } else if (Properties::isControlFlowStructure(curr)) {
           counts.maybeNote(curr->type);
           if (curr->type.isTuple()) {
@@ -437,6 +440,7 @@ collectSignatures(Module& wasm,
             counts.note(Signature(Type::none, curr->type));
           }
         }
+        // TODO struct.get and others contain a type index
       }
     };
     TypeCounter(counts).walk(func->body);
@@ -447,7 +451,7 @@ collectSignatures(Module& wasm,
   // Collect all the counts.
   Counts counts;
   for (auto& curr : wasm.functions) {
-    counts[curr->sig]++;
+    counts.note(curr->sig);
     for (auto type : curr->vars) {
       counts.maybeNote(type);
       if (type.isTuple()) {
@@ -458,7 +462,7 @@ collectSignatures(Module& wasm,
     }
   }
   for (auto& curr : wasm.events) {
-    counts[curr->sig]++;
+    counts.note(curr->sig);
   }
   for (auto& pair : analysis.map) {
     Counts& functionCounts = pair.second;
@@ -466,74 +470,81 @@ collectSignatures(Module& wasm,
       counts[innerPair.first] += innerPair.second;
     }
   }
-
+  // A generic utility to traverse the child types of a type.
+  // TODO: work with tlively to refactor this to a shared place
+  auto walkChildren = [&](std::function<void(Type)> callback) {
+    if (type.isSignature()) {
+      auto sig = type.getSignature();
+      for (Type type : {sig.params, sig.results}) {
+        for (auto element : type) {
+          callback(element);
+        }
+      }
+    } else if (type.isArray()) {
+      callback(type.getArray().element.type);
+    } else if (type.isStruct()) {
+      auto fields = type.getStruct().fields;
+      for (auto field : fields) {
+        callback(field.type);
+      }
+    }
+  };
   // Recursively traverse each reference type, which may have a child type that
   // is itself a reference type. This reflects an appearance in the binary
   // format that is in the type section itself.
-  // As we do this we may find more and more signatures, as nested children of
-  // previous ones. Each such signature will appear in the type section once, so
+  // As we do this we may find more and more types, as nested children of
+  // previous ones. Each such type will appear in the type section once, so
   // we just need to visit it once.
   // TODO: handle struct and array fields
-  std::unordered_set<Signature> newSigs;
+  std::unordered_set<HeapType> newTypes;
   for (auto& pair : counts) {
-    newSigs.insert(pair.first);
+    newTypes.insert(pair.first);
   }
-  while (!newSigs.empty()) {
-    auto iter = newSigs.begin();
-    auto sig = *iter;
-    newSigs.erase(iter);
-    for (Type type : {sig.params, sig.results}) {
-      for (auto element : type) {
-        if (element.isRef()) {
-          auto heapType = element.getHeapType();
-          if (heapType.isSignature()) {
-            auto sig = heapType.getSignature();
-            if (!counts.count(sig)) {
-              newSigs.insert(sig);
-            }
-            counts[sig]++;
-          }
+  while (!newTypes.empty()) {
+    auto iter = newTypes.begin();
+    auto type = *iter;
+    newTypes.erase(iter);
+    walkChildren(type, [&](Type type) {
+      if (counts.isRelevant(type)) {
+        if (!counts.count(type)) {
+          newTypes.insert(type);
         }
+        counts.note(type);
       }
-    }
+    });
   }
 
-  // We must sort all the dependencies of a signature before it. For example,
+  // We must sort all the dependencies of a type before it. For example,
   // (func (param (ref (func)))) must appear after (func). To do that, find the
-  // depth of dependencies of each signature. For example, if A depends on B
+  // depth of dependencies of each type. For example, if A depends on B
   // which depends on C, then A's depth is 2, B's is 1, and C's is 0 (assuming
   // no other dependencies).
   Counts depthOfDependencies;
-  std::unordered_map<Signature, std::unordered_set<Signature>> isDependencyOf;
+  std::unordered_map<HeapType, std::unordered_set<HeapType>> isDependencyOf;
   // To calculate the depth of dependencies, we'll do a flow analysis, visiting
-  // each signature as we find out new things about it.
-  std::set<Signature> toVisit;
+  // each type as we find out new things about it.
+  std::set<HeapType> toVisit;
   for (auto& pair : counts) {
-    auto sig = pair.first;
-    depthOfDependencies[sig] = 0;
-    toVisit.insert(sig);
-    for (Type type : {sig.params, sig.results}) {
-      for (auto element : type) {
-        if (element.isRef()) {
-          auto heapType = element.getHeapType();
-          if (heapType.isSignature()) {
-            isDependencyOf[heapType.getSignature()].insert(sig);
-          }
-        }
+    auto type = pair.first;
+    depthOfDependencies[type] = 0;
+    toVisit.insert(type);
+    walkChildren(type, [&](Type type) {
+      if (counts.isRelevant(type)) {
+        isDependencyOf[type.getHeapType()].insert(type);
       }
-    }
+    });
   }
   while (!toVisit.empty()) {
     auto iter = toVisit.begin();
-    auto sig = *iter;
+    auto type = *iter;
     toVisit.erase(iter);
     // Anything that depends on this has a depth of dependencies equal to this
-    // signature's, plus this signature itself.
-    auto newDepth = depthOfDependencies[sig] + 1;
+    // type's, plus this type itself.
+    auto newDepth = depthOfDependencies[type] + 1;
     if (newDepth > counts.size()) {
-      Fatal() << "Cyclic signatures detected, cannot sort them.";
+      Fatal() << "Cyclic types detected, cannot sort them.";
     }
-    for (auto& other : isDependencyOf[sig]) {
+    for (auto& other : isDependencyOf[type]) {
       if (depthOfDependencies[other] < newDepth) {
         // We found something new to propagate.
         depthOfDependencies[other] = newDepth;
@@ -541,9 +552,9 @@ collectSignatures(Module& wasm,
       }
     }
   }
-  // Sort by frequency and then simplicity, and also keeping every signature
+  // Sort by frequency and then simplicity, and also keeping every type
   // before things that depend on it.
-  std::vector<std::pair<Signature, size_t>> sorted(counts.begin(),
+  std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(),
                                                    counts.end());
   std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
     if (depthOfDependencies[a.first] != depthOfDependencies[b.first]) {
@@ -555,8 +566,8 @@ collectSignatures(Module& wasm,
     return a.first < b.first;
   });
   for (Index i = 0; i < sorted.size(); ++i) {
-    sigIndices[sorted[i].first] = i;
-    signatures.push_back(sorted[i].first);
+    typeIndices[sorted[i].first] = i;
+    types.push_back(sorted[i].first);
   }
 }
 
