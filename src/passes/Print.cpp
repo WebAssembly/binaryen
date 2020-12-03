@@ -2348,7 +2348,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     WASM_UNREACHABLE("TODO (gc): array.len");
   }
   // Module-level visitors
-  void handleSignature(Signature curr, Name name=Name()) {
+  void handleSignature(Signature curr, Name name = Name()) {
     o << "(func";
     if (name.is()) {
       o << " $" << name;
