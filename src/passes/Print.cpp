@@ -141,6 +141,11 @@ struct TypeName {
   TypeName(Type type) : type(type) {}
 };
 
+struct HeapTypeName {
+  HeapType type;
+  HeapTypeName(HeapType type) : type(type) {}
+};
+
 std::ostream& operator<<(std::ostream& os, TypeName typeName) {
   auto type = typeName.type;
   if (type.isRef() && !type.isBasic()) {
@@ -158,6 +163,15 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
     return os;
   }
   return os << SExprType(typeName.type);
+}
+
+std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
+  auto type = typeName.type;
+  if (type.isSignature()) {
+    os << SigName(type.getSignature());
+  } else {
+    os << type;
+  }
 }
 
 } // anonymous namespace
@@ -2386,7 +2400,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
   void handleArray(const Array& curr) {
     o << "(array ";
-    handleField(curr.element);
+    handleFieldBody(curr.element);
     o << ')';
   }
   void handleStruct(const Struct& curr) {
@@ -2394,7 +2408,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     auto sep = "";
     for (auto field : curr.fields) {
       o << sep << "(field ";
-      handleField(field);
+      handleFieldBody(field);
       o << ')';
       sep = " ";
     }
@@ -2404,9 +2418,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (type.isSignature()) {
       handleSignature(type.getSignature());
     } else if (type.isArray()) {
-      handleArray(type.getArray(), name);
+      handleArray(type.getArray());
     } else if (type.isStruct()) {
-      handleStruct(type.getStruct(), name);
+      handleStruct(type.getStruct());
     } else {
       WASM_UNREACHABLE("bad heap type");
     }
@@ -2489,7 +2503,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     lastPrintedLocation = {0, 0, 0};
     o << '(';
     emitImportHeader(curr);
-    handleSignature(curr->sig, &curr->name);
+    handleSignature(curr->sig, curr->name);
     o << ')';
     o << maybeNewLine;
   }
@@ -2745,7 +2759,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
-      o << TypeName(type) << ' ';
+      o << HeapTypeName(type) << ' ';
       handleHeapType(type);
       o << ")" << maybeNewLine;
     }
