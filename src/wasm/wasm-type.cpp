@@ -756,17 +756,13 @@ HeapType& HeapType::operator=(const HeapType& other) {
 }
 
 bool Field::operator<(const Field& other) const {
-  if (type != other.type) {
-    return type < other.type;
-  }
   if (mutable_ != other.mutable_) {
-    return mutable < other.mutable;
+    return mutable_ < other.mutable_;
   }
   if (type == Type::i32) {
     return packedType < other.packedType;
   }
-  // They are equal, so they are not <.
-  return false;
+  return type < other.type;
 }
 
 namespace {
