@@ -517,12 +517,10 @@ FeatureSet Type::getFeatures() const {
 // return for the basic types, so that we don't create a temporary copy on each
 // call.
 namespace statics {
-
 static HeapType funcHeapType(HeapType::FuncKind),
   externHeapType(HeapType::ExternKind), exnHeapType(HeapType::ExnKind),
   anyHeapType(HeapType::AnyKind), eqHeapType(HeapType::EqKind),
   i31HeapType(HeapType::I31Kind);
-
 }
 
 const HeapType& Type::getHeapType() const {
