@@ -756,11 +756,8 @@ HeapType& HeapType::operator=(const HeapType& other) {
 }
 
 bool Field::operator<(const Field& other) const {
-  if (type < other.type) {
-    return true;
-  }
-  if (other.type < type) {
-    return false;
+  if (type != other.type) {
+    return type < other.type;
   }
   if (mutable_ < other.mutable_) {
     return true;
