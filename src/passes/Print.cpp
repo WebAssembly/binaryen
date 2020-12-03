@@ -2348,10 +2348,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     WASM_UNREACHABLE("TODO (gc): array.len");
   }
   // Module-level visitors
-  void handleSignature(Signature curr, Name* funcName = nullptr) {
+  void handleSignature(Signature curr, Name name=Name()) {
     o << "(func";
-    if (funcName) {
-      o << " $" << *funcName;
+    if (name.is()) {
+      o << " $" << name;
     }
     if (curr.params.size() > 0) {
       o << maybeSpace;
@@ -2374,6 +2374,42 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << ')';
     }
     o << ")";
+  }
+  void handleFieldBody(const Field& field) {
+    if (field.mutable_) {
+      o << "(mut ";
+    }
+    o << TypeName(field.type);
+    if (field.mutable_) {
+      o << ')';
+    }
+  }
+  void handleArray(const Array& curr) {
+    o << "(array ";
+    handleField(curr.element);
+    o << ')';
+  }
+  void handleStruct(const Struct& curr) {
+    o << "(struct";
+    auto sep = "";
+    for (auto field : curr.fields) {
+      o << sep << "(field ";
+      handleField(field);
+      o << ')';
+      sep = " ";
+    }
+    o << ')';
+  }
+  void handleHeapType(HeapType type) {
+    if (type.isSignature()) {
+      handleSignature(type.getSignature());
+    } else if (type.isArray()) {
+      handleArray(type.getArray(), name);
+    } else if (type.isStruct()) {
+      handleStruct(type.getStruct(), name);
+    } else {
+      WASM_UNREACHABLE("bad heap type");
+    }
   }
   void visitExport(Export* curr) {
     o << '(';
@@ -2710,7 +2746,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMedium(o, "type") << ' ';
       o << TypeName(type) << ' ';
-      handleType(type);
+      handleHeapType(type);
       o << ")" << maybeNewLine;
     }
     ModuleUtils::iterImportedMemories(
