@@ -400,14 +400,11 @@ template<typename T> struct CallGraphPropertyAnalysis {
 // indices. HeapTypes are sorted in order of decreasing frequency to minize the
 // size of their collective encoding. Both a vector mapping indices to
 // HeapTypes and a map mapping HeapTypes to indices are produced.
-inline void
-collectHeapTypes(Module& wasm,
-                 std::vector<HeapType>& types,
-                 std::unordered_map<HeapType, Index>& typeIndices) {
+inline void collectHeapTypes(Module& wasm,
+                             std::vector<HeapType>& types,
+                             std::unordered_map<HeapType, Index>& typeIndices) {
   struct Counts : public std::unordered_map<HeapType, size_t> {
-    bool isRelevant(Type type) {
-      return !type.isBasic() && type.isRef();
-    }
+    bool isRelevant(Type type) { return !type.isBasic() && type.isRef(); }
     void note(HeapType type) { (*this)[type]++; }
     void note(Signature sig) { note(HeapType(sig)); }
     void maybeNote(Type type) {
@@ -554,8 +551,7 @@ collectHeapTypes(Module& wasm,
   }
   // Sort by frequency and then simplicity, and also keeping every type
   // before things that depend on it.
-  std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(),
-                                                   counts.end());
+  std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
   std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
     if (depthOfDependencies[a.first] != depthOfDependencies[b.first]) {
       return depthOfDependencies[a.first] < depthOfDependencies[b.first];
