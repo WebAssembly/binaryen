@@ -111,7 +111,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // get rid of it. However, the children may have side effects.
       SmallVector<Expression*, 1> childrenWithEffects;
       for (auto* child : ChildIterator(curr)) {
-        if (EffectAnalyzer(getPassOptions(), features, child).hasSideEffects()) {
+        if (EffectAnalyzer(getPassOptions(), features, child)
+              .hasSideEffects()) {
           childrenWithEffects.push_back(child);
         }
       }
