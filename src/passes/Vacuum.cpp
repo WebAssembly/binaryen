@@ -75,11 +75,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     if (type == Type::unreachable) {
       return curr;
     }
-    if (curr->is<Block>() || curr->is<Loop>()) {
-      // Structures which may define break targets should not be modified here;
-      // remove-unused-brs will remove those.
-      return curr;
-    }
     // resultUsed only makes sense when the type is concrete
     assert(!(resultUsed && curr->type == Type::none));
     // If we actually need the result, then we must not change anything.
@@ -90,6 +85,12 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // We iterate on possible replacements.
     auto* prev = curr;
     while (1) {
+      if (curr->is<Block>() || curr->is<Loop>()) {
+        // Structures which may define break targets should not be modified
+        // here; remove-unused-brs will remove those (being careful to not
+        // remove a necessary break target).
+        return curr;
+      }
       // If a replacement changes the type, and the type matters, return the
       // previous one and stop.
       if (typeMatters && curr->type != type) {
