@@ -71,6 +71,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
     FeatureSet features = getModule()->features;
     auto type = curr->type;
+    // If the type is none, then we can never replace it with another type.
+    if (type == Type::none) {
+      typeMatters = true;
+    }
     // An unreachable node must not be changed. DCE will remove those.
     if (type == Type::unreachable) {
       return curr;
@@ -85,18 +89,18 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // We iterate on possible replacements.
     auto* prev = curr;
     while (1) {
-      if (curr->is<Block>() || curr->is<Loop>()) {
-        // Structures which may define break targets should not be modified
-        // here; remove-unused-brs will remove those (being careful to not
-        // remove a necessary break target).
-        return curr;
-      }
       // If a replacement changes the type, and the type matters, return the
       // previous one and stop.
       if (typeMatters && curr->type != type) {
         return prev;
       }
       prev = curr;
+      // Some instructions have special handling in visit*, and we should do
+      // nothing for them here.
+      if (curr->is<Drop>() || curr->is<Block>() || curr->is<If>() ||
+          curr->is<Loop>() || curr->is<Try>()) {
+        return curr;
+      }
       // Check if this expression itself has side effects, ignoring children.
       EffectAnalyzer self(getPassOptions(), features);
       self.visit(curr);
