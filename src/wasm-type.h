@@ -364,6 +364,7 @@ struct HeapType {
   HeapType(const HeapType& other);
   ~HeapType();
 
+  bool isBasic() const { return kind <= _last_basic_kind; }
   bool isSignature() const { return kind == SignatureKind; }
   Signature getSignature() const {
     assert(isSignature() && "Not a signature");

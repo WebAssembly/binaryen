@@ -157,6 +157,10 @@ std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
   };
 
   auto type = typeName.type;
+  if (type.isBasic()) {
+    os << type;
+    return os;
+  }
   os << '$';
   if (type.isSignature()) {
     auto sig = type.getSignature();
