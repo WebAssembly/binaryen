@@ -10,6 +10,9 @@
     (field (ref $struct.A))
     (field (mut (ref $struct.A)))
   ))
+  (type $struct.C (struct
+    (field $named-mut (mut f32))
+  ))
 
   (type $vector (array (mut f64)))
   (type $matrix (array (ref $vector)))
@@ -17,6 +20,7 @@
   (func "foo" (param $x (ref $struct.A)) (result (ref $struct.B))
     (local (ref null $struct.A))
     (local (ref null $struct.B))
+    (local (ref null $struct.C))
     (local (ref null $vector))
     (local (ref null $matrix))
     (unreachable)

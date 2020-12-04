@@ -113,7 +113,7 @@ std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
             auto sig = heapType.getSignature();
             os << "ref";
             if (t.isNullable()) {
-              os << "_null";
+              os << "?";
             }
             os << "[";
             auto subsep = "";

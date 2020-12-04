@@ -302,8 +302,10 @@ struct Field {
   }
 
   bool operator==(const Field& other) const {
+    // Note that the name is not checked here - it is pure metadata for printing
+    // purposes only.
     return type == other.type && packedType == other.packedType &&
-           mutable_ == other.mutable_ && name == other.name;
+           mutable_ == other.mutable_;
   }
   bool operator!=(const Field& other) const { return !(*this == other); }
   bool operator<(const Field& other) const;
