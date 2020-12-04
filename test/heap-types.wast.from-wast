@@ -1,0 +1,11 @@
+(module
+ (type ${i32_f32_f64} (struct (field i32) (field f32) (field f64)))
+ (type ${mut:i64_{i32_f32_f64}_mut:{i32_f32_f64}} (struct (field (mut i64)) (field (ref null ${i32_f32_f64})) (field (mut (ref null ${i32_f32_f64})))))
+ (type ${i32_f32_f64}_=>_{mut:i64_{i32_f32_f64}_mut:{i32_f32_f64}} (func (param (ref null ${i32_f32_f64})) (result (ref null ${mut:i64_{i32_f32_f64}_mut:{i32_f32_f64}}))))
+ (export "foo" (func $0))
+ (func $0 (param $x (ref null ${i32_f32_f64})) (result (ref null (struct (field (mut i64) (ref null (struct (field i32 f32 f64))) (mut (ref null (struct (field i32 f32 f64))))))))
+  (local $1 (ref null ${i32_f32_f64}))
+  (local $2 (ref null ${mut:i64_{i32_f32_f64}_mut:{i32_f32_f64}}))
+  (unreachable)
+ )
+)
