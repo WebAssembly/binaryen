@@ -67,7 +67,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   // and told the result does not matter, we can return the call. Note that in
   // this case the type does not matter either, as drop doesn't care, and anyhow
   // i32.eqz returns the same type as it receives. But for an expression that
-  // returns a different type, if the type matter then we cannot replace it.
+  // returns a different type, if the type matters then we cannot replace it.
   Expression* optimize(Expression* curr, bool resultUsed, bool typeMatters) {
     FeatureSet features = getModule()->features;
     auto type = curr->type;
@@ -80,7 +80,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return curr;
     }
     // resultUsed only makes sense when the type is concrete
-    assert(!(resultUsed && curr->type == Type::none));
+    assert(!resultUsed || curr->type != Type::none));
     // If we actually need the result, then we must not change anything.
     // TODO: clever things
     if (resultUsed) {
