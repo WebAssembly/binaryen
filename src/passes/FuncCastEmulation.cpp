@@ -168,8 +168,7 @@ struct FuncCastEmulation : public Pass {
     Index numParams =
       std::stoul(runner->options.getArgumentOrDefault("max-func-params", "16"));
     // we just need the one ABI function type for all indirect calls
-    Signature ABIType(Type(std::vector<Type>(numParams, Type::i64)),
-                      Type::i64);
+    Signature ABIType(Type(std::vector<Type>(numParams, Type::i64)), Type::i64);
     // Add a thunk for each function in the table, and do the call through it.
     std::unordered_map<Name, Name> funcThunks;
     for (auto& segment : module->table.segments) {
