@@ -67,6 +67,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   // If the getSbrkPtr function is implemented in the wasm, we must not
   // instrument that, as it would lead to infinite recursion of it calling
   // SAFE_HEAP_LOAD that calls it and so forth.
+  // As well as the getSbrkPtr function we also avoid instrumenting the
+  // module start function.  This is because this function is used in
+  // shared memory builds to load the passive memory segments, which in
+  // turn means that value of sbrk() is not available.
   Name getSbrkPtr;
 
   bool isFunctionParallel() override { return true; }
@@ -78,7 +82,8 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   AccessInstrumenter(Name getSbrkPtr) : getSbrkPtr(getSbrkPtr) {}
 
   void visitLoad(Load* curr) {
-    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
+    if (getFunction()->name == getModule()->start ||
+        getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
@@ -89,7 +94,8 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   }
 
   void visitStore(Store* curr) {
-    if (getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
+    if (getFunction()->name == getModule()->start ||
+        getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
     }
     Builder builder(*getModule());
