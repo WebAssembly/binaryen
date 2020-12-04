@@ -17,6 +17,8 @@
   (func "foo" (param $x (ref $struct.A)) (result (ref $struct.B))
     (local (ref null $struct.A))
     (local (ref null $struct.B))
+    (local (ref null $vector))
+    (local (ref null $matrix))
     (unreachable)
   )
 )

@@ -93,6 +93,11 @@ struct HeapTypeName {
   HeapTypeName(HeapType type) : type(type) {}
 };
 
+struct ResultTypeName {
+  Type type;
+  ResultTypeName(Type type) : type(type) {}
+};
+
 std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
   std::function<void(Type)> printType = [&](Type type) {
     if (type == Type::none) {
@@ -206,6 +211,25 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
     return os;
   }
   return os << SExprType(typeName.type);
+}
+
+std::ostream& operator<<(std::ostream& os, ResultTypeName typeName) {
+  auto type = typeName.type;
+  os << "(result ";
+  if (type.isTuple()) {
+    // Tuple types are not printed in parens, we can just emit them one after
+    // the other in the same list as the "result".
+    auto sep = "";
+    for (auto t : type) {
+      os << sep;
+      sep = " ";
+      os << TypeName(t);
+    }
+  } else {
+    os << TypeName(type);
+  }
+  os << ')';
+  return os;
 }
 
 } // anonymous namespace
@@ -2567,7 +2591,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (curr->sig.results != Type::none) {
       o << maybeSpace;
-      o << ResultType(curr->sig.results);
+      o << ResultTypeName(curr->sig.results);
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
