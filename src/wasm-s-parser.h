@@ -262,7 +262,6 @@ private:
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
-  Index getStructIndex(const HeapType& type, Element& s);
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);

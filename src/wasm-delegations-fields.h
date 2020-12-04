@@ -595,9 +595,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::StructGetId: {
     DELEGATE_START(StructGet);
-    DELEGATE_FIELD_INT(StructGet, index);
-    DELEGATE_FIELD_CHILD(StructGet, value);
-    DELEGATE_FIELD_INT(Load, signed_);
+    WASM_UNREACHABLE("TODO (gc): struct.get");
     DELEGATE_END(StructGet);
     break;
   }
