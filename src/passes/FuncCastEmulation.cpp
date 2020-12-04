@@ -130,14 +130,14 @@ struct ParallelFuncCastEmulation
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override {
-    return new ParallelFuncCastEmulation(ABIType, num_params);
+    return new ParallelFuncCastEmulation(ABIType, numParams);
   }
 
-  ParallelFuncCastEmulation(Signature ABIType, unsigned int num_params)
-    : ABIType(ABIType), num_params(num_params) {}
+  ParallelFuncCastEmulation(Signature ABIType, Index numParams)
+    : ABIType(ABIType), numParams(numParams) {}
 
   void visitCallIndirect(CallIndirect* curr) {
-    if (curr->operands.size() > num_params) {
+    if (curr->operands.size() > numParams) {
       Fatal() << "max-func-params needs to be at least "
               << curr->operands.size();
     }
@@ -145,7 +145,7 @@ struct ParallelFuncCastEmulation
       operand = toABI(operand, getModule());
     }
     // Add extra operands as needed.
-    while (curr->operands.size() < num_params) {
+    while (curr->operands.size() < numParams) {
       curr->operands.push_back(LiteralUtils::makeZero(Type::i64, *getModule()));
     }
     // Set the new types
@@ -160,15 +160,15 @@ struct ParallelFuncCastEmulation
 private:
   // The signature of a call with the right params and return
   Signature ABIType;
-  unsigned int num_params;
+  Index numParams;
 };
 
 struct FuncCastEmulation : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    unsigned int num_params =
+    Index numParams =
       std::stoul(runner->options.getArgumentOrDefault("max-func-params", "16"));
     // we just need the one ABI function type for all indirect calls
-    Signature ABIType(Type(std::vector<Type>(num_params, Type::i64)),
+    Signature ABIType(Type(std::vector<Type>(numParams, Type::i64)),
                       Type::i64);
     // Add a thunk for each function in the table, and do the call through it.
     std::unordered_map<Name, Name> funcThunks;
@@ -176,7 +176,7 @@ struct FuncCastEmulation : public Pass {
       for (auto& name : segment.data) {
         auto iter = funcThunks.find(name);
         if (iter == funcThunks.end()) {
-          auto thunk = makeThunk(name, module, num_params);
+          auto thunk = makeThunk(name, module, numParams);
           funcThunks[name] = thunk;
           name = thunk;
         } else {
@@ -185,12 +185,12 @@ struct FuncCastEmulation : public Pass {
       }
     }
     // update call_indirects
-    ParallelFuncCastEmulation(ABIType, num_params).run(runner, module);
+    ParallelFuncCastEmulation(ABIType, numParams).run(runner, module);
   }
 
 private:
   // Creates a thunk for a function, casting args and return value as needed.
-  Name makeThunk(Name name, Module* module, unsigned int num_params) {
+  Name makeThunk(Name name, Module* module, Index numParams) {
     Name thunk = std::string("byn$fpcast-emu$") + name.str;
     if (module->getFunctionOrNull(thunk)) {
       Fatal() << "FuncCastEmulation::makeThunk seems a thunk name already in "
@@ -208,7 +208,7 @@ private:
     }
     auto* call = builder.makeCall(name, callOperands, type);
     std::vector<Type> thunkParams;
-    for (Index i = 0; i < num_params; i++) {
+    for (Index i = 0; i < numParams; i++) {
       thunkParams.push_back(Type::i64);
     }
     auto thunkFunc =
