@@ -30,7 +30,6 @@
 
 namespace wasm {
 
-static const Name DYNAMICTOP_PTR_IMPORT("DYNAMICTOP_PTR");
 static const Name GET_SBRK_PTR("emscripten_get_sbrk_ptr");
 static const Name SBRK("sbrk");
 static const Name SEGFAULT_IMPORT("segfault");
@@ -124,11 +123,7 @@ struct SafeHeap : public Pass {
   void addImports(Module* module) {
     ImportInfo info(*module);
     auto indexType = module->memory.indexType;
-    // Older emscripten imports env.DYNAMICTOP_PTR.
-    // Newer emscripten imports or exports emscripten_get_sbrk_ptr().
-    if (auto* existing = info.getImportedGlobal(ENV, DYNAMICTOP_PTR_IMPORT)) {
-      dynamicTopPtr = existing->name;
-    } else if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
+    if (auto* existing = info.getImportedFunction(ENV, GET_SBRK_PTR)) {
       getSbrkPtr = existing->name;
     } else if (auto* existing = module->getExportOrNull(GET_SBRK_PTR)) {
       getSbrkPtr = existing->value;
