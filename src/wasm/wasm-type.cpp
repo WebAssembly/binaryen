@@ -405,14 +405,7 @@ bool Type::operator<(const Type& other) const {
     if (a.isNullable() != b.isNullable()) {
       return a.isNullable();
     }
-    auto aHeap = a.getHeapType();
-    auto bHeap = b.getHeapType();
-    if (aHeap.isSignature() && bHeap.isSignature()) {
-      return aHeap.getSignature() < bHeap.getSignature();
-    }
-    TODO_SINGLE_COMPOUND(a);
-    TODO_SINGLE_COMPOUND(b);
-    WASM_UNREACHABLE("unimplemented type comparison");
+    return a.getHeapType() < b.getHeapType();
   };
   return std::lexicographical_compare(
     begin(), end(), other.begin(), other.end(), comp);
@@ -738,12 +731,38 @@ bool HeapType::operator==(const HeapType& other) const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
+bool HeapType::operator<(const HeapType& other) const {
+  if (kind != other.kind) {
+    return kind < other.kind;
+  }
+  if (isSignature()) {
+    return getSignature() < other.getSignature();
+  }
+  if (isStruct()) {
+    return getStruct() < other.getStruct();
+  }
+  if (isArray()) {
+    return getArray() < other.getArray();
+  }
+  WASM_UNREACHABLE("unimplemented type comparison");
+}
+
 HeapType& HeapType::operator=(const HeapType& other) {
   if (&other != this) {
     this->~HeapType();
     new (this) auto(other);
   }
   return *this;
+}
+
+bool Field::operator<(const Field& other) const {
+  if (mutable_ != other.mutable_) {
+    return mutable_ < other.mutable_;
+  }
+  if (type == Type::i32) {
+    return packedType < other.packedType;
+  }
+  return type < other.type;
 }
 
 namespace {

@@ -1175,8 +1175,8 @@ private:
   Module* wasm;
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
-  std::unordered_map<Signature, Index> typeIndices;
-  std::vector<Signature> types;
+  std::unordered_map<HeapType, Index> typeIndices;
+  std::vector<HeapType> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;

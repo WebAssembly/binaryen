@@ -31,7 +31,7 @@ namespace wasm {
 void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
-  ModuleUtils::collectSignatures(*wasm, types, typeIndices);
+  ModuleUtils::collectHeapTypes(*wasm, types, typeIndices);
   importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
@@ -215,14 +215,19 @@ void WasmBinaryWriter::writeTypes() {
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(types.size());
   for (Index i = 0; i < types.size(); ++i) {
-    Signature& sig = types[i];
-    BYN_TRACE("write " << sig.params << " -> " << sig.results << std::endl);
-    o << S32LEB(BinaryConsts::EncodedType::Func);
-    for (auto& sigType : {sig.params, sig.results}) {
-      o << U32LEB(sigType.size());
-      for (const auto& type : sigType) {
-        writeType(type);
+    auto type = types[i];
+    BYN_TRACE("write " << type << std::endl);
+    if (type.isSignature()) {
+      o << S32LEB(BinaryConsts::EncodedType::Func);
+      auto sig = type.getSignature();
+      for (auto& sigType : {sig.params, sig.results}) {
+        o << U32LEB(sigType.size());
+        for (const auto& type : sigType) {
+          writeType(type);
+        }
       }
+    } else {
+      WASM_UNREACHABLE("TODO GC type writing");
     }
   }
   finishSection(start);
