@@ -1352,12 +1352,7 @@ class StructGet : public SpecificExpression<Expression::StructGetId> {
 public:
   StructGet(MixedArena& allocator) {}
 
-  Index index;
-  Expression* value;
-  // Packed fields have a sign.
-  bool signed_ = false;
-
-  void finalize();
+  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
 };
 
 class StructSet : public SpecificExpression<Expression::StructSetId> {
