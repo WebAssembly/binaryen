@@ -2447,6 +2447,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void handleHeapType(HeapType type) {
     if (type.isSignature()) {
       handleSignature(type.getSignature());
+    } else if (type.isArray()) {
+      handleArray(type.getArray());
+    } else if (type.isStruct()) {
+      handleStruct(type.getStruct());
     } else {
       WASM_UNREACHABLE("unsupported heap type");
     }
