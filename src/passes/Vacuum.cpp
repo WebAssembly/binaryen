@@ -80,9 +80,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return curr;
     }
     // resultUsed only makes sense when the type is concrete
-    assert(!resultUsed || curr->type != Type::none));
+    assert(!resultUsed || curr->type != Type::none);
     // If we actually need the result, then we must not change anything.
-    // TODO: clever things
+    // TODO: maybe there is something clever though?
     if (resultUsed) {
       return curr;
     }
