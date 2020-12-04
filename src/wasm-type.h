@@ -17,6 +17,7 @@
 #ifndef wasm_wasm_type_h
 #define wasm_wasm_type_h
 
+#include "support/name.h"
 #include "wasm-features.h"
 #include <ostream>
 #include <vector>
@@ -115,6 +116,8 @@ public:
   bool isException() const;
   bool isNullable() const;
   bool isRtt() const;
+  bool isStruct() const;
+  bool isArray() const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
@@ -285,11 +288,12 @@ struct Field {
     i16,
   } packedType; // applicable iff type=i32
   bool mutable_;
+  Name name;
 
-  Field(Type type, bool mutable_ = false)
-    : type(type), packedType(not_packed), mutable_(mutable_) {}
-  Field(PackedType packedType, bool mutable_ = false)
-    : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
+  Field(Type type, bool mutable_, Name name = Name())
+    : type(type), packedType(not_packed), mutable_(mutable_), name(name) {}
+  Field(PackedType packedType, bool mutable_, Name name = Name())
+    : type(Type::i32), packedType(packedType), mutable_(mutable_), name(name) {}
 
   constexpr bool isPacked() const {
     if (packedType != not_packed) {
@@ -301,7 +305,7 @@ struct Field {
 
   bool operator==(const Field& other) const {
     return type == other.type && packedType == other.packedType &&
-           mutable_ == other.mutable_;
+           mutable_ == other.mutable_ && name == other.name;
   }
   bool operator!=(const Field& other) const { return !(*this == other); }
   bool operator<(const Field& other) const;

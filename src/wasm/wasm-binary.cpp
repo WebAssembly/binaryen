@@ -226,6 +226,16 @@ void WasmBinaryWriter::writeTypes() {
           writeType(type);
         }
       }
+    } else if (type.isStruct()) {
+      o << S32LEB(BinaryConsts::EncodedType::Struct);
+      auto fields = type.getStruct().fields;
+      o << U32LEB(fields.size());
+      for (const auto& field : fields) {
+        writeField(field);
+      }
+    } else if (type.isArray()) {
+      o << S32LEB(BinaryConsts::EncodedType::Array);
+      writeField(type.getArray().element);
     } else {
       WASM_UNREACHABLE("TODO GC type writing");
     }
@@ -495,7 +505,7 @@ uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) const {
+uint32_t WasmBinaryWriter::getTypeIndex(HeapType sig) const {
   auto it = typeIndices.find(sig);
 #ifndef NDEBUG
   if (it == typeIndices.end()) {
@@ -964,17 +974,13 @@ void WasmBinaryWriter::finishUp() {
 
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
-    auto heapType = type.getHeapType();
-    // TODO: fully handle non-signature reference types (GC), and in reading
-    if (heapType.isSignature()) {
-      if (type.isNullable()) {
-        o << S32LEB(BinaryConsts::EncodedType::nullable);
-      } else {
-        o << S32LEB(BinaryConsts::EncodedType::nonnullable);
-      }
-      writeHeapType(heapType);
-      return;
+    if (type.isNullable()) {
+      o << S32LEB(BinaryConsts::EncodedType::nullable);
+    } else {
+      o << S32LEB(BinaryConsts::EncodedType::nonnullable);
     }
+    writeHeapType(type.getHeapType());
+    return;
   }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);
@@ -1023,9 +1029,8 @@ void WasmBinaryWriter::writeType(Type type) {
 }
 
 void WasmBinaryWriter::writeHeapType(HeapType type) {
-  if (type.isSignature()) {
-    auto sig = type.getSignature();
-    o << S32LEB(getTypeIndex(sig));
+  if (type.isSignature() || type.isStruct() || type.isArray()) {
+    o << S32LEB(getTypeIndex(type));
     return;
   }
   int ret = 0;
@@ -1054,6 +1059,11 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       WASM_UNREACHABLE("TODO: compound GC types");
   }
   o << S32LEB(ret); // TODO: Actually encoded as s33
+}
+
+void WasmBinaryWriter::writeField(const Field& field) {
+  writeType(field.type);
+  o << U32LEB(field.mutable_);
 }
 
 // reader
@@ -1397,6 +1407,12 @@ HeapType WasmBinaryBuilder::getHeapType() {
   WASM_UNREACHABLE("unexpected type");
 }
 
+Field WasmBinaryBuilder::getField() {
+  auto type = getConcreteType();
+  auto mutable_ = getU32LEB();
+  return Field(type, mutable_);
+}
+
 Type WasmBinaryBuilder::getConcreteType() {
   auto type = getType();
   if (!type.isConcrete()) {
@@ -1493,23 +1509,34 @@ void WasmBinaryBuilder::readTypes() {
   BYN_TRACE("num: " << numTypes << std::endl);
   for (size_t i = 0; i < numTypes; i++) {
     BYN_TRACE("read one\n");
-    std::vector<Type> params;
-    std::vector<Type> results;
     auto form = getS32LEB();
-    if (form != BinaryConsts::EncodedType::Func) {
-      throwError("bad signature form " + std::to_string(form));
+    if (form == BinaryConsts::EncodedType::Func) {
+      std::vector<Type> params;
+      std::vector<Type> results;
+      size_t numParams = getU32LEB();
+      BYN_TRACE("num params: " << numParams << std::endl);
+      for (size_t j = 0; j < numParams; j++) {
+        params.push_back(getConcreteType());
+      }
+      auto numResults = getU32LEB();
+      BYN_TRACE("num results: " << numResults << std::endl);
+      for (size_t j = 0; j < numResults; j++) {
+        results.push_back(getConcreteType());
+      }
+      types.emplace_back(Signature(Type(params), Type(results)));
+    } else if (form == BinaryConsts::EncodedType::Struct) {
+      FieldList fields;
+      size_t numFields = getU32LEB();
+      BYN_TRACE("num fields: " << numFields << std::endl);
+      for (size_t j = 0; j < numFields; j++) {
+        fields.push_back(getField());
+      }
+      types.emplace_back(Struct(fields));
+    } else if (form == BinaryConsts::EncodedType::Array) {
+      types.emplace_back(Array(getField()));
+    } else {
+      throwError("bad type form " + std::to_string(form));
     }
-    size_t numParams = getU32LEB();
-    BYN_TRACE("num params: " << numParams << std::endl);
-    for (size_t j = 0; j < numParams; j++) {
-      params.push_back(getConcreteType());
-    }
-    auto numResults = getU32LEB();
-    BYN_TRACE("num results: " << numResults << std::endl);
-    for (size_t j = 0; j < numResults; j++) {
-      results.push_back(getConcreteType());
-    }
-    types.emplace_back(Signature(Type(params), Type(results)));
   }
 }
 

@@ -1402,7 +1402,11 @@ public:
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
-    WASM_UNREACHABLE("TODO (gc): struct.get");
+    Flow flow = this->visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    return flow.values[curr->index];
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");

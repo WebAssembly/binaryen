@@ -80,13 +80,20 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   return o;
 }
 
-// Wrapper for printing signature names
-struct SigName {
-  Signature sig;
-  SigName(Signature sig) : sig(sig) {}
+// Wrapper for printing a type when we try to print the type name as much as
+// possible. For example, for a signature we will print the signature's name,
+// not its contents.
+struct TypeName {
+  Type type;
+  TypeName(Type type) : type(type) {}
 };
 
-std::ostream& operator<<(std::ostream& os, SigName sigName) {
+struct HeapTypeName {
+  HeapType type;
+  HeapTypeName(HeapType type) : type(type) {}
+};
+
+std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
   std::function<void(Type)> printType = [&](Type type) {
     if (type == Type::none) {
       os << "none";
@@ -119,6 +126,29 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
             }
             os << "]";
             continue;
+          } else if (heapType.isStruct()) {
+            auto struct_ = heapType.getStruct();
+            os << "{";
+            auto sep = "";
+            for (auto& field : struct_.fields) {
+              os << sep;
+              sep = "_";
+              if (field.mutable_) {
+                os << "mut:";
+              }
+              printType(field.type);
+            }
+            os << "}";
+            continue;
+          } else if (heapType.isArray()) {
+            os << "[";
+            auto element = heapType.getArray().element;
+            if (element.mutable_) {
+              os << "mut:";
+            }
+            printType(element.type);
+            os << "]";
+            continue;
           }
         }
         os << t;
@@ -126,25 +156,39 @@ std::ostream& operator<<(std::ostream& os, SigName sigName) {
     }
   };
 
+  auto type = typeName.type;
   os << '$';
-  printType(sigName.sig.params);
-  os << "_=>_";
-  printType(sigName.sig.results);
+  if (type.isSignature()) {
+    auto sig = type.getSignature();
+    printType(sig.params);
+    os << "_=>_";
+    printType(sig.results);
+  } else if (type.isStruct()) {
+    auto struct_ = type.getStruct();
+    os << "{";
+    auto sep = "";
+    for (auto& field : struct_.fields) {
+      os << sep;
+      sep = "_";
+      if (field.mutable_) {
+        os << "mut:";
+      }
+      printType(field.type);
+    }
+    os << "}";
+  } else if (type.isArray()) {
+    os << "[";
+    auto element = type.getArray().element;
+    if (element.mutable_) {
+      os << "mut:";
+    }
+    printType(element.type);
+    os << "]";
+  } else {
+    WASM_UNREACHABLE("bad heap type");
+  }
   return os;
 }
-
-// Wrapper for printing a type when we try to print the type name as much as
-// possible. For example, for a signature we will print the signature's name,
-// not its contents.
-struct TypeName {
-  Type type;
-  TypeName(Type type) : type(type) {}
-};
-
-struct HeapTypeName {
-  HeapType type;
-  HeapTypeName(HeapType type) : type(type) {}
-};
 
 std::ostream& operator<<(std::ostream& os, TypeName typeName) {
   auto type = typeName.type;
@@ -153,26 +197,11 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
     if (type.isNullable()) {
       os << "null ";
     }
-    auto heapType = type.getHeapType();
-    if (heapType.isSignature()) {
-      os << SigName(heapType.getSignature());
-    } else {
-      os << heapType;
-    }
+    os << HeapTypeName(type.getHeapType());
     os << ')';
     return os;
   }
   return os << SExprType(typeName.type);
-}
-
-std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
-  auto type = typeName.type;
-  if (type.isSignature()) {
-    os << SigName(type.getSignature());
-  } else {
-    os << type;
-  }
-  return os;
 }
 
 } // anonymous namespace
@@ -250,7 +279,7 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "call_indirect (type ");
     }
-    o << SigName(curr->sig) << ')';
+    o << HeapTypeName(curr->sig) << ')';
   }
   void visitLocalGet(LocalGet* curr) {
     printMedium(o, "local.get ");
@@ -2389,6 +2418,31 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << ')';
     }
     o << ")";
+  }
+  void handleFieldBody(const Field& field) {
+    if (field.mutable_) {
+      o << "(mut ";
+    }
+    o << TypeName(field.type);
+    if (field.mutable_) {
+      o << ')';
+    }
+  }
+  void handleArray(const Array& curr) {
+    o << "(array ";
+    handleFieldBody(curr.element);
+    o << ')';
+  }
+  void handleStruct(const Struct& curr) {
+    o << "(struct ";
+    auto sep = "";
+    for (auto field : curr.fields) {
+      o << sep << "(field ";
+      handleFieldBody(field);
+      o << ')';
+      sep = " ";
+    }
+    o << ')';
   }
   void handleHeapType(HeapType type) {
     if (type.isSignature()) {

@@ -186,6 +186,7 @@ size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
   auto digest = wasm::hash(field.type);
   wasm::rehash(digest, field.packedType);
   wasm::rehash(digest, field.mutable_);
+  wasm::rehash(digest, field.name);
   return digest;
 }
 
@@ -389,6 +390,10 @@ bool Type::isRtt() const {
     return getTypeInfo(*this)->isRtt();
   }
 }
+
+bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
+
+bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
 
 bool Type::operator<(const Type& other) const {
   auto comp = [](const Type& a, const Type& b) {

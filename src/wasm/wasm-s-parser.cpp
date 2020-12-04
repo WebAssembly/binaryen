@@ -23,6 +23,7 @@
 #include "ir/branch-utils.h"
 #include "shared-constants.h"
 #include "wasm-binary.h"
+#include "wasm-builder.h"
 
 #define abort_on(str)                                                          \
   { throw ParseException(std::string("abort_on ") + str); }
@@ -48,6 +49,8 @@ int unhex(char c) {
 
 namespace wasm {
 
+static Name STRUCT("struct"), FIELD("field"), ARRAY("array");
+
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
 static void
@@ -59,6 +62,10 @@ checkAddress(Address a, const char* errorText, const Element* errorElem) {
 
 static bool elementStartsWith(Element& s, IString str) {
   return s.isList() && s.size() > 0 && s[0]->isStr() && s[0]->str() == str;
+}
+
+static bool elementStartsWith(Element* s, IString str) {
+  return elementStartsWith(*s, str);
 }
 
 Element::List& Element::list() {
@@ -908,7 +915,7 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
   }
   auto& list = s.list();
   auto size = list.size();
-  if (size > 0 && elementStartsWith(s, REF)) {
+  if (elementStartsWith(s, REF)) {
     // It's a reference. It should be in the form
     //   (ref $name)
     // or
@@ -2129,13 +2136,6 @@ Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeStructGet(Element& s) {
-  auto ret = allocator.alloc<StructGet>();
-  WASM_UNREACHABLE("TODO (gc): struct.get");
-  ret->finalize();
-  return ret;
-}
-
 Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
   auto ret = allocator.alloc<StructGet>();
   WASM_UNREACHABLE("TODO (gc): struct.get_s/u");
@@ -2789,6 +2789,44 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
       }
     }
     return Signature(Type(params), Type(results));
+  }
+  // It's a struct or an array.
+  auto parseField = [&](Element* t) {
+    bool mutable_ = false;
+    if (t->isStr()) {
+      // t is a simple string name like "i32"
+      return Field(elementToType(*t), mutable_);
+    }
+    // t is a tuple, containing either
+    //   TYPE
+    // or
+    //   (field TYPE)
+    // or
+    //   (field $name TYPE)
+    Name name;
+    if (elementStartsWith(t, FIELD)) {
+      if (t->size() == 3) {
+        name = (*t)[1]->str();
+      }
+      t = (*t)[t->size() - 1];
+    }
+    // The element may also be (mut (..)).
+    if (elementStartsWith(t, MUT)) {
+      mutable_ = true;
+      t = (*t)[1];
+    }
+    // Otherwise it's an arbitrary type.
+    return Field(elementToType(*t), mutable_, name);
+  };
+  if (elementStartsWith(s, STRUCT)) {
+    FieldList fields;
+    for (size_t k = 1; k < s.size(); k++) {
+      fields.emplace_back(parseField(s[k]));
+    }
+    return Struct(fields);
+  }
+  if (elementStartsWith(s, ARRAY)) {
+    return Array(parseField(s[1]));
   }
   throw ParseException("invalid heap type", s.line, s.col);
 }
