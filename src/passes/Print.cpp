@@ -204,16 +204,6 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
   return os << SExprType(typeName.type);
 }
 
-std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
-  auto type = typeName.type;
-  if (type.isSignature()) {
-    os << SigName(type.getSignature());
-  } else {
-    os << type;
-  }
-  return os;
-}
-
 } // anonymous namespace
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
