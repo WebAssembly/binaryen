@@ -1219,8 +1219,8 @@ int main(int argc, const char* argv[]) {
                "(read-written) binary\n";
   {
     // read and write it
-    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input +
-               " -o " + test;
+    auto cmd =
+      Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test;
     if (!binary) {
       cmd += " -S --all-features";
     } else {
