@@ -355,7 +355,9 @@ enum EncodedType {
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
-  Func = -0x20, // 0x60
+  Func = -0x20,   // 0x60
+  Struct = -0x21, // 0x5f
+  Array = -0x22,  // 0x5e
   // block_type
   Empty = -0x40 // 0x40
 };
@@ -1125,7 +1127,7 @@ public:
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getEventIndex(Name name) const;
-  uint32_t getTypeIndex(Signature sig) const;
+  uint32_t getTypeIndex(HeapType type) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1170,6 +1172,7 @@ public:
 
   void writeType(Type type);
   void writeHeapType(HeapType type);
+  void writeField(const Field& field);
 
 private:
   Module* wasm;
@@ -1251,6 +1254,7 @@ public:
   uint64_t getUPtrLEB();
   Type getType();
   HeapType getHeapType();
+  Field getField();
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);

@@ -80,59 +80,6 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
   return o;
 }
 
-// Wrapper for printing signature names
-struct SigName {
-  Signature sig;
-  SigName(Signature sig) : sig(sig) {}
-};
-
-std::ostream& operator<<(std::ostream& os, SigName sigName) {
-  std::function<void(Type)> printType = [&](Type type) {
-    if (type == Type::none) {
-      os << "none";
-    } else {
-      auto sep = "";
-      for (const auto& t : type) {
-        os << sep;
-        sep = "_";
-        if (t.isRef()) {
-          auto heapType = t.getHeapType();
-          if (heapType.isSignature()) {
-            auto sig = heapType.getSignature();
-            os << "ref";
-            if (t.isNullable()) {
-              os << "_null";
-            }
-            os << "[";
-            auto subsep = "";
-            for (auto s : sig.params) {
-              os << subsep;
-              subsep = "_";
-              printType(s);
-            }
-            os << "_->_";
-            subsep = "";
-            for (auto s : sig.results) {
-              os << subsep;
-              subsep = "_";
-              printType(s);
-            }
-            os << "]";
-            continue;
-          }
-        }
-        os << t;
-      }
-    }
-  };
-
-  os << '$';
-  printType(sigName.sig.params);
-  os << "_=>_";
-  printType(sigName.sig.results);
-  return os;
-}
-
 // Wrapper for printing a type when we try to print the type name as much as
 // possible. For example, for a signature we will print the signature's name,
 // not its contents.
@@ -141,10 +88,81 @@ struct TypeName {
   TypeName(Type type) : type(type) {}
 };
 
-struct HeapTypeName {
-  HeapType type;
-  HeapTypeName(HeapType type) : type(type) {}
+struct ResultTypeName {
+  Type type;
+  ResultTypeName(Type type) : type(type) {}
 };
+
+static void
+printHeapTypeName(std::ostream& os, HeapType type, bool first = true);
+
+static void printTypeName(std::ostream& os, Type type) {
+  if (type.isBasic()) {
+    os << type;
+    return;
+  }
+  if (type.isTuple()) {
+    auto sep = "";
+    for (auto t : type) {
+      os << sep;
+      sep = "_";
+      printTypeName(os, t);
+    }
+  } else if (type.isRef()) {
+    os << "ref";
+    if (type.isNullable()) {
+      os << "?";
+    }
+    os << "|";
+    printHeapTypeName(os, type.getHeapType(), false);
+    os << "|";
+  } else {
+    WASM_UNREACHABLE("unsupported print type");
+  }
+}
+
+static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
+  if (type.isBasic()) {
+    os << type;
+    return;
+  }
+  if (first) {
+    os << '$';
+  }
+  if (type.isSignature()) {
+    auto sig = type.getSignature();
+    printTypeName(os, sig.params);
+    if (first) {
+      os << "_=>_";
+    } else {
+      os << "_->_";
+    }
+    printTypeName(os, sig.results);
+  } else if (type.isStruct()) {
+    auto struct_ = type.getStruct();
+    os << "{";
+    auto sep = "";
+    for (auto& field : struct_.fields) {
+      os << sep;
+      sep = "_";
+      if (field.mutable_) {
+        os << "mut:";
+      }
+      printTypeName(os, field.type);
+    }
+    os << "}";
+  } else if (type.isArray()) {
+    os << "[";
+    auto element = type.getArray().element;
+    if (element.mutable_) {
+      os << "mut:";
+    }
+    printTypeName(os, element.type);
+    os << "]";
+  } else {
+    os << type;
+  }
+}
 
 std::ostream& operator<<(std::ostream& os, TypeName typeName) {
   auto type = typeName.type;
@@ -153,25 +171,29 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
     if (type.isNullable()) {
       os << "null ";
     }
-    auto heapType = type.getHeapType();
-    if (heapType.isSignature()) {
-      os << SigName(heapType.getSignature());
-    } else {
-      os << heapType;
-    }
+    printHeapTypeName(os, type.getHeapType());
     os << ')';
     return os;
   }
   return os << SExprType(typeName.type);
 }
 
-std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
+std::ostream& operator<<(std::ostream& os, ResultTypeName typeName) {
   auto type = typeName.type;
-  if (type.isSignature()) {
-    os << SigName(type.getSignature());
+  os << "(result ";
+  if (type.isTuple()) {
+    // Tuple types are not printed in parens, we can just emit them one after
+    // the other in the same list as the "result".
+    auto sep = "";
+    for (auto t : type) {
+      os << sep;
+      sep = " ";
+      os << TypeName(t);
+    }
   } else {
-    os << type;
+    os << TypeName(type);
   }
+  os << ')';
   return os;
 }
 
@@ -250,7 +272,8 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "call_indirect (type ");
     }
-    o << SigName(curr->sig) << ')';
+    printHeapTypeName(o, curr->sig);
+    o << ')';
   }
   void visitLocalGet(LocalGet* curr) {
     printMedium(o, "local.get ");
@@ -2390,11 +2413,40 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     o << ")";
   }
+  void handleFieldBody(const Field& field) {
+    if (field.mutable_) {
+      o << "(mut ";
+    }
+    o << TypeName(field.type);
+    if (field.mutable_) {
+      o << ')';
+    }
+  }
+  void handleArray(const Array& curr) {
+    o << "(array ";
+    handleFieldBody(curr.element);
+    o << ')';
+  }
+  void handleStruct(const Struct& curr) {
+    o << "(struct ";
+    auto sep = "";
+    for (auto field : curr.fields) {
+      o << sep << "(field ";
+      handleFieldBody(field);
+      o << ')';
+      sep = " ";
+    }
+    o << ')';
+  }
   void handleHeapType(HeapType type) {
     if (type.isSignature()) {
       handleSignature(type.getSignature());
+    } else if (type.isArray()) {
+      handleArray(type.getArray());
+    } else if (type.isStruct()) {
+      handleStruct(type.getStruct());
     } else {
-      WASM_UNREACHABLE("unsupported heap type");
+      o << type;
     }
   }
   void visitExport(Export* curr) {
@@ -2505,7 +2557,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (curr->sig.results != Type::none) {
       o << maybeSpace;
-      o << ResultType(curr->sig.results);
+      o << ResultTypeName(curr->sig.results);
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
@@ -2731,7 +2783,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
-      o << HeapTypeName(type) << ' ';
+      printHeapTypeName(o, type);
+      o << ' ';
       handleHeapType(type);
       o << ")" << maybeNewLine;
     }
