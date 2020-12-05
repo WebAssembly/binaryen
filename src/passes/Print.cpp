@@ -113,9 +113,9 @@ static void printTypeName(std::ostream& os, Type type) {
     if (type.isNullable()) {
       os << "?";
     }
-    os << "{";
+    os << "|";
     printHeapTypeName(os, type.getHeapType(), false);
-    os << "}";
+    os << "|";
   } else {
     WASM_UNREACHABLE("unsupported print type");
   }
