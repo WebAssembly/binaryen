@@ -871,32 +871,32 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
                                                   bool prefix) {
   if (str[0] == 'a') {
     if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
-      return HeapType::AnyKind;
+      return HeapType::any;
     }
   }
   if (str[0] == 'e') {
     if (str[1] == 'q' && (prefix || str[2] == 0)) {
-      return HeapType::EqKind;
+      return HeapType::eq;
     }
     if (str[1] == 'x') {
       if (str[2] == 'n' && (prefix || str[3] == 0)) {
-        return HeapType::ExnKind;
+        return HeapType::exn;
       }
       if (str[2] == 't' && str[3] == 'e' && str[4] == 'r' && str[5] == 'n' &&
           (prefix || str[6] == 0)) {
-        return HeapType::ExternKind;
+        return HeapType::ext;
       }
     }
   }
   if (str[0] == 'i') {
     if (str[1] == '3' && str[2] == '1' && (prefix || str[3] == 0)) {
-      return HeapType::I31Kind;
+      return HeapType::i31;
     }
   }
   if (str[0] == 'f') {
     if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
         (prefix || str[4] == 0)) {
-      return HeapType::FuncKind;
+      return HeapType::func;
     }
   }
   throw ParseException(std::string("invalid wasm heap type: ") + str);

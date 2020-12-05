@@ -1029,29 +1029,29 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     return;
   }
   int ret = 0;
-  switch (type.kind) {
-    case HeapType::FuncKind:
-      ret = BinaryConsts::EncodedHeapType::func;
-      break;
-    case HeapType::ExternKind:
-      ret = BinaryConsts::EncodedHeapType::extern_;
-      break;
-    case HeapType::ExnKind:
-      ret = BinaryConsts::EncodedHeapType::exn;
-      break;
-    case HeapType::AnyKind:
-      ret = BinaryConsts::EncodedHeapType::any;
-      break;
-    case HeapType::EqKind:
-      ret = BinaryConsts::EncodedHeapType::eq;
-      break;
-    case HeapType::I31Kind:
-      ret = BinaryConsts::EncodedHeapType::i31;
-      break;
-    case HeapType::SignatureKind:
-    case HeapType::StructKind:
-    case HeapType::ArrayKind:
-      WASM_UNREACHABLE("TODO: compound GC types");
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case HeapType::func:
+        ret = BinaryConsts::EncodedHeapType::func;
+        break;
+      case HeapType::ext:
+        ret = BinaryConsts::EncodedHeapType::extern_;
+        break;
+      case HeapType::exn:
+        ret = BinaryConsts::EncodedHeapType::exn;
+        break;
+      case HeapType::any:
+        ret = BinaryConsts::EncodedHeapType::any;
+        break;
+      case HeapType::eq:
+        ret = BinaryConsts::EncodedHeapType::eq;
+        break;
+      case HeapType::i31:
+        ret = BinaryConsts::EncodedHeapType::i31;
+        break;
+    }
+  } else {
+    WASM_UNREACHABLE("TODO: compound GC types");
   }
   o << S32LEB(ret); // TODO: Actually encoded as s33
 }
@@ -1380,17 +1380,17 @@ HeapType WasmBinaryBuilder::getHeapType() {
   }
   switch (type) {
     case BinaryConsts::EncodedHeapType::func:
-      return HeapType::FuncKind;
+      return HeapType::func;
     case BinaryConsts::EncodedHeapType::extern_:
-      return HeapType::ExternKind;
+      return HeapType::ext;
     case BinaryConsts::EncodedHeapType::exn:
-      return HeapType::ExnKind;
+      return HeapType::exn;
     case BinaryConsts::EncodedHeapType::any:
-      return HeapType::AnyKind;
+      return HeapType::any;
     case BinaryConsts::EncodedHeapType::eq:
-      return HeapType::EqKind;
+      return HeapType::eq;
     case BinaryConsts::EncodedHeapType::i31:
-      return HeapType::I31Kind;
+      return HeapType::i31;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
