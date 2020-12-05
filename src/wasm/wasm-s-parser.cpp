@@ -49,7 +49,8 @@ int unhex(char c) {
 
 namespace wasm {
 
-static Name STRUCT("struct"), FIELD("field"), ARRAY("array");
+static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), I8("i8"),
+  I16("i16");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -1888,28 +1889,13 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
     throw ParseException("invalid heap type reference", s.line, s.col);
   }
   auto ret = allocator.alloc<RefNull>();
-  if (s[1]->isStr()) {
-    // For example, this parses
-    //  (ref.null func)
-    ret->finalize(stringToHeapType(s[1]->str()));
+  // The heap type may be just "func", that is, the whole thing is just
+  // (ref.null func), or it may be the name of a defined type, such as
+  // (ref.null $struct.FOO)
+  if (s[1]->dollared()) {
+    ret->finalize(parseHeapType(*s[1]));
   } else {
-    // To parse a heap type, create an element around it, and call that method.
-    // That is, given (func) we wrap to (ref (func)).
-    // For example, this parses
-    //  (ref.null (func (param i32)))
-    // TODO add a helper method, but this is the only user atm, and we are
-    // waiting on https://github.com/WebAssembly/function-references/issues/42
-    Element wrapper(wasm.allocator);
-    auto& list = wrapper.list();
-    list.resize(3);
-    Element ref(wasm.allocator);
-    ref.setString(REF, false, false);
-    Element null(wasm.allocator);
-    null.setString(NULL_, false, false);
-    list[0] = &ref;
-    list[1] = &null;
-    list[2] = s[1];
-    ret->finalize(elementToType(wrapper));
+    ret->finalize(stringToHeapType(s[1]->str()));
   }
   return ret;
 }
@@ -2136,11 +2122,28 @@ Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   return ret;
 }
 
+Index SExpressionWasmBuilder::getStructIndex(const HeapType& type, Element& s) {
+  if (s.dollared()) {
+    auto name = s.str();
+    auto struct_ = type.getStruct();
+    auto& fields = struct_.fields;
+    for (Index i = 0; i < fields.size(); i++) {
+      if (fields[i].name == name) {
+        return i;
+      }
+    }
+    throw ParseException("bad struct name", s.line, s.col);
+  }
+  // this is a numeric index
+  return atoi(s.c_str());
+}
+
 Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
-  auto ret = allocator.alloc<StructGet>();
-  WASM_UNREACHABLE("TODO (gc): struct.get_s/u");
-  ret->finalize();
-  return ret;
+  auto structType = parseHeapType(*s[1]);
+  auto index = getStructIndex(structType, *s[2]);
+  auto type = structType.getStruct().fields[index].type;
+  auto value = parseExpression(*s[3]);
+  return Builder(wasm).makeStructGet(index, value, type, signed_);
 }
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
@@ -2793,10 +2796,6 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
   // It's a struct or an array.
   auto parseField = [&](Element* t) {
     bool mutable_ = false;
-    if (t->isStr()) {
-      // t is a simple string name like "i32"
-      return Field(elementToType(*t), mutable_);
-    }
     // t is a list, containing either
     //   TYPE
     // or
@@ -2814,6 +2813,15 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
     if (elementStartsWith(t, MUT)) {
       mutable_ = true;
       t = (*t)[1];
+    }
+    if (t->isStr()) {
+      // t is a simple string name like "i32". It can be a normal wasm type, or
+      // one of the special types only available in fields.
+      if (*t == I8) {
+        return Field(Field::i8, mutable_, name);
+      } else if (*t == I16) {
+        return Field(Field::i16, mutable_, name);
+      }
     }
     // Otherwise it's an arbitrary type.
     return Field(elementToType(*t), mutable_, name);

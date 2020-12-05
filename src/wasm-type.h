@@ -116,6 +116,8 @@ public:
   bool isException() const;
   bool isNullable() const;
   bool isRtt() const;
+  bool isStruct() const;
+  bool isArray() const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {

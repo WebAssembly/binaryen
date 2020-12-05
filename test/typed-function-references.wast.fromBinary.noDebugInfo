@@ -50,7 +50,7 @@
   )
  )
  (func $6 (param $0 f64) (result (ref null $none_=>_eqref))
-  (ref.null (func (result eqref)))
+  (ref.null $none_=>_eqref)
  )
  (func $7
   (local $0 i32)
@@ -63,7 +63,7 @@
   (local $1 (ref null $none_=>_anyref_f32_anyref_f32))
   (local $2 i32)
   (local.set $0
-   (block $label$1 (result i32 (ref null (func (result anyref f32 anyref f32))) f64)
+   (block $label$1 (result i32 (ref null $none_=>_anyref_f32_anyref_f32) f64)
     (unreachable)
    )
   )
@@ -75,7 +75,7 @@
      )
     )
     (drop
-     (block (result (ref null (func (result anyref f32 anyref f32))))
+     (block (result (ref null $none_=>_anyref_f32_anyref_f32))
       (local.set $1
        (tuple.extract 1
         (local.get $0)

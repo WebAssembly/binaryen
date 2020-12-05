@@ -1910,7 +1910,19 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
-  WASM_UNREACHABLE("TODO (gc): struct.get");
+  const auto& heapType = curr->value->type.getHeapType();
+  const auto& field = heapType.getStruct().fields[curr->index];
+  int8_t op;
+  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+    op = BinaryConsts::StructGet;
+  } else if (curr->signed_) {
+    op = BinaryConsts::StructGetS;
+  } else {
+    op = BinaryConsts::StructGetU;
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(op);
+  parent.writeHeapType(heapType);
+  o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {

@@ -50,7 +50,7 @@
   )
  )
  (func $ref-in-sig (param $0 f64) (result (ref null $none_=>_eqref))
-  (ref.null (func (result eqref)))
+  (ref.null $none_=>_eqref)
  )
  (func $type-only-in-tuple-local
   (local $x (i32 (ref null (func (result anyref))) f64))
@@ -58,7 +58,7 @@
  )
  (func $type-only-in-tuple-block
   (drop
-   (block $block (result i32 (ref null (func (result anyref f32 anyref f32))) f64)
+   (block $block (result i32 (ref null $none_=>_anyref_f32_anyref_f32) f64)
     (unreachable)
    )
   )
