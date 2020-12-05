@@ -505,11 +505,11 @@ uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getTypeIndex(HeapType sig) const {
-  auto it = typeIndices.find(sig);
+uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
+  auto it = typeIndices.find(type);
 #ifndef NDEBUG
   if (it == typeIndices.end()) {
-    std::cout << "Missing signature: " << sig << '\n';
+    std::cout << "Missing type: " << type << '\n';
     assert(0);
   }
 #endif

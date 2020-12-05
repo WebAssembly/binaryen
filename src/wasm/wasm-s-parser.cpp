@@ -2797,7 +2797,7 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
       // t is a simple string name like "i32"
       return Field(elementToType(*t), mutable_);
     }
-    // t is a tuple, containing either
+    // t is a list, containing either
     //   TYPE
     // or
     //   (field TYPE)
