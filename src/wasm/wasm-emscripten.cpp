@@ -85,9 +85,19 @@ std::vector<Address> getSegmentOffsets(Module& wasm) {
       OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
         : offsets(offsets) {}
       void visitMemoryInit(MemoryInit* curr) {
+        // The desitination of the memory.init is either a constant
+        // or the result of an addition with __memory_base in the
+        // case of PIC code.
         auto* dest = curr->dest->dynCast<Const>();
         if (!dest) {
-          return;
+          auto* add = curr->dest->dynCast<Binary>();
+          if (!add) {
+            return;
+          }
+          dest = add->left->dynCast<Const>();
+          if (!dest) {
+            return;
+          }
         }
         auto it = offsets.find(curr->segment);
         if (it != offsets.end()) {
@@ -170,9 +180,7 @@ std::string codeForConstAddr(Module& wasm,
                              int32_t address) {
   const char* str = stringAtAddr(wasm, segmentOffsets, address);
   if (!str) {
-    // If we can't find the segment corresponding with the address, then we
-    // omitted the segment and the address points to an empty string.
-    return escape("");
+    Fatal() << "unable to find data for ASM/EM_JS const at: " << address;
   }
   return escape(str);
 }
