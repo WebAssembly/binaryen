@@ -88,90 +88,56 @@ struct TypeName {
   TypeName(Type type) : type(type) {}
 };
 
-struct HeapTypeName {
-  HeapType type;
-  HeapTypeName(HeapType type) : type(type) {}
-};
-
 struct ResultTypeName {
   Type type;
   ResultTypeName(Type type) : type(type) {}
 };
 
-std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
-  std::function<void(Type)> printType = [&](Type type) {
-    if (type == Type::none) {
-      os << "none";
-    } else {
-      auto sep = "";
-      for (const auto& t : type) {
-        os << sep;
-        sep = "_";
-        if (t.isRef()) {
-          auto heapType = t.getHeapType();
-          if (heapType.isSignature()) {
-            auto sig = heapType.getSignature();
-            os << "ref";
-            if (t.isNullable()) {
-              os << "?";
-            }
-            os << "[";
-            auto subsep = "";
-            for (auto s : sig.params) {
-              os << subsep;
-              subsep = "_";
-              printType(s);
-            }
-            os << "_->_";
-            subsep = "";
-            for (auto s : sig.results) {
-              os << subsep;
-              subsep = "_";
-              printType(s);
-            }
-            os << "]";
-            continue;
-          } else if (heapType.isStruct()) {
-            auto struct_ = heapType.getStruct();
-            os << "{";
-            auto sep = "";
-            for (auto& field : struct_.fields) {
-              os << sep;
-              sep = "_";
-              if (field.mutable_) {
-                os << "mut:";
-              }
-              printType(field.type);
-            }
-            os << "}";
-            continue;
-          } else if (heapType.isArray()) {
-            os << "[";
-            auto element = heapType.getArray().element;
-            if (element.mutable_) {
-              os << "mut:";
-            }
-            printType(element.type);
-            os << "]";
-            continue;
-          }
-        }
-        os << t;
-      }
-    }
-  };
+static void
+printHeapTypeName(std::ostream& os, HeapType type, bool first = true);
 
-  auto type = typeName.type;
+static void printTypeName(std::ostream& os, Type type) {
   if (type.isBasic()) {
     os << type;
-    return os;
+    return;
   }
-  os << '$';
+  if (type.isTuple()) {
+    auto sep = "";
+    for (auto t : type) {
+      os << sep;
+      sep = "_";
+      printTypeName(os, t);
+    }
+  } else if (type.isRef()) {
+    os << "ref";
+    if (type.isNullable()) {
+      os << "?";
+    }
+    os << "{";
+    printHeapTypeName(os, type.getHeapType(), false);
+    os << "}";
+  } else {
+    WASM_UNREACHABLE("unsupported print type");
+  }
+}
+
+static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
+  if (type.isBasic()) {
+    os << type;
+    return;
+  }
+  if (first) {
+    os << '$';
+  }
   if (type.isSignature()) {
     auto sig = type.getSignature();
-    printType(sig.params);
-    os << "_=>_";
-    printType(sig.results);
+    printTypeName(os, sig.params);
+    if (first) {
+      os << "_=>_";
+    } else {
+      os << "_->_";
+    }
+    printTypeName(os, sig.results);
   } else if (type.isStruct()) {
     auto struct_ = type.getStruct();
     os << "{";
@@ -182,7 +148,7 @@ std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
       if (field.mutable_) {
         os << "mut:";
       }
-      printType(field.type);
+      printTypeName(os, field.type);
     }
     os << "}";
   } else if (type.isArray()) {
@@ -191,12 +157,11 @@ std::ostream& operator<<(std::ostream& os, HeapTypeName typeName) {
     if (element.mutable_) {
       os << "mut:";
     }
-    printType(element.type);
+    printTypeName(os, element.type);
     os << "]";
   } else {
     os << type;
   }
-  return os;
 }
 
 std::ostream& operator<<(std::ostream& os, TypeName typeName) {
@@ -206,7 +171,7 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
     if (type.isNullable()) {
       os << "null ";
     }
-    os << HeapTypeName(type.getHeapType());
+    printHeapTypeName(os, type.getHeapType());
     os << ')';
     return os;
   }
@@ -307,7 +272,8 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "call_indirect (type ");
     }
-    o << HeapTypeName(curr->sig) << ')';
+    printHeapTypeName(o, curr->sig);
+    o << ')';
   }
   void visitLocalGet(LocalGet* curr) {
     printMedium(o, "local.get ");
@@ -2817,7 +2783,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
-      o << HeapTypeName(type) << ' ';
+      printHeapTypeName(o, type);
+      o << ' ';
       handleHeapType(type);
       o << ")" << maybeNewLine;
     }
