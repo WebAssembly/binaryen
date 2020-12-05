@@ -1127,7 +1127,7 @@ public:
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getEventIndex(Name name) const;
-  uint32_t getTypeIndex(HeapType sig) const;
+  uint32_t getTypeIndex(HeapType type) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();

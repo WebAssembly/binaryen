@@ -505,7 +505,7 @@ uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getTypeIndex(HeapType sig) const {
+uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
   auto it = typeIndices.find(sig);
 #ifndef NDEBUG
   if (it == typeIndices.end()) {
