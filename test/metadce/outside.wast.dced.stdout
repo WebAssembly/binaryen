@@ -1,4 +1,4 @@
-unused: export$wasm_func_unused$12
+unused: export$wasm_func_unused$10
 unused: func$an_unused_wasm_func$1
 unused: global$__THREW__unused$4
 unused: global$from_segment$5
