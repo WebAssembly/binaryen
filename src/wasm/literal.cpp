@@ -57,11 +57,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     }
   } else if (other.isGCData()) {
     // Avoid calling the destructor on an uninitialized value
-    if (other.gcData != nullptr) {
-      new (&gcData) std::shared_ptr<Literals>(other.gcData);
-    } else {
-      new (&gcData) std::shared_ptr<Literals>();
-    }
+    new (&gcData) std::shared_ptr<Literals>(other.gcData);
   } else if (type.isFunction()) {
     func = other.func;
   } else {

@@ -1600,7 +1600,7 @@ struct PrintExpressionContents
   void visitSelect(Select* curr) {
     prepareColor(o) << "select";
     if (curr->type.isRef()) {
-      o << ResultTypeName(curr->type);
+      o << ' ' << ResultTypeName(curr->type);
     }
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
