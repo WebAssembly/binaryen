@@ -1402,11 +1402,11 @@ public:
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
-    Flow flow = this->visit(curr->value);
-    if (flow.breaking()) {
-      return flow;
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
     }
-    auto data = flow.getSingleValue().getGCData();
+    auto data = ref.getSingleValue().getGCData();
     if (!data) {
       trap("null ref");
     }
@@ -1414,7 +1414,31 @@ public:
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");
-    WASM_UNREACHABLE("TODO (gc): struct.set");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow value = this->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    // Truncate the value if we need to. The storage is just a list of Literals,
+    // so we can't just write the value like we would to a C struct field.
+    auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
+    auto setValue = value.getSingleValue();
+    if (field.type == Type::i32) {
+      if (field.packedType == Field::i8) {
+        setValue = setValue.and_(Literal(int32_t(0xff)));
+      } else if (field.packedType == Field::i16) {
+        setValue = setValue.and_(Literal(int32_t(0xffff)));
+      }
+    }
+    (*data)[curr->index] = setValue;
+    return Flow();
   }
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");

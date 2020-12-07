@@ -2231,8 +2231,8 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.get requires gc to be enabled");
-  if (curr->value->type != Type::unreachable) {
-    const auto& fields = curr->value->type.getHeapType().getStruct().fields;
+  if (curr->ref->type != Type::unreachable) {
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
     shouldBeEqual(curr->type,
                   fields[curr->index].type,
@@ -2245,7 +2245,14 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.set requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): struct.set");
+  if (curr->ref->type != Type::unreachable) {
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+    shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+    shouldBeEqual(curr->value->type,
+                  fields[curr->index].type,
+                  curr,
+                  "struct.set must have the proper type");
+  }
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {

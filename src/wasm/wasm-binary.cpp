@@ -5632,7 +5632,7 @@ bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
   }
   auto type = getHeapType();
   curr->index = getU32LEB();
-  curr->value = popNonVoidExpression();
+  curr->ref = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;
@@ -5643,7 +5643,10 @@ bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
     return false;
   }
   auto* curr = allocator.alloc<StructSet>();
-  WASM_UNREACHABLE("TODO (gc): struct.set");
+  auto type = getHeapType();
+  curr->index = getU32LEB();
+  curr->ref = popNonVoidExpression();
+  curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;

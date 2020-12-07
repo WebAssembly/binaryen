@@ -1353,7 +1353,7 @@ public:
   StructGet(MixedArena& allocator) {}
 
   Index index;
-  Expression* value;
+  Expression* ref;
   // Packed fields have a sign.
   bool signed_ = false;
 
@@ -1364,7 +1364,11 @@ class StructSet : public SpecificExpression<Expression::StructSetId> {
 public:
   StructSet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
+  Index index;
+  Expression* ref;
+  Expression* value;
+
+  void finalize();
 };
 
 class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {

@@ -72,6 +72,10 @@
     (i32.const 1)
    )
   )
+  (struct.set ${i32_f32_f64} 0
+   (local.get $0)
+   (i32.const 100)
+  )
   (unreachable)
  )
 )

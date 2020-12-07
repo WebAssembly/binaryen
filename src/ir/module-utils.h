@@ -430,7 +430,9 @@ inline void collectHeapTypes(Module& wasm,
         } else if (curr->is<RefNull>()) {
           counts.maybeNote(curr->type);
         } else if (auto* get = curr->dynCast<StructGet>()) {
-          counts.maybeNote(get->value->type);
+          counts.maybeNote(get->ref->type);
+        } else if (auto* set = curr->dynCast<StructSet>()) {
+          counts.maybeNote(set->ref->type);
         } else if (Properties::isControlFlowStructure(curr)) {
           counts.maybeNote(curr->type);
           if (curr->type.isTuple()) {
