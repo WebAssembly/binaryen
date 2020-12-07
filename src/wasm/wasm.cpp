@@ -1083,7 +1083,15 @@ void CallRef::finalize(Type type_) {
 // TODO (gc): rtt.canon
 // TODO (gc): rtt.sub
 // TODO (gc): struct.new
-// TODO (gc): struct.get
+
+void StructGet::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = value->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
 // TODO (gc): struct.set
 // TODO (gc): array.new
 // TODO (gc): array.get

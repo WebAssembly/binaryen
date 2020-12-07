@@ -222,13 +222,13 @@ struct PrintExpressionContents
       printName(curr->name, o);
     }
     if (curr->type.isConcrete()) {
-      o << ' ' << ResultType(curr->type);
+      o << ' ' << ResultTypeName(curr->type);
     }
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
     if (curr->type.isConcrete()) {
-      o << ' ' << ResultType(curr->type);
+      o << ' ' << ResultTypeName(curr->type);
     }
   }
   void visitLoop(Loop* curr) {
@@ -238,7 +238,7 @@ struct PrintExpressionContents
       printName(curr->name, o);
     }
     if (curr->type.isConcrete()) {
-      o << ' ' << ResultType(curr->type);
+      o << ' ' << ResultTypeName(curr->type);
     }
   }
   void visitBreak(Break* curr) {
@@ -1600,7 +1600,7 @@ struct PrintExpressionContents
   void visitSelect(Select* curr) {
     prepareColor(o) << "select";
     if (curr->type.isRef()) {
-      o << " (result " << curr->type << ')';
+      o << ' ' << ResultTypeName(curr->type);
     }
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
@@ -1609,7 +1609,7 @@ struct PrintExpressionContents
   void visitMemoryGrow(MemoryGrow* curr) { printMedium(o, "memory.grow"); }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
-    o << curr->type.getHeapType();
+    printHeapTypeName(o, curr->type.getHeapType());
   }
   void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
   void visitRefFunc(RefFunc* curr) {
@@ -1684,7 +1684,20 @@ struct PrintExpressionContents
     WASM_UNREACHABLE("TODO (gc): struct.new");
   }
   void visitStructGet(StructGet* curr) {
-    WASM_UNREACHABLE("TODO (gc): struct.get");
+    const auto& field =
+      curr->value->type.getHeapType().getStruct().fields[curr->index];
+    if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+      if (curr->signed_) {
+        printMedium(o, "struct.get_s ");
+      } else {
+        printMedium(o, "struct.get_u ");
+      }
+    } else {
+      printMedium(o, "struct.get ");
+    }
+    printHeapTypeName(o, curr->value->type.getHeapType());
+    o << ' ';
+    o << curr->index;
   }
   void visitStructSet(StructSet* curr) {
     printMedium(o, "struct.set");
@@ -2358,7 +2371,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitStructGet(StructGet* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): struct.get");
+    incIndent();
+    printFullLine(curr->value);
+    decIndent();
   }
   void visitStructSet(StructSet* curr) {
     o << '(';
@@ -2417,7 +2432,17 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (field.mutable_) {
       o << "(mut ";
     }
-    o << TypeName(field.type);
+    if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+      if (field.packedType == Field::i8) {
+        o << "i8";
+      } else if (field.packedType == Field::i16) {
+        o << "i16";
+      } else {
+        WASM_UNREACHABLE("invalid packed type");
+      }
+    } else {
+      o << TypeName(field.type);
+    }
     if (field.mutable_) {
       o << ')';
     }

@@ -425,10 +425,12 @@ inline void collectHeapTypes(Module& wasm,
       TypeCounter(Counts& counts) : counts(counts) {}
 
       void visitExpression(Expression* curr) {
-        if (curr->is<RefNull>()) {
-          counts.maybeNote(curr->type);
-        } else if (auto* call = curr->dynCast<CallIndirect>()) {
+        if (auto* call = curr->dynCast<CallIndirect>()) {
           counts.note(call->sig);
+        } else if (curr->is<RefNull>()) {
+          counts.maybeNote(curr->type);
+        } else if (auto* get = curr->dynCast<StructGet>()) {
+          counts.maybeNote(get->value->type);
         } else if (Properties::isControlFlowStructure(curr)) {
           counts.maybeNote(curr->type);
           if (curr->type.isTuple()) {
@@ -436,7 +438,6 @@ inline void collectHeapTypes(Module& wasm,
             counts.note(Signature(Type::none, curr->type));
           }
         }
-        // TODO struct.get and others contain a type index
       }
     };
     TypeCounter(counts).walk(func->body);

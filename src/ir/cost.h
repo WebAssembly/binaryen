@@ -566,12 +566,20 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitRttCanon(RttCanon* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitRttSub(RttSub* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitStructNew(StructNew* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitStructGet(StructGet* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitStructGet(StructGet* curr) {
+    return 1 + nullCheckCost(curr->value) + visit(curr->value);
+  }
   Index visitStructSet(StructSet* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitArrayGet(ArrayGet* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitArraySet(ArraySet* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitArrayLen(ArrayLen* curr) { WASM_UNREACHABLE("TODO: GC"); }
+
+private:
+  Index nullCheckCost(Expression* ref) {
+    // A nullable type requires a bounds check in most VMs.
+    return ref->type.isNullable();
+  }
 };
 
 } // namespace wasm

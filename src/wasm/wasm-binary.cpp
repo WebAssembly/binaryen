@@ -1030,7 +1030,7 @@ void WasmBinaryWriter::writeType(Type type) {
 
 void WasmBinaryWriter::writeHeapType(HeapType type) {
   if (type.isSignature() || type.isStruct() || type.isArray()) {
-    o << S32LEB(getTypeIndex(type));
+    o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
     return;
   }
   int ret = 0;
@@ -1058,11 +1058,21 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     case HeapType::ArrayKind:
       WASM_UNREACHABLE("TODO: compound GC types");
   }
-  o << S32LEB(ret); // TODO: Actually encoded as s33
+  o << S64LEB(ret); // TODO: Actually s33
 }
 
 void WasmBinaryWriter::writeField(const Field& field) {
-  writeType(field.type);
+  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+    if (field.packedType == Field::i8) {
+      o << S32LEB(BinaryConsts::EncodedType::i8);
+    } else if (field.packedType == Field::i16) {
+      o << S32LEB(BinaryConsts::EncodedType::i16);
+    } else {
+      WASM_UNREACHABLE("invalid packed type");
+    }
+  } else {
+    writeType(field.type);
+  }
   o << U32LEB(field.mutable_);
 }
 
@@ -1335,14 +1345,13 @@ uint64_t WasmBinaryBuilder::getUPtrLEB() {
   return wasm.memory.is64() ? getU64LEB() : getU32LEB();
 }
 
-Type WasmBinaryBuilder::getType() {
-  int type = getS32LEB();
+Type WasmBinaryBuilder::getType(int initial) {
   // Single value types are negative; signature indices are non-negative
-  if (type >= 0) {
+  if (initial >= 0) {
     // TODO: Handle block input types properly.
-    return getSignatureByTypeIndex(type).results;
+    return getSignatureByTypeIndex(initial).results;
   }
-  switch (type) {
+  switch (initial) {
     // None only used for block signatures. TODO: Separate out?
     case BinaryConsts::EncodedType::Empty:
       return Type::none;
@@ -1374,13 +1383,15 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     default:
-      throwError("invalid wasm type: " + std::to_string(type));
+      throwError("invalid wasm type: " + std::to_string(initial));
   }
   WASM_UNREACHABLE("unexpected type");
 }
 
+Type WasmBinaryBuilder::getType() { return getType(getS32LEB()); }
+
 HeapType WasmBinaryBuilder::getHeapType() {
-  int type = getS32LEB(); // TODO: Actually encoded as s33
+  auto type = getS64LEB(); // TODO: Actually s33
   // Single heap types are negative; heap type indices are non-negative
   if (type >= 0) {
     if (size_t(type) >= types.size()) {
@@ -1408,7 +1419,19 @@ HeapType WasmBinaryBuilder::getHeapType() {
 }
 
 Field WasmBinaryBuilder::getField() {
-  auto type = getConcreteType();
+  // The value may be a general wasm type, or one of the types only possible in
+  // a field.
+  auto initial = getS32LEB();
+  if (initial == BinaryConsts::EncodedType::i8) {
+    auto mutable_ = getU32LEB();
+    return Field(Field::i8, mutable_);
+  }
+  if (initial == BinaryConsts::EncodedType::i16) {
+    auto mutable_ = getU32LEB();
+    return Field(Field::i16, mutable_);
+  }
+  // It's a regular wasm value.
+  auto type = getType(initial);
   auto mutable_ = getU32LEB();
   return Field(type, mutable_);
 }
@@ -1464,12 +1487,6 @@ void WasmBinaryBuilder::verifyInt64(int64_t x) {
   if (x != y) {
     throwError("surprising value");
   }
-}
-
-void WasmBinaryBuilder::ungetInt8() {
-  assert(pos > 0);
-  BYN_TRACE("ungetInt8 (at " << pos << ")\n");
-  pos--;
 }
 
 void WasmBinaryBuilder::readHeader() {
@@ -5601,20 +5618,21 @@ bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
   switch (code) {
     case BinaryConsts::StructGet:
       curr = allocator.alloc<StructGet>();
-      // ...
       break;
     case BinaryConsts::StructGetS:
       curr = allocator.alloc<StructGet>();
-      // ...
+      curr->signed_ = true;
       break;
     case BinaryConsts::StructGetU:
       curr = allocator.alloc<StructGet>();
-      // ...
+      curr->signed_ = false;
       break;
     default:
       return false;
   }
-  WASM_UNREACHABLE("TODO (gc): struct.get");
+  auto type = getHeapType();
+  curr->index = getU32LEB();
+  curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;

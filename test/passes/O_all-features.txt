@@ -1,0 +1,12 @@
+(module
+ (type ${i32} (struct (field i32)))
+ (type $ref?|{i32}|_=>_none (func (param (ref null ${i32}))))
+ (export "foo" (func $0))
+ (func $0 (; has Stack IR ;) (param $0 (ref null ${i32}))
+  (drop
+   (struct.get ${i32} 0
+    (local.get $0)
+   )
+  )
+ )
+)
