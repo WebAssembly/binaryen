@@ -2232,11 +2232,12 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
                curr,
                "struct.get requires gc to be enabled");
   if (curr->value->type != Type::unreachable) {
-    shouldBeEqual(
-      curr->type,
-      curr->value->type.getHeapType().getStruct().fields[curr->index].type,
-      curr,
-      "struct.get must have the proper type");
+    const auto& fields = curr->value->type.getHeapType().getStruct().fields;
+    shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+    shouldBeEqual(curr->type,
+                  fields[curr->index].type,
+                  curr,
+                  "struct.get must have the proper type");
   }
 }
 

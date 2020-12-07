@@ -327,6 +327,7 @@ private:
     }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
+    // TODO: interesting uses of typed function types
     // TODO: interesting subtypes of compound types
     if (type.isBasic()) {
       switch (type.getBasic()) {
