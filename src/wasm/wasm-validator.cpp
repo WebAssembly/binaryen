@@ -2221,9 +2221,8 @@ void FunctionValidator::visitRttSub(RttSub* curr) {
     getModule()->features.hasGC(), curr, "rtt.sub requires gc to be enabled");
   shouldBeTrue(curr->type.isRtt(), curr, "rtt.sub must have RTT type");
   if (curr->parent->type != Type::unreachable) {
-    shouldBeTrue(curr->parent->type.isRtt(),
-                 curr,
-                 "rtt.sub parent must have RTT type");
+    shouldBeTrue(
+      curr->parent->type.isRtt(), curr, "rtt.sub parent must have RTT type");
     auto parentRTT = curr->parent->type.getRtt();
     auto rtt = curr->type.getRtt();
     shouldBeEqual(rtt.depth,
