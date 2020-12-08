@@ -2211,13 +2211,26 @@ void FunctionValidator::visitBrOnCast(BrOnCast* curr) {
 void FunctionValidator::visitRttCanon(RttCanon* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "rtt.canon requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  shouldBeTrue(curr->type.isRtt(), curr, "rtt.canon must have RTT type");
+  auto rtt = curr->type.getRtt();
+  shouldBeEqual(rtt.depth, 0, curr, "rtt.canon has a depth of 0");
 }
 
 void FunctionValidator::visitRttSub(RttSub* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "rtt.sub requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  shouldBeTrue(curr->type.isRtt(), curr, "rtt.sub must have RTT type");
+  if (curr->parent->type != Type::unreachable) {
+    shouldBeTrue(curr->parent->type.isRtt(),
+                 curr,
+                 "rtt.sub parent must have RTT type");
+    auto parentRTT = curr->parent->type.getRtt();
+    auto rtt = curr->type.getRtt();
+    shouldBeEqual(rtt.depth,
+                  parentRTT.depth + 1,
+                  curr,
+                  "rtt.canon has a depth of 1 over the parent");
+  }
 }
 
 void FunctionValidator::visitStructNew(StructNew* curr) {
