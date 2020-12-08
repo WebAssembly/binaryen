@@ -1,10 +1,20 @@
 (module
  (type ${i32_f32_f64} (struct (field i32) (field f32) (field f64)))
  (type $[mut:f64] (array (mut f64)))
+ (type ${} (struct ))
+ (type ${i32} (struct (field i32)))
+ (type ${i32_i64} (struct (field i32) (field i64)))
  (type ${mut:f32} (struct (field (mut f32))))
  (type ${i32_mut:i32_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref null ${i32_f32_f64})) (field (mut (ref null ${i32_f32_f64})))))
  (type $[ref?|[mut:f64]|] (array (ref null $[mut:f64])))
  (type $ref?|{i32_f32_f64}|_=>_ref?|{i32_mut:i32_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}| (func (param (ref null ${i32_f32_f64})) (result (ref null ${i32_mut:i32_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))))
+ (global $rttparent (rtt 0 ${}) (rtt.canon ${})
+ (global $rttchild (rtt 1 ${i32}) (rtt.sub ${i32}
+  (global.get $rttparent)
+ ))
+ (global $rttgrandchild (rtt 2 ${i32_i64}) (rtt.sub ${i32_i64}
+  (global.get $rttchild)
+ ))
  (export "foo" (func $0))
  (func $0 (param $x (ref null ${i32_f32_f64})) (result (ref null ${i32_mut:i32_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))
   (local $tA (ref null ${i32_f32_f64}))

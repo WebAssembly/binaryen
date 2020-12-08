@@ -339,7 +339,7 @@ enum EncodedType {
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
   i8 = -0x6,   // 0x7a
-  i16 = -0x7,  // 0x79
+  i16 = 0x7,   // 0x79
   // function reference type
   funcref = -0x10, // 0x70
   // opaque host reference type
@@ -354,6 +354,8 @@ enum EncodedType {
   nonnullable = -0x15, // 0x6b
   // integer reference type
   i31ref = -0x16, // 0x6a
+  // run-time type info type
+  rtt = -0x17, // 0x69
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form

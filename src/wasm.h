@@ -1331,14 +1331,16 @@ class RttCanon : public SpecificExpression<Expression::RttCanonId> {
 public:
   RttCanon(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
+  void finalize();
 };
 
 class RttSub : public SpecificExpression<Expression::RttSubId> {
 public:
   RttSub(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+  Expression* parent;
+
+  void finalize();
 };
 
 class StructNew : public SpecificExpression<Expression::StructNewId> {

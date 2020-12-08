@@ -163,6 +163,8 @@ public:
   // Gets the heap type corresponding to this type
   const HeapType& getHeapType() const;
 
+  const struct Rtt& getRtt() const;
+
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
   static Type get(unsigned byteSize, bool float_);
