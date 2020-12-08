@@ -253,7 +253,7 @@ template<typename Info> struct Store {
   // Maps from constructed types to their canonical Type IDs.
   std::unordered_map<Info, uintptr_t> typeIDs;
 
-  typename Info::type_t canonicalize(Info info) {
+  typename Info::type_t canonicalize(const Info& info) {
     std::lock_guard<std::mutex> lock(mutex);
     auto indexIt = typeIDs.find(info);
     if (indexIt != typeIDs.end()) {
