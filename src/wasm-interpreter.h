@@ -1389,12 +1389,14 @@ public:
     WASM_UNREACHABLE("TODO (gc): br_on_cast");
   }
   Flow visitRttCanon(RttCanon* curr) {
-    NOTE_ENTER("RttCanon");
-    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    return Literal(curr->type);
   }
   Flow visitRttSub(RttSub* curr) {
-    NOTE_ENTER("RttSub");
-    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    Flow parent = this->visit(curr->parent);
+    if (parent.breaking()) {
+      return parent;
+    }
+    return Literal(curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
