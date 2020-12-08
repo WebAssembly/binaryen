@@ -1706,7 +1706,7 @@ struct PrintExpressionContents
     if (curr->isWithDefault()) {
       o << "default_";
     }
-    o << "_with_rtt ";
+    o << "with_rtt ";
     printHeapTypeName(o, curr->rtt->type.getRtt().heapType);
   }
   void visitStructGet(StructGet* curr) {
