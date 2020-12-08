@@ -16,7 +16,7 @@
     (field $named-mut (mut f32))
   ))
 
-  ;;Arrays
+  ;; Arrays
   (type $vector (array (mut f64)))
   (type $matrix (array (ref $vector)))
 

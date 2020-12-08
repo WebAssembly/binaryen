@@ -43,7 +43,7 @@ class Literal {
     Name func;
     // exnref package. `nullptr` indicates a `null` value.
     std::unique_ptr<ExceptionPackage> exn;
-    // A reference to GC data, either a Struct or an Array. For  both of those
+    // A reference to GC data, either a Struct or an Array. For both of those
     // we store the referred data as a Literals object (which is natural for an
     // Array, and for a Struct, is just the fields in order). The type is used
     // to indicate whether this is a Struct or an Array, and of what type.
