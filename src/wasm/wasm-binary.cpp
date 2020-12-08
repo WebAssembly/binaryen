@@ -5630,7 +5630,8 @@ bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  auto type = getHeapType();
+  // This type annotation is unused. Beware it needing to be used in the future!
+  getHeapType();
   curr->index = getU32LEB();
   curr->ref = popNonVoidExpression();
   curr->finalize();
@@ -5643,7 +5644,8 @@ bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
     return false;
   }
   auto* curr = allocator.alloc<StructSet>();
-  auto type = getHeapType();
+  // This type annotation is unused. Beware it needing to be used in the future!
+  getHeapType();
   curr->index = getU32LEB();
   curr->ref = popNonVoidExpression();
   curr->value = popNonVoidExpression();
