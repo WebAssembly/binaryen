@@ -177,7 +177,7 @@ const char* stringAtAddr(Module& wasm,
 
 std::string codeForConstAddr(Module& wasm,
                              std::vector<Address> const& segmentOffsets,
-                             int32_t address) {
+                             int64_t address) {
   const char* str = stringAtAddr(wasm, segmentOffsets, address);
   if (!str) {
     Fatal() << "unable to find data for ASM/EM_JS const at: " << address;
@@ -232,7 +232,7 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   void process();
 
 private:
-  void createAsmConst(uint32_t id, std::string code, Signature sig, Name name);
+  void createAsmConst(uint64_t id, std::string code, Signature sig, Name name);
   Signature asmConstSig(Signature baseSig);
   Name nameForImportWithSig(Signature sig, Proxying proxy);
   void addImports();
@@ -291,7 +291,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     }
 
     if (auto* bin = arg->dynCast<Binary>()) {
-      if (bin->op == AddInt32) {
+      if (bin->op == AddInt32 || bin->op == AddInt64) {
         // In the dynamic linking case the address of the string constant
         // is the result of adding its offset to __memory_base.
         // In this case are only looking for the offset from __memory_base
@@ -301,12 +301,21 @@ void AsmConstWalker::visitCall(Call* curr) {
       }
     }
 
+    if (auto* unary = arg->dynCast<Unary>()) {
+      if (unary->op == WrapInt64) {
+        // This cast may be inserted around the string constant in the
+        // Memory64Lowering pass.
+        arg = unary->value;
+        continue;
+      }
+    }
+
     Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
             << ") in call to: " << importName;
   }
 
   auto* value = arg->cast<Const>();
-  int32_t address = value->value.geti32();
+  int64_t address = value->value.getInteger();
   auto code = codeForConstAddr(wasm, segmentOffsets, address);
   createAsmConst(address, code, sig, importName);
 }
@@ -328,7 +337,7 @@ void AsmConstWalker::process() {
   addImports();
 }
 
-void AsmConstWalker::createAsmConst(uint32_t id,
+void AsmConstWalker::createAsmConst(uint64_t id,
                                     std::string code,
                                     Signature sig,
                                     Name name) {
@@ -388,7 +397,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
     }
     auto* addrConst = consts.list[0];
-    int32_t address = addrConst->value.geti32();
+    int64_t address = addrConst->value.getInteger();
     auto code = codeForConstAddr(wasm, segmentOffsets, address);
     codeByName[funcName] = code;
   }
