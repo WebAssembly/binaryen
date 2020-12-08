@@ -339,7 +339,7 @@ enum EncodedType {
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
   i8 = -0x6,   // 0x7a
-  i16 = 0x7,   // 0x79
+  i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
   // opaque host reference type
