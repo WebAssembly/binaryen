@@ -235,8 +235,8 @@
  )
 )
 (module
- (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
  (type $f32_=>_i64 (func (param f32) (result i64)))
+ (type $i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_i64_=>_i64 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
  (table $0 42 42 funcref)
  (global $global$0 (mut i32) (i32.const 10))
  (export "func_106" (func $0))

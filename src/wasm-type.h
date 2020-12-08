@@ -32,11 +32,24 @@
 
 namespace wasm {
 
+// The types defined in this file. All of them are small and typically passed by
+// value except for `Tuple` and `Struct`, which may own an unbounded amount of
+// data.
+class Type;
+class HeapType;
+struct Tuple;
+struct Signature;
+struct Field;
+struct Struct;
+struct Array;
+struct Rtt;
+
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
   // comparison of the ids. For basic types the `id` is just the `BasicType`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
+  // Since `Type` is really just a single integer, it should be passed by value.
   uintptr_t id;
 
 public:
@@ -54,29 +67,30 @@ public:
     anyref,
     eqref,
     i31ref,
-    _last_basic_id = i31ref,
   };
+  static constexpr BasicType _last_basic_type = i31ref;
 
-  Type() = default;
+  Type() : id(none) {}
 
   // BasicType can be implicitly upgraded to Type
-  constexpr Type(BasicType id) : id(id){};
+  constexpr Type(BasicType id) : id(id) {}
 
-  // But converting raw uint32_t is more dangerous, so make it explicit
-  explicit Type(uint64_t id) : id(id){};
+  // But converting raw uint64_t is more dangerous, so make it explicit
+  explicit Type(uint64_t id) : id(id) {}
 
   // Construct tuple from a list of single types
   Type(std::initializer_list<Type>);
 
   // Construct from tuple description
-  explicit Type(const struct Tuple&);
+  Type(const Tuple&);
+  Type(Tuple&&);
 
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
-  explicit Type(const struct HeapType&, bool nullable);
+  Type(HeapType, bool nullable);
 
   // Construct from rtt description
-  explicit Type(const struct Rtt&);
+  Type(Rtt);
 
   // Predicates
   //                 Compound Concrete
@@ -102,8 +116,8 @@ public:
   // │ Tuple       ║   │ x │   │ x │       │
   // │ Rtt         ║   │ x │ x │ x │       │
   // └─────────────╨───┴───┴───┴───┴───────┘
-  constexpr bool isBasic() const { return id <= _last_basic_id; }
-  constexpr bool isCompound() const { return id > _last_basic_id; }
+  constexpr bool isBasic() const { return id <= _last_basic_type; }
+  constexpr bool isCompound() const { return id > _last_basic_type; }
   constexpr bool isConcrete() const { return id >= i32; }
   constexpr bool isInteger() const { return id == i32 || id == i64; }
   constexpr bool isFloat() const { return id == f32 || id == f64; }
@@ -143,9 +157,9 @@ public:
   // otherwise ambiguous whether to convert both this and other to int or
   // convert other to Type.
   bool operator==(const Type& other) const { return id == other.id; }
-  bool operator==(const BasicType& otherId) const { return id == otherId; }
+  bool operator==(const BasicType& other) const { return id == other; }
   bool operator!=(const Type& other) const { return id != other.id; }
-  bool operator!=(const BasicType& otherId) const { return id != otherId; }
+  bool operator!=(const BasicType& other) const { return id != other; }
 
   // Order types by some notion of simplicity
   bool operator<(const Type& other) const;
@@ -161,7 +175,7 @@ public:
   FeatureSet getFeatures() const;
 
   // Gets the heap type corresponding to this type
-  const HeapType& getHeapType() const;
+  HeapType getHeapType() const;
 
   const struct Rtt& getRtt() const;
 
@@ -256,17 +270,90 @@ struct ResultType {
   std::string toString() const;
 };
 
+class HeapType {
+  // Unlike `Type`, which represents the types of values on the WebAssembly
+  // stack, `HeapType` is used to describe the structures that reference types
+  // refer to. HeapTypes are canonicalized and interned exactly like Types and
+  // should also be passed by value.
+  uintptr_t id;
+
+public:
+  enum BasicHeapType : uint32_t {
+    func,
+    ext,
+    exn,
+    any,
+    eq,
+    i31,
+  };
+  static constexpr BasicHeapType _last_basic_type = i31;
+
+  // BasicHeapType can be implicitly upgraded to HeapType
+  constexpr HeapType(BasicHeapType id) : id(id) {}
+
+  // But converting raw uint64_t is more dangerous, so make it explicit
+  explicit HeapType(uint64_t id) : id(id) {}
+
+  HeapType(Signature signature);
+  HeapType(const Struct& struct_);
+  HeapType(Struct&& struct_);
+  HeapType(Array array);
+
+  constexpr bool isBasic() const { return id <= _last_basic_type; }
+  constexpr bool isCompound() const { return id > _last_basic_type; }
+  bool isFunction() const;
+  bool isSignature() const;
+  bool isStruct() const;
+  bool isArray() const;
+
+  Signature getSignature() const;
+  const Struct& getStruct() const;
+  Array getArray() const;
+
+  constexpr uint64_t getID() const { return id; }
+  constexpr BasicHeapType getBasic() const {
+    assert(isBasic() && "Basic heap type expected");
+    return static_cast<BasicHeapType>(id);
+  }
+
+  // (In)equality must be defined for both HeapType and BasicHeapType because it
+  // is otherwise ambiguous whether to convert both this and other to int or
+  // convert other to HeapType.
+  bool operator==(const HeapType& other) const { return id == other.id; }
+  bool operator==(const BasicHeapType& other) const { return id == other; }
+  bool operator!=(const HeapType& other) const { return id != other.id; }
+  bool operator!=(const BasicHeapType& other) const { return id != other; }
+
+  bool operator<(const HeapType& other) const;
+  std::string toString() const;
+};
+
 typedef std::vector<Type> TypeList;
 
+// Passed by reference rather than by value because it can own an unbounded
+// amount of data.
 struct Tuple {
   TypeList types;
   Tuple() : types() {}
-  Tuple(std::initializer_list<Type> types) : types(types) {}
-  Tuple(const TypeList& types) : types(types) {}
-  Tuple(TypeList&& types) : types(std::move(types)) {}
+  Tuple(std::initializer_list<Type> types) : types(types) { validate(); }
+  Tuple(const TypeList& types) : types(types) { validate(); }
+  Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
   bool operator==(const Tuple& other) const { return types == other.types; }
   bool operator!=(const Tuple& other) const { return !(*this == other); }
+  bool operator<(const Tuple& other) const { return types < other.types; }
   std::string toString() const;
+
+  // Prevent accidental copies
+  Struct& operator=(const Struct&) = delete;
+
+private:
+  void validate() {
+#ifndef NDEBUG
+    for (auto type : types) {
+      assert(type.isSingle());
+    }
+#endif
+  }
 };
 
 struct Signature {
@@ -318,6 +405,8 @@ struct Field {
 
 typedef std::vector<Field> FieldList;
 
+// Passed by reference rather than by value because it can own an unbounded
+// amount of data.
 struct Struct {
   FieldList fields;
   Struct(const Struct& other) : fields(other.fields) {}
@@ -327,85 +416,30 @@ struct Struct {
   bool operator!=(const Struct& other) const { return !(*this == other); }
   bool operator<(const Struct& other) const { return fields < other.fields; }
   std::string toString() const;
+
+  // Prevent accidental copies
+  Struct& operator=(const Struct&) = delete;
 };
 
 struct Array {
   Field element;
   Array(const Array& other) : element(other.element) {}
-  Array(const Field& element) : element(element) {}
-  Array(Field&& element) : element(std::move(element)) {}
+  Array(Field element) : element(element) {}
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
   bool operator<(const Array& other) const { return element < other.element; }
   std::string toString() const;
 };
 
-struct HeapType {
-  enum Kind {
-    FuncKind,
-    ExternKind,
-    ExnKind,
-    AnyKind,
-    EqKind,
-    I31Kind,
-    _last_basic_kind = I31Kind,
-    SignatureKind,
-    StructKind,
-    ArrayKind,
-  } kind;
-  union {
-    Signature signature;
-    Struct struct_;
-    Array array;
-  };
-  HeapType(Kind kind) : kind(kind) { assert(kind <= _last_basic_kind); }
-  HeapType(const Signature& signature)
-    : kind(SignatureKind), signature(signature) {}
-  HeapType(Signature&& signature)
-    : kind(SignatureKind), signature(std::move(signature)) {}
-  HeapType(const Struct& struct_) : kind(StructKind), struct_(struct_) {}
-  HeapType(Struct&& struct_) : kind(StructKind), struct_(std::move(struct_)) {}
-  HeapType(const Array& array) : kind(ArrayKind), array(array) {}
-  HeapType(Array&& array) : kind(ArrayKind), array(std::move(array)) {}
-  HeapType(const HeapType& other);
-  ~HeapType();
-
-  bool isBasic() const { return kind <= _last_basic_kind; }
-  bool isSignature() const { return kind == SignatureKind; }
-  Signature getSignature() const {
-    assert(isSignature() && "Not a signature");
-    return signature;
-  }
-  bool isStruct() const { return kind == StructKind; }
-  const Struct& getStruct() const {
-    assert(isStruct() && "Not a struct");
-    return struct_;
-  }
-  bool isArray() const { return kind == ArrayKind; }
-  const Array& getArray() const {
-    assert(isArray() && "Not an array");
-    return array;
-  }
-  bool isException() const { return kind == ExnKind; }
-
-  bool operator==(const HeapType& other) const;
-  bool operator!=(const HeapType& other) const { return !(*this == other); }
-  bool operator<(const HeapType& other) const;
-  HeapType& operator=(const HeapType& other);
-  std::string toString() const;
-};
-
 struct Rtt {
   uint32_t depth;
   HeapType heapType;
-  Rtt(uint32_t depth, const HeapType& heapType)
-    : depth(depth), heapType(heapType) {}
-  Rtt(uint32_t depth, HeapType&& heapType)
-    : depth(depth), heapType(std::move(heapType)) {}
+  Rtt(uint32_t depth, HeapType heapType) : depth(depth), heapType(heapType) {}
   bool operator==(const Rtt& other) const {
     return depth == other.depth && heapType == other.heapType;
   }
   bool operator!=(const Rtt& other) const { return !(*this == other); }
+  bool operator<(const Rtt& other) const;
   std::string toString() const;
 };
 
