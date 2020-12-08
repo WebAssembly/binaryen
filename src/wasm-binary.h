@@ -358,7 +358,7 @@ enum EncodedType {
   rtt_n = -0x17, // 0x69
   // run-time type info type, without depth index n
   rtt = -0x18, // 0x68 FIXME
-  // exception reference type TODO remove
+  // exception reference type TODO remove; the code for now is incorrect
   exnref = -0x19, // 0x67
   // func_type form
   Func = -0x20,   // 0x60
