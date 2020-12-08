@@ -75,12 +75,11 @@ static void printTypeName(std::ostream& os, Type type) {
   }
   if (type.isRtt()) {
     auto rtt = type.getRtt();
-    os << "(rtt ";
+    os << "rtt_";
     if (rtt.hasDepth()) {
-      os << rtt.depth << ' ';
+      os << rtt.depth << '_';
     }
     printHeapTypeName(os, rtt.heapType);
-    os << ')';
     return;
   }
   if (type.isTuple()) {
@@ -164,6 +163,14 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
       o << sep << t;
       sep = " ";
     }
+    o << ')';
+  } else if (type.isRtt()) {
+    auto rtt = type.getRtt();
+    o << "(rtt ";
+    if (rtt.hasDepth()) {
+      o << rtt.depth << ' ';
+    }
+    printHeapTypeName(o, rtt.heapType);
     o << ')';
   } else {
     printTypeName(o, localType.type);
