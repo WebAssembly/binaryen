@@ -1085,14 +1085,21 @@ void CallRef::finalize(Type type_) {
 // TODO (gc): struct.new
 
 void StructGet::finalize() {
-  if (value->type == Type::unreachable) {
+  if (ref->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = value->type.getHeapType().getStruct().fields[index].type;
+    type = ref->type.getHeapType().getStruct().fields[index].type;
   }
 }
 
-// TODO (gc): struct.set
+void StructSet::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
 // TODO (gc): array.new
 // TODO (gc): array.get
 // TODO (gc): array.set

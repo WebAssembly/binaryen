@@ -72,6 +72,10 @@
         (i32.const 1)
       )
     )
+    (struct.set $struct.A 0
+      (local.get $x)
+      (i32.const 100)
+    )
     (unreachable)
   )
 )

@@ -596,14 +596,16 @@ switch (DELEGATE_ID) {
   case Expression::Id::StructGetId: {
     DELEGATE_START(StructGet);
     DELEGATE_FIELD_INT(StructGet, index);
-    DELEGATE_FIELD_CHILD(StructGet, value);
+    DELEGATE_FIELD_CHILD(StructGet, ref);
     DELEGATE_FIELD_INT(Load, signed_);
     DELEGATE_END(StructGet);
     break;
   }
   case Expression::Id::StructSetId: {
     DELEGATE_START(StructSet);
-    WASM_UNREACHABLE("TODO (gc): struct.set");
+    DELEGATE_FIELD_INT(StructSet, index);
+    DELEGATE_FIELD_CHILD(StructSet, ref);
+    DELEGATE_FIELD_CHILD(StructSet, value);
     DELEGATE_END(StructSet);
     break;
   }

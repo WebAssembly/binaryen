@@ -1910,7 +1910,7 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
-  const auto& heapType = curr->value->type.getHeapType();
+  const auto& heapType = curr->ref->type.getHeapType();
   const auto& field = heapType.getStruct().fields[curr->index];
   int8_t op;
   if (field.type != Type::i32 || field.packedType == Field::not_packed) {
@@ -1926,8 +1926,9 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
-  WASM_UNREACHABLE("TODO (gc): struct.set");
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::StructSet);
+  parent.writeHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {

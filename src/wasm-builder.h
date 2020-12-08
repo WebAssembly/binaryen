@@ -727,21 +727,21 @@ public:
     ret->finalize();
     return ret;
   }
-  StructGet* makeStructGet(Index index,
-                           Expression* value,
-                           Type type,
-                           bool signed_ = false) {
+  StructGet*
+  makeStructGet(Index index, Expression* ref, Type type, bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<StructGet>();
     ret->index = index;
-    ret->value = value;
+    ret->ref = ref;
     ret->type = type;
     ret->signed_ = signed_;
     ret->finalize();
     return ret;
   }
-  StructSet* makeStructSet() {
+  StructSet* makeStructSet(Index index, Expression* ref, Expression* value) {
     auto* ret = wasm.allocator.alloc<StructSet>();
-    WASM_UNREACHABLE("TODO (gc): struct.set");
+    ret->index = index;
+    ret->ref = ref;
+    ret->value = value;
     ret->finalize();
     return ret;
   }

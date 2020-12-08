@@ -2142,15 +2142,16 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
   auto structType = parseHeapType(*s[1]);
   auto index = getStructIndex(structType, *s[2]);
   auto type = structType.getStruct().fields[index].type;
-  auto value = parseExpression(*s[3]);
-  return Builder(wasm).makeStructGet(index, value, type, signed_);
+  auto ref = parseExpression(*s[3]);
+  return Builder(wasm).makeStructGet(index, ref, type, signed_);
 }
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
-  auto ret = allocator.alloc<StructSet>();
-  WASM_UNREACHABLE("TODO (gc): struct.set");
-  ret->finalize();
-  return ret;
+  auto structType = parseHeapType(*s[1]);
+  auto index = getStructIndex(structType, *s[2]);
+  auto ref = parseExpression(*s[3]);
+  auto value = parseExpression(*s[4]);
+  return Builder(wasm).makeStructSet(index, ref, value);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
