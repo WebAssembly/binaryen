@@ -1004,8 +1004,8 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-size_t
-hash<wasm::HeapTypeInfo>::operator()(const wasm::HeapTypeInfo& info) const {
+size_t hash<wasm::HeapTypeInfo>::
+operator()(const wasm::HeapTypeInfo& info) const {
   auto digest = wasm::hash(info.kind);
   switch (info.kind) {
     case wasm::HeapTypeInfo::SignatureKind:
