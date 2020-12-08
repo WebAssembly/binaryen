@@ -2243,7 +2243,7 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
           curr->rtt->type.isRtt(), curr, "struct.new rtt must be rtt")) {
       auto heapType = curr->rtt->type.getHeapType();
       if (shouldBeTrue(
-            heapType.isStruct, curr, "struct.new heap type must be struct")) {
+            heapType.isStruct(), curr, "struct.new heap type must be struct")) {
         if (curr->isWithDefault()) {
           // All the fields must be defaultable.
           for (auto* operand : curr->operands) {

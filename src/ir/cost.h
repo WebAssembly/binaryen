@@ -576,7 +576,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     // at least some baseline cost, plus writing the fields. (If we use default
     // values for the fields, then it is possible they are all 0 and if so, we
     // can get that almost for free as well, so don't add anything there.)
-    Index ret = 4 + operands.size();
+    Index ret = 4 + visit(curr->rtt) + curr->operands.size();
     for (auto* child : curr->operands) {
       ret += visit(child);
     }

@@ -731,7 +731,7 @@ public:
   StructNew* makeStructNew(Expression* rtt, const T& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
     ret->rtt = rtt;
-    ret->operands.set(operands);
+    ret->operands.set(args);
     ret->finalize();
     return ret;
   }
