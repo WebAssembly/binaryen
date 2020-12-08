@@ -2366,6 +2366,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitRttCanon(RttCanon* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
+    o << ')';
   }
   void visitRttSub(RttSub* curr) {
     o << '(';
