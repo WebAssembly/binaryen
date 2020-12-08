@@ -87,7 +87,9 @@ static void printTypeName(std::ostream& os, Type type) {
       sep = "_";
       printTypeName(os, t);
     }
-  } else if (type.isRef()) {
+    return;
+  }
+  if (type.isRef()) {
     os << "ref";
     if (type.isNullable()) {
       os << "?";
@@ -95,9 +97,9 @@ static void printTypeName(std::ostream& os, Type type) {
     os << "|";
     printHeapTypeName(os, type.getHeapType(), false);
     os << "|";
-  } else {
-    WASM_UNREACHABLE("unsupported print type");
+    return;
   }
+  WASM_UNREACHABLE("unsupported print type");
 }
 
 static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
@@ -180,7 +182,8 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
   return os << SExprType(typeName.type);
 }
 
-// TODO: remove this
+// TODO: try to simplify or even remove this, as we may be able to do the same
+//       things with SExprType
 struct ResultTypeName {
   Type type;
   ResultTypeName(Type type) : type(type) {}
