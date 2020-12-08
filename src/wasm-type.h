@@ -31,6 +31,9 @@
 
 namespace wasm {
 
+// The types defined in this file. All of them are small and typically passed by
+// value except for `Tuple` and `Struct`, which may own an unbounded amount of
+// data.
 class Type;
 class HeapType;
 struct Tuple;
@@ -45,6 +48,7 @@ class Type {
   // comparison of the ids. For basic types the `id` is just the `BasicType`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
+  // Since `Type` is really just a single integer, it should be passed by value.
   uintptr_t id;
 
 public:
@@ -262,7 +266,10 @@ struct ResultType {
 };
 
 class HeapType {
-  // HeapTypes are canonicalized and interned exactly like Types.
+  // Unlike `Type`, which represents the types of values on the WebAssembly
+  // stack, `HeapType` is used to describe the structures that reference types
+  // refer to. HeapTypes are canonicalized and interned exactly like Types and
+  // should also be passed by value.
   uintptr_t id;
 
 public:
@@ -318,6 +325,8 @@ public:
 
 typedef std::vector<Type> TypeList;
 
+// Passed by reference rather than by value because it can own an unbounded
+// amount of data.
 struct Tuple {
   TypeList types;
   Tuple() : types() {}
@@ -328,6 +337,9 @@ struct Tuple {
   bool operator!=(const Tuple& other) const { return !(*this == other); }
   bool operator<(const Tuple& other) const { return types < other.types; }
   std::string toString() const;
+
+  // Prevent accidental copies
+  Struct& operator=(const Struct&) = delete;
 
 private:
   void validate() {
@@ -385,6 +397,8 @@ struct Field {
 
 typedef std::vector<Field> FieldList;
 
+// Passed by reference rather than by value because it can own an unbounded
+// amount of data.
 struct Struct {
   FieldList fields;
   Struct(const Struct& other) : fields(other.fields) {}
@@ -394,6 +408,9 @@ struct Struct {
   bool operator!=(const Struct& other) const { return !(*this == other); }
   bool operator<(const Struct& other) const { return fields < other.fields; }
   std::string toString() const;
+
+  // Prevent accidental copies
+  Struct& operator=(const Struct&) = delete;
 };
 
 struct Array {
