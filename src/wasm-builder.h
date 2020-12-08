@@ -719,7 +719,11 @@ public:
     auto* ret = wasm.allocator.alloc<RttSub>();
     ret->parent = parent;
     auto parentRtt = parent->type.getRtt();
-    ret->type = Type(Rtt(parentRtt.depth + 1, heapType));
+    if (parentRtt.hasDepth()) {
+      ret->type = Type(Rtt(parentRtt.depth + 1, heapType));
+    } else {
+      ret->type = Type(Rtt(heapType));
+    }
     ret->finalize();
     return ret;
   }

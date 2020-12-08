@@ -2223,12 +2223,14 @@ void FunctionValidator::visitRttSub(RttSub* curr) {
   if (curr->parent->type != Type::unreachable) {
     shouldBeTrue(
       curr->parent->type.isRtt(), curr, "rtt.sub parent must have RTT type");
-    auto parentRTT = curr->parent->type.getRtt();
+    auto parentRtt = curr->parent->type.getRtt();
     auto rtt = curr->type.getRtt();
-    shouldBeEqual(rtt.depth,
-                  parentRTT.depth + 1,
-                  curr,
-                  "rtt.canon has a depth of 1 over the parent");
+    if (rtt.hasDepth() && parentRtt.hasDepth()) {
+      shouldBeEqual(rtt.depth,
+                    parentRtt.depth + 1,
+                    curr,
+                    "rtt.canon has a depth of 1 over the parent");
+    }
   }
 }
 

@@ -984,8 +984,12 @@ void WasmBinaryWriter::writeType(Type type) {
   }
   if (type.isRtt()) {
     auto rtt = type.getRtt();
-    o << S32LEB(BinaryConsts::EncodedType::rtt);
-    o << U32LEB(rtt.depth);
+    if (rtt.hasDepth()) {
+      o << S32LEB(BinaryConsts::EncodedType::rtt_n);
+      o << U32LEB(rtt.depth);
+    } else {
+      o << S32LEB(BinaryConsts::EncodedType::rtt);
+    }
     writeHeapType(rtt.heapType);
     return;
   }
@@ -1389,10 +1393,13 @@ Type WasmBinaryBuilder::getType(int initial) {
       return Type(getHeapType(), /* nullable = */ true);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
-    case BinaryConsts::EncodedType::rtt: {
+    case BinaryConsts::EncodedType::rtt_n: {
       auto depth = getU32LEB();
       auto heapType = getHeapType();
       return Type(Rtt(depth, heapType));
+    }
+    case BinaryConsts::EncodedType::rtt: {
+      return Type(Rtt(getHeapType()));
     }
     default:
       throwError("invalid wasm type: " + std::to_string(initial));

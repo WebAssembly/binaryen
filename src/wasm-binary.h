@@ -354,9 +354,10 @@ enum EncodedType {
   nonnullable = -0x15, // 0x6b
   // integer reference type
   i31ref = -0x16, // 0x6a
-  // run-time type info type
-  rtt = -0x17, // 0x69
-  // exception reference type
+  // run-time type info type, with depth index n
+  rtt_n = -0x17, // 0x69
+  // exception reference type, without depth index n
+  rtt = -0x19,    // 0x67 FIXME: this should have the values that exnref has
   exnref = -0x18, // 0x68
   // func_type form
   Func = -0x20,   // 0x60

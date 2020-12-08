@@ -432,14 +432,20 @@ struct Array {
 };
 
 struct Rtt {
+  enum {
+    // An Rtt can have no depth specified
+    NoDepth = -1
+  };
   uint32_t depth;
   HeapType heapType;
+  Rtt(HeapType heapType) : depth(NoDepth), heapType(heapType) {}
   Rtt(uint32_t depth, HeapType heapType) : depth(depth), heapType(heapType) {}
   bool operator==(const Rtt& other) const {
     return depth == other.depth && heapType == other.heapType;
   }
   bool operator!=(const Rtt& other) const { return !(*this == other); }
   bool operator<(const Rtt& other) const;
+  bool hasDepth() { return depth != uint32_t(NoDepth); }
   std::string toString() const;
 };
 

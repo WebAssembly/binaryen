@@ -75,7 +75,10 @@ static void printTypeName(std::ostream& os, Type type) {
   }
   if (type.isRtt()) {
     auto rtt = type.getRtt();
-    os << "(rtt " << rtt.depth << ' ';
+    os << "(rtt ";
+    if (rtt.hasDepth()) {
+      os << rtt.depth << ' ';
+    }
     printHeapTypeName(os, rtt.heapType);
     os << ')';
     return;

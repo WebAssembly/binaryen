@@ -941,10 +941,16 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
     return Type(parseHeapType(*s[i]), nullable);
   }
   if (elementStartsWith(s, RTT)) {
-    // It's an RTT, something like (rtt N $typename)
-    auto depth = atoi(s[1]->str().c_str());
-    auto heapType = parseHeapType(*s[2]);
-    return Type(Rtt(depth, heapType));
+    // It's an RTT, something like (rtt N $typename) or just (rtt $typename)
+    // if there is no depth.
+    if (s[1]->dollared()) {
+      auto heapType = parseHeapType(*s[1]);
+      return Type(Rtt(heapType));
+    } else {
+      auto depth = atoi(s[1]->str().c_str());
+      auto heapType = parseHeapType(*s[2]);
+      return Type(Rtt(depth, heapType));
+    }
   }
   // It's a tuple.
   std::vector<Type> types;

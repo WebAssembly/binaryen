@@ -88,4 +88,7 @@
     )
     (unreachable)
   )
+  ;; RTT types as parameters
+  (func $rtt-param-with-depth (param $rtt (rtt 1 $parent)))
+  (func $rtt-param-without-depth (param $rtt (rtt $parent)))
 )
