@@ -463,13 +463,16 @@ void Break::finalize() {
 
 void Switch::finalize() { type = Type::unreachable; }
 
-template<typename T> void handleUnreachableOperands(T* curr) {
+// Sets the type to unreachable if there is an unreachable operand. Returns true
+// if so.
+template<typename T> bool handleUnreachableOperands(T* curr) {
   for (auto* child : curr->operands) {
     if (child->type == Type::unreachable) {
       curr->type = Type::unreachable;
-      break;
+      return true;
     }
   }
+  return false;
 }
 
 void Call::finalize() {
@@ -1093,7 +1096,16 @@ void RttSub::finalize() {
   // construction.
 }
 
-// TODO (gc): struct.new
+void StructNew::finalize() {
+  if (rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+  type = Type(rtt->type.getHeapType(), /* nullable = */ false);
+}
 
 void StructGet::finalize() {
   if (ref->type == Type::unreachable) {

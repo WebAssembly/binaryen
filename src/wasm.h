@@ -1345,9 +1345,17 @@ public:
 
 class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
-  StructNew(MixedArena& allocator) {}
+  StructNew(MixedArena& allocator) : operands(allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
+  Expression* rtt;
+  // A struct.new_with_default has empty operands. This does leave the case of a
+  // struct with no fields ambiguous, but it doesn't make a difference in that
+  // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
+  ExpressionList operands;
+
+  bool isWithDefault() { return operands.empty(); }
+
+  void finalize();
 };
 
 class StructGet : public SpecificExpression<Expression::StructGetId> {

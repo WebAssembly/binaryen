@@ -557,7 +557,6 @@ private:
     void visitRttCanon(RttCanon* curr) {}
     void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {
-      WASM_UNREACHABLE("TODO (gc): struct.new");
     }
     void visitStructGet(StructGet* curr) {
       // traps when the arg is null

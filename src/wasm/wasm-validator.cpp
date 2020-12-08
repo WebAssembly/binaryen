@@ -2238,7 +2238,33 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.new requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): struct.new");
+  if (curr->type != Type::unreachable) {
+    if (shouldBeTrue(
+          curr->rtt->type.isRtt(), curr, "struct.new rtt must be rtt")) {
+      auto heapType = curr->rtt->type.getHeapType();
+      if (shouldBeTrue(
+            heapType.isStruct, curr, "struct.new heap type must be struct")) {
+        if (curr->isWithDefault()) {
+          // All the fields must be defaultable.
+          for (auto* operand : curr->operands) {
+            shouldBeFalse(
+              operand->type.isNullable(),
+              operand,
+              "struct.new_with_default operand must be defaultable");
+          }
+        } else {
+          // All the fields must have the proper type.
+          const auto& fields = heapType.getStruct().fields;
+          for (Index i = 0; i < fields.size(); i++) {
+            shouldBeSubType(curr->operands[i]->type,
+                            fields[i].type,
+                            curr,
+                            "struct.new operand must have proper type");
+          }
+        }
+      }
+    }
+  }
 }
 
 void FunctionValidator::visitStructGet(StructGet* curr) {
