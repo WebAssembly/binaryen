@@ -338,6 +338,8 @@ enum EncodedType {
   f32 = -0x3,  // 0x7d
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
+  i8 = -0x6,   // 0x7a
+  i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
   // opaque host reference type
@@ -355,7 +357,9 @@ enum EncodedType {
   // exception reference type
   exnref = -0x18, // 0x68
   // func_type form
-  Func = -0x20, // 0x60
+  Func = -0x20,   // 0x60
+  Struct = -0x21, // 0x5f
+  Array = -0x22,  // 0x5e
   // block_type
   Empty = -0x40 // 0x40
 };
@@ -1125,7 +1129,7 @@ public:
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getEventIndex(Name name) const;
-  uint32_t getTypeIndex(Signature sig) const;
+  uint32_t getTypeIndex(HeapType type) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1170,6 +1174,7 @@ public:
 
   void writeType(Type type);
   void writeHeapType(HeapType type);
+  void writeField(const Field& field);
 
 private:
   Module* wasm;
@@ -1249,15 +1254,20 @@ public:
   int32_t getS32LEB();
   int64_t getS64LEB();
   uint64_t getUPtrLEB();
+
+  // Read a value and get a type for it.
   Type getType();
+  // Get a type given the initial S32LEB has already been read, and is provided.
+  Type getType(int initial);
+
   HeapType getHeapType();
+  Field getField();
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);
   void verifyInt16(int16_t x);
   void verifyInt32(int32_t x);
   void verifyInt64(int64_t x);
-  void ungetInt8();
   void readHeader();
   void readStart();
   void readMemory();

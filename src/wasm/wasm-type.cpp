@@ -377,6 +377,10 @@ bool Type::isRtt() const {
   }
 }
 
+bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
+
+bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
+
 bool Type::operator<(const Type& other) const {
   if (*this == other) {
     return false;
@@ -1035,6 +1039,8 @@ size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
   auto digest = wasm::hash(field.type);
   wasm::rehash(digest, field.packedType);
   wasm::rehash(digest, field.mutable_);
+  // Note that the name is not hashed here - it is pure metadata for printing
+  // purposes only.
   return digest;
 }
 

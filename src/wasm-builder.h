@@ -727,15 +727,21 @@ public:
     ret->finalize();
     return ret;
   }
-  StructGet* makeStructGet() {
+  StructGet*
+  makeStructGet(Index index, Expression* ref, Type type, bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<StructGet>();
-    WASM_UNREACHABLE("TODO (gc): struct.get");
+    ret->index = index;
+    ret->ref = ref;
+    ret->type = type;
+    ret->signed_ = signed_;
     ret->finalize();
     return ret;
   }
-  StructSet* makeStructSet() {
+  StructSet* makeStructSet(Index index, Expression* ref, Expression* value) {
     auto* ret = wasm.allocator.alloc<StructSet>();
-    WASM_UNREACHABLE("TODO (gc): struct.set");
+    ret->index = index;
+    ret->ref = ref;
+    ret->value = value;
     ret->finalize();
     return ret;
   }
@@ -780,11 +786,11 @@ public:
     if (type.isNumber()) {
       return makeConst(value);
     }
-    if (type.isFunction()) {
-      if (!value.isNull()) {
-        return makeRefFunc(value.getFunc(), type);
-      }
+    if (value.isNull()) {
       return makeRefNull(type);
+    }
+    if (type.isFunction()) {
+      return makeRefFunc(value.getFunc(), type);
     }
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -962,13 +968,12 @@ public:
     if (curr->type.isTuple()) {
       return makeConstantExpression(Literal::makeZeros(curr->type));
     }
+    if (curr->type.isNullable()) {
+      return ExpressionManipulator::refNull(curr, curr->type);
+    }
     if (curr->type.isFunction()) {
-      if (curr->type.isNullable()) {
-        return ExpressionManipulator::refNull(curr, curr->type);
-      } else {
-        // We can't do any better, keep the original.
-        return curr;
-      }
+      // We can't do any better, keep the original.
+      return curr;
     }
     Literal value;
     // TODO: reuse node conditionally when possible for literals

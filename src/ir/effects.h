@@ -515,12 +515,12 @@ private:
       if (parent.tryDepth == 0) {
         parent.throws = true;
       }
-      // rethrow traps when the arg is null
+      // traps when the arg is null
       parent.implicitTrap = true;
     }
     void visitBrOnExn(BrOnExn* curr) {
       parent.breakTargets.insert(curr->name);
-      // br_on_exn traps when the arg is null
+      // traps when the arg is null
       parent.implicitTrap = true;
     }
     void visitNop(Nop* curr) {}
@@ -562,10 +562,16 @@ private:
       WASM_UNREACHABLE("TODO (gc): struct.new");
     }
     void visitStructGet(StructGet* curr) {
-      WASM_UNREACHABLE("TODO (gc): struct.get");
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
     void visitStructSet(StructSet* curr) {
-      WASM_UNREACHABLE("TODO (gc): struct.set");
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
     void visitArrayNew(ArrayNew* curr) {
       WASM_UNREACHABLE("TODO (gc): array.new");
