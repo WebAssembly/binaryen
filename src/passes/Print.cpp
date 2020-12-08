@@ -1702,7 +1702,12 @@ struct PrintExpressionContents
     printHeapTypeName(o, curr->type.getRtt().heapType);
   }
   void visitStructNew(StructNew* curr) {
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    printMedium(o, "struct.new_");
+    if (curr->isWithDefault()) {
+      o << "default_";
+    }
+    o << "_with_rtt ";
+    printHeapTypeName(o, curr->rtt->type.getRtt().heapType);
   }
   void visitStructGet(StructGet* curr) {
     const auto& field =
@@ -2391,7 +2396,12 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitStructNew(StructNew* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    incIndent();
+    printFullLine(curr->rtt);
+    for (auto& operand : curr->operands) {
+      printFullLine(operand);
+    }
+    decIndent();
   }
   void visitStructGet(StructGet* curr) {
     o << '(';

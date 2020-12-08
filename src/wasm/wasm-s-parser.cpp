@@ -2124,10 +2124,20 @@ Expression* SExpressionWasmBuilder::makeRttSub(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
-  auto ret = allocator.alloc<StructNew>();
-  WASM_UNREACHABLE("TODO (gc): struct.new");
-  ret->finalize();
-  return ret;
+  auto heapType = parseHeapType(*s[1]);
+  auto* rtt = parseExpression(*s[2]);
+  if (rtt->type != Type::unreachable) {
+    if (!rtt->type.isRtt() || rtt->type.getHeapType() != heapType) {
+      throw ParseException("bad struct.new heap type", s.line, s.col);
+    }
+  }
+  auto numArgs = s.size() - 3;
+  std::vector<Expression*> args;
+  args.resize(numArgs);
+  for (Index i = 0; i < numArgs; i++) {
+    args[i] = parseExpression(*s[i + 3]);
+  }
+  return Builder(wasm).makeStructNew(rtt, args);
 }
 
 Index SExpressionWasmBuilder::getStructIndex(const HeapType& type, Element& s) {
