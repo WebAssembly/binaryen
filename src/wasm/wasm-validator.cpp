@@ -2232,11 +2232,12 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
                curr,
                "struct.get requires gc to be enabled");
   if (curr->ref->type != Type::unreachable) {
-    shouldBeEqual(
-      curr->type,
-      curr->ref->type.getHeapType().getStruct().fields[curr->index].type,
-      curr,
-      "struct.get must have the proper type");
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+    shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+    shouldBeEqual(curr->type,
+                  fields[curr->index].type,
+                  curr,
+                  "struct.get must have the proper type");
   }
 }
 
@@ -2245,11 +2246,12 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
                curr,
                "struct.set requires gc to be enabled");
   if (curr->ref->type != Type::unreachable) {
-    shouldBeEqual(
-      curr->value->type,
-      curr->ref->type.getHeapType().getStruct().fields[curr->index].type,
-      curr,
-      "struct.set must have the proper type");
+    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+    shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+    shouldBeEqual(curr->value->type,
+                  fields[curr->index].type,
+                  curr,
+                  "struct.set must have the proper type");
   }
 }
 
