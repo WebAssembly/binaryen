@@ -1950,8 +1950,18 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::ArrayGet);
-  parent.writeHeapType(curr->ref->type.getHeapType());
+  const auto& heapType = curr->ref->type.getHeapType();
+  const auto& field = heapType.getArray().element;
+  int8_t op;
+  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+    op = BinaryConsts::ArrayGet;
+  } else if (curr->signed_) {
+    op = BinaryConsts::ArrayGetS;
+  } else {
+    op = BinaryConsts::ArrayGetU;
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(op);
+  parent.writeHeapType(heapType);
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
