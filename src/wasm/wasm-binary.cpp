@@ -5612,7 +5612,8 @@ bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::StructNewWithRtt && code != BinaryConsts::StructNewDefaultWithRtt) {
+  if (code != BinaryConsts::StructNewWithRtt &&
+      code != BinaryConsts::StructNewDefaultWithRtt) {
     return false;
   }
   auto heapType = getHeapType();

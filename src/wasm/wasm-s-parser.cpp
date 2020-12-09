@@ -2133,7 +2133,8 @@ Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   }
   auto numOperands = s.size() - 3;
   if (default_ && numOperands > 0) {
-    throw ParseException("arguments provided for struct.new_with_default", s.line, s.col);
+    throw ParseException(
+      "arguments provided for struct.new_with_default", s.line, s.col);
   }
   std::vector<Expression*> operands;
   operands.resize(numOperands);

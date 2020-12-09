@@ -1913,7 +1913,7 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
     o << U32LEB(BinaryConsts::StructNewDefaultWithRtt);
   } else {
     o << U32LEB(BinaryConsts::StructNewWithRtt);
-  }  
+  }
   parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
