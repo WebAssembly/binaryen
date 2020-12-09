@@ -1416,7 +1416,8 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(Literal(std::shared_ptr<Literals>(new Literals(data)), curr->type));
+    return Flow(
+      Literal(std::shared_ptr<Literals>(new Literals(data)), curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");

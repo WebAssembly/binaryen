@@ -578,8 +578,7 @@ bool Type::isSubType(Type left, Type right) {
       return true;
     }
     // A non-nullable type is a supertype of a nullable one
-    if (left.getHeapType() == right.getHeapType() &&
-        !left.isNullable()) {
+    if (left.getHeapType() == right.getHeapType() && !left.isNullable()) {
       // The only difference is the nullability.
       assert(right.isNullable());
       return true;
