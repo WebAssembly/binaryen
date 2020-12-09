@@ -123,18 +123,17 @@
         (i32.const 2)
       )
     )
-    (drop
-      (array.set $vector
-        (local.get $x)
-        (i32.const 2)
-        (f64.const 2.18281828)
-      )
+    (array.set $vector
+      (local.get $x)
+      (i32.const 2)
+      (f64.const 2.18281828)
     )
     (drop
       (array.len $vector
         (local.get $x)
       )
     )
+    (unreachable)
   )
   ;; RTT types as parameters
   (func $rtt-param-with-depth (param $rtt (rtt 1 $parent)))
