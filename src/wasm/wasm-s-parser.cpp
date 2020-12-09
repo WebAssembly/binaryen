@@ -2195,31 +2195,37 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
 Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {
   auto arrayType = parseHeapType(*s[1]);
   auto ref = parseExpression(*s[2]);
+  if (ref->type != Type::unreachable) {
+    if (!ref->type.isRef() || ref->type.getHeapType() != arrayType) {
+      throw ParseException("bad array.get heap type", s.line, s.col);
+    }
+  }
   auto index = parseExpression(*s[3]);
-  auto type = arrayType.getArray().element.type;
-  return Builder(wasm).makeArrayGet(index, ref, type, signed_);
+  return Builder(wasm).makeArrayGet(ref, index, signed_);
 }
 
 Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
   auto arrayType = parseHeapType(*s[1]);
   auto ref = parseExpression(*s[2]);
+  if (ref->type != Type::unreachable) {
+    if (!ref->type.isRef() || ref->type.getHeapType() != arrayType) {
+      throw ParseException("bad array.set heap type", s.line, s.col);
+    }
+  }
   auto index = parseExpression(*s[3]);
   auto value = parseExpression(*s[4]);
-  auto type = arrayType.getArray().element.type;
-  return Builder(wasm).makeArraySet(index, ref, type, value);
-}
-
-Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
-  auto arrayType = parseHeapType(*s[1]);
-  auto ref = parseExpression(*s[2]);
-  return Builder(wasm).makeArrayLen(index, ref);
+  return Builder(wasm).makeArraySet(ref, index, value);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {
-  auto ret = allocator.alloc<ArrayLen>();
-  WASM_UNREACHABLE("TODO (gc): array.len");
-  ret->finalize();
-  return ret;
+  auto arrayType = parseHeapType(*s[1]);
+  auto ref = parseExpression(*s[2]);
+  if (ref->type != Type::unreachable) {
+    if (!ref->type.isRef() || ref->type.getHeapType() != arrayType) {
+      throw ParseException("bad array.len heap type", s.line, s.col);
+    }
+  }
+  return Builder(wasm).makeArrayLen(ref);
 }
 
 // converts an s-expression string representing binary data into an output

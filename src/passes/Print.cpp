@@ -1742,7 +1742,7 @@ struct PrintExpressionContents
   void visitArrayGet(ArrayGet* curr) {
     const auto& element =
       curr->ref->type.getHeapType().getArray().element;
-    if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+    if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
         printMedium(o, "array.get_s ");
       } else {
