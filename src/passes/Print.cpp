@@ -104,6 +104,23 @@ static void printTypeName(std::ostream& os, Type type) {
   WASM_UNREACHABLE("unsupported print type");
 }
 
+static void printFieldName(std::ostream& os, const Field& field) {
+  if (field.mutable_) {
+    os << "mut:";
+  }
+  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+    if (field.packedType == Field::i8) {
+      os << "i8";
+    } else if (field.packedType == Field::i16) {
+      os << "i16";
+    } else {
+      WASM_UNREACHABLE("invalid packed type");
+    }
+  } else {
+    printTypeName(os, field.type);
+  }
+}
+
 static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
   if (type.isBasic()) {
     os << type;
@@ -128,19 +145,12 @@ static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
     for (auto& field : struct_.fields) {
       os << sep;
       sep = "_";
-      if (field.mutable_) {
-        os << "mut:";
-      }
-      printTypeName(os, field.type);
+      printFieldName(os, field);
     }
     os << "}";
   } else if (type.isArray()) {
     os << "[";
-    auto element = type.getArray().element;
-    if (element.mutable_) {
-      os << "mut:";
-    }
-    printTypeName(os, element.type);
+    printFieldName(os, type.getArray().element);
     os << "]";
   } else {
     os << type;
