@@ -5723,7 +5723,7 @@ bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::ArraySet) {
+  if (code != BinaryConsts::ArrayLen) {
     return false;
   }
   auto heapType = getHeapType();
