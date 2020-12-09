@@ -1946,21 +1946,21 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   } else {
     o << U32LEB(BinaryConsts::ArrayNewWithRtt);
   }
-  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConst::ArrayGet);
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::ArrayGet);
   parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConst::ArraySet);
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::ArraySet);
   parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConst::ArrayLen);
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::ArrayLen);
   parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
