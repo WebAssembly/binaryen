@@ -5744,8 +5744,8 @@ void WasmBinaryBuilder::validateHeapTypeUsingChild(Expression* child,
   }
   if ((!child->type.isRef() && !child->type.isRtt()) ||
       child->type.getHeapType() != heapType) {
-    throwError("bad heap type: expected " + heapType.toString() + " but found "
-               + child->type.toString());
+    throwError("bad heap type: expected " + heapType.toString() +
+               " but found " + child->type.toString());
   }
 }
 
