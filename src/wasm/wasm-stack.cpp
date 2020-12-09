@@ -1940,21 +1940,28 @@ void BinaryInstWriter::visitStructSet(StructSet* curr) {
 }
 
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
-  WASM_UNREACHABLE("TODO (gc): array.new");
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->isWithDefault()) {
+    o << U32LEB(BinaryConsts::ArrayNewDefaultWithRtt);
+  } else {
+    o << U32LEB(BinaryConsts::ArrayNewWithRtt);
+  }
+  parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
-  WASM_UNREACHABLE("TODO (gc): array.get");
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConst::ArrayGet);
+  parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
-  WASM_UNREACHABLE("TODO (gc): array.set");
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConst::ArraySet);
+  parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
-  WASM_UNREACHABLE("TODO (gc): array.len");
+  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConst::ArrayLen);
+  parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
