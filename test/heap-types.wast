@@ -86,6 +86,19 @@
       (local.get $x)
       (i32.const 100)
     )
+    (drop
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $struct.A
+        (rtt.canon $struct.A)
+        (i32.const 1)
+        (f32.const 2.345)
+        (f64.const 3.14159)
+      )
+    )
     (unreachable)
   )
   ;; RTT types as parameters

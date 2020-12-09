@@ -1,0 +1,52 @@
+[fuzz-exec] calling structs
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 42]
+[LoggingExternalInterface logging 100]
+[LoggingExternalInterface logging 100]
+(module
+ (type ${i32} (struct (field i32)))
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (export "structs" (func $0))
+ (func $0
+  (local $0 (ref null ${i32}))
+  (call $log
+   (struct.get ${i32} 0
+    (local.tee $0
+     (struct.new_default_with_rtt ${i32}
+      (rtt.canon ${i32})
+     )
+    )
+   )
+  )
+  (struct.set ${i32} 0
+   (local.get $0)
+   (i32.const 42)
+  )
+  (call $log
+   (struct.get ${i32} 0
+    (local.get $0)
+   )
+  )
+  (struct.set ${i32} 0
+   (local.get $0)
+   (i32.const 100)
+  )
+  (call $log
+   (struct.get ${i32} 0
+    (local.get $0)
+   )
+  )
+  (call $log
+   (struct.get ${i32} 0
+    (local.get $0)
+   )
+  )
+ )
+)
+[fuzz-exec] calling structs
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 42]
+[LoggingExternalInterface logging 100]
+[LoggingExternalInterface logging 100]

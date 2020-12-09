@@ -588,7 +588,8 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::StructNewId: {
     DELEGATE_START(StructNew);
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    DELEGATE_FIELD_CHILD(StructNew, rtt);
+    DELEGATE_FIELD_CHILD_VECTOR(StructNew, operands);
     DELEGATE_END(StructNew);
     break;
   }

@@ -577,6 +577,12 @@ bool Type::isSubType(Type left, Type right) {
     if (left.getHeapType().isSignature() && right == Type::funcref) {
       return true;
     }
+    // A non-nullable type is a supertype of a nullable one
+    if (left.getHeapType() == right.getHeapType() && !left.isNullable()) {
+      // The only difference is the nullability.
+      assert(right.isNullable());
+      return true;
+    }
     return false;
   }
   if (left.isTuple() && right.isTuple()) {

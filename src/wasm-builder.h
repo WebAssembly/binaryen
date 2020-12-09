@@ -727,9 +727,11 @@ public:
     ret->finalize();
     return ret;
   }
-  StructNew* makeStructNew() {
+  template<typename T>
+  StructNew* makeStructNew(Expression* rtt, const T& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    ret->rtt = rtt;
+    ret->operands.set(args);
     ret->finalize();
     return ret;
   }
