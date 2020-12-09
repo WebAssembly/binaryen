@@ -1,6 +1,7 @@
 (module
   ;; inline ref type in result
   (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null (func (result eqref))))))
+  (type $=>eqref (func (result eqref)))
 
   (type $i32-i32 (func (param i32) (result i32)))
 
@@ -25,8 +26,7 @@
     (call_ref (i32.const 42) (local.get $f))
   )
   (func $ref-in-sig (param $0 f64) (result (ref null (func (result eqref))))
-    ;; ref.null of an inline type
-    (ref.null (func (result eqref)))
+    (ref.null $=>eqref)
   )
   (func $type-only-in-tuple-local
     (local $x (i32 (ref null (func (result anyref))) f64))

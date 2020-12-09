@@ -5437,9 +5437,10 @@
  (type $none_=>_none (func))
  (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
  (type $i32_i32_=>_f32 (func (param i32 i32) (result f32)))
- (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
+ (import "env" "emscripten_get_sbrk_ptr" (func $emscripten_get_sbrk_ptr (result i32)))
  (memory $0 (shared 100 100))
  (func $actions
   (drop
@@ -5474,7 +5475,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5510,7 +5511,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5540,7 +5541,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5570,7 +5571,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5600,7 +5601,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5630,7 +5631,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5673,7 +5674,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5710,7 +5711,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5740,7 +5741,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5777,7 +5778,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5814,7 +5815,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5844,7 +5845,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5881,7 +5882,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5918,7 +5919,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5955,7 +5956,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -5991,7 +5992,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6021,7 +6022,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6051,7 +6052,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6081,7 +6082,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6111,7 +6112,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6154,7 +6155,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6191,7 +6192,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6221,7 +6222,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6258,7 +6259,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6295,7 +6296,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6325,7 +6326,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6362,7 +6363,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6405,7 +6406,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6442,7 +6443,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6472,7 +6473,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6509,7 +6510,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6546,7 +6547,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6583,7 +6584,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6613,7 +6614,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6650,7 +6651,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6687,7 +6688,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6724,7 +6725,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6761,7 +6762,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6791,7 +6792,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6828,7 +6829,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6865,7 +6866,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6895,7 +6896,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6932,7 +6933,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -6969,7 +6970,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7006,7 +7007,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7036,7 +7037,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7073,7 +7074,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7110,7 +7111,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7147,7 +7148,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7184,7 +7185,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7215,7 +7216,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7246,7 +7247,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7277,7 +7278,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7315,7 +7316,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7353,7 +7354,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7384,7 +7385,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7422,7 +7423,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7460,7 +7461,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7498,7 +7499,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7529,7 +7530,7 @@
       (i32.const 1)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7560,7 +7561,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7591,7 +7592,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7629,7 +7630,7 @@
       (i32.const 2)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7667,7 +7668,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7698,7 +7699,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7736,7 +7737,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7774,7 +7775,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7812,7 +7813,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7843,7 +7844,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7881,7 +7882,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7919,7 +7920,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7957,7 +7958,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -7995,7 +7996,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8026,7 +8027,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8064,7 +8065,7 @@
       (i32.const 4)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8102,7 +8103,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8133,7 +8134,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8171,7 +8172,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8209,7 +8210,7 @@
       (i32.const 8)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8247,7 +8248,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8278,7 +8279,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8316,7 +8317,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8354,7 +8355,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )
@@ -8392,7 +8393,7 @@
       (i32.const 16)
      )
      (i32.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $emscripten_get_sbrk_ptr)
      )
     )
    )

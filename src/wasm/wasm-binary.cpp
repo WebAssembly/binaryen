@@ -31,7 +31,7 @@ namespace wasm {
 void WasmBinaryWriter::prepare() {
   // Collect function types and their frequencies. Collect information in each
   // function in parallel, then merge.
-  ModuleUtils::collectSignatures(*wasm, types, typeIndices);
+  ModuleUtils::collectHeapTypes(*wasm, types, typeIndices);
   importInfo = wasm::make_unique<ImportInfo>(*wasm);
 }
 
@@ -215,14 +215,29 @@ void WasmBinaryWriter::writeTypes() {
   auto start = startSection(BinaryConsts::Section::Type);
   o << U32LEB(types.size());
   for (Index i = 0; i < types.size(); ++i) {
-    Signature& sig = types[i];
-    BYN_TRACE("write " << sig.params << " -> " << sig.results << std::endl);
-    o << S32LEB(BinaryConsts::EncodedType::Func);
-    for (auto& sigType : {sig.params, sig.results}) {
-      o << U32LEB(sigType.size());
-      for (const auto& type : sigType) {
-        writeType(type);
+    auto type = types[i];
+    BYN_TRACE("write " << type << std::endl);
+    if (type.isSignature()) {
+      o << S32LEB(BinaryConsts::EncodedType::Func);
+      auto sig = type.getSignature();
+      for (auto& sigType : {sig.params, sig.results}) {
+        o << U32LEB(sigType.size());
+        for (const auto& type : sigType) {
+          writeType(type);
+        }
       }
+    } else if (type.isStruct()) {
+      o << S32LEB(BinaryConsts::EncodedType::Struct);
+      auto fields = type.getStruct().fields;
+      o << U32LEB(fields.size());
+      for (const auto& field : fields) {
+        writeField(field);
+      }
+    } else if (type.isArray()) {
+      o << S32LEB(BinaryConsts::EncodedType::Array);
+      writeField(type.getArray().element);
+    } else {
+      WASM_UNREACHABLE("TODO GC type writing");
     }
   }
   finishSection(start);
@@ -490,11 +505,11 @@ uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getTypeIndex(Signature sig) const {
-  auto it = typeIndices.find(sig);
+uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
+  auto it = typeIndices.find(type);
 #ifndef NDEBUG
   if (it == typeIndices.end()) {
-    std::cout << "Missing signature: " << sig << '\n';
+    std::cout << "Missing type: " << type << '\n';
     assert(0);
   }
 #endif
@@ -958,18 +973,14 @@ void WasmBinaryWriter::finishUp() {
 }
 
 void WasmBinaryWriter::writeType(Type type) {
-  if (type.isRef()) {
-    auto heapType = type.getHeapType();
-    // TODO: fully handle non-signature reference types (GC), and in reading
-    if (heapType.isSignature()) {
-      if (type.isNullable()) {
-        o << S32LEB(BinaryConsts::EncodedType::nullable);
-      } else {
-        o << S32LEB(BinaryConsts::EncodedType::nonnullable);
-      }
-      writeHeapType(heapType);
-      return;
+  if (type.isRef() && !type.isBasic()) {
+    if (type.isNullable()) {
+      o << S32LEB(BinaryConsts::EncodedType::nullable);
+    } else {
+      o << S32LEB(BinaryConsts::EncodedType::nonnullable);
     }
+    writeHeapType(type.getHeapType());
+    return;
   }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);
@@ -1018,39 +1029,51 @@ void WasmBinaryWriter::writeType(Type type) {
 }
 
 void WasmBinaryWriter::writeHeapType(HeapType type) {
-  if (type.isSignature()) {
-    auto sig = type.getSignature();
-    o << S32LEB(getTypeIndex(sig));
+  if (type.isSignature() || type.isStruct() || type.isArray()) {
+    o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
     return;
   }
   int ret = 0;
-  switch (type.kind) {
-    case HeapType::InvalidKind:
-      WASM_UNREACHABLE("invalid heap type");
-    case HeapType::FuncKind:
-      ret = BinaryConsts::EncodedHeapType::func;
-      break;
-    case HeapType::ExternKind:
-      ret = BinaryConsts::EncodedHeapType::extern_;
-      break;
-    case HeapType::ExnKind:
-      ret = BinaryConsts::EncodedHeapType::exn;
-      break;
-    case HeapType::AnyKind:
-      ret = BinaryConsts::EncodedHeapType::any;
-      break;
-    case HeapType::EqKind:
-      ret = BinaryConsts::EncodedHeapType::eq;
-      break;
-    case HeapType::I31Kind:
-      ret = BinaryConsts::EncodedHeapType::i31;
-      break;
-    case HeapType::SignatureKind:
-    case HeapType::StructKind:
-    case HeapType::ArrayKind:
-      WASM_UNREACHABLE("TODO: compound GC types");
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case HeapType::func:
+        ret = BinaryConsts::EncodedHeapType::func;
+        break;
+      case HeapType::ext:
+        ret = BinaryConsts::EncodedHeapType::extern_;
+        break;
+      case HeapType::exn:
+        ret = BinaryConsts::EncodedHeapType::exn;
+        break;
+      case HeapType::any:
+        ret = BinaryConsts::EncodedHeapType::any;
+        break;
+      case HeapType::eq:
+        ret = BinaryConsts::EncodedHeapType::eq;
+        break;
+      case HeapType::i31:
+        ret = BinaryConsts::EncodedHeapType::i31;
+        break;
+    }
+  } else {
+    WASM_UNREACHABLE("TODO: compound GC types");
   }
-  o << S32LEB(ret); // TODO: Actually encoded as s33
+  o << S64LEB(ret); // TODO: Actually s33
+}
+
+void WasmBinaryWriter::writeField(const Field& field) {
+  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+    if (field.packedType == Field::i8) {
+      o << S32LEB(BinaryConsts::EncodedType::i8);
+    } else if (field.packedType == Field::i16) {
+      o << S32LEB(BinaryConsts::EncodedType::i16);
+    } else {
+      WASM_UNREACHABLE("invalid packed type");
+    }
+  } else {
+    writeType(field.type);
+  }
+  o << U32LEB(field.mutable_);
 }
 
 // reader
@@ -1322,14 +1345,13 @@ uint64_t WasmBinaryBuilder::getUPtrLEB() {
   return wasm.memory.is64() ? getU64LEB() : getU32LEB();
 }
 
-Type WasmBinaryBuilder::getType() {
-  int type = getS32LEB();
+Type WasmBinaryBuilder::getType(int initial) {
   // Single value types are negative; signature indices are non-negative
-  if (type >= 0) {
+  if (initial >= 0) {
     // TODO: Handle block input types properly.
-    return getSignatureByTypeIndex(type).results;
+    return getSignatureByTypeIndex(initial).results;
   }
-  switch (type) {
+  switch (initial) {
     // None only used for block signatures. TODO: Separate out?
     case BinaryConsts::EncodedType::Empty:
       return Type::none;
@@ -1361,13 +1383,15 @@ Type WasmBinaryBuilder::getType() {
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     default:
-      throwError("invalid wasm type: " + std::to_string(type));
+      throwError("invalid wasm type: " + std::to_string(initial));
   }
   WASM_UNREACHABLE("unexpected type");
 }
 
+Type WasmBinaryBuilder::getType() { return getType(getS32LEB()); }
+
 HeapType WasmBinaryBuilder::getHeapType() {
-  int type = getS32LEB(); // TODO: Actually encoded as s33
+  auto type = getS64LEB(); // TODO: Actually s33
   // Single heap types are negative; heap type indices are non-negative
   if (type >= 0) {
     if (size_t(type) >= types.size()) {
@@ -1377,21 +1401,39 @@ HeapType WasmBinaryBuilder::getHeapType() {
   }
   switch (type) {
     case BinaryConsts::EncodedHeapType::func:
-      return HeapType::FuncKind;
+      return HeapType::func;
     case BinaryConsts::EncodedHeapType::extern_:
-      return HeapType::ExternKind;
+      return HeapType::ext;
     case BinaryConsts::EncodedHeapType::exn:
-      return HeapType::ExnKind;
+      return HeapType::exn;
     case BinaryConsts::EncodedHeapType::any:
-      return HeapType::AnyKind;
+      return HeapType::any;
     case BinaryConsts::EncodedHeapType::eq:
-      return HeapType::EqKind;
+      return HeapType::eq;
     case BinaryConsts::EncodedHeapType::i31:
-      return HeapType::I31Kind;
+      return HeapType::i31;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
   WASM_UNREACHABLE("unexpected type");
+}
+
+Field WasmBinaryBuilder::getField() {
+  // The value may be a general wasm type, or one of the types only possible in
+  // a field.
+  auto initial = getS32LEB();
+  if (initial == BinaryConsts::EncodedType::i8) {
+    auto mutable_ = getU32LEB();
+    return Field(Field::i8, mutable_);
+  }
+  if (initial == BinaryConsts::EncodedType::i16) {
+    auto mutable_ = getU32LEB();
+    return Field(Field::i16, mutable_);
+  }
+  // It's a regular wasm value.
+  auto type = getType(initial);
+  auto mutable_ = getU32LEB();
+  return Field(type, mutable_);
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -1447,12 +1489,6 @@ void WasmBinaryBuilder::verifyInt64(int64_t x) {
   }
 }
 
-void WasmBinaryBuilder::ungetInt8() {
-  assert(pos > 0);
-  BYN_TRACE("ungetInt8 (at " << pos << ")\n");
-  pos--;
-}
-
 void WasmBinaryBuilder::readHeader() {
   BYN_TRACE("== readHeader\n");
   verifyInt32(BinaryConsts::Magic);
@@ -1490,23 +1526,34 @@ void WasmBinaryBuilder::readTypes() {
   BYN_TRACE("num: " << numTypes << std::endl);
   for (size_t i = 0; i < numTypes; i++) {
     BYN_TRACE("read one\n");
-    std::vector<Type> params;
-    std::vector<Type> results;
     auto form = getS32LEB();
-    if (form != BinaryConsts::EncodedType::Func) {
-      throwError("bad signature form " + std::to_string(form));
+    if (form == BinaryConsts::EncodedType::Func) {
+      std::vector<Type> params;
+      std::vector<Type> results;
+      size_t numParams = getU32LEB();
+      BYN_TRACE("num params: " << numParams << std::endl);
+      for (size_t j = 0; j < numParams; j++) {
+        params.push_back(getConcreteType());
+      }
+      auto numResults = getU32LEB();
+      BYN_TRACE("num results: " << numResults << std::endl);
+      for (size_t j = 0; j < numResults; j++) {
+        results.push_back(getConcreteType());
+      }
+      types.emplace_back(Signature(Type(params), Type(results)));
+    } else if (form == BinaryConsts::EncodedType::Struct) {
+      FieldList fields;
+      size_t numFields = getU32LEB();
+      BYN_TRACE("num fields: " << numFields << std::endl);
+      for (size_t j = 0; j < numFields; j++) {
+        fields.push_back(getField());
+      }
+      types.emplace_back(Struct(fields));
+    } else if (form == BinaryConsts::EncodedType::Array) {
+      types.emplace_back(Array(getField()));
+    } else {
+      throwError("bad type form " + std::to_string(form));
     }
-    size_t numParams = getU32LEB();
-    BYN_TRACE("num params: " << numParams << std::endl);
-    for (size_t j = 0; j < numParams; j++) {
-      params.push_back(getConcreteType());
-    }
-    auto numResults = getU32LEB();
-    BYN_TRACE("num results: " << numResults << std::endl);
-    for (size_t j = 0; j < numResults; j++) {
-      results.push_back(getConcreteType());
-    }
-    types.emplace_back(Signature(Type(params), Type(results)));
   }
 }
 
@@ -5571,20 +5618,22 @@ bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
   switch (code) {
     case BinaryConsts::StructGet:
       curr = allocator.alloc<StructGet>();
-      // ...
       break;
     case BinaryConsts::StructGetS:
       curr = allocator.alloc<StructGet>();
-      // ...
+      curr->signed_ = true;
       break;
     case BinaryConsts::StructGetU:
       curr = allocator.alloc<StructGet>();
-      // ...
+      curr->signed_ = false;
       break;
     default:
       return false;
   }
-  WASM_UNREACHABLE("TODO (gc): struct.get");
+  // This type annotation is unused. Beware it needing to be used in the future!
+  getHeapType();
+  curr->index = getU32LEB();
+  curr->ref = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;
@@ -5595,7 +5644,11 @@ bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
     return false;
   }
   auto* curr = allocator.alloc<StructSet>();
-  WASM_UNREACHABLE("TODO (gc): struct.set");
+  // This type annotation is unused. Beware it needing to be used in the future!
+  getHeapType();
+  curr->index = getU32LEB();
+  curr->ref = popNonVoidExpression();
+  curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;

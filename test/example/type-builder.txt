@@ -1,15 +1,15 @@
 ;; Test TypeBuilder
-Before setting builder's heap types:
-(ref $sig) => (temp ref invalid)
-(ref $struct) => (temp ref invalid)
-(ref $array) => (temp ref invalid)
-(ref null $array) => (temp ref null invalid)
+Before setting heap types:
+(ref $sig) => (ref (func))
+(ref $struct) => (ref (func))
+(ref $array) => (ref (func))
+(ref null $array) => (ref null (func))
 
-After setting builder's heap types:
-(ref $sig) => (temp ref (func (param (temp ref (struct (field (temp ref null (array (mut externref))) (mut (ref extern)))))) (result (temp ref (array (mut externref))))))
-(ref $struct) => (temp ref (struct (field (temp ref null (array (mut externref))) (mut (ref extern)))))
-(ref $array) => (temp ref (array (mut externref)))
-(ref null $array) => (temp ref null (array (mut externref)))
+After setting heap types:
+(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))) (result (ref (array (mut externref))))))
+(ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))
+(ref $array) => (ref (array (mut externref)))
+(ref null $array) => (ref null (array (mut externref)))
 
 After building types:
 (ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))) (result (ref (array (mut externref))))))

@@ -78,7 +78,7 @@
   (block $__inlined_func$0
    (block
     (call_ref
-     (ref.null (func))
+     (ref.null $none_=>_none)
     )
     (br $__inlined_func$0)
    )

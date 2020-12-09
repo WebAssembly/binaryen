@@ -19,41 +19,46 @@ void test_builder() {
   Type refStruct = builder.getTempRefType(1, false);
   Type refArray = builder.getTempRefType(2, false);
   Type refNullArray = builder.getTempRefType(2, true);
-  Type refExt(HeapType::ExternKind, false);
-  Type refNullExt(HeapType::ExternKind, true);
+  Type refExt(HeapType::ext, false);
+  Type refNullExt(HeapType::ext, true);
 
-  std::cout << "Before setting builder's heap types:\n";
+  Signature sig(refStruct, refArray);
+  Struct struct_({Field(refNullArray, false), Field(refExt, true)});
+  Array array(Field(refNullExt, true));
+
+  std::cout << "Before setting heap types:\n";
   std::cout << "(ref $sig) => " << refSig << "\n";
   std::cout << "(ref $struct) => " << refStruct << "\n";
   std::cout << "(ref $array) => " << refArray << "\n";
   std::cout << "(ref null $array) => " << refNullArray << "\n\n";
 
-  HeapType sig = Signature(refStruct, refArray);
-  HeapType struct_ = Struct({Field(refNullArray, false), Field(refExt, true)});
-  HeapType array = Array(Field(refNullExt, true));
+  builder.setHeapType(0, sig);
+  builder.setHeapType(1, struct_);
+  builder.setHeapType(2, array);
 
-  builder[0] = sig;
-  builder[1] = struct_;
-  builder[2] = array;
-
-  std::cout << "After setting builder's heap types:\n";
+  std::cout << "After setting heap types:\n";
   std::cout << "(ref $sig) => " << refSig << "\n";
   std::cout << "(ref $struct) => " << refStruct << "\n";
   std::cout << "(ref $array) => " << refArray << "\n";
   std::cout << "(ref null $array) => " << refNullArray << "\n\n";
 
-  builder.build();
+  std::vector<HeapType> built = builder.build();
 
-  refSig = Type(builder[0], false);
-  refStruct = Type(builder[1], false);
-  refArray = Type(builder[2], false);
-  refNullArray = Type(builder[2], true);
+  Type newRefSig = Type(built[0], false);
+  Type newRefStruct = Type(built[1], false);
+  Type newRefArray = Type(built[2], false);
+  Type newRefNullArray = Type(built[2], true);
+
+  assert(refSig != newRefSig);
+  assert(refStruct != newRefStruct);
+  assert(refArray != newRefArray);
+  assert(refNullArray != newRefNullArray);
 
   std::cout << "After building types:\n";
-  std::cout << "(ref $sig) => " << refSig << "\n";
-  std::cout << "(ref $struct) => " << refStruct << "\n";
-  std::cout << "(ref $array) => " << refArray << "\n";
-  std::cout << "(ref null $array) => " << refNullArray << "\n\n";
+  std::cout << "(ref $sig) => " << newRefSig << "\n";
+  std::cout << "(ref $struct) => " << newRefStruct << "\n";
+  std::cout << "(ref $array) => " << newRefArray << "\n";
+  std::cout << "(ref null $array) => " << newRefNullArray << "\n\n";
 }
 
 // Check that the builder works when there are duplicate definitions
@@ -66,15 +71,25 @@ void test_canonicalization() {
   HeapType struct_ = Struct({Field(Type(sig, true), false)});
 
   TypeBuilder builder(4);
-  builder[0] = Struct({Field(builder.getTempRefType(2, true), false)});
-  builder[1] = Struct({Field(builder.getTempRefType(3, true), false)});
-  builder[2] = builder[3] = sig;
 
-  builder.build();
+  Type tempSigRef1 = builder.getTempRefType(2, true);
+  Type tempSigRef2 = builder.getTempRefType(3, true);
 
-  assert(Type(struct_, true) == Type(builder[0], true));
-  assert(Type(struct_, true) == Type(builder[1], true));
-  assert(Type(builder[0], false) == Type(builder[1], false));
+  assert(tempSigRef1 != tempSigRef2);
+  assert(tempSigRef1 != Type(sig, true));
+  assert(tempSigRef2 != Type(sig, true));
+
+  builder.setHeapType(0, Struct({Field(tempSigRef1, false)}));
+  builder.setHeapType(1, Struct({Field(tempSigRef2, false)}));
+  builder.setHeapType(2, Signature(Type::none, Type::none));
+  builder.setHeapType(3, Signature(Type::none, Type::none));
+
+  std::vector<HeapType> built = builder.build();
+
+  assert(built[0] == struct_);
+  assert(built[1] == struct_);
+  assert(built[2] == sig);
+  assert(built[3] == sig);
 }
 
 void test_recursive() {
@@ -83,27 +98,35 @@ void test_recursive() {
   {
     // Trivial recursion
     TypeBuilder builder(1);
-    builder[0] = Signature(Type::none, builder.getTempRefType(0, true));
-    // builder.build();
+    Type temp = builder.getTempRefType(0, true);
+    builder.setHeapType(0, Signature(Type::none, temp));
+    // std::vector<HeapType> built = builder.build();
   }
 
   {
     // Mutual recursion
     TypeBuilder builder(2);
-    builder[0] = Signature(Type::none, builder.getTempRefType(1, true));
-    builder[1] = Signature(Type::none, builder.getTempRefType(0, true));
-    // builder.build();
+    Type temp0 = builder.getTempRefType(0, true);
+    Type temp1 = builder.getTempRefType(1, true);
+    builder.setHeapType(0, Signature(Type::none, temp1));
+    builder.setHeapType(1, Signature(Type::none, temp0));
+    // std::vector<HeapType> built = builder.build();
   }
 
   {
     // A longer chain of recursion
     TypeBuilder builder(5);
-    builder[0] = Signature(Type::none, builder.getTempRefType(1, true));
-    builder[1] = Signature(Type::none, builder.getTempRefType(2, true));
-    builder[2] = Signature(Type::none, builder.getTempRefType(3, true));
-    builder[3] = Signature(Type::none, builder.getTempRefType(4, true));
-    builder[4] = Signature(Type::none, builder.getTempRefType(0, true));
-    // builder.build();
+    Type temp0 = builder.getTempRefType(0, true);
+    Type temp1 = builder.getTempRefType(1, true);
+    Type temp2 = builder.getTempRefType(2, true);
+    Type temp3 = builder.getTempRefType(3, true);
+    Type temp4 = builder.getTempRefType(4, true);
+    builder.setHeapType(0, Signature(Type::none, temp1));
+    builder.setHeapType(1, Signature(Type::none, temp2));
+    builder.setHeapType(2, Signature(Type::none, temp3));
+    builder.setHeapType(3, Signature(Type::none, temp4));
+    builder.setHeapType(4, Signature(Type::none, temp0));
+    // std::vector<HeapType> built = builder.build();
   }
 }
 
