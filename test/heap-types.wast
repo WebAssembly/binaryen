@@ -114,6 +114,7 @@
     (drop
       (array.new_default_with_rtt $matrix
         (rtt.canon $matrix)
+        (i32.const 10)
       )
     )
     (drop
