@@ -20,6 +20,7 @@
   (type $vector (array (mut f64)))
   (type $matrix (array (ref $vector)))
   (type $bytes (array (mut i8)))
+  (type $words (array (mut i32)))
 
   ;; RTT
   (type $parent (struct))
@@ -106,6 +107,7 @@
     (local $tv (ref null $vector))
     (local $tm (ref null $matrix))
     (local $tb (ref null $bytes))
+    (local $tw (ref null $words))
     (drop
       (array.new_with_rtt $vector
         (rtt.canon $vector)
@@ -136,8 +138,8 @@
       )
     )
     (drop
-      (array.get $bytes
-        (local.get $tb)
+      (array.get $words
+        (local.get $tw)
         (i32.const 1)
       )
     )
