@@ -1528,7 +1528,15 @@ public:
   }
   Flow visitArrayLen(ArrayLen* curr) {
     NOTE_ENTER("ArrayLen");
-    WASM_UNREACHABLE("TODO (gc): array.len");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return Literal(int32_t(data->size()));
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }

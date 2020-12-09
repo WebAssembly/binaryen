@@ -1123,10 +1123,39 @@ void StructSet::finalize() {
   }
 }
 
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
+void ArrayNew::finalize() {
+  if (rtt->type == Type::unreachable || size->type == Type::unreachable ||
+      (init && init->type == Type::unreachable)) {
+    type = Type::unreachable;
+    return;
+  }
+  type = Type(rtt->type.getHeapType(), /* nullable = */ false);
+}
+
+void ArrayGet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
+void ArraySet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayLen::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
 size_t Function::getNumParams() { return sig.params.size(); }
 
