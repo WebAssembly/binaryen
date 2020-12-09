@@ -28,7 +28,7 @@
   (global $rttchild (rtt 1 $child) (rtt.sub $child (global.get $rttparent)))
   (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild (global.get $rttchild)))
 
-  (func "foo" (param $x (ref $struct.A)) (result (ref $struct.B))
+  (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
     (local $tA (ref null $struct.A))
     (local $tB (ref null $struct.B))
     (local $tc (ref null $struct.C))
@@ -100,6 +100,40 @@
       )
     )
     (unreachable)
+  )
+  (func $arrays (param $x (ref $vector)) (result (ref $matrix))
+    (local $tv (ref null $vector))
+    (local $tm (ref null $matrix))
+    (drop
+      (array.new_with_rtt $vector
+        (rtt.canon $vector)
+        (i32.const 3)
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (array.new_default_with_rtt $matrix
+        (rtt.canon $matrix)
+      )
+    )
+    (drop
+      (array.get $vector
+        (local.get $x)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (array.set $vector
+        (local.get $x)
+        (i32.const 2)
+        (f64.const 2.18281828)
+      )
+    )
+    (drop
+      (array.len $vector
+        (local.get $x)
+      )
+    )
   )
   ;; RTT types as parameters
   (func $rtt-param-with-depth (param $rtt (rtt 1 $parent)))

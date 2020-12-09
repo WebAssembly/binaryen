@@ -586,12 +586,20 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
   }
   Index visitStructSet(StructSet* curr) {
-    return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
   }
-  Index visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitArrayGet(ArrayGet* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitArraySet(ArraySet* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitArrayLen(ArrayLen* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitArrayNew(ArrayNew* curr) {
+    return 4 + visit(curr->rtt) + visit(curr->size) + visit(curr->init);
+  }
+  Index visitArrayGet(ArrayGet* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
+  }
+  Index visitArraySet(ArraySet* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index) + visit(curr->value);
+  }
+  Index visitArrayLen(ArrayLen* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
+  }
 
 private:
   Index nullCheckCost(Expression* ref) {

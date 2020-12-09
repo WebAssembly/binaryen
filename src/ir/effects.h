@@ -571,16 +571,20 @@ private:
       }
     }
     void visitArrayNew(ArrayNew* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.new");
     }
     void visitArrayGet(ArrayGet* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.get");
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
     }
     void visitArraySet(ArraySet* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.set");
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
     }
     void visitArrayLen(ArrayLen* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.len");
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
   };
 

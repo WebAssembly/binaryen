@@ -597,7 +597,7 @@ switch (DELEGATE_ID) {
     DELEGATE_START(StructGet);
     DELEGATE_FIELD_INT(StructGet, index);
     DELEGATE_FIELD_CHILD(StructGet, ref);
-    DELEGATE_FIELD_INT(Load, signed_);
+    DELEGATE_FIELD_INT(StructGet, signed_);
     DELEGATE_END(StructGet);
     break;
   }
@@ -611,25 +611,31 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ArrayNewId: {
     DELEGATE_START(ArrayNew);
-    WASM_UNREACHABLE("TODO (gc): array.new");
+    DELEGATE_FIELD_CHILD(ArrayNew, rtt);
+    DELEGATE_FIELD_CHILD(ArrayNew, size);
+    DELEGATE_FIELD_OPTIONAL_CHILD(ArrayNew, init);
     DELEGATE_END(ArrayNew);
     break;
   }
   case Expression::Id::ArrayGetId: {
     DELEGATE_START(ArrayGet);
-    WASM_UNREACHABLE("TODO (gc): array.get");
+    DELEGATE_FIELD_CHILD(ArrayGet, ref);
+    DELEGATE_FIELD_CHILD(ArrayGet, index);
+    DELEGATE_FIELD_INT(ArrayGet, signed_);
     DELEGATE_END(ArrayGet);
     break;
   }
   case Expression::Id::ArraySetId: {
     DELEGATE_START(ArraySet);
-    WASM_UNREACHABLE("TODO (gc): array.set");
+    DELEGATE_FIELD_CHILD(ArrayGet, ref);
+    DELEGATE_FIELD_CHILD(ArrayGet, index);
+    DELEGATE_FIELD_CHILD(ArrayGet, value);
     DELEGATE_END(ArraySet);
     break;
   }
   case Expression::Id::ArrayLenId: {
     DELEGATE_START(ArrayLen);
-    WASM_UNREACHABLE("TODO (gc): array.len");
+    DELEGATE_FIELD_CHILD(ArrayLen, ref);
     DELEGATE_END(ArrayLen);
     break;
   }

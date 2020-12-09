@@ -1445,31 +1445,86 @@ public:
     if (!data) {
       trap("null ref");
     }
-    // Truncate the value if we need to. The storage is just a list of Literals,
-    // so we can't just write the value like we would to a C struct field.
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    auto setValue = value.getSingleValue();
-    if (field.type == Type::i32) {
-      if (field.packedType == Field::i8) {
-        setValue = setValue.and_(Literal(int32_t(0xff)));
-      } else if (field.packedType == Field::i16) {
-        setValue = setValue.and_(Literal(int32_t(0xffff)));
-      }
-    }
-    (*data)[curr->index] = setValue;
+    (*data)[curr->index] = getMaybePackedValue(value.getSingleValue(), field);
     return Flow();
   }
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    WASM_UNREACHABLE("TODO (gc): array.new");
+    auto rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      return rtt;
+    }
+    auto size = this->visit(curr->size);
+    if (size.breaking());
+      return size;
+    }
+    const auto& element = curr->rtt->type.getHeapType().getArray().element;
+    Literals data;
+    auto num = size.getSingleValue().geti32();
+    data.resize(num);
+    if (curr->isWithDefault()) {
+      for (Index i = 0; i < num; i++) {
+        data[i] = Literal::makeZero(fields[i].type);
+      }
+    } else {
+      auto init = this->visit(curr->operands[i]);
+      if (init.breaking()) {
+        return init;
+      }
+      auto value = init.getSingleValue();
+      for (Index i = 0; i < num; i++) {
+        data[i] = value;
+      }
+    }
+    return Flow(
+      Literal(std::shared_ptr<Literals>(new Literals(data)), curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
-    WASM_UNREACHABLE("TODO (gc): array.get");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = this->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto i = index.getSingleValue().geti32();
+    if (i >= data->size()) {
+      trap("array oob");
+    }
+    return (*data)[i];
   }
   Flow visitArraySet(ArraySet* curr) {
     NOTE_ENTER("ArraySet");
-    WASM_UNREACHABLE("TODO (gc): array.set");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = this->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow value = this->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto i = index.getSingleValue().geti32();
+    if (i >= data->size()) {
+      trap("array oob");
+    }
+    auto field = curr->ref->type.getHeapType().getArray().element;
+    (*data)[i] = getMaybePackedValue(value.getSingleValue(), field);
+    return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
     NOTE_ENTER("ArrayLen");
@@ -1479,6 +1534,18 @@ public:
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
   virtual void throwException(Literal exn) { WASM_UNREACHABLE("unimp"); }
+
+private:
+  Literal getMaybePackedValue(Literal value, const Field& field) {
+    if (field.type == Type::i32) {
+      if (field.packedType == Field::i8) {
+        value = value.and_(Literal(int32_t(0xff)));
+      } else if (field.packedType == Field::i16) {
+        value = value.and_(Literal(int32_t(0xffff)));
+      }
+    }
+    return value;
+  }
 };
 
 // Execute a suspected constant expression (precompute and C-API).
