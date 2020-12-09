@@ -1050,7 +1050,10 @@ Type TypeBuilder::getTempRttType(size_t i, uint32_t depth) {
   return impl->typeStore.canonicalize(Rtt(depth, impl->entries[i].get()));
 }
 
-// Implements the algorithm to canonicalize the HeapTypes in a TypeBuilder
+// Implements the algorithm to canonicalize the HeapTypes in a TypeBuilder,
+// replacing and deduplicating the temporary type and heaptypes backed by
+// storage owned by the TypeBuilder into normal types and heap types backed by
+// the global stores.
 struct Canonicalizer {
   TypeBuilder& builder;
 
