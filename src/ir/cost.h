@@ -595,7 +595,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
   }
   Index visitArraySet(ArraySet* curr) {
-    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index) + visit(curr->value);
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->value);
   }
   Index visitArrayLen(ArrayLen* curr) {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref);

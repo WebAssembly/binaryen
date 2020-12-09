@@ -1456,7 +1456,7 @@ public:
       return rtt;
     }
     auto size = this->visit(curr->size);
-    if (size.breaking());
+    if (size.breaking()) {
       return size;
     }
     const auto& element = curr->rtt->type.getHeapType().getArray().element;
@@ -1536,6 +1536,8 @@ public:
   virtual void throwException(Literal exn) { WASM_UNREACHABLE("unimp"); }
 
 private:
+  // Truncate the value if we need to. The storage is just a list of Literals,
+  // so we can't just write the value like we would to a C struct field.
   Literal getMaybePackedValue(Literal value, const Field& field) {
     if (field.type == Type::i32) {
       if (field.packedType == Field::i8) {
