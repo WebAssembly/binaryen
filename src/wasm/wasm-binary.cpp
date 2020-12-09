@@ -5742,7 +5742,8 @@ void WasmBinaryBuilder::validateHeapTypeUsingChild(Expression* child,
   if (child->type == Type::unreachable) {
     return;
   }
-  if (!child->type.isRef() || child->type.getHeapType() != heapType) {
+  if ((!child->type.isRef() && !child->type.isRtt()) ||
+      child->type.getHeapType() != heapType) {
     throwError("bad heap type");
   }
 }
