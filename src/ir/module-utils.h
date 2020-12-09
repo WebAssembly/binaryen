@@ -404,7 +404,9 @@ inline void collectHeapTypes(Module& wasm,
                              std::vector<HeapType>& types,
                              std::unordered_map<HeapType, Index>& typeIndices) {
   struct Counts : public std::unordered_map<HeapType, size_t> {
-    bool isRelevant(Type type) { return !type.isBasic() && type.isRef(); }
+    bool isRelevant(Type type) {
+      return !type.isBasic() && (type.isRef() || type.isRtt());
+    }
     void note(HeapType type) { (*this)[type]++; }
     void maybeNote(Type type) {
       if (isRelevant(type)) {
@@ -429,6 +431,8 @@ inline void collectHeapTypes(Module& wasm,
           counts.note(call->sig);
         } else if (curr->is<RefNull>()) {
           counts.maybeNote(curr->type);
+        } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
+          counts.note(curr->type.getRtt().heapType);
         } else if (auto* get = curr->dynCast<StructGet>()) {
           counts.maybeNote(get->ref->type);
         } else if (auto* set = curr->dynCast<StructSet>()) {
@@ -462,6 +466,9 @@ inline void collectHeapTypes(Module& wasm,
   }
   for (auto& curr : wasm.events) {
     counts.note(curr->sig);
+  }
+  for (auto& curr : wasm.globals) {
+    counts.maybeNote(curr->type);
   }
   for (auto& pair : analysis.map) {
     Counts& functionCounts = pair.second;

@@ -493,6 +493,8 @@ FeatureSet Type::getFeatures() const {
       if (heapType.isStruct() || heapType.isArray()) {
         return FeatureSet::ReferenceTypes | FeatureSet::GC;
       }
+    } else if (t.isRtt()) {
+      return FeatureSet::ReferenceTypes | FeatureSet::GC;
     }
     TODO_SINGLE_COMPOUND(t);
     switch (t.getBasic()) {
@@ -561,6 +563,11 @@ HeapType Type::getHeapType() const {
   }
 }
 
+Rtt Type::getRtt() const {
+  assert(isRtt());
+  return getTypeInfo(*this)->rtt;
+}
+
 Type Type::get(unsigned byteSize, bool float_) {
   if (byteSize < 4) {
     return Type::i32;
@@ -594,6 +601,12 @@ bool Type::isSubType(Type left, Type right) {
     }
     // All typed function signatures are subtypes of funcref.
     if (left.getHeapType().isSignature() && right == Type::funcref) {
+      return true;
+    }
+    // A non-nullable type is a supertype of a nullable one
+    if (left.getHeapType() == right.getHeapType() && !left.isNullable()) {
+      // The only difference is the nullability.
+      assert(right.isNullable());
       return true;
     }
     return false;

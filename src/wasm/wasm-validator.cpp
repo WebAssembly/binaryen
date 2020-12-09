@@ -2211,20 +2211,66 @@ void FunctionValidator::visitBrOnCast(BrOnCast* curr) {
 void FunctionValidator::visitRttCanon(RttCanon* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "rtt.canon requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  shouldBeTrue(curr->type.isRtt(), curr, "rtt.canon must have RTT type");
+  auto rtt = curr->type.getRtt();
+  shouldBeEqual(rtt.depth, Index(0), curr, "rtt.canon has a depth of 0");
 }
 
 void FunctionValidator::visitRttSub(RttSub* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "rtt.sub requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  shouldBeTrue(curr->type.isRtt(), curr, "rtt.sub must have RTT type");
+  if (curr->parent->type != Type::unreachable) {
+    shouldBeTrue(
+      curr->parent->type.isRtt(), curr, "rtt.sub parent must have RTT type");
+    auto parentRtt = curr->parent->type.getRtt();
+    auto rtt = curr->type.getRtt();
+    if (rtt.hasDepth() && parentRtt.hasDepth()) {
+      shouldBeEqual(rtt.depth,
+                    parentRtt.depth + 1,
+                    curr,
+                    "rtt.canon has a depth of 1 over the parent");
+    }
+  }
 }
 
 void FunctionValidator::visitStructNew(StructNew* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.new requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): struct.new");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "struct.new rtt must be rtt")) {
+    return;
+  }
+  auto heapType = curr->rtt->type.getHeapType();
+  if (!shouldBeTrue(
+        heapType.isStruct(), curr, "struct.new heap type must be struct")) {
+    return;
+  }
+  const auto& fields = heapType.getStruct().fields;
+  if (curr->isWithDefault()) {
+    shouldBeTrue(curr->operands.empty(),
+                 curr,
+                 "struct.new_with_default should have no operands");
+    // All the fields must be defaultable.
+    for (const auto& field : fields) {
+      // TODO: add type.isDefaultable()?
+      shouldBeTrue(!field.type.isRef() || field.type.isNullable(),
+                   field,
+                   "struct.new_with_default value type must be defaultable");
+    }
+  } else {
+    // All the fields must have the proper type.
+    for (Index i = 0; i < fields.size(); i++) {
+      shouldBeSubType(curr->operands[i]->type,
+                      fields[i].type,
+                      curr,
+                      "struct.new operand must have proper type");
+    }
+  }
 }
 
 void FunctionValidator::visitStructGet(StructGet* curr) {

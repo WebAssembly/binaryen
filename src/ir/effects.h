@@ -554,12 +554,9 @@ private:
     void visitBrOnCast(BrOnCast* curr) {
       WASM_UNREACHABLE("TODO (gc): br_on_cast");
     }
-    void visitRttCanon(RttCanon* curr) {
-      WASM_UNREACHABLE("TODO (gc): rtt.canon");
-    }
-    void visitRttSub(RttSub* curr) { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+    void visitRttCanon(RttCanon* curr) {}
+    void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {
-      WASM_UNREACHABLE("TODO (gc): struct.new");
     }
     void visitStructGet(StructGet* curr) {
       // traps when the arg is null

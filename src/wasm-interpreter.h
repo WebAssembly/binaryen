@@ -1388,17 +1388,36 @@ public:
     NOTE_ENTER("BrOnCast");
     WASM_UNREACHABLE("TODO (gc): br_on_cast");
   }
-  Flow visitRttCanon(RttCanon* curr) {
-    NOTE_ENTER("RttCanon");
-    WASM_UNREACHABLE("TODO (gc): rtt.canon");
-  }
+  Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {
-    NOTE_ENTER("RttSub");
-    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    Flow parent = this->visit(curr->parent);
+    if (parent.breaking()) {
+      return parent;
+    }
+    return Literal(curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    auto rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      return rtt;
+    }
+    const auto& fields = curr->rtt->type.getHeapType().getStruct().fields;
+    Literals data;
+    data.resize(fields.size());
+    for (Index i = 0; i < fields.size(); i++) {
+      if (curr->isWithDefault()) {
+        data[i] = Literal::makeZero(fields[i].type);
+      } else {
+        auto value = this->visit(curr->operands[i]);
+        if (value.breaking()) {
+          return value;
+        }
+        data[i] = value.getSingleValue();
+      }
+    }
+    return Flow(
+      Literal(std::shared_ptr<Literals>(new Literals(data)), curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");

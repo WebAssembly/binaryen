@@ -563,9 +563,25 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
   Index visitBrOnCast(BrOnCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitRttCanon(RttCanon* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitRttSub(RttSub* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitStructNew(StructNew* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitRttCanon(RttCanon* curr) {
+    // TODO: investigate actual RTT costs in VMs
+    return 1;
+  }
+  Index visitRttSub(RttSub* curr) {
+    // TODO: investigate actual RTT costs in VMs
+    return 2 + visit(curr->parent);
+  }
+  Index visitStructNew(StructNew* curr) {
+    // While allocation itself is almost free with generational GC, there is
+    // at least some baseline cost, plus writing the fields. (If we use default
+    // values for the fields, then it is possible they are all 0 and if so, we
+    // can get that almost for free as well, so don't add anything there.)
+    Index ret = 4 + visit(curr->rtt) + curr->operands.size();
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
   Index visitStructGet(StructGet* curr) {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
   }

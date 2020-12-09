@@ -82,7 +82,8 @@ inline bool isNamedControlFlow(Expression* curr) {
 
 inline bool isSingleConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
-         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>());
+         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>()) ||
+         curr->is<RttCanon>() || curr->is<RttSub>();
 }
 
 inline bool isConstantExpression(const Expression* curr) {

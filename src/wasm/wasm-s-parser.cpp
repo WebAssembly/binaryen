@@ -50,7 +50,7 @@ int unhex(char c) {
 namespace wasm {
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), I8("i8"),
-  I16("i16");
+  I16("i16"), RTT("rtt");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -939,6 +939,18 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
       i++;
     }
     return Type(parseHeapType(*s[i]), nullable);
+  }
+  if (elementStartsWith(s, RTT)) {
+    // It's an RTT, something like (rtt N $typename) or just (rtt $typename)
+    // if there is no depth.
+    if (s[1]->dollared()) {
+      auto heapType = parseHeapType(*s[1]);
+      return Type(Rtt(heapType));
+    } else {
+      auto depth = atoi(s[1]->str().c_str());
+      auto heapType = parseHeapType(*s[2]);
+      return Type(Rtt(depth, heapType));
+    }
   }
   // It's a tuple.
   std::vector<Type> types;
@@ -2102,24 +2114,34 @@ Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {
-  auto ret = allocator.alloc<RttCanon>();
-  WASM_UNREACHABLE("TODO (gc): rtt.canon");
-  ret->finalize();
-  return ret;
+  return Builder(wasm).makeRttCanon(parseHeapType(*s[1]));
 }
 
 Expression* SExpressionWasmBuilder::makeRttSub(Element& s) {
-  auto ret = allocator.alloc<RttSub>();
-  WASM_UNREACHABLE("TODO (gc): rtt.sub");
-  ret->finalize();
-  return ret;
+  auto heapType = parseHeapType(*s[1]);
+  auto parent = parseExpression(*s[2]);
+  return Builder(wasm).makeRttSub(heapType, parent);
 }
 
 Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
-  auto ret = allocator.alloc<StructNew>();
-  WASM_UNREACHABLE("TODO (gc): struct.new");
-  ret->finalize();
-  return ret;
+  auto heapType = parseHeapType(*s[1]);
+  auto* rtt = parseExpression(*s[2]);
+  if (rtt->type != Type::unreachable) {
+    if (!rtt->type.isRtt() || rtt->type.getHeapType() != heapType) {
+      throw ParseException("bad struct.new heap type", s.line, s.col);
+    }
+  }
+  auto numOperands = s.size() - 3;
+  if (default_ && numOperands > 0) {
+    throw ParseException(
+      "arguments provided for struct.new_with_default", s.line, s.col);
+  }
+  std::vector<Expression*> operands;
+  operands.resize(numOperands);
+  for (Index i = 0; i < numOperands; i++) {
+    operands[i] = parseExpression(*s[i + 3]);
+  }
+  return Builder(wasm).makeStructNew(rtt, operands);
 }
 
 Index SExpressionWasmBuilder::getStructIndex(const HeapType& type, Element& s) {

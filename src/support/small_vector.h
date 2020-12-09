@@ -111,6 +111,13 @@ public:
     flexible.clear();
   }
 
+  void resize(size_t newSize) {
+    usedFixed = std::min(N, newSize);
+    if (newSize > N) {
+      flexible.resize(newSize - N);
+    }
+  }
+
   bool operator==(const SmallVector<T, N>& other) const {
     if (usedFixed != other.usedFixed) {
       return false;

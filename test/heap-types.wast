@@ -1,5 +1,6 @@
 ;; Test that we can roundtrip struct and array types
 (module
+  ;; Structs
   (type $struct.A (struct
     i32
     (field f32)
@@ -15,8 +16,17 @@
     (field $named-mut (mut f32))
   ))
 
+  ;; Arrays
   (type $vector (array (mut f64)))
   (type $matrix (array (ref $vector)))
+
+  ;; RTT
+  (type $parent (struct))
+  (type $child (struct i32))
+  (type $grandchild (struct i32 i64))
+  (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
+  (global $rttchild (rtt 1 $child) (rtt.sub $child (global.get $rttparent)))
+  (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild (global.get $rttchild)))
 
   (func "foo" (param $x (ref $struct.A)) (result (ref $struct.B))
     (local $tA (ref null $struct.A))
@@ -76,6 +86,22 @@
       (local.get $x)
       (i32.const 100)
     )
+    (drop
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $struct.A
+        (rtt.canon $struct.A)
+        (i32.const 1)
+        (f32.const 2.345)
+        (f64.const 3.14159)
+      )
+    )
     (unreachable)
   )
+  ;; RTT types as parameters
+  (func $rtt-param-with-depth (param $rtt (rtt 1 $parent)))
+  (func $rtt-param-without-depth (param $rtt (rtt $parent)))
 )

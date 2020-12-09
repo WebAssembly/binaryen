@@ -982,6 +982,17 @@ void WasmBinaryWriter::writeType(Type type) {
     writeHeapType(type.getHeapType());
     return;
   }
+  if (type.isRtt()) {
+    auto rtt = type.getRtt();
+    if (rtt.hasDepth()) {
+      o << S32LEB(BinaryConsts::EncodedType::rtt_n);
+      o << U32LEB(rtt.depth);
+    } else {
+      o << S32LEB(BinaryConsts::EncodedType::rtt);
+    }
+    writeHeapType(rtt.heapType);
+    return;
+  }
   int ret = 0;
   TODO_SINGLE_COMPOUND(type);
   switch (type.getBasic()) {
@@ -1382,6 +1393,14 @@ Type WasmBinaryBuilder::getType(int initial) {
       return Type(getHeapType(), /* nullable = */ true);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
+    case BinaryConsts::EncodedType::rtt_n: {
+      auto depth = getU32LEB();
+      auto heapType = getHeapType();
+      return Type(Rtt(depth, heapType));
+    }
+    case BinaryConsts::EncodedType::rtt: {
+      return Type(Rtt(getHeapType()));
+    }
     default:
       throwError("invalid wasm type: " + std::to_string(initial));
   }
@@ -5575,10 +5594,8 @@ bool WasmBinaryBuilder::maybeVisitRttCanon(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RttCanon) {
     return false;
   }
-  auto* curr = allocator.alloc<RttCanon>();
-  WASM_UNREACHABLE("TODO (gc): rtt.canon");
-  curr->finalize();
-  out = curr;
+  auto heapType = getHeapType();
+  out = Builder(wasm).makeRttCanon(heapType);
   return true;
 }
 
@@ -5586,30 +5603,38 @@ bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RttSub) {
     return false;
   }
-  auto* curr = allocator.alloc<RttSub>();
-  WASM_UNREACHABLE("TODO (gc): rtt.sub");
-  curr->finalize();
-  out = curr;
+  // FIXME: the binary format may also have an extra heap type and index that
+  //        are not needed
+  auto heapType = getHeapType();
+  auto* parent = popNonVoidExpression();
+  out = Builder(wasm).makeRttSub(heapType, parent);
   return true;
 }
 
 bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
-  StructNew* curr;
-  switch (code) {
-    case BinaryConsts::StructNewWithRtt:
-      curr = allocator.alloc<StructNew>();
-      // ...
-      break;
-    case BinaryConsts::StructNewDefaultWithRtt:
-      curr = allocator.alloc<StructNew>();
-      // ...
-      break;
-    default:
-      return false;
+  if (code != BinaryConsts::StructNewWithRtt &&
+      code != BinaryConsts::StructNewDefaultWithRtt) {
+    return false;
   }
-  WASM_UNREACHABLE("TODO (gc): struct.new");
-  curr->finalize();
-  out = curr;
+  auto heapType = getHeapType();
+  if (!heapType.isStruct()) {
+    throwError("Non-heap type for struct.new");
+  }
+  auto* rtt = popNonVoidExpression();
+  if (rtt->type != Type::unreachable) {
+    if (!rtt->type.isRtt() || rtt->type.getHeapType() != heapType) {
+      throwError("Bad heap type for struct.new");
+    }
+  }
+  std::vector<Expression*> operands;
+  if (code == BinaryConsts::StructNewWithRtt) {
+    auto numOperands = heapType.getStruct().fields.size();
+    operands.resize(numOperands);
+    for (Index i = 0; i < numOperands; i++) {
+      operands[numOperands - i - 1] = popNonVoidExpression();
+    }
+  }
+  out = Builder(wasm).makeStructNew(rtt, operands);
   return true;
 }
 

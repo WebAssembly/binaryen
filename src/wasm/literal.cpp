@@ -60,6 +60,9 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&gcData) std::shared_ptr<Literals>(other.gcData);
   } else if (type.isFunction()) {
     func = other.func;
+  } else if (type.isRtt()) {
+    // Nothing to do: Rtts help JITs optimize, but are not used in the
+    // interpreter yet, and they are opaque to the wasm itself.
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {

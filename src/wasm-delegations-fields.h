@@ -577,19 +577,19 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RttCanonId: {
     DELEGATE_START(RttCanon);
-    WASM_UNREACHABLE("TODO (gc): rtt.canon");
     DELEGATE_END(RttCanon);
     break;
   }
   case Expression::Id::RttSubId: {
     DELEGATE_START(RttSub);
-    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    DELEGATE_FIELD_CHILD(RttSub, parent);
     DELEGATE_END(RttSub);
     break;
   }
   case Expression::Id::StructNewId: {
     DELEGATE_START(StructNew);
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    DELEGATE_FIELD_CHILD(StructNew, rtt);
+    DELEGATE_FIELD_CHILD_VECTOR(StructNew, operands);
     DELEGATE_END(StructNew);
     break;
   }
