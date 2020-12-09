@@ -81,6 +81,10 @@ struct AccessInstrumenter : public WalkerPass<PostWalker<AccessInstrumenter>> {
   AccessInstrumenter(Name getSbrkPtr) : getSbrkPtr(getSbrkPtr) {}
 
   void visitLoad(Load* curr) {
+    // As well as the getSbrkPtr function we also avoid insturmenting the
+    // module start function.  This is because this function is used in
+    // shared memory builds to load the passive memory segments, which in
+    // turn means that value of sbrk() is not available.
     if (getFunction()->name == getModule()->start ||
         getFunction()->name == getSbrkPtr || curr->type == Type::unreachable) {
       return;
