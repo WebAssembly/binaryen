@@ -2302,27 +2302,95 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
 }
 
 void FunctionValidator::visitArrayNew(ArrayNew* curr) {
-  shouldBeTrue(
-    getModule()->features.hasGC(), curr, "array.new requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): array.new");
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.new requires gc to be enabled");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type,
+    Type::i32,
+    curr,
+    "array.new size must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(
+        curr->rtt->type.isRtt(), curr, "array.new rtt must be rtt")) {
+    return;
+  }
+  auto heapType = curr->rtt->type.getHeapType();
+  if (!shouldBeTrue(
+        heapType.isArray(), curr, "array.new heap type must be array")) {
+    return;
+  }
+  const auto& element = heapType.getArray().element;
+  if (curr->isWithDefault()) {
+    shouldBeTrue(!curr->init,
+                 curr,
+                 "array.new_with_default should have no init");
+    // The element must be defaultable.
+    // TODO: add type.isDefaultable()?
+    shouldBeTrue(!element.type.isRef() || element.type.isNullable(),
+                 element,
+                 "array.new_with_default value type must be defaultable");
+  } else {
+    shouldBeTrue(!!curr->init,
+                 curr,
+                 "array.new should have an init");
+    // The inits must have the proper type.
+    shouldBeSubType(curr->init->type,
+                    element.type,
+                    curr,
+                    "array.new init must have proper type");
+  }
 }
 
 void FunctionValidator::visitArrayGet(ArrayGet* curr) {
-  shouldBeTrue(
-    getModule()->features.hasGC(), curr, "array.get requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): array.get");
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.get requires gc to be enabled");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->index->type,
+    Type::i32,
+    curr,
+    "array.get index must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  const auto& element = curr->ref->type.getHeapType().getArray().element;
+  shouldBeEqual(curr->type,
+                element.type,
+                curr,
+                "array.get must have the proper type");
 }
 
 void FunctionValidator::visitArraySet(ArraySet* curr) {
-  shouldBeTrue(
-    getModule()->features.hasGC(), curr, "array.set requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): array.set");
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.set requires gc to be enabled");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->index->type,
+    Type::i32,
+    curr,
+    "array.set index must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  const auto& element = curr->ref->type.getHeapType().getArray().element;
+  shouldBeEqual(curr->value->type,
+                element.type,
+                curr,
+                "array.set must have the proper type");
 }
 
 void FunctionValidator::visitArrayLen(ArrayLen* curr) {
-  shouldBeTrue(
-    getModule()->features.hasGC(), curr, "array.len requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): array.len");
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.len requires gc to be enabled");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type,
+    Type::i32,
+    curr,
+    "array.len result must be an i32");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
