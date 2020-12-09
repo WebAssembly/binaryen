@@ -19,6 +19,7 @@
   ;; Arrays
   (type $vector (array (mut f64)))
   (type $matrix (array (ref $vector)))
+  (type $bytes (array (mut i8)))
 
   ;; RTT
   (type $parent (struct))
@@ -104,6 +105,7 @@
   (func $arrays (param $x (ref $vector)) (result (ref $matrix))
     (local $tv (ref null $vector))
     (local $tm (ref null $matrix))
+    (local $tb (ref null $bytes))
     (drop
       (array.new_with_rtt $vector
         (rtt.canon $vector)
@@ -131,6 +133,24 @@
     (drop
       (array.len $vector
         (local.get $x)
+      )
+    )
+    (drop
+      (array.get $bytes
+        (local.get $tb)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.get_u $bytes
+        (local.get $tb)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (array.get_s $bytes
+        (local.get $tb)
+        (i32.const 3)
       )
     )
     (unreachable)

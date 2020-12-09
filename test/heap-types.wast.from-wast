@@ -5,6 +5,7 @@
  (type ${i32} (struct (field i32)))
  (type ${i32_i64} (struct (field i32) (field i64)))
  (type ${mut:f32} (struct (field (mut f32))))
+ (type $[mut:i32] (array (mut i8)))
  (type ${i32_mut:i32_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref null ${i32_f32_f64})) (field (mut (ref null ${i32_f32_f64})))))
  (type $[ref?|[mut:f64]|] (array (ref null $[mut:f64])))
  (type $rtt_1_${}_=>_none (func (param (rtt 1 ${}))))
@@ -106,6 +107,7 @@
  (func $arrays (param $x (ref null $[mut:f64])) (result (ref null $[ref?|[mut:f64]|]))
   (local $tv (ref null $[mut:f64]))
   (local $tm (ref null $[ref?|[mut:f64]|]))
+  (local $tb (ref null $[mut:i32]))
   (drop
    (array.new_with_rtt $[mut:f64]
     (rtt.canon $[mut:f64])
@@ -133,6 +135,24 @@
   (drop
    (array.len $[mut:f64]
     (local.get $x)
+   )
+  )
+  (drop
+   (array.get_u $[mut:i32]
+    (local.get $tb)
+    (i32.const 1)
+   )
+  )
+  (drop
+   (array.get_u $[mut:i32]
+    (local.get $tb)
+    (i32.const 2)
+   )
+  )
+  (drop
+   (array.get_s $[mut:i32]
+    (local.get $tb)
+    (i32.const 3)
    )
   )
   (unreachable)
