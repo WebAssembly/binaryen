@@ -5611,21 +5611,28 @@ bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
   return true;
 }
 
+// Struct/Array instructions have an unnecessary heap type that is just for
+// validation (except for the case of unreachability, but that's not a problem
+// anyhow, we can ignore it there). That is, we also have a reference or an rtt
+// child from which we can infer the type anyhow, and we just need to check that
+// type is the same.
+static void validateHeapType(Expression* child, HeapType heapType) {
+  if (child->type == Type::unreachable) {
+    return;
+  }
+  if (!child->type.isRef() || child->type.getHeapType() == heapType) {
+    throwError("bad heap type");
+  }
+}
+
 bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::StructNewWithRtt &&
       code != BinaryConsts::StructNewDefaultWithRtt) {
     return false;
   }
   auto heapType = getHeapType();
-  if (!heapType.isStruct()) {
-    throwError("Invalid type for struct.new");
-  }
   auto* rtt = popNonVoidExpression();
-  if (rtt->type != Type::unreachable) {
-    if (!rtt->type.isRtt() || rtt->type.getHeapType() != heapType) {
-      throwError("Bad heap type for struct.new");
-    }
-  }
+  validateHeapType(rtt, heapType);
   std::vector<Expression*> operands;
   if (code == BinaryConsts::StructNewWithRtt) {
     auto numOperands = heapType.getStruct().fields.size();
@@ -5658,11 +5665,7 @@ bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
   auto heapType = getHeapType();
   curr->index = getU32LEB();
   curr->ref = popNonVoidExpression();
-  if (curr->ref->type != Type::unreachable) {
-    if (!curr->ref->type.isRef() || curr->ref->type.getHeapType() != heapType) {
-      throwError("bad struct.get heap type");
-    }
-  }
+  validateHeapType(curr->ref, heapType);
   curr->finalize();
   out = curr;
   return true;
@@ -5693,15 +5696,8 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
     return false;
   }
   auto heapType = getHeapType();
-  if (!heapType.isArray()) {
-    throwError("Invalid type for Array.new");
-  }
   auto* rtt = popNonVoidExpression();
-  if (rtt->type != Type::unreachable) {
-    if (!rtt->type.isRtt() || rtt->type.getHeapType() != heapType) {
-      throwError("Bad heap type for Array.new");
-    }
-  }
+  validateHeapType(rtt, heapType);
   auto* size = popNonVoidExpression();
   Expression* init = nullptr;
   if (code == BinaryConsts::ArrayNewWithRtt) {
@@ -5712,32 +5708,22 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayGet(Expression*& out, uint32_t code) {
-  ArrayGet* curr;
+  bool signed_ = false;
   switch (code) {
     case BinaryConsts::ArrayGet:
-      curr = allocator.alloc<ArrayGet>();
+    case BinaryConsts::ArrayGetU:
       break;
     case BinaryConsts::ArrayGetS:
-      curr = allocator.alloc<ArrayGet>();
       curr->signed_ = true;
-      break;
-    case BinaryConsts::ArrayGetU:
-      curr = allocator.alloc<ArrayGet>();
-      curr->signed_ = false;
       break;
     default:
       return false;
   }
   auto heapType = getHeapType();
-  curr->ref = popNonVoidExpression();
-  if (curr->ref->type != Type::unreachable) {
-    if (!curr->ref->type.isRef() || curr->ref->type.getHeapType() != heapType) {
-      throwError("bad array.get heap type");
-    }
-  }
-  curr->index = popNonVoidExpression();
-  curr->finalize();
-  out = curr;
+  auto* ref = popNonVoidExpression();
+  validateHeapType(ref, heapType);
+  auto* index = popNonVoidExpression();
+  out = Builder(wasm).makeArrayGet(ref, index);
   return true;
 }
 
@@ -5745,35 +5731,23 @@ bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::ArraySet) {
     return false;
   }
-  auto* curr = allocator.alloc<ArraySet>();
   auto heapType = getHeapType();
-  curr->ref = popNonVoidExpression();
-  if (curr->ref->type != Type::unreachable) {
-    if (!curr->ref->type.isRef() || curr->ref->type.getHeapType() != heapType) {
-      throwError("bad array.set heap type");
-    }
-  }
-  curr->index = popNonVoidExpression();
-  curr->value = popNonVoidExpression();
-  curr->finalize();
-  out = curr;
+  auto* ref = popNonVoidExpression();
+  validateHeapType(ref, heapType();
+  auto* index = popNonVoidExpression();
+  auto* value = popNonVoidExpression();
+  out = Builder(wasm).makeArraySet(ref, index, value);
   return true;
 }
 
 bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::ArrayLen) {
+  if (code != BinaryConsts::ArraySet) {
     return false;
   }
-  auto* curr = allocator.alloc<ArrayLen>();
   auto heapType = getHeapType();
-  curr->ref = popNonVoidExpression();
-  if (curr->ref->type != Type::unreachable) {
-    if (!curr->ref->type.isRef() || curr->ref->type.getHeapType() != heapType) {
-      throwError("bad array.len heap type");
-    }
-  }
-  curr->finalize();
-  out = curr;
+  auto* ref = popNonVoidExpression();
+  validateHeapType(ref, heapType();
+  out = Builder(wasm).makeArrayLen(ref);
   return true;
 }
 
