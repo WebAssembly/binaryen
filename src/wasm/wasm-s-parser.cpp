@@ -2187,7 +2187,7 @@ Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
 }
 
 Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {
-  auto arrayType = parseHeapType(*s[1]);
+  auto heapType = parseHeapType(*s[1]);
   auto ref = parseExpression(*s[2]);
   validateHeapTypeUsingChild(ref, heapType, s);
   auto index = parseExpression(*s[3]);
@@ -2195,7 +2195,7 @@ Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {
 }
 
 Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
-  auto arrayType = parseHeapType(*s[1]);
+  auto heapType = parseHeapType(*s[1]);
   auto ref = parseExpression(*s[2]);
   validateHeapTypeUsingChild(ref, heapType, s);
   auto index = parseExpression(*s[3]);
@@ -2204,7 +2204,7 @@ Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {
-  auto arrayType = parseHeapType(*s[1]);
+  auto heapType = parseHeapType(*s[1]);
   auto ref = parseExpression(*s[2]);
   validateHeapTypeUsingChild(ref, heapType, s);
   return Builder(wasm).makeArrayLen(ref);
@@ -2967,7 +2967,8 @@ void SExpressionWasmBuilder::validateHeapTypeUsingChild(Expression* child,
   if (child->type == Type::unreachable) {
     return;
   }
-  if (!child->type.isRef() || child->type.getHeapType() == heapType) {
+  if ((!child->type.isRef() && !child->type.isRtt()) ||
+      child->type.getHeapType() != heapType) {
     throw ParseException("bad heap type", s.line, s.col);
   }
 }
