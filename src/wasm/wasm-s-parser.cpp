@@ -2131,13 +2131,16 @@ Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
       throw ParseException("bad struct.new heap type", s.line, s.col);
     }
   }
-  auto numArgs = s.size() - 3;
-  std::vector<Expression*> args;
-  args.resize(numArgs);
-  for (Index i = 0; i < numArgs; i++) {
-    args[i] = parseExpression(*s[i + 3]);
+  auto numOperands = s.size() - 3;
+  if (default_ && numOperands > 0) {
+    throw ParseException("arguments provided for struct.new_with_default", s.line, s.col);
   }
-  return Builder(wasm).makeStructNew(rtt, args);
+  std::vector<Expression*> operands;
+  operands.resize(numOperands);
+  for (Index i = 0; i < numOperands; i++) {
+    operands[i] = parseExpression(*s[i + 3]);
+  }
+  return Builder(wasm).makeStructNew(rtt, operands);
 }
 
 Index SExpressionWasmBuilder::getStructIndex(const HeapType& type, Element& s) {

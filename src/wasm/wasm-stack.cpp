@@ -1908,7 +1908,13 @@ void BinaryInstWriter::visitRttSub(RttSub* curr) {
 }
 
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
-  WASM_UNREACHABLE("TODO (gc): struct.new");
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->isWithDefault()) {
+    o << U32LEB(BinaryConsts::StructNewDefaultWithRtt);
+  } else {
+    o << U32LEB(BinaryConsts::StructNewWithRtt);
+  }  
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {

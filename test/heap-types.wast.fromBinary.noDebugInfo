@@ -88,6 +88,19 @@
    (local.get $0)
    (i32.const 100)
   )
+  (drop
+   (struct.new_default_with_rtt ${i32_f32_f64}
+    (rtt.canon ${i32_f32_f64})
+   )
+  )
+  (drop
+   (struct.new_with_rtt ${i32_f32_f64}
+    (rtt.canon ${i32_f32_f64})
+    (i32.const 1)
+    (f32.const 2.3450000286102295)
+    (f64.const 3.14159)
+   )
+  )
   (unreachable)
  )
  (func $1 (param $0 (rtt 1 ${}))
