@@ -1398,7 +1398,25 @@ public:
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    auto rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      return rtt;
+    }
+    const auto& fields = curr->rtt->type.getHeapType().getStruct().fields;
+    Literals data;
+    data.resize(fields.size());
+    for (Index i = 0; i < fields.size(); i++) {
+      if (curr->isWithDefault()) {
+        data[i] = Literal::makeZero(fields[i].type);
+      } else {
+        auto value = this->visit(curr->operands[i]);
+        if (value.breaking()) {
+          return value;
+        }
+        data[i] = value.getSingleValue();
+      }
+    }
+    return Flow(Literal(std::shared_ptr<Literals>(new Literals(data)), curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
