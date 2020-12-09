@@ -5737,7 +5737,8 @@ void WasmBinaryBuilder::throwError(std::string text) {
   throw ParseException(text, 0, pos);
 }
 
-void WasmBinaryBuilder::validateHeapTypeUsingChild(Expression* child, HeapType heapType) {
+void WasmBinaryBuilder::validateHeapTypeUsingChild(Expression* child,
+                                                   HeapType heapType) {
   if (child->type == Type::unreachable) {
     return;
   }
