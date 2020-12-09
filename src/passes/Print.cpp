@@ -57,40 +57,12 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
-// Unlike the default format, tuple types in s-expressions should not have
-// commas.
-struct SExprType {
-  Type type;
-  SExprType(Type type) : type(type){};
-};
-
-static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
-  Type type = localType.type;
-  if (type.isTuple()) {
-    o << '(';
-    auto sep = "";
-    for (const auto& t : type) {
-      o << sep << t;
-      sep = " ";
-    }
-    o << ')';
-  } else {
-    o << type;
-  }
-  return o;
-}
-
 // Wrapper for printing a type when we try to print the type name as much as
 // possible. For example, for a signature we will print the signature's name,
 // not its contents.
 struct TypeName {
   Type type;
   TypeName(Type type) : type(type) {}
-};
-
-struct ResultTypeName {
-  Type type;
-  ResultTypeName(Type type) : type(type) {}
 };
 
 static void
@@ -101,6 +73,15 @@ static void printTypeName(std::ostream& os, Type type) {
     os << type;
     return;
   }
+  if (type.isRtt()) {
+    auto rtt = type.getRtt();
+    os << "rtt_";
+    if (rtt.hasDepth()) {
+      os << rtt.depth << '_';
+    }
+    printHeapTypeName(os, rtt.heapType);
+    return;
+  }
   if (type.isTuple()) {
     auto sep = "";
     for (auto t : type) {
@@ -108,7 +89,9 @@ static void printTypeName(std::ostream& os, Type type) {
       sep = "_";
       printTypeName(os, t);
     }
-  } else if (type.isRef()) {
+    return;
+  }
+  if (type.isRef()) {
     os << "ref";
     if (type.isNullable()) {
       os << "?";
@@ -116,9 +99,9 @@ static void printTypeName(std::ostream& os, Type type) {
     os << "|";
     printHeapTypeName(os, type.getHeapType(), false);
     os << "|";
-  } else {
-    WASM_UNREACHABLE("unsupported print type");
+    return;
   }
+  WASM_UNREACHABLE("unsupported print type");
 }
 
 static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
@@ -164,6 +147,37 @@ static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
   }
 }
 
+// Unlike the default format, tuple types in s-expressions should not have
+// commas.
+struct SExprType {
+  Type type;
+  SExprType(Type type) : type(type){};
+};
+
+static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
+  Type type = localType.type;
+  if (type.isTuple()) {
+    o << '(';
+    auto sep = "";
+    for (const auto& t : type) {
+      o << sep << t;
+      sep = " ";
+    }
+    o << ')';
+  } else if (type.isRtt()) {
+    auto rtt = type.getRtt();
+    o << "(rtt ";
+    if (rtt.hasDepth()) {
+      o << rtt.depth << ' ';
+    }
+    printHeapTypeName(o, rtt.heapType);
+    o << ')';
+  } else {
+    printTypeName(o, localType.type);
+  }
+  return o;
+}
+
 std::ostream& operator<<(std::ostream& os, TypeName typeName) {
   auto type = typeName.type;
   if (type.isRef() && !type.isBasic()) {
@@ -177,6 +191,13 @@ std::ostream& operator<<(std::ostream& os, TypeName typeName) {
   }
   return os << SExprType(typeName.type);
 }
+
+// TODO: try to simplify or even remove this, as we may be able to do the same
+//       things with SExprType
+struct ResultTypeName {
+  Type type;
+  ResultTypeName(Type type) : type(type) {}
+};
 
 std::ostream& operator<<(std::ostream& os, ResultTypeName typeName) {
   auto type = typeName.type;
@@ -1673,12 +1694,12 @@ struct PrintExpressionContents
     WASM_UNREACHABLE("TODO (gc): br_on_cast");
   }
   void visitRttCanon(RttCanon* curr) {
-    printMedium(o, "rtt.canon");
-    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    printMedium(o, "rtt.canon ");
+    printHeapTypeName(o, curr->type.getRtt().heapType);
   }
   void visitRttSub(RttSub* curr) {
-    printMedium(o, "rtt.sub");
-    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    printMedium(o, "rtt.sub ");
+    printHeapTypeName(o, curr->type.getRtt().heapType);
   }
   void visitStructNew(StructNew* curr) {
     WASM_UNREACHABLE("TODO (gc): struct.new");
@@ -2358,12 +2379,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitRttCanon(RttCanon* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    o << ')';
   }
   void visitRttSub(RttSub* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    incIndent();
+    printFullLine(curr->parent);
+    decIndent();
   }
   void visitStructNew(StructNew* curr) {
     o << '(';

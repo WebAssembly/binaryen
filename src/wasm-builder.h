@@ -709,15 +709,21 @@ public:
     ret->finalize();
     return ret;
   }
-  RttCanon* makeRttCanon() {
+  RttCanon* makeRttCanon(HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RttCanon>();
-    WASM_UNREACHABLE("TODO (gc): rtt.canon");
+    ret->type = Type(Rtt(0, heapType));
     ret->finalize();
     return ret;
   }
-  RttSub* makeRttSub() {
+  RttSub* makeRttSub(HeapType heapType, Expression* parent) {
     auto* ret = wasm.allocator.alloc<RttSub>();
-    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    ret->parent = parent;
+    auto parentRtt = parent->type.getRtt();
+    if (parentRtt.hasDepth()) {
+      ret->type = Type(Rtt(parentRtt.depth + 1, heapType));
+    } else {
+      ret->type = Type(Rtt(heapType));
+    }
     ret->finalize();
     return ret;
   }

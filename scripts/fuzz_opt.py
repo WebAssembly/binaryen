@@ -213,6 +213,8 @@ def pick_initial_contents():
         '--disable-exception-handling',
         # has not been fuzzed in general yet
         '--disable-memory64',
+        # has not been fuzzed in general yet
+        '--disable-gc',
         # DWARF is incompatible with multivalue atm; it's more important to
         # fuzz multivalue since we aren't actually fuzzing DWARF here
         '--strip-dwarf',
