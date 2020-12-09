@@ -196,15 +196,16 @@ HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
   switch (kind) {
     case SignatureKind:
-      new (&signature) Signature(other.signature);
+      new (&signature) auto(other.signature);
       return;
     case StructKind:
-      new (&struct_) Struct(other.struct_);
+      new (&struct_) auto(other.struct_);
       return;
     case ArrayKind:
-      new (&array) Array(other.array);
+      new (&array) auto(other.array);
       return;
   }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 HeapTypeInfo::~HeapTypeInfo() {
@@ -325,6 +326,7 @@ using HeapTypeStore = Store<HeapTypeInfo>;
 TypeStore globalTypeStore;
 HeapTypeStore globalHeapTypeStore;
 
+// Specialized to simplify programming generically over Types and HeapTypes.
 template<typename T> struct MetaTypeInfo {};
 
 template<> struct MetaTypeInfo<Type> {
@@ -1096,12 +1098,8 @@ struct Canonicalizer {
 };
 
 // Traverse the type graph rooted at the initialized HeapTypeInfos in postorder,
-// replacing in-place all Types and HeapTypes backed by the TypeBuilder's Stores
+// replacing in place all Types and HeapTypes backed by the TypeBuilder's Stores
 // with equivalent globally canonicalized Types and HeapTypes.
-//
-// Recursive heap types must reach themselves through some recursive type that
-// refers dirctly to the heap type in question. Finding all recursive types is
-// therefore sufficient to identify all the recursive heap types.
 Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
   // Initialize `results` to hold all the temporary HeapTypes. Since we are
   // canonicalizing all Types and HeapTypes in place, this will end up holding
@@ -1115,9 +1113,9 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
   }
 
   // Traverse the type graph reachable from the heap types, calculating
-  // reachability and collecting a list of types that need to be canonicalized.
-  // We must scan in depth-first order so that we can do a postorder traversal
-  // later.
+  // reachability and collecting a list of types and heap types that need to be
+  // canonicalized. We must scan in depth-first order so that we can do a
+  // postorder traversal later.
   while (scanList.size() != 0) {
     auto item = scanList.back();
     scanList.pop_back();
@@ -1131,8 +1129,8 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
     }
   }
 
-  // Check for recursive types. TODO: pre-canonicalize these into their minimal
-  // finite representations.
+  // Check for recursive types and heap types. TODO: pre-canonicalize these into
+  // their minimal finite representations.
   makeReachabilityFixpoint();
   for (auto& reach : reaches) {
     if (reach.second.count(reach.first) != 0) {
@@ -1140,8 +1138,8 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
     }
   }
 
-  // Visit the types in reverse postorder, replacing them with their
-  // canonicalized versions.
+  // Visit the types and heap types in reverse postorder, replacing them with
+  // their canonicalized versions.
   for (auto it = visitList.rbegin(); it != visitList.rend(); ++it) {
     switch (it->kind) {
       case Item::TypeKind:
@@ -1294,8 +1292,8 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-size_t
-hash<wasm::HeapTypeInfo>::operator()(const wasm::HeapTypeInfo& info) const {
+size_t hash<wasm::HeapTypeInfo>::
+operator()(const wasm::HeapTypeInfo& info) const {
   auto digest = wasm::hash(info.kind);
   switch (info.kind) {
     case wasm::HeapTypeInfo::SignatureKind:
