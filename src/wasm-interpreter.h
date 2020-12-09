@@ -1461,14 +1461,14 @@ public:
     }
     const auto& element = curr->rtt->type.getHeapType().getArray().element;
     Literals data;
-    auto num = size.getSingleValue().geti32();
+    Index num = size.getSingleValue().geti32();
     data.resize(num);
     if (curr->isWithDefault()) {
       for (Index i = 0; i < num; i++) {
-        data[i] = Literal::makeZero(fields[i].type);
+        data[i] = Literal::makeZero(element.type);
       }
     } else {
-      auto init = this->visit(curr->operands[i]);
+      auto init = this->visit(curr->init);
       if (init.breaking()) {
         return init;
       }
@@ -1494,7 +1494,7 @@ public:
     if (!data) {
       trap("null ref");
     }
-    auto i = index.getSingleValue().geti32();
+    Index i = index.getSingleValue().geti32();
     if (i >= data->size()) {
       trap("array oob");
     }
@@ -1518,7 +1518,7 @@ public:
     if (!data) {
       trap("null ref");
     }
-    auto i = index.getSingleValue().geti32();
+    Index i = index.getSingleValue().geti32();
     if (i >= data->size()) {
       trap("array oob");
     }
