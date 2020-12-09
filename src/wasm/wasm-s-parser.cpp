@@ -2177,31 +2177,42 @@ Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeArrayNew(Element& s, bool default_) {
-  auto ret = allocator.alloc<ArrayNew>();
-  WASM_UNREACHABLE("TODO (gc): array.new");
-  ret->finalize();
-  return ret;
-}
-
-Expression* SExpressionWasmBuilder::makeArrayGet(Element& s) {
-  auto ret = allocator.alloc<ArrayGet>();
-  WASM_UNREACHABLE("TODO (gc): array.get");
-  ret->finalize();
-  return ret;
+  auto heapType = parseHeapType(*s[1]);
+  auto* rtt = parseExpression(*s[2]);
+  if (rtt->type != Type::unreachable) {
+    if (!rtt->type.isRtt() || rtt->type.getHeapType() != heapType) {
+      throw ParseException("bad array.new heap type", s.line, s.col);
+    }
+  }
+  auto* size = parseExpression(*s[3]);
+  Expression* init = nullptr;
+  if (!default_) {
+    init = parseExpression(*s[4]);
+  }
+  return Builder(wasm).makeArrayNew(rtt, size, init);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayGet(Element& s, bool signed_) {
-  auto ret = allocator.alloc<ArrayGet>();
-  WASM_UNREACHABLE("TODO (gc): array.get_s/u");
-  ret->finalize();
-  return ret;
+  auto arrayType = parseHeapType(*s[1]);
+  auto ref = parseExpression(*s[2]);
+  auto index = parseExpression(*s[3]);
+  auto type = arrayType.getArray().element.type;
+  return Builder(wasm).makeArrayGet(index, ref, type, signed_);
 }
 
 Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
-  auto ret = allocator.alloc<ArraySet>();
-  WASM_UNREACHABLE("TODO (gc): array.set");
-  ret->finalize();
-  return ret;
+  auto arrayType = parseHeapType(*s[1]);
+  auto ref = parseExpression(*s[2]);
+  auto index = parseExpression(*s[3]);
+  auto value = parseExpression(*s[4]);
+  auto type = arrayType.getArray().element.type;
+  return Builder(wasm).makeArraySet(index, ref, type, value);
+}
+
+Expression* SExpressionWasmBuilder::makeArraySet(Element& s) {
+  auto arrayType = parseHeapType(*s[1]);
+  auto ref = parseExpression(*s[2]);
+  return Builder(wasm).makeArrayLen(index, ref);
 }
 
 Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {

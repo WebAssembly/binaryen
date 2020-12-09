@@ -753,27 +753,33 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayNew* makeArrayNew() {
+  ArrayNew* makeArrayNew(Expression* rtt, Expression* size, Expression* init=nullptr) {
     auto* ret = wasm.allocator.alloc<ArrayNew>();
-    WASM_UNREACHABLE("TODO (gc): array.new");
+    ret->rtt = rtt;
+    ret->size = size;
+    ret->init = init;
     ret->finalize();
     return ret;
   }
-  ArrayGet* makeArrayGet() {
+  ArrayGet* makeArrayGet(Expression* ref, Expression* index, bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<ArrayGet>();
-    WASM_UNREACHABLE("TODO (gc): array.get");
+    ret->ref = ref;
+    ret->index = index;
+    ret->signed_ = signed_;
     ret->finalize();
     return ret;
   }
-  ArraySet* makeArraySet() {
+  ArraySet* makeArraySet(Expression* ref, Expression* index, Expression* value) {
     auto* ret = wasm.allocator.alloc<ArraySet>();
-    WASM_UNREACHABLE("TODO (gc): array.set");
+    ret->ref = ref;
+    ret->index = index;
+    ret->value = value;
     ret->finalize();
     return ret;
   }
-  ArrayLen* makeArrayLen() {
+  ArrayLen* makeArrayLen(Expression* ref) {
     auto* ret = wasm.allocator.alloc<ArrayLen>();
-    WASM_UNREACHABLE("TODO (gc): array.len");
+    ret->ref = ref;
     ret->finalize();
     return ret;
   }
