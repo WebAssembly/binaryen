@@ -309,8 +309,8 @@ private:
   // anyhow, we can ignore it there). That is, we also have a reference / rtt
   // child from which we can infer the type anyhow, and we just need to check
   // that type is the same.
-  void validateHeapTypeUsingChild(Expression* child, HeapType heapType,
-  Element& s);
+  void
+  validateHeapTypeUsingChild(Expression* child, HeapType heapType, Element& s);
 };
 
 } // namespace wasm
