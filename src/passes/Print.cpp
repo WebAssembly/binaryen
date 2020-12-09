@@ -1740,8 +1740,7 @@ struct PrintExpressionContents
     printHeapTypeName(o, curr->rtt->type.getRtt().heapType);
   }
   void visitArrayGet(ArrayGet* curr) {
-    const auto& element =
-      curr->ref->type.getHeapType().getArray().element;
+    const auto& element = curr->ref->type.getHeapType().getArray().element;
     if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
         printMedium(o, "array.get_s ");

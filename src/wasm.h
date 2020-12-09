@@ -1392,7 +1392,7 @@ public:
   // used.
   Expression* init = nullptr;
 
-  bool isWithDefault() { return !!init; }
+  bool isWithDefault() { return !init; }
 
   void finalize();
 };

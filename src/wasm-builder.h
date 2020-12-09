@@ -753,7 +753,8 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayNew* makeArrayNew(Expression* rtt, Expression* size, Expression* init=nullptr) {
+  ArrayNew*
+  makeArrayNew(Expression* rtt, Expression* size, Expression* init = nullptr) {
     auto* ret = wasm.allocator.alloc<ArrayNew>();
     ret->rtt = rtt;
     ret->size = size;
@@ -761,7 +762,8 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayGet* makeArrayGet(Expression* ref, Expression* index, bool signed_ = false) {
+  ArrayGet*
+  makeArrayGet(Expression* ref, Expression* index, bool signed_ = false) {
     auto* ret = wasm.allocator.alloc<ArrayGet>();
     ret->ref = ref;
     ret->index = index;
@@ -769,7 +771,8 @@ public:
     ret->finalize();
     return ret;
   }
-  ArraySet* makeArraySet(Expression* ref, Expression* index, Expression* value) {
+  ArraySet*
+  makeArraySet(Expression* ref, Expression* index, Expression* value) {
     auto* ret = wasm.allocator.alloc<ArraySet>();
     ret->ref = ref;
     ret->index = index;
