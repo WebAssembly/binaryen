@@ -1429,7 +1429,8 @@ public:
     if (!data) {
       trap("null ref");
     }
-    return (*data)[curr->index];
+    auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
+    return extendForPacking((*data)[curr->index], field, curr->signed_);
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");
@@ -1446,7 +1447,7 @@ public:
       trap("null ref");
     }
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    (*data)[curr->index] = getMaybePackedValue(value.getSingleValue(), field);
+    (*data)[curr->index] = truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
   Flow visitArrayNew(ArrayNew* curr) {
@@ -1498,7 +1499,8 @@ public:
     if (i >= data->size()) {
       trap("array oob");
     }
-    return (*data)[i];
+    auto field = curr->ref->type.getHeapType().getArray().element;
+    return extendForPacking((*data)[i], field, curr->signed_);
   }
   Flow visitArraySet(ArraySet* curr) {
     NOTE_ENTER("ArraySet");
@@ -1523,7 +1525,7 @@ public:
       trap("array oob");
     }
     auto field = curr->ref->type.getHeapType().getArray().element;
-    (*data)[i] = getMaybePackedValue(value.getSingleValue(), field);
+    (*data)[i] = truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
@@ -1545,13 +1547,37 @@ public:
 
 private:
   // Truncate the value if we need to. The storage is just a list of Literals,
-  // so we can't just write the value like we would to a C struct field.
-  Literal getMaybePackedValue(Literal value, const Field& field) {
+  // so we can't just write the value like we would to a C struct field and
+  // expect it to truncate for us. Instead, we truncate so the stored value is
+  // proper for the type.
+  Literal truncateForPacking(Literal value, const Field& field) {
     if (field.type == Type::i32) {
+      int32_t c = value.geti32();
       if (field.packedType == Field::i8) {
-        value = value.and_(Literal(int32_t(0xff)));
+        value = Literal(c & 0xff);
       } else if (field.packedType == Field::i16) {
-        value = value.and_(Literal(int32_t(0xffff)));
+        value = Literal(c & 0xffff);
+      }
+    }
+    return value;
+  }
+
+  Literal extendForPacking(Literal value, const Field& field, bool signed_) {
+    if (field.type == Type::i32) {
+      int32_t c = value.geti32();
+      if (field.packedType == Field::i8) {
+        if (signed_) {
+          value = Literal((c << 24) >> 24);
+        } else {
+          // The stored value should already be truncated.
+          assert(c == (c & 0xff));
+        }
+      } else if (field.packedType == Field::i16) {
+        if (signed_) {
+          value = Literal((c << 16) >> 16);
+        } else {
+          assert(c == (c & 0xffff));
+        }
       }
     }
     return value;
