@@ -6,13 +6,13 @@ Before setting heap types:
 (ref null $array) => (ref null (func))
 
 After setting heap types:
-(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))) (result (ref (array (mut externref))))))
+(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))) (result (ref (array (mut externref))) i32)))
 (ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))
 (ref $array) => (ref (array (mut externref)))
 (ref null $array) => (ref null (array (mut externref)))
 
 After building types:
-(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))) (result (ref (array (mut externref))))))
+(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))) (result (ref (array (mut externref))) i32)))
 (ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (ref extern)))))
 (ref $array) => (ref (array (mut externref)))
 (ref null $array) => (ref null (array (mut externref)))

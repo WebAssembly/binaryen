@@ -44,12 +44,18 @@ struct Struct;
 struct Array;
 struct Rtt;
 
+// The type used for interning IDs in the public interfaces of Type and
+// HeapType.
+using TypeID = uint64_t;
+
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
   // comparison of the ids. For basic types the `id` is just the `BasicType`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
   // Since `Type` is really just a single integer, it should be passed by value.
+  // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
+  // 32-bit platforms.
   uintptr_t id;
 
 public:
@@ -75,8 +81,8 @@ public:
   // BasicType can be implicitly upgraded to Type
   constexpr Type(BasicType id) : id(id) {}
 
-  // But converting raw uint64_t is more dangerous, so make it explicit
-  explicit Type(uint64_t id) : id(id) {}
+  // But converting raw TypeID is more dangerous, so make it explicit
+  explicit Type(TypeID id) : id(id) {}
 
   // Construct tuple from a list of single types
   Type(std::initializer_list<Type>);
@@ -147,7 +153,7 @@ public:
   bool hasVector() { return hasPredicate<&Type::isVector>(); }
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
-  constexpr uint64_t getID() const { return id; }
+  constexpr TypeID getID() const { return id; }
   constexpr BasicType getBasic() const {
     assert(isBasic() && "Basic type expected");
     return static_cast<BasicType>(id);
@@ -293,8 +299,8 @@ public:
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
 
-  // But converting raw uint64_t is more dangerous, so make it explicit
-  explicit HeapType(uint64_t id) : id(id) {}
+  // But converting raw TypeID is more dangerous, so make it explicit
+  explicit HeapType(TypeID id) : id(id) {}
 
   HeapType(Signature signature);
   HeapType(const Struct& struct_);
@@ -312,7 +318,7 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
-  constexpr uint64_t getID() const { return id; }
+  constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
     assert(isBasic() && "Basic heap type expected");
     return static_cast<BasicHeapType>(id);

@@ -1009,13 +1009,14 @@ struct TypeBuilder::Impl {
   HeapTypeStore heapTypeStore;
 
   struct Entry {
-    bool initialized = false;
+    // HeapTypeInfo has no default constructor, so pick an arbitrary default.
     HeapTypeInfo info = Signature();
+    bool initialized = false;
     void set(HeapTypeInfo&& hti) {
       info = hti;
       initialized = true;
     }
-    HeapType get() { return HeapType(uint64_t(&info)); }
+    HeapType get() { return HeapType(TypeID(&info)); }
   };
 
   std::vector<Entry> entries;
@@ -1063,6 +1064,8 @@ Type TypeBuilder::getTempRttType(size_t i, uint32_t depth) {
   return impl->typeStore.canonicalize(Rtt(depth, impl->entries[i].get()));
 }
 
+namespace {
+
 // Implements the algorithm to canonicalize the HeapTypes in a TypeBuilder,
 // replacing and deduplicating the temporary type and heaptypes backed by
 // storage owned by the TypeBuilder into normal types and heap types backed by
@@ -1084,7 +1087,7 @@ struct Canonicalizer {
   };
 
   // IDs of scanned Types and HeapTypes, used to prevent repeated scanning.
-  std::unordered_set<uint64_t> scanned;
+  std::unordered_set<TypeID> scanned;
 
   // The work list of Types and HeapTypes remaining to be scanned.
   std::vector<Item> scanList;
@@ -1094,7 +1097,7 @@ struct Canonicalizer {
 
   // Maps Type and HeapType IDs to the IDs of Types and HeapTypes they can
   // reach in the type graph. Only considers compound Types and HeapTypes.
-  std::unordered_map<uint64_t, std::unordered_set<uint64_t>> reaches;
+  std::unordered_map<TypeID, std::unordered_set<TypeID>> reaches;
 
   // Maps Types and HeapTypes backed by the TypeBuilder's Stores to globally
   // canonical Types and HeapTypes.
@@ -1108,7 +1111,11 @@ struct Canonicalizer {
   template<typename T1, typename T2> void noteChild(T1 parent, T2* child);
   void scanHeapType(HeapType* ht);
   void scanType(Type* child);
-  void makeReachabilityFixpoint();
+  void makeReachabilityFixedPoint();
+
+  // Replaces the pointee Type or HeapType of `type` with its globally canonical
+  // equivalent, recording the substitution for future use in either
+  // `canonicalTypes` or `canonicalHeapTypes`.
   template<typename T>
   void canonicalize(T* type, std::unordered_map<T, T>& canonicals);
 };
@@ -1147,7 +1154,7 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
 
   // Check for recursive types and heap types. TODO: pre-canonicalize these into
   // their minimal finite representations.
-  makeReachabilityFixpoint();
+  makeReachabilityFixedPoint();
   for (auto& reach : reaches) {
     if (reach.second.count(reach.first) != 0) {
       WASM_UNREACHABLE("TODO: support recursive types");
@@ -1225,14 +1232,14 @@ void Canonicalizer::scanType(Type* type) {
   }
 }
 
-void Canonicalizer::makeReachabilityFixpoint() {
+void Canonicalizer::makeReachabilityFixedPoint() {
   // Naively calculate the transitive closure of the reachability graph.
   bool changed;
   do {
     changed = false;
     for (auto& entry : reaches) {
       auto& reachable = entry.second;
-      std::unordered_set<uint64_t> nextReachable;
+      std::unordered_set<TypeID> nextReachable;
       for (auto& other : reachable) {
         auto& otherReaches = reaches[other];
         nextReachable.insert(otherReaches.begin(), otherReaches.end());
@@ -1260,6 +1267,8 @@ void Canonicalizer::canonicalize(T* type,
     *type = canonical;
   }
 }
+
+} // anonymous namespace
 
 std::vector<HeapType> TypeBuilder::build() {
   return Canonicalizer(*this).results;

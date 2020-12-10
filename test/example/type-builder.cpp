@@ -9,7 +9,7 @@ using namespace wasm;
 void test_builder() {
   std::cout << ";; Test TypeBuilder\n";
 
-  // (type $sig (func (param (ref $struct)) (result (ref $array))))
+  // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
   // (type $struct (struct (field (ref null $array) (mut ref extern))))
   // (type $array (array (mut ref null extern)))
 
@@ -22,7 +22,7 @@ void test_builder() {
   Type refExt(HeapType::ext, false);
   Type refNullExt(HeapType::ext, true);
 
-  Signature sig(refStruct, refArray);
+  Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
   Struct struct_({Field(refNullArray, false), Field(refExt, true)});
   Array array(Field(refNullExt, true));
 
