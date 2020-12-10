@@ -101,7 +101,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
   }
 }
 
-~Literal::Literal() {
+Literal::~Literal() {
   if (type.isException()) {
     exn.~unique_ptr();
   } else if (isGCData()) {

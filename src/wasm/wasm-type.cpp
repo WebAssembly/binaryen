@@ -598,8 +598,8 @@ bool Type::isSubType(Type left, Type right) {
     // (rtt n $x) is a subtype of (rtt $x), that is, if the only difference in
     // information is that the left side specifies a depth while the right side
     // allows any depth.
-    return leftRtt.heapType == rightRtt.heapType && left.hasDepth() &&
-           !right.hasDepth();
+    return leftRtt.heapType == rightRtt.heapType && leftRtt.hasDepth() &&
+           !rightRtt.hasDepth();
   }
   return false;
 }

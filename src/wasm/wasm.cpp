@@ -1086,7 +1086,7 @@ void RefCast::finalize() {
   if (rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type(rtt->getHeapType(), /* nullable = */ true);
+    type = Type(rtt->type.getHeapType(), /* nullable = */ true);
   }
 }
 
