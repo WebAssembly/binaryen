@@ -556,8 +556,7 @@ private:
     }
     void visitRttCanon(RttCanon* curr) {}
     void visitRttSub(RttSub* curr) {}
-    void visitStructNew(StructNew* curr) {
-    }
+    void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
@@ -570,17 +569,20 @@ private:
         parent.implicitTrap = true;
       }
     }
-    void visitArrayNew(ArrayNew* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.new");
-    }
+    void visitArrayNew(ArrayNew* curr) {}
     void visitArrayGet(ArrayGet* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.get");
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
     }
     void visitArraySet(ArraySet* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.set");
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
     }
     void visitArrayLen(ArrayLen* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.len");
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
   };
 

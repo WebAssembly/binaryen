@@ -1385,28 +1385,48 @@ class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
+  Expression* rtt;
+  Expression* size;
+  // If set, then the initial value is assigned to all entries in the array. If
+  // not set, this is array.new_with_default and the default of the type is
+  // used.
+  Expression* init = nullptr;
+
+  bool isWithDefault() { return !init; }
+
+  void finalize();
 };
 
 class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
 public:
   ArrayGet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
+  Expression* ref;
+  Expression* index;
+  // Packed fields have a sign.
+  bool signed_ = false;
+
+  void finalize();
 };
 
 class ArraySet : public SpecificExpression<Expression::ArraySetId> {
 public:
   ArraySet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+
+  void finalize();
 };
 
 class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
 public:
   ArrayLen(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
+  Expression* ref;
+
+  void finalize();
 };
 
 // Globals

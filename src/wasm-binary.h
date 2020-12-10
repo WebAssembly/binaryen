@@ -1503,6 +1503,13 @@ public:
 
   void throwError(std::string text);
 
+  // Struct/Array instructions have an unnecessary heap type that is just for
+  // validation (except for the case of unreachability, but that's not a problem
+  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // child from which we can infer the type anyhow, and we just need to check
+  // that type is the same.
+  void validateHeapTypeUsingChild(Expression* child, HeapType heapType);
+
 private:
   bool hasDWARFSections();
 };

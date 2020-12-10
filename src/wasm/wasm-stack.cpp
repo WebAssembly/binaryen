@@ -1928,33 +1928,50 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
   } else {
     op = BinaryConsts::StructGetU;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(op);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
   parent.writeHeapType(heapType);
   o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::StructSet);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
   parent.writeHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
-  WASM_UNREACHABLE("TODO (gc): array.new");
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->isWithDefault()) {
+    o << U32LEB(BinaryConsts::ArrayNewDefaultWithRtt);
+  } else {
+    o << U32LEB(BinaryConsts::ArrayNewWithRtt);
+  }
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
-  WASM_UNREACHABLE("TODO (gc): array.get");
+  auto heapType = curr->ref->type.getHeapType();
+  const auto& field = heapType.getArray().element;
+  int8_t op;
+  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+    op = BinaryConsts::ArrayGet;
+  } else if (curr->signed_) {
+    op = BinaryConsts::ArrayGetS;
+  } else {
+    op = BinaryConsts::ArrayGetU;
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
+  parent.writeHeapType(heapType);
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
-  WASM_UNREACHABLE("TODO (gc): array.set");
+  parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
-  WASM_UNREACHABLE("TODO (gc): array.len");
+  parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {

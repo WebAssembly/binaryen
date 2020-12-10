@@ -104,6 +104,23 @@ static void printTypeName(std::ostream& os, Type type) {
   WASM_UNREACHABLE("unsupported print type");
 }
 
+static void printFieldName(std::ostream& os, const Field& field) {
+  if (field.mutable_) {
+    os << "mut:";
+  }
+  if (field.type == Type::i32 && field.packedType != Field::not_packed) {
+    if (field.packedType == Field::i8) {
+      os << "i8";
+    } else if (field.packedType == Field::i16) {
+      os << "i16";
+    } else {
+      WASM_UNREACHABLE("invalid packed type");
+    }
+  } else {
+    printTypeName(os, field.type);
+  }
+}
+
 static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
   if (type.isBasic()) {
     os << type;
@@ -128,19 +145,12 @@ static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
     for (auto& field : struct_.fields) {
       os << sep;
       sep = "_";
-      if (field.mutable_) {
-        os << "mut:";
-      }
-      printTypeName(os, field.type);
+      printFieldName(os, field);
     }
     os << "}";
   } else if (type.isArray()) {
     os << "[";
-    auto element = type.getArray().element;
-    if (element.mutable_) {
-      os << "mut:";
-    }
-    printTypeName(os, element.type);
+    printFieldName(os, type.getArray().element);
     os << "]";
   } else {
     os << type;
@@ -1732,18 +1742,33 @@ struct PrintExpressionContents
     o << curr->index;
   }
   void visitArrayNew(ArrayNew* curr) {
-    WASM_UNREACHABLE("TODO (gc): array.new");
+    printMedium(o, "array.new_");
+    if (curr->isWithDefault()) {
+      o << "default_";
+    }
+    o << "with_rtt ";
+    printHeapTypeName(o, curr->rtt->type.getRtt().heapType);
   }
   void visitArrayGet(ArrayGet* curr) {
-    WASM_UNREACHABLE("TODO (gc): array.get");
+    const auto& element = curr->ref->type.getHeapType().getArray().element;
+    if (element.type == Type::i32 && element.packedType != Field::not_packed) {
+      if (curr->signed_) {
+        printMedium(o, "array.get_s ");
+      } else {
+        printMedium(o, "array.get_u ");
+      }
+    } else {
+      printMedium(o, "array.get ");
+    }
+    printHeapTypeName(o, curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
-    printMedium(o, "array.set");
-    WASM_UNREACHABLE("TODO (gc): array.set");
+    printMedium(o, "array.set ");
+    printHeapTypeName(o, curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) {
-    printMedium(o, "array.len");
-    WASM_UNREACHABLE("TODO (gc): array.len");
+    printMedium(o, "array.len ");
+    printHeapTypeName(o, curr->ref->type.getHeapType());
   }
 };
 
@@ -2421,22 +2446,37 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitArrayNew(ArrayNew* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): array.new");
+    incIndent();
+    printFullLine(curr->rtt);
+    printFullLine(curr->size);
+    if (curr->init) {
+      printFullLine(curr->init);
+    }
+    decIndent();
   }
   void visitArrayGet(ArrayGet* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): array.get");
+    incIndent();
+    printFullLine(curr->ref);
+    printFullLine(curr->index);
+    decIndent();
   }
   void visitArraySet(ArraySet* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): array.set");
+    incIndent();
+    printFullLine(curr->ref);
+    printFullLine(curr->index);
+    printFullLine(curr->value);
+    decIndent();
   }
   void visitArrayLen(ArrayLen* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): array.len");
+    incIndent();
+    printFullLine(curr->ref);
+    decIndent();
   }
   // Module-level visitors
   void handleSignature(Signature curr, Name name = Name()) {

@@ -759,7 +759,7 @@ bool Field::operator<(const Field& other) const {
   if (mutable_ != other.mutable_) {
     return mutable_ < other.mutable_;
   }
-  if (type == Type::i32) {
+  if (type == Type::i32 && other.type == Type::i32) {
     return packedType < other.packedType;
   }
   return type < other.type;

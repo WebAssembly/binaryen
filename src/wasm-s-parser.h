@@ -266,8 +266,7 @@ private:
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
-  Expression* makeArrayGet(Element& s);
-  Expression* makeArrayGet(Element& s, bool signed_);
+  Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
 
@@ -304,6 +303,14 @@ private:
   void parseEvent(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
+
+  // Struct/Array instructions have an unnecessary heap type that is just for
+  // validation (except for the case of unreachability, but that's not a problem
+  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // child from which we can infer the type anyhow, and we just need to check
+  // that type is the same.
+  void
+  validateHeapTypeUsingChild(Expression* child, HeapType heapType, Element& s);
 };
 
 } // namespace wasm

@@ -19,6 +19,8 @@
   ;; Arrays
   (type $vector (array (mut f64)))
   (type $matrix (array (ref $vector)))
+  (type $bytes (array (mut i8)))
+  (type $words (array (mut i32)))
 
   ;; RTT
   (type $parent (struct))
@@ -28,7 +30,7 @@
   (global $rttchild (rtt 1 $child) (rtt.sub $child (global.get $rttparent)))
   (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild (global.get $rttchild)))
 
-  (func "foo" (param $x (ref $struct.A)) (result (ref $struct.B))
+  (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
     (local $tA (ref null $struct.A))
     (local $tB (ref null $struct.B))
     (local $tc (ref null $struct.C))
@@ -97,6 +99,60 @@
         (i32.const 1)
         (f32.const 2.345)
         (f64.const 3.14159)
+      )
+    )
+    (unreachable)
+  )
+  (func $arrays (param $x (ref $vector)) (result (ref $matrix))
+    (local $tv (ref null $vector))
+    (local $tm (ref null $matrix))
+    (local $tb (ref null $bytes))
+    (local $tw (ref null $words))
+    (drop
+      (array.new_with_rtt $vector
+        (rtt.canon $vector)
+        (i32.const 3)
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (array.new_default_with_rtt $matrix
+        (rtt.canon $matrix)
+        (i32.const 10)
+      )
+    )
+    (drop
+      (array.get $vector
+        (local.get $x)
+        (i32.const 2)
+      )
+    )
+    (array.set $vector
+      (local.get $x)
+      (i32.const 2)
+      (f64.const 2.18281828)
+    )
+    (drop
+      (array.len $vector
+        (local.get $x)
+      )
+    )
+    (drop
+      (array.get $words
+        (local.get $tw)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.get_u $bytes
+        (local.get $tb)
+        (i32.const 2)
+      )
+    )
+    (drop
+      (array.get_s $bytes
+        (local.get $tb)
+        (i32.const 3)
       )
     )
     (unreachable)
