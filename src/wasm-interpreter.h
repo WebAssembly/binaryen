@@ -1415,8 +1415,7 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(
-      Literal(std::make_shared<Literals>(data), curr->type));
+    return Flow(Literal(std::make_shared<Literals>(data), curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1475,8 +1474,7 @@ public:
         data[i] = value;
       }
     }
-    return Flow(
-      Literal(std::make_shared<Literals>(data), curr->type));
+    return Flow(Literal(std::make_shared<Literals>(data), curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
