@@ -11,6 +11,7 @@
    )
   )
   ;; The value is initialized to 0
+  ;; Note: -Oz will optimize all these to constants thanks to Precompute
   (call $log
    (struct.get $struct 0 (local.get $x))
   )
