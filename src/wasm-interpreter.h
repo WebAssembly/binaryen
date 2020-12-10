@@ -1478,7 +1478,7 @@ public:
       }
     }
     return Flow(
-      Literal(std::shared_ptr<Literals>(new Literals(data)), curr->type));
+      Literal(std::make_shared<Literals>(data), curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");

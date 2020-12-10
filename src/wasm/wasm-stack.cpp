@@ -1950,7 +1950,7 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
-  const auto& heapType = curr->ref->type.getHeapType();
+  auto heapType = curr->ref->type.getHeapType();
   const auto& field = heapType.getArray().element;
   int8_t op;
   if (field.type != Type::i32 || field.packedType == Field::not_packed) {
