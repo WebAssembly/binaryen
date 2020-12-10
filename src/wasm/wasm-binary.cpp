@@ -690,7 +690,31 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
-  // TODO: label, type, element and data names
+  // memory names
+  if (wasm->memory.exists) {
+    Index count = 0;
+    for (auto& seg : wasm->memory.segments) {
+      if (seg.name.is()) {
+        count++;
+      }
+    }
+
+    if (count) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameData);
+      o << U32LEB(count);
+      for (Index i = 0; i < wasm->memory.segments.size(); i++) {
+        auto& seg = wasm->memory.segments[i];
+        if (seg.name.is()) {
+          o << U32LEB(i);
+          writeEscapedName(seg.name.str);
+        }
+      }
+      finishSubsection(substart);
+    }
+  }
+
+  // TODO: label, type, and element names
   // see: https://github.com/WebAssembly/extended-name-section
 
   finishSection(start);
@@ -2559,6 +2583,20 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto rawName = getInlineString();
         if (index == 0) {
           wasm.memory.setExplicitName(escape(rawName));
+        } else {
+          std::cerr << "warning: memory index out of bounds in name section, "
+                       "memory subsection: "
+                    << std::string(rawName.str) << " at index "
+                    << std::to_string(index) << std::endl;
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameData) {
+      auto num = getU32LEB();
+      for (size_t i = 0; i < num; i++) {
+        auto index = getU32LEB();
+        auto rawName = getInlineString();
+        if (index < wasm.memory.segments.size()) {
+          wasm.memory.segments[i].name = rawName;
         } else {
           std::cerr << "warning: memory index out of bounds in name section, "
                        "memory subsection: "

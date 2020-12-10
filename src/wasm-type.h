@@ -174,10 +174,12 @@ public:
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
 
-  // Gets the heap type corresponding to this type
+  // Gets the heap type corresponding to this type, assuming that it is a
+  // reference or Rtt type.
   HeapType getHeapType() const;
 
-  const struct Rtt& getRtt() const;
+  // Gets the Rtt for this type, assuming that it is an Rtt type.
+  Rtt getRtt() const;
 
   // Returns a number type based on its size in bytes and whether it is a float
   // type.
@@ -432,10 +434,8 @@ struct Array {
 };
 
 struct Rtt {
-  enum {
-    // An Rtt can have no depth specified
-    NoDepth = -1
-  };
+  // An Rtt can have no depth specified
+  static constexpr uint32_t NoDepth = -1;
   uint32_t depth;
   HeapType heapType;
   Rtt(HeapType heapType) : depth(NoDepth), heapType(heapType) {}

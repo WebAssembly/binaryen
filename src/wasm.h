@@ -1651,6 +1651,8 @@ public:
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
 
   struct Segment {
+    // For use in name section only
+    Name name;
     bool isPassive = false;
     Expression* offset = nullptr;
     std::vector<char> data; // TODO: optimize

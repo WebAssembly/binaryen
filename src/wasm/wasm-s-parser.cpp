@@ -2379,6 +2379,10 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   bool isPassive = false;
   Expression* offset = nullptr;
   Index i = 1;
+  Name name;
+  if (s[i]->dollared()) {
+    name = s[i++]->str();
+  }
   if (s[i]->isStr()) {
     // data is passive or named
     if (s[i]->str() == PASSIVE) {
@@ -2393,6 +2397,9 @@ void SExpressionWasmBuilder::parseData(Element& s) {
     throw ParseException("Unexpected data items", s.line, s.col);
   }
   parseInnerData(s, s.size() - 1, offset, isPassive);
+  if (name.is()) {
+    wasm.memory.segments.back().name = name;
+  }
 }
 
 void SExpressionWasmBuilder::parseInnerData(Element& s,

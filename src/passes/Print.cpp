@@ -2811,6 +2811,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMajor(o, "data ");
+      if (segment.name.is()) {
+        printName(segment.name, o);
+        o << ' ';
+      }
       if (segment.isPassive) {
         printMedium(o, "passive");
       } else {

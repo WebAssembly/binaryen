@@ -531,13 +531,9 @@ HeapType Type::getHeapType() const {
     }
     WASM_UNREACHABLE("Unexpected type");
   }
-  if (isRtt()) {
-    return getRtt().heapType;
-  }
-  WASM_UNREACHABLE("unexpected type");
 }
 
-const Rtt& Type::getRtt() const {
+Rtt Type::getRtt() const {
   assert(isRtt());
   return getTypeInfo(*this)->rtt;
 }
