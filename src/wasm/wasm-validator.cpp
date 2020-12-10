@@ -2277,14 +2277,19 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.get requires gc to be enabled");
-  if (curr->ref->type != Type::unreachable) {
-    const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
-    shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
-    shouldBeEqual(curr->type,
-                  fields[curr->index].type,
-                  curr,
-                  "struct.get must have the proper type");
+  const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+  shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+  auto field = fields[curr->index];
+  // If the type is not packed, it must be marked internally as unsigned, by
+  // convention.
+  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+    shouldBeFalse(curr->signed_, curr, "non-packed get cannot be signed");
   }
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  shouldBeEqual(
+    curr->type, field.type, curr, "struct.get must have the proper type");
 }
 
 void FunctionValidator::visitStructSet(StructSet* curr) {
@@ -2342,10 +2347,15 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
     getModule()->features.hasGC(), curr, "array.get requires gc to be enabled");
   shouldBeEqualOrFirstIsUnreachable(
     curr->index->type, Type(Type::i32), curr, "array.get index must be an i32");
+  const auto& element = curr->ref->type.getHeapType().getArray().element;
+  // If the type is not packed, it must be marked internally as unsigned, by
+  // convention.
+  if (element.type != Type::i32 || element.packedType == Field::not_packed) {
+    shouldBeFalse(curr->signed_, curr, "non-packed get cannot be signed");
+  }
   if (curr->type == Type::unreachable) {
     return;
   }
-  const auto& element = curr->ref->type.getHeapType().getArray().element;
   shouldBeEqual(
     curr->type, element.type, curr, "array.get must have the proper type");
 }
