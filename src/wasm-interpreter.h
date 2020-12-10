@@ -1403,8 +1403,7 @@ public:
       return rtt;
     }
     const auto& fields = curr->rtt->type.getHeapType().getStruct().fields;
-    Literals data;
-    data.resize(fields.size());
+    Literals data(fields.size());
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
         data[i] = Literal::makeZero(fields[i].type);
@@ -1460,9 +1459,8 @@ public:
       return size;
     }
     const auto& element = curr->rtt->type.getHeapType().getArray().element;
-    Literals data;
     Index num = size.getSingleValue().geti32();
-    data.resize(num);
+    Literals data(num);
     if (curr->isWithDefault()) {
       for (Index i = 0; i < num; i++) {
         data[i] = Literal::makeZero(element.type);

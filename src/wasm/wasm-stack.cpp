@@ -1928,13 +1928,13 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
   } else {
     op = BinaryConsts::StructGetU;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(op);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
   parent.writeHeapType(heapType);
   o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::StructSet);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
   parent.writeHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);
 }
@@ -1960,17 +1960,17 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
   } else {
     op = BinaryConsts::ArrayGetU;
   }
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(op);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
   parent.writeHeapType(heapType);
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::ArraySet);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
   parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::ArrayLen);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
   parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
