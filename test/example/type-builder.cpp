@@ -10,8 +10,8 @@ void test_builder() {
   std::cout << ";; Test TypeBuilder\n";
 
   // (type $sig (func (param (ref $struct)) (result (ref $array) i32)))
-  // (type $struct (struct (field (ref null $array) (mut ref extern))))
-  // (type $array (array (mut ref null extern)))
+  // (type $struct (struct (field (ref null $array) (mut rtt 0 $array))))
+  // (type $array (array (mut externref)))
 
   TypeBuilder builder(3);
 
@@ -19,18 +19,19 @@ void test_builder() {
   Type refStruct = builder.getTempRefType(1, false);
   Type refArray = builder.getTempRefType(2, false);
   Type refNullArray = builder.getTempRefType(2, true);
-  Type refExt(HeapType::ext, false);
+  Type rttArray = builder.getTempRttType(2, 0);
   Type refNullExt(HeapType::ext, true);
 
   Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
-  Struct struct_({Field(refNullArray, false), Field(refExt, true)});
+  Struct struct_({Field(refNullArray, false), Field(rttArray, true)});
   Array array(Field(refNullExt, true));
 
   std::cout << "Before setting heap types:\n";
   std::cout << "(ref $sig) => " << refSig << "\n";
   std::cout << "(ref $struct) => " << refStruct << "\n";
   std::cout << "(ref $array) => " << refArray << "\n";
-  std::cout << "(ref null $array) => " << refNullArray << "\n\n";
+  std::cout << "(ref null $array) => " << refNullArray << "\n";
+  std::cout << "(rtt 0 $array) => " << rttArray << "\n\n";
 
   builder.setHeapType(0, sig);
   builder.setHeapType(1, struct_);
@@ -40,7 +41,8 @@ void test_builder() {
   std::cout << "(ref $sig) => " << refSig << "\n";
   std::cout << "(ref $struct) => " << refStruct << "\n";
   std::cout << "(ref $array) => " << refArray << "\n";
-  std::cout << "(ref null $array) => " << refNullArray << "\n\n";
+  std::cout << "(ref null $array) => " << refNullArray << "\n";
+  std::cout << "(rtt 0 $array) => " << rttArray << "\n\n";
 
   std::vector<HeapType> built = builder.build();
 
@@ -48,17 +50,20 @@ void test_builder() {
   Type newRefStruct = Type(built[1], false);
   Type newRefArray = Type(built[2], false);
   Type newRefNullArray = Type(built[2], true);
+  Type newRttArray = Type(Rtt(0, built[2]));
 
   assert(refSig != newRefSig);
   assert(refStruct != newRefStruct);
   assert(refArray != newRefArray);
   assert(refNullArray != newRefNullArray);
+  assert(rttArray != newRttArray);
 
   std::cout << "After building types:\n";
   std::cout << "(ref $sig) => " << newRefSig << "\n";
   std::cout << "(ref $struct) => " << newRefStruct << "\n";
   std::cout << "(ref $array) => " << newRefArray << "\n";
-  std::cout << "(ref null $array) => " << newRefNullArray << "\n\n";
+  std::cout << "(ref null $array) => " << newRefNullArray << "\n";
+  std::cout << "(rtt 0 $array) => " << newRttArray << "\n\n";
 }
 
 // Check that the builder works when there are duplicate definitions

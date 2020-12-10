@@ -479,9 +479,9 @@ struct TypeBuilder {
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
 
-  // Gets a temporary type for use in initializing the TypeBuilder's HeapTypes.
-  // Temporary Ref and Rtt types are backed by the HeapType at index `i`. May
-  // only be called before `build`.
+  // Gets a temporary type or heap type for use in initializing the
+  // TypeBuilder's HeapTypes. Temporary Ref and Rtt types are backed by the
+  // HeapType at index `i`.
   Type getTempTupleType(const Tuple&);
   Type getTempRefType(size_t i, bool nullable);
   Type getTempRttType(size_t i, uint32_t depth);
