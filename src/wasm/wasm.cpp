@@ -1104,7 +1104,8 @@ void StructNew::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  type = Type(rtt->type.getHeapType(), /* nullable = */ false);
+  // TODO: make non-nullable when we support that
+  type = Type(rtt->type.getHeapType(), /* nullable = */ true);
 }
 
 void StructGet::finalize() {
@@ -1129,7 +1130,8 @@ void ArrayNew::finalize() {
     type = Type::unreachable;
     return;
   }
-  type = Type(rtt->type.getHeapType(), /* nullable = */ false);
+  // TODO: make non-nullable when we support that
+  type = Type(rtt->type.getHeapType(), /* nullable = */ true);
 }
 
 void ArrayGet::finalize() {
