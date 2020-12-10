@@ -691,15 +691,17 @@ public:
     ret->finalize();
     return ret;
   }
-  RefTest* makeRefTest() {
+  RefTest* makeRefTest(Expression* ref, Expression* rtt) {
     auto* ret = wasm.allocator.alloc<RefTest>();
-    WASM_UNREACHABLE("TODO (gc): ref.test");
+    ret->ref = ref;
+    ret->rtt = rtt;
     ret->finalize();
     return ret;
   }
-  RefCast* makeRefCast() {
+  RefCast* makeRefCast(Expression* ref, Expression* rtt) {
     auto* ret = wasm.allocator.alloc<RefCast>();
-    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    ret->ref = ref;
+    ret->rtt = rtt;
     ret->finalize();
     return ret;
   }
