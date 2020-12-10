@@ -168,11 +168,6 @@ struct Precompute
     if (curr->type.isVector()) {
       return;
     }
-    // Don't try to precompute a reference. We can't replace it with a constant
-    // expression, as that would make a copy of it by value.
-    if (curr->type.isRef()) {
-      return;
-    }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
     if (flow.getType().hasVector()) {
@@ -228,6 +223,12 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
+    // Don't try to precompute a reference. We can't replace it with a constant
+    // expression, as that would make a copy of it by value.
+    // TODO: do so when safe
+    if (curr->type.isRef()) {
+      return Flow(NONCONSTANT_FLOW);
+    }
     try {
       return PrecomputingExpressionRunner(
                getModule(), getValues, replaceExpression)
