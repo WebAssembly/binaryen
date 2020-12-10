@@ -346,7 +346,7 @@ struct Tuple {
   std::string toString() const;
 
   // Prevent accidental copies
-  Struct& operator=(const Struct&) = delete;
+  Tuple& operator=(const Tuple&) = delete;
 
 private:
   void validate() {

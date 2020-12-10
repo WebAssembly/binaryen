@@ -37,6 +37,10 @@ Literal::Literal(Type type) : type(type) {
     assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
     if (type.isException()) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
+    } else if (isGCData()) {
+      new (&gcData) std::shared_ptr<Literal>();
+    } else if (type.isRtt()) {
+      new (&parentRtt) std::unique_ptr<Type>();
     } else {
       memset(&v128, 0, 16);
     }
@@ -56,8 +60,13 @@ Literal::Literal(const Literal& other) : type(other.type) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     }
   } else if (other.isGCData()) {
-    // Avoid calling the destructor on an uninitialized value
     new (&gcData) std::shared_ptr<Literals>(other.gcData);
+  } else if (type.isRtt()) {
+    if (other.parentRtt != nullptr) {
+      new (&parentRtt) auto(std::make_unique<Type>(*other.parentRtt));
+    } else {
+      new (&parentRtt) std::unique_ptr<Type>();
+    }
   } else if (type.isFunction()) {
     func = other.func;
   } else if (type.isRtt()) {
@@ -89,6 +98,16 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
+  }
+}
+
+~Literal::Literal() {
+  if (type.isException()) {
+    exn.~unique_ptr();
+  } else if (isGCData()) {
+    gcData.~shared_ptr();
+  } else if (type.isRtt()) {
+    parentRtt.~unique_ptr();
   }
 }
 
