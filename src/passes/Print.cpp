@@ -1693,11 +1693,11 @@ struct PrintExpressionContents
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test");
-    printHeapTypeName(o, curr->rtt->getHeapType());
+    printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitRefCast(RefCast* curr) {
     printMedium(o, "ref.cast");
-    printHeapTypeName(o, curr->rtt->getHeapType());
+    printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitBrOnCast(BrOnCast* curr) {
     printMedium(o, "br_on_cast");
