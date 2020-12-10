@@ -46,6 +46,7 @@ public:
       push_back(item);
     }
   }
+  SmallVector(size_t initialSize) { resize(initialSize); }
 
   T& operator[](size_t i) {
     if (i < N) {

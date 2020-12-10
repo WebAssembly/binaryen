@@ -556,8 +556,7 @@ private:
     }
     void visitRttCanon(RttCanon* curr) {}
     void visitRttSub(RttSub* curr) {}
-    void visitStructNew(StructNew* curr) {
-    }
+    void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
@@ -570,8 +569,7 @@ private:
         parent.implicitTrap = true;
       }
     }
-    void visitArrayNew(ArrayNew* curr) {
-    }
+    void visitArrayNew(ArrayNew* curr) {}
     void visitArrayGet(ArrayGet* curr) {
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;

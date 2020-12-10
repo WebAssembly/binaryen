@@ -654,7 +654,9 @@ public:
       assert(lit.isConcrete());
     }
 #endif
-  };
+  }
+  Literals(size_t initialSize) : SmallVector(initialSize) {}
+
   Type getType() {
     std::vector<Type> types;
     for (auto& val : *this) {
