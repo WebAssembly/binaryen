@@ -2192,13 +2192,23 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
 void FunctionValidator::visitRefTest(RefTest* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.test requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): ref.test");
+  if (curr->ref->type != Type::unreachable) {
+    shouldBeTrue(curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
+  }
+  if (curr->rtt->type != Type::unreachable) {
+    shouldBeTrue(curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+  }
 }
 
 void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.cast requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): ref.cast");
+  if (curr->ref->type != Type::unreachable) {
+    shouldBeTrue(curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
+  }
+  if (curr->rtt->type != Type::unreachable) {
+    shouldBeTrue(curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+  }
 }
 
 void FunctionValidator::visitBrOnCast(BrOnCast* curr) {

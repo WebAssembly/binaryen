@@ -1310,14 +1310,20 @@ class RefTest : public SpecificExpression<Expression::RefTestId> {
 public:
   RefTest(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
+  Expression* ref;
+  Expression* rtt;
+
+  void finalize();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
 public:
   RefCast(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
+  Expression* ref;
+  Expression* rtt;
+
+  void finalize();
 };
 
 class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
