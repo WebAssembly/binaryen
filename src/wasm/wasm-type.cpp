@@ -1092,7 +1092,8 @@ struct Canonicalizer {
   // The work list of Types and HeapTypes remaining to be scanned.
   std::vector<Item> scanList;
 
-  // The list of Types and HeapTypes to visit (in forward preorder).
+  // The list of Types and HeapTypes to visit constructed in forward preorder
+  // and eventually traversed in reverse to give a reverse postorder.
   std::vector<Item> visitList;
 
   // Maps Type and HeapType IDs to the IDs of Types and HeapTypes they can
@@ -1120,9 +1121,10 @@ struct Canonicalizer {
   void canonicalize(T* type, std::unordered_map<T, T>& canonicals);
 };
 
-// Traverse the type graph rooted at the initialized HeapTypeInfos in postorder,
-// replacing in place all Types and HeapTypes backed by the TypeBuilder's Stores
-// with equivalent globally canonicalized Types and HeapTypes.
+// Traverse the type graph rooted at the initialized HeapTypeInfos in reverse
+// postorder, replacing in place all Types and HeapTypes backed by the
+// TypeBuilder's Stores with equivalent globally canonicalized Types and
+// HeapTypes.
 Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
   // Initialize `results` to hold all the temporary HeapTypes. Since we are
   // canonicalizing all Types and HeapTypes in place, this will end up holding
