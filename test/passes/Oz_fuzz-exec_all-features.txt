@@ -3,45 +3,47 @@
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 100]
 [LoggingExternalInterface logging 100]
+[fuzz-exec] calling arrays
+[LoggingExternalInterface logging 50]
+[LoggingExternalInterface logging 42]
+[LoggingExternalInterface logging 128]
+[LoggingExternalInterface logging -128]
+[LoggingExternalInterface logging 42]
 (module
- (type ${i32} (struct (field i32)))
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "structs" (func $0))
- (func $0
-  (local $0 (ref null ${i32}))
+ (export "arrays" (func $1))
+ (func $0 (; has Stack IR ;)
   (call $log
-   (struct.get ${i32} 0
-    (local.tee $0
-     (struct.new_default_with_rtt ${i32}
-      (rtt.canon ${i32})
-     )
-    )
-   )
+   (i32.const 0)
   )
-  (struct.set ${i32} 0
-   (local.get $0)
+  (call $log
    (i32.const 42)
   )
   (call $log
-   (struct.get ${i32} 0
-    (local.get $0)
-   )
-  )
-  (struct.set ${i32} 0
-   (local.get $0)
    (i32.const 100)
   )
   (call $log
-   (struct.get ${i32} 0
-    (local.get $0)
-   )
+   (i32.const 100)
+  )
+ )
+ (func $1 (; has Stack IR ;)
+  (call $log
+   (i32.const 50)
   )
   (call $log
-   (struct.get ${i32} 0
-    (local.get $0)
-   )
+   (i32.const 42)
+  )
+  (call $log
+   (i32.const 128)
+  )
+  (call $log
+   (i32.const -128)
+  )
+  (call $log
+   (i32.const 42)
   )
  )
 )
@@ -50,3 +52,9 @@
 [LoggingExternalInterface logging 42]
 [LoggingExternalInterface logging 100]
 [LoggingExternalInterface logging 100]
+[fuzz-exec] calling arrays
+[LoggingExternalInterface logging 50]
+[LoggingExternalInterface logging 42]
+[LoggingExternalInterface logging 128]
+[LoggingExternalInterface logging -128]
+[LoggingExternalInterface logging 42]
