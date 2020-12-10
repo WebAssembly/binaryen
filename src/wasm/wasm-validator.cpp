@@ -2193,10 +2193,12 @@ void FunctionValidator::visitRefTest(RefTest* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.test requires gc to be enabled");
   if (curr->ref->type != Type::unreachable) {
-    shouldBeTrue(curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
+    shouldBeTrue(
+      curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
   }
   if (curr->rtt->type != Type::unreachable) {
-    shouldBeTrue(curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+    shouldBeTrue(
+      curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
   }
 }
 
@@ -2204,10 +2206,12 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.cast requires gc to be enabled");
   if (curr->ref->type != Type::unreachable) {
-    shouldBeTrue(curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
+    shouldBeTrue(
+      curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
   }
   if (curr->rtt->type != Type::unreachable) {
-    shouldBeTrue(curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+    shouldBeTrue(
+      curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
   }
 }
 

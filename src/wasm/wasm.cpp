@@ -1080,9 +1080,7 @@ void CallRef::finalize(Type type_) {
   finalize();
 }
 
-void RefTest::finalize() {
-  type = Type::i32;
-}
+void RefTest::finalize() { type = Type::i32; }
 
 void RefCast::finalize() {
   if (rtt->type == Type::unreachable) {
