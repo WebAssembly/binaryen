@@ -112,6 +112,8 @@ inline Literal getLiteral(const Expression* curr) {
     if (auto* c = i->value->dynCast<Const>()) {
       return Literal::makeI31(c->value.geti32());
     }
+  } else if (curr->type.isRtt()) {
+    return Literal(curr->type);
   }
   WASM_UNREACHABLE("non-constant expression");
 }
