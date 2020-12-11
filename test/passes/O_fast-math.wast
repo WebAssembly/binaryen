@@ -115,13 +115,34 @@
   )
  )
  (func "neg_mul_add_const" (param $x f64) (param $y f64) (result f64)
- ;; (-x * y) + 1.0  ==>  1.0 - x * y
+  ;; (-x * y) + 1.0  ==>  1.0 - x * y
   (f64.add
    (f64.mul
     (f64.neg (local.get $x))
     (local.get $y)
    )
    (f64.const 1.0)
+  )
+ )
+ (func "neg_x_add_y" (param $x f64) (param $y f64) (result f64)
+  ;; (-x) + y  ==>  y - x
+   (f64.add
+    (f64.neg (local.get $x))
+    (local.get $y)
+   )
+ )
+ (func "x_add_neg_y" (param $x f64) (param $y f64) (result f64)
+  ;; x + (-y)  ==>  x - y
+  (f64.add
+   (local.get $x)
+   (f64.neg (local.get $y))
+  )
+ )
+ (func "x_sub_neg_y" (param $x f64) (param $y f64) (result f64)
+  ;; x - (-y)  ==>  x + y
+  (f64.sub
+   (local.get $x)
+   (f64.neg (local.get $y))
   )
  )
 )
