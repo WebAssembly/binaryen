@@ -69,8 +69,14 @@
   )
  )
  (func "rtts"
+  (local $x (rtt $struct))
+  (local $y (rtt $superstruct))
+  (local $z (rtt $superstruct))
   (local.set $x (rtt.canon $struct))
   (local.set $y (rtt.canon $superstruct))
   (local.set $z (rtt.sub $superstruct (local.get $x)))
+  (call $log (ref.is_null
+    (ref.cast $struct (ref.null $struct) (local.get $x))
+  ))
  )
 )
