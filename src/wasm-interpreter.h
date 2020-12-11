@@ -1378,7 +1378,8 @@ public:
   }
 
   // Helper for ref.test and ref.cast. Tries to do the cast, and returns a
-  // literal that either has the intended Rtt if we succeded, or a null if not.
+  // literal that either has the intended Rtt if we succeded, or a none if we
+  // failed. If the ref was null, we return a null.
   Flow doRefCast(Expression* currRef, Expression* currRtt, Type type) {
     Flow ref = this->visit(currRef);
     if (ref.breaking()) {
@@ -1389,10 +1390,15 @@ public:
       return rtt;
     }
     auto gcData = ref.getSingleValue().getGCData();
+    if (!gcData) {
+      // It's a null; just return that.
+      return Literal::makeNull(type);
+    }
     auto refRtt = gcData->rtt;
     auto intendedRtt = rtt.getSingleValue();
     if (!refRtt.isSubRtt(intendedRtt)) {
-      return Literal::makeNull(type);
+      // We failed; return none.
+      return Literal();
     }
     // The cast succeeded, return the data with the proper type.
     return Literal(gcData, type);
@@ -1400,7 +1406,12 @@ public:
 
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
-    return doRefCast(curr->ref, curr->rtt, curr->type);
+    auto ret = doRefCast(curr->ref, curr->rtt, curr->type);
+    if (ret.breaking()) {
+      return ret;
+    }
+    auto result = ret.getSingleValue();
+    return Literal(int32_t(!result.isNull() && !result.isNone()));
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
