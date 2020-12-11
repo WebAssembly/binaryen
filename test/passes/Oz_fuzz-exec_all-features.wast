@@ -74,8 +74,8 @@
   (local $z (rtt $superstruct))
   (local $any anyref)
   (local.set $x (rtt.canon $struct))
-  (local.set $y (rtt.canon $superstruct))
-  (local.set $z (rtt.sub $superstruct (local.get $x)))
+  (local.set $y (rtt.sub $superstruct (local.get $x)))
+  (local.set $z (rtt.canon $superstruct))
   ;; Casting null returns null.
   (call $log (ref.is_null
    (ref.cast $struct (ref.null $struct) (local.get $x))
@@ -110,7 +110,7 @@
     (struct.new_default_with_rtt $struct
      (local.get $x)
     )
-    (local.get $y)
+    (local.get $z)
    )
   )
   ;; Create a superstruct with RTT y, and upcast statically to anyref.
@@ -126,7 +126,7 @@
     (local.get $y)
    )
   )
-  ;; Casting to z, another RTT of the same type, fails.
+  ;; Casting to z, another RTT of the same data type, fails.
   (call $log
    (ref.test $superstruct
     (local.get $any)
@@ -135,9 +135,9 @@
   )
   ;; Casting to x, the parent of y, works.
   (call $log
-   (ref.test $superstruct
+   (ref.test $struct
     (local.get $any)
-    (local.get $z)
+    (local.get $x)
    )
   )
  )
