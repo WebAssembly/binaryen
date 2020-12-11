@@ -690,8 +690,9 @@ std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
 // A GC Struct or Array is a set of values with a run-time type saying what it
 // is.
 struct GCData {
-  Rtt rtt;
+  Literal rtt;
   Literals values;
+  GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 
 struct RttValue {

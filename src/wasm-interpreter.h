@@ -1422,7 +1422,7 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(Literal(std::make_shared<Literals>(data), curr->type));
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data), curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1435,7 +1435,7 @@ public:
       trap("null ref");
     }
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    return extendForPacking((*data)[curr->index], field, curr->signed_);
+    return extendForPacking((data->values)[curr->index], field, curr->signed_);
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");
@@ -1452,7 +1452,7 @@ public:
       trap("null ref");
     }
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    (*data)[curr->index] = truncateForPacking(value.getSingleValue(), field);
+    data->values[curr->index] = truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
   Flow visitArrayNew(ArrayNew* curr) {
@@ -1482,7 +1482,7 @@ public:
         data[i] = value;
       }
     }
-    return Flow(Literal(std::make_shared<Literals>(data), curr->type));
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data), curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1499,11 +1499,11 @@ public:
       trap("null ref");
     }
     Index i = index.getSingleValue().geti32();
-    if (i >= data->size()) {
+    if (i >= data->values.size()) {
       trap("array oob");
     }
     auto field = curr->ref->type.getHeapType().getArray().element;
-    return extendForPacking((*data)[i], field, curr->signed_);
+    return extendForPacking(data->values[i], field, curr->signed_);
   }
   Flow visitArraySet(ArraySet* curr) {
     NOTE_ENTER("ArraySet");
@@ -1524,11 +1524,11 @@ public:
       trap("null ref");
     }
     Index i = index.getSingleValue().geti32();
-    if (i >= data->size()) {
+    if (i >= data->values.size()) {
       trap("array oob");
     }
     auto field = curr->ref->type.getHeapType().getArray().element;
-    (*data)[i] = truncateForPacking(value.getSingleValue(), field);
+    data->values[i] = truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
@@ -1541,7 +1541,7 @@ public:
     if (!data) {
       trap("null ref");
     }
-    return Literal(int32_t(data->size()));
+    return Literal(int32_t(data->values.size()));
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
