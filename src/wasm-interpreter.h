@@ -1424,9 +1424,7 @@ public:
     NOTE_ENTER("BrOnCast");
     WASM_UNREACHABLE("TODO (gc): br_on_cast");
   }
-  Flow visitRttCanon(RttCanon* curr) {
-    return Literal(curr->type);
-  }
+  Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {
     Flow parent = this->visit(curr->parent);
     if (parent.breaking()) {
