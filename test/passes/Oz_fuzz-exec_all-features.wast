@@ -1,5 +1,6 @@
 (module
  (type $struct (struct i32))
+ (type $superstruct (struct i32 f64))
  (type $bytes (array (mut i8)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (func "structs"
@@ -66,5 +67,10 @@
   (call $log
    (array.get_s $bytes (local.get $x) (i32.const 20))
   )
+ )
+ (func "rtts"
+  (local.set $x (rtt.canon $struct))
+  (local.set $y (rtt.canon $superstruct))
+  (local.set $z (rtt.sub $superstruct (local.get $x)))
  )
 )

@@ -64,7 +64,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
   } else if (type.isFunction()) {
     func = other.func;
   } else if (type.isRtt()) {
-    new (&rtt) auto(std::make_shared<Literal>(*other.rtt));
+    new (&rtt) std::shared_ptr<RttValue>(other.rtt);
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -457,7 +457,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "funcref(" << literal.getFunc() << ")";
     }
   } else if (literal.isGCData()) {
-    auto& data = literal.getGCData();
+    auto data = literal.getGCData();
     if (data) {
       o << "[ref " << data->rtt << ' ' << data->values << ']';
     } else {
