@@ -2394,4 +2394,20 @@ Literal Literal::swizzleVec8x16(const Literal& other) const {
   return Literal(result);
 }
 
+bool Literal::isSubRtt(const Literal& other) const {
+  assert(type.isRtt() && other.type.isRtt());
+  // Look up the chain to see if the other RTT is one of our parents.
+  auto currType = type;
+  auto otherType = other.type;
+  while (1) {
+    if (currType == otherType) {
+      return true;
+    }
+    if (!hasRttSuper()) {
+      return false;
+    }
+    currType = rttSuper; // XXX
+  }
+}
+
 } // namespace wasm

@@ -1431,7 +1431,6 @@ public:
       return parent;
     }
     auto parentValue = parent.getSingleValue();
-    auto parentRtt = parentValue.getRtt();
     RttSupers newSupers = parentValue.getRttSupers();
     newSupers.push_back(parentValue.type);
     return Literal(newSupers, type);

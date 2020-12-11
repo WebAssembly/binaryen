@@ -32,6 +32,9 @@ namespace wasm {
 class Literals;
 struct ExceptionPackage;
 struct GCData;
+// Subclass the vector type so that this is not easily confused with a vector of
+// types (which could be confusing on the constructor, see above).
+struct RttSupers : std::vector<Type> {};
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -634,6 +637,8 @@ public:
   Literal widenHighUToVecI32x4() const;
   Literal swizzleVec8x16(const Literal& other) const;
 
+  bool isSubRtt(const Literal& other);
+
 private:
   Literal addSatSI8(const Literal& other) const;
   Literal addSatUI8(const Literal& other) const;
@@ -699,10 +704,6 @@ struct GCData {
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 
-// Subclass the vector type so that this is not easily confused with a vector of
-// types (which could be confusing on the constructor, see above).
-struct RttSupers : std::vector<Type> {};
-
 } // namespace wasm
 
 namespace std {
@@ -765,8 +766,9 @@ template<> struct hash<wasm::Literal> {
     } else if (a.type.isRef()) {
       return hashRef();
     } else if (a.type.isRtt()) {
-      wasm::rehash(digest, a.rttSupers.size());
-      for (auto super : rttSupers) {
+      const auto& supers = a.getRttSupers();
+      wasm::rehash(digest, supers.size());
+      for (auto super : supers) {
         wasm::rehash(digest, super.getID());
       }
       return digest;
