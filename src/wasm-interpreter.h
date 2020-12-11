@@ -1376,20 +1376,38 @@ public:
     NOTE_EVAL1(value);
     return Literal(value.geti31(curr->signed_));
   }
-  Flow visitRefTest(RefTest* curr) {
-    NOTE_ENTER("RefTest");
-    WASM_UNREACHABLE("TODO (gc): ref.test");
-  }
-  Flow visitRefCast(RefCast* curr) {
-    NOTE_ENTER("RefCast");
-    Flow ref = this->visit(curr->ref);
+
+  // Helper for ref.test and ref.cast. Tries to do the cast, and returns a
+  // literal that either has the intended Rtt if we succeded, or a null if not.
+  Literal doRefCast(Expression* ref, Expression* rtt, Type type) {
+    Flow ref = this->visit(ref);
     if (ref.breaking()) {
       return ref;
     }
-    Flow rtt = this->visit(curr->rtt);
+    Flow rtt = this->visit(rtt);
     if (rtt.breaking()) {
       return rtt;
     }
+    auto& gcData = ret.getSingleValue().getGCData();
+    auto& refRtt = gcData.rtt;
+    auto& intendedRtt = rtt.getSingleValue();
+    if (!refRtt.isSubRtt(intendedRtt)) {
+      return Literal(makeNull(type));
+    }
+    return Literal(std::make_shared<GCData>(intendedRtt, gcData), type);
+  }
+
+  Flow visitRefTest(RefTest* curr) {
+    NOTE_ENTER("RefTest");
+    return doRefCast(curr->ref, curr->rtt, curr->type);
+  }
+  Flow visitRefCast(RefCast* curr) {
+    NOTE_ENTER("RefCast");
+    auto ret = doRefCast(curr->ref, curr->rtt, curr->type);
+    if (!ret.breaking() && ret.getSingleValue().isNull()) {
+      trap("cast error");
+    }
+    return ret;
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");

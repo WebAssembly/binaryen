@@ -765,7 +765,7 @@ template<> struct hash<wasm::Literal> {
     } else if (a.type.isRef()) {
       return hashRef();
     } else if (a.type.isRtt()) {
-      wasm::rehash(digest, a.getRtt()->parent.get());
+      wasm::rehash(digest, a.getRtt().get());
     }
     WASM_UNREACHABLE("unexpected type");
   }
