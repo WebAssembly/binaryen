@@ -79,5 +79,9 @@
   (call $log (ref.is_null
     (ref.cast $struct (ref.null $struct) (local.get $x))
   ))
+  ;; Testing null returns 0.
+  (call $log
+    (ref.test $struct (ref.null $struct) (local.get $x))
+  )
  )
 )

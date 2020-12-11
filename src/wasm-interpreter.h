@@ -1416,7 +1416,7 @@ public:
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
     auto ret = doRefCast(curr->ref, curr->rtt, curr->type);
-    if (!ret.breaking() && ret.getSingleValue().isNull()) {
+    if (!ret.breaking() && ret.getSingleValue().isNone()) {
       trap("cast error");
     }
     return ret;
