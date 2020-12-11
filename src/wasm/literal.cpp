@@ -180,6 +180,8 @@ Literal Literal::makeZero(Type type) {
     } else {
       return makeNull(type);
     }
+  } else if (type.isRtt()) {
+    return Literal(std::shared_ptr<RttValue>(), type);
   } else {
     return makeFromInt32(0, type);
   }

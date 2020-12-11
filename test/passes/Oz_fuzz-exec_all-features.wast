@@ -75,6 +75,7 @@
   (local.set $x (rtt.canon $struct))
   (local.set $y (rtt.canon $superstruct))
   (local.set $z (rtt.sub $superstruct (local.get $x)))
+  ;; Casting null returns null.
   (call $log (ref.is_null
     (ref.cast $struct (ref.null $struct) (local.get $x))
   ))

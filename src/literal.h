@@ -51,8 +51,10 @@ class Literal {
     // to indicate whether this is a Struct or an Array, and of what type.
     std::shared_ptr<GCData> gcData;
     // RTT types have a special internal implementation, which we refer to by
-    // a shared pointer (which allows multiple Rtt values to all still refer to
+    // a shared pointer (which allows multiple RTT values to all still refer to
     // the same underlying information, which is necessary for casting).
+    // This value may be null, in which case it is an uninitialized rtt (like an
+    // RTT local before being assigned).
     std::shared_ptr<RttValue> rtt;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -87,6 +89,8 @@ public:
     : exn(std::move(exn)), type(Type::exnref) {}
   explicit Literal(std::shared_ptr<GCData> gcData, Type type)
     : gcData(gcData), type(type) {}
+  explicit Literal(std::shared_ptr<RttValue> rtt, Type type)
+    : rtt(rtt), type(type) {}
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();
