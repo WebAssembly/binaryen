@@ -1422,7 +1422,8 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data), curr->type));
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+                        curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1452,7 +1453,8 @@ public:
       trap("null ref");
     }
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    data->values[curr->index] = truncateForPacking(value.getSingleValue(), field);
+    data->values[curr->index] =
+      truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
   Flow visitArrayNew(ArrayNew* curr) {
@@ -1482,7 +1484,8 @@ public:
         data[i] = value;
       }
     }
-    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data), curr->type));
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+                        curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
