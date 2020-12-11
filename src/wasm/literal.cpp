@@ -2398,10 +2398,10 @@ bool Literal::isSubRtt(const Literal& other) {
     if (impl == otherImpl) {
       return true;
     }
-    impl = impl->parent.get();
     if (!impl) {
       return false;
     }
+    impl = impl->parent.get();
   }
 }
 
