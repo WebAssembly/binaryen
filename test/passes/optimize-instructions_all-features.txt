@@ -5555,9 +5555,11 @@
    )
   )
   (drop
-   (f64.sub
+   (f64.add
     (local.get $x0)
-    (local.get $x1)
+    (f64.neg
+     (local.get $x1)
+    )
    )
   )
   (drop
@@ -5569,21 +5571,27 @@
    )
   )
   (drop
-   (f64.sub
+   (f64.add
+    (f64.neg
+     (local.get $x0)
+    )
     (local.get $x1)
-    (local.get $x0)
    )
   )
   (drop
-   (f64.sub
+   (f64.add
+    (f64.neg
+     (local.get $x0)
+    )
     (f64.const -5)
-    (local.get $x0)
    )
   )
   (drop
-   (f64.sub
+   (f64.add
+    (f64.neg
+     (local.get $x0)
+    )
     (f64.const 5)
-    (local.get $x0)
    )
   )
   (drop
@@ -5708,9 +5716,11 @@
   )
   (drop
    (f64.neg
-    (f64.sub
+    (f64.add
      (local.get $x0)
-     (local.get $x1)
+     (f64.neg
+      (local.get $x1)
+     )
     )
    )
   )
