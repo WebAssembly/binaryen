@@ -545,11 +545,10 @@ private:
       // traps when the arg is null
       parent.implicitTrap = true;
     }
-    void visitRefTest(RefTest* curr) {
-      WASM_UNREACHABLE("TODO (gc): ref.test");
-    }
+    void visitRefTest(RefTest* curr) {}
     void visitRefCast(RefCast* curr) {
-      WASM_UNREACHABLE("TODO (gc): ref.cast");
+      // Traps if the ref is not null and it has an invalid rtt.
+      parent.implicitTrap = true;
     }
     void visitBrOnCast(BrOnCast* curr) {
       WASM_UNREACHABLE("TODO (gc): br_on_cast");

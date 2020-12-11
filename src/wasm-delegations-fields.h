@@ -559,13 +559,15 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefTestId: {
     DELEGATE_START(RefTest);
-    WASM_UNREACHABLE("TODO (gc): ref.test");
+    DELEGATE_FIELD_CHILD(RefTest, ref);
+    DELEGATE_FIELD_CHILD(RefTest, rtt);
     DELEGATE_END(RefTest);
     break;
   }
   case Expression::Id::RefCastId: {
     DELEGATE_START(RefCast);
-    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    DELEGATE_FIELD_CHILD(RefCast, ref);
+    DELEGATE_FIELD_CHILD(RefCast, rtt);
     DELEGATE_END(RefCast);
     break;
   }

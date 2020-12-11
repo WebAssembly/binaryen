@@ -2,6 +2,7 @@
  (type ${i32_f32_f64} (struct (field i32) (field f32) (field f64)))
  (type $[mut:f64] (array (mut f64)))
  (type ${} (struct ))
+ (type $none_=>_none (func))
  (type ${i32} (struct (field i32)))
  (type ${i32_i64} (struct (field i32) (field i64)))
  (type ${mut:f32} (struct (field (mut f32))))
@@ -164,6 +165,20 @@
  )
  (func $rtt-param-without-depth (param $rtt (rtt ${}))
   (nop)
+ )
+ (func $rtt-operations
+  (drop
+   (ref.test ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}
+    (ref.null ${i32_f32_f64})
+    (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
+   )
+  )
+  (drop
+   (ref.cast ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}
+    (ref.null ${i32_f32_f64})
+    (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
+   )
+  )
  )
 )
 
