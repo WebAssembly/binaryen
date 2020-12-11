@@ -533,6 +533,18 @@ struct PrintExpressionContents
       case QFMSF64x2:
         o << "f64x2.qfms";
         break;
+      case SignSelectVec8x16:
+        o << "v8x16.signselect";
+        break;
+      case SignSelectVec16x8:
+        o << "v16x8.signselect";
+        break;
+      case SignSelectVec32x4:
+        o << "v32x4.signselect";
+        break;
+      case SignSelectVec64x2:
+        o << "v64x2.signselect";
+        break;
     }
   }
   void visitSIMDShift(SIMDShift* curr) {
@@ -941,6 +953,9 @@ struct PrintExpressionContents
       case AllTrueVecI64x2:
         o << "i64x2.all_true";
         break;
+      case BitmaskVecI64x2:
+        o << "i64x2.bitmask";
+        break;
       case AbsVecF32x4:
         o << "f32x4.abs";
         break;
@@ -1030,6 +1045,18 @@ struct PrintExpressionContents
         break;
       case WidenHighUVecI16x8ToVecI32x4:
         o << "i32x4.widen_high_i16x8_u";
+        break;
+      case WidenLowSVecI32x4ToVecI64x2:
+        o << "i64x2.widen_low_i32x4_s";
+        break;
+      case WidenHighSVecI32x4ToVecI64x2:
+        o << "i64x2.widen_high_i32x4_s";
+        break;
+      case WidenLowUVecI32x4ToVecI64x2:
+        o << "i64x2.widen_low_i32x4_u";
+        break;
+      case WidenHighUVecI32x4ToVecI64x2:
+        o << "i64x2.widen_high_i32x4_u";
         break;
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
@@ -1359,6 +1386,9 @@ struct PrintExpressionContents
         break;
       case GeUVecI32x4:
         o << "i32x4.ge_u";
+        break;
+      case EqVecI64x2:
+        o << "i64x2.eq";
         break;
       case EqVecF32x4:
         o << "f32x4.eq";

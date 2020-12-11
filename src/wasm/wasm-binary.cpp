@@ -4371,6 +4371,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = GeUVecI32x4;
       break;
+    case BinaryConsts::I64x2Eq:
+      curr = allocator.alloc<Binary>();
+      curr->op = EqVecI64x2;
+      break;
     case BinaryConsts::F32x4Eq:
       curr = allocator.alloc<Binary>();
       curr->op = EqVecF32x4;
@@ -4828,6 +4832,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = AllTrueVecI64x2;
       break;
+    case BinaryConsts::I64x2Bitmask:
+      curr = allocator.alloc<Unary>();
+      curr->op = BitmaskVecI64x2;
+      break;
     case BinaryConsts::F32x4Abs:
       curr = allocator.alloc<Unary>();
       curr->op = AbsVecF32x4;
@@ -4947,6 +4955,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::I32x4WidenHighUI16x8:
       curr = allocator.alloc<Unary>();
       curr->op = WidenHighUVecI16x8ToVecI32x4;
+      break;
+    case BinaryConsts::I64x2WidenLowSI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowSVecI32x4ToVecI64x2;
+      break;
+    case BinaryConsts::I64x2WidenHighSI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighSVecI32x4ToVecI64x2;
+      break;
+    case BinaryConsts::I64x2WidenLowUI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowUVecI32x4ToVecI64x2;
+      break;
+    case BinaryConsts::I64x2WidenHighUI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighUVecI32x4ToVecI64x2;
       break;
     default:
       return false;
@@ -5100,6 +5124,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
     case BinaryConsts::V128Bitselect:
       curr = allocator.alloc<SIMDTernary>();
       curr->op = Bitselect;
+      break;
+    case BinaryConsts::V8x16SignSelect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = SignSelectVec8x16;
+      break;
+    case BinaryConsts::V16x8SignSelect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = SignSelectVec16x8;
+      break;
+    case BinaryConsts::V32x4SignSelect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = SignSelectVec32x4;
+      break;
+    case BinaryConsts::V64x2SignSelect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = SignSelectVec64x2;
       break;
     case BinaryConsts::F32x4QFMA:
       curr = allocator.alloc<SIMDTernary>();
