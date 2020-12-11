@@ -1382,7 +1382,15 @@ public:
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
-    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      return rtt;
+    }
+    
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");

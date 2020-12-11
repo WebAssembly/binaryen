@@ -1,5 +1,6 @@
 (module
  (type $struct (struct i32))
+ (type $struct_plus (struct i32 f64))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (func "structs"
   (local $x (ref null $struct))
@@ -33,5 +34,8 @@
   (call $log
    (struct.get $struct 0 (local.get $y))
   )
+ )
+ (func "rtts"
+  
  )
 )

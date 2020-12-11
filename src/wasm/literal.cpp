@@ -40,7 +40,7 @@ Literal::Literal(Type type) : type(type) {
     } else if (isGCData()) {
       new (&gcData) std::shared_ptr<Literal>();
     } else if (type.isRtt()) {
-      new (&parentRtt) std::unique_ptr<Type>();
+      new (&parentRtt) std::shared_ptr<Literal>();
     } else {
       memset(&v128, 0, 16);
     }
@@ -63,9 +63,9 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&gcData) std::shared_ptr<Literals>(other.gcData);
   } else if (type.isRtt()) {
     if (other.parentRtt != nullptr) {
-      new (&parentRtt) auto(std::make_unique<Type>(*other.parentRtt));
+      new (&parentRtt) auto(std::make_shared<Literal>(*other.parentRtt));
     } else {
-      new (&parentRtt) std::unique_ptr<Type>();
+      new (&parentRtt) std::shared_ptr<Literal>();
     }
   } else if (type.isFunction()) {
     func = other.func;
@@ -107,7 +107,7 @@ Literal::~Literal() {
   } else if (isGCData()) {
     gcData.~shared_ptr();
   } else if (type.isRtt()) {
-    parentRtt.~unique_ptr();
+    parentRtt.~shared_ptr();
   }
 }
 
@@ -2375,6 +2375,24 @@ Literal Literal::swizzleVec8x16(const Literal& other) const {
     result[i] = index >= 16 ? Literal(int32_t(0)) : lanes[index];
   }
   return Literal(result);
+}
+
+bool Literal::isSubRtt(const Literal& other) {
+  if (!type.isRtt() || !other.type.isRtt()) {
+    return false;
+  }
+  // Look up the chain to see if the other literal is one of our parents.
+  Literal* curr = this;
+  while (1) {
+    curr = curr->parentRtt.get();
+    if (!curr) {
+      return false;
+    }
+    assert(curr->type.isRtt());
+    if (curr == &other) {
+      return true;
+    }
+  }
 }
 
 } // namespace wasm
