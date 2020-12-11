@@ -40,7 +40,7 @@ Literal::Literal(Type type) : type(type) {
     } else if (isGCData()) {
       new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
-      new (&rtt) std::shared_ptr<RttValue>();
+      new (&rttSupers) RttSupers();
     } else {
       memset(&v128, 0, 16);
     }
@@ -59,6 +59,11 @@ Literal::Literal(std::shared_ptr<GCData> gcData, Type type)
   assert(isGCData());
 }
 
+Literal::Literal(RttSupers rttSupers, Type type)
+  : rttSupers(rttSupers), type(type) {
+  assert(type.isRtt());
+}
+
 Literal::Literal(const Literal& other) : type(other.type) {
   if (type.isException()) {
     // Avoid calling the destructor on an uninitialized value
@@ -72,7 +77,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
   } else if (type.isFunction()) {
     func = other.func;
   } else if (type.isRtt()) {
-    new (&rtt) std::shared_ptr<RttValue>(other.rtt);
+    rttSupers = other.rttSupers;
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -107,8 +112,6 @@ Literal::~Literal() {
     exn.~unique_ptr();
   } else if (isGCData()) {
     gcData.~shared_ptr();
-  } else if (type.isRtt()) {
-    rtt.~shared_ptr();
   }
 }
 
@@ -189,7 +192,7 @@ Literal Literal::makeZero(Type type) {
       return makeNull(type);
     }
   } else if (type.isRtt()) {
-    return Literal(std::shared_ptr<RttValue>(), type);
+    return Literal(type);
   } else {
     return makeFromInt32(0, type);
   }
@@ -222,9 +225,9 @@ std::shared_ptr<GCData> Literal::getGCData() const {
   return gcData;
 }
 
-std::shared_ptr<RttValue> Literal::getRtt() const {
+const RttSupers& Literal::getRttSupers() const {
   assert(type.isRtt());
-  return rtt;
+  return rttSupers;
 }
 
 Literal Literal::castToF32() {
@@ -360,7 +363,7 @@ bool Literal::operator==(const Literal& other) const {
   } else if (type.isRef()) {
     return compareRef();
   } else if (type.isRtt()) {
-    return rtt == other.rtt;
+    return rttSupers == other.rttSupers;
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -474,7 +477,11 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "[ref null " << literal.type << ']';
     }
   } else if (literal.type.isRtt()) {
-    o << "[rtt 0x" << literal.getRtt().get() << ']';
+    o << "[rtt ";
+    for (auto super : rttSupers) {
+      o << super << " <: ";
+    }
+    o << literal.type << ']';
   } else {
     TODO_SINGLE_COMPOUND(literal.type);
     switch (literal.type.getBasic()) {
@@ -2385,24 +2392,6 @@ Literal Literal::swizzleVec8x16(const Literal& other) const {
     result[i] = index >= 16 ? Literal(int32_t(0)) : lanes[index];
   }
   return Literal(result);
-}
-
-bool Literal::isSubRtt(const Literal& other) {
-  if (!type.isRtt() || !other.type.isRtt()) {
-    return false;
-  }
-  // Look up the chain to see if the other RTT is one of our parents.
-  auto* impl = rtt.get();
-  auto* otherImpl = other.rtt.get();
-  while (1) {
-    if (impl == otherImpl) {
-      return true;
-    }
-    if (!impl) {
-      return false;
-    }
-    impl = impl->parent.get();
-  }
 }
 
 } // namespace wasm

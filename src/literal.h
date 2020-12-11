@@ -32,7 +32,6 @@ namespace wasm {
 class Literals;
 struct ExceptionPackage;
 struct GCData;
-struct RttValue;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -50,12 +49,17 @@ class Literal {
     // Array, and for a Struct, is just the fields in order). The type is used
     // to indicate whether this is a Struct or an Array, and of what type.
     std::shared_ptr<GCData> gcData;
-    // RTT types have a special internal implementation, which we refer to by
-    // a shared pointer (which allows multiple RTT values to all still refer to
-    // the same underlying information, which is necessary for casting).
-    // This value may be null, in which case it is an uninitialized rtt (like an
-    // RTT local before being assigned).
-    std::shared_ptr<RttValue> rtt;
+    // RTT values are "structural" in that the MVP doc says that multiple
+    // invocations of ref.canon return things that are observably identical, and
+    // the same is true for ref.sub. That is, what matters is the types; there
+    // is no unique identifier created in each ref.canon/sub. To track the
+    // types, we maintain a simple vector of the supertypes. Thus, an rtt.canon
+    // of type A will have an empty vector; an rtt.sub of type B of that initial
+    // canon would have a vector of size 1 containing A; a subsequent rtt.sub
+    // would have A, B, and so forth.
+    // (This encoding is very inefficient and not at all what a production VM
+    // would do, but it is simple.)
+    RttSupers rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and
@@ -88,8 +92,7 @@ public:
   explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
   explicit Literal(std::shared_ptr<GCData> gcData, Type type);
-  explicit Literal(std::shared_ptr<RttValue> rtt, Type type)
-    : rtt(rtt), type(type) {}
+  explicit Literal(RttSupers rttSupers, Type type);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();
@@ -293,7 +296,7 @@ public:
   }
   ExceptionPackage getExceptionPackage() const;
   std::shared_ptr<GCData> getGCData() const;
-  std::shared_ptr<RttValue> getRtt() const;
+  const RttSupers& getRttSupers() const;
 
   // careful!
   int32_t* geti32Ptr() {
@@ -631,8 +634,6 @@ public:
   Literal widenHighUToVecI32x4() const;
   Literal swizzleVec8x16(const Literal& other) const;
 
-  bool isSubRtt(const Literal& other);
-
 private:
   Literal addSatSI8(const Literal& other) const;
   Literal addSatUI8(const Literal& other) const;
@@ -698,13 +699,9 @@ struct GCData {
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 
-struct RttValue {
-  // The key piece of information an RTT needs is to know its parent, which was
-  // defined when we did rtt.sub to create the new RTT value.
-  // An RTT created by rtt.canon, which has no parent, will have a null pointer
-  // here to indicate that.
-  std::shared_ptr<RttValue> parent;
-};
+// Subclass the vector type so that this is not easily confused with a vector of
+// types (which could be confusing on the constructor, see above).
+struct RttSupers : std::vector<Type> {};
 
 } // namespace wasm
 
@@ -768,7 +765,10 @@ template<> struct hash<wasm::Literal> {
     } else if (a.type.isRef()) {
       return hashRef();
     } else if (a.type.isRtt()) {
-      wasm::rehash(digest, a.getRtt().get());
+      wasm::rehash(digest, a.rttSupers.size());
+      for (auto super : rttSupers) {
+        wasm::rehash(digest, super.getID());
+      }
       return digest;
     }
     WASM_UNREACHABLE("unexpected type");

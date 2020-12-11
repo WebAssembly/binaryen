@@ -1425,8 +1425,7 @@ public:
     WASM_UNREACHABLE("TODO (gc): br_on_cast");
   }
   Flow visitRttCanon(RttCanon* curr) {
-    // A canon rtt has no parent.
-    return Literal(std::make_shared<RttValue>(), curr->type);
+    return Literal(curr->type);
   }
   Flow visitRttSub(RttSub* curr) {
     Flow parent = this->visit(curr->parent);
@@ -1435,18 +1434,9 @@ public:
     }
     auto parentValue = parent.getSingleValue();
     auto parentRtt = parentValue.getRtt();
-    // Allocate a value, and set the parent. Note that we do this a little
-    // verbosely because the parent and the constructor have the same type, so
-    // we do it in the most explicit way to avoid confusion between the copy
-    // constructor, default constructor, etc.
-    auto newRtt = std::make_shared<RttValue>();
-    newRtt->parent = parentRtt;
-    auto ret = Literal(newRtt, curr->type);
-    assert(ret != parentValue);
-    assert(ret != Literal(curr->type));
-    assert(ret.isSubRtt(parentValue));
-    assert(!parentValue.isSubRtt(ret));
-    return ret;
+    RttSupers newSupers = parentValue.getRttSupers();
+    newSupers.push_back(parentValue.type);
+    return Literal(newSupers, type);
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
