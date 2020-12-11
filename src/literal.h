@@ -62,7 +62,9 @@ class Literal {
     // would have A, B, and so forth.
     // (This encoding is very inefficient and not at all what a production VM
     // would do, but it is simple.)
-    RttSupers rttSupers;
+    // The unique_ptr here is to avoid increasing the size of the union as well
+    // as the Literal class itself.
+    std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and

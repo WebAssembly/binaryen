@@ -40,7 +40,7 @@ Literal::Literal(Type type) : type(type) {
     } else if (isGCData()) {
       new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
-      new (&rttSupers) RttSupers();
+      new (&rttSupers) std::unique_ptr<RttSupers>();
     } else {
       memset(&v128, 0, 16);
     }
@@ -60,7 +60,7 @@ Literal::Literal(std::shared_ptr<GCData> gcData, Type type)
 }
 
 Literal::Literal(RttSupers rttSupers, Type type)
-  : rttSupers(rttSupers), type(type) {
+  : rttSupers(std::make_unique<RttSupers>(rttSupers)), type(type) {
   assert(type.isRtt());
 }
 
@@ -77,7 +77,12 @@ Literal::Literal(const Literal& other) : type(other.type) {
   } else if (type.isFunction()) {
     func = other.func;
   } else if (type.isRtt()) {
-    rttSupers = other.rttSupers;
+    // Avoid calling the destructor on an uninitialized value
+    if (other.rttSupers != nullptr) {
+      new (&rttSupers) auto(std::make_unique<RttSupers>(*other.rttSupers));
+    } else {
+      new (&rttSupers) std::unique_ptr<RttSupers>();
+    }
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -227,7 +232,7 @@ std::shared_ptr<GCData> Literal::getGCData() const {
 
 const RttSupers& Literal::getRttSupers() const {
   assert(type.isRtt());
-  return rttSupers;
+  return *rttSupers;
 }
 
 Literal Literal::castToF32() {
@@ -363,7 +368,7 @@ bool Literal::operator==(const Literal& other) const {
   } else if (type.isRef()) {
     return compareRef();
   } else if (type.isRtt()) {
-    return rttSupers == other.rttSupers;
+    return *rttSupers == *other.rttSupers;
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -478,7 +483,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     }
   } else if (literal.type.isRtt()) {
     o << "[rtt ";
-    for (auto super : rttSupers) {
+    for (auto super : getRttSupers()) {
       o << super << " <: ";
     }
     o << literal.type << ']';

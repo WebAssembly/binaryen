@@ -1433,7 +1433,7 @@ public:
     auto parentValue = parent.getSingleValue();
     RttSupers newSupers = parentValue.getRttSupers();
     newSupers.push_back(parentValue.type);
-    return Literal(newSupers, type);
+    return Literal(newSupers, curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
