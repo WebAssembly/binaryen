@@ -685,6 +685,12 @@ std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
 
+struct RttImpl {
+  // The key piece of information an RTT needs is to know its parent, which was
+  // defined when we did rtt.sub to create the new RTT value.
+  std::shared_ptr<RttImpl> parent;
+};
+
 } // namespace wasm
 
 namespace std {
