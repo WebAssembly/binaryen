@@ -1433,8 +1433,20 @@ public:
     if (parent.breaking()) {
       return parent;
     }
-    auto parentRtt = parent.getSingleValue();
-    return Literal(parentRtt.getRtt(), curr->type);
+    auto parentValue = parent.getSingleValue();
+    auto parentRtt = parentValue.getRtt();
+    // Allocate a value, and set the parent. Note that we do this a little
+    // verbosely because the parent and the constructor have the same type, so
+    // we do it in the most explicit way to avoid confusion between the copy
+    // constructor, default constructor, etc.
+    auto newRtt = std::make_shared<RttValue>();
+    newRtt->parent = parentRtt;
+    auto ret = Literal(newRtt, curr->type);
+    assert(ret != parentValue);
+    assert(ret != Literal(curr->type));
+    assert(ret.isSubRtt(parentValue));
+    assert(!parentValue.isSubRtt(ret));
+    return ret;
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
