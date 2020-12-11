@@ -72,6 +72,7 @@
   (local $x (rtt $struct))
   (local $y (rtt $superstruct))
   (local $z (rtt $superstruct))
+  (local $any anyref)
   (local.set $x (rtt.canon $struct))
   (local.set $y (rtt.canon $superstruct))
   (local.set $z (rtt.sub $superstruct (local.get $x)))
@@ -92,6 +93,51 @@
      (i32.const 20)
     )
     (local.get $x)
+   )
+  )
+  ;; Testing a thing with the same RTT returns 1.
+  (call $log
+   (ref.test $struct
+    (struct.new_default_with_rtt $struct
+     (local.get $x)
+    )
+    (local.get $x)
+   )
+  )
+  ;; A bad downcast returns 0: we create a struct, which is not a superstruct.
+  (call $log
+   (ref.test $superstruct
+    (struct.new_default_with_rtt $struct
+     (local.get $x)
+    )
+    (local.get $y)
+   )
+  )
+  ;; Create a superstruct with RTT y, and upcast statically to anyref.
+  (local.set $any
+   (struct.new_default_with_rtt $superstruct
+    (local.get $y)
+   )
+  )
+  ;; Casting to y, the exact same RTT, works.
+  (call $log
+   (ref.test $superstruct
+    (local.get $any)
+    (local.get $y)
+   )
+  )
+  ;; Casting to z, another RTT of the same type, fails.
+  (call $log
+   (ref.test $superstruct
+    (local.get $any)
+    (local.get $z)
+   )
+  )
+  ;; Casting to x, the parent of y, works.
+  (call $log
+   (ref.test $superstruct
+    (local.get $any)
+    (local.get $z)
    )
   )
  )
