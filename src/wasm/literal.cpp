@@ -40,7 +40,7 @@ Literal::Literal(Type type) : type(type) {
     } else if (isGCData()) {
       new (&gcData) std::shared_ptr<Literal>();
     } else if (type.isRtt()) {
-      new (&parentRtt) std::shared_ptr<Literal>();
+      new (&rtt) std::shared_ptr<RttImpl>();
     } else {
       memset(&v128, 0, 16);
     }
@@ -61,17 +61,10 @@ Literal::Literal(const Literal& other) : type(other.type) {
     }
   } else if (other.isGCData()) {
     new (&gcData) std::shared_ptr<Literals>(other.gcData);
-  } else if (type.isRtt()) {
-    if (other.parentRtt != nullptr) {
-      new (&parentRtt) auto(std::make_shared<Literal>(*other.parentRtt));
-    } else {
-      new (&parentRtt) std::shared_ptr<Literal>();
-    }
   } else if (type.isFunction()) {
     func = other.func;
   } else if (type.isRtt()) {
-    // Nothing to do: Rtts help JITs optimize, but are not used in the
-    // interpreter yet, and they are opaque to the wasm itself.
+    new (&rtt) auto(std::make_shared<Literal>(*other.rtt));
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -107,7 +100,7 @@ Literal::~Literal() {
   } else if (isGCData()) {
     gcData.~shared_ptr();
   } else if (type.isRtt()) {
-    parentRtt.~shared_ptr();
+    rtt.~shared_ptr();
   }
 }
 
@@ -352,7 +345,7 @@ bool Literal::operator==(const Literal& other) const {
   } else if (type.isRef()) {
     return compareRef();
   } else if (type.isRtt()) {
-    WASM_UNREACHABLE("TODO: rtt literals");
+    return rtt == other.rtt;
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -2381,16 +2374,16 @@ bool Literal::isSubRtt(const Literal& other) {
   if (!type.isRtt() || !other.type.isRtt()) {
     return false;
   }
-  // Look up the chain to see if the other literal is one of our parents.
-  Literal* curr = this;
+  // Look up the chain to see if the other RTT is one of our parents.
+  auto* impl = rtt.get();
+  auto* otherImpl = other.rtt.get();
   while (1) {
-    curr = curr->parentRtt.get();
-    if (!curr) {
-      return false;
-    }
-    assert(curr->type.isRtt());
-    if (curr == &other) {
+    if (impl == otherImpl) {
       return true;
+    }
+    impl = impl->parent.get();
+    if (!impl) {
+      return false;
     }
   }
 }

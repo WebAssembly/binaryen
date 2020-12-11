@@ -50,7 +50,7 @@ class Literal {
     // to indicate whether this is a Struct or an Array, and of what type.
     std::shared_ptr<Literals> gcData;
     // RTT types have a special internal implementation, which we refer to by
-    // a shared pointer (which allows copying Rtt values to all still refer to
+    // a shared pointer (which allows multiple Rtt values to all still refer to
     // the same underlying information, which is necessary for casting).
     std::shared_ptr<RttImpl> rtt;
     // TODO: Literals of type `externref` can only be `null` currently but we
@@ -688,6 +688,8 @@ std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
 struct RttImpl {
   // The key piece of information an RTT needs is to know its parent, which was
   // defined when we did rtt.sub to create the new RTT value.
+  // An RTT created by rtt.canon, which has no parent, will have a null pointer
+  // here to indicate that.
   std::shared_ptr<RttImpl> parent;
 };
 
