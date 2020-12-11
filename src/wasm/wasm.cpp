@@ -1080,12 +1080,19 @@ void CallRef::finalize(Type type_) {
   finalize();
 }
 
-void RefTest::finalize() { type = Type::i32; }
-
-void RefCast::finalize() {
-  if (rtt->type == Type::unreachable) {
+void RefTest::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    type = Type::i32;
+  }
+}
+
+void RefCast::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+  // TODO: make non-nullable when we support that
     type = Type(rtt->type.getHeapType(), /* nullable = */ true);
   }
 }
