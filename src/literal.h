@@ -87,8 +87,7 @@ public:
   explicit Literal(Name func, Type type) : func(func), type(type) {}
   explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
-  explicit Literal(std::shared_ptr<GCData> gcData, Type type)
-    : gcData(gcData), type(type) {}
+  explicit Literal(std::shared_ptr<GCData> gcData, Type type);
   explicit Literal(std::shared_ptr<RttValue> rtt, Type type)
     : rtt(rtt), type(type) {}
   Literal(const Literal& other);
@@ -770,6 +769,7 @@ template<> struct hash<wasm::Literal> {
       return hashRef();
     } else if (a.type.isRtt()) {
       wasm::rehash(digest, a.getRtt().get());
+      return digest;
     }
     WASM_UNREACHABLE("unexpected type");
   }

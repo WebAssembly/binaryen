@@ -51,6 +51,14 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
+Literal::Literal(std::shared_ptr<GCData> gcData, Type type)
+  : gcData(gcData), type(type) {
+  // Null data is only allowed if nullable.
+  assert(gcData || type.isNullable());
+  // The type must be a proper type for GC data.
+  assert(isGCData());
+}
+
 Literal::Literal(const Literal& other) : type(other.type) {
   if (type.isException()) {
     // Avoid calling the destructor on an uninitialized value
@@ -465,6 +473,8 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     } else {
       o << "[ref null " << literal.type << ']';
     }
+  } else if (literal.type.isRtt()) {
+    o << "[rtt 0x" << literal.getRtt().get() << ']';
   } else {
     TODO_SINGLE_COMPOUND(literal.type);
     switch (literal.type.getBasic()) {

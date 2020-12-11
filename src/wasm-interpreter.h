@@ -1379,8 +1379,7 @@ public:
 
   // Helper for ref.test and ref.cast, which share almost all their logic except
   // for what they return.
-  template<typename T>
-  Flow doRefCast(T* curr) {
+  template<typename T> Flow doRefCast(T* curr) {
     Flow ref = this->visit(curr->ref);
     if (ref.breaking()) {
       return ref;
