@@ -1379,22 +1379,23 @@ public:
 
   // Helper for ref.test and ref.cast. Tries to do the cast, and returns a
   // literal that either has the intended Rtt if we succeded, or a null if not.
-  Literal doRefCast(Expression* ref, Expression* rtt, Type type) {
-    Flow ref = this->visit(ref);
+  Flow doRefCast(Expression* currRef, Expression* currRtt, Type type) {
+    Flow ref = this->visit(currRef);
     if (ref.breaking()) {
       return ref;
     }
-    Flow rtt = this->visit(rtt);
+    Flow rtt = this->visit(currRtt);
     if (rtt.breaking()) {
       return rtt;
     }
-    auto& gcData = ret.getSingleValue().getGCData();
-    auto& refRtt = gcData.rtt;
-    auto& intendedRtt = rtt.getSingleValue();
+    auto gcData = ref.getSingleValue().getGCData();
+    auto refRtt = gcData->rtt;
+    auto intendedRtt = rtt.getSingleValue();
     if (!refRtt.isSubRtt(intendedRtt)) {
-      return Literal(makeNull(type));
+      return Literal::makeNull(type);
     }
-    return Literal(std::make_shared<GCData>(intendedRtt, gcData), type);
+    // The cast succeeded, return the data with the proper type.
+    return Literal(gcData, type);
   }
 
   Flow visitRefTest(RefTest* curr) {
