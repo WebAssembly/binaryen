@@ -1080,8 +1080,16 @@ void CallRef::finalize(Type type_) {
   finalize();
 }
 
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
+void RefTest::finalize() { type = Type::i32; }
+
+void RefCast::finalize() {
+  if (rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type(rtt->type.getHeapType(), /* nullable = */ true);
+  }
+}
+
 // TODO (gc): br_on_cast
 
 void RttCanon::finalize() {

@@ -160,4 +160,12 @@
   ;; RTT types as parameters
   (func $rtt-param-with-depth (param $rtt (rtt 1 $parent)))
   (func $rtt-param-without-depth (param $rtt (rtt $parent)))
+  (func $rtt-operations
+    (drop
+      (ref.test $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+    )
+    (drop
+      (ref.cast $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+    )
+  )
 )

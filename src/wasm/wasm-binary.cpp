@@ -5599,10 +5599,13 @@ bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RefTest) {
     return false;
   }
-  auto* curr = allocator.alloc<RefTest>();
-  WASM_UNREACHABLE("TODO (gc): ref.test");
-  curr->finalize();
-  out = curr;
+  auto heapType1 = getHeapType();
+  auto heapType2 = getHeapType();
+  auto* ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType1);
+  auto* rtt = popNonVoidExpression();
+  validateHeapTypeUsingChild(rtt, heapType2);
+  out = Builder(wasm).makeRefTest(ref, rtt);
   return true;
 }
 
@@ -5610,10 +5613,13 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RefCast) {
     return false;
   }
-  auto* curr = allocator.alloc<RefCast>();
-  WASM_UNREACHABLE("TODO (gc): ref.cast");
-  curr->finalize();
-  out = curr;
+  auto heapType1 = getHeapType();
+  auto heapType2 = getHeapType();
+  auto* ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType1);
+  auto* rtt = popNonVoidExpression();
+  validateHeapTypeUsingChild(rtt, heapType2);
+  out = Builder(wasm).makeRefCast(ref, rtt);
   return true;
 }
 

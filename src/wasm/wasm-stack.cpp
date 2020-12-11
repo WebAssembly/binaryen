@@ -1882,12 +1882,14 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
-  WASM_UNREACHABLE("TODO (gc): ref.test");
+  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
-  WASM_UNREACHABLE("TODO (gc): ref.cast");
+  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {

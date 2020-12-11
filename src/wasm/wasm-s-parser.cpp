@@ -2093,17 +2093,19 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
-  auto ret = allocator.alloc<RefTest>();
-  WASM_UNREACHABLE("TODO (gc): ref.test");
-  ret->finalize();
-  return ret;
+  auto heapType = parseHeapType(*s[1]);
+  auto* ref = parseExpression(*s[2]);
+  auto* rtt = parseExpression(*s[3]);
+  validateHeapTypeUsingChild(rtt, heapType, s);
+  return Builder(wasm).makeRefTest(ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
-  auto ret = allocator.alloc<RefCast>();
-  WASM_UNREACHABLE("TODO (gc): ref.cast");
-  ret->finalize();
-  return ret;
+  auto heapType = parseHeapType(*s[1]);
+  auto* ref = parseExpression(*s[2]);
+  auto* rtt = parseExpression(*s[3]);
+  validateHeapTypeUsingChild(rtt, heapType, s);
+  return Builder(wasm).makeRefCast(ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {

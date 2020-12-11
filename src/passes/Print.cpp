@@ -1692,12 +1692,12 @@ struct PrintExpressionContents
     }
   }
   void visitRefTest(RefTest* curr) {
-    printMedium(o, "ref.test");
-    WASM_UNREACHABLE("TODO (gc): ref.test");
+    printMedium(o, "ref.test ");
+    printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitRefCast(RefCast* curr) {
-    printMedium(o, "ref.cast");
-    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    printMedium(o, "ref.cast ");
+    printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitBrOnCast(BrOnCast* curr) {
     printMedium(o, "br_on_cast");
@@ -1717,7 +1717,7 @@ struct PrintExpressionContents
       o << "default_";
     }
     o << "with_rtt ";
-    printHeapTypeName(o, curr->rtt->type.getRtt().heapType);
+    printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitStructGet(StructGet* curr) {
     const auto& field =
@@ -1747,7 +1747,7 @@ struct PrintExpressionContents
       o << "default_";
     }
     o << "with_rtt ";
-    printHeapTypeName(o, curr->rtt->type.getRtt().heapType);
+    printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitArrayGet(ArrayGet* curr) {
     const auto& element = curr->ref->type.getHeapType().getArray().element;
@@ -2394,12 +2394,18 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitRefTest(RefTest* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): ref.test");
+    incIndent();
+    printFullLine(curr->ref);
+    printFullLine(curr->rtt);
+    decIndent();
   }
   void visitRefCast(RefCast* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    incIndent();
+    printFullLine(curr->ref);
+    printFullLine(curr->rtt);
+    decIndent();
   }
   void visitBrOnCast(BrOnCast* curr) {
     o << '(';
