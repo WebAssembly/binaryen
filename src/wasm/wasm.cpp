@@ -1092,7 +1092,7 @@ void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-  // TODO: make non-nullable when we support that
+    // TODO: make non-nullable when we support that
     type = Type(rtt->type.getHeapType(), /* nullable = */ true);
   }
 }

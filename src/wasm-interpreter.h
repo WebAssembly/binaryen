@@ -1390,7 +1390,6 @@ public:
     if (rtt.breaking()) {
       return rtt;
     }
-    
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");
