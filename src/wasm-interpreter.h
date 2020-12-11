@@ -1562,17 +1562,15 @@ private:
     if (field.type == Type::i32) {
       int32_t c = value.geti32();
       if (field.packedType == Field::i8) {
+        // The stored value should already be truncated.
+        assert(c == (c & 0xff));
         if (signed_) {
           value = Literal((c << 24) >> 24);
-        } else {
-          // The stored value should already be truncated.
-          assert(c == (c & 0xff));
         }
       } else if (field.packedType == Field::i16) {
+        assert(c == (c & 0xffff));
         if (signed_) {
           value = Literal((c << 16) >> 16);
-        } else {
-          assert(c == (c & 0xffff));
         }
       }
     }
