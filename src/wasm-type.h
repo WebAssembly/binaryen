@@ -44,12 +44,18 @@ struct Struct;
 struct Array;
 struct Rtt;
 
+// The type used for interning IDs in the public interfaces of Type and
+// HeapType.
+using TypeID = uint64_t;
+
 class Type {
   // The `id` uniquely represents each type, so type equality is just a
   // comparison of the ids. For basic types the `id` is just the `BasicType`
   // enum value below, and for constructed types the `id` is the address of the
   // canonical representation of the type, making lookups cheap for all types.
   // Since `Type` is really just a single integer, it should be passed by value.
+  // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
+  // 32-bit platforms.
   uintptr_t id;
 
 public:
@@ -75,8 +81,8 @@ public:
   // BasicType can be implicitly upgraded to Type
   constexpr Type(BasicType id) : id(id) {}
 
-  // But converting raw uint64_t is more dangerous, so make it explicit
-  explicit Type(uint64_t id) : id(id) {}
+  // But converting raw TypeID is more dangerous, so make it explicit
+  explicit Type(TypeID id) : id(id) {}
 
   // Construct tuple from a list of single types
   Type(std::initializer_list<Type>);
@@ -147,7 +153,7 @@ public:
   bool hasVector() { return hasPredicate<&Type::isVector>(); }
   bool hasRef() { return hasPredicate<&Type::isRef>(); }
 
-  constexpr uint64_t getID() const { return id; }
+  constexpr TypeID getID() const { return id; }
   constexpr BasicType getBasic() const {
     assert(isBasic() && "Basic type expected");
     return static_cast<BasicType>(id);
@@ -293,8 +299,8 @@ public:
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
 
-  // But converting raw uint64_t is more dangerous, so make it explicit
-  explicit HeapType(uint64_t id) : id(id) {}
+  // But converting raw TypeID is more dangerous, so make it explicit
+  explicit HeapType(TypeID id) : id(id) {}
 
   HeapType(Signature signature);
   HeapType(const Struct& struct_);
@@ -312,7 +318,7 @@ public:
   const Struct& getStruct() const;
   Array getArray() const;
 
-  constexpr uint64_t getID() const { return id; }
+  constexpr TypeID getID() const { return id; }
   constexpr BasicHeapType getBasic() const {
     assert(isBasic() && "Basic heap type expected");
     return static_cast<BasicHeapType>(id);
@@ -447,6 +453,42 @@ struct Rtt {
   bool operator<(const Rtt& other) const;
   bool hasDepth() { return depth != uint32_t(NoDepth); }
   std::string toString() const;
+};
+
+// TypeBuilder - allows for the construction of recursive types. Contains a
+// table of `n` mutable HeapTypes and can construct temporary types that are
+// backed by those HeapTypes, refering to them by reference. Those temporary
+// types are owned by the TypeBuilder and should only be used in the
+// construction of HeapTypes to insert into the TypeBuilder. Temporary types
+// should never be used in the construction of normal Types, only other
+// temporary types.
+struct TypeBuilder {
+  struct Impl;
+  std::unique_ptr<Impl> impl;
+
+  TypeBuilder(size_t n);
+  ~TypeBuilder();
+
+  TypeBuilder(TypeBuilder& other) = delete;
+  TypeBuilder(TypeBuilder&& other) = delete;
+  TypeBuilder& operator=(TypeBuilder&) = delete;
+
+  // Sets the heap type at index `i`. May only be called before `build`.
+  void setHeapType(size_t i, Signature signature);
+  void setHeapType(size_t i, const Struct& struct_);
+  void setHeapType(size_t i, Struct&& struct_);
+  void setHeapType(size_t i, Array array);
+
+  // Gets a temporary type or heap type for use in initializing the
+  // TypeBuilder's HeapTypes. Temporary Ref and Rtt types are backed by the
+  // HeapType at index `i`.
+  Type getTempTupleType(const Tuple&);
+  Type getTempRefType(size_t i, bool nullable);
+  Type getTempRttType(size_t i, uint32_t depth);
+
+  // Canonicalizes and returns all of the heap types. May only be called once
+  // all of the heap types have been initialized with `setHeapType`.
+  std::vector<HeapType> build();
 };
 
 std::ostream& operator<<(std::ostream&, Type);

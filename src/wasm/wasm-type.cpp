@@ -19,6 +19,7 @@
 #include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 
 #include "compiler-support.h"
 #include "support/hash.h"
@@ -90,6 +91,7 @@ struct HeapTypeInfo {
   constexpr bool isStruct() const { return kind == StructKind; }
   constexpr bool isArray() const { return kind == ArrayKind; }
 
+  HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
   bool operator!=(const HeapTypeInfo& other) const { return !(*this == other); }
   bool operator<(const HeapTypeInfo& other) const;
@@ -115,8 +117,15 @@ public:
 namespace wasm {
 namespace {
 
-TypeInfo* getTypeInfo(Type type) { return (TypeInfo*)type.getID(); }
-HeapTypeInfo* getHeapTypeInfo(HeapType ht) { return (HeapTypeInfo*)ht.getID(); }
+TypeInfo* getTypeInfo(Type type) {
+  assert(type.isCompound());
+  return (TypeInfo*)type.getID();
+}
+
+HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
+  assert(ht.isCompound());
+  return (HeapTypeInfo*)ht.getID();
+}
 
 TypeInfo::TypeInfo(const TypeInfo& other) {
   kind = other.kind;
@@ -214,6 +223,14 @@ HeapTypeInfo::~HeapTypeInfo() {
   WASM_UNREACHABLE("unexpected kind");
 }
 
+HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
+  if (&other != this) {
+    this->~HeapTypeInfo();
+    new (this) HeapTypeInfo(other);
+  }
+  return *this;
+}
+
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
   if (kind != other.kind) {
     return false;
@@ -308,6 +325,19 @@ using HeapTypeStore = Store<HeapTypeInfo>;
 
 TypeStore globalTypeStore;
 HeapTypeStore globalHeapTypeStore;
+
+// Specialized to simplify programming generically over Types and HeapTypes.
+template<typename T> struct MetaTypeInfo {};
+
+template<> struct MetaTypeInfo<Type> {
+  constexpr static TypeStore& globalStore = globalTypeStore;
+  static TypeInfo* getInfo(Type type) { return getTypeInfo(type); }
+};
+
+template<> struct MetaTypeInfo<HeapType> {
+  constexpr static HeapTypeStore& globalStore = globalHeapTypeStore;
+  static HeapTypeInfo* getInfo(HeapType ht) { return getHeapTypeInfo(ht); }
+};
 
 } // anonymous namespace
 
@@ -972,6 +1002,278 @@ std::ostream& operator<<(std::ostream& os, HeapTypeInfo info) {
       return os << info.array;
   }
   WASM_UNREACHABLE("unexpected kind");
+}
+
+struct TypeBuilder::Impl {
+  TypeStore typeStore;
+  HeapTypeStore heapTypeStore;
+
+  struct Entry {
+    // HeapTypeInfo has no default constructor, so pick an arbitrary default.
+    HeapTypeInfo info = Signature();
+    bool initialized = false;
+    void set(HeapTypeInfo&& hti) {
+      info = hti;
+      initialized = true;
+    }
+    HeapType get() { return HeapType(TypeID(&info)); }
+  };
+
+  std::vector<Entry> entries;
+};
+
+TypeBuilder::TypeBuilder(size_t n) {
+  impl = std::make_unique<TypeBuilder::Impl>();
+  impl->entries.resize(n);
+}
+
+TypeBuilder::~TypeBuilder() = default;
+
+void TypeBuilder::setHeapType(size_t i, Signature signature) {
+  assert(i < impl->entries.size() && "Index out of bounds");
+  impl->entries[i].set(signature);
+}
+
+void TypeBuilder::setHeapType(size_t i, const Struct& struct_) {
+  assert(i < impl->entries.size() && "index out of bounds");
+  impl->entries[i].set(struct_);
+}
+
+void TypeBuilder::setHeapType(size_t i, Struct&& struct_) {
+  assert(i < impl->entries.size() && "index out of bounds");
+  impl->entries[i].set(std::move(struct_));
+}
+
+void TypeBuilder::setHeapType(size_t i, Array array) {
+  assert(i < impl->entries.size() && "index out of bounds");
+  impl->entries[i].set(array);
+}
+
+Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
+  return impl->typeStore.canonicalize(tuple);
+}
+
+Type TypeBuilder::getTempRefType(size_t i, bool nullable) {
+  assert(i < impl->entries.size() && "Index out of bounds");
+  return impl->typeStore.canonicalize(
+    TypeInfo(impl->entries[i].get(), nullable));
+}
+
+Type TypeBuilder::getTempRttType(size_t i, uint32_t depth) {
+  assert(i < impl->entries.size() && "Index out of bounds");
+  return impl->typeStore.canonicalize(Rtt(depth, impl->entries[i].get()));
+}
+
+namespace {
+
+// Implements the algorithm to canonicalize the HeapTypes in a TypeBuilder,
+// replacing and deduplicating the temporary type and heaptypes backed by
+// storage owned by the TypeBuilder into normal types and heap types backed by
+// the global stores.
+struct Canonicalizer {
+  TypeBuilder& builder;
+
+  struct Item {
+    enum Kind {
+      TypeKind,
+      HeapTypeKind,
+    } kind;
+    union {
+      Type* type;
+      HeapType* heapType;
+    };
+    Item(Type* type) : kind(TypeKind), type(type) {}
+    Item(HeapType* heapType) : kind(HeapTypeKind), heapType(heapType) {}
+  };
+
+  // IDs of scanned Types and HeapTypes, used to prevent repeated scanning.
+  std::unordered_set<TypeID> scanned;
+
+  // The work list of Types and HeapTypes remaining to be scanned.
+  std::vector<Item> scanList;
+
+  // The list of Types and HeapTypes to visit constructed in forward preorder
+  // and eventually traversed in reverse to give a reverse postorder.
+  std::vector<Item> visitList;
+
+  // Maps Type and HeapType IDs to the IDs of Types and HeapTypes they can
+  // reach in the type graph. Only considers compound Types and HeapTypes.
+  std::unordered_map<TypeID, std::unordered_set<TypeID>> reaches;
+
+  // Maps Types and HeapTypes backed by the TypeBuilder's Stores to globally
+  // canonical Types and HeapTypes.
+  std::unordered_map<Type, Type> canonicalTypes;
+  std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
+
+  // The fully canonicalized heap types.
+  std::vector<HeapType> results;
+
+  Canonicalizer(TypeBuilder& builder);
+  template<typename T1, typename T2> void noteChild(T1 parent, T2* child);
+  void scanHeapType(HeapType* ht);
+  void scanType(Type* child);
+  void makeReachabilityFixedPoint();
+
+  // Replaces the pointee Type or HeapType of `type` with its globally canonical
+  // equivalent, recording the substitution for future use in either
+  // `canonicalTypes` or `canonicalHeapTypes`.
+  template<typename T>
+  void canonicalize(T* type, std::unordered_map<T, T>& canonicals);
+};
+
+// Traverse the type graph rooted at the initialized HeapTypeInfos in reverse
+// postorder, replacing in place all Types and HeapTypes backed by the
+// TypeBuilder's Stores with equivalent globally canonicalized Types and
+// HeapTypes.
+Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
+  // Initialize `results` to hold all the temporary HeapTypes. Since we are
+  // canonicalizing all Types and HeapTypes in place, this will end up holding
+  // all the canonicalized HeapTypes instead. Also seed the scan list with these
+  // HeapTypes.
+  results.reserve(builder.impl->entries.size());
+  for (auto& entry : builder.impl->entries) {
+    assert(entry.initialized && "Cannot access uninitialized HeapType");
+    results.push_back(entry.get());
+    scanList.push_back(&results.back());
+  }
+
+  // Traverse the type graph reachable from the heap types, calculating
+  // reachability and collecting a list of types and heap types that need to be
+  // canonicalized. We must scan in depth-first order so that we can do a
+  // postorder traversal later.
+  while (scanList.size() != 0) {
+    auto item = scanList.back();
+    scanList.pop_back();
+    switch (item.kind) {
+      case Item::TypeKind:
+        scanType(item.type);
+        break;
+      case Item::HeapTypeKind:
+        scanHeapType(item.heapType);
+        break;
+    }
+  }
+
+  // Check for recursive types and heap types. TODO: pre-canonicalize these into
+  // their minimal finite representations.
+  makeReachabilityFixedPoint();
+  for (auto& reach : reaches) {
+    if (reach.second.count(reach.first) != 0) {
+      WASM_UNREACHABLE("TODO: support recursive types");
+    }
+  }
+
+  // Visit the types and heap types in reverse postorder, replacing them with
+  // their canonicalized versions.
+  for (auto it = visitList.rbegin(); it != visitList.rend(); ++it) {
+    switch (it->kind) {
+      case Item::TypeKind:
+        canonicalize(it->type, canonicalTypes);
+        break;
+      case Item::HeapTypeKind:
+        canonicalize(it->heapType, canonicalHeapTypes);
+        break;
+    }
+  }
+}
+
+template<typename T1, typename T2>
+void Canonicalizer::noteChild(T1 parent, T2* child) {
+  if (child->isCompound()) {
+    reaches[parent.getID()].insert(child->getID());
+    scanList.push_back(child);
+  }
+}
+
+void Canonicalizer::scanHeapType(HeapType* ht) {
+  assert(ht->isCompound());
+  visitList.push_back(ht);
+  if (scanned.count(ht->getID())) {
+    return;
+  }
+  scanned.insert(ht->getID());
+
+  auto* info = getHeapTypeInfo(*ht);
+  switch (info->kind) {
+    case HeapTypeInfo::SignatureKind:
+      noteChild(*ht, &info->signature.params);
+      noteChild(*ht, &info->signature.results);
+      break;
+    case HeapTypeInfo::StructKind:
+      for (auto& field : info->struct_.fields) {
+        noteChild(*ht, &field.type);
+      }
+      break;
+    case HeapTypeInfo::ArrayKind:
+      noteChild(*ht, &info->array.element.type);
+      break;
+  }
+};
+
+void Canonicalizer::scanType(Type* type) {
+  assert(type->isCompound());
+  visitList.push_back(type);
+  if (scanned.count(type->getID())) {
+    return;
+  }
+  scanned.insert(type->getID());
+
+  auto* info = getTypeInfo(*type);
+  switch (info->kind) {
+    case TypeInfo::TupleKind:
+      for (auto& child : info->tuple.types) {
+        noteChild(*type, &child);
+      }
+      break;
+    case TypeInfo::RefKind:
+      noteChild(*type, &info->ref.heapType);
+      break;
+    case TypeInfo::RttKind:
+      noteChild(*type, &info->rtt.heapType);
+      break;
+  }
+}
+
+void Canonicalizer::makeReachabilityFixedPoint() {
+  // Naively calculate the transitive closure of the reachability graph.
+  bool changed;
+  do {
+    changed = false;
+    for (auto& entry : reaches) {
+      auto& reachable = entry.second;
+      std::unordered_set<TypeID> nextReachable;
+      for (auto& other : reachable) {
+        auto& otherReaches = reaches[other];
+        nextReachable.insert(otherReaches.begin(), otherReaches.end());
+      }
+      size_t oldSize = reachable.size();
+      reachable.insert(nextReachable.begin(), nextReachable.end());
+      if (reachable.size() != oldSize) {
+        changed = true;
+      }
+    }
+  } while (changed);
+}
+
+template<typename T>
+void Canonicalizer::canonicalize(T* type,
+                                 std::unordered_map<T, T>& canonicals) {
+  auto it = canonicals.find(*type);
+  if (it != canonicals.end()) {
+    *type = it->second;
+  } else {
+    // Get the globally canonicalized version of the type
+    auto* info = MetaTypeInfo<T>::getInfo(*type);
+    T canonical = MetaTypeInfo<T>::globalStore.canonicalize(*info);
+    canonicals.insert({*type, canonical});
+    *type = canonical;
+  }
+}
+
+} // anonymous namespace
+
+std::vector<HeapType> TypeBuilder::build() {
+  return Canonicalizer(*this).results;
 }
 
 } // namespace wasm
