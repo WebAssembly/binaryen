@@ -1377,49 +1377,49 @@ public:
     return Literal(value.geti31(curr->signed_));
   }
 
-  // Helper for ref.test and ref.cast. Tries to do the cast, and returns a
-  // literal that either has the intended Rtt if we succeded, or a none if we
-  // failed. If the ref was null, we return a null.
-  Flow doRefCast(Expression* currRef, Expression* currRtt, Type type) {
-    Flow ref = this->visit(currRef);
+  // Helper for ref.test and ref.cast, which share almost all their logic except
+  // for what they return.
+  template<typename T>
+  Flow doRefCast(T* curr) {
+    Flow ref = this->visit(curr->ref);
     if (ref.breaking()) {
       return ref;
     }
-    Flow rtt = this->visit(currRtt);
+    Flow rtt = this->visit(curr->rtt);
     if (rtt.breaking()) {
       return rtt;
     }
     auto gcData = ref.getSingleValue().getGCData();
     if (!gcData) {
-      // It's a null; just return that.
-      return Literal::makeNull(type);
+      // It's a null. Return a 0 of the proper type (null for cast, 0 for test).
+      return Literal::makeZero(curr->type);
     }
+    auto isRefCast = curr->template is<RefCast>();
     auto refRtt = gcData->rtt;
     auto intendedRtt = rtt.getSingleValue();
     if (!refRtt.isSubRtt(intendedRtt)) {
-      // We failed; return none.
-      return Literal();
+      // We failed. Cast traps while test returns 0.
+      if (isRefCast) {
+        trap("cast error");
+      } else {
+        return Literal(int32_t(0));
+      }
     }
-    // The cast succeeded, return the data with the proper type.
-    return Literal(gcData, type);
+    // The cast succeeded, return the data properly
+    if (isRefCast) {
+      return Literal(gcData, curr->type);
+    } else {
+      return Literal(int32_t(1));
+    }
   }
 
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
-    auto ret = doRefCast(curr->ref, curr->rtt, curr->type);
-    if (ret.breaking()) {
-      return ret;
-    }
-    auto result = ret.getSingleValue();
-    return Literal(int32_t(!result.isNull() && !result.isNone()));
+    return doRefCast(curr);
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
-    auto ret = doRefCast(curr->ref, curr->rtt, curr->type);
-    if (!ret.breaking() && ret.getSingleValue().isNone()) {
-      trap("cast error");
-    }
-    return ret;
+    return doRefCast(curr);
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");
