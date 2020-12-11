@@ -31,7 +31,8 @@ namespace wasm {
 
 class Literals;
 struct ExceptionPackage;
-struct RttImpl;
+struct GCData;
+struct RttValue;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -48,11 +49,11 @@ class Literal {
     // we store the referred data as a Literals object (which is natural for an
     // Array, and for a Struct, is just the fields in order). The type is used
     // to indicate whether this is a Struct or an Array, and of what type.
-    std::shared_ptr<Literals> gcData;
+    std::shared_ptr<GCData> gcData;
     // RTT types have a special internal implementation, which we refer to by
     // a shared pointer (which allows multiple Rtt values to all still refer to
     // the same underlying information, which is necessary for casting).
-    std::shared_ptr<RttImpl> rtt;
+    std::shared_ptr<RttValue> rtt;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and
@@ -84,7 +85,7 @@ public:
   explicit Literal(Name func, Type type) : func(func), type(type) {}
   explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
-  explicit Literal(std::shared_ptr<Literals> gcData, Type type)
+  explicit Literal(std::shared_ptr<GCData> gcData, Type type)
     : gcData(gcData), type(type) {}
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
@@ -288,7 +289,8 @@ public:
     return func;
   }
   ExceptionPackage getExceptionPackage() const;
-  std::shared_ptr<Literals> getGCData() const;
+  std::shared_ptr<GCData> getGCData() const;
+  std::shared_ptr<RttValue> getRtt() const;
 
   // careful!
   int32_t* geti32Ptr() {
@@ -685,12 +687,19 @@ std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
 std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
 
-struct RttImpl {
+// A GC Struct or Array is a set of values with a run-time type saying what it
+// is.
+struct GCData {
+  Rtt rtt;
+  Literals values;
+};
+
+struct RttValue {
   // The key piece of information an RTT needs is to know its parent, which was
   // defined when we did rtt.sub to create the new RTT value.
   // An RTT created by rtt.canon, which has no parent, will have a null pointer
   // here to indicate that.
-  std::shared_ptr<RttImpl> parent;
+  std::shared_ptr<RttValue> parent;
 };
 
 } // namespace wasm
@@ -755,7 +764,7 @@ template<> struct hash<wasm::Literal> {
     } else if (a.type.isRef()) {
       return hashRef();
     } else if (a.type.isRtt()) {
-      wasm::rehash(digest, rtt.parent.get());
+      wasm::rehash(digest, a.getRtt()->parent.get());
     }
     WASM_UNREACHABLE("unexpected type");
   }

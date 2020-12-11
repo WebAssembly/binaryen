@@ -38,9 +38,9 @@ Literal::Literal(Type type) : type(type) {
     if (type.isException()) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     } else if (isGCData()) {
-      new (&gcData) std::shared_ptr<Literal>();
+      new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
-      new (&rtt) std::shared_ptr<RttImpl>();
+      new (&rtt) std::shared_ptr<RttValue>();
     } else {
       memset(&v128, 0, 16);
     }
@@ -60,7 +60,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     }
   } else if (other.isGCData()) {
-    new (&gcData) std::shared_ptr<Literals>(other.gcData);
+    new (&gcData) std::shared_ptr<GCData>(other.gcData);
   } else if (type.isFunction()) {
     func = other.func;
   } else if (type.isRtt()) {
@@ -207,9 +207,14 @@ ExceptionPackage Literal::getExceptionPackage() const {
   return *exn;
 }
 
-std::shared_ptr<Literals> Literal::getGCData() const {
+std::shared_ptr<GCData> Literal::getGCData() const {
   assert(isGCData());
   return gcData;
+}
+
+std::shared_ptr<RttValue> Literal::getRtt() const {
+  assert(type.isRtt());
+  return rtt;
 }
 
 Literal Literal::castToF32() {
@@ -452,9 +457,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "funcref(" << literal.getFunc() << ")";
     }
   } else if (literal.isGCData()) {
-    auto data = literal.getGCData();
+    auto& data = literal.getGCData();
     if (data) {
-      o << "[ref " << *data << ']';
+      o << "[ref " << data->rtt << ' ' << data->values << ']';
     } else {
       o << "[ref null " << literal.type << ']';
     }
