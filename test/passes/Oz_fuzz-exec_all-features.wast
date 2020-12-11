@@ -77,11 +77,22 @@
   (local.set $z (rtt.sub $superstruct (local.get $x)))
   ;; Casting null returns null.
   (call $log (ref.is_null
-    (ref.cast $struct (ref.null $struct) (local.get $x))
+   (ref.cast $struct (ref.null $struct) (local.get $x))
   ))
   ;; Testing null returns 0.
   (call $log
-    (ref.test $struct (ref.null $struct) (local.get $x))
+   (ref.test $struct (ref.null $struct) (local.get $x))
+  )
+  ;; Testing something completely wrong (struct vs array) returns 0.
+  (call $log
+   (ref.test $struct
+    (array.new_with_rtt $bytes
+     (rtt.canon $bytes)
+     (i32.const 10)
+     (i32.const 20)
+    )
+    (local.get $x)
+   )
   )
  )
 )
