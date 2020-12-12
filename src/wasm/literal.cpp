@@ -40,7 +40,7 @@ Literal::Literal(Type type) : type(type) {
     } else if (isGCData()) {
       new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
-      new (&rttSupers) std::unique_ptr<RttSupers>();
+      new (&rttSupers) auto(std::make_unique<RttSupers>());
     } else {
       memset(&v128, 0, 16);
     }
@@ -77,12 +77,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
   } else if (type.isFunction()) {
     func = other.func;
   } else if (type.isRtt()) {
-    // Avoid calling the destructor on an uninitialized value
-    if (other.rttSupers != nullptr) {
-      new (&rttSupers) auto(std::make_unique<RttSupers>(*other.rttSupers));
-    } else {
-      new (&rttSupers) std::unique_ptr<RttSupers>();
-    }
+    new (&rttSupers) auto(std::make_unique<RttSupers>(*other.rttSupers));
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -483,7 +478,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     }
   } else if (literal.type.isRtt()) {
     o << "[rtt ";
-    for (auto super : literal.getRttSupers()) {
+    for (Type super : literal.getRttSupers()) {
       o << super << " <: ";
     }
     o << literal.type << ']';
