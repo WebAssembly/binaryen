@@ -33,7 +33,7 @@ class Literals;
 struct ExceptionPackage;
 struct GCData;
 // Subclass the vector type so that this is not easily confused with a vector of
-// types (which could be confusing on the constructor, see above).
+// types (which could be confusing on the Literal constructor).
 struct RttSupers : std::vector<Type> {};
 
 class Literal {

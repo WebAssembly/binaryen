@@ -112,6 +112,8 @@ Literal::~Literal() {
     exn.~unique_ptr();
   } else if (isGCData()) {
     gcData.~shared_ptr();
+  } else if (type.isRtt()) {
+    rttSupers.~unique_ptr();
   }
 }
 
