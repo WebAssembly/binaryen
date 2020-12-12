@@ -639,7 +639,7 @@ public:
   Literal widenHighUToVecI32x4() const;
   Literal swizzleVec8x16(const Literal& other) const;
 
-  bool isSubRtt(const Literal& other);
+  bool isSubRtt(const Literal& other) const;
 
 private:
   Literal addSatSI8(const Literal& other) const;
