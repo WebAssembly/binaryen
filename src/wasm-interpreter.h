@@ -1430,10 +1430,7 @@ public:
     if (parent.breaking()) {
       return parent;
     }
-    auto parentValue = parent.getSingleValue();
-    RttSupers newSupers = parentValue.getRttSupers();
-    newSupers.push_back(parentValue.type);
-    return Literal(newSupers, curr->type);
+    return Properties::getLiteral(curr);
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");

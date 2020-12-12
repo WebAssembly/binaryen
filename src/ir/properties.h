@@ -83,7 +83,7 @@ inline bool isNamedControlFlow(Expression* curr) {
 inline bool isSingleConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
          (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>()) ||
-         curr->is<RttCanon>() || curr->is<RttSub>();
+         curr->is<RttCanon>();
 }
 
 inline bool isConstantExpression(const Expression* curr) {
@@ -112,7 +112,7 @@ inline Literal getLiteral(const Expression* curr) {
     if (auto* c = i->value->dynCast<Const>()) {
       return Literal::makeI31(c->value.geti32());
     }
-  } else if (curr->type.isRtt()) {
+  } else if (curr->is<RttCanon>()) {
     return Literal(curr->type);
   }
   WASM_UNREACHABLE("non-constant expression");
