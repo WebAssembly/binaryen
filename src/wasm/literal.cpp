@@ -479,7 +479,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
   } else if (literal.type.isRtt()) {
     o << "[rtt ";
     for (Type super : literal.getRttSupers()) {
-      o << super << " <: ";
+      o << super << " :> ";
     }
     o << literal.type << ']';
   } else {
