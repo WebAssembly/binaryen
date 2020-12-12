@@ -175,6 +175,7 @@ enum UnaryOp {
   NegVecI64x2,
   AnyTrueVecI64x2,
   AllTrueVecI64x2,
+  BitmaskVecI64x2,
   AbsVecF32x4,
   NegVecF32x4,
   SqrtVecF32x4,
@@ -207,6 +208,10 @@ enum UnaryOp {
   WidenHighSVecI16x8ToVecI32x4,
   WidenLowUVecI16x8ToVecI32x4,
   WidenHighUVecI16x8ToVecI32x4,
+  WidenLowSVecI32x4ToVecI64x2,
+  WidenHighSVecI32x4ToVecI64x2,
+  WidenLowUVecI32x4ToVecI64x2,
+  WidenHighUVecI32x4ToVecI64x2,
 
   InvalidUnary
 };
@@ -351,6 +356,7 @@ enum BinaryOp {
   LeUVecI32x4,
   GeSVecI32x4,
   GeUVecI32x4,
+  EqVecI64x2,
   EqVecF32x4,
   NeVecF32x4,
   LtVecF32x4,
@@ -509,7 +515,17 @@ enum SIMDLoadStoreLaneOp {
   StoreLaneVec64x2,
 };
 
-enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
+enum SIMDTernaryOp {
+  Bitselect,
+  QFMAF32x4,
+  QFMSF32x4,
+  QFMAF64x2,
+  QFMSF64x2,
+  SignSelectVec8x16,
+  SignSelectVec16x8,
+  SignSelectVec32x4,
+  SignSelectVec64x2
+};
 
 //
 // Expressions

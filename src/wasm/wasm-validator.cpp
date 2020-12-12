@@ -1534,6 +1534,7 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case GtUVecI32x4:
     case GeSVecI32x4:
     case GeUVecI32x4:
+    case EqVecI64x2:
     case EqVecF32x4:
     case NeVecF32x4:
     case LtVecF32x4:
@@ -1880,6 +1881,10 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case WidenHighSVecI16x8ToVecI32x4:
     case WidenLowUVecI16x8ToVecI32x4:
     case WidenHighUVecI16x8ToVecI32x4:
+    case WidenLowSVecI32x4ToVecI64x2:
+    case WidenHighSVecI32x4ToVecI64x2:
+    case WidenLowUVecI32x4ToVecI64x2:
+    case WidenHighUVecI32x4ToVecI64x2:
       shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
@@ -1895,6 +1900,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
+    case BitmaskVecI64x2:
       shouldBeEqual(curr->type, Type(Type::i32), curr, "expected i32 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");

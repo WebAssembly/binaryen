@@ -191,6 +191,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case NegVecI64x2:
       case AnyTrueVecI64x2:
       case AllTrueVecI64x2:
+      case BitmaskVecI64x2:
       case AbsVecF32x4:
       case NegVecF32x4:
       case SqrtVecF32x4:
@@ -221,6 +222,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case WidenHighSVecI16x8ToVecI32x4:
       case WidenLowUVecI16x8ToVecI32x4:
       case WidenHighUVecI16x8ToVecI32x4:
+      case WidenLowSVecI32x4ToVecI64x2:
+      case WidenHighSVecI32x4ToVecI64x2:
+      case WidenLowUVecI32x4ToVecI64x2:
+      case WidenHighUVecI32x4ToVecI64x2:
         ret = 1;
         break;
       case InvalidUnary:
@@ -363,6 +368,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case GtUVecI32x4:
       case GeSVecI32x4:
       case GeUVecI32x4:
+      case EqVecI64x2:
       case EqVecF32x4:
       case NeVecF32x4:
       case LtVecF32x4:
@@ -508,6 +514,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     Index ret = 0;
     switch (curr->op) {
       case Bitselect:
+      case SignSelectVec8x16:
+      case SignSelectVec16x8:
+      case SignSelectVec32x4:
+      case SignSelectVec64x2:
         ret = 1;
         break;
       case QFMAF32x4:

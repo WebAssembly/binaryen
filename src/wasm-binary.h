@@ -782,6 +782,7 @@ enum ASTNodes {
   I32x4LeU = 0x3e,
   I32x4GeS = 0x3f,
   I32x4GeU = 0x40,
+  I64x2Eq = 0xc0,
   F32x4Eq = 0x41,
   F32x4Ne = 0x42,
   F32x4Lt = 0x43,
@@ -801,6 +802,11 @@ enum ASTNodes {
   V128Or = 0x50,
   V128Xor = 0x51,
   V128Bitselect = 0x52,
+
+  V8x16SignSelect = 0x7d,
+  V16x8SignSelect = 0x7e,
+  V32x4SignSelect = 0x7f,
+  V64x2SignSelect = 0x94,
 
   V128Load8Lane = 0x58,
   V128Load16Lane = 0x59,
@@ -885,6 +891,11 @@ enum ASTNodes {
   I32x4MaxU = 0xb9,
   I32x4DotSVecI16x8 = 0xba,
 
+  I64x2Bitmask = 0xc4,
+  I64x2WidenLowSI32x4 = 0xc7,
+  I64x2WidenHighSI32x4 = 0xc8,
+  I64x2WidenLowUI32x4 = 0xc9,
+  I64x2WidenHighUI32x4 = 0xca,
   I64x2Neg = 0xc1,
   I64x2AnyTrue = 0xc2,
   I64x2AllTrue = 0xc3,

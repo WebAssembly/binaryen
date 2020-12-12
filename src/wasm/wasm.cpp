@@ -869,6 +869,10 @@ void Unary::finalize() {
     case WidenHighSVecI16x8ToVecI32x4:
     case WidenLowUVecI16x8ToVecI32x4:
     case WidenHighUVecI16x8ToVecI32x4:
+    case WidenLowSVecI32x4ToVecI64x2:
+    case WidenHighSVecI32x4ToVecI64x2:
+    case WidenLowUVecI32x4ToVecI64x2:
+    case WidenHighUVecI32x4ToVecI64x2:
       type = Type::v128;
       break;
     case AnyTrueVecI8x16:
@@ -882,6 +886,7 @@ void Unary::finalize() {
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
+    case BitmaskVecI64x2:
       type = Type::i32;
       break;
 
