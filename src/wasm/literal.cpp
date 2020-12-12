@@ -2396,6 +2396,9 @@ Literal Literal::swizzleVec8x16(const Literal& other) const {
 
 bool Literal::isSubRtt(const Literal& other) const {
   assert(type.isRtt() && other.type.isRtt());
+  if (type == other.type) {
+    return true;
+  }
   // Look up the chain to see if the other RTT is one of our parents.
   for (auto super : getRttSupers()) {
     if (super == other.type) {
