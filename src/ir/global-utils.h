@@ -62,8 +62,8 @@ inline bool canInitializeGlobal(const Expression* curr) {
     }
     return true;
   }
-  return Properties::isSingleConstantExpression(curr) || curr->is<GlobalGet>()
-         || curr->is<RttCanon>() || curr->is<RttSub>();
+  return Properties::isSingleConstantExpression(curr) ||
+         curr->is<GlobalGet>() || curr->is<RttCanon>() || curr->is<RttSub>();
 }
 
 } // namespace GlobalUtils
