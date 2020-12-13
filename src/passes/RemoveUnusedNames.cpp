@@ -19,6 +19,7 @@
 // merge names when possible (by merging their blocks)
 //
 
+#include <ir/branch-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
@@ -33,16 +34,41 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
   // a parent block, we know if it was branched to
   std::map<Name, std::set<Expression*>> branchesSeen;
 
-  void visitBreak(Break* curr) { branchesSeen[curr->name].insert(curr); }
-
-  void visitSwitch(Switch* curr) {
-    for (auto name : curr->targets) {
-      branchesSeen[name].insert(curr);
+  void visit(Expression* curr) {
+    if (auto* block = curr->dynCast<Block>()) {
+      visitBlock(block);
+      return;
     }
-    branchesSeen[curr->default_].insert(curr);
-  }
+    if (auto* loop = curr->dynCast<Loop>()) {
+      visitLoop(loop);
+      return;
+    }
 
-  void visitBrOnExn(BrOnExn* curr) { branchesSeen[curr->name].insert(curr); }
+    // For all break instructions, note their information.
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
+  branchesSeen[cast->name].insert(curr);
+
+#define DELEGATE_FIELD_CHILD(id, name)
+#define DELEGATE_FIELD_INT(id, name)
+#define DELEGATE_FIELD_LITERAL(id, name)
+#define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
+#define DELEGATE_FIELD_SIGNATURE(id, name)
+#define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_ADDRESS(id, name)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, name)
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+
+#include "wasm-delegations-fields.h"
+  }
 
   void handleBreakTarget(Name& name) {
     if (name.is()) {
@@ -62,26 +88,7 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
         // same place as breaking out of us, we just need one name (and block)
         auto& branches = branchesSeen[curr->name];
         for (auto* branch : branches) {
-          if (Break* br = branch->dynCast<Break>()) {
-            if (br->name == curr->name) {
-              br->name = child->name;
-            }
-          } else if (Switch* sw = branch->dynCast<Switch>()) {
-            for (auto& target : sw->targets) {
-              if (target == curr->name) {
-                target = child->name;
-              }
-            }
-            if (sw->default_ == curr->name) {
-              sw->default_ = child->name;
-            }
-          } else if (BrOnExn* br = branch->dynCast<BrOnExn>()) {
-            if (br->name == curr->name) {
-              br->name = child->name;
-            }
-          } else {
-            WASM_UNREACHABLE("unexpected expr type");
-          }
+          BranchUtils::replacePossibleTarget(branch, curr->name, child->name);
         }
         child->finalize(child->type);
         replaceCurrent(child);
