@@ -28,57 +28,48 @@ namespace BranchUtils {
 // Some branches are obviously not actually reachable (e.g. (br $out
 // (unreachable)))
 
-inline bool isBranchReachable(Break* br) {
-  return !(br->value && br->value->type == Type::unreachable) &&
-         !(br->condition && br->condition->type == Type::unreachable);
-}
-
-inline bool isBranchReachable(Switch* sw) {
-  return !(sw->value && sw->value->type == Type::unreachable) &&
-         sw->condition->type != Type::unreachable;
-}
-
-inline bool isBranchReachable(BrOnExn* br) {
-  return br->exnref->type != Type::unreachable;
-}
-
 inline bool isBranchReachable(Expression* expr) {
-  if (auto* br = expr->dynCast<Break>()) {
-    return isBranchReachable(br);
-  } else if (auto* sw = expr->dynCast<Switch>()) {
-    return isBranchReachable(sw);
-  } else if (auto* br = expr->dynCast<BrOnExn>()) {
-    return isBranchReachable(br);
+  // If any child is unreachable, the branch is not taken. Note that expr itself
+  // may be unreachable regardless (as in the case of a simple Break with no
+  // condition, which is still taken).
+  for (auto child : ChildIterator(expr)) {
+    if (child->type == Type::unreachable) {
+      return false;
+    }
   }
-  WASM_UNREACHABLE("unexpected expression type");
+  return true;
 }
 
 using NameSet = std::set<Name>;
 
-inline NameSet getUniqueTargets(Break* br) { return {br->name}; }
-
-inline NameSet getUniqueTargets(Switch* sw) {
-  NameSet ret;
-  for (auto target : sw->targets) {
-    ret.insert(target);
-  }
-  ret.insert(sw->default_);
-  return ret;
-}
-
-inline NameSet getUniqueTargets(BrOnExn* br) { return {br->name}; }
-
 inline NameSet getUniqueTargets(Expression* expr) {
-  if (auto* br = expr->dynCast<Break>()) {
-    return getUniqueTargets(br);
-  }
-  if (auto* br = expr->dynCast<Switch>()) {
-    return getUniqueTargets(br);
-  }
-  if (auto* br = expr->dynCast<BrOnExn>()) {
-    return getUniqueTargets(br);
-  }
-  return {};
+  NameSet ret;
+
+#define DELEGATE_ID expr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = expr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, name) cast->name
+
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
+  ret.insert(cast->name);
+
+#define DELEGATE_FIELD_CHILD(id, name)
+#define DELEGATE_FIELD_INT(id, name)
+#define DELEGATE_FIELD_LITERAL(id, name)
+#define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
+#define DELEGATE_FIELD_SIGNATURE(id, name)
+#define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_ADDRESS(id, name)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, name)
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+
+#include "wasm-delegations-fields.h"
+
+  return ret;
 }
 // If we branch to 'from', change that to 'to' instead.
 inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
