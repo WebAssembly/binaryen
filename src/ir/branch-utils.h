@@ -107,7 +107,7 @@ inline NameSet getUniqueTargets(Expression* expr) {
 // If we branch to 'from', change that to 'to' instead.
 inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
   bool worked = false;
-  operateOnScopeNameUses(expr, [&](Name& name) {
+  operateOnScopeNameUses(branch, [&](Name& name) {
     if (name == from) {
       name = to;
       worked = true;
@@ -124,12 +124,12 @@ inline NameSet getExitingBranches(Expression* ast) {
     NameSet targets;
 
     void visitExpression(Expression* curr) {
-      operateOnScopeNameDefs(expr, [&])(Name & name) {
+      operateOnScopeNameDefs(curr, [&](Name & name) {
         if (name.is()) {
           targets.erase(name);
         }
       });
-      operateOnScopeNameUses(expr, [&](Name& name) { targets.insert(name); });
+      operateOnScopeNameUses(curr, [&](Name& name) { targets.insert(name); });
     }
   };
   Scanner scanner;
