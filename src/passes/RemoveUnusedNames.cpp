@@ -52,6 +52,8 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
   auto* cast = curr->cast<id>();                                               \
   WASM_UNUSED(cast);
 
+#define DELEGATE_GET_FIELD(id, name) cast->name
+
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
   branchesSeen[cast->name].insert(curr);
 
@@ -65,7 +67,6 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
 #define DELEGATE_FIELD_ADDRESS(id, name)
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)
 #define DELEGATE_FIELD_INT_ARRAY(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
 
 #include "wasm-delegations-fields.h"
   }

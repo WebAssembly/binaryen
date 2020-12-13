@@ -90,6 +90,8 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
   auto* cast = branch->cast<id>();                                               \
   WASM_UNUSED(cast);
 
+#define DELEGATE_GET_FIELD(id, name) cast->name
+
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
   if (cast->name == from) { \
     cast->name = to; \
@@ -106,7 +108,6 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
 #define DELEGATE_FIELD_ADDRESS(id, name)
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)
 #define DELEGATE_FIELD_INT_ARRAY(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
 
 #include "wasm-delegations-fields.h"
 
