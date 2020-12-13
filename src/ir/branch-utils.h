@@ -40,11 +40,9 @@ inline bool isBranchReachable(Expression* expr) {
   return true;
 }
 
-using NameSet = std::set<Name>;
-
-inline NameSet getUniqueTargets(Expression* expr) {
-  NameSet ret;
-
+// Perform a generic operation on uses of scope names (branch targets) in an expression. The provided
+// function receives a Name& which it can modify if it needs to.
+inline void operateOnScopeNameUses(Expression* expr, std::function<void (Name&)> func) {
 #define DELEGATE_ID expr->_id
 
 #define DELEGATE_START(id)                                                     \
@@ -54,7 +52,7 @@ inline NameSet getUniqueTargets(Expression* expr) {
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
-  ret.insert(cast->name);
+  func(cast->name);
 
 #define DELEGATE_FIELD_CHILD(id, name)
 #define DELEGATE_FIELD_INT(id, name)
@@ -68,66 +66,73 @@ inline NameSet getUniqueTargets(Expression* expr) {
 #define DELEGATE_FIELD_INT_ARRAY(id, name)
 
 #include "wasm-delegations-fields.h"
+}
 
+// Perform a generic operation on definitions of scope names in an expression. The provided
+// function receives a Name& which it can modify if it needs to.
+inline void operateOnScopeNameDefs(Expression* expr, std::function<void (Name&)> func) {
+#define DELEGATE_ID expr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = expr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)                                \
+  func(cast->name)
+
+#define DELEGATE_FIELD_CHILD(id, name)
+#define DELEGATE_FIELD_INT(id, name)
+#define DELEGATE_FIELD_LITERAL(id, name)
+#define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
+#define DELEGATE_FIELD_SIGNATURE(id, name)
+#define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_ADDRESS(id, name)
+#define DELEGATE_FIELD_CHILD_VECTOR(id, name)
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                               
+#define DELEGATE_FIELD_SCOPE_NAME_USE_ARRAY(id, name)                      
+
+#include "wasm-delegations-fields.h"
+}
+
+using NameSet = std::set<Name>;
+
+inline NameSet getUniqueTargets(Expression* expr) {
+  NameSet ret;
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    ret.insert(name);
+  });
   return ret;
 }
+
 // If we branch to 'from', change that to 'to' instead.
 inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
   bool worked = false;
-
-#define DELEGATE_ID branch->_id
-
-#define DELEGATE_START(id)                                                     \
-  auto* cast = branch->cast<id>();                                             \
-  WASM_UNUSED(cast);
-
-#define DELEGATE_GET_FIELD(id, name) cast->name
-
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
-  if (cast->name == from) {                                                    \
-    cast->name = to;                                                           \
-    worked = true;                                                             \
-  }
-
-#define DELEGATE_FIELD_CHILD(id, name)
-#define DELEGATE_FIELD_INT(id, name)
-#define DELEGATE_FIELD_LITERAL(id, name)
-#define DELEGATE_FIELD_NAME(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
-#define DELEGATE_FIELD_SIGNATURE(id, name)
-#define DELEGATE_FIELD_TYPE(id, name)
-#define DELEGATE_FIELD_ADDRESS(id, name)
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name)
-#define DELEGATE_FIELD_INT_ARRAY(id, name)
-
-#include "wasm-delegations-fields.h"
-
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    if (name == from) {                                                    
+      name = to;
+      worked = true;                                                             
+    }
+  });
   return worked;
 }
 
-// returns the set of targets to which we branch that are
-// outside of a node
+// Returns the set of targets to which we branch that are
+// outside of an expression.
 inline NameSet getExitingBranches(Expression* ast) {
-  struct Scanner : public PostWalker<Scanner> {
+  struct Scanner : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
     NameSet targets;
 
-    void visitBreak(Break* curr) { targets.insert(curr->name); }
-    void visitSwitch(Switch* curr) {
-      for (auto target : curr->targets) {
-        targets.insert(target);
-      }
-      targets.insert(curr->default_);
-    }
-    void visitBrOnExn(BrOnExn* curr) { targets.insert(curr->name); }
-    void visitBlock(Block* curr) {
-      if (curr->name.is()) {
-        targets.erase(curr->name);
-      }
-    }
-    void visitLoop(Loop* curr) {
-      if (curr->name.is()) {
-        targets.erase(curr->name);
-      }
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(expr, [&])(Name& name) {
+        if (name.is()) {
+          targets.erase(name);
+        }
+      });
+      operateOnScopeNameUses(expr, [&](Name& name) {
+        targets.insert(name);
+      });
     }
   };
   Scanner scanner;
@@ -139,18 +144,15 @@ inline NameSet getExitingBranches(Expression* ast) {
 // returns the list of all branch targets in a node
 
 inline NameSet getBranchTargets(Expression* ast) {
-  struct Scanner : public PostWalker<Scanner> {
+  struct Scanner : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
     NameSet targets;
 
-    void visitBlock(Block* curr) {
-      if (curr->name.is()) {
-        targets.insert(curr->name);
-      }
-    }
-    void visitLoop(Loop* curr) {
-      if (curr->name.is()) {
-        targets.insert(curr->name);
-      }
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(expr, [&])(Name& name) {
+        if (name.is()) {
+          targets.insert(name);
+        }
+      });
     }
   };
   Scanner scanner;
