@@ -25,7 +25,9 @@
 
 namespace wasm {
 
-struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, UnifiedExpressionVisitor<RemoveUnusedNames>>> {
+struct RemoveUnusedNames
+  : public WalkerPass<PostWalker<RemoveUnusedNames,
+                                 UnifiedExpressionVisitor<RemoveUnusedNames>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RemoveUnusedNames; }
