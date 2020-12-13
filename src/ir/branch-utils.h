@@ -85,14 +85,13 @@ inline void operateOnScopeNameDefs(Expression* expr,
 #define DELEGATE_FIELD_INT(id, name)
 #define DELEGATE_FIELD_LITERAL(id, name)
 #define DELEGATE_FIELD_NAME(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
 #define DELEGATE_FIELD_SIGNATURE(id, name)
 #define DELEGATE_FIELD_TYPE(id, name)
 #define DELEGATE_FIELD_ADDRESS(id, name)
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name)
 #define DELEGATE_FIELD_INT_ARRAY(id, name)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_ARRAY(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
 
 #include "wasm-delegations-fields.h"
 }
