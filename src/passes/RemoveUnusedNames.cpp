@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
+struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames, UnifiedExpressionVisitor<RemoveUnusedNames>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RemoveUnusedNames; }
@@ -34,7 +34,7 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
   // a parent block, we know if it was branched to
   std::map<Name, std::set<Expression*>> branchesSeen;
 
-  void visit(Expression* curr) {
+  void visitExpression(Expression* curr) {
     if (auto* block = curr->dynCast<Block>()) {
       visitBlock(block);
       return;
