@@ -87,15 +87,15 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
 #define DELEGATE_ID branch->_id
 
 #define DELEGATE_START(id)                                                     \
-  auto* cast = branch->cast<id>();                                               \
+  auto* cast = branch->cast<id>();                                             \
   WASM_UNUSED(cast);
 
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)                                \
-  if (cast->name == from) { \
-    cast->name = to; \
-    worked = true; \
+  if (cast->name == from) {                                                    \
+    cast->name = to;                                                           \
+    worked = true;                                                             \
   }
 
 #define DELEGATE_FIELD_CHILD(id, name)
