@@ -124,7 +124,7 @@ inline NameSet getExitingBranches(Expression* ast) {
     NameSet targets;
 
     void visitExpression(Expression* curr) {
-      operateOnScopeNameDefs(curr, [&](Name & name) {
+      operateOnScopeNameDefs(curr, [&](Name& name) {
         if (name.is()) {
           targets.erase(name);
         }
@@ -146,7 +146,7 @@ inline NameSet getBranchTargets(Expression* ast) {
     NameSet targets;
 
     void visitExpression(Expression* curr) {
-      operateOnScopeNameDefs(curr, [&](Name & name) {
+      operateOnScopeNameDefs(curr, [&](Name& name) {
         if (name.is()) {
           targets.insert(name);
         }
