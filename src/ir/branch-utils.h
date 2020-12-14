@@ -161,8 +161,8 @@ inline NameSet getBranchTargets(Expression* ast) {
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
-struct BranchSeeker : public PostWalker<BranchSeeker,
-                                        UnifiedExpressionVisitor<BranchSeeker>> {
+struct BranchSeeker
+  : public PostWalker<BranchSeeker, UnifiedExpressionVisitor<BranchSeeker>> {
   Name target;
 
   Index found = 0;
