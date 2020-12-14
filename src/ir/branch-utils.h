@@ -188,11 +188,11 @@ struct BranchSeeker
     operateOnScopeNameDefs(curr, [&](Name& name) {
       if (name == target) {
         if (auto* br = curr->dynCast<Break>()) {
-          noteFound(curr->value);
+          noteFound(br->value);
         } else if (auto* sw = curr->dynCast<Switch>()) {
-          noteFound(curr->value);
+          noteFound(sw->value);
         } else if (auto* br = curr->dynCast<BrOnExn>()) {
-          noteFound(curr->sent);
+          noteFound(br->sent);
         } else {
           WASM_UNREACHABLE("bad br type");
         }
