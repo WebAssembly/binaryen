@@ -207,3 +207,17 @@
   )
  )
 )
+;; call_ref
+(module
+ (func $foo (param i32) (param i32)
+  (unreachable)
+ )
+ (func $bar (param $x i32) (param $y i32)
+  (call_ref
+   (local.get $x)
+   (local.get $y)
+   (ref.func $foo)
+  )
+ )
+)
+

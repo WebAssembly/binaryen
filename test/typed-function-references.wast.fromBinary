@@ -1,0 +1,100 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_anyref_f32_anyref_f32 (func (result anyref f32 anyref f32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_eqref (func (result eqref)))
+ (type $i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_anyref (func (result anyref)))
+ (type $ref?|i32_->_i32|_=>_i32 (func (param (ref null $i32_=>_i32)) (result i32)))
+ (type $none_=>_i32_ref?|none_->_anyref_f32_anyref_f32|_f64 (func (result i32 (ref null $none_=>_anyref_f32_anyref_f32) f64)))
+ (type $none_=>_ref?|i32_i32_i32_i32_i32_->_none| (func (result (ref null $i32_i32_i32_i32_i32_=>_none))))
+ (type $f64_=>_ref?|none_->_eqref| (func (param f64) (result (ref null $none_=>_eqref))))
+ (type $none_=>_ref?|none_->_ref?|i32_i32_i32_i32_i32_->_none|| (func (result (ref null $none_=>_ref?|i32_i32_i32_i32_i32_->_none|))))
+ (func $call-ref
+  (call_ref
+   (ref.func $call-ref)
+  )
+ )
+ (func $return-call-ref
+  (return_call_ref
+   (ref.func $call-ref)
+  )
+ )
+ (func $call-ref-more (param $0 i32) (result i32)
+  (call_ref
+   (i32.const 42)
+   (ref.func $call-ref-more)
+  )
+ )
+ (func $call_from-param (param $f (ref null $i32_=>_i32)) (result i32)
+  (call_ref
+   (i32.const 42)
+   (local.get $f)
+  )
+ )
+ (func $call_from-param-null (param $f (ref null $i32_=>_i32)) (result i32)
+  (call_ref
+   (i32.const 42)
+   (local.get $f)
+  )
+ )
+ (func $call_from-local-null (result i32)
+  (local $f (ref null $i32_=>_i32))
+  (local.set $f
+   (ref.func $call-ref-more)
+  )
+  (call_ref
+   (i32.const 42)
+   (local.get $f)
+  )
+ )
+ (func $ref-in-sig (param $0 f64) (result (ref null $none_=>_eqref))
+  (ref.null $none_=>_eqref)
+ )
+ (func $type-only-in-tuple-local
+  (local $x i32)
+  (local $1 f64)
+  (local $2 (ref null $none_=>_anyref))
+  (nop)
+ )
+ (func $type-only-in-tuple-block
+  (local $0 (i32 (ref null (func (result anyref f32 anyref f32))) f64))
+  (local $1 (ref null $none_=>_anyref_f32_anyref_f32))
+  (local $2 i32)
+  (local.set $0
+   (block $label$1 (result i32 (ref null $none_=>_anyref_f32_anyref_f32) f64)
+    (unreachable)
+   )
+  )
+  (drop
+   (block (result i32)
+    (local.set $2
+     (tuple.extract 0
+      (local.get $0)
+     )
+    )
+    (drop
+     (block (result (ref null $none_=>_anyref_f32_anyref_f32))
+      (local.set $1
+       (tuple.extract 1
+        (local.get $0)
+       )
+      )
+      (drop
+       (tuple.extract 2
+        (local.get $0)
+       )
+      )
+      (local.get $1)
+     )
+    )
+    (local.get $2)
+   )
+  )
+ )
+ (func $nested-type-only-there (result (ref null $none_=>_ref?|i32_i32_i32_i32_i32_->_none|))
+  (unreachable)
+ )
+)
+

@@ -24,11 +24,11 @@ static Name IMPOSSIBLE_CONTINUE("impossible-continue");
 
 void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
-    o << binaryType(Type::none);
+    parent.writeType(Type::none);
   } else if (type.isTuple()) {
     o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
   } else {
-    o << binaryType(type);
+    parent.writeType(type);
   }
 }
 
@@ -560,6 +560,18 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
     case QFMSF64x2:
       o << U32LEB(BinaryConsts::F64x2QFMS);
       break;
+    case SignSelectVec8x16:
+      o << U32LEB(BinaryConsts::V8x16SignSelect);
+      break;
+    case SignSelectVec16x8:
+      o << U32LEB(BinaryConsts::V16x8SignSelect);
+      break;
+    case SignSelectVec32x4:
+      o << U32LEB(BinaryConsts::V32x4SignSelect);
+      break;
+    case SignSelectVec64x2:
+      o << U32LEB(BinaryConsts::V64x2SignSelect);
+      break;
   }
 }
 
@@ -1024,6 +1036,10 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I64x2AllTrue);
       break;
+    case BitmaskVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2Bitmask);
+      break;
     case AbsVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Abs);
       break;
@@ -1131,6 +1147,22 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case WidenHighUVecI16x8ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I32x4WidenHighUI16x8);
+      break;
+    case WidenLowSVecI32x4ToVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2WidenLowSI32x4);
+      break;
+    case WidenHighSVecI32x4ToVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2WidenHighSI32x4);
+      break;
+    case WidenLowUVecI32x4ToVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2WidenLowUI32x4);
+      break;
+    case WidenHighUVecI32x4ToVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2WidenHighUI32x4);
       break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
@@ -1461,6 +1493,9 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case GeUVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GeU);
       break;
+    case EqVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Eq);
+      break;
     case EqVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Eq);
       break;
@@ -1756,8 +1791,8 @@ void BinaryInstWriter::visitSelect(Select* curr) {
   if (curr->type.isRef()) {
     o << int8_t(BinaryConsts::SelectWithType) << U32LEB(curr->type.size());
     for (size_t i = 0; i < curr->type.size(); i++) {
-      o << binaryType(curr->type != Type::unreachable ? curr->type
-                                                      : Type::none);
+      parent.writeType(curr->type != Type::unreachable ? curr->type
+                                                       : Type::none);
     }
   } else {
     o << int8_t(BinaryConsts::Select);
@@ -1779,8 +1814,8 @@ void BinaryInstWriter::visitMemoryGrow(MemoryGrow* curr) {
 }
 
 void BinaryInstWriter::visitRefNull(RefNull* curr) {
-  o << int8_t(BinaryConsts::RefNull)
-    << binaryHeapType(curr->type.getHeapType());
+  o << int8_t(BinaryConsts::RefNull);
+  parent.writeHeapType(curr->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
@@ -1875,14 +1910,21 @@ void BinaryInstWriter::visitI31Get(I31Get* curr) {
     << U32LEB(curr->signed_ ? BinaryConsts::I31GetS : BinaryConsts::I31GetU);
 }
 
+void BinaryInstWriter::visitCallRef(CallRef* curr) {
+  o << int8_t(curr->isReturn ? BinaryConsts::RetCallRef
+                             : BinaryConsts::CallRef);
+}
+
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
-  WASM_UNREACHABLE("TODO (gc): ref.test");
+  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
-  WASM_UNREACHABLE("TODO (gc): ref.cast");
+  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {
@@ -1892,43 +1934,81 @@ void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttCanon);
-  WASM_UNREACHABLE("TODO (gc): rtt.canon");
+  parent.writeHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
-  WASM_UNREACHABLE("TODO (gc): rtt.sub");
+  // FIXME: the binary format may also have an extra heap type and index that
+  //        are not needed
+  parent.writeHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
-  WASM_UNREACHABLE("TODO (gc): struct.new");
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->isWithDefault()) {
+    o << U32LEB(BinaryConsts::StructNewDefaultWithRtt);
+  } else {
+    o << U32LEB(BinaryConsts::StructNewWithRtt);
+  }
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
-  WASM_UNREACHABLE("TODO (gc): struct.get");
+  const auto& heapType = curr->ref->type.getHeapType();
+  const auto& field = heapType.getStruct().fields[curr->index];
+  int8_t op;
+  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+    op = BinaryConsts::StructGet;
+  } else if (curr->signed_) {
+    op = BinaryConsts::StructGetS;
+  } else {
+    op = BinaryConsts::StructGetU;
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
+  parent.writeHeapType(heapType);
+  o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
-  WASM_UNREACHABLE("TODO (gc): struct.set");
+  parent.writeHeapType(curr->ref->type.getHeapType());
+  o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
-  WASM_UNREACHABLE("TODO (gc): array.new");
+  o << int8_t(BinaryConsts::GCPrefix);
+  if (curr->isWithDefault()) {
+    o << U32LEB(BinaryConsts::ArrayNewDefaultWithRtt);
+  } else {
+    o << U32LEB(BinaryConsts::ArrayNewWithRtt);
+  }
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
-  WASM_UNREACHABLE("TODO (gc): array.get");
+  auto heapType = curr->ref->type.getHeapType();
+  const auto& field = heapType.getArray().element;
+  int8_t op;
+  if (field.type != Type::i32 || field.packedType == Field::not_packed) {
+    op = BinaryConsts::ArrayGet;
+  } else if (curr->signed_) {
+    op = BinaryConsts::ArrayGetS;
+  } else {
+    op = BinaryConsts::ArrayGetU;
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
+  parent.writeHeapType(heapType);
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
-  WASM_UNREACHABLE("TODO (gc): array.set");
+  parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
-  WASM_UNREACHABLE("TODO (gc): array.len");
+  parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
@@ -1966,7 +2046,8 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     o << U32LEB(func->getNumVars());
     for (Index i = varStart; i < varEnd; i++) {
       mappedLocals[std::make_pair(i, 0)] = i;
-      o << U32LEB(1) << binaryType(func->getLocalType(i));
+      o << U32LEB(1);
+      parent.writeType(func->getLocalType(i));
     }
     return;
   }
@@ -1995,7 +2076,8 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   setScratchLocals();
   o << U32LEB(numLocalsByType.size());
   for (auto& typeCount : numLocalsByType) {
-    o << U32LEB(typeCount.second) << binaryType(typeCount.first);
+    o << U32LEB(typeCount.second);
+    parent.writeType(typeCount.first);
   }
 }
 

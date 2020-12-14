@@ -336,6 +336,7 @@ binaryen_add_executable(wasm-as src/tools/wasm-as.cpp)
 binaryen_add_executable(wasm-dis src/tools/wasm-dis.cpp)
 binaryen_add_executable(wasm-ctor-eval src/tools/wasm-ctor-eval.cpp)
 binaryen_add_executable(wasm-reduce src/tools/wasm-reduce.cpp)
+binaryen_add_executable(wasm-split src/tools/wasm-split.cpp)
 
 
 # binaryen.js
@@ -393,3 +394,5 @@ if(EMSCRIPTEN)
   set_property(TARGET binaryen_js PROPERTY CXX_STANDARD_REQUIRED ON)
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
+
+configure_file(scripts/binaryen-lit.in ${CMAKE_BINARY_DIR}/bin/binaryen-lit @ONLY)

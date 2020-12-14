@@ -7,46 +7,46 @@ using namespace wasm;
 
 void test_compound() {
   {
-    HeapType func(HeapType::FuncKind);
+    HeapType func(HeapType::func);
     assert(Type(func, true).getID() == Type::funcref);
     assert(Type(func, false).getID() == Type(func, false).getID());
     assert(Type(func, false).getID() != Type(func, true).getID());
-    HeapType sameFunc(HeapType::FuncKind);
+    HeapType sameFunc(HeapType::func);
     assert(Type(func, false).getID() == Type(sameFunc, false).getID());
 
-    HeapType extern_(HeapType::ExternKind);
+    HeapType extern_(HeapType::ext);
     assert(Type(extern_, true).getID() == Type::externref);
     assert(Type(extern_, false).getID() == Type(extern_, false).getID());
     assert(Type(extern_, false).getID() != Type(extern_, true).getID());
-    HeapType sameExtern(HeapType::ExternKind);
+    HeapType sameExtern(HeapType::ext);
     assert(Type(extern_, false).getID() == Type(sameExtern, false).getID());
 
-    HeapType exn(HeapType::ExnKind);
+    HeapType exn(HeapType::exn);
     assert(Type(exn, true).getID() == Type::exnref);
     assert(Type(exn, false).getID() == Type(exn, false).getID());
     assert(Type(exn, false).getID() != Type(exn, true).getID());
-    HeapType sameExn(HeapType::ExnKind);
+    HeapType sameExn(HeapType::exn);
     assert(Type(exn, false).getID() == Type(sameExn, false).getID());
 
-    HeapType any(HeapType::AnyKind);
+    HeapType any(HeapType::any);
     assert(Type(any, true).getID() == Type::anyref);
     assert(Type(any, false).getID() == Type(any, false).getID());
     assert(Type(any, false).getID() != Type(any, true).getID());
-    HeapType sameAny(HeapType::AnyKind);
+    HeapType sameAny(HeapType::any);
     assert(Type(any, false).getID() == Type(sameAny, false).getID());
 
-    HeapType eq(HeapType::EqKind);
+    HeapType eq(HeapType::eq);
     // assert(Type(eq, true).getID() == Type::eqref);
     assert(Type(eq, false).getID() == Type(eq, false).getID());
     assert(Type(eq, false).getID() != Type(eq, true).getID());
-    HeapType sameEq(HeapType::EqKind);
+    HeapType sameEq(HeapType::eq);
     assert(Type(eq, false).getID() == Type(sameEq, false).getID());
 
-    HeapType i31(HeapType::I31Kind);
+    HeapType i31(HeapType::i31);
     // assert(Type(i31, false).getID() == Type::i31ref);
     assert(Type(i31, false).getID() == Type(i31, false).getID());
     assert(Type(i31, false).getID() != Type(i31, true).getID());
-    HeapType sameI31(HeapType::I31Kind);
+    HeapType sameI31(HeapType::i31);
     assert(Type(i31, false).getID() == Type(sameI31, false).getID());
   }
   {
@@ -98,18 +98,18 @@ void test_compound() {
     assert(Type(tuple).getID() != Type(otherTuple).getID());
   }
   {
-    Rtt rtt(0, HeapType::FuncKind);
+    Rtt rtt(0, HeapType::func);
     assert(Type(rtt).getID() == Type(rtt).getID());
 
-    Rtt sameRtt(0, HeapType::FuncKind);
+    Rtt sameRtt(0, HeapType::func);
     assert(rtt == sameRtt);
     assert(Type(rtt).getID() == Type(sameRtt).getID());
 
-    Rtt otherDepthRtt(1, HeapType::FuncKind);
+    Rtt otherDepthRtt(1, HeapType::func);
     assert(rtt != otherDepthRtt);
     assert(Type(rtt).getID() != Type(otherDepthRtt).getID());
 
-    Rtt otherHeapTypeRtt(0, HeapType::AnyKind);
+    Rtt otherHeapTypeRtt(0, HeapType::any);
     assert(rtt != otherHeapTypeRtt);
     assert(Type(rtt).getID() != Type(otherHeapTypeRtt).getID());
 
@@ -129,24 +129,24 @@ void test_compound() {
 void test_printing() {
   {
     std::cout << ";; Heap types\n";
-    std::cout << HeapType(HeapType::FuncKind) << "\n";
-    std::cout << Type(HeapType::FuncKind, true) << "\n";
-    std::cout << Type(HeapType::FuncKind, false) << "\n";
-    std::cout << HeapType(HeapType::ExternKind) << "\n";
-    std::cout << Type(HeapType::ExternKind, true) << "\n";
-    std::cout << Type(HeapType::ExternKind, false) << "\n";
-    std::cout << HeapType(HeapType::AnyKind) << "\n";
-    std::cout << Type(HeapType::AnyKind, true) << "\n";
-    std::cout << Type(HeapType::AnyKind, false) << "\n";
-    std::cout << HeapType(HeapType::EqKind) << "\n";
-    std::cout << Type(HeapType::EqKind, true) << "\n";
-    std::cout << Type(HeapType::EqKind, false) << "\n";
-    std::cout << HeapType(HeapType::I31Kind) << "\n";
-    std::cout << Type(HeapType::I31Kind, true) << "\n";
-    std::cout << Type(HeapType::I31Kind, false) << "\n";
-    std::cout << HeapType(HeapType::ExnKind) << "\n";
-    std::cout << Type(HeapType::ExnKind, true) << "\n";
-    std::cout << Type(HeapType::ExnKind, false) << "\n";
+    std::cout << HeapType(HeapType::func) << "\n";
+    std::cout << Type(HeapType::func, true) << "\n";
+    std::cout << Type(HeapType::func, false) << "\n";
+    std::cout << HeapType(HeapType::ext) << "\n";
+    std::cout << Type(HeapType::ext, true) << "\n";
+    std::cout << Type(HeapType::ext, false) << "\n";
+    std::cout << HeapType(HeapType::any) << "\n";
+    std::cout << Type(HeapType::any, true) << "\n";
+    std::cout << Type(HeapType::any, false) << "\n";
+    std::cout << HeapType(HeapType::eq) << "\n";
+    std::cout << Type(HeapType::eq, true) << "\n";
+    std::cout << Type(HeapType::eq, false) << "\n";
+    std::cout << HeapType(HeapType::i31) << "\n";
+    std::cout << Type(HeapType::i31, true) << "\n";
+    std::cout << Type(HeapType::i31, false) << "\n";
+    std::cout << HeapType(HeapType::exn) << "\n";
+    std::cout << Type(HeapType::exn, true) << "\n";
+    std::cout << Type(HeapType::exn, false) << "\n";
     std::cout << HeapType(Signature(Type::none, Type::none)) << "\n";
     std::cout << HeapType(Struct({})) << "\n";
     std::cout << HeapType(Array({Type::i32, false})) << "\n";
@@ -205,18 +205,18 @@ void test_printing() {
   }
   {
     std::cout << "\n;; Rtt\n";
-    std::cout << Rtt(0, HeapType::FuncKind) << "\n";
-    std::cout << Type(Rtt(0, HeapType::FuncKind)) << "\n";
-    std::cout << Rtt(1, HeapType::ExternKind) << "\n";
-    std::cout << Type(Rtt(1, HeapType::ExternKind)) << "\n";
-    std::cout << Rtt(2, HeapType::AnyKind) << "\n";
-    std::cout << Type(Rtt(2, HeapType::AnyKind)) << "\n";
-    std::cout << Rtt(3, HeapType::EqKind) << "\n";
-    std::cout << Type(Rtt(3, HeapType::EqKind)) << "\n";
-    std::cout << Rtt(4, HeapType::I31Kind) << "\n";
-    std::cout << Type(Rtt(4, HeapType::I31Kind)) << "\n";
-    std::cout << Rtt(5, HeapType::ExnKind) << "\n";
-    std::cout << Type(Rtt(5, HeapType::ExnKind)) << "\n";
+    std::cout << Rtt(0, HeapType::func) << "\n";
+    std::cout << Type(Rtt(0, HeapType::func)) << "\n";
+    std::cout << Rtt(1, HeapType::ext) << "\n";
+    std::cout << Type(Rtt(1, HeapType::ext)) << "\n";
+    std::cout << Rtt(2, HeapType::any) << "\n";
+    std::cout << Type(Rtt(2, HeapType::any)) << "\n";
+    std::cout << Rtt(3, HeapType::eq) << "\n";
+    std::cout << Type(Rtt(3, HeapType::eq)) << "\n";
+    std::cout << Rtt(4, HeapType::i31) << "\n";
+    std::cout << Type(Rtt(4, HeapType::i31)) << "\n";
+    std::cout << Rtt(5, HeapType::exn) << "\n";
+    std::cout << Type(Rtt(5, HeapType::exn)) << "\n";
     Rtt signatureRtt(6, Signature(Type::none, Type::none));
     std::cout << signatureRtt << "\n";
     std::cout << Type(signatureRtt) << "\n";

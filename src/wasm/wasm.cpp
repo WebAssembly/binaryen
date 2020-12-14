@@ -47,6 +47,7 @@ const char* ReferenceTypesFeature = "reference-types";
 const char* MultivalueFeature = "multivalue";
 const char* GCFeature = "gc";
 const char* Memory64Feature = "memory64";
+const char* TypedFunctionReferencesFeature = "typed-function-references";
 } // namespace UserSections
 } // namespace BinaryConsts
 
@@ -72,6 +73,8 @@ Name TABLE("table");
 Name ELEM("elem");
 Name LOCAL("local");
 Name TYPE("type");
+Name REF("ref");
+Name NULL_("null");
 Name CALL("call");
 Name CALL_INDIRECT("call_indirect");
 Name BLOCK("block");
@@ -211,6 +214,8 @@ const char* getExpressionName(Expression* curr) {
       return "i31.new";
     case Expression::Id::I31GetId:
       return "i31.get";
+    case Expression::Id::CallRefId:
+      return "call_ref";
     case Expression::Id::RefTestId:
       return "ref.test";
     case Expression::Id::RefCastId:
@@ -458,13 +463,16 @@ void Break::finalize() {
 
 void Switch::finalize() { type = Type::unreachable; }
 
-template<typename T> void handleUnreachableOperands(T* curr) {
+// Sets the type to unreachable if there is an unreachable operand. Returns true
+// if so.
+template<typename T> bool handleUnreachableOperands(T* curr) {
   for (auto* child : curr->operands) {
     if (child->type == Type::unreachable) {
       curr->type = Type::unreachable;
-      break;
+      return true;
     }
   }
+  return false;
 }
 
 void Call::finalize() {
@@ -861,6 +869,10 @@ void Unary::finalize() {
     case WidenHighSVecI16x8ToVecI32x4:
     case WidenLowUVecI16x8ToVecI32x4:
     case WidenHighUVecI16x8ToVecI32x4:
+    case WidenLowSVecI32x4ToVecI64x2:
+    case WidenHighSVecI32x4ToVecI64x2:
+    case WidenLowUVecI32x4ToVecI64x2:
+    case WidenHighUVecI32x4ToVecI64x2:
       type = Type::v128;
       break;
     case AnyTrueVecI8x16:
@@ -874,6 +886,7 @@ void Unary::finalize() {
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
+    case BitmaskVecI64x2:
       type = Type::i32;
       break;
 
@@ -968,12 +981,10 @@ void MemoryGrow::finalize() {
 void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
 
 void RefNull::finalize(Type type_) {
-  assert(type_ == Type::unreachable || type_.isNullable());
   type = type_;
 }
 
 void RefNull::finalize() {
-  assert(type == Type::unreachable || type.isNullable());
 }
 
 void RefIsNull::finalize() {
@@ -984,7 +995,12 @@ void RefIsNull::finalize() {
   type = Type::i32;
 }
 
-void RefFunc::finalize() { type = Type::funcref; }
+void RefFunc::finalize() {
+  // No-op. We assume that the full proper typed function type has been applied
+  // previously.
+}
+
+void RefFunc::finalize(Type type_) { type = type_; }
 
 void RefEq::finalize() {
   if (left->type == Type::unreachable || right->type == Type::unreachable) {
@@ -1054,18 +1070,114 @@ void I31Get::finalize() {
   }
 }
 
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
+void CallRef::finalize() {
+  handleUnreachableOperands(this);
+  if (isReturn) {
+    type = Type::unreachable;
+  }
+  if (target->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void CallRef::finalize(Type type_) {
+  type = type_;
+  finalize();
+}
+
+void RefTest::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+void RefCast::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    // TODO: make non-nullable when we support that
+    type = Type(rtt->type.getHeapType(), /* nullable = */ true);
+  }
+}
+
 // TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
-// TODO (gc): struct.new
-// TODO (gc): struct.get
-// TODO (gc): struct.set
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
+
+void RttCanon::finalize() {
+  // Nothing to do - the type must have been set already during construction.
+}
+
+void RttSub::finalize() {
+  if (parent->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+  // Else nothing to do - the type must have been set already during
+  // construction.
+}
+
+void StructNew::finalize() {
+  if (rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+  // TODO: make non-nullable when we support that
+  type = Type(rtt->type.getHeapType(), /* nullable = */ true);
+}
+
+void StructGet::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
+void StructSet::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayNew::finalize() {
+  if (rtt->type == Type::unreachable || size->type == Type::unreachable ||
+      (init && init->type == Type::unreachable)) {
+    type = Type::unreachable;
+    return;
+  }
+  // TODO: make non-nullable when we support that
+  type = Type(rtt->type.getHeapType(), /* nullable = */ true);
+}
+
+void ArrayGet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
+void ArraySet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayLen::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
 size_t Function::getNumParams() { return sig.params.size(); }
 

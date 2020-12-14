@@ -5623,7 +5623,8 @@
  (type $none_=>_none (func))
  (type $i64_i64_f32_=>_none (func (param i64 i64 f32)))
  (type $i64_i64_=>_f32 (func (param i64 i64) (result f32)))
- (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
+ (type $none_=>_i64 (func (result i64)))
+ (import "env" "emscripten_get_sbrk_ptr" (func $foo (result i64)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
  (memory $0 (shared i64 100 100))
@@ -5660,7 +5661,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5696,7 +5697,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5726,7 +5727,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5756,7 +5757,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5786,7 +5787,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5816,7 +5817,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5861,7 +5862,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5900,7 +5901,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5930,7 +5931,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -5969,7 +5970,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6008,7 +6009,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6038,7 +6039,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6077,7 +6078,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6116,7 +6117,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6155,7 +6156,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6191,7 +6192,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6221,7 +6222,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6251,7 +6252,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6281,7 +6282,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6311,7 +6312,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6356,7 +6357,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6395,7 +6396,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6425,7 +6426,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6464,7 +6465,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6503,7 +6504,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6533,7 +6534,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6572,7 +6573,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6617,7 +6618,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6656,7 +6657,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6686,7 +6687,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6725,7 +6726,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6764,7 +6765,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6803,7 +6804,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6833,7 +6834,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6872,7 +6873,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6911,7 +6912,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6950,7 +6951,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -6989,7 +6990,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7019,7 +7020,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7058,7 +7059,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7097,7 +7098,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7127,7 +7128,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7166,7 +7167,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7205,7 +7206,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7244,7 +7245,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7274,7 +7275,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7313,7 +7314,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7352,7 +7353,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7391,7 +7392,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7430,7 +7431,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7461,7 +7462,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7492,7 +7493,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7523,7 +7524,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7563,7 +7564,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7603,7 +7604,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7634,7 +7635,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7674,7 +7675,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7714,7 +7715,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7754,7 +7755,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7785,7 +7786,7 @@
       (i64.const 1)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7816,7 +7817,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7847,7 +7848,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7887,7 +7888,7 @@
       (i64.const 2)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7927,7 +7928,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7958,7 +7959,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -7998,7 +7999,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8038,7 +8039,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8078,7 +8079,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8109,7 +8110,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8149,7 +8150,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8189,7 +8190,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8229,7 +8230,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8269,7 +8270,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8300,7 +8301,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8340,7 +8341,7 @@
       (i64.const 4)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8380,7 +8381,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8411,7 +8412,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8451,7 +8452,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8491,7 +8492,7 @@
       (i64.const 8)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8531,7 +8532,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8562,7 +8563,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8602,7 +8603,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8642,7 +8643,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )
@@ -8682,7 +8683,7 @@
       (i64.const 16)
      )
      (i64.load
-      (global.get $DYNAMICTOP_PTR)
+      (call $foo)
      )
     )
    )

@@ -205,6 +205,47 @@
 )
 (module
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (func $signed-comparison-to-unsigned
+  (call $log
+   (i32.eq               ;; should be false
+    (i32.shr_s           ;; 0x0000006b after the sign-extend
+     (i32.shl
+      (i32.const -25749) ;; 0xffff9b6b
+      (i32.const 24)
+     )
+     (i32.const 24)
+    )
+    (i32.const -149)     ;; 0xffffff6b - high bits are set, but not sign bit
+   )
+  )
+  ;; the same, with mixed high bits. mixed bits mean the two sides can never be
+  ;; equal, so the eq is always false
+  (call $log
+   (i32.eq
+    (i32.shr_s
+     (i32.shl
+      (i32.const -25749)
+      (i32.const 24)
+     )
+     (i32.const 24)
+    )
+    (i32.const 0xffffeb)
+   )
+  )
+  ;; the same, with !=, so the result is always true
+  (call $log
+   (i32.ne
+    (i32.shr_s
+     (i32.shl
+      (i32.const -25749)
+      (i32.const 24)
+     )
+     (i32.const 24)
+    )
+    (i32.const 0xffffeb)
+   )
+  )
+ )
  (func "foo" (param $0 i32)
   ;; 8 - 0x80000000 < 0
   ;;
@@ -244,6 +285,68 @@
     (i32.const 8)
     (i32.const 0x80000000)
    )
+  )
+ )
+ (func $shift (param $0 i32)
+  (call $log
+   ;; x << 24 >> 24 << 30 >> 24 - the extra shifts make it invalid to do the
+   ;; optimization of not repeating a sign-extend. That is, this would be valid
+   ;; if the 30 were replaced by a 24.
+   (i32.shr_s
+    (i32.shl
+     (i32.shr_s
+      (i32.shl
+       (local.get $0)
+       (i32.const 24)
+      )
+      (i32.const 24)
+     )
+     (i32.const 30)
+    )
+    (i32.const 24)
+   )
+  )
+ )
+ (func "do-shift"
+  (call $shift
+   (i32.const 65419)
+  )
+ )
+ ;; similar, but with the value compared to having the sign bit set but no
+ ;; upper bits
+ (func $compare-maybe-signed-eq (param $0 i32) (result i32)
+  (i32.eq
+   (i32.shr_s
+    (i32.shl
+     (local.get $0)
+     (i32.const 24)
+    )
+    (i32.const 24)
+   )
+   (i32.const 128)
+  )
+ )
+ (func "call-compare-maybe-signed-eq" (result i32)
+  (call $compare-maybe-signed-eq
+   (i32.const 128)
+  )
+ )
+ ;; the same with !=
+ (func $compare-maybe-signed-ne (param $0 i32) (result i32)
+  (i32.ne
+   (i32.shr_s
+    (i32.shl
+     (local.get $0)
+     (i32.const 24)
+    )
+    (i32.const 24)
+   )
+   (i32.const 128)
+  )
+ )
+ (func "call-compare-maybe-signed-ne" (result i32)
+  (call $compare-maybe-signed-ne
+   (i32.const 128)
   )
  )
 )

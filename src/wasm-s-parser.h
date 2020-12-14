@@ -77,6 +77,11 @@ public:
   Element* setString(cashew::IString str__, bool dollared__, bool quoted__);
   Element* setMetadata(size_t line_, size_t col_, SourceLocation* startLoc_);
 
+  // comparisons
+  bool operator==(Name name) { return isStr() && str() == name; }
+
+  template<typename T> bool operator!=(T t) { return !(*this == t); }
+
   // printing
   friend std::ostream& operator<<(std::ostream& o, Element& e);
   void dump();
@@ -112,8 +117,11 @@ class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
   IRProfile profile;
-  std::vector<Signature> signatures;
-  std::unordered_map<std::string, size_t> signatureIndices;
+
+  // The main list of types declared in the module
+  std::vector<HeapType> types;
+  std::unordered_map<std::string, size_t> typeIndices;
+
   std::vector<Name> functionNames;
   std::vector<Name> globalNames;
   std::vector<Name> eventNames;
@@ -144,7 +152,6 @@ private:
 
   UniqueNameMapper nameMapper;
 
-  Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
   Name getGlobalName(Element& s);
   Name getEventName(Element& s);
@@ -246,6 +253,7 @@ private:
   Expression* makeBrOnExn(Element& s);
   Expression* makeTupleMake(Element& s);
   Expression* makeTupleExtract(Element& s);
+  Expression* makeCallRef(Element& s, bool isReturn);
   Expression* makeI31New(Element& s);
   Expression* makeI31Get(Element& s, bool signed_);
   Expression* makeRefTest(Element& s);
@@ -254,12 +262,11 @@ private:
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
-  Expression* makeStructGet(Element& s);
-  Expression* makeStructGet(Element& s, bool signed_);
+  Index getStructIndex(const HeapType& type, Element& s);
+  Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
-  Expression* makeArrayGet(Element& s);
-  Expression* makeArrayGet(Element& s, bool signed_);
+  Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
 
@@ -288,10 +295,22 @@ private:
   void parseTable(Element& s, bool preParseImport = false);
   void parseElem(Element& s);
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
+
+  // Parses something like (func ..), (array ..), (struct)
+  HeapType parseHeapType(Element& s);
+
   void parseType(Element& s);
   void parseEvent(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
+
+  // Struct/Array instructions have an unnecessary heap type that is just for
+  // validation (except for the case of unreachability, but that's not a problem
+  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // child from which we can infer the type anyhow, and we just need to check
+  // that type is the same.
+  void
+  validateHeapTypeUsingChild(Expression* child, HeapType heapType, Element& s);
 };
 
 } // namespace wasm

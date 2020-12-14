@@ -14,9 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 from lit.main import main
 
-# A simple wrapper around `lit`'s main function, since it isn't otherwise
-# exposed.
+# A simple wrapper around `lit` test running.   Loosely based on
+# llvm's llvm-lit script
+
+builtin_parameters = {
+    'config_map': {
+        os.path.normcase(os.path.normpath('@CMAKE_SOURCE_DIR@/test/lit/lit.cfg.py')):
+        os.path.normcase(os.path.normpath('@CMAKE_BINARY_DIR@/test/lit/lit.site.cfg.py'))
+    }
+}
+
+print(builtin_parameters)
+
 if __name__ == '__main__':
-    main()
+    main(builtin_parameters)

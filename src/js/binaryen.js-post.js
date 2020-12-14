@@ -99,6 +99,7 @@ function initializeConstants() {
     'Pop',
     'I31New',
     'I31Get',
+    'CallRef',
     'RefTest',
     'RefCast',
     'BrOnCast',
@@ -2112,8 +2113,8 @@ function wrapModule(module, self = {}) {
     'is_null'(value) {
       return Module['_BinaryenRefIsNull'](module, value);
     },
-    'func'(func) {
-      return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func)));
+    'func'(func, type) {
+      return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func), type));
     },
     'eq'(left, right) {
       return Module['_BinaryenRefEq'](module, left, right);

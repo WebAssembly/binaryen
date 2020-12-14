@@ -43,6 +43,11 @@ class Literal {
     Name func;
     // exnref package. `nullptr` indicates a `null` value.
     std::unique_ptr<ExceptionPackage> exn;
+    // A reference to GC data, either a Struct or an Array. For both of those
+    // we store the referred data as a Literals object (which is natural for an
+    // Array, and for a Struct, is just the fields in order). The type is used
+    // to indicate whether this is a Struct or an Array, and of what type.
+    std::shared_ptr<Literals> gcData;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
     // 1) run the spec tests and fuzzer with reference types enabled and
@@ -55,7 +60,7 @@ public:
 
   Literal() : v128(), type(Type::none) {}
   explicit Literal(Type type);
-  explicit Literal(Type::BasicID typeId) : Literal(Type(typeId)) {}
+  explicit Literal(Type::BasicType type) : Literal(Type(type)) {}
   explicit Literal(int32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(uint32_t init) : i32(init), type(Type::i32) {}
   explicit Literal(int64_t init) : i64(init), type(Type::i64) {}
@@ -71,15 +76,19 @@ public:
   explicit Literal(const std::array<Literal, 8>&);
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
-  explicit Literal(Name func, Type type = Type::funcref)
-    : func(func), type(type) {}
+  explicit Literal(Name func, Type type) : func(func), type(type) {}
   explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
+  explicit Literal(std::shared_ptr<Literals> gcData, Type type)
+    : gcData(gcData), type(type) {}
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal() {
     if (type.isException()) {
       exn.~unique_ptr();
+    }
+    if (type.isStruct() || type.isArray()) {
+      gcData.~shared_ptr();
     }
   }
 
@@ -92,6 +101,9 @@ public:
       }
       if (type.isException()) {
         return !exn;
+      }
+      if (isGCData()) {
+        return !gcData;
       }
       return true;
     }
@@ -157,6 +169,7 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
+  bool isGCData() const { return type.isStruct() || type.isArray(); }
 
   static Literals makeZeros(Type type);
   static Literals makeOnes(Type type);
@@ -277,6 +290,7 @@ public:
     return func;
   }
   ExceptionPackage getExceptionPackage() const;
+  std::shared_ptr<Literals> getGCData() const;
 
   // careful!
   int32_t* geti32Ptr() {
@@ -466,6 +480,7 @@ public:
   Literal leUI32x4(const Literal& other) const;
   Literal geSI32x4(const Literal& other) const;
   Literal geUI32x4(const Literal& other) const;
+  Literal eqI64x2(const Literal& other) const;
   Literal eqF32x4(const Literal& other) const;
   Literal neF32x4(const Literal& other) const;
   Literal ltF32x4(const Literal& other) const;
@@ -640,7 +655,9 @@ public:
       assert(lit.isConcrete());
     }
 #endif
-  };
+  }
+  Literals(size_t initialSize) : SmallVector(initialSize) {}
+
   Type getType() {
     std::vector<Type> types;
     for (auto& val : *this) {

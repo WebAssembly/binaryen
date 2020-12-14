@@ -175,6 +175,7 @@ enum UnaryOp {
   NegVecI64x2,
   AnyTrueVecI64x2,
   AllTrueVecI64x2,
+  BitmaskVecI64x2,
   AbsVecF32x4,
   NegVecF32x4,
   SqrtVecF32x4,
@@ -207,6 +208,10 @@ enum UnaryOp {
   WidenHighSVecI16x8ToVecI32x4,
   WidenLowUVecI16x8ToVecI32x4,
   WidenHighUVecI16x8ToVecI32x4,
+  WidenLowSVecI32x4ToVecI64x2,
+  WidenHighSVecI32x4ToVecI64x2,
+  WidenLowUVecI32x4ToVecI64x2,
+  WidenHighUVecI32x4ToVecI64x2,
 
   InvalidUnary
 };
@@ -351,6 +356,7 @@ enum BinaryOp {
   LeUVecI32x4,
   GeSVecI32x4,
   GeUVecI32x4,
+  EqVecI64x2,
   EqVecF32x4,
   NeVecF32x4,
   LtVecF32x4,
@@ -509,7 +515,17 @@ enum SIMDLoadStoreLaneOp {
   StoreLaneVec64x2,
 };
 
-enum SIMDTernaryOp { Bitselect, QFMAF32x4, QFMSF32x4, QFMAF64x2, QFMSF64x2 };
+enum SIMDTernaryOp {
+  Bitselect,
+  QFMAF32x4,
+  QFMSF32x4,
+  QFMAF64x2,
+  QFMSF64x2,
+  SignSelectVec8x16,
+  SignSelectVec16x8,
+  SignSelectVec32x4,
+  SignSelectVec64x2
+};
 
 //
 // Expressions
@@ -588,6 +604,7 @@ public:
     TupleExtractId,
     I31NewId,
     I31GetId,
+    CallRefId,
     RefTestId,
     RefCastId,
     BrOnCastId,
@@ -1198,6 +1215,7 @@ public:
   Name func;
 
   void finalize();
+  void finalize(Type type_);
 };
 
 class RefEq : public SpecificExpression<Expression::RefEqId> {
@@ -1293,18 +1311,35 @@ public:
   void finalize();
 };
 
+class CallRef : public SpecificExpression<Expression::CallRefId> {
+public:
+  CallRef(MixedArena& allocator) : operands(allocator) {}
+  ExpressionList operands;
+  Expression* target;
+  bool isReturn = false;
+
+  void finalize();
+  void finalize(Type type_);
+};
+
 class RefTest : public SpecificExpression<Expression::RefTestId> {
 public:
   RefTest(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.test"); }
+  Expression* ref;
+  Expression* rtt;
+
+  void finalize();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
 public:
   RefCast(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): ref.cast"); }
+  Expression* ref;
+  Expression* rtt;
+
+  void finalize();
 };
 
 class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
@@ -1318,63 +1353,102 @@ class RttCanon : public SpecificExpression<Expression::RttCanonId> {
 public:
   RttCanon(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.canon"); }
+  void finalize();
 };
 
 class RttSub : public SpecificExpression<Expression::RttSubId> {
 public:
   RttSub(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
+  Expression* parent;
+
+  void finalize();
 };
 
 class StructNew : public SpecificExpression<Expression::StructNewId> {
 public:
-  StructNew(MixedArena& allocator) {}
+  StructNew(MixedArena& allocator) : operands(allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.new"); }
+  Expression* rtt;
+  // A struct.new_with_default has empty operands. This does leave the case of a
+  // struct with no fields ambiguous, but it doesn't make a difference in that
+  // case, and binaryen doesn't guarantee roundtripping binaries anyhow.
+  ExpressionList operands;
+
+  bool isWithDefault() { return operands.empty(); }
+
+  void finalize();
 };
 
 class StructGet : public SpecificExpression<Expression::StructGetId> {
 public:
   StructGet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.get"); }
+  Index index;
+  Expression* ref;
+  // Packed fields have a sign.
+  bool signed_ = false;
+
+  void finalize();
 };
 
 class StructSet : public SpecificExpression<Expression::StructSetId> {
 public:
   StructSet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): struct.set"); }
+  Index index;
+  Expression* ref;
+  Expression* value;
+
+  void finalize();
 };
 
 class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.new"); }
+  Expression* rtt;
+  Expression* size;
+  // If set, then the initial value is assigned to all entries in the array. If
+  // not set, this is array.new_with_default and the default of the type is
+  // used.
+  Expression* init = nullptr;
+
+  bool isWithDefault() { return !init; }
+
+  void finalize();
 };
 
 class ArrayGet : public SpecificExpression<Expression::ArrayGetId> {
 public:
   ArrayGet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.get"); }
+  Expression* ref;
+  Expression* index;
+  // Packed fields have a sign.
+  bool signed_ = false;
+
+  void finalize();
 };
 
 class ArraySet : public SpecificExpression<Expression::ArraySetId> {
 public:
   ArraySet(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.set"); }
+  Expression* ref;
+  Expression* index;
+  Expression* value;
+
+  void finalize();
 };
 
 class ArrayLen : public SpecificExpression<Expression::ArrayLenId> {
 public:
   ArrayLen(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): array.len"); }
+  Expression* ref;
+
+  void finalize();
 };
 
 // Globals
@@ -1599,6 +1673,8 @@ public:
     (uint64_t(4) * 1024 * 1024 * 1024) / kPageSize;
 
   struct Segment {
+    // For use in name section only
+    Name name;
     bool isPassive = false;
     Expression* offset = nullptr;
     std::vector<char> data; // TODO: optimize

@@ -338,6 +338,8 @@ enum EncodedType {
   f32 = -0x3,  // 0x7d
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
+  i8 = -0x6,   // 0x7a
+  i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
   // opaque host reference type
@@ -346,12 +348,22 @@ enum EncodedType {
   anyref = -0x12, // 0x6e
   // comparable reference type
   eqref = -0x13, // 0x6d
+  // nullable typed function reference type, with parameter
+  nullable = -0x14, // 0x6c
+  // non-nullable typed function reference type, with parameter
+  nonnullable = -0x15, // 0x6b
   // integer reference type
   i31ref = -0x16, // 0x6a
-  // exception reference type
-  exnref = -0x18, // 0x68
+  // run-time type info type, with depth index n
+  rtt_n = -0x17, // 0x69
+  // run-time type info type, without depth index n
+  rtt = -0x18, // 0x68
+  // exception reference type TODO remove; the code for now is incorrect
+  exnref = -0x19, // 0x67
   // func_type form
-  Func = -0x20, // 0x60
+  Func = -0x20,   // 0x60
+  Struct = -0x21, // 0x5f
+  Array = -0x22,  // 0x5e
   // block_type
   Empty = -0x40 // 0x40
 };
@@ -386,6 +398,7 @@ extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
 extern const char* GCFeature;
 extern const char* Memory64Feature;
+extern const char* TypedFunctionReferencesFeature;
 
 enum Subsection {
   NameModule = 0,
@@ -769,6 +782,7 @@ enum ASTNodes {
   I32x4LeU = 0x3e,
   I32x4GeS = 0x3f,
   I32x4GeU = 0x40,
+  I64x2Eq = 0xc0,
   F32x4Eq = 0x41,
   F32x4Ne = 0x42,
   F32x4Lt = 0x43,
@@ -788,6 +802,11 @@ enum ASTNodes {
   V128Or = 0x50,
   V128Xor = 0x51,
   V128Bitselect = 0x52,
+
+  V8x16SignSelect = 0x7d,
+  V16x8SignSelect = 0x7e,
+  V32x4SignSelect = 0x7f,
+  V64x2SignSelect = 0x94,
 
   V128Load8Lane = 0x58,
   V128Load16Lane = 0x59,
@@ -872,6 +891,11 @@ enum ASTNodes {
   I32x4MaxU = 0xb9,
   I32x4DotSVecI16x8 = 0xba,
 
+  I64x2Bitmask = 0xc4,
+  I64x2WidenLowSI32x4 = 0xc7,
+  I64x2WidenHighSI32x4 = 0xc8,
+  I64x2WidenLowUI32x4 = 0xc9,
+  I64x2WidenHighUI32x4 = 0xca,
   I64x2Neg = 0xc1,
   I64x2AnyTrue = 0xc2,
   I64x2AllTrue = 0xc3,
@@ -967,6 +991,11 @@ enum ASTNodes {
   Rethrow = 0x09,
   BrOnExn = 0x0a,
 
+  // typed function references opcodes
+
+  CallRef = 0x14,
+  RetCallRef = 0x15,
+
   // gc opcodes
 
   RefEq = 0xd5,
@@ -1008,82 +1037,6 @@ enum FeaturePrefix {
 };
 
 } // namespace BinaryConsts
-
-inline S32LEB binaryType(Type type) {
-  int ret = 0;
-  TODO_SINGLE_COMPOUND(type);
-  switch (type.getBasic()) {
-    // None only used for block signatures. TODO: Separate out?
-    case Type::none:
-      ret = BinaryConsts::EncodedType::Empty;
-      break;
-    case Type::i32:
-      ret = BinaryConsts::EncodedType::i32;
-      break;
-    case Type::i64:
-      ret = BinaryConsts::EncodedType::i64;
-      break;
-    case Type::f32:
-      ret = BinaryConsts::EncodedType::f32;
-      break;
-    case Type::f64:
-      ret = BinaryConsts::EncodedType::f64;
-      break;
-    case Type::v128:
-      ret = BinaryConsts::EncodedType::v128;
-      break;
-    case Type::funcref:
-      ret = BinaryConsts::EncodedType::funcref;
-      break;
-    case Type::externref:
-      ret = BinaryConsts::EncodedType::externref;
-      break;
-    case Type::exnref:
-      ret = BinaryConsts::EncodedType::exnref;
-      break;
-    case Type::anyref:
-      ret = BinaryConsts::EncodedType::anyref;
-      break;
-    case Type::eqref:
-      ret = BinaryConsts::EncodedType::eqref;
-      break;
-    case Type::i31ref:
-      ret = BinaryConsts::EncodedType::i31ref;
-      break;
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
-  }
-  return S32LEB(ret);
-}
-
-inline S32LEB binaryHeapType(HeapType type) {
-  int ret = 0;
-  switch (type.kind) {
-    case HeapType::FuncKind:
-      ret = BinaryConsts::EncodedHeapType::func;
-      break;
-    case HeapType::ExternKind:
-      ret = BinaryConsts::EncodedHeapType::extern_;
-      break;
-    case HeapType::ExnKind:
-      ret = BinaryConsts::EncodedHeapType::exn;
-      break;
-    case HeapType::AnyKind:
-      ret = BinaryConsts::EncodedHeapType::any;
-      break;
-    case HeapType::EqKind:
-      ret = BinaryConsts::EncodedHeapType::eq;
-      break;
-    case HeapType::I31Kind:
-      ret = BinaryConsts::EncodedHeapType::i31;
-      break;
-    case HeapType::SignatureKind:
-    case HeapType::StructKind:
-    case HeapType::ArrayKind:
-      WASM_UNREACHABLE("TODO: compound GC types");
-  }
-  return S32LEB(ret); // TODO: Actually encoded as s33
-}
 
 // Writes out wasm to the binary format
 
@@ -1191,7 +1144,7 @@ public:
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getEventIndex(Name name) const;
-  uint32_t getTypeIndex(Signature sig) const;
+  uint32_t getTypeIndex(HeapType type) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1234,12 +1187,16 @@ public:
 
   Module* getModule() { return wasm; }
 
+  void writeType(Type type);
+  void writeHeapType(HeapType type);
+  void writeField(const Field& field);
+
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
-  std::unordered_map<Signature, Index> typeIndices;
-  std::vector<Signature> types;
+  std::unordered_map<HeapType, Index> typeIndices;
+  std::vector<HeapType> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;
@@ -1283,8 +1240,8 @@ class WasmBinaryBuilder {
 
   std::set<BinaryConsts::Section> seenSections;
 
-  // All signatures present in the type section
-  std::vector<Signature> signatures;
+  // All types defined in the type section
+  std::vector<HeapType> types;
 
 public:
   WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
@@ -1312,19 +1269,24 @@ public:
   int32_t getS32LEB();
   int64_t getS64LEB();
   uint64_t getUPtrLEB();
+
+  // Read a value and get a type for it.
   Type getType();
+  // Get a type given the initial S32LEB has already been read, and is provided.
+  Type getType(int initial);
+
   HeapType getHeapType();
+  Field getField();
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);
   void verifyInt16(int16_t x);
   void verifyInt32(int32_t x);
   void verifyInt64(int64_t x);
-  void ungetInt8();
   void readHeader();
   void readStart();
   void readMemory();
-  void readSignatures();
+  void readTypes();
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
@@ -1342,6 +1304,9 @@ public:
   std::vector<Signature> functionSignatures;
 
   void readFunctionSignatures();
+  Signature getSignatureByFunctionIndex(Index index);
+  Signature getSignatureByTypeIndex(Index index);
+
   size_t nextLabel;
 
   Name getNextLabel();
@@ -1362,7 +1327,7 @@ public:
   Index endOfFunction = -1;
 
   // we store globals here before wasm.addGlobal after we know their names
-  std::vector<Global*> globals;
+  std::vector<std::unique_ptr<Global>> globals;
   // we store global imports here before wasm.addGlobalImport after we know
   // their names
   std::vector<Global*> globalImports;
@@ -1545,8 +1510,16 @@ public:
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);
+  void visitCallRef(CallRef* curr);
 
   void throwError(std::string text);
+
+  // Struct/Array instructions have an unnecessary heap type that is just for
+  // validation (except for the case of unreachability, but that's not a problem
+  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // child from which we can infer the type anyhow, and we just need to check
+  // that type is the same.
+  void validateHeapTypeUsingChild(Expression* child, HeapType heapType);
 
 private:
   bool hasDWARFSections();

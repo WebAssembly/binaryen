@@ -153,7 +153,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_tail_call(module, 'return_call requires tail calls to be enabled')
+        self.check_tail_call(module, 'return_call* requires tail calls to be enabled')
 
     def test_tail_call_indirect(self):
         module = '''
@@ -167,7 +167,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_tail_call(module, 'return_call_indirect requires tail calls to be enabled')
+        self.check_tail_call(module, 'return_call* requires tail calls to be enabled')
 
     def test_reference_types_externref(self):
         module = '''
@@ -408,5 +408,6 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-reference-types',
             '--enable-multivalue',
             '--enable-gc',
-            '--enable-memory64'
+            '--enable-memory64',
+            '--enable-typed-function-references',
         ], p2.stdout.splitlines())

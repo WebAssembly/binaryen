@@ -45,7 +45,6 @@
 ;; pre-existing
 (module
  (type $FUNCSIG$v (func))
- (import "env" "DYNAMICTOP_PTR" (global $DYNAMICTOP_PTR i32))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
  (memory $0 (shared 100 100))

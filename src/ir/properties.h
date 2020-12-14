@@ -19,6 +19,7 @@
 
 #include "ir/bits.h"
 #include "ir/effects.h"
+#include "ir/match.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -81,7 +82,8 @@ inline bool isNamedControlFlow(Expression* curr) {
 
 inline bool isSingleConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
-         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>());
+         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>()) ||
+         curr->is<RttCanon>() || curr->is<RttSub>();
 }
 
 inline bool isConstantExpression(const Expression* curr) {
@@ -105,7 +107,7 @@ inline Literal getLiteral(const Expression* curr) {
   } else if (auto* n = curr->dynCast<RefNull>()) {
     return Literal(n->type);
   } else if (auto* r = curr->dynCast<RefFunc>()) {
-    return Literal(r->func);
+    return Literal(r->func, r->type);
   } else if (auto* i = curr->dynCast<I31New>()) {
     if (auto* c = i->value->dynCast<Const>()) {
       return Literal::makeI31(c->value.geti32());
@@ -131,84 +133,81 @@ inline Literals getLiterals(const Expression* curr) {
 // Check if an expression is a sign-extend, and if so, returns the value
 // that is extended, otherwise nullptr
 inline Expression* getSignExtValue(Expression* curr) {
-  if (auto* outer = curr->dynCast<Binary>()) {
-    if (outer->op == ShrSInt32) {
-      if (auto* outerConst = outer->right->dynCast<Const>()) {
-        if (outerConst->value.geti32() != 0) {
-          if (auto* inner = outer->left->dynCast<Binary>()) {
-            if (inner->op == ShlInt32) {
-              if (auto* innerConst = inner->right->dynCast<Const>()) {
-                if (outerConst->value == innerConst->value) {
-                  return inner->left;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  // We only care about i32s here, and ignore i64s, unreachables, etc.
+  if (curr->type != Type::i32) {
+    return nullptr;
+  }
+  using namespace Match;
+  int32_t leftShift = 0, rightShift = 0;
+  Expression* extended = nullptr;
+  if (matches(curr,
+              binary(ShrSInt32,
+                     binary(ShlInt32, any(&extended), i32(&leftShift)),
+                     i32(&rightShift))) &&
+      leftShift == rightShift && leftShift != 0) {
+    return extended;
   }
   return nullptr;
 }
 
 // gets the size of the sign-extended value
 inline Index getSignExtBits(Expression* curr) {
-  return 32 - Bits::getEffectiveShifts(curr->cast<Binary>()->right);
+  assert(curr->type == Type::i32);
+  auto* rightShift = curr->cast<Binary>()->right;
+  return 32 - Bits::getEffectiveShifts(rightShift);
 }
 
 // Check if an expression is almost a sign-extend: perhaps the inner shift
 // is too large. We can split the shifts in that case, which is sometimes
 // useful (e.g. if we can remove the signext)
 inline Expression* getAlmostSignExt(Expression* curr) {
-  if (auto* outer = curr->dynCast<Binary>()) {
-    if (outer->op == ShrSInt32) {
-      if (auto* outerConst = outer->right->dynCast<Const>()) {
-        if (outerConst->value.geti32() != 0) {
-          if (auto* inner = outer->left->dynCast<Binary>()) {
-            if (inner->op == ShlInt32) {
-              if (auto* innerConst = inner->right->dynCast<Const>()) {
-                if (Bits::getEffectiveShifts(outerConst) <=
-                    Bits::getEffectiveShifts(innerConst)) {
-                  return inner->left;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  using namespace Match;
+  int32_t leftShift = 0, rightShift = 0;
+  Expression* extended = nullptr;
+  if (matches(curr,
+              binary(ShrSInt32,
+                     binary(ShlInt32, any(&extended), i32(&leftShift)),
+                     i32(&rightShift))) &&
+      Bits::getEffectiveShifts(rightShift, Type::i32) <=
+        Bits::getEffectiveShifts(leftShift, Type::i32) &&
+      rightShift != 0) {
+    return extended;
   }
   return nullptr;
 }
 
 // gets the size of the almost sign-extended value, as well as the
 // extra shifts, if any
-inline Index getAlmostSignExtBits(Expression* curr, Index& extraShifts) {
-  extraShifts = Bits::getEffectiveShifts(
-                  curr->cast<Binary>()->left->cast<Binary>()->right) -
-                Bits::getEffectiveShifts(curr->cast<Binary>()->right);
+inline Index getAlmostSignExtBits(Expression* curr, Index& extraLeftShifts) {
+  auto* leftShift = curr->cast<Binary>()->left->cast<Binary>()->right;
+  auto* rightShift = curr->cast<Binary>()->right;
+  extraLeftShifts =
+    Bits::getEffectiveShifts(leftShift) - Bits::getEffectiveShifts(rightShift);
   return getSignExtBits(curr);
 }
 
 // Check if an expression is a zero-extend, and if so, returns the value
 // that is extended, otherwise nullptr
 inline Expression* getZeroExtValue(Expression* curr) {
-  if (auto* binary = curr->dynCast<Binary>()) {
-    if (binary->op == AndInt32) {
-      if (auto* c = binary->right->dynCast<Const>()) {
-        if (Bits::getMaskedBits(c->value.geti32())) {
-          return binary->right;
-        }
-      }
-    }
+  // We only care about i32s here, and ignore i64s, unreachables, etc.
+  if (curr->type != Type::i32) {
+    return nullptr;
+  }
+  using namespace Match;
+  int32_t mask = 0;
+  Expression* extended = nullptr;
+  if (matches(curr, binary(AndInt32, any(&extended), i32(&mask))) &&
+      Bits::getMaskedBits(mask) != 0) {
+    return extended;
   }
   return nullptr;
 }
 
 // gets the size of the sign-extended value
 inline Index getZeroExtBits(Expression* curr) {
-  return Bits::getMaskedBits(
-    curr->cast<Binary>()->right->cast<Const>()->value.geti32());
+  assert(curr->type == Type::i32);
+  int32_t mask = curr->cast<Binary>()->right->cast<Const>()->value.geti32();
+  return Bits::getMaskedBits(mask);
 }
 
 // Returns a falling-through value, that is, it looks through a local.tee

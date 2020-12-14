@@ -157,18 +157,14 @@
    )
   )
   (local.set $F
-   (call $set_funcref
-    (i32.const 15)
-    (i32.const 4)
-    (ref.func $test)
-   )
+   (ref.func $test)
   )
   (local.set $X
    (call $set_externref
-    (i32.const 17)
+    (i32.const 16)
     (i32.const 5)
     (call $get_externref
-     (i32.const 16)
+     (i32.const 15)
      (i32.const 5)
      (local.get $X)
     )
@@ -176,10 +172,10 @@
   )
   (local.set $E
    (call $set_exnref
-    (i32.const 19)
+    (i32.const 18)
     (i32.const 6)
     (call $get_exnref
-     (i32.const 18)
+     (i32.const 17)
      (i32.const 6)
      (local.get $E)
     )
@@ -187,7 +183,7 @@
   )
   (local.set $x
    (call $set_i32
-    (i32.const 20)
+    (i32.const 19)
     (i32.const 0)
     (i32.const 11)
    )
@@ -197,24 +193,24 @@
   )
   (local.set $z
    (call $set_f32
-    (i32.const 21)
+    (i32.const 20)
     (i32.const 2)
     (f32.const 33.209999084472656)
    )
   )
   (local.set $w
    (call $set_f64
-    (i32.const 22)
+    (i32.const 21)
     (i32.const 3)
     (f64.const 44.321)
    )
   )
   (local.set $F
    (call $set_funcref
-    (i32.const 24)
+    (i32.const 23)
     (i32.const 4)
     (call $get_funcref
-     (i32.const 23)
+     (i32.const 22)
      (i32.const 4)
      (local.get $F)
     )
@@ -222,10 +218,10 @@
   )
   (local.set $X
    (call $set_externref
-    (i32.const 26)
+    (i32.const 25)
     (i32.const 5)
     (call $get_externref
-     (i32.const 25)
+     (i32.const 24)
      (i32.const 5)
      (local.get $X)
     )
@@ -233,10 +229,10 @@
   )
   (local.set $E
    (call $set_exnref
-    (i32.const 28)
+    (i32.const 27)
     (i32.const 6)
     (call $get_exnref
-     (i32.const 27)
+     (i32.const 26)
      (i32.const 6)
      (local.get $E)
     )
@@ -274,14 +270,14 @@
   )
   (drop
    (call $get_v128
-    (i32.const 29)
+    (i32.const 28)
     (i32.const 7)
     (local.get $S)
    )
   )
   (local.set $S
    (call $set_v128
-    (i32.const 30)
+    (i32.const 29)
     (i32.const 7)
     (v128.const i32x4 0x00000000 0x00000001 0x00000002 0x00000003)
    )

@@ -805,6 +805,19 @@
         (i32.const 0)
       )
     )
+    (drop
+      (if (result i32)
+        (i32.shr_s
+          (i32.shl
+            (unreachable) ;; ignore an unreachable value
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+        (i32.const 111)
+        (i32.const 222)
+      )
+    )
   )
   (func $sign-ext-input (param $0 i32) (param $1 i32)
     (drop
@@ -6160,5 +6173,15 @@
       )
       (nop)
     )
+  )
+)
+;; typed function references
+(module
+  (type $i32-i32 (func (param i32) (result i32)))
+  ;; this function has a reference parameter. we analyze parameters, and should
+  ;; not be confused by a type that has no bit size, in particular. this test
+  ;; just verifies that we do not crash on that.
+  (func $call_from-param (param $f (ref null $i32-i32)) (result i32)
+    (unreachable)
   )
 )

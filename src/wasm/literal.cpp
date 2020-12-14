@@ -55,8 +55,14 @@ Literal::Literal(const Literal& other) : type(other.type) {
     } else {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     }
+  } else if (other.isGCData()) {
+    // Avoid calling the destructor on an uninitialized value
+    new (&gcData) std::shared_ptr<Literals>(other.gcData);
   } else if (type.isFunction()) {
     func = other.func;
+  } else if (type.isRtt()) {
+    // Nothing to do: Rtts help JITs optimize, but are not used in the
+    // interpreter yet, and they are opaque to the wasm itself.
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -187,6 +193,11 @@ std::array<uint8_t, 16> Literal::getv128() const {
 ExceptionPackage Literal::getExceptionPackage() const {
   assert(type.isException() && exn != nullptr);
   return *exn;
+}
+
+std::shared_ptr<Literals> Literal::getGCData() const {
+  assert(isGCData());
+  return gcData;
 }
 
 Literal Literal::castToF32() {
@@ -427,6 +438,13 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "funcref(null)";
     } else {
       o << "funcref(" << literal.getFunc() << ")";
+    }
+  } else if (literal.isGCData()) {
+    auto data = literal.getGCData();
+    if (data) {
+      o << "[ref " << *data << ']';
+    } else {
+      o << "[ref null " << literal.type << ']';
     }
   } else {
     TODO_SINGLE_COMPOUND(literal.type);
@@ -1569,7 +1587,8 @@ Literal Literal::shuffleV8x16(const Literal& other,
   return Literal(bytes);
 }
 
-template<Type::BasicID Ty, int Lanes> static Literal splat(const Literal& val) {
+template<Type::BasicType Ty, int Lanes>
+static Literal splat(const Literal& val) {
   assert(val.type == Ty);
   LaneArray<Lanes> lanes;
   lanes.fill(val);
@@ -1966,6 +1985,10 @@ Literal Literal::geSI32x4(const Literal& other) const {
 }
 Literal Literal::geUI32x4(const Literal& other) const {
   return compare<4, &Literal::getLanesI32x4, &Literal::geU>(*this, other);
+}
+Literal Literal::eqI64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesI64x2, &Literal::eq, int64_t>(*this,
+                                                                    other);
 }
 Literal Literal::eqF32x4(const Literal& other) const {
   return compare<4, &Literal::getLanesF32x4, &Literal::eq>(*this, other);
