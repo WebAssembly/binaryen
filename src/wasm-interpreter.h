@@ -1377,48 +1377,82 @@ public:
     return Literal(value.geti31(curr->signed_));
   }
 
-  // Helper for ref.test and ref.cast, which share almost all their logic except
-  // for what they return.
-  template<typename T> Flow doRefCast(T* curr) {
+  // Helper for ref.test, ref.cast, and br_on_cast, which share almost all their
+  // logic except for what they return.
+  struct Cast {
+    enum Outcome {
+      // We took a break before doing anything.
+      Break,
+      // The input was null.
+      Null,
+      // The cast succeeded.
+      Success,
+      // The cast failed.
+      Failure
+    } outcome;
+
+    Flow breaking;
+    Literal originalRef;
+    Literal castRef;
+  };
+
+  template<typename T> Cast doCast(T* curr) {
+    Cast cast;
     Flow ref = this->visit(curr->ref);
     if (ref.breaking()) {
-      return ref;
+      cast.outcome = cast.Break;
+      cast.breaking = ref;
+      return cast;
     }
     Flow rtt = this->visit(curr->rtt);
     if (rtt.breaking()) {
-      return rtt;
+      cast.outcome = cast.Break;
+      cast.breaking = rtt;
+      return cast;
     }
-    auto gcData = ref.getSingleValue().getGCData();
+    cast.originalRef = ref.getSingleValue();
+    auto gcData = cast.originalRef.getGCData();
     if (!gcData) {
-      // It's a null. Return a 0 of the proper type (null for cast, 0 for test).
-      return Literal::makeZero(curr->type);
+      cast.outcome = cast.Null;
+      return cast;
     }
-    auto isRefCast = curr->template is<RefCast>();
     auto refRtt = gcData->rtt;
     auto intendedRtt = rtt.getSingleValue();
     if (!refRtt.isSubRtt(intendedRtt)) {
-      // We failed. Cast traps while test returns 0.
-      if (isRefCast) {
-        trap("cast error");
-      } else {
-        return Literal(int32_t(0));
+      cast.outcome = cast.Failure;
+    } else {
+      cast.outcome = cast.Success;
+      // If the output may want the cast reference, cast it. (ref.test has type
+      // i32, and so it definitely does not.)
+      if (curr->type.isRef()) {
+        cast.castRef = Literal(gcData, curr->type);
       }
     }
-    // The cast succeeded, return the data properly
-    if (isRefCast) {
-      return Literal(gcData, curr->type);
-    } else {
-      return Literal(int32_t(1));
-    }
+    return cast;
   }
 
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
-    return doRefCast(curr);
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    return Literal(int32_t(cast.outcome == cast.Success));
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
-    return doRefCast(curr);
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    if (cast.outcome == cast.Null) {
+      return Literal::makeNull(curr->type);
+    }
+    if (cast.outcome == cast.Failure) {
+      trap("cast error");
+    }
+    assert(cast.outcome == cast.Success);
+    return cast.castRef;
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");
