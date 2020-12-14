@@ -185,7 +185,7 @@ struct BranchSeeker
   }
 
   void visitExpression(Expression* curr) {
-    operateOnScopeNameDefs(curr, [&](Name& name) {
+    operateOnScopeNameUses(curr, [&](Name& name) {
       if (name == target) {
         if (auto* br = curr->dynCast<Break>()) {
           noteFound(br->value);
