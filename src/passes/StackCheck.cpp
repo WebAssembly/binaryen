@@ -32,6 +32,9 @@
 
 namespace wasm {
 
+// Exported function to set the base and the limit.
+static Name SET_STACK_LIMITS("__set_stack_limits");
+
 static void importStackOverflowHandler(Module& module, Name name) {
   ImportInfo info(module);
 
@@ -134,8 +137,6 @@ struct StackCheck : public Pass {
   // The limit is the farthest it can grow to, which is the lowest valid
   // address.
   Name STACK_LIMIT;
-  // Exported function to set the base and the limit.
-  Name SET_STACK_LIMITS;
 
   void run(PassRunner* runner, Module* module) override {
     Global* stackPointer = getStackPointerGlobal(*module);
@@ -147,8 +148,6 @@ struct StackCheck : public Pass {
     // Pick appropriate names.
     STACK_BASE = Names::getValidGlobalName(*module, "__stack_base");
     STACK_LIMIT = Names::getValidGlobalName(*module, "__stack_limit");
-    SET_STACK_LIMITS =
-      Names::getValidFunctionName(*module, "__set_stack_limits");
 
     Name handler;
     auto handlerName =

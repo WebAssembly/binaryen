@@ -15,6 +15,4 @@
  (func $0 (result i32)
   (unreachable)
  )
- (func $__set_stack_limits (param $0 i32) (param $1 i32)
- )
 )
