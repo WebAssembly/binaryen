@@ -97,7 +97,7 @@ public:
   explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
     : exn(std::move(exn)), type(Type::exnref) {}
   explicit Literal(std::shared_ptr<GCData> gcData, Type type);
-  explicit Literal(RttSupers rttSupers, Type type);
+  explicit Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type) {}
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();

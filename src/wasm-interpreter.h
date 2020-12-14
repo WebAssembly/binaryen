@@ -1465,9 +1465,9 @@ public:
       return parent;
     }
     auto parentValue = parent.getSingleValue();
-    RttSupers newSupers = parentValue.getRttSupers();
-    newSupers.push_back(parentValue.type);
-    return Literal(newSupers, curr->type);
+    auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
+    newSupers->push_back(parentValue.type);
+    return Literal(std::move(newSupers), curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");

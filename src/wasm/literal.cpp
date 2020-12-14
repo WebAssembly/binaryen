@@ -59,8 +59,8 @@ Literal::Literal(std::shared_ptr<GCData> gcData, Type type)
   assert(isGCData());
 }
 
-Literal::Literal(RttSupers rttSupers, Type type)
-  : rttSupers(std::make_unique<RttSupers>(rttSupers)), type(type) {
+Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
+  : rttSupers(std::move(rttSupers)), type(type) {
   assert(type.isRtt());
 }
 
