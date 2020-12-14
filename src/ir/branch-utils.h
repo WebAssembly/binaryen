@@ -43,8 +43,7 @@ inline bool isBranchReachable(Expression* expr) {
 // Perform a generic operation on uses of scope names (branch targets) in an
 // expression. The provided function receives a Name& which it can modify if it
 // needs to.
-inline void operateOnScopeNameUses(Expression* expr,
-                                   std::function<void(Name&)> func) {
+template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #define DELEGATE_ID expr->_id
 
 #define DELEGATE_START(id)                                                     \
@@ -71,8 +70,7 @@ inline void operateOnScopeNameUses(Expression* expr,
 
 // Perform a generic operation on definitions of scope names in an expression.
 // The provided function receives a Name& which it can modify if it needs to.
-inline void operateOnScopeNameDefs(Expression* expr,
-                                   std::function<void(Name&)> func) {
+template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
 #define DELEGATE_ID expr->_id
 
 #define DELEGATE_START(id)                                                     \
