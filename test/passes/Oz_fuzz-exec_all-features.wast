@@ -1,6 +1,6 @@
 (module
  (type $struct (struct i32))
- (type $superstruct (struct i32 f64))
+ (type $extendedstruct (struct i32 f64))
  (type $bytes (array (mut i8)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (func "structs"
@@ -70,12 +70,12 @@
  )
  (func "rtts"
   (local $x (rtt $struct))
-  (local $y (rtt $superstruct))
-  (local $z (rtt $superstruct))
+  (local $y (rtt $extendedstruct))
+  (local $z (rtt $extendedstruct))
   (local $any anyref)
   (local.set $x (rtt.canon $struct))
-  (local.set $y (rtt.sub $superstruct (local.get $x)))
-  (local.set $z (rtt.canon $superstruct))
+  (local.set $y (rtt.sub $extendedstruct (local.get $x)))
+  (local.set $z (rtt.canon $extendedstruct))
   ;; Casting null returns null.
   (call $log (ref.is_null
    (ref.cast $struct (ref.null $struct) (local.get $x))
@@ -104,31 +104,31 @@
     (local.get $x)
    )
   )
-  ;; A bad downcast returns 0: we create a struct, which is not a superstruct.
+  ;; A bad downcast returns 0: we create a struct, which is not a extendedstruct.
   (call $log
-   (ref.test $superstruct
+   (ref.test $extendedstruct
     (struct.new_default_with_rtt $struct
      (local.get $x)
     )
     (local.get $z)
    )
   )
-  ;; Create a superstruct with RTT y, and upcast statically to anyref.
+  ;; Create a extendedstruct with RTT y, and upcast statically to anyref.
   (local.set $any
-   (struct.new_default_with_rtt $superstruct
+   (struct.new_default_with_rtt $extendedstruct
     (local.get $y)
    )
   )
   ;; Casting to y, the exact same RTT, works.
   (call $log
-   (ref.test $superstruct
+   (ref.test $extendedstruct
     (local.get $any)
     (local.get $y)
    )
   )
   ;; Casting to z, another RTT of the same data type, fails.
   (call $log
-   (ref.test $superstruct
+   (ref.test $extendedstruct
     (local.get $any)
     (local.get $z)
    )
