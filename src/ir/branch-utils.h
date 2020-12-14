@@ -161,7 +161,8 @@ inline NameSet getBranchTargets(Expression* ast) {
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
-struct BranchSeeker : public PostWalker<BranchSeeker> {
+struct BranchSeeker : public PostWalker<BranchSeeker,
+                                        UnifiedExpressionVisitor<BranchSeeker>> {
   Name target;
 
   Index found = 0;
@@ -183,30 +184,20 @@ struct BranchSeeker : public PostWalker<BranchSeeker> {
     }
   }
 
-  void visitBreak(Break* curr) {
-    // check the break
-    if (curr->name == target) {
-      noteFound(curr->value);
-    }
-  }
-
-  void visitSwitch(Switch* curr) {
-    // check the switch
-    for (auto name : curr->targets) {
+  void visitExpression(Expression* curr) {
+    operateOnScopeNameDefs(curr, [&](Name& name) {
       if (name == target) {
-        noteFound(curr->value);
+        if (auto* br = curr->dynCast<Break>()) {
+          noteFound(curr->value);
+        } else if (auto* sw = curr->dynCast<Switch>()) {
+          noteFound(curr->value);
+        } else if (auto* br = curr->dynCast<BrOnExn>()) {
+          noteFound(curr->sent);
+        } else {
+          WASM_UNREACHABLE("bad br type");
+        }
       }
-    }
-    if (curr->default_ == target) {
-      noteFound(curr->value);
-    }
-  }
-
-  void visitBrOnExn(BrOnExn* curr) {
-    // check the br_on_exn
-    if (curr->name == target) {
-      noteFound(curr->sent);
-    }
+    });
   }
 
   static bool has(Expression* tree, Name target) {
