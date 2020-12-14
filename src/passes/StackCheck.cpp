@@ -141,19 +141,20 @@ struct StackCheck : public Pass {
     Builder builder(*module);
 
     // Add the globals.
-    auto stackBase = module->addGlobal(builder.makeGlobal(stackBaseName,
-                                        stackPointer->type,
-                                        builder.makeConst(int32_t(0)),
-                                        Builder::Mutable));
-    auto stackLimit = module->addGlobal(builder.makeGlobal(stackLimitName,
-                                         stackPointer->type,
-                                         builder.makeConst(int32_t(0)),
-                                         Builder::Mutable));
+    auto stackBase =
+      module->addGlobal(builder.makeGlobal(stackBaseName,
+                                           stackPointer->type,
+                                           builder.makeConst(int32_t(0)),
+                                           Builder::Mutable));
+    auto stackLimit =
+      module->addGlobal(builder.makeGlobal(stackLimitName,
+                                           stackPointer->type,
+                                           builder.makeConst(int32_t(0)),
+                                           Builder::Mutable));
 
     // Instrument all the code.
     PassRunner innerRunner(module);
-    EnforceStackLimits(
-      stackPointer, stackBase, stackLimit, builder, handler)
+    EnforceStackLimits(stackPointer, stackBase, stackLimit, builder, handler)
       .run(&innerRunner, module);
 
     // Generate the exported function.
