@@ -45,9 +45,8 @@ struct RemoveUnusedNames
       visitLoop(loop);
       return;
     }
-    BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
-      branchesSeen[name].insert(curr);
-    });
+    BranchUtils::operateOnScopeNameUses(
+      curr, [&](Name& name) { branchesSeen[name].insert(curr); });
   }
 
   void handleBreakTarget(Name& name) {
