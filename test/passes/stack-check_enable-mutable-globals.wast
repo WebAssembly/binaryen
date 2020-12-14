@@ -5,7 +5,7 @@
   (global.get $sp)
  )
 )
-;; running on the output should not crash, but pick valid names
+;; if the global names are taken we should not crash
 (module
  (import "env" "__stack_pointer" (global $sp (mut i32)))
  (global $__stack_base (mut i32) (i32.const 0))
