@@ -114,6 +114,11 @@ Literal::~Literal() {
     gcData.~shared_ptr();
   } else if (type.isRtt()) {
     rttSupers.~unique_ptr();
+  } else if (type.isFunction()) {
+    // Nothing special to do.
+  } else {
+    // Basic types need no special handling.
+    assert(type.isBasic());
   }
 }
 
