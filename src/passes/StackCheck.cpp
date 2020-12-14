@@ -160,10 +160,10 @@ struct StackCheck : public Pass {
     // Generate the exported function.
     auto limitsFunc = builder.makeFunction(
       SET_STACK_LIMITS, Signature({Type::i32, Type::i32}, Type::none), {});
-    LocalGet* getBase = builder.makeLocalGet(0, Type::i32);
-    Expression* storeBase = builder.makeGlobalSet(stackBaseName, getBase);
-    LocalGet* getLimit = builder.makeLocalGet(1, Type::i32);
-    Expression* storeLimit = builder.makeGlobalSet(stackLimitName, getLimit);
+    auto* getBase = builder.makeLocalGet(0, Type::i32);
+    auto* storeBase = builder.makeGlobalSet(stackBaseName, getBase);
+    auto* getLimit = builder.makeLocalGet(1, Type::i32);
+    auto* storeLimit = builder.makeGlobalSet(stackLimitName, getLimit);
     limitsFunc->body = builder.makeBlock({storeBase, storeLimit});
     addExportedFunction(*module, std::move(limitsFunc));
   }
