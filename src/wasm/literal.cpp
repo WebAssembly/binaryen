@@ -2407,16 +2407,29 @@ Literal Literal::swizzleVec8x16(const Literal& other) const {
 
 bool Literal::isSubRtt(const Literal& other) const {
   assert(type.isRtt() && other.type.isRtt());
-  if (type == other.type) {
-    return true;
+  // For this literal to be a sub-rtt of the other rtt, the supers must be a
+  // superset. That is, if other is a->b->c then we should be a->b->c as well
+  // with possibly ->d->.. added. The rttSupers array represents those chains,
+  // but only the supers, which means the last item in the chain is simply the
+  // type of the literal.
+  const auto& supers = getRttSupers();
+  const auto& otherSupers = other.getRttSupers();
+  if (otherSupers.size() > supers.size()) {
+    return false;
   }
-  // Look up the chain to see if the other RTT is one of our parents.
-  for (auto super : getRttSupers()) {
-    if (super == other.type) {
-      return true;
+  for (Index i = 0; i < otherSupers.size(); i++) {
+    if (supers[i] != otherSupers[i]) {
+      return false;
     }
   }
-  return false;
+  // If we have more supers than other, compare that extra super. Otherwise,
+  // we have the same amount of supers, and must be completely identical to
+  // other.
+  if (otherSupers.size() < supers.size()) {
+    return other.type == supers[otherSupers.size()];
+  } else {
+    return other.type == type;
+  }
 }
 
 } // namespace wasm
