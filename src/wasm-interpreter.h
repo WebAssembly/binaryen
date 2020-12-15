@@ -1431,11 +1431,8 @@ public:
       cast.outcome = cast.Failure;
     } else {
       cast.outcome = cast.Success;
-      // If the output may want the cast reference, cast it. (ref.test has type
-      // i32, and so it definitely does not.)
-      if (curr->type.isRef()) {
-        cast.castRef = Literal(gcData, curr->type);
-      }
+      cast.castRef =
+        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
     }
     return cast;
   }
