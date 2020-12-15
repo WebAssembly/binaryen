@@ -1464,7 +1464,7 @@ HeapType WasmBinaryBuilder::getHeapType() {
 Mutability WasmBinaryBuilder::getMutability() {
   switch (getU32LEB()) {
     case 0:
-      return NonMutable;
+      return Immutable;
     case 1:
       return Mutable;
     default:

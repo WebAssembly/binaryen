@@ -2825,7 +2825,7 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
   }
   // It's a struct or an array.
   auto parseField = [&](Element* t) {
-    Mutability mutable_ = NonMutable;
+    Mutability mutable_ = Immutable;
     // t is a list, containing either
     //   TYPE
     // or

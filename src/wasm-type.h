@@ -45,7 +45,7 @@ struct Array;
 struct Rtt;
 
 enum Nullability { NonNullable, Nullable };
-enum Mutability { NonMutable, Mutable };
+enum Mutability { Immutable, Mutable };
 
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.

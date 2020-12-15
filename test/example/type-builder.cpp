@@ -23,7 +23,7 @@ void test_builder() {
   Type refNullExt(HeapType::ext, Nullable);
 
   Signature sig(refStruct, builder.getTempTupleType({refArray, Type::i32}));
-  Struct struct_({Field(refNullArray, NonMutable), Field(rttArray, Mutable)});
+  Struct struct_({Field(refNullArray, Immutable), Field(rttArray, Mutable)});
   Array array(Field(refNullExt, Mutable));
 
   std::cout << "Before setting heap types:\n";
@@ -73,7 +73,7 @@ void test_canonicalization() {
   // (type $struct (struct (field (ref null $sig))))
   // (type $sig (func))
   HeapType sig = Signature(Type::none, Type::none);
-  HeapType struct_ = Struct({Field(Type(sig, Nullable), NonMutable)});
+  HeapType struct_ = Struct({Field(Type(sig, Nullable), Immutable)});
 
   TypeBuilder builder(4);
 
@@ -84,8 +84,8 @@ void test_canonicalization() {
   assert(tempSigRef1 != Type(sig, Nullable));
   assert(tempSigRef2 != Type(sig, Nullable));
 
-  builder.setHeapType(0, Struct({Field(tempSigRef1, NonMutable)}));
-  builder.setHeapType(1, Struct({Field(tempSigRef2, NonMutable)}));
+  builder.setHeapType(0, Struct({Field(tempSigRef1, Immutable)}));
+  builder.setHeapType(1, Struct({Field(tempSigRef2, Immutable)}));
   builder.setHeapType(2, Signature(Type::none, Type::none));
   builder.setHeapType(3, Signature(Type::none, Type::none));
 
