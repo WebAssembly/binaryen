@@ -2213,11 +2213,11 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     getModule()->features.hasGC(), curr, "ref.cast requires gc to be enabled");
   if (curr->ref->type != Type::unreachable) {
     shouldBeTrue(
-      curr->ref->type.isRef(), curr, "ref.test ref must have ref type");
+      curr->ref->type.isRef(), curr, "ref.cast ref must have ref type");
   }
   if (curr->rtt->type != Type::unreachable) {
     shouldBeTrue(
-      curr->rtt->type.isRtt(), curr, "ref.test rtt must have rtt type");
+      curr->rtt->type.isRtt(), curr, "ref.cast rtt must have rtt type");
   }
 }
 
@@ -2225,7 +2225,15 @@ void FunctionValidator::visitBrOnCast(BrOnCast* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "br_on_cast requires gc to be enabled");
-  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  if (curr->ref->type != Type::unreachable) {
+    shouldBeTrue(
+      curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type");
+  }
+  if (curr->rtt->type != Type::unreachable) {
+    shouldBeTrue(
+      curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
+    noteBreak(curr->name, Type(curr->rtt->type.getHeapType(), Nullable), curr);
+  }
 }
 
 void FunctionValidator::visitRttCanon(RttCanon* curr) {
@@ -2367,14 +2375,14 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
     getModule()->features.hasGC(), curr, "array.get requires gc to be enabled");
   shouldBeEqualOrFirstIsUnreachable(
     curr->index->type, Type(Type::i32), curr, "array.get index must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
   const auto& element = curr->ref->type.getHeapType().getArray().element;
   // If the type is not packed, it must be marked internally as unsigned, by
   // convention.
   if (element.type != Type::i32 || element.packedType == Field::not_packed) {
     shouldBeFalse(curr->signed_, curr, "non-packed get cannot be signed");
-  }
-  if (curr->type == Type::unreachable) {
-    return;
   }
   shouldBeEqual(
     curr->type, element.type, curr, "array.get must have the proper type");

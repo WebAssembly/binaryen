@@ -1730,8 +1730,10 @@ struct PrintExpressionContents
     printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitBrOnCast(BrOnCast* curr) {
-    printMedium(o, "br_on_cast");
-    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    printMedium(o, "br_on_cast ");
+    printName(curr->name, o);
+    o << " ";
+    printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitRttCanon(RttCanon* curr) {
     printMedium(o, "rtt.canon ");
@@ -2440,7 +2442,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitBrOnCast(BrOnCast* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    incIndent();
+    printFullLine(curr->ref);
+    printFullLine(curr->rtt);
+    decIndent();
   }
   void visitRttCanon(RttCanon* curr) {
     o << '(';

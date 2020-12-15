@@ -1102,7 +1102,13 @@ void RefCast::finalize() {
   }
 }
 
-// TODO (gc): br_on_cast
+void BrOnCast::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type;
+  }
+}
 
 void RttCanon::finalize() {
   // Nothing to do - the type must have been set already during construction.

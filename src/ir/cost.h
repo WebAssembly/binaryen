@@ -576,7 +576,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitRefCast(RefCast* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
   }
-  Index visitBrOnCast(BrOnCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitBrOnCast(BrOnCast* curr) {
+    return 3 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
+  }
   Index visitRttCanon(RttCanon* curr) {
     // TODO: investigate actual RTT costs in VMs
     return 1;

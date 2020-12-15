@@ -5677,10 +5677,14 @@ bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::BrOnCast) {
     return false;
   }
-  auto* curr = allocator.alloc<BrOnCast>();
-  WASM_UNREACHABLE("TODO (gc): br_on_cast");
-  curr->finalize();
-  out = curr;
+  auto name = getBreakTarget(getU32LEB()).name;
+  auto heapType1 = getHeapType();
+  auto heapType2 = getHeapType();
+  auto* ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType1);
+  auto* rtt = popNonVoidExpression();
+  validateHeapTypeUsingChild(rtt, heapType2);
+  out = Builder(wasm).makeBrOnCast(name, ref, rtt);
   return true;
 }
 

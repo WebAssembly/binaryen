@@ -1928,8 +1928,10 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
 }
 
 void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
-  WASM_UNREACHABLE("TODO (gc): br_on_cast");
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast)
+    << U32LEB(getBreakIndex(curr->name));
+  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
