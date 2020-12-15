@@ -1411,10 +1411,10 @@ Type WasmBinaryBuilder::getType(int initial) {
     case BinaryConsts::EncodedType::eqref:
       return Type::eqref;
     case BinaryConsts::EncodedType::nullable:
-      return Type(getHeapType(), /* nullable = */ true);
+      return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::nonnullable:
       // FIXME: for now, force all inputs to be nullable
-      return Type(getHeapType(), /* nullable = */ true);
+      return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     case BinaryConsts::EncodedType::rtt_n: {
@@ -1461,21 +1461,32 @@ HeapType WasmBinaryBuilder::getHeapType() {
   WASM_UNREACHABLE("unexpected type");
 }
 
+Mutability WasmBinaryBuilder::getMutability() {
+  switch (getU32LEB()) {
+    case 0:
+      return Immutable;
+    case 1:
+      return Mutable;
+    default:
+      throw ParseException("Expected 0 or 1 for mutability");
+  }
+}
+
 Field WasmBinaryBuilder::getField() {
   // The value may be a general wasm type, or one of the types only possible in
   // a field.
   auto initial = getS32LEB();
   if (initial == BinaryConsts::EncodedType::i8) {
-    auto mutable_ = getU32LEB();
+    auto mutable_ = getMutability();
     return Field(Field::i8, mutable_);
   }
   if (initial == BinaryConsts::EncodedType::i16) {
-    auto mutable_ = getU32LEB();
+    auto mutable_ = getMutability();
     return Field(Field::i16, mutable_);
   }
   // It's a regular wasm value.
   auto type = getType(initial);
-  auto mutable_ = getU32LEB();
+  auto mutable_ = getMutability();
   return Field(type, mutable_);
 }
 
@@ -4371,6 +4382,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = GeUVecI32x4;
       break;
+    case BinaryConsts::I64x2Eq:
+      curr = allocator.alloc<Binary>();
+      curr->op = EqVecI64x2;
+      break;
     case BinaryConsts::F32x4Eq:
       curr = allocator.alloc<Binary>();
       curr->op = EqVecF32x4;
@@ -4828,6 +4843,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = AllTrueVecI64x2;
       break;
+    case BinaryConsts::I64x2Bitmask:
+      curr = allocator.alloc<Unary>();
+      curr->op = BitmaskVecI64x2;
+      break;
     case BinaryConsts::F32x4Abs:
       curr = allocator.alloc<Unary>();
       curr->op = AbsVecF32x4;
@@ -4947,6 +4966,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::I32x4WidenHighUI16x8:
       curr = allocator.alloc<Unary>();
       curr->op = WidenHighUVecI16x8ToVecI32x4;
+      break;
+    case BinaryConsts::I64x2WidenLowSI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowSVecI32x4ToVecI64x2;
+      break;
+    case BinaryConsts::I64x2WidenHighSI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighSVecI32x4ToVecI64x2;
+      break;
+    case BinaryConsts::I64x2WidenLowUI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenLowUVecI32x4ToVecI64x2;
+      break;
+    case BinaryConsts::I64x2WidenHighUI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = WidenHighUVecI32x4ToVecI64x2;
       break;
     default:
       return false;
@@ -5100,6 +5135,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
     case BinaryConsts::V128Bitselect:
       curr = allocator.alloc<SIMDTernary>();
       curr->op = Bitselect;
+      break;
+    case BinaryConsts::V8x16SignSelect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = SignSelectVec8x16;
+      break;
+    case BinaryConsts::V16x8SignSelect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = SignSelectVec16x8;
+      break;
+    case BinaryConsts::V32x4SignSelect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = SignSelectVec32x4;
+      break;
+    case BinaryConsts::V64x2SignSelect:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = SignSelectVec64x2;
       break;
     case BinaryConsts::F32x4QFMA:
       curr = allocator.alloc<SIMDTernary>();
@@ -5393,8 +5444,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   // FIXME: for now, emit a nullable type here
-  curr->finalize(Type(HeapType(getSignatureByFunctionIndex(index)),
-                      /* nullable = */ true));
+  curr->finalize(Type(HeapType(getSignatureByFunctionIndex(index)), Nullable));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {

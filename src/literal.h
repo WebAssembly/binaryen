@@ -491,6 +491,7 @@ public:
   Literal leUI32x4(const Literal& other) const;
   Literal geSI32x4(const Literal& other) const;
   Literal geUI32x4(const Literal& other) const;
+  Literal eqI64x2(const Literal& other) const;
   Literal eqF32x4(const Literal& other) const;
   Literal neF32x4(const Literal& other) const;
   Literal ltF32x4(const Literal& other) const;

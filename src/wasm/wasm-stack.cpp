@@ -560,6 +560,18 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
     case QFMSF64x2:
       o << U32LEB(BinaryConsts::F64x2QFMS);
       break;
+    case SignSelectVec8x16:
+      o << U32LEB(BinaryConsts::V8x16SignSelect);
+      break;
+    case SignSelectVec16x8:
+      o << U32LEB(BinaryConsts::V16x8SignSelect);
+      break;
+    case SignSelectVec32x4:
+      o << U32LEB(BinaryConsts::V32x4SignSelect);
+      break;
+    case SignSelectVec64x2:
+      o << U32LEB(BinaryConsts::V64x2SignSelect);
+      break;
   }
 }
 
@@ -1024,6 +1036,10 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I64x2AllTrue);
       break;
+    case BitmaskVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2Bitmask);
+      break;
     case AbsVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Abs);
       break;
@@ -1131,6 +1147,22 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case WidenHighUVecI16x8ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I32x4WidenHighUI16x8);
+      break;
+    case WidenLowSVecI32x4ToVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2WidenLowSI32x4);
+      break;
+    case WidenHighSVecI32x4ToVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2WidenHighSI32x4);
+      break;
+    case WidenLowUVecI32x4ToVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2WidenLowUI32x4);
+      break;
+    case WidenHighUVecI32x4ToVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2WidenHighUI32x4);
       break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
@@ -1460,6 +1492,9 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
     case GeUVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4GeU);
+      break;
+    case EqVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Eq);
       break;
     case EqVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Eq);

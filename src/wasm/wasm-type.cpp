@@ -39,7 +39,7 @@ struct TypeInfo {
   } kind;
   struct Ref {
     HeapType heapType;
-    bool nullable;
+    Nullability nullable;
   };
   union {
     Tuple tuple;
@@ -49,7 +49,7 @@ struct TypeInfo {
 
   TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
   TypeInfo(Tuple&& tuple) : kind(TupleKind), tuple(std::move(tuple)) {}
-  TypeInfo(HeapType heapType, bool nullable)
+  TypeInfo(HeapType heapType, Nullability nullable)
     : kind(RefKind), ref{heapType, nullable} {}
   TypeInfo(Rtt rtt) : kind(RttKind), rtt(rtt) {}
   TypeInfo(const TypeInfo& other);
@@ -351,7 +351,7 @@ Type::Type(Tuple&& tuple) {
   new (this) Type(globalTypeStore.canonicalize(std::move(tuple)));
 }
 
-Type::Type(HeapType heapType, bool nullable) {
+Type::Type(HeapType heapType, Nullability nullable) {
   new (this) Type(globalTypeStore.canonicalize(TypeInfo(heapType, nullable)));
 }
 
@@ -1062,7 +1062,7 @@ Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
   return impl->typeStore.canonicalize(tuple);
 }
 
-Type TypeBuilder::getTempRefType(size_t i, bool nullable) {
+Type TypeBuilder::getTempRefType(size_t i, Nullability nullable) {
   assert(i < impl->entries.size() && "Index out of bounds");
   return impl->typeStore.canonicalize(
     TypeInfo(impl->entries[i].get(), nullable));

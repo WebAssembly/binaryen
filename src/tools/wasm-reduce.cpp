@@ -287,7 +287,9 @@ struct Reducer
           currCommand += " -g ";
         }
         if (!binary) {
-          currCommand += " -S ";
+          currCommand += " -S --all-features ";
+        } else {
+          currCommand += " --detect-features ";
         }
         if (verbose) {
           std::cerr << "|    trying pass command: " << currCommand << "\n";
@@ -1217,10 +1219,12 @@ int main(int argc, const char* argv[]) {
                "(read-written) binary\n";
   {
     // read and write it
-    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input +
-               " --detect-features -o " + test;
+    auto cmd =
+      Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test;
     if (!binary) {
-      cmd += " -S";
+      cmd += " -S --all-features";
+    } else {
+      cmd += " --detect-features";
     }
     ProgramResult readWrite(cmd);
     if (readWrite.failed()) {

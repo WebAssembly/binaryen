@@ -2029,6 +2029,10 @@ Literal Literal::geSI32x4(const Literal& other) const {
 Literal Literal::geUI32x4(const Literal& other) const {
   return compare<4, &Literal::getLanesI32x4, &Literal::geU>(*this, other);
 }
+Literal Literal::eqI64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesI64x2, &Literal::eq, int64_t>(*this,
+                                                                    other);
+}
 Literal Literal::eqF32x4(const Literal& other) const {
   return compare<4, &Literal::getLanesF32x4, &Literal::eq>(*this, other);
 }

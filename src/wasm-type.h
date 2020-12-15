@@ -44,6 +44,9 @@ struct Struct;
 struct Array;
 struct Rtt;
 
+enum Nullability { NonNullable, Nullable };
+enum Mutability { Immutable, Mutable };
+
 // The type used for interning IDs in the public interfaces of Type and
 // HeapType.
 using TypeID = uint64_t;
@@ -93,7 +96,7 @@ public:
 
   // Construct from a heap type description. Also covers construction from
   // Signature, Struct or Array via implicit conversion to HeapType.
-  Type(HeapType, bool nullable);
+  Type(HeapType, Nullability nullable);
 
   // Construct from rtt description
   Type(Rtt);
@@ -384,12 +387,12 @@ struct Field {
     i8,
     i16,
   } packedType; // applicable iff type=i32
-  bool mutable_;
+  Mutability mutable_;
   Name name;
 
-  Field(Type type, bool mutable_, Name name = Name())
+  Field(Type type, Mutability mutable_, Name name = Name())
     : type(type), packedType(not_packed), mutable_(mutable_), name(name) {}
-  Field(PackedType packedType, bool mutable_, Name name = Name())
+  Field(PackedType packedType, Mutability mutable_, Name name = Name())
     : type(Type::i32), packedType(packedType), mutable_(mutable_), name(name) {}
 
   constexpr bool isPacked() const {
@@ -483,7 +486,7 @@ struct TypeBuilder {
   // TypeBuilder's HeapTypes. Temporary Ref and Rtt types are backed by the
   // HeapType at index `i`.
   Type getTempTupleType(const Tuple&);
-  Type getTempRefType(size_t i, bool nullable);
+  Type getTempRefType(size_t i, Nullability nullable);
   Type getTempRttType(size_t i, uint32_t depth);
 
   // Canonicalizes and returns all of the heap types. May only be called once
