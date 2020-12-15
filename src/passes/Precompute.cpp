@@ -229,6 +229,10 @@ private:
     if (curr->type.isRef()) {
       return Flow(NONCONSTANT_FLOW);
     }
+    // Don't try to precompute an Rtt. TODO figure out when that would be safe
+    if (curr->type.isRtt()) {
+      return Flow(NONCONSTANT_FLOW);
+    }
     try {
       return PrecomputingExpressionRunner(
                getModule(), getValues, replaceExpression)

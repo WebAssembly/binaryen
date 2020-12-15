@@ -1385,13 +1385,80 @@ public:
     NOTE_EVAL1(value);
     return Literal(value.geti31(curr->signed_));
   }
+
+  // Helper for ref.test, ref.cast, and br_on_cast, which share almost all their
+  // logic except for what they return.
+  struct Cast {
+    enum Outcome {
+      // We took a break before doing anything.
+      Break,
+      // The input was null.
+      Null,
+      // The cast succeeded.
+      Success,
+      // The cast failed.
+      Failure
+    } outcome;
+
+    Flow breaking;
+    Literal originalRef;
+    Literal castRef;
+  };
+
+  template<typename T> Cast doCast(T* curr) {
+    Cast cast;
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      cast.outcome = cast.Break;
+      cast.breaking = ref;
+      return cast;
+    }
+    Flow rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      cast.outcome = cast.Break;
+      cast.breaking = rtt;
+      return cast;
+    }
+    cast.originalRef = ref.getSingleValue();
+    auto gcData = cast.originalRef.getGCData();
+    if (!gcData) {
+      cast.outcome = cast.Null;
+      return cast;
+    }
+    auto refRtt = gcData->rtt;
+    auto intendedRtt = rtt.getSingleValue();
+    if (!refRtt.isSubRtt(intendedRtt)) {
+      cast.outcome = cast.Failure;
+    } else {
+      cast.outcome = cast.Success;
+      cast.castRef =
+        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
+    }
+    return cast;
+  }
+
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
-    WASM_UNREACHABLE("TODO (gc): ref.test");
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    return Literal(int32_t(cast.outcome == cast.Success));
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
-    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    if (cast.outcome == cast.Null) {
+      return Literal::makeNull(curr->type);
+    }
+    if (cast.outcome == cast.Failure) {
+      trap("cast error");
+    }
+    assert(cast.outcome == cast.Success);
+    return cast.castRef;
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");
@@ -1403,7 +1470,10 @@ public:
     if (parent.breaking()) {
       return parent;
     }
-    return Literal(curr->type);
+    auto parentValue = parent.getSingleValue();
+    auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
+    newSupers->push_back(parentValue.type);
+    return Literal(std::move(newSupers), curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
@@ -1424,7 +1494,8 @@ public:
         data[i] = value.getSingleValue();
       }
     }
-    return Flow(Literal(std::make_shared<Literals>(data), curr->type));
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+                        curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1437,7 +1508,7 @@ public:
       trap("null ref");
     }
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    return extendForPacking((*data)[curr->index], field, curr->signed_);
+    return extendForPacking(data->values[curr->index], field, curr->signed_);
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");
@@ -1454,7 +1525,8 @@ public:
       trap("null ref");
     }
     auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
-    (*data)[curr->index] = truncateForPacking(value.getSingleValue(), field);
+    data->values[curr->index] =
+      truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
   Flow visitArrayNew(ArrayNew* curr) {
@@ -1484,7 +1556,8 @@ public:
         data[i] = value;
       }
     }
-    return Flow(Literal(std::make_shared<Literals>(data), curr->type));
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+                        curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1501,11 +1574,11 @@ public:
       trap("null ref");
     }
     Index i = index.getSingleValue().geti32();
-    if (i >= data->size()) {
+    if (i >= data->values.size()) {
       trap("array oob");
     }
     auto field = curr->ref->type.getHeapType().getArray().element;
-    return extendForPacking((*data)[i], field, curr->signed_);
+    return extendForPacking(data->values[i], field, curr->signed_);
   }
   Flow visitArraySet(ArraySet* curr) {
     NOTE_ENTER("ArraySet");
@@ -1526,11 +1599,11 @@ public:
       trap("null ref");
     }
     Index i = index.getSingleValue().geti32();
-    if (i >= data->size()) {
+    if (i >= data->values.size()) {
       trap("array oob");
     }
     auto field = curr->ref->type.getHeapType().getArray().element;
-    (*data)[i] = truncateForPacking(value.getSingleValue(), field);
+    data->values[i] = truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
@@ -1543,7 +1616,7 @@ public:
     if (!data) {
       trap("null ref");
     }
-    return Literal(int32_t(data->size()));
+    return Literal(int32_t(data->values.size()));
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }

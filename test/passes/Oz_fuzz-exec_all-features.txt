@@ -9,14 +9,25 @@
 [LoggingExternalInterface logging 128]
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
+[fuzz-exec] calling rtts
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
 (module
  (type ${i32} (struct (field i32)))
+ (type ${i32_f64} (struct (field i32) (field f64)))
  (type $none_=>_none (func))
  (type $[mut:i8] (array (mut i8)))
  (type $i32_=>_none (func (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "structs" (func $0))
  (export "arrays" (func $1))
+ (export "rtts" (func $2))
  (func $0 (; has Stack IR ;)
   (local $0 (ref null ${i32}))
   (call $log
@@ -95,6 +106,84 @@
    )
   )
  )
+ (func $2 (; has Stack IR ;)
+  (local $0 (rtt ${i32}))
+  (local $1 (rtt ${i32_f64}))
+  (local $2 (rtt ${i32_f64}))
+  (local $3 anyref)
+  (local.set $1
+   (rtt.sub ${i32_f64}
+    (local.tee $0
+     (rtt.canon ${i32})
+    )
+   )
+  )
+  (local.set $2
+   (rtt.canon ${i32_f64})
+  )
+  (call $log
+   (ref.is_null
+    (ref.cast ${i32}
+     (ref.null ${i32})
+     (local.get $0)
+    )
+   )
+  )
+  (call $log
+   (ref.test ${i32}
+    (ref.null ${i32})
+    (local.get $0)
+   )
+  )
+  (call $log
+   (ref.test ${i32}
+    (array.new_with_rtt $[mut:i8]
+     (rtt.canon $[mut:i8])
+     (i32.const 10)
+     (i32.const 20)
+    )
+    (local.get $0)
+   )
+  )
+  (call $log
+   (ref.test ${i32}
+    (struct.new_default_with_rtt ${i32}
+     (local.get $0)
+    )
+    (local.get $0)
+   )
+  )
+  (call $log
+   (ref.test ${i32_f64}
+    (struct.new_default_with_rtt ${i32}
+     (local.get $0)
+    )
+    (local.get $2)
+   )
+  )
+  (call $log
+   (ref.test ${i32_f64}
+    (local.tee $3
+     (struct.new_default_with_rtt ${i32_f64}
+      (local.get $1)
+     )
+    )
+    (local.get $1)
+   )
+  )
+  (call $log
+   (ref.test ${i32_f64}
+    (local.get $3)
+    (local.get $2)
+   )
+  )
+  (call $log
+   (ref.test ${i32}
+    (local.get $3)
+    (local.get $0)
+   )
+  )
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -107,3 +196,12 @@
 [LoggingExternalInterface logging 128]
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
+[fuzz-exec] calling rtts
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
