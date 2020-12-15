@@ -40,6 +40,7 @@ Literal::Literal(Type type) : type(type) {
     } else if (isGCData()) {
       new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
+      // Allocate a new RttSupers (with no data).
       new (&rttSupers) auto(std::make_unique<RttSupers>());
     } else {
       memset(&v128, 0, 16);
@@ -77,6 +78,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
   } else if (type.isFunction()) {
     func = other.func;
   } else if (type.isRtt()) {
+    // Allocate a new RttSupers with a copy of the other's data.
     new (&rttSupers) auto(std::make_unique<RttSupers>(*other.rttSupers));
   } else {
     TODO_SINGLE_COMPOUND(type);

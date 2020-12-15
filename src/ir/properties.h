@@ -83,6 +83,7 @@ inline bool isNamedControlFlow(Expression* curr) {
 // A constant expression is something like a Const: it has a fixed value known
 // at compile time, and passes that propagate constants can try to propagate it.
 // Constant expressions are also allowed in global initializers in wasm.
+// TODO: look into adding more things here like RttCanon.
 inline bool isSingleConstantExpression(const Expression* curr) {
   return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
          (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>());
