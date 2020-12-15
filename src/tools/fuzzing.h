@@ -1478,7 +1478,7 @@ private:
     for (const auto& type : target->sig.params) {
       args.push_back(make(type));
     }
-    auto targetType = Type(HeapType(target->sig), /* nullable = */ true);
+    auto targetType = Type(HeapType(target->sig), Nullable);
     // TODO: half the time make a completely random item with that type.
     return builder.makeCallRef(
       builder.makeRefFunc(target->name, targetType), args, type, isReturn);
@@ -2066,7 +2066,7 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        auto type = Type(HeapType(target->sig), /* nullable = */ true);
+        auto type = Type(HeapType(target->sig), Nullable);
         return builder.makeRefFunc(target->name, type);
       }
       if (type == Type::i31ref) {
@@ -2079,7 +2079,7 @@ private:
       for (auto& func : wasm.functions) {
         // FIXME: RefFunc type should be non-nullable, but we emit nullable
         //        types for now.
-        if (type == Type(HeapType(func->sig), /* nullable = */ true)) {
+        if (type == Type(HeapType(func->sig), Nullable)) {
           return builder.makeRefFunc(func->name, type);
         }
       }

@@ -1276,6 +1276,7 @@ public:
   Type getType(int initial);
 
   HeapType getHeapType();
+  Mutability getMutability();
   Field getField();
   Type getConcreteType();
   Name getInlineString();

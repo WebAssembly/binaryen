@@ -1411,10 +1411,10 @@ Type WasmBinaryBuilder::getType(int initial) {
     case BinaryConsts::EncodedType::eqref:
       return Type::eqref;
     case BinaryConsts::EncodedType::nullable:
-      return Type(getHeapType(), /* nullable = */ true);
+      return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::nonnullable:
       // FIXME: for now, force all inputs to be nullable
-      return Type(getHeapType(), /* nullable = */ true);
+      return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::i31ref:
       return Type::i31ref;
     case BinaryConsts::EncodedType::rtt_n: {
@@ -1461,21 +1461,32 @@ HeapType WasmBinaryBuilder::getHeapType() {
   WASM_UNREACHABLE("unexpected type");
 }
 
+Mutability WasmBinaryBuilder::getMutability() {
+  switch (getU32LEB()) {
+    case 0:
+      return Immutable;
+    case 1:
+      return Mutable;
+    default:
+      throw ParseException("Expected 0 or 1 for mutability");
+  }
+}
+
 Field WasmBinaryBuilder::getField() {
   // The value may be a general wasm type, or one of the types only possible in
   // a field.
   auto initial = getS32LEB();
   if (initial == BinaryConsts::EncodedType::i8) {
-    auto mutable_ = getU32LEB();
+    auto mutable_ = getMutability();
     return Field(Field::i8, mutable_);
   }
   if (initial == BinaryConsts::EncodedType::i16) {
-    auto mutable_ = getU32LEB();
+    auto mutable_ = getMutability();
     return Field(Field::i16, mutable_);
   }
   // It's a regular wasm value.
   auto type = getType(initial);
-  auto mutable_ = getU32LEB();
+  auto mutable_ = getMutability();
   return Field(type, mutable_);
 }
 
@@ -5433,8 +5444,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
   // FIXME: for now, emit a nullable type here
-  curr->finalize(Type(HeapType(getSignatureByFunctionIndex(index)),
-                      /* nullable = */ true));
+  curr->finalize(Type(HeapType(getSignatureByFunctionIndex(index)), Nullable));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {

@@ -978,7 +978,7 @@ void MemoryGrow::finalize() {
   }
 }
 
-void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
+void RefNull::finalize(HeapType heapType) { type = Type(heapType, Nullable); }
 
 void RefNull::finalize(Type type_) {
   type = type_;
@@ -1098,7 +1098,7 @@ void RefCast::finalize() {
     type = Type::unreachable;
   } else {
     // TODO: make non-nullable when we support that
-    type = Type(rtt->type.getHeapType(), /* nullable = */ true);
+    type = Type(rtt->type.getHeapType(), Nullable);
   }
 }
 
@@ -1125,7 +1125,7 @@ void StructNew::finalize() {
     return;
   }
   // TODO: make non-nullable when we support that
-  type = Type(rtt->type.getHeapType(), /* nullable = */ true);
+  type = Type(rtt->type.getHeapType(), Nullable);
 }
 
 void StructGet::finalize() {
@@ -1151,7 +1151,7 @@ void ArrayNew::finalize() {
     return;
   }
   // TODO: make non-nullable when we support that
-  type = Type(rtt->type.getHeapType(), /* nullable = */ true);
+  type = Type(rtt->type.getHeapType(), Nullable);
 }
 
 void ArrayGet::finalize() {
