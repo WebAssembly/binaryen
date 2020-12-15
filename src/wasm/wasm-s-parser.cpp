@@ -932,10 +932,10 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
         std::string("invalid reference type qualifier"), s.line, s.col);
     }
     // FIXME: for now, force all inputs to be nullable
-    bool nullable = true;
+    Nullability nullable = Nullable;
     size_t i = 1;
     if (size == 3) {
-      nullable = true;
+      nullable = Nullable;
       i++;
     }
     return Type(parseHeapType(*s[i]), nullable);
@@ -1925,8 +1925,7 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   ret->func = func;
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
-  ret->finalize(
-    Type(HeapType(functionSignatures[func]), /* nullable = */ true));
+  ret->finalize(Type(HeapType(functionSignatures[func]), Nullable));
   return ret;
 }
 
@@ -2826,7 +2825,7 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
   }
   // It's a struct or an array.
   auto parseField = [&](Element* t) {
-    bool mutable_ = false;
+    Mutability mutable_ = NonMutable;
     // t is a list, containing either
     //   TYPE
     // or
@@ -2842,7 +2841,7 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
     }
     // The element may also be (mut (..)).
     if (elementStartsWith(t, MUT)) {
-      mutable_ = true;
+      mutable_ = Mutable;
       t = (*t)[1];
     }
     if (t->isStr()) {
