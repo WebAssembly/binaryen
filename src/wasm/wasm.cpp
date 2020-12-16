@@ -338,11 +338,18 @@ void Block::finalize() {
   BranchUtils::BranchSeeker seeker(this->name);
   Expression* temp = this;
   seeker.walk(temp);
-  if (seeker.valueType != Type::none) {
-    // There are branches; take those into account.
-    type = Type::getLeastUpperBound(type, seeker.valueType);
+  if (seeker.found) {
+    // Take the branch values into account.
+    if (seeker.valueType != Type::none) {
+      type = Type::getLeastUpperBound(type, seeker.valueType);
+    } else {
+      // No value is sent, but as we have a branch we are not unreachable.
+      type = Type::none;
+    }
+  } else {
+    // There are no branches, so this block may be unreachable.
+    handleUnreachable(this);
   }
-  handleUnreachable(this);
 }
 
 void Block::finalize(Type type_) {
