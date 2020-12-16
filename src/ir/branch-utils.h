@@ -68,6 +68,25 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #include "wasm-delegations-fields.h"
 }
 
+// Similar to operateOnScopeNameUses, but also passes in the type that is sent
+// if the branch is taken. The type is none if there is no value.
+template<typename T>
+void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value ? br->value->type : Type::none);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value ? sw->value->type : Type::none);
+    } else if (auto* br = expr->dynCast<BrOnExn>()) {
+      func(name, br->sent);
+    } else {
+      WASM_UNREACHABLE("bad br type");
+    }
+  });
+}
+
 // Perform a generic operation on definitions of scope names in an expression.
 // The provided function receives a Name& which it can modify if it needs to.
 template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
@@ -164,36 +183,26 @@ struct BranchSeeker
   Name target;
 
   Index found = 0;
-  Type valueType;
+  // None indicates no value is sent.
+  Type valueType = Type::none;
 
   BranchSeeker(Name target) : target(target) {}
 
-  void noteFound(Expression* value) {
-    noteFound(value ? value->type : Type::none);
-  }
-
-  void noteFound(Type type) {
+  void noteFound(Type newType) {
     found++;
-    if (found == 1) {
-      valueType = Type::unreachable;
-    }
-    if (type != Type::unreachable) {
-      valueType = type;
+    if (newType != Type::none) {
+      if (found == 1) {
+        valueType = newType;
+      } else {
+        valueType = Type::getLeastUpperBound(valueType, newType);
+      }
     }
   }
 
   void visitExpression(Expression* curr) {
-    operateOnScopeNameUses(curr, [&](Name& name) {
+    operateOnScopeNameUsesAndSentTypes(curr, [&](Name& name, Type type) {
       if (name == target) {
-        if (auto* br = curr->dynCast<Break>()) {
-          noteFound(br->value);
-        } else if (auto* sw = curr->dynCast<Switch>()) {
-          noteFound(sw->value);
-        } else if (auto* br = curr->dynCast<BrOnExn>()) {
-          noteFound(br->sent);
-        } else {
-          WASM_UNREACHABLE("bad br type");
-        }
+        noteFound(type);
       }
     });
   }
