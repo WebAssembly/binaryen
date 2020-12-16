@@ -1,3 +1,959 @@
+precomp
+precomp
+((f32.const call $0)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+precomp
+(block (result i32)
+ (call $0)
+ (i32.const 1()0
+global.get precomp
+$()i32
+)
+  p1
+global$1.const )
+  p2
+  p3
+1  p1
+)
+precomp
+(i32.const 0)
+precomp
+(call $2
+ (f32.const   p2
+  p3
+precomp
+1)
+ ((unreachable)
+i32  p1
+.const 1)
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(drop
+ (call $2
+  (f32.const 1)
+  (i32.const 1)
+  (i32.const 0)
+ )
+)
+  p1
+  p2
+  p3
+  p2
+  p3
+precomp
+(if
+ (global.get $global$1)
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(global.set $global$1
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 3)
+precomp
+(i32.load16_u
+ (i32.const 3)
+)
+  p1
+  p2
+  p3
+precomp
+(br_if $label$2
+ (i32.load16_u
+  (i32.const 3)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(block
+ (br_if $label$2
+  (i32.load16_u
+   (i32.const 3)
+  )
+ )
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(block $label$2
+ (block
+  (br_if $label$2
+   (i32.load16_u
+    (i32.const 3)
+   )
+  )
+  (unreachable)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (if
+  (global.get $global$1)
+  (unreachable)
+ )
+ (global.set $global$1
+  (i32.const 0)
+ )
+ (block $label$2
+  (block
+   (br_if $label$2
+    (i32.load16_u
+     (i32.const 3)
+    )
+   )
+   (unreachable)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+precomp
+(call $(0f32)
+  p1
+.const   p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(block (result 1i32)
+)precomp
+(i32.const 
+ 1()
+precomp
+(i32.const 0)
+precomp
+call $0)(
+ (i32.const 0)
+)
+  p1
+call $2
+ (f32.const   p2
+1)
+ (i32  p3
+.const 1)
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(drop
+ (call $2
+  (f32.const 1)
+  (i32.const 1)
+  (i32.const 0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(global.get $global$1)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(if
+ (global.get $global$1)
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(global.set $global$1
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 3)
+precomp
+(i32.load16_u
+ (i32.const 3)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.eqz
+ (i32.load16_u
+  (i32.const 3)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(nop)
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(block
+ (nop)
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(if
+ (i32.eqz
+  (i32.load16_u
+   (i32.const 3)
+  )
+ )
+ (block
+  (nop)
+  (unreachable)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (if
+  (global.get $global$1)
+  (unreachable)
+ )
+ (global.set $global$1
+  (i32.const 0)
+ )
+ (if
+  (i32.eqz
+   (i32.load16_u
+    (i32.const 3)
+   )
+  )
+  (block
+   (nop)
+   (unreachable)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(local.set $0
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 1)
+precomp
+(local.set $1
+ (i32.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(f32.const 1)
+precomp
+(local.set $2
+ (f32.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(block (result i32)
+ (call $0)
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(block (result i32)
+ (local.set $2
+  (f32.const 1)
+ )
+ (block (result i32)
+  (call $0)
+  (i32.const 0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block (result i32)
+ (local.set $1
+  (i32.const 1)
+ )
+ (block (result i32)
+  (local.set $2
+   (f32.const 1)
+  )
+  (block (result i32)
+   (call $0)
+   (i32.const 0)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block (result i32)
+ (local.set $0
+  (i32.const 0)
+ )
+ (block (result i32)
+  (local.set $1
+   (i32.const 1)
+  )
+  (block (result i32)
+   (local.set $2
+    (f32.const 1)
+   )
+   (block (result i32)
+    (call $0)
+    (i32.const 0)
+   )
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(local.set $3
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 1)
+precomp
+(local.set $4
+ (i32.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(f32.const 1)
+precomp
+(local.set $5
+ (f32.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(block (result i32)
+ (call $0)
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(block (result i32)
+ (local.set $5
+  (f32.const 1)
+ )
+ (block (result i32)
+  (call $0)
+  (i32.const 0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block (result i32)
+ (local.set $4
+  (i32.const 1)
+ )
+ (block (result i32)
+  (local.set $5
+   (f32.const 1)
+  )
+  (block (result i32)
+   (call $0)
+   (i32.const 0)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block (result i32)
+ (local.set $3
+  (i32.const 0)
+ )
+ (block (result i32)
+  (local.set $4
+   (i32.const 1)
+  )
+  (block (result i32)
+   (local.set $5
+    (f32.const 1)
+   )
+   (block (result i32)
+    (call $0)
+    (i32.const 0)
+   )
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(block (result i32)
+ (call $0)
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(block (result i32)
+ (call $0)
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(drop
+ (block (result i32)
+  (call $0)
+  (i32.const 0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(block (result i32)
+ (call $0)
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(drop
+ (block (result i32)
+  (call $0)
+  (i32.const 0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(block
+ (call $0)
+)
+  p1
+  p2
+  p3
+precomp
+(block $__inlined_func$2
+ (block
+  (call $0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (block $__inlined_func$2
+  (block
+   (call $0)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(block
+ (call $0)
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (block
+  (call $0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (block
+  (block
+   (call $0)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(call $0)
+  p1
+  p2
+  p3
+precomp
+(global.get $global$1)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(if
+ (global.get $global$1)
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(global.set $global$1
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 3)
+precomp
+(i32.load16_u
+ (i32.const 3)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.eqz
+ (i32.load16_u
+  (i32.const 3)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(if
+ (i32.eqz
+  (i32.load16_u
+   (i32.const 3)
+  )
+ )
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (if
+  (global.get $global$1)
+  (unreachable)
+ )
+ (global.set $global$1
+  (i32.const 0)
+ )
+ (if
+  (i32.eqz
+   (i32.load16_u
+    (i32.const 3)
+   )
+  )
+  (unreachable)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block $__inlined_func$0
+ (block
+  (if
+   (global.get $global$1)
+   (unreachable)
+  )
+  (global.set $global$1
+   (i32.const 0)
+  )
+  (if
+   (i32.eqz
+    (i32.load16_u
+     (i32.const 3)
+    )
+   )
+   (unreachable)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (block $__inlined_func$0
+  (block
+   (if
+    (global.get $global$1)
+    (unreachable)
+   )
+   (global.set $global$1
+    (i32.const 0)
+   )
+   (if
+    (i32.eqz
+     (i32.load16_u
+      (i32.const 3)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(global.get $global$1)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(if
+ (global.get $global$1)
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(global.set $global$1
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 3)
+precomp
+(i32.load16_u
+ (i32.const 3)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.eqz
+ (i32.load16_u
+  (i32.const 3)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(if
+ (i32.eqz
+  (i32.load16_u
+   (i32.const 3)
+  )
+ )
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (if
+  (global.get $global$1)
+  (unreachable)
+ )
+ (global.set $global$1
+  (i32.const 0)
+ )
+ (if
+  (i32.eqz
+   (i32.load16_u
+    (i32.const 3)
+   )
+  )
+  (unreachable)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (block
+  (if
+   (global.get $global$1)
+   (unreachable)
+  )
+  (global.set $global$1
+   (i32.const 0)
+  )
+  (if
+   (i32.eqz
+    (i32.load16_u
+     (i32.const 3)
+    )
+   )
+   (unreachable)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (block
+  (block
+   (if
+    (global.get $global$1)
+    (unreachable)
+   )
+   (global.set $global$1
+    (i32.const 0)
+   )
+   (if
+    (i32.eqz
+     (i32.load16_u
+      (i32.const 3)
+     )
+    )
+    (unreachable)
+   )
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(global.get $global$1)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(if
+ (global.get $global$1)
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(global.set $global$1
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 3)
+precomp
+(i32.load16_u
+ (i32.const 3)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.eqz
+ (i32.load16_u
+  (i32.const 3)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(if
+ (i32.eqz
+  (i32.load16_u
+   (i32.const 3)
+  )
+ )
+ (unreachable)
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (if
+  (global.get $global$1)
+  (unreachable)
+ )
+ (global.set $global$1
+  (i32.const 0)
+ )
+ (if
+  (i32.eqz
+   (i32.load16_u
+    (i32.const 3)
+   )
+  )
+  (unreachable)
+ )
+)
+  p1
+  p2
+  p3
 (module
  (type $i32_=>_none (func (param i32)))
  (memory $0 1 1)

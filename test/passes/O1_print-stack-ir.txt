@@ -1,3 +1,213 @@
+precomp
+(i32.const 0)
+precomp
+(call $stacky-help
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 1)
+precomp
+(call $stacky-help
+ (i32.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(local.set $1
+ (call $stacky-help
+  (i32.const 1)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 2)
+precomp
+(call $stacky-help
+ (i32.const 2)
+)
+  p1
+  p2
+  p3
+precomp
+(drop
+ (call $stacky-help
+  (i32.const 2)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $1)
+  p1
+  p2
+  p3
+precomp
+(block (result i32)
+ (local.set $1
+  (call $stacky-help
+   (i32.const 1)
+  )
+ )
+ (drop
+  (call $stacky-help
+   (i32.const 2)
+  )
+ )
+ (local.get $1)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.eqz
+ (block (result i32)
+  (local.set $1
+   (call $stacky-help
+    (i32.const 1)
+   )
+  )
+  (drop
+   (call $stacky-help
+    (i32.const 2)
+   )
+  )
+  (local.get $1)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(i32.add
+ (call $stacky-help
+  (i32.const 0)
+ )
+ (i32.eqz
+  (block (result i32)
+   (local.set $1
+    (call $stacky-help
+     (i32.const 1)
+    )
+   )
+   (drop
+    (call $stacky-help
+     (i32.const 2)
+    )
+   )
+   (local.get $1)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 0)
+precomp
+(call $stacky-help
+ (i32.const 0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 1)
+precomp
+(call $stacky-help
+ (i32.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(local.set $0
+ (call $stacky-help
+  (i32.const 1)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(i32.const 2)
+precomp
+(call $stacky-help
+ (i32.const 2)
+)
+  p1
+  p2
+  p3
+precomp
+(drop
+ (call $stacky-help
+  (i32.const 2)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+(i32.eqz
+ (local.get $0)
+)
+  p1
+  p2
+  p3
+precomp
+(block (result i32)
+ (local.set $0
+  (call $stacky-help
+   (i32.const 1)
+  )
+ )
+ (drop
+  (call $stacky-help
+   (i32.const 2)
+  )
+ )
+ (i32.eqz
+  (local.get $0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(i32.add
+ (call $stacky-help
+  (i32.const 0)
+ )
+ (block (result i32)
+  (local.set $0
+   (call $stacky-help
+    (i32.const 1)
+   )
+  )
+  (drop
+   (call $stacky-help
+    (i32.const 2)
+   )
+  )
+  (i32.eqz
+   (local.get $0)
+  )
+ )
+)
+  p1
+  p2
+  p3
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (export "stacky-help" (func $stacky-help))

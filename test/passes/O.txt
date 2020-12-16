@@ -1,3 +1,504 @@
+precomp
+precomp
+precomp
+(((precomp
+(precomp
+call local.get ($ret)
+  p1
+i32local.get .const local.get $0)
+  p1
+  p2
+  p3
+$0)$
+  p2
+  p3
+  p1
+0)precomp
+precomp
+0)(
+(
+i32  p1
+precomp
+drop
+(nop .const   p2
+  p2
+1)  p3
+(  p3
+)precomp
+
+call precomp
+
+(call $ret)
+  p1
+$  p2
+  p3
+precomp
+precomp
+((local.set ret)
+)
+  p1
+local.set $0
+ (call $ret)
+$0)  p2
+  p3
+precomp
+((
+precomp
+unreachablecall ()$ret)i32
+  p1
+ .const (
+
+i32.const -1073741824)
+precomp
+1  p1
+(  p1
+  p2
+  p3
+precomp
+(i32.lt_s
+)i32  p2
+
+ )  p3
+precomp
+(local.get .const ($
+if0
+  p1
+)
+ (i32.const  (local.get $0)
+  p2
+1 (  p3
+local.set -1073741824$)
+)precomp
+precomp
+0
+  (
+call $ret)
+ )
+)((return)if
+
+ (i32.const 
+1
+)
+)
+  p1
+  p1
+  p1
+ (local.get $0)
+ (local.set $0
+    p2
+(  p3
+i32.const   p2
+precomp
+1)  p3
+
+precomp
+(i32.const -1073741824)
+precomp
+((local.get local.set $0)
+  p2
+  p3
+ $  p1
+)
+)0
+
+  p4   p2
+ (i32.const   p3
+  p1
+precomp
+-1073741824  p2
+  p3
+precomp
+()local.get 1
+
+)
+  p1
+  p2
+  p3
+precomp
+($(local.get $0)
+  p1
+  p2
+  p3
+precomp
+precomp
+(blockif
+ ((call i32$.const ret10737418230))
+
+ (precomp
+( i32.gt_s
+ (local.get $0)
+ (return(result i32.const 1073741823)
+)i32 
+ ))
+ (
+  p1
+if  p2
+(
+  p3
+i32.const 1)
+ )precomp
+
+
+()  p1
+  i32
+  p1
+(  p2
+  p3
+precomp
+  p2
+local.get $0()block (result i32)
+ (if
+
+   (  p3
+precomp
+(i32local.set .const  .const $99910737418230(local.get $0)
+  ()local.set 
+
+)$precomp
+(local.set 
+$precomp
+ 0
+ (i32.const 1073741823)
+()0
+  p1
+i32 
+  .const 1)
+  p2
+   p2
+  p3
+ precomp
+precomp
+((call $ret)
+  )if
+(br_if $out
+ (i32
+ )
+ (local.get  (i32.gt_s
+    p3
+.const $(0999)
+ local.get precomp
+)
+($((if0
+ )
+  (i32.const 1073741823)
+ )(
+i32.const  0i32i32(local.set $0
+  (i32.const .const 1)
+).const 1073741823)1))
+ )
+)
+  p1
+  p2
+)  p3
+precomp
+(
+  )
+ )
+ (local.get if
+$ (i32.lt_s
+  (local.get $0)
+ 
+
+  p1
+ (i32.const 0 (nop)
+ (unreachable)
+)
+-1073741824  p1
+  p2
+)  p3
+
+))
+
+  p1
+  p2
+   p3
+
+)
+ (local.set $0
+  (i32.const -1073741824)
+ )
+   p1
+(if
+  (i32.gt_s
+   (local.get $0)
+   (i32.const 1073741823)
+  )
+  (local.set $0
+   (i32.const 1073741823)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+  p2
+  p3
+  p4 (block (result i32)999
+
+ (if
+  (i32.lt_s
+   (local.get $0)
+   (i32.const -1073741824)
+  )
+  (local.set $0
+   (i32.const precomp
+-1073741824(drop
+ )
+  )
+  (if
+ ( br $out 
+(i32.gt_s 
+ (i32.const  999) 
+  )
+  p2
+)  p3
+precomp
+
+  p1
+ (local.get $0)
+    p2
+  p3
+  p4 999
+(block
+ (if
+  (i32.const 0)
+  (nop)
+  (unreachable)
+ )
+)
+  p1
+  (i32.const 1073741823)
+   )
+   (local.set $0
+    (i32.const 1073741823)
+   )
+  )
+ )
+ (local.get $0)
+)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+  p2
+  p3
+precomp
+(block $out (result i32)
+ (drop
+  (call $ret)
+ )
+ (if
+  (call $ret)
+  (return
+   (i32.const   p2
+  p3
+1)precomp
+
+  )
+ )
+ ((block
+ br $out
+  (i32(.const block
+  999()
+ )
+ (unreachable)
+)if
+
+   (i32.const 0)  p1
+
+   (nop)
+   (unreachable)
+  p2
+   p3
+ )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(unreachable)
+  p1
+precomp
+(call $ret)
+  p1
+  p2
+  p3
+precomp
+(drop
+ (call $ret)
+  p2
+)
+  p1
+  p2
+  p3
+precomp
+(call $ret)
+  p1
+  p3
+  p2
+  p3
+precomp
+(i32.const 1)
+precomp
+precomp
+(return
+ (i32.const 1)
+)
+  p1
+  p2
+  p3
+  p4 1
+(precomp
+(iflocal.get precomp
+(i32.const 
+$0)
+  p1
+1)
+  p2
+  p3
+ precomp
+precomp
+(local.get (call $0$(call $ret)
+ (return
+  (i32.const ret))1
+)
+  p1
+
+  p1
+   p2
+)  p2
+  p3
+  p3
+
+precomp
+precomp
+(local.get precomp
+$)(i32(.const 
+  p1
+  p2
+  p3
+-1073741824precomp
+)(i32
+.const 999)
+precomp
+precomp
+(i32.const local.get 10737418230($)
+precomp
+0))(local.get block
+$0)
+  p1
+ (result   p2
+  p1
+
+  p2
+  p3
+precomp
+  p1
+(  p2
+  p3
+precomp
+(selectif
+  p3
+  (i32i32precomp
+(local.get $0(result ))
+ (drop
+  (call $i32ret)
+ (local.get )
+ )
+ (if
+  p1
+$
+  p2
+0   p3
+precomp
+.const  )
+ 1(call )$ret)
+ (local.get $0)
+
+) ((
+local.get (call   p1
+$$  p2
+  p3
+i32ret)
+  (.const 1073741823)
+precomp
+0return()
+ (local.get 
+$i32.gt_s
+ (local.get $0)
+ ( 0)
+)
+  p1
+i32  (i32.const 1)
+  )
+ ).const 
+1073741823)
+)
+  p1
+  p2
+  p3
+precomp
+ (i32(.const   p2
+select999
+) 
+(  p3
+)i32
+  p1
+.const   p2
+  p3
+1073741823)
+ (local.get $0)
+ (i32.gt_s
+  (local.get $0)
+  (i32.const 1073741823)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+(i32.const -1073741824)
+precomp
+(i32.lt_s
+ (local.get $0)
+ (i32.const -1073741824)
+)
+  p1
+  p2
+  p3
+precomp
+(select
+ (i32.const -1073741824)
+ (select
+  (i32.const 1073741823)
+  (local.get $0)
+  (i32.gt_s
+   (local.get $0)
+   (i32.const 1073741823)
+  )
+ )
+ (i32.lt_s
+  (local.get $0)
+  (i32.const -1073741824)
+ )
+)
+  p1
+  p2
+  p3
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i64_=>_none (func (param i64)))

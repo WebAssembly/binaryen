@@ -158,7 +158,6 @@ struct Precompute
   }
 
   void visitExpression(Expression* curr) {
-    std::cout << "precomp\n" << *curr << '\n';
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
@@ -171,18 +170,14 @@ struct Precompute
       return;
     }
     // try to evaluate this into a const
-    std::cout << "  p1\n";
     Flow flow = precomputeExpression(curr);
     if (flow.getType().hasVector()) {
       return;
     }
-    std::cout << "  p2\n";
     if (flow.breaking()) {
-      std::cout << "  p3\n";
       if (flow.breakTo == NONCONSTANT_FLOW) {
         return;
       }
-      std::cout << "  p4 " << flow.values << "\n";
       if (!canEmitConstantFor(flow.values)) {
         return;
       }

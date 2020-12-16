@@ -1,3 +1,1390 @@
+precomp
+precomp
+(i64.const (precomp
+local.get (local.get precomp
+precomp
+1($local.get 0)
+  p1
+(local.get )$
+precomp
+$0(0$local.set )
+  p1
+)$0
+  p2
+  p1
+1)
+  p1
+  p3
+
+  p2
+  p2
+  p3
+ (i64.const   p2
+1)  p3
+precomp
+  p3
+
+precomp
+precomp
+precomp
+()(
+  p1
+(local.set i64.eqz
+($1
+ (local.get i64.eqz   p2
+local.set ($$01)
+)
+
+
+  p1
+   p2
+(local.get  (  p3
+precomp
+$local.get 0)local.get 
+()
+$  p3
+  p1
+  p2
+  p3
+0i64)
+)
+  p1
+precomp
+.const (precomp
+  p2
+  p3
+i64precomp
+1().const (1
+local.get $i64precomp
+0))$
+(local.set 0$).const )
+  p1
+
+3  p2
+  p3
+precomp
+1
+ (i64.const 1)(precomp
+
+)i64
+
+(.const 2)
+precomp
+  p1
+local.set )(precomp
+$2
+  p2
+(local.get $0)
+i64.lt_s  p3
+  p1
+
+ (local.get $0  p2
+)  p3
+
+precomp
+(local.get  $(1)
+  p1
+i64.const   p1
+2  p2
+  p2
+)  p3
+precomp
+
+)
+  p1
+precomp
+
+(i64  p3
+.const   p2
+  p3
+precomp
+(i64 precomp
+((1i64.eqz
+i64.const ().const br_if $label$2
+ (i64.lt_s
+  (local.get 1 1)
+$
+precomp
+)
+precomp
+(()
+  p1
+0  p2
+  p3
+i64.subprecomp
+)(local.get 
+ (
+  (i64.const local.get 2)
+ )
+)
+local.get   p1
+$1)
+)
+  p1
+$  p2
+  p3
+1)
+  p1
+  p2
+  p2
+  p3
+precomp
+  p3
+precomp
+(precomp
+$0nop()
+(  p1
+)local.get 
+  p2
+i64.eqz
+ ($local.get   p3
+precomp
+precomp
+0((i64$)
+  p1
+  p2
+  p3
+unreachable.const precomp
+)
+  p1
+(local.get $1)
+1)
+)
+  p1
+  p1
+  p2
+  p3
+precomp
+  p2
+  p3
+precomp
+1(i64.mul
+ (local.get $)
+precomp
+((0(nop)
+local.get $0 ()i64.sub)
+
+  ((local.get i64.const $0
+)
+ (precomp
+i64.const 1)
+)
+  p1
+local.get 1()
+$)local.get 
+  p1
+$1)
+  p2
+)
+  p1
+  p2
+  p2
+  p3
+1  p3
+  p3
+precomp
+precomp
+()precomp
+(local.set $1
+ (i64.mul
+  (local.get $
+(0)call $  p1
+0  p2
+  p3
+
+precomp
+call 
+ (i64.sub( $1
+
+  ( local.get (local.get $1)
+ $)
+)
+  p1
+local.get   p2
+0)
+  (  p3
+$2)
+  p1
+  p2
+  p3
+precomp
+i64precomp
+ .const (local.get $0)
+  p1
+  p2
+  p3
+precomp
+((i64.const (11)i64.sub
+  (local.get i64.mul)$
+precomp
+(i64.sub
+ (local.get 
+
+0 )
+)
+)  p1
+
+ (local.get $1)
+ (local.get $ 2  p2
+  p3
+$ 0)
+(i64 (i64.const )precomp
+1)
+)
+  p1
+  p2
+
+)
+  p1
+(local.get   p3
+  p2
+$  p3
+precomp
+0)
+  p1
+(  p2
+  p3
+local.set precomp
+(i64.mul
+ (call $$0
+  (i64.sub
+   (local.get 2
+$precomp
+(local.set $0
+ (i64.sub
+   (local.get $0)
+  0(i64.mul
+  (local.get $1)).const (
+  (local.get $i641
+2))
+
+ )
+)
+  p1
+  p2
+  p3
+    (i64.const 1)precomp
+  p2
+  p3
+.const precomp
+(
+local.get $0)
+  p1
+1  p2
+))
+  p1
+  p2
+  p3
+precomp
+  p3
+(
+( local.get $1) )block
+  p1
+  p2
+  p3
+)precomp
+precomp
+
+ (
+
+ ( ))
+(nopi64.mul
+
+) 
+ )((call 
+  p1
+local.get $0)
+)  p2
+  p3
+precomp
+(local.get $0
+  p1
+)$
+  p2
+   p1
+  p2
+  p3
+precomp
+(  p3
+i64precomp
+1(if.const  
+1)
+precomp
+(i64i64.gt_s
+ .const (result (  (i64.sub
+ unreachable1 )
+i64))(
+precomp
+)
+(
+i64.sub 
+(local.get i64.eqz  p1
+ (
+  (local.get  $local.get 0)
+$ 1$(local.get $0)
+ )0  ())
+ (i64.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+
+(i64br_if 
+ .const  (i64$(i64.const label$3
+.const  (i64.gt_s
+  (111)
+ (i64.mul
+  (call $0
+) 
+)  
+(i64.sub
+)  p1
+   p2
+local.get     p3
+precomp
+( (local.get $0)
+$ 
+0)
+  (i64.const  local.set 1)
+ )
+)
+  p1
+   p2
+   p3
+$precomp
+ )
+ )
+ ((block   p2
+  p3
+precomp
+local.get 
+((unreachable 1i64()$
+ (local.set .const $0i64.sub1)1
+
+)
+  (i64.mul
+   (local.get 
+  p1
+ 
+)   )
+  $) 
+0)
+   (local.get $1)
+  )
+ )
+ (local.set 
+$0
+  (local.get $0)   p1
+ (i64.sub
+ 
+(   p2
+  p3
+precomp
+ ) 
+)
+local.get   p2
+($1)
+  (local.get i64  p3
+$.const precomp
+0)
+   ((1)  p1
+
+i64if
+ (.const i64.eqz 
+   p2
+  p3
+ 1)
+)
+  p1
+  p2
+  p3
+)precomp
+((br $label$3
+)
+  p1
+(  p2
+  p3
+  p4 local.get  if )
+ )
+ (br_if $label$3
+  (i64.gt_s (result i64()
+)  
+
+  (local.get $0$)
+   (i64.const precomp
+1)
+ )
+ 1(block
+  (nop))
+(
+  )
+ )
+)block
+
+   (unreachable)
+ (()
+i64.eqz
+  (local.set   p1
+ (unreachable)
+)
+  p1
+$  p2
+  p3
+precomp
+(loop $label$32local.get 
+  p2
+  
+$0   p3
+((local.set $1
+  (i64.mul
+precomp
+i64.mul   (local.get )$
+   (local.get 0$
+ )
+ ()i641)
+ 
+ ( .const   (local.get $2)
+  )
+  (1)
+ (i64.mul
+local.get $block1)
+   
+)
+) 
+ (local.set $) 
+1  (local.set $0((
+call  $1if (i64.sub
+  
+
+   (i64.sub
+     (i64.sub
+    
+ (local.get $1)
+( (local.get $0)
+    local.get (  (i64.const i641.const )1
+  )
+ )
+ (br )$label$3)
+)
+  p1
+
+  )
+ )
+ (br_if $label$3
+  (i64.gt_s
+  p2
+   (local.get $0)$  p3
+ 
+0)precomp
+(if
+ (i64.eqz
+  (local.get  $  (i64.const 1)
+  )
+ )
+)
+  p1
+
+  p2
+  p3
+precomp
+(block $label$2
+ (br_if 1$    (()label$2i64
+ 
+.const i64.eqz1  )
+ 
+((i64.lt_s
+   (local.get $0)
+  nop)
+ ()block  (local.get 
+   
+  (local.set $  1)
+  ))(i64.const $2)
+  )
+ )
+
+
+  )
+  (   local.get ($0)
+ )
+)
+  p1
+2block
+  p2
+(
+      p3
+loop  ((nop)
+   (unreachable)
+  )
+  i64.mul
+    ($label$3 local.get 
+(unreachable)
+ )
+)
+  (local.set $1
+   (i64.mul
+  $  p1
+  (local.get $10)
+      p2
+)  p3
+
+    (local.get precomp
+((blocklocal.get $2)
+   $
+)
+  )
+ 1 (local.set $1
+ )
+   )
+  )
+  (local.set    (i64.sub
+    ($local.get 0
+ ($1)
+    (local.set $1
+  (local.get $0)
+ i64.const   1)
+ (local.set ($)
+   )i64.sub3
+    
+( local.get  (i64.const 
+1)
+ )
+ (block
+  (if
+  )
+  ($ 0)
+     (i64.eqz
+    (local.get $1)
+  (  )
+   (block
+    (nop)i64
+.const 1)
+br     (unreachable)
+   $label$3)
+ ) 
+)
+  p1
+  )
+  )
+  (br_if $  p2
+)
+   (unreachable)
+  )
+ )
+)label$3  p3
+precomp
+
+
+   p1
+   p2
+   p3
+(i64.gt_s
+    (local.get $(0block
+ (if)
+
+    (i64.const 1)
+   )
+  )
+ )
+)
+  p1
+  (i64.eqz  p2
+
+  p3
+  precomp
+ (local.get ($1)
+local.get  $1)
+  p1
+  p2
+  p3
+precomp
+(block (result i64)
+ (local.set $1 
+)
+  (nop ) (i64.const 1)
+ )
+ (block $label$2
+ 
+   (block(br_if $label$2
+   (
+i64.lt_s   (local.set 
+$ 2
+     ( i64.mul 
+     ((local.get $0)
+    (i64.const 2local.get )$1)
+   
+  (local.get $ 2) 
+    )
+   ) )
+  )
+  (
+loop   (local.set $1
+   $label$3
+   ( local.set  (i64.sub
+     $(1
+    (i64.mullocal.get 
+$1)
+     (i64.const      1()
+    )local.get 
+   )
+   ($0)
+     (precomp
+local.get (local.get $$br 1)
+    )
+   )
+   (local.set 0$precomp
+)
+  p1
+0  p2
+  p3
+
+    (i64.subprecomp
+(i64.eqz
+(
+     ( local.get $0)
+  $ (local.get  local.get  label$3$0$(i64.const 1)
+   )0)
+  p1
+) )
+   )
+     p2
+
+(br_if $label$3
+    p3
+)  (i64.gt_s
+ 
+
+  p1
+precomp
+   p2
+  p3
+precomp
+ (i64 .const   (local.get $0) 
+     (i64.const 1)
+    ()i64.eqz
+ 
+   )
+  )
+ )
+ (local.get $1)
+)1))
+
+precomp
+(local.get $0)
+  p1
+
+  p2
+  p3
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (block
+  (if
+   (i64.eqz  p1
+
+   p2
+   p3
+ precomp
+precomp
+ (local.get (i64(.const 1)
+(local.get precomp
+($i64.sublocal.get $0)
+  p1
+
+1)
+   p2
+ $  p3
+ precomp
+(i64.eqz 0)
+(
+ (  local.get $0)
+)
+  p1
+local.get   p2
+  p3
+precomp
+ (drop)(
+ $
+)(i64.eqz
+ 
+ (local.get $0)
+ )
+)
+  p1
+0  p2
+  p3
+  p1
+precomp
+)
+ (i64.const 1)
+)
+  p1
+nop  p2
+  p2
+)
+     p3
+precomp
+((call   p3
+precomp
+unreachable)
+  p1
+$1
+ (i64.sub
+  (local.get ($block
+  0)
+  (i64.const 1)
+ )
+)
+  p1
+(  p2
+  p3
+precomp
+ (i64 (local.get local.set .const $2
+   $ 10 )  p2
+)(  p3
+i64.mulprecomp
+
+ 
+(
+precomp
+  p1
+block  p2
+
+  p3
+precomp
+(i64.mul
+   ( (call $1
+( drop local.get $0)
+  p1
+   p2
+  (local.get (i64.sub
+   (local.get $0)
+   ($i64  p3
+1)
+    precomp
+.const (  i64(
+.const   (i64.eqz
+   (local.get 1$0)
+  )
+1)
+ )local.get )precomp
+
+
+  )
+($i64.sub
+   2()(
+ )(
+     )
+ unreachablelocal.get  )
+)
+  p1
+$local.get   )  p2
+
+$0    0)
+ (i64)
+)
+  p1
+(  p2
+  p3
+  p3
+.const 1local.set )precomp
+$
+)
+  p1
+(if (result i64)
+ (i64.eqz1
+  (local.get $0)
+ )
+ (i64.const 1)
+ (i64.mul
+  (call $1
+   (i64.sub
+    (local.get $0)
+    (i64.const 1)
+   )
+  )
+  (local.get $0)
+ )
+)
+  p1
+
+  p2
+     (i64.sub
+    p3
+   p2
+     p3
+(precomp
+(call $0local.get 
+$1)
+      (i64.const  (1i64.sub)
+     )
+    )
+
+   (local.get  $0)
+  (i64.const   1()
+br  $label$3)
+   )
+  )
+)
+) )
+)
+  p1
+
+  p1
+  p2
+  p3
+precomp
+  p2
+  p3
+(precomp
+local.get $0)
+  p1
+  p2
+  p3
+precomp
+((i64.mul
+ (call $0
+  (i64.sub
+loop  $label$3
+ (block
+   ( (iflocal.get $0)
+   (i64.const 
+1)
+  )
+ )
+  (local.get  $0)
+)
+  p1
+  p2
+  p3
+ precomp
+(if (result (i64.eqzi64
+ )   (local.get $1)
+   
+) 
+ (  i64.eqz(nop)
+   (block
+  
+    (local.set $2
+     ((i64.mullocal.get 
+  $ 0   (local.get )$1)
+      (local.get 
+$ 2))
+
+ (i64.const 1)
+ ( i64.mul 
+  (call $0
+   ( i64.sub 
+    (local.get $0)
+  )  
+ (i64.const 1)
+   ) 
+   )
+    (local.set $ 1 
+) 
+    (i64.sub
+      ( local.get  $1)
+      (i64.const (local.get 1)$
+0  )
+    ))
+
+)
+  p1
+  p2
+  p3
+    )
+    (br $label$3)
+   )
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $2)
+  p1
+  p2
+  p3
+precomp
+(block (result i64)
+ (local.set $1
+  (local.get $0)
+ )
+ (local.set $2
+  (i64.const 1)
+ )
+ (loop $label$3
+  (block
+   (if
+    (i64.eqz
+     (local.get $1)
+    )
+    (nop)
+    (block
+     (local.set $2
+      (i64.mul
+       (local.get $1)
+       (local.get $2)
+      )
+     )
+     (local.set $1
+      (i64.sub
+       (local.get $1)
+       (i64.const 1)
+      )
+     )
+     (br $label$3)
+    )
+   )
+  )
+ )
+ (local.get $2)
+)
+  p1
+  p2
+  p3
+precomp
+(i64.const 1)
+precomp
+(local.set $1
+ (i64.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+(i64.const 2)
+precomp
+(i64.lt_s
+ (local.get $0)
+ (i64.const 2)
+)
+  p1
+  p2
+  p3
+precomp
+(br_if $label$2
+ (i64.lt_s
+  (local.get $0)
+  (i64.const 2)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+(local.get $1)
+  p1
+  p2
+  p3
+precomp
+(i64.mul
+ (local.get $0)
+ (local.get $1)
+)
+  p1
+  p2
+  p3
+precomp
+(local.set $1
+ (i64.mul
+  (local.get $0)
+  (local.get $1)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+(i64.const 1)
+precomp
+(i64.sub
+ (local.get $0)
+ (i64.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(local.tee $0
+ (i64.sub
+  (local.get $0)
+  (i64.const 1)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(i64.const 1)
+precomp
+(i64.gt_s
+ (local.tee $0
+  (i64.sub
+   (local.get $0)
+   (i64.const 1)
+  )
+ )
+ (i64.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(br_if $label$3
+ (i64.gt_s
+  (local.tee $0
+   (i64.sub
+    (local.get $0)
+    (i64.const 1)
+   )
+  )
+  (i64.const 1)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block
+ (local.set $1
+  (i64.mul
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (br_if $label$3
+  (i64.gt_s
+   (local.tee $0
+    (i64.sub
+     (local.get $0)
+     (i64.const 1)
+    )
+   )
+   (i64.const 1)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(loop $label$3
+ (local.set $1
+  (i64.mul
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (br_if $label$3
+  (i64.gt_s
+   (local.tee $0
+    (i64.sub
+     (local.get $0)
+     (i64.const 1)
+    )
+   )
+   (i64.const 1)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(block $label$2
+ (br_if $label$2
+  (i64.lt_s
+   (local.get $0)
+   (i64.const 2)
+  )
+ )
+ (loop $label$3
+  (local.set $1
+   (i64.mul
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+  (br_if $label$3
+   (i64.gt_s
+    (local.tee $0
+     (i64.sub
+      (local.get $0)
+      (i64.const 1)
+     )
+    )
+    (i64.const 1)
+   )
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $1)
+  p1
+  p2
+  p3
+precomp
+(block (result i64)
+ (local.set $1
+  (i64.const 1)
+ )
+ (block $label$2
+  (br_if $label$2
+   (i64.lt_s
+    (local.get $0)
+    (i64.const 2)
+   )
+  )
+  (loop $label$3
+   (local.set $1
+    (i64.mul
+     (local.get $0)
+     (local.get $1)
+    )
+   )
+   (br_if $label$3
+    (i64.gt_s
+     (local.tee $0
+      (i64.sub
+       (local.get $0)
+       (i64.const 1)
+      )
+     )
+     (i64.const 1)
+    )
+   )
+  )
+ )
+ (local.get $1)
+)
+  p1
+  p2
+  p3
+precomp
+(i64.const 1)
+precomp
+(local.set $1
+ (i64.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+(i64.eqz
+ (local.get $0)
+)
+  p1
+  p2
+  p3
+precomp
+(i32.eqz
+ (i64.eqz
+  (local.get $0)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+(local.get $1)
+  p1
+  p2
+  p3
+precomp
+(i64.mul
+ (local.get $0)
+ (local.get $1)
+)
+  p1
+  p2
+  p3
+precomp
+(local.set $1
+ (i64.mul
+  (local.get $0)
+  (local.get $1)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $0)
+  p1
+  p2
+  p3
+precomp
+(i64.const 1)
+precomp
+(i64.sub
+ (local.get $0)
+ (i64.const 1)
+)
+  p1
+  p2
+  p3
+precomp
+(local.set $0
+ (i64.sub
+  (local.get $0)
+  (i64.const 1)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(br $label$3)
+  p1
+  p2
+  p3
+  p4 ()
+precomp
+(block
+ (local.set $1
+  (i64.mul
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+ (local.set $0
+  (i64.sub
+   (local.get $0)
+   (i64.const 1)
+  )
+ )
+ (br $label$3)
+)
+  p1
+  p2
+  p3
+precomp
+(if
+ (i32.eqz
+  (i64.eqz
+   (local.get $0)
+  )
+ )
+ (block
+  (local.set $1
+   (i64.mul
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+  (local.set $0
+   (i64.sub
+    (local.get $0)
+    (i64.const 1)
+   )
+  )
+  (br $label$3)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(loop $label$3
+ (if
+  (i32.eqz
+   (i64.eqz
+    (local.get $0)
+   )
+  )
+  (block
+   (local.set $1
+    (i64.mul
+     (local.get $0)
+     (local.get $1)
+    )
+   )
+   (local.set $0
+    (i64.sub
+     (local.get $0)
+     (i64.const 1)
+    )
+   )
+   (br $label$3)
+  )
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $1)
+  p1
+  p2
+  p3
+precomp
+(block (result i64)
+ (local.set $1
+  (i64.const 1)
+ )
+ (loop $label$3
+  (if
+   (i32.eqz
+    (i64.eqz
+     (local.get $0)
+    )
+   )
+   (block
+    (local.set $1
+     (i64.mul
+      (local.get $0)
+      (local.get $1)
+     )
+    )
+    (local.set $0
+     (i64.sub
+      (local.get $0)
+      (i64.const 1)
+     )
+    )
+    (br $label$3)
+   )
+  )
+ )
+ (local.get $1)
+)
+  p1
+  p2
+  p3
 (module
  (type $i64_=>_i64 (func (param i64) (result i64)))
  (export "fac-rec" (func $0))
@@ -78,10 +1465,12 @@
   (local.set $1
    (i64.const 1)
   )
-  (if
-   (i64.ge_s
-    (local.get $0)
-    (i64.const 2)
+  (block $label$2
+   (br_if $label$2
+    (i64.lt_s
+     (local.get $0)
+     (i64.const 2)
+    )
    )
    (loop $label$3
     (local.set $1

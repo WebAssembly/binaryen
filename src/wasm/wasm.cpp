@@ -1040,7 +1040,7 @@ template<typename T> static Type doGetCastType(T* curr) {
   return Type(curr->rtt->type.getHeapType(), Nullable);
 }
 
-void RefTest::getCastType() { return doGetCastType(this); }
+Type RefTest::getCastType() { return doGetCastType(this); }
 
 void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
@@ -1051,7 +1051,7 @@ void RefCast::finalize() {
   }
 }
 
-void RefCast::getCastType() { return doGetCastType(this); }
+Type RefCast::getCastType() { return doGetCastType(this); }
 
 void BrOnCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
@@ -1061,7 +1061,7 @@ void BrOnCast::finalize() {
   }
 }
 
-void BrOnCast::getCastType() { return doGetCastType(this); }
+Type BrOnCast::getCastType() { return doGetCastType(this); }
 
 void RttCanon::finalize() {
   // Nothing to do - the type must have been set already during construction.

@@ -1,3 +1,170 @@
+precomp
+(i64.const 2147483647)
+precomp
+(local.set $3
+ (i64.const 2147483647)
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $4)
+  p1
+  p2
+  p3
+precomp
+(br_if $label$1
+ (local.get $4)
+)
+  p1
+  p2
+  p3
+precomp
+(block $label$1
+ (local.set $3
+  (i64.const 2147483647)
+ )
+ (br_if $label$1
+  (local.get $4)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $3)
+  p1
+  p2
+  p3
+precomp
+(block (result i64)
+ (block $label$1
+  (local.set $3
+   (i64.const 2147483647)
+  )
+  (br_if $label$1
+   (local.get $4)
+  )
+ )
+ (local.get $3)
+)
+  p1
+  p2
+  p3
+precomp
+(i64.const 2147483647)
+precomp
+(local.set $3
+ (i64.const 2147483647)
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $4)
+  p1
+  p2
+  p3
+precomp
+(br_if $label$1
+ (local.get $4)
+)
+  p1
+  p2
+  p3
+precomp
+(block $label$1
+ (br_if $label$1
+  (local.get $4)
+ )
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $3)
+  p1
+  p2
+  p3
+precomp
+(block (result i64)
+ (local.set $3
+  (i64.const 2147483647)
+ )
+ (block $label$1
+  (br_if $label$1
+   (local.get $4)
+  )
+ )
+ (local.get $3)
+)
+  p1
+  p2
+  p3
+precomp
+(i64.const 2147483647)
+precomp
+(local.set $3
+ (i64.const 2147483647)
+)
+  p1
+  p2
+  p3
+precomp
+(local.get $4)
+  p1
+  p2
+precomp
+(br_if $label$1
+ (i32.const 0)
+)
+  p1
+  p2
+precomp
+(block $label$1
+ (nop)
+)
+  p1
+  p2
+precomp
+(local.get $3)
+  p1
+  p2
+precomp
+(block (result i64)
+ (local.set $3
+  (i64.const 2147483647)
+ )
+ (nop)
+ (i64.const 2147483647)
+)
+  p1
+  p2
+  p3
+precomp
+(i64.const 2147483647)
+precomp
+(local.set $3
+ (i64.const 2147483647)
+)
+  p1
+  p2
+  p3
+precomp
+(nop)
+precomp
+(i64.const 2147483647)
+precomp
+(block (result i64)
+ (local.set $3
+  (i64.const 2147483647)
+ )
+ (nop)
+ (i64.const 2147483647)
+)
+  p1
+  p2
+  p3
 (module
  (type $i32_i32_i32_i64_=>_i64 (func (param i32 i32 i32 i64) (result i64)))
  (export "func" (func $0))
