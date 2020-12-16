@@ -71,20 +71,20 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 // Similar to operateOnScopeNameUses, but also passes in the type that is sent
 // if the branch is taken. The type is none if there is no value.
 template<typename T>
-operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
+void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
   operateOnScopeNameUses(expr, [&](Name& name) {
-    if (name == target) {
-      if (auto* br = curr->dynCast<Break>()) {
-        noteFound(br->value ? br->value->type : Type::none);
-      } else if (auto* sw = curr->dynCast<Switch>()) {
-        noteFound(sw->value ? sw->value->type : Type::none);
-      } else if (auto* br = curr->dynCast<BrOnExn>()) {
-        noteFound(br->sent);
-      } else if (auto* br = curr->dynCast<BrOnCast>()) {
-        noteFound(Type(br->rtt->type.getHeapType(), Nullable));
-      } else {
-        WASM_UNREACHABLE("bad br type");
-      }
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value ? br->value->type : Type::none);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value ? sw->value->type : Type::none);
+    } else if (auto* br = expr->dynCast<BrOnExn>()) {
+      func(name, br->sent);
+    } else if (auto* br = expr->dynCast<BrOnCast>()) {
+      func(Type(br->rtt->type.getHeapType(), Nullable));
+    } else {
+      WASM_UNREACHABLE("bad br type");
     }
   });
 }
