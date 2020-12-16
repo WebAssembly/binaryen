@@ -68,6 +68,27 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #include "wasm-delegations-fields.h"
 }
 
+// Similar to operateOnScopeNameUses, but also passes in the type that is sent
+// if the branch is taken. The type is none if there is no value.
+template<typename T>
+operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    if (name == target) {
+      if (auto* br = curr->dynCast<Break>()) {
+        noteFound(br->value ? br->value->type : Type::none);
+      } else if (auto* sw = curr->dynCast<Switch>()) {
+        noteFound(sw->value ? sw->value->type : Type::none);
+      } else if (auto* br = curr->dynCast<BrOnExn>()) {
+        noteFound(br->sent);
+      } else if (auto* br = curr->dynCast<BrOnCast>()) {
+        noteFound(Type(br->rtt->type.getHeapType(), Nullable));
+      } else {
+        WASM_UNREACHABLE("bad br type");
+      }
+    }
+  });
+}
+
 // Perform a generic operation on definitions of scope names in an expression.
 // The provided function receives a Name& which it can modify if it needs to.
 template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
@@ -168,10 +189,6 @@ struct BranchSeeker
 
   BranchSeeker(Name target) : target(target) {}
 
-  void noteFound(Expression* value) {
-    noteFound(value ? value->type : Type::none);
-  }
-
   void noteFound(Type newType) {
     found++;
     if (found == 1) {
@@ -183,20 +200,8 @@ struct BranchSeeker
   }
 
   void visitExpression(Expression* curr) {
-    operateOnScopeNameUses(curr, [&](Name& name) {
-      if (name == target) {
-        if (auto* br = curr->dynCast<Break>()) {
-          noteFound(br->value);
-        } else if (auto* sw = curr->dynCast<Switch>()) {
-          noteFound(sw->value);
-        } else if (auto* br = curr->dynCast<BrOnExn>()) {
-          noteFound(br->sent);
-        } else if (auto* br = curr->dynCast<BrOnCast>()) {
-          noteFound(Type(br->rtt->type.getHeapType(), Nullable));
-        } else {
-          WASM_UNREACHABLE("bad br type");
-        }
-      }
+    operateOnScopeNameUsesAndSentTypes(curr, [&](Name& name, Type type) {
+      noteFound(type);
     });
   }
 
