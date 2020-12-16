@@ -348,7 +348,8 @@ void Block::finalize() {
     }
   } else {
     // There are no branches, so this block may be unreachable.
-    handleUnreachable(this);
+    handleUnreachable(
+      this, /* breakabilityKnown = */ true, /* hasBreak = */ false);
   }
 }
 
