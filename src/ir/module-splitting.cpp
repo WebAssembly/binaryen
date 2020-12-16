@@ -80,6 +80,19 @@
 #include "wasm-builder.h"
 #include "wasm.h"
 
+namespace std {
+
+// Used in ModuleSplitter::shareImportableItems
+template<> struct hash<pair<wasm::ExternalKind, wasm::Name>> {
+  size_t operator()(const pair<wasm::ExternalKind, wasm::Name>& p) const {
+    auto digest = wasm::hash(p.first);
+    wasm::rehash(digest, p.second);
+    return digest;
+  }
+};
+
+} // namespace std
+
 namespace wasm {
 
 namespace ModuleSplitting {
@@ -496,10 +509,10 @@ void ModuleSplitter::shareImportableItems() {
   // Map internal names to (one of) their corresponding export names. Don't
   // consider functions because they have already been imported and exported as
   // necessary.
-  std::unordered_map<Name, Name> exports;
+  std::unordered_map<std::pair<ExternalKind, Name>, Name> exports;
   for (auto& ex : primary.exports) {
     if (ex->kind != ExternalKind::Function) {
-      exports[ex->value] = ex->name;
+      exports[std::make_pair(ex->kind, ex->value)] = ex->name;
     }
   }
 
@@ -510,7 +523,7 @@ void ModuleSplitter::shareImportableItems() {
     secondaryItem.name = primaryItem.name;
     secondaryItem.hasExplicitName = primaryItem.hasExplicitName;
     secondaryItem.module = config.importNamespace;
-    auto exportIt = exports.find(primaryItem.name);
+    auto exportIt = exports.find(std::make_pair(kind, primaryItem.name));
     if (exportIt != exports.end()) {
       secondaryItem.base = exportIt->second;
     } else {
