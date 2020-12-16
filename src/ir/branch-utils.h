@@ -164,7 +164,7 @@ struct BranchSeeker
   Name target;
 
   Index found = 0;
-  Type valueType;
+  Type valueType = Type::none;
 
   BranchSeeker(Name target) : target(target) {}
 
@@ -172,13 +172,13 @@ struct BranchSeeker
     noteFound(value ? value->type : Type::none);
   }
 
-  void noteFound(Type type) {
+  void noteFound(Type newType) {
     found++;
     if (found == 1) {
       valueType = Type::unreachable;
     }
-    if (type != Type::unreachable) {
-      valueType = type;
+    if (newType != Type::none) {
+      valueType = Type::getLeastUpperBound(valueType, newType);
     }
   }
 
@@ -191,6 +191,8 @@ struct BranchSeeker
           noteFound(sw->value);
         } else if (auto* br = curr->dynCast<BrOnExn>()) {
           noteFound(br->sent);
+        } else if (auto* br = curr->dynCast<BrOnCast>()) {
+          noteFound(Type(br->rtt->type.getHeapType(), Nullable));
         } else {
           WASM_UNREACHABLE("bad br type");
         }

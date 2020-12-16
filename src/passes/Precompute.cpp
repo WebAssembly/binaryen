@@ -1,3 +1,4 @@
+#include <wasm-printing.h>
 /*
  * Copyright 2016 WebAssembly Community Group participants
  *
@@ -157,6 +158,7 @@ struct Precompute
   }
 
   void visitExpression(Expression* curr) {
+std::cout << "precomp\n" << *curr << '\n';
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
@@ -169,12 +171,19 @@ struct Precompute
       return;
     }
     // try to evaluate this into a const
+std::cout << "  p1\n";
     Flow flow = precomputeExpression(curr);
     if (flow.getType().hasVector()) {
       return;
     }
+std::cout << "  p2\n";
     if (flow.breaking()) {
+std::cout << "  p3\n";
       if (flow.breakTo == NONCONSTANT_FLOW) {
+        return;
+      }
+std::cout << "  p4 " << flow.values << "\n";
+      if (!canEmitConstantFor(flow.values)) {
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
@@ -223,14 +232,7 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
-    // Don't try to precompute a reference. We can't replace it with a constant
-    // expression, as that would make a copy of it by value.
-    // TODO: do so when safe
-    if (curr->type.isRef()) {
-      return Flow(NONCONSTANT_FLOW);
-    }
-    // Don't try to precompute an Rtt. TODO figure out when that would be safe
-    if (curr->type.isRtt()) {
+    if (!canEmitConstantFor(curr->type)) {
       return Flow(NONCONSTANT_FLOW);
     }
     try {
@@ -347,6 +349,27 @@ private:
         }
       }
     }
+  }
+
+  bool canEmitConstantFor(const Literals& values) {
+    for (auto& value : values) {
+      if (!canEmitConstantFor(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool canEmitConstantFor(const Literal& value) {
+    return canEmitConstantFor(value.type);
+  }
+
+  bool canEmitConstantFor(Type type) {
+    // Don't try to precompute a reference. We can't replace it with a constant
+    // expression, as that would make a copy of it by value.
+    // For now, don't try to precompute an Rtt. TODO figure out when that would
+    // be safe and useful.
+    return !type.isRef() && !type.isRtt();
   }
 };
 
