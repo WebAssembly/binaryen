@@ -357,8 +357,13 @@ private:
 
   bool canEmitConstantFor(const Literal& value) {
     // A null is fine to emit a constant for - we'll emit a RefNull. Otherwise,
-    // see below about actual references.
+    // see below about references to GC data.
     if (value.isNull()) {
+      return true;
+    }
+    // A function is fine to emit a constant for - we'll emit a RefFunc, which
+    // is compact and immutable, so there can't be a problem.
+    if (value.type.isFunction()) {
       return true;
     }
     return canEmitConstantFor(value.type);
