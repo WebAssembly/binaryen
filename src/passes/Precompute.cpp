@@ -356,6 +356,11 @@ private:
   }
 
   bool canEmitConstantFor(const Literal& value) {
+    // A null is fine to emit a constant for - we'll emit a RefNull. Otherwise,
+    // see below about actual references.
+    if (value.isNull()) {
+      return true;
+    }
     return canEmitConstantFor(value.type);
   }
 

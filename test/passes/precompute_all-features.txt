@@ -287,18 +287,12 @@
   (drop
    (block $l2 (result externref)
     (drop
-     (block $l3 (result i32)
+     (block $l3
       (global.set $global-mut
        (i32.const 1)
       )
-      (br_if $l3
-       (i32.const 1)
-       (ref.is_null
-        (br_if $l2
-         (ref.null extern)
-         (i32.const 3)
-        )
-       )
+      (br $l2
+       (ref.null extern)
       )
      )
     )
