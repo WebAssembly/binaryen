@@ -1330,6 +1330,8 @@ public:
   Expression* rtt;
 
   void finalize();
+
+  Type getCastType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1340,6 +1342,8 @@ public:
   Expression* rtt;
 
   void finalize();
+
+  Type getCastType();
 };
 
 class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
@@ -1351,6 +1355,8 @@ public:
   Expression* rtt;
 
   void finalize();
+
+  Type getCastType();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {

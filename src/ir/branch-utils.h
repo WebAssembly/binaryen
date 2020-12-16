@@ -82,7 +82,7 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
     } else if (auto* br = expr->dynCast<BrOnExn>()) {
       func(name, br->sent);
     } else if (auto* br = expr->dynCast<BrOnCast>()) {
-      func(Type(br->rtt->type.getHeapType(), Nullable));
+      func(name, br->getCastType());
     } else {
       WASM_UNREACHABLE("bad br type");
     }
