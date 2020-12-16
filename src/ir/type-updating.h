@@ -59,7 +59,7 @@ struct TypeUpdater
     } else {
       BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
         // ensure info exists, discoverBreaks can then fill it
-        blockInfos[>name];
+        blockInfos[ > name];
       });
     }
     // add a break to the info, for break and switch
@@ -151,9 +151,9 @@ struct TypeUpdater
 
   // adds (or removes) breaks depending on break/switch contents
   void discoverBreaks(Expression* curr, int change) {
-    BranchUtils::operateOnScopeNameUsesAndSentTypes(curr, [&](Name& name, Type type) {
-      noteBreakChange(name, change, type);
-    });
+    BranchUtils::operateOnScopeNameUsesAndSentTypes(
+      curr,
+      [&](Name& name, Type type) { noteBreakChange(name, change, type); });
     // FIXME: accumulate switch changes to a set first, uniquify?
   }
 
