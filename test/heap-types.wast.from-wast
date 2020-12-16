@@ -187,6 +187,10 @@
       (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
      )
     )
+    (br_on_cast $out any
+     (ref.null ${i32_f32_f64})
+     (unreachable)
+    )
     (unreachable)
    )
   )

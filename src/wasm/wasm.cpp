@@ -1049,6 +1049,12 @@ void RefTest::finalize() {
 // Helper to get the cast type for a cast instruction. They all look at the rtt
 // operand's type.
 template<typename T> static Type doGetCastType(T* curr) {
+  if (curr->rtt->type == Type::unreachable) {
+    // We don't have the RTT type, so just assume the most generic type as
+    // possible.
+    return Type::anyref;
+  }
+  // TODO: make non-nullable when we support that
   return Type(curr->rtt->type.getHeapType(), Nullable);
 }
 
@@ -1058,7 +1064,6 @@ void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    // TODO: make non-nullable when we support that
     type = getCastType();
   }
 }

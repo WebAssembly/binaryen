@@ -1723,17 +1723,17 @@ struct PrintExpressionContents
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test ");
-    printHeapTypeName(o, curr->rtt->type.getHeapType());
+    printHeapTypeName(o, curr->getCastType().getHeapType());
   }
   void visitRefCast(RefCast* curr) {
     printMedium(o, "ref.cast ");
-    printHeapTypeName(o, curr->rtt->type.getHeapType());
+    printHeapTypeName(o, curr->getCastType().getHeapType());
   }
   void visitBrOnCast(BrOnCast* curr) {
     printMedium(o, "br_on_cast ");
     printName(curr->name, o);
     o << " ";
-    printHeapTypeName(o, curr->rtt->type.getHeapType());
+    printHeapTypeName(o, curr->getCastType().getHeapType());
   }
   void visitRttCanon(RttCanon* curr) {
     printMedium(o, "rtt.canon ");

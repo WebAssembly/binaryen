@@ -172,6 +172,10 @@
         (drop
           (br_on_cast $out $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
         )
+        ;; an untaken br_on_cast, with unreachable rtt - so we cannot use the
+        ;; RTT in binaryen IR to find the cast type (binaryen IR does not store
+        ;; the extra cast type that wasm does).
+        (br_on_cast $out $struct.B (ref.null $struct.A) (unreachable))
         (unreachable)
       )
     )
