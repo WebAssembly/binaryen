@@ -17,6 +17,7 @@
 #ifndef wasm_ir_type_updating_h
 #define wasm_ir_type_updating_h
 
+#include "ir/branch-utils.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -59,7 +60,7 @@ struct TypeUpdater
     } else {
       BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
         // ensure info exists, discoverBreaks can then fill it
-        blockInfos[ > name];
+        blockInfos[name];
       });
     }
     // add a break to the info, for break and switch
