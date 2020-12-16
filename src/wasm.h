@@ -1842,6 +1842,4 @@ template<> struct hash<wasm::Address> {
 };
 } // namespace std
 
-#include "wasm-printing.h"
-
 #endif // wasm_wasm_h
