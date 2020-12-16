@@ -200,8 +200,11 @@ struct BranchSeeker
   }
 
   void visitExpression(Expression* curr) {
-    operateOnScopeNameUsesAndSentTypes(
-      curr, [&](Name& name, Type type) { noteFound(type); });
+    operateOnScopeNameUsesAndSentTypes(curr, [&](Name& name, Type type) {
+      if (name == target) {
+        noteFound(type);
+      }
+    });
   }
 
   static bool has(Expression* tree, Name target) {
