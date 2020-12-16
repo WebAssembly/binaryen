@@ -18,16 +18,19 @@
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_cast
+[LoggingExternalInterface logging 3]
 (module
  (type ${i32} (struct (field i32)))
- (type ${i32_f64} (struct (field i32) (field f64)))
  (type $none_=>_none (func))
+ (type ${i32_f64} (struct (field i32) (field f64)))
  (type $[mut:i8] (array (mut i8)))
  (type $i32_=>_none (func (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "structs" (func $0))
  (export "arrays" (func $1))
  (export "rtts" (func $2))
+ (export "br_on_cast" (func $3))
  (func $0 (; has Stack IR ;)
   (local $0 (ref null ${i32}))
   (call $log
@@ -184,6 +187,11 @@
    )
   )
  )
+ (func $3 (; has Stack IR ;)
+  (call $log
+   (i32.const 3)
+  )
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -205,3 +213,5 @@
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
+[fuzz-exec] calling br_on_cast
+[LoggingExternalInterface logging 3]
