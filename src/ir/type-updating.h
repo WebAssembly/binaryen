@@ -155,7 +155,9 @@ struct TypeUpdater
     BranchUtils::operateOnScopeNameUsesAndSentTypes(
       curr,
       [&](Name& name, Type type) { noteBreakChange(name, change, type); });
-    // FIXME: accumulate switch changes to a set first, uniquify?
+    // TODO: it may be faster to accumulate all changes to a set first, then
+    // call noteBreakChange on the unique values, as a switch can be quite
+    // large and have lots of repeated targets.
   }
 
   void noteBreakChange(Name name, int change, Type type) {
