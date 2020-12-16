@@ -1036,14 +1036,11 @@ void RefTest::finalize() {
 
 // Helper to get the cast type for a cast instruction. They all look at the rtt
 // operand's type.
-template <typename T>
-static Type doGetCastType(T* curr) {
+template<typename T> static Type doGetCastType(T* curr) {
   return Type(curr->rtt->type.getHeapType(), Nullable);
 }
 
-void RefTest::getCastType() {
-  return doGetCastType(this);
-}
+void RefTest::getCastType() { return doGetCastType(this); }
 
 void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
@@ -1054,9 +1051,7 @@ void RefCast::finalize() {
   }
 }
 
-void RefCast::getCastType() {
-  return doGetCastType(this);
-}
+void RefCast::getCastType() { return doGetCastType(this); }
 
 void BrOnCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
@@ -1066,9 +1061,7 @@ void BrOnCast::finalize() {
   }
 }
 
-void BrOnCast::getCastType() {
-  return doGetCastType(this);
-}
+void BrOnCast::getCastType() { return doGetCastType(this); }
 
 void RttCanon::finalize() {
   // Nothing to do - the type must have been set already during construction.
