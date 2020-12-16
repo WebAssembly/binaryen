@@ -185,17 +185,19 @@ struct BranchSeeker
   Name target;
 
   Index found = 0;
+  // None indicates no value is sent.
   Type valueType = Type::none;
 
   BranchSeeker(Name target) : target(target) {}
 
   void noteFound(Type newType) {
     found++;
-    if (found == 1) {
-      valueType = Type::unreachable;
-    }
     if (newType != Type::none) {
-      valueType = Type::getLeastUpperBound(valueType, newType);
+      if (found == 1) {
+        valueType = newType;
+      } else {
+        valueType = Type::getLeastUpperBound(valueType, newType);
+      }
     }
   }
 
