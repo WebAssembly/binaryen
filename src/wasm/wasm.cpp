@@ -301,42 +301,47 @@ static void handleUnreachable(Block* block,
 }
 
 void Block::finalize() {
+  if (list.size() == 0) {
+    type = Type::none;
+    return;
+  }
   if (!name.is()) {
-    if (list.size() > 0) {
-      // nothing branches here, so this is easy
-      // normally the type is the type of the final child
-      type = list.back()->type;
-      // and even if we have an unreachable child somewhere,
-      // we still mark ourselves as having that type,
-      // (block (result i32)
-      //  (return)
-      //  (i32.const 10)
-      // )
-      if (type.isConcrete()) {
+    // nothing branches here, so this is easy
+    // normally the type is the type of the final child
+    type = list.back()->type;
+    // and even if we have an unreachable child somewhere,
+    // we still mark ourselves as having that type,
+    // (block (result i32)
+    //  (return)
+    //  (i32.const 10)
+    // )
+    if (type.isConcrete()) {
+      return;
+    }
+    // if we are unreachable, we are done
+    if (type == Type::unreachable) {
+      return;
+    }
+    // we may still be unreachable if we have an unreachable
+    // child
+    for (auto* child : list) {
+      if (child->type == Type::unreachable) {
+        type = Type::unreachable;
         return;
       }
-      // if we are unreachable, we are done
-      if (type == Type::unreachable) {
-        return;
-      }
-      // we may still be unreachable if we have an unreachable
-      // child
-      for (auto* child : list) {
-        if (child->type == Type::unreachable) {
-          type = Type::unreachable;
-          return;
-        }
-      }
-    } else {
-      type = Type::none;
     }
     return;
   }
 
+  // The default type is according to the value that flows out.
+  type = list.back()->type;
   BranchUtils::BranchSeeker seeker(this->name);
   Expression* temp = this;
   seeker.walk(temp);
-  type = seeker.valueType;
+  if (seeker.valueType != Type::none) {
+    // There are branches; take those into account.
+    type = Type::getLeastUpperBound(type, seeker.valueType);
+  }
   handleUnreachable(this);
 }
 
