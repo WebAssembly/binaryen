@@ -3079,9 +3079,9 @@ public:
 Pass* createPrintStackIRPass() { return new PrintStackIR(); }
 
 static std::ostream& printExpression(Expression* expression,
-                              std::ostream& o,
-                              bool minify,
-                              bool full) {
+                                     std::ostream& o,
+                                     bool minify,
+                                     bool full) {
   if (!expression) {
     o << "(null expression)";
     return o;
