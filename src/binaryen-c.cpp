@@ -3380,7 +3380,7 @@ BinaryenModuleRef BinaryenModuleParse(const char* text) {
 }
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
-  std::cout << *(Module*)module << '\n';
+  std::cout << *(Module*)module;
 }
 
 void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
@@ -3544,7 +3544,7 @@ size_t BinaryenModuleWriteText(BinaryenModuleRef module,
   // use a stringstream as an std::ostream. Extract the std::string
   // representation, and then store in the output.
   std::stringstream ss;
-  ss << *(Module*)module << '\n';
+  ss << *(Module*)module;
 
   const auto temp = ss.str();
   const auto ctemp = temp.c_str();
@@ -3589,7 +3589,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 
 char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   std::stringstream ss;
-  ss << *(Module*)module << '\n';
+  ss << *(Module*)module;
 
   const std::string out = ss.str();
   const int len = out.length() + 1;
