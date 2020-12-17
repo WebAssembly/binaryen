@@ -310,7 +310,7 @@ int main(int argc, const char* argv[]) {
         modules[moduleName]->features = FeatureSet::All;
         bool valid = WasmValidator().validate(*modules[moduleName]);
         if (!valid) {
-          WasmPrinter::printModule(modules[moduleName].get());
+          std::cout << *modules[moduleName] << '\n';
           Fatal() << "module failed to validate, see above";
         }
         run_asserts(moduleName,

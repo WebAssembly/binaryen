@@ -466,7 +466,7 @@ int main(int argc, const char* argv[]) {
   options.applyFeatures(wasm);
 
   if (!WasmValidator().validate(wasm)) {
-    WasmPrinter::printModule(&wasm);
+    std::cout << wasm << '\n';
     Fatal() << "error in validating input";
   }
 

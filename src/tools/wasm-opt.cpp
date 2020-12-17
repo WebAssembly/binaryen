@@ -226,7 +226,7 @@ int main(int argc, const char* argv[]) {
     // to print would not be reached).
     if (std::find(options.passes.begin(), options.passes.end(), "print") !=
         options.passes.end()) {
-      WasmPrinter::printModule(&wasm);
+      std::cout << wasm << '\n';
     }
     Fatal() << message;
   };
@@ -278,7 +278,7 @@ int main(int argc, const char* argv[]) {
     reader.build();
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm)) {
-        WasmPrinter::printModule(&wasm);
+        std::cout << wasm << '\n';
         Fatal() << "error after translate-to-fuzz";
       }
     }
