@@ -387,4 +387,12 @@ int main() {
       (call $foo (i32.const 1))
      )
     ))");
+
+  // Multiple exports of a secondary function
+  do_test({}, R"(
+    (module
+     (export "foo1" (func $foo))
+     (export "foo2" (func $foo))
+     (func $foo)
+    ))");
 }
