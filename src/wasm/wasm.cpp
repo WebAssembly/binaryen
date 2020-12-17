@@ -269,9 +269,10 @@ Literals getLiteralsFromConstExpression(Expression* curr) {
 
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
-static void handleUnreachable(Block* block,
-                              bool breakabilityKnown = false,
-                              bool hasBreak = false) {
+
+static void
+handleUnreachable(Block* block,
+                  Block::Breakability breakability = Block::Unknown) {
   if (block->type == Type::unreachable) {
     return; // nothing to do
   }
@@ -289,10 +290,12 @@ static void handleUnreachable(Block* block,
     if (child->type == Type::unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a
       // break
-      if (!breakabilityKnown) {
-        hasBreak = BranchUtils::BranchSeeker::has(block, block->name);
+      if (breakability == Block::Unknown) {
+        breakability = BranchUtils::BranchSeeker::has(block, block->name)
+                         ? Block::HasBreak
+                         : Block::NoBreak;
       }
-      if (!hasBreak) {
+      if (breakability == Block::NoBreak) {
         block->type = Type::unreachable;
       }
       return;
@@ -310,13 +313,11 @@ void Block::finalize() {
   type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
-    handleUnreachable(
-      this, /* breakabilityKnown = */ true, /* hasBreak = */ false);
+    handleUnreachable(this, NoBreak);
     return;
   }
 
   // The default type is according to the value that flows out.
-  type = list.back()->type;
   BranchUtils::BranchSeeker seeker(this->name);
   Expression* temp = this;
   seeker.walk(temp);
@@ -330,8 +331,7 @@ void Block::finalize() {
     }
   } else {
     // There are no branches, so this block may be unreachable.
-    handleUnreachable(
-      this, /* breakabilityKnown = */ true, /* hasBreak = */ false);
+    handleUnreachable(this, NoBreak);
   }
 }
 
@@ -342,10 +342,10 @@ void Block::finalize(Type type_) {
   }
 }
 
-void Block::finalize(Type type_, bool hasBreak) {
+void Block::finalize(Type type_, Breakability breakability) {
   type = type_;
   if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this, true, hasBreak);
+    handleUnreachable(this, breakability);
   }
 }
 

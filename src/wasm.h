@@ -703,11 +703,13 @@ public:
   // needed (which may require scanning the block)
   void finalize(Type type_);
 
+  enum Breakability { Unknown, HasBreak, NoBreak };
+
   // set the type given you know its type, and you know if there is a break to
   // this block. this avoids the need to scan the contents of the block in the
   // case that it might be unreachable, so it is recommended if you already know
   // the type and breakability anyhow.
-  void finalize(Type type_, bool hasBreak);
+  void finalize(Type type_, Breakability breakability);
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -1851,7 +1853,5 @@ template<> struct hash<wasm::Address> {
   }
 };
 } // namespace std
-
-#include "wasm-printing.h"
 
 #endif // wasm_wasm_h

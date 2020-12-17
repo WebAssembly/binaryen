@@ -3154,8 +3154,9 @@ void WasmBinaryBuilder::visitBlock(Block* curr) {
     }
     pushBlockElements(curr, curr->type, start);
     curr->finalize(curr->type,
-                   breakTargetNames.find(curr->name) !=
-                     breakTargetNames.end() /* hasBreak */);
+                   breakTargetNames.find(curr->name) != breakTargetNames.end()
+                     ? Block::HasBreak
+                     : Block::NoBreak);
     breakStack.pop_back();
     breakTargetNames.erase(curr->name);
   }
