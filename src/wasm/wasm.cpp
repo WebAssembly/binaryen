@@ -99,10 +99,7 @@ Name ATTR("attr");
 // Expressions
 
 void Expression::dump() {
-  WasmPrinter::printExpression(this,
-                               std::cerr,
-                               /*minify=*/false,
-                               /*full=*/true);
+  std::cout << *this << '\n';
 }
 
 const char* getExpressionName(Expression* curr) {
