@@ -26,7 +26,6 @@
 #include "pass.h"
 #include "support/name.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
