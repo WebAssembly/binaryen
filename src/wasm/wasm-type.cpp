@@ -411,6 +411,8 @@ bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
 
+bool Type::isDefaultable() const { return !isRef() || isNullable(); }
+
 bool Type::operator<(const Type& other) const {
   if (*this == other) {
     return false;
