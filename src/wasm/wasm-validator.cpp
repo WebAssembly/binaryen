@@ -2418,8 +2418,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
-    shouldBeTrue(var.isDefaultable());
+    shouldBeTrue(var.isDefaultable(), curr, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
