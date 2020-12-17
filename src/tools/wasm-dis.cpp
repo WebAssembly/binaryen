@@ -75,8 +75,7 @@ int main(int argc, const char* argv[]) {
     std::cerr << "Printing..." << std::endl;
   }
   Output output(options.extra["output"], Flags::Text);
-  WasmPrinter::printModule(&wasm, output.getStream());
-  output << '\n';
+  output.getStream() << wasm << '\n';
 
   if (options.debug) {
     std::cerr << "Done." << std::endl;

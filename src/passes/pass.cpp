@@ -561,7 +561,7 @@ void PassRunner::run() {
       // pass breaks it, so we can print the before and after
       std::stringstream moduleBefore;
       if (passDebug == 2 && !isNested) {
-        WasmPrinter::printModule(wasm, moduleBefore);
+        moduleBefore << *wasm << '\n';
       }
       // prepare to run
       std::cerr << "[PassRunner]   running pass: " << pass->name << "... ";
@@ -584,7 +584,7 @@ void PassRunner::run() {
         // validate, ignoring the time
         std::cerr << "[PassRunner]   (validating)\n";
         if (!WasmValidator().validate(*wasm, validationFlags)) {
-          WasmPrinter::printModule(wasm);
+          std::cout << *wasm << '\n';
           if (passDebug >= 2) {
             Fatal() << "Last pass (" << pass->name
                     << ") broke validation. Here is the module before: \n"

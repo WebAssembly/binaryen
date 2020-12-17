@@ -404,7 +404,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
 
 #ifndef NDEBUG
   if (!WasmValidator().validate(*wasm)) {
-    WasmPrinter::printModule(wasm);
+    std::cout << *wasm << '\n';
     Fatal() << "error in validating wasm2js output";
   }
 #endif
