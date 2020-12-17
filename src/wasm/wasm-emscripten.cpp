@@ -434,8 +434,8 @@ void printSignatures(std::ostream& o, const std::set<Signature>& c) {
   o << "]";
 }
 
-std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
-  std::vector<Name> const& initializerFunctions) {
+std::string
+EmscriptenGlueGenerator::generateEmscriptenMetadata(Name initializer) {
   bool commaFirst;
   auto nextElement = [&commaFirst]() {
     if (commaFirst) {
@@ -482,13 +482,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
 
   meta << "  \"tableSize\": " << wasm.table.initial.addr << ",\n";
 
-  if (!initializerFunctions.empty()) {
+  if (initializer.is()) {
     meta << "  \"initializers\": [";
-    commaFirst = true;
-    for (const auto& func : initializerFunctions) {
-      meta << nextElement();
-      meta << "\"" << func.c_str() << "\"";
-    }
+    meta << "\n    \"" << initializer.c_str() << "\"";
     meta << "\n  ],\n";
   }
 
