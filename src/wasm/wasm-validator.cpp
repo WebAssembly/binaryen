@@ -43,7 +43,7 @@ inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
 // Extra overload for Expressions, to print type info too
 inline std::ostream& printModuleComponent(Expression* curr,
                                           std::ostream& stream) {
-  WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
+  stream << *curr << '\n';
   return stream;
 }
 

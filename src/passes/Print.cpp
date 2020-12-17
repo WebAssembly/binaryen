@@ -31,8 +31,6 @@ namespace {
 struct WasmPrinter {
   static std::ostream& printModule(Module* module, std::ostream& o);
 
-  static std::ostream& printModule(Module* module);
-
   static std::ostream& printExpression(Expression* expression,
                                        std::ostream& o,
                                        bool minify = false,
@@ -3088,10 +3086,6 @@ std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
   PassRunner runner(module);
   Printer(&o).run(&runner, module);
   return o;
-}
-
-std::ostream& WasmPrinter::printModule(Module* module) {
-  return printModule(module, std::cout);
 }
 
 std::ostream& WasmPrinter::printExpression(Expression* expression,
