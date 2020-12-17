@@ -468,22 +468,22 @@ uint64_t hashFile(const std::string& filename) {
   return uint64_t(digest);
 }
 
-void adjustTableSize(Module& wasm, const WasmSplitOptions& options) {
-  if (options.initialTableSize < 0) {
+void adjustTableSize(Module& wasm, int initialSize) {
+  if (initialSize < 0) {
     return;
   }
   if (!wasm.table.exists) {
     Fatal() << "--initial-table used but there is no table";
   }
-  if ((uint64_t)options.initialTableSize < wasm.table.initial) {
+  if ((uint64_t)initialSize < wasm.table.initial) {
     Fatal() << "Specified initial table size too small, should be at least "
             << wasm.table.initial;
   }
-  if ((uint64_t)options.initialTableSize > wasm.table.max) {
+  if ((uint64_t)initialSize > wasm.table.max) {
     Fatal() << "Specified initial table size larger than max table size "
             << wasm.table.max;
   }
-  wasm.table.initial = options.initialTableSize;
+  wasm.table.initial = initialSize;
 }
 
 void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
@@ -496,7 +496,7 @@ void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   PassRunner runner(&wasm, options.passOptions);
   Instrumenter(options.profileExport, moduleHash).run(&runner, &wasm);
 
-  adjustTableSize(wasm, options);
+  adjustTableSize(wasm, options.initialTableSize);
 
   // Write the output modules
   ModuleWriter writer;
@@ -635,8 +635,8 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
   std::unique_ptr<Module> secondary =
     ModuleSplitting::splitFunctions(wasm, config);
 
-  adjustTableSize(wasm, options);
-  adjustTableSize(*secondary, options);
+  adjustTableSize(wasm, options.initialTableSize);
+  adjustTableSize(*secondary, options.initialTableSize);
 
   // Write the output modules
   ModuleWriter writer;
