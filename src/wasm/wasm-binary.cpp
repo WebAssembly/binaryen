@@ -5685,7 +5685,7 @@ bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
   validateHeapTypeUsingChild(ref, heapType1);
   auto* rtt = popNonVoidExpression();
   validateHeapTypeUsingChild(rtt, heapType2);
-  out = Builder(wasm).makeBrOnCast(name, ref, rtt);
+  out = Builder(wasm).makeBrOnCast(name, heapType2, ref, rtt);
   return true;
 }
 

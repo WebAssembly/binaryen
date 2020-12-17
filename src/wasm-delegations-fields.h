@@ -574,6 +574,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::BrOnCastId: {
     DELEGATE_START(BrOnCast);
     DELEGATE_FIELD_SCOPE_NAME_USE(BrOnCast, name);
+    DELEGATE_FIELD_TYPE(BrOnCast, castType);
     DELEGATE_FIELD_CHILD(BrOnCast, ref);
     DELEGATE_FIELD_CHILD(BrOnCast, rtt);
     DELEGATE_END(BrOnCast);

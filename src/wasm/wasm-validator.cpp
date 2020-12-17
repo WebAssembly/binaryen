@@ -2232,6 +2232,10 @@ void FunctionValidator::visitBrOnCast(BrOnCast* curr) {
   if (curr->rtt->type != Type::unreachable) {
     shouldBeTrue(
       curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
+    shouldBeEqual(curr->rtt->type.getHeapType(),
+                  curr->castType.getHeapType(),
+                  curr,
+                  "br_on_cast rtt must have the proper heap type");
     noteBreak(curr->name, Type(curr->rtt->type.getHeapType(), Nullable), curr);
   }
 }

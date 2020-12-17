@@ -2113,7 +2113,7 @@ Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {
   auto* ref = parseExpression(*s[3]);
   auto* rtt = parseExpression(*s[4]);
   validateHeapTypeUsingChild(rtt, heapType, s);
-  return Builder(wasm).makeBrOnCast(name, ref, rtt);
+  return Builder(wasm).makeBrOnCast(name, heapType, ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {

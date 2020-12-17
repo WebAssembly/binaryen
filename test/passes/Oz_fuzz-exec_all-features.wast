@@ -170,5 +170,13 @@
    )
   )
   (call $log (i32.const 3)) ;; we should get here
+  (drop
+   (block $never (result (ref $extendedstruct))
+    ;; an untaken br_on_cast, with unreachable rtt - so we cannot use the
+    ;; RTT in binaryen IR to find the cast type.
+    (br_on_cast $never $extendedstruct (ref.null $struct) (unreachable))
+    (unreachable)
+   )
+  )
  )
 )

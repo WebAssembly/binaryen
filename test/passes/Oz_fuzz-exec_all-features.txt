@@ -20,6 +20,7 @@
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_cast
 [LoggingExternalInterface logging 3]
+[trap unreachable]
 (module
  (type ${i32} (struct (field i32)))
  (type $none_=>_none (func))
@@ -191,6 +192,7 @@
   (call $log
    (i32.const 3)
   )
+  (unreachable)
  )
 )
 [fuzz-exec] calling structs
@@ -215,3 +217,4 @@
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_cast
 [LoggingExternalInterface logging 3]
+[trap unreachable]

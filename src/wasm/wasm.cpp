@@ -1061,7 +1061,7 @@ void BrOnCast::finalize() {
   }
 }
 
-Type BrOnCast::getCastType() { return doGetCastType(this); }
+Type BrOnCast::getCastType() { return castType; }
 
 void RttCanon::finalize() {
   // Nothing to do - the type must have been set already during construction.
