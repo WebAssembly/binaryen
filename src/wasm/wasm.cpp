@@ -99,13 +99,6 @@ Name ATTR("attr");
 
 // Expressions
 
-void Expression::dump() {
-  WasmPrinter::printExpression(this,
-                               std::cerr,
-                               /*minify=*/false,
-                               /*full=*/true);
-}
-
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
     case Expression::Id::InvalidId:

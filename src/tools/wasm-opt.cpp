@@ -34,7 +34,6 @@
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "wasm2c-wrapper.h"

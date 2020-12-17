@@ -29,7 +29,6 @@
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "wasm.h"

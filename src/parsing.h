@@ -26,8 +26,8 @@
 #include "shared-constants.h"
 #include "support/colors.h"
 #include "support/utilities.h"
-#include "wasm-printing.h"
 #include "wasm.h"
+#include "wasm-traversal.h"
 
 namespace wasm {
 

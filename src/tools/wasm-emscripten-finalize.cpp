@@ -30,7 +30,6 @@
 #include "wasm-binary.h"
 #include "wasm-emscripten.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
 #include "wasm-validator.h"
 
 #define DEBUG_TYPE "emscripten"

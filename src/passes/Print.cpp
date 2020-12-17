@@ -21,7 +21,6 @@
 #include <ir/module-utils.h>
 #include <pass.h>
 #include <pretty_printing.h>
-#include <wasm-printing.h>
 #include <wasm-stack.h>
 #include <wasm.h>
 
@@ -3198,3 +3197,27 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
 }
 
 } // namespace wasm
+
+namespace std {
+
+std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
+  return wasm::WasmPrinter::printModule(&module, o);
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
+  return wasm::WasmPrinter::printExpression(&expression, o);
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
+  return wasm::WasmPrinter::printExpression(expression, o);
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
+  return wasm::WasmPrinter::printStackInst(&inst, o);
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir) {
+  return wasm::WasmPrinter::printStackIR(&ir, o);
+}
+
+} // namespace std

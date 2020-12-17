@@ -28,6 +28,7 @@
 #include <array>
 #include <cassert>
 #include <map>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -659,9 +660,6 @@ public:
     assert(int(_id) == int(T::SpecificId));
     return (const T*)this;
   }
-
-  // Print the expression to stderr. Meant for use while debugging.
-  void dump();
 };
 
 const char* getExpressionName(Expression* curr);
@@ -1832,6 +1830,23 @@ public:
   void clearDebugInfo();
 };
 
+struct WasmPrinter {
+  static std::ostream& printModule(Module* module, std::ostream& o);
+
+  static std::ostream& printModule(Module* module);
+
+  static std::ostream& printExpression(Expression* expression,
+                                       std::ostream& o,
+                                       bool minify = false,
+                                       bool full = false);
+
+  static std::ostream&
+  printStackInst(StackInst* inst, std::ostream& o, Function* func = nullptr);
+
+  static std::ostream&
+  printStackIR(StackIR* ir, std::ostream& o, Function* func = nullptr);
+};
+
 } // namespace wasm
 
 namespace std {
@@ -1840,6 +1855,12 @@ template<> struct hash<wasm::Address> {
     return std::hash<wasm::Address::address64_t>()(a.addr);
   }
 };
+
+std::ostream& operator<<(std::ostream& o, wasm::Module& module);
+std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
+std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
+
 } // namespace std
 
 #endif // wasm_wasm_h

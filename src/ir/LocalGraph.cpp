@@ -20,7 +20,6 @@
 #include <ir/find_all.h>
 #include <ir/local-graph.h>
 #include <wasm-builder.h>
-#include <wasm-printing.h>
 
 namespace wasm {
 

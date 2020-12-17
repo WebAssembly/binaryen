@@ -28,7 +28,6 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-interpreter.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 

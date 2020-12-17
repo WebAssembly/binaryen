@@ -28,7 +28,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
-#include "wasm-printing.h"
 #include <iostream>
 #endif
 

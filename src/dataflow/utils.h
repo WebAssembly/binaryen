@@ -26,7 +26,6 @@
 #define wasm_dataflow_utils_h
 
 #include "dataflow/node.h"
-#include "wasm-printing.h"
 #include "wasm.h"
 
 namespace wasm {

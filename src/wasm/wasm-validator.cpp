@@ -25,7 +25,6 @@
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
-#include "wasm-printing.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 
