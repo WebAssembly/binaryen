@@ -393,6 +393,14 @@ bool Type::isException() const {
 
 bool Type::isNullable() const {
   if (isBasic()) {
+    if (id == i31ref) {
+      // i31ref is always non-nullable - there is no way to declare a nullable
+      // i31 reference, unlike other reference types. For now, allow it in vars
+      // for testing (as we have no other way to test it, yet), by reporting
+      // that it is nullable.
+      // FIXME when we have proper non-nullability.
+      return true;
+    }
     return id >= funcref && id <= eqref; // except i31ref
   } else {
     return getTypeInfo(*this)->isNullable();
