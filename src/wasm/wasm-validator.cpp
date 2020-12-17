@@ -40,10 +40,12 @@ inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
   return stream;
 }
 
-// Extra overload for Expressions, to print type info too
+// Extra overload for Expressions, to print their contents.
 inline std::ostream& printModuleComponent(Expression* curr,
                                           std::ostream& stream) {
-  stream << *curr << '\n';
+  if (curr) {
+    stream << *curr << '\n';
+  }
   return stream;
 }
 
