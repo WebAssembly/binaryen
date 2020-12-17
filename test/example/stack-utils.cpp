@@ -5,7 +5,6 @@
 #include "literal.h"
 #include "mixed_arena.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -26,11 +25,9 @@ void test_remove_nops() {
       builder.makeNop(),
     },
     {Type::i32, Type::i64});
-  WasmPrinter::printExpression(block, std::cout);
-  std::cout << "\n";
+  std::cout << *block << '\n';
   StackUtils::removeNops(block);
-  WasmPrinter::printExpression(block, std::cout);
-  std::cout << "\n";
+  std::cout << *block << '\n';
 }
 
 void test_stack_signatures() {
