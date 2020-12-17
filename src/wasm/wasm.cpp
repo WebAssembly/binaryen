@@ -1033,9 +1033,9 @@ void RefTest::finalize() {
 // operand's type.
 template<typename T> static Type doGetCastType(T* curr) {
   if (curr->rtt->type == Type::unreachable) {
-    // We don't have the RTT type, so just assume the most generic type as
-    // possible.
-    return Type::anyref;
+    // We don't have the RTT type, so just return unreachable. The type in this
+    // case should not matter in practice, but it may be seen while debugging.
+    return Type::unreachable;
   }
   // TODO: make non-nullable when we support that
   return Type(curr->rtt->type.getHeapType(), Nullable);
