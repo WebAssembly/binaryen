@@ -121,7 +121,7 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
 #define DEBUG_TYPE "writer"
 
 void ModuleWriter::writeText(Module& wasm, Output& output) {
-  WasmPrinter::printModule(&wasm, output.getStream());
+  output.getStream() << wasm;
 }
 
 void ModuleWriter::writeText(Module& wasm, std::string filename) {

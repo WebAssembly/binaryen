@@ -25,7 +25,6 @@
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
 #include "support/colors.h"
-#include "wasm-printing.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 
@@ -41,10 +40,12 @@ inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
   return stream;
 }
 
-// Extra overload for Expressions, to print type info too
+// Extra overload for Expressions, to print their contents.
 inline std::ostream& printModuleComponent(Expression* curr,
                                           std::ostream& stream) {
-  WasmPrinter::printExpression(curr, stream, false, true) << std::endl;
+  if (curr) {
+    stream << *curr << '\n';
+  }
   return stream;
 }
 

@@ -26,7 +26,6 @@
 #define wasm_dataflow_utils_h
 
 #include "dataflow/node.h"
-#include "wasm-printing.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -47,7 +46,7 @@ inline std::ostream& dump(Node* node, std::ostream& o, size_t indent = 0) {
       break;
     case Node::Type::Expr: {
       o << "expr ";
-      WasmPrinter::printExpression(node->expr, o, true);
+      o << *node->expr << '\n';
       break;
     }
     case Node::Type::Phi:

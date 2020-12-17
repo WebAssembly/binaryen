@@ -31,10 +31,6 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#ifdef RERELOOP_DEBUG
-#include <wasm-printing.h>
-#endif
-
 namespace wasm {
 
 struct ReReloop final : public Pass {

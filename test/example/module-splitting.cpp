@@ -4,7 +4,6 @@
 #include "ir/module-splitting.h"
 #include "ir/stack-utils.h"
 #include "wasm-features.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -34,7 +33,7 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   assert(valid && "before invalid!");
 
   std::cout << "Before:\n";
-  WasmPrinter::printModule(primary.get());
+  std::cout << *primary.get();
 
   std::cout << "Keeping: ";
   if (keptFuncs.size()) {
@@ -54,9 +53,9 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   auto secondary = splitFunctions(*primary, config);
 
   std::cout << "After:\n";
-  WasmPrinter::printModule(primary.get());
+  std::cout << *primary.get();
   std::cout << "Secondary:\n";
-  WasmPrinter::printModule(secondary.get());
+  std::cout << *secondary.get();
   std::cout << "\n\n";
 
   valid = validator.validate(*primary);

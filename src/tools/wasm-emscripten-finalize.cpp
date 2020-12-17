@@ -30,7 +30,6 @@
 #include "wasm-binary.h"
 #include "wasm-emscripten.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
 #include "wasm-validator.h"
 
 #define DEBUG_TYPE "emscripten"
@@ -222,8 +221,7 @@ int main(int argc, const char* argv[]) {
   options.applyFeatures(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
-  BYN_DEBUG_WITH_TYPE("emscripten-dump",
-                      WasmPrinter::printModule(&wasm, std::cerr));
+  BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << &wasm);
 
   EmscriptenGlueGenerator generator(wasm);
   generator.standalone = standaloneWasm;
@@ -315,8 +313,7 @@ int main(int argc, const char* argv[]) {
   }
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
-  BYN_DEBUG_WITH_TYPE("emscripten-dump",
-                      WasmPrinter::printModule(&wasm, std::cerr));
+  BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << wasm << '\n');
 
   // Write the modified wasm if the user asked us to, either by specifying an
   // output file, or requesting text output (which goes to stdout by default).

@@ -29,7 +29,6 @@
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -1276,8 +1275,7 @@ void BinaryenExpressionSetType(BinaryenExpressionRef expr, BinaryenType type) {
   ((Expression*)expr)->type = Type(type);
 }
 void BinaryenExpressionPrint(BinaryenExpressionRef expr) {
-  WasmPrinter::printExpression((Expression*)expr, std::cout);
-  std::cout << '\n';
+  std::cout << *(Expression*)expr << '\n';
 }
 void BinaryenExpressionFinalize(BinaryenExpressionRef expr) {
   ReFinalizeNode().visit((Expression*)expr);
@@ -3382,7 +3380,7 @@ BinaryenModuleRef BinaryenModuleParse(const char* text) {
 }
 
 void BinaryenModulePrint(BinaryenModuleRef module) {
-  WasmPrinter::printModule((Module*)module);
+  std::cout << *(Module*)module;
 }
 
 void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
@@ -3546,7 +3544,7 @@ size_t BinaryenModuleWriteText(BinaryenModuleRef module,
   // use a stringstream as an std::ostream. Extract the std::string
   // representation, and then store in the output.
   std::stringstream ss;
-  WasmPrinter::printModule((Module*)module, ss);
+  ss << *(Module*)module;
 
   const auto temp = ss.str();
   const auto ctemp = temp.c_str();
@@ -3591,7 +3589,7 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 
 char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   std::stringstream ss;
-  WasmPrinter::printModule((Module*)module, ss);
+  ss << *(Module*)module;
 
   const std::string out = ss.str();
   const int len = out.length() + 1;

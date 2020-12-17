@@ -28,6 +28,7 @@
 #include <array>
 #include <cassert>
 #include <map>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -1842,6 +1843,12 @@ template<> struct hash<wasm::Address> {
     return std::hash<wasm::Address::address64_t>()(a.addr);
   }
 };
+
+std::ostream& operator<<(std::ostream& o, wasm::Module& module);
+std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
+std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
+
 } // namespace std
 
 #endif // wasm_wasm_h
