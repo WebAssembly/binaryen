@@ -26,20 +26,18 @@
 
 namespace wasm {
 
+static std::ostream& printExpression(Expression* expression,
+                                     std::ostream& o,
+                                     bool minify = false,
+                                     bool full = false);
+
+static std::ostream&
+printStackInst(StackInst* inst, std::ostream& o, Function* func = nullptr);
+
+static std::ostream&
+printStackIR(StackIR* ir, std::ostream& o, Function* func = nullptr);
+
 namespace {
-
-struct WasmPrinter {
-  static std::ostream& printExpression(Expression* expression,
-                                       std::ostream& o,
-                                       bool minify = false,
-                                       bool full = false);
-
-  static std::ostream&
-  printStackInst(StackInst* inst, std::ostream& o, Function* func = nullptr);
-
-  static std::ostream&
-  printStackIR(StackIR* ir, std::ostream& o, Function* func = nullptr);
-};
 
 bool isFullForced() {
   if (getenv("BINARYEN_PRINT_FULL")) {
@@ -1826,9 +1824,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
 
   bool full = false; // whether to not elide nodes in output when possible
                      // (like implicit blocks) and to emit types
-  bool printStackIR = false; // whether to print stack IR if it is present
-                             // (if false, and Stack IR is there, we just
-                             // note it exists)
+  bool stackIR = false; // whether to print stack IR if it is present
+                        // (if false, and Stack IR is there, we just
+                        // note it exists)
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
@@ -1888,7 +1886,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
 
   void setFull(bool full_) { full = full_; }
 
-  void setPrintStackIR(bool printStackIR_) { printStackIR = printStackIR_; }
+  void setStackIR(bool stackIR_) { stackIR = stackIR_; }
 
   void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
 
@@ -2692,7 +2690,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printMajor(o, "func ");
     printName(curr->name, o);
-    if (!printStackIR && curr->stackIR && !minify) {
+    if (!stackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
     if (curr->sig.params.size() > 0) {
@@ -2720,7 +2718,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << maybeNewLine;
     }
     // Print the body.
-    if (!printStackIR || !curr->stackIR) {
+    if (!stackIR || !curr->stackIR) {
       // It is ok to emit a block here, as a function can directly contain a
       // list, even if our ast avoids that for simplicity. We can just do that
       // optimization here..
@@ -2735,7 +2733,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
     } else {
       // Print the stack IR.
-      WasmPrinter::printStackIR(curr->stackIR.get(), o, curr);
+      printStackIR(curr->stackIR.get(), o, curr);
     }
     if (currFunction->epilogLocation.size() &&
         lastPrintedLocation != *currFunction->epilogLocation.begin()) {
@@ -3073,17 +3071,17 @@ public:
   void run(PassRunner* runner, Module* module) override {
     PrintSExpression print(o);
     print.setDebugInfo(runner->options.debugInfo);
-    print.setPrintStackIR(true);
+    print.setStackIR(true);
     print.visitModule(module);
   }
 };
 
 Pass* createPrintStackIRPass() { return new PrintStackIR(); }
 
-std::ostream& WasmPrinter::printExpression(Expression* expression,
-                                           std::ostream& o,
-                                           bool minify,
-                                           bool full) {
+static std::ostream& printExpression(Expression* expression,
+                              std::ostream& o,
+                              bool minify,
+                              bool full) {
   if (!expression) {
     o << "(null expression)";
     return o;
@@ -3098,8 +3096,8 @@ std::ostream& WasmPrinter::printExpression(Expression* expression,
   return o;
 }
 
-std::ostream&
-WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
+static std::ostream&
+printStackInst(StackInst* inst, std::ostream& o, Function* func) {
   switch (inst->op) {
     case StackInst::Basic: {
       PrintExpressionContents(func, o).visit(inst->origin);
@@ -3133,8 +3131,8 @@ WasmPrinter::printStackInst(StackInst* inst, std::ostream& o, Function* func) {
   return o;
 }
 
-std::ostream&
-WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
+static std::ostream&
+printStackIR(StackIR* ir, std::ostream& o, Function* func) {
   size_t indent = func ? 2 : 0;
   auto doIndent = [&indent, &o]() {
     for (size_t j = 0; j < indent; j++) {
@@ -3208,19 +3206,19 @@ std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
-  return wasm::WasmPrinter::printExpression(&expression, o);
+  return wasm::printExpression(&expression, o);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
-  return wasm::WasmPrinter::printExpression(expression, o);
+  return wasm::printExpression(expression, o);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
-  return wasm::WasmPrinter::printStackInst(&inst, o);
+  return wasm::printStackInst(&inst, o);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir) {
-  return wasm::WasmPrinter::printStackIR(&ir, o);
+  return wasm::printStackIR(&ir, o);
 }
 
 } // namespace std
