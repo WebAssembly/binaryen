@@ -606,7 +606,7 @@ void PassRunner::run() {
     if (options.validate && !isNested) {
       std::cerr << "[PassRunner] (final validation)\n";
       if (!WasmValidator().validate(*wasm, validationFlags)) {
-        WasmPrinter::printModule(wasm);
+        std::cout << *wasm << '\n';
         Fatal() << "final module does not validate\n";
       }
     }
