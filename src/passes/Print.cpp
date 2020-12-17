@@ -3202,8 +3202,8 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
 namespace std {
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
-  PassRunner runner(module);
-  Printer(&o).run(&runner, module);
+  wasm::PassRunner runner(&module);
+  wasm::Printer(&o).run(&runner, &module);
   return o;
 }
 
