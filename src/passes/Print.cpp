@@ -29,8 +29,6 @@ namespace wasm {
 namespace {
 
 struct WasmPrinter {
-  static std::ostream& printModule(Module* module, std::ostream& o);
-
   static std::ostream& printExpression(Expression* expression,
                                        std::ostream& o,
                                        bool minify = false,
@@ -3082,12 +3080,6 @@ public:
 
 Pass* createPrintStackIRPass() { return new PrintStackIR(); }
 
-std::ostream& WasmPrinter::printModule(Module* module, std::ostream& o) {
-  PassRunner runner(module);
-  Printer(&o).run(&runner, module);
-  return o;
-}
-
 std::ostream& WasmPrinter::printExpression(Expression* expression,
                                            std::ostream& o,
                                            bool minify,
@@ -3210,7 +3202,9 @@ WasmPrinter::printStackIR(StackIR* ir, std::ostream& o, Function* func) {
 namespace std {
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module) {
-  return wasm::WasmPrinter::printModule(&module, o);
+  PassRunner runner(module);
+  Printer(&o).run(&runner, module);
+  return o;
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
