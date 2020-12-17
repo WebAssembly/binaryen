@@ -2337,7 +2337,7 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       // (memory (data ..)) format
       auto j = parseMemoryIndex(inner, 1);
       auto offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
-      parseInnerData(inner, j, offset, false);
+      parseInnerData(inner, j, {}, offset, false);
       wasm.memory.initial = wasm.memory.segments[0].data.size();
       return;
     }
@@ -2399,16 +2399,11 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   if (s.size() != 3 && s.size() != 4) {
     throw ParseException("Unexpected data items", s.line, s.col);
   }
-  parseInnerData(s, s.size() - 1, offset, isPassive);
-  if (name.is()) {
-    wasm.memory.segments.back().name = name;
-  }
+  parseInnerData(s, s.size() - 1, name, offset, isPassive);
 }
 
-void SExpressionWasmBuilder::parseInnerData(Element& s,
-                                            Index i,
-                                            Expression* offset,
-                                            bool isPassive) {
+void SExpressionWasmBuilder::parseInnerData(
+  Element& s, Index i, Name name, Expression* offset, bool isPassive) {
   std::vector<char> data;
   while (i < s.size()) {
     const char* input = s[i++]->c_str();
@@ -2417,7 +2412,7 @@ void SExpressionWasmBuilder::parseInnerData(Element& s,
     }
   }
   wasm.memory.segments.emplace_back(
-    isPassive, offset, data.data(), data.size());
+    name, isPassive, offset, data.data(), data.size());
 }
 
 void SExpressionWasmBuilder::parseExport(Element& s) {
