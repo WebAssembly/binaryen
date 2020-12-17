@@ -158,8 +158,7 @@ void ReFinalize::visitBrOnCast(BrOnCast* curr) {
   if (curr->type == Type::unreachable) {
     replaceUntaken(curr->ref, nullptr);
   } else {
-    updateBreakValueType(curr->name,
-                         Type(curr->rtt->type.getHeapType(), Nullable));
+    updateBreakValueType(curr->name, curr->getCastType());
   }
 }
 void ReFinalize::visitRttCanon(RttCanon* curr) { curr->finalize(); }
