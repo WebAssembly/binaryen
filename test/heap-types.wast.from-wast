@@ -167,6 +167,7 @@
   (nop)
  )
  (func $rtt-operations
+  (local $temp.A (ref null ${i32_f32_f64}))
   (drop
    (ref.test ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}
     (ref.null ${i32_f32_f64})
@@ -181,7 +182,7 @@
   )
   (drop
    (block $out (result (ref null ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))
-    (drop
+    (local.set $temp.A
      (br_on_cast $out ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}
       (ref.null ${i32_f32_f64})
       (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
