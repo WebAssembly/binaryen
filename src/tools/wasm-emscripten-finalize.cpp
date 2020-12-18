@@ -230,7 +230,7 @@ int main(int argc, const char* argv[]) {
   generator.onlyI64DynCalls = onlyI64DynCalls;
   generator.noDynCalls = noDynCalls;
 
-  std::vector<Name> initializerFunctions;
+  Name initializerFunction;
 
   if (!standaloneWasm) {
     // This is also not needed in standalone mode since standalone mode uses
@@ -292,7 +292,7 @@ int main(int argc, const char* argv[]) {
     // Unless there is no entry point.
     if (!standaloneWasm || !wasm.getExportOrNull("_start")) {
       if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-        initializerFunctions.push_back(e->name);
+        initializerFunction = e->name;
       }
     }
   }
@@ -300,7 +300,7 @@ int main(int argc, const char* argv[]) {
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata =
-    generator.generateEmscriptenMetadata(initializerFunctions);
+    generator.generateEmscriptenMetadata(initializerFunction);
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
