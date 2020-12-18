@@ -141,4 +141,42 @@
    )
   )
  )
+ (func "br_on_cast"
+  (local $any anyref)
+  ;; create a simple $struct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $struct (rtt.canon $struct))
+  )
+  (drop
+   (block $block (result ($ref $struct))
+    (drop
+     (block $extendedblock (result (ref $extendedstruct))
+      (drop
+       ;; second, try to cast our simple $struct to what it is, which will work
+       (br_on_cast $block $struct
+        ;; first, try to cast our simple $struct to an extended, which will fail
+        (br_on_cast $extendedblock $extendedstruct
+         (local.get $any) (rtt.canon $extendedstruct)
+        )
+        (rtt.canon $struct)
+       )
+      )
+      (call $log (i32.const -1)) ;; we should never get here
+      (return)
+     )
+    )
+    (call $log (i32.const -2)) ;; we should never get here either
+    (return)
+   )
+  )
+  (call $log (i32.const 3)) ;; we should get here
+  (drop
+   (block $never (result (ref $extendedstruct))
+    ;; an untaken br_on_cast, with unreachable rtt - so we cannot use the
+    ;; RTT in binaryen IR to find the cast type.
+    (br_on_cast $never $extendedstruct (ref.null $struct) (unreachable))
+    (unreachable)
+   )
+  )
+ )
 )

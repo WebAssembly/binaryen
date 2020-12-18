@@ -81,6 +81,8 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
       func(name, sw->value ? sw->value->type : Type::none);
     } else if (auto* br = expr->dynCast<BrOnExn>()) {
       func(name, br->sent);
+    } else if (auto* br = expr->dynCast<BrOnCast>()) {
+      func(name, br->getCastType());
     } else {
       WASM_UNREACHABLE("bad br type");
     }

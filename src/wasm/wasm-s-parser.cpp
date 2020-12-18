@@ -2108,10 +2108,12 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {
-  auto ret = allocator.alloc<BrOnCast>();
-  WASM_UNREACHABLE("TODO (gc): br_on_cast");
-  ret->finalize();
-  return ret;
+  auto name = getLabel(*s[1]);
+  auto heapType = parseHeapType(*s[2]);
+  auto* ref = parseExpression(*s[3]);
+  auto* rtt = parseExpression(*s[4]);
+  validateHeapTypeUsingChild(rtt, heapType, s);
+  return Builder(wasm).makeBrOnCast(name, heapType, ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {

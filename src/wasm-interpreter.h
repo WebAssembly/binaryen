@@ -60,6 +60,7 @@ public:
   Flow(Literals& values) : values(values) {}
   Flow(Literals&& values) : values(std::move(values)) {}
   Flow(Name breakTo) : values(), breakTo(breakTo) {}
+  Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
@@ -1462,7 +1463,15 @@ public:
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");
-    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
+      return cast.originalRef;
+    }
+    assert(cast.outcome == cast.Success);
+    return Flow(curr->name, cast.castRef);
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {

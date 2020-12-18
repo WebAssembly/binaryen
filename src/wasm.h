@@ -1333,6 +1333,8 @@ public:
   Expression* rtt;
 
   void finalize();
+
+  Type getCastType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1343,13 +1345,24 @@ public:
   Expression* rtt;
 
   void finalize();
+
+  Type getCastType();
 };
 
 class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
 public:
   BrOnCast(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
+  Name name;
+  // The cast type cannot be inferred from rtt if rtt is unreachable, so we must
+  // store it explicitly.
+  Type castType;
+  Expression* ref;
+  Expression* rtt;
+
+  void finalize();
+
+  Type getCastType();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {
