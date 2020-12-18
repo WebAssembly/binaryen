@@ -3274,7 +3274,8 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     wasm->addExport(memoryExport.release());
   }
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    wasm->memory.segments.emplace_back(segmentPassive[i],
+    wasm->memory.segments.emplace_back(Name(),
+                                       segmentPassive[i],
                                        (Expression*)segmentOffsets[i],
                                        segments[i],
                                        segmentSizes[i]);

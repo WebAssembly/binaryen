@@ -156,6 +156,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     auto& currReferrers = referrers[origIndex];
 
     std::vector<Range> ranges;
+
     if (canSplit(segment, currReferrers)) {
       calculateRanges(segment, currReferrers, ranges);
     } else {
@@ -252,6 +253,14 @@ bool MemoryPacking::canOptimize(const Memory& memory,
 
 bool MemoryPacking::canSplit(const Memory::Segment& segment,
                              const Referrers& referrers) {
+  // Don't mess with segments related to llvm coverage tools such as
+  // __llvm_covfun. There segments are expected/parsed by external downstream
+  // tools (llvm-cov) so they need to be left intact.
+  // See https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
+  if (segment.name.is() && segment.name.startsWith("__llvm")) {
+    return false;
+  }
+
   if (segment.isPassive) {
     for (auto* referrer : referrers) {
       if (auto* init = referrer->dynCast<MemoryInit>()) {
@@ -262,10 +271,10 @@ bool MemoryPacking::canSplit(const Memory::Segment& segment,
       }
     }
     return true;
-  } else {
-    // Active segments can only be split if they have constant offsets
-    return segment.offset->is<Const>();
   }
+
+  // Active segments can only be split if they have constant offsets
+  return segment.offset->is<Const>();
 }
 
 void MemoryPacking::calculateRanges(const Memory::Segment& segment,
@@ -505,6 +514,7 @@ void MemoryPacking::createSplitSegments(Builder& builder,
                                         std::vector<Range>& ranges,
                                         std::vector<Memory::Segment>& packed,
                                         size_t segmentsRemaining) {
+  size_t segmentCount = 0;
   for (size_t i = 0; i < ranges.size(); ++i) {
     Range& range = ranges[i];
     if (range.isZero) {
@@ -528,7 +538,22 @@ void MemoryPacking::createSplitSegments(Builder& builder,
       range.end = lastNonzero->end;
       ranges.erase(ranges.begin() + i + 1, lastNonzero + 1);
     }
-    packed.emplace_back(segment.isPassive,
+    Name name;
+    if (segment.name.is()) {
+      // Name the first range after the original segment and all following
+      // ranges get numbered accordingly.  This means that for segments that
+      // canot be split (segments that contains a single range) the input and
+      // output segment have the same name.
+      if (!segmentCount) {
+        name = segment.name;
+      } else {
+        name = std::string(segment.name.c_str()) + "." +
+               std::to_string(segmentCount);
+      }
+      segmentCount++;
+    }
+    packed.emplace_back(name,
+                        segment.isPassive,
                         offset,
                         &segment.data[range.start],
                         range.end - range.start);

@@ -1704,8 +1704,12 @@ public:
     Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
     }
-    Segment(bool isPassive, Expression* offset, const char* init, Address size)
-      : isPassive(isPassive), offset(offset) {
+    Segment(Name name,
+            bool isPassive,
+            Expression* offset,
+            const char* init,
+            Address size)
+      : name(name), isPassive(isPassive), offset(offset) {
       data.resize(size);
       std::copy_n(init, size, data.begin());
     }
