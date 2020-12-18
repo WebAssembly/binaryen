@@ -525,22 +525,21 @@ struct OptimizeInstructions
         // (x / fneg(y)) + C   ==>   C - (x / y)
         if (fastMath &&
             (matches(curr,
-                     binary(&op,
+                     binary(Add,
                             binary(&bin, Mul, unary(Neg, any(&x)), any(&y)),
                             fval(&c))) ||
              matches(curr,
-                     binary(&op,
+                     binary(Add,
                             binary(&bin, Mul, any(&x), unary(Neg, any(&y))),
                             fval(&c))) ||
              matches(curr,
-                     binary(&op,
+                     binary(Add,
                             binary(&bin, DivS, unary(Neg, any(&x)), any(&y)),
                             fval(&c))) ||
              matches(curr,
-                     binary(&op,
+                     binary(Add,
                             binary(&bin, DivS, any(&x), unary(Neg, any(&y))),
-                            fval(&c)))) &&
-            op == Abstract::getBinary(bin->type, Add)) {
+                            fval(&c))))) {
           curr->cast<Binary>()->op = Abstract::getBinary(bin->type, Sub);
           std::swap(curr->cast<Binary>()->left, curr->cast<Binary>()->right);
           bin->left = x;
