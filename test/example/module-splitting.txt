@@ -943,3 +943,39 @@ Secondary:
 )
 
 
+Before:
+(module
+ (type $none_=>_none (func))
+ (export "foo1" (func $foo))
+ (export "foo2" (func $foo))
+ (func $foo
+  (nop)
+ )
+)
+Keeping: <none>
+After:
+(module
+ (type $none_=>_none (func))
+ (import "placeholder" "0" (func $placeholder_0))
+ (table $0 1 funcref)
+ (elem (i32.const 0) $placeholder_0)
+ (export "foo1" (func $foo))
+ (export "foo2" (func $foo))
+ (export "%table" (table $0))
+ (func $foo
+  (call_indirect (type $none_=>_none)
+   (i32.const 0)
+  )
+ )
+)
+Secondary:
+(module
+ (type $none_=>_none (func))
+ (import "primary" "%table" (table $0 1 funcref))
+ (elem (i32.const 0) $foo)
+ (func $foo
+  (nop)
+ )
+)
+
+
