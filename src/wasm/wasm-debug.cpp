@@ -1045,6 +1045,19 @@ static void updateLoc(llvm::DWARFYAML::Data& yaml,
   }
 }
 
+static void updateAddr(llvm::DWARFYAML::Data& yaml,
+                       const LocationUpdater& locationUpdater) {
+  for (auto& addrTable : yaml.DebugAddr) {
+    for (auto& addr : addrTable.Addrs) {
+      BinaryLocation start = addr, newStart = 0;
+      if (!isTombstone(start)) {
+        newStart = locationUpdater.getNewStart(start);
+      }
+      addr = newStart;
+    }
+  }
+}
+
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   BinaryenDWARFInfo info(wasm);
 
@@ -1063,6 +1076,8 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   updateRanges(data, locationUpdater);
 
   updateLoc(data, locationUpdater);
+
+  updateAddr(data, locationUpdater);
 
   // Convert to binary sections.
   auto newSections =
