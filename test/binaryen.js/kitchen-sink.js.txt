@@ -4432,6 +4432,8 @@ sizeof Literal: 24
  (table $0 1 funcref)
  (elem (i32.const 0) $fn0 $fn1 $fn2)
  (global $a-global i32 (i32.const 125))
+ (global $a-global2 i32 (i32.const 2))
+ (global $a-global3 i32 (i32.const 3))
  (export "export0" (func $fn0))
  (export "export1" (func $fn1))
  (export "export2" (func $fn2))

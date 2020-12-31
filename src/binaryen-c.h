@@ -1872,7 +1872,8 @@ BinaryenAddFunction(BinaryenModuleRef module,
                     BinaryenType* varTypes,
                     BinaryenIndex numVarTypes,
                     BinaryenExpressionRef body);
-// Gets a function reference by name.
+// Gets a function reference by name. Returns NULL if the function does not
+// exist.
 BINARYEN_API BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                                      const char* name);
 // Removes a function by name.
@@ -1880,10 +1881,10 @@ BINARYEN_API void BinaryenRemoveFunction(BinaryenModuleRef module,
                                          const char* name);
 
 // Gets the number of functions in the module.
-BINARYEN_API uint32_t BinaryenGetNumFunctions(BinaryenModuleRef module);
-// Get function pointer from its index.
+BINARYEN_API BinaryenIndex BinaryenGetNumFunctions(BinaryenModuleRef module);
+// Gets the function at the specified index.
 BINARYEN_API BinaryenFunctionRef
-BinaryenGetFunctionByIndex(BinaryenModuleRef module, BinaryenIndex id);
+BinaryenGetFunctionByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
 // Imports
 
@@ -1923,47 +1924,72 @@ BINARYEN_REF(Export);
 WASM_DEPRECATED BinaryenExportRef BinaryenAddExport(BinaryenModuleRef module,
                                                     const char* internalName,
                                                     const char* externalName);
+// Adds a function export to the module.
 BINARYEN_API BinaryenExportRef BinaryenAddFunctionExport(
   BinaryenModuleRef module, const char* internalName, const char* externalName);
+// Adds a table export to the module.
 BINARYEN_API BinaryenExportRef BinaryenAddTableExport(BinaryenModuleRef module,
                                                       const char* internalName,
                                                       const char* externalName);
+// Adds a memory export to the module.
 BINARYEN_API BinaryenExportRef BinaryenAddMemoryExport(
   BinaryenModuleRef module, const char* internalName, const char* externalName);
+// Adds a global export to the module.
 BINARYEN_API BinaryenExportRef BinaryenAddGlobalExport(
   BinaryenModuleRef module, const char* internalName, const char* externalName);
+// Adds an event export to the module.
 BINARYEN_API BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
                                                       const char* internalName,
                                                       const char* externalName);
+// Gets an export reference by external name. Returns NULL if the export does
+// not exist.
+BINARYEN_API BinaryenExportRef BinaryenGetExport(BinaryenModuleRef module,
+                                                 const char* externalName);
+// Removes an export by external name.
 BINARYEN_API void BinaryenRemoveExport(BinaryenModuleRef module,
                                        const char* externalName);
+// Gets the number of exports in the module.
+BINARYEN_API BinaryenIndex BinaryenGetNumExports(BinaryenModuleRef module);
+// Gets the export at the specified index.
+BINARYEN_API BinaryenExportRef
+BinaryenGetExportByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
 // Globals
 
 BINARYEN_REF(Global);
 
+// Adds a global to the module.
 BINARYEN_API BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
                                                  const char* name,
                                                  BinaryenType type,
                                                  int8_t mutable_,
                                                  BinaryenExpressionRef init);
-// Gets a global reference by name.
+// Gets a global reference by name. Returns NULL if the global does not exist.
 BINARYEN_API BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module,
                                                  const char* name);
+// Removes a global by name.
 BINARYEN_API void BinaryenRemoveGlobal(BinaryenModuleRef module,
                                        const char* name);
+// Gets the number of globals in the module.
+BINARYEN_API BinaryenIndex BinaryenGetNumGlobals(BinaryenModuleRef module);
+// Gets the global at the specified index.
+BINARYEN_API BinaryenGlobalRef
+BinaryenGetGlobalByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
 // Events
 
 BINARYEN_REF(Event);
 
+// Adds an event to the module.
 BINARYEN_API BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
                                                const char* name,
                                                uint32_t attribute,
                                                BinaryenType params,
                                                BinaryenType results);
+// Gets an event reference by name. Returns NULL if the event does not exist.
 BINARYEN_API BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module,
                                                const char* name);
+// Removes an event by name.
 BINARYEN_API void BinaryenRemoveEvent(BinaryenModuleRef module,
                                       const char* name);
 
@@ -2331,11 +2357,6 @@ BinaryenExportGetKind(BinaryenExportRef export_);
 BINARYEN_API const char* BinaryenExportGetName(BinaryenExportRef export_);
 // Gets the internal name of the specified export.
 BINARYEN_API const char* BinaryenExportGetValue(BinaryenExportRef export_);
-// Gets the number of exports in the module.
-BINARYEN_API uint32_t BinaryenGetNumExports(BinaryenModuleRef module);
-// Get export pointer from its index.
-BINARYEN_API BinaryenExportRef
-BinaryenGetExportByIndex(BinaryenModuleRef module, BinaryenIndex id);
 
 //
 // ========= Custom sections =========
