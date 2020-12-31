@@ -33,8 +33,7 @@ public:
     : wasm(wasm), builder(wasm), stackPointerOffset(stackPointerOffset),
       useStackPointerGlobal(stackPointerOffset == 0) {}
 
-  std::string
-  generateEmscriptenMetadata(std::vector<Name> const& initializerFunctions);
+  std::string generateEmscriptenMetadata(Name initializer);
 
   void fixInvokeFunctionNames();
 

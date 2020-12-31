@@ -191,6 +191,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case NegVecI64x2:
       case AnyTrueVecI64x2:
       case AllTrueVecI64x2:
+      case BitmaskVecI64x2:
       case AbsVecF32x4:
       case NegVecF32x4:
       case SqrtVecF32x4:
@@ -221,6 +222,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case WidenHighSVecI16x8ToVecI32x4:
       case WidenLowUVecI16x8ToVecI32x4:
       case WidenHighUVecI16x8ToVecI32x4:
+      case WidenLowSVecI32x4ToVecI64x2:
+      case WidenHighSVecI32x4ToVecI64x2:
+      case WidenLowUVecI32x4ToVecI64x2:
+      case WidenHighUVecI32x4ToVecI64x2:
         ret = 1;
         break;
       case InvalidUnary:
@@ -363,6 +368,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case GtUVecI32x4:
       case GeSVecI32x4:
       case GeUVecI32x4:
+      case EqVecI64x2:
       case EqVecF32x4:
       case NeVecF32x4:
       case LtVecF32x4:
@@ -508,6 +514,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     Index ret = 0;
     switch (curr->op) {
       case Bitselect:
+      case SignSelectVec8x16:
+      case SignSelectVec16x8:
+      case SignSelectVec32x4:
+      case SignSelectVec64x2:
         ret = 1;
         break;
       case QFMAF32x4:
@@ -560,18 +570,59 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitDataDrop(DataDrop* curr) { return 5; }
   Index visitI31New(I31New* curr) { return 3 + visit(curr->value); }
   Index visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
-  Index visitRefTest(RefTest* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitRefCast(RefCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitBrOnCast(BrOnCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitRttCanon(RttCanon* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitRttSub(RttSub* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitStructNew(StructNew* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitStructGet(StructGet* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitStructSet(StructSet* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitArrayNew(ArrayNew* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitArrayGet(ArrayGet* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitArraySet(ArraySet* curr) { WASM_UNREACHABLE("TODO: GC"); }
-  Index visitArrayLen(ArrayLen* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitRefTest(RefTest* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
+  }
+  Index visitRefCast(RefCast* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
+  }
+  Index visitBrOnCast(BrOnCast* curr) {
+    return 3 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
+  }
+  Index visitRttCanon(RttCanon* curr) {
+    // TODO: investigate actual RTT costs in VMs
+    return 1;
+  }
+  Index visitRttSub(RttSub* curr) {
+    // TODO: investigate actual RTT costs in VMs
+    return 2 + visit(curr->parent);
+  }
+  Index visitStructNew(StructNew* curr) {
+    // While allocation itself is almost free with generational GC, there is
+    // at least some baseline cost, plus writing the fields. (If we use default
+    // values for the fields, then it is possible they are all 0 and if so, we
+    // can get that almost for free as well, so don't add anything there.)
+    Index ret = 4 + visit(curr->rtt) + curr->operands.size();
+    for (auto* child : curr->operands) {
+      ret += visit(child);
+    }
+    return ret;
+  }
+  Index visitStructGet(StructGet* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
+  }
+  Index visitStructSet(StructSet* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->value);
+  }
+  Index visitArrayNew(ArrayNew* curr) {
+    return 4 + visit(curr->rtt) + visit(curr->size) + visit(curr->init);
+  }
+  Index visitArrayGet(ArrayGet* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->index);
+  }
+  Index visitArraySet(ArraySet* curr) {
+    return 2 + nullCheckCost(curr->ref) + visit(curr->ref) +
+           visit(curr->index) + visit(curr->value);
+  }
+  Index visitArrayLen(ArrayLen* curr) {
+    return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
+  }
+
+private:
+  Index nullCheckCost(Expression* ref) {
+    // A nullable type requires a bounds check in most VMs.
+    return ref->type.isNullable();
+  }
 };
 
 } // namespace wasm

@@ -515,12 +515,12 @@ private:
       if (parent.tryDepth == 0) {
         parent.throws = true;
       }
-      // rethrow traps when the arg is null
+      // traps when the arg is null
       parent.implicitTrap = true;
     }
     void visitBrOnExn(BrOnExn* curr) {
       parent.breakTargets.insert(curr->name);
-      // br_on_exn traps when the arg is null
+      // traps when the arg is null
       parent.implicitTrap = true;
     }
     void visitNop(Nop* curr) {}
@@ -545,39 +545,43 @@ private:
       // traps when the arg is null
       parent.implicitTrap = true;
     }
-    void visitRefTest(RefTest* curr) {
-      WASM_UNREACHABLE("TODO (gc): ref.test");
-    }
+    void visitRefTest(RefTest* curr) {}
     void visitRefCast(RefCast* curr) {
-      WASM_UNREACHABLE("TODO (gc): ref.cast");
+      // Traps if the ref is not null and it has an invalid rtt.
+      parent.implicitTrap = true;
     }
     void visitBrOnCast(BrOnCast* curr) {
-      WASM_UNREACHABLE("TODO (gc): br_on_cast");
+      parent.breakTargets.insert(curr->name);
     }
-    void visitRttCanon(RttCanon* curr) {
-      WASM_UNREACHABLE("TODO (gc): rtt.canon");
-    }
-    void visitRttSub(RttSub* curr) { WASM_UNREACHABLE("TODO (gc): rtt.sub"); }
-    void visitStructNew(StructNew* curr) {
-      WASM_UNREACHABLE("TODO (gc): struct.new");
-    }
+    void visitRttCanon(RttCanon* curr) {}
+    void visitRttSub(RttSub* curr) {}
+    void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
-      WASM_UNREACHABLE("TODO (gc): struct.get");
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
     void visitStructSet(StructSet* curr) {
-      WASM_UNREACHABLE("TODO (gc): struct.set");
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
-    void visitArrayNew(ArrayNew* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.new");
-    }
+    void visitArrayNew(ArrayNew* curr) {}
     void visitArrayGet(ArrayGet* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.get");
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
     }
     void visitArraySet(ArraySet* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.set");
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
     }
     void visitArrayLen(ArrayLen* curr) {
-      WASM_UNREACHABLE("TODO (gc): array.len");
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
     }
   };
 

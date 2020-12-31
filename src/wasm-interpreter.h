@@ -60,6 +60,7 @@ public:
   Flow(Literals& values) : values(values) {}
   Flow(Literals&& values) : values(std::move(values)) {}
   Flow(Name breakTo) : values(), breakTo(breakTo) {}
+  Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
@@ -491,6 +492,8 @@ public:
         return value.anyTrueI64x2();
       case AllTrueVecI64x2:
         return value.allTrueI64x2();
+      case BitmaskVecI64x2:
+        WASM_UNREACHABLE("unimp");
       case AbsVecF32x4:
         return value.absF32x4();
       case NegVecF32x4:
@@ -551,6 +554,11 @@ public:
         return value.widenLowUToVecI32x4();
       case WidenHighUVecI16x8ToVecI32x4:
         return value.widenHighUToVecI32x4();
+      case WidenLowSVecI32x4ToVecI64x2:
+      case WidenHighSVecI32x4ToVecI64x2:
+      case WidenLowUVecI32x4ToVecI64x2:
+      case WidenHighUVecI32x4ToVecI64x2:
+        WASM_UNREACHABLE("unimp");
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
     }
@@ -796,6 +804,8 @@ public:
         return left.geSI32x4(right);
       case GeUVecI32x4:
         return left.geUI32x4(right);
+      case EqVecI64x2:
+        return left.eqI64x2(right);
       case EqVecF32x4:
         return left.eqF32x4(right);
       case NeVecF32x4:
@@ -1067,7 +1077,7 @@ public:
       case Bitselect:
         return c.bitselectV128(a, b);
       default:
-        // TODO: implement qfma/qfms
+        // TODO: implement qfma/qfms and signselect
         WASM_UNREACHABLE("not implemented");
     }
   }
@@ -1376,58 +1386,287 @@ public:
     NOTE_EVAL1(value);
     return Literal(value.geti31(curr->signed_));
   }
+
+  // Helper for ref.test, ref.cast, and br_on_cast, which share almost all their
+  // logic except for what they return.
+  struct Cast {
+    enum Outcome {
+      // We took a break before doing anything.
+      Break,
+      // The input was null.
+      Null,
+      // The cast succeeded.
+      Success,
+      // The cast failed.
+      Failure
+    } outcome;
+
+    Flow breaking;
+    Literal originalRef;
+    Literal castRef;
+  };
+
+  template<typename T> Cast doCast(T* curr) {
+    Cast cast;
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      cast.outcome = cast.Break;
+      cast.breaking = ref;
+      return cast;
+    }
+    Flow rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      cast.outcome = cast.Break;
+      cast.breaking = rtt;
+      return cast;
+    }
+    cast.originalRef = ref.getSingleValue();
+    auto gcData = cast.originalRef.getGCData();
+    if (!gcData) {
+      cast.outcome = cast.Null;
+      return cast;
+    }
+    auto refRtt = gcData->rtt;
+    auto intendedRtt = rtt.getSingleValue();
+    if (!refRtt.isSubRtt(intendedRtt)) {
+      cast.outcome = cast.Failure;
+    } else {
+      cast.outcome = cast.Success;
+      cast.castRef =
+        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
+    }
+    return cast;
+  }
+
   Flow visitRefTest(RefTest* curr) {
     NOTE_ENTER("RefTest");
-    WASM_UNREACHABLE("TODO (gc): ref.test");
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    return Literal(int32_t(cast.outcome == cast.Success));
   }
   Flow visitRefCast(RefCast* curr) {
     NOTE_ENTER("RefCast");
-    WASM_UNREACHABLE("TODO (gc): ref.cast");
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    if (cast.outcome == cast.Null) {
+      return Literal::makeNull(curr->type);
+    }
+    if (cast.outcome == cast.Failure) {
+      trap("cast error");
+    }
+    assert(cast.outcome == cast.Success);
+    return cast.castRef;
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");
-    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
+      return cast.originalRef;
+    }
+    assert(cast.outcome == cast.Success);
+    return Flow(curr->name, cast.castRef);
   }
-  Flow visitRttCanon(RttCanon* curr) {
-    NOTE_ENTER("RttCanon");
-    WASM_UNREACHABLE("TODO (gc): rtt.canon");
-  }
+  Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {
-    NOTE_ENTER("RttSub");
-    WASM_UNREACHABLE("TODO (gc): rtt.sub");
+    Flow parent = this->visit(curr->parent);
+    if (parent.breaking()) {
+      return parent;
+    }
+    auto parentValue = parent.getSingleValue();
+    auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
+    newSupers->push_back(parentValue.type);
+    return Literal(std::move(newSupers), curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
     NOTE_ENTER("StructNew");
-    WASM_UNREACHABLE("TODO (gc): struct.new");
+    auto rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      return rtt;
+    }
+    const auto& fields = curr->rtt->type.getHeapType().getStruct().fields;
+    Literals data(fields.size());
+    for (Index i = 0; i < fields.size(); i++) {
+      if (curr->isWithDefault()) {
+        data[i] = Literal::makeZero(fields[i].type);
+      } else {
+        auto value = this->visit(curr->operands[i]);
+        if (value.breaking()) {
+          return value;
+        }
+        data[i] = value.getSingleValue();
+      }
+    }
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+                        curr->type));
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
-    WASM_UNREACHABLE("TODO (gc): struct.get");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
+    return extendForPacking(data->values[curr->index], field, curr->signed_);
   }
   Flow visitStructSet(StructSet* curr) {
     NOTE_ENTER("StructSet");
-    WASM_UNREACHABLE("TODO (gc): struct.set");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow value = this->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto field = curr->ref->type.getHeapType().getStruct().fields[curr->index];
+    data->values[curr->index] =
+      truncateForPacking(value.getSingleValue(), field);
+    return Flow();
   }
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
-    WASM_UNREACHABLE("TODO (gc): array.new");
+    auto rtt = this->visit(curr->rtt);
+    if (rtt.breaking()) {
+      return rtt;
+    }
+    auto size = this->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    const auto& element = curr->rtt->type.getHeapType().getArray().element;
+    Index num = size.getSingleValue().geti32();
+    Literals data(num);
+    if (curr->isWithDefault()) {
+      for (Index i = 0; i < num; i++) {
+        data[i] = Literal::makeZero(element.type);
+      }
+    } else {
+      auto init = this->visit(curr->init);
+      if (init.breaking()) {
+        return init;
+      }
+      auto value = init.getSingleValue();
+      for (Index i = 0; i < num; i++) {
+        data[i] = value;
+      }
+    }
+    return Flow(Literal(std::make_shared<GCData>(rtt.getSingleValue(), data),
+                        curr->type));
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
-    WASM_UNREACHABLE("TODO (gc): array.get");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = this->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    Index i = index.getSingleValue().geti32();
+    if (i >= data->values.size()) {
+      trap("array oob");
+    }
+    auto field = curr->ref->type.getHeapType().getArray().element;
+    return extendForPacking(data->values[i], field, curr->signed_);
   }
   Flow visitArraySet(ArraySet* curr) {
     NOTE_ENTER("ArraySet");
-    WASM_UNREACHABLE("TODO (gc): array.set");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow index = this->visit(curr->index);
+    if (index.breaking()) {
+      return index;
+    }
+    Flow value = this->visit(curr->value);
+    if (value.breaking()) {
+      return value;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    Index i = index.getSingleValue().geti32();
+    if (i >= data->values.size()) {
+      trap("array oob");
+    }
+    auto field = curr->ref->type.getHeapType().getArray().element;
+    data->values[i] = truncateForPacking(value.getSingleValue(), field);
+    return Flow();
   }
   Flow visitArrayLen(ArrayLen* curr) {
     NOTE_ENTER("ArrayLen");
-    WASM_UNREACHABLE("TODO (gc): array.len");
+    Flow ref = this->visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    auto data = ref.getSingleValue().getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return Literal(int32_t(data->values.size()));
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
   virtual void throwException(Literal exn) { WASM_UNREACHABLE("unimp"); }
+
+private:
+  // Truncate the value if we need to. The storage is just a list of Literals,
+  // so we can't just write the value like we would to a C struct field and
+  // expect it to truncate for us. Instead, we truncate so the stored value is
+  // proper for the type.
+  Literal truncateForPacking(Literal value, const Field& field) {
+    if (field.type == Type::i32) {
+      int32_t c = value.geti32();
+      if (field.packedType == Field::i8) {
+        value = Literal(c & 0xff);
+      } else if (field.packedType == Field::i16) {
+        value = Literal(c & 0xffff);
+      }
+    }
+    return value;
+  }
+
+  Literal extendForPacking(Literal value, const Field& field, bool signed_) {
+    if (field.type == Type::i32) {
+      int32_t c = value.geti32();
+      if (field.packedType == Field::i8) {
+        // The stored value should already be truncated.
+        assert(c == (c & 0xff));
+        if (signed_) {
+          value = Literal((c << 24) >> 24);
+        }
+      } else if (field.packedType == Field::i16) {
+        assert(c == (c & 0xffff));
+        if (signed_) {
+          value = Literal((c << 16) >> 16);
+        }
+      }
+    }
+    return value;
+  }
 };
 
 // Execute a suspected constant expression (precompute and C-API).

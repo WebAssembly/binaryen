@@ -117,8 +117,11 @@ class SExpressionWasmBuilder {
   Module& wasm;
   MixedArena& allocator;
   IRProfile profile;
-  std::vector<Signature> signatures;
-  std::unordered_map<std::string, size_t> signatureIndices;
+
+  // The main list of types declared in the module
+  std::vector<HeapType> types;
+  std::unordered_map<std::string, size_t> typeIndices;
+
   std::vector<Name> functionNames;
   std::vector<Name> globalNames;
   std::vector<Name> eventNames;
@@ -149,8 +152,6 @@ private:
 
   UniqueNameMapper nameMapper;
 
-  // Given a function signature type's name, return the signature
-  Signature getFunctionSignature(Element& s);
   Name getFunctionName(Element& s);
   Name getGlobalName(Element& s);
   Name getEventName(Element& s);
@@ -261,12 +262,11 @@ private:
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
-  Expression* makeStructGet(Element& s);
-  Expression* makeStructGet(Element& s, bool signed_);
+  Index getStructIndex(const HeapType& type, Element& s);
+  Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
-  Expression* makeArrayGet(Element& s);
-  Expression* makeArrayGet(Element& s, bool signed_);
+  Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
 
@@ -288,18 +288,30 @@ private:
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);
   void parseData(Element& s);
-  void parseInnerData(Element& s, Index i, Expression* offset, bool isPassive);
+  void parseInnerData(
+    Element& s, Index i, Name name, Expression* offset, bool isPassive);
   void parseExport(Element& s);
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);
   void parseTable(Element& s, bool preParseImport = false);
   void parseElem(Element& s);
   void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
-  Signature parseInlineFunctionSignature(Element& s);
+
+  // Parses something like (func ..), (array ..), (struct)
+  HeapType parseHeapType(Element& s);
+
   void parseType(Element& s);
   void parseEvent(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
+
+  // Struct/Array instructions have an unnecessary heap type that is just for
+  // validation (except for the case of unreachability, but that's not a problem
+  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // child from which we can infer the type anyhow, and we just need to check
+  // that type is the same.
+  void
+  validateHeapTypeUsingChild(Expression* child, HeapType heapType, Element& s);
 };
 
 } // namespace wasm

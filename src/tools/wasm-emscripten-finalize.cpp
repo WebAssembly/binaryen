@@ -30,7 +30,6 @@
 #include "wasm-binary.h"
 #include "wasm-emscripten.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
 #include "wasm-validator.h"
 
 #define DEBUG_TYPE "emscripten"
@@ -222,8 +221,7 @@ int main(int argc, const char* argv[]) {
   options.applyFeatures(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
-  BYN_DEBUG_WITH_TYPE("emscripten-dump",
-                      WasmPrinter::printModule(&wasm, std::cerr));
+  BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << &wasm);
 
   EmscriptenGlueGenerator generator(wasm);
   generator.standalone = standaloneWasm;
@@ -232,7 +230,7 @@ int main(int argc, const char* argv[]) {
   generator.onlyI64DynCalls = onlyI64DynCalls;
   generator.noDynCalls = noDynCalls;
 
-  std::vector<Name> initializerFunctions;
+  Name initializerFunction;
 
   if (!standaloneWasm) {
     // This is also not needed in standalone mode since standalone mode uses
@@ -294,7 +292,7 @@ int main(int argc, const char* argv[]) {
     // Unless there is no entry point.
     if (!standaloneWasm || !wasm.getExportOrNull("_start")) {
       if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-        initializerFunctions.push_back(e->name);
+        initializerFunction = e->name;
       }
     }
   }
@@ -302,7 +300,7 @@ int main(int argc, const char* argv[]) {
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata =
-    generator.generateEmscriptenMetadata(initializerFunctions);
+    generator.generateEmscriptenMetadata(initializerFunction);
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
@@ -315,8 +313,7 @@ int main(int argc, const char* argv[]) {
   }
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
-  BYN_DEBUG_WITH_TYPE("emscripten-dump",
-                      WasmPrinter::printModule(&wasm, std::cerr));
+  BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << wasm << '\n');
 
   // Write the modified wasm if the user asked us to, either by specifying an
   // output file, or requesting text output (which goes to stdout by default).

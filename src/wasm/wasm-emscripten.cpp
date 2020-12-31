@@ -85,9 +85,19 @@ std::vector<Address> getSegmentOffsets(Module& wasm) {
       OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
         : offsets(offsets) {}
       void visitMemoryInit(MemoryInit* curr) {
+        // The desitination of the memory.init is either a constant
+        // or the result of an addition with __memory_base in the
+        // case of PIC code.
         auto* dest = curr->dest->dynCast<Const>();
         if (!dest) {
-          return;
+          auto* add = curr->dest->dynCast<Binary>();
+          if (!add) {
+            return;
+          }
+          dest = add->left->dynCast<Const>();
+          if (!dest) {
+            return;
+          }
         }
         auto it = offsets.find(curr->segment);
         if (it != offsets.end()) {
@@ -167,12 +177,10 @@ const char* stringAtAddr(Module& wasm,
 
 std::string codeForConstAddr(Module& wasm,
                              std::vector<Address> const& segmentOffsets,
-                             int32_t address) {
+                             int64_t address) {
   const char* str = stringAtAddr(wasm, segmentOffsets, address);
   if (!str) {
-    // If we can't find the segment corresponding with the address, then we
-    // omitted the segment and the address points to an empty string.
-    return escape("");
+    Fatal() << "unable to find data for ASM/EM_JS const at: " << address;
   }
   return escape(str);
 }
@@ -224,7 +232,7 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   void process();
 
 private:
-  void createAsmConst(uint32_t id, std::string code, Signature sig, Name name);
+  void createAsmConst(uint64_t id, std::string code, Signature sig, Name name);
   Signature asmConstSig(Signature baseSig);
   Name nameForImportWithSig(Signature sig, Proxying proxy);
   void addImports();
@@ -283,7 +291,7 @@ void AsmConstWalker::visitCall(Call* curr) {
     }
 
     if (auto* bin = arg->dynCast<Binary>()) {
-      if (bin->op == AddInt32) {
+      if (bin->op == AddInt32 || bin->op == AddInt64) {
         // In the dynamic linking case the address of the string constant
         // is the result of adding its offset to __memory_base.
         // In this case are only looking for the offset from __memory_base
@@ -293,12 +301,21 @@ void AsmConstWalker::visitCall(Call* curr) {
       }
     }
 
+    if (auto* unary = arg->dynCast<Unary>()) {
+      if (unary->op == WrapInt64) {
+        // This cast may be inserted around the string constant in the
+        // Memory64Lowering pass.
+        arg = unary->value;
+        continue;
+      }
+    }
+
     Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
             << ") in call to: " << importName;
   }
 
   auto* value = arg->cast<Const>();
-  int32_t address = value->value.geti32();
+  int64_t address = value->value.getInteger();
   auto code = codeForConstAddr(wasm, segmentOffsets, address);
   createAsmConst(address, code, sig, importName);
 }
@@ -320,7 +337,7 @@ void AsmConstWalker::process() {
   addImports();
 }
 
-void AsmConstWalker::createAsmConst(uint32_t id,
+void AsmConstWalker::createAsmConst(uint64_t id,
                                     std::string code,
                                     Signature sig,
                                     Name name) {
@@ -380,7 +397,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
     }
     auto* addrConst = consts.list[0];
-    int32_t address = addrConst->value.geti32();
+    int64_t address = addrConst->value.getInteger();
     auto code = codeForConstAddr(wasm, segmentOffsets, address);
     codeByName[funcName] = code;
   }
@@ -417,8 +434,8 @@ void printSignatures(std::ostream& o, const std::set<Signature>& c) {
   o << "]";
 }
 
-std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
-  std::vector<Name> const& initializerFunctions) {
+std::string
+EmscriptenGlueGenerator::generateEmscriptenMetadata(Name initializer) {
   bool commaFirst;
   auto nextElement = [&commaFirst]() {
     if (commaFirst) {
@@ -465,13 +482,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata(
 
   meta << "  \"tableSize\": " << wasm.table.initial.addr << ",\n";
 
-  if (!initializerFunctions.empty()) {
+  if (initializer.is()) {
     meta << "  \"initializers\": [";
-    commaFirst = true;
-    for (const auto& func : initializerFunctions) {
-      meta << nextElement();
-      meta << "\"" << func.c_str() << "\"";
-    }
+    meta << "\n    \"" << initializer.c_str() << "\"";
     meta << "\n  ],\n";
   }
 

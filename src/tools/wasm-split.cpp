@@ -66,6 +66,11 @@ struct WasmSplitOptions : ToolOptions {
   std::string placeholderNamespace;
   std::string exportPrefix;
 
+  // A hack to ensure the split and instrumented modules have the same table
+  // size when using Emscripten's SPLIT_MODULE mode with dynamic linking. TODO:
+  // Figure out a more elegant solution for that use case and remove this.
+  int initialTableSize = -1;
+
   WasmSplitOptions();
   bool validate();
   void parse(int argc, const char* argv[]);
@@ -178,6 +183,16 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) {
            passOptions.debugInfo = true;
+         })
+    .add("--initial-table",
+         "",
+         "A hack to ensure the split and instrumented modules have the same "
+         "table size when using Emscripten's SPLIT_MODULE mode with dynamic "
+         "linking. TODO: Figure out a more elegant solution for that use "
+         "case and remove this.",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           initialTableSize = std::stoi(argument);
          })
     .add_positional(
       "INFILE",
@@ -359,7 +374,7 @@ void Instrumenter::instrumentFuncs() {
   });
 }
 
-// wasm-split profile format::
+// wasm-split profile format:
 //
 // The wasm-split profile is a binary format designed to be simple to produce
 // and consume. It is comprised of:
@@ -443,16 +458,45 @@ void Instrumenter::addProfileExport() {
   // TODO: export the memory if it is not already exported.
 }
 
+uint64_t hashFile(const std::string& filename) {
+  auto contents(read_file<std::vector<char>>(filename, Flags::Binary));
+  size_t digest = 0;
+  // Don't use `hash` or `rehash` - they aren't deterministic between executions
+  for (char c : contents) {
+    hash_combine(digest, c);
+  }
+  return uint64_t(digest);
+}
+
+void adjustTableSize(Module& wasm, int initialSize) {
+  if (initialSize < 0) {
+    return;
+  }
+  if (!wasm.table.exists) {
+    Fatal() << "--initial-table used but there is no table";
+  }
+  if ((uint64_t)initialSize < wasm.table.initial) {
+    Fatal() << "Specified initial table size too small, should be at least "
+            << wasm.table.initial;
+  }
+  if ((uint64_t)initialSize > wasm.table.max) {
+    Fatal() << "Specified initial table size larger than max table size "
+            << wasm.table.max;
+  }
+  wasm.table.initial = initialSize;
+}
+
 void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   // Check that the profile export name is not already taken
   if (wasm.getExportOrNull(options.profileExport) != nullptr) {
     Fatal() << "error: Export " << options.profileExport << " already exists.";
   }
 
-  // TODO: calculate module hash.
-  uint64_t moduleHash = 0;
+  uint64_t moduleHash = hashFile(options.input);
   PassRunner runner(&wasm, options.passOptions);
   Instrumenter(options.profileExport, moduleHash).run(&runner, &wasm);
+
+  adjustTableSize(wasm, options.initialTableSize);
 
   // Write the output modules
   ModuleWriter writer;
@@ -471,16 +515,21 @@ std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
       Fatal() << "Unexpected end of profile data";
     }
     uint32_t i32 = 0;
-    i32 |= uint32_t(profileData[i++]);
-    i32 |= uint32_t(profileData[i++]) << 8;
-    i32 |= uint32_t(profileData[i++]) << 16;
-    i32 |= uint32_t(profileData[i++]) << 24;
+    i32 |= uint32_t(uint8_t(profileData[i++]));
+    i32 |= uint32_t(uint8_t(profileData[i++])) << 8;
+    i32 |= uint32_t(uint8_t(profileData[i++])) << 16;
+    i32 |= uint32_t(uint8_t(profileData[i++])) << 24;
     return i32;
   };
 
-  // TODO: Read and compare the 8-byte module hash. Just skip it for now.
-  readi32();
-  readi32();
+  // Read and compare the 8-byte module hash.
+  uint64_t expected = readi32();
+  expected |= uint64_t(readi32()) << 32;
+  if (expected != hashFile(options.input)) {
+    Fatal() << "error: checksum in profile does not match module checksum. "
+            << "The split module must be the original module that was "
+            << "instrumented to generate the profile.";
+  }
 
   std::set<Name> keptFuncs;
   ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
@@ -585,6 +634,9 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
   }
   std::unique_ptr<Module> secondary =
     ModuleSplitting::splitFunctions(wasm, config);
+
+  adjustTableSize(wasm, options.initialTableSize);
+  adjustTableSize(*secondary, options.initialTableSize);
 
   // Write the output modules
   ModuleWriter writer;

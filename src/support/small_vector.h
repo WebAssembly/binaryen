@@ -46,6 +46,7 @@ public:
       push_back(item);
     }
   }
+  SmallVector(size_t initialSize) { resize(initialSize); }
 
   T& operator[](size_t i) {
     if (i < N) {
@@ -109,6 +110,13 @@ public:
   void clear() {
     usedFixed = 0;
     flexible.clear();
+  }
+
+  void resize(size_t newSize) {
+    usedFixed = std::min(N, newSize);
+    if (newSize > N) {
+      flexible.resize(newSize - N);
+    }
   }
 
   bool operator==(const SmallVector<T, N>& other) const {

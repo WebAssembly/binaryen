@@ -327,28 +327,31 @@ private:
     }
     SmallVector<Type, 2> options;
     options.push_back(type); // includes itself
-    TODO_SINGLE_COMPOUND(type);
-    switch (type.getBasic()) {
-      case Type::anyref:
-        if (wasm.features.hasReferenceTypes()) {
-          options.push_back(Type::funcref);
-          options.push_back(Type::externref);
-          if (wasm.features.hasExceptionHandling()) {
-            options.push_back(Type::exnref);
+    // TODO: interesting uses of typed function types
+    // TODO: interesting subtypes of compound types
+    if (type.isBasic()) {
+      switch (type.getBasic()) {
+        case Type::anyref:
+          if (wasm.features.hasReferenceTypes()) {
+            options.push_back(Type::funcref);
+            options.push_back(Type::externref);
+            if (wasm.features.hasExceptionHandling()) {
+              options.push_back(Type::exnref);
+            }
+            if (wasm.features.hasGC()) {
+              options.push_back(Type::eqref);
+              options.push_back(Type::i31ref);
+            }
           }
+          break;
+        case Type::eqref:
           if (wasm.features.hasGC()) {
-            options.push_back(Type::eqref);
             options.push_back(Type::i31ref);
           }
-        }
-        break;
-      case Type::eqref:
-        if (wasm.features.hasGC()) {
-          options.push_back(Type::i31ref);
-        }
-        break;
-      default:
-        break;
+          break;
+        default:
+          break;
+      }
     }
     return pick(options);
   }
@@ -1120,6 +1123,7 @@ private:
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeI31New);
     }
+    // TODO: struct.get and other GC things
     return (this->*pick(options))(type);
   }
 
@@ -1474,7 +1478,7 @@ private:
     for (const auto& type : target->sig.params) {
       args.push_back(make(type));
     }
-    auto targetType = Type(HeapType(target->sig), /* nullable = */ true);
+    auto targetType = Type(HeapType(target->sig), Nullable);
     // TODO: half the time make a completely random item with that type.
     return builder.makeCallRef(
       builder.makeRefFunc(target->name, targetType), args, type, isReturn);
@@ -2062,7 +2066,7 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        auto type = Type(HeapType(target->sig), /* nullable = */ true);
+        auto type = Type(HeapType(target->sig), Nullable);
         return builder.makeRefFunc(target->name, type);
       }
       if (type == Type::i31ref) {
@@ -2075,7 +2079,7 @@ private:
       for (auto& func : wasm.functions) {
         // FIXME: RefFunc type should be non-nullable, but we emit nullable
         //        types for now.
-        if (type == Type(HeapType(func->sig), /* nullable = */ true)) {
+        if (type == Type(HeapType(func->sig), Nullable)) {
           return builder.makeRefFunc(func->name, type);
         }
       }

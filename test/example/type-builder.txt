@@ -1,0 +1,24 @@
+;; Test TypeBuilder
+Before setting heap types:
+(ref $sig) => (ref (func))
+(ref $struct) => (ref (func))
+(ref $array) => (ref (func))
+(ref null $array) => (ref null (func))
+(rtt 0 $array) => (rtt 0 (func))
+
+After setting heap types:
+(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))) (result (ref (array (mut externref))) i32)))
+(ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))
+(ref $array) => (ref (array (mut externref)))
+(ref null $array) => (ref null (array (mut externref)))
+(rtt 0 $array) => (rtt 0 (array (mut externref)))
+
+After building types:
+(ref $sig) => (ref (func (param (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))) (result (ref (array (mut externref))) i32)))
+(ref $struct) => (ref (struct (field (ref null (array (mut externref))) (mut (rtt 0 (array (mut externref)))))))
+(ref $array) => (ref (array (mut externref)))
+(ref null $array) => (ref null (array (mut externref)))
+(rtt 0 $array) => (rtt 0 (array (mut externref)))
+
+;; Test canonicalization
+;; Test recursive types

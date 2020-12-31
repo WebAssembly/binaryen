@@ -19,12 +19,15 @@
 // merge names when possible (by merging their blocks)
 //
 
+#include <ir/branch-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
 namespace wasm {
 
-struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
+struct RemoveUnusedNames
+  : public WalkerPass<PostWalker<RemoveUnusedNames,
+                                 UnifiedExpressionVisitor<RemoveUnusedNames>>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new RemoveUnusedNames; }
@@ -33,16 +36,18 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
   // a parent block, we know if it was branched to
   std::map<Name, std::set<Expression*>> branchesSeen;
 
-  void visitBreak(Break* curr) { branchesSeen[curr->name].insert(curr); }
-
-  void visitSwitch(Switch* curr) {
-    for (auto name : curr->targets) {
-      branchesSeen[name].insert(curr);
+  void visitExpression(Expression* curr) {
+    if (auto* block = curr->dynCast<Block>()) {
+      visitBlock(block);
+      return;
     }
-    branchesSeen[curr->default_].insert(curr);
+    if (auto* loop = curr->dynCast<Loop>()) {
+      visitLoop(loop);
+      return;
+    }
+    BranchUtils::operateOnScopeNameUses(
+      curr, [&](Name& name) { branchesSeen[name].insert(curr); });
   }
-
-  void visitBrOnExn(BrOnExn* curr) { branchesSeen[curr->name].insert(curr); }
 
   void handleBreakTarget(Name& name) {
     if (name.is()) {
@@ -62,26 +67,7 @@ struct RemoveUnusedNames : public WalkerPass<PostWalker<RemoveUnusedNames>> {
         // same place as breaking out of us, we just need one name (and block)
         auto& branches = branchesSeen[curr->name];
         for (auto* branch : branches) {
-          if (Break* br = branch->dynCast<Break>()) {
-            if (br->name == curr->name) {
-              br->name = child->name;
-            }
-          } else if (Switch* sw = branch->dynCast<Switch>()) {
-            for (auto& target : sw->targets) {
-              if (target == curr->name) {
-                target = child->name;
-              }
-            }
-            if (sw->default_ == curr->name) {
-              sw->default_ = child->name;
-            }
-          } else if (BrOnExn* br = branch->dynCast<BrOnExn>()) {
-            if (br->name == curr->name) {
-              br->name = child->name;
-            }
-          } else {
-            WASM_UNREACHABLE("unexpected expr type");
-          }
+          BranchUtils::replacePossibleTarget(branch, curr->name, child->name);
         }
         child->finalize(child->type);
         replaceCurrent(child);

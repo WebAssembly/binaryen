@@ -316,6 +316,12 @@
    (local.get $1)
   )
  )
+ (func $i64x2.eq (param $0 v128) (param $1 v128) (result v128)
+  (i64x2.eq
+   (local.get $0)
+   (local.get $1)
+  )
+ )
  (func $f32x4.eq (param $0 v128) (param $1 v128) (result v128)
   (f32x4.eq
    (local.get $0)
@@ -419,6 +425,34 @@
  )
  (func $v128.bitselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
   (v128.bitselect
+   (local.get $0)
+   (local.get $1)
+   (local.get $2)
+  )
+ )
+ (func $v8x16.signselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (v8x16.signselect
+   (local.get $0)
+   (local.get $1)
+   (local.get $2)
+  )
+ )
+ (func $v16x8.signselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (v16x8.signselect
+   (local.get $0)
+   (local.get $1)
+   (local.get $2)
+  )
+ )
+ (func $v32x4.signselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (v32x4.signselect
+   (local.get $0)
+   (local.get $1)
+   (local.get $2)
+  )
+ )
+ (func $v64x2.signselect (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+  (v64x2.signselect
    (local.get $0)
    (local.get $1)
    (local.get $2)
@@ -903,6 +937,11 @@
    (local.get $0)
   )
  )
+ (func $i64x2.bitmask (param $0 v128) (result i32)
+  (i64x2.bitmask
+   (local.get $0)
+  )
+ )
  (func $i64x2.shl (param $0 v128) (param $1 i32) (result v128)
   (i64x2.shl
    (local.get $0)
@@ -1278,6 +1317,26 @@
  )
  (func $i32x4.widen_high_i16x8_u (param $0 v128) (result v128)
   (i32x4.widen_high_i16x8_u
+   (local.get $0)
+  )
+ )
+ (func $i64x2.widen_low_i32x4_s (param $0 v128) (result v128)
+  (i64x2.widen_low_i32x4_s
+   (local.get $0)
+  )
+ )
+ (func $i64x2.widen_high_i32x4_s (param $0 v128) (result v128)
+  (i64x2.widen_high_i32x4_s
+   (local.get $0)
+  )
+ )
+ (func $i64x2.widen_low_i32x4_u (param $0 v128) (result v128)
+  (i64x2.widen_low_i32x4_u
+   (local.get $0)
+  )
+ )
+ (func $i64x2.widen_high_i32x4_u (param $0 v128) (result v128)
+  (i64x2.widen_high_i32x4_u
    (local.get $0)
   )
  )

@@ -177,6 +177,9 @@ struct Precompute
       if (flow.breakTo == NONCONSTANT_FLOW) {
         return;
       }
+      if (!canEmitConstantFor(flow.values)) {
+        return;
+      }
       if (flow.breakTo == RETURN_FLOW) {
         // this expression causes a return. if it's already a return, reuse the
         // node
@@ -223,6 +226,9 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
+    if (!canEmitConstantFor(curr->type)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
     try {
       return PrecomputingExpressionRunner(
                getModule(), getValues, replaceExpression)
@@ -337,6 +343,37 @@ private:
         }
       }
     }
+  }
+
+  bool canEmitConstantFor(const Literals& values) {
+    for (auto& value : values) {
+      if (!canEmitConstantFor(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool canEmitConstantFor(const Literal& value) {
+    // A null is fine to emit a constant for - we'll emit a RefNull. Otherwise,
+    // see below about references to GC data.
+    if (value.isNull()) {
+      return true;
+    }
+    // A function is fine to emit a constant for - we'll emit a RefFunc, which
+    // is compact and immutable, so there can't be a problem.
+    if (value.type.isFunction()) {
+      return true;
+    }
+    return canEmitConstantFor(value.type);
+  }
+
+  bool canEmitConstantFor(Type type) {
+    // Don't try to precompute a reference. We can't replace it with a constant
+    // expression, as that would make a copy of it by value.
+    // For now, don't try to precompute an Rtt. TODO figure out when that would
+    // be safe and useful.
+    return !type.isRef() && !type.isRtt();
   }
 };
 

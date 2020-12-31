@@ -37,6 +37,11 @@ Literal::Literal(Type type) : type(type) {
     assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
     if (type.isException()) {
       new (&exn) std::unique_ptr<ExceptionPackage>();
+    } else if (isGCData()) {
+      new (&gcData) std::shared_ptr<GCData>();
+    } else if (type.isRtt()) {
+      // Allocate a new RttSupers (with no data).
+      new (&rttSupers) auto(std::make_unique<RttSupers>());
     } else {
       memset(&v128, 0, 16);
     }
@@ -47,6 +52,19 @@ Literal::Literal(const uint8_t init[16]) : type(Type::v128) {
   memcpy(&v128, init, 16);
 }
 
+Literal::Literal(std::shared_ptr<GCData> gcData, Type type)
+  : gcData(gcData), type(type) {
+  // Null data is only allowed if nullable.
+  assert(gcData || type.isNullable());
+  // The type must be a proper type for GC data.
+  assert(isGCData());
+}
+
+Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
+  : rttSupers(std::move(rttSupers)), type(type) {
+  assert(type.isRtt());
+}
+
 Literal::Literal(const Literal& other) : type(other.type) {
   if (type.isException()) {
     // Avoid calling the destructor on an uninitialized value
@@ -55,8 +73,13 @@ Literal::Literal(const Literal& other) : type(other.type) {
     } else {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     }
+  } else if (other.isGCData()) {
+    new (&gcData) std::shared_ptr<GCData>(other.gcData);
   } else if (type.isFunction()) {
     func = other.func;
+  } else if (type.isRtt()) {
+    // Allocate a new RttSupers with a copy of the other's data.
+    new (&rttSupers) auto(std::make_unique<RttSupers>(*other.rttSupers));
   } else {
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
@@ -83,6 +106,21 @@ Literal::Literal(const Literal& other) : type(other.type) {
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
+  }
+}
+
+Literal::~Literal() {
+  if (type.isException()) {
+    exn.~unique_ptr();
+  } else if (isGCData()) {
+    gcData.~shared_ptr();
+  } else if (type.isRtt()) {
+    rttSupers.~unique_ptr();
+  } else if (type.isFunction()) {
+    // Nothing special to do.
+  } else {
+    // Basic types need no special handling.
+    assert(type.isBasic());
   }
 }
 
@@ -162,6 +200,8 @@ Literal Literal::makeZero(Type type) {
     } else {
       return makeNull(type);
     }
+  } else if (type.isRtt()) {
+    return Literal(type);
   } else {
     return makeFromInt32(0, type);
   }
@@ -187,6 +227,16 @@ std::array<uint8_t, 16> Literal::getv128() const {
 ExceptionPackage Literal::getExceptionPackage() const {
   assert(type.isException() && exn != nullptr);
   return *exn;
+}
+
+std::shared_ptr<GCData> Literal::getGCData() const {
+  assert(isGCData());
+  return gcData;
+}
+
+const RttSupers& Literal::getRttSupers() const {
+  assert(type.isRtt());
+  return *rttSupers;
 }
 
 Literal Literal::castToF32() {
@@ -322,7 +372,7 @@ bool Literal::operator==(const Literal& other) const {
   } else if (type.isRef()) {
     return compareRef();
   } else if (type.isRtt()) {
-    WASM_UNREACHABLE("TODO: rtt literals");
+    return *rttSupers == *other.rttSupers;
   }
   WASM_UNREACHABLE("unexpected type");
 }
@@ -428,6 +478,19 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     } else {
       o << "funcref(" << literal.getFunc() << ")";
     }
+  } else if (literal.isGCData()) {
+    auto data = literal.getGCData();
+    if (data) {
+      o << "[ref " << data->rtt << ' ' << data->values << ']';
+    } else {
+      o << "[ref null " << literal.type << ']';
+    }
+  } else if (literal.type.isRtt()) {
+    o << "[rtt ";
+    for (Type super : literal.getRttSupers()) {
+      o << super << " :> ";
+    }
+    o << literal.type << ']';
   } else {
     TODO_SINGLE_COMPOUND(literal.type);
     switch (literal.type.getBasic()) {
@@ -1569,7 +1632,8 @@ Literal Literal::shuffleV8x16(const Literal& other,
   return Literal(bytes);
 }
 
-template<Type::BasicID Ty, int Lanes> static Literal splat(const Literal& val) {
+template<Type::BasicType Ty, int Lanes>
+static Literal splat(const Literal& val) {
   assert(val.type == Ty);
   LaneArray<Lanes> lanes;
   lanes.fill(val);
@@ -1967,6 +2031,10 @@ Literal Literal::geSI32x4(const Literal& other) const {
 Literal Literal::geUI32x4(const Literal& other) const {
   return compare<4, &Literal::getLanesI32x4, &Literal::geU>(*this, other);
 }
+Literal Literal::eqI64x2(const Literal& other) const {
+  return compare<2, &Literal::getLanesI64x2, &Literal::eq, int64_t>(*this,
+                                                                    other);
+}
 Literal Literal::eqF32x4(const Literal& other) const {
   return compare<4, &Literal::getLanesF32x4, &Literal::eq>(*this, other);
 }
@@ -2337,6 +2405,33 @@ Literal Literal::swizzleVec8x16(const Literal& other) const {
     result[i] = index >= 16 ? Literal(int32_t(0)) : lanes[index];
   }
   return Literal(result);
+}
+
+bool Literal::isSubRtt(const Literal& other) const {
+  assert(type.isRtt() && other.type.isRtt());
+  // For this literal to be a sub-rtt of the other rtt, the supers must be a
+  // superset. That is, if other is a->b->c then we should be a->b->c as well
+  // with possibly ->d->.. added. The rttSupers array represents those chains,
+  // but only the supers, which means the last item in the chain is simply the
+  // type of the literal.
+  const auto& supers = getRttSupers();
+  const auto& otherSupers = other.getRttSupers();
+  if (otherSupers.size() > supers.size()) {
+    return false;
+  }
+  for (Index i = 0; i < otherSupers.size(); i++) {
+    if (supers[i] != otherSupers[i]) {
+      return false;
+    }
+  }
+  // If we have more supers than other, compare that extra super. Otherwise,
+  // we have the same amount of supers, and must be completely identical to
+  // other.
+  if (otherSupers.size() < supers.size()) {
+    return other.type == supers[otherSupers.size()];
+  } else {
+    return other.type == type;
+  }
 }
 
 } // namespace wasm

@@ -16,7 +16,6 @@
 
 #include "wasm.h"
 #include "ir/branch-utils.h"
-#include "wasm-printing.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -99,12 +98,7 @@ Name ATTR("attr");
 
 // Expressions
 
-void Expression::dump() {
-  WasmPrinter::printExpression(this,
-                               std::cerr,
-                               /*minify=*/false,
-                               /*full=*/true);
-}
+void Expression::dump() { std::cout << *this << '\n'; }
 
 const char* getExpressionName(Expression* curr) {
   switch (curr->_id) {
@@ -267,72 +261,12 @@ Literals getLiteralsFromConstExpression(Expression* curr) {
   }
 }
 
-// core AST type checking
-
-struct TypeSeeker : public PostWalker<TypeSeeker> {
-  Expression* target; // look for this one
-  Name targetName;
-  std::vector<Type> types;
-
-  TypeSeeker(Expression* target, Name targetName)
-    : target(target), targetName(targetName) {
-    Expression* temp = target;
-    walk(temp);
-  }
-
-  void visitBreak(Break* curr) {
-    if (curr->name == targetName) {
-      types.push_back(curr->value ? curr->value->type : Type::none);
-    }
-  }
-
-  void visitSwitch(Switch* curr) {
-    for (auto name : curr->targets) {
-      if (name == targetName) {
-        types.push_back(curr->value ? curr->value->type : Type::none);
-      }
-    }
-    if (curr->default_ == targetName) {
-      types.push_back(curr->value ? curr->value->type : Type::none);
-    }
-  }
-
-  void visitBrOnExn(BrOnExn* curr) {
-    if (curr->name == targetName) {
-      types.push_back(curr->sent);
-    }
-  }
-
-  void visitBlock(Block* curr) {
-    if (curr == target) {
-      if (curr->list.size() > 0) {
-        types.push_back(curr->list.back()->type);
-      } else {
-        types.push_back(Type::none);
-      }
-    } else if (curr->name == targetName) {
-      // ignore all breaks til now, they were captured by someone with the same
-      // name
-      types.clear();
-    }
-  }
-
-  void visitLoop(Loop* curr) {
-    if (curr == target) {
-      types.push_back(curr->body->type);
-    } else if (curr->name == targetName) {
-      // ignore all breaks til now, they were captured by someone with the same
-      // name
-      types.clear();
-    }
-  }
-};
-
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
-static void handleUnreachable(Block* block,
-                              bool breakabilityKnown = false,
-                              bool hasBreak = false) {
+
+static void
+handleUnreachable(Block* block,
+                  Block::Breakability breakability = Block::Unknown) {
   if (block->type == Type::unreachable) {
     return; // nothing to do
   }
@@ -350,10 +284,12 @@ static void handleUnreachable(Block* block,
     if (child->type == Type::unreachable) {
       // there is an unreachable child, so we are unreachable, unless we have a
       // break
-      if (!breakabilityKnown) {
-        hasBreak = BranchUtils::BranchSeeker::has(block, block->name);
+      if (breakability == Block::Unknown) {
+        breakability = BranchUtils::BranchSeeker::has(block, block->name)
+                         ? Block::HasBreak
+                         : Block::NoBreak;
       }
-      if (!hasBreak) {
+      if (breakability == Block::NoBreak) {
         block->type = Type::unreachable;
       }
       return;
@@ -362,41 +298,35 @@ static void handleUnreachable(Block* block,
 }
 
 void Block::finalize() {
+  if (list.size() == 0) {
+    type = Type::none;
+    return;
+  }
+  // The default type is what is at the end. Next we need to see if breaks and/
+  // or unreachabitily change that.
+  type = list.back()->type;
   if (!name.is()) {
-    if (list.size() > 0) {
-      // nothing branches here, so this is easy
-      // normally the type is the type of the final child
-      type = list.back()->type;
-      // and even if we have an unreachable child somewhere,
-      // we still mark ourselves as having that type,
-      // (block (result i32)
-      //  (return)
-      //  (i32.const 10)
-      // )
-      if (type.isConcrete()) {
-        return;
-      }
-      // if we are unreachable, we are done
-      if (type == Type::unreachable) {
-        return;
-      }
-      // we may still be unreachable if we have an unreachable
-      // child
-      for (auto* child : list) {
-        if (child->type == Type::unreachable) {
-          type = Type::unreachable;
-          return;
-        }
-      }
-    } else {
-      type = Type::none;
-    }
+    // Nothing branches here, so this is easy.
+    handleUnreachable(this, NoBreak);
     return;
   }
 
-  TypeSeeker seeker(this, this->name);
-  type = Type::mergeTypes(seeker.types);
-  handleUnreachable(this);
+  // The default type is according to the value that flows out.
+  BranchUtils::BranchSeeker seeker(this->name);
+  Expression* temp = this;
+  seeker.walk(temp);
+  if (seeker.found) {
+    // Take the branch values into account.
+    if (seeker.valueType != Type::none) {
+      type = Type::getLeastUpperBound(type, seeker.valueType);
+    } else {
+      // No value is sent, but as we have a branch we are not unreachable.
+      type = Type::none;
+    }
+  } else {
+    // There are no branches, so this block may be unreachable.
+    handleUnreachable(this, NoBreak);
+  }
 }
 
 void Block::finalize(Type type_) {
@@ -406,10 +336,10 @@ void Block::finalize(Type type_) {
   }
 }
 
-void Block::finalize(Type type_, bool hasBreak) {
+void Block::finalize(Type type_, Breakability breakability) {
   type = type_;
   if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this, true, hasBreak);
+    handleUnreachable(this, breakability);
   }
 }
 
@@ -463,13 +393,16 @@ void Break::finalize() {
 
 void Switch::finalize() { type = Type::unreachable; }
 
-template<typename T> void handleUnreachableOperands(T* curr) {
+// Sets the type to unreachable if there is an unreachable operand. Returns true
+// if so.
+template<typename T> bool handleUnreachableOperands(T* curr) {
   for (auto* child : curr->operands) {
     if (child->type == Type::unreachable) {
       curr->type = Type::unreachable;
-      break;
+      return true;
     }
   }
+  return false;
 }
 
 void Call::finalize() {
@@ -866,6 +799,10 @@ void Unary::finalize() {
     case WidenHighSVecI16x8ToVecI32x4:
     case WidenLowUVecI16x8ToVecI32x4:
     case WidenHighUVecI16x8ToVecI32x4:
+    case WidenLowSVecI32x4ToVecI64x2:
+    case WidenHighSVecI32x4ToVecI64x2:
+    case WidenLowUVecI32x4ToVecI64x2:
+    case WidenHighUVecI32x4ToVecI64x2:
       type = Type::v128;
       break;
     case AnyTrueVecI8x16:
@@ -879,6 +816,7 @@ void Unary::finalize() {
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
+    case BitmaskVecI64x2:
       type = Type::i32;
       break;
 
@@ -970,7 +908,7 @@ void MemoryGrow::finalize() {
   }
 }
 
-void RefNull::finalize(HeapType heapType) { type = Type(heapType, true); }
+void RefNull::finalize(HeapType heapType) { type = Type(heapType, Nullable); }
 
 void RefNull::finalize(Type type_) {
   type = type_;
@@ -1077,18 +1015,122 @@ void CallRef::finalize(Type type_) {
   finalize();
 }
 
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
-// TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
-// TODO (gc): struct.new
-// TODO (gc): struct.get
-// TODO (gc): struct.set
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
+void RefTest::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
+
+// Helper to get the cast type for a cast instruction. They all look at the rtt
+// operand's type.
+template<typename T> static Type doGetCastType(T* curr) {
+  if (curr->rtt->type == Type::unreachable) {
+    // We don't have the RTT type, so just return unreachable. The type in this
+    // case should not matter in practice, but it may be seen while debugging.
+    return Type::unreachable;
+  }
+  // TODO: make non-nullable when we support that
+  return Type(curr->rtt->type.getHeapType(), Nullable);
+}
+
+Type RefTest::getCastType() { return doGetCastType(this); }
+
+void RefCast::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = getCastType();
+  }
+}
+
+Type RefCast::getCastType() { return doGetCastType(this); }
+
+void BrOnCast::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type;
+  }
+}
+
+Type BrOnCast::getCastType() { return castType; }
+
+void RttCanon::finalize() {
+  // Nothing to do - the type must have been set already during construction.
+}
+
+void RttSub::finalize() {
+  if (parent->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+  // Else nothing to do - the type must have been set already during
+  // construction.
+}
+
+void StructNew::finalize() {
+  if (rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  if (handleUnreachableOperands(this)) {
+    return;
+  }
+  // TODO: make non-nullable when we support that
+  type = Type(rtt->type.getHeapType(), Nullable);
+}
+
+void StructGet::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type.getHeapType().getStruct().fields[index].type;
+  }
+}
+
+void StructSet::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayNew::finalize() {
+  if (rtt->type == Type::unreachable || size->type == Type::unreachable ||
+      (init && init->type == Type::unreachable)) {
+    type = Type::unreachable;
+    return;
+  }
+  // TODO: make non-nullable when we support that
+  type = Type(rtt->type.getHeapType(), Nullable);
+}
+
+void ArrayGet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type.getHeapType().getArray().element.type;
+  }
+}
+
+void ArraySet::finalize() {
+  if (ref->type == Type::unreachable || index->type == Type::unreachable ||
+      value->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
+void ArrayLen::finalize() {
+  if (ref->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::i32;
+  }
+}
 
 size_t Function::getNumParams() { return sig.params.size(); }
 

@@ -22,7 +22,6 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-io.h"
-#include "wasm-printing.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -76,8 +75,7 @@ int main(int argc, const char* argv[]) {
     std::cerr << "Printing..." << std::endl;
   }
   Output output(options.extra["output"], Flags::Text);
-  WasmPrinter::printModule(&wasm, output.getStream());
-  output << '\n';
+  output.getStream() << wasm << '\n';
 
   if (options.debug) {
     std::cerr << "Done." << std::endl;

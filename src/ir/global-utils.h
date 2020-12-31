@@ -56,13 +56,14 @@ getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
 inline bool canInitializeGlobal(const Expression* curr) {
   if (auto* tuple = curr->dynCast<TupleMake>()) {
     for (auto* op : tuple->operands) {
-      if (!Properties::isSingleConstantExpression(op) && !op->is<GlobalGet>()) {
+      if (!canInitializeGlobal(op)) {
         return false;
       }
     }
     return true;
   }
-  return Properties::isSingleConstantExpression(curr) || curr->is<GlobalGet>();
+  return Properties::isSingleConstantExpression(curr) ||
+         curr->is<GlobalGet>() || curr->is<RttCanon>() || curr->is<RttSub>();
 }
 
 } // namespace GlobalUtils

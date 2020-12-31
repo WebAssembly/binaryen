@@ -28,7 +28,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
-#include "wasm-printing.h"
 #include <iostream>
 #endif
 
@@ -468,14 +467,14 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
             if (allBalanced) {
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
               std::cerr << "  eliminating ";
-              WasmPrinter::printExpression(retain, std::cerr, true);
+              std::cerr << *retain << '\n';
               std::cerr << " reaching\n";
 #endif
               redundantRetains.insert(retainLocation);
               for (auto** getLocation : releaseLocations) {
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
                 std::cerr << "    ";
-                WasmPrinter::printExpression(*getLocation, std::cerr, true);
+                std::cerr << **getLocation << '\n';
                 std::cerr << "\n";
 #endif
                 redundantReleases.insert(getLocation);
@@ -483,28 +482,28 @@ struct OptimizeARC : public WalkerPass<PostWalker<OptimizeARC>> {
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
             } else {
               std::cerr << "  cannot eliminate ";
-              WasmPrinter::printExpression(retain, std::cerr, true);
+              std::cerr << *retain << '\n';
               std::cerr << " - unbalanced\n";
 #endif
             }
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
           } else {
             std::cerr << "  cannot eliminate ";
-            WasmPrinter::printExpression(retain, std::cerr, true);
+            std::cerr << *retain << '\n';
             std::cerr << " - zero releases\n";
 #endif
           }
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
         } else {
           std::cerr << "  cannot eliminate ";
-          WasmPrinter::printExpression(retain, std::cerr, true);
+          std::cerr << *retain << '\n';
           std::cerr << " - retains allocation\n";
 #endif
         }
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
       } else {
         std::cerr << "  cannot eliminate ";
-        WasmPrinter::printExpression(retain, std::cerr, true);
+        std::cerr << *retain << '\n';
         std::cerr << " - reaches return\n";
 #endif
       }
@@ -560,7 +559,7 @@ struct FinalizeARC : public WalkerPass<PostWalker<FinalizeARC>> {
               // __release(__retain(__alloc(...))) - unnecessary allocation
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
               std::cerr << "  finalizing ";
-              WasmPrinter::printExpression(curr, std::cerr, true);
+              std::cerr << *curr << '\n';
               std::cerr << " - unnecessary allocation\n";
 #endif
               Builder builder(*getModule());
@@ -574,7 +573,7 @@ struct FinalizeARC : public WalkerPass<PostWalker<FinalizeARC>> {
           // __release(__retain(...)) - unnecessary pair
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
           std::cerr << "  finalizing ";
-          WasmPrinter::printExpression(curr, std::cerr, true);
+          std::cerr << *curr << '\n';
           std::cerr << " - unnecessary pair\n";
 #endif
           Builder builder(*getModule());
@@ -586,7 +585,7 @@ struct FinalizeARC : public WalkerPass<PostWalker<FinalizeARC>> {
         // __release(42) - unnecessary static release
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
         std::cerr << "  finalizing ";
-        WasmPrinter::printExpression(curr, std::cerr, true);
+        std::cerr << *curr << '\n';
         std::cerr << " - static release\n";
 #endif
         Builder builder(*getModule());
@@ -598,7 +597,7 @@ struct FinalizeARC : public WalkerPass<PostWalker<FinalizeARC>> {
         // __retain(42) - unnecessary static retain
 #ifdef POST_ASSEMBLYSCRIPT_DEBUG
         std::cerr << "  finalizing ";
-        WasmPrinter::printExpression(curr, std::cerr, true);
+        std::cerr << *curr << '\n';
         std::cerr << " - static retain\n";
 #endif
         replaceCurrent(retainedConst);

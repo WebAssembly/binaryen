@@ -805,6 +805,19 @@
         (i32.const 0)
       )
     )
+    (drop
+      (if (result i32)
+        (i32.shr_s
+          (i32.shl
+            (unreachable) ;; ignore an unreachable value
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+        (i32.const 111)
+        (i32.const 222)
+      )
+    )
   )
   (func $sign-ext-input (param $0 i32) (param $1 i32)
     (drop

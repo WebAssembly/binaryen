@@ -338,6 +338,8 @@ enum EncodedType {
   f32 = -0x3,  // 0x7d
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
+  i8 = -0x6,   // 0x7a
+  i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
   // opaque host reference type
@@ -352,10 +354,16 @@ enum EncodedType {
   nonnullable = -0x15, // 0x6b
   // integer reference type
   i31ref = -0x16, // 0x6a
-  // exception reference type
-  exnref = -0x18, // 0x68
+  // run-time type info type, with depth index n
+  rtt_n = -0x17, // 0x69
+  // run-time type info type, without depth index n
+  rtt = -0x18, // 0x68
+  // exception reference type TODO remove; the code for now is incorrect
+  exnref = -0x19, // 0x67
   // func_type form
-  Func = -0x20, // 0x60
+  Func = -0x20,   // 0x60
+  Struct = -0x21, // 0x5f
+  Array = -0x22,  // 0x5e
   // block_type
   Empty = -0x40 // 0x40
 };
@@ -774,6 +782,7 @@ enum ASTNodes {
   I32x4LeU = 0x3e,
   I32x4GeS = 0x3f,
   I32x4GeU = 0x40,
+  I64x2Eq = 0xc0,
   F32x4Eq = 0x41,
   F32x4Ne = 0x42,
   F32x4Lt = 0x43,
@@ -793,6 +802,11 @@ enum ASTNodes {
   V128Or = 0x50,
   V128Xor = 0x51,
   V128Bitselect = 0x52,
+
+  V8x16SignSelect = 0x7d,
+  V16x8SignSelect = 0x7e,
+  V32x4SignSelect = 0x7f,
+  V64x2SignSelect = 0x94,
 
   V128Load8Lane = 0x58,
   V128Load16Lane = 0x59,
@@ -877,6 +891,11 @@ enum ASTNodes {
   I32x4MaxU = 0xb9,
   I32x4DotSVecI16x8 = 0xba,
 
+  I64x2Bitmask = 0xc4,
+  I64x2WidenLowSI32x4 = 0xc7,
+  I64x2WidenHighSI32x4 = 0xc8,
+  I64x2WidenLowUI32x4 = 0xc9,
+  I64x2WidenHighUI32x4 = 0xca,
   I64x2Neg = 0xc1,
   I64x2AnyTrue = 0xc2,
   I64x2AllTrue = 0xc3,
@@ -1125,7 +1144,7 @@ public:
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getEventIndex(Name name) const;
-  uint32_t getTypeIndex(Signature sig) const;
+  uint32_t getTypeIndex(HeapType type) const;
 
   void writeFunctionTableDeclaration();
   void writeTableElements();
@@ -1170,13 +1189,14 @@ public:
 
   void writeType(Type type);
   void writeHeapType(HeapType type);
+  void writeField(const Field& field);
 
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
   BinaryIndexes indexes;
-  std::unordered_map<Signature, Index> typeIndices;
-  std::vector<Signature> types;
+  std::unordered_map<HeapType, Index> typeIndices;
+  std::vector<HeapType> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;
@@ -1220,8 +1240,8 @@ class WasmBinaryBuilder {
 
   std::set<BinaryConsts::Section> seenSections;
 
-  // All signatures present in the type section
-  std::vector<Signature> signatures;
+  // All types defined in the type section
+  std::vector<HeapType> types;
 
 public:
   WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
@@ -1249,19 +1269,25 @@ public:
   int32_t getS32LEB();
   int64_t getS64LEB();
   uint64_t getUPtrLEB();
+
+  // Read a value and get a type for it.
   Type getType();
+  // Get a type given the initial S32LEB has already been read, and is provided.
+  Type getType(int initial);
+
   HeapType getHeapType();
+  Mutability getMutability();
+  Field getField();
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);
   void verifyInt16(int16_t x);
   void verifyInt32(int32_t x);
   void verifyInt64(int64_t x);
-  void ungetInt8();
   void readHeader();
   void readStart();
   void readMemory();
-  void readSignatures();
+  void readTypes();
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
@@ -1279,7 +1305,8 @@ public:
   std::vector<Signature> functionSignatures;
 
   void readFunctionSignatures();
-  Signature getFunctionSignatureByIndex(Index index);
+  Signature getSignatureByFunctionIndex(Index index);
+  Signature getSignatureByTypeIndex(Index index);
 
   size_t nextLabel;
 
@@ -1487,6 +1514,13 @@ public:
   void visitCallRef(CallRef* curr);
 
   void throwError(std::string text);
+
+  // Struct/Array instructions have an unnecessary heap type that is just for
+  // validation (except for the case of unreachability, but that's not a problem
+  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // child from which we can infer the type anyhow, and we just need to check
+  // that type is the same.
+  void validateHeapTypeUsingChild(Expression* child, HeapType heapType);
 
 private:
   bool hasDWARFSections();

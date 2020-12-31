@@ -257,11 +257,49 @@
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
+[fuzz-exec] calling do-shift
+[LoggingExternalInterface logging -64]
+[fuzz-exec] calling call-compare-maybe-signed-eq
+[fuzz-exec] note result: call-compare-maybe-signed-eq => 0
+[fuzz-exec] calling call-compare-maybe-signed-ne
+[fuzz-exec] note result: call-compare-maybe-signed-ne => 1
 (module
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
+ (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
- (export "foo" (func $0))
- (func $0 (param $0 i32)
+ (export "foo" (func $1))
+ (export "do-shift" (func $3))
+ (export "call-compare-maybe-signed-eq" (func $5))
+ (export "call-compare-maybe-signed-ne" (func $7))
+ (func $signed-comparison-to-unsigned
+  (call $log
+   (block (result i32)
+    (drop
+     (i32.const -25749)
+    )
+    (i32.const 0)
+   )
+  )
+  (call $log
+   (block (result i32)
+    (drop
+     (i32.const -25749)
+    )
+    (i32.const 0)
+   )
+  )
+  (call $log
+   (block (result i32)
+    (drop
+     (i32.const -25749)
+    )
+    (i32.const 1)
+   )
+  )
+ )
+ (func $1 (param $0 i32)
   (call $log
    (i32.le_s
     (i32.sub
@@ -286,8 +324,60 @@
    )
   )
  )
+ (func $shift (param $0 i32)
+  (call $log
+   (i32.shr_s
+    (i32.shl
+     (i32.shr_s
+      (i32.shl
+       (local.get $0)
+       (i32.const 24)
+      )
+      (i32.const 24)
+     )
+     (i32.const 30)
+    )
+    (i32.const 24)
+   )
+  )
+ )
+ (func $3
+  (call $shift
+   (i32.const 65419)
+  )
+ )
+ (func $compare-maybe-signed-eq (param $0 i32) (result i32)
+  (drop
+   (local.get $0)
+  )
+  (i32.const 0)
+ )
+ (func $5 (result i32)
+  (call $compare-maybe-signed-eq
+   (i32.const 128)
+  )
+ )
+ (func $compare-maybe-signed-ne (param $0 i32) (result i32)
+  (drop
+   (local.get $0)
+  )
+  (i32.const 1)
+ )
+ (func $7 (result i32)
+  (call $compare-maybe-signed-ne
+   (i32.const 128)
+  )
+ )
 )
 [fuzz-exec] calling foo
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
+[fuzz-exec] calling do-shift
+[LoggingExternalInterface logging -64]
+[fuzz-exec] calling call-compare-maybe-signed-eq
+[fuzz-exec] note result: call-compare-maybe-signed-eq => 0
+[fuzz-exec] calling call-compare-maybe-signed-ne
+[fuzz-exec] note result: call-compare-maybe-signed-ne => 1
+[fuzz-exec] comparing call-compare-maybe-signed-eq
+[fuzz-exec] comparing call-compare-maybe-signed-ne
