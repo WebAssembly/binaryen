@@ -161,9 +161,12 @@ struct DeadCodeElimination
     } else if (auto* tryy = curr->dynCast<Try>()) {
       // If both try body and catch body are unreachable, there is no need for a
       // concrete type, which may allow more reduction.
+      bool allCatchesUnreachable = true;
+      for (auto* catchBody : tryy->catchBodies) {
+        allCatchesUnreachable &= catchBody->type == Type::unreachable;
+      }
       if (tryy->type != Type::unreachable &&
-          tryy->body->type == Type::unreachable &&
-          tryy->catchBody->type == Type::unreachable) {
+          tryy->body->type == Type::unreachable && allCatchesUnreachable) {
         typeUpdater.changeType(tryy, Type::unreachable);
       }
     } else {

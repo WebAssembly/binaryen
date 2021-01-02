@@ -40,7 +40,7 @@
    )
   )
  )
- (func $can-push-past-throw-within-try
+ (func $can-push-past-try
   (local $x i32)
   (block $out
    (try
@@ -49,9 +49,9 @@
       (i32.const 0)
      )
     )
-    (catch
+    (catch_all
      (drop
-      (pop exnref)
+      (pop i32)
      )
     )
    )
@@ -63,6 +63,36 @@
    )
    (local.set $x
     (i32.const 1)
+   )
+   (drop
+    (local.get $x)
+   )
+  )
+ )
+ (func $foo
+  (nop)
+ )
+ (func $cant-push-past-try
+  (local $x i32)
+  (block $out
+   (local.set $x
+    (i32.const 1)
+   )
+   (try
+    (do
+     (call $foo)
+    )
+    (catch $e
+     (drop
+      (pop i32)
+     )
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+   (br_if $out
+    (i32.const 2)
    )
    (drop
     (local.get $x)
@@ -81,10 +111,8 @@
       (i32.const 0)
      )
     )
-    (catch
-     (rethrow
-      (pop exnref)
-     )
+    (catch_all
+     (rethrow 0)
     )
    )
    (drop

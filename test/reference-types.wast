@@ -38,6 +38,8 @@
   (global $global_anyref4 (mut anyref) (ref.func $foo))
   (global $global_anyref5 (mut anyref) (ref.null exn))
 
+  (event $e-i32 (attr 0) (param i32))
+
   (func $test
     (local $local_externref externref)
     (local $local_funcref funcref)
@@ -462,8 +464,8 @@
         (do
           (local.get $local_externref)
         )
-        (catch
-          (drop (pop exnref))
+        (catch $e-i32
+          (drop (pop i32))
           (ref.null extern)
         )
       )
@@ -473,8 +475,8 @@
         (do
           (ref.func $foo)
         )
-        (catch
-          (drop (pop exnref))
+        (catch $e-i32
+          (drop (pop i32))
           (ref.null func)
         )
       )
@@ -484,8 +486,9 @@
         (do
           (ref.null exn)
         )
-        (catch
-          (pop exnref)
+        (catch $e-i32
+          (drop (pop i32))
+          (ref.null exn)
         )
       )
     )
@@ -496,8 +499,8 @@
         (do
           (local.get $local_externref)
         )
-        (catch
-          (drop (pop exnref))
+        (catch $e-i32
+          (drop (pop i32))
           (ref.func $foo)
         )
       )
@@ -507,8 +510,9 @@
         (do
           (local.get $local_externref)
         )
-        (catch
-          (pop exnref)
+        (catch $e-i32
+          (drop (pop i32))
+          (local.get $local_exnref)
         )
       )
     )
@@ -517,8 +521,8 @@
         (do
           (ref.func $foo)
         )
-        (catch
-          (drop (pop exnref))
+        (catch $e-i32
+          (drop (pop i32))
           (local.get $local_externref)
         )
       )
@@ -528,8 +532,9 @@
         (do
           (ref.func $foo)
         )
-        (catch
-          (pop exnref)
+        (catch $e-i32
+          (drop (pop i32))
+          (local.get $local_exnref)
         )
       )
     )
@@ -538,8 +543,8 @@
         (do
           (ref.null exn)
         )
-        (catch
-          (drop (pop exnref))
+        (catch $e-i32
+          (drop (pop i32))
           (local.get $local_externref)
         )
       )
@@ -549,8 +554,8 @@
         (do
           (ref.null exn)
         )
-        (catch
-          (drop (pop exnref))
+        (catch $e-i32
+          (drop (pop i32))
           (ref.func $foo)
         )
       )

@@ -206,6 +206,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   }
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) COMPARE_LIST(name)
+#define DELEGATE_FIELD_NAME_VECTOR(id, name) COMPARE_LIST(name)
 
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)                                \
   if (castLeft->name.is() != castRight->name.is()) {                           \
@@ -306,6 +307,10 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 #define DELEGATE_FIELD_SIGNATURE(id, name) HASH_FIELD(name)
 
 #define DELEGATE_FIELD_NAME(id, name) visitNonScopeName(cast->name)
+#define DELEGATE_FIELD_NAME_VECTOR(id, name)                                   \
+  for (auto n : cast->name) {                                                  \
+    visitNonScopeName(n);                                                      \
+  }
 #define DELEGATE_FIELD_TYPE(id, name) visitType(cast->name);
 #define DELEGATE_FIELD_ADDRESS(id, name) visitAddress(cast->name);
 

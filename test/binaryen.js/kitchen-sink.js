@@ -547,18 +547,8 @@ function test_core() {
     // Exception handling
     module.try(
       module.throw("a-event", [module.i32.const(0)]),
-      module.block(null, [
-        module.local.set(5, module.exnref.pop()),
-        module.drop(
-          module.block("try-block", [
-            module.rethrow(
-              module.br_on_exn("try-block", "a-event",
-                module.local.get(5, binaryen.exnref)),
-            )
-          ], binaryen.i32)
-        )
-      ]
-      )
+      ["a-event"],
+      [module.drop(module.i32.pop())]
     ),
 
     // Atomics

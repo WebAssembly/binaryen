@@ -1859,14 +1859,26 @@ void BinaryInstWriter::visitTry(Try* curr) {
   emitResultType(curr->type);
 }
 
-void BinaryInstWriter::emitCatch(Try* curr) {
+void BinaryInstWriter::emitCatch(Try* curr, Index i) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, BinaryLocations::Catch);
   }
-  o << int8_t(BinaryConsts::Catch);
+  o << int8_t(BinaryConsts::Catch)
+    << U32LEB(parent.getEventIndex(curr->catchEvents[i]));
+}
+
+void BinaryInstWriter::emitCatchAll(Try* curr) {
+  assert(!breakStack.empty());
+  breakStack.pop_back();
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  // TODO Is this right?
+  if (func && !sourceMap) {
+    parent.writeExtraDebugLocation(curr, func, BinaryLocations::Catch);
+  }
+  o << int8_t(BinaryConsts::CatchAll);
 }
 
 void BinaryInstWriter::visitThrow(Throw* curr) {
@@ -1874,7 +1886,7 @@ void BinaryInstWriter::visitThrow(Throw* curr) {
 }
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
-  o << int8_t(BinaryConsts::Rethrow);
+  o << int8_t(BinaryConsts::Rethrow) << U32LEB(curr->depth);
 }
 
 void BinaryInstWriter::visitBrOnExn(BrOnExn* curr) {
@@ -2200,23 +2212,27 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
 
 void StackIRToBinaryWriter::write() {
   writer.mapLocalsAndEmitHeader();
+  // Stack to track indices of catches within a try
+  SmallVector<Index, 4> catchIndexStack;
   for (auto* inst : *func->stackIR) {
     if (!inst) {
       continue; // a nullptr is just something we can skip
     }
     switch (inst->op) {
+      case StackInst::TryBegin:
+        catchIndexStack.push_back(0);
       case StackInst::Basic:
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin:
-      case StackInst::TryBegin: {
+      case StackInst::LoopBegin: {
         writer.visit(inst->origin);
         break;
       }
+      case StackInst::TryEnd:
+        catchIndexStack.pop_back();
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd:
-      case StackInst::TryEnd: {
+      case StackInst::LoopEnd: {
         writer.emitScopeEnd(inst->origin);
         break;
       }
@@ -2225,7 +2241,7 @@ void StackIRToBinaryWriter::write() {
         break;
       }
       case StackInst::Catch: {
-        writer.emitCatch(inst->origin->cast<Try>());
+        writer.emitCatch(inst->origin->cast<Try>(), catchIndexStack.back()++);
         break;
       }
       default:

@@ -337,6 +337,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 #define DELEGATE_FIELD_INT_ARRAY(id, name)
 #define DELEGATE_FIELD_LITERAL(id, name)
 #define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_NAME_VECTOR(id, name)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
@@ -566,8 +567,11 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::TryId: {
         self->pushTask(SubType::doVisitTry, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
-        self->pushTask(SubType::doNoteNonLinear, currp);
+        auto& list = curr->cast<Try>()->catchBodies;
+        for (int i = int(list.size()) - 1; i >= 0; i--) {
+          self->pushTask(SubType::scan, &list[i]);
+          self->pushTask(SubType::doNoteNonLinear, currp);
+        }
         self->pushTask(SubType::scan, &curr->cast<Try>()->body);
         break;
       }
@@ -583,7 +587,6 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::RethrowId: {
         self->pushTask(SubType::doVisitRethrow, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<Rethrow>()->exnref);
         break;
       }
       case Expression::Id::BrOnExnId: {

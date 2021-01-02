@@ -5687,10 +5687,7 @@
     (do
      (i32.const 123)
     )
-    (catch
-     (drop
-      (pop exnref)
-     )
+    (catch_all
      (i32.const 456)
     )
    )

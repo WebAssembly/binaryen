@@ -546,7 +546,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   }
   Index visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
-    return visit(curr->body) + maybeVisit(curr->catchBody);
+    return visit(curr->body);
   }
   Index visitThrow(Throw* curr) {
     Index ret = 100;

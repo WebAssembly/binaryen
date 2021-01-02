@@ -1253,11 +1253,16 @@ public:
 
 class Try : public SpecificExpression<Expression::TryId> {
 public:
-  Try(MixedArena& allocator) {}
+  Try(MixedArena& allocator) : catchEvents(allocator), catchBodies(allocator) {}
 
   Expression* body;
-  Expression* catchBody;
+  ArenaVector<Name> catchEvents;
+  ExpressionList catchBodies;
 
+  bool hasCatchAll() const {
+    assert(catchBodies.size() - catchEvents.size() <= 1);
+    return catchBodies.size() - catchEvents.size() == 1;
+  }
   void finalize();
   void finalize(Type type_);
 };
@@ -1277,6 +1282,7 @@ public:
   Rethrow(MixedArena& allocator) {}
 
   Expression* exnref;
+  Index depth;
 
   void finalize();
 };

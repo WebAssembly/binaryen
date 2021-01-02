@@ -2026,20 +2026,35 @@ void FunctionValidator::visitTry(Try* curr) {
       curr->type,
       curr->body,
       "try's type does not match try body's type");
-    shouldBeSubTypeOrFirstIsUnreachable(
-      curr->catchBody->type,
-      curr->type,
-      curr->catchBody,
-      "try's type does not match catch's body type");
+    for (auto catchBody : curr->catchBodies) {
+      shouldBeSubTypeOrFirstIsUnreachable(
+        catchBody->type,
+        curr->type,
+        catchBody,
+        "try's type does not match catch's body type");
+    }
   } else {
     shouldBeEqual(curr->body->type,
                   Type(Type::unreachable),
                   curr,
                   "unreachable try-catch must have unreachable try body");
-    shouldBeEqual(curr->catchBody->type,
-                  Type(Type::unreachable),
+    for (auto catchBody : curr->catchBodies) {
+      shouldBeEqual(catchBody->type,
+                    Type(Type::unreachable),
+                    curr,
+                    "unreachable try-catch must have unreachable catch body");
+    }
+  }
+  if (curr->hasCatchAll()) {
+    shouldBeEqual(curr->catchBodies.size(),
+                  curr->catchEvents.size() + 1,
                   curr,
-                  "unreachable try-catch must have unreachable catch body");
+                  "the number of catch blocks and events do not match");
+  } else {
+    shouldBeEqual(curr->catchBodies.size(),
+                  curr->catchEvents.size(),
+                  curr,
+                  "the number of catch blocks and events do not match");
   }
 }
 
@@ -2084,11 +2099,7 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
                 Type(Type::unreachable),
                 curr,
                 "rethrow's type must be unreachable");
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->exnref->type,
-    Type::exnref,
-    curr->exnref,
-    "rethrow's argument must be exnref type or its subtype");
+  // TODO Validate depth field
 }
 
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {

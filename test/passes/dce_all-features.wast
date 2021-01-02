@@ -746,11 +746,7 @@
       (do
         (unreachable)
       )
-      (catch
-        (drop
-          (pop exnref)
-        )
-      )
+      (catch_all)
     )
     (call $foo) ;; shouldn't be dce'd
   )
@@ -758,7 +754,7 @@
   (func $catch_unreachable
     (try
       (do)
-      (catch
+      (catch_all
         (unreachable)
       )
     )
@@ -770,7 +766,7 @@
       (do
         (unreachable)
       )
-      (catch
+      (catch_all
         (unreachable)
       )
     )
@@ -799,9 +795,7 @@
         (if
           (i32.clz
             (block $label$1 (result i32)
-              (rethrow
-                (ref.null exn)
-              )
+              (rethrow 0)
             )
           )
           (nop)
@@ -835,7 +829,7 @@
       (do
         (unreachable)
       )
-      (catch
+      (catch_all
         (unreachable)
       )
     )

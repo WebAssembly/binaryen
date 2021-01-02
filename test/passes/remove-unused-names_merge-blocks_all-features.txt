@@ -1711,13 +1711,6 @@
    (i32.const 3)
   )
  )
- (func $rethrow
-  (local $0 exnref)
-  (call $foo)
-  (rethrow
-   (local.get $0)
-  )
- )
  (func $br_on_exn (result i32)
   (local $0 exnref)
   (block $label$0 (result i32)

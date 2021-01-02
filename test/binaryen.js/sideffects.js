@@ -108,7 +108,7 @@ assert(
 
 assert(
   binaryen.getSideEffects(
-    module.drop(module.exnref.pop()),
+    module.drop(module.i32.pop()),
     module.getFeatures()
   )
   ==

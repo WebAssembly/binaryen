@@ -2943,6 +2943,8 @@ private:
       return {};
     }
     Flow visitTry(Try* curr) {
+      // FIXME Update the implementation to match the new spec
+      /*
       NOTE_ENTER("Try");
       try {
         return this->visit(curr->body);
@@ -2950,6 +2952,8 @@ private:
         instance.multiValues.push_back(e.exn);
         return this->visit(curr->catchBody);
       }
+      */
+      return Flow();
     }
     Flow visitPop(Pop* curr) {
       NOTE_ENTER("Pop");

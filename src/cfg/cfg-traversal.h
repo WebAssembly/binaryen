@@ -304,11 +304,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::TryId: {
+        // FIXME Update the implementation to match the new spec
+        /*
         self->pushTask(SubType::doEndTry, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
         self->pushTask(SubType::doStartCatch, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->body);
         self->pushTask(SubType::doStartTry, currp);
+        */
         return; // don't do anything else
       }
       case Expression::Id::ThrowId:

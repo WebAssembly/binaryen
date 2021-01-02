@@ -1099,7 +1099,9 @@ private:
     } else if (auto* tryy = boolean->dynCast<Try>()) {
       if (tryy->type == Type::i32) {
         tryy->body = optimizeBoolean(tryy->body);
-        tryy->catchBody = optimizeBoolean(tryy->catchBody);
+        for (Index i = 0; i < tryy->catchBodies.size(); i++) {
+          tryy->catchBodies[i] = optimizeBoolean(tryy->catchBodies[i]);
+        }
       }
     }
     // TODO: recurse into br values?

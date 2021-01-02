@@ -84,14 +84,16 @@ public:
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
   bool throws = false;
-  // The nested depth of try. If an instruction that may throw is inside an
-  // inner try, we don't mark it as 'throws', because it will be caught by an
-  // inner catch.
+  // The nested depth of try-catch_all. If an instruction that may throw is
+  // inside an inner try-catch_all, we don't mark it as 'throws', because it
+  // will be caught by an inner catch_all. We only count 'try's with a
+  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
+  // still throw outside of the try.
   size_t tryDepth = 0;
   // The nested depth of catch. This is necessary to track danglng pops.
   size_t catchDepth = 0;
-  // If this expression contains 'exnref.pop's that are not enclosed in 'catch'
-  // body. For example, (drop (exnref.pop)) should set this to true.
+  // If this expression contains 'pop's that are not enclosed in 'catch' body.
+  // For example, (drop (pop i32)) should set this to true.
   bool danglingPop = false;
 
   // Helper functions to check for various effect types
@@ -258,7 +260,10 @@ private:
       if (curr->is<Try>()) {
         self->pushTask(doVisitTry, currp);
         self->pushTask(doEndCatch, currp);
-        self->pushTask(scan, &curr->cast<Try>()->catchBody);
+        auto& catchBodies = curr->cast<Try>()->catchBodies;
+        for (int i = int(catchBodies.size()) - 1; i >= 0; i--) {
+          self->pushTask(scan, &catchBodies[i]);
+        }
         self->pushTask(doStartCatch, currp);
         self->pushTask(scan, &curr->cast<Try>()->body);
         self->pushTask(doStartTry, currp);
@@ -269,12 +274,22 @@ private:
     }
 
     static void doStartTry(InternalAnalyzer* self, Expression** currp) {
-      self->parent.tryDepth++;
+      Try* curr = (*currp)->cast<Try>();
+      // We only count 'try's with a 'catch_all' because instructions within a
+      // 'try' without a 'catch_all' can still throw outside of the try.
+      if (curr->hasCatchAll()) {
+        self->parent.tryDepth++;
+      }
     }
 
     static void doStartCatch(InternalAnalyzer* self, Expression** currp) {
-      assert(self->parent.tryDepth > 0 && "try depth cannot be negative");
-      self->parent.tryDepth--;
+      Try* curr = (*currp)->cast<Try>();
+      // We only count 'try's with a 'catch_all' because instructions within a
+      // 'try' without a 'catch_all' can still throw outside of the try.
+      if (curr->hasCatchAll()) {
+        assert(self->parent.tryDepth > 0 && "try depth cannot be negative");
+        self->parent.tryDepth--;
+      }
       self->parent.catchDepth++;
     }
 

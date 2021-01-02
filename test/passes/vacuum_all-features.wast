@@ -804,29 +804,50 @@
       (do
         (drop (i32.const 0))
       )
-      (catch
-        (drop (pop exnref))
+      (catch $e
+        (drop (pop i32))
       )
     )
   )
 
-  ;; The exception thrown in the inner try is caught by the inner catch, so the
-  ;; outer try body does not throw and the outer try-catch can be removed
-  (func $inner-try-test (local $0 i32)
+  ;; The exception thrown in the inner try is caught by the inner catch_all, so
+  ;; the outer try body does not throw and the outer try-catch can be removed
+  (func $inner-try-catch_all-test (local $0 i32)
     (try
       (do
         (try
           (do
             (throw $e (i32.const 0))
           )
-          (catch
-            (drop (pop exnref))
+          (catch_all
             (local.set $0 (i32.const 1))
           )
         )
       )
-      (catch
-        (drop (pop exnref))
+      (catch $e
+        (drop (pop i32))
+      )
+    )
+  )
+
+  ;; The exception thrown in the inner try may not be caught by the inner catch
+  ;; (here it will be caught because they use the same event, but in general we
+  ;; cannot know), so the outer try-catch cannot be removed
+  (func $inner-try-catch-test (local $0 i32)
+    (try
+      (do
+        (try
+          (do
+            (throw $e (i32.const 0))
+          )
+          (catch $e
+            (drop (pop i32))
+            (local.set $0 (i32.const 1))
+          )
+        )
+      )
+      (catch $e
+        (drop (pop i32))
       )
     )
   )
@@ -840,8 +861,8 @@
         (do
           (unreachable)
         )
-        (catch
-          (drop (pop exnref))
+        (catch $e
+          (drop (pop i32))
           (br $label$1)
         )
       )

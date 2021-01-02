@@ -1947,13 +1947,19 @@ Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
 
 // try-catch-end is written in the folded wast format as
 // (try
-//   ...
+//  (do
+//    ...
+//  )
 //  (catch
 //    ...
 //  )
+//  ...
+//  (catch_all
+//    ...
+//  )
 // )
-// The parenthesis wrapping 'catch' is just a syntax and does not affect nested
-// depths of instructions within.
+// Zero or multiple catch blocks can exist. Zero or one catch_all block can
+// exist, and if it does, it should be at the end.
 Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   auto ret = allocator.alloc<Try>();
   Index i = 1;
@@ -1966,16 +1972,41 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   }
   auto label = nameMapper.pushLabelName(sName);
   Type type = parseOptionalResultType(s, i); // signature
+
   if (!elementStartsWith(*s[i], "do")) {
     throw ParseException(
       "try body should start with 'do'", s[i]->line, s[i]->col);
   }
-  ret->body = makeTryOrCatchBody(*s[i++], type, true);
-  if (!elementStartsWith(*s[i], "catch")) {
-    throw ParseException("catch clause does not exist", s[i]->line, s[i]->col);
+  ret->body = makeMaybeBlock(*s[i++], 1, type);
+
+  while (i < s.size() && elementStartsWith(*s[i], "catch")) {
+    Element& inner = *s[i++];
+    if (inner.size() < 3) {
+      throw ParseException("invalid catch block", inner.line, inner.col);
+    }
+    Name event = getEventName(*inner[1]);
+    if (!wasm.getEventOrNull(event)) {
+      throw ParseException("bad event name", inner[1]->line, inner[1]->col);
+    }
+    ret->catchEvents.push_back(getEventName(*inner[1]));
+    ret->catchBodies.push_back(makeMaybeBlock(inner, 2, type));
   }
-  ret->catchBody = makeTryOrCatchBody(*s[i++], type, false);
+
+  if (i < s.size() && elementStartsWith(*s[i], "catch_all")) {
+    ret->catchBodies.push_back(makeMaybeBlock(*s[i++], 1, type));
+  }
+
+  if (i != s.size()) {
+    throw ParseException(
+      "there should be at most one catch_all block at the end", s.line, s.col);
+  }
+  if (ret->catchBodies.empty()) {
+    throw ParseException("no catch bodies", s.line, s.col);
+  }
+
   ret->finalize(type);
+  // TODO If 'delegate' targets a try block, should we make 'try' take a label
+  // rather than wrapping it with a block like this?
   nameMapper.popLabelName(label);
   // create a break target if we must
   if (BranchUtils::BranchSeeker::has(ret, label)) {
@@ -1993,10 +2024,11 @@ SExpressionWasmBuilder::makeTryOrCatchBody(Element& s, Type type, bool isTry) {
   if (isTry && !elementStartsWith(s, "do")) {
     throw ParseException("invalid try do clause", s.line, s.col);
   }
-  if (!isTry && !elementStartsWith(s, "catch")) {
+  if (!isTry &&
+      !(elementStartsWith(s, "catch") || elementStartsWith(s, "catch_all"))) {
     throw ParseException("invalid catch clause", s.line, s.col);
   }
-  if (s.size() == 1) { // (do) or (catch) without instructions
+  if (s.size() == 1) { // (do) / (catch) / (catch_all) without instructions
     return makeNop();
   }
   auto ret = allocator.alloc<Block>();
@@ -2027,7 +2059,7 @@ Expression* SExpressionWasmBuilder::makeThrow(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeRethrow(Element& s) {
   auto ret = allocator.alloc<Rethrow>();
-  ret->exnref = parseExpression(*s[1]);
+  ret->depth = atoi(s[1]->str().c_str());
   ret->finalize();
   return ret;
 }

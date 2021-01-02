@@ -949,13 +949,19 @@ void RefEq::finalize() {
 }
 
 void Try::finalize() {
-  type = Type::getLeastUpperBound(body->type, catchBody->type);
+  type = body->type;
+  for (auto catchBody : catchBodies) {
+    type = Type::getLeastUpperBound(type, catchBody->type);
+  }
 }
 
 void Try::finalize(Type type_) {
   type = type_;
-  if (type == Type::none && body->type == Type::unreachable &&
-      catchBody->type == Type::unreachable) {
+  bool allUnreachable = body->type == Type::unreachable;
+  for (auto catchBody : catchBodies) {
+    allUnreachable &= catchBody->type == Type::unreachable;
+  }
+  if (type == Type::none && allUnreachable) {
     type = Type::unreachable;
   }
 }

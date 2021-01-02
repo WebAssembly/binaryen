@@ -57,6 +57,9 @@
 //
 // DELEGATE_FIELD_NAME(id, name) - called for a Name.
 //
+// DELEGATE_FIELD_NAME_VECTOR(id, name) - called for a variable-sized vector of
+//    Names.
+//
 // DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) - called for a scope name definition
 //    (like a block's name).
 //
@@ -490,7 +493,8 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::TryId: {
     DELEGATE_START(Try);
-    DELEGATE_FIELD_CHILD(Try, catchBody);
+    DELEGATE_FIELD_CHILD_VECTOR(Try, catchBodies);
+    DELEGATE_FIELD_NAME_VECTOR(Try, catchEvents);
     DELEGATE_FIELD_CHILD(Try, body);
     DELEGATE_END(Try);
     break;
@@ -504,7 +508,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RethrowId: {
     DELEGATE_START(Rethrow);
-    DELEGATE_FIELD_CHILD(Rethrow, exnref);
+    DELEGATE_FIELD_INT(Rethrow, depth);
     DELEGATE_END(Rethrow);
     break;
   }
@@ -665,6 +669,7 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_FIELD_INT_ARRAY
 #undef DELEGATE_FIELD_LITERAL
 #undef DELEGATE_FIELD_NAME
+#undef DELEGATE_FIELD_NAME_VECTOR
 #undef DELEGATE_FIELD_SCOPE_NAME_DEF
 #undef DELEGATE_FIELD_SCOPE_NAME_USE
 #undef DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR

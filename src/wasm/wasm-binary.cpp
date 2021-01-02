@@ -2128,7 +2128,7 @@ void WasmBinaryBuilder::processExpressions() {
       }
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
-          peek == BinaryConsts::Catch) {
+          peek == BinaryConsts::Catch || peek == BinaryConsts::CatchAll) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
         lastSeparator = BinaryConsts::ASTNodes(peek);
@@ -5494,7 +5494,8 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   // blocks instead.
   curr->type = getType();
   curr->body = getBlockOrSingleton(curr->type);
-  if (lastSeparator != BinaryConsts::Catch) {
+  if (lastSeparator != BinaryConsts::Catch &&
+      lastSeparator != BinaryConsts::CatchAll) {
     throwError("No catch instruction within a try scope");
   }
 
@@ -5544,25 +5545,48 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   //     )
   //   )
   // )
-  Name catchLabel = getNextLabel();
-  breakStack.push_back({catchLabel, curr->type});
-  auto start = expressionStack.size();
 
   Builder builder(wasm);
-  pushExpression(builder.makePop(Type::exnref));
+  Name catchLabel = getNextLabel();
+  breakStack.push_back({catchLabel, curr->type});
 
-  processExpressions();
-  size_t end = expressionStack.size();
-  if (start > end) {
-    throwError("block cannot pop from outside");
-  }
-  if (end - start == 1) {
-    curr->catchBody = popExpression();
-  } else {
-    auto* block = allocator.alloc<Block>();
-    pushBlockElements(block, curr->type, start);
-    block->finalize(curr->type);
-    curr->catchBody = block;
+  auto readCatchBody = [&](Type eventType) {
+    auto start = expressionStack.size();
+    if (eventType != Type::none) {
+      pushExpression(builder.makePop(eventType));
+    }
+    processExpressions();
+    size_t end = expressionStack.size();
+    if (start > end) {
+      throwError("block cannot pop from outside");
+    }
+    if (end - start == 1) {
+      curr->catchBodies.push_back(popExpression());
+    } else {
+      auto* block = allocator.alloc<Block>();
+      pushBlockElements(block, curr->type, start);
+      block->finalize(curr->type);
+      curr->catchBodies.push_back(block);
+    }
+  };
+
+  while (lastSeparator == BinaryConsts::Catch ||
+         lastSeparator == BinaryConsts::CatchAll) {
+    if (lastSeparator == BinaryConsts::Catch) {
+      auto index = getU32LEB();
+      if (index >= wasm.events.size()) {
+        throwError("bad event index");
+      }
+      auto* event = wasm.events[index].get();
+      curr->catchEvents.push_back(event->name);
+      readCatchBody(event->sig.params);
+
+    } else { // catch_all
+      if (curr->hasCatchAll()) {
+        throwError("there should be at most one 'catch_all' clause per try");
+      }
+      readCatchBody(Type::none);
+    }
   }
   curr->finalize(curr->type);
 
@@ -5595,7 +5619,7 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
 
 void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
   BYN_TRACE("zz node: Rethrow\n");
-  curr->exnref = popNonVoidExpression();
+  curr->depth = getU32LEB();
   curr->finalize();
 }
 

@@ -1,4 +1,6 @@
 (module
+  (event $e (attr 0) (param i32))
+
   (func $test
     (local $x i32)
     (local $y i64)
@@ -44,20 +46,8 @@
     ;; Pop instructions should not be instrumented
     (try
       (do)
-      (catch
-        (local.set $F (pop funcref))
-      )
-    )
-    (try
-      (do)
-      (catch
-        (local.set $X (pop externref))
-      )
-    )
-    (try
-      (do)
-      (catch
-        (local.set $E (pop exnref))
+      (catch $e
+        (local.set $x (pop i32))
       )
     )
 
