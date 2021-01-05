@@ -27,6 +27,8 @@ Current Trunk
   This can be revived if needed from git history (#3261).
 - Make `NUM_PARAMS` in `FuncCastEmulation` a runtime configuration option named
   `max-func-params`. This defaults to the original value of 16.
+- `BinaryenGetFunction`, `BinaryenGetGlobal` and `BinaryenGetEvent` now return
+  `NULL` instead of aborting when the respective element does not yet exist.
 
 v98
 ---

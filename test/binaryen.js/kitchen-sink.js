@@ -1035,7 +1035,16 @@ function test_for_each() {
   var expected_data = ["hello, world", "segment data 2"];
   var expected_passive = [false, false];
 
-  var global = module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1]))
+  var glos = [
+    module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1])),
+    module.addGlobal("a-global2", binaryen.i32, false, module.i32.const(2)),
+    module.addGlobal("a-global3", binaryen.i32, false, module.i32.const(3))
+  ];
+
+  for (i = 0; i < module.getNumGlobals(); i++) {
+    assert(module.getGlobalByIndex(i) === glos[i]);
+  }
+
   module.setMemory(1, 256, "mem", [
     {
       passive: expected_passive[0],

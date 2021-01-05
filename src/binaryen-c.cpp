@@ -3011,21 +3011,21 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
 }
 BinaryenFunctionRef BinaryenGetFunction(BinaryenModuleRef module,
                                         const char* name) {
-  return ((Module*)module)->getFunction(name);
+  return ((Module*)module)->getFunctionOrNull(name);
 }
 void BinaryenRemoveFunction(BinaryenModuleRef module, const char* name) {
   ((Module*)module)->removeFunction(name);
 }
-uint32_t BinaryenGetNumFunctions(BinaryenModuleRef module) {
+BinaryenIndex BinaryenGetNumFunctions(BinaryenModuleRef module) {
   return ((Module*)module)->functions.size();
 }
 BinaryenFunctionRef BinaryenGetFunctionByIndex(BinaryenModuleRef module,
-                                               BinaryenIndex id) {
+                                               BinaryenIndex index) {
   const auto& functions = ((Module*)module)->functions;
-  if (functions.size() <= id) {
-    Fatal() << "invalid function id.";
+  if (functions.size() <= index) {
+    Fatal() << "invalid function index.";
   }
-  return functions[id].get();
+  return functions[index].get();
 }
 
 // Globals
@@ -3045,10 +3045,21 @@ BinaryenGlobalRef BinaryenAddGlobal(BinaryenModuleRef module,
 }
 BinaryenGlobalRef BinaryenGetGlobal(BinaryenModuleRef module,
                                     const char* name) {
-  return ((Module*)module)->getGlobal(name);
+  return ((Module*)module)->getGlobalOrNull(name);
 }
 void BinaryenRemoveGlobal(BinaryenModuleRef module, const char* name) {
   ((Module*)module)->removeGlobal(name);
+}
+BinaryenIndex BinaryenGetNumGlobals(BinaryenModuleRef module) {
+  return ((Module*)module)->globals.size();
+}
+BinaryenGlobalRef BinaryenGetGlobalByIndex(BinaryenModuleRef module,
+                                           BinaryenIndex index) {
+  const auto& globals = ((Module*)module)->globals;
+  if (globals.size() <= index) {
+    Fatal() << "invalid global index.";
+  }
+  return globals[index].get();
 }
 
 // Events
@@ -3067,7 +3078,7 @@ BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
 }
 
 BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
-  return ((Module*)module)->getEvent(name);
+  return ((Module*)module)->getEventOrNull(name);
 }
 void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name) {
   ((Module*)module)->removeEvent(name);
@@ -3192,8 +3203,23 @@ BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
   ((Module*)module)->addExport(ret);
   return ret;
 }
+BinaryenExportRef BinaryenGetExport(BinaryenModuleRef module,
+                                    const char* externalName) {
+  return ((Module*)module)->getExportOrNull(externalName);
+}
 void BinaryenRemoveExport(BinaryenModuleRef module, const char* externalName) {
   ((Module*)module)->removeExport(externalName);
+}
+BinaryenIndex BinaryenGetNumExports(BinaryenModuleRef module) {
+  return ((Module*)module)->exports.size();
+}
+BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
+                                           BinaryenIndex index) {
+  const auto& exports = ((Module*)module)->exports;
+  if (exports.size() <= index) {
+    Fatal() << "invalid export index.";
+  }
+  return exports[index].get();
 }
 
 // Function table. One per module
@@ -3811,17 +3837,6 @@ const char* BinaryenExportGetName(BinaryenExportRef export_) {
 }
 const char* BinaryenExportGetValue(BinaryenExportRef export_) {
   return ((Export*)export_)->value.c_str();
-}
-uint32_t BinaryenGetNumExports(BinaryenModuleRef module) {
-  return ((Module*)module)->exports.size();
-}
-BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
-                                           BinaryenIndex id) {
-  const auto& exports = ((Module*)module)->exports;
-  if (exports.size() <= id) {
-    Fatal() << "invalid export id.";
-  }
-  return exports[id].get();
 }
 
 //
