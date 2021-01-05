@@ -281,8 +281,6 @@ function test_core() {
     module.i32x4.all_true(module.v128.const(v128_bytes)),
     module.i32x4.bitmask(module.v128.const(v128_bytes)),
     module.i64x2.neg(module.v128.const(v128_bytes)),
-    module.i64x2.any_true(module.v128.const(v128_bytes)),
-    module.i64x2.all_true(module.v128.const(v128_bytes)),
     module.f32x4.abs(module.v128.const(v128_bytes)),
     module.f32x4.neg(module.v128.const(v128_bytes)),
     module.f32x4.sqrt(module.v128.const(v128_bytes)),

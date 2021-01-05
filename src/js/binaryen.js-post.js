@@ -416,8 +416,6 @@ function initializeConstants() {
     'MaxSVecI32x4',
     'MaxUVecI32x4',
     'NegVecI64x2',
-    'AnyTrueVecI64x2',
-    'AllTrueVecI64x2',
     'ShlVecI64x2',
     'ShrSVecI64x2',
     'ShrUVecI64x2',
@@ -1827,12 +1825,6 @@ function wrapModule(module, self = {}) {
     },
     'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI64x2'], value);
-    },
-    'any_true'(value) {
-      return Module['_BinaryenUnary'](module, Module['AnyTrueVecI64x2'], value);
-    },
-    'all_true'(value) {
-      return Module['_BinaryenUnary'](module, Module['AllTrueVecI64x2'], value);
     },
     'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI64x2'], vec, shift);

@@ -1028,14 +1028,6 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case NegVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Neg);
       break;
-    case AnyTrueVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2AnyTrue);
-      break;
-    case AllTrueVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2AllTrue);
-      break;
     case BitmaskVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I64x2Bitmask);
@@ -1083,6 +1075,22 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case NearestVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F64x2Nearest);
+      break;
+    case ExtAddPairwiseSVecI8x16ToI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8ExtAddPairWiseSI8x16);
+      break;
+    case ExtAddPairwiseUVecI8x16ToI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8ExtAddPairWiseUI8x16);
+      break;
+    case ExtAddPairwiseSVecI16x8ToI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4ExtAddPairWiseSI16x8);
+      break;
+    case ExtAddPairwiseUVecI16x8ToI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4ExtAddPairWiseUI16x8);
       break;
     case TruncSatSVecF32x4ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)

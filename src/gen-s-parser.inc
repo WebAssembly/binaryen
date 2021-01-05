@@ -4,8 +4,8 @@
 
 #ifdef INSTRUCTION_PARSER
 #undef INSTRUCTION_PARSER
-char op[28] = {'\0'};
-strncpy(op, s[0]->c_str(), 27);
+char op[30] = {'\0'};
+strncpy(op, s[0]->c_str(), 29);
 switch (op[0]) {
   case 'a': {
     switch (op[1]) {
@@ -800,6 +800,17 @@ switch (op[0]) {
                 goto parse_error;
               case 'x': {
                 switch (op[9]) {
+                  case 'a': {
+                    switch (op[28]) {
+                      case 's':
+                        if (strcmp(op, "i16x8.extadd_pairwise_i8x16_s") == 0) { return makeUnary(s, UnaryOp::ExtAddPairwiseSVecI8x16ToI16x8); }
+                        goto parse_error;
+                      case 'u':
+                        if (strcmp(op, "i16x8.extadd_pairwise_i8x16_u") == 0) { return makeUnary(s, UnaryOp::ExtAddPairwiseUVecI8x16ToI16x8); }
+                        goto parse_error;
+                      default: goto parse_error;
+                    }
+                  }
                   case 'm': {
                     switch (op[13]) {
                       case 'h': {
@@ -1554,6 +1565,17 @@ switch (op[0]) {
                         goto parse_error;
                       case 'x': {
                         switch (op[9]) {
+                          case 'a': {
+                            switch (op[28]) {
+                              case 's':
+                                if (strcmp(op, "i32x4.extadd_pairwise_i16x8_s") == 0) { return makeUnary(s, UnaryOp::ExtAddPairwiseSVecI16x8ToI32x4); }
+                                goto parse_error;
+                              case 'u':
+                                if (strcmp(op, "i32x4.extadd_pairwise_i16x8_u") == 0) { return makeUnary(s, UnaryOp::ExtAddPairwiseUVecI16x8ToI32x4); }
+                                goto parse_error;
+                              default: goto parse_error;
+                            }
+                          }
                           case 'm': {
                             switch (op[13]) {
                               case 'h': {
@@ -2298,20 +2320,9 @@ switch (op[0]) {
           }
           case 'x': {
             switch (op[6]) {
-              case 'a': {
-                switch (op[7]) {
-                  case 'd':
-                    if (strcmp(op, "i64x2.add") == 0) { return makeBinary(s, BinaryOp::AddVecI64x2); }
-                    goto parse_error;
-                  case 'l':
-                    if (strcmp(op, "i64x2.all_true") == 0) { return makeUnary(s, UnaryOp::AllTrueVecI64x2); }
-                    goto parse_error;
-                  case 'n':
-                    if (strcmp(op, "i64x2.any_true") == 0) { return makeUnary(s, UnaryOp::AnyTrueVecI64x2); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case 'a':
+                if (strcmp(op, "i64x2.add") == 0) { return makeBinary(s, BinaryOp::AddVecI64x2); }
+                goto parse_error;
               case 'b':
                 if (strcmp(op, "i64x2.bitmask") == 0) { return makeUnary(s, UnaryOp::BitmaskVecI64x2); }
                 goto parse_error;

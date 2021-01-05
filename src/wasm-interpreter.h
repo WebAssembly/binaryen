@@ -488,10 +488,6 @@ public:
         return value.bitmaskI32x4();
       case NegVecI64x2:
         return value.negI64x2();
-      case AnyTrueVecI64x2:
-        return value.anyTrueI64x2();
-      case AllTrueVecI64x2:
-        return value.allTrueI64x2();
       case BitmaskVecI64x2:
         WASM_UNREACHABLE("unimp");
       case AbsVecF32x4:
@@ -522,6 +518,14 @@ public:
         return value.truncF64x2();
       case NearestVecF64x2:
         return value.nearestF64x2();
+      case ExtAddPairwiseSVecI8x16ToI16x8:
+        WASM_UNREACHABLE("unimp");
+      case ExtAddPairwiseUVecI8x16ToI16x8:
+        WASM_UNREACHABLE("unimp");
+      case ExtAddPairwiseSVecI16x8ToI32x4:
+        WASM_UNREACHABLE("unimp");
+      case ExtAddPairwiseUVecI16x8ToI32x4:
+        WASM_UNREACHABLE("unimp");
       case TruncSatSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:

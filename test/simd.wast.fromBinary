@@ -1,8 +1,8 @@
 (module
  (type $v128_v128_=>_v128 (func (param v128 v128) (result v128)))
  (type $v128_=>_v128 (func (param v128) (result v128)))
- (type $v128_=>_i32 (func (param v128) (result i32)))
  (type $i32_=>_v128 (func (param i32) (result v128)))
+ (type $v128_=>_i32 (func (param v128) (result i32)))
  (type $v128_i32_=>_v128 (func (param v128 i32) (result v128)))
  (type $v128_v128_v128_=>_v128 (func (param v128 v128 v128) (result v128)))
  (type $i32_v128_=>_none (func (param i32 v128)))
@@ -944,16 +944,6 @@
    (local.get $0)
   )
  )
- (func $i64x2.any_true (param $0 v128) (result i32)
-  (i64x2.any_true
-   (local.get $0)
-  )
- )
- (func $i64x2.all_true (param $0 v128) (result i32)
-  (i64x2.all_true
-   (local.get $0)
-  )
- )
  (func $i64x2.bitmask (param $0 v128) (result i32)
   (i64x2.bitmask
    (local.get $0)
@@ -1211,6 +1201,26 @@
    (local.get $0)
    (local.get $1)
    (local.get $2)
+  )
+ )
+ (func $i16x8.extadd_pairwise_i8x16_s (param $0 v128) (result v128)
+  (i16x8.extadd_pairwise_i8x16_s
+   (local.get $0)
+  )
+ )
+ (func $i16x8.extadd_pairwise_i8x16_u (param $0 v128) (result v128)
+  (i16x8.extadd_pairwise_i8x16_u
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extadd_pairwise_i16x8_s (param $0 v128) (result v128)
+  (i32x4.extadd_pairwise_i16x8_s
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extadd_pairwise_i16x8_u (param $0 v128) (result v128)
+  (i32x4.extadd_pairwise_i16x8_u
+   (local.get $0)
   )
  )
  (func $i32x4.trunc_sat_f32x4_s (param $0 v128) (result v128)

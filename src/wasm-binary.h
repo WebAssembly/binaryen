@@ -897,8 +897,6 @@ enum ASTNodes {
   I64x2WidenLowUI32x4 = 0xc9,
   I64x2WidenHighUI32x4 = 0xca,
   I64x2Neg = 0xc1,
-  I64x2AnyTrue = 0xc2,
-  I64x2AllTrue = 0xc3,
   I64x2Shl = 0xcb,
   I64x2ShrS = 0xcc,
   I64x2ShrU = 0xcd,
@@ -938,6 +936,11 @@ enum ASTNodes {
   F64x2Max = 0xf5,
   F64x2PMin = 0xf6,
   F64x2PMax = 0xf7,
+
+  I16x8ExtAddPairWiseSI8x16 = 0xc2,
+  I16x8ExtAddPairWiseUI8x16 = 0xc3,
+  I32x4ExtAddPairWiseSI16x8 = 0xa5,
+  I32x4ExtAddPairWiseUI16x8 = 0xa6,
 
   I32x4TruncSatSF32x4 = 0xf8,
   I32x4TruncSatUF32x4 = 0xf9,
