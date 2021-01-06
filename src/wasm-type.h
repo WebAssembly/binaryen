@@ -310,8 +310,8 @@ public:
   HeapType(Struct&& struct_);
   HeapType(Array array);
 
-  constexpr bool isBasic() const;
-  constexpr bool isCompound() const;
+  constexpr bool isBasic() const { return id <= _last_basic_type; }
+  constexpr bool isCompound() const { return id > _last_basic_type; }
   bool isFunction() const;
   bool isSignature() const;
   bool isStruct() const;
