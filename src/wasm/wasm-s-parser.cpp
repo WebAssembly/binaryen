@@ -2796,12 +2796,17 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
       }
       return types[it->second];
     } else {
-      // index
-      size_t offset = atoi(s.str().c_str());
-      if (offset >= types.size()) {
-        throw ParseException("unknown indexed function type", s.line, s.col);
+      // It may be a numerical index, or it may be a built-in type name like
+      // "i31".
+      auto* str = s.str().c_str();
+      if (isNumber(str)) {
+        size_t offset = atoi(str);
+        if (offset >= types.size()) {
+          throw ParseException("unknown indexed function type", s.line, s.col);
+        }
+        return types[offset];
       }
-      return types[offset];
+      return stringToHeapType(str, /* prefix = */ false);
     }
   }
   // It's a list.

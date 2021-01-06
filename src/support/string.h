@@ -115,6 +115,18 @@ inline std::string trim(const std::string& input) {
   return input.substr(0, size);
 }
 
+inline bool isNumber(const std::string& str) {
+  if (str.empty()) {
+    return false;
+  }
+  for (auto c : str) {
+    if (!std::isdigit(c)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 } // namespace String
 
 } // namespace wasm
