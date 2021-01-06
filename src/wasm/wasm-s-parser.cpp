@@ -868,7 +868,8 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     return Type::eqref;
   }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type::i31ref;
+    // FIXME: for now, force all inputs to be nullable
+    return Type(HeapType::BasicHeapType::i31, Nullable);
   }
   if (allowError) {
     return Type::none;
