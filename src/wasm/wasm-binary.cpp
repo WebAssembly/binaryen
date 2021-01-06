@@ -5387,12 +5387,9 @@ bool WasmBinaryBuilder::maybeVisitPrefetch(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  auto* curr = allocator.alloc<Prefetch>();
-  curr->op = op;
-  readMemoryAccess(curr->align, curr->offset);
-  curr->ptr = popNonVoidExpression();
-  curr->finalize();
-  out = curr;
+  Address align, offset;
+  readMemoryAccess(align, offset);
+  out = Builder(wasm).makePrefetch(op, offset, align, popNonVoidExpression());
   return true;
 }
 

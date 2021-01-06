@@ -537,7 +537,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitSIMDShuffle(SIMDShuffle* curr) {
     return 1 + visit(curr->left) + visit(curr->right);
   }
-  Index visitPrefetch(Prefetch* curr) { return 1 + visit(curr->ptr); }
+  Index visitPrefetch(Prefetch* curr) { return 0 + visit(curr->ptr); }
   Index visitRefNull(RefNull* curr) { return 1; }
   Index visitRefIsNull(RefIsNull* curr) { return 1 + visit(curr->value); }
   Index visitRefFunc(RefFunc* curr) { return 1; }
