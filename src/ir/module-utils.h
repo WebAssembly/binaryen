@@ -405,13 +405,7 @@ inline void collectHeapTypes(Module& wasm,
                              std::unordered_map<HeapType, Index>& typeIndices) {
   struct Counts : public std::unordered_map<HeapType, size_t> {
     bool isRelevant(Type type) {
-      if (type.isBasic()) {
-        return false;
-      }
-      if (type.isRef()) {
-        return !type.getHeapType().isBasic();
-      }
-      return type.isRtt();
+      return !type.isBasic() && (type.isRef() || type.isRtt());
     }
     void note(HeapType type) { (*this)[type]++; }
     void maybeNote(Type type) {

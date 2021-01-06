@@ -373,6 +373,14 @@ bool Type::isRef() const {
   }
 }
 
+bool Type::isBasic() const {
+  return id <= _last_basic_type || (isRef() && getHeapType().isBasic());
+}
+
+bool Type::isCompound() const {
+  return !isBasic();
+}
+
 bool Type::isFunction() const {
   if (isBasic()) {
     return id == funcref;
