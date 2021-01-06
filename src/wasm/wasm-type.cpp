@@ -499,9 +499,9 @@ FeatureSet Type::getFeatures() const {
           case HeapType::BasicHeapType::ext:
           case HeapType::BasicHeapType::exn:
           case HeapType::BasicHeapType::any:
-          case HeapType::BasicHeapType::eq: 
+          case HeapType::BasicHeapType::eq:
             return FeatureSet::ReferenceTypes;
-          case HeapType::BasicHeapType::i31: 
+          case HeapType::BasicHeapType::i31:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
           default:
             WASM_UNREACHABLE("unknown basic type");
