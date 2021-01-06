@@ -174,8 +174,6 @@ enum UnaryOp {
   AllTrueVecI32x4,
   BitmaskVecI32x4,
   NegVecI64x2,
-  AnyTrueVecI64x2,
-  AllTrueVecI64x2,
   BitmaskVecI64x2,
   AbsVecF32x4,
   NegVecF32x4,
@@ -191,6 +189,10 @@ enum UnaryOp {
   FloorVecF64x2,
   TruncVecF64x2,
   NearestVecF64x2,
+  ExtAddPairwiseSVecI8x16ToI16x8,
+  ExtAddPairwiseUVecI8x16ToI16x8,
+  ExtAddPairwiseSVecI16x8ToI32x4,
+  ExtAddPairwiseUVecI16x8ToI32x4,
 
   // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,
@@ -1333,6 +1335,8 @@ public:
   Expression* rtt;
 
   void finalize();
+
+  Type getCastType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1343,13 +1347,24 @@ public:
   Expression* rtt;
 
   void finalize();
+
+  Type getCastType();
 };
 
 class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
 public:
   BrOnCast(MixedArena& allocator) {}
 
-  void finalize() { WASM_UNREACHABLE("TODO (gc): br_on_cast"); }
+  Name name;
+  // The cast type cannot be inferred from rtt if rtt is unreachable, so we must
+  // store it explicitly.
+  Type castType;
+  Expression* ref;
+  Expression* rtt;
+
+  void finalize();
+
+  Type getCastType();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {
@@ -1691,8 +1706,12 @@ public:
     Segment(Expression* offset, std::vector<char>& init) : offset(offset) {
       data.swap(init);
     }
-    Segment(bool isPassive, Expression* offset, const char* init, Address size)
-      : isPassive(isPassive), offset(offset) {
+    Segment(Name name,
+            bool isPassive,
+            Expression* offset,
+            const char* init,
+            Address size)
+      : name(name), isPassive(isPassive), offset(offset) {
       data.resize(size);
       std::copy_n(init, size, data.begin());
     }

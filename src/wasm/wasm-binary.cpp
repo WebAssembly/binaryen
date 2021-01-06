@@ -4836,14 +4836,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = NegVecI64x2;
       break;
-    case BinaryConsts::I64x2AnyTrue:
-      curr = allocator.alloc<Unary>();
-      curr->op = AnyTrueVecI64x2;
-      break;
-    case BinaryConsts::I64x2AllTrue:
-      curr = allocator.alloc<Unary>();
-      curr->op = AllTrueVecI64x2;
-      break;
     case BinaryConsts::I64x2Bitmask:
       curr = allocator.alloc<Unary>();
       curr->op = BitmaskVecI64x2;
@@ -4903,6 +4895,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2Nearest:
       curr = allocator.alloc<Unary>();
       curr->op = NearestVecF64x2;
+      break;
+    case BinaryConsts::I16x8ExtAddPairWiseSI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = ExtAddPairwiseSVecI8x16ToI16x8;
+      break;
+    case BinaryConsts::I16x8ExtAddPairWiseUI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = ExtAddPairwiseUVecI8x16ToI16x8;
+      break;
+    case BinaryConsts::I32x4ExtAddPairWiseSI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = ExtAddPairwiseSVecI16x8ToI32x4;
+      break;
+    case BinaryConsts::I32x4ExtAddPairWiseUI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = ExtAddPairwiseUVecI16x8ToI32x4;
       break;
     case BinaryConsts::I32x4TruncSatSF32x4:
       curr = allocator.alloc<Unary>();
@@ -5678,10 +5686,14 @@ bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::BrOnCast) {
     return false;
   }
-  auto* curr = allocator.alloc<BrOnCast>();
-  WASM_UNREACHABLE("TODO (gc): br_on_cast");
-  curr->finalize();
-  out = curr;
+  auto name = getBreakTarget(getU32LEB()).name;
+  auto heapType1 = getHeapType();
+  auto heapType2 = getHeapType();
+  auto* ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType1);
+  auto* rtt = popNonVoidExpression();
+  validateHeapTypeUsingChild(rtt, heapType2);
+  out = Builder(wasm).makeBrOnCast(name, heapType2, ref, rtt);
   return true;
 }
 

@@ -161,11 +161,25 @@
   (func $rtt-param-with-depth (param $rtt (rtt 1 $parent)))
   (func $rtt-param-without-depth (param $rtt (rtt $parent)))
   (func $rtt-operations
+    (local $temp.A (ref null $struct.A))
     (drop
       (ref.test $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
     )
     (drop
       (ref.cast $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+    )
+    (drop
+      (block $out (result (ref $struct.B))
+        ;; set the value to a local with type $struct.A, showing that the value
+        ;; flowing out has the right type
+        (local.set $temp.A
+          (br_on_cast $out $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+        )
+        ;; an untaken br_on_cast, with unreachable rtt - so we cannot use the
+        ;; RTT in binaryen IR to find the cast type.
+        (br_on_cast $out $struct.B (ref.null $struct.A) (unreachable))
+        (unreachable)
+      )
     )
   )
 )

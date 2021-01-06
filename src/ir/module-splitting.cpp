@@ -345,6 +345,10 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
       continue;
     }
     Name secondaryFunc = ex->value;
+    if (primary.getFunctionOrNull(secondaryFunc)) {
+      // We've already created a thunk for this function
+      continue;
+    }
     auto tableSlot = tableManager.getSlot(secondaryFunc);
     auto func = std::make_unique<Function>();
 

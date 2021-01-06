@@ -551,7 +551,7 @@ private:
       parent.implicitTrap = true;
     }
     void visitBrOnCast(BrOnCast* curr) {
-      WASM_UNREACHABLE("TODO (gc): br_on_cast");
+      parent.breakTargets.insert(curr->name);
     }
     void visitRttCanon(RttCanon* curr) {}
     void visitRttSub(RttSub* curr) {}

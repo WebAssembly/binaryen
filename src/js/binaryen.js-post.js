@@ -416,8 +416,6 @@ function initializeConstants() {
     'MaxSVecI32x4',
     'MaxUVecI32x4',
     'NegVecI64x2',
-    'AnyTrueVecI64x2',
-    'AllTrueVecI64x2',
     'ShlVecI64x2',
     'ShrSVecI64x2',
     'ShrUVecI64x2',
@@ -1828,12 +1826,6 @@ function wrapModule(module, self = {}) {
     'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI64x2'], value);
     },
-    'any_true'(value) {
-      return Module['_BinaryenUnary'](module, Module['AnyTrueVecI64x2'], value);
-    },
-    'all_true'(value) {
-      return Module['_BinaryenUnary'](module, Module['AllTrueVecI64x2'], value);
-    },
     'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI64x2'], vec, shift);
     },
@@ -2340,18 +2332,27 @@ function wrapModule(module, self = {}) {
       Module['_BinaryenAddCustomSection'](module, strToStack(name), i8sToStack(contents), contents.length)
     );
   };
+  self['getExport'] = function(externalName) {
+    return preserveStack(() => Module['_BinaryenGetExport'](module, strToStack(externalName)));
+  };
   self['getNumExports'] = function() {
     return Module['_BinaryenGetNumExports'](module);
-  }
-  self['getExportByIndex'] = function(id) {
-    return Module['_BinaryenGetExportByIndex'](module, id);
-  }
+  };
+  self['getExportByIndex'] = function(index) {
+    return Module['_BinaryenGetExportByIndex'](module, index);
+  };
   self['getNumFunctions'] = function() {
     return Module['_BinaryenGetNumFunctions'](module);
-  }
-  self['getFunctionByIndex'] = function(id) {
-    return Module['_BinaryenGetFunctionByIndex'](module, id);
-  }
+  };
+  self['getFunctionByIndex'] = function(index) {
+    return Module['_BinaryenGetFunctionByIndex'](module, index);
+  };
+  self['getNumGlobals'] = function() {
+    return Module['_BinaryenGetNumGlobals'](module);
+  };
+  self['getGlobalByIndex'] = function(index) {
+    return Module['_BinaryenGetGlobalByIndex'](module, index);
+  };
   self['emitText'] = function() {
     const old = out;
     let ret = '';

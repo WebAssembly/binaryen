@@ -66,6 +66,11 @@ struct WasmSplitOptions : ToolOptions {
   std::string placeholderNamespace;
   std::string exportPrefix;
 
+  // A hack to ensure the split and instrumented modules have the same table
+  // size when using Emscripten's SPLIT_MODULE mode with dynamic linking. TODO:
+  // Figure out a more elegant solution for that use case and remove this.
+  int initialTableSize = -1;
+
   WasmSplitOptions();
   bool validate();
   void parse(int argc, const char* argv[]);
@@ -178,6 +183,16 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) {
            passOptions.debugInfo = true;
+         })
+    .add("--initial-table",
+         "",
+         "A hack to ensure the split and instrumented modules have the same "
+         "table size when using Emscripten's SPLIT_MODULE mode with dynamic "
+         "linking. TODO: Figure out a more elegant solution for that use "
+         "case and remove this.",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           initialTableSize = std::stoi(argument);
          })
     .add_positional(
       "INFILE",
@@ -453,6 +468,24 @@ uint64_t hashFile(const std::string& filename) {
   return uint64_t(digest);
 }
 
+void adjustTableSize(Module& wasm, int initialSize) {
+  if (initialSize < 0) {
+    return;
+  }
+  if (!wasm.table.exists) {
+    Fatal() << "--initial-table used but there is no table";
+  }
+  if ((uint64_t)initialSize < wasm.table.initial) {
+    Fatal() << "Specified initial table size too small, should be at least "
+            << wasm.table.initial;
+  }
+  if ((uint64_t)initialSize > wasm.table.max) {
+    Fatal() << "Specified initial table size larger than max table size "
+            << wasm.table.max;
+  }
+  wasm.table.initial = initialSize;
+}
+
 void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   // Check that the profile export name is not already taken
   if (wasm.getExportOrNull(options.profileExport) != nullptr) {
@@ -462,6 +495,8 @@ void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   uint64_t moduleHash = hashFile(options.input);
   PassRunner runner(&wasm, options.passOptions);
   Instrumenter(options.profileExport, moduleHash).run(&runner, &wasm);
+
+  adjustTableSize(wasm, options.initialTableSize);
 
   // Write the output modules
   ModuleWriter writer;
@@ -599,6 +634,9 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
   }
   std::unique_ptr<Module> secondary =
     ModuleSplitting::splitFunctions(wasm, config);
+
+  adjustTableSize(wasm, options.initialTableSize);
+  adjustTableSize(*secondary, options.initialTableSize);
 
   // Write the output modules
   ModuleWriter writer;

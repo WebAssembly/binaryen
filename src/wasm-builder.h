@@ -705,9 +705,13 @@ public:
     ret->finalize();
     return ret;
   }
-  BrOnCast* makeBrOnCast() {
+  BrOnCast*
+  makeBrOnCast(Name name, HeapType heapType, Expression* ref, Expression* rtt) {
     auto* ret = wasm.allocator.alloc<BrOnCast>();
-    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    ret->name = name;
+    ret->castType = Type(heapType, Nullable);
+    ret->ref = ref;
+    ret->rtt = rtt;
     ret->finalize();
     return ret;
   }

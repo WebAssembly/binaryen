@@ -189,8 +189,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case AllTrueVecI32x4:
       case BitmaskVecI32x4:
       case NegVecI64x2:
-      case AnyTrueVecI64x2:
-      case AllTrueVecI64x2:
       case BitmaskVecI64x2:
       case AbsVecF32x4:
       case NegVecF32x4:
@@ -206,6 +204,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case FloorVecF64x2:
       case TruncVecF64x2:
       case NearestVecF64x2:
+      case ExtAddPairwiseSVecI8x16ToI16x8:
+      case ExtAddPairwiseUVecI8x16ToI16x8:
+      case ExtAddPairwiseSVecI16x8ToI32x4:
+      case ExtAddPairwiseUVecI16x8ToI32x4:
       case TruncSatSVecF32x4ToVecI32x4:
       case TruncSatUVecF32x4ToVecI32x4:
       case TruncSatSVecF64x2ToVecI64x2:
@@ -576,7 +578,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitRefCast(RefCast* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
   }
-  Index visitBrOnCast(BrOnCast* curr) { WASM_UNREACHABLE("TODO: GC"); }
+  Index visitBrOnCast(BrOnCast* curr) {
+    return 3 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
+  }
   Index visitRttCanon(RttCanon* curr) {
     // TODO: investigate actual RTT costs in VMs
     return 1;

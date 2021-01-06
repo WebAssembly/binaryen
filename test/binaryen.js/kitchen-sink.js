@@ -281,8 +281,6 @@ function test_core() {
     module.i32x4.all_true(module.v128.const(v128_bytes)),
     module.i32x4.bitmask(module.v128.const(v128_bytes)),
     module.i64x2.neg(module.v128.const(v128_bytes)),
-    module.i64x2.any_true(module.v128.const(v128_bytes)),
-    module.i64x2.all_true(module.v128.const(v128_bytes)),
     module.f32x4.abs(module.v128.const(v128_bytes)),
     module.f32x4.neg(module.v128.const(v128_bytes)),
     module.f32x4.sqrt(module.v128.const(v128_bytes)),
@@ -1035,7 +1033,16 @@ function test_for_each() {
   var expected_data = ["hello, world", "segment data 2"];
   var expected_passive = [false, false];
 
-  var global = module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1]))
+  var glos = [
+    module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1])),
+    module.addGlobal("a-global2", binaryen.i32, false, module.i32.const(2)),
+    module.addGlobal("a-global3", binaryen.i32, false, module.i32.const(3))
+  ];
+
+  for (i = 0; i < module.getNumGlobals(); i++) {
+    assert(module.getGlobalByIndex(i) === glos[i]);
+  }
+
   module.setMemory(1, 256, "mem", [
     {
       passive: expected_passive[0],

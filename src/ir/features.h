@@ -57,8 +57,6 @@ inline FeatureSet get(UnaryOp op) {
     case AnyTrueVecI32x4:
     case AllTrueVecI32x4:
     case NegVecI64x2:
-    case AnyTrueVecI64x2:
-    case AllTrueVecI64x2:
     case AbsVecF32x4:
     case NegVecF32x4:
     case SqrtVecF32x4:

@@ -783,6 +783,10 @@ void Unary::finalize() {
     case FloorVecF64x2:
     case TruncVecF64x2:
     case NearestVecF64x2:
+    case ExtAddPairwiseSVecI8x16ToI16x8:
+    case ExtAddPairwiseUVecI8x16ToI16x8:
+    case ExtAddPairwiseSVecI16x8ToI32x4:
+    case ExtAddPairwiseUVecI16x8ToI32x4:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
     case TruncSatSVecF64x2ToVecI64x2:
@@ -808,11 +812,9 @@ void Unary::finalize() {
     case AnyTrueVecI8x16:
     case AnyTrueVecI16x8:
     case AnyTrueVecI32x4:
-    case AnyTrueVecI64x2:
     case AllTrueVecI8x16:
     case AllTrueVecI16x8:
     case AllTrueVecI32x4:
-    case AllTrueVecI64x2:
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
@@ -1023,16 +1025,39 @@ void RefTest::finalize() {
   }
 }
 
+// Helper to get the cast type for a cast instruction. They all look at the rtt
+// operand's type.
+template<typename T> static Type doGetCastType(T* curr) {
+  if (curr->rtt->type == Type::unreachable) {
+    // We don't have the RTT type, so just return unreachable. The type in this
+    // case should not matter in practice, but it may be seen while debugging.
+    return Type::unreachable;
+  }
+  // TODO: make non-nullable when we support that
+  return Type(curr->rtt->type.getHeapType(), Nullable);
+}
+
+Type RefTest::getCastType() { return doGetCastType(this); }
+
 void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    // TODO: make non-nullable when we support that
-    type = Type(rtt->type.getHeapType(), Nullable);
+    type = getCastType();
   }
 }
 
-// TODO (gc): br_on_cast
+Type RefCast::getCastType() { return doGetCastType(this); }
+
+void BrOnCast::finalize() {
+  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = ref->type;
+  }
+}
+
+Type BrOnCast::getCastType() { return castType; }
 
 void RttCanon::finalize() {
   // Nothing to do - the type must have been set already during construction.

@@ -185,8 +185,6 @@
  (func (export "i32x4.max_u") (param $0 v128) (param $1 v128) (result v128) (i32x4.max_u (local.get $0) (local.get $1)))
  (func (export "i32x4.dot_i16x8_s") (param $0 v128) (param $1 v128) (result v128) (i32x4.dot_i16x8_s (local.get $0) (local.get $1)))
  (func (export "i64x2.neg") (param $0 v128) (result v128) (i64x2.neg (local.get $0)))
- (func (export "i64x2.any_true") (param $0 v128) (result i32) (i64x2.any_true (local.get $0)))
- (func (export "i64x2.all_true") (param $0 v128) (result i32) (i64x2.all_true (local.get $0)))
  (func (export "i64x2.bitmask") (param $0 v128) (result i32) (i64x2.bitmask (local.get $0)))
  (func (export "i64x2.shl") (param $0 v128) (param $1 i32) (result v128) (i64x2.shl (local.get $0) (local.get $1)))
  (func (export "i64x2.shr_s") (param $0 v128) (param $1 i32) (result v128) (i64x2.shr_s (local.get $0) (local.get $1)))
@@ -228,6 +226,7 @@
  (func (export "f64x2.floor") (param $0 v128) (result v128) (f64x2.floor (local.get $0)))
  (func (export "f64x2.trunc") (param $0 v128) (result v128) (f64x2.trunc (local.get $0)))
  (func (export "f64x2.nearest") (param $0 v128) (result v128) (f64x2.nearest (local.get $0)))
+ ;; TODO: Extending pairwise adds once they have interpreter support
  (func (export "i32x4.trunc_sat_f32x4_s") (param $0 v128) (result v128) (i32x4.trunc_sat_f32x4_s (local.get $0)))
  (func (export "i32x4.trunc_sat_f32x4_u") (param $0 v128) (result v128) (i32x4.trunc_sat_f32x4_u (local.get $0)))
  (func (export "i64x2.trunc_sat_f64x2_s") (param $0 v128) (result v128) (i64x2.trunc_sat_f64x2_s (local.get $0)))
@@ -867,12 +866,6 @@
 
 ;; i64x2 arithmetic
 (assert_return (invoke "i64x2.neg" (v128.const i64x2 0x8000000000000000 42)) (v128.const i64x2 0x8000000000000000 -42))
-(assert_return (invoke "i64x2.any_true" (v128.const i64x2 0 0)) (i32.const 0))
-(assert_return (invoke "i64x2.any_true" (v128.const i64x2 1 0)) (i32.const 1))
-(assert_return (invoke "i64x2.any_true" (v128.const i64x2 1 1)) (i32.const 1))
-(assert_return (invoke "i64x2.all_true" (v128.const i64x2 0 0)) (i32.const 0))
-(assert_return (invoke "i64x2.all_true" (v128.const i64x2 1 0)) (i32.const 0))
-(assert_return (invoke "i64x2.all_true" (v128.const i64x2 1 1)) (i32.const 1))
 ;; TODO: test i64x2.bitmask
 (assert_return (invoke "i64x2.shl" (v128.const i64x2 1 0x8000000000000000) (i32.const 1)) (v128.const i64x2 2 0))
 (assert_return (invoke "i64x2.shl" (v128.const i64x2 1 0x8000000000000000) (i32.const 64)) (v128.const i64x2 1 0x8000000000000000))

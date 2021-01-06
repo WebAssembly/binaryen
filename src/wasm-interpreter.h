@@ -60,6 +60,7 @@ public:
   Flow(Literals& values) : values(values) {}
   Flow(Literals&& values) : values(std::move(values)) {}
   Flow(Name breakTo) : values(), breakTo(breakTo) {}
+  Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
@@ -487,10 +488,6 @@ public:
         return value.bitmaskI32x4();
       case NegVecI64x2:
         return value.negI64x2();
-      case AnyTrueVecI64x2:
-        return value.anyTrueI64x2();
-      case AllTrueVecI64x2:
-        return value.allTrueI64x2();
       case BitmaskVecI64x2:
         WASM_UNREACHABLE("unimp");
       case AbsVecF32x4:
@@ -521,6 +518,14 @@ public:
         return value.truncF64x2();
       case NearestVecF64x2:
         return value.nearestF64x2();
+      case ExtAddPairwiseSVecI8x16ToI16x8:
+        WASM_UNREACHABLE("unimp");
+      case ExtAddPairwiseUVecI8x16ToI16x8:
+        WASM_UNREACHABLE("unimp");
+      case ExtAddPairwiseSVecI16x8ToI32x4:
+        WASM_UNREACHABLE("unimp");
+      case ExtAddPairwiseUVecI16x8ToI32x4:
+        WASM_UNREACHABLE("unimp");
       case TruncSatSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
@@ -1462,7 +1467,15 @@ public:
   }
   Flow visitBrOnCast(BrOnCast* curr) {
     NOTE_ENTER("BrOnCast");
-    WASM_UNREACHABLE("TODO (gc): br_on_cast");
+    auto cast = doCast(curr);
+    if (cast.outcome == cast.Break) {
+      return cast.breaking;
+    }
+    if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
+      return cast.originalRef;
+    }
+    assert(cast.outcome == cast.Success);
+    return Flow(curr->name, cast.castRef);
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {

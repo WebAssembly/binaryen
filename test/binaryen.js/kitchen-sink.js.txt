@@ -483,16 +483,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (i64x2.any_true
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i64x2.all_true
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
        (f32x4.abs
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -2361,16 +2351,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i64x2.neg
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i64x2.any_true
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i64x2.all_true
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -4432,6 +4412,8 @@ sizeof Literal: 24
  (table $0 1 funcref)
  (elem (i32.const 0) $fn0 $fn1 $fn2)
  (global $a-global i32 (i32.const 125))
+ (global $a-global2 i32 (i32.const 2))
+ (global $a-global3 i32 (i32.const 3))
  (export "export0" (func $fn0))
  (export "export1" (func $fn1))
  (export "export2" (func $fn2))
