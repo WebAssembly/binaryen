@@ -1662,6 +1662,12 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   return ret;
 }
 
+Expression* SExpressionWasmBuilder::makePrefetch(Element& s, PrefetchOp op) {
+  Address offset, align;
+  size_t i = parseMemAttributes(s, offset, align, /*defaultAlign*/ 1);
+  return Builder(wasm).makePrefetch(op, offset, align, parseExpression(s[i]));
+}
+
 Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
   auto ret = allocator.alloc<MemoryInit>();
   ret->segment = atoi(s[1]->str().c_str());

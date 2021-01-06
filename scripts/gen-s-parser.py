@@ -516,6 +516,9 @@ instructions = [
     ("i16x8.extadd_pairwise_i8x16_u", "makeUnary(s, UnaryOp::ExtAddPairwiseUVecI8x16ToI16x8)"),
     ("i32x4.extadd_pairwise_i16x8_s", "makeUnary(s, UnaryOp::ExtAddPairwiseSVecI16x8ToI32x4)"),
     ("i32x4.extadd_pairwise_i16x8_u", "makeUnary(s, UnaryOp::ExtAddPairwiseUVecI16x8ToI32x4)"),
+    # prefetch instructions
+    ("prefetch.t",  "makePrefetch(s, PrefetchOp::PrefetchTemporal)"),
+    ("prefetch.nt", "makePrefetch(s, PrefetchOp::PrefetchNontemporal)"),
     # reference types instructions
     # TODO Add table instructions
     ("ref.null",             "makeRefNull(s)"),

@@ -40,6 +40,7 @@ DELEGATE(SIMDTernary);
 DELEGATE(SIMDShift);
 DELEGATE(SIMDLoad);
 DELEGATE(SIMDLoadStoreLane);
+DELEGATE(Prefetch);
 DELEGATE(MemoryInit);
 DELEGATE(DataDrop);
 DELEGATE(MemoryCopy);

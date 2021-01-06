@@ -2759,9 +2759,25 @@ switch (op[0]) {
   case 'n':
     if (strcmp(op, "nop") == 0) { return makeNop(); }
     goto parse_error;
-  case 'p':
-    if (strcmp(op, "pop") == 0) { return makePop(s); }
-    goto parse_error;
+  case 'p': {
+    switch (op[1]) {
+      case 'o':
+        if (strcmp(op, "pop") == 0) { return makePop(s); }
+        goto parse_error;
+      case 'r': {
+        switch (op[9]) {
+          case 'n':
+            if (strcmp(op, "prefetch.nt") == 0) { return makePrefetch(s, PrefetchOp::PrefetchNontemporal); }
+            goto parse_error;
+          case 't':
+            if (strcmp(op, "prefetch.t") == 0) { return makePrefetch(s, PrefetchOp::PrefetchTemporal); }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
+      default: goto parse_error;
+    }
+  }
   case 'r': {
     switch (op[1]) {
       case 'e': {

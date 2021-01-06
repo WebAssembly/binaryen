@@ -8,6 +8,7 @@
  (type $i32_v128_=>_none (func (param i32 v128)))
  (type $i32_v128_=>_v128 (func (param i32 v128) (result v128)))
  (type $none_=>_v128 (func (result v128)))
+ (type $i32_=>_none (func (param i32)))
  (type $v128_=>_i64 (func (param v128) (result i64)))
  (type $v128_=>_f32 (func (param v128) (result f32)))
  (type $v128_=>_f64 (func (param v128) (result f64)))
@@ -1411,6 +1412,16 @@
   (v8x16.swizzle
    (local.get $0)
    (local.get $1)
+  )
+ )
+ (func $248 (param $0 i32)
+  (prefetch.t offset=3 align=2
+   (local.get $0)
+  )
+ )
+ (func $249 (param $0 i32)
+  (prefetch.nt offset=3 align=2
+   (local.get $0)
   )
  )
 )

@@ -973,6 +973,11 @@ enum ASTNodes {
   I64x2ExtMulLowUI32x4 = 0xd6,
   I64x2ExtMulHighUI32x4 = 0xd7,
 
+  // prefetch opcodes
+
+  PrefetchT = 0xc5,
+  PrefetchNT = 0xc6,
+
   // bulk memory opcodes
 
   MemoryInit = 0x08,
@@ -1481,6 +1486,7 @@ public:
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
+  bool maybeVisitPrefetch(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);

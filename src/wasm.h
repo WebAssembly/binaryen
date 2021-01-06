@@ -530,6 +530,11 @@ enum SIMDTernaryOp {
   SignSelectVec64x2
 };
 
+enum PrefetchOp {
+  PrefetchTemporal,
+  PrefetchNontemporal,
+};
+
 //
 // Expressions
 //
@@ -577,6 +582,7 @@ public:
     MemorySizeId,
     MemoryGrowId,
     NopId,
+    PrefetchId,
     UnreachableId,
     AtomicRMWId,
     AtomicCmpxchgId,
@@ -1034,6 +1040,18 @@ public:
   bool isStore();
   bool isLoad() { return !isStore(); }
   Index getMemBytes();
+  void finalize();
+};
+
+class Prefetch : public SpecificExpression<Expression::PrefetchId> {
+public:
+  Prefetch() = default;
+  Prefetch(MixedArena& allocator) : Prefetch() {}
+
+  PrefetchOp op;
+  Address offset;
+  Address align;
+  Expression* ptr;
   void finalize();
 };
 
