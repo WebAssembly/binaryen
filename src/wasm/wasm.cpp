@@ -783,6 +783,10 @@ void Unary::finalize() {
     case FloorVecF64x2:
     case TruncVecF64x2:
     case NearestVecF64x2:
+    case ExtAddPairwiseSVecI8x16ToI16x8:
+    case ExtAddPairwiseUVecI8x16ToI16x8:
+    case ExtAddPairwiseSVecI16x8ToI32x4:
+    case ExtAddPairwiseUVecI16x8ToI32x4:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
     case TruncSatSVecF64x2ToVecI64x2:
@@ -808,11 +812,9 @@ void Unary::finalize() {
     case AnyTrueVecI8x16:
     case AnyTrueVecI16x8:
     case AnyTrueVecI32x4:
-    case AnyTrueVecI64x2:
     case AllTrueVecI8x16:
     case AllTrueVecI16x8:
     case AllTrueVecI32x4:
-    case AllTrueVecI64x2:
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:

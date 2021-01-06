@@ -2168,9 +2168,7 @@ private:
                                     AnyTrueVecI16x8,
                                     AllTrueVecI16x8,
                                     AnyTrueVecI32x4,
-                                    AllTrueVecI32x4,
-                                    AnyTrueVecI64x2,
-                                    AllTrueVecI64x2),
+                                    AllTrueVecI32x4),
                                make(Type::v128)});
           }
           case Type::funcref:

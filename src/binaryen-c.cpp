@@ -580,8 +580,6 @@ BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void) {
   return DotSVecI16x8ToVecI32x4;
 }
 BinaryenOp BinaryenNegVecI64x2(void) { return NegVecI64x2; }
-BinaryenOp BinaryenAnyTrueVecI64x2(void) { return AnyTrueVecI64x2; }
-BinaryenOp BinaryenAllTrueVecI64x2(void) { return AllTrueVecI64x2; }
 BinaryenOp BinaryenShlVecI64x2(void) { return ShlVecI64x2; }
 BinaryenOp BinaryenShrSVecI64x2(void) { return ShrSVecI64x2; }
 BinaryenOp BinaryenShrUVecI64x2(void) { return ShrUVecI64x2; }

@@ -430,8 +430,6 @@ instructions = [
     ("i32x4.extmul_low_i16x8_u", "makeBinary(s, BinaryOp::ExtMulLowUVecI32x4)"),
     ("i32x4.extmul_high_i16x8_u", "makeBinary(s, BinaryOp::ExtMulHighUVecI32x4)"),
     ("i64x2.neg",            "makeUnary(s, UnaryOp::NegVecI64x2)"),
-    ("i64x2.any_true",       "makeUnary(s, UnaryOp::AnyTrueVecI64x2)"),
-    ("i64x2.all_true",       "makeUnary(s, UnaryOp::AllTrueVecI64x2)"),
     ("i64x2.bitmask",        "makeUnary(s, UnaryOp::BitmaskVecI64x2)"),
     ("i64x2.shl",            "makeSIMDShift(s, SIMDShiftOp::ShlVecI64x2)"),
     ("i64x2.shr_s",          "makeSIMDShift(s, SIMDShiftOp::ShrSVecI64x2)"),
@@ -514,6 +512,10 @@ instructions = [
     ("i64x2.widen_low_i32x4_u",  "makeUnary(s, UnaryOp::WidenLowUVecI32x4ToVecI64x2)"),
     ("i64x2.widen_high_i32x4_u", "makeUnary(s, UnaryOp::WidenHighUVecI32x4ToVecI64x2)"),
     ("v8x16.swizzle",            "makeBinary(s, BinaryOp::SwizzleVec8x16)"),
+    ("i16x8.extadd_pairwise_i8x16_s", "makeUnary(s, UnaryOp::ExtAddPairwiseSVecI8x16ToI16x8)"),
+    ("i16x8.extadd_pairwise_i8x16_u", "makeUnary(s, UnaryOp::ExtAddPairwiseUVecI8x16ToI16x8)"),
+    ("i32x4.extadd_pairwise_i16x8_s", "makeUnary(s, UnaryOp::ExtAddPairwiseSVecI16x8ToI32x4)"),
+    ("i32x4.extadd_pairwise_i16x8_u", "makeUnary(s, UnaryOp::ExtAddPairwiseUVecI16x8ToI32x4)"),
     # reference types instructions
     # TODO Add table instructions
     ("ref.null",             "makeRefNull(s)"),

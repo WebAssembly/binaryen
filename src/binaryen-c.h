@@ -486,8 +486,6 @@ BINARYEN_API BinaryenOp BinaryenMaxSVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI64x2(void);
-BINARYEN_API BinaryenOp BinaryenAnyTrueVecI64x2(void);
-BINARYEN_API BinaryenOp BinaryenAllTrueVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenShlVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenShrSVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI64x2(void);
@@ -528,6 +526,7 @@ BINARYEN_API BinaryenOp BinaryenCeilVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenFloorVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenTruncVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenNearestVecF64x2(void);
+// TODO: Add extending pairwise adds to C and JS APIs once merged
 BINARYEN_API BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatSVecF64x2ToVecI64x2(void);

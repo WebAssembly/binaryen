@@ -1868,12 +1868,6 @@ Literal Literal::allTrueI32x4() const {
 Literal Literal::bitmaskI32x4() const {
   return bitmask<4, &Literal::getLanesI32x4>(*this);
 }
-Literal Literal::anyTrueI64x2() const {
-  return any_true<2, &Literal::getLanesI64x2>(*this);
-}
-Literal Literal::allTrueI64x2() const {
-  return all_true<2, &Literal::getLanesI64x2>(*this);
-}
 
 template<int Lanes,
          LaneArray<Lanes> (Literal::*IntoLanes)() const,

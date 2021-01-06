@@ -927,16 +927,6 @@
    (local.get $0)
   )
  )
- (func $i64x2.any_true (param $0 v128) (result i32)
-  (i64x2.any_true
-   (local.get $0)
-  )
- )
- (func $i64x2.all_true (param $0 v128) (result i32)
-  (i64x2.all_true
-   (local.get $0)
-  )
- )
  (func $i64x2.bitmask (param $0 v128) (result i32)
   (i64x2.bitmask
    (local.get $0)
@@ -1194,6 +1184,26 @@
    (local.get $0)
    (local.get $1)
    (local.get $2)
+  )
+ )
+ (func $i16x8.extadd_pairwise_i8x16_s (param $0 v128) (result v128)
+  (i16x8.extadd_pairwise_i8x16_s
+   (local.get $0)
+  )
+ )
+ (func $i16x8.extadd_pairwise_i8x16_u (param $0 v128) (result v128)
+  (i16x8.extadd_pairwise_i8x16_u
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extadd_pairwise_i16x8_s (param $0 v128) (result v128)
+  (i32x4.extadd_pairwise_i16x8_s
+   (local.get $0)
+  )
+ )
+ (func $i32x4.extadd_pairwise_i16x8_u (param $0 v128) (result v128)
+  (i32x4.extadd_pairwise_i16x8_u
+   (local.get $0)
   )
  )
  (func $i32x4.trunc_sat_f32x4_s (param $0 v128) (result v128)

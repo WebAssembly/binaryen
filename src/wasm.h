@@ -174,8 +174,6 @@ enum UnaryOp {
   AllTrueVecI32x4,
   BitmaskVecI32x4,
   NegVecI64x2,
-  AnyTrueVecI64x2,
-  AllTrueVecI64x2,
   BitmaskVecI64x2,
   AbsVecF32x4,
   NegVecF32x4,
@@ -191,6 +189,10 @@ enum UnaryOp {
   FloorVecF64x2,
   TruncVecF64x2,
   NearestVecF64x2,
+  ExtAddPairwiseSVecI8x16ToI16x8,
+  ExtAddPairwiseUVecI8x16ToI16x8,
+  ExtAddPairwiseSVecI16x8ToI32x4,
+  ExtAddPairwiseUVecI16x8ToI32x4,
 
   // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,

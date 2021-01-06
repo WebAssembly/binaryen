@@ -435,8 +435,6 @@ void test_core() {
     makeUnary(module, BinaryenAllTrueVecI32x4(), v128),
     makeUnary(module, BinaryenBitmaskVecI32x4(), v128),
     makeUnary(module, BinaryenNegVecI64x2(), v128),
-    makeUnary(module, BinaryenAnyTrueVecI64x2(), v128),
-    makeUnary(module, BinaryenAllTrueVecI64x2(), v128),
     makeUnary(module, BinaryenAbsVecF32x4(), v128),
     makeUnary(module, BinaryenNegVecF32x4(), v128),
     makeUnary(module, BinaryenSqrtVecF32x4(), v128),

@@ -957,12 +957,6 @@ struct PrintExpressionContents
       case NegVecI64x2:
         o << "i64x2.neg";
         break;
-      case AnyTrueVecI64x2:
-        o << "i64x2.any_true";
-        break;
-      case AllTrueVecI64x2:
-        o << "i64x2.all_true";
-        break;
       case BitmaskVecI64x2:
         o << "i64x2.bitmask";
         break;
@@ -1007,6 +1001,18 @@ struct PrintExpressionContents
         break;
       case NearestVecF64x2:
         o << "f64x2.nearest";
+        break;
+      case ExtAddPairwiseSVecI8x16ToI16x8:
+        o << "i16x8.extadd_pairwise_i8x16_s";
+        break;
+      case ExtAddPairwiseUVecI8x16ToI16x8:
+        o << "i16x8.extadd_pairwise_i8x16_u";
+        break;
+      case ExtAddPairwiseSVecI16x8ToI32x4:
+        o << "i32x4.extadd_pairwise_i16x8_s";
+        break;
+      case ExtAddPairwiseUVecI16x8ToI32x4:
+        o << "i32x4.extadd_pairwise_i16x8_u";
         break;
       case TruncSatSVecF32x4ToVecI32x4:
         o << "i32x4.trunc_sat_f32x4_s";

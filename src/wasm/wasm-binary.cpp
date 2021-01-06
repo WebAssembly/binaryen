@@ -4836,14 +4836,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = NegVecI64x2;
       break;
-    case BinaryConsts::I64x2AnyTrue:
-      curr = allocator.alloc<Unary>();
-      curr->op = AnyTrueVecI64x2;
-      break;
-    case BinaryConsts::I64x2AllTrue:
-      curr = allocator.alloc<Unary>();
-      curr->op = AllTrueVecI64x2;
-      break;
     case BinaryConsts::I64x2Bitmask:
       curr = allocator.alloc<Unary>();
       curr->op = BitmaskVecI64x2;
@@ -4903,6 +4895,22 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::F64x2Nearest:
       curr = allocator.alloc<Unary>();
       curr->op = NearestVecF64x2;
+      break;
+    case BinaryConsts::I16x8ExtAddPairWiseSI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = ExtAddPairwiseSVecI8x16ToI16x8;
+      break;
+    case BinaryConsts::I16x8ExtAddPairWiseUI8x16:
+      curr = allocator.alloc<Unary>();
+      curr->op = ExtAddPairwiseUVecI8x16ToI16x8;
+      break;
+    case BinaryConsts::I32x4ExtAddPairWiseSI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = ExtAddPairwiseSVecI16x8ToI32x4;
+      break;
+    case BinaryConsts::I32x4ExtAddPairWiseUI16x8:
+      curr = allocator.alloc<Unary>();
+      curr->op = ExtAddPairwiseUVecI16x8ToI32x4;
       break;
     case BinaryConsts::I32x4TruncSatSF32x4:
       curr = allocator.alloc<Unary>();
