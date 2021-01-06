@@ -148,5 +148,10 @@
    )
   )
  )
+ (func $test-variants
+  (local $local_i31refnull (ref null i31))
+  (local $local_i31refnonnull (ref null i31))
+  (nop)
+ )
 )
 

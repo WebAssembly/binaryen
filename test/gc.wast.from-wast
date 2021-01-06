@@ -1,5 +1,4 @@
 (module
- (type i31 i31)
  (type $none_=>_none (func))
  (global $global_anyref (mut anyref) (ref.null any))
  (global $global_eqref (mut eqref) (ref.null eq))
