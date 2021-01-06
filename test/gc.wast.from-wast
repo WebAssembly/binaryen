@@ -1,4 +1,5 @@
 (module
+ (type i31 i31)
  (type $none_=>_none (func))
  (global $global_anyref (mut anyref) (ref.null any))
  (global $global_eqref (mut eqref) (ref.null eq))
@@ -147,5 +148,10 @@
     (local.get $local_i31ref)
    )
   )
+ )
+ (func $test-variants
+  (local $local_i31refnull (ref null i31))
+  (local $local_i31refnonnull (ref null i31))
+  (nop)
  )
 )

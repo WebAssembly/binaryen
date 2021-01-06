@@ -493,6 +493,20 @@ FeatureSet Type::getFeatures() const {
       if (heapType.isStruct() || heapType.isArray()) {
         return FeatureSet::ReferenceTypes | FeatureSet::GC;
       }
+      if (heapType.isBasic()) {
+        switch (heapType.getBasic()) {
+          case HeapType::BasicHeapType::func:
+          case HeapType::BasicHeapType::ext:
+          case HeapType::BasicHeapType::exn:
+          case HeapType::BasicHeapType::any:
+          case HeapType::BasicHeapType::eq: 
+            return FeatureSet::ReferenceTypes;
+          case HeapType::BasicHeapType::i31: 
+            return FeatureSet::ReferenceTypes | FeatureSet::GC;
+          default:
+            WASM_UNREACHABLE("unknown basic type");
+        }
+      }
     } else if (t.isRtt()) {
       return FeatureSet::ReferenceTypes | FeatureSet::GC;
     }

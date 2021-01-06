@@ -22,6 +22,7 @@
 
 #include "ir/branch-utils.h"
 #include "shared-constants.h"
+#include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 
@@ -2799,7 +2800,7 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
       // It may be a numerical index, or it may be a built-in type name like
       // "i31".
       auto* str = s.str().c_str();
-      if (isNumber(str)) {
+      if (String::isNumber(str)) {
         size_t offset = atoi(str);
         if (offset >= types.size()) {
           throw ParseException("unknown indexed function type", s.line, s.col);
