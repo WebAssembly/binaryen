@@ -371,6 +371,15 @@ switch (DELEGATE_ID) {
     DELEGATE_END(SIMDLoadStoreLane);
     break;
   }
+  case Expression::Id::PrefetchId: {
+    DELEGATE_START(Prefetch);
+    DELEGATE_FIELD_CHILD(Prefetch, ptr);
+    DELEGATE_FIELD_INT(Prefetch, op);
+    DELEGATE_FIELD_ADDRESS(Prefetch, offset);
+    DELEGATE_FIELD_ADDRESS(Prefetch, align);
+    DELEGATE_END(Prefetch);
+    break;
+  }
   case Expression::Id::MemoryInitId: {
     DELEGATE_START(MemoryInit);
     DELEGATE_FIELD_CHILD(MemoryInit, size);

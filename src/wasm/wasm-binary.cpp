@@ -2967,6 +2967,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDLoadStoreLane(curr, opcode)) {
         break;
       }
+      if (maybeVisitPrefetch(curr, opcode)) {
+        break;
+      }
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
       break;
     }
@@ -5366,6 +5369,27 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
   readMemoryAccess(curr->align, curr->offset);
   curr->index = getLaneIndex(lanes);
   curr->vec = popNonVoidExpression();
+  curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitPrefetch(Expression*& out, uint32_t code) {
+  PrefetchOp op;
+  switch (code) {
+    case BinaryConsts::PrefetchT:
+      op = PrefetchTemporal;
+      break;
+    case BinaryConsts::PrefetchNT:
+      op = PrefetchNontemporal;
+      break;
+    default:
+      return false;
+  }
+  auto* curr = allocator.alloc<Prefetch>();
+  curr->op = op;
+  readMemoryAccess(curr->align, curr->offset);
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;

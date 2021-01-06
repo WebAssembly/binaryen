@@ -683,6 +683,24 @@ struct PrintExpressionContents
     }
     o << " " << int(curr->index);
   }
+  void visitPrefetch(Prefetch* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case PrefetchTemporal:
+        o << "prefetch.t";
+        break;
+      case PrefetchNontemporal:
+        o << "prefetch.nt";
+        break;
+    }
+    restoreNormalColor(o);
+    if (curr->offset) {
+      o << " offset=" << curr->offset;
+    }
+    if (curr->align != 1) {
+      o << " align=" << curr->align;
+    }
+  }
   void visitMemoryInit(MemoryInit* curr) {
     prepareColor(o);
     o << "memory.init " << curr->segment;
@@ -2210,6 +2228,13 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     incIndent();
     printFullLine(curr->ptr);
     printFullLine(curr->vec);
+    decIndent();
+  }
+  void visitPrefetch(Prefetch* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->ptr);
     decIndent();
   }
   void visitMemoryInit(MemoryInit* curr) {
