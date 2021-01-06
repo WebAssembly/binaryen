@@ -310,8 +310,9 @@ public:
   HeapType(Struct&& struct_);
   HeapType(Array array);
 
-  constexpr bool isBasic() const;
-  constexpr bool isCompound() const;
+  bool isBasic() const;
+  bool isCompound() const;
+
   bool isFunction() const;
   bool isSignature() const;
   bool isStruct() const;
@@ -322,7 +323,7 @@ public:
   Array getArray() const;
 
   constexpr TypeID getID() const { return id; }
-  constexpr BasicHeapType getBasic() const {
+  BasicHeapType getBasic() const {
     assert(isBasic() && "Basic heap type expected");
     return static_cast<BasicHeapType>(id);
   }
