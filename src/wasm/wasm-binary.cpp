@@ -1416,7 +1416,8 @@ Type WasmBinaryBuilder::getType(int initial) {
       // FIXME: for now, force all inputs to be nullable
       return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::i31ref:
-      return Type::i31ref;
+      // FIXME: for now, force all inputs to be nullable
+      return Type(HeapType::BasicHeapType::i31, Nullable);
     case BinaryConsts::EncodedType::rtt_n: {
       auto depth = getU32LEB();
       auto heapType = getHeapType();
