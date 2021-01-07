@@ -568,15 +568,15 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefTestId: {
     DELEGATE_START(RefTest);
-    DELEGATE_FIELD_CHILD(RefTest, ref);
     DELEGATE_FIELD_CHILD(RefTest, rtt);
+    DELEGATE_FIELD_CHILD(RefTest, ref);
     DELEGATE_END(RefTest);
     break;
   }
   case Expression::Id::RefCastId: {
     DELEGATE_START(RefCast);
-    DELEGATE_FIELD_CHILD(RefCast, ref);
     DELEGATE_FIELD_CHILD(RefCast, rtt);
+    DELEGATE_FIELD_CHILD(RefCast, ref);
     DELEGATE_END(RefCast);
     break;
   }
@@ -584,8 +584,8 @@ switch (DELEGATE_ID) {
     DELEGATE_START(BrOnCast);
     DELEGATE_FIELD_SCOPE_NAME_USE(BrOnCast, name);
     DELEGATE_FIELD_TYPE(BrOnCast, castType);
-    DELEGATE_FIELD_CHILD(BrOnCast, ref);
     DELEGATE_FIELD_CHILD(BrOnCast, rtt);
+    DELEGATE_FIELD_CHILD(BrOnCast, ref);
     DELEGATE_END(BrOnCast);
     break;
   }
@@ -618,8 +618,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::StructSetId: {
     DELEGATE_START(StructSet);
     DELEGATE_FIELD_INT(StructSet, index);
-    DELEGATE_FIELD_CHILD(StructSet, ref);
     DELEGATE_FIELD_CHILD(StructSet, value);
+    DELEGATE_FIELD_CHILD(StructSet, ref);
     DELEGATE_END(StructSet);
     break;
   }
@@ -633,17 +633,17 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::ArrayGetId: {
     DELEGATE_START(ArrayGet);
-    DELEGATE_FIELD_CHILD(ArrayGet, ref);
     DELEGATE_FIELD_CHILD(ArrayGet, index);
+    DELEGATE_FIELD_CHILD(ArrayGet, ref);
     DELEGATE_FIELD_INT(ArrayGet, signed_);
     DELEGATE_END(ArrayGet);
     break;
   }
   case Expression::Id::ArraySetId: {
     DELEGATE_START(ArraySet);
-    DELEGATE_FIELD_CHILD(ArrayGet, ref);
-    DELEGATE_FIELD_CHILD(ArrayGet, index);
     DELEGATE_FIELD_CHILD(ArrayGet, value);
+    DELEGATE_FIELD_CHILD(ArrayGet, index);
+    DELEGATE_FIELD_CHILD(ArrayGet, ref);
     DELEGATE_END(ArraySet);
     break;
   }

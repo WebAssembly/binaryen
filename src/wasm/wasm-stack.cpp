@@ -1963,8 +1963,7 @@ void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
-  // FIXME: the binary format may also have an extra heap type and index that
-  //        are not needed
+  parent.writeHeapType(curr->parent->type.getRtt().heapType);
   parent.writeHeapType(curr->type.getRtt().heapType);
 }
 
