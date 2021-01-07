@@ -497,10 +497,11 @@ FeatureSet Type::getFeatures() const {
         switch (heapType.getBasic()) {
           case HeapType::BasicHeapType::func:
           case HeapType::BasicHeapType::ext:
+            return FeatureSet::ReferenceTypes;
           case HeapType::BasicHeapType::exn:
+            return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
           case HeapType::BasicHeapType::any:
           case HeapType::BasicHeapType::eq:
-            return FeatureSet::ReferenceTypes;
           case HeapType::BasicHeapType::i31:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
           default:
