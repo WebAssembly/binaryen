@@ -594,22 +594,25 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isRef() && right.isRef()) {
+    auto leftHeap = left.getHeapType();
+    auto rightHeap = right.getHeapType();
+
     // Everything is a subtype of anyref.
-    if (right == Type::anyref) {
+    if (rightHeap == HeapType::any) {
       return true;
     }
     // Various things are subtypes of eqref.
-    if ((left == Type::i31ref || left.getHeapType().isArray() ||
-         left.getHeapType().isStruct()) &&
-        right == Type::eqref) {
+    if ((leftHeap == HeapType::i31 || leftHeap.isArray() ||
+         leftHeap.isStruct()) &&
+        rightHeap == HeapType::eq) {
       return true;
     }
     // All typed function signatures are subtypes of funcref.
-    if (left.getHeapType().isSignature() && right == Type::funcref) {
+    if (leftHeap.isSignature() && rightHeap == HeapType::func) {
       return true;
     }
     // A non-nullable type is a supertype of a nullable one
-    if (left.getHeapType() == right.getHeapType() && !left.isNullable()) {
+    if (leftHeap == rightHeap && !left.isNullable()) {
       // The only difference is the nullability.
       assert(right.isNullable());
       return true;
