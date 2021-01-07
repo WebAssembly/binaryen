@@ -601,7 +601,7 @@ bool Type::isSubType(Type left, Type right) {
     auto rightHeap = right.getHeapType();
     if ((leftHeap == HeapType::i31 || leftHeap.isArray() ||
          leftHeap.isStruct()) &&
-        rightHeap == Type::eq && (!left.isNullable() || right.isNullable())) {
+        rightHeap == HeapType::eq && (!left.isNullable() || right.isNullable())) {
       return true;
     }
     // All typed function signatures are subtypes of funcref.
