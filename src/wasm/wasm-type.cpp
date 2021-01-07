@@ -481,33 +481,29 @@ Type Type::reinterpret() const {
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
     if (t.isRef()) {
-      if (t != Type::funcref && t.isFunction()) {
-        // Strictly speaking, typed function references require the typed
-        // function references feature, however, we use these types internally
-        // regardless of the presence of features (in particular, since during
-        // load of the wasm we don't know the features yet, so we apply the more
-        // refined types).
-        return FeatureSet::ReferenceTypes;
-      }
+      // A reference type implies we need that feature. Some also require more,
+      // such as GC or exceptions.
       auto heapType = t.getHeapType();
       if (heapType.isStruct() || heapType.isArray()) {
         return FeatureSet::ReferenceTypes | FeatureSet::GC;
       }
       if (heapType.isBasic()) {
         switch (heapType.getBasic()) {
-          case HeapType::BasicHeapType::func:
-          case HeapType::BasicHeapType::ext:
-            return FeatureSet::ReferenceTypes;
           case HeapType::BasicHeapType::exn:
             return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
           case HeapType::BasicHeapType::any:
           case HeapType::BasicHeapType::eq:
           case HeapType::BasicHeapType::i31:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
-          default:
-            WASM_UNREACHABLE("unknown basic type");
+          default: {}
         }
       }
+      // Note: Technically typed function references also require the typed
+      // function references feature, however, we use these types internally
+      // regardless of the presence of features (in particular, since during
+      // load of the wasm we don't know the features yet, so we apply the more
+      // refined types), so we don't add that in any case here.
+      return FeatureSet::ReferenceTypes;
     } else if (t.isRtt()) {
       return FeatureSet::ReferenceTypes | FeatureSet::GC;
     }
