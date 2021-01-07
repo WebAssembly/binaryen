@@ -495,7 +495,8 @@ FeatureSet Type::getFeatures() const {
           case HeapType::BasicHeapType::eq:
           case HeapType::BasicHeapType::i31:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
-          default: {}
+          default: {
+          }
         }
       }
       // Note: Technically typed function references also require the typed
