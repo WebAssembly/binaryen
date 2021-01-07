@@ -79,10 +79,13 @@ static void
 printHeapTypeName(std::ostream& os, HeapType type, bool first = true);
 
 static void printTypeName(std::ostream& os, Type type) {
-  if (type.isBasic()) {
+  // If this is simple enough that it is not defined in the type section, just
+  // print it out.
+  if (type.isBasic() || (type.isRef() && type.getHeapType().isBasic())) {
     os << type;
     return;
   }
+  // This will be defined in the type section, emit the proper name.
   if (type.isRtt()) {
     auto rtt = type.getRtt();
     os << "rtt_";
