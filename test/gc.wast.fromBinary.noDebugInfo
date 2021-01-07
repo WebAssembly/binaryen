@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (global $global$0 (mut anyref) (ref.null any))
  (global $global$1 (mut eqref) (ref.null eq))
- (global $global$2 (mut i31ref) (i31.new
+ (global $global$2 (mut (ref null i31)) (i31.new
   (i32.const 0)
  ))
  (global $global$3 (mut anyref) (ref.null eq))
@@ -16,7 +16,7 @@
   (local $0 i32)
   (local $1 anyref)
   (local $2 eqref)
-  (local $3 i31ref)
+  (local $3 (ref null i31))
   (local.set $1
    (local.get $1)
   )
@@ -147,6 +147,11 @@
     (local.get $3)
    )
   )
+ )
+ (func $1
+  (local $0 (ref null i31))
+  (local $1 (ref null i31))
+  (nop)
  )
 )
 

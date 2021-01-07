@@ -22,6 +22,7 @@
 
 #include "ir/branch-utils.h"
 #include "shared-constants.h"
+#include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 
@@ -867,7 +868,8 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     return Type::eqref;
   }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type::i31ref;
+    // FIXME: for now, force all inputs to be nullable
+    return Type(HeapType::BasicHeapType::i31, Nullable);
   }
   if (allowError) {
     return Type::none;
@@ -2802,12 +2804,17 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
       }
       return types[it->second];
     } else {
-      // index
-      size_t offset = atoi(s.str().c_str());
-      if (offset >= types.size()) {
-        throw ParseException("unknown indexed function type", s.line, s.col);
+      // It may be a numerical index, or it may be a built-in type name like
+      // "i31".
+      auto* str = s.str().c_str();
+      if (String::isNumber(str)) {
+        size_t offset = atoi(str);
+        if (offset >= types.size()) {
+          throw ParseException("unknown indexed function type", s.line, s.col);
+        }
+        return types[offset];
       }
-      return types[offset];
+      return stringToHeapType(str, /* prefix = */ false);
     }
   }
   // It's a list.

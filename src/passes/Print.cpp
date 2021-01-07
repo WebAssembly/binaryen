@@ -67,17 +67,10 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
-// Wrapper for printing a type when we try to print the type name as much as
-// possible. For example, for a signature we will print the signature's name,
-// not its contents.
-struct TypeName {
-  Type type;
-  TypeName(Type type) : type(type) {}
-};
-
 static void
 printHeapTypeName(std::ostream& os, HeapType type, bool first = true);
 
+// Prints the name of a type. This output is guaranteed to not contain spaces.
 static void printTypeName(std::ostream& os, Type type) {
   if (type.isBasic()) {
     os << type;
@@ -131,6 +124,8 @@ static void printFieldName(std::ostream& os, const Field& field) {
   }
 }
 
+// Prints the name of a heap type. As with printTypeName, this output is
+// guaranteed to not contain spaces.
 static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
   if (type.isBasic()) {
     os << type;
@@ -174,8 +169,8 @@ struct SExprType {
   SExprType(Type type) : type(type){};
 };
 
-static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
-  Type type = localType.type;
+static std::ostream& operator<<(std::ostream& o, const SExprType& sType) {
+  Type type = sType.type;
   if (type.isTuple()) {
     o << '(';
     auto sep = "";
@@ -192,24 +187,17 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
     }
     printHeapTypeName(o, rtt.heapType);
     o << ')';
+  } else if (type.isRef() && !type.isBasic()) {
+    o << "(ref ";
+    if (type.isNullable()) {
+      o << "null ";
+    }
+    printHeapTypeName(o, type.getHeapType());
+    o << ')';
   } else {
-    printTypeName(o, localType.type);
+    printTypeName(o, sType.type);
   }
   return o;
-}
-
-std::ostream& operator<<(std::ostream& os, TypeName typeName) {
-  auto type = typeName.type;
-  if (type.isRef() && !type.isBasic()) {
-    os << "(ref ";
-    if (type.isNullable()) {
-      os << "null ";
-    }
-    printHeapTypeName(os, type.getHeapType());
-    os << ')';
-    return os;
-  }
-  return os << SExprType(typeName.type);
 }
 
 // TODO: try to simplify or even remove this, as we may be able to do the same
@@ -229,10 +217,10 @@ std::ostream& operator<<(std::ostream& os, ResultTypeName typeName) {
     for (auto t : type) {
       os << sep;
       sep = " ";
-      os << TypeName(t);
+      os << SExprType(t);
     }
   } else {
-    os << TypeName(type);
+    os << SExprType(type);
   }
   os << ')';
   return os;
@@ -2571,7 +2559,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << "(param ";
       auto sep = "";
       for (auto type : curr.params) {
-        o << sep << TypeName(type);
+        o << sep << SExprType(type);
         sep = " ";
       }
       o << ')';
@@ -2581,7 +2569,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << "(result ";
       auto sep = "";
       for (auto type : curr.results) {
-        o << sep << TypeName(type);
+        o << sep << SExprType(type);
         sep = " ";
       }
       o << ')';
@@ -2601,7 +2589,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         WASM_UNREACHABLE("invalid packed type");
       }
     } else {
-      o << TypeName(field.type);
+      o << SExprType(field.type);
     }
     if (field.mutable_) {
       o << ')';
@@ -2736,7 +2724,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << '(';
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
-        o << ' ' << TypeName(param) << ')';
+        o << ' ' << SExprType(param) << ')';
         ++i;
       }
     }
@@ -2750,7 +2738,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o)
-        << ' ' << TypeName(curr->getLocalType(i)) << ')';
+        << ' ' << SExprType(curr->getLocalType(i)) << ')';
       o << maybeNewLine;
     }
     // Print the body.

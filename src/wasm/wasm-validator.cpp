@@ -2191,9 +2191,11 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "i31.get_s/u requires gc to be enabled");
+  // FIXME: use i31ref here, which is non-nullable, when we support non-
+  // nullability.
   shouldBeSubTypeOrFirstIsUnreachable(
     curr->i31->type,
-    Type::i31ref,
+    Type(HeapType::i31, Nullable),
     curr->i31,
     "i31.get_s/u's argument should be i31ref");
 }
