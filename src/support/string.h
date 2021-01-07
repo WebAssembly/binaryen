@@ -116,15 +116,7 @@ inline std::string trim(const std::string& input) {
 }
 
 inline bool isNumber(const std::string& str) {
-  if (str.empty()) {
-    return false;
-  }
-  for (auto c : str) {
-    if (!std::isdigit(c)) {
-      return false;
-    }
-  }
-  return true;
+  return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
 } // namespace String
