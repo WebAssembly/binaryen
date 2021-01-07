@@ -78,14 +78,12 @@ struct TypeName {
 static void
 printHeapTypeName(std::ostream& os, HeapType type, bool first = true);
 
+// Prints the name of a type. This output is guaranteed to not contain spaces.
 static void printTypeName(std::ostream& os, Type type) {
-  // If this is simple enough that it is not defined in the type section, just
-  // print it out.
-  if (type.isBasic() || (type.isRef() && type.getHeapType().isBasic())) {
+  if (type.isBasic()) {
     os << type;
     return;
   }
-  // This will be defined in the type section, emit the proper name.
   if (type.isRtt()) {
     auto rtt = type.getRtt();
     os << "rtt_";
@@ -134,6 +132,8 @@ static void printFieldName(std::ostream& os, const Field& field) {
   }
 }
 
+// Prints the name of a heap type. As with printTypeName, this output is
+// guaranteed to not contain spaces.
 static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
   if (type.isBasic()) {
     os << type;
@@ -177,8 +177,8 @@ struct SExprType {
   SExprType(Type type) : type(type){};
 };
 
-static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
-  Type type = localType.type;
+static std::ostream& operator<<(std::ostream& o, const SExprType& sType) {
+  Type type = sType.type;
   if (type.isTuple()) {
     o << '(';
     auto sep = "";
@@ -195,23 +195,20 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& localType) {
     }
     printHeapTypeName(o, rtt.heapType);
     o << ')';
+  } else if (type.isRef() && !type.isBasic()) {
+    o << "(ref ";
+    if (type.isNullable()) {
+      o << "null ";
+    }
+    printHeapTypeName(o, type.getHeapType());
+    o << ')';
   } else {
-    printTypeName(o, localType.type);
+    printTypeName(o, sType.type);
   }
   return o;
 }
 
 std::ostream& operator<<(std::ostream& os, TypeName typeName) {
-  auto type = typeName.type;
-  if (type.isRef() && !type.isBasic()) {
-    os << "(ref ";
-    if (type.isNullable()) {
-      os << "null ";
-    }
-    printHeapTypeName(os, type.getHeapType());
-    os << ')';
-    return os;
-  }
   return os << SExprType(typeName.type);
 }
 
