@@ -514,15 +514,6 @@ FeatureSet Type::getFeatures() const {
     switch (t.getBasic()) {
       case Type::v128:
         return FeatureSet::SIMD;
-      case Type::funcref:
-      case Type::externref:
-        return FeatureSet::ReferenceTypes;
-      case Type::exnref:
-        return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-        return FeatureSet::ReferenceTypes | FeatureSet::GC;
       default:
         return FeatureSet::MVP;
     }
