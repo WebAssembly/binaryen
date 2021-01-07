@@ -605,7 +605,8 @@ bool Type::isSubType(Type left, Type right) {
       return true;
     }
     // All typed function signatures are subtypes of funcref.
-    if (left.getHeapType().isSignature() && right == Type::funcref) {
+    if (leftHeap.isSignature() && rightHeap == HeapType::func &&
+        (!left.isNullable() || right.isNullable())) {
       return true;
     }
     // A non-nullable type is a supertype of a nullable one
