@@ -1,5 +1,5 @@
 (module
- (type $struct (struct i32))
+ (type $struct (struct (mut i32)))
  (type $extendedstruct (struct i32 f64))
  (type $bytes (array (mut i8)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
