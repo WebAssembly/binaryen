@@ -1416,7 +1416,8 @@ Type WasmBinaryBuilder::getType(int initial) {
       // FIXME: for now, force all inputs to be nullable
       return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::i31ref:
-      return Type::i31ref;
+      // FIXME: for now, force all inputs to be nullable
+      return Type(HeapType::BasicHeapType::i31, Nullable);
     case BinaryConsts::EncodedType::rtt_n: {
       auto depth = getU32LEB();
       auto heapType = getHeapType();
@@ -2965,6 +2966,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitSIMDLoadStoreLane(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitPrefetch(curr, opcode)) {
         break;
       }
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
@@ -5369,6 +5373,24 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitPrefetch(Expression*& out, uint32_t code) {
+  PrefetchOp op;
+  switch (code) {
+    case BinaryConsts::PrefetchT:
+      op = PrefetchTemporal;
+      break;
+    case BinaryConsts::PrefetchNT:
+      op = PrefetchNontemporal;
+      break;
+    default:
+      return false;
+  }
+  Address align, offset;
+  readMemoryAccess(align, offset);
+  out = Builder(wasm).makePrefetch(op, offset, align, popNonVoidExpression());
   return true;
 }
 

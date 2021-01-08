@@ -84,9 +84,9 @@
         (i32.const 1)
       )
     )
-    (struct.set $struct.A 0
-      (local.get $x)
-      (i32.const 100)
+    (struct.set $struct.C 0
+      (ref.null $struct.C)
+      (f32.const 100)
     )
     (drop
       (struct.new_default_with_rtt $struct.A

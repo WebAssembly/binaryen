@@ -68,4 +68,9 @@
     (local.set $local_i32 (i31.get_s (local.get $local_i31ref)))
     (local.set $local_i32 (i31.get_u (local.get $local_i31ref)))
   )
+
+  (func $test-variants
+    (local $local_i31refnull (ref null i31))
+    (local $local_i31refnonnull (ref i31))
+  )
 )

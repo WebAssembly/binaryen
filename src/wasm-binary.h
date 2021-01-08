@@ -373,7 +373,7 @@ enum EncodedHeapType {
   extern_ = -0x11, // 0x6f
   any = -0x12,     // 0x6e
   eq = -0x13,      // 0x6d
-  i31 = -0x17,     // 0x69, != i31ref
+  i31 = -0x16,     // 0x6a
   exn = -0x18,     // 0x68
 };
 
@@ -973,6 +973,11 @@ enum ASTNodes {
   I64x2ExtMulLowUI32x4 = 0xd6,
   I64x2ExtMulHighUI32x4 = 0xd7,
 
+  // prefetch opcodes
+
+  PrefetchT = 0xc5,
+  PrefetchNT = 0xc6,
+
   // bulk memory opcodes
 
   MemoryInit = 0x08,
@@ -1481,6 +1486,7 @@ public:
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
+  bool maybeVisitPrefetch(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);

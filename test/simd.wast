@@ -1396,4 +1396,14 @@
    (local.get $1)
   )
  )
+ (func $prefetch.t (param $0 i32)
+  (prefetch.t offset=3 align=2
+   (local.get $0)
+  )
+ )
+ (func $prefetch.nt (param $0 i32)
+  (prefetch.nt offset=3 align=2
+   (local.get $0)
+  )
+ )
 )

@@ -1167,6 +1167,14 @@ public:
     NOTE_ENTER("Nop");
     return Flow();
   }
+  Flow visitPrefetch(Prefetch* curr) {
+    NOTE_ENTER("Prefetch");
+    Flow flow = visit(curr->ptr);
+    if (flow.breaking()) {
+      return flow;
+    }
+    return Flow();
+  }
   Flow visitUnreachable(Unreachable* curr) {
     NOTE_ENTER("Unreachable");
     trap("unreachable");

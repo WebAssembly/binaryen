@@ -496,18 +496,29 @@ Type Type::reinterpret() const {
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
     if (t.isRef()) {
-      if (t != Type::funcref && t.isFunction()) {
-        // Strictly speaking, typed function references require the typed
-        // function references feature, however, we use these types internally
-        // regardless of the presence of features (in particular, since during
-        // load of the wasm we don't know the features yet, so we apply the more
-        // refined types).
-        return FeatureSet::ReferenceTypes;
-      }
+      // A reference type implies we need that feature. Some also require more,
+      // such as GC or exceptions.
       auto heapType = t.getHeapType();
       if (heapType.isStruct() || heapType.isArray()) {
         return FeatureSet::ReferenceTypes | FeatureSet::GC;
       }
+      if (heapType.isBasic()) {
+        switch (heapType.getBasic()) {
+          case HeapType::BasicHeapType::exn:
+            return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
+          case HeapType::BasicHeapType::any:
+          case HeapType::BasicHeapType::eq:
+          case HeapType::BasicHeapType::i31:
+            return FeatureSet::ReferenceTypes | FeatureSet::GC;
+          default: {}
+        }
+      }
+      // Note: Technically typed function references also require the typed
+      // function references feature, however, we use these types internally
+      // regardless of the presence of features (in particular, since during
+      // load of the wasm we don't know the features yet, so we apply the more
+      // refined types), so we don't add that in any case here.
+      return FeatureSet::ReferenceTypes;
     } else if (t.isRtt()) {
       return FeatureSet::ReferenceTypes | FeatureSet::GC;
     }
@@ -515,15 +526,6 @@ FeatureSet Type::getFeatures() const {
     switch (t.getBasic()) {
       case Type::v128:
         return FeatureSet::SIMD;
-      case Type::funcref:
-      case Type::externref:
-        return FeatureSet::ReferenceTypes;
-      case Type::exnref:
-        return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
-      case Type::anyref:
-      case Type::eqref:
-      case Type::i31ref:
-        return FeatureSet::ReferenceTypes | FeatureSet::GC;
       default:
         return FeatureSet::MVP;
     }
@@ -609,17 +611,21 @@ bool Type::isSubType(Type left, Type right) {
       return true;
     }
     // Various things are subtypes of eqref.
-    if ((left == Type::i31ref || left.getHeapType().isArray() ||
-         left.getHeapType().isStruct()) &&
-        right == Type::eqref) {
+    auto leftHeap = left.getHeapType();
+    auto rightHeap = right.getHeapType();
+    if ((leftHeap == HeapType::i31 || leftHeap.isArray() ||
+         leftHeap.isStruct()) &&
+        rightHeap == HeapType::eq &&
+        (!left.isNullable() || right.isNullable())) {
       return true;
     }
     // All typed function signatures are subtypes of funcref.
-    if (left.getHeapType().isSignature() && right == Type::funcref) {
+    if (leftHeap.isSignature() && rightHeap == HeapType::func &&
+        (!left.isNullable() || right.isNullable())) {
       return true;
     }
     // A non-nullable type is a supertype of a nullable one
-    if (left.getHeapType() == right.getHeapType() && !left.isNullable()) {
+    if (leftHeap == rightHeap && !left.isNullable()) {
       // The only difference is the nullability.
       assert(right.isNullable());
       return true;

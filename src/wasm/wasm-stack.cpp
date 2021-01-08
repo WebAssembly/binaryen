@@ -694,6 +694,20 @@ void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   o << curr->index;
 }
 
+void BinaryInstWriter::visitPrefetch(Prefetch* curr) {
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case PrefetchTemporal:
+      o << U32LEB(BinaryConsts::PrefetchT);
+      break;
+    case PrefetchNontemporal:
+      o << U32LEB(BinaryConsts::PrefetchNT);
+      break;
+  }
+  assert(curr->align);
+  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
+}
+
 void BinaryInstWriter::visitMemoryInit(MemoryInit* curr) {
   o << int8_t(BinaryConsts::MiscPrefix);
   o << U32LEB(BinaryConsts::MemoryInit);

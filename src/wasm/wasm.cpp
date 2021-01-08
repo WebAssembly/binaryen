@@ -174,6 +174,8 @@ const char* getExpressionName(Expression* curr) {
       return "simd_load";
     case Expression::Id::SIMDLoadStoreLaneId:
       return "simd_load_store_lane";
+    case Expression::Id::PrefetchId:
+      return "prefetch";
     case Expression::Id::MemoryInitId:
       return "memory.init";
     case Expression::Id::DataDropId:
@@ -654,6 +656,10 @@ bool SIMDLoadStoreLane::isStore() {
       return false;
   }
   WASM_UNREACHABLE("unexpected op");
+}
+
+void Prefetch::finalize() {
+  type = ptr->type == Type::unreachable ? Type::unreachable : Type::none;
 }
 
 Const* Const::set(Literal value_) {

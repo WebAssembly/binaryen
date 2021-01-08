@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (global $global_anyref (mut anyref) (ref.null any))
  (global $global_eqref (mut eqref) (ref.null eq))
- (global $global_i31ref (mut i31ref) (i31.new
+ (global $global_i31ref (mut (ref null i31)) (i31.new
   (i32.const 0)
  ))
  (global $global_anyref2 (mut anyref) (ref.null eq))
@@ -16,7 +16,7 @@
   (local $local_i32 i32)
   (local $local_anyref anyref)
   (local $local_eqref eqref)
-  (local $local_i31ref i31ref)
+  (local $local_i31ref (ref null i31))
   (local.set $local_anyref
    (local.get $local_anyref)
   )
@@ -147,6 +147,11 @@
     (local.get $local_i31ref)
    )
   )
+ )
+ (func $test-variants
+  (local $local_i31refnull (ref null i31))
+  (local $local_i31refnonnull (ref null i31))
+  (nop)
  )
 )
 

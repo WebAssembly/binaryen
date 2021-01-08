@@ -112,6 +112,7 @@ void ReFinalize::visitSIMDLoad(SIMDLoad* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   curr->finalize();
 }
+void ReFinalize::visitPrefetch(Prefetch* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
 void ReFinalize::visitDataDrop(DataDrop* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
