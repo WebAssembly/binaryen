@@ -99,8 +99,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::BasicHeapType::i31:
           i32 = other.i32;
           return;
-        default:
-          WASM_UNREACHABLE("unexpected heap type");
       }
     }
   }
@@ -119,8 +117,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
       break;
     case Type::none:
       break;
-    default:
-      WASM_UNREACHABLE("unexpected type");
   }
 }
 
@@ -527,8 +523,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::i31:
           o << "i31ref(" << literal.geti31() << ")";
           break;
-        default:
-          WASM_UNREACHABLE("invalid heap type");
       }
     }
   } else if (literal.type.isRtt()) {
@@ -559,8 +553,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         o << "i32x4 ";
         literal.printVec128(o, literal.getv128());
         break;
-      default:
-        WASM_UNREACHABLE("invalid type");
     }
   }
   restoreNormalColor(o);
