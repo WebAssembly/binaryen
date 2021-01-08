@@ -92,13 +92,16 @@ Literal::Literal(const Literal& other) : type(other.type) {
     auto heapType = type.getHeapType();
     if (heapType.isBasic()) {
       switch (heapType.getBasic()) {
-        case HeapType::BasicHeapType::any:
-        case HeapType::BasicHeapType::ext:
-        case HeapType::BasicHeapType::eq:
+        case HeapType::any:
+        case HeapType::ext:
+        case HeapType::eq:
           return; // null
-        case HeapType::BasicHeapType::i31:
+        case HeapType::i31:
           i32 = other.i32;
           return;
+        case HeapType::func:
+        case HeapType::exn:
+          WASM_UNREACHABLE("invalid type");
       }
     }
   }
@@ -117,6 +120,14 @@ Literal::Literal(const Literal& other) : type(other.type) {
       break;
     case Type::none:
       break;
+    case Type::unreachable:
+    case Type::funcref:
+    case Type::externref:
+    case Type::exnref:
+    case Type::anyref:
+    case Type::eqref:
+    case Type::i31ref:
+      WASM_UNREACHABLE("invalid type");
   }
 }
 
@@ -523,6 +534,8 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::i31:
           o << "i31ref(" << literal.geti31() << ")";
           break;
+        case HeapType::func:
+          WASM_UNREACHABLE("invalid type");
       }
     }
   } else if (literal.type.isRtt()) {
@@ -553,6 +566,14 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         o << "i32x4 ";
         literal.printVec128(o, literal.getv128());
         break;
+      case Type::funcref:
+      case Type::externref:
+      case Type::exnref:
+      case Type::anyref:
+      case Type::eqref:
+      case Type::i31ref:
+      case Type::unreachable:
+        WASM_UNREACHABLE("unexpected type");
     }
   }
   restoreNormalColor(o);
