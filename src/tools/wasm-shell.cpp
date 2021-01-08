@@ -329,14 +329,14 @@ int main(int argc, const char* argv[]) {
     exit(1);
   }
 
-{
-Literal x(Type(HeapType::i31, Nullable));
-std::cout << x << '\n';
-}
-{
-Literal x(Type(HeapType::i31, NonNullable));
-std::cout << x << '\n';
-}
+  {
+    Literal x(Type(HeapType::i31, Nullable));
+    std::cout << x << '\n';
+  }
+  {
+    Literal x(Type(HeapType::i31, NonNullable));
+    std::cout << x << '\n';
+  }
 
   if (checked) {
     Colors::green(std::cerr);
