@@ -5710,7 +5710,7 @@ bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
   }
   auto name = getBreakTarget(getU32LEB()).name;
   // TODO the spec has two heaptype immediates, but the V8 prototype does not;
-  //      match that for now.
+  //      match V8 for now.
   auto* rtt = popNonVoidExpression();
   if (!rtt->type.isRtt()) {
     throwError("bad rtt for br_on_cast");
