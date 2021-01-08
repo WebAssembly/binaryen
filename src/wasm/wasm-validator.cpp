@@ -2336,10 +2336,13 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
   if (curr->ref->type != Type::unreachable) {
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
+    auto& field = fields[curr->index];
     shouldBeEqual(curr->value->type,
-                  fields[curr->index].type,
+                  field.type,
                   curr,
                   "struct.set must have the proper type");
+    shouldBeEqual(
+      field.mutable_, Mutable, curr, "struct.set field must be mutable");
   }
 }
 

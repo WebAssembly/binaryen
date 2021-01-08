@@ -22,7 +22,7 @@
 [LoggingExternalInterface logging 3]
 [trap unreachable]
 (module
- (type ${i32} (struct (field i32)))
+ (type ${mut:i32} (struct (field (mut i32))))
  (type $none_=>_none (func))
  (type ${i32_f64} (struct (field i32) (field f64)))
  (type $[mut:i8] (array (mut i8)))
@@ -33,36 +33,36 @@
  (export "rtts" (func $2))
  (export "br_on_cast" (func $3))
  (func $0 (; has Stack IR ;)
-  (local $0 (ref null ${i32}))
+  (local $0 (ref null ${mut:i32}))
   (call $log
-   (struct.get ${i32} 0
+   (struct.get ${mut:i32} 0
     (local.tee $0
-     (struct.new_default_with_rtt ${i32}
-      (rtt.canon ${i32})
+     (struct.new_default_with_rtt ${mut:i32}
+      (rtt.canon ${mut:i32})
      )
     )
    )
   )
-  (struct.set ${i32} 0
+  (struct.set ${mut:i32} 0
    (local.get $0)
    (i32.const 42)
   )
   (call $log
-   (struct.get ${i32} 0
+   (struct.get ${mut:i32} 0
     (local.get $0)
    )
   )
-  (struct.set ${i32} 0
+  (struct.set ${mut:i32} 0
    (local.get $0)
    (i32.const 100)
   )
   (call $log
-   (struct.get ${i32} 0
+   (struct.get ${mut:i32} 0
     (local.get $0)
    )
   )
   (call $log
-   (struct.get ${i32} 0
+   (struct.get ${mut:i32} 0
     (local.get $0)
    )
   )
@@ -111,14 +111,14 @@
   )
  )
  (func $2 (; has Stack IR ;)
-  (local $0 (rtt ${i32}))
+  (local $0 (rtt ${mut:i32}))
   (local $1 (rtt ${i32_f64}))
   (local $2 (rtt ${i32_f64}))
   (local $3 anyref)
   (local.set $1
    (rtt.sub ${i32_f64}
     (local.tee $0
-     (rtt.canon ${i32})
+     (rtt.canon ${mut:i32})
     )
    )
   )
@@ -127,20 +127,20 @@
   )
   (call $log
    (ref.is_null
-    (ref.cast ${i32}
-     (ref.null ${i32})
+    (ref.cast ${mut:i32}
+     (ref.null ${mut:i32})
      (local.get $0)
     )
    )
   )
   (call $log
-   (ref.test ${i32}
-    (ref.null ${i32})
+   (ref.test ${mut:i32}
+    (ref.null ${mut:i32})
     (local.get $0)
    )
   )
   (call $log
-   (ref.test ${i32}
+   (ref.test ${mut:i32}
     (array.new_with_rtt $[mut:i8]
      (rtt.canon $[mut:i8])
      (i32.const 10)
@@ -150,8 +150,8 @@
    )
   )
   (call $log
-   (ref.test ${i32}
-    (struct.new_default_with_rtt ${i32}
+   (ref.test ${mut:i32}
+    (struct.new_default_with_rtt ${mut:i32}
      (local.get $0)
     )
     (local.get $0)
@@ -159,7 +159,7 @@
   )
   (call $log
    (ref.test ${i32_f64}
-    (struct.new_default_with_rtt ${i32}
+    (struct.new_default_with_rtt ${mut:i32}
      (local.get $0)
     )
     (local.get $2)
@@ -182,7 +182,7 @@
    )
   )
   (call $log
-   (ref.test ${i32}
+   (ref.test ${mut:i32}
     (local.get $3)
     (local.get $0)
    )
