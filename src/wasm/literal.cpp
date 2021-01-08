@@ -73,39 +73,54 @@ Literal::Literal(const Literal& other) : type(other.type) {
     } else {
       new (&exn) std::unique_ptr<ExceptionPackage>();
     }
-  } else if (other.isGCData()) {
+    return;
+  }
+  if (other.isGCData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
-  } else if (type.isFunction()) {
+    return;
+  }
+  if (type.isFunction()) {
     func = other.func;
-  } else if (type.isRtt()) {
+    return;
+  }
+  if (type.isRtt()) {
     // Allocate a new RttSupers with a copy of the other's data.
     new (&rttSupers) auto(std::make_unique<RttSupers>(*other.rttSupers));
-  } else {
-    TODO_SINGLE_COMPOUND(type);
-    switch (type.getBasic()) {
-      case Type::i32:
-      case Type::f32:
-      case Type::i31ref:
-        i32 = other.i32;
-        break;
-      case Type::i64:
-      case Type::f64:
-        i64 = other.i64;
-        break;
-      case Type::v128:
-        memcpy(&v128, other.v128, 16);
-        break;
-      case Type::none:
-        break;
-      case Type::externref:
-      case Type::anyref:
-      case Type::eqref:
-        break; // null
-      case Type::funcref:
-      case Type::exnref:
-      case Type::unreachable:
-        WASM_UNREACHABLE("unexpected type");
+    return;
+  }
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (heapType.isBasic()) {
+      switch (heapType.getBasic()) {
+        case HeapType::BasicHeapType::any:
+        case HeapType::BasicHeapType::ext:
+        case HeapType::BasicHeapType::eq:
+          return; // null
+        case HeapType::BasicHeapType::i31:
+          i32 = other.i32;
+          return;
+        default:
+          WASM_UNREACHABLE("unexpected heap type");
+      }
     }
+  }
+  TODO_SINGLE_COMPOUND(type);
+  switch (type.getBasic()) {
+    case Type::i32:
+    case Type::f32:
+      i32 = other.i32;
+      break;
+    case Type::i64:
+    case Type::f64:
+      i64 = other.i64;
+      break;
+    case Type::v128:
+      memcpy(&v128, other.v128, 16);
+      break;
+    case Type::none:
+      break;
+    default:
+      WASM_UNREACHABLE("unexpected type");
   }
 }
 
@@ -116,8 +131,10 @@ Literal::~Literal() {
     gcData.~shared_ptr();
   } else if (type.isRtt()) {
     rttSupers.~unique_ptr();
-  } else if (type.isFunction()) {
-    // Nothing special to do.
+  } else if (type.isFunction() || type.isRef()) {
+    // Nothing special to do for a function or a non-GC reference (GC data was
+    // handled earlier). For references, this handles the case of (ref ? i31)
+    // for example, which may or may not be basic.
   } else {
     // Basic types need no special handling.
     assert(type.isBasic());
@@ -478,12 +495,41 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     } else {
       o << "funcref(" << literal.getFunc() << ")";
     }
-  } else if (literal.isGCData()) {
-    auto data = literal.getGCData();
-    if (data) {
-      o << "[ref " << data->rtt << ' ' << data->values << ']';
+  } else if (literal.type.isRef()) {
+    if (literal.isGCData()) {
+      auto data = literal.getGCData();
+      if (data) {
+        o << "[ref " << data->rtt << ' ' << data->values << ']';
+      } else {
+        o << "[ref null " << literal.type << ']';
+      }
     } else {
-      o << "[ref null " << literal.type << ']';
+      switch (literal.type.getHeapType().getBasic()) {
+        case HeapType::ext:
+          assert(literal.isNull() && "unexpected non-null externref literal");
+          o << "externref(null)";
+          break;
+        case HeapType::exn:
+          if (literal.isNull()) {
+            o << "exnref(null)";
+          } else {
+            o << "exnref(" << literal.getExceptionPackage() << ")";
+          }
+          break;
+        case HeapType::any:
+          assert(literal.isNull() && "unexpected non-null anyref literal");
+          o << "anyref(null)";
+          break;
+        case HeapType::eq:
+          assert(literal.isNull() && "unexpected non-null eqref literal");
+          o << "eqref(null)";
+          break;
+        case HeapType::i31:
+          o << "i31ref(" << literal.geti31() << ")";
+          break;
+        default:
+          WASM_UNREACHABLE("invalid heap type");
+      }
     }
   } else if (literal.type.isRtt()) {
     o << "[rtt ";
@@ -512,28 +558,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       case Type::v128:
         o << "i32x4 ";
         literal.printVec128(o, literal.getv128());
-        break;
-      case Type::externref:
-        assert(literal.isNull() && "unexpected non-null externref literal");
-        o << "externref(null)";
-        break;
-      case Type::exnref:
-        if (literal.isNull()) {
-          o << "exnref(null)";
-        } else {
-          o << "exnref(" << literal.getExceptionPackage() << ")";
-        }
-        break;
-      case Type::anyref:
-        assert(literal.isNull() && "unexpected non-null anyref literal");
-        o << "anyref(null)";
-        break;
-      case Type::eqref:
-        assert(literal.isNull() && "unexpected non-null eqref literal");
-        o << "eqref(null)";
-        break;
-      case Type::i31ref:
-        o << "i31ref(" << literal.geti31() << ")";
         break;
       default:
         WASM_UNREACHABLE("invalid type");
