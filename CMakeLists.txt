@@ -68,7 +68,7 @@ endfunction()
 
 function(ADD_LINK_FLAG value)
   message(STATUS "Linking with ${value}")
-  FOREACH(variable CMAKE_EXE_LINKER_FLAGS)
+  FOREACH(variable CMAKE_EXE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS)
     set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
   ENDFOREACH(variable)
 endfunction()
@@ -134,6 +134,12 @@ FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
 ENDFOREACH()
+
+option(BYN_ENABLE_LTO "Build with LTO" Off)
+if(BYN_ENABLE_LTO)
+  add_compile_flag("-flto")
+  add_link_options("-fuse-ld=lld")
+endif()
 
 if(MSVC)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
