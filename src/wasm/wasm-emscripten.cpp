@@ -434,8 +434,7 @@ void printSignatures(std::ostream& o, const std::set<Signature>& c) {
   o << "]";
 }
 
-std::string
-EmscriptenGlueGenerator::generateEmscriptenMetadata(Name initializer) {
+std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   bool commaFirst;
   auto nextElement = [&commaFirst]() {
     if (commaFirst) {
@@ -481,12 +480,6 @@ EmscriptenGlueGenerator::generateEmscriptenMetadata(Name initializer) {
   }
 
   meta << "  \"tableSize\": " << wasm.table.initial.addr << ",\n";
-
-  if (initializer.is()) {
-    meta << "  \"initializers\": [";
-    meta << "\n    \"" << initializer.c_str() << "\"";
-    meta << "\n  ],\n";
-  }
 
   // Avoid adding duplicate imports to `declares' or `invokeFuncs`.  Even
   // though we might import the same function multiple times (i.e. with

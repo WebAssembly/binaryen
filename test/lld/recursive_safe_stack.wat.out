@@ -176,9 +176,6 @@
 --BEGIN METADATA --
 {
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "printf",
     "__handle_stack_overflow"

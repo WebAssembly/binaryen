@@ -142,9 +142,6 @@
 --BEGIN METADATA --
 {
   "tableSize": 2,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "malloc",
     "saveSetjmp",
