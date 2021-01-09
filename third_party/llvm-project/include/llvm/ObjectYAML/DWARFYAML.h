@@ -94,6 +94,10 @@ struct Loc {
   std::vector<uint8_t> Location;
   uint64_t CompileUnitOffset;
 };
+
+struct AddrTable {
+  std::vector<uint64_t> Addrs;
+};
 // XXX BINARYEN -->
 
 struct PubEntry {
@@ -173,6 +177,7 @@ struct Data {
   std::vector<ARange> ARanges;
   std::vector<Range> Ranges; // XXX BINARYEN
   std::vector<Loc> Locs; // XXX BINARYEN
+  std::vector<AddrTable> DebugAddr; // XXX BINARYEN
   PubSection PubNames;
   PubSection PubTypes;
 
@@ -195,6 +200,7 @@ LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARangeDescriptor)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::ARange)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Range) // XXX BINARYEN
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Loc) // XXX BINARYEN
+LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::AddrTable) // XXX BINARYEN
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::PubEntry)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::Unit)
 LLVM_YAML_IS_SEQUENCE_VECTOR(llvm::DWARFYAML::FormValue)
@@ -232,6 +238,10 @@ template <> struct MappingTraits<DWARFYAML::Range> { // XXX BINARYEN
 
 template <> struct MappingTraits<DWARFYAML::Loc> { // XXX BINARYEN
   static void mapping(IO &IO, DWARFYAML::Loc &Loc);
+};
+
+template <> struct MappingTraits<DWARFYAML::AddrTable> { // XXX BINARYEN
+  static void mapping(IO &IO, DWARFYAML::AddrTable &AddrTable);
 };
 
 template <> struct MappingTraits<DWARFYAML::PubEntry> {

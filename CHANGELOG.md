@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- `.debug_addr` sections (pre-DWARFv5) are now updated correctly when
+  DWARF mode is enabled.
 - `RefFunc` C and JS API constructors (`BinaryenRefFunc` and `ref.func`
   respectively) now take an extra `type` parameter, similar to `RefNull`. This
   is necessary for typed function references support.

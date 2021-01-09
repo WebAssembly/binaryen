@@ -148,6 +148,17 @@ void DWARFYAML::EmitDebugLoc(raw_ostream &OS, const DWARFYAML::Data &DI) {
   }
 }
 
+// XXX BINARYEN
+void DWARFYAML::EmitDebugAddr(raw_ostream &OS, const DWARFYAML::Data &DI) {
+  // This is the legacy DWARF extension .debug_addr format, which is
+  // only a simple list of addresses. This doesn't support DWARF5.
+  for (auto AddrTable : DI.DebugAddr) {
+    for (auto Addr : AddrTable.Addrs) {
+      writeInteger((uint32_t)Addr, OS, DI.IsLittleEndian);
+    }
+  }
+}
+
 void DWARFYAML::EmitPubSection(raw_ostream &OS,
                                const DWARFYAML::PubSection &Sect,
                                bool IsLittleEndian) {
@@ -484,6 +495,8 @@ EmitDebugSections(llvm::DWARFYAML::Data &DI, bool ApplyFixups) {
   EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugRanges, "debug_ranges",
                        DebugSections); // XXX BINARYEN
   EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugLoc, "debug_loc",
+                       DebugSections); // XXX BINARYEN
+  EmitDebugSectionImpl(DI, &DWARFYAML::EmitDebugAddr, "debug_addr",
                        DebugSections); // XXX BINARYEN
   return std::move(DebugSections);
 }

@@ -90,6 +90,9 @@ public:
 
   /// Returns the length of the array of addresses.
   uint32_t getDataSize() const;
+
+  /// Return the parsed addresses of this table.
+  ArrayRef<uint64_t> getAddressEntries() const { return Addrs; }
 };
 
 } // end namespace llvm
