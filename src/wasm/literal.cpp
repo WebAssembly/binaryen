@@ -120,7 +120,12 @@ Literal::~Literal() {
     // Nothing special to do.
   } else {
     // Basic types need no special handling.
-    assert(type.isBasic());
+    // TODO: change this to an assert after we figure out the underlying issue
+    //       on the release builder
+    //       https://github.com/WebAssembly/binaryen/issues/3459
+    if (!type.isBasic()) {
+      Fatal() << "~Literal on unhandled type: " << type << '\n';
+    }
   }
 }
 
