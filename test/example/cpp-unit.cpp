@@ -556,10 +556,24 @@ void test_effects() {
   assert_equal(EffectAnalyzer(options, features, &nop).trap, false);
 }
 
+void test_literals() {
+  // The i31 heap type may or may not be basic, depending on if it is nullable.
+  // Verify we handle both code paths.
+  {
+    Literal x(Type(HeapType::i31, Nullable));
+    std::cout << x << '\n';
+  }
+  {
+    Literal x(Type(HeapType::i31, NonNullable));
+    std::cout << x << '\n';
+  }
+}
+
 int main() {
   test_bits();
   test_cost();
   test_effects();
+  test_literals();
 
   if (failsCount > 0) {
     abort();
