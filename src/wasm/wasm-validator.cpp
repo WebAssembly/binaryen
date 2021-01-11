@@ -2294,8 +2294,7 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                  "struct.new_with_default should have no operands");
     // All the fields must be defaultable.
     for (const auto& field : fields) {
-      // TODO: add type.isDefaultable()?
-      shouldBeTrue(!field.type.isRef() || field.type.isNullable(),
+      shouldBeTrue(field.type.isDefaultable(),
                    field,
                    "struct.new_with_default value type must be defaultable");
     }
@@ -2368,8 +2367,7 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
     shouldBeTrue(
       !curr->init, curr, "array.new_with_default should have no init");
     // The element must be defaultable.
-    // TODO: add type.isDefaultable()?
-    shouldBeTrue(!element.type.isRef() || element.type.isNullable(),
+    shouldBeTrue(element.type.isDefaultable(),
                  element,
                  "array.new_with_default value type must be defaultable");
   } else {
@@ -2439,8 +2437,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    shouldBeTrue(var.isConcrete(), curr, "vars must be concretely typed");
-    // TODO: check for nullability
+    shouldBeTrue(var.isDefaultable(), curr, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,

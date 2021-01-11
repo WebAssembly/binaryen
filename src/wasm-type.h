@@ -141,6 +141,7 @@ public:
   bool isRtt() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isDefaultable() const;
 
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
