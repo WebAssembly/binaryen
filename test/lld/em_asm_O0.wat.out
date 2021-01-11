@@ -99,9 +99,6 @@
     "621": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]]
   },
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "emscripten_asm_const_int"
   ],

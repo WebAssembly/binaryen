@@ -57,9 +57,6 @@
 --BEGIN METADATA --
 {
   "tableSize": 0,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "puts"
   ],

@@ -199,9 +199,6 @@
     "621": ["{ Module.print(\"Got \" + $0); }", ["iii"], ["sync_on_main_thread_"]]
   },
   "tableSize": 1,
-  "initializers": [
-    "__wasm_call_ctors"
-  ],
   "declares": [
     "emscripten_asm_const_int_sync_on_main_thread"
   ],

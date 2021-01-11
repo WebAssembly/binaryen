@@ -230,8 +230,6 @@ int main(int argc, const char* argv[]) {
   generator.onlyI64DynCalls = onlyI64DynCalls;
   generator.noDynCalls = noDynCalls;
 
-  Name initializerFunction;
-
   if (!standaloneWasm) {
     // This is also not needed in standalone mode since standalone mode uses
     // crt1.c to invoke the main and is aware of __main_argc_argv mangling.
@@ -286,21 +284,11 @@ int main(int argc, const char* argv[]) {
     if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
       e->name = "__post_instantiate";
     }
-  } else {
-    BYN_TRACE("finalizing as regular module\n");
-    // Costructors get called from crt1 in wasm standalone mode.
-    // Unless there is no entry point.
-    if (!standaloneWasm || !wasm.getExportOrNull("_start")) {
-      if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-        initializerFunction = e->name;
-      }
-    }
   }
 
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
-  std::string metadata =
-    generator.generateEmscriptenMetadata(initializerFunction);
+  std::string metadata = generator.generateEmscriptenMetadata();
 
   // Finally, separate out data segments if relevant (they may have been needed
   // for metadata).
