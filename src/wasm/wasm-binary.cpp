@@ -5682,10 +5682,10 @@ bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
   }
   auto heapType1 = getHeapType();
   auto heapType2 = getHeapType();
-  auto* ref = popNonVoidExpression();
-  validateHeapTypeUsingChild(ref, heapType1);
   auto* rtt = popNonVoidExpression();
   validateHeapTypeUsingChild(rtt, heapType2);
+  auto* ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType1);
   out = Builder(wasm).makeRefTest(ref, rtt);
   return true;
 }
@@ -5696,10 +5696,10 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
   }
   auto heapType1 = getHeapType();
   auto heapType2 = getHeapType();
-  auto* ref = popNonVoidExpression();
-  validateHeapTypeUsingChild(ref, heapType1);
   auto* rtt = popNonVoidExpression();
   validateHeapTypeUsingChild(rtt, heapType2);
+  auto* ref = popNonVoidExpression();
+  validateHeapTypeUsingChild(ref, heapType1);
   out = Builder(wasm).makeRefCast(ref, rtt);
   return true;
 }
@@ -5709,13 +5709,14 @@ bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
     return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
-  auto heapType1 = getHeapType();
-  auto heapType2 = getHeapType();
-  auto* ref = popNonVoidExpression();
-  validateHeapTypeUsingChild(ref, heapType1);
+  // TODO the spec has two heaptype immediates, but the V8 prototype does not;
+  //      match V8 for now.
   auto* rtt = popNonVoidExpression();
-  validateHeapTypeUsingChild(rtt, heapType2);
-  out = Builder(wasm).makeBrOnCast(name, heapType2, ref, rtt);
+  if (!rtt->type.isRtt()) {
+    throwError("bad rtt for br_on_cast");
+  }
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeBrOnCast(name, rtt->type.getHeapType(), ref, rtt);
   return true;
 }
 
@@ -5732,11 +5733,11 @@ bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RttSub) {
     return false;
   }
-  // FIXME: the binary format may also have an extra heap type and index that
-  //        are not needed
-  auto heapType = getHeapType();
+  // TODO the spec has two heaptype immediates, but the V8 prototype does not;
+  //      match that for now.
+  auto targetHeapType = getHeapType();
   auto* parent = popNonVoidExpression();
-  out = Builder(wasm).makeRttSub(heapType, parent);
+  out = Builder(wasm).makeRttSub(targetHeapType, parent);
   return true;
 }
 
@@ -5793,9 +5794,9 @@ bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
   auto* curr = allocator.alloc<StructSet>();
   auto heapType = getHeapType();
   curr->index = getU32LEB();
+  curr->value = popNonVoidExpression();
   curr->ref = popNonVoidExpression();
   validateHeapTypeUsingChild(curr->ref, heapType);
-  curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;
@@ -5831,9 +5832,9 @@ bool WasmBinaryBuilder::maybeVisitArrayGet(Expression*& out, uint32_t code) {
       return false;
   }
   auto heapType = getHeapType();
+  auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
-  auto* index = popNonVoidExpression();
   out = Builder(wasm).makeArrayGet(ref, index, signed_);
   return true;
 }
@@ -5843,10 +5844,10 @@ bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
     return false;
   }
   auto heapType = getHeapType();
+  auto* value = popNonVoidExpression();
+  auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
-  auto* index = popNonVoidExpression();
-  auto* value = popNonVoidExpression();
   out = Builder(wasm).makeArraySet(ref, index, value);
   return true;
 }

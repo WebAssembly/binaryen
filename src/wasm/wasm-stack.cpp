@@ -1952,8 +1952,6 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
 void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast)
     << U32LEB(getBreakIndex(curr->name));
-  parent.writeHeapType(curr->ref->type.getHeapType());
-  parent.writeHeapType(curr->getCastType().getHeapType());
 }
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
@@ -1963,8 +1961,6 @@ void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
-  // FIXME: the binary format may also have an extra heap type and index that
-  //        are not needed
   parent.writeHeapType(curr->type.getRtt().heapType);
 }
 
