@@ -3070,7 +3070,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
 
 Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
   // Track the total let items we've seen so far.
-  int64_t Index total = 0;
+  int64_t total = 0;
   for (int64_t i = letStack.size() - 1; i >= 0; i++) {
     int64_t num = letStack[i];
     // There were num items added in a let. Check if we were one of them.
