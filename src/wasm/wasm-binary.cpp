@@ -1848,6 +1848,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(controlFlowStack.empty());
+      assert(letStack.empty());
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
@@ -1857,6 +1858,7 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("stack not empty on function exit");
       }
       assert(controlFlowStack.empty());
+      assert(letStack.empty());
       if (pos != endOfFunction) {
         throwError("binary offset at function exit not at expected location");
       }
@@ -1875,7 +1877,7 @@ void WasmBinaryBuilder::readVars() {
     auto num = getU32LEB();
     auto type = getConcreteType();
     while (num > 0) {
-      func->vars.push_back(type);
+      currFunction->vars.push_back(type);
       num--;
     }
   }
@@ -2894,6 +2896,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     }
     case BinaryConsts::Let: {
       visitLet((curr = allocator.alloc<Block>())->cast<Block>());
+      break;
     }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
@@ -3063,6 +3066,22 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
   return BinaryConsts::ASTNodes(code);
+}
+
+Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
+  // Track the total let items we've seen so far.
+  int64_t Index total = 0;
+  for (int64_t i = letStack.size() - 1; i >= 0; i++) {
+    int64_t num = letStack[i];
+    // There were num items added in a let. Check if we were one of them.
+    auto relative = index - total;
+    if (relative < num) {
+      return relative;
+    }
+    total += num;
+  }
+  // We were not in any of the lets, so we are a normal var.
+  return index - total;
 }
 
 void WasmBinaryBuilder::startControlFlow(Expression* curr) {
@@ -3333,7 +3352,7 @@ void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
   BYN_TRACE("zz node: LocalGet " << pos << std::endl);
   ;
   requireFunctionContext("local.get");
-  curr->index = getU32LEB();
+  curr->index = getAbsoluteLocalIndex(getU32LEB());
   if (curr->index >= currFunction->getNumLocals()) {
     throwError("bad local.get index");
   }
@@ -3344,7 +3363,7 @@ void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
 void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
   BYN_TRACE("zz node: Set|LocalTee\n");
   requireFunctionContext("local.set outside of function");
-  curr->index = getU32LEB();
+  curr->index = getAbsoluteLocalIndex(getU32LEB());
   if (curr->index >= currFunction->getNumLocals()) {
     throwError("bad local.set index");
   }
@@ -5657,17 +5676,24 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
 void WasmBinaryBuilder::visitLet(Block* curr) {
   // A let is lowered into a block that contains the value, and we allocate
   // locals as needed, which works as we remove non-nullability.
+
   startControlFlow(curr);
+  // Get the output type.
   curr->type = getType();
-  auto varsBefore = func->vars.size();
+  // Get the new local types.
+  auto varsBefore = currFunction->vars.size();
   readVars();
-  auto numNewVars = func->vars.size() - varsBefore;
+  auto numNewVars = currFunction->vars.size() - varsBefore;
   // Assign the values into locals.
+  Builder builder(wasm);
   for (Index i = 0; i < numNewVars; i++) {
     auto* value = popNonVoidExpression();
     curr->list.push_back(builder.makeLocalSet(varsBefore + i, value));
   }
+  // Read the body, with adjusted local indexes.
+  letStack.push_back(numNewVars);
   curr->list.push_back(getBlockOrSingleton(curr->type));
+  letStack.pop_back();
   curr->finalize(curr->type);
 }
 

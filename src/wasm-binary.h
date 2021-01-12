@@ -1369,6 +1369,16 @@ public:
 
   std::vector<Expression*> expressionStack;
 
+  // Each let block in the binary adds new locals to the bottom of the index
+  // space. That is, all previously-existing indexes are bumped to higher
+  // indexes. getAbsoluteLocalIndex does this computation.
+  std::vector<Index> letStack;
+
+  // Given a relative index of a local (the one used in the wasm binary), get
+  // the absolute one which takes into account lets, and is the one used in
+  // Binaryen IR.
+  Index getAbsoluteLocalIndex(Index index);
+
   // Control flow structure parsing: these have not just the normal binary
   // data for an instruction, but also some bytes later on like "end" or "else".
   // We must be aware of the connection between those things, for debug info.
