@@ -1438,7 +1438,9 @@ public:
       return cast;
     }
     // The input may not be a struct or an array; for example it could be an
-    // anyref of null (already handled above) or anything else (handled here).
+    // anyref of null (already handled above) or anything else (handled here,
+    // but this is for future use as atm the binaryen interpreter cannot
+    // represent external references).
     if (!cast.originalRef.isGCData()) {
       cast.outcome = cast.Failure;
       return cast;
