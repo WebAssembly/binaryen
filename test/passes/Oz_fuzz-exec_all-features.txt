@@ -21,6 +21,8 @@
 [fuzz-exec] calling br_on_cast
 [LoggingExternalInterface logging 3]
 [trap unreachable]
+[fuzz-exec] calling cast-null-anyref-to-gc
+[LoggingExternalInterface logging 0]
 (module
  (type ${mut:i32} (struct (field (mut i32))))
  (type $none_=>_none (func))
@@ -32,6 +34,7 @@
  (export "arrays" (func $1))
  (export "rtts" (func $2))
  (export "br_on_cast" (func $3))
+ (export "cast-null-anyref-to-gc" (func $4))
  (func $0 (; has Stack IR ;)
   (local $0 (ref null ${mut:i32}))
   (call $log
@@ -194,6 +197,11 @@
   )
   (unreachable)
  )
+ (func $4 (; has Stack IR ;)
+  (call $log
+   (i32.const 0)
+  )
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -218,3 +226,5 @@
 [fuzz-exec] calling br_on_cast
 [LoggingExternalInterface logging 3]
 [trap unreachable]
+[fuzz-exec] calling cast-null-anyref-to-gc
+[LoggingExternalInterface logging 0]

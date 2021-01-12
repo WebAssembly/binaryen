@@ -1433,11 +1433,17 @@ public:
       return cast;
     }
     cast.originalRef = ref.getSingleValue();
-    auto gcData = cast.originalRef.getGCData();
-    if (!gcData) {
+    if (cast.originalRef.isNull()) {
       cast.outcome = cast.Null;
       return cast;
     }
+    // The input may not be a struct or an array; for example it could be an
+    // anyref of null (already handled above) or anything else (handled here).
+    if (!cast.originalRef.isGCData()) {
+      cast.outcome = cast.Failure;
+      return cast;
+    }
+    auto gcData = cast.originalRef.getGCData();
     auto refRtt = gcData->rtt;
     auto intendedRtt = rtt.getSingleValue();
     if (!refRtt.isSubRtt(intendedRtt)) {
