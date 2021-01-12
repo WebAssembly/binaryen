@@ -137,7 +137,7 @@ ENDFOREACH()
 
 option(BYN_ENABLE_LTO "Build with LTO" Off)
 if(BYN_ENABLE_LTO)
-  add_compile_flag("-flto")
+  add_compile_flag("-flto=thin")
   add_link_options("-fuse-ld=lld")
 endif()
 
