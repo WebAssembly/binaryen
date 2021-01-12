@@ -1835,6 +1835,13 @@ void WasmBinaryBuilder::readFunctions() {
     BYN_TRACE("reading " << i << std::endl);
 
     readVars();
+    // Treat the function scope itself as a let for purposes of computing the
+    // indexes of locals, so that we just have a single stack of when variables
+    // were declared.
+    Note the initial vars as if they were a group of lets; they are the first
+    // declared variables.
+    assert(letStack.empty());
+    letStack.push_back(func->vars.size();
 
     std::swap(func->prologLocation, debugLocation);
     {
@@ -1848,7 +1855,6 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(controlFlowStack.empty());
-      assert(letStack.empty());
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
@@ -1858,11 +1864,12 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("stack not empty on function exit");
       }
       assert(controlFlowStack.empty());
-      assert(letStack.empty());
       if (pos != endOfFunction) {
         throwError("binary offset at function exit not at expected location");
       }
     }
+    letStack.pop_back();
+    assert(letStack.empty());
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
@@ -3069,19 +3076,57 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
 }
 
 Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
-  // Track the total let items we've seen so far.
-  int64_t total = 0;
-  for (int64_t i = letStack.size() - 1; i >= 0; i++) {
-    int64_t num = letStack[i];
-    // There were num items added in a let. Check if we were one of them.
-    auto relative = index - total;
-    if (relative < num) {
-      return relative;
+std::cout << "waka " << index << " : stack is " << letStack.size() << " of " <<'\n';
+for (int i : letStack) std::cout << i << " ";
+std::cout << '\n';
+  // Wasm binaries put each let at the bottom of the index space, which may be
+  // good for binary size as often the uses of the let variables are close to
+  // the let itself. However, in Binaryen IR we just have a simple flat index
+  // space of absolute values, which we add to as we parse, and we depend on
+  // later optimizations to reorder locals for size.
+  //
+  // For example, if we have $x, then we add a let with $y, the binary would map
+  // 0 => y, 1 => x, while in Binaryen IR $x always stays at 0, and $y is added
+  // at 1.
+  //
+  // Start by finding the let in which we were added, if we were. -1 means we
+  // were not added in a let, that is, we are a normal var. Note that this is
+  // not just a special invalid value, but the actually valid one, in the sense
+  // that 1 means the 1th let added us, 0 means the 0th let added us, and -1
+  // means that we were added before the lets - which is what vars are.
+  int64_t foundLetIndex = -1;
+  // Compute the relative index in the let we were added. We start by looking at
+  // the last let added, and if we belong to it, we are already relative to it.
+  // We will continue relativizing as we go down, til we find our let.
+  int64_t relative = index;
+  Index totalLetItems = 0;
+  for (int64_t i = letStack.size() - 1; i >= 0; i--) {
+    int64_t curr = letStack[i];
+    totalLetItems += curr;
+    // There were |curr| let items added in this let. Check if we were one of
+    // them.
+    if (relative < curr) {
+      foundLetIndex = i;
+      break;
     }
-    total += num;
+    relative -= curr;
   }
-  // We were not in any of the lets, so we are a normal var.
-  return index - total;
+std::cout << "found: " << foundLetIndex << '\n';
+  // Now that we know when we were added (as a var, or which of the lets), we
+  // can compute the absolute index. Note that if we are a normal var, we have
+  // nothing to do, as we have subtracted the lets, and |relative| has the
+  // correct value already. For actual lets, we add the normal vars and then the
+  // lets before them.
+  if (foundLetIndex >= 0) {
+    auto numOriginalVars = currFunction->vars.size() - totalLetItems;
+std::cout << "num orig: " << numOriginalVars << '\n';
+    relative += numOriginalVars;
+    for (int64_t i = 0; i < foundLetIndex; i++) {
+      relative += letStack[i];
+    }
+  }
+std::cout << "return: " << relative << '\n';
+  return relative;
 }
 
 void WasmBinaryBuilder::startControlFlow(Expression* curr) {
