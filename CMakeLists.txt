@@ -6,8 +6,8 @@ cmake_minimum_required(VERSION 3.13)
 # it is invoked directly by CMake rather than by the compiler.
 option(BYN_ENABLE_LTO "Build with LTO" Off)
 if(BYN_ENABLE_LTO AND NOT MSVC)
-  set(CMAKE_EXE_LINKER_FLAGS "$CMAKE_EXE_LINKER_FLAGS -fuse-ld=lld")
-  set(CMAKE_SHARED_LINKER_FLAGS "$CMAKE_SHARED_LINKER_FLAGS -fuse-ld=lld")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
+  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
 endif()
 
 project(binaryen LANGUAGES C CXX VERSION 99)
