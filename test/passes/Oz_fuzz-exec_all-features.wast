@@ -179,4 +179,15 @@
    )
   )
  )
+ (func "cast-null-anyref-to-gc"
+  ;; a null anyref is a literal which is not even of GC data, as it's not an
+  ;; array or a struct, so our casting code should not assume it is. it is ok
+  ;; to try to cast it, and the result should be 0.
+  (call $log
+   (ref.test $struct
+    (ref.null any)
+    (rtt.canon $struct)
+   )
+  )
+ )
 )
