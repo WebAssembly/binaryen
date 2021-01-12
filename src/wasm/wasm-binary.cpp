@@ -1833,15 +1833,9 @@ void WasmBinaryBuilder::readFunctions() {
     readNextDebugLocation();
 
     BYN_TRACE("reading " << i << std::endl);
-    size_t numLocalTypes = getU32LEB();
-    for (size_t t = 0; t < numLocalTypes; t++) {
-      auto num = getU32LEB();
-      auto type = getConcreteType();
-      while (num > 0) {
-        func->vars.push_back(type);
-        num--;
-      }
-    }
+
+    readVars();
+
     std::swap(func->prologLocation, debugLocation);
     {
       // process the function body
@@ -1873,6 +1867,18 @@ void WasmBinaryBuilder::readFunctions() {
     functions.push_back(func);
   }
   BYN_TRACE(" end function bodies\n");
+}
+
+void WasmBinaryBuilder::readVars() {
+  size_t numLocalTypes = getU32LEB();
+  for (size_t t = 0; t < numLocalTypes; t++) {
+    auto num = getU32LEB();
+    auto type = getConcreteType();
+    while (num > 0) {
+      func->vars.push_back(type);
+      num--;
+    }
+  }
 }
 
 void WasmBinaryBuilder::readExports() {
@@ -2885,6 +2891,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       curr = call;
       visitCallRef(call);
       break;
+    }
+    case BinaryConsts::Let: {
+      visitLet((curr = allocator.alloc<Block>())->cast<Block>());
     }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
@@ -5643,6 +5652,23 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->finalize(sig.results);
+}
+
+void WasmBinaryBuilder::visitLet(Block* curr) {
+  // A let is lowered into a block that contains the value, and we allocate
+  // locals as needed, which works as we remove non-nullability.
+  startControlFlow(curr);
+  curr->type = getType();
+  auto varsBefore = func->vars.size();
+  readVars();
+  auto numNewVars = func->vars.size() - varsBefore;
+  // Assign the values into locals.
+  for (Index i = 0; i < numNewVars; i++) {
+    auto* value = popNonVoidExpression();
+    curr->list.push_back(builder.makeLocalSet(varsBefore + i, value));
+  }
+  curr->list.push_back(getBlockOrSingleton(curr->type));
+  curr->finalize(curr->type);
 }
 
 bool WasmBinaryBuilder::maybeVisitI31New(Expression*& out, uint32_t code) {

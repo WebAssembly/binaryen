@@ -1003,6 +1003,7 @@ enum ASTNodes {
 
   CallRef = 0x14,
   RetCallRef = 0x15,
+  Let = 0x17,
 
   // gc opcodes
 
@@ -1347,6 +1348,7 @@ public:
   void requireFunctionContext(const char* error);
 
   void readFunctions();
+  void readVars();
 
   std::map<Export*, Index> exportIndices;
   std::vector<Export*> exportOrder;
@@ -1521,6 +1523,8 @@ public:
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);
   void visitCallRef(CallRef* curr);
+  // Let is lowered into a block.
+  void visitLet(Block* curr);
 
   void throwError(std::string text);
 
