@@ -1874,7 +1874,6 @@ void BinaryInstWriter::emitCatchAll(Try* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
-  // TODO Is this right?
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, BinaryLocations::Catch);
   }

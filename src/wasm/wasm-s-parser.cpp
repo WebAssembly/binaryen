@@ -1958,8 +1958,9 @@ Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
 //    ...
 //  )
 // )
-// Zero or multiple catch blocks can exist. Zero or one catch_all block can
-// exist, and if it does, it should be at the end.
+// Any number of catch blocks can exist, including none. Zero or one catch_all
+// block can exist, and if it does, it should be at the end. There should be at
+// least one catch or catch_all body per try.
 Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   auto ret = allocator.alloc<Try>();
   Index i = 1;
@@ -2005,8 +2006,6 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   }
 
   ret->finalize(type);
-  // TODO If 'delegate' targets a try block, should we make 'try' take a label
-  // rather than wrapping it with a block like this?
   nameMapper.popLabelName(label);
   // create a break target if we must
   if (BranchUtils::BranchSeeker::has(ret, label)) {
