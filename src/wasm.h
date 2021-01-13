@@ -1260,7 +1260,6 @@ public:
   ExpressionList catchBodies;
 
   bool hasCatchAll() const {
-    assert(catchBodies.size() - catchEvents.size() <= 1);
     return catchBodies.size() - catchEvents.size() == 1;
   }
   void finalize();
