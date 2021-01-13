@@ -370,7 +370,7 @@ public:
   void insertAt(size_t index, T item) {
     assert(index <= usedElements); // appending is ok
     resize(usedElements + 1);
-    for (auto i = usedElements; i > index; --i) {
+    for (auto i = usedElements - 1; i > index; --i) {
       data[i] = data[i - 1];
     }
     data[index] = item;
