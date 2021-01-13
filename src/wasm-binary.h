@@ -1372,7 +1372,12 @@ public:
   // Each let block in the binary adds new locals to the bottom of the index
   // space. That is, all previously-existing indexes are bumped to higher
   // indexes. getAbsoluteLocalIndex does this computation.
-  std::vector<Index> letStack;
+  // Note that we must track not just the number of locals added in each let,
+  // but also their absolute indexes, as binaryen will add new locals as it goes
+  // for things like stacky code and tuples (so there isn't a simple way to get
+  // to the absolute index from a relative one). Hence each entry here is a list
+  // of the absolute indexes in use by that let.
+  std::vector<std::vector<Index>> letStack;
 
   // Given a relative index of a local (the one used in the wasm binary), get
   // the absolute one which takes into account lets, and is the one used in
