@@ -69,10 +69,19 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   std::vector<BasicBlock*> ifStack;
   // stack of the first blocks of loops
   std::vector<BasicBlock*> loopStack;
+
   // stack of the last blocks of try bodies
   std::vector<BasicBlock*> tryStack;
-  // stack of the first blocks of catch bodies
-  std::vector<BasicBlock*> catchStack;
+  // stack of the first blocks of catches that throwing instructions should
+  // unwind to at any moment. Because there can be multiple catch blocks for a
+  // try, we maintain a vector of first blocks of catches.
+  std::vector<std::vector<BasicBlock*>> unwindCatchStack;
+  // stack of 'Try' expression corresponding to unwindCatchStack.
+  std::vector<Expression*> unwindExprStack;
+  // Contains the stack of the first blocks of catches currently being processed
+  // in the beginning. Will contain the last blocks of catches after being
+  // processed.
+  std::vector<std::vector<BasicBlock*>> processCatchStack;
 
   void startBasicBlock() {
     currBasicBlock = ((SubType*)this)->makeBasicBlock();
@@ -210,41 +219,89 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // unless the call is within a try-catch, because the CFG will have too many
     // blocks that way, and if an exception is thrown, the function will be
     // exited anyway.
-    if (!self->catchStack.empty()) {
+    if (!self->unwindCatchStack.empty()) {
       auto* last = self->currBasicBlock;
       self->startBasicBlock();
       self->link(last, self->currBasicBlock);    // exception not thrown
-      self->link(last, self->catchStack.back()); // exception thrown
+      // Exception thrown. Create a link to each catch within the innermost try.
+      for (auto* block : self->unwindCatchStack.back()) {
+        self->link(last, block);
+      }
+      // If the innermost try does not have a catch_all clause, an exception
+      // thrown can be caught by any of its outer catch block. And if that outer
+      // try-catch also does not have a catch_all, this continues until we
+      // encounter try-catch_all. Create a link to all those possible catch
+      // unwind destinations.
+      for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
+        if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
+          break;
+        }
+        for (auto* block : self->unwindCatchStack[i - 1]) {
+          self->link(last, block);
+        }
+      }
     }
   }
 
   static void doStartTry(SubType* self, Expression** currp) {
+    auto* curr = (*currp)->cast<Try>();
     auto* last = self->currBasicBlock;
-    self->startBasicBlock(); // catch body's first block
-    self->catchStack.push_back(self->currBasicBlock);
+    self->unwindCatchStack.emplace_back();
+    self->unwindExprStack.push_back(curr);
+    for (Index i = 0; i < curr->catchBodies.size(); i++) {
+      self->startBasicBlock(); // catch body's first block
+      self->unwindCatchStack.back().push_back(self->currBasicBlock);
+    }
     self->currBasicBlock = last; // reset to the current block
   }
 
-  static void doStartCatch(SubType* self, Expression** currp) {
+  static void doStartCatches(SubType* self, Expression** currp) {
     self->tryStack.push_back(self->currBasicBlock); // last block of try body
-    self->currBasicBlock = self->catchStack.back();
-    self->catchStack.pop_back();
+    self->processCatchStack.push_back(self->unwindCatchStack.back());
+    self->unwindCatchStack.pop_back();
+    self->unwindExprStack.pop_back();
+  }
+
+  static void doStartCatch(SubType* self, Expression** currp, Index i) {
+    self->currBasicBlock = self->processCatchStack.back()[i];
+  }
+
+  static void doEndCatch(SubType* self, Expression** currp, Index i) {
+    self->processCatchStack.back()[i] = self->currBasicBlock;
   }
 
   static void doEndTry(SubType* self, Expression** currp) {
-    auto* last = self->currBasicBlock;
     self->startBasicBlock(); // continuation block after try-catch
-    // catch body's last block -> continuation block
-    self->link(last, self->currBasicBlock);
+    // each catch body's last block -> continuation block
+    for (auto *last : self->processCatchStack.back()) {
+      self->link(last, self->currBasicBlock);
+    }
     // try body's last block -> continuation block
     self->link(self->tryStack.back(), self->currBasicBlock);
     self->tryStack.pop_back();
+    self->processCatchStack.pop_back();
   }
 
   static void doEndThrow(SubType* self, Expression** currp) {
-    // We unwind to the innermost catch, if any
-    if (!self->catchStack.empty()) {
-      self->link(self->currBasicBlock, self->catchStack.back());
+    // We unwind to the innermost catches, if any
+    if (!self->unwindCatchStack.empty()) {
+      for (auto *block : self->unwindCatchStack.back()) {
+        self->link(self->currBasicBlock, block);
+      }
+      // Exception thrown. Create a link to each catch within the innermost try.
+      for (auto* block : self->unwindCatchStack.back()) {
+        self->link(self->currBasicBlock, block);
+      }
+      // Until we encounter try-catch_all, an exception can unwind to outer
+      // catches
+      for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
+        if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
+          break;
+        }
+        for (auto* block : self->unwindCatchStack[i - 1]) {
+          self->link(self->currBasicBlock, block);
+        }
+      }
     }
     self->startUnreachableBlock();
   }
@@ -304,16 +361,20 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         break;
       }
       case Expression::Id::TryId: {
-        // FIXME Update the implementation to match the new spec
-        WASM_UNREACHABLE("unimp");
-        /*
         self->pushTask(SubType::doEndTry, currp);
-        self->pushTask(SubType::scan, &curr->cast<Try>()->catchBody);
-        self->pushTask(SubType::doStartCatch, currp);
+        auto &catchBodies = curr->cast<Try>()->catchBodies;
+        using namespace std::placeholders;
+        for (Index i = 0; i < catchBodies.size(); i++) {
+          auto doEndCatchI = std::bind(doEndCatch, _1, _2, i);
+          self->pushTask(doEndCatchI, currp);
+          self->pushTask(SubType::scan, &catchBodies[i]);
+          auto doStartCatchI = std::bind(doStartCatch, _1, _2, i);
+          self->pushTask(doStartCatchI, currp);
+        }
+        self->pushTask(SubType::doStartCatches, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->body);
         self->pushTask(SubType::doStartTry, currp);
         return; // don't do anything else
-        */
       }
       case Expression::Id::ThrowId:
       case Expression::Id::RethrowId: {
@@ -350,7 +411,9 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     assert(ifStack.size() == 0);
     assert(loopStack.size() == 0);
     assert(tryStack.size() == 0);
-    assert(catchStack.size() == 0);
+    assert(unwindCatchStack.size() == 0);
+    assert(unwindExprStack.size() == 0);
+    assert(processCatchStack.size() == 0);
   }
 
   std::unordered_set<BasicBlock*> findLiveBlocks() {

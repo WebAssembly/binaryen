@@ -287,90 +287,133 @@
    )
   )
 
-;; FIXME Reenable these tests after fixing CFG traversal for EH
-;;  (event $e (attr 0) (param i32))
-;;  (func $try1
-;;    (local $x i32)
-;;    (try
-;;      (do)
-;;      (catch
-;;        (drop (pop exnref))
-;;        (local.set $x (i32.const 1))
-;;      )
-;;    )
-;;    (local.set $x (i32.const 1)) ;; should NOT be dropped
-;;  )
-;;  (func $try2
-;;    (local $x i32)
-;;    (try
-;;      (do
-;;        (throw $e (i32.const 0))
-;;        (local.set $x (i32.const 1))
-;;      )
-;;      (catch
-;;        (drop (pop exnref))
-;;      )
-;;    )
-;;    (local.set $x (i32.const 1)) ;; should NOT be dropped
-;;  )
-;;  (func $try3
-;;    (local $x i32)
-;;    (try
-;;      (do
-;;        (throw $e (i32.const 0))
-;;      )
-;;      (catch
-;;        (drop (pop exnref))
-;;        (local.set $x (i32.const 1))
-;;      )
-;;    )
-;;    (local.set $x (i32.const 1)) ;; should be dropped
-;;  )
-;;  (func $foo)
-;;  (func $try4
-;;    (local $x i32)
-;;    (try
-;;      (do
-;;        (call $foo)
-;;        (local.set $x (i32.const 1))
-;;      )
-;;      (catch
-;;        (drop (pop exnref))
-;;      )
-;;    )
-;;    (local.set $x (i32.const 1)) ;; should NOT be dropped
-;;  )
-;;  (func $try5
-;;    (local $x i32)
-;;    (try
-;;      (do
-;;        (local.set $x (i32.const 1))
-;;        (call $foo)
-;;      )
-;;      (catch
-;;        (drop (pop exnref))
-;;      )
-;;    )
-;;    (local.set $x (i32.const 1)) ;; should be dropped
-;;  )
-;;  (func $nested-try
-;;    (local $x i32)
-;;    (try
-;;      (do
-;;        (try
-;;          (do
-;;            (throw $e (i32.const 0))
-;;          )
-;;          (catch
-;;            (rethrow (pop exnref))
-;;          )
-;;        )
-;;      )
-;;      (catch
-;;        (drop (pop exnref))
-;;        (local.set $x (i32.const 1))
-;;      )
-;;    )
-;;    (local.set $x (i32.const 1)) ;; should be dropped
-;;  )
+  (event $e (attr 0) (param i32))
+  (func $try1
+    (local $x i32)
+    (try
+      (do)
+      (catch_all
+        (local.set $x (i32.const 1))
+      )
+    )
+    ;; try will not throw. So this should NOT be dropped
+    (local.set $x (i32.const 1))
+  )
+  (func $try2
+    (local $x i32)
+    (try
+      (do
+        (throw $e (i32.const 0))
+        (local.set $x (i32.const 1))
+      )
+      (catch_all)
+    )
+    ;; local.set is after 'throw' so it will not run. This should NOT be
+    ;; dropped.
+    (local.set $x (i32.const 1))
+  )
+  (func $try3
+    (local $x i32)
+    (try
+      (do
+        (throw $e (i32.const 0))
+      )
+      (catch_all
+        (local.set $x (i32.const 1))
+      )
+    )
+    ;; try body will throw and catch_all contains the same local.set. This
+    ;; should be dropped.
+    (local.set $x (i32.const 1))
+  )
+  (func $foo)
+  (func $try4
+    (local $x i32)
+    (try
+      (do
+        (call $foo)
+        (local.set $x (i32.const 1))
+      )
+      (catch_all)
+    )
+    ;; (call $foo) may throw and the local.set may not run, so this should NOT
+    ;; be dropped
+    (local.set $x (i32.const 1))
+  )
+  (func $try5
+    (local $x i32)
+    (try
+      (do
+        (local.set $x (i32.const 1))
+        (call $foo)
+      )
+      (catch_all)
+    )
+    ;; Even if (call $foo) throws, local.set runs before it, so this should be
+    ;; dropped
+    (local.set $x (i32.const 1))
+  )
+  (func $nested-try1
+    (local $x i32)
+    (try
+      (do
+        (try
+          (do
+            (throw $e (i32.const 0))
+          )
+          (catch_all
+            (rethrow 0)
+          )
+        )
+      )
+      (catch_all
+        (local.set $x (i32.const 1))
+      )
+    )
+    ;; The exception is caught by the inner catch_all and rethrown and again
+    ;; caught by the outer catch_all, which runs the local.set. So this should
+    ;; be dropped.
+    (local.set $x (i32.const 1))
+  )
+  (func $nested-try2
+    (local $x i32)
+    (try
+      (do
+        (try
+          (do
+            (throw $e (i32.const 0))
+          )
+          (catch_all
+            (local.set $x (i32.const 1))
+            (rethrow 0)
+          )
+        )
+      )
+      (catch_all)
+    )
+    ;; The exception is caught by the inner catch_all, which runs the local.set,
+    ;; so this should be dropped
+    (local.set $x (i32.const 1))
+  )
+  (func $nested-try3
+    (local $x i32)
+    (try
+      (do
+        (try
+          (do
+            (throw $e (i32.const 0))
+          )
+          (catch $e
+            (drop (pop i32))
+            (local.set $x (i32.const 1))
+            (rethrow 0)
+          )
+        )
+      )
+      (catch_all)
+    )
+    ;; Unlike nested-try2, the exception may not be caught by the inner catch,
+    ;; so the local.set may not run. So this should NOT be dropped.
+    (local.set $x (i32.const 1))
+  )
 )
