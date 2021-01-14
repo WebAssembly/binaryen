@@ -3365,7 +3365,6 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
 
 void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
   BYN_TRACE("zz node: LocalGet " << pos << std::endl);
-  ;
   requireFunctionContext("local.get");
   curr->index = getAbsoluteLocalIndex(getU32LEB());
   if (curr->index >= currFunction->getNumLocals()) {
