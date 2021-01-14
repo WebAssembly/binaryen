@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.13)
 project(binaryen LANGUAGES C CXX VERSION 99)
 include(GNUInstallDirs)
 
@@ -68,7 +68,7 @@ endfunction()
 
 function(ADD_LINK_FLAG value)
   message(STATUS "Linking with ${value}")
-  FOREACH(variable CMAKE_EXE_LINKER_FLAGS)
+  FOREACH(variable CMAKE_EXE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS)
     set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
   ENDFOREACH(variable)
 endfunction()
@@ -134,6 +134,17 @@ FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   set(CMAKE_LIBRARY_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
 ENDFOREACH()
+
+option(BYN_ENABLE_LTO "Build with LTO" Off)
+if(BYN_ENABLE_LTO)
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    message(FATAL_ERROR "ThinLTO is only supported by clang")
+  endif()
+  if(NOT APPLE)
+    add_link_flag("-fuse-ld=lld")
+  endif()
+  add_compile_flag("-flto=thin")
+endif()
 
 if(MSVC)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
