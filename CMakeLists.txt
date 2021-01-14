@@ -1,15 +1,4 @@
 cmake_minimum_required(VERSION 3.13)
-
-# These linker flags must be set before the project() command below, because
-# linker flags set later are not passed to CMake's test compiles at configure
-# time. On Windows, the linker must be overridden with -DCMAKE_LINKER= because
-# it is invoked directly by CMake rather than by the compiler.
-option(BYN_ENABLE_LTO "Build with LTO" Off)
-if(BYN_ENABLE_LTO AND NOT MSVC)
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fuse-ld=lld")
-  set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fuse-ld=lld")
-endif()
-
 project(binaryen LANGUAGES C CXX VERSION 99)
 include(GNUInstallDirs)
 
@@ -79,7 +68,7 @@ endfunction()
 
 function(ADD_LINK_FLAG value)
   message(STATUS "Linking with ${value}")
-  FOREACH(variable CMAKE_EXE_LINKER_FLAGS)
+  FOREACH(variable CMAKE_EXE_LINKER_FLAGS CMAKE_SHARED_LINKER_FLAGS)
     set(${variable} "${${variable}} ${value}" PARENT_SCOPE)
   ENDFOREACH(variable)
 endfunction()
@@ -146,8 +135,14 @@ FOREACH(SUFFIX "_DEBUG" "_RELEASE" "_RELWITHDEBINFO" "_MINSIZEREL" "")
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY${SUFFIX} "${PROJECT_BINARY_DIR}/lib")
 ENDFOREACH()
 
-
+option(BYN_ENABLE_LTO "Build with LTO" Off)
 if(BYN_ENABLE_LTO)
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    message(FATAL_ERROR "ThinLTO is only supported by clang")
+  endif()
+  if(NOT APPLE)
+    add_link_flag("-fuse-ld=lld")
+  endif()
   add_compile_flag("-flto=thin")
 endif()
 
