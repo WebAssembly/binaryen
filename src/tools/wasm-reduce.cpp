@@ -71,8 +71,12 @@ std::string GetLastErrorStdStr() {
 #endif
 using namespace wasm;
 
-// a timeout on every execution of the command
-size_t timeout = 2;
+// A timeout on every execution of the command.
+static size_t timeout = 2;
+
+// A string of feature flags and other things to pass while reducing. The
+// default of enabling all features should work in most cases.
+static std::string extraFlags = "-all";
 
 struct ProgramResult {
   int code;
@@ -282,14 +286,12 @@ struct Reducer
       // compensated for), and without
       for (auto pass : passes) {
         std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-        currCommand += working + " --detect-features -o " + test + " " + pass;
+        currCommand += working + " -o " + test + " " + pass + " " + extraFlags;
         if (debugInfo) {
           currCommand += " -g ";
         }
         if (!binary) {
-          currCommand += " -S --all-features ";
-        } else {
-          currCommand += " --detect-features ";
+          currCommand += " -S ";
         }
         if (verbose) {
           std::cerr << "|    trying pass command: " << currCommand << "\n";
@@ -1153,6 +1155,15 @@ int main(int argc, const char* argv[]) {
            timeout = atoi(argument.c_str());
            std::cout << "|applying timeout: " << timeout << "\n";
          })
+    .add("--extra-flags",
+         "-ef",
+         "Extra commandline flags to pass to wasm-opt while reducing. "
+         "(default: --enable-all)",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           extraFlags = argument;
+           std::cout << "|applying extraFlags: " << extraFlags << "\n";
+         })
     .add_positional(
       "INFILE",
       Options::Arguments::One,
@@ -1219,12 +1230,10 @@ int main(int argc, const char* argv[]) {
                "(read-written) binary\n";
   {
     // read and write it
-    auto cmd =
-      Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test;
+    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " +
+               test + " " + extraFlags;
     if (!binary) {
-      cmd += " -S --all-features";
-    } else {
-      cmd += " --detect-features";
+      cmd += " -S ";
     }
     ProgramResult readWrite(cmd);
     if (readWrite.failed()) {
