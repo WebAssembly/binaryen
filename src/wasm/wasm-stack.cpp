@@ -1863,9 +1863,8 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
-  // TODO Fix handling of BinaryLocations for the new EH spec
   if (func && !sourceMap) {
-    parent.writeExtraDebugLocation(curr, func, BinaryLocations::Catch);
+    parent.writeExtraDebugLocation(curr, func, i);
   }
   o << int8_t(BinaryConsts::Catch)
     << U32LEB(parent.getEventIndex(curr->catchEvents[i]));
@@ -1875,7 +1874,9 @@ void BinaryInstWriter::emitCatchAll(Try* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
   breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
-  // TODO Fix handling of BinaryLocations for the new EH spec
+  if (func && !sourceMap) {
+    parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
+  }
   o << int8_t(BinaryConsts::CatchAll);
 }
 

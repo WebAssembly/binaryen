@@ -915,8 +915,9 @@ void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
   }
 }
 
-void WasmBinaryWriter::writeExtraDebugLocation(
-  Expression* curr, Function* func, BinaryLocations::DelimiterId id) {
+void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
+                                               Function* func,
+                                               size_t id) {
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
@@ -2830,10 +2831,16 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       curr = nullptr;
       continueControlFlow(BinaryLocations::Else, startPos);
       break;
-    case BinaryConsts::Catch:
+    case BinaryConsts::Catch: {
       curr = nullptr;
-      continueControlFlow(BinaryLocations::Catch, startPos);
+      // The new catch is appended at the end of the list of debug delimiters
+      // for this instruction.
+      auto currControlFlow = controlFlowStack.back();
+      auto delimiterId =
+        currFunction->delimiterLocations[currControlFlow].size();
+      continueControlFlow(delimiterId, startPos);
       break;
+    }
     case BinaryConsts::RefNull:
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
       break;
@@ -3062,8 +3069,7 @@ void WasmBinaryBuilder::startControlFlow(Expression* curr) {
   }
 }
 
-void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
-                                            BinaryLocation pos) {
+void WasmBinaryBuilder::continueControlFlow(size_t id, BinaryLocation pos) {
   if (DWARF && currFunction) {
     assert(!controlFlowStack.empty());
     auto currControlFlow = controlFlowStack.back();
