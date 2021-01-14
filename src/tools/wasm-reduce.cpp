@@ -1200,9 +1200,9 @@ int main(int argc, const char* argv[]) {
   }
 
   if (!force) {
-    std::cerr
-      << "|checking that command has different behavior on different inputs (this "
-         "verifies that the test file is used by the command)\n";
+    std::cerr << "|checking that command has different behavior on different "
+                 "inputs (this "
+                 "verifies that the test file is used by the command)\n";
     // Try it on an invalid input.
     {
       std::ofstream dst(test, std::ios::binary);
@@ -1217,11 +1217,11 @@ int main(int argc, const char* argv[]) {
       writer.write(emptyModule, test);
       ProgramResult resultOnValid(command);
       if (resultOnValid == expected) {
-        Fatal() <<
-          "running the command on the given input gives the same result as "
-          "when running it on either a trivial valid wasm or a file with "
-          "nonsense in it. does the script not look at the test file (" +
-          test + ")? (use -f to ignore this check)";
+        Fatal()
+          << "running the command on the given input gives the same result as "
+             "when running it on either a trivial valid wasm or a file with "
+             "nonsense in it. does the script not look at the test file (" +
+               test + ")? (use -f to ignore this check)";
       }
     }
   }
