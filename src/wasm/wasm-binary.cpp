@@ -3084,7 +3084,7 @@ Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
   // We will continue relativizing as we go down, til we find our let.
   int64_t relative = index;
   Index totalLetItems = 0;
-  for (int64_t i = letStack.size() - 1; i >= 0; i--) {
+  for (auto i = int64_t(letStack.size()) - 1; i >= 0; i--) {
     auto& info = letStack[i];
     int64_t currNum = info.num;
     totalLetItems += currNum;
