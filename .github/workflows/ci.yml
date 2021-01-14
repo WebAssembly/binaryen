@@ -70,7 +70,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
 
     - name: cmake (macos)
-      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install
+      run: cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DBYN_ENABLE_LTO=ON
       if: matrix.os == 'macos-latest'
 
     - name: cmake (win)
@@ -79,7 +79,7 @@ jobs:
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out --config Release
+      run: cmake --build out --config Release -v
 
     - name: install
       run: cmake --install out --config Release
