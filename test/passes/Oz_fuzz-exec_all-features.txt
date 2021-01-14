@@ -114,80 +114,46 @@
   )
  )
  (func $2 (; has Stack IR ;)
-  (local $0 (rtt ${mut:i32}))
-  (local $1 (rtt ${i32_f64}))
-  (local $2 (rtt ${i32_f64}))
-  (local $3 anyref)
-  (local.set $1
-   (rtt.sub ${i32_f64}
+  (local $0 anyref)
+  (call $log
+   (i32.const 1)
+  )
+  (call $log
+   (i32.const 0)
+  )
+  (call $log
+   (i32.const 0)
+  )
+  (call $log
+   (i32.const 1)
+  )
+  (call $log
+   (i32.const 0)
+  )
+  (call $log
+   (ref.test ${i32_f64}
     (local.tee $0
+     (struct.new_default_with_rtt ${i32_f64}
+      (rtt.sub ${i32_f64}
+       (rtt.canon ${mut:i32})
+      )
+     )
+    )
+    (rtt.sub ${i32_f64}
      (rtt.canon ${mut:i32})
     )
    )
   )
-  (local.set $2
-   (rtt.canon ${i32_f64})
-  )
-  (call $log
-   (ref.is_null
-    (ref.cast ${mut:i32}
-     (ref.null ${mut:i32})
-     (local.get $0)
-    )
-   )
-  )
-  (call $log
-   (ref.test ${mut:i32}
-    (ref.null ${mut:i32})
-    (local.get $0)
-   )
-  )
-  (call $log
-   (ref.test ${mut:i32}
-    (array.new_with_rtt $[mut:i8]
-     (rtt.canon $[mut:i8])
-     (i32.const 10)
-     (i32.const 20)
-    )
-    (local.get $0)
-   )
-  )
-  (call $log
-   (ref.test ${mut:i32}
-    (struct.new_default_with_rtt ${mut:i32}
-     (local.get $0)
-    )
-    (local.get $0)
-   )
-  )
   (call $log
    (ref.test ${i32_f64}
-    (struct.new_default_with_rtt ${mut:i32}
-     (local.get $0)
-    )
-    (local.get $2)
-   )
-  )
-  (call $log
-   (ref.test ${i32_f64}
-    (local.tee $3
-     (struct.new_default_with_rtt ${i32_f64}
-      (local.get $1)
-     )
-    )
-    (local.get $1)
-   )
-  )
-  (call $log
-   (ref.test ${i32_f64}
-    (local.get $3)
-    (local.get $2)
+    (local.get $0)
+    (rtt.canon ${i32_f64})
    )
   )
   (call $log
    (ref.test ${mut:i32}
-    (local.get $3)
     (local.get $0)
+    (rtt.canon ${mut:i32})
    )
   )
  )
