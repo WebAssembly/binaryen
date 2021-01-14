@@ -137,7 +137,7 @@ ENDFOREACH()
 
 option(BYN_ENABLE_LTO "Build with LTO" Off)
 if(BYN_ENABLE_LTO)
-  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     message(FATAL_ERROR "ThinLTO is only supported by clang")
   endif()
   if(NOT APPLE)
