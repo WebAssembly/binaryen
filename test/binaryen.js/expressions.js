@@ -1457,11 +1457,13 @@ console.log("# Try");
 
   theTry.body = body = module.i32.const(4);
   assert(theTry.body === body);
-  theTry.catchBodies = catchBodies = [
+  catchBodies = [
     module.i32.const(5) // set
     //remove
-  ]
+  ];
+  theTry.setCatchBodies(catchBodies);
   assertDeepEqual(theTry.catchBodies, catchBodies);
+  assertDeepEqual(theTry.getCatchBodies(), catchBodies);
   console.log(theTry.toText());
 
   theTry.insertCatchEventAt(1, "event2");
