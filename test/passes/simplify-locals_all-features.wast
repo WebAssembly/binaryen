@@ -1704,7 +1704,7 @@
     (try
       (do)
       (catch $e-i32
-        ;; This (local.set $0) of (pop i32) cannot be sinked to (local.get $0)
+        ;; This (local.set $0) of (pop i32) cannot be sunk to (local.get $0)
         ;; below, because the pop should follow right after 'catch'.
         (local.set $0 (pop i32))
         (call $foo
