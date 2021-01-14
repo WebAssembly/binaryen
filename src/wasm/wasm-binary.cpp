@@ -5709,7 +5709,7 @@ void WasmBinaryBuilder::visitLet(Block* curr) {
     curr->list.push_back(builder.makeLocalSet(absoluteIndex, value));
   }
   // Read the body, with adjusted local indexes.
-  letStack.push_back(absoluteIndexes);
+  letStack.emplace_back(std::move(absoluteIndexes));
   curr->list.push_back(getBlockOrSingleton(curr->type));
   letStack.pop_back();
   curr->finalize(curr->type);
