@@ -368,21 +368,21 @@ public:
   // C-API
 
   void insertAt(size_t index, T item) {
-    assert(index <= usedElements); // appending is ok
-    resize(usedElements + 1);
-    for (auto i = usedElements - 1; i > index; --i) {
+    assert(index <= size()); // appending is ok
+    resize(size() + 1);
+    for (auto i = size() - 1; i > index; --i) {
       data[i] = data[i - 1];
     }
     data[index] = item;
   }
 
   T removeAt(size_t index) {
-    assert(index < usedElements);
+    assert(index < size());
     auto item = data[index];
-    for (auto i = index; i < usedElements - 1; ++i) {
+    for (auto i = index; i < size() - 1; ++i) {
       data[i] = data[i + 1];
     }
-    resize(usedElements - 1);
+    resize(size() - 1);
     return item;
   }
 };
