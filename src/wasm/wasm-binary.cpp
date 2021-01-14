@@ -3085,14 +3085,15 @@ Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
   int64_t relative = index;
   Index totalLetItems = 0;
   for (int64_t i = letStack.size() - 1; i >= 0; i--) {
-    int64_t curr = letStack[i].size();
-    totalLetItems += curr;
-    // There were |curr| let items added in this let. Check if we were one of
+    auto& info = letStack[i];
+    int64_t currNum = info.num;
+    totalLetItems += currNum;
+    // There were |currNum| let items added in this let. Check if we were one of
     // them.
-    if (relative < curr) {
-      return letStack[i][relative];
+    if (relative < currNum) {
+      return info.absoluteStart + relative;
     }
-    relative -= curr;
+    relative -= currNum;
   }
   // We were not a let, but a normal var from the beginning. In that case, after
   // we subtracted the let items, we have the proper absolute index.
@@ -5694,21 +5695,19 @@ void WasmBinaryBuilder::visitLet(Block* curr) {
   startControlFlow(curr);
   // Get the output type.
   curr->type = getType();
-  // Get the new local types.
-  auto varsBefore = currFunction->vars.size();
+  // Get the new local types. First, get the absolute index from which we will
+  // start to allocate them.
+  Index absoluteStart = currFunction->vars.size();
   readVars();
-  auto numNewVars = currFunction->vars.size() - varsBefore;
+  Index numNewVars = currFunction->vars.size() - absoluteStart;
   // Assign the values into locals.
   Builder builder(wasm);
-  std::vector<Index> absoluteIndexes;
   for (Index i = 0; i < numNewVars; i++) {
     auto* value = popNonVoidExpression();
-    auto absoluteIndex = varsBefore + i;
-    absoluteIndexes.push_back(absoluteIndex);
-    curr->list.push_back(builder.makeLocalSet(absoluteIndex, value));
+    curr->list.push_back(builder.makeLocalSet(absoluteStart + i, value));
   }
   // Read the body, with adjusted local indexes.
-  letStack.emplace_back(std::move(absoluteIndexes));
+  letStack.emplace_back(LetData{numNewVars, absoluteStart});
   curr->list.push_back(getBlockOrSingleton(curr->type));
   letStack.pop_back();
   curr->finalize(curr->type);
