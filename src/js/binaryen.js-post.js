@@ -2492,6 +2492,25 @@ function getAllNested(ref, numFn, getFn) {
   return ret;
 }
 
+function setAllNested(ref, values, numFn, setFn, appendFn, removeFn) {
+  const num = values.length;
+  let prevNum = numFn(ref);
+  let index = 0;
+  while (index < num) {
+    preserveStack(() => {
+      if (index < prevNum) {
+        setFn(ref, index, values[index]);
+      } else {
+        appendFn(ref, values[index]);
+      }
+    });
+    ++index;
+  }
+  while (prevNum > index) {
+    removeFn(ref, --prevNum);
+  }
+}
+
 // Gets the specific id of an 'Expression'
 Module['getExpressionId'] = function(expr) {
   return Module['_BinaryenExpressionGetId'](expr);
@@ -3228,29 +3247,10 @@ Module['Block'] = makeExpressionWrapper({
     return Module['_BinaryenBlockGetNumChildren'](expr);
   },
   'getChildren'(expr) {
-    const numChildren = Module['_BinaryenBlockGetNumChildren'](expr);
-    const children = new Array(numChildren);
-    let index = 0;
-    while (index < numChildren) {
-      children[index] = Module['_BinaryenBlockGetChildAt'](expr, index++);
-    }
-    return children;
+    return getAllNested(expr, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockGetChildAt']);
   },
   'setChildren'(expr, children) {
-    const numChildren = children.length;
-    let prevNumChildren = Module['_BinaryenBlockGetNumChildren'](expr);
-    let index = 0;
-    while (index < numChildren) {
-      if (index < prevNumChildren) {
-        Module['_BinaryenBlockSetChildAt'](expr, index, children[index]);
-      } else {
-        Module['_BinaryenBlockAppendChild'](expr, children[index]);
-      }
-      ++index;
-    }
-    while (prevNumChildren > index) {
-      Module['_BinaryenBlockRemoveChildAt'](expr, --prevNumChildren);
-    }
+    setAllNested(expr, children, Module['_BinaryenBlockGetNumChildren'], Module['_BinaryenBlockSetChildAt'], Module['_BinaryenBlockAppendChild'], Module['_BinaryenBlockRemoveChildAt']);
   },
   'getChildAt'(expr, index) {
     return Module['_BinaryenBlockGetChildAt'](expr, index);
@@ -3333,31 +3333,10 @@ Module['Switch'] = makeExpressionWrapper({
     return Module['_BinaryenSwitchGetNumNames'](expr);
   },
   'getNames'(expr) {
-    const numNames = Module['_BinaryenSwitchGetNumNames'](expr);
-    const names = new Array(numNames);
-    let index = 0;
-    while (index < numNames) {
-      names[index] = UTF8ToString(Module['_BinaryenSwitchGetNameAt'](expr, index++));
-    }
-    return names;
+    return getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(p => UTF8ToString(p));
   },
   'setNames'(expr, names) {
-    const numNames = names.length;
-    let prevNumNames = Module['_BinaryenSwitchGetNumNames'](expr);
-    let index = 0;
-    while (index < numNames) {
-      preserveStack(() => {
-        if (index < prevNumNames) {
-          Module['_BinaryenSwitchSetNameAt'](expr, index, strToStack(names[index]));
-        } else {
-          Module['_BinaryenSwitchAppendName'](expr, strToStack(names[index]));
-        }
-      });
-      ++index;
-    }
-    while (prevNumNames > index) {
-      Module['_BinaryenSwitchRemoveNameAt'](expr, --prevNumNames);
-    }
+    setAllNested(expr, names.map(strToStack), Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchSetNameAt'], Module['_BinaryenSwitchAppendName'], Module['_BinaryenSwitchRemoveNameAt']);
   },
   'getDefaultName'(expr) {
     const name = Module['_BinaryenSwitchGetDefaultName'](expr);
@@ -3406,29 +3385,10 @@ Module['Call'] = makeExpressionWrapper({
     return Module['_BinaryenCallGetNumOperands'](expr);
   },
   'getOperands'(expr) {
-    const numOperands = Module['_BinaryenCallGetNumOperands'](expr);
-    const operands = new Array(numOperands);
-    let index = 0;
-    while (index < numOperands) {
-      operands[index] = Module['_BinaryenCallGetOperandAt'](expr, index++);
-    }
-    return operands;
+    return getAllNested(expr, Module['_BinaryenCallGetNumOperands'], Module['_BinaryenCallGetOperandAt']);
   },
   'setOperands'(expr, operands) {
-    const numOperands = operands.length;
-    let prevNumOperands = Module['_BinaryenCallGetNumOperands'](expr);
-    let index = 0;
-    while (index < numOperands) {
-      if (index < prevNumOperands) {
-        Module['_BinaryenCallSetOperandAt'](expr, index, operands[index]);
-      } else {
-        Module['_BinaryenCallAppendOperand'](expr, operands[index]);
-      }
-      ++index;
-    }
-    while (prevNumOperands > index) {
-      Module['_BinaryenCallRemoveOperandAt'](expr, --prevNumOperands);
-    }
+    setAllNested(expr, operands, Module['_BinaryenCallGetNumOperands'], Module['_BinaryenCallSetOperandAt'], Module['_BinaryenCallAppendOperand'], Module['_BinaryenCallRemoveOperandAt']);
   },
   'getOperandAt'(expr, index) {
     return Module['_BinaryenCallGetOperandAt'](expr, index);
@@ -3464,29 +3424,10 @@ Module['CallIndirect'] = makeExpressionWrapper({
     return Module['_BinaryenCallIndirectGetNumOperands'](expr);
   },
   'getOperands'(expr) {
-    const numOperands = Module['_BinaryenCallIndirectGetNumOperands'](expr);
-    const operands = new Array(numOperands);
-    let index = 0;
-    while (index < numOperands) {
-      operands[index] = Module['_BinaryenCallIndirectGetOperandAt'](expr, index++);
-    }
-    return operands;
+    return getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt']);
   },
   'setOperands'(expr, operands) {
-    const numOperands = operands.length;
-    let prevNumOperands = Module['_BinaryenCallIndirectGetNumOperands'](expr);
-    let index = 0;
-    while (index < numOperands) {
-      if (index < prevNumOperands) {
-        Module['_BinaryenCallIndirectSetOperandAt'](expr, index, operands[index]);
-      } else {
-        Module['_BinaryenCallIndirectAppendOperand'](expr, operands[index]);
-      }
-      ++index;
-    }
-    while (prevNumOperands > index) {
-      Module['_BinaryenCallIndirectRemoveOperandAt'](expr, --prevNumOperands);
-    }
+    setAllNested(expr, operands, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectSetOperandAt'], Module['_BinaryenCallIndirectAppendOperand'], Module['_BinaryenCallIndirectRemoveOperandAt']);
   },
   'getOperandAt'(expr, index) {
     return Module['_BinaryenCallIndirectGetOperandAt'](expr, index);
@@ -4196,31 +4137,10 @@ Module['Try'] = makeExpressionWrapper({
     return Module['_BinaryenTryGetNumCatchEvents'](expr);
   },
   'getCatchEvents'(expr) {
-    const numCatchEvents = Module['_BinaryenTryGetNumCatchEvents'](expr);
-    const catchEvents = new Array(numCatchEvents);
-    let index = 0;
-    while (index < numCatchEvents) {
-      catchEvents[index] = UTF8ToString(Module['_BinaryenTryGetCatchEventAt'](expr, index++));
-    }
-    return catchEvents;
+    return getAllNested(expr, Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTryGetCatchEventAt']).map(p => UTF8ToString(p));
   },
   'setCatchEvents'(expr, catchEvents) {
-    const numCatchEvents = catchEvents.length;
-    let prevNumCatchEvents = Module['_BinaryenTryGetNumCatchEvents'](expr);
-    let index = 0;
-    while (index < numCatchEvents) {
-      preserveStack(() => {
-        if (index < prevNumCatchEvents) {
-          Module['_BinaryenTrySetCatchEventAt'](expr, index, strToStack(catchEvents[index]));
-        } else {
-          Module['_BinaryenTryAppendCatchEvent'](expr, strToStack(catchEvents[index]));
-        }
-      });
-      ++index;
-    }
-    while (prevNumCatchEvents > index) {
-      Module['_BinaryenTryRemoveCatchEventAt'](expr, --prevNumCatchEvents);
-    }
+    setAllNested(expr, catchEvents.map(strToStack), Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTrySetCatchEventAt'], Module['_BinaryenTryAppendCatchEvent'], Module['_BinaryenTryRemoveCatchEventAt']);
   },
   'getCatchEventAt'(expr, index) {
     return UTF8ToString(Module['_BinaryenTryGetCatchEventAt'](expr, index));
@@ -4241,29 +4161,10 @@ Module['Try'] = makeExpressionWrapper({
     return Module['_BinaryenTryGetNumCatchBodies'](expr);
   },
   'getCatchBodies'(expr) {
-    const numCatchBodies = Module['_BinaryenTryGetNumCatchBodies'](expr);
-    const catchbodies = new Array(numCatchBodies);
-    let index = 0;
-    while (index < numCatchBodies) {
-      catchbodies[index] = Module['_BinaryenTryGetCatchBodyAt'](expr, index++);
-    }
-    return catchbodies;
+    return getAllNested(expr, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']);
   },
-  'setCatchBodies'(expr, catchbodies) {
-    const numCatchBodies = catchbodies.length;
-    let prevNumCatchBodies = Module['_BinaryenTryGetNumCatchBodies'](expr);
-    let index = 0;
-    while (index < numCatchBodies) {
-      if (index < prevNumCatchBodies) {
-        Module['_BinaryenTrySetCatchBodyAt'](expr, index, catchbodies[index]);
-      } else {
-        Module['_BinaryenTryAppendCatchBody'](expr, catchbodies[index]);
-      }
-      ++index;
-    }
-    while (prevNumCatchBodies > index) {
-      Module['_BinaryenTryRemoveCatchBodyAt'](expr, --prevNumCatchBodies);
-    }
+  'setCatchBodies'(expr, catchBodies) {
+    setAllNested(expr, catchBodies, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTrySetCatchBodyAt'], Module['_BinaryenTryAppendCatchBody'], Module['_BinaryenTryRemoveCatchBodyAt']);
   },
   'getCatchBodyAt'(expr, index) {
     return Module['_BinaryenTryGetCatchBodyAt'](expr, index);
@@ -4296,29 +4197,10 @@ Module['Throw'] = makeExpressionWrapper({
     return Module['_BinaryenThrowGetNumOperands'](expr);
   },
   'getOperands'(expr) {
-    const numOperands = Module['_BinaryenThrowGetNumOperands'](expr);
-    const operands = new Array(numOperands);
-    let index = 0;
-    while (index < numOperands) {
-      operands[index] = Module['_BinaryenThrowGetOperandAt'](expr, index++);
-    }
-    return operands;
+    return getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperandAt']);
   },
   'setOperands'(expr, operands) {
-    const numOperands = operands.length;
-    let prevNumOperands = Module['_BinaryenThrowGetNumOperands'](expr);
-    let index = 0;
-    while (index < numOperands) {
-      if (index < prevNumOperands) {
-        Module['_BinaryenThrowSetOperandAt'](expr, index, operands[index]);
-      } else {
-        Module['_BinaryenThrowAppendOperand'](expr, operands[index]);
-      }
-      ++index;
-    }
-    while (prevNumOperands > index) {
-      Module['_BinaryenThrowRemoveOperandAt'](expr, --prevNumOperands);
-    }
+    setAllNested(expr, operands, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowSetOperandAt'], Module['_BinaryenThrowAppendOperand'], Module['_BinaryenThrowRemoveOperandAt']);
   },
   'getOperandAt'(expr, index) {
     return Module['_BinaryenThrowGetOperandAt'](expr, index);
@@ -4372,29 +4254,10 @@ Module['TupleMake'] = makeExpressionWrapper({
     return Module['_BinaryenTupleMakeGetNumOperands'](expr);
   },
   'getOperands'(expr) {
-    const numOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
-    const operands = new Array(numOperands);
-    let index = 0;
-    while (index < numOperands) {
-      operands[index] = Module['_BinaryenTupleMakeGetOperandAt'](expr, index++);
-    }
-    return operands;
+    return getAllNested(expr, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeGetOperandAt']);
   },
   'setOperands'(expr, operands) {
-    const numOperands = operands.length;
-    let prevNumOperands = Module['_BinaryenTupleMakeGetNumOperands'](expr);
-    let index = 0;
-    while (index < numOperands) {
-      if (index < prevNumOperands) {
-        Module['_BinaryenTupleMakeSetOperandAt'](expr, index, operands[index]);
-      } else {
-        Module['_BinaryenTupleMakeAppendOperand'](expr, operands[index]);
-      }
-      ++index;
-    }
-    while (prevNumOperands > index) {
-      Module['_BinaryenTupleMakeRemoveOperandAt'](expr, --prevNumOperands);
-    }
+    setAllNested(expr, operands, Module['_BinaryenTupleMakeGetNumOperands'], Module['_BinaryenTupleMakeSetOperandAt'], Module['_BinaryenTupleMakeAppendOperand'], Module['_BinaryenTupleMakeRemoveOperandAt']);
   },
   'getOperandAt'(expr, index) {
     return Module['_BinaryenTupleMakeGetOperandAt'](expr, index);
