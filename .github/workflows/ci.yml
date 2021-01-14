@@ -117,7 +117,7 @@ jobs:
         mkdir -p out
         cmake -S . -B out -G Ninja -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DBYN_ENABLE_LTO=ON
     - name: build
-      run: cmake --build out
+      run: cmake --build -v out
     - name: test binaryen-lit
       run: python out/bin/binaryen-lit test/lit/parse-error.wast
     - name: test
