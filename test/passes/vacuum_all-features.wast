@@ -798,6 +798,7 @@
 
 (module
   (event $e (attr 0) (param i32))
+  (event $e2 (attr 0) (param i32))
   ;; When try body does not throw, try-body can be replaced with the try body
   (func $try-test
     (try
@@ -830,15 +831,14 @@
     )
   )
 
-  ;; The exception thrown in the inner try may not be caught by the inner catch
-  ;; (here it will be caught because they use the same event, but in general we
-  ;; cannot know), so the outer try-catch cannot be removed
+  ;; The exception thrown in the inner try will not be caught by the inner
+  ;; catch, so the outer try-catch cannot be removed
   (func $inner-try-catch-test (local $0 i32)
     (try
       (do
         (try
           (do
-            (throw $e (i32.const 0))
+            (throw $e2 (i32.const 0))
           )
           (catch $e
             (drop (pop i32))

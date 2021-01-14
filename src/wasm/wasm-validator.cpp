@@ -2045,17 +2045,9 @@ void FunctionValidator::visitTry(Try* curr) {
                     "unreachable try-catch must have unreachable catch body");
     }
   }
-  if (curr->hasCatchAll()) {
-    shouldBeEqual(curr->catchBodies.size(),
-                  curr->catchEvents.size() + 1,
-                  curr,
-                  "the number of catch blocks and events do not match");
-  } else {
-    shouldBeEqual(curr->catchBodies.size(),
-                  curr->catchEvents.size(),
-                  curr,
-                  "the number of catch blocks and events do not match");
-  }
+  shouldBeTrue(curr->catchBodies.size() - curr->catchEvents.size() <= 1,
+               curr,
+               "the number of catch blocks and events do not match");
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {

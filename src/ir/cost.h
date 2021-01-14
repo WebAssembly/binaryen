@@ -555,7 +555,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     }
     return ret;
   }
-  Index visitRethrow(Rethrow* curr) { return 100 + visit(curr->exnref); }
+  Index visitRethrow(Rethrow* curr) { return 100; }
   Index visitBrOnExn(BrOnExn* curr) {
     return 1 + visit(curr->exnref) + curr->sent.size();
   }

@@ -58,7 +58,8 @@
 // DELEGATE_FIELD_NAME(id, name) - called for a Name.
 //
 // DELEGATE_FIELD_NAME_VECTOR(id, name) - called for a variable-sized vector of
-//    Names.
+//    names (like try's catch event names). If this is not defined, and
+//    DELEGATE_GET_FIELD is, then DELEGATE_FIELD_CHILD is called on them.
 //
 // DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) - called for a scope name definition
 //    (like a block's name).
@@ -125,6 +126,17 @@
 
 #ifndef DELEGATE_FIELD_NAME
 #error please define DELEGATE_FIELD_NAME(id, name)
+#endif
+
+#ifndef DELEGATE_FIELD_NAME_VECTOR
+#ifdef DELEGATE_GET_FIELD
+#define DELEGATE_FIELD_NAME_VECTOR(id, name)                                   \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, name)).size(); i++) {          \
+    DELEGATE_FIELD_NAME(id, name[i]);                                          \
+  }
+#else
+#error please define DELEGATE_FIELD_NAME_VECTOR(id, name)
+#endif
 #endif
 
 #ifndef DELEGATE_FIELD_SCOPE_NAME_DEF

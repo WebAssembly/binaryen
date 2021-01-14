@@ -1,6 +1,7 @@
 function cleanInfo(info) {
   var ret = {};
   for (var x in info) {
+    // Filter out address pointers and only print meaningful info
     if (x == 'id' || x == 'type' || x == 'name' || x == 'event' ||
         x == 'depth' || x == 'hasCatchAll') {
       ret[x] = info[x];

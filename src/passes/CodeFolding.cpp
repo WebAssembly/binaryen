@@ -306,9 +306,10 @@ private:
       }
       if (getModule()->features.hasExceptionHandling()) {
         EffectAnalyzer effects(getPassOptions(), getModule()->features, item);
-        // Pop instructions are pseudoinstructions used only after 'catch' to simulate its behavior. We cannot move
-        // expressions containing pops if they are not enclosed in a 'catch'
-        // body, because a pop instruction should follow right after 'catch'.
+        // Pop instructions are pseudoinstructions used only after 'catch' to
+        // simulate its behavior. We cannot move expressions containing pops if
+        // they are not enclosed in a 'catch' body, because a pop instruction
+        // should follow right after 'catch'.
         if (effects.danglingPop) {
           return false;
         }

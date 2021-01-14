@@ -2024,7 +2024,7 @@ SExpressionWasmBuilder::makeTryOrCatchBody(Element& s, Type type, bool isTry) {
     throw ParseException("invalid try do clause", s.line, s.col);
   }
   if (!isTry &&
-      !(elementStartsWith(s, "catch") || elementStartsWith(s, "catch_all"))) {
+      !elementStartsWith(s, "catch") && !elementStartsWith(s, "catch_all")) {
     throw ParseException("invalid catch clause", s.line, s.col);
   }
   if (s.size() == 1) { // (do) / (catch) / (catch_all) without instructions

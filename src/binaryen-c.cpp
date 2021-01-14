@@ -1200,20 +1200,20 @@ BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
 
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
                                   BinaryenExpressionRef body,
-                                  const char** catchEvents,
+                                  const char** catchEvents_,
                                   BinaryenIndex numCatchEvents,
-                                  BinaryenExpressionRef* catchBodies,
+                                  BinaryenExpressionRef* catchBodies_,
                                   BinaryenIndex numCatchBodies) {
-  auto* ret = ((Module*)module)->allocator.alloc<Try>();
-  ret->body = (Expression*)body;
+  std::vector<Name> catchEvents;
+  std::vector<Expression*> catchBodies;
   for (BinaryenIndex i = 0; i < numCatchEvents; i++) {
-    ret->catchEvents.push_back(catchEvents[i]);
+    catchEvents.push_back(catchEvents_[i]);
   }
   for (BinaryenIndex i = 0; i < numCatchBodies; i++) {
-    ret->catchBodies.push_back((Expression*)catchBodies[i]);
+    catchBodies.push_back((Expression*)catchBodies_[i]);
   }
-  ret->finalize();
-  return ret;
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeTry(body, catchEvents, catchBodies));
 }
 
 BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,

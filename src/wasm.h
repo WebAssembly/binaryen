@@ -1280,7 +1280,6 @@ class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
   Rethrow(MixedArena& allocator) {}
 
-  Expression* exnref;
   Index depth;
 
   void finalize();
