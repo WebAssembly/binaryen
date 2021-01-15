@@ -76,7 +76,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // unwind to at any moment. Because there can be multiple catch blocks for a
   // try, we maintain a vector of first blocks of catches.
   std::vector<std::vector<BasicBlock*>> unwindCatchStack;
-  // stack of 'Try' expression corresponding to unwindCatchStack.
+  // stack of 'Try' expressions corresponding to unwindCatchStack.
   std::vector<Expression*> unwindExprStack;
   // Contains the stack of the first blocks of catches currently being processed
   // in the beginning. Will contain the last blocks of catches after being
