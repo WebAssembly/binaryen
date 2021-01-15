@@ -2829,16 +2829,25 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::Else:
       curr = nullptr;
-      continueControlFlow(BinaryLocations::Else, startPos);
+      if (DWARF && currFunction) {
+        assert(!controlFlowStack.empty());
+        auto currControlFlow = controlFlowStack.back();
+        currFunction->delimiterLocations[currControlFlow][BinaryLocations::Else] =
+          startPos - codeSectionLocation;
+      }
       break;
     case BinaryConsts::Catch: {
       curr = nullptr;
-      // The new catch is appended at the end of the list of debug delimiters
-      // for this instruction.
-      auto currControlFlow = controlFlowStack.back();
-      auto delimiterId =
-        currFunction->delimiterLocations[currControlFlow].size();
-      continueControlFlow(delimiterId, startPos);
+      if (DWARF && currFunction) {
+        assert(!controlFlowStack.empty());
+        auto currControlFlow = controlFlowStack.back();
+        // The new catch is appended at the end of the list of debug delimiters
+        // for this instruction.
+        auto delimiterId =
+          currFunction->delimiterLocations[currControlFlow].size();
+        currFunction->delimiterLocations[currControlFlow][delimiterId] =
+          startPos - codeSectionLocation;
+      }
       break;
     }
     case BinaryConsts::RefNull:
@@ -3066,17 +3075,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
 void WasmBinaryBuilder::startControlFlow(Expression* curr) {
   if (DWARF && currFunction) {
     controlFlowStack.push_back(curr);
-  }
-}
-
-void WasmBinaryBuilder::continueControlFlow(size_t id, BinaryLocation pos) {
-  if (DWARF && currFunction) {
-    assert(!controlFlowStack.empty());
-    auto currControlFlow = controlFlowStack.back();
-    // We are called after parsing the byte, so we need to subtract one to
-    // get its position.
-    currFunction->delimiterLocations[currControlFlow][id] =
-      pos - codeSectionLocation;
   }
 }
 
