@@ -83,9 +83,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // processed.
   std::vector<std::vector<BasicBlock*>> processCatchStack;
 
-  void startBasicBlock() {
+  BasicBlock* startBasicBlock() {
     currBasicBlock = ((SubType*)this)->makeBasicBlock();
     basicBlocks.push_back(std::unique_ptr<BasicBlock>(currBasicBlock));
+    return currBasicBlock;
   }
 
   void startUnreachableBlock() { currBasicBlock = nullptr; }
@@ -128,16 +129,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doStartIfTrue(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
-    self->startBasicBlock();
-    self->link(last, self->currBasicBlock); // ifTrue
+    self->link(last, self->startBasicBlock()); // ifTrue
     self->ifStack.push_back(last);          // the block before the ifTrue
   }
 
   static void doStartIfFalse(SubType* self, Expression** currp) {
     self->ifStack.push_back(self->currBasicBlock); // the ifTrue fallthrough
-    self->startBasicBlock();
     self->link(self->ifStack[self->ifStack.size() - 2],
-               self->currBasicBlock); // before if -> ifFalse
+               self->startBasicBlock()); // before if -> ifFalse
   }
 
   static void doEndIf(SubType* self, Expression** currp) {
@@ -168,8 +167,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doEndLoop(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
-    self->startBasicBlock();
-    self->link(last, self->currBasicBlock); // fallthrough
+    self->link(last, self->startBasicBlock()); // fallthrough
     auto* curr = (*currp)->cast<Loop>();
     // branches to the top of the loop
     if (curr->name.is()) {
@@ -189,8 +187,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       self->currBasicBlock); // branch to the target
     if (curr->condition) {
       auto* last = self->currBasicBlock;
-      self->startBasicBlock();
-      self->link(last, self->currBasicBlock); // we might fall through
+      self->link(last, self->startBasicBlock()); // we might fall through
     } else {
       self->startUnreachableBlock();
     }
@@ -214,18 +211,15 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->startUnreachableBlock();
   }
 
-  static void doEndCall(SubType* self, Expression** currp) {
+  static void doEndThrowingInst(SubType* self, Expression** currp) {
     // Every call can possibly throw, but we don't end the current basic block
     // unless the call is within a try-catch, because the CFG will have too many
     // blocks that way, and if an exception is thrown, the function will be
     // exited anyway.
     if (!self->unwindCatchStack.empty()) {
-      auto* last = self->currBasicBlock;
-      self->startBasicBlock();
-      self->link(last, self->currBasicBlock);    // exception not thrown
       // Exception thrown. Create a link to each catch within the innermost try.
       for (auto* block : self->unwindCatchStack.back()) {
-        self->link(last, block);
+        self->link(self->currBasicBlock, block);
       }
       // If the innermost try does not have a catch_all clause, an exception
       // thrown can be caught by any of its outer catch block. And if that outer
@@ -237,10 +231,16 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
           break;
         }
         for (auto* block : self->unwindCatchStack[i - 1]) {
-          self->link(last, block);
+          self->link(self->currBasicBlock, block);
         }
       }
     }
+  }
+
+  static void doEndCall(SubType* self, Expression** currp) {
+    doEndThrowingInst(self, currp);
+    // exception not thrown. link to the continuation BB
+    self->link(self->currBasicBlock, self->startBasicBlock());
   }
 
   static void doStartTry(SubType* self, Expression** currp) {
@@ -249,8 +249,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->unwindCatchStack.emplace_back();
     self->unwindExprStack.push_back(curr);
     for (Index i = 0; i < curr->catchBodies.size(); i++) {
-      self->startBasicBlock(); // catch body's first block
-      self->unwindCatchStack.back().push_back(self->currBasicBlock);
+      // Create the catch body's first block
+      self->unwindCatchStack.back().push_back(self->startBasicBlock());
     }
     self->currBasicBlock = last; // reset to the current block
   }
@@ -283,26 +283,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doEndThrow(SubType* self, Expression** currp) {
-    // We unwind to the innermost catches, if any
-    if (!self->unwindCatchStack.empty()) {
-      for (auto* block : self->unwindCatchStack.back()) {
-        self->link(self->currBasicBlock, block);
-      }
-      // Exception thrown. Create a link to each catch within the innermost try.
-      for (auto* block : self->unwindCatchStack.back()) {
-        self->link(self->currBasicBlock, block);
-      }
-      // Until we encounter try-catch_all, an exception can unwind to outer
-      // catches
-      for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
-        if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
-          break;
-        }
-        for (auto* block : self->unwindCatchStack[i - 1]) {
-          self->link(self->currBasicBlock, block);
-        }
-      }
-    }
+    doEndThrowingInst(self, currp);
     self->startUnreachableBlock();
   }
 
@@ -311,8 +292,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->branches[self->findBreakTarget(curr->name)].push_back(
       self->currBasicBlock); // branch to the target
     auto* last = self->currBasicBlock;
-    self->startBasicBlock();
-    self->link(last, self->currBasicBlock); // we might fall through
+    self->link(last, self->startBasicBlock()); // we might fall through
   }
 
   static void scan(SubType* self, Expression** currp) {
