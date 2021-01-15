@@ -76,6 +76,7 @@ public:
     anyref,
     eqref,
     i31ref,
+    dataref,
   };
   static constexpr BasicType _last_basic_type = i31ref;
 
@@ -119,7 +120,8 @@ public:
   // │ exnref      ║ x │   │ x │ x │    n  │ │  n_ullable
   // │ anyref      ║ x │   │ x │ x │ f? n  │ │
   // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
-  // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
+  // │ i31ref      ║ x │   │ x │ x │       │ │ │
+  // │ dataref     ║ x │   │ x │ x │       │ │ ┘
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
@@ -297,6 +299,7 @@ public:
     any,
     eq,
     i31,
+    data,
   };
   static constexpr BasicHeapType _last_basic_type = i31;
 

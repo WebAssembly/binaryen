@@ -310,6 +310,8 @@ struct TypeStore : Store<TypeInfo> {
             return Type::eqref;
           case HeapType::i31:
             break;
+          case HeapType::data:
+            return Type::dataref;
         }
       } else {
         if (info.ref.heapType == HeapType::i31) {
@@ -452,6 +454,7 @@ unsigned Type::getByteSize() const {
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         break;
@@ -501,6 +504,7 @@ FeatureSet Type::getFeatures() const {
           case HeapType::BasicHeapType::any:
           case HeapType::BasicHeapType::eq:
           case HeapType::BasicHeapType::i31:
+          case HeapType::BasicHeapType::data:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
           default: {}
         }
@@ -556,6 +560,8 @@ HeapType Type::getHeapType() const {
         return HeapType::eq;
       case Type::i31ref:
         return HeapType::i31;
+      case Type::dataref:
+        return HeapType::data;
     }
     WASM_UNREACHABLE("Unexpected type");
   } else {
@@ -894,6 +900,8 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         return os << "eqref";
       case Type::i31ref:
         return os << "i31ref";
+      case Type::dataref:
+        return os << "dataref";
     }
   }
   return os << *getTypeInfo(type);
@@ -986,6 +994,8 @@ std::ostream& operator<<(std::ostream& os, HeapType heapType) {
         return os << "eq";
       case HeapType::i31:
         return os << "i31";
+      case HeapType::data:
+        return os << "data";
     }
   }
   return os << *getHeapTypeInfo(heapType);

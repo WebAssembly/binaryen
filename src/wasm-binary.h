@@ -358,8 +358,9 @@ enum EncodedType {
   rtt_n = -0x17, // 0x69
   // run-time type info type, without depth index n
   rtt = -0x18, // 0x68
+  dataref = -0x19, // 0x67
   // exception reference type TODO remove; the code for now is incorrect
-  exnref = -0x19, // 0x67
+  exnref = -0x1A, // 0x66
   // func_type form
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f

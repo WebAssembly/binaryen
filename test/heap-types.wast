@@ -182,4 +182,8 @@
       )
     )
   )
+
+  (func $dataref
+    (local $x dataref)
+  )
 )
