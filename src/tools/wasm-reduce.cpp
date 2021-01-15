@@ -344,10 +344,9 @@ struct Reducer
 
   void loadWorking() {
     module = make_unique<Module>();
-    Module wasm;
     ModuleReader reader;
     reader.read(working, *module);
-    wasm.features = FeatureSet::All;
+    module->features = FeatureSet::All;
     builder = make_unique<Builder>(*module);
     setModule(module.get());
   }
