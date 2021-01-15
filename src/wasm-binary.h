@@ -376,6 +376,7 @@ enum EncodedHeapType {
   eq = -0x13,      // 0x6d
   i31 = -0x16,     // 0x6a
   exn = -0x18,     // 0x68
+  data = -0x19,    // 0x67
 };
 
 namespace UserSections {

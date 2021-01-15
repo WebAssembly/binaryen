@@ -185,5 +185,7 @@
 
   (func $dataref
     (local $x dataref)
+    (local $y (ref data))
+    (local $z (ref null data))
   )
 )
