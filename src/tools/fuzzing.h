@@ -1652,6 +1652,7 @@ private:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1758,6 +1759,7 @@ private:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1894,6 +1896,7 @@ private:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("invalid type");
@@ -1941,6 +1944,7 @@ private:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -2013,6 +2017,7 @@ private:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -2042,6 +2047,7 @@ private:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -2177,6 +2183,7 @@ private:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
             return makeTrivial(type);
           case Type::none:
           case Type::unreachable:
@@ -2325,6 +2332,7 @@ private:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2567,6 +2575,7 @@ private:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2774,6 +2783,7 @@ private:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -3039,7 +3049,8 @@ private:
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
              Type::eqref,
-             Type::i31ref));
+             Type::i31ref,
+             Type::dataref));
     // TODO: emit typed function references types
   }
 
@@ -3054,7 +3065,8 @@ private:
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
              Type::eqref,
-             Type::i31ref));
+             Type::i31ref,
+             Type::dataref));
   }
 
   Type getReferenceType() { return pick(getReferenceTypes()); }
