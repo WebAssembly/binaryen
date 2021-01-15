@@ -2091,9 +2091,10 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
                 Type(Type::unreachable),
                 curr,
                 "rethrow's type must be unreachable");
-  // TODO Validate depth field if it becomes necessary in future. This requires
-  // a separate stack for 'catch', and the current LLVM toolchain only generates
-  // depth 0 for C++ support.
+  // TODO Allow non-zero depths and Validate the depth field. The current LLVM
+  // toolchain only generates depth 0 for C++ support.
+  shouldBeEqual(
+    curr->depth, (Index)0, curr, "rethrow only support depth 0 at the moment");
 }
 
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
