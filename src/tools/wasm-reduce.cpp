@@ -1199,19 +1199,30 @@ int main(int argc, const char* argv[]) {
                     expected);
   }
 
-  std::cerr
-    << "|checking that command has different behavior on invalid binary (this "
-       "verifies that the test file is used by the command)\n";
-  {
+  if (!force) {
+    std::cerr << "|checking that command has different behavior on different "
+                 "inputs (this "
+                 "verifies that the test file is used by the command)\n";
+    // Try it on an invalid input.
     {
       std::ofstream dst(test, std::ios::binary);
       dst << "waka waka\n";
     }
-    ProgramResult result(command);
-    if (result == expected) {
-      stopIfNotForced(
-        "running command on an invalid module should give different results",
-        result);
+    ProgramResult resultOnInvalid(command);
+    if (resultOnInvalid == expected) {
+      // Try it on a valid input.
+      Module emptyModule;
+      ModuleWriter writer;
+      writer.setBinary(true);
+      writer.write(emptyModule, test);
+      ProgramResult resultOnValid(command);
+      if (resultOnValid == expected) {
+        Fatal()
+          << "running the command on the given input gives the same result as "
+             "when running it on either a trivial valid wasm or a file with "
+             "nonsense in it. does the script not look at the test file (" +
+               test + ")? (use -f to ignore this check)";
+      }
     }
   }
 
