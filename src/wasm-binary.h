@@ -995,6 +995,7 @@ enum ASTNodes {
 
   Try = 0x06,
   Catch = 0x07,
+  CatchAll = 0x05,
   Throw = 0x08,
   Rethrow = 0x09,
   BrOnExn = 0x0a,

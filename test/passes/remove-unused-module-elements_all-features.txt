@@ -279,34 +279,23 @@
  )
 )
 (module
- (type $i32_=>_none (func (param i32)))
  (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (event $e-export (attr 0) (param i64))
  (event $e-throw (attr 0) (param i32))
- (event $e-bronexn (attr 0) (param i32))
  (export "e-export" (event $e-export))
  (start $start)
  (func $start
-  (local $exn exnref)
   (try
    (do
     (throw $e-throw
      (i32.const 0)
     )
    )
-   (catch
-    (local.set $exn
-     (pop exnref)
-    )
+   (catch $e-catch
     (drop
-     (block $l0 (result i32)
-      (rethrow
-       (br_on_exn $l0 $e-bronexn
-        (local.get $exn)
-       )
-      )
-     )
+     (pop i32)
     )
    )
   )

@@ -597,8 +597,6 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
     }
   }
 
-  void visitRethrow(Rethrow* curr) { optimize(curr, curr->exnref); }
-
   void visitBrOnExn(BrOnExn* curr) { optimize(curr, curr->exnref); }
 };
 

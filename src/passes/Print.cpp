@@ -1710,7 +1710,10 @@ struct PrintExpressionContents
     printMedium(o, "throw ");
     printName(curr->event, o);
   }
-  void visitRethrow(Rethrow* curr) { printMedium(o, "rethrow"); }
+  void visitRethrow(Rethrow* curr) {
+    printMedium(o, "rethrow ");
+    o << curr->depth;
+  }
   void visitBrOnExn(BrOnExn* curr) {
     printMedium(o, "br_on_exn ");
     printName(curr->name, o);
@@ -2363,12 +2366,23 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     maybePrintImplicitBlock(curr->body, true);
     decIndent();
     o << "\n";
-    doIndent(o, indent);
-    o << "(catch";
-    incIndent();
-    maybePrintImplicitBlock(curr->catchBody, true);
-    decIndent();
-    o << "\n";
+    for (size_t i = 0; i < curr->catchEvents.size(); i++) {
+      doIndent(o, indent);
+      o << "(catch ";
+      printName(curr->catchEvents[i], o);
+      incIndent();
+      maybePrintImplicitBlock(curr->catchBodies[i], true);
+      decIndent();
+      o << "\n";
+    }
+    if (curr->hasCatchAll()) {
+      doIndent(o, indent);
+      o << "(catch_all";
+      incIndent();
+      maybePrintImplicitBlock(curr->catchBodies.back(), true);
+      decIndent();
+      o << "\n";
+    }
     decIndent();
     if (full) {
       o << " ;; end try";
@@ -2386,9 +2400,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   void visitRethrow(Rethrow* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
-    incIndent();
-    printFullLine(curr->exnref);
-    decIndent();
+    o << ')';
   }
   void visitBrOnExn(BrOnExn* curr) {
     o << '(';

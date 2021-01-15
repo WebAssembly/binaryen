@@ -1435,31 +1435,69 @@ console.log("# RefEq");
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();
+  module.addEvent("event1", 0, binaryen.none, binaryen.none);
+  module.addEvent("event2", 0, binaryen.none, binaryen.none);
+  module.addEvent("event3", 0, binaryen.none, binaryen.none);
 
   var body = module.i32.const(1);
-  var catchBody = module.i32.const(2);
-  const theTry = binaryen.Try(module.try(body, catchBody));
+  var catchBodies = [
+    module.i32.const(2),
+    module.i32.const(3)
+  ];
+  const theTry = binaryen.Try(module.try(body, ["event1"], catchBodies));
   assert(theTry instanceof binaryen.Try);
   assert(theTry instanceof binaryen.Expression);
   assert(theTry.body === body);
-  assert(theTry.catchBody === catchBody);
+  assertDeepEqual(theTry.catchBodies, catchBodies);
   assert(theTry.type === binaryen.i32);
+  assert(theTry.getNumCatchEvents() == 1);
+  assert(theTry.getNumCatchBodies() == 2);
+  assert(theTry.hasCatchAll() == 1);
+  console.log(theTry.toText());
 
-  theTry.body = body = module.i32.const(3);
+  theTry.body = body = module.i32.const(4);
   assert(theTry.body === body);
-  theTry.catchBody = catchBody = module.i32.const(4);
-  assert(theTry.catchBody === catchBody);
+  catchBodies = [
+    module.i32.const(5) // set
+    //remove
+  ];
+  theTry.setCatchBodies(catchBodies);
+  assertDeepEqual(theTry.catchBodies, catchBodies);
+  assertDeepEqual(theTry.getCatchBodies(), catchBodies);
+  console.log(theTry.toText());
+
+  theTry.insertCatchEventAt(1, "event2");
+  theTry.insertCatchBodyAt(0, module.i32.const(6));
+  assert(theTry.getNumCatchEvents() == 2);
+  assert(theTry.getNumCatchBodies() == 2);
+  assert(theTry.hasCatchAll() == 0);
+  console.log(theTry.toText());
+
+  assert(theTry.removeCatchEventAt(1) == "event2");
+  theTry.removeCatchBodyAt(1);
+  assert(theTry.getNumCatchEvents() == 1);
+  assert(theTry.getNumCatchBodies() == 1);
+  console.log(theTry.toText());
+
+  theTry.appendCatchEvent("event3");
+  theTry.appendCatchBody(module.drop(module.i32.const(7)));
+  assert(theTry.getCatchEventAt(0) == "event1");
+  assert(theTry.getCatchEventAt(1) == "event3");
+  theTry.setCatchEvents(["event2", "event3"]);
+  assertDeepEqual(theTry.getCatchEvents(), ["event2", "event3"]);
+  theTry.setCatchBodies([module.i32.const(8), module.i32.const(9)]);
+  assert(theTry.getCatchEventAt(0) == "event2");
+  assert(theTry.getCatchEventAt(1) == "event3");
+  theTry.setCatchEventAt(1, "event1");
+  theTry.setCatchBodyAt(1, module.i32.const(10));
+  assert(theTry.getCatchEventAt(1) == "event1");
+  console.log(theTry.toText());
+
   theTry.type = binaryen.f64;
   theTry.finalize();
   assert(theTry.type === binaryen.i32);
 
   console.log(theTry.toText());
-  assert(
-    theTry.toText()
-    ==
-    "(try (result i32)\n (do\n  (i32.const 3)\n )\n (catch\n  (i32.const 4)\n )\n)\n"
-  );
-
   module.dispose();
 })();
 
@@ -1512,15 +1550,14 @@ console.log("# Rethrow");
 (function testRethrow() {
   const module = new binaryen.Module();
 
-  var exnref = module.local.get(1, binaryen.exnref);
-  const theRethrow = binaryen.Rethrow(module.rethrow(exnref));
+  const theRethrow = binaryen.Rethrow(module.rethrow(0));
   assert(theRethrow instanceof binaryen.Rethrow);
   assert(theRethrow instanceof binaryen.Expression);
-  assert(theRethrow.exnref === exnref);
+  assert(theRethrow.depth === 0);
   assert(theRethrow.type === binaryen.unreachable);
 
-  theRethrow.exnref = exnref = module.local.get(2, binaryen.exnref);
-  assert(theRethrow.exnref === exnref);
+  theRethrow.depth = 1
+  assert(theRethrow.depth === 1);
   theRethrow.type = binaryen.f64;
   theRethrow.finalize();
   assert(theRethrow.type === binaryen.unreachable);
@@ -1529,7 +1566,7 @@ console.log("# Rethrow");
   assert(
     theRethrow.toText()
     ==
-    "(rethrow\n (local.get $2)\n)\n"
+    "(rethrow 1)\n"
   );
 
   module.dispose();

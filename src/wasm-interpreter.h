@@ -1347,7 +1347,10 @@ public:
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) {
+    // FIXME Update the implementation to match the new spec
     NOTE_ENTER("Rethrow");
+    WASM_UNREACHABLE("unimp");
+    /*
     Flow flow = visit(curr->exnref);
     if (flow.breaking()) {
       return flow;
@@ -1358,6 +1361,7 @@ public:
     }
     throwException(value);
     WASM_UNREACHABLE("rethrow");
+    */
   }
   Flow visitBrOnExn(BrOnExn* curr) {
     NOTE_ENTER("BrOnExn");
@@ -2943,6 +2947,9 @@ private:
       return {};
     }
     Flow visitTry(Try* curr) {
+      // FIXME Update the implementation to match the new spec
+      WASM_UNREACHABLE("unimp");
+      /*
       NOTE_ENTER("Try");
       try {
         return this->visit(curr->body);
@@ -2950,6 +2957,7 @@ private:
         instance.multiValues.push_back(e.exn);
         return this->visit(curr->catchBody);
       }
+      */
     }
     Flow visitPop(Pop* curr) {
       NOTE_ENTER("Pop");

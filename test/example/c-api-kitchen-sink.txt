@@ -1771,19 +1771,13 @@ BinaryenFeatureAll: 8191
          (i32.const 0)
         )
        )
-       (catch
-        (local.set $5
-         (pop exnref)
-        )
+       (catch $a-event
         (drop
-         (block $try-block (result i32)
-          (rethrow
-           (br_on_exn $try-block $a-event
-            (local.get $5)
-           )
-          )
-         )
+         (pop i32)
         )
+       )
+       (catch_all
+        (nop)
        )
       )
       (i32.atomic.store

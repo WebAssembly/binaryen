@@ -624,17 +624,24 @@ public:
     ret->finalize();
     return ret;
   }
-  Try* makeTry(Expression* body, Expression* catchBody) {
+  Try* makeTry(Expression* body,
+               const std::vector<Name>& catchEvents,
+               const std::vector<Expression*>& catchBodies) {
     auto* ret = wasm.allocator.alloc<Try>();
     ret->body = body;
-    ret->catchBody = catchBody;
+    ret->catchEvents.set(catchEvents);
+    ret->catchBodies.set(catchBodies);
     ret->finalize();
     return ret;
   }
-  Try* makeTry(Expression* body, Expression* catchBody, Type type) {
+  Try* makeTry(Expression* body,
+               const std::vector<Name>& catchEvents,
+               const std::vector<Expression*>& catchBodies,
+               Type type) {
     auto* ret = wasm.allocator.alloc<Try>();
     ret->body = body;
-    ret->catchBody = catchBody;
+    ret->catchEvents.set(catchEvents);
+    ret->catchBodies.set(catchBodies);
     ret->finalize(type);
     return ret;
   }
@@ -648,9 +655,9 @@ public:
     ret->finalize();
     return ret;
   }
-  Rethrow* makeRethrow(Expression* exnref) {
+  Rethrow* makeRethrow(Index depth) {
     auto* ret = wasm.allocator.alloc<Rethrow>();
-    ret->exnref = exnref;
+    ret->depth = depth;
     ret->finalize();
     return ret;
   }

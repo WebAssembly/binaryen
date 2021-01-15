@@ -25,18 +25,39 @@
     )
   )
 
-  (func $can-push-past-throw-within-try
+  (func $can-push-past-try
     (local $x i32)
     (block $out
       ;; This local.set can be pushed down, because the 'throw' below is going
-      ;; to be caught by the inner catch
+      ;; to be caught by the inner catch_all
       (local.set $x (i32.const 1))
       (try
         (do
           (throw $e (i32.const 0))
         )
-        (catch
-          (drop (pop exnref))
+        (catch_all
+          (drop (pop i32))
+        )
+      )
+      (drop (i32.const 1))
+      (br_if $out (i32.const 2))
+      (drop (local.get $x))
+    )
+  )
+
+  (func $foo)
+  (func $cant-push-past-try
+    (local $x i32)
+    (block $out
+      ;; This local.set cannot be pushed down, because the exception thrown by
+      ;; 'call $foo' below may not be caught by 'catch $e'
+      (local.set $x (i32.const 1))
+      (try
+        (do
+          (call $foo)
+        )
+        (catch $e
+          (drop (pop i32))
         )
       )
       (drop (i32.const 1))
@@ -49,14 +70,14 @@
     (local $x i32)
     (block $out
       ;; This local.set cannot be pushed down, because there is 'rethrow' within
-      ;; the inner catch
+      ;; the inner catch_all
       (local.set $x (i32.const 1))
       (try
         (do
           (throw $e (i32.const 0))
         )
-        (catch
-          (rethrow (pop exnref))
+        (catch_all
+          (rethrow 0)
         )
       )
       (drop (i32.const 1))
