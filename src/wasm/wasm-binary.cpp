@@ -1057,6 +1057,9 @@ void WasmBinaryWriter::writeType(Type type) {
     case Type::i31ref:
       ret = BinaryConsts::EncodedType::i31ref;
       break;
+    case Type::dataref:
+      ret = BinaryConsts::EncodedType::dataref;
+      break;
     default:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1088,6 +1091,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
         break;
       case HeapType::i31:
         ret = BinaryConsts::EncodedHeapType::i31;
+        break;
+      case HeapType::data:
+        ret = BinaryConsts::EncodedHeapType::data;
         break;
     }
   } else {
@@ -1418,6 +1424,8 @@ Type WasmBinaryBuilder::getType(int initial) {
     case BinaryConsts::EncodedType::i31ref:
       // FIXME: for now, force all inputs to be nullable
       return Type(HeapType::BasicHeapType::i31, Nullable);
+    case BinaryConsts::EncodedType::dataref:
+      return Type::dataref;
     case BinaryConsts::EncodedType::rtt_n: {
       auto depth = getU32LEB();
       auto heapType = getHeapType();
@@ -1456,6 +1464,8 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::eq;
     case BinaryConsts::EncodedHeapType::i31:
       return HeapType::i31;
+    case BinaryConsts::EncodedHeapType::data:
+      return HeapType::data;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
