@@ -100,6 +100,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
           i32 = other.i32;
           return;
         case HeapType::func:
+        case HeapType::data:
         case HeapType::exn:
           WASM_UNREACHABLE("invalid type");
       }
@@ -127,6 +128,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
       WASM_UNREACHABLE("invalid type");
   }
 }
@@ -351,6 +353,7 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
       WASM_UNREACHABLE("invalid type");
   }
 }
@@ -394,6 +397,7 @@ bool Literal::operator==(const Literal& other) const {
       case Type::exnref:
       case Type::anyref:
       case Type::eqref:
+      case Type::dataref:
         return compareRef();
       case Type::unreachable:
         break;
@@ -539,6 +543,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::i31:
           o << "i31ref(" << literal.geti31() << ")";
           break;
+        case HeapType::data:
         case HeapType::func:
           WASM_UNREACHABLE("invalid type");
       }
@@ -577,6 +582,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -805,6 +811,7 @@ Literal Literal::eqz() const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -829,6 +836,7 @@ Literal Literal::neg() const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -853,6 +861,7 @@ Literal Literal::abs() const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -994,6 +1003,7 @@ Literal Literal::add(const Literal& other) const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1018,6 +1028,7 @@ Literal Literal::sub(const Literal& other) const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1113,6 +1124,7 @@ Literal Literal::mul(const Literal& other) const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1349,6 +1361,7 @@ Literal Literal::eq(const Literal& other) const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1373,6 +1386,7 @@ Literal Literal::ne(const Literal& other) const {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");

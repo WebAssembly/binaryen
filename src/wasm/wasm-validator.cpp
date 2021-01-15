@@ -1399,6 +1399,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -2541,6 +2542,7 @@ void FunctionValidator::validateAlignment(
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
       WASM_UNREACHABLE("invalid type");
   }
