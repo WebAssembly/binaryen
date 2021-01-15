@@ -273,7 +273,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doEndTry(SubType* self, Expression** currp) {
     self->startBasicBlock(); // continuation block after try-catch
     // each catch body's last block -> continuation block
-    for (auto *last : self->processCatchStack.back()) {
+    for (auto* last : self->processCatchStack.back()) {
       self->link(last, self->currBasicBlock);
     }
     // try body's last block -> continuation block
@@ -285,7 +285,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   static void doEndThrow(SubType* self, Expression** currp) {
     // We unwind to the innermost catches, if any
     if (!self->unwindCatchStack.empty()) {
-      for (auto *block : self->unwindCatchStack.back()) {
+      for (auto* block : self->unwindCatchStack.back()) {
         self->link(self->currBasicBlock, block);
       }
       // Exception thrown. Create a link to each catch within the innermost try.
@@ -362,7 +362,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       }
       case Expression::Id::TryId: {
         self->pushTask(SubType::doEndTry, currp);
-        auto &catchBodies = curr->cast<Try>()->catchBodies;
+        auto& catchBodies = curr->cast<Try>()->catchBodies;
         using namespace std::placeholders;
         for (Index i = 0; i < catchBodies.size(); i++) {
           auto doEndCatchI = std::bind(doEndCatch, _1, _2, i);
