@@ -2832,7 +2832,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (DWARF && currFunction) {
         assert(!controlFlowStack.empty());
         auto currControlFlow = controlFlowStack.back();
-        currFunction->delimiterLocations[currControlFlow][BinaryLocations::Else] =
+        currFunction
+          ->delimiterLocations[currControlFlow][BinaryLocations::Else] =
           startPos - codeSectionLocation;
       }
       break;
