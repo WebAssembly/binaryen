@@ -239,10 +239,14 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
           curr, get_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
         addImport(
           curr, set_i31ref, {Type::i32, Type::i32, Type::i31ref}, Type::i31ref);
-        addImport(
-          curr, get_dataref, {Type::i32, Type::i32, Type::dataref}, Type::dataref);
-        addImport(
-          curr, set_dataref, {Type::i32, Type::i32, Type::dataref}, Type::dataref);
+        addImport(curr,
+                  get_dataref,
+                  {Type::i32, Type::i32, Type::dataref},
+                  Type::dataref);
+        addImport(curr,
+                  set_dataref,
+                  {Type::i32, Type::i32, Type::dataref},
+                  Type::dataref);
       }
     }
     if (curr->features.hasSIMD()) {
