@@ -3083,11 +3083,9 @@ Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
   // the last let added, and if we belong to it, we are already relative to it.
   // We will continue relativizing as we go down, til we find our let.
   int64_t relative = index;
-  Index totalLetItems = 0;
   for (auto i = int64_t(letStack.size()) - 1; i >= 0; i--) {
     auto& info = letStack[i];
     int64_t currNum = info.num;
-    totalLetItems += currNum;
     // There were |currNum| let items added in this let. Check if we were one of
     // them.
     if (relative < currNum) {
