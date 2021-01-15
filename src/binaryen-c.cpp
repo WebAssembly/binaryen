@@ -1200,10 +1200,20 @@ BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
 
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
                                   BinaryenExpressionRef body,
-                                  BinaryenExpressionRef catchBody) {
+                                  const char** catchEvents_,
+                                  BinaryenIndex numCatchEvents,
+                                  BinaryenExpressionRef* catchBodies_,
+                                  BinaryenIndex numCatchBodies) {
+  std::vector<Name> catchEvents;
+  std::vector<Expression*> catchBodies;
+  for (BinaryenIndex i = 0; i < numCatchEvents; i++) {
+    catchEvents.push_back(catchEvents_[i]);
+  }
+  for (BinaryenIndex i = 0; i < numCatchBodies; i++) {
+    catchBodies.push_back((Expression*)catchBodies_[i]);
+  }
   return static_cast<Expression*>(
-    Builder(*(Module*)module)
-      .makeTry((Expression*)body, (Expression*)catchBody));
+    Builder(*(Module*)module).makeTry(body, catchEvents, catchBodies));
 }
 
 BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
@@ -1219,9 +1229,8 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
 }
 
 BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
-                                      BinaryenExpressionRef exnref) {
-  return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRethrow((Expression*)exnref));
+                                      BinaryenIndex depth) {
+  return static_cast<Expression*>(Builder(*(Module*)module).makeRethrow(depth));
 }
 
 BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
@@ -2755,17 +2764,101 @@ void BinaryenTrySetBody(BinaryenExpressionRef expr,
   assert(bodyExpr);
   static_cast<Try*>(expression)->body = (Expression*)bodyExpr;
 }
-BinaryenExpressionRef BinaryenTryGetCatchBody(BinaryenExpressionRef expr) {
+BinaryenIndex BinaryenTryGetNumCatchEvents(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->catchBody;
+  return static_cast<Try*>(expression)->catchEvents.size();
 }
-void BinaryenTrySetCatchBody(BinaryenExpressionRef expr,
-                             BinaryenExpressionRef catchBodyExpr) {
+BinaryenIndex BinaryenTryGetNumCatchBodies(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(catchBodyExpr);
-  static_cast<Try*>(expression)->catchBody = (Expression*)catchBodyExpr;
+  return static_cast<Try*>(expression)->catchBodies.size();
+}
+const char* BinaryenTryGetCatchEventAt(BinaryenExpressionRef expr,
+                                       BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(index < static_cast<Try*>(expression)->catchEvents.size());
+  return static_cast<Try*>(expression)->catchEvents[index].c_str();
+}
+void BinaryenTrySetCatchEventAt(BinaryenExpressionRef expr,
+                                BinaryenIndex index,
+                                const char* catchEvent) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(index < static_cast<Try*>(expression)->catchEvents.size());
+  assert(catchEvent);
+  static_cast<Try*>(expression)->catchEvents[index] = catchEvent;
+}
+BinaryenIndex BinaryenTryAppendCatchEvent(BinaryenExpressionRef expr,
+                                          const char* catchEvent) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(catchEvent);
+  auto& list = static_cast<Try*>(expression)->catchEvents;
+  auto index = list.size();
+  list.push_back(catchEvent);
+  return index;
+}
+void BinaryenTryInsertCatchEventAt(BinaryenExpressionRef expr,
+                                   BinaryenIndex index,
+                                   const char* catchEvent) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(catchEvent);
+  static_cast<Try*>(expression)->catchEvents.insertAt(index, catchEvent);
+}
+const char* BinaryenTryRemoveCatchEventAt(BinaryenExpressionRef expr,
+                                          BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->catchEvents.removeAt(index).c_str();
+}
+BinaryenExpressionRef BinaryenTryGetCatchBodyAt(BinaryenExpressionRef expr,
+                                                BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(index < static_cast<Try*>(expression)->catchBodies.size());
+  return static_cast<Try*>(expression)->catchBodies[index];
+}
+void BinaryenTrySetCatchBodyAt(BinaryenExpressionRef expr,
+                               BinaryenIndex index,
+                               BinaryenExpressionRef catchExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(index < static_cast<Try*>(expression)->catchBodies.size());
+  assert(catchExpr);
+  static_cast<Try*>(expression)->catchBodies[index] = (Expression*)catchExpr;
+}
+BinaryenIndex BinaryenTryAppendCatchBody(BinaryenExpressionRef expr,
+                                         BinaryenExpressionRef catchExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(catchExpr);
+  auto& list = static_cast<Try*>(expression)->catchBodies;
+  auto index = list.size();
+  list.push_back((Expression*)catchExpr);
+  return index;
+}
+void BinaryenTryInsertCatchBodyAt(BinaryenExpressionRef expr,
+                                  BinaryenIndex index,
+                                  BinaryenExpressionRef catchExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  assert(catchExpr);
+  static_cast<Try*>(expression)
+    ->catchBodies.insertAt(index, (Expression*)catchExpr);
+}
+BinaryenExpressionRef BinaryenTryRemoveCatchBodyAt(BinaryenExpressionRef expr,
+                                                   BinaryenIndex index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->catchBodies.removeAt(index);
+}
+int BinaryenTryHasCatchAll(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->hasCatchAll();
 }
 // Throw
 const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {
@@ -2825,17 +2918,15 @@ BinaryenExpressionRef BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr,
   return static_cast<Throw*>(expression)->operands.removeAt(index);
 }
 // Rethrow
-BinaryenExpressionRef BinaryenRethrowGetExnref(BinaryenExpressionRef expr) {
+BinaryenIndex BinaryenRethrowGetDepth(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Rethrow>());
-  return static_cast<Rethrow*>(expression)->exnref;
+  return static_cast<Rethrow*>(expression)->depth;
 }
-void BinaryenRethrowSetExnref(BinaryenExpressionRef expr,
-                              BinaryenExpressionRef exnrefExpr) {
+void BinaryenRethrowSetDepth(BinaryenExpressionRef expr, BinaryenIndex depth) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Rethrow>());
-  assert(exnrefExpr);
-  static_cast<Rethrow*>(expression)->exnref = (Expression*)exnrefExpr;
+  static_cast<Rethrow*>(expression)->depth = depth;
 }
 // BrOnExn
 const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr) {

@@ -1896,12 +1896,14 @@
 )
 (module
  (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (type $exnref_=>_none (func (param exnref)))
- (type $i32_exnref_=>_none (func (param i32 exnref)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_exnref (func (result exnref)))
  (event $event$0 (attr 0) (param))
  (event $event$1 (attr 0) (param exnref))
+ (event $e-i32 (attr 0) (param i32))
  (func $unoptimizable-br_on_exn-block (result exnref)
   (local $0 exnref)
   (block $label$0
@@ -1923,36 +1925,18 @@
    )
   )
  )
- (func $rethrow-trap
-  (local $0 i32)
-  (drop
-   (block $label$1 (result i32)
-    (try
-     (do
-      (rethrow
-       (ref.null exn)
-      )
-     )
-     (catch
-      (nop)
-     )
-    )
-    (i32.const 0)
-   )
-  )
- )
- (func $foo (param $0 i32) (param $1 exnref)
+ (func $foo (param $0 i32) (param $1 i32)
   (nop)
  )
  (func $pop-cannot-be-sinked
-  (local $0 exnref)
+  (local $0 i32)
   (try
    (do
     (nop)
    )
-   (catch
+   (catch $e-i32
     (local.set $0
-     (pop exnref)
+     (pop i32)
     )
     (call $foo
      (i32.const 3)
@@ -1962,21 +1946,21 @@
   )
  )
  (func $pop-within-catch-can-be-sinked
-  (local $0 exnref)
+  (local $0 i32)
   (try
    (do
     (nop)
    )
-   (catch
+   (catch_all
     (nop)
     (call $foo
      (i32.const 3)
-     (try (result exnref)
+     (try (result i32)
       (do
-       (ref.null exn)
+       (i32.const 0)
       )
-      (catch
-       (pop exnref)
+      (catch $e-i32
+       (pop i32)
       )
      )
     )
@@ -1997,9 +1981,9 @@
      (local.get $0)
     )
    )
-   (catch
+   (catch $e-i32
     (drop
-     (pop exnref)
+     (pop i32)
     )
    )
   )
@@ -2013,9 +1997,9 @@
      (i32.const 3)
     )
    )
-   (catch
+   (catch $e-i32
     (drop
-     (pop exnref)
+     (pop i32)
     )
    )
   )

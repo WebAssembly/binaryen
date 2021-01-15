@@ -325,40 +325,18 @@ void test_core() {
   //   (do
   //     (throw $a-event (i32.const 0))
   //   )
-  //   (catch
-  //     ;; We don't support multi-value yet. Use locals instead.
-  //     (local.set 0 (exnref.pop))
-  //     (drop
-  //       (block $try-block (result i32)
-  //         (rethrow
-  //           (br_on_exn $try-block $a-event (local.get 5))
-  //         )
-  //       )
-  //     )
+  //   (catch $a-event
+  //     (drop (i32 pop))
   //   )
+  //   (catch_all)
   // )
   BinaryenExpressionRef tryBody = BinaryenThrow(
     module, "a-event", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1);
-  BinaryenExpressionRef catchBody = BinaryenBlock(
-    module,
-    NULL,
-    (BinaryenExpressionRef[]){
-      BinaryenLocalSet(module, 5, BinaryenPop(module, BinaryenTypeExnref())),
-      BinaryenDrop(
-        module,
-        BinaryenBlock(module,
-                      "try-block",
-                      (BinaryenExpressionRef[]){BinaryenRethrow(
-                        module,
-                        BinaryenBrOnExn(
-                          module,
-                          "try-block",
-                          "a-event",
-                          BinaryenLocalGet(module, 5, BinaryenTypeExnref())))},
-                      1,
-                      BinaryenTypeInt32()))},
-    2,
-    BinaryenTypeNone());
+  BinaryenExpressionRef catchBody =
+    BinaryenDrop(module, BinaryenPop(module, BinaryenTypeInt32()));
+  BinaryenExpressionRef catchAllBody = BinaryenNop(module);
+  BinaryenExpressionRef catchBodies[] = {catchBody, catchAllBody};
+  const char* catchEvents[] = {"a-event"};
 
   BinaryenType i32 = BinaryenTypeInt32();
   BinaryenType i64 = BinaryenTypeInt64();
@@ -747,7 +725,7 @@ void test_core() {
                   BinaryenRefNull(module, BinaryenTypeEqref()),
                   BinaryenRefNull(module, BinaryenTypeEqref())),
     // Exception handling
-    BinaryenTry(module, tryBody, catchBody),
+    BinaryenTry(module, tryBody, catchEvents, 1, catchBodies, 2),
     // Atomics
     BinaryenAtomicStore(
       module,

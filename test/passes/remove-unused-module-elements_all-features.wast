@@ -266,24 +266,17 @@
  (event $e-remove (attr 0) (type $0))   ;; can be removed
  (event $e-export (attr 0) (param i64)) ;; cannot be removed (exported)
  (event $e-throw (attr 0) (type $0))    ;; cannot be removed (used in throw)
- (event $e-bronexn (attr 0) (type $0))  ;; cannot be removed (used in br_on_exn)
+ (event $e-catch (attr 0) (type $0))    ;; cannot be removed (used in catch)
  (export "e-export" (event $e-export))
  (import "env" "e" (event $e-import (attr 0) (param i32)))
  (start $start)
- (func $start (local $exn exnref) (; 0 ;)
+ (func $start
   (try
    (do
     (throw $e-throw (i32.const 0))
    )
-   (catch
-    (local.set $exn (pop exnref))
-    (drop
-     (block $l0 (result i32)
-      (rethrow
-       (br_on_exn $l0 $e-bronexn (local.get $exn))
-      )
-     )
-    )
+   (catch $e-catch
+    (drop (pop i32))
    )
   )
  )

@@ -71,8 +71,12 @@ std::string GetLastErrorStdStr() {
 #endif
 using namespace wasm;
 
-// a timeout on every execution of the command
-size_t timeout = 2;
+// A timeout on every execution of the command.
+static size_t timeout = 2;
+
+// A string of feature flags and other things to pass while reducing. The
+// default of enabling all features should work in most cases.
+static std::string extraFlags = "-all";
 
 struct ProgramResult {
   int code;
@@ -282,14 +286,12 @@ struct Reducer
       // compensated for), and without
       for (auto pass : passes) {
         std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-        currCommand += working + " --detect-features -o " + test + " " + pass;
+        currCommand += working + " -o " + test + " " + pass + " " + extraFlags;
         if (debugInfo) {
           currCommand += " -g ";
         }
         if (!binary) {
-          currCommand += " -S --all-features ";
-        } else {
-          currCommand += " --detect-features ";
+          currCommand += " -S ";
         }
         if (verbose) {
           std::cerr << "|    trying pass command: " << currCommand << "\n";
@@ -1157,6 +1159,15 @@ int main(int argc, const char* argv[]) {
            timeout = atoi(argument.c_str());
            std::cout << "|applying timeout: " << timeout << "\n";
          })
+    .add("--extra-flags",
+         "-ef",
+         "Extra commandline flags to pass to wasm-opt while reducing. "
+         "(default: --enable-all)",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           extraFlags = argument;
+           std::cout << "|applying extraFlags: " << extraFlags << "\n";
+         })
     .add_positional(
       "INFILE",
       Options::Arguments::One,
@@ -1203,19 +1214,30 @@ int main(int argc, const char* argv[]) {
                     expected);
   }
 
-  std::cerr
-    << "|checking that command has different behavior on invalid binary (this "
-       "verifies that the test file is used by the command)\n";
-  {
+  if (!force) {
+    std::cerr << "|checking that command has different behavior on different "
+                 "inputs (this "
+                 "verifies that the test file is used by the command)\n";
+    // Try it on an invalid input.
     {
       std::ofstream dst(test, std::ios::binary);
       dst << "waka waka\n";
     }
-    ProgramResult result(command);
-    if (result == expected) {
-      stopIfNotForced(
-        "running command on an invalid module should give different results",
-        result);
+    ProgramResult resultOnInvalid(command);
+    if (resultOnInvalid == expected) {
+      // Try it on a valid input.
+      Module emptyModule;
+      ModuleWriter writer;
+      writer.setBinary(true);
+      writer.write(emptyModule, test);
+      ProgramResult resultOnValid(command);
+      if (resultOnValid == expected) {
+        Fatal()
+          << "running the command on the given input gives the same result as "
+             "when running it on either a trivial valid wasm or a file with "
+             "nonsense in it. does the script not look at the test file (" +
+               test + ")? (use -f to ignore this check)";
+      }
     }
   }
 
@@ -1223,12 +1245,10 @@ int main(int argc, const char* argv[]) {
                "(read-written) binary\n";
   {
     // read and write it
-    auto cmd =
-      Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " + test;
+    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " +
+               test + " " + extraFlags;
     if (!binary) {
-      cmd += " -S --all-features";
-    } else {
-      cmd += " --detect-features";
+      cmd += " -S ";
     }
     ProgramResult readWrite(cmd);
     if (readWrite.failed()) {

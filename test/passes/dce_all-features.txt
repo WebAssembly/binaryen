@@ -551,10 +551,8 @@
    (do
     (unreachable)
    )
-   (catch
-    (drop
-     (pop exnref)
-    )
+   (catch_all
+    (nop)
    )
   )
   (call $foo)
@@ -564,7 +562,7 @@
    (do
     (nop)
    )
-   (catch
+   (catch_all
     (unreachable)
    )
   )
@@ -575,7 +573,7 @@
    (do
     (unreachable)
    )
-   (catch
+   (catch_all
     (unreachable)
    )
   )
@@ -591,9 +589,7 @@
  (func $rethrow
   (block $label$0
    (block $label$1
-    (rethrow
-     (ref.null exn)
-    )
+    (rethrow 0)
    )
   )
  )
@@ -624,7 +620,7 @@
    (do
     (unreachable)
    )
-   (catch
+   (catch_all
     (unreachable)
    )
   )

@@ -796,16 +796,20 @@ BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                                  BinaryenExpressionRef left,
                                                  BinaryenExpressionRef right);
-BINARYEN_API BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
-                                               BinaryenExpressionRef body,
-                                               BinaryenExpressionRef catchBody);
+BINARYEN_API BinaryenExpressionRef
+BinaryenTry(BinaryenModuleRef module,
+            BinaryenExpressionRef body,
+            const char** catchEvents,
+            BinaryenIndex numCatchEvents,
+            BinaryenExpressionRef* catchBodies,
+            BinaryenIndex numCatchBodies);
 BINARYEN_API BinaryenExpressionRef
 BinaryenThrow(BinaryenModuleRef module,
               const char* event,
               BinaryenExpressionRef* operands,
               BinaryenIndex numOperands);
-BINARYEN_API BinaryenExpressionRef
-BinaryenRethrow(BinaryenModuleRef module, BinaryenExpressionRef exnref);
+BINARYEN_API BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
+                                                   BinaryenIndex depth);
 BINARYEN_API BinaryenExpressionRef
 BinaryenBrOnExn(BinaryenModuleRef module,
                 const char* name,
@@ -1714,12 +1718,57 @@ BinaryenTryGetBody(BinaryenExpressionRef expr);
 // Sets the body expression of a `try` expression.
 BINARYEN_API void BinaryenTrySetBody(BinaryenExpressionRef expr,
                                      BinaryenExpressionRef bodyExpr);
-// Gets the catch body expression of a `try` expression.
+// Gets the number of catch blocks (= the number of catch events) of a `try`
+// expression.
+BINARYEN_API BinaryenIndex
+BinaryenTryGetNumCatchEvents(BinaryenExpressionRef expr);
+// Gets the number of catch/catch_all blocks of a `try` expression.
+BINARYEN_API BinaryenIndex
+BinaryenTryGetNumCatchBodies(BinaryenExpressionRef expr);
+// Gets the catch event at the specified index of a `try` expression.
+BINARYEN_API const char* BinaryenTryGetCatchEventAt(BinaryenExpressionRef expr,
+                                                    BinaryenIndex index);
+// Sets the catch event at the specified index of a `try` expression.
+BINARYEN_API void BinaryenTrySetCatchEventAt(BinaryenExpressionRef expr,
+                                             BinaryenIndex index,
+                                             const char* catchEvent);
+// Appends a catch event to a `try` expression, returning its insertion index.
+BINARYEN_API BinaryenIndex
+BinaryenTryAppendCatchEvent(BinaryenExpressionRef expr, const char* catchEvent);
+// Inserts a catch event at the specified index of a `try` expression, moving
+// existing catch events including the one previously at that index one index
+// up.
+BINARYEN_API void BinaryenTryInsertCatchEventAt(BinaryenExpressionRef expr,
+                                                BinaryenIndex index,
+                                                const char* catchEvent);
+// Removes the catch event at the specified index of a `try` expression, moving
+// all subsequent catch events one index down. Returns the event.
+BINARYEN_API const char*
+BinaryenTryRemoveCatchEventAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets the catch body expression at the specified index of a `try` expression.
 BINARYEN_API BinaryenExpressionRef
-BinaryenTryGetCatchBody(BinaryenExpressionRef expr);
-// Sets the catch body expression of a `try` expression.
-BINARYEN_API void BinaryenTrySetCatchBody(BinaryenExpressionRef expr,
-                                          BinaryenExpressionRef catchBodyExpr);
+BinaryenTryGetCatchBodyAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Sets the catch body expression at the specified index of a `try` expression.
+BINARYEN_API void BinaryenTrySetCatchBodyAt(BinaryenExpressionRef expr,
+                                            BinaryenIndex index,
+                                            BinaryenExpressionRef catchExpr);
+// Appends a catch expression to a `try` expression, returning its insertion
+// index.
+BINARYEN_API BinaryenIndex BinaryenTryAppendCatchBody(
+  BinaryenExpressionRef expr, BinaryenExpressionRef catchExpr);
+// Inserts a catch expression at the specified index of a `try` expression,
+// moving existing catch bodies including the one previously at that index one
+// index up.
+BINARYEN_API void BinaryenTryInsertCatchBodyAt(BinaryenExpressionRef expr,
+                                               BinaryenIndex index,
+                                               BinaryenExpressionRef catchExpr);
+// Removes the catch expression at the specified index of a `try` expression,
+// moving all subsequent catch bodies one index down. Returns the catch
+// expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenTryRemoveCatchBodyAt(BinaryenExpressionRef expr, BinaryenIndex index);
+// Gets whether an `try` expression has a catch_all clause.
+BINARYEN_API int BinaryenTryHasCatchAll(BinaryenExpressionRef expr);
 
 // Throw
 
@@ -1757,12 +1806,11 @@ BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 
 // Rethrow
 
-// Gets the exception reference expression of a `rethrow` expression.
-BINARYEN_API BinaryenExpressionRef
-BinaryenRethrowGetExnref(BinaryenExpressionRef expr);
+// Gets the depth of a `rethrow` expression.
+BINARYEN_API BinaryenIndex BinaryenRethrowGetDepth(BinaryenExpressionRef expr);
 // Sets the exception reference expression of a `rethrow` expression.
-BINARYEN_API void BinaryenRethrowSetExnref(BinaryenExpressionRef expr,
-                                           BinaryenExpressionRef exnrefExpr);
+BINARYEN_API void BinaryenRethrowSetDepth(BinaryenExpressionRef expr,
+                                          BinaryenIndex depth);
 
 // BrOnExn
 

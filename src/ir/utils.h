@@ -222,8 +222,10 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     if (maybeDrop(curr->body)) {
       acted = true;
     }
-    if (maybeDrop(curr->catchBody)) {
-      acted = true;
+    for (auto* catchBody : curr->catchBodies) {
+      if (maybeDrop(catchBody)) {
+        acted = true;
+      }
     }
     if (acted) {
       reFinalize();

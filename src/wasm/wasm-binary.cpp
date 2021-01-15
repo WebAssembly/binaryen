@@ -1833,15 +1833,9 @@ void WasmBinaryBuilder::readFunctions() {
     readNextDebugLocation();
 
     BYN_TRACE("reading " << i << std::endl);
-    size_t numLocalTypes = getU32LEB();
-    for (size_t t = 0; t < numLocalTypes; t++) {
-      auto num = getU32LEB();
-      auto type = getConcreteType();
-      while (num > 0) {
-        func->vars.push_back(type);
-        num--;
-      }
-    }
+
+    readVars();
+
     std::swap(func->prologLocation, debugLocation);
     {
       // process the function body
@@ -1854,6 +1848,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(controlFlowStack.empty());
+      assert(letStack.empty());
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
@@ -1863,6 +1858,7 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("stack not empty on function exit");
       }
       assert(controlFlowStack.empty());
+      assert(letStack.empty());
       if (pos != endOfFunction) {
         throwError("binary offset at function exit not at expected location");
       }
@@ -1873,6 +1869,18 @@ void WasmBinaryBuilder::readFunctions() {
     functions.push_back(func);
   }
   BYN_TRACE(" end function bodies\n");
+}
+
+void WasmBinaryBuilder::readVars() {
+  size_t numLocalTypes = getU32LEB();
+  for (size_t t = 0; t < numLocalTypes; t++) {
+    auto num = getU32LEB();
+    auto type = getConcreteType();
+    while (num > 0) {
+      currFunction->vars.push_back(type);
+      num--;
+    }
+  }
 }
 
 void WasmBinaryBuilder::readExports() {
@@ -2128,7 +2136,7 @@ void WasmBinaryBuilder::processExpressions() {
       }
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
-          peek == BinaryConsts::Catch) {
+          peek == BinaryConsts::Catch || peek == BinaryConsts::CatchAll) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
         lastSeparator = BinaryConsts::ASTNodes(peek);
@@ -2886,6 +2894,10 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitCallRef(call);
       break;
     }
+    case BinaryConsts::Let: {
+      visitLet((curr = allocator.alloc<Block>())->cast<Block>());
+      break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -3054,6 +3066,36 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
   return BinaryConsts::ASTNodes(code);
+}
+
+Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
+  // Wasm binaries put each let at the bottom of the index space, which may be
+  // good for binary size as often the uses of the let variables are close to
+  // the let itself. However, in Binaryen IR we just have a simple flat index
+  // space of absolute values, which we add to as we parse, and we depend on
+  // later optimizations to reorder locals for size.
+  //
+  // For example, if we have $x, then we add a let with $y, the binary would map
+  // 0 => y, 1 => x, while in Binaryen IR $x always stays at 0, and $y is added
+  // at 1.
+  //
+  // Compute the relative index in the let we were added. We start by looking at
+  // the last let added, and if we belong to it, we are already relative to it.
+  // We will continue relativizing as we go down, til we find our let.
+  int64_t relative = index;
+  for (auto i = int64_t(letStack.size()) - 1; i >= 0; i--) {
+    auto& info = letStack[i];
+    int64_t currNum = info.num;
+    // There were |currNum| let items added in this let. Check if we were one of
+    // them.
+    if (relative < currNum) {
+      return info.absoluteStart + relative;
+    }
+    relative -= currNum;
+  }
+  // We were not a let, but a normal var from the beginning. In that case, after
+  // we subtracted the let items, we have the proper absolute index.
+  return relative;
 }
 
 void WasmBinaryBuilder::startControlFlow(Expression* curr) {
@@ -3322,9 +3364,8 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
 
 void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
   BYN_TRACE("zz node: LocalGet " << pos << std::endl);
-  ;
   requireFunctionContext("local.get");
-  curr->index = getU32LEB();
+  curr->index = getAbsoluteLocalIndex(getU32LEB());
   if (curr->index >= currFunction->getNumLocals()) {
     throwError("bad local.get index");
   }
@@ -3335,7 +3376,7 @@ void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
 void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
   BYN_TRACE("zz node: Set|LocalTee\n");
   requireFunctionContext("local.set outside of function");
-  curr->index = getU32LEB();
+  curr->index = getAbsoluteLocalIndex(getU32LEB());
   if (curr->index >= currFunction->getNumLocals()) {
     throwError("bad local.set index");
   }
@@ -5494,7 +5535,8 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   // blocks instead.
   curr->type = getType();
   curr->body = getBlockOrSingleton(curr->type);
-  if (lastSeparator != BinaryConsts::Catch) {
+  if (lastSeparator != BinaryConsts::Catch &&
+      lastSeparator != BinaryConsts::CatchAll) {
     throwError("No catch instruction within a try scope");
   }
 
@@ -5544,25 +5586,48 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   //     )
   //   )
   // )
-  Name catchLabel = getNextLabel();
-  breakStack.push_back({catchLabel, curr->type});
-  auto start = expressionStack.size();
 
   Builder builder(wasm);
-  pushExpression(builder.makePop(Type::exnref));
+  Name catchLabel = getNextLabel();
+  breakStack.push_back({catchLabel, curr->type});
 
-  processExpressions();
-  size_t end = expressionStack.size();
-  if (start > end) {
-    throwError("block cannot pop from outside");
-  }
-  if (end - start == 1) {
-    curr->catchBody = popExpression();
-  } else {
-    auto* block = allocator.alloc<Block>();
-    pushBlockElements(block, curr->type, start);
-    block->finalize(curr->type);
-    curr->catchBody = block;
+  auto readCatchBody = [&](Type eventType) {
+    auto start = expressionStack.size();
+    if (eventType != Type::none) {
+      pushExpression(builder.makePop(eventType));
+    }
+    processExpressions();
+    size_t end = expressionStack.size();
+    if (start > end) {
+      throwError("block cannot pop from outside");
+    }
+    if (end - start == 1) {
+      curr->catchBodies.push_back(popExpression());
+    } else {
+      auto* block = allocator.alloc<Block>();
+      pushBlockElements(block, curr->type, start);
+      block->finalize(curr->type);
+      curr->catchBodies.push_back(block);
+    }
+  };
+
+  while (lastSeparator == BinaryConsts::Catch ||
+         lastSeparator == BinaryConsts::CatchAll) {
+    if (lastSeparator == BinaryConsts::Catch) {
+      auto index = getU32LEB();
+      if (index >= wasm.events.size()) {
+        throwError("bad event index");
+      }
+      auto* event = wasm.events[index].get();
+      curr->catchEvents.push_back(event->name);
+      readCatchBody(event->sig.params);
+
+    } else { // catch_all
+      if (curr->hasCatchAll()) {
+        throwError("there should be at most one 'catch_all' clause per try");
+      }
+      readCatchBody(Type::none);
+    }
   }
   curr->finalize(curr->type);
 
@@ -5595,7 +5660,7 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
 
 void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
   BYN_TRACE("zz node: Rethrow\n");
-  curr->exnref = popNonVoidExpression();
+  curr->depth = getU32LEB();
   curr->finalize();
 }
 
@@ -5643,6 +5708,31 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->finalize(sig.results);
+}
+
+void WasmBinaryBuilder::visitLet(Block* curr) {
+  // A let is lowered into a block that contains the value, and we allocate
+  // locals as needed, which works as we remove non-nullability.
+
+  startControlFlow(curr);
+  // Get the output type.
+  curr->type = getType();
+  // Get the new local types. First, get the absolute index from which we will
+  // start to allocate them.
+  Index absoluteStart = currFunction->vars.size();
+  readVars();
+  Index numNewVars = currFunction->vars.size() - absoluteStart;
+  // Assign the values into locals.
+  Builder builder(wasm);
+  for (Index i = 0; i < numNewVars; i++) {
+    auto* value = popNonVoidExpression();
+    curr->list.push_back(builder.makeLocalSet(absoluteStart + i, value));
+  }
+  // Read the body, with adjusted local indexes.
+  letStack.emplace_back(LetData{numNewVars, absoluteStart});
+  curr->list.push_back(getBlockOrSingleton(curr->type));
+  letStack.pop_back();
+  curr->finalize(curr->type);
 }
 
 bool WasmBinaryBuilder::maybeVisitI31New(Expression*& out, uint32_t code) {

@@ -1698,29 +1698,15 @@
     )
   )
 
-  (func $rethrow-trap (local $0 i32)
-    ;; This dead local.set cannot be replaced with a nop because rethrow can
-    ;; trap.
-    (local.set $0
-      (block $label$1 (result i32)
-        (try
-          (do (rethrow (ref.null exn)))
-          (catch)
-        )
-        (i32.const 0)
-      )
-    )
-  )
-
-  (func $foo (param i32 exnref))
-  (func $pop-cannot-be-sinked (local $0 exnref)
+  (event $e-i32 (attr 0) (param i32))
+  (func $foo (param i32 i32))
+  (func $pop-cannot-be-sinked (local $0 i32)
     (try
       (do)
-      (catch
-        ;; This (local.set $0) of (pop exnref) cannot be sinked to
-        ;; (local.get $0) below, because pop exnref should follow right after
-        ;; 'catch'.
-        (local.set $0 (pop exnref))
+      (catch $e-i32
+        ;; This (local.set $0) of (pop i32) cannot be sunk to (local.get $0)
+        ;; below, because the pop should follow right after 'catch'.
+        (local.set $0 (pop i32))
         (call $foo
           (i32.const 3)
           (local.get $0)
@@ -1729,17 +1715,17 @@
     )
   )
 
-  (func $pop-within-catch-can-be-sinked (local $0 exnref)
+  (func $pop-within-catch-can-be-sinked (local $0 i32)
     (try
       (do)
-      (catch
+      (catch_all
         ;; This whole 'try' body can be sinked to eliminate local.set /
         ;; local.get. Even though it contains a pop, it is enclosed within
         ;; try-catch, so it is OK.
         (local.set $0
-          (try (result exnref)
-            (do (ref.null exn))
-            (catch (pop exnref))
+          (try (result i32)
+            (do (i32.const 0))
+            (catch $e-i32 (pop i32))
           )
         )
         (call $foo
@@ -1761,8 +1747,8 @@
       (do
         (drop (local.get $0))
       )
-      (catch
-        (drop (pop exnref))
+      (catch $e-i32
+        (drop (pop i32))
       )
     )
   )
@@ -1776,8 +1762,8 @@
       (do
         (drop (local.get $0))
       )
-      (catch
-        (drop (pop exnref))
+      (catch $e-i32
+        (drop (pop i32))
       )
     )
   )

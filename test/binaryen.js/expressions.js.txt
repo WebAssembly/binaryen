@@ -219,10 +219,67 @@
 # Try
 (try (result i32)
  (do
+  (i32.const 1)
+ )
+ (catch $event1
+  (i32.const 2)
+ )
+ (catch_all
   (i32.const 3)
  )
- (catch
+)
+
+(try (result i32)
+ (do
   (i32.const 4)
+ )
+ (catch $event1
+  (i32.const 5)
+ )
+)
+
+(try (result i32)
+ (do
+  (i32.const 4)
+ )
+ (catch $event1
+  (i32.const 6)
+ )
+ (catch $event2
+  (i32.const 5)
+ )
+)
+
+(try (result i32)
+ (do
+  (i32.const 4)
+ )
+ (catch $event1
+  (i32.const 6)
+ )
+)
+
+(try (result i32)
+ (do
+  (i32.const 4)
+ )
+ (catch $event2
+  (i32.const 8)
+ )
+ (catch $event1
+  (i32.const 10)
+ )
+)
+
+(try (result i32)
+ (do
+  (i32.const 4)
+ )
+ (catch $event2
+  (i32.const 8)
+ )
+ (catch $event1
+  (i32.const 10)
  )
 )
 
@@ -233,9 +290,7 @@
 )
 
 # Rethrow
-(rethrow
- (local.get $2)
-)
+(rethrow 1)
 
 # BrOnExn
 (br_on_exn $bar $event2

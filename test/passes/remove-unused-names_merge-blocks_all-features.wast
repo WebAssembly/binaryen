@@ -1571,16 +1571,6 @@
     )
   )
 
-  ;; 'call $foo' within 'block' of `rethrow' can be hoisted
-  (func $rethrow (local $0 exnref)
-    (rethrow
-      (block (result exnref)
-        (call $foo)
-        (local.get $0)
-      )
-    )
-  )
-
   ;; 'call $foo' within 'block' of `br_on_exn' can be hoisted
   (func $br_on_exn (result i32) (local $0 exnref)
     (block $label$0 (result i32)

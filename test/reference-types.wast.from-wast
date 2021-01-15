@@ -8,6 +8,7 @@
  (type $none_=>_externref (func (result externref)))
  (type $none_=>_exnref (func (result exnref)))
  (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (type $externref_=>_funcref (func (param externref) (result funcref)))
  (import "env" "import_global" (global $import_global externref))
  (import "env" "import_func" (func $import_func (param externref) (result funcref)))
@@ -22,6 +23,7 @@
  (global $global_anyref3 (mut anyref) (ref.null func))
  (global $global_anyref4 (mut anyref) (ref.func $foo))
  (global $global_anyref5 (mut anyref) (ref.null exn))
+ (event $e-i32 (attr 0) (param i32))
  (export "export_func" (func $import_func))
  (export "export_global" (global $import_global))
  (func $take_externref (param $0 externref)
@@ -700,9 +702,9 @@
     (do
      (local.get $local_externref)
     )
-    (catch
+    (catch $e-i32
      (drop
-      (pop exnref)
+      (pop i32)
      )
      (ref.null extern)
     )
@@ -713,9 +715,9 @@
     (do
      (ref.func $foo)
     )
-    (catch
+    (catch $e-i32
      (drop
-      (pop exnref)
+      (pop i32)
      )
      (ref.null func)
     )
@@ -726,8 +728,11 @@
     (do
      (ref.null exn)
     )
-    (catch
-     (pop exnref)
+    (catch $e-i32
+     (drop
+      (pop i32)
+     )
+     (ref.null exn)
     )
    )
   )
@@ -736,9 +741,9 @@
     (do
      (local.get $local_externref)
     )
-    (catch
+    (catch $e-i32
      (drop
-      (pop exnref)
+      (pop i32)
      )
      (ref.func $foo)
     )
@@ -749,8 +754,11 @@
     (do
      (local.get $local_externref)
     )
-    (catch
-     (pop exnref)
+    (catch $e-i32
+     (drop
+      (pop i32)
+     )
+     (local.get $local_exnref)
     )
    )
   )
@@ -759,9 +767,9 @@
     (do
      (ref.func $foo)
     )
-    (catch
+    (catch $e-i32
      (drop
-      (pop exnref)
+      (pop i32)
      )
      (local.get $local_externref)
     )
@@ -772,8 +780,11 @@
     (do
      (ref.func $foo)
     )
-    (catch
-     (pop exnref)
+    (catch $e-i32
+     (drop
+      (pop i32)
+     )
+     (local.get $local_exnref)
     )
    )
   )
@@ -782,9 +793,9 @@
     (do
      (ref.null exn)
     )
-    (catch
+    (catch $e-i32
      (drop
-      (pop exnref)
+      (pop i32)
      )
      (local.get $local_externref)
     )
@@ -795,9 +806,9 @@
     (do
      (ref.null exn)
     )
-    (catch
+    (catch $e-i32
      (drop
-      (pop exnref)
+      (pop i32)
      )
      (ref.func $foo)
     )

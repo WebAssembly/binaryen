@@ -546,7 +546,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   }
   Index visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases
-    return visit(curr->body) + maybeVisit(curr->catchBody);
+    return visit(curr->body);
   }
   Index visitThrow(Throw* curr) {
     Index ret = 100;
@@ -555,7 +555,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     }
     return ret;
   }
-  Index visitRethrow(Rethrow* curr) { return 100 + visit(curr->exnref); }
+  Index visitRethrow(Rethrow* curr) { return 100; }
   Index visitBrOnExn(BrOnExn* curr) {
     return 1 + visit(curr->exnref) + curr->sent.size();
   }

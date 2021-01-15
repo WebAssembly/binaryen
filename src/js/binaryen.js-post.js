@@ -2135,14 +2135,15 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['try'] = function(body, catchBody) {
-    return Module['_BinaryenTry'](module, body, catchBody);
+  self['try'] = function(body, catchEvents, catchBodies) {
+    return preserveStack(() =>
+      Module['_BinaryenTry'](module, body, i32sToStack(catchEvents.map(strToStack)), catchEvents.length, i32sToStack(catchBodies), catchBodies.length));
   };
   self['throw'] = function(event_, operands) {
     return preserveStack(() => Module['_BinaryenThrow'](module, strToStack(event_), i32sToStack(operands), operands.length));
   };
-  self['rethrow'] = function(exnref) {
-    return Module['_BinaryenRethrow'](module, exnref);
+  self['rethrow'] = function(depth) {
+    return Module['_BinaryenRethrow'](module, depth);
   };
   self['br_on_exn'] = function(label, event_, exnref) {
     return preserveStack(() => Module['_BinaryenBrOnExn'](module, strToStack(label), strToStack(event_), exnref));
@@ -2850,7 +2851,9 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'body': Module['_BinaryenTryGetBody'](expr),
-        'catchBody': Module['_BinaryenTryGetCatchBody'](expr)
+        'catchEvents': getAllNested(expr, Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTryGetCatchEventAt']),
+        'catchBodies': getAllNested(expr, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
+        'hasCatchAll': Module['_BinaryenTryHasCatchAll'](expr)
       };
     case Module['ThrowId']:
       return {
@@ -2863,7 +2866,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'exnref': Module['_BinaryenRethrowGetExnref'](expr)
+        'depth': Module['_BinaryenRethrowGetDepth'](expr)
       };
     case Module['BrOnExnId']:
       return {
@@ -4189,12 +4192,97 @@ Module['Try'] = makeExpressionWrapper({
   'setBody'(expr, bodyExpr) {
     Module['_BinaryenTrySetBody'](expr, bodyExpr);
   },
-  'getCatchBody'(expr) {
-    return Module['_BinaryenTryGetCatchBody'](expr);
+  'getNumCatchEvents'(expr) {
+    return Module['_BinaryenTryGetNumCatchEvents'](expr);
   },
-  'setCatchBody'(expr, catchBodyExpr) {
-    Module['_BinaryenTrySetCatchBody'](expr, catchBodyExpr);
-  }
+  'getCatchEvents'(expr) {
+    const numCatchEvents = Module['_BinaryenTryGetNumCatchEvents'](expr);
+    const catchEvents = new Array(numCatchEvents);
+    let index = 0;
+    while (index < numCatchEvents) {
+      catchEvents[index] = UTF8ToString(Module['_BinaryenTryGetCatchEventAt'](expr, index++));
+    }
+    return catchEvents;
+  },
+  'setCatchEvents'(expr, catchEvents) {
+    const numCatchEvents = catchEvents.length;
+    let prevNumCatchEvents = Module['_BinaryenTryGetNumCatchEvents'](expr);
+    let index = 0;
+    while (index < numCatchEvents) {
+      preserveStack(() => {
+        if (index < prevNumCatchEvents) {
+          Module['_BinaryenTrySetCatchEventAt'](expr, index, strToStack(catchEvents[index]));
+        } else {
+          Module['_BinaryenTryAppendCatchEvent'](expr, strToStack(catchEvents[index]));
+        }
+      });
+      ++index;
+    }
+    while (prevNumCatchEvents > index) {
+      Module['_BinaryenTryRemoveCatchEventAt'](expr, --prevNumCatchEvents);
+    }
+  },
+  'getCatchEventAt'(expr, index) {
+    return UTF8ToString(Module['_BinaryenTryGetCatchEventAt'](expr, index));
+  },
+  'setCatchEventAt'(expr, index, catchEvent) {
+    preserveStack(() => { Module['_BinaryenTrySetCatchEventAt'](expr, index, strToStack(catchEvent)) });
+  },
+  'appendCatchEvent'(expr, catchEvent) {
+    preserveStack(() => Module['_BinaryenTryAppendCatchEvent'](expr, strToStack(catchEvent)));
+  },
+  'insertCatchEventAt'(expr, index, catchEvent) {
+    preserveStack(() => { Module['_BinaryenTryInsertCatchEventAt'](expr, index, strToStack(catchEvent)) });
+  },
+  'removeCatchEventAt'(expr, index) {
+    return UTF8ToString(Module['_BinaryenTryRemoveCatchEventAt'](expr, index));
+  },
+  'getNumCatchBodies'(expr) {
+    return Module['_BinaryenTryGetNumCatchBodies'](expr);
+  },
+  'getCatchBodies'(expr) {
+    const numCatchBodies = Module['_BinaryenTryGetNumCatchBodies'](expr);
+    const catchbodies = new Array(numCatchBodies);
+    let index = 0;
+    while (index < numCatchBodies) {
+      catchbodies[index] = Module['_BinaryenTryGetCatchBodyAt'](expr, index++);
+    }
+    return catchbodies;
+  },
+  'setCatchBodies'(expr, catchbodies) {
+    const numCatchBodies = catchbodies.length;
+    let prevNumCatchBodies = Module['_BinaryenTryGetNumCatchBodies'](expr);
+    let index = 0;
+    while (index < numCatchBodies) {
+      if (index < prevNumCatchBodies) {
+        Module['_BinaryenTrySetCatchBodyAt'](expr, index, catchbodies[index]);
+      } else {
+        Module['_BinaryenTryAppendCatchBody'](expr, catchbodies[index]);
+      }
+      ++index;
+    }
+    while (prevNumCatchBodies > index) {
+      Module['_BinaryenTryRemoveCatchBodyAt'](expr, --prevNumCatchBodies);
+    }
+  },
+  'getCatchBodyAt'(expr, index) {
+    return Module['_BinaryenTryGetCatchBodyAt'](expr, index);
+  },
+  'setCatchBodyAt'(expr, index, catchExpr) {
+    Module['_BinaryenTrySetCatchBodyAt'](expr, index, catchExpr);
+  },
+  'appendCatchBody'(expr, catchExpr) {
+    return Module['_BinaryenTryAppendCatchBody'](expr, catchExpr);
+  },
+  'insertCatchBodyAt'(expr, index, catchExpr) {
+    Module['_BinaryenTryInsertCatchBodyAt'](expr, index, catchExpr);
+  },
+  'removeCatchBodyAt'(expr, index) {
+    return Module['_BinaryenTryRemoveCatchBodyAt'](expr, index);
+  },
+  'hasCatchAll'(expr) {
+    return Boolean(Module['_BinaryenTryHasCatchAll'](expr));
+  },
 });
 
 Module['Throw'] = makeExpressionWrapper({
@@ -4250,11 +4338,11 @@ Module['Throw'] = makeExpressionWrapper({
 });
 
 Module['Rethrow'] = makeExpressionWrapper({
-  'getExnref'(expr) {
-    return Module['_BinaryenRethrowGetExnref'](expr);
+  'getDepth'(expr) {
+    return Module['_BinaryenRethrowGetDepth'](expr);
   },
-  'setExnref'(expr, exnrefExpr) {
-    Module['_BinaryenRethrowSetExnref'](expr, exnrefExpr);
+  'setDepth'(expr, depthExpr) {
+    Module['_BinaryenRethrowSetDepth'](expr, depthExpr);
   }
 });
 

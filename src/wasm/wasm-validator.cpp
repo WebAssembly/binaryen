@@ -2026,21 +2026,28 @@ void FunctionValidator::visitTry(Try* curr) {
       curr->type,
       curr->body,
       "try's type does not match try body's type");
-    shouldBeSubTypeOrFirstIsUnreachable(
-      curr->catchBody->type,
-      curr->type,
-      curr->catchBody,
-      "try's type does not match catch's body type");
+    for (auto catchBody : curr->catchBodies) {
+      shouldBeSubTypeOrFirstIsUnreachable(
+        catchBody->type,
+        curr->type,
+        catchBody,
+        "try's type does not match catch's body type");
+    }
   } else {
     shouldBeEqual(curr->body->type,
                   Type(Type::unreachable),
                   curr,
                   "unreachable try-catch must have unreachable try body");
-    shouldBeEqual(curr->catchBody->type,
-                  Type(Type::unreachable),
-                  curr,
-                  "unreachable try-catch must have unreachable catch body");
+    for (auto catchBody : curr->catchBodies) {
+      shouldBeEqual(catchBody->type,
+                    Type(Type::unreachable),
+                    curr,
+                    "unreachable try-catch must have unreachable catch body");
+    }
   }
+  shouldBeTrue(curr->catchBodies.size() - curr->catchEvents.size() <= 1,
+               curr,
+               "the number of catch blocks and events do not match");
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
@@ -2084,11 +2091,10 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
                 Type(Type::unreachable),
                 curr,
                 "rethrow's type must be unreachable");
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->exnref->type,
-    Type::exnref,
-    curr->exnref,
-    "rethrow's argument must be exnref type or its subtype");
+  // TODO Allow non-zero depths and Validate the depth field. The current LLVM
+  // toolchain only generates depth 0 for C++ support.
+  shouldBeEqual(
+    curr->depth, (Index)0, curr, "rethrow only support depth 0 at the moment");
 }
 
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {

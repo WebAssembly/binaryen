@@ -70,6 +70,7 @@ public:
     LoopEnd,    // the ending of a loop
     TryBegin,   // the beginning of a try
     Catch,      // the catch within a try
+    CatchAll,   // the catch_all within a try
     TryEnd      // the ending of a try
   } op;
 
@@ -106,7 +107,8 @@ public:
 
   void emitResultType(Type type);
   void emitIfElse(If* curr);
-  void emitCatch(Try* curr);
+  void emitCatch(Try* curr, Index i);
+  void emitCatchAll(Try* curr);
   // emit an end at the end of a block/loop/if/try
   void emitScopeEnd(Expression* curr);
   // emit an end at the end of a function
@@ -161,7 +163,12 @@ private:
   void emit(Expression* curr) { static_cast<SubType*>(this)->emit(curr); }
   void emitHeader() { static_cast<SubType*>(this)->emitHeader(); }
   void emitIfElse(If* curr) { static_cast<SubType*>(this)->emitIfElse(curr); }
-  void emitCatch(Try* curr) { static_cast<SubType*>(this)->emitCatch(curr); }
+  void emitCatch(Try* curr, Index i) {
+    static_cast<SubType*>(this)->emitCatch(curr, i);
+  }
+  void emitCatchAll(Try* curr) {
+    static_cast<SubType*>(this)->emitCatchAll(curr);
+  }
   void emitScopeEnd(Expression* curr) {
     static_cast<SubType*>(this)->emitScopeEnd(curr);
   }
@@ -328,8 +335,14 @@ void BinaryenIRWriter<SubType>::visitLoop(Loop* curr) {
 template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   emit(curr);
   visitPossibleBlockContents(curr->body);
-  emitCatch(curr);
-  visitPossibleBlockContents(curr->catchBody);
+  for (Index i = 0; i < curr->catchEvents.size(); i++) {
+    emitCatch(curr, i);
+    visitPossibleBlockContents(curr->catchBodies[i]);
+  }
+  if (curr->hasCatchAll()) {
+    emitCatchAll(curr);
+    visitPossibleBlockContents(curr->catchBodies.back());
+  }
   emitScopeEnd(curr);
   if (curr->type == Type::unreachable) {
     emitUnreachable();
@@ -360,7 +373,8 @@ public:
     writer.mapLocalsAndEmitHeader();
   }
   void emitIfElse(If* curr) { writer.emitIfElse(curr); }
-  void emitCatch(Try* curr) { writer.emitCatch(curr); }
+  void emitCatch(Try* curr, Index i) { writer.emitCatch(curr, i); }
+  void emitCatchAll(Try* curr) { writer.emitCatchAll(curr); }
   void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(curr); }
   void emitFunctionEnd() {
     if (func->epilogLocation.size()) {
@@ -394,8 +408,11 @@ public:
   void emitIfElse(If* curr) {
     stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
   }
-  void emitCatch(Try* curr) {
+  void emitCatch(Try* curr, Index i) {
     stackIR.push_back(makeStackInst(StackInst::Catch, curr));
+  }
+  void emitCatchAll(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::CatchAll, curr));
   }
   void emitFunctionEnd() {}
   void emitUnreachable() {

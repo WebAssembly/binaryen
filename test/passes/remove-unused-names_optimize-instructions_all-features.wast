@@ -7,6 +7,7 @@
     (local $x1 i32)
     (local $x2 i32)
     (local $x3 i32)
+    (local $x4 i32)
 
     ;; try - try body does not throw, can
     (local.set $x0
@@ -14,8 +15,7 @@
         (do
           (i32.const 1)
         )
-        (catch
-          (drop (pop exnref))
+        (catch_all
           (i32.const 3)
         )
       )
@@ -29,15 +29,15 @@
           (call $dummy)
           (i32.const 1)
         )
-        (catch
-          (drop (pop exnref))
+        (catch_all
           (i32.const 3)
         )
       )
     )
     (drop (i32.and (local.get $x1) (i32.const 7)))
 
-    ;; nested try - inner try may throw but will be caught by inner catch, can
+    ;; nested try - inner try may throw and may not be caught by inner catch,
+    ;; can't
     (local.set $x2
       (try (result i32)
         (do
@@ -45,39 +45,57 @@
             (do
               (throw $e (i32.const 0))
             )
-            (catch
-              (drop (pop exnref))
+            (catch $e
+              (drop (pop i32))
             )
           )
           (i32.const 1)
         )
-        (catch
-          (drop (pop exnref))
+        (catch $e
+          (drop (pop i32))
           (i32.const 3)
         )
       )
     )
     (drop (i32.and (local.get $x2) (i32.const 7)))
 
-    ;; nested try - inner catch may throw, can't
+    ;; nested try - inner try may throw but will be caught by inner catch_all,
+    ;; can
     (local.set $x3
       (try (result i32)
         (do
           (try
-            (do)
-            (catch
-              (drop (pop exnref))
+            (do
               (throw $e (i32.const 0))
             )
+            (catch_all)
           )
           (i32.const 1)
         )
-        (catch
-          (drop (pop exnref))
+        (catch_all
           (i32.const 3)
         )
       )
     )
     (drop (i32.and (local.get $x3) (i32.const 7)))
+
+    ;; nested try - inner catch_all may throw, can't
+    (local.set $x4
+      (try (result i32)
+        (do
+          (try
+            (do)
+            (catch_all
+              (throw $e (i32.const 0))
+            )
+          )
+          (i32.const 1)
+        )
+        (catch_all
+          (i32.const 3)
+        )
+      )
+    )
+    (drop (i32.and (local.get $x4) (i32.const 7)))
   )
 )

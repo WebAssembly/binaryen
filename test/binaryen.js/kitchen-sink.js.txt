@@ -1865,18 +1865,9 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
          (i32.const 0)
         )
        )
-       (catch
-        (local.set $5
-         (pop exnref)
-        )
+       (catch $a-event
         (drop
-         (block $try-block (result i32)
-          (rethrow
-           (br_on_exn $try-block $a-event
-            (local.get $5)
-           )
-          )
-         )
+         (pop i32)
         )
        )
       )
@@ -3737,18 +3728,9 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
          (i32.const 0)
         )
        )
-       (catch
-        (local.set $5
-         (pop exnref)
-        )
+       (catch $a-event
         (drop
-         (block $try-block (result i32)
-          (rethrow
-           (br_on_exn $try-block $a-event
-            (local.get $5)
-           )
-          )
-         )
+         (pop i32)
         )
        )
       )

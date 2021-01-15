@@ -6160,10 +6160,7 @@
             )
           )
         )
-        (catch
-          (drop
-            (pop exnref)
-          )
+        (catch_all
           (i32.eqz
             (i32.eqz
               (i32.const 456)
