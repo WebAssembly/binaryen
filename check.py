@@ -159,8 +159,8 @@ def run_wasm_reduce_tests():
     for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
         print('..', os.path.basename(t))
         # convert to wasm
-        support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm'])
-        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec --detect-features ' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
+        support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm', '-all'])
+        support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all ' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm', '--timeout=4'])
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', 'a.wat'])
         with open('a.wat') as seen:

@@ -346,10 +346,14 @@ struct Reducer
 
   void loadWorking() {
     module = make_unique<Module>();
-    Module wasm;
     ModuleReader reader;
     reader.read(working, *module);
-    wasm.features = FeatureSet::All;
+    // If there is no features section, assume we may need them all (without
+    // this, a module with no features section but that uses e.g. atomics and
+    // bulk memory would not work).
+    if (!module->hasFeaturesSection) {
+      module->features = FeatureSet::All;
+    }
     builder = make_unique<Builder>(*module);
     setModule(module.get());
   }
