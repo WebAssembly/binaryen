@@ -2497,13 +2497,11 @@ function setAllNested(ref, values, numFn, setFn, appendFn, removeFn) {
   let prevNum = numFn(ref);
   let index = 0;
   while (index < num) {
-    preserveStack(() => {
-      if (index < prevNum) {
-        setFn(ref, index, values[index]);
-      } else {
-        appendFn(ref, values[index]);
-      }
-    });
+    if (index < prevNum) {
+      setFn(ref, index, values[index]);
+    } else {
+      appendFn(ref, values[index]);
+    }
     ++index;
   }
   while (prevNum > index) {
@@ -3336,7 +3334,9 @@ Module['Switch'] = makeExpressionWrapper({
     return getAllNested(expr, Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchGetNameAt']).map(p => UTF8ToString(p));
   },
   'setNames'(expr, names) {
-    setAllNested(expr, names.map(strToStack), Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchSetNameAt'], Module['_BinaryenSwitchAppendName'], Module['_BinaryenSwitchRemoveNameAt']);
+    preserveStack(() => {
+      setAllNested(expr, names.map(strToStack), Module['_BinaryenSwitchGetNumNames'], Module['_BinaryenSwitchSetNameAt'], Module['_BinaryenSwitchAppendName'], Module['_BinaryenSwitchRemoveNameAt']);
+    });
   },
   'getDefaultName'(expr) {
     const name = Module['_BinaryenSwitchGetDefaultName'](expr);
@@ -4140,7 +4140,9 @@ Module['Try'] = makeExpressionWrapper({
     return getAllNested(expr, Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTryGetCatchEventAt']).map(p => UTF8ToString(p));
   },
   'setCatchEvents'(expr, catchEvents) {
-    setAllNested(expr, catchEvents.map(strToStack), Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTrySetCatchEventAt'], Module['_BinaryenTryAppendCatchEvent'], Module['_BinaryenTryRemoveCatchEventAt']);
+    preserveStack(() => {
+      setAllNested(expr, catchEvents.map(strToStack), Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTrySetCatchEventAt'], Module['_BinaryenTryAppendCatchEvent'], Module['_BinaryenTryRemoveCatchEventAt']);
+    });
   },
   'getCatchEventAt'(expr, index) {
     return UTF8ToString(Module['_BinaryenTryGetCatchEventAt'](expr, index));
