@@ -75,8 +75,8 @@ public:
     exnref,
     anyref,
     eqref,
-    i31ref,
     dataref,
+    i31ref,
   };
   static constexpr BasicType _last_basic_type = i31ref;
 
@@ -298,8 +298,8 @@ public:
     exn,
     any,
     eq,
-    i31,
     data,
+    i31,
   };
   static constexpr BasicHeapType _last_basic_type = i31;
 
