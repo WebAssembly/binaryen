@@ -867,12 +867,13 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
     return Type::eqref;
   }
+  if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
+    // FIXME: for now, force all inputs to be nullable
+    return Type(HeapType::BasicHeapType::data, Nullable);
+  }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
     // FIXME: for now, force all inputs to be nullable
     return Type(HeapType::BasicHeapType::i31, Nullable);
-  }
-  if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type::dataref;
   }
   if (allowError) {
     return Type::none;
