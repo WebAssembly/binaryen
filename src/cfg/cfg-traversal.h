@@ -78,9 +78,12 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   std::vector<std::vector<BasicBlock*>> unwindCatchStack;
   // stack of 'Try' expressions corresponding to unwindCatchStack.
   std::vector<Expression*> unwindExprStack;
-  // Contains the stack of the first blocks of catches currently being processed
-  // in the beginning. Will contain the last blocks of catches after being
-  // processed.
+  // A stack for each try, where each entry is a list of blocks, one for each
+  // catch, used during processing. We start by assigning the start blocks to
+  // here, and then read those at the appropriate time; when we finish a catch
+  // we write to here the end block, so that when we finish with them all we can
+  // connect the ends to the outside. In principle two vectors could be used,
+  // but their usage does not overlap in time, and this is more efficient.
   std::vector<std::vector<BasicBlock*>> processCatchStack;
 
   BasicBlock* startBasicBlock() {
@@ -212,10 +215,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doEndThrowingInst(SubType* self, Expression** currp) {
-    // Every call can possibly throw, but we don't end the current basic block
-    // unless the call is within a try-catch, because the CFG will have too many
-    // blocks that way, and if an exception is thrown, the function will be
-    // exited anyway.
+    // Even if the instruction can possibly throw, we don't end the current
+    // basic block unless the instruction is within a try-catch, because the CFG
+    // will have too many blocks that way, and if an exception is thrown, the
+    // function will be exited anyway.
     if (!self->unwindCatchStack.empty()) {
       // Exception thrown. Create a link to each catch within the innermost try.
       for (auto* block : self->unwindCatchStack.back()) {
@@ -224,8 +227,11 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       // If the innermost try does not have a catch_all clause, an exception
       // thrown can be caught by any of its outer catch block. And if that outer
       // try-catch also does not have a catch_all, this continues until we
-      // encounter try-catch_all. Create a link to all those possible catch
+      // encounter a try-catch_all. Create a link to all those possible catch
       // unwind destinations.
+      // TODO This can be more precise for `throw`s if we compare event types
+      // and create links to outer catch BBs only when the exception is not
+      // caught.
       for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
         if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
           break;
@@ -263,10 +269,12 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   }
 
   static void doStartCatch(SubType* self, Expression** currp, Index i) {
+    // Get the block that starts this catch
     self->currBasicBlock = self->processCatchStack.back()[i];
   }
 
   static void doEndCatch(SubType* self, Expression** currp, Index i) {
+    // We are done with this catch; set the block that ends it
     self->processCatchStack.back()[i] = self->currBasicBlock;
   }
 
