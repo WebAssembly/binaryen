@@ -3069,8 +3069,8 @@ private:
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
              Type::eqref,
-             Type::i31ref,
-             Type::dataref));
+             Type::i31ref));
+    // TODO: dataref
   }
 
   Type getReferenceType() { return pick(getReferenceTypes()); }
