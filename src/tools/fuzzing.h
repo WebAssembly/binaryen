@@ -2084,7 +2084,6 @@ private:
       if (type == Type::dataref) {
         WASM_UNREACHABLE("TODO: dataref");
       }
-      assert(type.isFunction());
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
         // FIXME: RefFunc type should be non-nullable, but we emit nullable
