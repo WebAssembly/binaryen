@@ -309,13 +309,15 @@ struct TypeStore : Store<TypeInfo> {
           case HeapType::eq:
             return Type::eqref;
           case HeapType::data:
-            return Type::dataref;
           case HeapType::i31:
             break;
         }
       } else {
         if (info.ref.heapType == HeapType::i31) {
           return Type::i31ref;
+        }
+        if (info.ref.heapType == HeapType::data) {
+          return Type::dataref;
         }
       }
     }

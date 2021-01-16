@@ -2444,7 +2444,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    shouldBeTrue(var.isDefaultable(), curr, "vars must be defaultable");
+    shouldBeTrue(var.isDefaultable(), var, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
