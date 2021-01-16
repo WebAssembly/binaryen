@@ -219,34 +219,38 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // basic block unless the instruction is within a try-catch, because the CFG
     // will have too many blocks that way, and if an exception is thrown, the
     // function will be exited anyway.
-    if (!self->unwindCatchStack.empty()) {
-      // Exception thrown. Create a link to each catch within the innermost try.
-      for (auto* block : self->unwindCatchStack.back()) {
-        self->link(self->currBasicBlock, block);
+    if (self->unwindCatchStack.empty()) {
+      return;
+    }
+
+    // Exception thrown. Create a link to each catch within the innermost try.
+    for (auto* block : self->unwindCatchStack.back()) {
+      self->link(self->currBasicBlock, block);
+    }
+    // If the innermost try does not have a catch_all clause, an exception
+    // thrown can be caught by any of its outer catch block. And if that outer
+    // try-catch also does not have a catch_all, this continues until we
+    // encounter a try-catch_all. Create a link to all those possible catch
+    // unwind destinations.
+    // TODO This can be more precise for `throw`s if we compare event types
+    // and create links to outer catch BBs only when the exception is not
+    // caught.
+    for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
+      if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
+        break;
       }
-      // If the innermost try does not have a catch_all clause, an exception
-      // thrown can be caught by any of its outer catch block. And if that outer
-      // try-catch also does not have a catch_all, this continues until we
-      // encounter a try-catch_all. Create a link to all those possible catch
-      // unwind destinations.
-      // TODO This can be more precise for `throw`s if we compare event types
-      // and create links to outer catch BBs only when the exception is not
-      // caught.
-      for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
-        if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
-          break;
-        }
-        for (auto* block : self->unwindCatchStack[i - 1]) {
-          self->link(self->currBasicBlock, block);
-        }
+      for (auto* block : self->unwindCatchStack[i - 1]) {
+        self->link(self->currBasicBlock, block);
       }
     }
   }
 
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    // exception not thrown. link to the continuation BB
-    self->link(self->currBasicBlock, self->startBasicBlock());
+    if (!self->unwindCatchStack.empty()) {
+      // exception not thrown. link to the continuation BB
+      self->link(self->currBasicBlock, self->startBasicBlock());
+    }
   }
 
   static void doStartTry(SubType* self, Expression** currp) {
