@@ -3053,9 +3053,9 @@ private:
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
              Type::eqref,
-             Type::i31ref,
-             Type::dataref));
+             Type::i31ref));
     // TODO: emit typed function references types
+    // TODO: dataref
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
