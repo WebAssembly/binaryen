@@ -71,7 +71,6 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       ret.func = x.isNull() ? nullptr : x.getFunc().c_str();
       break;
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
       assert(x.isNull() && "unexpected non-null reference type literal");
@@ -100,7 +99,6 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
     case Type::funcref:
       return Literal::makeFunc(x.func);
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
       return Literal::makeNull(Type(x.type));
@@ -139,7 +137,6 @@ BinaryenType BinaryenTypeFloat64(void) { return Type::f64; }
 BinaryenType BinaryenTypeVec128(void) { return Type::v128; }
 BinaryenType BinaryenTypeFuncref(void) { return Type::funcref; }
 BinaryenType BinaryenTypeExternref(void) { return Type::externref; }
-BinaryenType BinaryenTypeExnref(void) { return Type::exnref; }
 BinaryenType BinaryenTypeAnyref(void) { return Type::anyref; }
 BinaryenType BinaryenTypeEqref(void) { return Type::eqref; }
 BinaryenType BinaryenTypeI31ref(void) { return Type::i31ref; }
@@ -1231,17 +1228,6 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
                                       BinaryenIndex depth) {
   return static_cast<Expression*>(Builder(*(Module*)module).makeRethrow(depth));
-}
-
-BinaryenExpressionRef BinaryenBrOnExn(BinaryenModuleRef module,
-                                      const char* name,
-                                      const char* eventName,
-                                      BinaryenExpressionRef exnref) {
-  auto* wasm = (Module*)module;
-  auto* event = wasm->getEventOrNull(eventName);
-  assert(event && "br_on_exn's event must exist");
-  return static_cast<Expression*>(
-    Builder(*wasm).makeBrOnExn(name, event, (Expression*)exnref));
 }
 
 BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
@@ -2927,40 +2913,6 @@ void BinaryenRethrowSetDepth(BinaryenExpressionRef expr, BinaryenIndex depth) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Rethrow>());
   static_cast<Rethrow*>(expression)->depth = depth;
-}
-// BrOnExn
-const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  return static_cast<BrOnExn*>(expression)->event.c_str();
-}
-void BinaryenBrOnExnSetEvent(BinaryenExpressionRef expr,
-                             const char* eventName) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  static_cast<BrOnExn*>(expression)->event = eventName;
-}
-const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  return static_cast<BrOnExn*>(expression)->name.c_str();
-}
-void BinaryenBrOnExnSetName(BinaryenExpressionRef expr, const char* name) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  static_cast<BrOnExn*>(expression)->name = name;
-}
-BinaryenExpressionRef BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  return static_cast<BrOnExn*>(expression)->exnref;
-}
-void BinaryenBrOnExnSetExnref(BinaryenExpressionRef expr,
-                              BinaryenExpressionRef exnrefExpr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<BrOnExn>());
-  assert(exnrefExpr);
-  static_cast<BrOnExn*>(expression)->exnref = (Expression*)exnrefExpr;
 }
 // TupleMake
 BinaryenIndex BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr) {

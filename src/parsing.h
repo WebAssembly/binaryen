@@ -264,7 +264,6 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -373,9 +372,6 @@ struct UniqueNameMapper {
       }
 
       void visitBreak(Break* curr) {
-        curr->name = mapper.sourceToUnique(curr->name);
-      }
-      void visitBrOnExn(BrOnExn* curr) {
         curr->name = mapper.sourceToUnique(curr->name);
       }
       void visitSwitch(Switch* curr) {

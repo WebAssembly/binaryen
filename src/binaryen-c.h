@@ -100,7 +100,6 @@ BINARYEN_API BinaryenType BinaryenTypeFloat64(void);
 BINARYEN_API BinaryenType BinaryenTypeVec128(void);
 BINARYEN_API BinaryenType BinaryenTypeFuncref(void);
 BINARYEN_API BinaryenType BinaryenTypeExternref(void);
-BINARYEN_API BinaryenType BinaryenTypeExnref(void);
 BINARYEN_API BinaryenType BinaryenTypeAnyref(void);
 BINARYEN_API BinaryenType BinaryenTypeEqref(void);
 BINARYEN_API BinaryenType BinaryenTypeI31ref(void);
@@ -192,7 +191,6 @@ struct BinaryenLiteral {
     double f64;
     uint8_t v128[16];
     const char* func;
-    // TODO: exn
   };
 };
 
@@ -810,11 +808,6 @@ BinaryenThrow(BinaryenModuleRef module,
               BinaryenIndex numOperands);
 BINARYEN_API BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
                                                    BinaryenIndex depth);
-BINARYEN_API BinaryenExpressionRef
-BinaryenBrOnExn(BinaryenModuleRef module,
-                const char* name,
-                const char* eventName,
-                BinaryenExpressionRef exnref);
 BINARYEN_API BinaryenExpressionRef
 BinaryenTupleMake(BinaryenModuleRef module,
                   BinaryenExpressionRef* operands,
@@ -1811,25 +1804,6 @@ BINARYEN_API BinaryenIndex BinaryenRethrowGetDepth(BinaryenExpressionRef expr);
 // Sets the exception reference expression of a `rethrow` expression.
 BINARYEN_API void BinaryenRethrowSetDepth(BinaryenExpressionRef expr,
                                           BinaryenIndex depth);
-
-// BrOnExn
-
-// Gets the name of the event triggering a `br_on_exn` expression.
-BINARYEN_API const char* BinaryenBrOnExnGetEvent(BinaryenExpressionRef expr);
-// Sets the name of the event triggering a `br_on_exn` expression.
-BINARYEN_API void BinaryenBrOnExnSetEvent(BinaryenExpressionRef expr,
-                                          const char* eventName);
-// Gets the name (target label) of a `br_on_exn` expression.
-BINARYEN_API const char* BinaryenBrOnExnGetName(BinaryenExpressionRef expr);
-// Sets the name (target label) of a `br_on_exn` expression.
-BINARYEN_API void BinaryenBrOnExnSetName(BinaryenExpressionRef expr,
-                                         const char* name);
-// Gets the expression reference expression of a `br_on_exn` expression.
-BINARYEN_API BinaryenExpressionRef
-BinaryenBrOnExnGetExnref(BinaryenExpressionRef expr);
-// Sets the expression reference expression of a `br_on_exn` expression.
-BINARYEN_API void BinaryenBrOnExnSetExnref(BinaryenExpressionRef expr,
-                                           BinaryenExpressionRef exnrefExpr);
 
 // TupleMake
 

@@ -292,11 +292,6 @@
 # Rethrow
 (rethrow 1)
 
-# BrOnExn
-(br_on_exn $bar $event2
- (local.get $2)
-)
-
 # TupleMake
 (tuple.make
  (i32.const 6)

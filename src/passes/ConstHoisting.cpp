@@ -96,7 +96,6 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref: {

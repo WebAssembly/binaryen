@@ -538,11 +538,6 @@ private:
       // traps when the arg is null
       parent.implicitTrap = true;
     }
-    void visitBrOnExn(BrOnExn* curr) {
-      parent.breakTargets.insert(curr->name);
-      // traps when the arg is null
-      parent.implicitTrap = true;
-    }
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) { parent.trap = true; }
     void visitPop(Pop* curr) {

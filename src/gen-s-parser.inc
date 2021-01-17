@@ -71,17 +71,9 @@ switch (op[0]) {
               case 'i':
                 if (strcmp(op, "br_if") == 0) { return makeBreak(s); }
                 goto parse_error;
-              case 'o': {
-                switch (op[6]) {
-                  case 'c':
-                    if (strcmp(op, "br_on_cast") == 0) { return makeBrOnCast(s); }
-                    goto parse_error;
-                  case 'e':
-                    if (strcmp(op, "br_on_exn") == 0) { return makeBrOnExn(s); }
-                    goto parse_error;
-                  default: goto parse_error;
-                }
-              }
+              case 'o':
+                if (strcmp(op, "br_on_cast") == 0) { return makeBrOnCast(s); }
+                goto parse_error;
               case 't':
                 if (strcmp(op, "br_table") == 0) { return makeBreakTable(s); }
                 goto parse_error;

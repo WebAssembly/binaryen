@@ -1045,9 +1045,6 @@ void WasmBinaryWriter::writeType(Type type) {
     case Type::externref:
       ret = BinaryConsts::EncodedType::externref;
       break;
-    case Type::exnref:
-      ret = BinaryConsts::EncodedType::exnref;
-      break;
     case Type::anyref:
       ret = BinaryConsts::EncodedType::anyref;
       break;
@@ -1076,9 +1073,6 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
         break;
       case HeapType::ext:
         ret = BinaryConsts::EncodedHeapType::extern_;
-        break;
-      case HeapType::exn:
-        ret = BinaryConsts::EncodedHeapType::exn;
         break;
       case HeapType::any:
         ret = BinaryConsts::EncodedHeapType::any;
@@ -1404,8 +1398,6 @@ Type WasmBinaryBuilder::getType(int initial) {
       return Type::funcref;
     case BinaryConsts::EncodedType::externref:
       return Type::externref;
-    case BinaryConsts::EncodedType::exnref:
-      return Type::exnref;
     case BinaryConsts::EncodedType::anyref:
       return Type::anyref;
     case BinaryConsts::EncodedType::eqref:
@@ -1448,8 +1440,6 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::func;
     case BinaryConsts::EncodedHeapType::extern_:
       return HeapType::ext;
-    case BinaryConsts::EncodedHeapType::exn:
-      return HeapType::exn;
     case BinaryConsts::EncodedHeapType::any:
       return HeapType::any;
     case BinaryConsts::EncodedHeapType::eq:
@@ -2862,9 +2852,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::Rethrow:
       visitRethrow((curr = allocator.alloc<Rethrow>())->cast<Rethrow>());
-      break;
-    case BinaryConsts::BrOnExn:
-      visitBrOnExn((curr = allocator.alloc<BrOnExn>())->cast<BrOnExn>());
       break;
     case BinaryConsts::MemorySize: {
       auto size = allocator.alloc<MemorySize>();
@@ -5685,26 +5672,6 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
 void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
   BYN_TRACE("zz node: Rethrow\n");
   curr->depth = getU32LEB();
-  curr->finalize();
-}
-
-void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
-  BYN_TRACE("zz node: BrOnExn\n");
-  BreakTarget target = getBreakTarget(getU32LEB());
-  curr->name = target.name;
-  auto index = getU32LEB();
-  if (index >= wasm.events.size()) {
-    throwError("bad event index");
-  }
-  curr->event = wasm.events[index]->name;
-  curr->exnref = popNonVoidExpression();
-
-  Event* event = wasm.getEventOrNull(curr->event);
-  assert(event && "br_on_exn's event must exist");
-
-  // Copy params info into BrOnExn, because it is necessary when BrOnExn is
-  // refinalized without the module.
-  curr->sent = event->sig.params;
   curr->finalize();
 }
 

@@ -1,42 +1,38 @@
 total
  [events]       : 1       
- [exports]      : 3       
- [funcs]        : 2       
+ [exports]      : 7       
+ [funcs]        : 8       
  [globals]      : 6       
- [imports]      : 6       
+ [imports]      : 5       
  [memory-data]  : 22      
- [table-data]   : 0       
- [total]        : 592     
- [vars]         : 1       
- atomic.cmpxchg : 1       
- atomic.fence   : 3       
- binary         : 58      
- block          : 84      
- break          : 26      
- call           : 4       
+ [table-data]   : 1       
+ [total]        : 461     
+ [vars]         : 11      
+ atomic.rmw     : 1       
+ binary         : 72      
+ block          : 40      
+ break          : 5       
+ call           : 13      
  call_ref       : 1       
- const          : 149     
- data.drop      : 1       
+ const          : 124     
  drop           : 3       
- global.get     : 29      
- global.set     : 17      
- i31.get        : 2       
- i31.new        : 7       
- if             : 35      
- load           : 15      
- local.get      : 10      
- local.set      : 14      
- loop           : 13      
+ global.get     : 20      
+ global.set     : 11      
+ i31.get        : 1       
+ i31.new        : 8       
+ if             : 17      
+ load           : 19      
+ local.get      : 34      
+ local.set      : 18      
+ loop           : 4       
  memory.init    : 1       
- nop            : 36      
- ref.eq         : 2       
- ref.func       : 2       
- ref.is_null    : 3       
- ref.null       : 8       
+ nop            : 8       
+ ref.func       : 1       
+ ref.null       : 11      
  return         : 14      
- select         : 2       
+ select         : 1       
  simd_extract   : 2       
- store          : 8       
- tuple.extract  : 5       
- tuple.make     : 4       
- unary          : 33      
+ store          : 3       
+ tuple.extract  : 1       
+ tuple.make     : 8       
+ unary          : 20      

@@ -69,8 +69,7 @@ struct Flatten
       return;
     }
 
-    if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>() ||
-        curr->is<BrOnExn>()) {
+    if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>()) {
       Fatal() << "Flatten does not support EH instructions yet";
     }
 
@@ -277,7 +276,6 @@ struct Flatten
         }
       }
     }
-    // TODO Handle br_on_exn
 
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it

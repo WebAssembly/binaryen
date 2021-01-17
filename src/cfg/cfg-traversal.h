@@ -317,14 +317,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->startUnreachableBlock();
   }
 
-  static void doEndBrOnExn(SubType* self, Expression** currp) {
-    auto* curr = (*currp)->cast<BrOnExn>();
-    self->branches[self->findBreakTarget(curr->name)].push_back(
-      self->currBasicBlock); // branch to the target
-    auto* last = self->currBasicBlock;
-    self->link(last, self->startBasicBlock()); // we might fall through
-  }
-
   static void scan(SubType* self, Expression** currp) {
     Expression* curr = *currp;
 
@@ -393,10 +385,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       case Expression::Id::ThrowId:
       case Expression::Id::RethrowId: {
         self->pushTask(SubType::doEndThrow, currp);
-        break;
-      }
-      case Expression::Id::BrOnExnId: {
-        self->pushTask(SubType::doEndBrOnExn, currp);
         break;
       }
       default: {}

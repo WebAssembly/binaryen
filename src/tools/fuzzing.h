@@ -335,9 +335,6 @@ private:
           if (wasm.features.hasReferenceTypes()) {
             options.push_back(Type::funcref);
             options.push_back(Type::externref);
-            if (wasm.features.hasExceptionHandling()) {
-              options.push_back(Type::exnref);
-            }
             if (wasm.features.hasGC()) {
               options.push_back(Type::eqref);
               options.push_back(Type::i31ref);
@@ -870,8 +867,6 @@ private:
       }
 
       void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
-
-      void visitBrOnExn(BrOnExn* curr) { replaceIfInvalid(curr->name); }
 
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
@@ -1648,7 +1643,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -1754,7 +1748,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -1890,7 +1883,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
@@ -1937,7 +1929,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
@@ -2009,7 +2000,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
@@ -2038,7 +2028,6 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
@@ -2173,7 +2162,6 @@ private:
           }
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
@@ -2321,7 +2309,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -2563,7 +2550,6 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -2770,7 +2756,6 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -3034,8 +3019,6 @@ private:
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
              Type::eqref,
@@ -3049,8 +3032,6 @@ private:
     return items(
       FeatureOptions<Type>()
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
              Type::eqref,
@@ -3122,9 +3103,7 @@ private:
       loggableTypes = items(
         FeatureOptions<Type>()
           .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-          .add(FeatureSet::SIMD, Type::v128)
-          .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-               Type::exnref));
+          .add(FeatureSet::SIMD, Type::v128));
     }
     return loggableTypes;
   }

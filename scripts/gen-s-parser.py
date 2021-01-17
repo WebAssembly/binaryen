@@ -535,7 +535,6 @@ instructions = [
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),
     ("rethrow",              "makeRethrow(s)"),
-    ("br_on_exn",            "makeBrOnExn(s)"),
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),

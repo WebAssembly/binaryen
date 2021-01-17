@@ -63,7 +63,6 @@ static Expression* toABI(Expression* value, Module* module) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref: {
@@ -109,7 +108,6 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref: {

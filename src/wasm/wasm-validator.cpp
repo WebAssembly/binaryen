@@ -337,7 +337,6 @@ public:
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
   void visitCallRef(CallRef* curr);
@@ -1395,7 +1394,6 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       break;
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2101,34 +2099,6 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
   // depth 0 for C++ support.
 }
 
-void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
-  shouldBeTrue(getModule()->features.hasExceptionHandling(),
-               curr,
-               "br_on_exn requires exception-handling to be enabled");
-  Event* event = getModule()->getEventOrNull(curr->event);
-  shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
-  shouldBeTrue(event->sig.params == curr->sent,
-               curr,
-               "br_on_exn's event params and event's params are different");
-  noteBreak(curr->name, curr->sent, curr);
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->exnref->type,
-    Type::exnref,
-    curr,
-    "br_on_exn's argument must be unreachable or exnref type or its subtype");
-  if (curr->exnref->type == Type::unreachable) {
-    shouldBeTrue(curr->type == Type::unreachable,
-                 curr,
-                 "If exnref argument's type is unreachable, br_on_exn should "
-                 "be unreachable too");
-  } else {
-    shouldBeTrue(curr->type == Type::exnref,
-                 curr,
-                 "br_on_exn's type should be exnref unless its exnref argument "
-                 "is unreachable");
-  }
-}
-
 void FunctionValidator::visitTupleMake(TupleMake* curr) {
   shouldBeTrue(getModule()->features.hasMultivalue(),
                curr,
@@ -2541,7 +2511,6 @@ void FunctionValidator::validateAlignment(
       break;
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -2856,12 +2825,6 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(module.features.hasReferenceTypes(),
                       module.features,
                       "--enable-gc requires --enable-reference-types");
-  }
-  if (module.features.hasExceptionHandling()) { // implies exnref
-    info.shouldBeTrue(
-      module.features.hasReferenceTypes(),
-      module.features,
-      "--enable-exception-handling requires --enable-reference-types");
   }
 }
 

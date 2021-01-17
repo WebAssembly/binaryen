@@ -16,14 +16,12 @@
   // 7
   // BinaryenTypeExternref: 8
   // 8
-  // BinaryenTypeExnref: 9
+  // BinaryenTypeAnyref: 9
   // 9
-  // BinaryenTypeAnyref: 10
+  // BinaryenTypeEqref: 10
   // 10
-  // BinaryenTypeEqref: 11
+  // BinaryenTypeI31ref: 11
   // 11
-  // BinaryenTypeI31ref: 12
-  // 12
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
@@ -88,24 +86,23 @@ RefEqId: 45
 TryId: 46
 ThrowId: 47
 RethrowId: 48
-BrOnExnId: 49
-TupleMakeId: 50
-TupleExtractId: 51
-I31NewId: 52
-I31GetId: 53
-CallRefId: 54
-RefTestId: 55
-RefCastId: 56
-BrOnCastId: 57
-RttCanonId: 58
-RttSubId: 59
-StructNewId: 60
-StructGetId: 61
-StructSetId: 62
-ArrayNewId: 63
-ArrayGetId: 64
-ArraySetId: 65
-ArrayLenId: 66
+TupleMakeId: 49
+TupleExtractId: 50
+I31NewId: 51
+I31GetId: 52
+CallRefId: 53
+RefTestId: 54
+RefCastId: 55
+BrOnCastId: 56
+RttCanonId: 57
+RttSubId: 58
+StructNewId: 59
+StructGetId: 60
+StructSetId: 61
+ArrayNewId: 62
+ArrayGetId: 63
+ArraySetId: 64
+ArrayLenId: 65
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -142,7 +139,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
-  (local $5 exnref)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
@@ -1929,9 +1925,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (pop externref)
-      )
-      (drop
-       (pop exnref)
       )
       (drop
        (pop anyref)
@@ -2005,7 +1998,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
-  (local $5 exnref)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
@@ -3792,9 +3784,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (pop externref)
-      )
-      (drop
-       (pop exnref)
       )
       (drop
        (pop anyref)

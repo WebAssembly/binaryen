@@ -146,10 +146,6 @@ struct SimplifyLocals
         self->unoptimizableBlocks.insert(target);
       }
       // TODO: we could use this info to stop gathering data on these blocks
-    } else if (auto* br = curr->dynCast<BrOnExn>()) {
-      // We cannot optimize the block this targets to have a return value, as
-      // the br_on_exn doesn't support a change to the block's type
-      self->unoptimizableBlocks.insert(br->name);
     }
     self->sinkables.clear();
   }

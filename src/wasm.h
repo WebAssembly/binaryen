@@ -615,7 +615,6 @@ public:
     TryId,
     ThrowId,
     RethrowId,
-    BrOnExnId,
     TupleMakeId,
     TupleExtractId,
     I31NewId,
@@ -1288,21 +1287,6 @@ public:
   Rethrow(MixedArena& allocator) {}
 
   Index depth;
-
-  void finalize();
-};
-
-class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
-public:
-  BrOnExn() { type = Type::unreachable; }
-  BrOnExn(MixedArena& allocator) : BrOnExn() {}
-
-  Name name;
-  Name event;
-  Expression* exnref;
-  // This is duplicate info of param types stored in Event, but this is required
-  // for us to know the type of the value sent to the target block.
-  Type sent;
 
   void finalize();
 };

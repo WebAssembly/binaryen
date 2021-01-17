@@ -589,12 +589,6 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doNoteNonLinear, currp);
         break;
       }
-      case Expression::Id::BrOnExnId: {
-        self->pushTask(SubType::doVisitBrOnExn, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<BrOnExn>()->exnref);
-        break;
-      }
       case Expression::Id::UnreachableId: {
         self->pushTask(SubType::doVisitUnreachable, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);

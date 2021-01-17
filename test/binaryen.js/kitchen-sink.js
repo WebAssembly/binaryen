@@ -74,9 +74,6 @@ function test_types() {
   console.log("  // BinaryenTypeExternref: " + binaryen.externref);
   console.log("  //", binaryen.expandType(binaryen.externref).join(","));
 
-  console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
-  console.log("  //", binaryen.expandType(binaryen.exnref).join(","));
-
   console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
   console.log("  //", binaryen.expandType(binaryen.anyref).join(","));
 
@@ -164,7 +161,6 @@ function test_ids() {
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
-  console.log("BrOnExnId: " + binaryen.BrOnExnId);
   console.log("TupleMakeId: " + binaryen.TupleMakeId);
   console.log("TupleExtractId: " + binaryen.TupleExtractId);
   console.log("I31NewId: " + binaryen.I31NewId);
@@ -591,7 +587,6 @@ function test_core() {
     module.v128.pop(),
     module.funcref.pop(),
     module.externref.pop(),
-    module.exnref.pop(),
     module.anyref.pop(),
     module.eqref.pop(),
     module.i31ref.pop(),
@@ -642,7 +637,7 @@ function test_core() {
   var body = module.block("the-body", [ nothing, makeInt32(42) ]);
 
   // Create the function
-  var sinker = module.addFunction("kitchen()sinker", iIfF, binaryen.i32, [ binaryen.i32, binaryen.exnref ], body);
+  var sinker = module.addFunction("kitchen()sinker", iIfF, binaryen.i32, [ binaryen.i32 ], body);
 
   // Create a global
   var initExpr = module.i32.const(1);

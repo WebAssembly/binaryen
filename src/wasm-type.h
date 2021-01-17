@@ -72,7 +72,6 @@ public:
     v128,
     funcref,
     externref,
-    exnref,
     anyref,
     eqref,
     i31ref,
@@ -116,8 +115,7 @@ public:
   // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
   // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
-  // │ exnref      ║ x │   │ x │ x │    n  │ │  n_ullable
-  // │ anyref      ║ x │   │ x │ x │ f? n  │ │
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  n_ullable
   // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
   // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
@@ -293,7 +291,6 @@ public:
   enum BasicHeapType : uint32_t {
     func,
     ext,
-    exn,
     any,
     eq,
     i31,

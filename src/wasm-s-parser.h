@@ -251,7 +251,6 @@ private:
   Expression* makeTryOrCatchBody(Element& s, Type type, bool isTry);
   Expression* makeThrow(Element& s);
   Expression* makeRethrow(Element& s);
-  Expression* makeBrOnExn(Element& s);
   Expression* makeTupleMake(Element& s);
   Expression* makeTupleExtract(Element& s);
   Expression* makeCallRef(Element& s, bool isReturn);
