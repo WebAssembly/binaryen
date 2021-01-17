@@ -232,7 +232,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     throw TrapException();
   }
 
-  void throwException(Literal exn) override { throw WasmException(exn); }
+  void throwException(const WasmException& exn) override { throw exn; }
 };
 
 } // namespace wasm
