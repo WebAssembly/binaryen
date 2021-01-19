@@ -2837,7 +2837,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
           startPos - codeSectionLocation;
       }
       break;
-    case BinaryConsts::Catch: {
+    case BinaryConsts::Catch:
+    case BinaryConsts::CatchAll: {
       curr = nullptr;
       if (DWARF && currFunction) {
         assert(!controlFlowStack.empty());
