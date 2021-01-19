@@ -562,6 +562,12 @@ public:
       case WidenHighSVecI32x4ToVecI64x2:
       case WidenLowUVecI32x4ToVecI64x2:
       case WidenHighUVecI32x4ToVecI64x2:
+      case ConvertLowSVecI32x4ToVecF64x2:
+      case ConvertLowUVecI32x4ToVecF64x2:
+      case TruncSatZeroSVecF64x2ToVecI32x4:
+      case TruncSatZeroUVecF64x2ToVecI32x4:
+      case DemoteZeroVecF64x2ToVecF32x4:
+      case PromoteLowVecF32x4ToVecF64x2:
         WASM_UNREACHABLE("unimp");
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
