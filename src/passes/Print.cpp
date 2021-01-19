@@ -2023,6 +2023,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->condition);
     maybePrintImplicitBlock(curr->ifTrue, false);
     if (curr->ifFalse) {
+      // Note: debug info here is not used as LLVM does not emit ifs, and since
+      // LLVM is the main source of DWARF, effectively we never encounter ifs
+      // with DWARF.
+      printDebugDelimiterLocation(curr, BinaryLocations::Else);
       maybePrintImplicitBlock(curr->ifFalse, false);
     }
     decIndent();
