@@ -1890,6 +1890,21 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
   }
 
+  // Prints debug info for a delimiter in an expression.
+  void printDebugDelimiterLocation(Expression* curr, Index i) {
+    if (currFunction && debugInfo) {
+      auto iter = currFunction->delimiterLocations.find(curr);
+      if (iter != currFunction->delimiterLocations.end()) {
+        auto& locations = iter->second;
+        Colors::grey(o);
+        o << ";; code offset: 0x" << std::hex << locations[i] << std::dec
+          << '\n';
+        restoreNormalColor(o);
+        doIndent(o, indent);
+      }
+    }
+  }
+
   void visit(Expression* curr) {
     printDebugLocation(curr);
     OverriddenVisitor<PrintSExpression>::visit(curr);
@@ -2368,6 +2383,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << "\n";
     for (size_t i = 0; i < curr->catchEvents.size(); i++) {
       doIndent(o, indent);
+      printDebugDelimiterLocation(curr, i);
       o << "(catch ";
       printName(curr->catchEvents[i], o);
       incIndent();
@@ -2377,6 +2393,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     if (curr->hasCatchAll()) {
       doIndent(o, indent);
+      printDebugDelimiterLocation(curr, curr->catchEvents.size());
       o << "(catch_all";
       incIndent();
       maybePrintImplicitBlock(curr->catchBodies.back(), true);
