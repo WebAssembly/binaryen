@@ -439,10 +439,12 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
     addIfSupportsDWARF("code-folding");
   }
-  addIfSupportsDWARF("merge-blocks");        // makes remove-unused-brs more effective
-  addIfSupportsDWARF("remove-unused-brs");   // coalesce-locals opens opportunities
-  addIfSupportsDWARF("remove-unused-names"); // remove-unused-brs opens opportunities
-  addIfSupportsDWARF("merge-blocks");        // clean up remove-unused-brs new blocks
+  addIfSupportsDWARF("merge-blocks"); // makes remove-unused-brs more effective
+  addIfSupportsDWARF(
+    "remove-unused-brs"); // coalesce-locals opens opportunities
+  addIfSupportsDWARF(
+    "remove-unused-names");           // remove-unused-brs opens opportunities
+  addIfSupportsDWARF("merge-blocks"); // clean up remove-unused-brs new blocks
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfSupportsDWARF("precompute-propagate");
@@ -451,7 +453,8 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   }
   addIfSupportsDWARF("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    addIfSupportsDWARF("rse"); // after all coalesce-locals, and before a final vacuum
+    addIfSupportsDWARF(
+      "rse"); // after all coalesce-locals, and before a final vacuum
   }
   addIfSupportsDWARF("vacuum"); // just to be safe
 }
