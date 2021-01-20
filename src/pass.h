@@ -191,7 +191,9 @@ struct PassRunner {
     doAdd(std::move(pass));
   }
 
-  void addIfSupportsDWARF(std::string passName);
+  // Adds the pass if it supports DWARF (or, if DWARF is not present, it always
+  // adds it).
+  void addIfDWARFAllowed(std::string passName);
 
   // Adds the default set of optimization passes; this is
   // what -O does.

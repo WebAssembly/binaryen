@@ -372,9 +372,10 @@ void PassRegistry::registerPasses() {
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
 
-void PassRunner::addIfSupportsDWARF(std::string passName) {
+void PassRunner::addIfDWARFAllowed(std::string passName) {
   auto pass = PassRegistry::get()->createPass(passName);
-  if (!pass->invalidatesDWARF()) {
+  if (!pass->invalidatesDWARF() ||
+      !Debug::shouldPreserveDWARF(options, *wasm)) {
     doAdd(std::move(pass));
   }
 }
@@ -393,107 +394,107 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // Untangling to semi-ssa form is helpful (but best to ignore merges
   // so as to not introduce new copies).
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    addIfSupportsDWARF("ssa-nomerge");
+    addIfDWARFAllowed("ssa-nomerge");
   }
   // if we are willing to work very very hard, flatten the IR and do opts
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
-    addIfSupportsDWARF("flatten");
-    addIfSupportsDWARF("local-cse");
+    addIfDWARFAllowed("flatten");
+    addIfDWARFAllowed("local-cse");
   }
-  addIfSupportsDWARF("dce");
-  addIfSupportsDWARF("remove-unused-names");
-  addIfSupportsDWARF("remove-unused-brs");
-  addIfSupportsDWARF("remove-unused-names");
-  addIfSupportsDWARF("optimize-instructions");
+  addIfDWARFAllowed("dce");
+  addIfDWARFAllowed("remove-unused-names");
+  addIfDWARFAllowed("remove-unused-brs");
+  addIfDWARFAllowed("remove-unused-names");
+  addIfDWARFAllowed("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    addIfSupportsDWARF("pick-load-signs");
+    addIfDWARFAllowed("pick-load-signs");
   }
   // early propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    addIfSupportsDWARF("precompute-propagate");
+    addIfDWARFAllowed("precompute-propagate");
   } else {
-    addIfSupportsDWARF("precompute");
+    addIfDWARFAllowed("precompute");
   }
   if (options.lowMemoryUnused) {
     if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-      addIfSupportsDWARF("optimize-added-constants-propagate");
+      addIfDWARFAllowed("optimize-added-constants-propagate");
     } else {
-      addIfSupportsDWARF("optimize-added-constants");
+      addIfDWARFAllowed("optimize-added-constants");
     }
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    addIfSupportsDWARF("code-pushing");
+    addIfDWARFAllowed("code-pushing");
   }
   // don't create if/block return values yet, as coalesce can remove copies that
   // that could inhibit
-  addIfSupportsDWARF("simplify-locals-nostructure");
-  addIfSupportsDWARF("vacuum"); // previous pass creates garbage
-  addIfSupportsDWARF("reorder-locals");
+  addIfDWARFAllowed("simplify-locals-nostructure");
+  addIfDWARFAllowed("vacuum"); // previous pass creates garbage
+  addIfDWARFAllowed("reorder-locals");
   // simplify-locals opens opportunities for optimizations
-  addIfSupportsDWARF("remove-unused-brs");
+  addIfDWARFAllowed("remove-unused-brs");
   // if we are willing to work hard, also optimize copies before coalescing
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    addIfSupportsDWARF("merge-locals"); // very slow on e.g. sqlite
+    addIfDWARFAllowed("merge-locals"); // very slow on e.g. sqlite
   }
-  addIfSupportsDWARF("coalesce-locals");
-  addIfSupportsDWARF("simplify-locals");
-  addIfSupportsDWARF("vacuum");
-  addIfSupportsDWARF("reorder-locals");
-  addIfSupportsDWARF("coalesce-locals");
-  addIfSupportsDWARF("reorder-locals");
-  addIfSupportsDWARF("vacuum");
+  addIfDWARFAllowed("coalesce-locals");
+  addIfDWARFAllowed("simplify-locals");
+  addIfDWARFAllowed("vacuum");
+  addIfDWARFAllowed("reorder-locals");
+  addIfDWARFAllowed("coalesce-locals");
+  addIfDWARFAllowed("reorder-locals");
+  addIfDWARFAllowed("vacuum");
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    addIfSupportsDWARF("code-folding");
+    addIfDWARFAllowed("code-folding");
   }
-  addIfSupportsDWARF("merge-blocks"); // makes remove-unused-brs more effective
-  addIfSupportsDWARF(
+  addIfDWARFAllowed("merge-blocks"); // makes remove-unused-brs more effective
+  addIfDWARFAllowed(
     "remove-unused-brs"); // coalesce-locals opens opportunities
-  addIfSupportsDWARF(
+  addIfDWARFAllowed(
     "remove-unused-names");           // remove-unused-brs opens opportunities
-  addIfSupportsDWARF("merge-blocks"); // clean up remove-unused-brs new blocks
+  addIfDWARFAllowed("merge-blocks"); // clean up remove-unused-brs new blocks
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    addIfSupportsDWARF("precompute-propagate");
+    addIfDWARFAllowed("precompute-propagate");
   } else {
-    addIfSupportsDWARF("precompute");
+    addIfDWARFAllowed("precompute");
   }
-  addIfSupportsDWARF("optimize-instructions");
+  addIfDWARFAllowed("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    addIfSupportsDWARF(
+    addIfDWARFAllowed(
       "rse"); // after all coalesce-locals, and before a final vacuum
   }
-  addIfSupportsDWARF("vacuum"); // just to be safe
+  addIfDWARFAllowed("vacuum"); // just to be safe
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
-  addIfSupportsDWARF("duplicate-function-elimination");
-  addIfSupportsDWARF("memory-packing");
+  addIfDWARFAllowed("duplicate-function-elimination");
+  addIfDWARFAllowed("memory-packing");
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    addIfSupportsDWARF("dae-optimizing");
+    addIfDWARFAllowed("dae-optimizing");
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    addIfSupportsDWARF("inlining-optimizing");
+    addIfDWARFAllowed("inlining-optimizing");
   }
   // Optimizations show more functions as duplicate, so run this here in Post.
-  addIfSupportsDWARF("duplicate-function-elimination");
-  addIfSupportsDWARF("duplicate-import-elimination");
+  addIfDWARFAllowed("duplicate-function-elimination");
+  addIfDWARFAllowed("duplicate-import-elimination");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    addIfSupportsDWARF("simplify-globals-optimizing");
+    addIfDWARFAllowed("simplify-globals-optimizing");
   } else {
-    addIfSupportsDWARF("simplify-globals");
+    addIfDWARFAllowed("simplify-globals");
   }
-  addIfSupportsDWARF("remove-unused-module-elements");
+  addIfDWARFAllowed("remove-unused-module-elements");
   // may allow more inlining/dae/etc., need --converge for that
-  addIfSupportsDWARF("directize");
+  addIfDWARFAllowed("directize");
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    addIfSupportsDWARF("generate-stack-ir");
-    addIfSupportsDWARF("optimize-stack-ir");
+    addIfDWARFAllowed("generate-stack-ir");
+    addIfDWARFAllowed("optimize-stack-ir");
   }
 }
 
