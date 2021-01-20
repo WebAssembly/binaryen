@@ -357,10 +357,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         auto& catchBodies = curr->cast<Try>()->catchBodies;
         using namespace std::placeholders;
         for (Index i = 0; i < catchBodies.size(); i++) {
-          auto doEndCatchI = std::bind(doEndCatch, _1, _2, i);
+          auto doEndCatchI = [i](SubType* self, Expression** currp) {
+            doEndCatch(self, currp, i);
+          };
           self->pushTask(doEndCatchI, currp);
           self->pushTask(SubType::scan, &catchBodies[i]);
-          auto doStartCatchI = std::bind(doStartCatch, _1, _2, i);
+          auto doStartCatchI = [i](SubType* self, Expression** currp) {
+            doStartCatch(self, currp, i);
+          };
           self->pushTask(doStartCatchI, currp);
         }
         self->pushTask(SubType::doStartCatches, currp);
