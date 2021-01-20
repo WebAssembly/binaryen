@@ -377,8 +377,7 @@ void PassRunner::add(std::string passName) {
 }
 
 // Add a pass given an instance.
-template<class P>
-void PassRunner::add(std::unique_ptr<P> pass) {
+template<class P> void PassRunner::add(std::unique_ptr<P> pass) {
   doAdd(std::move(pass));
 }
 
