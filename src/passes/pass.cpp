@@ -372,6 +372,23 @@ void PassRegistry::registerPasses() {
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
 
+void PassRunner::add(std::string passName) {
+  doAdd(std::move(PassRegistry::get()->createPass(passName)));
+}
+
+// Add a pass given an instance.
+template<class P>
+void PassRunner::add(std::unique_ptr<P> pass) {
+  doAdd(std::move(pass));
+}
+
+void PassRunner::addIfSupportsDWARF(std::string passName) {
+  auto pass = PassRegistry::get()->createPass(passName);
+  if (!pass->invalidatesDWARF()) {
+    doAdd(std::move(pass));
+  }
+}
+
 void PassRunner::addDefaultOptimizationPasses() {
   addDefaultGlobalOptimizationPrePasses();
   addDefaultFunctionOptimizationPasses();

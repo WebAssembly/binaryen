@@ -182,21 +182,12 @@ struct PassRunner {
   }
 
   // Add a pass using its name.
-  void add(std::string passName) {
-    doAdd(std::move(PassRegistry::get()->createPass(passName)));
-  }
+  void add(std::string passName);
 
   // Add a pass given an instance.
-  template<class P> void add(std::unique_ptr<P> pass) {
-    doAdd(std::move(pass));
-  }
+  template<class P> void add(std::unique_ptr<P> pass);
 
-  void addIfSupportsDWARF(std::string passName) {
-    auto pass = PassRegistry::get()->createPass(passName);
-    if (!pass->invalidatesDWARF()) {
-      doAdd(std::move(pass));
-    }
-  }
+  void addIfSupportsDWARF(std::string passName);
 
   // Adds the default set of optimization passes; this is
   // what -O does.
