@@ -1,4 +1,5 @@
 import os
+import subprocess
 
 from scripts.test import shared
 from . import utils
@@ -16,12 +17,12 @@ class DWARFTest(utils.BinaryenTestCase):
             shared.run_process(shared.WASM_OPT + args, capture_output=True)
 
     def test_dwarf_incompatibility(self):
-        warning = 'waka'
-        path = self.input_path('dwarf', 'cubescript.wasm')
+        warning = 'not fully compatible with DWARF'
+        path = self.input_path(os.path.join('dwarf', 'cubescript.wasm'))
         args = [path, '-g']
         # flatten warns
         err = shared.run_process(shared.WASM_OPT + args + ['--flatten'], stderr=subprocess.PIPE).stderr
         self.assertIn(warning, err)
         # safe passes do not
-        err = shared.run_process(shared.WASM_OPT + args + ['--flatten'], stderr=subprocess.PIPE).stderr
+        err = shared.run_process(shared.WASM_OPT + args + ['--metrics'], stderr=subprocess.PIPE).stderr
         self.assertNotIn(warning, err)
