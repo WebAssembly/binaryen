@@ -235,6 +235,24 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // TODO This can be more precise for `throw`s if we compare event types
     // and create links to outer catch BBs only when the exception is not
     // caught.
+    // TODO This can also be more precise if we analyze the structure of nested
+    // try-catches. For example, in the example below, 'call $foo' doesn't need
+    // a link to the BB of outer 'catch $e1', because if the exception thrown by
+    // the call is of event $e1, it would've already been caught by the inner
+    // 'catch $e1'. Optimize these cases later.
+    // try
+    //   try
+    //     call $foo
+    //   catch $e1
+    //     ...
+    //   catch $e2
+    //     ...
+    //   end
+    // catch $e1
+    //   ...
+    // catch $e3
+    //   ...
+    // end
     for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
       if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
         break;
