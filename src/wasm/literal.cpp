@@ -545,7 +545,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           break;
         case HeapType::data:
         case HeapType::func:
-          WASM_UNREACHABLE("invalid type");
+          WASM_UNREACHABLE("type should have been handled above");
       }
     }
   } else if (literal.type.isRtt()) {
