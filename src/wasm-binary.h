@@ -973,6 +973,13 @@ enum ASTNodes {
   I64x2ExtMulLowUI32x4 = 0xd6,
   I64x2ExtMulHighUI32x4 = 0xd7,
 
+  F64x2ConvertLowSI32x4 = 0x53,
+  F64x2ConvertLowUI32x4 = 0x54,
+  I32x4TruncSatZeroSF64x2 = 0x55,
+  I32x4TruncSatZeroUF64x2 = 0x56,
+  F32x4DemoteZeroF64x2 = 0x57,
+  F64x2PromoteLowF32x4 = 0x69,
+
   // prefetch opcodes
 
   PrefetchT = 0xc5,

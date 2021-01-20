@@ -1186,6 +1186,30 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I64x2WidenHighUI32x4);
       break;
+    case ConvertLowSVecI32x4ToVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2ConvertLowSI32x4);
+      break;
+    case ConvertLowUVecI32x4ToVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2ConvertLowUI32x4);
+      break;
+    case TruncSatZeroSVecF64x2ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4TruncSatZeroSF64x2);
+      break;
+    case TruncSatZeroUVecF64x2ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4TruncSatZeroUF64x2);
+      break;
+    case DemoteZeroVecF64x2ToVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4DemoteZeroF64x2);
+      break;
+    case PromoteLowVecF32x4ToVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2PromoteLowF32x4);
+      break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
   }
