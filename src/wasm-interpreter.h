@@ -2971,7 +2971,6 @@ private:
         }
         // This exception is not caught by this try-catch. Rethrow it.
         throw;
-        WASM_UNREACHABLE("try");
       }
     }
     Flow visitRethrow(Rethrow* curr) {
