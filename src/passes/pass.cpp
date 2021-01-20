@@ -448,10 +448,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfDWARFAllowed("code-folding");
   }
   addIfDWARFAllowed("merge-blocks"); // makes remove-unused-brs more effective
+  addIfDWARFAllowed("remove-unused-brs"); // coalesce-locals opens opportunities
   addIfDWARFAllowed(
-    "remove-unused-brs"); // coalesce-locals opens opportunities
-  addIfDWARFAllowed(
-    "remove-unused-names");           // remove-unused-brs opens opportunities
+    "remove-unused-names");          // remove-unused-brs opens opportunities
   addIfDWARFAllowed("merge-blocks"); // clean up remove-unused-brs new blocks
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
