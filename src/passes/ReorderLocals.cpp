@@ -32,6 +32,9 @@ namespace wasm {
 struct ReorderLocals : public WalkerPass<PostWalker<ReorderLocals>> {
   bool isFunctionParallel() override { return true; }
 
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() { return true; }
+
   Pass* create() override { return new ReorderLocals; }
 
   // local index => times it is used

@@ -254,6 +254,10 @@ struct DAEScanner
 };
 
 struct DAE : public Pass {
+  // This pass changes locals and parameters.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() { return true; }
+
   bool optimize = false;
 
   void run(PassRunner* runner, Module* module) override {

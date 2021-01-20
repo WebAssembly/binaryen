@@ -86,6 +86,10 @@ void dumpDWARF(const Module& wasm) {
   info.context->dump(llvm::outs(), options);
 }
 
+bool shouldPreserveDWARF(PassOptions& options, Module& wasm) {
+  return options.debugInfo && hasDWARFSections(wasm);
+}
+
 //
 // Big picture: We use a DWARFContext to read data, then DWARFYAML support
 // code to write it. That is not the main LLVM Dwarf code used for writing
