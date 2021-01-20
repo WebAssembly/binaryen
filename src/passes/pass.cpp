@@ -372,15 +372,6 @@ void PassRegistry::registerPasses() {
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
 
-void PassRunner::add(std::string passName) {
-  doAdd(std::move(PassRegistry::get()->createPass(passName)));
-}
-
-// Add a pass given an instance.
-template<class P> void PassRunner::add(std::unique_ptr<P> pass) {
-  doAdd(std::move(pass));
-}
-
 void PassRunner::addIfSupportsDWARF(std::string passName) {
   auto pass = PassRegistry::get()->createPass(passName);
   if (!pass->invalidatesDWARF()) {
@@ -663,7 +654,7 @@ void PassRunner::runOnFunction(Function* func) {
 }
 
 void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
-  if (Debug::shouldPreserveDWARF(options, wasm) && pass->invalidatesDWARF()) {
+  if (Debug::shouldPreserveDWARF(options, *wasm) && pass->invalidatesDWARF()) {
     std::cerr << "warning: running pass '" << pass->name
               << "' which is not fully compatible with DWARF\n";
   }

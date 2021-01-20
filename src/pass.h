@@ -182,10 +182,14 @@ struct PassRunner {
   }
 
   // Add a pass using its name.
-  void add(std::string passName);
+  void add(std::string passName) {
+    doAdd(std::move(PassRegistry::get()->createPass(passName)));
+  }
 
   // Add a pass given an instance.
-  template<class P> void add(std::unique_ptr<P> pass);
+  template<class P> void add(std::unique_ptr<P> pass) {
+    doAdd(std::move(pass));
+  }
 
   void addIfSupportsDWARF(std::string passName);
 
