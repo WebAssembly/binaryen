@@ -1011,6 +1011,7 @@ enum ASTNodes {
 
   CallRef = 0x14,
   RetCallRef = 0x15,
+  Let = 0x17,
 
   // gc opcodes
 
@@ -1355,6 +1356,7 @@ public:
   void requireFunctionContext(const char* error);
 
   void readFunctions();
+  void readVars();
 
   std::map<Export*, Index> exportIndices;
   std::vector<Export*> exportOrder;
@@ -1374,6 +1376,29 @@ public:
   std::unordered_set<Name> breakTargetNames;
 
   std::vector<Expression*> expressionStack;
+
+  // Each let block in the binary adds new locals to the bottom of the index
+  // space. That is, all previously-existing indexes are bumped to higher
+  // indexes. getAbsoluteLocalIndex does this computation.
+  // Note that we must track not just the number of locals added in each let,
+  // but also the absolute index from which they were allocated, as binaryen
+  // will add new locals as it goes for things like stacky code and tuples (so
+  // there isn't a simple way to get to the absolute index from a relative one).
+  // Hence each entry here is a pair of the number of items, and the absolute
+  // index they begin at.
+  struct LetData {
+    // How many items are defined in this let.
+    Index num;
+    // The absolute index from which they are allocated from. That is, if num is
+    // 5 and absoluteStart is 10, then we use indexes 10-14.
+    Index absoluteStart;
+  };
+  std::vector<LetData> letStack;
+
+  // Given a relative index of a local (the one used in the wasm binary), get
+  // the absolute one which takes into account lets, and is the one used in
+  // Binaryen IR.
+  Index getAbsoluteLocalIndex(Index index);
 
   // Control flow structure parsing: these have not just the normal binary
   // data for an instruction, but also some bytes later on like "end" or "else".
@@ -1529,6 +1554,8 @@ public:
   void visitRethrow(Rethrow* curr);
   void visitBrOnExn(BrOnExn* curr);
   void visitCallRef(CallRef* curr);
+  // Let is lowered into a block.
+  void visitLet(Block* curr);
 
   void throwError(std::string text);
 

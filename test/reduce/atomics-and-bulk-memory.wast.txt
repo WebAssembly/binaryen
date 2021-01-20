@@ -1,0 +1,15 @@
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (memory $0 1 1)
+ (export "foo" (func $0))
+ (func $0 (result i32)
+  (i32.atomic.store8
+   (i32.const 0)
+   (i32.const 99)
+  )
+  (i32.atomic.load8_u
+   (i32.const 0)
+  )
+ )
+)
+

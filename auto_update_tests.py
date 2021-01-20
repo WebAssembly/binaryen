@@ -114,8 +114,8 @@ def update_reduce_tests():
     for t in shared.get_tests(shared.get_test_dir('reduce'), ['.wast']):
         print('..', os.path.basename(t))
         # convert to wasm
-        support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm'])
-        print(support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm']))
+        support.run_command(shared.WASM_AS + [t, '-o', 'a.wasm', '-all'])
+        print(support.run_command(shared.WASM_REDUCE + ['a.wasm', '--command=%s b.wasm --fuzz-exec -all' % shared.WASM_OPT[0], '-t', 'b.wasm', '-w', 'c.wasm']))
         expected = t + '.txt'
         support.run_command(shared.WASM_DIS + ['c.wasm', '-o', expected])
 
