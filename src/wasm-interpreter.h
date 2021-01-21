@@ -2036,6 +2036,7 @@ public:
         case Type::exnref:
         case Type::anyref:
         case Type::eqref:
+        case Type::dataref:
         case Type::i31ref:
         case Type::none:
         case Type::unreachable:
@@ -2095,6 +2096,7 @@ public:
         case Type::exnref:
         case Type::anyref:
         case Type::eqref:
+        case Type::dataref:
         case Type::i31ref:
         case Type::none:
         case Type::unreachable:

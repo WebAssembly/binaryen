@@ -1398,6 +1398,7 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
     case Type::exnref:
     case Type::anyref:
     case Type::eqref:
+    case Type::dataref:
     case Type::i31ref:
     case Type::none:
       WASM_UNREACHABLE("unexpected type");
@@ -2447,7 +2448,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    shouldBeTrue(var.isDefaultable(), curr, "vars must be defaultable");
+    shouldBeTrue(var.isDefaultable(), var, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
@@ -2544,6 +2545,7 @@ void FunctionValidator::validateAlignment(
     case Type::exnref:
     case Type::anyref:
     case Type::eqref:
+    case Type::dataref:
     case Type::i31ref:
     case Type::none:
       WASM_UNREACHABLE("invalid type");

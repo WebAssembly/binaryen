@@ -357,9 +357,10 @@ enum EncodedType {
   // run-time type info type, with depth index n
   rtt_n = -0x17, // 0x69
   // run-time type info type, without depth index n
-  rtt = -0x18, // 0x68
+  rtt = -0x18,     // 0x68
+  dataref = -0x19, // 0x67
   // exception reference type TODO remove; the code for now is incorrect
-  exnref = -0x19, // 0x67
+  exnref = -0x1a, // 0x66
   // func_type form
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f
@@ -375,6 +376,7 @@ enum EncodedHeapType {
   eq = -0x13,      // 0x6d
   i31 = -0x16,     // 0x6a
   exn = -0x18,     // 0x68
+  data = -0x19,    // 0x67
 };
 
 namespace UserSections {

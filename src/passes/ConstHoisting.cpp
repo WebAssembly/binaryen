@@ -99,7 +99,8 @@ private:
       case Type::exnref:
       case Type::anyref:
       case Type::eqref:
-      case Type::i31ref: {
+      case Type::i31ref:
+      case Type::dataref: {
         return false;
       }
       case Type::none:

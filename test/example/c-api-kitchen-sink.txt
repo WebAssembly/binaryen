@@ -10,7 +10,7 @@
   // BinaryenTypeExnref: 9
   // BinaryenTypeAnyref: 10
   // BinaryenTypeEqref: 11
-  // BinaryenTypeI31ref: 12
+  // BinaryenTypeI31ref: 13
   // BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
