@@ -150,6 +150,7 @@ def update_lit_tests():
                              os.path.join(lit_dir, '**', '*.wast'),
                              os.path.join(lit_dir, '**', '*.wat')])
 
+
 TEST_SUITES = OrderedDict([
     ('wasm-opt', wasm_opt.update_wasm_opt_tests),
     ('wasm-dis', update_wasm_dis_tests),

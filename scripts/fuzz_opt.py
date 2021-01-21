@@ -836,6 +836,7 @@ unit_tests = shared.get_tests(shared.get_test_dir(os.path.join('unit', 'input'))
 lit_tests = shared.get_tests(shared.get_test_dir('lit'), test_suffixes, recursive=True)
 all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests
 
+
 # Do one test, given an input file for -ttf and some optimizations to run
 def test_one(random_input, given_wasm):
     randomize_pass_debug()
