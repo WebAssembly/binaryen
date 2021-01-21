@@ -54,7 +54,7 @@ struct Flatten
   // Flattening splits the original locals into a great many other ones, losing
   // track of the originals that DWARF refers to.
   // FIXME DWARF updating does not handle local changes yet.
-  bool invalidatesDWARF() { return true; }
+  bool invalidatesDWARF() override { return true; }
 
   Pass* create() override { return new Flatten; }
 

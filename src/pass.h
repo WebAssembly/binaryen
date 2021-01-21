@@ -183,7 +183,7 @@ struct PassRunner {
 
   // Add a pass using its name.
   void add(std::string passName) {
-    doAdd(std::move(PassRegistry::get()->createPass(passName)));
+    doAdd(PassRegistry::get()->createPass(passName));
   }
 
   // Add a pass given an instance.

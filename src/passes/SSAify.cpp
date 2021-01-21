@@ -71,7 +71,7 @@ struct SSAify : public Pass {
 
   // SSAify maps each original local to a number of new ones.
   // FIXME DWARF updating does not handle local changes yet.
-  bool invalidatesDWARF() { return true; }
+  bool invalidatesDWARF() override { return true; }
 
   Pass* create() override { return new SSAify(allowMerges); }
 

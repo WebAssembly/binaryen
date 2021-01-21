@@ -54,7 +54,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   // CSE adds and reuses locals.
   // FIXME DWARF updating does not handle local changes yet.
-  bool invalidatesDWARF() { return true; }
+  bool invalidatesDWARF() override { return true; }
 
   Pass* create() override { return new LocalCSE(); }
 

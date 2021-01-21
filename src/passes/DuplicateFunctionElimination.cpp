@@ -32,7 +32,7 @@ namespace wasm {
 
 struct DuplicateFunctionElimination : public Pass {
   // FIXME Merge DWARF info
-  bool invalidatesDWARF() { return true; }
+  bool invalidatesDWARF() override { return true; }
 
   void run(PassRunner* runner, Module* module) override {
     // Multiple iterations may be necessary: A and B may be identical only after
