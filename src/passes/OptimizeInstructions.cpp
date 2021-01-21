@@ -460,6 +460,114 @@ struct OptimizeInstructions
           return c;
         }
       }
+      {
+        Const* c;
+        Binary* bin;
+        Expression *x, *y;
+        BinaryOp op;
+
+        // fneg(x) * fneg(y)   ==>   x * y
+        // fneg(x) / fneg(y)   ==>   x / y
+        if (matches(
+              curr,
+              binary(&bin, Mul, unary(Neg, any(&x)), unary(Neg, any(&y)))) ||
+            matches(
+              curr,
+              binary(&bin, DivS, unary(Neg, any(&x)), unary(Neg, any(&y))))) {
+          bin->left = x;
+          bin->right = y;
+          return bin;
+        }
+        // fneg(x * C)   ==>   x * -C
+        // fneg(x / C)   ==>   x / -C
+        // fneg(C / x)   ==>   -C / x
+        //
+        // TODO: using `fastMath` is not necessary, but due to fuzzer can't
+        // flexible handle sign of NaNs we use it here.
+        if (fastMath &&
+            (matches(curr, unary(Neg, binary(&bin, Mul, any(&x), fval(&c)))) ||
+             matches(curr, unary(Neg, binary(&bin, DivS, any(&x), fval(&c)))) ||
+             matches(curr,
+                     unary(Neg, binary(&bin, DivS, fval(&c), any(&x)))))) {
+          c->value = c->value.neg();
+          return bin;
+        }
+        // (fneg(x) * y) op C   ==>   (x * y) op -C
+        // (x * fneg(y)) op C   ==>   (x * y) op -C
+        // (fneg(x) / y) op C   ==>   (x / y) op -C
+        // (x / fneg(y)) op C   ==>   (x / y) op -C
+        //
+        // where op = `*` or `/`
+        if ((matches(curr,
+                     binary(&op,
+                            binary(&bin, Mul, unary(Neg, any(&x)), any(&y)),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(&op,
+                            binary(&bin, Mul, any(&x), unary(Neg, any(&y))),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(&op,
+                            binary(&bin, DivS, unary(Neg, any(&x)), any(&y)),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(&op,
+                            binary(&bin, DivS, any(&x), unary(Neg, any(&y))),
+                            fval(&c)))) &&
+            (op == Abstract::getBinary(bin->type, Mul) ||
+             op == Abstract::getBinary(bin->type, DivS))) {
+          c->value = c->value.neg();
+          bin->left = x;
+          bin->right = y;
+          return curr;
+        }
+        // (x * fneg(y)) + C   ==>   C - (x * y)
+        // (x / fneg(y)) + C   ==>   C - (x / y)
+        if (fastMath &&
+            (matches(curr,
+                     binary(Add,
+                            binary(&bin, Mul, unary(Neg, any(&x)), any(&y)),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(Add,
+                            binary(&bin, Mul, any(&x), unary(Neg, any(&y))),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(Add,
+                            binary(&bin, DivS, unary(Neg, any(&x)), any(&y)),
+                            fval(&c))) ||
+             matches(curr,
+                     binary(Add,
+                            binary(&bin, DivS, any(&x), unary(Neg, any(&y))),
+                            fval(&c))))) {
+          curr->cast<Binary>()->op = Abstract::getBinary(bin->type, Sub);
+          std::swap(curr->cast<Binary>()->left, curr->cast<Binary>()->right);
+          bin->left = x;
+          bin->right = y;
+          return curr;
+        }
+
+        // x + fneg(y)   ==>   x - y
+        if (matches(curr, binary(&bin, Add, any(), unary(Neg, any(&y))))) {
+          bin->op = Abstract::getBinary(bin->left->type, Sub);
+          bin->right = y;
+          return bin;
+        }
+        // fneg(x) + y   ==>   y - x
+        if (matches(curr, binary(&bin, Add, unary(Neg, any(&x)), any(&y))) &&
+            canReorder(x, y)) {
+          bin->op = Abstract::getBinary(bin->left->type, Sub);
+          bin->left = y;
+          bin->right = x;
+          return bin;
+        }
+        // x - fneg(y)   ==>   x + y
+        if (matches(curr, binary(&bin, Sub, any(), unary(Neg, any(&y))))) {
+          bin->op = Abstract::getBinary(bin->left->type, Add);
+          bin->right = y;
+          return bin;
+        }
+      }
     }
 
     if (auto* select = curr->dynCast<Select>()) {
@@ -976,7 +1084,8 @@ private:
       return swap();
     }
     if (auto* c = binary->right->dynCast<Const>()) {
-      // x - C  ==>   x + (-C)
+      // x - ival(C)  ==>   x + (-C)
+      // x - fval(C)  ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
       if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
         c->value = c->value.neg();
@@ -1797,20 +1906,6 @@ private:
       }
     }
     {
-      double value;
-      if (matches(curr, binary(Sub, any(), fval(&value))) && value == 0.0) {
-        // x - (-0.0)   ==>   x + 0.0
-        if (std::signbit(value)) {
-          curr->op = Abstract::getBinary(type, Add);
-          right->value = right->value.neg();
-          return curr;
-        } else if (fastMath) {
-          // x - 0.0   ==>   x
-          return curr->left;
-        }
-      }
-    }
-    {
       // x * 2.0  ==>  x + x
       // but we apply this only for simple expressions like
       // local.get and global.get for avoid using extra local
@@ -1820,6 +1915,15 @@ private:
           (x->is<LocalGet>() || x->is<GlobalGet>())) {
         curr->op = Abstract::getBinary(type, Abstract::Add);
         curr->right = ExpressionManipulator::copy(x, *getModule());
+        return curr;
+      }
+      // fneg(x) - fval(C)   ==>   -C - x
+      //  if x != C' and C != NaN
+      if (matches(curr, binary(Sub, unary(Neg, any(&x)), fval())) &&
+          !x->is<Const>() && !right->value.isNaN()) {
+        right->value = right->value.neg();
+        curr->left = right;
+        curr->right = x;
         return curr;
       }
     }
@@ -2427,7 +2531,7 @@ private:
   }
 
   bool shouldCanonicalize(Binary* binary) {
-    if ((binary->op == SubInt32 || binary->op == SubInt64) &&
+    if (binary->op == Abstract::getBinary(binary->left->type, Abstract::Sub) &&
         binary->right->is<Const>() && !binary->left->is<Const>()) {
       return true;
     }

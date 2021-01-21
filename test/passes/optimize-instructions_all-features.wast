@@ -6017,6 +6017,185 @@
       (f64.abs (f64.add (local.get $x0) (local.get $x1)))
       (f64.abs (f64.add (local.get $x0) (local.get $x0)))
     ))
+
+    ;; x + (-y)   ==>   x - y
+    (drop (f64.add
+      (local.get $x0)
+      (f64.neg (local.get $x1))
+    ))
+    ;; x - (-y)   ==>   x + y
+    (drop (f64.sub
+      (local.get $x0)
+      (f64.neg (local.get $x1))
+    ))
+    ;; (-x) + y   ==>   y - x
+    (drop (f64.add
+      (f64.neg (local.get $x0))
+      (local.get $x1)
+    ))
+
+    ;; (-x) - C   ==>   -C - x
+    (drop (f64.sub
+      (f64.neg (local.get $x0))
+      (f64.const 5)
+    ))
+    ;; (-x) + C   ==>   C - x
+    (drop (f64.add
+      (f64.neg (local.get $x0))
+      (f64.const 5)
+    ))
+
+    ;; (-x) * (-y)   ==>   x * y
+    (drop (f64.mul
+      (f64.neg (local.get $x0))
+      (f64.neg (local.get $x1))
+    ))
+    ;; (-x) * y   ==>   -(x * y)
+    (drop (f64.mul
+      (f64.neg (local.get $x0))
+      (local.get $x1)
+    ))
+    ;; x * (-y)   ==>   -(x * y)
+    (drop (f64.mul
+      (local.get $x0)
+      (f64.neg (local.get $x1))
+    ))
+
+    ;; (-x) / (-y)   ==>   x / y
+    (drop (f64.div
+      (f64.neg (local.get $x0))
+      (f64.neg (local.get $x1))
+    ))
+    ;; (-x) / y   ==>   -(x / y)
+    (drop (f64.div
+      (f64.neg (local.get $x0))
+      (local.get $x1)
+    ))
+    ;; x / (-y)   ==>   -(x / y)
+    (drop (f64.div
+      (local.get $x0)
+      (f64.neg (local.get $x1))
+    ))
+    ;; -(x / (-y))   ==>   x / y
+    (drop (f64.neg
+      (f64.div
+        (local.get $x0)
+        (f64.neg (local.get $x1))
+      )
+    ))
+    ;; -((-x) / y)   ==>   x / y
+    (drop (f64.neg
+      (f64.div
+        (f64.neg (local.get $x0))
+        (local.get $x1)
+      )
+    ))
+    ;; y - ((-x) / y)   ==>   y + x / y
+    (drop (f64.sub
+      (local.get $x1)
+      (f64.div
+        (f64.neg (local.get $x0))
+        (local.get $x1)
+      )
+    ))
+    ;; y - (x / (-y))   ==>   y + x / y
+    (drop (f64.sub
+      (local.get $x1)
+      (f64.div
+        (local.get $x0)
+        (f64.neg (local.get $x1))
+      )
+    ))
+    ;; (-x / -3)   ==>   x / 3
+    (drop (f64.div
+      (f64.neg (local.get $x0))
+      (f64.const -3)
+    ))
+    ;; (-x / 3)   ==>   x / -3
+    (drop (f64.div
+      (f64.neg (local.get $x0))
+      (f64.const 3)
+    ))
+    ;; -(x / -3)   ==>   x / 3
+    (drop (f64.neg
+      (f64.div
+        (local.get $x0)
+        (f64.const -3)
+      )
+    ))
+    ;; -(-3 / y)   ==>   3 / y
+    (drop (f64.neg
+      (f64.div
+        (f64.const -3)
+        (local.get $x1)
+      )
+    ))
+
+    ;; x - (-3.0)   ==>   x + 3.0
+    (drop (f64.sub
+      (local.get $x0)
+      (f64.const -3)
+    ))
+
+    ;; -(x + (-y))  ==>  -(x - y)
+    (drop (f64.neg
+      (f64.add
+        (local.get $x0)
+        (f64.neg (local.get $x1))
+      )
+    ))
+
+    ;; (-x) - y   ==>   skip
+    (drop (f64.sub
+      (f64.neg (local.get $x0))
+      (local.get $x1)
+    ))
+
+    ;; x + (-3.0)   ==>   skip
+    (drop (f64.add
+      (local.get $x0)
+      (f64.const -3)
+    ))
+
+    ;; -(x + 3.0)  ==>  skip
+    (drop (f64.neg
+      (f64.add
+        (local.get $x1)
+        (f64.const 3)
+      )
+    ))
+
+    ;; -(x - 3.0)  ==>  skip
+    (drop (f64.neg
+      (f64.sub
+        (local.get $x1)
+        (f64.const 3)
+      )
+    ))
+
+    ;; -(3.0 - x)  ==>  skip
+    (drop (f64.neg
+      (f64.sub
+        (f64.const 3)
+        (local.get $x1)
+      )
+    ))
+
+    ;; -(nan / C)  ==>  skip
+    (drop (f32.neg
+      (f32.div
+        (f32.const -nan:0x7fffb3)
+        (f32.const 0)
+      )
+    ))
+
+    ;; -(C / nan)  ==>  skip
+    (drop (f32.neg
+      (f32.div
+        (f32.const 1)
+        (f32.const -nan:0x7fffb3)
+      )
+    ))
   )
 )
 ;; atomics
