@@ -635,39 +635,9 @@ struct OptimizeInstructions
           return ret;
         }
         // the square of some operations can be merged
-        if (auto* left = binary->left->dynCast<Binary>()) {
-          if (left->op == binary->op) {
-            if (auto* leftRight = left->right->dynCast<Const>()) {
-              if (left->op == AndInt32 || left->op == AndInt64) {
-                leftRight->value = leftRight->value.and_(right->value);
-                return left;
-              } else if (left->op == OrInt32 || left->op == OrInt64) {
-                leftRight->value = leftRight->value.or_(right->value);
-                return left;
-              } else if (left->op == XorInt32 || left->op == XorInt64) {
-                leftRight->value = leftRight->value.xor_(right->value);
-                return left;
-              } else if (left->op == MulInt32 || left->op == MulInt64) {
-                leftRight->value = leftRight->value.mul(right->value);
-                return left;
-
-                // TODO:
-                // handle signed / unsigned divisions. They are more complex
-              } else if (left->op == ShlInt32 || left->op == ShrUInt32 ||
-                         left->op == ShrSInt32 || left->op == ShlInt64 ||
-                         left->op == ShrUInt64 || left->op == ShrSInt64) {
-                // shifts only use an effective amount from the constant, so
-                // adding must be done carefully
-                auto total = Bits::getEffectiveShifts(leftRight) +
-                             Bits::getEffectiveShifts(right);
-                if (total == Bits::getEffectiveShifts(total, right->type)) {
-                  // no overflow, we can do this
-                  leftRight->value = Literal::makeFromInt32(total, right->type);
-                  return left;
-                } // TODO: handle overflows
-              }
-            }
-          }
+        // (x op C1) op C2  ==>  (x op (C1 op C2))
+        if (auto* ret = partialEvaluation(binary)) {
+          return ret;
         }
         if (right->type == Type::i32) {
           BinaryOp op;
@@ -1985,6 +1955,170 @@ private:
           curr->right = inner->right;
           curr->left = inner->left;
           return curr;
+        }
+      }
+    }
+    return nullptr;
+  }
+
+  Expression* partialEvaluation(Binary* binary) {
+    assert(binary->right->is<Const>());
+    Const* right = binary->right->cast<Const>();
+
+    // detect overflow or zero during signed multiplication
+    auto hasSignedMulOverflow = [](auto a, auto b) {
+      using T = decltype(a);
+      auto min = std::numeric_limits<T>::min();
+      auto max = std::numeric_limits<T>::max();
+      return (a != T(0) && b != T(0) &&
+              ((b > T(0) && a > max / b) || (b < T(0) && a < max / b) ||
+               (b > T(0) && a < min / b) || (b < T(-1) && a > min / b)));
+    };
+
+    // detect overflow or zero during signed multiplication
+    auto hasUnsignedMulOverflow = [](auto a, auto b) {
+      using T = decltype(a);
+      return a != T(0) && b != T(0) && a > std::numeric_limits<T>::max() / b;
+    };
+
+    // the square of some operations can be merged
+    // (x op C1) op C2  ==>  (x op (C1 op C2))
+    if (auto* left = binary->left->dynCast<Binary>()) {
+      if (auto* leftRight = left->right->dynCast<Const>()) {
+
+        // canonicalize mul/div and shl/shr to mul/div only
+        if (left->type == binary->type && left->type.isInteger()) {
+          auto type = left->type;
+          // (x << C1) * C2  ==>  (x * (1 << C1)) * C2
+          if (left->op == Abstract::getBinary(type, Abstract::Shl) &&
+              binary->op == Abstract::getBinary(type, Abstract::Mul)) {
+            left->op = Abstract::getBinary(type, Abstract::Mul);
+            // C1  ==>  1 << C1
+            leftRight->value = Literal::makeOne(type).shl(leftRight->value);
+
+            // (x * C1) << C2  ==>  (x * C1) * (1 << C2)
+          } else if (left->op == Abstract::getBinary(type, Abstract::Mul) &&
+                     binary->op == Abstract::getBinary(type, Abstract::Shl)) {
+            binary->op = Abstract::getBinary(type, Abstract::Mul);
+            // C2  ==>  1 << C2
+            right->value = Literal::makeOne(type).shl(right->value);
+
+            // ((signed)x >> C1) / C2  ==>  (x / (1 << C1)) / C2
+          } else if (left->op == Abstract::getBinary(type, Abstract::ShrS) &&
+                     binary->op == Abstract::getBinary(type, Abstract::DivS)) {
+            left->op = Abstract::getBinary(type, Abstract::DivS);
+            // C1  ==>  1 << C1
+            leftRight->value = Literal::makeOne(type).shl(leftRight->value);
+
+            // ((signed)x / C1) >> C2  ==>  (x / C1) / (1 << C2)
+          } else if (left->op == Abstract::getBinary(type, Abstract::DivS) &&
+                     binary->op == Abstract::getBinary(type, Abstract::ShrS)) {
+            binary->op = Abstract::getBinary(type, Abstract::DivS);
+            // C2  ==>  1 << C2
+            right->value = Literal::makeOne(type).shl(right->value);
+            // ((unsigned)x >>> C1) / C2  ==>  (x / (1 << C1)) / C2
+          } else if (left->op == Abstract::getBinary(type, Abstract::ShrU) &&
+                     binary->op == Abstract::getBinary(type, Abstract::DivU)) {
+            left->op = Abstract::getBinary(type, Abstract::DivU);
+            // C1  ==>  1 << C1
+            leftRight->value = Literal::makeOne(type).shl(leftRight->value);
+
+            // ((unsigned)x / C1) >>> C2  ==>  (x / C1) / (1 << C2)
+          } else if (left->op == Abstract::getBinary(type, Abstract::DivU) &&
+                     binary->op == Abstract::getBinary(type, Abstract::ShrU)) {
+            binary->op = Abstract::getBinary(type, Abstract::DivU);
+            // C2  ==>  1 << C2
+            right->value = Literal::makeOne(type).shl(right->value);
+          }
+        }
+
+        if (left->op == binary->op) {
+          BinaryOp op = left->op;
+          if (op == AndInt32 || op == AndInt64) {
+            leftRight->value = leftRight->value.and_(right->value);
+            return left;
+          } else if (op == OrInt32 || op == OrInt64) {
+            leftRight->value = leftRight->value.or_(right->value);
+            return left;
+          } else if (op == XorInt32 || op == XorInt64) {
+            leftRight->value = leftRight->value.xor_(right->value);
+            return left;
+          } else if (op == MulInt32 || op == MulInt64) {
+            leftRight->value = leftRight->value.mul(right->value);
+            return left;
+          } else if (op == DivSInt32 || op == DivSInt64) {
+            auto prod = leftRight->value.mul(right->value);
+            // don't apply partially constant folding if product
+            // produce signed minimum
+            if (prod.isSignedMin()) {
+              return nullptr;
+            }
+            // return x / 0 if any of constant is zero
+            if (prod.isZero()) {
+              leftRight->value = Literal::makeZero(right->type);
+              return left;
+            }
+            // if constant's product produce overflow we can fold
+            // final result to zero
+            if ((leftRight->value.type == Type::i32 &&
+                 hasSignedMulOverflow(leftRight->value.geti32(),
+                                      right->value.geti32())) ||
+                (leftRight->value.type == Type::i64 &&
+                 hasSignedMulOverflow(leftRight->value.geti64(),
+                                      right->value.geti64()))) {
+              right->value = Literal::makeZero(right->type);
+              return right;
+            }
+            leftRight->value = prod;
+            return left;
+          } else if (op == DivUInt32 || op == DivUInt64) {
+            auto prod = leftRight->value.mul(right->value);
+            // return x / 0 if any of constant is zero
+            if (prod.isZero()) {
+              leftRight->value = Literal::makeZero(right->type);
+              return left;
+            }
+            // if constant's product produce overflow we can fold
+            // final result to zero
+            if ((leftRight->value.type == Type::i32 &&
+                 hasUnsignedMulOverflow((uint32_t)leftRight->value.geti32(),
+                                        (uint32_t)right->value.geti32())) ||
+                (leftRight->value.type == Type::i64 &&
+                 hasUnsignedMulOverflow((uint64_t)leftRight->value.geti64(),
+                                        (uint64_t)right->value.geti64()))) {
+              right->value = Literal::makeZero(right->type);
+              return right;
+            }
+            leftRight->value = prod;
+            return left;
+          } else if (Abstract::hasAnyShift(op)) {
+            // shifts only use an effective amount from the constant, so
+            // adding must be done carefully
+            auto total = Bits::getEffectiveShifts(leftRight) +
+                         Bits::getEffectiveShifts(right);
+            auto effective = Bits::getEffectiveShifts(total, right->type);
+            if (op == RotLInt32 || op == RotLInt64 || op == RotRInt32 ||
+                op == RotRInt64 || total == effective) {
+              // no owerflow (total == effective) or rotational shifts which
+              // owerflow-agnostic
+              leftRight->value = Literal::makeFromInt32(effective, right->type);
+              return left;
+            } else {
+              // overflow, so we make the following:
+              // - for shl and shr_u just return zero;
+              // - for shr_s return x >> (31|63).
+              if (op == ShlInt32 || op == ShlInt64 || op == ShrUInt32 ||
+                  op == ShrUInt64) {
+                right->value = Literal::makeZero(right->type);
+                return right;
+              } else {
+                // op == ShrSInt32 || op == ShrSInt64
+                leftRight->value = Literal::makeFromInt32(
+                  right->type.getByteSize() * 8 - 1, right->type);
+                return left;
+              }
+            }
+          }
         }
       }
     }

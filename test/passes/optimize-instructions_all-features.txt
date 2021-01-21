@@ -53,6 +53,183 @@
     (i32.const -133169153)
    )
   )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.shl
+    (local.get $i1)
+    (i32.const 31)
+   )
+  )
+  (drop
+   (i32.shl
+    (local.get $i1)
+    (i32.const 31)
+   )
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const -2300)
+   )
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const -45)
+   )
+  )
+  (drop
+   (local.get $i1)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.div_s
+     (local.get $i1)
+     (i32.const -2147483648)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.div_s
+     (local.get $i1)
+     (i32.const -1)
+    )
+    (i32.const -2147483648)
+   )
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_s
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_s
+    (i32.div_s
+     (local.get $i1)
+     (i32.const 65536)
+    )
+    (i32.const 32768)
+   )
+  )
+  (drop
+   (i32.div_u
+    (local.get $i1)
+    (i32.const 75)
+   )
+  )
+  (drop
+   (i32.ge_u
+    (local.get $i1)
+    (i32.const -8255)
+   )
+  )
+  (drop
+   (i32.eq
+    (local.get $i1)
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.div_u
+    (i32.eq
+     (local.get $i1)
+     (i32.const -1)
+    )
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i32.eq
+    (i32.eq
+     (local.get $i1)
+     (i32.const -1)
+    )
+    (i32.const -1)
+   )
+  )
+  (drop
+   (i32.div_u
+    (local.get $i1)
+    (i32.const 15)
+   )
+  )
+  (drop
+   (i32.const 0)
+  )
+  (drop
+   (i32.div_u
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.div_u
+    (local.get $i1)
+    (i32.const 0)
+   )
+  )
+  (drop
+   (i32.rotl
+    (local.get $i1)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (i64.rotl
+    (local.get $i2)
+    (i64.const 10)
+   )
+  )
+  (drop
+   (i32.rotr
+    (local.get $i1)
+    (i32.const 3)
+   )
+  )
+  (drop
+   (local.get $i1)
+  )
   (if
    (i32.eqz
     (local.get $i1)
@@ -2422,13 +2599,7 @@
   )
  )
  (func $shifts-square-overflow (param $x i32) (result i32)
-  (i32.shr_u
-   (i32.shr_u
-    (local.get $x)
-    (i32.const 31)
-   )
-   (i32.const 31)
-  )
+  (i32.const 0)
  )
  (func $shifts-square-no-overflow-small (param $x i32) (result i32)
   (i32.shr_u
@@ -2437,13 +2608,7 @@
   )
  )
  (func $shifts-square-overflow-64 (param $x i64) (result i64)
-  (i64.shr_u
-   (i64.shr_u
-    (local.get $x)
-    (i64.const 63)
-   )
-   (i64.const 63)
-  )
+  (i64.const 0)
  )
  (func $shifts-square-no-overflow-small-64 (param $x i64) (result i64)
   (i64.shr_u

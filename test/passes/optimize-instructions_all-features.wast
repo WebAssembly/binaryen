@@ -29,6 +29,10 @@
         (i32.const -5)
       )
     )
+
+    ;; partial evaluation for
+    ;; multiplications
+
     (drop
       (i32.mul
         (i32.mul
@@ -46,6 +50,323 @@
           (i32.const 0xfffff)
         )
         (i32.const 0x8000001)
+      )
+    )
+    ;; more cases
+    ;; (x * 0x80000000) * 2  -->  0
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 2)
+      )
+    )
+    ;; (x * 0x80000000) * 3  -->  x * 0x80000000
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 3)
+      )
+    )
+    ;; (x * -3) * 0x80000000  -->  x * 0x80000000
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const -3)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+    ;; (x * 0x80000000) * 0x80000000 -->  x * 0
+    (drop
+      (i32.mul
+        (i32.mul
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+
+    ;; signed divisions
+
+    ;; -> x / -2300
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const -100)
+        )
+        (i32.const 23)
+      )
+    )
+    ;; -> x / -45
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 3)
+        )
+        (i32.const -15)
+      )
+    )
+    ;; -> x / 1 -> x
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const -1)
+        )
+        (i32.const -1)
+      )
+    )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const -0xFFFF)
+        )
+        (i32.const -0xFFFF)
+      )
+    )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x7FFFFFFF)
+        )
+        (i32.const 2)
+      )
+    )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 2)
+      )
+    )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 2)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+    ;; -> skip (overflow)
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const -1)
+      )
+    )
+    ;; -> skip (overflow)
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const -1)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x80000000)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+    ;; -> x / 0
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x10000)
+        )
+        (i32.const 0)
+      )
+    )
+    ;; -> x / 0
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0)
+        )
+        (i32.const 0x80000000)
+      )
+    )
+    ;; skip due to C1 * C2 == 0x80000000
+    (drop
+      (i32.div_s
+        (i32.div_s
+          (local.get $i1)
+          (i32.const 0x10000)
+        )
+        (i32.const 0x8000)
+      )
+    )
+
+    ;; unsigned divisions
+
+    ;; -> x / 75
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 15)
+        )
+        (i32.const 5)
+      )
+    )
+    ;; -> x / -8255
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x1FFF)
+        )
+        (i32.const 0x8003F)
+      )
+    )
+    ;; -> x / -1 -> x == -1
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x10001)
+        )
+        (i32.const 0xFFFF)
+      )
+    )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x10001)
+        )
+        (i32.const 0x10001)
+      )
+    )
+    ;; -> 0 (overflow) ;; skipped now
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const -1)
+        )
+        (i32.const 3)
+      )
+    )
+    ;; -> 0 (overflow) ;; skipped now
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const -1)
+        )
+        (i32.const -1)
+      )
+    )
+    ;; -> 0 (overflow)
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 3)
+        )
+        (i32.const 5)
+      )
+    )
+    ;; -> 0 (overflow) ;; skipped now
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x7FFFFFFF)
+        )
+        (i32.const 3)
+      )
+    )
+    ;; -> x / 0
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0x7FFFFFFF)
+        )
+        (i32.const 0)
+      )
+    )
+    ;; -> x / 0
+    (drop
+      (i32.div_u
+        (i32.div_u
+          (local.get $i1)
+          (i32.const 0)
+        )
+        (i32.const 3)
+      )
+    )
+
+    ;; rotated shifts
+
+    (drop
+      (i32.rotl
+        (i32.rotl
+          (local.get $i1)
+          (i32.const 5)
+        )
+        (i32.const 30)
+      )
+    )
+    (drop
+      (i64.rotl
+        (i64.rotl
+          (local.get $i2)
+          (i64.const 4)
+        )
+        (i64.const 6)
+      )
+    )
+    (drop
+      (i32.rotr
+        (i32.rotr
+          (local.get $i1)
+          (i32.const 16)
+        )
+        (i32.const 19)
+      )
+    )
+    ;; rotl(rotl(x, 16), 16) -> x
+    (drop
+      (i32.rotl
+        (i32.rotl
+          (local.get $i1)
+          (i32.const 16)
+        )
+        (i32.const 16)
       )
     )
     (if
