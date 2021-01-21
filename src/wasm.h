@@ -216,6 +216,13 @@ enum UnaryOp {
   WidenLowUVecI32x4ToVecI64x2,
   WidenHighUVecI32x4ToVecI64x2,
 
+  ConvertLowSVecI32x4ToVecF64x2,
+  ConvertLowUVecI32x4ToVecF64x2,
+  TruncSatZeroSVecF64x2ToVecI32x4,
+  TruncSatZeroUVecF64x2ToVecI32x4,
+  DemoteZeroVecF64x2ToVecF32x4,
+  PromoteLowVecF32x4ToVecF64x2,
+
   InvalidUnary
 };
 

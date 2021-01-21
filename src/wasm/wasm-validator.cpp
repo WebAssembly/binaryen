@@ -1891,6 +1891,12 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case WidenHighSVecI32x4ToVecI64x2:
     case WidenLowUVecI32x4ToVecI64x2:
     case WidenHighUVecI32x4ToVecI64x2:
+    case ConvertLowSVecI32x4ToVecF64x2:
+    case ConvertLowUVecI32x4ToVecF64x2:
+    case TruncSatZeroSVecF64x2ToVecI32x4:
+    case TruncSatZeroUVecF64x2ToVecI32x4:
+    case DemoteZeroVecF64x2ToVecF32x4:
+    case PromoteLowVecF32x4ToVecF64x2:
       shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
@@ -2092,10 +2098,8 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
                 Type(Type::unreachable),
                 curr,
                 "rethrow's type must be unreachable");
-  // TODO Allow non-zero depths and Validate the depth field. The current LLVM
-  // toolchain only generates depth 0 for C++ support.
-  shouldBeEqual(
-    curr->depth, (Index)0, curr, "rethrow only support depth 0 at the moment");
+  // TODO Validate the depth field. The current LLVM toolchain only generates
+  // depth 0 for C++ support.
 }
 
 void FunctionValidator::visitBrOnExn(BrOnExn* curr) {

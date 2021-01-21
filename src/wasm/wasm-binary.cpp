@@ -5048,6 +5048,30 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = WidenHighUVecI32x4ToVecI64x2;
       break;
+    case BinaryConsts::F64x2ConvertLowSI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = ConvertLowSVecI32x4ToVecF64x2;
+      break;
+    case BinaryConsts::F64x2ConvertLowUI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = ConvertLowUVecI32x4ToVecF64x2;
+      break;
+    case BinaryConsts::I32x4TruncSatZeroSF64x2:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncSatZeroSVecF64x2ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4TruncSatZeroUF64x2:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncSatZeroUVecF64x2ToVecI32x4;
+      break;
+    case BinaryConsts::F32x4DemoteZeroF64x2:
+      curr = allocator.alloc<Unary>();
+      curr->op = DemoteZeroVecF64x2ToVecF32x4;
+      break;
+    case BinaryConsts::F64x2PromoteLowF32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = PromoteLowVecF32x4ToVecF64x2;
+      break;
     default:
       return false;
   }
