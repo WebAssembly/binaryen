@@ -47,7 +47,7 @@ BinaryenFeatureAll: 8191
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
-  (local $5 (ref null func))
+  (local $5 externref)
   (block $the-body (result i32)
    (block $the-nothing
     (drop

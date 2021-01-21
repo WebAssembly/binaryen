@@ -771,7 +771,7 @@ void test_core() {
     BinaryenBlock(module, "the-body", bodyList, 2, BinaryenTypeAuto());
 
   // Create the function
-  BinaryenType localTypes[] = {BinaryenTypeInt32()};
+  BinaryenType localTypes[] = {BinaryenTypeInt32(), BinaryenTypeExternref()};
   BinaryenFunctionRef sinker = BinaryenAddFunction(
     module, "kitchen()sinker", iIfF, BinaryenTypeInt32(), localTypes, 2, body);
 
