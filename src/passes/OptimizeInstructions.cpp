@@ -770,6 +770,13 @@ struct OptimizeInstructions
           return ret;
         }
       }
+      if (binary->op == Abstract::getBinary(binary->type, Abstract::Or) ||
+          binary->op == Abstract::getBinary(binary->type, Abstract::Xor) ||
+          binary->op == Abstract::getBinary(binary->type, Abstract::Add)) {
+        if (auto* ret = combineBitwiseRotation(binary)) {
+          return ret;
+        }
+      }
       // relation/comparisons allow for math optimizations
       if (binary->isRelational()) {
         if (auto* ret = optimizeRelational(binary)) {
@@ -1438,6 +1445,115 @@ private:
         }
       }
     }
+    return nullptr;
+  }
+
+  // (x <<  (y &? M)) u (x >>> ((0 - y) &? M))  ==>  (i32|i64).rotl(x, y)
+  // (x >>> (y &? M)) u (x  << ((0 - y) &? M))  ==>  (i32|i64).rotr(x, y)
+  //
+  // (x <<  (y &? M)) u (x >>> ((N - y) &? M))  ==>  (i32|i64).rotl(x, y)
+  // (x >>> (y &? M)) u (x  << ((N - y) &? M))  ==>  (i32|i64).rotr(x, y)
+  //
+  // (x <<  C) u (x >>> (N - C))  ==>  (i32|i64).rot(l|r)(x, C)
+  // (x >>> C) u (x  << (N - C))  ==>  (i32|i64).rot(r|l)(x, C)
+  //
+  // where
+  //   M   -> (31 | 63), this should already reduced
+  //   N   -> (32 | 64),
+  //   &?  -> optional bitwise "&",
+  //   >>> -> unsigned shift
+  //   u   -> any binary op of "|", "^", "+"
+  //
+  Expression* combineBitwiseRotation(Binary* binary) {
+    using namespace Abstract;
+    auto type = binary->type;
+    assert(Abstract::getBinary(type, Or) || Abstract::getBinary(type, Xor) ||
+           Abstract::getBinary(type, Add));
+
+    if (auto* left = binary->left->dynCast<Binary>()) {
+      if (auto* right = binary->right->dynCast<Binary>()) {
+        bool isRotateLeft = left->op == Abstract::getBinary(type, Shl) &&
+                            right->op == Abstract::getBinary(type, ShrU);
+
+        bool isRotateRight = left->op == Abstract::getBinary(type, ShrU) &&
+                             right->op == Abstract::getBinary(type, Shl);
+
+        if (!(isRotateLeft || isRotateRight)) {
+          return nullptr;
+        }
+
+        if (!ExpressionAnalyzer::equal(left->left, right->left)) {
+          return nullptr;
+        }
+
+        int bitSize = type.getByteSize() * 8;
+        if (auto* leftRightConst = left->right->dynCast<Const>()) {
+          if (auto* rightRightConst = right->right->dynCast<Const>()) {
+            if (EffectAnalyzer(
+                  getPassOptions(), getModule()->features, left->left)
+                  .hasSideEffects()) {
+              return nullptr;
+            }
+            // (x  << C1) | (x >>> C2)  ==>  (i32|64).rot(l|r)(x, C)
+            // (x >>> C1) | (x  << C2)  ==>  (i32|64).rot(r|l)(x, C)
+            int32_t leftShift = Bits::getEffectiveShifts(leftRightConst);
+            int32_t rightShift = Bits::getEffectiveShifts(rightRightConst);
+            if (leftShift + rightShift == bitSize) {
+              if (leftShift > rightShift) {
+                leftRightConst->value =
+                  Literal::makeFromInt32(rightShift, type);
+                left->op = Abstract::getBinary(type, RotR);
+              } else {
+                leftRightConst->value = Literal::makeFromInt32(leftShift, type);
+                left->op = Abstract::getBinary(type, RotL);
+              }
+              return left;
+            }
+          }
+        } else {
+          if (auto* rightRight = right->right->dynCast<Binary>()) {
+            // (x <<>>> y) | (x >>><< (N - y))  ==>  (i32|64).rotl(x, y)
+            // (x <<>>> y) | (x >>><< (0 - y))  ==>  (i32|64).rotl(x, y)
+            if (rightRight->op == Abstract::getBinary(type, Sub)) {
+              if (auto* c = rightRight->left->dynCast<Const>()) {
+                if (c->value.isZero() ||
+                    c->value == Literal::makeFromInt32(bitSize, type)) {
+                  if (!EffectAnalyzer(
+                         getPassOptions(), getModule()->features, left)
+                         .hasSideEffects() &&
+                      ExpressionAnalyzer::equal(left->right,
+                                                rightRight->right)) {
+                    left->op =
+                      Abstract::getBinary(type, isRotateLeft ? RotL : RotR);
+                    return left;
+                  }
+                }
+              }
+            }
+          } else if (auto* leftRight = left->right->dynCast<Binary>()) {
+            // (x >>><< (N - y)) | (x <<>>> y)  ==>  (i32|64).rotl(x, y)
+            // (x >>><< (0 - y)) | (x <<>>> y)  ==>  (i32|64).rotl(x, y)
+            if (leftRight->op == Abstract::getBinary(type, Sub)) {
+              if (auto* c = leftRight->left->dynCast<Const>()) {
+                if (c->value.isZero() ||
+                    c->value == Literal::makeFromInt32(bitSize, type)) {
+                  if (!EffectAnalyzer(
+                         getPassOptions(), getModule()->features, right)
+                         .hasSideEffects() &&
+                      ExpressionAnalyzer::equal(right->right,
+                                                leftRight->right)) {
+                    right->op =
+                      Abstract::getBinary(type, isRotateLeft ? RotR : RotL);
+                    return right;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     return nullptr;
   }
 
