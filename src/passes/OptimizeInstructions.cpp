@@ -1949,6 +1949,31 @@ private:
           }
         }
       }
+      // TODO: This should be handled in previous rule block
+      // as more general (x + 5 <=> 7)
+      //
+      // signed(x + C) <=> 0  =>  x <=> -C, if C != min_s
+      if (curr->op == Abstract::getBinary(type, Abstract::LeS) ||
+          curr->op == Abstract::getBinary(type, Abstract::LtS) ||
+          curr->op == Abstract::getBinary(type, Abstract::GeS) ||
+          curr->op == Abstract::getBinary(type, Abstract::GtS)) {
+        if (auto* left = curr->left->dynCast<Binary>()) {
+          if (left->op == Abstract::getBinary(type, Abstract::Add)) {
+            if (auto* rightConst = curr->right->dynCast<Const>()) {
+              if (rightConst->value.isZero()) {
+                if (auto* leftConst = left->right->dynCast<Const>()) {
+                  if (!leftConst->value.isSignedMin()) {
+                    leftConst->value = leftConst->value.neg();
+                    curr->left = left->left;
+                    curr->right = leftConst;
+                    return curr;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
       // x - y == 0  =>  x == y
       // x - y != 0  =>  x != y
       // unsigned(x - y) > 0    =>   x != y
