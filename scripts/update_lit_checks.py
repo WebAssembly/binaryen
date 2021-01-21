@@ -45,7 +45,7 @@ def itertests(args):
     Yield (filename, lines) for each test specified in the command line args
     """
     for pattern in args.tests:
-        tests = glob.glob(pattern)
+        tests = glob.glob(pattern, recursive=True)
         if not tests:
             warn(f'No tests matched {pattern}. Ignoring it.')
             continue
