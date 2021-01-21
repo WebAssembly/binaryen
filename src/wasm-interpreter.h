@@ -41,9 +41,10 @@
 namespace wasm {
 
 struct WasmException {
-  WasmException(Literal exn) : exn(exn) {}
-  Literal exn;
+  Name event;
+  Literals values;
 };
+std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
 using namespace cashew;
 
@@ -1344,31 +1345,15 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->event);
-    auto exn = std::make_unique<ExceptionPackage>();
-    exn->event = curr->event;
+    WasmException exn;
+    exn.event = curr->event;
     for (auto item : arguments) {
-      exn->values.push_back(item);
+      exn.values.push_back(item);
     }
-    throwException(Literal::makeExn(std::move(exn)));
+    throwException(exn);
     WASM_UNREACHABLE("throw");
   }
-  Flow visitRethrow(Rethrow* curr) {
-    // FIXME Update the implementation to match the new spec
-    NOTE_ENTER("Rethrow");
-    WASM_UNREACHABLE("unimp");
-    /*
-    Flow flow = visit(curr->exnref);
-    if (flow.breaking()) {
-      return flow;
-    }
-    const auto& value = flow.getSingleValue();
-    if (value.isNull()) {
-      trap("rethrow: argument is null");
-    }
-    throwException(value);
-    WASM_UNREACHABLE("rethrow");
-    */
-  }
+  Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitBrOnExn(BrOnExn* curr) {
     NOTE_ENTER("BrOnExn");
     Flow flow = this->visit(curr->exnref);
@@ -1660,7 +1645,9 @@ public:
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
-  virtual void throwException(Literal exn) { WASM_UNREACHABLE("unimp"); }
+  virtual void throwException(const WasmException& exn) {
+    WASM_UNREACHABLE("unimp");
+  }
 
 private:
   // Truncate the value if we need to. The storage is just a list of Literals,
@@ -1943,10 +1930,14 @@ public:
     NOTE_ENTER("Try");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitRethrow(Rethrow* curr) {
+    NOTE_ENTER("Rethrow");
+    return Flow(NONCONSTANT_FLOW);
+  }
 
   void trap(const char* why) override { throw NonconstantException(); }
 
-  virtual void throwException(Literal exn) override {
+  virtual void throwException(const WasmException& exn) override {
     throw NonconstantException();
   }
 };
@@ -1995,7 +1986,7 @@ public:
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
-    virtual void throwException(Literal exnref) = 0;
+    virtual void throwException(const WasmException& exn) = 0;
 
     // the default impls for load and store switch on the sizes. you can either
     // customize load/store, or the sub-functions which they call
@@ -2152,7 +2143,7 @@ public:
   GlobalManager globals;
 
   // Multivalue ABI support (see push/pop).
-  std::vector<Literal> multiValues;
+  std::vector<Literals> multiValues;
 
   ModuleInstanceBase(Module& wasm, ExternalInterface* externalInterface)
     : wasm(wasm), externalInterface(externalInterface) {
@@ -2315,6 +2306,7 @@ private:
     : public ExpressionRunner<RuntimeExpressionRunner> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
+    SmallVector<WasmException, 4> exceptionStack;
 
   public:
     RuntimeExpressionRunner(ModuleInstanceBase& instance,
@@ -2953,22 +2945,50 @@ private:
       return {};
     }
     Flow visitTry(Try* curr) {
-      // FIXME Update the implementation to match the new spec
-      WASM_UNREACHABLE("unimp");
-      /*
       NOTE_ENTER("Try");
       try {
         return this->visit(curr->body);
       } catch (const WasmException& e) {
-        instance.multiValues.push_back(e.exn);
-        return this->visit(curr->catchBody);
+        auto processCatchBody = [&](Expression* catchBody) {
+          // Push the current exception onto the exceptionStack in case
+          // 'rethrow's use it
+          exceptionStack.push_back(e);
+          // We need to pop exceptionStack in either case: when the catch body
+          // exits normally or when a new exception is thrown
+          Flow ret;
+          try {
+            ret = this->visit(catchBody);
+          } catch (const WasmException& e) {
+            exceptionStack.pop_back();
+            throw;
+          }
+          exceptionStack.pop_back();
+          return ret;
+        };
+
+        for (size_t i = 0; i < curr->catchEvents.size(); i++) {
+          if (curr->catchEvents[i] == e.event) {
+            instance.multiValues.push_back(e.values);
+            return processCatchBody(curr->catchBodies[i]);
+          }
+        }
+        if (curr->hasCatchAll()) {
+          return processCatchBody(curr->catchBodies.back());
+        }
+        // This exception is not caught by this try-catch. Rethrow it.
+        throw;
       }
-      */
+    }
+    Flow visitRethrow(Rethrow* curr) {
+      assert(exceptionStack.size() > curr->depth);
+      throwException(exceptionStack[exceptionStack.size() - 1 - curr->depth]);
+      WASM_UNREACHABLE("rethrow");
     }
     Flow visitPop(Pop* curr) {
       NOTE_ENTER("Pop");
       assert(!instance.multiValues.empty());
       auto ret = instance.multiValues.back();
+      assert(curr->type == ret.getType());
       instance.multiValues.pop_back();
       return ret;
     }
@@ -2977,7 +2997,7 @@ private:
       instance.externalInterface->trap(why);
     }
 
-    void throwException(Literal exn) override {
+    void throwException(const WasmException& exn) override {
       instance.externalInterface->throwException(exn);
     }
 

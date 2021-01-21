@@ -189,9 +189,6 @@ def run_spec_tests():
         # windows has some failures that need to be investigated
         if base == 'names.wast' and shared.skip_if_on_windows('spec: ' + base):
             continue
-        # FIXME Reenable this after updating interpreter for EH
-        if base == 'exception-handling.wast':
-            continue
 
         def run_spec_test(wast):
             cmd = shared.WASM_SHELL + [wast]
