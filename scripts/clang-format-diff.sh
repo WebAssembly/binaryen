@@ -12,7 +12,7 @@ fi
 if [ -n "$TRAVIS_BRANCH" ]; then
   BRANCH=$TRAVIS_BRANCH
 else
-  BRANCH=origin/master
+  BRANCH=origin/main
 fi
 
 MERGE_BASE=$(git merge-base $BRANCH HEAD)
