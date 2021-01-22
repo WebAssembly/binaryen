@@ -759,6 +759,7 @@ template<> struct hash<wasm::Literal> {
         case wasm::Type::exnref:
         case wasm::Type::anyref:
         case wasm::Type::eqref:
+        case wasm::Type::dataref:
           return hashRef();
         case wasm::Type::i31ref:
           wasm::rehash(digest, a.geti31(true));
@@ -814,6 +815,7 @@ template<> struct less<wasm::Literal> {
       case wasm::Type::exnref:
       case wasm::Type::anyref:
       case wasm::Type::eqref:
+      case wasm::Type::dataref:
       case wasm::Type::i31ref:
       case wasm::Type::none:
       case wasm::Type::unreachable:

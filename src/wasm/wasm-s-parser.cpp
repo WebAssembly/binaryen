@@ -867,6 +867,10 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
     return Type::eqref;
   }
+  if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
+    // FIXME: for now, force all inputs to be nullable
+    return Type(HeapType::BasicHeapType::data, Nullable);
+  }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
     // FIXME: for now, force all inputs to be nullable
     return Type(HeapType::BasicHeapType::i31, Nullable);
@@ -907,6 +911,12 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
     if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
         (prefix || str[4] == 0)) {
       return HeapType::func;
+    }
+  }
+  if (str[0] == 'd') {
+    if (str[1] == 'a' && str[2] == 't' && str[3] == 'a' &&
+        (prefix || str[4] == 0)) {
+      return HeapType::data;
     }
   }
   throw ParseException(std::string("invalid wasm heap type: ") + str);

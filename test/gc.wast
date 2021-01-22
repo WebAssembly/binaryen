@@ -18,6 +18,7 @@
     (local $local_i32 i32)
     (local $local_anyref anyref)
     (local $local_eqref eqref)
+    (local $local_dataref dataref)
     (local $local_i31ref i31ref)
 
     ;; Test types for local.get/set
@@ -70,6 +71,8 @@
   )
 
   (func $test-variants
+    (local $local_datarefnull (ref null data))
+    (local $local_datarefnonnull (ref data))
     (local $local_i31refnull (ref null i31))
     (local $local_i31refnonnull (ref i31))
   )
