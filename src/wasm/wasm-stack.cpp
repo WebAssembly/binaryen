@@ -192,7 +192,6 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         return;
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -297,7 +296,6 @@ void BinaryInstWriter::visitStore(Store* curr) {
         break;
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
@@ -762,7 +760,6 @@ void BinaryInstWriter::visitConst(Const* curr) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
@@ -1912,11 +1909,6 @@ void BinaryInstWriter::visitThrow(Throw* curr) {
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
   o << int8_t(BinaryConsts::Rethrow) << U32LEB(curr->depth);
-}
-
-void BinaryInstWriter::visitBrOnExn(BrOnExn* curr) {
-  o << int8_t(BinaryConsts::BrOnExn) << U32LEB(getBreakIndex(curr->name))
-    << U32LEB(parent.getEventIndex(curr->event));
 }
 
 void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }

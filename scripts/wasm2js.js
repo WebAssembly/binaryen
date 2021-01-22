@@ -128,10 +128,6 @@ var asmLibraryArg = {
     console.log('get_externref ' + [loc, index, value]);
     return value;
   },
-  get_exnref: function(loc, index, value) {
-    console.log('get_exnref ' + [loc, index, value]);
-    return value;
-  },
   set_i32: function(loc, index, value) {
     console.log('set_i32 ' + [loc, index, value]);
     return value;
@@ -151,10 +147,6 @@ var asmLibraryArg = {
   },
   set_externref: function(loc, index, value) {
     console.log('set_externref ' + [loc, index, value]);
-    return value;
-  },
-  set_exnref: function(loc, index, value) {
-    console.log('set_exnref ' + [loc, index, value]);
     return value;
   },
   load_ptr: function(loc, bytes, offset, ptr) {

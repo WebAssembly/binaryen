@@ -200,8 +200,6 @@ const char* getExpressionName(Expression* curr) {
       return "throw";
     case Expression::Id::RethrowId:
       return "rethrow";
-    case Expression::Id::BrOnExnId:
-      return "br_on_exn";
     case Expression::Id::TupleMakeId:
       return "tuple.make";
     case Expression::Id::TupleExtractId:
@@ -975,14 +973,6 @@ void Try::finalize(Type type_) {
 void Throw::finalize() { type = Type::unreachable; }
 
 void Rethrow::finalize() { type = Type::unreachable; }
-
-void BrOnExn::finalize() {
-  if (exnref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::exnref;
-  }
-}
 
 void TupleMake::finalize() {
   std::vector<Type> types;

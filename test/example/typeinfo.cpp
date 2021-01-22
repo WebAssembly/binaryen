@@ -25,14 +25,6 @@ void test_compound() {
     assert(Type(extern_, NonNullable).getID() ==
            Type(sameExtern, NonNullable).getID());
 
-    HeapType exn(HeapType::exn);
-    assert(Type(exn, Nullable).getID() == Type::exnref);
-    assert(Type(exn, NonNullable).getID() == Type(exn, NonNullable).getID());
-    assert(Type(exn, NonNullable).getID() != Type(exn, Nullable).getID());
-    HeapType sameExn(HeapType::exn);
-    assert(Type(exn, NonNullable).getID() ==
-           Type(sameExn, NonNullable).getID());
-
     HeapType any(HeapType::any);
     assert(Type(any, Nullable).getID() == Type::anyref);
     assert(Type(any, NonNullable).getID() == Type(any, NonNullable).getID());
@@ -160,9 +152,6 @@ void test_printing() {
     std::cout << HeapType(HeapType::i31) << "\n";
     std::cout << Type(HeapType::i31, Nullable) << "\n";
     std::cout << Type(HeapType::i31, NonNullable) << "\n";
-    std::cout << HeapType(HeapType::exn) << "\n";
-    std::cout << Type(HeapType::exn, Nullable) << "\n";
-    std::cout << Type(HeapType::exn, NonNullable) << "\n";
     std::cout << HeapType(Signature(Type::none, Type::none)) << "\n";
     std::cout << HeapType(Struct({})) << "\n";
     std::cout << HeapType(Array({Type::i32, Immutable})) << "\n";
@@ -231,8 +220,6 @@ void test_printing() {
     std::cout << Type(Rtt(3, HeapType::eq)) << "\n";
     std::cout << Rtt(4, HeapType::i31) << "\n";
     std::cout << Type(Rtt(4, HeapType::i31)) << "\n";
-    std::cout << Rtt(5, HeapType::exn) << "\n";
-    std::cout << Type(Rtt(5, HeapType::exn)) << "\n";
     Rtt signatureRtt(6, Signature(Type::none, Type::none));
     std::cout << signatureRtt << "\n";
     std::cout << Type(signatureRtt) << "\n";

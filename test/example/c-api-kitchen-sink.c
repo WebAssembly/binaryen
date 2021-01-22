@@ -205,12 +205,6 @@ void test_types() {
   BinaryenTypeExpand(externref, &valueType);
   assert(valueType == externref);
 
-  BinaryenType exnref = BinaryenTypeExnref();
-  printf("  // BinaryenTypeExnref: %d\n", exnref);
-  assert(BinaryenTypeArity(exnref) == 1);
-  BinaryenTypeExpand(exnref, &valueType);
-  assert(valueType == exnref);
-
   BinaryenType anyref = BinaryenTypeAnyref();
   printf("  // BinaryenTypeAnyref: %d\n", anyref);
   assert(BinaryenTypeArity(anyref) == 1);
@@ -312,7 +306,6 @@ void test_core() {
   BinaryenExpressionRef funcrefExpr = BinaryenRefNull(module, BinaryenTypeFuncref());
   funcrefExpr =
     BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
-  BinaryenExpressionRef exnrefExpr = BinaryenRefNull(module, BinaryenTypeExnref());
   BinaryenExpressionRef i31refExpr = BinaryenI31New(module, makeInt32(module, 1));
 
   // Events
@@ -713,7 +706,6 @@ void test_core() {
     // Reference types
     BinaryenRefIsNull(module, externrefExpr),
     BinaryenRefIsNull(module, funcrefExpr),
-    BinaryenRefIsNull(module, exnrefExpr),
     BinaryenSelect(
       module,
       temp10,
@@ -750,7 +742,6 @@ void test_core() {
     BinaryenPop(module, BinaryenTypeFloat64()),
     BinaryenPop(module, BinaryenTypeFuncref()),
     BinaryenPop(module, BinaryenTypeExternref()),
-    BinaryenPop(module, BinaryenTypeExnref()),
     BinaryenPop(module, iIfF),
     // Memory
     BinaryenMemorySize(module),
@@ -780,7 +771,7 @@ void test_core() {
     BinaryenBlock(module, "the-body", bodyList, 2, BinaryenTypeAuto());
 
   // Create the function
-  BinaryenType localTypes[] = {BinaryenTypeInt32(), BinaryenTypeExnref()};
+  BinaryenType localTypes[] = {BinaryenTypeInt32(), BinaryenTypeExternref()};
   BinaryenFunctionRef sinker = BinaryenAddFunction(
     module, "kitchen()sinker", iIfF, BinaryenTypeInt32(), localTypes, 2, body);
 

@@ -57,7 +57,6 @@ Name get_f32("get_f32");
 Name get_f64("get_f64");
 Name get_funcref("get_funcref");
 Name get_externref("get_externref");
-Name get_exnref("get_exnref");
 Name get_anyref("get_anyref");
 Name get_eqref("get_eqref");
 Name get_dataref("get_dataref");
@@ -70,7 +69,6 @@ Name set_f32("set_f32");
 Name set_f64("set_f64");
 Name set_funcref("set_funcref");
 Name set_externref("set_externref");
-Name set_exnref("set_exnref");
 Name set_anyref("set_anyref");
 Name set_eqref("set_eqref");
 Name set_dataref("set_dataref");
@@ -102,9 +100,6 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
         break;
       case Type::externref:
         import = get_externref;
-        break;
-      case Type::exnref:
-        import = get_exnref;
         break;
       case Type::anyref:
         import = get_anyref;
@@ -166,9 +161,6 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       case Type::externref:
         import = set_externref;
         break;
-      case Type::exnref:
-        import = set_exnref;
-        break;
       case Type::anyref:
         import = set_anyref;
         break;
@@ -220,12 +212,6 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
                 set_externref,
                 {Type::i32, Type::i32, Type::externref},
                 Type::externref);
-      if (curr->features.hasExceptionHandling()) {
-        addImport(
-          curr, get_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
-        addImport(
-          curr, set_exnref, {Type::i32, Type::i32, Type::exnref}, Type::exnref);
-      }
       if (curr->features.hasGC()) {
         addImport(
           curr, get_anyref, {Type::i32, Type::i32, Type::anyref}, Type::anyref);

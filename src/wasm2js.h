@@ -2175,10 +2175,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitBrOnExn(BrOnExn* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
     Ref visitPop(Pop* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

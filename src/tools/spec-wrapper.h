@@ -55,9 +55,6 @@ static std::string generateSpecWrapper(Module& wasm) {
         case Type::externref:
           ret += "(ref.null extern)";
           break;
-        case Type::exnref:
-          ret += "(ref.null exn)";
-          break;
         case Type::anyref:
           ret += "(ref.null any)";
           break;

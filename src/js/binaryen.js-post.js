@@ -35,7 +35,6 @@ function initializeConstants() {
     ['v128', 'Vec128'],
     ['funcref', 'Funcref'],
     ['externref', 'Externref'],
-    ['exnref', 'Exnref'],
     ['anyref', 'Anyref'],
     ['eqref', 'Eqref'],
     ['i31ref', 'I31ref'],
@@ -93,7 +92,6 @@ function initializeConstants() {
     'Try',
     'Throw',
     'Rethrow',
-    'BrOnExn',
     'TupleMake',
     'TupleExtract',
     'Pop',
@@ -2074,12 +2072,6 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['exnref'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['exnref']);
-    }
-  };
-
   self['anyref'] = {
     'pop'() {
       return Module['_BinaryenPop'](module, Module['anyref']);
@@ -2144,9 +2136,6 @@ function wrapModule(module, self = {}) {
   };
   self['rethrow'] = function(depth) {
     return Module['_BinaryenRethrow'](module, depth);
-  };
-  self['br_on_exn'] = function(label, event_, exnref) {
-    return preserveStack(() => Module['_BinaryenBrOnExn'](module, strToStack(label), strToStack(event_), exnref));
   };
 
   self['tuple'] = {
@@ -2884,14 +2873,6 @@ Module['getExpressionInfo'] = function(expr) {
         'id': id,
         'type': type,
         'depth': Module['_BinaryenRethrowGetDepth'](expr)
-      };
-    case Module['BrOnExnId']:
-      return {
-        'id': id,
-        'type': type,
-        'name': UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr)),
-        'event': UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr)),
-        'exnref': Module['_BinaryenBrOnExnGetExnref'](expr)
       };
     case Module['TupleMakeId']:
       return {
@@ -4227,27 +4208,6 @@ Module['Rethrow'] = makeExpressionWrapper({
   },
   'setDepth'(expr, depthExpr) {
     Module['_BinaryenRethrowSetDepth'](expr, depthExpr);
-  }
-});
-
-Module['BrOnExn'] = makeExpressionWrapper({
-  'getEvent'(expr) {
-    return UTF8ToString(Module['_BinaryenBrOnExnGetEvent'](expr));
-  },
-  'setEvent'(expr, eventName) {
-    preserveStack(() => { Module['_BinaryenBrOnExnSetEvent'](expr, strToStack(eventName)) });
-  },
-  'getName'(expr) {
-    return UTF8ToString(Module['_BinaryenBrOnExnGetName'](expr));
-  },
-  'setName'(expr, name) {
-    preserveStack(() => { Module['_BinaryenBrOnExnSetName'](expr, strToStack(name)) });
-  },
-  'getExnref'(expr) {
-    return Module['_BinaryenBrOnExnGetExnref'](expr);
-  },
-  'setExnref'(expr, exnrefExpr) {
-    Module['_BinaryenBrOnExnSetExnref'](expr, exnrefExpr);
   }
 });
 

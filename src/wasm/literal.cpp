@@ -35,9 +35,7 @@ Literal::Literal(Type type) : type(type) {
     i32 = 0;
   } else {
     assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
-    if (type.isException()) {
-      new (&exn) std::unique_ptr<ExceptionPackage>();
-    } else if (isGCData()) {
+    if (isGCData()) {
       new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
       // Allocate a new RttSupers (with no data).
@@ -66,15 +64,6 @@ Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
-  if (type.isException()) {
-    // Avoid calling the destructor on an uninitialized value
-    if (other.exn != nullptr) {
-      new (&exn) auto(std::make_unique<ExceptionPackage>(*other.exn));
-    } else {
-      new (&exn) std::unique_ptr<ExceptionPackage>();
-    }
-    return;
-  }
   if (other.isGCData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
@@ -101,7 +90,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
           return;
         case HeapType::func:
         case HeapType::data:
-        case HeapType::exn:
           WASM_UNREACHABLE("invalid type");
       }
     }
@@ -124,7 +112,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
     case Type::unreachable:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -134,9 +121,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
 }
 
 Literal::~Literal() {
-  if (type.isException()) {
-    exn.~unique_ptr();
-  } else if (isGCData()) {
+  if (isGCData()) {
     gcData.~shared_ptr();
   } else if (type.isRtt()) {
     rttSupers.~unique_ptr();
@@ -255,11 +240,6 @@ std::array<uint8_t, 16> Literal::getv128() const {
   return ret;
 }
 
-ExceptionPackage Literal::getExceptionPackage() const {
-  assert(type.isException() && exn != nullptr);
-  return *exn;
-}
-
 std::shared_ptr<GCData> Literal::getGCData() const {
   assert(isGCData());
   return gcData;
@@ -349,7 +329,6 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
     case Type::unreachable:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -371,10 +350,6 @@ bool Literal::operator==(const Literal& other) const {
       assert(func.is() && other.func.is());
       return func == other.func;
     }
-    if (type.isException()) {
-      assert(exn != nullptr && other.exn != nullptr);
-      return *exn == *other.exn;
-    }
     // other non-null reference type literals cannot represent concrete values,
     // i.e. there is no concrete externref, anyref or eqref other than null.
     WASM_UNREACHABLE("unexpected type");
@@ -394,7 +369,6 @@ bool Literal::operator==(const Literal& other) const {
         return memcmp(v128, other.v128, 16) == 0;
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::dataref:
       case Type::eqref:
@@ -525,13 +499,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           assert(literal.isNull() && "unexpected non-null externref literal");
           o << "externref(null)";
           break;
-        case HeapType::exn:
-          if (literal.isNull()) {
-            o << "exnref(null)";
-          } else {
-            o << "exnref(" << literal.getExceptionPackage() << ")";
-          }
-          break;
         case HeapType::any:
           assert(literal.isNull() && "unexpected non-null anyref literal");
           o << "anyref(null)";
@@ -578,7 +545,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         break;
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::dataref:
@@ -604,10 +570,6 @@ std::ostream& operator<<(std::ostream& o, wasm::Literals literals) {
     }
     return o << ')';
   }
-}
-
-std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn) {
-  return o << exn.event << " " << exn.values;
 }
 
 Literal Literal::countLeadingZeroes() const {
@@ -807,7 +769,6 @@ Literal Literal::eqz() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -832,7 +793,6 @@ Literal Literal::neg() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -857,7 +817,6 @@ Literal Literal::abs() const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -999,7 +958,6 @@ Literal Literal::add(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -1024,7 +982,6 @@ Literal Literal::sub(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -1120,7 +1077,6 @@ Literal Literal::mul(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -1357,7 +1313,6 @@ Literal Literal::eq(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:
@@ -1382,7 +1337,6 @@ Literal Literal::ne(const Literal& other) const {
     case Type::v128:
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::dataref:

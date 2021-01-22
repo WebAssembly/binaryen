@@ -155,8 +155,6 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     unoptimizables.insert(curr->default_);
   }
 
-  void visitBrOnExn(BrOnExn* curr) { unoptimizables.insert(curr->name); }
-
   void visitUnreachable(Unreachable* curr) {
     // we can only optimize if we are at the end of the parent block
     if (!controlFlowStack.empty()) {

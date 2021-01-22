@@ -359,8 +359,6 @@ enum EncodedType {
   // run-time type info type, without depth index n
   rtt = -0x18,     // 0x68
   dataref = -0x19, // 0x67
-  // exception reference type TODO remove; the code for now is incorrect
-  exnref = -0x1a, // 0x66
   // func_type form
   Func = -0x20,   // 0x60
   Struct = -0x21, // 0x5f
@@ -375,7 +373,6 @@ enum EncodedHeapType {
   any = -0x12,     // 0x6e
   eq = -0x13,      // 0x6d
   i31 = -0x16,     // 0x6a
-  exn = -0x18,     // 0x68
   data = -0x19,    // 0x67
 };
 
@@ -1007,7 +1004,6 @@ enum ASTNodes {
   CatchAll = 0x05,
   Throw = 0x08,
   Rethrow = 0x09,
-  BrOnExn = 0x0a,
 
   // typed function references opcodes
 
@@ -1472,8 +1468,6 @@ public:
   void readNextDebugLocation();
   void readSourceMapHeader();
 
-  void handleBrOnExnNotTaken(Expression* curr);
-
   // AST reading
   int depth = 0; // only for debugging
 
@@ -1554,7 +1548,6 @@ public:
   void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
   void visitCallRef(CallRef* curr);
   // Let is lowered into a block.
   void visitLet(Block* curr);

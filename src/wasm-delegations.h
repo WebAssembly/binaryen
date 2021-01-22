@@ -62,7 +62,6 @@ DELEGATE(RefEq);
 DELEGATE(Try);
 DELEGATE(Throw);
 DELEGATE(Rethrow);
-DELEGATE(BrOnExn);
 DELEGATE(TupleMake);
 DELEGATE(TupleExtract);
 DELEGATE(I31New);

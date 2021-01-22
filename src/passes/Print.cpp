@@ -1732,12 +1732,6 @@ struct PrintExpressionContents
     printMedium(o, "rethrow ");
     o << curr->depth;
   }
-  void visitBrOnExn(BrOnExn* curr) {
-    printMedium(o, "br_on_exn ");
-    printName(curr->name, o);
-    o << " ";
-    printName(curr->event, o);
-  }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
@@ -2419,13 +2413,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
-  }
-  void visitBrOnExn(BrOnExn* curr) {
-    o << '(';
-    PrintExpressionContents(currFunction, o).visit(curr);
-    incIndent();
-    printFullLine(curr->exnref);
-    decIndent();
   }
   void visitNop(Nop* curr) {
     o << '(';

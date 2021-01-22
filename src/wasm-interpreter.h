@@ -1354,25 +1354,6 @@ public:
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitBrOnExn(BrOnExn* curr) {
-    NOTE_ENTER("BrOnExn");
-    Flow flow = this->visit(curr->exnref);
-    if (flow.breaking()) {
-      return flow;
-    }
-    const auto& value = flow.getSingleValue();
-    if (value.isNull()) {
-      trap("br_on_exn: argument is null");
-    }
-    auto ex = value.getExceptionPackage();
-    if (curr->event != ex.event) { // Not taken
-      return flow;
-    }
-    // Taken
-    flow.values = ex.values;
-    flow.breakTo = curr->name;
-    return flow;
-  }
   Flow visitI31New(I31New* curr) {
     NOTE_ENTER("I31New");
     Flow flow = visit(curr->value);
@@ -2033,7 +2014,6 @@ public:
           return Literal(load128(addr).data());
         case Type::funcref:
         case Type::externref:
-        case Type::exnref:
         case Type::anyref:
         case Type::eqref:
         case Type::dataref:
@@ -2093,7 +2073,6 @@ public:
           break;
         case Type::funcref:
         case Type::externref:
-        case Type::exnref:
         case Type::anyref:
         case Type::eqref:
         case Type::dataref:

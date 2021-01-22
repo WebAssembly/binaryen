@@ -524,15 +524,6 @@ switch (DELEGATE_ID) {
     DELEGATE_END(Rethrow);
     break;
   }
-  case Expression::Id::BrOnExnId: {
-    DELEGATE_START(BrOnExn);
-    DELEGATE_FIELD_CHILD(BrOnExn, exnref);
-    DELEGATE_FIELD_SCOPE_NAME_USE(BrOnExn, name);
-    DELEGATE_FIELD_NAME(BrOnExn, event);
-    DELEGATE_FIELD_TYPE(BrOnExn, sent);
-    DELEGATE_END(BrOnExn);
-    break;
-  }
   case Expression::Id::NopId: {
     DELEGATE_START(Nop);
     DELEGATE_END(Nop);

@@ -302,8 +302,6 @@ struct TypeStore : Store<TypeInfo> {
             return Type::funcref;
           case HeapType::ext:
             return Type::externref;
-          case HeapType::exn:
-            return Type::exnref;
           case HeapType::any:
             return Type::anyref;
           case HeapType::eq:
@@ -386,15 +384,6 @@ bool Type::isFunction() const {
   }
 }
 
-bool Type::isException() const {
-  if (isBasic()) {
-    return id == exnref;
-  } else {
-    auto* info = getTypeInfo(*this);
-    return info->isRef() && info->ref.heapType == HeapType::exn;
-  }
-}
-
 bool Type::isNullable() const {
   if (isBasic()) {
     return id >= funcref && id <= eqref; // except i31ref
@@ -452,7 +441,6 @@ unsigned Type::getByteSize() const {
         return 16;
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::dataref:
@@ -501,8 +489,6 @@ FeatureSet Type::getFeatures() const {
       }
       if (heapType.isBasic()) {
         switch (heapType.getBasic()) {
-          case HeapType::BasicHeapType::exn:
-            return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
           case HeapType::BasicHeapType::any:
           case HeapType::BasicHeapType::eq:
           case HeapType::BasicHeapType::data:
@@ -554,8 +540,6 @@ HeapType Type::getHeapType() const {
         return HeapType::func;
       case Type::externref:
         return HeapType::ext;
-      case Type::exnref:
-        return HeapType::exn;
       case Type::anyref:
         return HeapType::any;
       case Type::eqref:
@@ -894,8 +878,6 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         return os << "funcref";
       case Type::externref:
         return os << "externref";
-      case Type::exnref:
-        return os << "exnref";
       case Type::anyref:
         return os << "anyref";
       case Type::eqref:
@@ -988,8 +970,6 @@ std::ostream& operator<<(std::ostream& os, HeapType heapType) {
         return os << "func";
       case HeapType::ext:
         return os << "extern";
-      case HeapType::exn:
-        return os << "exn";
       case HeapType::any:
         return os << "any";
       case HeapType::eq:

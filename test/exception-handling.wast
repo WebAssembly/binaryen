@@ -3,10 +3,6 @@
   (event $e-i64 (attr 0) (param i64))
   (event $e-i32-i64 (attr 0) (param i32 i64))
 
-  (func $exnref_test (param $0 exnref) (result exnref)
-    (local.get $0)
-  )
-
   (func $foo)
   (func $bar)
 

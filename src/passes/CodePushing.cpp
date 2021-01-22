@@ -141,7 +141,7 @@ private:
     if (auto* drop = curr->dynCast<Drop>()) {
       curr = drop->value;
     }
-    if (curr->is<If>() || curr->is<BrOnExn>()) {
+    if (curr->is<If>()) {
       return true;
     }
     if (auto* br = curr->dynCast<Break>()) {

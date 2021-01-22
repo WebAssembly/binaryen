@@ -80,8 +80,6 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
       func(name, br->value ? br->value->type : Type::none);
     } else if (auto* sw = expr->dynCast<Switch>()) {
       func(name, sw->value ? sw->value->type : Type::none);
-    } else if (auto* br = expr->dynCast<BrOnExn>()) {
-      func(name, br->sent);
     } else if (auto* br = expr->dynCast<BrOnCast>()) {
       func(name, br->getCastType());
     } else {

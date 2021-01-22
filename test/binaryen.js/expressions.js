@@ -1581,43 +1581,6 @@ console.log("# Rethrow");
   module.dispose();
 })();
 
-console.log("# BrOnExn");
-(function testBrOnExn() {
-  const module = new binaryen.Module();
-  module.addEvent("event1", 0, binaryen.none, binaryen.none);
-  module.addEvent("event2", 0, binaryen.none, binaryen.none);
-
-  var name = "foo";
-  var event = "event1";
-  var exnref = module.local.get(1, binaryen.exnref);
-  const theBrOnExn = binaryen.BrOnExn(module.br_on_exn(name, event, exnref));
-  assert(theBrOnExn instanceof binaryen.BrOnExn);
-  assert(theBrOnExn instanceof binaryen.Expression);
-  assert(theBrOnExn.name === name);
-  assert(theBrOnExn.event === event);
-  assert(theBrOnExn.exnref === exnref);
-  assert(theBrOnExn.type === binaryen.exnref);
-
-  theBrOnExn.name = name = "bar";
-  assert(theBrOnExn.name === name);
-  theBrOnExn.event = event = "event2";
-  assert(theBrOnExn.event === event);
-  theBrOnExn.exnref = exnref = module.local.get(2, binaryen.exnref);
-  assert(theBrOnExn.exnref === exnref);
-  theBrOnExn.type = binaryen.f64;
-  theBrOnExn.finalize();
-  assert(theBrOnExn.type === binaryen.exnref);
-
-  console.log(theBrOnExn.toText());
-  assert(
-    theBrOnExn.toText()
-    ==
-    "(br_on_exn $bar $event2\n (local.get $2)\n)\n"
-  );
-
-  module.dispose();
-})();
-
 console.log("# TupleMake");
 (function testTupleMake() {
   const module = new binaryen.Module();
