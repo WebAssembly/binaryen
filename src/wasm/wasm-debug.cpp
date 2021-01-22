@@ -1096,9 +1096,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   std::cerr << "warning: no DWARF updating support present\n";
 }
 
-bool shouldPreserveDWARF(PassOptions& options, Module& wasm) {
-  return false;
-}
+bool shouldPreserveDWARF(PassOptions& options, Module& wasm) { return false; }
 
 #endif // BUILD_LLVM_DWARF
 
