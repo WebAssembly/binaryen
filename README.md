@@ -444,6 +444,10 @@ The `check.py` script supports some options:
 (or `python third_party/setup.py`) installs required dependencies like the SpiderMonkey JS shell, the V8 JS shell
 and WABT in `third_party/`. Other scripts automatically pick these up when installed.
 
+Run `pip3 install -r requirements-dev.txt` to get the requirements for the `lit`
+tests. Note that you need to have the location `pip` installs to in your path
+(on linux, `~/.local/bin`).
+
 ### Fuzzing
 
 ```
