@@ -65,7 +65,7 @@
         ;; code offset: 0x44
         (call $__cxa_end_catch)
        )
-       ;; code offset: 0x63
+       ;; code offset: 0x4a
        (catch $event$0
         ;; code offset: 0x50
         (local.set $1
@@ -84,7 +84,7 @@
         ;; code offset: 0x62
         (unreachable)
        )
-       ;; code offset: 0x0
+       ;; code offset: 0x63
        (catch_all
         ;; code offset: 0x64
         (call $std::terminate\28\29)
@@ -486,7 +486,7 @@ file_names[  1]:
         ;; code offset: 0x2a
         (call $__cxa_end_catch)
        )
-       ;; code offset: 0x39
+       ;; code offset: 0x2c
        (catch $event$0
         ;; code offset: 0x2e
         (local.set $1
@@ -505,7 +505,7 @@ file_names[  1]:
         ;; code offset: 0x38
         (unreachable)
        )
-       ;; code offset: 0x0
+       ;; code offset: 0x39
        (catch_all
         ;; code offset: 0x3a
         (call $std::terminate\28\29)
