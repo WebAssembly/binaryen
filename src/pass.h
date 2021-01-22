@@ -191,9 +191,15 @@ struct PassRunner {
     doAdd(std::move(pass));
   }
 
-  // Adds the pass if it supports DWARF (or, if DWARF is not present, it always
-  // adds it).
-  void addIfDWARFAllowed(std::string passName);
+  // Adds the pass if there are no DWARF-related issues. There is an issue if
+  // there is DWARF and if the pass does not support DWARF (as defined by the
+  // pass returning true from invalidatesDWARF); otherwise, if there is no
+  // DWARF, or the pass supports it, the pass is added.
+  // In contrast to add(), add() will always add the pass, and it will print a
+  // warning if there is an issue with DWARF. This method is useful for a pass
+  // that is optional, to avoid adding it and therefore avoid getting the
+  // warning.
+  void addIfNoDWARFIssues(std::string passName);
 
   // Adds the default set of optimization passes; this is
   // what -O does.
