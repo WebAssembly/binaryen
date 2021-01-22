@@ -661,20 +661,6 @@ public:
     ret->finalize();
     return ret;
   }
-  BrOnExn* makeBrOnExn(Name name, Event* event, Expression* exnref) {
-    return makeBrOnExn(name, event->name, exnref, event->sig.params);
-  }
-  BrOnExn* makeBrOnExn(Name name, Name event, Expression* exnref, Type sent) {
-    auto* ret = wasm.allocator.alloc<BrOnExn>();
-    ret->name = name;
-    ret->event = event;
-    ret->exnref = exnref;
-    // Copy params info into BrOnExn, because it is necessary when BrOnExn is
-    // refinalized without the module.
-    ret->sent = sent;
-    ret->finalize();
-    return ret;
-  }
   Unreachable* makeUnreachable() { return wasm.allocator.alloc<Unreachable>(); }
   Pop* makePop(Type type) {
     auto* ret = wasm.allocator.alloc<Pop>();
@@ -835,7 +821,6 @@ public:
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
       case Type::externref:
-      case Type::exnref: // TODO: ExceptionPackage?
       case Type::anyref:
       case Type::eqref:
         assert(value.isNull() && "unexpected non-null reference type literal");
@@ -1040,12 +1025,13 @@ public:
       case Type::funcref:
         WASM_UNREACHABLE("handled above");
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
         return ExpressionManipulator::refNull(curr, curr->type);
       case Type::i31ref:
         return makeI31New(makeConst(0));
+      case Type::dataref:
+        WASM_UNREACHABLE("TODO: dataref");
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:

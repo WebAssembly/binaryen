@@ -250,7 +250,7 @@ struct Walker : public VisitorType {
   // nested.
 
   // Tasks receive the this pointer and a pointer to the pointer to operate on
-  typedef void (*TaskFunc)(SubType*, Expression**);
+  using TaskFunc = std::function<void(SubType*, Expression**)>;
 
   struct Task {
     TaskFunc func;
@@ -587,12 +587,6 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::RethrowId: {
         self->pushTask(SubType::doVisitRethrow, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
-        break;
-      }
-      case Expression::Id::BrOnExnId: {
-        self->pushTask(SubType::doVisitBrOnExn, currp);
-        self->pushTask(SubType::doNoteNonLinear, currp);
-        self->pushTask(SubType::scan, &curr->cast<BrOnExn>()->exnref);
         break;
       }
       case Expression::Id::UnreachableId: {

@@ -1046,9 +1046,6 @@ void WasmBinaryWriter::writeType(Type type) {
     case Type::externref:
       ret = BinaryConsts::EncodedType::externref;
       break;
-    case Type::exnref:
-      ret = BinaryConsts::EncodedType::exnref;
-      break;
     case Type::anyref:
       ret = BinaryConsts::EncodedType::anyref;
       break;
@@ -1057,6 +1054,9 @@ void WasmBinaryWriter::writeType(Type type) {
       break;
     case Type::i31ref:
       ret = BinaryConsts::EncodedType::i31ref;
+      break;
+    case Type::dataref:
+      ret = BinaryConsts::EncodedType::dataref;
       break;
     default:
       WASM_UNREACHABLE("unexpected type");
@@ -1078,9 +1078,6 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       case HeapType::ext:
         ret = BinaryConsts::EncodedHeapType::extern_;
         break;
-      case HeapType::exn:
-        ret = BinaryConsts::EncodedHeapType::exn;
-        break;
       case HeapType::any:
         ret = BinaryConsts::EncodedHeapType::any;
         break;
@@ -1089,6 +1086,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
         break;
       case HeapType::i31:
         ret = BinaryConsts::EncodedHeapType::i31;
+        break;
+      case HeapType::data:
+        ret = BinaryConsts::EncodedHeapType::data;
         break;
     }
   } else {
@@ -1405,8 +1405,6 @@ Type WasmBinaryBuilder::getType(int initial) {
       return Type::funcref;
     case BinaryConsts::EncodedType::externref:
       return Type::externref;
-    case BinaryConsts::EncodedType::exnref:
-      return Type::exnref;
     case BinaryConsts::EncodedType::anyref:
       return Type::anyref;
     case BinaryConsts::EncodedType::eqref:
@@ -1419,6 +1417,9 @@ Type WasmBinaryBuilder::getType(int initial) {
     case BinaryConsts::EncodedType::i31ref:
       // FIXME: for now, force all inputs to be nullable
       return Type(HeapType::BasicHeapType::i31, Nullable);
+    case BinaryConsts::EncodedType::dataref:
+      // FIXME: for now, force all inputs to be nullable
+      return Type(HeapType::BasicHeapType::data, Nullable);
     case BinaryConsts::EncodedType::rtt_n: {
       auto depth = getU32LEB();
       auto heapType = getHeapType();
@@ -1449,14 +1450,14 @@ HeapType WasmBinaryBuilder::getHeapType() {
       return HeapType::func;
     case BinaryConsts::EncodedHeapType::extern_:
       return HeapType::ext;
-    case BinaryConsts::EncodedHeapType::exn:
-      return HeapType::exn;
     case BinaryConsts::EncodedHeapType::any:
       return HeapType::any;
     case BinaryConsts::EncodedHeapType::eq:
       return HeapType::eq;
     case BinaryConsts::EncodedHeapType::i31:
       return HeapType::i31;
+    case BinaryConsts::EncodedHeapType::data:
+      return HeapType::data;
     default:
       throwError("invalid wasm heap type: " + std::to_string(type));
   }
@@ -1834,15 +1835,9 @@ void WasmBinaryBuilder::readFunctions() {
     readNextDebugLocation();
 
     BYN_TRACE("reading " << i << std::endl);
-    size_t numLocalTypes = getU32LEB();
-    for (size_t t = 0; t < numLocalTypes; t++) {
-      auto num = getU32LEB();
-      auto type = getConcreteType();
-      while (num > 0) {
-        func->vars.push_back(type);
-        num--;
-      }
-    }
+
+    readVars();
+
     std::swap(func->prologLocation, debugLocation);
     {
       // process the function body
@@ -1855,6 +1850,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(controlFlowStack.empty());
+      assert(letStack.empty());
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
@@ -1864,6 +1860,7 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("stack not empty on function exit");
       }
       assert(controlFlowStack.empty());
+      assert(letStack.empty());
       if (pos != endOfFunction) {
         throwError("binary offset at function exit not at expected location");
       }
@@ -1874,6 +1871,18 @@ void WasmBinaryBuilder::readFunctions() {
     functions.push_back(func);
   }
   BYN_TRACE(" end function bodies\n");
+}
+
+void WasmBinaryBuilder::readVars() {
+  size_t numLocalTypes = getU32LEB();
+  for (size_t t = 0; t < numLocalTypes; t++) {
+    auto num = getU32LEB();
+    auto type = getConcreteType();
+    while (num > 0) {
+      currFunction->vars.push_back(type);
+      num--;
+    }
+  }
 }
 
 void WasmBinaryBuilder::readExports() {
@@ -2874,9 +2883,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::Rethrow:
       visitRethrow((curr = allocator.alloc<Rethrow>())->cast<Rethrow>());
       break;
-    case BinaryConsts::BrOnExn:
-      visitBrOnExn((curr = allocator.alloc<BrOnExn>())->cast<BrOnExn>());
-      break;
     case BinaryConsts::MemorySize: {
       auto size = allocator.alloc<MemorySize>();
       if (wasm.memory.is64()) {
@@ -2903,6 +2909,10 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       call->isReturn = true;
       curr = call;
       visitCallRef(call);
+      break;
+    }
+    case BinaryConsts::Let: {
+      visitLet((curr = allocator.alloc<Block>())->cast<Block>());
       break;
     }
     case BinaryConsts::AtomicPrefix: {
@@ -3073,6 +3083,36 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
   }
   BYN_TRACE("zz recurse from " << depth-- << " at " << pos << std::endl);
   return BinaryConsts::ASTNodes(code);
+}
+
+Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
+  // Wasm binaries put each let at the bottom of the index space, which may be
+  // good for binary size as often the uses of the let variables are close to
+  // the let itself. However, in Binaryen IR we just have a simple flat index
+  // space of absolute values, which we add to as we parse, and we depend on
+  // later optimizations to reorder locals for size.
+  //
+  // For example, if we have $x, then we add a let with $y, the binary would map
+  // 0 => y, 1 => x, while in Binaryen IR $x always stays at 0, and $y is added
+  // at 1.
+  //
+  // Compute the relative index in the let we were added. We start by looking at
+  // the last let added, and if we belong to it, we are already relative to it.
+  // We will continue relativizing as we go down, til we find our let.
+  int64_t relative = index;
+  for (auto i = int64_t(letStack.size()) - 1; i >= 0; i--) {
+    auto& info = letStack[i];
+    int64_t currNum = info.num;
+    // There were |currNum| let items added in this let. Check if we were one of
+    // them.
+    if (relative < currNum) {
+      return info.absoluteStart + relative;
+    }
+    relative -= currNum;
+  }
+  // We were not a let, but a normal var from the beginning. In that case, after
+  // we subtracted the let items, we have the proper absolute index.
+  return relative;
 }
 
 void WasmBinaryBuilder::startControlFlow(Expression* curr) {
@@ -3329,9 +3369,8 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
 
 void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
   BYN_TRACE("zz node: LocalGet " << pos << std::endl);
-  ;
   requireFunctionContext("local.get");
-  curr->index = getU32LEB();
+  curr->index = getAbsoluteLocalIndex(getU32LEB());
   if (curr->index >= currFunction->getNumLocals()) {
     throwError("bad local.get index");
   }
@@ -3342,7 +3381,7 @@ void WasmBinaryBuilder::visitLocalGet(LocalGet* curr) {
 void WasmBinaryBuilder::visitLocalSet(LocalSet* curr, uint8_t code) {
   BYN_TRACE("zz node: Set|LocalTee\n");
   requireFunctionContext("local.set outside of function");
-  curr->index = getU32LEB();
+  curr->index = getAbsoluteLocalIndex(getU32LEB());
   if (curr->index >= currFunction->getNumLocals()) {
     throwError("bad local.set index");
   }
@@ -5003,6 +5042,30 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = WidenHighUVecI32x4ToVecI64x2;
       break;
+    case BinaryConsts::F64x2ConvertLowSI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = ConvertLowSVecI32x4ToVecF64x2;
+      break;
+    case BinaryConsts::F64x2ConvertLowUI32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = ConvertLowUVecI32x4ToVecF64x2;
+      break;
+    case BinaryConsts::I32x4TruncSatZeroSF64x2:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncSatZeroSVecF64x2ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4TruncSatZeroUF64x2:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncSatZeroUVecF64x2ToVecI32x4;
+      break;
+    case BinaryConsts::F32x4DemoteZeroF64x2:
+      curr = allocator.alloc<Unary>();
+      curr->op = DemoteZeroVecF64x2ToVecF32x4;
+      break;
+    case BinaryConsts::F64x2PromoteLowF32x4:
+      curr = allocator.alloc<Unary>();
+      curr->op = PromoteLowVecF32x4ToVecF64x2;
+      break;
     default:
       return false;
   }
@@ -5630,26 +5693,6 @@ void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
   curr->finalize();
 }
 
-void WasmBinaryBuilder::visitBrOnExn(BrOnExn* curr) {
-  BYN_TRACE("zz node: BrOnExn\n");
-  BreakTarget target = getBreakTarget(getU32LEB());
-  curr->name = target.name;
-  auto index = getU32LEB();
-  if (index >= wasm.events.size()) {
-    throwError("bad event index");
-  }
-  curr->event = wasm.events[index]->name;
-  curr->exnref = popNonVoidExpression();
-
-  Event* event = wasm.getEventOrNull(curr->event);
-  assert(event && "br_on_exn's event must exist");
-
-  // Copy params info into BrOnExn, because it is necessary when BrOnExn is
-  // refinalized without the module.
-  curr->sent = event->sig.params;
-  curr->finalize();
-}
-
 void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
   BYN_TRACE("zz node: CallRef\n");
   curr->target = popNonVoidExpression();
@@ -5674,6 +5717,31 @@ void WasmBinaryBuilder::visitCallRef(CallRef* curr) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->finalize(sig.results);
+}
+
+void WasmBinaryBuilder::visitLet(Block* curr) {
+  // A let is lowered into a block that contains the value, and we allocate
+  // locals as needed, which works as we remove non-nullability.
+
+  startControlFlow(curr);
+  // Get the output type.
+  curr->type = getType();
+  // Get the new local types. First, get the absolute index from which we will
+  // start to allocate them.
+  Index absoluteStart = currFunction->vars.size();
+  readVars();
+  Index numNewVars = currFunction->vars.size() - absoluteStart;
+  // Assign the values into locals.
+  Builder builder(wasm);
+  for (Index i = 0; i < numNewVars; i++) {
+    auto* value = popNonVoidExpression();
+    curr->list.push_back(builder.makeLocalSet(absoluteStart + i, value));
+  }
+  // Read the body, with adjusted local indexes.
+  letStack.emplace_back(LetData{numNewVars, absoluteStart});
+  curr->list.push_back(getBlockOrSingleton(curr->type));
+  letStack.pop_back();
+  curr->finalize(curr->type);
 }
 
 bool WasmBinaryBuilder::maybeVisitI31New(Expression*& out, uint32_t code) {
@@ -5711,12 +5779,8 @@ bool WasmBinaryBuilder::maybeVisitRefTest(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RefTest) {
     return false;
   }
-  auto heapType1 = getHeapType();
-  auto heapType2 = getHeapType();
   auto* rtt = popNonVoidExpression();
-  validateHeapTypeUsingChild(rtt, heapType2);
   auto* ref = popNonVoidExpression();
-  validateHeapTypeUsingChild(ref, heapType1);
   out = Builder(wasm).makeRefTest(ref, rtt);
   return true;
 }
@@ -5725,12 +5789,8 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RefCast) {
     return false;
   }
-  auto heapType1 = getHeapType();
-  auto heapType2 = getHeapType();
   auto* rtt = popNonVoidExpression();
-  validateHeapTypeUsingChild(rtt, heapType2);
   auto* ref = popNonVoidExpression();
-  validateHeapTypeUsingChild(ref, heapType1);
   out = Builder(wasm).makeRefCast(ref, rtt);
   return true;
 }
@@ -5740,8 +5800,6 @@ bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
     return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
-  // TODO the spec has two heaptype immediates, but the V8 prototype does not;
-  //      match V8 for now.
   auto* rtt = popNonVoidExpression();
   if (!rtt->type.isRtt()) {
     throwError("bad rtt for br_on_cast");
@@ -5764,8 +5822,6 @@ bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RttSub) {
     return false;
   }
-  // TODO the spec has two heaptype immediates, but the V8 prototype does not;
-  //      match that for now.
   auto targetHeapType = getHeapType();
   auto* parent = popNonVoidExpression();
   out = Builder(wasm).makeRttSub(targetHeapType, parent);

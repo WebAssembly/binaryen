@@ -117,13 +117,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             assert(false && "v128 not implemented yet");
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
             globals[import->name] = {Literal::makeNull(import->type)};
             break;
           case Type::i31ref:
             WASM_UNREACHABLE("TODO: i31ref");
+          case Type::dataref:
+            WASM_UNREACHABLE("TODO: dataref");
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -232,7 +233,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     throw TrapException();
   }
 
-  void throwException(Literal exn) override { throw WasmException(exn); }
+  void throwException(const WasmException& exn) override { throw exn; }
 };
 
 } // namespace wasm

@@ -7,10 +7,10 @@
   // BinaryenTypeVec128: 6
   // BinaryenTypeFuncref: 7
   // BinaryenTypeExternref: 8
-  // BinaryenTypeExnref: 9
-  // BinaryenTypeAnyref: 10
-  // BinaryenTypeEqref: 11
-  // BinaryenTypeI31ref: 12
+  // BinaryenTypeAnyref: 9
+  // BinaryenTypeEqref: 10
+  // BinaryenTypeI31ref: 11
+  // BinaryenTypeDataref: 12
   // BinaryenTypeAuto: -1
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
@@ -48,7 +48,7 @@ BinaryenFeatureAll: 8191
  (start $starter)
  (func "$kitchen()sinker" (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
-  (local $5 exnref)
+  (local $5 externref)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
@@ -1748,11 +1748,6 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (ref.is_null
-        (ref.null exn)
-       )
-      )
-      (drop
        (select (result funcref)
         (ref.null func)
         (ref.func "$kitchen()sinker")
@@ -1835,9 +1830,6 @@ BinaryenFeatureAll: 8191
       )
       (drop
        (pop externref)
-      )
-      (drop
-       (pop exnref)
       )
       (drop
        (pop i32 i64 f32 f64)

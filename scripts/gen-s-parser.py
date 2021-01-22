@@ -516,6 +516,13 @@ instructions = [
     ("i16x8.extadd_pairwise_i8x16_u", "makeUnary(s, UnaryOp::ExtAddPairwiseUVecI8x16ToI16x8)"),
     ("i32x4.extadd_pairwise_i16x8_s", "makeUnary(s, UnaryOp::ExtAddPairwiseSVecI16x8ToI32x4)"),
     ("i32x4.extadd_pairwise_i16x8_u", "makeUnary(s, UnaryOp::ExtAddPairwiseUVecI16x8ToI32x4)"),
+    ("f64x2.convert_low_i32x4_s",     "makeUnary(s, UnaryOp::ConvertLowSVecI32x4ToVecF64x2)"),
+    ("f64x2.convert_low_i32x4_u",     "makeUnary(s, UnaryOp::ConvertLowUVecI32x4ToVecF64x2)"),
+    ("i32x4.trunc_sat_f64x2_zero_s",  "makeUnary(s, UnaryOp::TruncSatZeroSVecF64x2ToVecI32x4)"),
+    ("i32x4.trunc_sat_f64x2_zero_u",  "makeUnary(s, UnaryOp::TruncSatZeroUVecF64x2ToVecI32x4)"),
+    ("f32x4.demote_f64x2_zero",       "makeUnary(s, UnaryOp::DemoteZeroVecF64x2ToVecF32x4)"),
+    ("f64x2.promote_low_f32x4",       "makeUnary(s, UnaryOp::PromoteLowVecF32x4ToVecF64x2)"),
+
     # prefetch instructions
     ("prefetch.t",  "makePrefetch(s, PrefetchOp::PrefetchTemporal)"),
     ("prefetch.nt", "makePrefetch(s, PrefetchOp::PrefetchNontemporal)"),
@@ -528,7 +535,6 @@ instructions = [
     ("try",                  "makeTry(s)"),
     ("throw",                "makeThrow(s)"),
     ("rethrow",              "makeRethrow(s)"),
-    ("br_on_exn",            "makeBrOnExn(s)"),
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),

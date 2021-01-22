@@ -37,6 +37,7 @@ console.log("# Block");
   assert(theBlock.type === binaryen.i32);
   assert(theBlock.numChildren === 0);
   assertDeepEqual(theBlock.children, []);
+  assertDeepEqual(theBlock.getChildren(), []);
 
   var child1 = module.i32.const(1);
   theBlock.appendChild(child1);
@@ -205,11 +206,12 @@ console.log("# Switch");
   assert(theSwitch.value === value);
   assert(theSwitch.type === binaryen.unreachable);
 
-  theSwitch.names = names = [
+  names = [
     "1", // set
-    "2", // set
-    "3"  // append
-  ];
+    "2", //set
+    "3" // append
+  ]
+  theSwitch.setNames(names);
   assertDeepEqual(theSwitch.names, names);
   theSwitch.names = names = [
     "x", // set
@@ -217,6 +219,7 @@ console.log("# Switch");
     // remove
   ];
   assertDeepEqual(theSwitch.names, names);
+  assertDeepEqual(theSwitch.getNames(), names);
   theSwitch.insertNameAt(1, "y");
   theSwitch.condition = condition = module.i32.const(3);
   assert(theSwitch.condition === condition);
@@ -248,6 +251,7 @@ console.log("# Call");
   assert(theCall instanceof binaryen.Expression);
   assert(theCall.target === target);
   assertDeepEqual(theCall.operands, operands);
+  assertDeepEqual(theCall.getOperands(), operands);
   assert(theCall.return === false);
   assert(theCall.type === binaryen.i32);
 
@@ -259,11 +263,12 @@ console.log("# Call");
     module.i32.const(5)  // append
   ];
   assertDeepEqual(theCall.operands, operands);
-  theCall.operands = operands = [
+  operands = [
     module.i32.const(6) // set
     // remove
     // remove
   ];
+  theCall.setOperands(operands);
   assertDeepEqual(theCall.operands, operands);
   theCall.insertOperandAt(0, module.i32.const(7));
   theCall.return = true;
@@ -315,12 +320,14 @@ console.log("# CallIndirect");
     module.i32.const(5)  // append
   ];
   assertDeepEqual(theCallIndirect.operands, operands);
-  theCallIndirect.operands = operands = [
+  operands = [
     module.i32.const(6) // set
     // remove
     // remove
   ];
+  theCallIndirect.setOperands(operands);
   assertDeepEqual(theCallIndirect.operands, operands);
+  assertDeepEqual(theCallIndirect.getOperands(), operands);
   theCallIndirect.insertOperandAt(0, module.i32.const(7));
   theCallIndirect.return = true;
   assert(theCallIndirect.return === true);
@@ -1525,11 +1532,13 @@ console.log("# Throw");
     module.i32.const(5)  // append
   ];
   assertDeepEqual(theThrow.operands, operands);
-  theThrow.operands = operands = [
+  assertDeepEqual(theThrow.getOperands(), operands);
+  operands = [
     module.i32.const(6) // set
     // remove
     // remove
   ];
+  theThrow.setOperands(operands);
   assertDeepEqual(theThrow.operands, operands);
   theThrow.insertOperandAt(1, module.i32.const(7));
   theThrow.type = binaryen.f64;
@@ -1572,43 +1581,6 @@ console.log("# Rethrow");
   module.dispose();
 })();
 
-console.log("# BrOnExn");
-(function testBrOnExn() {
-  const module = new binaryen.Module();
-  module.addEvent("event1", 0, binaryen.none, binaryen.none);
-  module.addEvent("event2", 0, binaryen.none, binaryen.none);
-
-  var name = "foo";
-  var event = "event1";
-  var exnref = module.local.get(1, binaryen.exnref);
-  const theBrOnExn = binaryen.BrOnExn(module.br_on_exn(name, event, exnref));
-  assert(theBrOnExn instanceof binaryen.BrOnExn);
-  assert(theBrOnExn instanceof binaryen.Expression);
-  assert(theBrOnExn.name === name);
-  assert(theBrOnExn.event === event);
-  assert(theBrOnExn.exnref === exnref);
-  assert(theBrOnExn.type === binaryen.exnref);
-
-  theBrOnExn.name = name = "bar";
-  assert(theBrOnExn.name === name);
-  theBrOnExn.event = event = "event2";
-  assert(theBrOnExn.event === event);
-  theBrOnExn.exnref = exnref = module.local.get(2, binaryen.exnref);
-  assert(theBrOnExn.exnref === exnref);
-  theBrOnExn.type = binaryen.f64;
-  theBrOnExn.finalize();
-  assert(theBrOnExn.type === binaryen.exnref);
-
-  console.log(theBrOnExn.toText());
-  assert(
-    theBrOnExn.toText()
-    ==
-    "(br_on_exn $bar $event2\n (local.get $2)\n)\n"
-  );
-
-  module.dispose();
-})();
-
 console.log("# TupleMake");
 (function testTupleMake() {
   const module = new binaryen.Module();
@@ -1630,12 +1602,14 @@ console.log("# TupleMake");
     module.i32.const(5)  // append
   ];
   assertDeepEqual(theTupleMake.operands, operands);
-  theTupleMake.operands = operands = [
+  operands = [
     module.i32.const(6) // set
     // remove
     // remove
   ];
+  theTupleMake.setOperands(operands);
   assertDeepEqual(theTupleMake.operands, operands);
+  assertDeepEqual(theTupleMake.getOperands(), operands);
   theTupleMake.insertOperandAt(1, module.i32.const(7));
   theTupleMake.type = binaryen.f64;
   theTupleMake.finalize();

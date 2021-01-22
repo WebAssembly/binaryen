@@ -1080,6 +1080,24 @@ struct PrintExpressionContents
       case WidenHighUVecI32x4ToVecI64x2:
         o << "i64x2.widen_high_i32x4_u";
         break;
+      case ConvertLowSVecI32x4ToVecF64x2:
+        o << "f64x2.convert_low_i32x4_s";
+        break;
+      case ConvertLowUVecI32x4ToVecF64x2:
+        o << "f64x2.convert_low_i32x4_u";
+        break;
+      case TruncSatZeroSVecF64x2ToVecI32x4:
+        o << "i32x4.trunc_sat_f64x2_zero_s";
+        break;
+      case TruncSatZeroUVecF64x2ToVecI32x4:
+        o << "i32x4.trunc_sat_f64x2_zero_u";
+        break;
+      case DemoteZeroVecF64x2ToVecF32x4:
+        o << "f32x4.demote_f64x2_zero";
+        break;
+      case PromoteLowVecF32x4ToVecF64x2:
+        o << "f64x2.promote_low_f32x4";
+        break;
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
     }
@@ -1713,12 +1731,6 @@ struct PrintExpressionContents
   void visitRethrow(Rethrow* curr) {
     printMedium(o, "rethrow ");
     o << curr->depth;
-  }
-  void visitBrOnExn(BrOnExn* curr) {
-    printMedium(o, "br_on_exn ");
-    printName(curr->name, o);
-    o << " ";
-    printName(curr->event, o);
   }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
@@ -2422,13 +2434,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
-  }
-  void visitBrOnExn(BrOnExn* curr) {
-    o << '(';
-    PrintExpressionContents(currFunction, o).visit(curr);
-    incIndent();
-    printFullLine(curr->exnref);
-    decIndent();
   }
   void visitNop(Nop* curr) {
     o << '(';

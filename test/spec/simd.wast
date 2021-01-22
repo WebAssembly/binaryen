@@ -265,6 +265,7 @@
  (func (export "v128.load64_zero") (param $0 i32) (result v128) (v128.load64_zero (local.get $0)))
  (func (export "v8x16.swizzle") (param $0 v128) (param $1 v128) (result v128) (v8x16.swizzle (local.get $0) (local.get $1)))
 )
+;; TODO: Additional f64x2 conversions if specified
 
 ;; Basic v128 manipulation
 (assert_return (invoke "v128.load" (i32.const 128)) (v128.const i8x16 87 65 83 77 83 73 77 68 71 79 69 83 70 65 83 84))

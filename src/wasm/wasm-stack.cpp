@@ -192,10 +192,10 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         return;
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
         WASM_UNREACHABLE("unexpected type");
     }
@@ -296,10 +296,10 @@ void BinaryInstWriter::visitStore(Store* curr) {
         break;
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -760,10 +760,10 @@ void BinaryInstWriter::visitConst(Const* curr) {
     }
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -1185,6 +1185,30 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case WidenHighUVecI32x4ToVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I64x2WidenHighUI32x4);
+      break;
+    case ConvertLowSVecI32x4ToVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2ConvertLowSI32x4);
+      break;
+    case ConvertLowUVecI32x4ToVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2ConvertLowUI32x4);
+      break;
+    case TruncSatZeroSVecF64x2ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4TruncSatZeroSF64x2);
+      break;
+    case TruncSatZeroUVecF64x2ToVecI32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I32x4TruncSatZeroUF64x2);
+      break;
+    case DemoteZeroVecF64x2ToVecF32x4:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F32x4DemoteZeroF64x2);
+      break;
+    case PromoteLowVecF32x4ToVecF64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F64x2PromoteLowF32x4);
       break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
@@ -1888,11 +1912,6 @@ void BinaryInstWriter::visitRethrow(Rethrow* curr) {
   o << int8_t(BinaryConsts::Rethrow) << U32LEB(curr->depth);
 }
 
-void BinaryInstWriter::visitBrOnExn(BrOnExn* curr) {
-  o << int8_t(BinaryConsts::BrOnExn) << U32LEB(getBreakIndex(curr->name))
-    << U32LEB(parent.getEventIndex(curr->event));
-}
-
 void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }
 
 void BinaryInstWriter::visitUnreachable(Unreachable* curr) {
@@ -1950,14 +1969,10 @@ void BinaryInstWriter::visitCallRef(CallRef* curr) {
 
 void BinaryInstWriter::visitRefTest(RefTest* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefTest);
-  parent.writeHeapType(curr->ref->type.getHeapType());
-  parent.writeHeapType(curr->getCastType().getHeapType());
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
-  parent.writeHeapType(curr->ref->type.getHeapType());
-  parent.writeHeapType(curr->getCastType().getHeapType());
 }
 
 void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {

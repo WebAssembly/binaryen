@@ -302,18 +302,20 @@ struct TypeStore : Store<TypeInfo> {
             return Type::funcref;
           case HeapType::ext:
             return Type::externref;
-          case HeapType::exn:
-            return Type::exnref;
           case HeapType::any:
             return Type::anyref;
           case HeapType::eq:
             return Type::eqref;
           case HeapType::i31:
+          case HeapType::data:
             break;
         }
       } else {
         if (info.ref.heapType == HeapType::i31) {
           return Type::i31ref;
+        }
+        if (info.ref.heapType == HeapType::data) {
+          return Type::dataref;
         }
       }
     }
@@ -382,15 +384,6 @@ bool Type::isFunction() const {
   }
 }
 
-bool Type::isException() const {
-  if (isBasic()) {
-    return id == exnref;
-  } else {
-    auto* info = getTypeInfo(*this);
-    return info->isRef() && info->ref.heapType == HeapType::exn;
-  }
-}
-
 bool Type::isNullable() const {
   if (isBasic()) {
     return id >= funcref && id <= eqref; // except i31ref
@@ -448,10 +441,10 @@ unsigned Type::getByteSize() const {
         return 16;
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         break;
@@ -496,11 +489,10 @@ FeatureSet Type::getFeatures() const {
       }
       if (heapType.isBasic()) {
         switch (heapType.getBasic()) {
-          case HeapType::BasicHeapType::exn:
-            return FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling;
           case HeapType::BasicHeapType::any:
           case HeapType::BasicHeapType::eq:
           case HeapType::BasicHeapType::i31:
+          case HeapType::BasicHeapType::data:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
           default: {}
         }
@@ -548,14 +540,14 @@ HeapType Type::getHeapType() const {
         return HeapType::func;
       case Type::externref:
         return HeapType::ext;
-      case Type::exnref:
-        return HeapType::exn;
       case Type::anyref:
         return HeapType::any;
       case Type::eqref:
         return HeapType::eq;
       case Type::i31ref:
         return HeapType::i31;
+      case Type::dataref:
+        return HeapType::data;
     }
     WASM_UNREACHABLE("Unexpected type");
   } else {
@@ -886,14 +878,14 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         return os << "funcref";
       case Type::externref:
         return os << "externref";
-      case Type::exnref:
-        return os << "exnref";
       case Type::anyref:
         return os << "anyref";
       case Type::eqref:
         return os << "eqref";
       case Type::i31ref:
         return os << "i31ref";
+      case Type::dataref:
+        return os << "dataref";
     }
   }
   return os << *getTypeInfo(type);
@@ -978,14 +970,14 @@ std::ostream& operator<<(std::ostream& os, HeapType heapType) {
         return os << "func";
       case HeapType::ext:
         return os << "extern";
-      case HeapType::exn:
-        return os << "exn";
       case HeapType::any:
         return os << "any";
       case HeapType::eq:
         return os << "eq";
       case HeapType::i31:
         return os << "i31";
+      case HeapType::data:
+        return os << "data";
     }
   }
   return os << *getHeapTypeInfo(heapType);

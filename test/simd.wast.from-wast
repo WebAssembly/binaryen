@@ -1424,4 +1424,34 @@
    (local.get $0)
   )
  )
+ (func $f64x2.convert_low_i32x4_s (param $0 v128) (result v128)
+  (f64x2.convert_low_i32x4_s
+   (local.get $0)
+  )
+ )
+ (func $f64x2.convert_low_i32x4_u (param $0 v128) (result v128)
+  (f64x2.convert_low_i32x4_u
+   (local.get $0)
+  )
+ )
+ (func $i32x4.trunc_sat_f64x2_zero_s (param $0 v128) (result v128)
+  (i32x4.trunc_sat_f64x2_zero_s
+   (local.get $0)
+  )
+ )
+ (func $i32x4.trunc_sat_f64x2_zero_u (param $0 v128) (result v128)
+  (i32x4.trunc_sat_f64x2_zero_u
+   (local.get $0)
+  )
+ )
+ (func $f32x4.demote_f64x2_zero (param $0 v128) (result v128)
+  (f32x4.demote_f64x2_zero
+   (local.get $0)
+  )
+ )
+ (func $f64x2.promote_low_f32x4 (param $0 v128) (result v128)
+  (f64x2.promote_low_f32x4
+   (local.get $0)
+  )
+ )
 )

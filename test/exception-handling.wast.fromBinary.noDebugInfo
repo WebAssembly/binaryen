@@ -3,20 +3,16 @@
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
- (type $exnref_=>_exnref (func (param exnref) (result exnref)))
  (event $event$0 (attr 0) (param i32))
  (event $event$1 (attr 0) (param i64))
  (event $event$2 (attr 0) (param i32 i64))
- (func $0 (param $0 exnref) (result exnref)
-  (local.get $0)
+ (func $0
+  (nop)
  )
  (func $1
   (nop)
  )
  (func $2
-  (nop)
- )
- (func $3
   (local $0 i32)
   (local $1 i64)
   (local $2 (i32 i64))
@@ -98,15 +94,15 @@
   )
   (try
    (do
+    (call $0)
     (call $1)
-    (call $2)
    )
    (catch $event$0
     (drop
      (pop i32)
     )
+    (call $0)
     (call $1)
-    (call $2)
    )
   )
   (try
@@ -153,8 +149,8 @@
     )
    )
    (catch_all
+    (call $0)
     (call $1)
-    (call $2)
    )
   )
   (try

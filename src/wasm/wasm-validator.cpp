@@ -337,7 +337,6 @@ public:
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
   void visitCallRef(CallRef* curr);
@@ -1395,10 +1394,10 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
       break;
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
       WASM_UNREACHABLE("unexpected type");
   }
@@ -1890,6 +1889,12 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case WidenHighSVecI32x4ToVecI64x2:
     case WidenLowUVecI32x4ToVecI64x2:
     case WidenHighUVecI32x4ToVecI64x2:
+    case ConvertLowSVecI32x4ToVecF64x2:
+    case ConvertLowUVecI32x4ToVecF64x2:
+    case TruncSatZeroSVecF64x2ToVecI32x4:
+    case TruncSatZeroUVecF64x2ToVecI32x4:
+    case DemoteZeroVecF64x2ToVecF32x4:
+    case PromoteLowVecF32x4ToVecF64x2:
       shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
@@ -2091,38 +2096,8 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
                 Type(Type::unreachable),
                 curr,
                 "rethrow's type must be unreachable");
-  // TODO Allow non-zero depths and Validate the depth field. The current LLVM
-  // toolchain only generates depth 0 for C++ support.
-  shouldBeEqual(
-    curr->depth, (Index)0, curr, "rethrow only support depth 0 at the moment");
-}
-
-void FunctionValidator::visitBrOnExn(BrOnExn* curr) {
-  shouldBeTrue(getModule()->features.hasExceptionHandling(),
-               curr,
-               "br_on_exn requires exception-handling to be enabled");
-  Event* event = getModule()->getEventOrNull(curr->event);
-  shouldBeTrue(event != nullptr, curr, "br_on_exn's event must exist");
-  shouldBeTrue(event->sig.params == curr->sent,
-               curr,
-               "br_on_exn's event params and event's params are different");
-  noteBreak(curr->name, curr->sent, curr);
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->exnref->type,
-    Type::exnref,
-    curr,
-    "br_on_exn's argument must be unreachable or exnref type or its subtype");
-  if (curr->exnref->type == Type::unreachable) {
-    shouldBeTrue(curr->type == Type::unreachable,
-                 curr,
-                 "If exnref argument's type is unreachable, br_on_exn should "
-                 "be unreachable too");
-  } else {
-    shouldBeTrue(curr->type == Type::exnref,
-                 curr,
-                 "br_on_exn's type should be exnref unless its exnref argument "
-                 "is unreachable");
-  }
+  // TODO Validate the depth field. The current LLVM toolchain only generates
+  // depth 0 for C++ support.
 }
 
 void FunctionValidator::visitTupleMake(TupleMake* curr) {
@@ -2443,7 +2418,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   for (const auto& var : curr->vars) {
     features |= var.getFeatures();
-    shouldBeTrue(var.isDefaultable(), curr, "vars must be defaultable");
+    shouldBeTrue(var.isDefaultable(), var, "vars must be defaultable");
   }
   shouldBeTrue(features <= getModule()->features,
                curr->name,
@@ -2537,10 +2512,10 @@ void FunctionValidator::validateAlignment(
       break;
     case Type::funcref:
     case Type::externref:
-    case Type::exnref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
     case Type::none:
       WASM_UNREACHABLE("invalid type");
   }
@@ -2852,12 +2827,6 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
     info.shouldBeTrue(module.features.hasReferenceTypes(),
                       module.features,
                       "--enable-gc requires --enable-reference-types");
-  }
-  if (module.features.hasExceptionHandling()) { // implies exnref
-    info.shouldBeTrue(
-      module.features.hasReferenceTypes(),
-      module.features,
-      "--enable-exception-handling requires --enable-reference-types");
   }
 }
 

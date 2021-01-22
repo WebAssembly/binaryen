@@ -124,12 +124,6 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       queue.emplace_back(ModuleElementKind::Event, curr->event);
     }
   }
-  void visitBrOnExn(BrOnExn* curr) {
-    if (reachable.count(ModuleElement(ModuleElementKind::Event, curr->event)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Event, curr->event);
-    }
-  }
 };
 
 struct RemoveUnusedModuleElements : public Pass {

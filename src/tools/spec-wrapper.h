@@ -55,9 +55,6 @@ static std::string generateSpecWrapper(Module& wasm) {
         case Type::externref:
           ret += "(ref.null extern)";
           break;
-        case Type::exnref:
-          ret += "(ref.null exn)";
-          break;
         case Type::anyref:
           ret += "(ref.null any)";
           break;
@@ -66,6 +63,8 @@ static std::string generateSpecWrapper(Module& wasm) {
           break;
         case Type::i31ref:
           WASM_UNREACHABLE("TODO: i31ref");
+        case Type::dataref:
+          WASM_UNREACHABLE("TODO: dataref");
         case Type::none:
         case Type::unreachable:
           WASM_UNREACHABLE("unexpected type");

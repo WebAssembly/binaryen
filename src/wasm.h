@@ -216,6 +216,13 @@ enum UnaryOp {
   WidenLowUVecI32x4ToVecI64x2,
   WidenHighUVecI32x4ToVecI64x2,
 
+  ConvertLowSVecI32x4ToVecF64x2,
+  ConvertLowUVecI32x4ToVecF64x2,
+  TruncSatZeroSVecF64x2ToVecI32x4,
+  TruncSatZeroUVecF64x2ToVecI32x4,
+  DemoteZeroVecF64x2ToVecF32x4,
+  PromoteLowVecF32x4ToVecF64x2,
+
   InvalidUnary
 };
 
@@ -608,7 +615,6 @@ public:
     TryId,
     ThrowId,
     RethrowId,
-    BrOnExnId,
     TupleMakeId,
     TupleExtractId,
     I31NewId,
@@ -1281,21 +1287,6 @@ public:
   Rethrow(MixedArena& allocator) {}
 
   Index depth;
-
-  void finalize();
-};
-
-class BrOnExn : public SpecificExpression<Expression::BrOnExnId> {
-public:
-  BrOnExn() { type = Type::unreachable; }
-  BrOnExn(MixedArena& allocator) : BrOnExn() {}
-
-  Name name;
-  Name event;
-  Expression* exnref;
-  // This is duplicate info of param types stored in Event, but this is required
-  // for us to know the type of the value sent to the target block.
-  Type sent;
 
   void finalize();
 };

@@ -1,4 +1,4 @@
-[![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=master&event=push)](https://github.com/WebAssembly/binaryen/actions?query=workflow%3ACI)
+[![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions?query=workflow%3ACI)
 
 # Binaryen
 
@@ -27,7 +27,7 @@ effective**:
 Compilers using Binaryen include:
 
  * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles a subset of TypeScript to WebAssembly
- * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2js.h) which compiles WebAssembly to JS
+ * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/main/src/wasm2js.h) which compiles WebAssembly to JS
  * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
  * [`Grain`](https://github.com/grain-lang/grain) which compiles Grain to WebAssembly
 
@@ -167,14 +167,14 @@ This repository contains code that builds the following tools in `bin/`:
    performs emscripten-specific passes over it.
  * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of
    time. Used by Emscripten.
- * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
+ * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
 
 Usage instructions for each are below.
 
 ## Binaryen Optimizations
 
 Binaryen contains
-[a lot of optimization passes](https://github.com/WebAssembly/binaryen/tree/master/src/passes)
+[a lot of optimization passes](https://github.com/WebAssembly/binaryen/tree/main/src/passes)
 to make WebAssembly smaller and faster. You can run the Binaryen optimizer by
 using ``wasm-opt``, but also they can be run while using other tools, like
 ``wasm2js`` and ``wasm-metadce``.
@@ -256,14 +256,14 @@ it works across multiple functions, but in a sense Binaryen is always “LTO” 
 it usually is run on the final linked wasm.
 
 Advanced optimization techniques in the Binaryen optimizer include
-[SSAification](https://github.com/WebAssembly/binaryen/blob/master/src/passes/SSAify.cpp),
-[Flat IR](https://github.com/WebAssembly/binaryen/blob/master/src/ir/flat.h), and
-[Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/master/src/ir/stack-utils.h).
+[SSAification](https://github.com/WebAssembly/binaryen/blob/main/src/passes/SSAify.cpp),
+[Flat IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/flat.h), and
+[Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/stack-utils.h).
 
 Binaryen also contains various passes that do other things than optimizations,
 like
-[legalization for JavaScript](https://github.com/WebAssembly/binaryen/blob/master/src/passes/LegalizeJSInterface.cpp),
-[Asyncify](https://github.com/WebAssembly/binaryen/blob/master/src/passes/Asyncify.cpp),
+[legalization for JavaScript](https://github.com/WebAssembly/binaryen/blob/main/src/passes/LegalizeJSInterface.cpp),
+[Asyncify](https://github.com/WebAssembly/binaryen/blob/main/src/passes/Asyncify.cpp),
 etc.
 
 ## Building
@@ -335,7 +335,7 @@ commands.
 
 It's easy to add your own transformation passes to the shell, just add `.cpp`
 files into `src/passes`, and rebuild the shell. For example code, take a look at
-the [`lower-if-else` pass](https://github.com/WebAssembly/binaryen/blob/master/src/passes/LowerIfElse.cpp).
+the [`lower-if-else` pass](https://github.com/WebAssembly/binaryen/blob/main/src/passes/LowerIfElse.cpp).
 
 Some more notes:
 
@@ -443,6 +443,10 @@ The `check.py` script supports some options:
 
 (or `python third_party/setup.py`) installs required dependencies like the SpiderMonkey JS shell, the V8 JS shell
 and WABT in `third_party/`. Other scripts automatically pick these up when installed.
+
+Run `pip3 install -r requirements-dev.txt` to get the requirements for the `lit`
+tests. Note that you need to have the location `pip` installs to in your `$PATH`
+(on linux, `~/.local/bin`).
 
 ### Fuzzing
 

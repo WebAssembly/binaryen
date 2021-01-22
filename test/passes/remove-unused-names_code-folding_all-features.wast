@@ -1218,33 +1218,6 @@
     )
   )
 
-  (event $e (attr 0)) ;; exception with no param
-  (func $br_on_exn-target-block (local $exn exnref)
-    ;; Here this block $x is targeted by br_on_exn, so code folding out of this
-    ;; block should NOT happen.
-    (block $x
-      (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x)
-        )
-      )
-      (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x)
-        )
-      )
-      (drop (br_on_exn $x $e (local.get $exn)))
-      ;; no fallthrough, another thing to merge
-      (drop (i32.const 1))
-      (drop (i32.const 2))
-      (br $x)
-    )
-  )
-
   (func $foo)
   (func $try-call-optimize-terminating-tails (result i32)
     (try

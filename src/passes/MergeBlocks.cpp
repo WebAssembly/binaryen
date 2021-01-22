@@ -129,11 +129,6 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
     }
   }
 
-  void visitBrOnExn(BrOnExn* curr) {
-    // We should not take exnref value out of br_on_exn
-    foundProblem = true;
-  }
-
   bool found() {
     assert(brIfs >= droppedBrIfs);
     return foundProblem || brIfs > droppedBrIfs;
@@ -596,8 +591,6 @@ struct MergeBlocks : public WalkerPass<PostWalker<MergeBlocks>> {
       outer = optimize(curr, curr->operands[i], outer);
     }
   }
-
-  void visitBrOnExn(BrOnExn* curr) { optimize(curr, curr->exnref); }
 };
 
 Pass* createMergeBlocksPass() { return new MergeBlocks(); }

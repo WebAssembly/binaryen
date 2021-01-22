@@ -5,7 +5,7 @@ on:
   # branches which are also PRs.
   push:
     branches:
-      - master
+      - main
       - kripken/*
   pull_request:
 

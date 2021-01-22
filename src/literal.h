@@ -30,7 +30,6 @@
 namespace wasm {
 
 class Literals;
-struct ExceptionPackage;
 struct GCData;
 // Subclass the vector type so that this is not easily confused with a vector of
 // types (which could be confusing on the Literal constructor).
@@ -45,8 +44,6 @@ class Literal {
     uint8_t v128[16];
     // funcref function name. `isNull()` indicates a `null` value.
     Name func;
-    // exnref package. `nullptr` indicates a `null` value.
-    std::unique_ptr<ExceptionPackage> exn;
     // A reference to GC data, either a Struct or an Array. For both of those
     // we store the referred data as a Literals object (which is natural for an
     // Array, and for a Struct, is just the fields in order). The type is used
@@ -94,8 +91,6 @@ public:
   explicit Literal(const std::array<Literal, 4>&);
   explicit Literal(const std::array<Literal, 2>&);
   explicit Literal(Name func, Type type) : func(func), type(type) {}
-  explicit Literal(std::unique_ptr<ExceptionPackage>&& exn)
-    : exn(std::move(exn)), type(Type::exnref) {}
   explicit Literal(std::shared_ptr<GCData> gcData, Type type);
   explicit Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type);
   Literal(const Literal& other);
@@ -108,9 +103,6 @@ public:
     if (type.isNullable()) {
       if (type.isFunction()) {
         return func.isNull();
-      }
-      if (type.isException()) {
-        return !exn;
       }
       if (isGCData()) {
         return !gcData;
@@ -260,9 +252,6 @@ public:
   static Literal makeFunc(Name func, Type type = Type::funcref) {
     return Literal(func, type);
   }
-  static Literal makeExn(std::unique_ptr<ExceptionPackage>&& exn) {
-    return Literal(std::move(exn));
-  }
   static Literal makeI31(int32_t value) {
     auto lit = Literal(Type::i31ref);
     lit.i32 = value & 0x7fffffff;
@@ -299,7 +288,6 @@ public:
     assert(type.isFunction() && !func.isNull());
     return func;
   }
-  ExceptionPackage getExceptionPackage() const;
   std::shared_ptr<GCData> getGCData() const;
   const RttSupers& getRttSupers() const;
 
@@ -683,22 +671,8 @@ public:
   bool isConcrete() { return size() != 0; }
 };
 
-// A struct for a thrown exception, which includes a tag (event) and thrown
-// values
-struct ExceptionPackage {
-  Name event;
-  Literals values;
-  bool operator==(const ExceptionPackage& other) const {
-    return event == other.event && values == other.values;
-  }
-  bool operator!=(const ExceptionPackage& other) const {
-    return !(*this == other);
-  }
-};
-
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);
 std::ostream& operator<<(std::ostream& o, wasm::Literals literals);
-std::ostream& operator<<(std::ostream& o, const ExceptionPackage& exn);
 
 // A GC Struct or Array is a set of values with a run-time type saying what it
 // is.
@@ -721,12 +695,6 @@ template<> struct hash<wasm::Literal> {
       }
       if (a.type.isFunction()) {
         wasm::rehash(digest, a.getFunc());
-        return digest;
-      }
-      if (a.type.isException()) {
-        auto exn = a.getExceptionPackage();
-        wasm::rehash(digest, exn.event);
-        wasm::rehash(digest, exn.values);
         return digest;
       }
       // other non-null reference type literals cannot represent concrete
@@ -756,9 +724,9 @@ template<> struct hash<wasm::Literal> {
           return digest;
         case wasm::Type::funcref:
         case wasm::Type::externref:
-        case wasm::Type::exnref:
         case wasm::Type::anyref:
         case wasm::Type::eqref:
+        case wasm::Type::dataref:
           return hashRef();
         case wasm::Type::i31ref:
           wasm::rehash(digest, a.geti31(true));
@@ -811,10 +779,10 @@ template<> struct less<wasm::Literal> {
         return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
       case wasm::Type::funcref:
       case wasm::Type::externref:
-      case wasm::Type::exnref:
       case wasm::Type::anyref:
       case wasm::Type::eqref:
       case wasm::Type::i31ref:
+      case wasm::Type::dataref:
       case wasm::Type::none:
       case wasm::Type::unreachable:
         return false;

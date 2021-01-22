@@ -858,9 +858,6 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "externref", 9) == 0 && (prefix || str[9] == 0)) {
     return Type::externref;
   }
-  if (strncmp(str, "exnref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type::exnref;
-  }
   if (strncmp(str, "anyref", 6) == 0 && (prefix || str[6] == 0)) {
     return Type::anyref;
   }
@@ -871,6 +868,10 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     // FIXME: for now, force all inputs to be nullable
     return Type(HeapType::BasicHeapType::i31, Nullable);
   }
+  if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
+    // FIXME: for now, force all inputs to be nullable
+    return Type(HeapType::BasicHeapType::data, Nullable);
+  }
   if (allowError) {
     return Type::none;
   }
@@ -879,23 +880,24 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
 
 HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
                                                   bool prefix) {
-  if (str[0] == 'a') {
-    if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
-      return HeapType::any;
+  if (str[0] == 'f') {
+    if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
+        (prefix || str[4] == 0)) {
+      return HeapType::func;
     }
   }
   if (str[0] == 'e') {
     if (str[1] == 'q' && (prefix || str[2] == 0)) {
       return HeapType::eq;
     }
-    if (str[1] == 'x') {
-      if (str[2] == 'n' && (prefix || str[3] == 0)) {
-        return HeapType::exn;
-      }
-      if (str[2] == 't' && str[3] == 'e' && str[4] == 'r' && str[5] == 'n' &&
-          (prefix || str[6] == 0)) {
-        return HeapType::ext;
-      }
+    if (str[1] == 'x' && str[2] == 't' && str[3] == 'e' && str[4] == 'r' &&
+        str[5] == 'n' && (prefix || str[6] == 0)) {
+      return HeapType::ext;
+    }
+  }
+  if (str[0] == 'a') {
+    if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
+      return HeapType::any;
     }
   }
   if (str[0] == 'i') {
@@ -903,10 +905,10 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
       return HeapType::i31;
     }
   }
-  if (str[0] == 'f') {
-    if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
+  if (str[0] == 'd') {
+    if (str[1] == 'a' && str[2] == 't' && str[3] == 'a' &&
         (prefix || str[4] == 0)) {
-      return HeapType::func;
+      return HeapType::data;
     }
   }
   throw ParseException(std::string("invalid wasm heap type: ") + str);
@@ -2059,25 +2061,6 @@ Expression* SExpressionWasmBuilder::makeThrow(Element& s) {
 Expression* SExpressionWasmBuilder::makeRethrow(Element& s) {
   auto ret = allocator.alloc<Rethrow>();
   ret->depth = atoi(s[1]->str().c_str());
-  ret->finalize();
-  return ret;
-}
-
-Expression* SExpressionWasmBuilder::makeBrOnExn(Element& s) {
-  auto ret = allocator.alloc<BrOnExn>();
-  size_t i = 1;
-  ret->name = getLabel(*s[i++]);
-  ret->event = getEventName(*s[i++]);
-  if (!wasm.getEventOrNull(ret->event)) {
-    throw ParseException("bad event name", s[1]->line, s[1]->col);
-  }
-  ret->exnref = parseExpression(s[i]);
-
-  Event* event = wasm.getEventOrNull(ret->event);
-  assert(event && "br_on_exn's event must exist");
-  // Copy params info into BrOnExn, because it is necessary when BrOnExn is
-  // refinalized without the module.
-  ret->sent = event->sig.params;
   ret->finalize();
   return ret;
 }

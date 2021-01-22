@@ -72,12 +72,12 @@ public:
     v128,
     funcref,
     externref,
-    exnref,
     anyref,
     eqref,
     i31ref,
+    dataref,
   };
-  static constexpr BasicType _last_basic_type = i31ref;
+  static constexpr BasicType _last_basic_type = dataref;
 
   Type() : id(none) {}
 
@@ -116,10 +116,10 @@ public:
   // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
   // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
   // │ externref   ║ x │   │ x │ x │ f? n  │ │  f_unc
-  // │ exnref      ║ x │   │ x │ x │    n  │ │  n_ullable
-  // │ anyref      ║ x │   │ x │ x │ f? n  │ │
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  n_ullable
   // │ eqref       ║ x │   │ x │ x │    n  │ │ ┐ TODO (GC)
-  // │ i31ref      ║ x │   │ x │ x │       │ │ ┘
+  // │ i31ref      ║ x │   │ x │ x │       │ │ │
+  // │ dataref     ║ x │   │ x │ x │       │ │ ┘
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
@@ -293,12 +293,12 @@ public:
   enum BasicHeapType : uint32_t {
     func,
     ext,
-    exn,
     any,
     eq,
     i31,
+    data,
   };
-  static constexpr BasicHeapType _last_basic_type = i31;
+  static constexpr BasicHeapType _last_basic_type = data;
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}

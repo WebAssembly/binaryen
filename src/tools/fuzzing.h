@@ -335,9 +335,6 @@ private:
           if (wasm.features.hasReferenceTypes()) {
             options.push_back(Type::funcref);
             options.push_back(Type::externref);
-            if (wasm.features.hasExceptionHandling()) {
-              options.push_back(Type::exnref);
-            }
             if (wasm.features.hasGC()) {
               options.push_back(Type::eqref);
               options.push_back(Type::i31ref);
@@ -870,8 +867,6 @@ private:
       }
 
       void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
-
-      void visitBrOnExn(BrOnExn* curr) { replaceIfInvalid(curr->name); }
 
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
@@ -1648,10 +1643,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1754,10 +1749,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("invalid type");
@@ -1890,10 +1885,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("invalid type");
@@ -1937,10 +1932,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -2009,10 +2004,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -2038,10 +2033,10 @@ private:
           case Type::v128:
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -2074,6 +2069,9 @@ private:
       }
       if (oneIn(2) && type.isNullable()) {
         return builder.makeRefNull(type);
+      }
+      if (type == Type::dataref) {
+        WASM_UNREACHABLE("TODO: dataref");
       }
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
@@ -2173,10 +2171,10 @@ private:
           }
           case Type::funcref:
           case Type::externref:
-          case Type::exnref:
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
             return makeTrivial(type);
           case Type::none:
           case Type::unreachable:
@@ -2321,10 +2319,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2563,10 +2561,10 @@ private:
       }
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -2770,10 +2768,10 @@ private:
       case Type::v128:
       case Type::funcref:
       case Type::externref:
-      case Type::exnref:
       case Type::anyref:
       case Type::eqref:
       case Type::i31ref:
+      case Type::dataref:
       case Type::none:
       case Type::unreachable:
         WASM_UNREACHABLE("unexpected type");
@@ -3034,13 +3032,12 @@ private:
         .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
         .add(FeatureSet::SIMD, Type::v128)
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
              Type::eqref,
              Type::i31ref));
     // TODO: emit typed function references types
+    // TODO: dataref
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
@@ -3049,12 +3046,11 @@ private:
     return items(
       FeatureOptions<Type>()
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
-        .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-             Type::exnref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
              Type::eqref,
              Type::i31ref));
+    // TODO: dataref
   }
 
   Type getReferenceType() { return pick(getReferenceTypes()); }
@@ -3122,9 +3118,7 @@ private:
       loggableTypes = items(
         FeatureOptions<Type>()
           .add(FeatureSet::MVP, Type::i32, Type::i64, Type::f32, Type::f64)
-          .add(FeatureSet::SIMD, Type::v128)
-          .add(FeatureSet::ReferenceTypes | FeatureSet::ExceptionHandling,
-               Type::exnref));
+          .add(FeatureSet::SIMD, Type::v128));
     }
     return loggableTypes;
   }

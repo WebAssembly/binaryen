@@ -187,16 +187,6 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         '''
         self.check_reference_types(module, 'all used types should be allowed')
 
-    def test_exnref_local(self):
-        module = '''
-        (module
-         (func $foo
-            (local exnref)
-         )
-        )
-        '''
-        self.check_exception_handling(module, 'all used types should be allowed')
-
     def test_event(self):
         module = '''
         (module
