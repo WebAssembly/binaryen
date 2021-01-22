@@ -3800,6 +3800,9 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop i31ref)
       )
       (drop
+       (pop dataref)
+      )
+      (drop
        (memory.size)
       )
       (drop
