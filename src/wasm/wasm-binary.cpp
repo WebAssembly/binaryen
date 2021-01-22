@@ -2850,10 +2850,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
           delimiterId = BinaryLocations::Else;
         } else {
           delimiterId =
-              currFunction->delimiterLocations[currControlFlow].size();
+            currFunction->delimiterLocations[currControlFlow].size();
         }
-        currFunction
-          ->delimiterLocations[currControlFlow][delimiterId] =
+        currFunction->delimiterLocations[currControlFlow][delimiterId] =
           startPos - codeSectionLocation;
       }
       break;
