@@ -16,8 +16,8 @@
   (local $0 i32)
   (local $1 anyref)
   (local $2 eqref)
-  (local $3 (ref null data))
-  (local $4 (ref null i31))
+  (local $3 (ref null i31))
+  (local $4 (ref null data))
   (local.set $1
    (local.get $1)
   )
@@ -36,13 +36,13 @@
   (local.set $2
    (ref.null eq)
   )
-  (local.set $4
-   (local.get $4)
+  (local.set $3
+   (local.get $3)
   )
-  (local.set $4
+  (local.set $3
    (global.get $global$2)
   )
-  (local.set $4
+  (local.set $3
    (i31.new
     (i32.const 0)
    )
@@ -57,7 +57,7 @@
    (ref.null eq)
   )
   (local.set $1
-   (local.get $4)
+   (local.get $3)
   )
   (local.set $1
    (global.get $global$2)
@@ -68,7 +68,7 @@
    )
   )
   (local.set $2
-   (local.get $4)
+   (local.get $3)
   )
   (local.set $2
    (global.get $global$2)
@@ -97,7 +97,7 @@
    (ref.null eq)
   )
   (global.set $global$2
-   (local.get $4)
+   (local.get $3)
   )
   (global.set $global$2
    (global.get $global$2)
@@ -117,7 +117,7 @@
    (ref.null eq)
   )
   (global.set $global$0
-   (local.get $4)
+   (local.get $3)
   )
   (global.set $global$0
    (global.get $global$2)
@@ -128,7 +128,7 @@
    )
   )
   (global.set $global$1
-   (local.get $4)
+   (local.get $3)
   )
   (global.set $global$1
    (global.get $global$2)
@@ -140,20 +140,20 @@
   )
   (local.set $0
    (i31.get_s
-    (local.get $4)
+    (local.get $3)
    )
   )
   (local.set $0
    (i31.get_u
-    (local.get $4)
+    (local.get $3)
    )
   )
  )
  (func $1
-  (local $0 (ref null data))
-  (local $1 (ref null data))
-  (local $2 (ref null i31))
-  (local $3 (ref null i31))
+  (local $0 (ref null i31))
+  (local $1 (ref null i31))
+  (local $2 (ref null data))
+  (local $3 (ref null data))
   (nop)
  )
 )

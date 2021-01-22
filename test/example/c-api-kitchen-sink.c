@@ -223,6 +223,12 @@ void test_types() {
   BinaryenTypeExpand(i31ref, &valueType);
   assert(valueType == i31ref);
 
+  BinaryenType dataref = BinaryenTypeDataref();
+  printf("  // BinaryenTypeDataref: %d\n", dataref);
+  assert(BinaryenTypeArity(dataref) == 1);
+  BinaryenTypeExpand(dataref, &valueType);
+  assert(valueType == dataref);
+
   printf("  // BinaryenTypeAuto: %d\n", BinaryenTypeAuto());
 
   BinaryenType pair[] = {i32, i32};

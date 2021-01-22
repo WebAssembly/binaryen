@@ -864,13 +864,13 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
   if (strncmp(str, "eqref", 5) == 0 && (prefix || str[5] == 0)) {
     return Type::eqref;
   }
-  if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
-    // FIXME: for now, force all inputs to be nullable
-    return Type(HeapType::BasicHeapType::data, Nullable);
-  }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
     // FIXME: for now, force all inputs to be nullable
     return Type(HeapType::BasicHeapType::i31, Nullable);
+  }
+  if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
+    // FIXME: for now, force all inputs to be nullable
+    return Type(HeapType::BasicHeapType::data, Nullable);
   }
   if (allowError) {
     return Type::none;
@@ -880,9 +880,10 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
 
 HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
                                                   bool prefix) {
-  if (str[0] == 'a') {
-    if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
-      return HeapType::any;
+  if (str[0] == 'f') {
+    if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
+        (prefix || str[4] == 0)) {
+      return HeapType::func;
     }
   }
   if (str[0] == 'e') {
@@ -894,15 +895,14 @@ HeapType SExpressionWasmBuilder::stringToHeapType(const char* str,
       return HeapType::ext;
     }
   }
+  if (str[0] == 'a') {
+    if (str[1] == 'n' && str[2] == 'y' && (prefix || str[3] == 0)) {
+      return HeapType::any;
+    }
+  }
   if (str[0] == 'i') {
     if (str[1] == '3' && str[2] == '1' && (prefix || str[3] == 0)) {
       return HeapType::i31;
-    }
-  }
-  if (str[0] == 'f') {
-    if (str[1] == 'u' && str[2] == 'n' && str[3] == 'c' &&
-        (prefix || str[4] == 0)) {
-      return HeapType::func;
     }
   }
   if (str[0] == 'd') {

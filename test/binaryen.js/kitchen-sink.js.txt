@@ -20,7 +20,9 @@
   // 9
   // BinaryenTypeEqref: 10
   // 10
-  // BinaryenTypeI31ref: 12
+  // BinaryenTypeI31ref: 11
+  // 11
+  // BinaryenTypeDataref: 12
   // 12
   // BinaryenTypeAuto: -1
   // 2,2
@@ -1936,6 +1938,9 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (pop i31ref)
       )
       (drop
+       (pop dataref)
+      )
+      (drop
        (memory.size)
       )
       (drop
@@ -3793,6 +3798,9 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (pop i31ref)
+      )
+      (drop
+       (pop dataref)
       )
       (drop
        (memory.size)
