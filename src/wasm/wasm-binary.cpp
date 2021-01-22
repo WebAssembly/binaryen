@@ -2845,7 +2845,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         BinaryLocation delimiterId;
         // Else and CatchAll have the same binary ID, so differentiate them
         // using the control flow stack.
-        static_assert(BinaryConsts::CatchAll == BinaryConsts::Else);
+        static_assert(BinaryConsts::CatchAll == BinaryConsts::Else,
+                      "Else and CatchAll should have identical codes");
         if (currControlFlow->is<If>()) {
           delimiterId = BinaryLocations::Else;
         } else {
