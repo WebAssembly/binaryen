@@ -609,7 +609,7 @@ public:
     MemoryFillId,
     PopId,
     RefNullId,
-    RefIsNullId,
+    RefIsId,
     RefFuncId,
     RefEqId,
     TryId,
@@ -1228,9 +1228,12 @@ public:
   void finalize(Type type);
 };
 
-class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
+class RefIs : public SpecificExpression<Expression::RefIsId> {
 public:
-  RefIsNull(MixedArena& allocator) {}
+  RefIs(MixedArena& allocator) {}
+
+  // RefIs can represent ref.is_null, ref.is_func, ref.is_data, and ref.is_i31.
+  enum What { Null, Func, Data, I31 } what;
 
   Expression* value;
 
@@ -1378,18 +1381,6 @@ public:
   void finalize();
 
   Type getCastType();
-};
-
-class RefIs : public SpecificExpression<Expression::RefIsId> {
-public:
-  RefIs(MixedArena& allocator) {}
-
-  // RefIs can represent ref.is_func, ref.is_data, and ref.is_i31.
-  enum What { Func, Data, i31 } what;
-
-  Expression* ref;
-
-  void finalize();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {
