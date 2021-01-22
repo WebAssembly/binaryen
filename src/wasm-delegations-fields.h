@@ -596,6 +596,13 @@ switch (DELEGATE_ID) {
     DELEGATE_END(BrOnCast);
     break;
   }
+  case Expression::Id::RefIsId: {
+    DELEGATE_START(RefIs);
+    DELEGATE_FIELD_INT(RefIs, what);
+    DELEGATE_FIELD_CHILD(RefIs, ref);
+    DELEGATE_END(RefIs);
+    break;
+  }
   case Expression::Id::RttCanonId: {
     DELEGATE_START(RttCanon);
     DELEGATE_END(RttCanon);

@@ -70,6 +70,7 @@ DELEGATE(CallRef);
 DELEGATE(RefTest);
 DELEGATE(RefCast);
 DELEGATE(BrOnCast);
+DELEGATE(RefIs);
 DELEGATE(RttCanon);
 DELEGATE(RttSub);
 DELEGATE(StructNew);

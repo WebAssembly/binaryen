@@ -1380,6 +1380,22 @@ public:
   Type getCastType();
 };
 
+class RefIs : public SpecificExpression<Expression::RefIsId> {
+public:
+  RefIs(MixedArena& allocator) {}
+
+  // RefIs can represent ref.is_func, ref.is_data, and ref.is_i31.
+  enum What {
+    Func,
+    Data,
+    i31
+  } what;
+
+  Expression* ref;
+
+  void finalize();
+};
+
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {
 public:
   RttCanon(MixedArena& allocator) {}
