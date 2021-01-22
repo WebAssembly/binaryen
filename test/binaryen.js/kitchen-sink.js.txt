@@ -20,8 +20,8 @@
   // 9
   // BinaryenTypeEqref: 10
   // 10
-  // BinaryenTypeI31ref: 11
-  // 11
+  // BinaryenTypeI31ref: 12
+  // 12
   // BinaryenTypeAuto: -1
   // 2,2
   // 2,2
