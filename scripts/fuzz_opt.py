@@ -151,7 +151,7 @@ def randomize_fuzz_settings():
 
 
 IMPORTANT_INITIAL_CONTENTS = [
-    os.path.join('passes', 'optimize-instructions_all-features.wast'),
+    os.path.join('lit', 'passes', 'optimize-instructions.wast'),
     os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
@@ -833,7 +833,8 @@ spec_tests = shared.get_tests(shared.get_test_dir('spec'), test_suffixes)
 wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), test_suffixes)
 lld_tests = shared.get_tests(shared.get_test_dir('lld'), test_suffixes)
 unit_tests = shared.get_tests(shared.get_test_dir(os.path.join('unit', 'input')), test_suffixes)
-all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests
+lit_tests = shared.get_tests(shared.get_test_dir('lit'), test_suffixes, recursive=True)
+all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests
 
 
 # Do one test, given an input file for -ttf and some optimizations to run

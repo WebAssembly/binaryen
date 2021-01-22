@@ -366,15 +366,16 @@ def get_test_dir(name):
     return os.path.join(options.binaryen_test, name)
 
 
-def get_tests(test_dir, extensions=[]):
+def get_tests(test_dir, extensions=[], recursive=False):
     """Returns the list of test files in a given directory. 'extensions' is a
     list of file extensions. If 'extensions' is empty, returns all files.
     """
     tests = []
+    star = '**/*' if recursive else '*'
     if not extensions:
-        tests += glob.glob(os.path.join(test_dir, '*'))
+        tests += glob.glob(os.path.join(test_dir, star), recursive=True)
     for ext in extensions:
-        tests += glob.glob(os.path.join(test_dir, '*' + ext))
+        tests += glob.glob(os.path.join(test_dir, star + ext), recursive=True)
     if options.test_name_filter:
         tests = fnmatch.filter(tests, options.test_name_filter)
     return sorted(tests)
