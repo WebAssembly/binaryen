@@ -2837,27 +2837,23 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       }
       break;
     case BinaryConsts::Else:
-      curr = nullptr;
-      if (DWARF && currFunction) {
-        assert(!controlFlowStack.empty());
-        auto currControlFlow = controlFlowStack.back();
-        currFunction
-          ->delimiterLocations[currControlFlow][BinaryLocations::Else] =
-          startPos - codeSectionLocation;
-      }
-      break;
     case BinaryConsts::Catch: {
-      // TODO: add CatchAll, but the value of the constant is identical to Else
-      // case BinaryConsts::CatchAll: {
       curr = nullptr;
       if (DWARF && currFunction) {
         assert(!controlFlowStack.empty());
         auto currControlFlow = controlFlowStack.back();
-        // The new catch is appended at the end of the list of debug delimiters
-        // for this instruction.
-        auto delimiterId =
-          currFunction->delimiterLocations[currControlFlow].size();
-        currFunction->delimiterLocations[currControlFlow][delimiterId] =
+        BinaryLocation delimiterId;
+        // Else and CatchAll have the same binary ID, so differentiate them
+        // using the control flow stack.
+        static_assert(BinaryConsts::CatchAll == BinaryConsts::Else);
+        if (currControlFlow->is<If>()) {
+          delimiterId = BinaryLocations::Else;
+        } else {
+          delimiterId =
+              currFunction->delimiterLocations[currControlFlow].size();
+        }
+        currFunction
+          ->delimiterLocations[currControlFlow][delimiterId] =
           startPos - codeSectionLocation;
       }
       break;
