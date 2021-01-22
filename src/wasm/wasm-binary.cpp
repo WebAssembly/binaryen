@@ -1413,12 +1413,12 @@ Type WasmBinaryBuilder::getType(int initial) {
     case BinaryConsts::EncodedType::nonnullable:
       // FIXME: for now, force all inputs to be nullable
       return Type(getHeapType(), Nullable);
-    case BinaryConsts::EncodedType::dataref:
-      // FIXME: for now, force all inputs to be nullable
-      return Type(HeapType::BasicHeapType::data, Nullable);
     case BinaryConsts::EncodedType::i31ref:
       // FIXME: for now, force all inputs to be nullable
       return Type(HeapType::BasicHeapType::i31, Nullable);
+    case BinaryConsts::EncodedType::dataref:
+      // FIXME: for now, force all inputs to be nullable
+      return Type(HeapType::BasicHeapType::data, Nullable);
     case BinaryConsts::EncodedType::rtt_n: {
       auto depth = getU32LEB();
       auto heapType = getHeapType();

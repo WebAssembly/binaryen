@@ -83,6 +83,9 @@ function test_types() {
   console.log("  // BinaryenTypeI31ref: " + binaryen.i31ref);
   console.log("  //", binaryen.expandType(binaryen.i31ref).join(","));
 
+  console.log("  // BinaryenTypeDataref: " + binaryen.dataref);
+  console.log("  //", binaryen.expandType(binaryen.dataref).join(","));
+
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
@@ -590,6 +593,7 @@ function test_core() {
     module.anyref.pop(),
     module.eqref.pop(),
     module.i31ref.pop(),
+    module.dataref.pop(),
 
     // Memory
     module.memory.size(),
