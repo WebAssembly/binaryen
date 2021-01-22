@@ -1385,11 +1385,7 @@ public:
   RefIs(MixedArena& allocator) {}
 
   // RefIs can represent ref.is_func, ref.is_data, and ref.is_i31.
-  enum What {
-    Func,
-    Data,
-    i31
-  } what;
+  enum What { Func, Data, i31 } what;
 
   Expression* ref;
 
