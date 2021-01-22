@@ -267,6 +267,7 @@ parseConst(cashew::IString s, Type type, MixedArena& allocator) {
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
+    case Type::dataref:
       WASM_UNREACHABLE("unexpected const type");
     case Type::none:
     case Type::unreachable: {

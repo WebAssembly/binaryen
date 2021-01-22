@@ -611,6 +611,7 @@ struct Reducer
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
+              case Type::dataref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -638,6 +639,7 @@ struct Reducer
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
+              case Type::dataref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -665,6 +667,7 @@ struct Reducer
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
+              case Type::dataref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -692,6 +695,7 @@ struct Reducer
               case Type::anyref:
               case Type::eqref:
               case Type::i31ref:
+              case Type::dataref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -705,6 +709,7 @@ struct Reducer
           case Type::anyref:
           case Type::eqref:
           case Type::i31ref:
+          case Type::dataref:
             continue; // not implemented yet
           case Type::none:
           case Type::unreachable:

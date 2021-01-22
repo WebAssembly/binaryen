@@ -306,12 +306,16 @@ struct TypeStore : Store<TypeInfo> {
             return Type::anyref;
           case HeapType::eq:
             return Type::eqref;
+          case HeapType::data:
           case HeapType::i31:
             break;
         }
       } else {
         if (info.ref.heapType == HeapType::i31) {
           return Type::i31ref;
+        }
+        if (info.ref.heapType == HeapType::data) {
+          return Type::dataref;
         }
       }
     }
@@ -439,6 +443,7 @@ unsigned Type::getByteSize() const {
       case Type::externref:
       case Type::anyref:
       case Type::eqref:
+      case Type::dataref:
       case Type::i31ref:
       case Type::none:
       case Type::unreachable:
@@ -486,6 +491,7 @@ FeatureSet Type::getFeatures() const {
         switch (heapType.getBasic()) {
           case HeapType::BasicHeapType::any:
           case HeapType::BasicHeapType::eq:
+          case HeapType::BasicHeapType::data:
           case HeapType::BasicHeapType::i31:
             return FeatureSet::ReferenceTypes | FeatureSet::GC;
           default: {}
@@ -538,6 +544,8 @@ HeapType Type::getHeapType() const {
         return HeapType::any;
       case Type::eqref:
         return HeapType::eq;
+      case Type::dataref:
+        return HeapType::data;
       case Type::i31ref:
         return HeapType::i31;
     }
@@ -874,6 +882,8 @@ std::ostream& operator<<(std::ostream& os, Type type) {
         return os << "anyref";
       case Type::eqref:
         return os << "eqref";
+      case Type::dataref:
+        return os << "dataref";
       case Type::i31ref:
         return os << "i31ref";
     }
@@ -964,6 +974,8 @@ std::ostream& operator<<(std::ostream& os, HeapType heapType) {
         return os << "any";
       case HeapType::eq:
         return os << "eq";
+      case HeapType::data:
+        return os << "data";
       case HeapType::i31:
         return os << "i31";
     }

@@ -77,6 +77,8 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
       break;
     case Type::i31ref:
       WASM_UNREACHABLE("TODO: i31ref");
+    case Type::dataref:
+      WASM_UNREACHABLE("TODO: dataref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
@@ -104,6 +106,8 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
       return Literal::makeNull(Type(x.type));
     case Type::i31ref:
       WASM_UNREACHABLE("TODO: i31ref");
+    case Type::dataref:
+      WASM_UNREACHABLE("TODO: dataref");
     case Type::none:
     case Type::unreachable:
       WASM_UNREACHABLE("unexpected type");
