@@ -2849,6 +2849,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         if (currControlFlow->is<If>()) {
           delimiterId = BinaryLocations::Else;
         } else {
+          // Both Catch and CatchAll can simply append to the list as we go, as
+          // we visit them in the right order in the binary, and like the binary
+          // we store the CatchAll at the end.
           delimiterId =
             currFunction->delimiterLocations[currControlFlow].size();
         }
