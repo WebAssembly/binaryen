@@ -1716,13 +1716,11 @@ struct PrintExpressionContents
     switch (curr->what) {
       case RefIs::Null:
         printMedium(o, "ref.is_null");
+        break;
+      default:
+        WASM_UNREACHABLE("unimplemented ref.is_*");
     }
-    break;
-    default:
-      WASM_UNREACHABLE("unimplemented ref.is_*");
   }
-} printMedium(o, "ref.is_null");
-} // namespace wasm
   void visitRefFunc(RefFunc* curr) {
     printMedium(o, "ref.func ");
     printName(curr->func, o);
