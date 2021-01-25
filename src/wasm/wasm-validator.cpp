@@ -331,7 +331,7 @@ public:
   void visitMemorySize(MemorySize* curr);
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
-  void visitRefIsNull(RefIsNull* curr);
+  void visitRefIs(RefIs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void visitTry(Try* curr);
@@ -1981,14 +1981,14 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
     curr->type.isNullable(), curr, "ref.null types must be nullable");
 }
 
-void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
+void FunctionValidator::visitRefIs(RefIs* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
-               "ref.is_null requires reference-types to be enabled");
+               "ref.is_* requires reference-types to be enabled");
   shouldBeTrue(curr->value->type == Type::unreachable ||
                  curr->value->type.isRef(),
                curr->value,
-               "ref.is_null's argument should be a reference type");
+               "ref.is_*'s argument should be a reference type");
 }
 
 void FunctionValidator::visitRefFunc(RefFunc* curr) {

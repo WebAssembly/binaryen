@@ -2834,7 +2834,7 @@ switch (op[0]) {
                 if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
                 goto parse_error;
               case 'i':
-                if (strcmp(op, "ref.is_null") == 0) { return makeRefIsNull(s); }
+                if (strcmp(op, "ref.is_null") == 0) { return makeRefIs(s); }
                 goto parse_error;
               case 'n':
                 if (strcmp(op, "ref.null") == 0) { return makeRefNull(s); }

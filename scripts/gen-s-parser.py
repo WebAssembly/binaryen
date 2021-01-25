@@ -529,7 +529,7 @@ instructions = [
     # reference types instructions
     # TODO Add table instructions
     ("ref.null",             "makeRefNull(s)"),
-    ("ref.is_null",          "makeRefIsNull(s)"),
+    ("ref.is_null",          "makeRefIs(s)"),
     ("ref.func",             "makeRefFunc(s)"),
     # exception handling instructions
     ("try",                  "makeTry(s)"),
