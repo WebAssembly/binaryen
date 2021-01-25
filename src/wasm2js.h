@@ -1727,8 +1727,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               WASM_UNREACHABLE(
                 "operation should have been removed in previous passes");
 
-            default:
-              WASM_UNREACHABLE("unhandled unary float operator");
+            default: { WASM_UNREACHABLE("unhandled unary"); }
           }
           if (curr->type == Type::f32) { // doubles need much less coercing
             return makeAsmCoercion(ret, ASM_FLOAT);
