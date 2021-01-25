@@ -1638,7 +1638,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 ValueBuilder::makeNum(16));
             }
             default: {
-              Fatal() << "Unhandled unary i32 operator: " << curr;
+              WASM_UNREACHABLE("unhandled unary");
             }
           }
         }

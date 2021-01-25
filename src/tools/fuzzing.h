@@ -2946,7 +2946,7 @@ private:
   Expression* makeRefIsNull(Type type) {
     assert(type == Type::i32);
     assert(wasm.features.hasReferenceTypes());
-    return builder.makeRefIs(make(getReferenceType()), RefIs::Null);
+    return builder.makeRefIs(RefIs::Null, make(getReferenceType()));
   }
 
   Expression* makeRefEq(Type type) {
