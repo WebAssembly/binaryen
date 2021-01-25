@@ -15,14 +15,3 @@ class DWARFTest(utils.BinaryenTestCase):
             args = [os.path.join(path, name)] + \
                    ['-g', '--dwarfdump', '--roundtrip', '--dwarfdump']
             shared.run_process(shared.WASM_OPT + args, capture_output=True)
-
-    def test_dwarf_incompatibility(self):
-        warning = 'not fully compatible with DWARF'
-        path = self.input_path(os.path.join('dwarf', 'cubescript.wasm'))
-        args = [path, '-g']
-        # flatten warns
-        err = shared.run_process(shared.WASM_OPT + args + ['--flatten'], stderr=subprocess.PIPE).stderr
-        self.assertIn(warning, err)
-        # safe passes do not
-        err = shared.run_process(shared.WASM_OPT + args + ['--metrics'], stderr=subprocess.PIPE).stderr
-        self.assertNotIn(warning, err)
