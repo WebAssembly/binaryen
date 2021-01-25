@@ -1,4 +1,6 @@
-cmake_minimum_required(VERSION 3.13)
+# Version set according the the cmake versions available in Ubuntu/Bionic:
+# https://packages.ubuntu.com/bionic/cmake
+cmake_minimum_required(VERSION 3.10.2)
 project(binaryen LANGUAGES C CXX VERSION 99)
 include(GNUInstallDirs)
 
