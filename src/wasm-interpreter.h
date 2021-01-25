@@ -1306,15 +1306,20 @@ public:
     NOTE_ENTER("RefNull");
     return Literal::makeNull(curr->type);
   }
-  Flow visitRefIsNull(RefIsNull* curr) {
-    NOTE_ENTER("RefIsNull");
+  Flow visitRefIs(RefIs* curr) {
+    NOTE_ENTER("RefIs");
     Flow flow = visit(curr->value);
     if (flow.breaking()) {
       return flow;
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    return Literal(value.isNull());
+    switch (curr->what) {
+      case RefIs::Null:
+        return Literal(value.isNull());
+      default:
+        WASM_UNREACHABLE("implemented ref.is_*");
+    }
   }
   Flow visitRefFunc(RefFunc* curr) {
     NOTE_ENTER("RefFunc");

@@ -2847,7 +2847,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
       break;
     case BinaryConsts::RefIsNull:
-      visitRefIsNull((curr = allocator.alloc<RefIsNull>())->cast<RefIsNull>());
+      visitRefIs((curr = allocator.alloc<RefIs>())->cast<RefIs>(), code);
       break;
     case BinaryConsts::RefFunc:
       visitRefFunc((curr = allocator.alloc<RefFunc>())->cast<RefFunc>());
@@ -5522,8 +5522,15 @@ void WasmBinaryBuilder::visitRefNull(RefNull* curr) {
   curr->finalize(getHeapType());
 }
 
-void WasmBinaryBuilder::visitRefIsNull(RefIsNull* curr) {
-  BYN_TRACE("zz node: RefIsNull\n");
+void WasmBinaryBuilder::visitRefIs(RefIs* curr, uint8_t code) {
+  BYN_TRACE("zz node: RefIs\n");
+  switch (code) {
+    case BinaryConsts::RefIsNull:
+      curr->what = RefIs::Null;
+      break;
+    default:
+      WASM_UNREACHABLE("invalid code for ref.is_*");
+  }
   curr->value = popNonVoidExpression();
   curr->finalize();
 }

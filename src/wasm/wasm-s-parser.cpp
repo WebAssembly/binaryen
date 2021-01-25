@@ -1922,8 +1922,13 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeRefIsNull(Element& s) {
-  auto ret = allocator.alloc<RefIsNull>();
+Expression* SExpressionWasmBuilder::makeRefIs(Element& s) {
+  auto ret = allocator.alloc<RefIs>();
+  if (s[0] == REF_IS_NULL) {
+    ret->what = RefIs::Null;
+  } else {
+    WASM_UNREACHABLE("unimplemented ref.is_*");
+  }
   ret->value = parseExpression(s[1]);
   ret->finalize();
   return ret;
