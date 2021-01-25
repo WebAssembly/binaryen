@@ -915,8 +915,9 @@ void WasmBinaryWriter::writeDebugLocationEnd(Expression* curr, Function* func) {
   }
 }
 
-void WasmBinaryWriter::writeExtraDebugLocation(
-  Expression* curr, Function* func, BinaryLocations::DelimiterId id) {
+void WasmBinaryWriter::writeExtraDebugLocation(Expression* curr,
+                                               Function* func,
+                                               size_t id) {
   if (func && !func->expressionLocations.empty()) {
     binaryLocations.delimiters[curr][id] = o.size();
   }
@@ -2836,13 +2837,30 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       }
       break;
     case BinaryConsts::Else:
+    case BinaryConsts::Catch: {
       curr = nullptr;
-      continueControlFlow(BinaryLocations::Else, startPos);
+      if (DWARF && currFunction) {
+        assert(!controlFlowStack.empty());
+        auto currControlFlow = controlFlowStack.back();
+        BinaryLocation delimiterId;
+        // Else and CatchAll have the same binary ID, so differentiate them
+        // using the control flow stack.
+        static_assert(BinaryConsts::CatchAll == BinaryConsts::Else,
+                      "Else and CatchAll should have identical codes");
+        if (currControlFlow->is<If>()) {
+          delimiterId = BinaryLocations::Else;
+        } else {
+          // Both Catch and CatchAll can simply append to the list as we go, as
+          // we visit them in the right order in the binary, and like the binary
+          // we store the CatchAll at the end.
+          delimiterId =
+            currFunction->delimiterLocations[currControlFlow].size();
+        }
+        currFunction->delimiterLocations[currControlFlow][delimiterId] =
+          startPos - codeSectionLocation;
+      }
       break;
-    case BinaryConsts::Catch:
-      curr = nullptr;
-      continueControlFlow(BinaryLocations::Catch, startPos);
-      break;
+    }
     case BinaryConsts::RefNull:
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
       break;
@@ -3099,18 +3117,6 @@ Index WasmBinaryBuilder::getAbsoluteLocalIndex(Index index) {
 void WasmBinaryBuilder::startControlFlow(Expression* curr) {
   if (DWARF && currFunction) {
     controlFlowStack.push_back(curr);
-  }
-}
-
-void WasmBinaryBuilder::continueControlFlow(BinaryLocations::DelimiterId id,
-                                            BinaryLocation pos) {
-  if (DWARF && currFunction) {
-    assert(!controlFlowStack.empty());
-    auto currControlFlow = controlFlowStack.back();
-    // We are called after parsing the byte, so we need to subtract one to
-    // get its position.
-    currFunction->delimiterLocations[currControlFlow][id] =
-      pos - codeSectionLocation;
   }
 }
 

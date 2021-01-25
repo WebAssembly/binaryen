@@ -361,7 +361,7 @@ struct AddrExprMap {
   // bloat the common case which is represented in the earlier maps.
   struct DelimiterInfo {
     Expression* expr;
-    BinaryLocations::DelimiterId id;
+    size_t id;
   };
   std::unordered_map<BinaryLocation, DelimiterInfo> delimiterMap;
 
@@ -414,8 +414,7 @@ private:
     for (Index i = 0; i < delimiter.size(); i++) {
       if (delimiter[i] != 0) {
         assert(delimiterMap.count(delimiter[i]) == 0);
-        delimiterMap[delimiter[i]] =
-          DelimiterInfo{expr, BinaryLocations::DelimiterId(i)};
+        delimiterMap[delimiter[i]] = DelimiterInfo{expr, i};
       }
     }
   }
