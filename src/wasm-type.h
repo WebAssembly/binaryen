@@ -74,10 +74,10 @@ public:
     externref,
     anyref,
     eqref,
-    dataref,
     i31ref,
+    dataref,
   };
-  static constexpr BasicType _last_basic_type = i31ref;
+  static constexpr BasicType _last_basic_type = dataref;
 
   Type() : id(none) {}
 
@@ -295,10 +295,10 @@ public:
     ext,
     any,
     eq,
-    data,
     i31,
+    data,
   };
-  static constexpr BasicHeapType _last_basic_type = i31;
+  static constexpr BasicHeapType _last_basic_type = data;
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}

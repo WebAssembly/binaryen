@@ -1028,10 +1028,10 @@ public:
       case Type::anyref:
       case Type::eqref:
         return ExpressionManipulator::refNull(curr, curr->type);
-      case Type::dataref:
-        WASM_UNREACHABLE("TODO: dataref");
       case Type::i31ref:
         return makeI31New(makeConst(0));
+      case Type::dataref:
+        WASM_UNREACHABLE("TODO: dataref");
       case Type::none:
         return ExpressionManipulator::nop(curr);
       case Type::unreachable:
