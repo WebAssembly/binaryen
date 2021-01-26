@@ -2836,16 +2836,16 @@ switch (op[0]) {
               case 'i': {
                 switch (op[7]) {
                   case 'd':
-                    if (strcmp(op, "ref.is_data") == 0) { return makeRefIs(s); }
+                    if (strcmp(op, "ref.is_data") == 0) { return makeRefIs(s, RefIsData); }
                     goto parse_error;
                   case 'f':
-                    if (strcmp(op, "ref.is_func") == 0) { return makeRefIs(s); }
+                    if (strcmp(op, "ref.is_func") == 0) { return makeRefIs(s, RefIsFunc); }
                     goto parse_error;
                   case 'i':
-                    if (strcmp(op, "ref.is_i31") == 0) { return makeRefIs(s); }
+                    if (strcmp(op, "ref.is_i31") == 0) { return makeRefIs(s, RefIsI31); }
                     goto parse_error;
                   case 'n':
-                    if (strcmp(op, "ref.is_null") == 0) { return makeRefIs(s); }
+                    if (strcmp(op, "ref.is_null") == 0) { return makeRefIs(s, RefIsNull); }
                     goto parse_error;
                   default: goto parse_error;
                 }
