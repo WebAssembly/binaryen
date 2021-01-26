@@ -565,9 +565,9 @@ instructions = [
     ("array.get_u",         "makeArrayGet(s, false)"),
     ("array.set",           "makeArraySet(s)"),
     ("array.len",           "makeArrayLen(s)"),
-    ("ref.is_func",         "makeRefIs(s)"),
-    ("ref.is_data",         "makeRefIs(s)"),
-    ("ref.is_i31",          "makeRefIs(s)"),
+    ("ref.is_func",         "makeRefIs(s, RefIsOp::RefIsFunc)"),
+    ("ref.is_data",         "makeRefIs(s, RefIsOp::RefIsData)"),**
+    ("ref.is_i31",          "makeRefIs(s, RefIsOp::RefIsI31)"),
 ]
 
 
