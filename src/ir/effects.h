@@ -522,7 +522,7 @@ private:
       parent.isAtomic = true;
     }
     void visitRefNull(RefNull* curr) {}
-    void visitRefIsNull(RefIsNull* curr) {}
+    void visitRefIs(RefIs* curr) {}
     void visitRefFunc(RefFunc* curr) {}
     void visitRefEq(RefEq* curr) {}
     void visitTry(Try* curr) {}

@@ -1712,7 +1712,15 @@ struct PrintExpressionContents
     printMedium(o, "ref.null ");
     printHeapTypeName(o, curr->type.getHeapType());
   }
-  void visitRefIsNull(RefIsNull* curr) { printMedium(o, "ref.is_null"); }
+  void visitRefIs(RefIs* curr) {
+    switch (curr->op) {
+      case RefIsNull:
+        printMedium(o, "ref.is_null");
+        break;
+      default:
+        WASM_UNREACHABLE("unimplemented ref.is_*");
+    }
+  }
   void visitRefFunc(RefFunc* curr) {
     printMedium(o, "ref.func ");
     printName(curr->func, o);
@@ -2356,7 +2364,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     o << ')';
   }
-  void visitRefIsNull(RefIsNull* curr) {
+  void visitRefIs(RefIs* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();

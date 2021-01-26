@@ -1637,9 +1637,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 RSHIFT,
                 ValueBuilder::makeNum(16));
             }
-            default: {
-              Fatal() << "Unhandled unary i32 operator: " << curr;
-            }
+            default: { WASM_UNREACHABLE("unhandled unary"); }
           }
         }
         case Type::f32:
@@ -2151,7 +2149,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitRefIsNull(RefIsNull* curr) {
+    Ref visitRefIs(RefIs* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

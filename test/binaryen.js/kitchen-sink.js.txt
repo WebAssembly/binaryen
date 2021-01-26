@@ -82,7 +82,7 @@ MemoryCopyId: 39
 MemoryFillId: 40
 PopId: 41
 RefNullId: 42
-RefIsNullId: 43
+RefIsId: 43
 RefFuncId: 44
 RefEqId: 45
 TryId: 46

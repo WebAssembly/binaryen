@@ -705,6 +705,7 @@ BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void) {
   return WidenHighUVecI16x8ToVecI32x4;
 }
 BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
+BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,
@@ -1180,10 +1181,11 @@ BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
   return static_cast<Expression*>(Builder(*(Module*)module).makeRefNull(type_));
 }
 
-BinaryenExpressionRef BinaryenRefIsNull(BinaryenModuleRef module,
-                                        BinaryenExpressionRef value) {
+BinaryenExpressionRef BinaryenRefIs(BinaryenModuleRef module,
+                                    BinaryenOp op,
+                                    BinaryenExpressionRef value) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefIsNull((Expression*)value));
+    Builder(*(Module*)module).makeRefIs(RefIsOp(op), (Expression*)value));
 }
 
 BinaryenExpressionRef
@@ -2696,17 +2698,17 @@ void BinaryenMemoryFillSetSize(BinaryenExpressionRef expr,
   static_cast<MemoryFill*>(expression)->size = (Expression*)sizeExpr;
 }
 // RefIsNull
-BinaryenExpressionRef BinaryenRefIsNullGetValue(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenRefIsGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<RefIsNull>());
-  return static_cast<RefIsNull*>(expression)->value;
+  assert(expression->is<RefIs>());
+  return static_cast<RefIs*>(expression)->value;
 }
-void BinaryenRefIsNullSetValue(BinaryenExpressionRef expr,
-                               BinaryenExpressionRef valueExpr) {
+void BinaryenRefIsSetValue(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef valueExpr) {
   auto* expression = (Expression*)expr;
-  assert(expression->is<RefIsNull>());
+  assert(expression->is<RefIs>());
   assert(valueExpr);
-  static_cast<RefIsNull*>(expression)->value = (Expression*)valueExpr;
+  static_cast<RefIs*>(expression)->value = (Expression*)valueExpr;
 }
 // RefFunc
 const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr) {

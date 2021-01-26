@@ -51,7 +51,7 @@ int unhex(char c) {
 namespace wasm {
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), I8("i8"),
-  I16("i16"), RTT("rtt");
+  I16("i16"), RTT("rtt"), REF_IS_NULL("ref.is_null");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -1922,8 +1922,13 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeRefIsNull(Element& s) {
-  auto ret = allocator.alloc<RefIsNull>();
+Expression* SExpressionWasmBuilder::makeRefIs(Element& s) {
+  auto ret = allocator.alloc<RefIs>();
+  if (*s[0] == REF_IS_NULL) {
+    ret->op = RefIsNull;
+  } else {
+    WASM_UNREACHABLE("unimplemented ref.is_*");
+  }
   ret->value = parseExpression(s[1]);
   ret->finalize();
   return ret;

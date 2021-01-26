@@ -545,7 +545,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   }
   Index visitPrefetch(Prefetch* curr) { return 0 + visit(curr->ptr); }
   Index visitRefNull(RefNull* curr) { return 1; }
-  Index visitRefIsNull(RefIsNull* curr) { return 1 + visit(curr->value); }
+  Index visitRefIs(RefIs* curr) { return 1 + visit(curr->value); }
   Index visitRefFunc(RefFunc* curr) { return 1; }
   Index visitRefEq(RefEq* curr) {
     return 1 + visit(curr->left) + visit(curr->right);

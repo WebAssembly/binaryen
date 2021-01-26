@@ -710,8 +710,8 @@ void test_core() {
                                iIfF,
                                BinaryenTypeInt32()),
     // Reference types
-    BinaryenRefIsNull(module, externrefExpr),
-    BinaryenRefIsNull(module, funcrefExpr),
+    BinaryenRefIs(module, BinaryenRefIsNull(), externrefExpr),
+    BinaryenRefIs(module, BinaryenRefIsNull(), funcrefExpr),
     BinaryenSelect(
       module,
       temp10,

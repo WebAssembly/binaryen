@@ -1864,8 +1864,14 @@ void BinaryInstWriter::visitRefNull(RefNull* curr) {
   parent.writeHeapType(curr->type.getHeapType());
 }
 
-void BinaryInstWriter::visitRefIsNull(RefIsNull* curr) {
-  o << int8_t(BinaryConsts::RefIsNull);
+void BinaryInstWriter::visitRefIs(RefIs* curr) {
+  switch (curr->op) {
+    case RefIsNull:
+      o << int8_t(BinaryConsts::RefIsNull);
+      break;
+    default:
+      WASM_UNREACHABLE("unimplemented ref.is_*");
+  }
 }
 
 void BinaryInstWriter::visitRefFunc(RefFunc* curr) {

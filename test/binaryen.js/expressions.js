@@ -1353,26 +1353,26 @@ console.log("# MemoryFill");
   module.dispose();
 })();
 
-console.log("# RefIsNull");
-(function testRefIsNull() {
+console.log("# RefIs");
+(function testRefIs() {
   const module = new binaryen.Module();
 
   var value = module.local.get(1, binaryen.externref);
-  const theRefIsNull = binaryen.RefIsNull(module.ref.is_null(value));
-  assert(theRefIsNull instanceof binaryen.RefIsNull);
-  assert(theRefIsNull instanceof binaryen.Expression);
-  assert(theRefIsNull.value === value);
-  assert(theRefIsNull.type === binaryen.i32);
+  const theRefIs = binaryen.RefIs(module.ref.is_null(value));
+  assert(theRefIs instanceof binaryen.RefIs);
+  assert(theRefIs instanceof binaryen.Expression);
+  assert(theRefIs.value === value);
+  assert(theRefIs.type === binaryen.i32);
 
-  theRefIsNull.value = value = module.local.get(2, binaryen.externref);
-  assert(theRefIsNull.value === value);
-  theRefIsNull.type = binaryen.f64;
-  theRefIsNull.finalize();
-  assert(theRefIsNull.type === binaryen.i32);
+  theRefIs.value = value = module.local.get(2, binaryen.externref);
+  assert(theRefIs.value === value);
+  theRefIs.type = binaryen.f64;
+  theRefIs.finalize();
+  assert(theRefIs.type === binaryen.i32);
 
-  console.log(theRefIsNull.toText());
+  console.log(theRefIs.toText());
   assert(
-    theRefIsNull.toText()
+    theRefIs.toText()
     ==
     "(ref.is_null\n (local.get $2)\n)\n"
   );

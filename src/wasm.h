@@ -542,6 +542,13 @@ enum PrefetchOp {
   PrefetchNontemporal,
 };
 
+enum RefIsOp {
+  RefIsNull,
+  RefIsFunc,
+  RefIsData,
+  RefIsI31,
+};
+
 //
 // Expressions
 //
@@ -609,7 +616,7 @@ public:
     MemoryFillId,
     PopId,
     RefNullId,
-    RefIsNullId,
+    RefIsId,
     RefFuncId,
     RefEqId,
     TryId,
@@ -1228,9 +1235,12 @@ public:
   void finalize(Type type);
 };
 
-class RefIsNull : public SpecificExpression<Expression::RefIsNullId> {
+class RefIs : public SpecificExpression<Expression::RefIsId> {
 public:
-  RefIsNull(MixedArena& allocator) {}
+  RefIs(MixedArena& allocator) {}
+
+  // RefIs can represent ref.is_null, ref.is_func, ref.is_data, and ref.is_i31.
+  RefIsOp op;
 
   Expression* value;
 

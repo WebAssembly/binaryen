@@ -605,8 +605,9 @@ public:
     ret->finalize(type);
     return ret;
   }
-  RefIsNull* makeRefIsNull(Expression* value) {
-    auto* ret = wasm.allocator.alloc<RefIsNull>();
+  RefIs* makeRefIs(RefIsOp op, Expression* value) {
+    auto* ret = wasm.allocator.alloc<RefIs>();
+    ret->op = op;
     ret->value = value;
     ret->finalize();
     return ret;

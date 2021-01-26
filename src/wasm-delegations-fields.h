@@ -484,10 +484,11 @@ switch (DELEGATE_ID) {
     DELEGATE_END(RefNull);
     break;
   }
-  case Expression::Id::RefIsNullId: {
-    DELEGATE_START(RefIsNull);
-    DELEGATE_FIELD_CHILD(RefIsNull, value);
-    DELEGATE_END(RefIsNull);
+  case Expression::Id::RefIsId: {
+    DELEGATE_START(RefIs);
+    DELEGATE_FIELD_INT(RefIs, op);
+    DELEGATE_FIELD_CHILD(RefIs, value);
+    DELEGATE_END(RefIs);
     break;
   }
   case Expression::Id::RefFuncId: {
