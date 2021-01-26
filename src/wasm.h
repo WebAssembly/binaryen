@@ -542,6 +542,13 @@ enum PrefetchOp {
   PrefetchNontemporal,
 };
 
+enum RefIsOp {
+  RefIsNull,
+  RefIsFunc,
+  RefIsData,
+  RefIsI31,
+};
+
 //
 // Expressions
 //
@@ -1233,7 +1240,7 @@ public:
   RefIs(MixedArena& allocator) {}
 
   // RefIs can represent ref.is_null, ref.is_func, ref.is_data, and ref.is_i31.
-  enum What { Null, Func, Data, I31 } what;
+  RefIsOp op;
 
   Expression* value;
 

@@ -5526,7 +5526,7 @@ void WasmBinaryBuilder::visitRefIs(RefIs* curr, uint8_t code) {
   BYN_TRACE("zz node: RefIs\n");
   switch (code) {
     case BinaryConsts::RefIsNull:
-      curr->what = RefIs::Null;
+      curr->op = RefIsNull;
       break;
     default:
       WASM_UNREACHABLE("invalid code for ref.is_*");

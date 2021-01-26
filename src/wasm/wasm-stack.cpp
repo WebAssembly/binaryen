@@ -1865,8 +1865,8 @@ void BinaryInstWriter::visitRefNull(RefNull* curr) {
 }
 
 void BinaryInstWriter::visitRefIs(RefIs* curr) {
-  switch (curr->what) {
-    case RefIs::Null:
+  switch (curr->op) {
+    case RefIsNull:
       o << int8_t(BinaryConsts::RefIsNull);
       break;
     default:

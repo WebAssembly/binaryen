@@ -189,8 +189,8 @@ const char* getExpressionName(Expression* curr) {
     case Expression::Id::RefNullId:
       return "ref.null";
     case Expression::Id::RefIsId:
-      switch (curr->cast<RefIs>()->what) {
-        case RefIs::Null:
+      switch (curr->cast<RefIs>()->op) {
+        case RefIsNull:
           return "ref.is_null";
         default:
           WASM_UNREACHABLE("unimplemented ref.is_*");

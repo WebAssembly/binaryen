@@ -1925,7 +1925,7 @@ Expression* SExpressionWasmBuilder::makeRefNull(Element& s) {
 Expression* SExpressionWasmBuilder::makeRefIs(Element& s) {
   auto ret = allocator.alloc<RefIs>();
   if (*s[0] == REF_IS_NULL) {
-    ret->what = RefIs::Null;
+    ret->op = RefIsNull;
   } else {
     WASM_UNREACHABLE("unimplemented ref.is_*");
   }

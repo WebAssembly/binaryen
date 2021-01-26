@@ -1314,8 +1314,8 @@ public:
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    switch (curr->what) {
-      case RefIs::Null:
+    switch (curr->op) {
+      case RefIsNull:
         return Literal(value.isNull());
       default:
         WASM_UNREACHABLE("unimplemented ref.is_*");

@@ -486,7 +486,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RefIsId: {
     DELEGATE_START(RefIs);
-    DELEGATE_FIELD_INT(RefIs, what);
+    DELEGATE_FIELD_INT(RefIs, op);
     DELEGATE_FIELD_CHILD(RefIs, value);
     DELEGATE_END(RefIs);
     break;

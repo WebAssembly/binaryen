@@ -605,9 +605,9 @@ public:
     ret->finalize(type);
     return ret;
   }
-  RefIs* makeRefIs(RefIs::What what, Expression* value) {
+  RefIs* makeRefIs(RefIsOp op, Expression* value) {
     auto* ret = wasm.allocator.alloc<RefIs>();
-    ret->what = what;
+    ret->op = op;
     ret->value = value;
     ret->finalize();
     return ret;

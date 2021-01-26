@@ -1713,8 +1713,8 @@ struct PrintExpressionContents
     printHeapTypeName(o, curr->type.getHeapType());
   }
   void visitRefIs(RefIs* curr) {
-    switch (curr->what) {
-      case RefIs::Null:
+    switch (curr->op) {
+      case RefIsNull:
         printMedium(o, "ref.is_null");
         break;
       default:
