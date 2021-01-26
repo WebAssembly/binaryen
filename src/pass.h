@@ -183,17 +183,23 @@ struct PassRunner {
 
   // Add a pass using its name.
   void add(std::string passName) {
-    auto pass = PassRegistry::get()->createPass(passName);
-    if (!pass) {
-      Fatal() << "Could not find pass: " << passName << "\n";
-    }
-    doAdd(std::move(pass));
+    doAdd(PassRegistry::get()->createPass(passName));
   }
 
   // Add a pass given an instance.
   template<class P> void add(std::unique_ptr<P> pass) {
     doAdd(std::move(pass));
   }
+
+  // Adds the pass if there are no DWARF-related issues. There is an issue if
+  // there is DWARF and if the pass does not support DWARF (as defined by the
+  // pass returning true from invalidatesDWARF); otherwise, if there is no
+  // DWARF, or the pass supports it, the pass is added.
+  // In contrast to add(), add() will always add the pass, and it will print a
+  // warning if there is an issue with DWARF. This method is useful for a pass
+  // that is optional, to avoid adding it and therefore avoid getting the
+  // warning.
+  void addIfNoDWARFIssues(std::string passName);
 
   // Adds the default set of optimization passes; this is
   // what -O does.
@@ -311,6 +317,10 @@ public:
   // This property is important as if Binaryen IR is modified, we need to throw
   // out any Stack IR - it would need to be regenerated and optimized.
   virtual bool modifiesBinaryenIR() { return true; }
+
+  // Some passes modify the wasm in a way that we cannot update DWARF properly
+  // for. This is used to issue a proper warning about that.
+  virtual bool invalidatesDWARF() { return false; }
 
   std::string name;
 

@@ -74,7 +74,8 @@ def test_wasm_opt():
 
             # also check pass-debug mode
             def check():
-                pass_debug = support.run_command(cmd)
+                # ignore stderr, as the pass-debug output is very verbose in CI
+                pass_debug = support.run_command(cmd, stderr=subprocess.PIPE)
                 shared.fail_if_not_identical(curr, pass_debug)
             shared.with_pass_debug(check)
 

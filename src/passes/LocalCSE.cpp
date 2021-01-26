@@ -52,6 +52,10 @@ namespace wasm {
 struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   bool isFunctionParallel() override { return true; }
 
+  // CSE adds and reuses locals.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new LocalCSE(); }
 
   struct Usable {
