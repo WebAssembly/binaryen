@@ -1377,6 +1377,22 @@ console.log("# RefIs");
     "(ref.is_null\n (local.get $2)\n)\n"
   );
 
+  assert(
+    binaryen.RefIs(module.ref.is_func(value)).toText()
+    ==
+    "(ref.is_func\n (local.get $2)\n)\n"
+  );
+  assert(
+    binaryen.RefIs(module.ref.is_data(value)).toText()
+    ==
+    "(ref.is_data\n (local.get $2)\n)\n"
+  );
+  assert(
+    binaryen.RefIs(module.ref.is_i31(value)).toText()
+    ==
+    "(ref.is_i31\n (local.get $2)\n)\n"
+  );
+
   module.dispose();
 })();
 
