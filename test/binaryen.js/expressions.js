@@ -1358,8 +1358,7 @@ console.log("# RefIs");
   const module = new binaryen.Module();
 
   var value = module.local.get(1, binaryen.externref);
-  const theRefIs = binaryen.RefIs(binaryen.Operations.RefIsNull,
-                                  module.ref.is_null(value));
+  const theRefIs = binaryen.RefIs(module.ref.is_null(value));
   assert(theRefIs instanceof binaryen.RefIs);
   assert(theRefIs instanceof binaryen.Expression);
   assert(theRefIs.value === value);
