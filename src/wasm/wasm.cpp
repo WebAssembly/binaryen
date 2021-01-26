@@ -1229,8 +1229,7 @@ Function* Module::addFunction(std::unique_ptr<Function>&& curr) {
 }
 
 Table* Module::addTable(std::unique_ptr<Table>&& curr) {
-  return addModuleElement(
-    tables, tablesMap, std::move(curr), "addTable");
+  return addModuleElement(tables, tablesMap, std::move(curr), "addTable");
 }
 
 Global* Module::addGlobal(std::unique_ptr<Global>&& curr) {

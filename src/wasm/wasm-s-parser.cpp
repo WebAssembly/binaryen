@@ -465,8 +465,7 @@ Name SExpressionWasmBuilder::getTableName(Element& s) {
     // index
     size_t offset = atoi(s.str().c_str());
     if (offset >= tableNames.size()) {
-      throw ParseException(
-        "unknown table in getTableName", s.line, s.col);
+      throw ParseException("unknown table in getTableName", s.line, s.col);
     }
     return tableNames[offset];
   }

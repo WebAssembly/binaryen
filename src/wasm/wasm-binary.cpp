@@ -524,7 +524,8 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
 
 void WasmBinaryWriter::writeTableDeclarations() {
   if (importInfo->getNumDefinedTables() == 0) {
-    // std::cerr << std::endl << "(WasmBinaryWriter::writeTableDeclarations) No defined tables found. skipping" << std::endl;
+    // std::cerr << std::endl << "(WasmBinaryWriter::writeTableDeclarations) No
+    // defined tables found. skipping" << std::endl;
     return;
   }
   BYN_TRACE("== writeTableDeclarations\n");
@@ -534,10 +535,10 @@ void WasmBinaryWriter::writeTableDeclarations() {
   ModuleUtils::iterDefinedTables(*wasm, [&](Table* table) {
     o << S32LEB(BinaryConsts::EncodedType::funcref);
     writeResizableLimits(table->initial,
-                        table->max,
-                        table->hasMax(),
-                        /*shared=*/false,
-                        /*is64*/ false);
+                         table->max,
+                         table->hasMax(),
+                         /*shared=*/false,
+                         /*is64*/ false);
   });
   finishSection(start);
 }
@@ -549,7 +550,7 @@ void WasmBinaryWriter::writeTableElements() {
   BYN_TRACE("== writeTableElements\n");
   auto start = startSection(BinaryConsts::Section::Element);
 
-  for(auto& table : wasm->tables) {
+  for (auto& table : wasm->tables) {
     o << U32LEB(table->segments.size());
     for (auto& segment : table->segments) {
       o << U32LEB(0);
@@ -685,7 +686,7 @@ void WasmBinaryWriter::writeNames() {
       finishSubsection(substart);
     }
   }
-    
+
   // memory names
   if (wasm->memory.exists && wasm->memory.hasExplicitName) {
     auto substart =
@@ -2396,7 +2397,8 @@ void WasmBinaryBuilder::processNames() {
       auto i = pair.first;
       auto& indices = pair.second;
       for (auto j : indices) {
-        wasm.tables[table_pair.first]->segments[i].data.push_back(getFunctionName(j));
+        wasm.tables[table_pair.first]->segments[i].data.push_back(
+          getFunctionName(j));
       }
     }
 
@@ -2465,11 +2467,8 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
     table->setName("table$" + std::to_string(i), false);
     bool is_shared;
     Type indexType;
-    getResizableLimits(table->initial,
-                      table->max,
-                      is_shared,
-                      indexType,
-                      Table::kUnlimitedSize);
+    getResizableLimits(
+      table->initial, table->max, is_shared, indexType, Table::kUnlimitedSize);
     if (is_shared) {
       throwError("Tables may not be shared");
     }

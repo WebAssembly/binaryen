@@ -662,7 +662,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
       // We don't handle the case where a table is both imported and exported.
       if (table->imported()) {
         Fatal() << "wasm2js doesn't support a table that is both imported and "
-                  "exported\n";
+                   "exported\n";
       }
       Ref theVar = ValueBuilder::makeVar();
       ast->push_back(theVar);
@@ -694,9 +694,11 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
             WASM_UNREACHABLE("unexpected expr type");
           }
           ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-            ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), index),
+            ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                  index),
             SET,
-            ValueBuilder::makeName(fromName(segment.data[i], NameScope::Top)))));
+            ValueBuilder::makeName(
+              fromName(segment.data[i], NameScope::Top)))));
         }
       }
     }

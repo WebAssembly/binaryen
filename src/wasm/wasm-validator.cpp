@@ -814,10 +814,10 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
     if (!shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
       return;
     }
-  // TODO: shouldn't we care about the case where no tables exist?
-  // } else {
-  //   shouldBeFalse(
-  //     getModule()->tables.empty(), curr, "call-indirect no tables found");
+    // TODO: shouldn't we care about the case where no tables exist?
+    // } else {
+    //   shouldBeFalse(
+    //     getModule()->tables.empty(), curr, "call-indirect no tables found");
   }
 
   validateCallParamsAndResult(curr, curr->sig);

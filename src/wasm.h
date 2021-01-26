@@ -1701,9 +1701,7 @@ public:
   Address max = kMaxSize;
   std::vector<Segment> segments;
 
-  Table(Index tableidx) {
-    name = Name::fromInt(tableidx);
-  }
+  Table(Index tableidx) { name = Name::fromInt(tableidx); }
   Table() { Table(0); }
 
   bool hasMax() { return max != kUnlimitedSize; }
