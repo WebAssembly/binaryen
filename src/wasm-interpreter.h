@@ -1318,7 +1318,7 @@ public:
       case RefIs::Null:
         return Literal(value.isNull());
       default:
-        WASM_UNREACHABLE("implemented ref.is_*");
+        WASM_UNREACHABLE("unimplemented ref.is_*");
     }
   }
   Flow visitRefFunc(RefFunc* curr) {
