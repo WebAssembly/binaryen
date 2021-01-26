@@ -1869,6 +1869,15 @@ void BinaryInstWriter::visitRefIs(RefIs* curr) {
     case RefIsNull:
       o << int8_t(BinaryConsts::RefIsNull);
       break;
+    case RefIsFunc:
+      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsFunc);
+      break;
+    case RefIsData:
+      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsData);
+      break;
+    case RefIsI31:
+      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefIsI31);
+      break;
     default:
       WASM_UNREACHABLE("unimplemented ref.is_*");
   }

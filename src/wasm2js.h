@@ -1637,7 +1637,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 RSHIFT,
                 ValueBuilder::makeNum(16));
             }
-            default: { WASM_UNREACHABLE("unhandled unary"); }
+            default:
+              WASM_UNREACHABLE("unhandled unary");
           }
         }
         case Type::f32:

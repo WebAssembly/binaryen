@@ -2833,9 +2833,23 @@ switch (op[0]) {
               case 'f':
                 if (strcmp(op, "ref.func") == 0) { return makeRefFunc(s); }
                 goto parse_error;
-              case 'i':
-                if (strcmp(op, "ref.is_null") == 0) { return makeRefIs(s); }
-                goto parse_error;
+              case 'i': {
+                switch (op[7]) {
+                  case 'd':
+                    if (strcmp(op, "ref.is_data") == 0) { return makeRefIs(s); }
+                    goto parse_error;
+                  case 'f':
+                    if (strcmp(op, "ref.is_func") == 0) { return makeRefIs(s); }
+                    goto parse_error;
+                  case 'i':
+                    if (strcmp(op, "ref.is_i31") == 0) { return makeRefIs(s); }
+                    goto parse_error;
+                  case 'n':
+                    if (strcmp(op, "ref.is_null") == 0) { return makeRefIs(s); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'n':
                 if (strcmp(op, "ref.null") == 0) { return makeRefNull(s); }
                 goto parse_error;

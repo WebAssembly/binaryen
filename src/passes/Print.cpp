@@ -1717,6 +1717,15 @@ struct PrintExpressionContents
       case RefIsNull:
         printMedium(o, "ref.is_null");
         break;
+      case RefIsFunc:
+        printMedium(o, "ref.is_func");
+        break;
+      case RefIsData:
+        printMedium(o, "ref.is_data");
+        break;
+      case RefIsI31:
+        printMedium(o, "ref.is_i31");
+        break;
       default:
         WASM_UNREACHABLE("unimplemented ref.is_*");
     }

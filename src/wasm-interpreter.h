@@ -1317,6 +1317,13 @@ public:
     switch (curr->op) {
       case RefIsNull:
         return Literal(value.isNull());
+      case RefIsFunc:
+        return Literal(!value.isNull() && value.type.isFunction());
+      case RefIsData:
+        return Literal(!value.isNull() && value.isGCData());
+      case RefIsI31:
+        return Literal(!value.isNull() &&
+                       value.type.getHeapType() == HeapType::i31);
       default:
         WASM_UNREACHABLE("unimplemented ref.is_*");
     }

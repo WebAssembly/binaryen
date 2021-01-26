@@ -487,6 +487,9 @@ function initializeConstants() {
     'WidenHighUVecI16x8ToVecI32x4',
     'SwizzleVec8x16',
     'RefIsNull',
+    'RefIsFunc',
+    'RefIsData',
+    'RefIsI31',
   ].forEach(name => {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });

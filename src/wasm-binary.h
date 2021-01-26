@@ -1034,7 +1034,11 @@ enum ASTNodes {
   RttSub = 0x31,
   RefTest = 0x40,
   RefCast = 0x41,
-  BrOnCast = 0x42
+  BrOnCast = 0x42,
+  RefIsFunc = 0x50,
+  RefIsData = 0x51,
+  RefIsI31 = 0x52
+
 };
 
 enum MemoryAccess {

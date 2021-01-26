@@ -706,6 +706,9 @@ BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void) {
 }
 BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
 BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
+BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
+BinaryenOp BinaryenRefIsData(void) { return RefIsData; }
+BinaryenOp BinaryenRefIsI31(void) { return RefIsI31; }
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,
@@ -2697,7 +2700,7 @@ void BinaryenMemoryFillSetSize(BinaryenExpressionRef expr,
   assert(sizeExpr);
   static_cast<MemoryFill*>(expression)->size = (Expression*)sizeExpr;
 }
-// RefIsNull
+// RefIs
 BinaryenExpressionRef BinaryenRefIsGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<RefIs>());
