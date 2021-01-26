@@ -2102,8 +2102,8 @@ function wrapModule(module, self = {}) {
     'null'(type) {
       return Module['_BinaryenRefNull'](module, type);
     },
-    'is_null'(op, value) {
-      return Module['_BinaryenRefIs'](module, op, value);
+    'is_null'(value) {
+      return Module['_BinaryenRefIs'](module, Module['RefIsNull'], value);
     },
     'func'(func, type) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func), type));
