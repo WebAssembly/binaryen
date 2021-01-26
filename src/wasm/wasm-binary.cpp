@@ -2392,7 +2392,7 @@ void WasmBinaryBuilder::processNames() {
     }
   }
 
-  for (auto& table_pair : functionTable)
+  for (auto& table_pair : functionTable) {
     for (auto& pair : table_pair.second) {
       auto i = pair.first;
       auto& indices = pair.second;
@@ -2401,6 +2401,7 @@ void WasmBinaryBuilder::processNames() {
           getFunctionName(j));
       }
     }
+  }
 
   for (auto& iter : globalRefs) {
     size_t index = iter.first;
