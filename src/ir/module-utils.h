@@ -85,11 +85,9 @@ inline Table* copyTableWithoutSegments(Table* table, Module& out) {
 inline Table* copyTable(Table* table, Module& out) {
   auto ret = copyTableWithoutSegments(table, out);
 
-  if (!table->imported()) {
-    for (auto& segment : table->segments) {
-      segment.offset = ExpressionManipulator::copy(segment.offset, out);
-      ret->segments.push_back(segment);
-    }
+  for (auto& segment : table->segments) {
+    segment.offset = ExpressionManipulator::copy(segment.offset, out);
+    ret->segments.push_back(segment);
   }
 
   return ret;

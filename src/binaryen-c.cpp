@@ -3283,8 +3283,7 @@ BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
   return exports[index].get();
 }
 
-// Function table. One per module
-// TODO(reference-types): Deprecate this function
+// TODO(reference-types): maybe deprecate this function?
 void BinaryenSetFunctionTable(BinaryenModuleRef module,
                               BinaryenIndex initial,
                               BinaryenIndex maximum,
@@ -3302,7 +3301,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
     wasm->addTable(std::move(table));
   }
 
-  auto& table = wasm->tables[0];
+  auto& table = wasm->tables.front();
   table->initial = initial;
   table->max = maximum;
   table->segments.push_back(segment);

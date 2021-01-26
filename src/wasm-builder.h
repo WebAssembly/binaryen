@@ -78,9 +78,6 @@ public:
     return func;
   }
 
-  // static std::unique_ptr<Table> makeTable(Name name,
-  //                                         )
-
   static std::unique_ptr<Export>
   makeExport(Name name, Name value, ExternalKind kind) {
     auto export_ = std::make_unique<Export>();

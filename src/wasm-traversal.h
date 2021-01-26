@@ -243,11 +243,7 @@ struct Walker : public VisitorType {
       }
     }
     for (auto& curr : module->tables) {
-      if (curr->imported()) {
-        self->visitTable(curr.get());
-      } else {
-        self->walkTable(curr.get());
-      }
+      self->walkTable(curr.get());
     };
     self->walkMemory(&module->memory);
   }

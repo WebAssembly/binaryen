@@ -46,7 +46,7 @@ struct ExtractFunction : public Pass {
     }
     // clear data
     module->memory.segments.clear();
-    (module->tables).clear();
+    module->tables.clear();
     // leave just an export for the thing we want
     if (!module->getExportOrNull(name)) {
       module->exports.clear();

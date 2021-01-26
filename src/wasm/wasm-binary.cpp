@@ -552,7 +552,6 @@ void WasmBinaryWriter::writeTableElements() {
   for(auto& table : wasm->tables) {
     o << U32LEB(table->segments.size());
     for (auto& segment : table->segments) {
-
       o << U32LEB(0);
       writeExpression(segment.offset);
       o << int8_t(BinaryConsts::End);

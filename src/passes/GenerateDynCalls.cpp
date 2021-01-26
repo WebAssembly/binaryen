@@ -127,7 +127,8 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
   for (const auto& param : sig.params) {
     args.push_back(builder.makeLocalGet(++i, param));
   }
-  // FIXME: change tableName param to something proper
+  // FIXME: Should the existence of a table be ensured here? i.e. create one if
+  // there is none?
   Expression* call =
     builder.makeCallIndirect(Name::fromInt(0), fptr, args, sig);
   f->body = call;

@@ -50,7 +50,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     if (iter == tables.end()) {
       return;
     }
-    auto flatTable = iter->second;
+    auto& flatTable = iter->second;
 
     if (auto* c = curr->target->dynCast<Const>()) {
       Index index = c->value.geti32();
@@ -96,7 +96,6 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  // If null, then we cannot optimize call_indirects.
   const std::unordered_map<Name, TableUtils::FlatTable> tables;
 
   bool changedTypes = false;

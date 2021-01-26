@@ -1687,12 +1687,6 @@ public:
   // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
-  enum class SegmentStatus {
-    Active = 0,
-    Passive = 1,
-    Declarative = 2
-  };
-
   struct Segment {
     Expression* offset;
     std::vector<Name> data;
@@ -1703,12 +1697,11 @@ public:
     }
   };
 
-  Index tableidx = 0;
   Address initial = 0;
   Address max = kMaxSize;
   std::vector<Segment> segments;
 
-  Table(Index tableidx) : tableidx(tableidx) {
+  Table(Index tableidx) {
     name = Name::fromInt(tableidx);
   }
   Table() { Table(0); }
