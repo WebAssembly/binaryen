@@ -559,6 +559,9 @@ BINARYEN_API BinaryenOp BinaryenWidenLowUVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenWidenHighUVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenSwizzleVec8x16(void);
 BINARYEN_API BinaryenOp BinaryenRefIsNull(void);
+BINARYEN_API BinaryenOp BinaryenRefIsFunc(void);
+BINARYEN_API BinaryenOp BinaryenRefIsData(void);
+BINARYEN_API BinaryenOp BinaryenRefIsI31(void);
 
 BINARYEN_REF(Expression);
 

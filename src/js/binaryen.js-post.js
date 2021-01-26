@@ -487,6 +487,9 @@ function initializeConstants() {
     'WidenHighUVecI16x8ToVecI32x4',
     'SwizzleVec8x16',
     'RefIsNull',
+    'RefIsFunc',
+    'RefIsData',
+    'RefIsI31',
   ].forEach(name => {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });
@@ -2104,6 +2107,15 @@ function wrapModule(module, self = {}) {
     },
     'is_null'(value) {
       return Module['_BinaryenRefIs'](module, Module['RefIsNull'], value);
+    },
+    'is_func'(value) {
+      return Module['_BinaryenRefIs'](module, Module['RefIsFunc'], value);
+    },
+    'is_data'(value) {
+      return Module['_BinaryenRefIs'](module, Module['RefIsData'], value);
+    },
+    'is_i31'(value) {
+      return Module['_BinaryenRefIs'](module, Module['RefIsI31'], value);
     },
     'func'(func, type) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func), type));
