@@ -2824,6 +2824,20 @@ switch (op[0]) {
         switch (op[2]) {
           case 'f': {
             switch (op[4]) {
+              case 'a': {
+                switch (op[7]) {
+                  case 'd':
+                    if (strcmp(op, "ref.as_data") == 0) { return makeRefAs(s, RefAsData); }
+                    goto parse_error;
+                  case 'f':
+                    if (strcmp(op, "ref.as_func") == 0) { return makeRefAs(s, RefAsFunc); }
+                    goto parse_error;
+                  case 'i':
+                    if (strcmp(op, "ref.as_i31") == 0) { return makeRefAs(s, RefAsI31); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 'c':
                 if (strcmp(op, "ref.cast") == 0) { return makeRefCast(s); }
                 goto parse_error;

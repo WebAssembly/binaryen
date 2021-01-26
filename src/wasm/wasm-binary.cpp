@@ -3052,6 +3052,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         visitRefIs((curr = allocator.alloc<RefIs>())->cast<RefIs>(), opcode);
         break;
       }
+      if (opcode == BinaryConsts::RefAsFunc ||
+          opcode == BinaryConsts::RefAsData ||
+          opcode == BinaryConsts::RefAsI31) {
+        visitRefAs((curr = allocator.alloc<RefAs>())->cast<RefAs>(), opcode);
+        break;
+      }
       throwError("invalid code after GC prefix: " + std::to_string(opcode));
       break;
     }
@@ -5969,6 +5975,25 @@ bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
   validateHeapTypeUsingChild(ref, heapType);
   out = Builder(wasm).makeArrayLen(ref);
   return true;
+}
+
+void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
+  BYN_TRACE("zz node: RefAs\n");
+  switch (code) {
+    case BinaryConsts::RefAsFunc:
+      curr->op = RefAsFunc;
+      break;
+    case BinaryConsts::RefAsData:
+      curr->op = RefAsData;
+      break;
+    case BinaryConsts::RefAsI31:
+      curr->op = RefAsI31;
+      break;
+    default:
+      WASM_UNREACHABLE("invalid code for ref.as_*");
+  }
+  curr->value = popNonVoidExpression();
+  curr->finalize();
 }
 
 void WasmBinaryBuilder::throwError(std::string text) {

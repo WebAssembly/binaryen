@@ -1037,8 +1037,10 @@ enum ASTNodes {
   BrOnCast = 0x42,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
-  RefIsI31 = 0x52
-
+  RefIsI31 = 0x52,
+  RefAsFunc = 0x58,
+  RefAsData = 0x59,
+  RefAsI31 = 0x5a,
 };
 
 enum MemoryAccess {
@@ -1547,6 +1549,7 @@ public:
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
   void visitCallRef(CallRef* curr);
+  void visitRefAs(RefAs* curr, uint8_t code);
   // Let is lowered into a block.
   void visitLet(Block* curr);
 

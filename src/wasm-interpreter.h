@@ -1635,6 +1635,38 @@ public:
     }
     return Literal(int32_t(data->values.size()));
   }
+  Flow visitRefAs(RefAs* curr) {
+    NOTE_ENTER("RefAs");
+    Flow flow = visit(curr->value);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    if (value.isNull()) {
+      trap("null ref");
+    }
+    switch (curr->op) {
+      case RefAsFunc:
+        if (value.type.isFunction()) {
+          trap("not a func");
+        }
+        break;
+      case RefAsData:
+        if (value.isGCData()) {
+          trap("not a data");
+        }
+        break;
+      case RefAsI31:
+        if (value.type.getHeapType() != HeapType::i31) {
+          trap("not an i31");
+        }
+        break;
+      default:
+        WASM_UNREACHABLE("unimplemented ref.is_*");
+    }
+    return value;
+  }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 

@@ -661,6 +661,13 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayLen);
     break;
   }
+  case Expression::Id::RefAsId: {
+    DELEGATE_START(RefAs);
+    DELEGATE_FIELD_INT(RefAs, op);
+    DELEGATE_FIELD_CHILD(RefAs, value);
+    DELEGATE_END(RefAs);
+    break;
+  }
 }
 
 #undef DELEGATE_ID

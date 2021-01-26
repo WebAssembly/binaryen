@@ -598,6 +598,12 @@ private:
         parent.implicitTrap = true;
       }
     }
+    void visitRefAs(RefAs* curr) {
+      // traps when the arg is null
+      if (curr->value->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+    }
   };
 
 public:

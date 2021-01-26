@@ -549,6 +549,12 @@ enum RefIsOp {
   RefIsI31,
 };
 
+enum RefAsOp {
+  RefAsFunc,
+  RefAsData,
+  RefAsI31,
+};
+
 //
 // Expressions
 //
@@ -639,6 +645,7 @@ public:
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
+    RefAsId,
     NumExpressionIds
   };
   Id _id;
@@ -1488,6 +1495,17 @@ public:
   ArrayLen(MixedArena& allocator) {}
 
   Expression* ref;
+
+  void finalize();
+};
+
+class RefAs : public SpecificExpression<Expression::RefAsId> {
+public:
+  RefAs(MixedArena& allocator) {}
+
+  RefAsOp op;
+
+  Expression* value;
 
   void finalize();
 };

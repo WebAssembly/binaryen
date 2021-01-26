@@ -2246,6 +2246,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
+    Ref visitRefAs(RefAs* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
 
   private:
     Ref makePointer(Expression* ptr, Address offset) {

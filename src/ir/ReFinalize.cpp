@@ -163,6 +163,7 @@ void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
 void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
+void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad

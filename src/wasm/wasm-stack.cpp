@@ -2072,6 +2072,22 @@ void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
   parent.writeHeapType(curr->ref->type.getHeapType());
 }
 
+void BinaryInstWriter::visitRefAs(RefAs* curr) {
+  switch (curr->op) {
+    case RefAsFunc:
+      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsFunc);
+      break;
+    case RefAsData:
+      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsData);
+      break;
+    case RefAsI31:
+      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsI31);
+      break;
+    default:
+      WASM_UNREACHABLE("unimplemented ref.as_*");
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

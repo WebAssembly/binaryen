@@ -79,5 +79,6 @@ DELEGATE(ArrayNew);
 DELEGATE(ArrayGet);
 DELEGATE(ArraySet);
 DELEGATE(ArrayLen);
+DELEGATE(RefAs);
 
 #undef DELEGATE

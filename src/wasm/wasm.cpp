@@ -245,6 +245,17 @@ const char* getExpressionName(Expression* curr) {
       return "array.set";
     case Expression::Id::ArrayLenId:
       return "array.len";
+    case Expression::Id::RefAsId:
+      switch (curr->cast<RefAs>()->op) {
+        case RefAsFunc:
+          return "ref.as_func";
+        case RefAsData:
+          return "ref.as_data";
+        case RefAsI31:
+          return "ref.as_i31";
+        default:
+          WASM_UNREACHABLE("unimplemented ref.is_*");
+      }
     case Expression::Id::NumExpressionIds:
       WASM_UNREACHABLE("invalid expr id");
   }
@@ -1150,6 +1161,26 @@ void ArrayLen::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::i32;
+  }
+}
+
+void RefAs::finalize() {
+  if (value->type == Type::unreachable) {
+    type = Type::unreachable;
+    return;
+  }
+  switch (op) {
+    case RefAsFunc:
+      type = Type::funcref;
+      break;
+    case RefAsData:
+      type = Type::dataref;
+      break;
+    case RefAsI31:
+      type = Type::i31ref;
+      break;
+    default:
+      WASM_UNREACHABLE("unimplemented ref.is_*");
   }
 }
 
