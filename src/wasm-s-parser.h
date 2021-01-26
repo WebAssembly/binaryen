@@ -244,7 +244,7 @@ private:
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
   Expression* makeRefNull(Element& s);
-  Expression* makeRefIs(Element& s);
+  Expression* makeRefIs(Element& s, RefIsOp op);
   Expression* makeRefFunc(Element& s);
   Expression* makeRefEq(Element& s);
   Expression* makeTry(Element& s);
