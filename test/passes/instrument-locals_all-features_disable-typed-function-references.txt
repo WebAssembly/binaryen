@@ -203,7 +203,7 @@
     )
    )
   )
-  (try
+  (try $try
    (do
     (nop)
    )

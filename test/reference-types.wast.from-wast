@@ -507,7 +507,7 @@
    )
   )
   (drop
-   (try (result externref)
+   (try $try (result externref)
     (do
      (local.get $local_externref)
     )
@@ -520,7 +520,7 @@
    )
   )
   (drop
-   (try (result funcref)
+   (try $try35 (result funcref)
     (do
      (ref.func $foo)
     )
@@ -533,7 +533,7 @@
    )
   )
   (drop
-   (try (result anyref)
+   (try $try36 (result anyref)
     (do
      (local.get $local_externref)
     )
@@ -546,7 +546,7 @@
    )
   )
   (drop
-   (try (result anyref)
+   (try $try37 (result anyref)
     (do
      (ref.func $foo)
     )

@@ -242,7 +242,7 @@ private:
       i++;
     }
   }
-  Name getLabel(Element& s);
+  Name getLabel(Element& s, bool isBranch = true);
   Expression* makeBreak(Element& s);
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);

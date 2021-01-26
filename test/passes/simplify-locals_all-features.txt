@@ -1905,7 +1905,7 @@
  )
  (func $pop-cannot-be-sinked
   (local $0 i32)
-  (try
+  (try $try
    (do
     (nop)
    )
@@ -1922,7 +1922,7 @@
  )
  (func $pop-within-catch-can-be-sinked
   (local $0 i32)
-  (try
+  (try $try
    (do
     (nop)
    )
@@ -1930,7 +1930,7 @@
     (nop)
     (call $foo
      (i32.const 3)
-     (try (result i32)
+     (try $try0 (result i32)
       (do
        (i32.const 0)
       )
@@ -1950,7 +1950,7 @@
   (local.set $0
    (call $bar)
   )
-  (try
+  (try $try
    (do
     (drop
      (local.get $0)
@@ -1966,7 +1966,7 @@
  (func $non-call-can-be-sinked-into-try
   (local $0 i32)
   (nop)
-  (try
+  (try $try
    (do
     (drop
      (i32.const 3)

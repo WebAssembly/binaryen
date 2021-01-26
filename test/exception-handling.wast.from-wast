@@ -14,7 +14,7 @@
  )
  (func $eh_test
   (local $x (i32 i64))
-  (try
+  (try $try
    (do
     (throw $e-i32
      (i32.const 0)
@@ -26,7 +26,7 @@
     )
    )
   )
-  (try
+  (try $try0
    (do
     (throw $e-i32-i64
      (i32.const 0)
@@ -44,20 +44,20 @@
     )
    )
   )
-  (block $l1
-   (try
+  (block $l11
+   (try $l1
     (do
-     (br $l1)
+     (br $l11)
     )
     (catch $e-i32
      (drop
       (pop i32)
      )
-     (br $l1)
+     (br $l11)
     )
    )
   )
-  (try
+  (try $try2
    (do
     (nop)
    )
@@ -67,7 +67,7 @@
     )
    )
   )
-  (try
+  (try $try3
    (do
     (call $foo)
     (call $bar)
@@ -80,7 +80,7 @@
     (call $bar)
    )
   )
-  (try
+  (try $try4
    (do
     (throw $e-i32
      (i32.const 0)
@@ -97,7 +97,7 @@
     )
    )
   )
-  (try
+  (try $try5
    (do
     (throw $e-i32
      (i32.const 0)
@@ -107,7 +107,7 @@
     (nop)
    )
   )
-  (try
+  (try $try6
    (do
     (throw $e-i32
      (i32.const 0)
@@ -128,7 +128,48 @@
     (call $bar)
    )
   )
-  (try
+  (try $try7
+   (do
+    (try $try8
+     (do
+      (throw $e-i32
+       (i32.const 0)
+      )
+     )
+     (catch $e-i32
+      (drop
+       (pop i32)
+      )
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+   (catch $e-i32
+    (drop
+     (pop i32)
+    )
+   )
+   (catch_all
+    (try $try9
+     (do
+      (throw $e-i32
+       (i32.const 0)
+      )
+     )
+     (catch $e-i32
+      (drop
+       (pop i32)
+      )
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+  )
+  (try $try10
    (do
     (throw $e-i32
      (i32.const 0)
@@ -140,6 +181,63 @@
     )
     (rethrow 0)
    )
+  )
+ )
+ (func $delegate-test
+  (try $l0
+   (do
+    (try $try
+     (do
+      (call $foo)
+     )
+     (delegate $l0)
+    )
+    (try $try11
+     (do
+      (call $foo)
+     )
+     (delegate $l0)
+    )
+   )
+   (catch_all
+    (nop)
+   )
+  )
+  (block $l015
+   (try $l012
+    (do
+     (try $try13
+      (do
+       (br_if $l015
+        (i32.const 1)
+       )
+      )
+      (delegate $l012)
+     )
+     (try $try14
+      (do
+       (br_if $l015
+        (i32.const 1)
+       )
+      )
+      (delegate $l012)
+     )
+    )
+    (catch_all
+     (nop)
+    )
+   )
+  )
+  (try $l016
+   (do
+    (try $try17
+     (do
+      (call $foo)
+     )
+     (delegate $l016)
+    )
+   )
+   (delegate 0)
   )
  )
 )

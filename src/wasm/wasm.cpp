@@ -88,6 +88,7 @@ Name CASE("case");
 Name BR("br");
 Name FUNCREF("funcref");
 Name FAKE_RETURN("fake_return_waka123");
+Name DELEGATE_CALLER_TARGET("delegate_caller_target_waka123");
 Name MUT("mut");
 Name SPECTEST("spectest");
 Name PRINT("print");

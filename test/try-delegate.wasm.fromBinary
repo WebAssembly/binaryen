@@ -1,0 +1,23 @@
+(module
+ (type $none_=>_none (func))
+ (event $event$0 (attr 0) (param))
+ (func $0
+  (try $label$9
+   (do
+    (try $label$4
+     (do
+     )
+     (delegate $label$9)
+    )
+   )
+   (catch $event$0
+    (try $label$8
+     (do
+     )
+     (delegate $label$9)
+    )
+   )
+  )
+ )
+)
+

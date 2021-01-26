@@ -17,6 +17,7 @@
 #include "ir/iteration.h"
 #include "ir/load-utils.h"
 #include "ir/utils.h"
+#include "shared-constants.h"
 #include "support/hash.h"
 #include "support/small_vector.h"
 #include "wasm-traversal.h"
@@ -261,6 +262,9 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 
     Hasher(Expression* curr) {
       stack.push_back(curr);
+      // DELEGATE_CALLER_TARGET is a fake target used to denote delegating to
+      // the caller. Add it here to prevent the unknown name error.
+      noteScopeName(DELEGATE_CALLER_TARGET);
 
       while (stack.size() > 0) {
         curr = stack.back();
@@ -327,13 +331,15 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
       }
     }
     void visitScopeName(Name curr) {
-      // Names are relative, we give the same hash for
-      // (block $x (br $x))
-      // (block $y (br $y))
-      static_assert(sizeof(Index) == sizeof(int32_t),
-                    "wasm64 will need changes here");
-      assert(internalNames.find(curr) != internalNames.end());
-      rehash(digest, internalNames[curr]);
+      if (curr.is()) { // try's delegate target can be null
+        // Names are relative, we give the same hash for
+        // (block $x (br $x))
+        // (block $y (br $y))
+        static_assert(sizeof(Index) == sizeof(int32_t),
+                      "wasm64 will need changes here");
+        assert(internalNames.find(curr) != internalNames.end());
+        rehash(digest, internalNames[curr]);
+      }
     }
     void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
     void visitType(Type curr) { rehash(digest, curr.getID()); }

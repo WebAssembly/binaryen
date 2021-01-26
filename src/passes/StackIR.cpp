@@ -258,6 +258,7 @@ private:
       case StackInst::LoopEnd:
       case StackInst::Catch:
       case StackInst::CatchAll:
+      case StackInst::Delegate:
       case StackInst::TryEnd: {
         return true;
       }
@@ -284,7 +285,8 @@ private:
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
-      case StackInst::TryEnd: {
+      case StackInst::TryEnd:
+      case StackInst::Delegate: {
         return true;
       }
       default: { return false; }

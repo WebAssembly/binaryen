@@ -60,6 +60,7 @@ extern Name CASE;
 extern Name BR;
 extern Name FUNCREF;
 extern Name FAKE_RETURN;
+extern Name DELEGATE_CALLER_TARGET;
 extern Name MUT;
 extern Name SPECTEST;
 extern Name PRINT;

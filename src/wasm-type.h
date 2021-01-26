@@ -137,7 +137,6 @@ public:
   bool isRef() const;
   bool isFunction() const;
   bool isData() const;
-  bool isException() const;
   bool isNullable() const;
   bool isRtt() const;
   bool isStruct() const;

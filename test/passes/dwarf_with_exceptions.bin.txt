@@ -22,7 +22,7 @@
    (global.get $global$0)
   )
   ;; code offset: 0x10
-  (try
+  (try $label$9
    (do
     ;; code offset: 0x12
     (call $foo)
@@ -47,7 +47,7 @@
      )
     )
     ;; code offset: 0x31
-    (try
+    (try $label$8
      (do
       ;; code offset: 0x33
       (call $foo)
@@ -60,7 +60,7 @@
      ;; code offset: 0x41
      (catch_all
       ;; code offset: 0x42
-      (try
+      (try $label$7
        (do
         ;; code offset: 0x44
         (call $__cxa_end_catch)
@@ -443,7 +443,7 @@ file_names[  1]:
    (global.get $global$0)
   )
   ;; code offset: 0xe
-  (try
+  (try $label$9
    (do
     ;; code offset: 0x10
     (call $foo)
@@ -468,7 +468,7 @@ file_names[  1]:
      )
     )
     ;; code offset: 0x1f
-    (try
+    (try $label$8
      (do
       ;; code offset: 0x21
       (call $foo)
@@ -481,7 +481,7 @@ file_names[  1]:
      ;; code offset: 0x27
      (catch_all
       ;; code offset: 0x28
-      (try
+      (try $label$7
        (do
         ;; code offset: 0x2a
         (call $__cxa_end_catch)
