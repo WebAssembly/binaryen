@@ -215,14 +215,21 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
                               extra);
   }
 
-  Literals callTable(Index index,
+  Literals callTable(Name tableName,
+                     Index index,
                      Signature sig,
                      LiteralList& arguments,
                      Type result,
                      EvallingModuleInstance& instance) override {
+
+    auto* table = wasm->getTableOrNull(tableName);
+    if (!table) {
+      throw FailToEvalException("callTable on non-existing table");
+    }
+
     // we assume the table is not modified (hmm)
     // look through the segments, try to find the function
-    for (auto& segment : wasm->table.segments) {
+    for (auto& segment : table->segments) {
       Index start;
       // look for the index in this segment. if it has a constant offset, we
       // look in the proper range. if it instead gets a global, we rely on the
@@ -282,7 +289,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   // called during initialization, but we don't keep track of a table
-  void tableStore(Address addr, Name value) override {}
+  void tableStore(Name tableName, Address addr, Name value) override {}
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {
     throw FailToEvalException("grow memory");

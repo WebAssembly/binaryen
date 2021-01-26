@@ -899,7 +899,7 @@ struct Reducer
     // If we are left with a single function that is not exported or used in
     // a table, that is useful as then we can change the return type.
     if (module->functions.size() == 1 && module->exports.empty() &&
-        module->table.segments.empty()) {
+        ((module->tables).empty() || module->tables[0]->segments.empty())) {
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {

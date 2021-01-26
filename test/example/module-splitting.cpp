@@ -77,6 +77,8 @@ int main() {
      (event $e (attr 0) (param i32))
     ))");
 
+  // assert(false && "after second");
+
   // Imported global stuff
   do_test({}, R"(
     (module

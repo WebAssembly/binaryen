@@ -2039,6 +2039,33 @@ BINARYEN_API BinaryenIndex BinaryenGetFunctionTableSegmentLength(
 BINARYEN_API const char* BinaryenGetFunctionTableSegmentData(
   BinaryenModuleRef module, BinaryenIndex segmentId, BinaryenIndex dataId);
 
+// Tables
+
+BINARYEN_REF(Table);
+
+// TODO: Add support for multiple segments in BinaryenSetFunctionTable.
+BINARYEN_API BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
+                                               const char* tableName,
+                                               BinaryenIndex initial,
+                                               BinaryenIndex maximum,
+                                               const char** funcNames,
+                                               BinaryenIndex numFuncNames,
+                                               BinaryenExpressionRef offset);
+BINARYEN_API int BinaryenIsTableImported(BinaryenModuleRef module,
+                                         const char* tableName);
+BINARYEN_API void BinaryenRemoveTable(BinaryenModuleRef module,
+                                      const char* tableName);
+BINARYEN_API BinaryenIndex BinaryenGetNumTableSegments(BinaryenModuleRef module,
+                                                       const char* tableName);
+BINARYEN_API BinaryenExpressionRef BinaryenGetTableSegmentOffset(
+  BinaryenModuleRef module, const char* tableName, BinaryenIndex segmentId);
+BINARYEN_API BinaryenIndex BinaryenGetTableSegmentLength(
+  BinaryenModuleRef module, const char* tableName, BinaryenIndex segmentId);
+BINARYEN_API const char* BinaryenGetTableSegmentData(BinaryenModuleRef module,
+                                                     const char* tableName,
+                                                     BinaryenIndex segmentId,
+                                                     BinaryenIndex dataId);
+
 // Memory. One per module
 
 // Each segment has data in segments, a start offset in segmentOffsets, and a

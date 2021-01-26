@@ -78,6 +78,9 @@ public:
     return func;
   }
 
+  // static std::unique_ptr<Table> makeTable(Name name,
+  //                                         )
+
   static std::unique_ptr<Export>
   makeExport(Name name, Name value, ExternalKind kind) {
     auto export_ = std::make_unique<Export>();
@@ -244,11 +247,13 @@ public:
     return call;
   }
   template<typename T>
-  CallIndirect* makeCallIndirect(Expression* target,
+  CallIndirect* makeCallIndirect(const Name tableName,
+                                 Expression* target,
                                  const T& args,
                                  Signature sig,
                                  bool isReturn = false) {
     auto* call = wasm.allocator.alloc<CallIndirect>();
+    call->tableName = tableName;
     call->sig = sig;
     call->type = sig.results;
     call->target = target;

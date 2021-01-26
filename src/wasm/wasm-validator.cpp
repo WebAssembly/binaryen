@@ -809,6 +809,17 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
                                     Type(Type::i32),
                                     curr,
                                     "indirect call target must be an i32");
+  if (curr->tableName.is()) {
+    auto* table = getModule()->getTableOrNull(curr->tableName);
+    if (!shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
+      return;
+    }
+  // TODO: shouldn't we care about the case where no tables exist?
+  // } else {
+  //   shouldBeFalse(
+  //     getModule()->tables.empty(), curr, "call-indirect no tables found");
+  }
+
   validateCallParamsAndResult(curr, curr->sig);
 }
 
@@ -2646,7 +2657,7 @@ static void validateExports(Module& module, ValidationInfo& info) {
                         name,
                         "module global exports must be found");
     } else if (exp->kind == ExternalKind::Table) {
-      info.shouldBeTrue(name == Name("0") || name == module.table.name,
+      info.shouldBeTrue(module.getTableOrNull(name),
                         name,
                         "module table exports must be found");
     } else if (exp->kind == ExternalKind::Memory) {
@@ -2756,21 +2767,27 @@ static void validateMemory(Module& module, ValidationInfo& info) {
 }
 
 static void validateTable(Module& module, ValidationInfo& info) {
-  auto& curr = module.table;
-  for (auto& segment : curr.segments) {
-    info.shouldBeEqual(segment.offset->type,
-                       Type(Type::i32),
-                       segment.offset,
-                       "segment offset should be i32");
-    info.shouldBeTrue(
-      checkSegmentOffset(segment.offset,
-                         segment.data.size(),
-                         module.table.initial * Table::kPageSize),
-      segment.offset,
-      "table segment offset should be reasonable");
-    for (auto name : segment.data) {
-      info.shouldBeTrue(
-        module.getFunctionOrNull(name), name, "segment name should be valid");
+  if (!module.features.hasReferenceTypes()) {
+    info.shouldBeTrue(module.tables.size() <= 1,
+                      "table",
+                      "Only 1 table definition allowed in MVP (requires "
+                      "--enable-reference-types)");
+  }
+  for (auto& curr : module.tables) {
+    for (auto& segment : curr->segments) {
+      info.shouldBeEqual(segment.offset->type,
+                         Type(Type::i32),
+                         segment.offset,
+                         "segment offset should be i32");
+      info.shouldBeTrue(checkSegmentOffset(segment.offset,
+                                           segment.data.size(),
+                                           curr->initial * Table::kPageSize),
+                        segment.offset,
+                        "table segment offset should be reasonable");
+      for (auto name : segment.data) {
+        info.shouldBeTrue(
+          module.getFunctionOrNull(name), name, "segment name should be valid");
+      }
     }
   }
 }

@@ -335,11 +335,14 @@ struct Inlining : public Pass {
         infos[ex->value].usedGlobally = true;
       }
     }
-    for (auto& segment : module->table.segments) {
-      for (auto name : segment.data) {
-        infos[name].usedGlobally = true;
+    for (auto& table : module->tables) {
+      for (auto& segment : table->segments) {
+        for (auto name : segment.data) {
+          infos[name].usedGlobally = true;
+        }
       }
     }
+
     for (auto& global : module->globals) {
       if (!global->imported()) {
         for (auto* ref : FindAll<RefFunc>(global->init).list) {

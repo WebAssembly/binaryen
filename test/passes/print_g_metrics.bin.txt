@@ -70,6 +70,7 @@ total
  [funcs]        : 3       
  [globals]      : 1       
  [imports]      : 0       
+ [tables]       : 0       
  [total]        : 37      
  [vars]         : 0       
  Binary         : 11      

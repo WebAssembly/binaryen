@@ -127,7 +127,9 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
   for (const auto& param : sig.params) {
     args.push_back(builder.makeLocalGet(++i, param));
   }
-  Expression* call = builder.makeCallIndirect(fptr, args, sig);
+  // FIXME: change tableName param to something proper
+  Expression* call =
+    builder.makeCallIndirect(Name::fromInt(0), fptr, args, sig);
   f->body = call;
 
   wasm->addFunction(std::move(f));

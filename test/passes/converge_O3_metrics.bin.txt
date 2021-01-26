@@ -6,6 +6,7 @@ total
  [imports]      : 3       
  [memory-data]  : 28      
  [table-data]   : 429     
+ [tables]       : 0       
  [total]        : 129     
  [vars]         : 4       
  Binary         : 12      
@@ -247,6 +248,7 @@ total
  [imports]      : 3       
  [memory-data]  : 28      
  [table-data]   : 429     
+ [tables]       : 0       
  [total]        : 129     
  [vars]         : 4       
  Binary         : 12      

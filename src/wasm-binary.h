@@ -1071,6 +1071,7 @@ class WasmBinaryWriter {
     std::unordered_map<Name, Index> functionIndexes;
     std::unordered_map<Name, Index> eventIndexes;
     std::unordered_map<Name, Index> globalIndexes;
+    std::unordered_map<Name, Index> tableIndexes;
 
     BinaryIndexes(Module& wasm) {
       auto addIndexes = [&](auto& source, auto& indexes) {
@@ -1091,6 +1092,7 @@ class WasmBinaryWriter {
       };
       addIndexes(wasm.functions, functionIndexes);
       addIndexes(wasm.events, eventIndexes);
+      addIndexes(wasm.tables, tableIndexes);
 
       // Globals may have tuple types in the IR, in which case they lower to
       // multiple globals, one for each tuple element, in the binary. Tuple
@@ -1163,11 +1165,12 @@ public:
   void writeEvents();
 
   uint32_t getFunctionIndex(Name name) const;
+  uint32_t getTableIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getEventIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
 
-  void writeFunctionTableDeclaration();
+  void writeTableDeclarations();
   void writeTableElements();
   void writeNames();
   void writeSourceMapUrl();
@@ -1311,6 +1314,7 @@ public:
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
+  Name getTableName(Index index);
   Name getGlobalName(Index index);
   Name getEventName(Index index);
 
@@ -1451,7 +1455,7 @@ public:
   void readDataSegments();
   void readDataCount();
 
-  std::map<Index, std::vector<Index>> functionTable;
+  std::map<Index, std::map<Index, std::vector<Index>>> functionTable;
 
   void readFunctionTableDeclaration();
   void readTableElements();

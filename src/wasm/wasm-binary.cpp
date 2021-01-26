@@ -48,7 +48,7 @@ void WasmBinaryWriter::write() {
   writeTypes();
   writeImports();
   writeFunctionSignatures();
-  writeFunctionTableDeclaration();
+  writeTableDeclarations();
   writeMemory();
   writeEvents();
   writeGlobals();
@@ -285,17 +285,17 @@ void WasmBinaryWriter::writeImports() {
                          wasm->memory.shared,
                          wasm->memory.is64());
   }
-  if (wasm->table.imported()) {
+  ModuleUtils::iterImportedTables(*wasm, [&](Table* table) {
     BYN_TRACE("write one table\n");
-    writeImportHeader(&wasm->table);
+    writeImportHeader(table);
     o << U32LEB(int32_t(ExternalKind::Table));
     o << S32LEB(BinaryConsts::EncodedType::funcref);
-    writeResizableLimits(wasm->table.initial,
-                         wasm->table.max,
-                         wasm->table.hasMax(),
+    writeResizableLimits(table->initial,
+                         table->max,
+                         table->hasMax(),
                          /*shared=*/false,
                          /*is64*/ false);
-  }
+  });
   finishSection(start);
 }
 
@@ -493,6 +493,12 @@ uint32_t WasmBinaryWriter::getFunctionIndex(Name name) const {
   return it->second;
 }
 
+uint32_t WasmBinaryWriter::getTableIndex(Name name) const {
+  auto it = indexes.tableIndexes.find(name);
+  assert(it != indexes.tableIndexes.end());
+  return it->second;
+}
+
 uint32_t WasmBinaryWriter::getGlobalIndex(Name name) const {
   auto it = indexes.globalIndexes.find(name);
   assert(it != indexes.globalIndexes.end());
@@ -516,38 +522,44 @@ uint32_t WasmBinaryWriter::getTypeIndex(HeapType type) const {
   return it->second;
 }
 
-void WasmBinaryWriter::writeFunctionTableDeclaration() {
-  if (!wasm->table.exists || wasm->table.imported()) {
+void WasmBinaryWriter::writeTableDeclarations() {
+  if (importInfo->getNumDefinedTables() == 0) {
+    // std::cerr << std::endl << "(WasmBinaryWriter::writeTableDeclarations) No defined tables found. skipping" << std::endl;
     return;
   }
-  BYN_TRACE("== writeFunctionTableDeclaration\n");
+  BYN_TRACE("== writeTableDeclarations\n");
   auto start = startSection(BinaryConsts::Section::Table);
-  o << U32LEB(1); // Declare 1 table.
-  o << S32LEB(BinaryConsts::EncodedType::funcref);
-  writeResizableLimits(wasm->table.initial,
-                       wasm->table.max,
-                       wasm->table.hasMax(),
-                       /*shared=*/false,
-                       /*is64*/ false);
+  auto num = importInfo->getNumDefinedTables();
+  o << U32LEB(num);
+  ModuleUtils::iterDefinedTables(*wasm, [&](Table* table) {
+    o << S32LEB(BinaryConsts::EncodedType::funcref);
+    writeResizableLimits(table->initial,
+                        table->max,
+                        table->hasMax(),
+                        /*shared=*/false,
+                        /*is64*/ false);
+  });
   finishSection(start);
 }
 
 void WasmBinaryWriter::writeTableElements() {
-  if (!wasm->table.exists || wasm->table.segments.size() == 0) {
+  if (wasm->tables.empty() || wasm->tables.front()->segments.empty()) {
     return;
   }
   BYN_TRACE("== writeTableElements\n");
   auto start = startSection(BinaryConsts::Section::Element);
 
-  o << U32LEB(wasm->table.segments.size());
-  for (auto& segment : wasm->table.segments) {
-    // Table index; 0 in the MVP (and binaryen IR only has 1 table)
-    o << U32LEB(0);
-    writeExpression(segment.offset);
-    o << int8_t(BinaryConsts::End);
-    o << U32LEB(segment.data.size());
-    for (auto name : segment.data) {
-      o << U32LEB(getFunctionIndex(name));
+  for(auto& table : wasm->tables) {
+    o << U32LEB(table->segments.size());
+    for (auto& segment : table->segments) {
+
+      o << U32LEB(0);
+      writeExpression(segment.offset);
+      o << int8_t(BinaryConsts::End);
+      o << U32LEB(segment.data.size());
+      for (auto name : segment.data) {
+        o << U32LEB(getFunctionIndex(name));
+      }
     }
   }
   finishSection(start);
@@ -648,14 +660,33 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // table names
-  if (wasm->table.exists && wasm->table.hasExplicitName) {
-    auto substart =
-      startSubsection(BinaryConsts::UserSections::Subsection::NameTable);
-    o << U32LEB(1) << U32LEB(0); // currently exactly 1 table at index 0
-    writeEscapedName(wasm->table.name.str);
-    finishSubsection(substart);
-  }
+  {
+    std::vector<std::pair<Index, Table*>> tablesWithNames;
+    Index checked = 0;
+    auto check = [&](Table* curr) {
+      if (curr->hasExplicitName) {
+        tablesWithNames.push_back({checked, curr});
+      }
+      checked++;
+    };
+    ModuleUtils::iterImportedTables(*wasm, check);
+    ModuleUtils::iterDefinedTables(*wasm, check);
+    assert(checked == indexes.tableIndexes.size());
 
+    if (tablesWithNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameTable);
+      o << U32LEB(tablesWithNames.size());
+
+      for (auto& indexedTable : tablesWithNames) {
+        o << U32LEB(indexedTable.first);
+        writeEscapedName(indexedTable.second->name.str);
+      }
+
+      finishSubsection(substart);
+    }
+  }
+    
   // memory names
   if (wasm->memory.exists && wasm->memory.hasExplicitName) {
     auto substart =
@@ -1626,6 +1657,13 @@ Name WasmBinaryBuilder::getFunctionName(Index index) {
   return wasm.functions[index]->name;
 }
 
+Name WasmBinaryBuilder::getTableName(Index index) {
+  if (index >= wasm.tables.size()) {
+    throwError("invalid table index");
+  }
+  return wasm.tables[index]->name;
+}
+
 Name WasmBinaryBuilder::getGlobalName(Index index) {
   if (index >= wasm.globals.size()) {
     throwError("invalid global index");
@@ -1694,19 +1732,20 @@ void WasmBinaryBuilder::readImports() {
       }
       case ExternalKind::Table: {
         Name name(std::string("timport$") + std::to_string(tableCounter++));
-        wasm.table.module = module;
-        wasm.table.base = base;
-        wasm.table.name = name;
+        auto table = std::make_unique<Table>();
+        table->module = module;
+        table->base = base;
+        table->name = name;
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::funcref) {
           throwError("Imported table type is not funcref");
         }
-        wasm.table.exists = true;
+
         bool is_shared;
         Type indexType;
-        getResizableLimits(wasm.table.initial,
-                           wasm.table.max,
+        getResizableLimits(table->initial,
+                           table->max,
                            is_shared,
                            indexType,
                            Table::kUnlimitedSize);
@@ -1716,6 +1755,8 @@ void WasmBinaryBuilder::readImports() {
         if (indexType == Type::i64) {
           throwError("Tables may not be 64-bit");
         }
+
+        wasm.addTable(std::move(table));
         break;
       }
       case ExternalKind::Memory: {
@@ -2320,7 +2361,7 @@ void WasmBinaryBuilder::processNames() {
         break;
       }
       case ExternalKind::Table:
-        curr->value = wasm.table.name;
+        curr->value = getTableName(index);
         break;
       case ExternalKind::Memory:
         curr->value = wasm.memory.name;
@@ -2351,13 +2392,14 @@ void WasmBinaryBuilder::processNames() {
     }
   }
 
-  for (auto& pair : functionTable) {
-    auto i = pair.first;
-    auto& indices = pair.second;
-    for (auto j : indices) {
-      wasm.table.segments[i].data.push_back(getFunctionName(j));
+  for (auto& table_pair : functionTable)
+    for (auto& pair : table_pair.second) {
+      auto i = pair.first;
+      auto& indices = pair.second;
+      for (auto j : indices) {
+        wasm.tables[table_pair.first]->segments[i].data.push_back(getFunctionName(j));
+      }
     }
-  }
 
   for (auto& iter : globalRefs) {
     size_t index = iter.first;
@@ -2414,29 +2456,29 @@ void WasmBinaryBuilder::readDataSegments() {
 void WasmBinaryBuilder::readFunctionTableDeclaration() {
   BYN_TRACE("== readFunctionTableDeclaration\n");
   auto numTables = getU32LEB();
-  if (numTables != 1) {
-    throwError("Only 1 table definition allowed in MVP");
-  }
-  if (wasm.table.exists) {
-    throwError("Table cannot be both imported and defined");
-  }
-  wasm.table.exists = true;
-  auto elemType = getS32LEB();
-  if (elemType != BinaryConsts::EncodedType::funcref) {
-    throwError("ElementType must be funcref in MVP");
-  }
-  bool is_shared;
-  Type indexType;
-  getResizableLimits(wasm.table.initial,
-                     wasm.table.max,
-                     is_shared,
-                     indexType,
-                     Table::kUnlimitedSize);
-  if (is_shared) {
-    throwError("Tables may not be shared");
-  }
-  if (indexType == Type::i64) {
-    throwError("Tables may not be 64-bit");
+
+  for (size_t i = 0; i < numTables; i++) {
+    auto elemType = getS32LEB();
+    if (elemType != BinaryConsts::EncodedType::funcref) {
+      throwError("ElementType must be funcref in MVP");
+    }
+    auto table = std::make_unique<Table>();
+    table->setName("table$" + std::to_string(i), false);
+    bool is_shared;
+    Type indexType;
+    getResizableLimits(table->initial,
+                      table->max,
+                      is_shared,
+                      indexType,
+                      Table::kUnlimitedSize);
+    if (is_shared) {
+      throwError("Tables may not be shared");
+    }
+    if (indexType == Type::i64) {
+      throwError("Tables may not be 64-bit");
+    }
+
+    wasm.addTable(std::move(table));
   }
 }
 
@@ -2447,13 +2489,19 @@ void WasmBinaryBuilder::readTableElements() {
     throwError("Too many segments");
   }
   for (size_t i = 0; i < numSegments; i++) {
-    auto tableIndex = getU32LEB();
-    if (tableIndex != 0) {
+    auto headerFormat = getU32LEB();
+    if (headerFormat != 0) {
       throwError("Table elements must refer to table 0 in MVP");
     }
-    wasm.table.segments.emplace_back(readExpression());
 
-    auto& indexSegment = functionTable[i];
+    Index tableIdx = 0;
+    if (wasm.tables.empty()) {
+      throwError("Table index out of range.");
+    }
+
+    wasm.tables[tableIdx]->segments.emplace_back(readExpression());
+
+    auto& indexSegment = functionTable[tableIdx][i];
     auto size = getU32LEB();
     for (Index j = 0; j < size; j++) {
       indexSegment.push_back(getU32LEB());
@@ -2592,8 +2640,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        if (index == 0) {
-          wasm.table.setExplicitName(escape(rawName));
+        if (index < wasm.tables.size()) {
+          wasm.tables[i]->setExplicitName(escape(rawName));
         } else {
           std::cerr << "warning: table index out of bounds in name section, "
                        "table subsection: "
@@ -3368,10 +3416,8 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
   BYN_TRACE("zz node: CallIndirect\n");
   auto index = getU32LEB();
   curr->sig = getSignatureByTypeIndex(index);
-  auto reserved = getU32LEB();
-  if (reserved != 0) {
-    throwError("Invalid flags field in call_indirect");
-  }
+  Index tableIdx = getU32LEB();
+  curr->tableName = getTableName(tableIdx);
   auto num = curr->sig.params.size();
   curr->operands.resize(num);
   curr->target = popNonVoidExpression();

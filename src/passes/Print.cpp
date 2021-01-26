@@ -2887,14 +2887,11 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << " funcref)";
   }
   void visitTable(Table* curr) {
-    if (!curr->exists) {
-      return;
-    }
     if (curr->imported()) {
       doIndent(o, indent);
       o << '(';
       emitImportHeader(curr);
-      printTableHeader(&currModule->table);
+      printTableHeader(curr);
       o << ')' << maybeNewLine;
     } else {
       doIndent(o, indent);

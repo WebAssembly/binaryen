@@ -4,9 +4,12 @@ Before:
 Keeping: <none>
 After:
 (module
+ (table $0 0 funcref)
+ (export "%table" (table $0))
 )
 Secondary:
 (module
+ (import "primary" "%table" (table $0 0 funcref))
 )
 
 
@@ -118,12 +121,15 @@ Keeping: foo
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (table $0 0 funcref)
+ (export "%table" (table $0))
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
  )
 )
 Secondary:
 (module
+ (import "primary" "%table" (table $0 0 funcref))
 )
 
 
@@ -139,13 +145,16 @@ Keeping: foo
 After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (table $0 0 funcref)
  (export "foo" (func $foo))
+ (export "%table" (table $0))
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
  )
 )
 Secondary:
 (module
+ (import "primary" "%table" (table $0 0 funcref))
 )
 
 
@@ -215,9 +224,12 @@ After:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "foo" (func $foo (param i32) (result i32)))
+ (table $0 0 funcref)
+ (export "%table" (table $0))
 )
 Secondary:
 (module
+ (import "primary" "%table" (table $0 0 funcref))
 )
 
 
@@ -283,10 +295,13 @@ Before:
 Keeping: <none>
 After:
 (module
+ (table $0 0 funcref)
+ (export "%table" (table $0))
 )
 Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "primary" "%table" (table $0 0 funcref))
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -504,6 +519,8 @@ Keeping: bar, foo
 After:
 (module
  (type $none_=>_none (func))
+ (table $0 0 funcref)
+ (export "%table" (table $0))
  (func $foo
   (call $bar)
  )
@@ -513,6 +530,7 @@ After:
 )
 Secondary:
 (module
+ (import "primary" "%table" (table $0 0 funcref))
 )
 
 
@@ -530,7 +548,9 @@ Keeping: bar
 After:
 (module
  (type $none_=>_none (func))
+ (table $0 0 funcref)
  (export "%bar" (func $bar))
+ (export "%table" (table $0))
  (func $bar
   (nop)
  )
@@ -538,6 +558,7 @@ After:
 Secondary:
 (module
  (type $none_=>_none (func))
+ (import "primary" "%table" (table $0 0 funcref))
  (import "primary" "%bar" (func $bar))
  (func $foo
   (call $bar)
@@ -593,10 +614,13 @@ Before:
 Keeping: <none>
 After:
 (module
+ (table $0 0 funcref)
+ (export "%table" (table $0))
 )
 Secondary:
 (module
  (type $none_=>_none (func))
+ (import "primary" "%table" (table $0 0 funcref))
  (func $bar
   (nop)
  )

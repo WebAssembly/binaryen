@@ -38,7 +38,7 @@ BinaryenFeatureAll: 8191
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
- (table $0 1 1 funcref)
+ (table $tab 1 1 funcref)
  (elem (i32.const 0) "$kitchen()sinker")
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))

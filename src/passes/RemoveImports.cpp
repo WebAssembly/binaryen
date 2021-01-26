@@ -49,8 +49,8 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
       *curr, [&](Function* func) { names.push_back(func->name); });
     // Do not remove names referenced in a table
     std::set<Name> indirectNames;
-    if (curr->table.exists) {
-      for (auto& segment : curr->table.segments) {
+    for (auto& table : curr->tables) {
+      for (auto& segment : table->segments) {
         for (auto& name : segment.data) {
           indirectNames.insert(name);
         }

@@ -86,7 +86,7 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
   o << op << U32LEB(parent.getTypeIndex(curr->sig))
-    << U32LEB(0); // Reserved flags field
+    << U32LEB(parent.getTableIndex(curr->tableName));
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {

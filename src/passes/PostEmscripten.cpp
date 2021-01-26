@@ -61,13 +61,13 @@ struct PostEmscripten : public Pass {
         hasInvokes = true;
       }
     }
-    if (!hasInvokes) {
+    if (!hasInvokes || module->tables.empty()) {
       return;
     }
     // Next, see if the Table is flat, which we need in order to see where
     // invokes go statically. (In dynamic linking, the table is not flat,
     // and we can't do this.)
-    TableUtils::FlatTable flatTable(module->table);
+    TableUtils::FlatTable flatTable(*module->tables[0]);
     if (!flatTable.valid) {
       return;
     }

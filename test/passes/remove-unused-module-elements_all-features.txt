@@ -87,7 +87,7 @@
  (import "env" "memory" (memory $0 256))
  (import "env" "table" (table $timport$0 1 funcref))
  (export "mem" (memory $0))
- (export "tab" (table $0))
+ (export "tab" (table $timport$0))
 )
 (module
  (type $none_=>_none (func))

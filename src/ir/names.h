@@ -76,6 +76,10 @@ inline Name getValidFunctionName(Module& module, Name root) {
   return getValidName(
     module, root, [&](Name test) { return !module.getFunctionOrNull(test); });
 }
+inline Name getValidTableName(Module& module, Name root) {
+  return getValidName(
+    module, root, [&](Name test) { return !module.getTableOrNull(test); });
+}
 inline Name getValidEventName(Module& module, Name root) {
   return getValidName(
     module, root, [&](Name test) { return !module.getEventOrNull(test); });

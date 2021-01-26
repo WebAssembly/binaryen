@@ -135,10 +135,6 @@
   (module (import "" "" (table 10 funcref)) (table 10 funcref))
   "multiple tables"
 )
-(assert_invalid
-  (module (table 10 funcref) (table 10 funcref))
-  "multiple tables"
-)
 
 (assert_unlinkable
   (module (import "spectest" "unknown" (table 10 funcref)))

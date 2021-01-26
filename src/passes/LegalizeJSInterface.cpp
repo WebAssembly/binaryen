@@ -97,10 +97,12 @@ struct LegalizeJSInterface : public Pass {
         // we need to use the legalized version in the table, as the import from
         // JS is legal for JS. Our stub makes it look like a native wasm
         // function.
-        for (auto& segment : module->table.segments) {
-          for (auto& name : segment.data) {
-            if (name == im->name) {
-              name = funcName;
+        for (auto& table : module->tables) {
+          for (auto& segment : table->segments) {
+            for (auto& name : segment.data) {
+              if (name == im->name) {
+                name = funcName;
+              }
             }
           }
         }

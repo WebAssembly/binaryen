@@ -6,6 +6,7 @@ total
  [imports]      : 4       
  [memory-data]  : 4       
  [table-data]   : 18      
+ [tables]       : 1       
  [total]        : 4870    
  [vars]         : 236     
  Binary         : 368     

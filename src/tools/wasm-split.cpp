@@ -472,18 +472,23 @@ void adjustTableSize(Module& wasm, int initialSize) {
   if (initialSize < 0) {
     return;
   }
-  if (!wasm.table.exists) {
+  if (wasm.tables.empty()) {
     Fatal() << "--initial-table used but there is no table";
   }
-  if ((uint64_t)initialSize < wasm.table.initial) {
+
+  if (wasm.features.hasReferenceTypes()) {
+    return;
+  }
+
+  if ((uint64_t)initialSize < wasm.tables[0]->initial) {
     Fatal() << "Specified initial table size too small, should be at least "
-            << wasm.table.initial;
+            << wasm.tables[0]->initial;
   }
-  if ((uint64_t)initialSize > wasm.table.max) {
+  if ((uint64_t)initialSize > wasm.tables[0]->max) {
     Fatal() << "Specified initial table size larger than max table size "
-            << wasm.table.max;
+            << wasm.tables[0]->max;
   }
-  wasm.table.initial = initialSize;
+  wasm.tables[0]->initial = initialSize;
 }
 
 void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
