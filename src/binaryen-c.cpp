@@ -3326,7 +3326,7 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
   table->segments.push_back(segment);
   ((Module*)module)->addTable(std::move(table));
 
-  return table.get();
+  return ((Module*)module)->getTable(name);
 }
 void BinaryenRemoveTable(BinaryenModuleRef module, const char* tableName) {
   ((Module*)module)->removeTable(tableName);
