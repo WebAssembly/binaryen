@@ -1177,9 +1177,7 @@ public:
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeDebugLocation(Expression* curr, Function* func);
   void writeDebugLocationEnd(Expression* curr, Function* func);
-  void writeExtraDebugLocation(Expression* curr,
-                               Function* func,
-                               BinaryLocations::DelimiterId id);
+  void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
 
   // helpers
   void writeInlineString(const char* name);
@@ -1405,10 +1403,6 @@ public:
 
   // Called when we parse the beginning of a control flow structure.
   void startControlFlow(Expression* curr);
-
-  // Called when we parse a later part of a control flow structure, like "end"
-  // or "else".
-  void continueControlFlow(BinaryLocations::DelimiterId id, BinaryLocation pos);
 
   // set when we know code is unreachable in the sense of the wasm spec: we are
   // in a block and after an unreachable element. this helps parse stacky wasm

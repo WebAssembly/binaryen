@@ -46,6 +46,10 @@ struct CoalesceLocals
   : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor<CoalesceLocals>>> {
   bool isFunctionParallel() override { return true; }
 
+  // This pass merges locals, mapping the originals to new ones.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new CoalesceLocals; }
 
   // main entry point

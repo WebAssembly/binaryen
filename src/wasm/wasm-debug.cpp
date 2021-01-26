@@ -86,6 +86,10 @@ void dumpDWARF(const Module& wasm) {
   info.context->dump(llvm::outs(), options);
 }
 
+bool shouldPreserveDWARF(PassOptions& options, Module& wasm) {
+  return options.debugInfo && hasDWARFSections(wasm);
+}
+
 //
 // Big picture: We use a DWARFContext to read data, then DWARFYAML support
 // code to write it. That is not the main LLVM Dwarf code used for writing
@@ -361,7 +365,7 @@ struct AddrExprMap {
   // bloat the common case which is represented in the earlier maps.
   struct DelimiterInfo {
     Expression* expr;
-    BinaryLocations::DelimiterId id;
+    size_t id;
   };
   std::unordered_map<BinaryLocation, DelimiterInfo> delimiterMap;
 
@@ -414,8 +418,7 @@ private:
     for (Index i = 0; i < delimiter.size(); i++) {
       if (delimiter[i] != 0) {
         assert(delimiterMap.count(delimiter[i]) == 0);
-        delimiterMap[delimiter[i]] =
-          DelimiterInfo{expr, BinaryLocations::DelimiterId(i)};
+        delimiterMap[delimiter[i]] = DelimiterInfo{expr, i};
       }
     }
   }
@@ -1091,6 +1094,8 @@ void dumpDWARF(const Module& wasm) {
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   std::cerr << "warning: no DWARF updating support present\n";
 }
+
+bool shouldPreserveDWARF(PassOptions& options, Module& wasm) { return false; }
 
 #endif // BUILD_LLVM_DWARF
 

@@ -1540,20 +1540,15 @@ struct BinaryLocations {
   // Track the extra delimiter positions that some instructions, in particular
   // control flow, have, like 'end' for loop and block. We keep these in a
   // separate map because they are rare and we optimize for the storage space
-  // for the common type of instruction which just needs a Span. We implement
-  // this as a simple array with one element at the moment (more elements may
-  // be necessary in the future).
-  // TODO: If we are sure we won't need more, make this a single value?
-  struct DelimiterLocations : public std::array<BinaryLocation, 1> {
-    DelimiterLocations() {
-      // Ensure zero-initialization.
-      for (auto& item : *this) {
-        item = 0;
-      }
-    }
-  };
+  // for the common type of instruction which just needs a Span.
+  // For "else" (from an if) we use index 0, and for catch (from a try) we use
+  // indexes 0 and above.
+  // We use automatic zero-initialization here because that indicates a "null"
+  // debug value, indicating the information is not present.
+  using DelimiterLocations = ZeroInitSmallVector<BinaryLocation, 1>;
 
-  enum DelimiterId { Else = 0, Catch = 0, Invalid = -1 };
+  enum DelimiterId : size_t { Else = 0, Invalid = size_t(-1) };
+
   std::unordered_map<Expression*, DelimiterLocations> delimiters;
 
   // DWARF debug info can refer to multiple interesting positions in a function.

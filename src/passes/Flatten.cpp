@@ -51,6 +51,11 @@ struct Flatten
       ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
   bool isFunctionParallel() override { return true; }
 
+  // Flattening splits the original locals into a great many other ones, losing
+  // track of the originals that DWARF refers to.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new Flatten; }
 
   // For each expression, a bunch of expressions that should execute right

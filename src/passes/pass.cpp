@@ -49,7 +49,7 @@ void PassRegistry::registerPass(const char* name,
 
 std::unique_ptr<Pass> PassRegistry::createPass(std::string name) {
   if (passInfos.find(name) == passInfos.end()) {
-    return nullptr;
+    Fatal() << "Could not find pass: " << name << "\n";
   }
   std::unique_ptr<Pass> ret;
   ret.reset(passInfos[name].create());
@@ -372,144 +372,129 @@ void PassRegistry::registerPasses() {
   //   "lower-i64", "lowers i64 into pairs of i32s", createLowerInt64Pass);
 }
 
+void PassRunner::addIfNoDWARFIssues(std::string passName) {
+  auto pass = PassRegistry::get()->createPass(passName);
+  if (!pass->invalidatesDWARF() ||
+      !Debug::shouldPreserveDWARF(options, *wasm)) {
+    doAdd(std::move(pass));
+  }
+}
+
 void PassRunner::addDefaultOptimizationPasses() {
   addDefaultGlobalOptimizationPrePasses();
   addDefaultFunctionOptimizationPasses();
   addDefaultGlobalOptimizationPostPasses();
 }
 
-// Check whether we should preserve valid DWARF while optimizing. If so, we
-// disable optimizations that currently cause issues with debug info.
-static bool shouldPreserveDWARF(PassOptions& options, Module& wasm) {
-  return options.debugInfo && Debug::hasDWARFSections(wasm);
-}
-
 void PassRunner::addDefaultFunctionOptimizationPasses() {
-  auto preserveDWARF = shouldPreserveDWARF(options, *wasm);
+  // All the additions here are optional if DWARF must be preserved. That is,
+  // when DWARF is relevant we run fewer optimizations.
+  // FIXME: support DWARF in all of them.
+
   // Untangling to semi-ssa form is helpful (but best to ignore merges
   // so as to not introduce new copies).
-  // FIXME DWARF updating does not handle local changes yet.
-  if (!preserveDWARF &&
-      (options.optimizeLevel >= 3 || options.shrinkLevel >= 1)) {
-    add("ssa-nomerge");
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("ssa-nomerge");
   }
   // if we are willing to work very very hard, flatten the IR and do opts
   // that depend on flat IR
-  // FIXME DWARF updating does not handle local changes yet.
-  if (!preserveDWARF && options.optimizeLevel >= 4) {
-    add("flatten");
-    add("local-cse");
+  if (options.optimizeLevel >= 4) {
+    addIfNoDWARFIssues("flatten");
+    addIfNoDWARFIssues("local-cse");
   }
-  add("dce");
-  add("remove-unused-names");
-  add("remove-unused-brs");
-  add("remove-unused-names");
-  add("optimize-instructions");
+  addIfNoDWARFIssues("dce");
+  addIfNoDWARFIssues("remove-unused-names");
+  addIfNoDWARFIssues("remove-unused-brs");
+  addIfNoDWARFIssues("remove-unused-names");
+  addIfNoDWARFIssues("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    add("pick-load-signs");
+    addIfNoDWARFIssues("pick-load-signs");
   }
   // early propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    add("precompute-propagate");
+    addIfNoDWARFIssues("precompute-propagate");
   } else {
-    add("precompute");
+    addIfNoDWARFIssues("precompute");
   }
   if (options.lowMemoryUnused) {
     if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-      add("optimize-added-constants-propagate");
+      addIfNoDWARFIssues("optimize-added-constants-propagate");
     } else {
-      add("optimize-added-constants");
+      addIfNoDWARFIssues("optimize-added-constants");
     }
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    add("code-pushing");
+    addIfNoDWARFIssues("code-pushing");
   }
   // don't create if/block return values yet, as coalesce can remove copies that
   // that could inhibit
-  add("simplify-locals-nostructure");
-  add("vacuum"); // previous pass creates garbage
-  add("reorder-locals");
+  addIfNoDWARFIssues("simplify-locals-nostructure");
+  addIfNoDWARFIssues("vacuum"); // previous pass creates garbage
+  addIfNoDWARFIssues("reorder-locals");
   // simplify-locals opens opportunities for optimizations
-  add("remove-unused-brs");
+  addIfNoDWARFIssues("remove-unused-brs");
   // if we are willing to work hard, also optimize copies before coalescing
-  // FIXME DWARF updating does not handle local changes yet.
-  if (!preserveDWARF &&
-      (options.optimizeLevel >= 3 || options.shrinkLevel >= 2)) {
-    add("merge-locals"); // very slow on e.g. sqlite
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
+    addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite
   }
-  // FIXME DWARF updating does not handle local changes yet.
-  if (!preserveDWARF) {
-    add("coalesce-locals");
-  }
-  add("simplify-locals");
-  add("vacuum");
-  add("reorder-locals");
-  // FIXME DWARF updating does not handle local changes yet.
-  if (!preserveDWARF) {
-    add("coalesce-locals");
-    add("reorder-locals");
-  }
-  add("vacuum");
+  addIfNoDWARFIssues("coalesce-locals");
+  addIfNoDWARFIssues("simplify-locals");
+  addIfNoDWARFIssues("vacuum");
+  addIfNoDWARFIssues("reorder-locals");
+  addIfNoDWARFIssues("coalesce-locals");
+  addIfNoDWARFIssues("reorder-locals");
+  addIfNoDWARFIssues("vacuum");
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    add("code-folding");
+    addIfNoDWARFIssues("code-folding");
   }
-  add("merge-blocks");        // makes remove-unused-brs more effective
-  add("remove-unused-brs");   // coalesce-locals opens opportunities
-  add("remove-unused-names"); // remove-unused-brs opens opportunities
-  add("merge-blocks");        // clean up remove-unused-brs new blocks
+  addIfNoDWARFIssues("merge-blocks"); // makes remove-unused-brs more effective
+  addIfNoDWARFIssues(
+    "remove-unused-brs"); // coalesce-locals opens opportunities
+  addIfNoDWARFIssues(
+    "remove-unused-names");           // remove-unused-brs opens opportunities
+  addIfNoDWARFIssues("merge-blocks"); // clean up remove-unused-brs new blocks
   // late propagation
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
-    add("precompute-propagate");
+    addIfNoDWARFIssues("precompute-propagate");
   } else {
-    add("precompute");
+    addIfNoDWARFIssues("precompute");
   }
-  add("optimize-instructions");
+  addIfNoDWARFIssues("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("rse"); // after all coalesce-locals, and before a final vacuum
+    addIfNoDWARFIssues(
+      "rse"); // after all coalesce-locals, and before a final vacuum
   }
-  add("vacuum"); // just to be safe
+  addIfNoDWARFIssues("vacuum"); // just to be safe
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
-  // FIXME DWARF updating does not handle merging debug info with merged code.
-  if (!shouldPreserveDWARF(options, *wasm)) {
-    add("duplicate-function-elimination");
-  }
-  add("memory-packing");
+  addIfNoDWARFIssues("duplicate-function-elimination");
+  addIfNoDWARFIssues("memory-packing");
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
-  auto preserveDWARF = shouldPreserveDWARF(options, *wasm);
-  // FIXME DWARF may be badly affected currently as DAE changes function
-  // signatures and hence params and locals.
-  if (!preserveDWARF &&
-      (options.optimizeLevel >= 2 || options.shrinkLevel >= 1)) {
-    add("dae-optimizing");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("dae-optimizing");
   }
-  // FIXME DWARF updating does not handle inlining yet.
-  if (!preserveDWARF &&
-      (options.optimizeLevel >= 2 || options.shrinkLevel >= 2)) {
-    add("inlining-optimizing");
+  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
+    addIfNoDWARFIssues("inlining-optimizing");
   }
   // Optimizations show more functions as duplicate, so run this here in Post.
-  // FIXME DWARF updating does not handle merging debug info with merged code.
-  if (!preserveDWARF) {
-    add("duplicate-function-elimination");
-  }
-  add("duplicate-import-elimination");
+  addIfNoDWARFIssues("duplicate-function-elimination");
+  addIfNoDWARFIssues("duplicate-import-elimination");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
-    add("simplify-globals-optimizing");
+    addIfNoDWARFIssues("simplify-globals-optimizing");
   } else {
-    add("simplify-globals");
+    addIfNoDWARFIssues("simplify-globals");
   }
-  add("remove-unused-module-elements");
+  addIfNoDWARFIssues("remove-unused-module-elements");
   // may allow more inlining/dae/etc., need --converge for that
-  add("directize");
+  addIfNoDWARFIssues("directize");
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    add("generate-stack-ir");
-    add("optimize-stack-ir");
+    addIfNoDWARFIssues("generate-stack-ir");
+    addIfNoDWARFIssues("optimize-stack-ir");
   }
 }
 
@@ -670,6 +655,10 @@ void PassRunner::runOnFunction(Function* func) {
 }
 
 void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
+  if (Debug::shouldPreserveDWARF(options, *wasm) && pass->invalidatesDWARF()) {
+    std::cerr << "warning: running pass '" << pass->name
+              << "' which is not fully compatible with DWARF\n";
+  }
   passes.emplace_back(std::move(pass));
 }
 
