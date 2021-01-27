@@ -796,6 +796,13 @@ public:
     ret->finalize();
     return ret;
   }
+  RefAs* makeRefAs(RefAsOp op, Expression* value) {
+    auto* ret = wasm.allocator.alloc<RefAs>();
+    ret->op = op;
+    ret->value = value;
+    ret->finalize();
+    return ret;
+  }
 
   // Additional helpers
 

@@ -3,8 +3,8 @@
  (type $[mut:f64] (array (mut f64)))
  (type ${} (struct ))
  (type ${mut:f32} (struct (field (mut f32))))
- (type $none_=>_none (func))
  (type $anyref_=>_none (func (param anyref)))
+ (type $none_=>_none (func))
  (type ${i32} (struct (field i32)))
  (type ${i32_i64} (struct (field i32) (field i64)))
  (type $[mut:i32] (array (mut i32)))
@@ -214,6 +214,23 @@
     (local.get $0)
    )
    (unreachable)
+  )
+ )
+ (func $6 (param $0 anyref)
+  (drop
+   (ref.as_func
+    (local.get $0)
+   )
+  )
+  (drop
+   (ref.as_data
+    (local.get $0)
+   )
+  )
+  (drop
+   (ref.as_i31
+    (local.get $0)
+   )
   )
  )
 )

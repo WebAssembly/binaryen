@@ -269,6 +269,7 @@ private:
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
+  Expression* makeRefAs(Element& s, RefAsOp op);
 
   // Helper functions
   Type parseOptionalResultType(Element& s, Index& i);

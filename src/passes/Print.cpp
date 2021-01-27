@@ -1856,6 +1856,21 @@ struct PrintExpressionContents
     printMedium(o, "array.len ");
     printHeapTypeName(o, curr->ref->type.getHeapType());
   }
+  void visitRefAs(RefAs* curr) {
+    switch (curr->op) {
+      case RefAsFunc:
+        printMedium(o, "ref.as_func");
+        break;
+      case RefAsData:
+        printMedium(o, "ref.as_data");
+        break;
+      case RefAsI31:
+        printMedium(o, "ref.as_i31");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid ref.is_*");
+    }
+  }
 };
 
 // Prints an expression in s-expr format, including both the
@@ -2601,6 +2616,13 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ref);
+    decIndent();
+  }
+  void visitRefAs(RefAs* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
+    printFullLine(curr->value);
     decIndent();
   }
   // Module-level visitors

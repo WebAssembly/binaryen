@@ -623,6 +623,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitArrayLen(ArrayLen* curr) {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
   }
+  Index visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
 
 private:
   Index nullCheckCost(Expression* ref) {

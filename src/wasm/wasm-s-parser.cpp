@@ -2236,6 +2236,10 @@ Expression* SExpressionWasmBuilder::makeArrayLen(Element& s) {
   return Builder(wasm).makeArrayLen(ref);
 }
 
+Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
+  return Builder(wasm).makeRefAs(op, parseExpression(s[1]));
+}
+
 // converts an s-expression string representing binary data into an output
 // sequence of raw bytes this appends to data, which may already contain
 // content.
