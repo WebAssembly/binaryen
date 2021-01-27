@@ -1264,12 +1264,13 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     wasm.userSections.resize(wasm.userSections.size() + 1);
     auto& section = wasm.userSections.back();
     section.name = sectionName.str;
-    section.data = getBytes(payloadLen);
+    auto data = getByteView(payloadLen);
+    section.data = {data.first, data.second};
   }
 }
 
-std::vector<char> WasmBinaryBuilder::getBytes(size_t size) {
-  if (size >= input.size() || pos >= input.size() - size) {
+std::pair<const char*, const char*> WasmBinaryBuilder::getByteView(size_t size) {
+  if (size > input.size() || pos > input.size() - size) {
     throwError("unexpected end of input");
   }
   pos += size;
@@ -1506,15 +1507,14 @@ Type WasmBinaryBuilder::getConcreteType() {
 Name WasmBinaryBuilder::getInlineString() {
   BYN_TRACE("<==\n");
   auto len = getU32LEB();
-  std::string str;
-  for (size_t i = 0; i < len; i++) {
-    auto curr = char(getInt8());
-    if (curr == 0) {
+
+  auto data = getByteView(len);
+
+  std::string str(data.first, data.second);
+  if (str.find('\0') != std::string::npos) {
       throwError(
         "inline string contains NULL (0). that is technically valid in wasm, "
         "but you shouldn't do it, and it's not supported in binaryen");
-    }
-    str = str + curr;
   }
   BYN_TRACE("getInlineString: " << str << " ==>\n");
   return Name(str);
@@ -2394,8 +2394,9 @@ void WasmBinaryBuilder::readDataSegments() {
       curr.offset = readExpression();
     }
     auto size = getU32LEB();
-    curr.data = getBytes(size);
-    wasm.memory.segments.push_back(curr);
+    auto data = getByteView(size);
+    curr.data = {data.first, data.second};
+    wasm.memory.segments.push_back(std::move(curr));
   }
 }
 
