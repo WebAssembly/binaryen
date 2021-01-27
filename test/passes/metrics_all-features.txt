@@ -8,11 +8,11 @@ total
  [table-data]   : 3       
  [total]        : 27      
  [vars]         : 1       
- binary         : 1       
- block          : 1       
- const          : 15      
- drop           : 6       
- if             : 4       
+ Binary         : 1       
+ Block          : 1       
+ Const          : 15      
+ Drop           : 6       
+ If             : 4       
 (module
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))

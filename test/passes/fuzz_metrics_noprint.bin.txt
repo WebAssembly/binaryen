@@ -8,23 +8,23 @@ total
  [table-data]   : 18      
  [total]        : 4870    
  [vars]         : 236     
- binary         : 368     
- block          : 699     
- break          : 191     
- call           : 300     
- call_indirect  : 39      
- const          : 847     
- drop           : 91      
- global.get     : 403     
- global.set     : 171     
- if             : 260     
- load           : 85      
- local.get      : 374     
- local.set      : 251     
- loop           : 111     
- nop            : 86      
- return         : 187     
- select         : 30      
- store          : 36      
- unary          : 340     
- unreachable    : 1       
+ Binary         : 368     
+ Block          : 699     
+ Break          : 191     
+ Call           : 300     
+ CallIndirect   : 39      
+ Const          : 847     
+ Drop           : 91      
+ GlobalGet      : 403     
+ GlobalSet      : 171     
+ If             : 260     
+ Load           : 85      
+ LocalGet       : 374     
+ LocalSet       : 251     
+ Loop           : 111     
+ Nop            : 86      
+ Return         : 187     
+ Select         : 30      
+ Store          : 36      
+ Unary          : 340     
+ Unreachable    : 1       

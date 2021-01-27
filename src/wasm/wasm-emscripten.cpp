@@ -310,7 +310,7 @@ void AsmConstWalker::visitCall(Call* curr) {
       }
     }
 
-    Fatal() << "Unexpected arg0 type (" << getExpressionName(arg)
+    Fatal() << "Unexpected arg0 type (" << *arg
             << ") in call to: " << importName;
   }
 

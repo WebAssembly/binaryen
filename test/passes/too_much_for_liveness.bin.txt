@@ -6,10 +6,10 @@ total
  [imports]      : 0       
  [total]        : 4       
  [vars]         : 65536   
- block          : 1       
- const          : 1       
- local.get      : 1       
- local.set      : 1       
+ Block          : 1       
+ Const          : 1       
+ LocalGet       : 1       
+ LocalSet       : 1       
 total
  [events]       : 0       
  [exports]      : 1       
@@ -18,10 +18,10 @@ total
  [imports]      : 0       
  [total]        : 4       
  [vars]         : 65536   
- block          : 1       
- const          : 1       
- local.get      : 1       
- local.set      : 1       
+ Block          : 1       
+ Const          : 1       
+ LocalGet       : 1       
+ LocalSet       : 1       
 (module
  (type $none_=>_i32 (func (result i32)))
  (export "foo" (func $0))

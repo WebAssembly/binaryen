@@ -3200,15 +3200,12 @@ static std::ostream& printExpression(Expression* expression,
 static std::ostream&
 printStackInst(StackInst* inst, std::ostream& o, Function* func) {
   switch (inst->op) {
-    case StackInst::Basic: {
-      PrintExpressionContents(func, o).visit(inst->origin);
-      break;
-    }
+    case StackInst::Basic:
     case StackInst::BlockBegin:
     case StackInst::IfBegin:
     case StackInst::LoopBegin:
     case StackInst::TryBegin: {
-      o << getExpressionName(inst->origin);
+      PrintExpressionContents(func, o).visit(inst->origin);
       break;
     }
     case StackInst::BlockEnd:

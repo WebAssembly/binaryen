@@ -8,22 +8,22 @@ total
  [table-data]   : 0       
  [total]        : 1964    
  [vars]         : 9       
- binary         : 240     
- block          : 68      
- break          : 90      
- call           : 22      
- call_indirect  : 1       
- const          : 175     
- drop           : 8       
- if             : 27      
- load           : 313     
- local.get      : 633     
- local.set      : 181     
- loop           : 3       
- return         : 3       
- select         : 11      
- store          : 160     
- unary          : 29      
+ Binary         : 240     
+ Block          : 68      
+ Break          : 90      
+ Call           : 22      
+ CallIndirect   : 1       
+ Const          : 175     
+ Drop           : 8       
+ If             : 27      
+ Load           : 313     
+ LocalGet       : 633     
+ LocalSet       : 181     
+ Loop           : 3       
+ Return         : 3       
+ Select         : 11      
+ Store          : 160     
+ Unary          : 29      
 (module
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
