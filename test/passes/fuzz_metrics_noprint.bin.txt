@@ -1,4 +1,13 @@
 total
+ [events]       : 0       
+ [exports]      : 51      
+ [funcs]        : 67      
+ [globals]      : 7       
+ [imports]      : 4       
+ [memory-data]  : 4       
+ [table-data]   : 18      
+ [total]        : 4870    
+ [vars]         : 236     
  Binary         : 368     
  Block          : 699     
  Break          : 191     
@@ -19,12 +28,3 @@ total
  Store          : 36      
  Unary          : 340     
  Unreachable    : 1       
- [events]       : 0       
- [exports]      : 51      
- [funcs]        : 67      
- [globals]      : 7       
- [imports]      : 4       
- [memory-data]  : 4       
- [table-data]   : 18      
- [total]        : 4870    
- [vars]         : 236     

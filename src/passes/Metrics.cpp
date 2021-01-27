@@ -171,6 +171,13 @@ struct Metrics
     counts["[total]"] = total;
     // sort
     sort(keys.begin(), keys.end(), [](const char* a, const char* b) -> bool {
+      // Sort the [..] ones first.
+      if (a[0] == '[' && b[0] != '[') {
+        return true;
+      }
+      if (a[0] != '[' && b[0] == '[') {
+        return false;
+      }
       return strcmp(b, a) > 0;
     });
     o << title << "\n";

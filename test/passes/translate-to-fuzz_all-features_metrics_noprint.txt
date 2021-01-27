@@ -1,4 +1,13 @@
 total
+ [events]       : 1       
+ [exports]      : 7       
+ [funcs]        : 8       
+ [globals]      : 6       
+ [imports]      : 5       
+ [memory-data]  : 22      
+ [table-data]   : 1       
+ [total]        : 461     
+ [vars]         : 11      
  AtomicRMW      : 1       
  Binary         : 72      
  Block          : 40      
@@ -27,12 +36,3 @@ total
  TupleExtract   : 1       
  TupleMake      : 8       
  Unary          : 20      
- [events]       : 1       
- [exports]      : 7       
- [funcs]        : 8       
- [globals]      : 6       
- [imports]      : 5       
- [memory-data]  : 22      
- [table-data]   : 1       
- [total]        : 461     
- [vars]         : 11      

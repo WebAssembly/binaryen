@@ -65,6 +65,13 @@
  )
 )
 total
+ [events]       : 0       
+ [exports]      : 3       
+ [funcs]        : 3       
+ [globals]      : 1       
+ [imports]      : 0       
+ [total]        : 37      
+ [vars]         : 0       
  Binary         : 11      
  Block          : 2       
  Break          : 1       
@@ -76,13 +83,6 @@ total
  LocalSet       : 2       
  Loop           : 1       
  Nop            : 1       
- [events]       : 0       
- [exports]      : 3       
- [funcs]        : 3       
- [globals]      : 1       
- [imports]      : 0       
- [total]        : 37      
- [vars]         : 0       
 (module
  (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
