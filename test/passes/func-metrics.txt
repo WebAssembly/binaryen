@@ -1,4 +1,5 @@
 global
+ Const          : 3       
  [events]       : 0       
  [exports]      : 0       
  [funcs]        : 3       
@@ -7,30 +8,29 @@ global
  [memory-data]  : 9       
  [table-data]   : 3       
  [total]        : 3       
- const          : 3       
 func: empty
+ Nop            : 1       
  [binary-bytes] : 3       
  [total]        : 1       
  [vars]         : 0       
- nop            : 1       
 func: small
+ Block          : 1       
+ Const          : 1       
+ Drop           : 1       
+ Nop            : 1       
+ Return         : 1       
  [binary-bytes] : 9       
  [total]        : 5       
  [vars]         : 0       
- block          : 1       
- const          : 1       
- drop           : 1       
- nop            : 1       
- return         : 1       
 func: ifs
+ Binary         : 1       
+ Block          : 1       
+ Const          : 12      
+ Drop           : 6       
+ If             : 4       
  [binary-bytes] : 51      
  [total]        : 24      
  [vars]         : 1       
- binary         : 1       
- block          : 1       
- const          : 12      
- drop           : 6       
- if             : 4       
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
@@ -106,23 +106,23 @@ global
  [imports]      : 1       
  [total]        : 0       
 func: func_a
+ Block          : 1       
+ Call           : 7       
  [binary-bytes] : 16      
  [total]        : 8       
  [vars]         : 0       
- block          : 1       
- call           : 7       
 func: func_b
+ Block          : 1       
+ Call           : 10      
  [binary-bytes] : 22      
  [total]        : 11      
  [vars]         : 0       
- block          : 1       
- call           : 10      
 func: func_c
+ Block          : 1       
+ Call           : 15      
  [binary-bytes] : 32      
  [total]        : 16      
  [vars]         : 0       
- block          : 1       
- call           : 15      
 export: a (func_a)
  [removable-bytes-without-it]: 72      
  [total]        : 0       
@@ -181,11 +181,11 @@ global
  [imports]      : 1       
  [total]        : 0       
 func: func_a
+ Block          : 1       
+ Call           : 5       
  [binary-bytes] : 12      
  [total]        : 6       
  [vars]         : 0       
- block          : 1       
- call           : 5       
 export: a (func_a)
  [removable-bytes-without-it]: 7       
  [total]        : 0       
@@ -213,11 +213,11 @@ global
  [imports]      : 1       
  [total]        : 0       
 func: func_a
+ Block          : 1       
+ Call           : 5       
  [binary-bytes] : 12      
  [total]        : 6       
  [vars]         : 0       
- block          : 1       
- call           : 5       
 start: func_a
  [removable-bytes-without-it]: 57      
  [total]        : 0       
@@ -234,18 +234,18 @@ start: func_a
  )
 )
 global
+ GlobalGet      : 1       
  [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 1       
  [imports]      : 1       
  [total]        : 1       
- global.get     : 1       
 func: 0
+ GlobalGet      : 1       
  [binary-bytes] : 4       
  [total]        : 1       
  [vars]         : 0       
- global.get     : 1       
 export: stackSave (0)
  [removable-bytes-without-it]: 56      
  [total]        : 0       

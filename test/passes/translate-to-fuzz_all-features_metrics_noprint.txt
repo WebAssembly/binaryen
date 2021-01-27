@@ -1,4 +1,32 @@
 total
+ AtomicRMW      : 1       
+ Binary         : 72      
+ Block          : 40      
+ Break          : 5       
+ Call           : 13      
+ CallRef        : 1       
+ Const          : 124     
+ Drop           : 3       
+ GlobalGet      : 20      
+ GlobalSet      : 11      
+ I31Get         : 1       
+ I31New         : 8       
+ If             : 17      
+ Load           : 19      
+ LocalGet       : 34      
+ LocalSet       : 18      
+ Loop           : 4       
+ MemoryInit     : 1       
+ Nop            : 8       
+ RefFunc        : 1       
+ RefNull        : 11      
+ Return         : 14      
+ SIMDExtract    : 2       
+ Select         : 1       
+ Store          : 3       
+ TupleExtract   : 1       
+ TupleMake      : 8       
+ Unary          : 20      
  [events]       : 1       
  [exports]      : 7       
  [funcs]        : 8       
@@ -8,31 +36,3 @@ total
  [table-data]   : 1       
  [total]        : 461     
  [vars]         : 11      
- atomic.rmw     : 1       
- binary         : 72      
- block          : 40      
- break          : 5       
- call           : 13      
- call_ref       : 1       
- const          : 124     
- drop           : 3       
- global.get     : 20      
- global.set     : 11      
- i31.get        : 1       
- i31.new        : 8       
- if             : 17      
- load           : 19      
- local.get      : 34      
- local.set      : 18      
- loop           : 4       
- memory.init    : 1       
- nop            : 8       
- ref.func       : 1       
- ref.null       : 11      
- return         : 14      
- select         : 1       
- simd_extract   : 2       
- store          : 3       
- tuple.extract  : 1       
- tuple.make     : 8       
- unary          : 20      
