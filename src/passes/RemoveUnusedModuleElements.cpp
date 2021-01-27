@@ -92,9 +92,20 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
+    if (module->tables.empty()) {
+      return;
+    }
+
+    Name name;
+    if (curr->tableName.is()) {
+      name = curr->tableName;
+    } else {
+      name = module->tables.front()->name;
+    }
+
     if (reachable.count(
-          ModuleElement(ModuleElementKind::Table, curr->tableName)) == 0) {
-      queue.emplace_back(ModuleElementKind::Table, curr->tableName);
+          ModuleElement(ModuleElementKind::Table, name)) == 0) {
+      queue.emplace_back(ModuleElementKind::Table, name);
     }
   }
 

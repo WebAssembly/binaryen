@@ -166,7 +166,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
                      Type results,
                      ModuleInstance& instance) override {
 
-    auto it = tables.find(tableName);
+    std::unordered_map<wasm::Name, std::vector<wasm::Name>>::iterator it;
+
+    if (tableName.is()) {
+      it = tables.find(tableName);
+    } else {
+      it = tables.begin();
+    }
+
     if (it == tables.end()) {
       trap("callTable on non-existing table");
     }

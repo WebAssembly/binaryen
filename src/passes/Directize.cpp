@@ -43,14 +43,17 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
-    if (tables.empty()) {
+    std::unordered_map<Name, TableUtils::FlatTable>::const_iterator it;
+    if (curr->tableName.is()) {
+      it = tables.find(curr->tableName);
+    } else {
+      it = tables.begin();
+    }
+    if (it == tables.end()) {
       return;
     }
-    auto iter = tables.find(curr->tableName);
-    if (iter == tables.end()) {
-      return;
-    }
-    auto& flatTable = iter->second;
+
+    auto& flatTable = it->second;
 
     if (auto* c = curr->target->dynCast<Const>()) {
       Index index = c->value.geti32();
