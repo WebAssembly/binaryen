@@ -1610,6 +1610,11 @@ void BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
   assert(targetExpr);
   static_cast<CallIndirect*>(expression)->target = (Expression*)targetExpr;
 }
+const char* BinaryenCallIndirectGetTableName(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->tableName.c_str();
+}
 void BinaryenCallIndirectSetTableName(BinaryenExpressionRef expr,
                                       const char* tableName) {
   Name name(tableName);
