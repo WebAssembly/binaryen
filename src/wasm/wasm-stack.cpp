@@ -2084,7 +2084,7 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
       o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsI31);
       break;
     default:
-      WASM_UNREACHABLE("unimplemented ref.as_*");
+      WASM_UNREACHABLE("invalid ref.as_*");
   }
 }
 
