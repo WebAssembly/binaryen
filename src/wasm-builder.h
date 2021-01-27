@@ -709,8 +709,7 @@ public:
     ret->finalize();
     return ret;
   }
-  BrOnCast*
-  makeBrOnCast(Name name, Expression* ref, Expression* rtt) {
+  BrOnCast* makeBrOnCast(Name name, Expression* ref, Expression* rtt) {
     auto* ret = wasm.allocator.alloc<BrOnCast>();
     ret->name = name;
     ret->ref = ref;
