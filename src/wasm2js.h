@@ -2263,7 +2263,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     void unimplemented(Expression* curr) {
-      Fatal() << "wasm2js cannot convert " << getExpressionName(curr);
+      Fatal() << "wasm2js cannot convert " << *curr;
     }
   };
 
