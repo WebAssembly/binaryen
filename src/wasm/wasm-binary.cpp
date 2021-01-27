@@ -1264,12 +1264,16 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     wasm.userSections.resize(wasm.userSections.size() + 1);
     auto& section = wasm.userSections.back();
     section.name = sectionName.str;
-    auto sectionSize = payloadLen;
-    section.data.resize(sectionSize);
-    for (size_t i = 0; i < sectionSize; i++) {
-      section.data[i] = getInt8();
-    }
+    section.data = getBytes(payloadLen);
   }
+}
+
+std::vector<char> WasmBinaryBuilder::getBytes(size_t size) {
+  if (size >= input.size() || pos >= input.size() - size) {
+    throwError("unexpected end of input");
+  }
+  pos += size;
+  return {&input[pos - size], &input[pos]};
 }
 
 uint8_t WasmBinaryBuilder::getInt8() {
@@ -2390,10 +2394,7 @@ void WasmBinaryBuilder::readDataSegments() {
       curr.offset = readExpression();
     }
     auto size = getU32LEB();
-    curr.data.resize(size);
-    for (size_t j = 0; j < size; j++) {
-      curr.data[j] = char(getInt8());
-    }
+    curr.data = getBytes(size);
     wasm.memory.segments.push_back(curr);
   }
 }
