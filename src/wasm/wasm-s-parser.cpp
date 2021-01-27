@@ -2132,11 +2132,9 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {
   auto name = getLabel(*s[1]);
-  auto heapType = parseHeapType(*s[2]);
-  auto* ref = parseExpression(*s[3]);
-  auto* rtt = parseExpression(*s[4]);
-  validateHeapTypeUsingChild(rtt, heapType, s);
-  return Builder(wasm).makeBrOnCast(name, heapType, ref, rtt);
+  auto* ref = parseExpression(*s[2]);
+  auto* rtt = parseExpression(*s[3]);
+  return Builder(wasm).makeBrOnCast(name, ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {

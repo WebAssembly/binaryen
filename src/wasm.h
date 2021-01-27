@@ -1386,9 +1386,6 @@ public:
   BrOnCast(MixedArena& allocator) {}
 
   Name name;
-  // The cast type cannot be inferred from rtt if rtt is unreachable, so we must
-  // store it explicitly.
-  Type castType;
   Expression* ref;
   Expression* rtt;
 

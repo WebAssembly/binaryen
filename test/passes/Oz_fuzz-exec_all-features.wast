@@ -147,9 +147,9 @@
      (block $extendedblock (result (ref $extendedstruct))
       (drop
        ;; second, try to cast our simple $struct to what it is, which will work
-       (br_on_cast $block $struct
+       (br_on_cast $block
         ;; first, try to cast our simple $struct to an extended, which will fail
-        (br_on_cast $extendedblock $extendedstruct
+        (br_on_cast $extendedblock
          (local.get $any) (rtt.canon $extendedstruct)
         )
         (rtt.canon $struct)
@@ -168,7 +168,7 @@
    (block $never (result (ref $extendedstruct))
     ;; an untaken br_on_cast, with unreachable rtt - so we cannot use the
     ;; RTT in binaryen IR to find the cast type.
-    (br_on_cast $never $extendedstruct (ref.null $struct) (unreachable))
+    (br_on_cast $never (ref.null $struct) (unreachable))
     (unreachable)
    )
   )

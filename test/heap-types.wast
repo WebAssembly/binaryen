@@ -173,11 +173,11 @@
         ;; set the value to a local with type $struct.A, showing that the value
         ;; flowing out has the right type
         (local.set $temp.A
-          (br_on_cast $out $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+          (br_on_cast $out (ref.null $struct.A) (rtt.canon $struct.B))
         )
         ;; an untaken br_on_cast, with unreachable rtt - so we cannot use the
         ;; RTT in binaryen IR to find the cast type.
-        (br_on_cast $out $struct.B (ref.null $struct.A) (unreachable))
+        (br_on_cast $out (ref.null $struct.A) (unreachable))
         (unreachable)
       )
     )
