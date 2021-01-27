@@ -1269,7 +1269,8 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
   }
 }
 
-std::pair<const char*, const char*> WasmBinaryBuilder::getByteView(size_t size) {
+std::pair<const char*, const char*>
+WasmBinaryBuilder::getByteView(size_t size) {
   if (size > input.size() || pos > input.size() - size) {
     throwError("unexpected end of input");
   }
@@ -1512,9 +1513,9 @@ Name WasmBinaryBuilder::getInlineString() {
 
   std::string str(data.first, data.second);
   if (str.find('\0') != std::string::npos) {
-      throwError(
-        "inline string contains NULL (0). that is technically valid in wasm, "
-        "but you shouldn't do it, and it's not supported in binaryen");
+    throwError(
+      "inline string contains NULL (0). that is technically valid in wasm, "
+      "but you shouldn't do it, and it's not supported in binaryen");
   }
   BYN_TRACE("getInlineString: " << str << " ==>\n");
   return Name(str);
