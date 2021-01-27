@@ -1868,7 +1868,7 @@ struct PrintExpressionContents
         printMedium(o, "ref.as_i31");
         break;
       default:
-        WASM_UNREACHABLE("unimplemented ref.is_*");
+        WASM_UNREACHABLE("invalid ref.is_*");
     }
   }
 };
