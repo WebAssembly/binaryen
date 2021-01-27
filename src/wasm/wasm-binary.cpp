@@ -1265,12 +1265,18 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
     wasm.userSections.resize(wasm.userSections.size() + 1);
     auto& section = wasm.userSections.back();
     section.name = sectionName.str;
-    auto sectionSize = payloadLen;
-    section.data.resize(sectionSize);
-    for (size_t i = 0; i < sectionSize; i++) {
-      section.data[i] = getInt8();
-    }
+    auto data = getByteView(payloadLen);
+    section.data = {data.first, data.second};
   }
+}
+
+std::pair<const char*, const char*>
+WasmBinaryBuilder::getByteView(size_t size) {
+  if (size > input.size() || pos > input.size() - size) {
+    throwError("unexpected end of input");
+  }
+  pos += size;
+  return {&input[pos - size], &input[pos]};
 }
 
 uint8_t WasmBinaryBuilder::getInt8() {
@@ -1504,15 +1510,14 @@ Type WasmBinaryBuilder::getConcreteType() {
 Name WasmBinaryBuilder::getInlineString() {
   BYN_TRACE("<==\n");
   auto len = getU32LEB();
-  std::string str;
-  for (size_t i = 0; i < len; i++) {
-    auto curr = char(getInt8());
-    if (curr == 0) {
-      throwError(
-        "inline string contains NULL (0). that is technically valid in wasm, "
-        "but you shouldn't do it, and it's not supported in binaryen");
-    }
-    str = str + curr;
+
+  auto data = getByteView(len);
+
+  std::string str(data.first, data.second);
+  if (str.find('\0') != std::string::npos) {
+    throwError(
+      "inline string contains NULL (0). that is technically valid in wasm, "
+      "but you shouldn't do it, and it's not supported in binaryen");
   }
   BYN_TRACE("getInlineString: " << str << " ==>\n");
   return Name(str);
@@ -2400,11 +2405,9 @@ void WasmBinaryBuilder::readDataSegments() {
       curr.offset = readExpression();
     }
     auto size = getU32LEB();
-    curr.data.resize(size);
-    for (size_t j = 0; j < size; j++) {
-      curr.data[j] = char(getInt8());
-    }
-    wasm.memory.segments.push_back(curr);
+    auto data = getByteView(size);
+    curr.data = {data.first, data.second};
+    wasm.memory.segments.push_back(std::move(curr));
   }
 }
 
