@@ -1,6 +1,6 @@
 (module
  (type $none_=>_none (func))
- (table $table$0 1 1 funcref)
+ (table $0 1 1 funcref)
  (elem (i32.const 0) $foo)
  (func $foo
   (return_call $bar)

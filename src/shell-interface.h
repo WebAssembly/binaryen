@@ -95,8 +95,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
     if (wasm.tables.size() > 0) {
       for (auto& table : wasm.tables) {
-        // TODO(reference-types): check if table's type is funcref
-
         tables[table->name].resize(table->initial);
       }
     }

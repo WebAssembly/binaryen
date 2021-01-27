@@ -2465,7 +2465,7 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
       throwError("ElementType must be funcref in MVP");
     }
     auto table = std::make_unique<Table>();
-    table->setName("table$" + std::to_string(i), false);
+    table->setName(Name::fromInt(i), false);
     bool is_shared;
     Type indexType;
     getResizableLimits(

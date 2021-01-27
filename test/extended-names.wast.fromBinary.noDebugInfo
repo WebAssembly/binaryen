@@ -2,6 +2,6 @@
  (memory $0 1 1)
  (data (i32.const 0) "a")
  (data passive "b")
- (table $table$0 1 funcref)
+ (table $0 1 funcref)
 )
 
