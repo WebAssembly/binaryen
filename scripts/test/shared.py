@@ -493,18 +493,8 @@ def minify_check(wast, verify_final_result=True):
     print('      ', ' '.join(cmd))
     subprocess.check_call(cmd, stdout=open('a.wast', 'w'), stderr=subprocess.PIPE)
     assert os.path.exists('a.wast')
-    subprocess.check_call(WASM_OPT + ['a.wast', '--print-minified', '-all'],
+    subprocess.check_call(WASM_OPT + ['a.wast', '-all'],
                           stdout=open('b.wast', 'w'), stderr=subprocess.PIPE)
-    assert os.path.exists('b.wast')
-    if verify_final_result:
-        expected = open('a.wast').read()
-        actual = open('b.wast').read()
-        if actual != expected:
-            fail(actual, expected)
-    if os.path.exists('a.wast'):
-        os.unlink('a.wast')
-    if os.path.exists('b.wast'):
-        os.unlink('b.wast')
 
 
 # run a check with BINARYEN_PASS_DEBUG set, to do full validation
