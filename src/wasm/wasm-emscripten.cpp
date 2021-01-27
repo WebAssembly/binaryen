@@ -310,8 +310,8 @@ void AsmConstWalker::visitCall(Call* curr) {
       }
     }
 
-    Fatal() << "Unexpected arg0 type (" << *arg << ") in call to: "
-            << importName;
+    Fatal() << "Unexpected arg0 type (" << *arg
+            << ") in call to: " << importName;
   }
 
   auto* value = arg->cast<Const>();
