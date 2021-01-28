@@ -184,15 +184,17 @@
   (drop
    (block $label$1 (result (ref null ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))
     (local.set $0
-     (br_on_cast $label$1 ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}
+     (br_on_cast $label$1
       (ref.null ${i32_f32_f64})
       (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
      )
     )
-    (drop
-     (ref.null ${i32_f32_f64})
+    (block $label$2
+     (drop
+      (ref.null ${i32_f32_f64})
+     )
+     (unreachable)
     )
-    (unreachable)
    )
   )
  )

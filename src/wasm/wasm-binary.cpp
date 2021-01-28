@@ -5835,7 +5835,7 @@ bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
     throwError("bad rtt for br_on_cast");
   }
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeBrOnCast(name, rtt->type.getHeapType(), ref, rtt);
+  out = Builder(wasm).makeBrOnCast(name, ref, rtt);
   return true;
 }
 

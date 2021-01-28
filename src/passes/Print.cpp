@@ -1786,8 +1786,6 @@ struct PrintExpressionContents
   void visitBrOnCast(BrOnCast* curr) {
     printMedium(o, "br_on_cast ");
     printName(curr->name, o);
-    o << " ";
-    printHeapTypeName(o, curr->getCastType().getHeapType());
   }
   void visitRttCanon(RttCanon* curr) {
     printMedium(o, "rtt.canon ");

@@ -184,13 +184,15 @@
   (drop
    (block $out (result (ref null ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))
     (local.set $temp.A
-     (br_on_cast $out ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}
+     (br_on_cast $out
       (ref.null ${i32_f32_f64})
       (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
      )
     )
-    (br_on_cast $out ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}
-     (ref.null ${i32_f32_f64})
+    (block
+     (drop
+      (ref.null ${i32_f32_f64})
+     )
      (unreachable)
     )
     (unreachable)

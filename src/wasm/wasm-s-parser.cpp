@@ -2132,11 +2132,16 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {
   auto name = getLabel(*s[1]);
-  auto heapType = parseHeapType(*s[2]);
-  auto* ref = parseExpression(*s[3]);
-  auto* rtt = parseExpression(*s[4]);
-  validateHeapTypeUsingChild(rtt, heapType, s);
-  return Builder(wasm).makeBrOnCast(name, heapType, ref, rtt);
+  auto* ref = parseExpression(*s[2]);
+  auto* rtt = parseExpression(*s[3]);
+  Builder builder(wasm);
+  if (rtt->type == Type::unreachable) {
+    // An unreachable rtt is not supported: the text format does not provide the
+    // type, so if it's unreachable we should not even create a br_on_cast in
+    // such a case, as we'd have no idea what it casts to.
+    return builder.makeSequence(builder.makeDrop(ref), rtt);
+  }
+  return builder.makeBrOnCast(name, ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {
