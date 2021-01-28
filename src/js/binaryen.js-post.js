@@ -101,7 +101,7 @@ function initializeConstants() {
     'CallRef',
     'RefTest',
     'RefCast',
-    'BrOnCast',
+    'BrOn',
     'RttCanon',
     'RttSub',
     'StructNew',

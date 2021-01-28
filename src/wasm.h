@@ -555,6 +555,13 @@ enum RefAsOp {
   RefAsI31,
 };
 
+enum BrOnOp {
+  BrOnCast,
+  BrOnFunc,
+  BrOnData,
+  BrOnI31,
+};
+
 //
 // Expressions
 //
@@ -635,7 +642,7 @@ public:
     CallRefId,
     RefTestId,
     RefCastId,
-    BrOnCastId,
+    BrOnId,
     RttCanonId,
     RttSubId,
     StructNewId,
@@ -1381,12 +1388,15 @@ public:
   Type getCastType();
 };
 
-class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
+class BrOn : public SpecificExpression<Expression::BrOnId> {
 public:
-  BrOnCast(MixedArena& allocator) {}
+  BrOn(MixedArena& allocator) {}
 
+  BrOnOp op;
   Name name;
   Expression* ref;
+
+  // BrOnCast has an rtt that is used in the cast.
   Expression* rtt;
 
   void finalize();

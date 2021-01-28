@@ -1783,8 +1783,23 @@ struct PrintExpressionContents
     printMedium(o, "ref.cast ");
     printHeapTypeName(o, curr->getCastType().getHeapType());
   }
-  void visitBrOnCast(BrOnCast* curr) {
-    printMedium(o, "br_on_cast ");
+  void visitBrOn(BrOn* curr) {
+    switch (curr->op) {
+      case BrOnCast:
+        printMedium(o, "br_on_cast ");
+        break;
+      case BrOnFunc:
+        printMedium(o, "br_on_func ");
+        break;
+      case BrOnData:
+        printMedium(o, "br_on_data ");
+        break;
+      case BrOnI31:
+        printMedium(o, "br_on_i31 ");
+        break;
+      default:
+        WASM_UNREACHABLE("invalid ref.is_*");
+    }
     printName(curr->name, o);
   }
   void visitRttCanon(RttCanon* curr) {
@@ -2536,12 +2551,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printFullLine(curr->rtt);
     decIndent();
   }
-  void visitBrOnCast(BrOnCast* curr) {
+  void visitBrOn(BrOn* curr) {
     o << '(';
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ref);
-    printFullLine(curr->rtt);
+    if (curr->rtt) {
+      printFullLine(curr->rtt);
+    }
     decIndent();
   }
   void visitRttCanon(RttCanon* curr) {

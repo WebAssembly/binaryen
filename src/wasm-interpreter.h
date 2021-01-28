@@ -1469,17 +1469,51 @@ public:
     assert(cast.outcome == cast.Success);
     return cast.castRef;
   }
-  Flow visitBrOnCast(BrOnCast* curr) {
-    NOTE_ENTER("BrOnCast");
-    auto cast = doCast(curr);
-    if (cast.outcome == cast.Break) {
-      return cast.breaking;
+  Flow visitBrOn(BrOn* curr) {
+    NOTE_ENTER("BrOn");
+    // BrOnCast uses the casting infrastructure, so handle it first.
+    if (curr->op == BrOnCast) {
+      auto cast = doCast(curr);
+      if (cast.outcome == cast.Break) {
+        return cast.breaking;
+      }
+      if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
+        return cast.originalRef;
+      }
+      assert(cast.outcome == cast.Success);
+      return Flow(curr->name, cast.castRef);
     }
-    if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
-      return cast.originalRef;
+    // The others do a simpler check for the type.
+    Flow flow = visit(curr->ref);
+    if (flow.breaking()) {
+      return flow;
     }
-    assert(cast.outcome == cast.Success);
-    return Flow(curr->name, cast.castRef);
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    if (value.isNull()) {
+      return {value};
+    }
+    switch (curr->op) {
+      case BrOnFunc:
+        if (!value.type.isFunction()) {
+          return {value};
+        }
+        break;
+      case BrOnData:
+        if (!value.isGCData()) {
+          return {value};
+        }
+        break;
+      case BrOnI31:
+        if (value.type.getHeapType() != HeapType::i31) {
+          return {value};
+        }
+        break;
+      default:
+        WASM_UNREACHABLE("invalid br_on_*");
+    }
+    // No problems: take the branch.
+    return Flow(curr->name, value);
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {

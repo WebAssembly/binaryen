@@ -1990,9 +1990,25 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
 }
 
-void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast)
-    << U32LEB(getBreakIndex(curr->name));
+void BinaryInstWriter::visitBrOn(BrOn* curr) {
+  o << int8_t(BinaryConsts::GCPrefix);
+  switch (curr->op) {
+    case BrOnCast:
+      o << U32LEB(BinaryConsts::BrOnCast);
+      break;
+    case BrOnFunc:
+      o << U32LEB(BinaryConsts::BrOnFunc);
+      break;
+    case BrOnData:
+      o << U32LEB(BinaryConsts::BrOnData);
+      break;
+    case BrOnI31:
+      o << U32LEB(BinaryConsts::BrOnI31);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid br_on_*");
+  }
+  o << U32LEB(getBreakIndex(curr->name));
 }
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {

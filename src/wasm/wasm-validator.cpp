@@ -344,7 +344,7 @@ public:
   void visitI31Get(I31Get* curr);
   void visitRefTest(RefTest* curr);
   void visitRefCast(RefCast* curr);
-  void visitBrOnCast(BrOnCast* curr);
+  void visitBrOn(BrOn* curr);
   void visitRttCanon(RttCanon* curr);
   void visitRttSub(RttSub* curr);
   void visitStructNew(StructNew* curr);
@@ -2207,7 +2207,7 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   }
 }
 
-void FunctionValidator::visitBrOnCast(BrOnCast* curr) {
+void FunctionValidator::visitBrOn(BrOn* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "br_on_cast requires gc to be enabled");
@@ -2215,12 +2215,17 @@ void FunctionValidator::visitBrOnCast(BrOnCast* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type");
   }
-  // Note that an unreachable rtt is not supported: the text and binary formats
-  // do not provide the type, so if it's unreachable we should not even create
-  // a br_on_cast in such a case, as we'd have no idea what it casts to.
-  shouldBeTrue(
-    curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
-  noteBreak(curr->name, curr->getCastType(), curr);
+  if (curr->op == BrOnCast) {
+    // Note that an unreachable rtt is not supported: the text and binary
+    // formats do not provide the type, so if it's unreachable we should not
+    // even create a br_on_cast in such a case, as we'd have no idea what it
+    // casts to.
+    shouldBeTrue(
+      curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
+    noteBreak(curr->name, curr->getCastType(), curr);
+  } else {
+    shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");
+  }
 }
 
 void FunctionValidator::visitRttCanon(RttCanon* curr) {

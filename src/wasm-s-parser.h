@@ -258,7 +258,7 @@ private:
   Expression* makeI31Get(Element& s, bool signed_);
   Expression* makeRefTest(Element& s);
   Expression* makeRefCast(Element& s);
-  Expression* makeBrOnCast(Element& s);
+  Expression* makeBrOn(Element& s, BrOnOp op);
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
