@@ -1494,7 +1494,7 @@ public:
     // we just flow out the value.
     flow = Flow(curr->name, value);
     if (value.isNull()) {
-      flow.breakTo = Name();
+      flow.breakTo.clear();
     } else {
       switch (curr->op) {
         case BrOnFunc:
