@@ -1399,11 +1399,6 @@ public:
   // BrOnCast has an rtt that is used in the cast.
   Expression* rtt;
 
-  // BrOnCast's cast type cannot be inferred from rtt if rtt is unreachable, so
-  // we must store it explicitly. We also store the cast type for other BrOn*
-  // variants here for convenience.
-  Type castType;
-
   void finalize();
 
   Type getCastType();
