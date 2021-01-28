@@ -103,8 +103,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       name = module->tables.front()->name;
     }
 
-    if (reachable.count(
-          ModuleElement(ModuleElementKind::Table, name)) == 0) {
+    if (reachable.count(ModuleElement(ModuleElementKind::Table, name)) == 0) {
       queue.emplace_back(ModuleElementKind::Table, name);
     }
   }

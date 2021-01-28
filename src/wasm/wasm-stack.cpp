@@ -90,8 +90,7 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getTypeIndex(curr->sig))
-    << U32LEB(tableIdx);
+  o << op << U32LEB(parent.getTypeIndex(curr->sig)) << U32LEB(tableIdx);
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
