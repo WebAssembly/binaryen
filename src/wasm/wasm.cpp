@@ -1046,7 +1046,7 @@ void RefAs::finalize() {
       type = Type::i31ref;
       break;
     default:
-      WASM_UNREACHABLE("invalid ref.is_*");
+      WASM_UNREACHABLE("invalid ref.as_*");
   }
 }
 
