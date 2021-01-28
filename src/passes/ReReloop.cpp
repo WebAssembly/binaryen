@@ -278,8 +278,6 @@ struct ReReloop final : public Pass {
       ReturnTask::handle(*this, ret);
     } else if (auto* un = curr->dynCast<Unreachable>()) {
       UnreachableTask::handle(*this, un);
-    } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>()) {
-      Fatal() << "ReReloop does not support EH instructions yet";
     } else {
       // not control flow, so just a simple element
       getCurrBlock()->list.push_back(curr);
