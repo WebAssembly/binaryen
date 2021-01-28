@@ -95,7 +95,7 @@ I31GetId: 52
 CallRefId: 53
 RefTestId: 54
 RefCastId: 55
-BrOnCastId: 56
+BrOnId: 56
 RttCanonId: 57
 RttSubId: 58
 StructNewId: 59
