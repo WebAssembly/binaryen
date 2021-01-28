@@ -2514,7 +2514,8 @@ void WasmBinaryBuilder::readTableElements() {
     if (tableIdx < numTableImports) {
       tableImports[tableIdx]->segments.emplace_back(readExpression());
     } else if (tableIdx - numTableImports < tables.size()) {
-      tables[tableIdx - numTableImports]->segments.emplace_back(readExpression());
+      tables[tableIdx - numTableImports]->segments.emplace_back(
+        readExpression());
     } else {
       throwError("Table index out of range.");
     }
@@ -2662,8 +2663,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto name = escape(rawName);
         // De-duplicate names by appending .1, .2, etc.
         for (int i = 1; !usedNames.insert(name).second; ++i) {
-          name = std::string(escape(rawName).str) +
-                      std::string(".") + std::to_string(i);
+          name = std::string(escape(rawName).str) + std::string(".") +
+                 std::to_string(i);
         }
 
         auto numTableImports = tableImports.size();
