@@ -1490,32 +1490,30 @@ public:
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    // Prepare to break. If we do not break, we will unset the break target, and
-    // we just flow out the value.
-    flow = Flow(curr->name, value);
     if (value.isNull()) {
-      flow.breakTo.clear();
-    } else {
-      switch (curr->op) {
-        case BrOnFunc:
-          if (!value.type.isFunction()) {
-            return {value};
-          }
-        case BrOnData:
-          if (!value.isGCData()) {
-            flow.breakTo = Name();
-          }
-          break;
-        case BrOnI31:
-          if (value.type.getHeapType() != HeapType::i31) {
-            flow.breakTo = Name();
-          }
-          break;
-        default:
-          WASM_UNREACHABLE("invalid br_on_*");
-      }
+      return {value};
     }
-    return flow;
+    switch (curr->op) {
+      case BrOnFunc:
+        if (!value.type.isFunction()) {
+          return {value};
+        }
+        break;
+      case BrOnData:
+        if (!value.isGCData()) {
+          return {value};
+        }
+        break;
+      case BrOnI31:
+        if (value.type.getHeapType() != HeapType::i31) {
+          return {value};
+        }
+        break;
+      default:
+        WASM_UNREACHABLE("invalid br_on_*");
+    }
+    // No problems: take the branch.
+    return Flow(curr->name, value);
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {
