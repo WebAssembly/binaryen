@@ -146,7 +146,7 @@ void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
 void ReFinalize::visitCallRef(CallRef* curr) { curr->finalize(); }
 void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }
 void ReFinalize::visitRefCast(RefCast* curr) { curr->finalize(); }
-void ReFinalize::visitBrOnCast(BrOnCast* curr) {
+void ReFinalize::visitBrOn(BrOn* curr) {
   curr->finalize();
   if (curr->type == Type::unreachable) {
     replaceUntaken(curr->ref, nullptr);

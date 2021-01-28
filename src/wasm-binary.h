@@ -1041,6 +1041,9 @@ enum ASTNodes {
   RefAsFunc = 0x58,
   RefAsData = 0x59,
   RefAsI31 = 0x5a,
+  BrOnFunc = 0x60,
+  BrOnData = 0x61,
+  BrOnI31 = 0x62,
 };
 
 enum MemoryAccess {
@@ -1525,7 +1528,7 @@ public:
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);
   bool maybeVisitRefCast(Expression*& out, uint32_t code);
-  bool maybeVisitBrOnCast(Expression*& out, uint32_t code);
+  bool maybeVisitBrOn(Expression*& out, uint32_t code);
   bool maybeVisitRttCanon(Expression*& out, uint32_t code);
   bool maybeVisitRttSub(Expression*& out, uint32_t code);
   bool maybeVisitStructNew(Expression*& out, uint32_t code);

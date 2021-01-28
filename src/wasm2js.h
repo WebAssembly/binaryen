@@ -2206,7 +2206,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitBrOnCast(BrOnCast* curr) {
+    Ref visitBrOn(BrOn* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

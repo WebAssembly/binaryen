@@ -3019,7 +3019,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitRefCast(curr, opcode)) {
         break;
       }
-      if (maybeVisitBrOnCast(curr, opcode)) {
+      if (maybeVisitBrOn(curr, opcode)) {
         break;
       }
       if (maybeVisitRttCanon(curr, opcode)) {
@@ -5825,17 +5825,34 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::BrOnCast) {
-    return false;
+bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
+  BrOnOp op;
+  switch (code) {
+    case BinaryConsts::BrOnCast:
+      op = BrOnCast;
+      break;
+    case BinaryConsts::BrOnFunc:
+      op = BrOnFunc;
+      break;
+    case BinaryConsts::BrOnData:
+      op = BrOnData;
+      break;
+    case BinaryConsts::BrOnI31:
+      op = BrOnI31;
+      break;
+    default:
+      return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
-  auto* rtt = popNonVoidExpression();
-  if (!rtt->type.isRtt()) {
-    throwError("bad rtt for br_on_cast");
+  Expression* rtt = nullptr;
+  if (op == BrOnCast) {
+    rtt = popNonVoidExpression();
+    if (!rtt->type.isRtt()) {
+      throwError("bad rtt for br_on_cast");
+    }
   }
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeBrOnCast(name, ref, rtt);
+  out = Builder(wasm).makeBrOn(op, name, ref, rtt);
   return true;
 }
 

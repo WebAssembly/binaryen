@@ -931,7 +931,7 @@ void RefCast::finalize() {
 
 Type RefCast::getCastType() { return doGetCastType(this); }
 
-void BrOnCast::finalize() {
+void BrOn::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
@@ -939,7 +939,7 @@ void BrOnCast::finalize() {
   }
 }
 
-Type BrOnCast::getCastType() { return Type(rtt->type.getHeapType(), Nullable); }
+Type BrOn::getCastType() { return Type(rtt->type.getHeapType(), Nullable); }
 
 void RttCanon::finalize() {
   // Nothing to do - the type must have been set already during construction.
@@ -1032,7 +1032,7 @@ void RefAs::finalize() {
       type = Type::i31ref;
       break;
     default:
-      WASM_UNREACHABLE("unimplemented ref.is_*");
+      WASM_UNREACHABLE("invalid ref.is_*");
   }
 }
 

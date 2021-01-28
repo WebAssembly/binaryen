@@ -71,9 +71,23 @@ switch (op[0]) {
               case 'i':
                 if (strcmp(op, "br_if") == 0) { return makeBreak(s); }
                 goto parse_error;
-              case 'o':
-                if (strcmp(op, "br_on_cast") == 0) { return makeBrOnCast(s); }
-                goto parse_error;
+              case 'o': {
+                switch (op[6]) {
+                  case 'c':
+                    if (strcmp(op, "br_on_cast") == 0) { return makeBrOn(s, BrOnCast); }
+                    goto parse_error;
+                  case 'd':
+                    if (strcmp(op, "br_on_data") == 0) { return makeBrOn(s, BrOnData); }
+                    goto parse_error;
+                  case 'f':
+                    if (strcmp(op, "br_on_func") == 0) { return makeBrOn(s, BrOnFunc); }
+                    goto parse_error;
+                  case 'i':
+                    if (strcmp(op, "br_on_i31t") == 0) { return makeBrOn(s, BrOnI31); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 't':
                 if (strcmp(op, "br_table") == 0) { return makeBreakTable(s); }
                 goto parse_error;

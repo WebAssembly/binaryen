@@ -2130,7 +2130,7 @@ Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
   return Builder(wasm).makeRefCast(ref, rtt);
 }
 
-Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {
+Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   auto name = getLabel(*s[1]);
   auto* ref = parseExpression(*s[2]);
   auto* rtt = parseExpression(*s[3]);
@@ -2141,7 +2141,7 @@ Expression* SExpressionWasmBuilder::makeBrOnCast(Element& s) {
     // such a case, as we'd have no idea what it casts to.
     return builder.makeSequence(builder.makeDrop(ref), rtt);
   }
-  return builder.makeBrOnCast(name, ref, rtt);
+  return builder.makeBrOn(op, name, ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {
