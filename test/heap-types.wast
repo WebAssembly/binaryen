@@ -193,19 +193,28 @@
     (drop (ref.as_i31 (local.get $x)))
   )
   (func $br_on_X (param $x anyref)
+    (local $f funcref)
+    (local $d dataref)
+    (local $i i31ref)
     (drop
       (block $func (result funcref)
-        (br_on_func $func (local.get $x))
+        (local.set $f
+          (br_on_func $func (local.get $x))
+        )
       )
     )
     (drop
       (block $data (result dataref)
-        (br_on_data $data (local.get $x))
+        (local.set $d
+          (br_on_data $data (local.get $x))
+        )
       )
     )
     (drop
       (block $i31 (result i31ref)
-        (br_on_i31 $i31 (local.get $x))
+        (local.set $i
+          (br_on_i31 $i31 (local.get $x))
+        )
       )
     )
   )

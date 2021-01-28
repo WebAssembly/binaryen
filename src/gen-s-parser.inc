@@ -83,7 +83,7 @@ switch (op[0]) {
                     if (strcmp(op, "br_on_func") == 0) { return makeBrOn(s, BrOnFunc); }
                     goto parse_error;
                   case 'i':
-                    if (strcmp(op, "br_on_i31t") == 0) { return makeBrOn(s, BrOnI31); }
+                    if (strcmp(op, "br_on_i31") == 0) { return makeBrOn(s, BrOnI31); }
                     goto parse_error;
                   default: goto parse_error;
                 }

@@ -2556,7 +2556,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ref);
-    printFullLine(curr->rtt);
+    if (curr->rtt) {
+      printFullLine(curr->rtt);
+    }
     decIndent();
   }
   void visitRttCanon(RttCanon* curr) {

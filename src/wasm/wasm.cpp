@@ -932,7 +932,8 @@ void RefCast::finalize() {
 Type RefCast::getCastType() { return doGetCastType(this); }
 
 void BrOn::finalize() {
-  if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
+  if (ref->type == Type::unreachable ||
+      (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
     type = ref->type;
