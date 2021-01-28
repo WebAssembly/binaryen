@@ -1499,9 +1499,8 @@ public:
       switch (curr->op) {
         case BrOnFunc:
           if (!value.type.isFunction()) {
-            flow.breakTo = Name();
+            return {value};
           }
-          break;
         case BrOnData:
           if (!value.isGCData()) {
             flow.breakTo = Name();
