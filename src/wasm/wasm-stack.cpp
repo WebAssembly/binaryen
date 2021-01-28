@@ -2090,6 +2090,9 @@ void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
   switch (curr->op) {
+    case RefAsNonNull:
+      o << int8_t(BinaryConsts::RefAsNonNull);
+      break;
     case RefAsFunc:
       o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsFunc);
       break;
