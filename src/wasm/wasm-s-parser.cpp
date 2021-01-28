@@ -1837,9 +1837,11 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
   }
   Index i = 1;
   auto ret = allocator.alloc<CallIndirect>();
+  if (s[i]->isStr()) {
+    ret->tableName = s[i++]->str();
+  }
   i = parseTypeUse(s, i, ret->sig);
   parseCallOperands(s, i, s.size() - 1, ret);
-  ret->tableName = wasm.tables[0]->name;
   ret->target = parseExpression(s[s.size() - 1]);
   ret->isReturn = isReturn;
   ret->finalize();
@@ -2597,7 +2599,7 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     table->setName(name, hasExplicitName);
     table->module = module;
     table->base = base;
-    tableNames.push_back(table->name);
+    tableNames.push_back(name);
 
     if (j < inner.size() - 1) {
       auto initElem = inner[j++];

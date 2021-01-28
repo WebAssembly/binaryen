@@ -1310,6 +1310,10 @@ void Module::updateMaps() {
   for (auto& curr : exports) {
     exportsMap[curr->name] = curr.get();
   }
+  tablesMap.clear();
+  for (auto& curr : tables) {
+    tablesMap[curr->name] = curr.get();
+  }
   globalsMap.clear();
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
