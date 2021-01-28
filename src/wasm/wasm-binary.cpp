@@ -5847,9 +5847,6 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
   Expression* rtt = nullptr;
   if (op == BrOnCast) {
     rtt = popNonVoidExpression();
-    if (!rtt->type.isRtt()) {
-      throwError("bad rtt for br_on_cast");
-    }
   }
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeBrOn(op, name, ref, rtt);
