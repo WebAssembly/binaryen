@@ -940,7 +940,20 @@ void BrOn::finalize() {
   }
 }
 
-Type BrOn::getCastType() { return Type(rtt->type.getHeapType(), Nullable); }
+Type BrOn::getCastType() {
+  switch (op) {
+    case BrOnCast:
+      return Type(rtt->type.getHeapType(), Nullable);
+    case BrOnFunc:
+      return Type::funcref;
+    case BrOnData:
+      return Type::dataref;
+    case BrOnI31:
+      return Type::i31ref;
+    default:
+      WASM_UNREACHABLE("invalid br_on_*");
+  }
+}
 
 void RttCanon::finalize() {
   // Nothing to do - the type must have been set already during construction.
