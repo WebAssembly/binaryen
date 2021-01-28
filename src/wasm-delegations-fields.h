@@ -590,6 +590,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::BrOnId: {
     DELEGATE_START(BrOn);
+    DELEGATE_FIELD_INT(BrOn, op);
     DELEGATE_FIELD_SCOPE_NAME_USE(BrOn, name);
     DELEGATE_FIELD_OPTIONAL_CHILD(BrOn, rtt);
     DELEGATE_FIELD_CHILD(BrOn, ref);
