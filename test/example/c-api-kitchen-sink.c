@@ -843,7 +843,6 @@ void test_unreachable() {
   BinaryenModuleRef module = BinaryenModuleCreate();
   const char* names[1] = {"unreachable-fn"};
 
-  // BinaryenAddTable(module, "tab", 1, 1, names, 1, makeInt32(module, 0));
   BinaryenExpressionRef body = BinaryenCallIndirect(module,
                                                     BinaryenUnreachable(module),
                                                     NULL,

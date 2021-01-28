@@ -809,15 +809,20 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
                                     Type(Type::i32),
                                     curr,
                                     "indirect call target must be an i32");
-  if (curr->tableName.is()) {
-    auto* table = getModule()->getTableOrNull(curr->tableName);
-    if (!shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
-      return;
+
+  if (curr->target->type != Type::unreachable) {
+    if (curr->tableName.is()) {
+      auto* table = getModule()->getTableOrNull(curr->tableName);
+      if (!shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
+        return;
+      } else {
+        shouldBeFalse(
+          getModule()->tables.empty(), curr, "call-indirect table not defined");
+      }
+    } else {
+      shouldBeFalse(
+        getModule()->tables.empty(), curr, "call-indirect no tables found");
     }
-    // TODO: shouldn't we care about the case where no tables exist?
-    // } else {
-    //   shouldBeFalse(
-    //     getModule()->tables.empty(), curr, "call-indirect no tables found");
   }
 
   validateCallParamsAndResult(curr, curr->sig);
