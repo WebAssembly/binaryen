@@ -936,12 +936,22 @@ void BrOn::finalize() {
       (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
-    type = ref->type;
+    if (op == BrOnNull) {
+      // BrOnNull is the reverse of the others: it branches if null, and it does
+      // not flow out the existing value otherwise, rather it returns it as non-
+      // null.
+      // FIXME: When we support non-nullable types, this should be non-nullable.
+      type = Type(ref->type.getHeapType(), Nullable);
+    } else {
+      type = ref->type;
+    }
   }
 }
 
 Type BrOn::getCastType() {
   switch (op) {
+    case BrOnNull:
+      return ref->type;
     case BrOnCast:
       return Type(rtt->type.getHeapType(), Nullable);
     case BrOnFunc:

@@ -2876,6 +2876,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::RefEq:
       visitRefEq((curr = allocator.alloc<RefEq>())->cast<RefEq>());
       break;
+    case BinaryConsts::BrOnNull:
+      visitBrOn((curr = allocator.alloc<BrOn>())->cast<BrOn>(), code);
+      break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
       break;
@@ -5828,6 +5831,9 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
 bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
   BrOnOp op;
   switch (code) {
+    case BinaryConsts::BrOnNull:
+      op = BrOnNull;
+      break;
     case BinaryConsts::BrOnCast:
       op = BrOnCast;
       break;

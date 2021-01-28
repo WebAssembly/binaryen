@@ -996,6 +996,7 @@ enum ASTNodes {
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
+  BrOnNull = 0xd4,
 
   // exception handling opcodes
 

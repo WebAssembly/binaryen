@@ -556,6 +556,7 @@ enum RefAsOp {
 };
 
 enum BrOnOp {
+  BrOnNull,
   BrOnCast,
   BrOnFunc,
   BrOnData,
