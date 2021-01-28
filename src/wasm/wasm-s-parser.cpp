@@ -2138,9 +2138,9 @@ Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   if (op == BrOnCast) {
     rtt = parseExpression(*s[3]);
     if (rtt->type == Type::unreachable) {
-      // An unreachable rtt is not supported: the text format does not provide the
-      // type, so if it's unreachable we should not even create a br_on_cast in
-      // such a case, as we'd have no idea what it casts to.
+      // An unreachable rtt is not supported: the text format does not provide
+      // the type, so if it's unreachable we should not even create a br_on_cast
+      // in such a case, as we'd have no idea what it casts to.
       return builder.makeSequence(builder.makeDrop(ref), rtt);
     }
   }
