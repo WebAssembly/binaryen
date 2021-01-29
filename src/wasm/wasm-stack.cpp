@@ -84,8 +84,8 @@ void BinaryInstWriter::visitCall(Call* curr) {
 
 void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
   Index tableIdx = 0;
-  if (curr->tableName.is()) {
-    tableIdx = parent.getTableIndex(curr->tableName);
+  if (curr->table.is()) {
+    tableIdx = parent.getTableIndex(curr->table);
   }
 
   int8_t op =

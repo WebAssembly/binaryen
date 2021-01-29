@@ -1046,7 +1046,7 @@ BINARYEN_API const char*
 BinaryenCallIndirectGetTableName(BinaryenExpressionRef expr);
 // Sets the table name of a `call_indirect` expression.
 BINARYEN_API void BinaryenCallIndirectSetTableName(BinaryenExpressionRef expr,
-                                                   const char* tableName);
+                                                   const char* table);
 // Gets the number of operands of a `call_indirect` expression.
 BINARYEN_API BinaryenIndex
 BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr);
@@ -2050,14 +2050,14 @@ BINARYEN_API const char* BinaryenGetFunctionTableSegmentData(
 BINARYEN_REF(Table);
 
 BINARYEN_API BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
-                                               const char* tableName,
+                                               const char* table,
                                                BinaryenIndex initial,
                                                BinaryenIndex maximum,
                                                const char** funcNames,
                                                BinaryenIndex numFuncNames,
                                                BinaryenExpressionRef offset);
 BINARYEN_API void BinaryenRemoveTable(BinaryenModuleRef module,
-                                      const char* tableName);
+                                      const char* table);
 
 // Memory. One per module
 

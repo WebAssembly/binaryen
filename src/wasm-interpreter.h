@@ -2382,7 +2382,7 @@ private:
       Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->sig.results : curr->type;
       Flow ret = instance.externalInterface->callTable(
-        curr->tableName, index, curr->sig, arguments, type, *instance.self());
+        curr->table, index, curr->sig, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
         ret.breakTo = RETURN_FLOW;

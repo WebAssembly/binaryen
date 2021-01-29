@@ -282,7 +282,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
             params.push_back(param);
           }
         }
-        return builder->makeCallIndirect(curr->tableName,
+        return builder->makeCallIndirect(curr->table,
                                          curr->target,
                                          args,
                                          Signature(Type(params), results),

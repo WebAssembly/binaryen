@@ -1838,7 +1838,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
   Index i = 1;
   auto ret = allocator.alloc<CallIndirect>();
   if (s[i]->isStr()) {
-    ret->tableName = s[i++]->str();
+    ret->table = s[i++]->str();
   }
   i = parseTypeUse(s, i, ret->sig);
   parseCallOperands(s, i, s.size() - 1, ret);

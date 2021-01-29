@@ -2401,7 +2401,7 @@ void WasmBinaryBuilder::processNames() {
     auto& refs = iter.second;
     for (auto* ref : refs) {
       if (auto* callIndirect = ref->dynCast<CallIndirect>()) {
-        callIndirect->tableName = getTableName(index);
+        callIndirect->table = getTableName(index);
       } else {
         WASM_UNREACHABLE("Invalid type in table references");
       }

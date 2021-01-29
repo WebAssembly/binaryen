@@ -244,13 +244,13 @@ public:
     return call;
   }
   template<typename T>
-  CallIndirect* makeCallIndirect(const Name tableName,
+  CallIndirect* makeCallIndirect(const Name table,
                                  Expression* target,
                                  const T& args,
                                  Signature sig,
                                  bool isReturn = false) {
     auto* call = wasm.allocator.alloc<CallIndirect>();
-    call->tableName = tableName;
+    call->table = table;
     call->sig = sig;
     call->type = sig.results;
     call->target = target;

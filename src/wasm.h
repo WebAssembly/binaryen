@@ -821,7 +821,7 @@ public:
   Signature sig;
   ExpressionList operands;
   Expression* target;
-  Name tableName;
+  Name table;
   bool isReturn = false;
 
   void finalize();

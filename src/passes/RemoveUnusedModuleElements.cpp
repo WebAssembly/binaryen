@@ -97,8 +97,8 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     }
 
     Name name;
-    if (curr->tableName.is()) {
-      name = curr->tableName;
+    if (curr->table.is()) {
+      name = curr->table;
     } else {
       name = module->tables.front()->name;
     }

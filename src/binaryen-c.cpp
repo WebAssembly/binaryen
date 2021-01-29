@@ -1613,15 +1613,15 @@ void BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
 const char* BinaryenCallIndirectGetTableName(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<CallIndirect>());
-  return static_cast<CallIndirect*>(expression)->tableName.c_str();
+  return static_cast<CallIndirect*>(expression)->table.c_str();
 }
 void BinaryenCallIndirectSetTableName(BinaryenExpressionRef expr,
-                                      const char* tableName) {
-  Name name(tableName);
+                                      const char* table) {
+  Name name(table);
   auto* expression = (Expression*)expr;
 
   assert(expression->is<CallIndirect>());
-  static_cast<CallIndirect*>(expression)->tableName = name;
+  static_cast<CallIndirect*>(expression)->table = name;
 }
 BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -3333,8 +3333,8 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
 
   return ((Module*)module)->getTable(name);
 }
-void BinaryenRemoveTable(BinaryenModuleRef module, const char* tableName) {
-  ((Module*)module)->removeTable(tableName);
+void BinaryenRemoveTable(BinaryenModuleRef module, const char* table) {
+  ((Module*)module)->removeTable(table);
 }
 
 int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
