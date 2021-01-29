@@ -131,9 +131,7 @@ struct TableSlotManager {
   Slot activeBase;
   std::map<Name, Slot> funcIndices;
 
-  TableSlotManager(Module& module);
-
-  static Table& initTable(Module& module);
+  TableSlotManager(Module& module, Table& table);
 
   // Returns the table index for `func`, allocating a new index if necessary.
   Slot getSlot(Name func);
@@ -157,22 +155,8 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
   assert(it.second && "Function already has multiple table slots");
 }
 
-Table& TableSlotManager::initTable(Module& module) {
-  if (module.tables.empty()) {
-    auto newTable = std::make_unique<Table>();
-    Name name = Name::fromInt(0);
-    newTable->setExplicitName(name);
-    newTable->segments.emplace_back(Builder(module).makeConst(int32_t(0)));
-    module.addTable(std::move(newTable));
-
-    return *module.getTable(name);
-  } else {
-    return *module.tables[0];
-  }
-}
-
-TableSlotManager::TableSlotManager(Module& module)
-  : module(module), table(initTable(module)) {
+TableSlotManager::TableSlotManager(Module& module, Table& table)
+  : module(module), table(table) {
 
   // If there is exactly one table segment and that segment has a non-constant
   // offset, append new items to the end of that segment. In all other cases,
@@ -245,6 +229,10 @@ struct ModuleSplitter {
   const std::set<Name>& primaryFuncs;
   const std::set<Name>& secondaryFuncs;
 
+  // An auxiliary table, in case primary does not have any tables.
+  // Empty otherwise.
+  std::unique_ptr<Table> auxiliaryTable;
+
   TableSlotManager tableManager;
 
   // Map from internal function names to (one of) their corresponding export
@@ -257,6 +245,10 @@ struct ModuleSplitter {
   classifyFunctions(const Module& primary, const Config& config);
   static std::map<Name, Name> initExportedPrimaryFuncs(const Module& primary);
 
+  static std::unique_ptr<Table> initAuxiliaryTable(Module& module);
+  static TableSlotManager initTableManager(Module& module,
+                                           Table* auxiliaryTable);
+
   // Other helpers
   void exportImportFunction(Name func);
 
@@ -266,6 +258,7 @@ struct ModuleSplitter {
   void indirectCallsToSecondaryFunctions();
   void exportImportCalledPrimaryFunctions();
   void setupTablePatching();
+  void maybeAddAuxiliaryTableToPrimary();
   void shareImportableItems();
 
   ModuleSplitter(Module& primary, const Config& config)
@@ -273,13 +266,16 @@ struct ModuleSplitter {
       secondary(*secondaryPtr),
       classifiedFuncs(classifyFunctions(primary, config)),
       primaryFuncs(classifiedFuncs.first),
-      secondaryFuncs(classifiedFuncs.second), tableManager(primary),
+      secondaryFuncs(classifiedFuncs.second),
+      auxiliaryTable(initAuxiliaryTable(primary)),
+      tableManager(initTableManager(primary, auxiliaryTable.get())),
       exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)) {
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
     indirectCallsToSecondaryFunctions();
     exportImportCalledPrimaryFunctions();
     setupTablePatching();
+    maybeAddAuxiliaryTableToPrimary();
     shareImportableItems();
   }
 };
@@ -315,6 +311,26 @@ ModuleSplitter::initExportedPrimaryFuncs(const Module& primary) {
     }
   }
   return functionExportNames;
+}
+
+std::unique_ptr<Table> ModuleSplitter::initAuxiliaryTable(Module& module) {
+  if (module.tables.empty()) {
+    auto table = std::make_unique<Table>();
+    table->setName(Name::fromInt(0), false);
+    return table;
+  }
+
+  return std::unique_ptr<Table>();
+}
+
+TableSlotManager ModuleSplitter::initTableManager(Module& module,
+                                                  Table* auxiliaryTable) {
+  if (auxiliaryTable) {
+    return TableSlotManager(module, *auxiliaryTable);
+  } else {
+    // If auxiliaryTable is null, it means primary does have at least one table.
+    return TableSlotManager(module, *module.tables.front());
+  }
 }
 
 void ModuleSplitter::exportImportFunction(Name funcName) {
@@ -531,6 +547,15 @@ void ModuleSplitter::setupTablePatching() {
   }
   if (currData.size()) {
     finishSegment();
+  }
+}
+
+void ModuleSplitter::maybeAddAuxiliaryTableToPrimary() {
+  if (auxiliaryTable) {
+    if (!auxiliaryTable->segments.empty() &&
+        !auxiliaryTable->segments.front().data.empty()) {
+      primary.addTable(std::move(auxiliaryTable));
+    }
   }
 }
 
