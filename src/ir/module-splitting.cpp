@@ -329,6 +329,7 @@ TableSlotManager ModuleSplitter::initTableManager(Module& module,
     return TableSlotManager(module, *auxiliaryTable);
   } else {
     // If auxiliaryTable is null, it means primary does have at least one table.
+    assert(!module.tables.empty());
     return TableSlotManager(module, *module.tables.front());
   }
 }
@@ -552,6 +553,7 @@ void ModuleSplitter::setupTablePatching() {
 
 void ModuleSplitter::maybeAddAuxiliaryTableToPrimary() {
   if (auxiliaryTable) {
+    assert(primary.tables.empty());
     if (!auxiliaryTable->segments.empty() &&
         !auxiliaryTable->segments.front().data.empty()) {
       primary.addTable(std::move(auxiliaryTable));
