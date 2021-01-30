@@ -35,6 +35,14 @@ int main() {
                      BinaryenConst(module, BinaryenLiteralInt32(0)));
   }
 
+  BinaryenAddTable(module,
+                    "t2",
+                    1,
+                    1,
+                    NULL,
+                    0,
+                    BinaryenConst(module, BinaryenLiteralInt32(0)));
+
   {
     // Get the 0 and 1 arguments, and add them
     BinaryenExpressionRef operands[] = {

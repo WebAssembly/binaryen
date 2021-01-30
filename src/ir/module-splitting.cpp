@@ -99,8 +99,8 @@ namespace ModuleSplitting {
 
 namespace {
 
-template<class F> void forEachElement(Table& table, F f) {
-  for (auto& segment : table.segments) {
+template<class F> void forEachElement(Table* table, F f) {
+  for (auto& segment : table->segments) {
     Name base = "";
     Index offset = 0;
     if (auto* c = segment.offset->dynCast<Const>()) {
@@ -126,12 +126,14 @@ struct TableSlotManager {
     Expression* makeExpr(Module& module);
   };
   Module& module;
-  Table& table;
+  Table* activeTable = nullptr;
   Table::Segment* activeSegment = nullptr;
   Slot activeBase;
   std::map<Name, Slot> funcIndices;
 
-  TableSlotManager(Module& module, Table& table);
+  TableSlotManager(Module& module);
+
+  Table* makeTable();
 
   // Returns the table index for `func`, allocating a new index if necessary.
   Slot getSlot(Name func);
@@ -155,40 +157,54 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
   assert(it.second && "Function already has multiple table slots");
 }
 
-TableSlotManager::TableSlotManager(Module& module, Table& table)
-  : module(module), table(table) {
+TableSlotManager::TableSlotManager(Module& module) : module(module) {
 
+  if (module.tables.empty())
+    return;
+
+  activeTable = module.tables.front().get();
   // If there is exactly one table segment and that segment has a non-constant
   // offset, append new items to the end of that segment. In all other cases,
   // append new items at constant offsets after all existing items at constant
   // offsets.
-  if (table.segments.size() == 1 && !table.segments[0].offset->is<Const>()) {
-    assert(table.segments[0].offset->is<GlobalGet>() &&
+  if (activeTable->segments.size() == 1 &&
+      !activeTable->segments[0].offset->is<Const>()) {
+    assert(activeTable->segments[0].offset->is<GlobalGet>() &&
            "Unexpected initializer instruction");
-    activeSegment = &table.segments[0];
-    activeBase = {
-      table.name, table.segments[0].offset->cast<GlobalGet>()->name, 0};
+    activeSegment = &activeTable->segments[0];
+    activeBase = {activeTable->name,
+                  activeTable->segments[0].offset->cast<GlobalGet>()->name,
+                  0};
   } else {
     // Finds the segment with the highest occupied table slot so that new items
     // can be inserted contiguously at the end of it without accidentally
     // overwriting any other items. TODO: be more clever about filling gaps in
     // the table, if that is ever useful.
     Index maxIndex = 0;
-    for (auto& segment : table.segments) {
+    for (auto& segment : activeTable->segments) {
       assert(segment.offset->is<Const>() &&
              "Unexpected non-const segment offset with multiple segments");
       Index segmentBase = segment.offset->cast<Const>()->value.geti32();
       if (segmentBase + segment.data.size() >= maxIndex) {
         maxIndex = segmentBase + segment.data.size();
         activeSegment = &segment;
-        activeBase = {table.name, "", segmentBase};
+        activeBase = {activeTable->name, "", segmentBase};
       }
     }
   }
+
   // Initialize funcIndices with the functions already in the table.
-  forEachElement(table, [&](Name base, Index offset, Name func) {
-    addSlot(func, {table.name, base, offset});
+  forEachElement(activeTable, [&](Name base, Index offset, Name func) {
+    addSlot(func, {activeTable->name, base, offset});
   });
+}
+
+Table* TableSlotManager::makeTable() {
+  auto table = std::make_unique<Table>();
+  table->setName(Name::fromInt(0), false);
+  module.addTable(std::move(table));
+
+  return module.tables.front().get();
 }
 
 TableSlotManager::Slot TableSlotManager::getSlot(Name func) {
@@ -199,9 +215,14 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func) {
 
   // If there are no segments yet, allocate one.
   if (activeSegment == nullptr) {
-    assert(table.segments.size() == 0);
-    table.segments.emplace_back(Builder(module).makeConst(int32_t(0)));
-    activeSegment = &table.segments.back();
+    if (activeTable == nullptr) {
+      activeTable = makeTable();
+    }
+
+    assert(activeTable->segments.size() == 0);
+    activeTable->segments.emplace_back(activeTable->name,
+                                       Builder(module).makeConst(int32_t(0)));
+    activeSegment = &activeTable->segments.back();
   }
 
   Slot newSlot = {activeBase.tableName,
@@ -209,11 +230,11 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func) {
                   activeBase.index + Index(activeSegment->data.size())};
   activeSegment->data.push_back(func);
   addSlot(func, newSlot);
-  if (table.initial <= newSlot.index) {
-    table.initial = newSlot.index + 1;
+  if (activeTable->initial <= newSlot.index) {
+    activeTable->initial = newSlot.index + 1;
   }
-  if (table.max <= newSlot.index) {
-    table.max = newSlot.index + 1;
+  if (activeTable->max <= newSlot.index) {
+    activeTable->max = newSlot.index + 1;
   }
   return newSlot;
 }
@@ -229,10 +250,6 @@ struct ModuleSplitter {
   const std::set<Name>& primaryFuncs;
   const std::set<Name>& secondaryFuncs;
 
-  // An auxiliary table, in case primary does not have any tables.
-  // Empty otherwise.
-  std::unique_ptr<Table> auxiliaryTable;
-
   TableSlotManager tableManager;
 
   // Map from internal function names to (one of) their corresponding export
@@ -245,10 +262,6 @@ struct ModuleSplitter {
   classifyFunctions(const Module& primary, const Config& config);
   static std::map<Name, Name> initExportedPrimaryFuncs(const Module& primary);
 
-  static std::unique_ptr<Table> initAuxiliaryTable(Module& module);
-  static TableSlotManager initTableManager(Module& module,
-                                           Table* auxiliaryTable);
-
   // Other helpers
   void exportImportFunction(Name func);
 
@@ -258,7 +271,6 @@ struct ModuleSplitter {
   void indirectCallsToSecondaryFunctions();
   void exportImportCalledPrimaryFunctions();
   void setupTablePatching();
-  void maybeAddAuxiliaryTableToPrimary();
   void shareImportableItems();
 
   ModuleSplitter(Module& primary, const Config& config)
@@ -266,16 +278,13 @@ struct ModuleSplitter {
       secondary(*secondaryPtr),
       classifiedFuncs(classifyFunctions(primary, config)),
       primaryFuncs(classifiedFuncs.first),
-      secondaryFuncs(classifiedFuncs.second),
-      auxiliaryTable(initAuxiliaryTable(primary)),
-      tableManager(initTableManager(primary, auxiliaryTable.get())),
+      secondaryFuncs(classifiedFuncs.second), tableManager(primary),
       exportedPrimaryFuncs(initExportedPrimaryFuncs(primary)) {
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
     indirectCallsToSecondaryFunctions();
     exportImportCalledPrimaryFunctions();
     setupTablePatching();
-    maybeAddAuxiliaryTableToPrimary();
     shareImportableItems();
   }
 };
@@ -311,27 +320,6 @@ ModuleSplitter::initExportedPrimaryFuncs(const Module& primary) {
     }
   }
   return functionExportNames;
-}
-
-std::unique_ptr<Table> ModuleSplitter::initAuxiliaryTable(Module& module) {
-  if (module.tables.empty()) {
-    auto table = std::make_unique<Table>();
-    table->setName(Name::fromInt(0), false);
-    return table;
-  }
-
-  return std::unique_ptr<Table>();
-}
-
-TableSlotManager ModuleSplitter::initTableManager(Module& module,
-                                                  Table* auxiliaryTable) {
-  if (auxiliaryTable) {
-    return TableSlotManager(module, *auxiliaryTable);
-  } else {
-    // If auxiliaryTable is null, it means primary does have at least one table.
-    assert(!module.tables.empty());
-    return TableSlotManager(module, *module.tables.front());
-  }
 }
 
 void ModuleSplitter::exportImportFunction(Name funcName) {
@@ -463,11 +451,13 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
 }
 
 void ModuleSplitter::setupTablePatching() {
+  if (!tableManager.activeTable) return;
+
   std::map<Index, Name> replacedElems;
   // Replace table references to secondary functions with an imported
   // placeholder that encodes the table index in its name:
   // `importNamespace`.`index`.
-  forEachElement(tableManager.table, [&](Name, Index index, Name& elem) {
+  forEachElement(tableManager.activeTable, [&](Name, Index index, Name& elem) {
     if (secondaryFuncs.count(elem)) {
       replacedElems[index] = elem;
       auto* secondaryFunc = secondary.getFunction(elem);
@@ -490,10 +480,10 @@ void ModuleSplitter::setupTablePatching() {
   }
 
   auto secondaryTable =
-    ModuleUtils::copyTableWithoutSegments(&tableManager.table, secondary);
+    ModuleUtils::copyTableWithoutSegments(tableManager.activeTable, secondary);
 
   if (tableManager.activeBase.global.size()) {
-    assert(tableManager.table.segments.size() == 1 &&
+    assert(tableManager.activeTable->segments.size() == 1 &&
            "Unexpected number of segments with non-const base");
     assert(secondary.tables.size() == 1 &&
            secondary.tables.front()->segments.empty());
@@ -505,7 +495,8 @@ void ModuleSplitter::setupTablePatching() {
     // to be imported into the second module. TODO: use better strategies here,
     // such as using ref.func in the start function or standardizing addition in
     // initializer expressions.
-    const Table::Segment& primarySeg = tableManager.table.segments.front();
+    const Table::Segment& primarySeg =
+      tableManager.activeTable->segments.front();
     std::vector<Name> secondaryElems;
     secondaryElems.reserve(primarySeg.data.size());
 
@@ -526,7 +517,8 @@ void ModuleSplitter::setupTablePatching() {
     }
 
     auto offset = ExpressionManipulator::copy(primarySeg.offset, secondary);
-    secondaryTable->segments.emplace_back(offset, secondaryElems);
+    secondaryTable->segments.emplace_back(
+      secondaryTable->name, offset, secondaryElems);
     return;
   }
 
@@ -536,7 +528,8 @@ void ModuleSplitter::setupTablePatching() {
   std::vector<Name> currData;
   auto finishSegment = [&]() {
     auto* offset = Builder(secondary).makeConst(int32_t(currBase));
-    secondaryTable->segments.emplace_back(offset, currData);
+    secondaryTable->segments.emplace_back(
+      secondaryTable->name, offset, currData);
   };
   for (auto curr = replacedElems.begin(); curr != replacedElems.end(); ++curr) {
     if (curr->first != currBase + currData.size()) {
@@ -548,16 +541,6 @@ void ModuleSplitter::setupTablePatching() {
   }
   if (currData.size()) {
     finishSegment();
-  }
-}
-
-void ModuleSplitter::maybeAddAuxiliaryTableToPrimary() {
-  if (auxiliaryTable) {
-    assert(primary.tables.empty());
-    if (!auxiliaryTable->segments.empty() &&
-        !auxiliaryTable->segments.front().data.empty()) {
-      primary.addTable(std::move(auxiliaryTable));
-    }
   }
 }
 

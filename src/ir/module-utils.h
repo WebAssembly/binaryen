@@ -208,6 +208,17 @@ template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
   }
 }
 
+template<typename T>
+inline void iterNonemptyTableSegments(Module& wasm, T visitor) {
+  for (auto& table : wasm.tables) {
+    for (auto& segment : table->segments) {
+      if (!segment.data.empty()) {
+        visitor(segment);
+      }
+    }
+  }
+}
+
 template<typename T> inline void iterImportedGlobals(Module& wasm, T visitor) {
   for (auto& import : wasm.globals) {
     if (import->imported()) {

@@ -3295,10 +3295,6 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
                               const char** funcNames,
                               BinaryenIndex numFuncNames,
                               BinaryenExpressionRef offset) {
-  Table::Segment segment((Expression*)offset);
-  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
-    segment.data.push_back(funcNames[i]);
-  }
   auto* wasm = (Module*)module;
   if (wasm->tables.empty()) {
     auto table = std::make_unique<Table>();
@@ -3309,6 +3305,11 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
   auto& table = wasm->tables.front();
   table->initial = initial;
   table->max = maximum;
+
+  Table::Segment segment(table->name, (Expression*)offset);
+  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
+    segment.data.push_back(funcNames[i]);
+  }
   table->segments.push_back(segment);
 }
 
@@ -3319,15 +3320,15 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   const char** funcNames,
                                   BinaryenIndex numFuncNames,
                                   BinaryenExpressionRef offset) {
-  Table::Segment segment((Expression*)offset);
-  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
-    segment.data.push_back(funcNames[i]);
-  }
-
   auto table = std::make_unique<Table>();
   table->setExplicitName(name);
   table->initial = initial;
   table->max = maximum;
+
+  Table::Segment segment(name, (Expression*)offset);
+  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
+    segment.data.push_back(funcNames[i]);
+  }
   table->segments.push_back(segment);
   ((Module*)module)->addTable(std::move(table));
 

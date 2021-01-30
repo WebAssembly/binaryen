@@ -1,0 +1,1 @@
+(module(type $none_=>_none (func))(import "a" "b" (table $t1 1 10 funcref))(table $t2 2 2 funcref)(elem (i32.const 0) $g $f)(func $g(nop))(func $f(call_indirect (type $none_=>_none)(i32.const 0))(call_indirect (type $none_=>_none)(i32.const 0))))

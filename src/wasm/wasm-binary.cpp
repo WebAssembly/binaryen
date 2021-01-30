@@ -544,24 +544,43 @@ void WasmBinaryWriter::writeTableDeclarations() {
 }
 
 void WasmBinaryWriter::writeTableElements() {
-  if (wasm->tables.empty() || wasm->tables.front()->segments.empty()) {
+  if (wasm->tables.empty()) {
     return;
   }
+
+  size_t elemCount = 0;
+  ModuleUtils::iterNonemptyTableSegments(*wasm, [&](Table::Segment& segment) {
+    elemCount += 1;
+  });
+  if (elemCount == 0) {
+    return;
+  }
+
   BYN_TRACE("== writeTableElements\n");
   auto start = startSection(BinaryConsts::Section::Element);
+  o << U32LEB(elemCount);
 
-  for (auto& table : wasm->tables) {
-    o << U32LEB(table->segments.size());
-    for (auto& segment : table->segments) {
-      o << U32LEB(0);
-      writeExpression(segment.offset);
-      o << int8_t(BinaryConsts::End);
-      o << U32LEB(segment.data.size());
-      for (auto name : segment.data) {
-        o << U32LEB(getFunctionIndex(name));
-      }
+  ModuleUtils::iterNonemptyTableSegments(*wasm, [&](Table::Segment& segment) {
+    Index tableIdx = getTableIndex(segment.table);
+
+    // header format
+    if (tableIdx < 1) {
+      o << U32LEB(0x0);
+    } else {
+      o << U32LEB(0x2);
+      o << U32LEB(tableIdx);
     }
-  }
+    writeExpression(segment.offset);
+    o << int8_t(BinaryConsts::End);
+    if (tableIdx > 0) {
+      // elemKind funcref
+      o << U32LEB(0);
+    }
+    o << U32LEB(segment.data.size());
+    for (auto name : segment.data) {
+      o << U32LEB(getFunctionIndex(name));
+    }
+  });
   finishSection(start);
 }
 
@@ -797,9 +816,10 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
     }
     // more VLG digit will follow -- add continuation bit (0x20),
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
-    out << char(digit < 20
-                  ? 'g' + digit
-                  : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
+    out << char(digit < 20    ? 'g' + digit
+                : digit < 30  ? '0' + digit - 20
+                : digit == 30 ? '+'
+                              : '/');
   }
 }
 
@@ -2348,6 +2368,9 @@ void WasmBinaryBuilder::processNames() {
     wasm.addGlobal(std::move(global));
   }
   for (auto& table : tables) {
+    for (auto& segment : table->segments) {
+      segment.table = table->name;
+    }
     wasm.addTable(std::move(table));
   }
 
@@ -2478,7 +2501,7 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
   for (size_t i = 0; i < numTables; i++) {
     auto elemType = getS32LEB();
     if (elemType != BinaryConsts::EncodedType::funcref) {
-      throwError("ElementType must be funcref in MVP");
+      throwError("Non-funcref tables not yet supported");
     }
     auto table = std::make_unique<Table>();
     table->setName(Name::fromInt(i), false);
@@ -2505,19 +2528,31 @@ void WasmBinaryBuilder::readTableElements() {
   }
   for (size_t i = 0; i < numSegments; i++) {
     auto headerFormat = getU32LEB();
-    if (headerFormat != 0) {
+    if (headerFormat != 0x0 && headerFormat != 0x2) {
       throwError("Table elements must refer to table 0 in MVP");
     }
 
     Index tableIdx = 0;
+    if (headerFormat == 0x2) {
+      tableIdx = getU32LEB();
+    }
+
     auto numTableImports = tableImports.size();
     if (tableIdx < numTableImports) {
-      tableImports[tableIdx]->segments.emplace_back(readExpression());
+      auto table = tableImports[tableIdx];
+      table->segments.emplace_back(table->name, readExpression());
     } else if (tableIdx - numTableImports < tables.size()) {
-      tables[tableIdx - numTableImports]->segments.emplace_back(
-        readExpression());
+      auto table = tables[tableIdx - numTableImports].get();
+      table->segments.emplace_back(table->name, readExpression());
     } else {
       throwError("Table index out of range.");
+    }
+
+    if (headerFormat == 0x2) {
+      auto elemKind = getU32LEB();
+      if (elemKind != 0x0) {
+        throwError("Non-funcref elemKind is not supported yet.");
+      }
     }
 
     auto& indexSegment = functionTable[tableIdx][i];

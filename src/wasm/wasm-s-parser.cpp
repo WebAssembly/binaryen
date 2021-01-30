@@ -2824,19 +2824,42 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
 void SExpressionWasmBuilder::parseElem(Element& s) {
   Index i = 1;
   Table* table = nullptr;
+  Expression* offset = nullptr;
 
   if (!s[i]->isList()) {
-    auto name = getTableName(*s[i]);
-    table = wasm.getTableOrNull(name);
+    // optional segment id OR 'declare' OR start of elemList
     i += 1;
-  } else if (!wasm.tables.empty()) {
-    table = wasm.tables[0].get();
   }
-  if (!table) {
+
+  bool oldStyle = true;
+
+  while (1) {
+    auto& inner = *s[i];
+    if (elementStartsWith(inner, TABLE)) {
+      oldStyle = false;
+      Name tableName = getTableName(*inner[1]);
+      table = wasm.getTable(tableName);
+      i += 1;
+    } else {
+      offset = parseExpression(s[i++]);
+      break;
+    }
+  }
+
+  if (!oldStyle) {
+    if (strcmp(s[i]->c_str(), "func") != 0) {
+      throw ParseException(
+        "only the abbreviated form of elemList is supported.");
+    }
+    // ignore elemType for now
+    i += 1;
+  }
+
+  if (!table && wasm.tables.empty()) {
     throw ParseException("elem without table", s.line, s.col);
   }
 
-  auto* offset = parseExpression(s[i++]);
+  table = wasm.tables[0].get();
   parseInnerElem(table, s, i, offset);
 }
 
@@ -2847,7 +2870,7 @@ void SExpressionWasmBuilder::parseInnerElem(Table* table,
   if (!offset) {
     offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
   }
-  Table::Segment segment(offset);
+  Table::Segment segment(table->name, offset);
   for (; i < s.size(); i++) {
     segment.data.push_back(getFunctionName(*s[i]));
   }

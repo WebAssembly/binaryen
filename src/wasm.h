@@ -1622,11 +1622,10 @@ public:
       return !(*this == other);
     }
     bool operator<(const DebugLocation& other) const {
-      return fileIndex != other.fileIndex
-               ? fileIndex < other.fileIndex
-               : lineNumber != other.lineNumber
-                   ? lineNumber < other.lineNumber
-                   : columnNumber < other.columnNumber;
+      return fileIndex != other.fileIndex ? fileIndex < other.fileIndex
+             : lineNumber != other.lineNumber
+               ? lineNumber < other.lineNumber
+               : columnNumber < other.columnNumber;
     }
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
@@ -1688,11 +1687,13 @@ public:
   static const Index kMaxSize = Index(-1);
 
   struct Segment {
+    Name table;
     Expression* offset;
     std::vector<Name> data;
     Segment() = default;
-    Segment(Expression* offset) : offset(offset) {}
-    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
+    Segment(Name table, Expression* offset) : table(table), offset(offset) {}
+    Segment(Name table, Expression* offset, std::vector<Name>& init)
+      : table(table), offset(offset) {
       data.swap(init);
     }
   };

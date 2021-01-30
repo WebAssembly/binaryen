@@ -1,0 +1,8 @@
+(module
+ (type $none_=>_none (func))
+ (table $t 1 1 funcref)
+ (elem (i32.const 0) $f)
+ (func $f
+  (nop)
+ )
+)
