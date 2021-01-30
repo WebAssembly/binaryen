@@ -166,12 +166,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
                      Type results,
                      ModuleInstance& instance) override {
 
-    std::unordered_map<wasm::Name, std::vector<wasm::Name>>::iterator it;
-
+    auto it = tables.begin();
     if (tableName.is()) {
       it = tables.find(tableName);
-    } else {
-      it = tables.begin();
     }
 
     if (it == tables.end()) {

@@ -2771,7 +2771,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateTable(Module& module, ValidationInfo& info) {
+static void validateTables(Module& module, ValidationInfo& info) {
   if (!module.features.hasReferenceTypes()) {
     info.shouldBeTrue(module.tables.size() <= 1,
                       "table",
@@ -2866,7 +2866,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateExports(module, info);
     validateGlobals(module, info);
     validateMemory(module, info);
-    validateTable(module, info);
+    validateTables(module, info);
     validateEvents(module, info);
     validateModule(module, info);
     validateFeatures(module, info);

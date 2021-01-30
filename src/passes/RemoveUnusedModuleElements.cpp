@@ -92,9 +92,7 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
-    if (module->tables.empty()) {
-      return;
-    }
+    assert(!module->tables.empty() && "call-indirect to undefined table.");
 
     Name name;
     if (curr->table.is()) {

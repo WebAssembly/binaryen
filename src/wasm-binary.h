@@ -1463,6 +1463,7 @@ public:
   void readDataSegments();
   void readDataCount();
 
+  // A map from table indexes to the map of segment indexes to their elements
   std::map<Index, std::map<Index, std::vector<Index>>> functionTable;
 
   void readFunctionTableDeclaration();
