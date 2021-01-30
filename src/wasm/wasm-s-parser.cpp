@@ -2834,14 +2834,17 @@ void SExpressionWasmBuilder::parseElem(Element& s) {
   bool oldStyle = true;
 
   while (1) {
-    auto& inner = *s[i];
+    auto& inner = *s[i++];
     if (elementStartsWith(inner, TABLE)) {
       oldStyle = false;
       Name tableName = getTableName(*inner[1]);
       table = wasm.getTable(tableName);
-      i += 1;
     } else {
-      offset = parseExpression(s[i++]);
+      if (elementStartsWith(inner, "offset")) {
+        offset = parseExpression(inner[1]);
+      } else {
+        offset = parseExpression(inner);
+      }
       break;
     }
   }
@@ -2855,11 +2858,12 @@ void SExpressionWasmBuilder::parseElem(Element& s) {
     i += 1;
   }
 
-  if (!table && wasm.tables.empty()) {
+  if (wasm.tables.empty()) {
     throw ParseException("elem without table", s.line, s.col);
+  } else if (!table) {
+    table = wasm.tables[0].get();
   }
 
-  table = wasm.tables[0].get();
   parseInnerElem(table, s, i, offset);
 }
 

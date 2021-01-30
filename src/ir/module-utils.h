@@ -209,12 +209,10 @@ template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
 }
 
 template<typename T>
-inline void iterNonemptyTableSegments(Module& wasm, T visitor) {
+inline void iterNonemptyTables(Module& wasm, T visitor) {
   for (auto& table : wasm.tables) {
-    for (auto& segment : table->segments) {
-      if (!segment.data.empty()) {
-        visitor(segment);
-      }
+    if (!table->segments.empty()) {
+      visitor(table.get());
     }
   }
 }

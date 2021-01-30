@@ -549,8 +549,8 @@ void WasmBinaryWriter::writeTableElements() {
   }
 
   size_t elemCount = 0;
-  ModuleUtils::iterNonemptyTableSegments(
-    *wasm, [&](Table::Segment& segment) { elemCount += 1; });
+  ModuleUtils::iterNonemptyTables(
+    *wasm, [&](Table* table) { elemCount += table->segments.size(); });
   if (elemCount == 0) {
     return;
   }
@@ -559,25 +559,27 @@ void WasmBinaryWriter::writeTableElements() {
   auto start = startSection(BinaryConsts::Section::Element);
   o << U32LEB(elemCount);
 
-  ModuleUtils::iterNonemptyTableSegments(*wasm, [&](Table::Segment& segment) {
-    Index tableIdx = getTableIndex(segment.table);
+  ModuleUtils::iterNonemptyTables(*wasm, [&](Table* table) {
+    for (auto& segment : table->segments) {
+      Index tableIdx = getTableIndex(segment.table);
 
-    // header format
-    if (tableIdx < 1) {
-      o << U32LEB(0x0);
-    } else {
-      o << U32LEB(0x2);
-      o << U32LEB(tableIdx);
-    }
-    writeExpression(segment.offset);
-    o << int8_t(BinaryConsts::End);
-    if (tableIdx > 0) {
-      // elemKind funcref
-      o << U32LEB(0);
-    }
-    o << U32LEB(segment.data.size());
-    for (auto name : segment.data) {
-      o << U32LEB(getFunctionIndex(name));
+      // header format
+      if (tableIdx < 1) {
+        o << U32LEB(0x0);
+      } else {
+        o << U32LEB(0x2);
+        o << U32LEB(tableIdx);
+      }
+      writeExpression(segment.offset);
+      o << int8_t(BinaryConsts::End);
+      if (tableIdx > 0) {
+        // elemKind funcref
+        o << U32LEB(0);
+      }
+      o << U32LEB(segment.data.size());
+      for (auto name : segment.data) {
+        o << U32LEB(getFunctionIndex(name));
+      }
     }
   });
   finishSection(start);
@@ -2366,10 +2368,13 @@ void WasmBinaryBuilder::processNames() {
     wasm.addGlobal(std::move(global));
   }
   for (auto& table : tables) {
+    wasm.addTable(std::move(table));
+  }
+
+  for (auto& table : wasm.tables) {
     for (auto& segment : table->segments) {
       segment.table = table->name;
     }
-    wasm.addTable(std::move(table));
   }
 
   // now that we have names, apply things
@@ -2553,7 +2558,8 @@ void WasmBinaryBuilder::readTableElements() {
       }
     }
 
-    auto& indexSegment = functionTable[tableIdx][i];
+    size_t segmentIndex = functionTable[tableIdx].size();
+    auto& indexSegment = functionTable[tableIdx][segmentIndex];
     auto size = getU32LEB();
     for (Index j = 0; j < size; j++) {
       indexSegment.push_back(getU32LEB());

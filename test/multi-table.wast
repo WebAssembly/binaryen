@@ -1,25 +1,14 @@
 (module
-  (table $t 1 1 funcref)
-  (elem (i32.const 0) $f)
-  (func $f)
-)
-(module
-  (table $t 1 1 funcref)
-  (elem (table $t) (i32.const 0) func $f)
-  (func $f)
-)
-(module
-  (table $t1 1 1 funcref)
-  (table $t2 1 1 funcref)
-  (elem (table $t1) (i32.const 0) func $f)
-  (func $f)
-)
-(module
-  (type $t1 (func))
   (import "a" "b" (table $t1 1 10 funcref))
+  (table $t2 3 3 funcref)
+
+  ;; add to $t1
+  (elem (i32.const 0) $f)
+
+  ;; add to $t2
+  (elem (table $t2) (i32.const 0) func $f)
+  (elem (table $t2) (offset (i32.const 1)) func $f $g)
+
+  (func $f)
   (func $g)
-  (table $t2 funcref (elem $g $f))
-  (func $f
-    (call_indirect (type $t1) (i32.const 0))
-  )
 )
