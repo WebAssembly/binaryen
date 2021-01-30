@@ -241,8 +241,7 @@ struct PrintExpressionContents
   Function* currFunction = nullptr;
   std::ostream& o;
 
-  PrintExpressionContents(Function* currFunction,
-                          std::ostream& o)
+  PrintExpressionContents(Function* currFunction, std::ostream& o)
     : currFunction(currFunction), o(o) {}
 
   void visitBlock(Block* curr) {

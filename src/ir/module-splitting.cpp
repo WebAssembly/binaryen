@@ -158,9 +158,9 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
 }
 
 TableSlotManager::TableSlotManager(Module& module) : module(module) {
-
-  if (module.tables.empty())
+  if (module.tables.empty()) {
     return;
+  }
 
   activeTable = module.tables.front().get();
   // If there is exactly one table segment and that segment has a non-constant
@@ -451,7 +451,9 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
 }
 
 void ModuleSplitter::setupTablePatching() {
-  if (!tableManager.activeTable) return;
+  if (!tableManager.activeTable) {
+    return;
+  }
 
   std::map<Index, Name> replacedElems;
   // Replace table references to secondary functions with an imported
