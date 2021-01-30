@@ -337,13 +337,13 @@ private:
             options.push_back(Type::externref);
             if (wasm.features.hasGC()) {
               options.push_back(Type::eqref);
-              options.push_back(Type::i31ref);
+              // TODO: i31ref, dataref, etc.
             }
           }
           break;
         case Type::eqref:
           if (wasm.features.hasGC()) {
-            options.push_back(Type::i31ref);
+            // TODO: i31ref, dataref, etc.
           }
           break;
         default:
@@ -1108,8 +1108,8 @@ private:
     if (type == Type::i32) {
       options.add(FeatureSet::ReferenceTypes, &Self::makeRefIsNull);
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                  &Self::makeRefEq,
-                  &Self::makeI31Get);
+                  &Self::makeRefEq);
+      //  TODO: makeI31Get
     }
     if (type.isTuple()) {
       options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -3035,10 +3035,9 @@ private:
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
-             Type::eqref,
-             Type::i31ref));
+             Type::eqref));
     // TODO: emit typed function references types
-    // TODO: dataref
+    // TODO: i31ref, dataref
   }
 
   Type getSingleConcreteType() { return pick(getSingleConcreteTypes()); }
@@ -3049,16 +3048,16 @@ private:
         .add(FeatureSet::ReferenceTypes, Type::funcref, Type::externref)
         .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
              Type::anyref,
-             Type::eqref,
-             Type::i31ref));
-    // TODO: dataref
+             Type::eqref));
+    // TODO: i31ref, dataref
   }
 
   Type getReferenceType() { return pick(getReferenceTypes()); }
 
   std::vector<Type> getEqReferenceTypes() {
     return items(FeatureOptions<Type>().add(
-      FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref, Type::i31ref));
+      FeatureSet::ReferenceTypes | FeatureSet::GC, Type::eqref));
+    // TODO: i31ref, dataref
   }
 
   Type getEqReferenceType() { return pick(getEqReferenceTypes()); }
