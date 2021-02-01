@@ -10,7 +10,7 @@
   )
  )
  (func $call_adder_indirect (param $0 i32) (param $1 i32) (result i32)
-  (call_indirect (type $i32_i32_=>_i32)
+  (call_indirect $tab (type $i32_i32_=>_i32)
    (local.get $0)
    (local.get $1)
    (i32.const 0)

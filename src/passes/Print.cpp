@@ -302,7 +302,10 @@ struct PrintExpressionContents
       printMedium(o, "call_indirect ");
     }
 
-    // TODO(reference-types): print table's name
+    if (curr->table.is()) {
+      printName(curr->table, o);
+      o << ' ';
+    }
 
     o << '(';
     printMinor(o, "type ");
