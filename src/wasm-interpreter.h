@@ -1496,6 +1496,7 @@ public:
       if (value.isNull()) {
         return Flow(curr->name);
       }
+      // If the branch is not taken, we return the non-null value.
       return {value};
     }
     if (value.isNull()) {
