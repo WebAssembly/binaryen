@@ -544,13 +544,10 @@ void WasmBinaryWriter::writeTableDeclarations() {
 }
 
 void WasmBinaryWriter::writeTableElements() {
-  if (wasm->tables.empty()) {
-    return;
-  }
-
   size_t elemCount = 0;
-  ModuleUtils::iterNonemptyTables(
-    *wasm, [&](Table* table) { elemCount += table->segments.size(); });
+  for (auto& table : wasm->tables) {
+    elemCount += table->segments.size();
+  }
   if (elemCount == 0) {
     return;
   }
@@ -559,9 +556,9 @@ void WasmBinaryWriter::writeTableElements() {
   auto start = startSection(BinaryConsts::Section::Element);
   o << U32LEB(elemCount);
 
-  ModuleUtils::iterNonemptyTables(*wasm, [&](Table* table) {
+  for (auto& table : wasm->tables) {
     for (auto& segment : table->segments) {
-      Index tableIdx = getTableIndex(segment.table);
+      Index tableIdx = getTableIndex(table->name);
 
       // header format
       if (tableIdx < 1) {
@@ -581,7 +578,7 @@ void WasmBinaryWriter::writeTableElements() {
         o << U32LEB(getFunctionIndex(name));
       }
     }
-  });
+  }
   finishSection(start);
 }
 
@@ -2371,12 +2368,6 @@ void WasmBinaryBuilder::processNames() {
     wasm.addTable(std::move(table));
   }
 
-  for (auto& table : wasm.tables) {
-    for (auto& segment : table->segments) {
-      segment.table = table->name;
-    }
-  }
-
   // now that we have names, apply things
 
   if (startIndex != static_cast<Index>(-1)) {
@@ -2543,10 +2534,10 @@ void WasmBinaryBuilder::readTableElements() {
     auto numTableImports = tableImports.size();
     if (tableIdx < numTableImports) {
       auto table = tableImports[tableIdx];
-      table->segments.emplace_back(table->name, readExpression());
+      table->segments.emplace_back(readExpression());
     } else if (tableIdx - numTableImports < tables.size()) {
       auto table = tables[tableIdx - numTableImports].get();
-      table->segments.emplace_back(table->name, readExpression());
+      table->segments.emplace_back(readExpression());
     } else {
       throwError("Table index out of range.");
     }

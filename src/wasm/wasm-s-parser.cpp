@@ -2821,6 +2821,16 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   wasm.addTable(std::move(table));
 }
 
+// parses an elem segment
+// elem  ::= (elem (expr) vec(funcidx))
+//         | (elem (offset (expr)) func vec(funcidx))
+//         | (elem (table tableidx) (offset (expr)) func vec(funcidx))
+//
+// abbreviation:
+//   (offset (expr)) ≡ (expr)
+//   (elem (expr) vec(funcidx)) ≡ (elem (table 0) (offset (expr)) func
+//                                vec(funcidx))
+//
 void SExpressionWasmBuilder::parseElem(Element& s) {
   Index i = 1;
   Table* table = nullptr;
@@ -2831,6 +2841,7 @@ void SExpressionWasmBuilder::parseElem(Element& s) {
     i += 1;
   }
 
+  // old style refers to the pre-reftypes form of (elem (expr) vec(funcidx))
   bool oldStyle = true;
 
   while (1) {
@@ -2874,7 +2885,7 @@ void SExpressionWasmBuilder::parseInnerElem(Table* table,
   if (!offset) {
     offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
   }
-  Table::Segment segment(table->name, offset);
+  Table::Segment segment(offset);
   for (; i < s.size(); i++) {
     segment.data.push_back(getFunctionName(*s[i]));
   }

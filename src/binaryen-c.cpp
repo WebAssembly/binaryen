@@ -3306,7 +3306,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
   table->initial = initial;
   table->max = maximum;
 
-  Table::Segment segment(table->name, (Expression*)offset);
+  Table::Segment segment((Expression*)offset);
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
     segment.data.push_back(funcNames[i]);
   }
@@ -3325,7 +3325,7 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
   table->initial = initial;
   table->max = maximum;
 
-  Table::Segment segment(name, (Expression*)offset);
+  Table::Segment segment((Expression*)offset);
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
     segment.data.push_back(funcNames[i]);
   }

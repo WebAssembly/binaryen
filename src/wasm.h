@@ -1688,13 +1688,11 @@ public:
   static const Index kMaxSize = Index(-1);
 
   struct Segment {
-    Name table;
     Expression* offset;
     std::vector<Name> data;
     Segment() = default;
-    Segment(Name table, Expression* offset) : table(table), offset(offset) {}
-    Segment(Name table, Expression* offset, std::vector<Name>& init)
-      : table(table), offset(offset) {
+    Segment(Expression* offset) : offset(offset) {}
+    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
       data.swap(init);
     }
   };

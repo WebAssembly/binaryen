@@ -2920,7 +2920,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         // tableuse
         o << '(';
         printMedium(o, "table ");
-        printName(segment.table, o);
+        printName(curr->name, o);
         o << ") ";
       }
 

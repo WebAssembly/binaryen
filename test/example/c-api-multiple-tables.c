@@ -33,15 +33,15 @@ int main() {
                      funcNames,
                      1,
                      BinaryenConst(module, BinaryenLiteralInt32(0)));
-  }
 
-  BinaryenAddTable(module,
-                    "t2",
-                    1,
-                    1,
-                    NULL,
-                    0,
-                    BinaryenConst(module, BinaryenLiteralInt32(0)));
+    BinaryenAddTable(module,
+                      "t2",
+                      1,
+                      1,
+                      funcNames,
+                      1,
+                      BinaryenConst(module, BinaryenLiteralInt32(0)));
+  }
 
   {
     // Get the 0 and 1 arguments, and add them
@@ -56,7 +56,7 @@ int main() {
                            2,
                            params,
                            results);
-    BinaryenCallIndirectSetTableName(add_indirect, "tab");
+    BinaryenCallIndirectSetTableName(add_indirect, "t2");
 
     BinaryenFunctionRef call_adder_indirectly = BinaryenAddFunction(
       module, "call_adder_indirect", params, results, NULL, 0, add_indirect);

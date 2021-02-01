@@ -624,7 +624,7 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
 }
 
 void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
-  if ((wasm->tables).size() == 0) {
+  if (wasm->tables.size() == 0) {
     return;
   }
 

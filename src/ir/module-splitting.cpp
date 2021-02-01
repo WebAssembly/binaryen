@@ -220,8 +220,7 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func) {
     }
 
     assert(activeTable->segments.size() == 0);
-    activeTable->segments.emplace_back(activeTable->name,
-                                       Builder(module).makeConst(int32_t(0)));
+    activeTable->segments.emplace_back(Builder(module).makeConst(int32_t(0)));
     activeSegment = &activeTable->segments.back();
   }
 
@@ -519,8 +518,7 @@ void ModuleSplitter::setupTablePatching() {
     }
 
     auto offset = ExpressionManipulator::copy(primarySeg.offset, secondary);
-    secondaryTable->segments.emplace_back(
-      secondaryTable->name, offset, secondaryElems);
+    secondaryTable->segments.emplace_back(offset, secondaryElems);
     return;
   }
 
@@ -530,8 +528,7 @@ void ModuleSplitter::setupTablePatching() {
   std::vector<Name> currData;
   auto finishSegment = [&]() {
     auto* offset = Builder(secondary).makeConst(int32_t(currBase));
-    secondaryTable->segments.emplace_back(
-      secondaryTable->name, offset, currData);
+    secondaryTable->segments.emplace_back(offset, currData);
   };
   for (auto curr = replacedElems.begin(); curr != replacedElems.end(); ++curr) {
     if (curr->first != currBase + currData.size()) {
