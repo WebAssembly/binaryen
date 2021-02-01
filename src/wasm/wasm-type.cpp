@@ -90,6 +90,7 @@ struct HeapTypeInfo {
   constexpr bool isSignature() const { return kind == SignatureKind; }
   constexpr bool isStruct() const { return kind == StructKind; }
   constexpr bool isArray() const { return kind == ArrayKind; }
+  constexpr bool isData() const { return isStruct() || isArray(); }
 
   HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
