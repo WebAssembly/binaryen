@@ -982,6 +982,11 @@ int main(int argc, const char* argv[]) {
                "request for silly amounts of memory)";
   }
 
+  // TODO: Remove this restriction when wasm2js can handle multiple tables
+  if (wasm.tables.size() > 1) {
+    Fatal() << "error: modules with multiple tables are not supported yet.";
+  }
+
   if (options.passOptions.validate) {
     if (!WasmValidator().validate(wasm)) {
       std::cout << wasm << '\n';
