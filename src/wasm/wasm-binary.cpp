@@ -2876,10 +2876,11 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::RefEq:
       visitRefEq((curr = allocator.alloc<RefEq>())->cast<RefEq>());
       break;
-    case BinaryConsts::BrOnNull:
-      maybeVisitBrOn(curr, code);
     case BinaryConsts::RefAsNonNull:
       visitRefAs((curr = allocator.alloc<RefAs>())->cast<RefAs>(), code);
+      break;
+    case BinaryConsts::BrOnNull:
+      maybeVisitBrOn(curr, code);
       break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
