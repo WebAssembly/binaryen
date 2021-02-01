@@ -220,6 +220,11 @@
  )
  (func $6 (param $0 anyref)
   (drop
+   (ref.as_non_null
+    (local.get $0)
+   )
+  )
+  (drop
    (ref.as_func
     (local.get $0)
    )

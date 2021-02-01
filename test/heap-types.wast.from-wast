@@ -221,6 +221,11 @@
  )
  (func $ref.as_X (param $x anyref)
   (drop
+   (ref.as_non_null
+    (local.get $x)
+   )
+  )
+  (drop
    (ref.as_func
     (local.get $x)
    )

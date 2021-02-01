@@ -1046,6 +1046,10 @@ void RefAs::finalize() {
     return;
   }
   switch (op) {
+    case RefAsNonNull:
+      // FIXME: when we support non-nullable types, switch to NonNullable
+      type = Type(value->type.getHeapType(), Nullable);
+      break;
     case RefAsFunc:
       type = Type::funcref;
       break;

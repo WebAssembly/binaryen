@@ -2878,6 +2878,8 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       break;
     case BinaryConsts::BrOnNull:
       maybeVisitBrOn(curr, code);
+    case BinaryConsts::RefAsNonNull:
+      visitRefAs((curr = allocator.alloc<RefAs>())->cast<RefAs>(), code);
       break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
@@ -6003,6 +6005,9 @@ bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
 void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
   BYN_TRACE("zz node: RefAs\n");
   switch (code) {
+    case BinaryConsts::RefAsNonNull:
+      curr->op = RefAsNonNull;
+      break;
     case BinaryConsts::RefAsFunc:
       curr->op = RefAsFunc;
       break;

@@ -1689,6 +1689,9 @@ public:
       trap("null ref");
     }
     switch (curr->op) {
+      case RefAsNonNull:
+        // We've already checked for a null.
+        break;
       case RefAsFunc:
         if (value.type.isFunction()) {
           trap("not a func");

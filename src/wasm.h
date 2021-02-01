@@ -550,6 +550,7 @@ enum RefIsOp {
 };
 
 enum RefAsOp {
+  RefAsNonNull,
   RefAsFunc,
   RefAsData,
   RefAsI31,

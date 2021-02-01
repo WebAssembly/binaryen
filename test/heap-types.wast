@@ -188,6 +188,7 @@
     (if (ref.is_i31 (local.get $x)) (unreachable))
   )
   (func $ref.as_X (param $x anyref)
+    (drop (ref.as_non_null (local.get $x)))
     (drop (ref.as_func (local.get $x)))
     (drop (ref.as_data (local.get $x)))
     (drop (ref.as_i31 (local.get $x)))

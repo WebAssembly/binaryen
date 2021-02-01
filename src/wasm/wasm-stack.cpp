@@ -48,9 +48,6 @@ void BinaryInstWriter::visitIf(If* curr) {
 }
 
 void BinaryInstWriter::emitIfElse(If* curr) {
-  assert(!breakStack.empty());
-  breakStack.pop_back();
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE); // TODO same as If
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, BinaryLocations::Else);
   }
@@ -1899,9 +1896,6 @@ void BinaryInstWriter::visitTry(Try* curr) {
 }
 
 void BinaryInstWriter::emitCatch(Try* curr, Index i) {
-  assert(!breakStack.empty());
-  breakStack.pop_back();
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
@@ -1910,9 +1904,6 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
-  assert(!breakStack.empty());
-  breakStack.pop_back();
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
   }
@@ -2092,6 +2083,9 @@ void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
   switch (curr->op) {
+    case RefAsNonNull:
+      o << int8_t(BinaryConsts::RefAsNonNull);
+      break;
     case RefAsFunc:
       o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsFunc);
       break;

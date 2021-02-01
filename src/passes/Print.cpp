@@ -1874,6 +1874,9 @@ struct PrintExpressionContents
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
+      case RefAsNonNull:
+        printMedium(o, "ref.as_non_null");
+        break;
       case RefAsFunc:
         printMedium(o, "ref.as_func");
         break;
