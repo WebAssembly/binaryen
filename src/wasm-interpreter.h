@@ -1491,11 +1491,10 @@ public:
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
     if (curr->op == BrOnNull) {
-      // BrOnNull is the reverse of the others: it branches if null, and it does
-      // not flow out the existing value otherwise, rather it returns it as non-
-      // null.
+      // Unlike the others, BrOnNull does not propagate the value if it takes the
+      // branch.
       if (value.isNull()) {
-        return Flow(curr->name, value);
+        return Flow(curr->name);
       }
       return {value};
     }
