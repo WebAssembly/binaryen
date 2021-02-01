@@ -691,6 +691,19 @@ void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   o << curr->index;
 }
 
+void BinaryInstWriter::visitSIMDWiden(SIMDWiden* curr) {
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case WidenSVecI8x16ToVecI32x4:
+      o << U32LEB(BinaryConsts::I32x4WidenSI8x16);
+      break;
+    case WidenUVecI8x16ToVecI32x4:
+      o << U32LEB(BinaryConsts::I32x4WidenUI8x16);
+      break;
+  }
+  o << uint8_t(curr->index);
+}
+
 void BinaryInstWriter::visitPrefetch(Prefetch* curr) {
   o << int8_t(BinaryConsts::SIMDPrefix);
   switch (curr->op) {

@@ -496,6 +496,11 @@ void SIMDLoadStoreLane::finalize() {
   }
 }
 
+void SIMDWiden::finalize() {
+  assert(vec);
+  type = vec->type == Type::unreachable ? Type::unreachable : Type::v128;
+}
+
 Index SIMDLoadStoreLane::getMemBytes() {
   switch (op) {
     case LoadLaneVec8x16:

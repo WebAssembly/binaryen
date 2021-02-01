@@ -3005,6 +3005,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDLoadStoreLane(curr, opcode)) {
         break;
       }
+      if (maybeVisitSIMDWiden(curr, opcode)) {
+        break;
+      }
       if (maybeVisitPrefetch(curr, opcode)) {
         break;
       }
@@ -5461,6 +5464,27 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
   curr->index = getLaneIndex(lanes);
   curr->vec = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitSIMDWiden(Expression*& out, uint32_t code) {
+  SIMDWidenOp op;
+  switch (code) {
+    case BinaryConsts::I32x4WidenSI8x16:
+      op = WidenSVecI8x16ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4WidenUI8x16:
+      op = WidenUVecI8x16ToVecI32x4;
+      break;
+    default:
+      return false;
+  }
+  auto* curr = allocator.alloc<SIMDWiden>();
+  curr->op = op;
+  curr->index = getLaneIndex(4);
+  curr->vec = popNonVoidExpression();
   curr->finalize();
   out = curr;
   return true;

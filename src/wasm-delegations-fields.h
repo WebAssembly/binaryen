@@ -386,6 +386,14 @@ switch (DELEGATE_ID) {
     DELEGATE_END(SIMDLoadStoreLane);
     break;
   }
+  case Expression::Id::SIMDWidenId: {
+    DELEGATE_START(SIMDWiden);
+    DELEGATE_FIELD_CHILD(SIMDWiden, vec);
+    DELEGATE_FIELD_INT(SIMDWiden, op);
+    DELEGATE_FIELD_INT(SIMDWiden, index);
+    DELEGATE_END(SIMDWiden);
+    break;
+  }
   case Expression::Id::PrefetchId: {
     DELEGATE_START(Prefetch);
     DELEGATE_FIELD_CHILD(Prefetch, ptr);

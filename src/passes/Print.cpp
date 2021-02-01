@@ -671,6 +671,19 @@ struct PrintExpressionContents
     }
     o << " " << int(curr->index);
   }
+  void visitSIMDWiden(SIMDWiden* curr) {
+    prepareColor(o);
+    switch (curr->op) {
+      case WidenSVecI8x16ToVecI32x4:
+        o << "i32x4.widen_i8x16_s ";
+        break;
+      case WidenUVecI8x16ToVecI32x4:
+        o << "i32x4.widen_i8x16_u ";
+        break;
+    }
+    restoreNormalColor(o);
+    o << int(curr->index);
+  }
   void visitPrefetch(Prefetch* curr) {
     prepareColor(o);
     switch (curr->op) {
@@ -2300,6 +2313,13 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     PrintExpressionContents(currFunction, o).visit(curr);
     incIndent();
     printFullLine(curr->ptr);
+    printFullLine(curr->vec);
+    decIndent();
+  }
+  void visitSIMDWiden(SIMDWiden* curr) {
+    o << '(';
+    PrintExpressionContents(currFunction, o).visit(curr);
+    incIndent();
     printFullLine(curr->vec);
     decIndent();
   }

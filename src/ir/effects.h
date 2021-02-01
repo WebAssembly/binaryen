@@ -430,6 +430,7 @@ private:
       }
       parent.implicitTrap = true;
     }
+    void visitSIMDWiden(SIMDWiden* curr) {}
     void visitPrefetch(Prefetch* curr) {
       // Do not reorder with respect to other memory ops
       parent.writesMemory = true;

@@ -481,7 +481,7 @@ enum SIMDReplaceOp {
   ReplaceLaneVecI32x4,
   ReplaceLaneVecI64x2,
   ReplaceLaneVecF32x4,
-  ReplaceLaneVecF64x2
+  ReplaceLaneVecF64x2,
 };
 
 enum SIMDShiftOp {
@@ -535,6 +535,11 @@ enum SIMDTernaryOp {
   SignSelectVec16x8,
   SignSelectVec32x4,
   SignSelectVec64x2
+};
+
+enum SIMDWidenOp {
+  WidenSVecI8x16ToVecI32x4,
+  WidenUVecI8x16ToVecI32x4,
 };
 
 enum PrefetchOp {
@@ -625,6 +630,7 @@ public:
     SIMDShiftId,
     SIMDLoadId,
     SIMDLoadStoreLaneId,
+    SIMDWidenId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -1069,6 +1075,18 @@ public:
   bool isStore();
   bool isLoad() { return !isStore(); }
   Index getMemBytes();
+  void finalize();
+};
+
+class SIMDWiden : public SpecificExpression<Expression::SIMDWidenId> {
+public:
+  SIMDWiden() = default;
+  SIMDWiden(MixedArena& allocator) {}
+
+  SIMDWidenOp op;
+  uint8_t index;
+  Expression* vec;
+
   void finalize();
 };
 

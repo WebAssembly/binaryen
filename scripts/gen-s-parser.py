@@ -522,6 +522,8 @@ instructions = [
     ("i32x4.trunc_sat_f64x2_zero_u",  "makeUnary(s, UnaryOp::TruncSatZeroUVecF64x2ToVecI32x4)"),
     ("f32x4.demote_f64x2_zero",       "makeUnary(s, UnaryOp::DemoteZeroVecF64x2ToVecF32x4)"),
     ("f64x2.promote_low_f32x4",       "makeUnary(s, UnaryOp::PromoteLowVecF32x4ToVecF64x2)"),
+    ("i32x4.widen_i8x16_s",           "makeSIMDWiden(s, SIMDWidenOp::WidenSVecI8x16ToVecI32x4)"),
+    ("i32x4.widen_i8x16_u",           "makeSIMDWiden(s, SIMDWidenOp::WidenUVecI8x16ToVecI32x4)"),
 
     # prefetch instructions
     ("prefetch.t",  "makePrefetch(s, PrefetchOp::PrefetchTemporal)"),
