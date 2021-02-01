@@ -549,6 +549,7 @@ instructions = [
     ("i31.get_u",            "makeI31Get(s, false)"),
     ("ref.test",             "makeRefTest(s)"),
     ("ref.cast",             "makeRefCast(s)"),
+    ("br_on_null",           "makeBrOn(s, BrOnNull)"),
     ("br_on_cast",           "makeBrOn(s, BrOnCast)"),
     ("br_on_func",           "makeBrOn(s, BrOnFunc)"),
     ("br_on_data",           "makeBrOn(s, BrOnData)"),

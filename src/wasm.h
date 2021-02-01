@@ -557,6 +557,7 @@ enum RefAsOp {
 };
 
 enum BrOnOp {
+  BrOnNull,
   BrOnCast,
   BrOnFunc,
   BrOnData,
@@ -1399,6 +1400,12 @@ public:
 
   // BrOnCast has an rtt that is used in the cast.
   Expression* rtt;
+
+  // TODO: BrOnNull also has an optional extra value in the spec, which we do
+  //       not support. See also the discussion on
+  //       https://github.com/WebAssembly/function-references/issues/45
+  //       - depending on the decision there, we may want to move BrOnNull into
+  //       Break or a new class of its own.
 
   void finalize();
 

@@ -1490,6 +1490,15 @@ public:
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
+    if (curr->op == BrOnNull) {
+      // Unlike the others, BrOnNull does not propagate the value if it takes
+      // the branch.
+      if (value.isNull()) {
+        return Flow(curr->name);
+      }
+      // If the branch is not taken, we return the non-null value.
+      return {value};
+    }
     if (value.isNull()) {
       return {value};
     }

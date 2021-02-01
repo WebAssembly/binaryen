@@ -195,6 +195,12 @@
   )
   (func $br_on_X (param $x anyref)
     (local $y anyref)
+    (local $z (ref any))
+    (block $null
+      (local.set $z
+        (br_on_null $null (local.get $x))
+      )
+    )
     (drop
       (block $func (result funcref)
         (local.set $y

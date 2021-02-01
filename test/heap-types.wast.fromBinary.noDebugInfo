@@ -242,10 +242,18 @@
  )
  (func $7 (param $0 anyref)
   (local $1 anyref)
+  (local $2 anyref)
+  (block $label$1
+   (local.set $2
+    (br_on_null $label$1
+     (local.get $0)
+    )
+   )
+  )
   (drop
-   (block $label$1 (result funcref)
+   (block $label$2 (result funcref)
     (local.set $1
-     (br_on_func $label$1
+     (br_on_func $label$2
       (local.get $0)
      )
     )
@@ -253,9 +261,9 @@
    )
   )
   (drop
-   (block $label$2 (result (ref null data))
+   (block $label$3 (result (ref null data))
     (local.set $1
-     (br_on_data $label$2
+     (br_on_data $label$3
       (local.get $0)
      )
     )
@@ -263,9 +271,9 @@
    )
   )
   (drop
-   (block $label$3 (result (ref null i31))
+   (block $label$4 (result (ref null i31))
     (local.set $1
-     (br_on_i31 $label$3
+     (br_on_i31 $label$4
       (local.get $0)
      )
     )

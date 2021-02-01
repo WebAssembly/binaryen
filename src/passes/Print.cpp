@@ -1785,6 +1785,9 @@ struct PrintExpressionContents
   }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
+      case BrOnNull:
+        printMedium(o, "br_on_null ");
+        break;
       case BrOnCast:
         printMedium(o, "br_on_cast ");
         break;
