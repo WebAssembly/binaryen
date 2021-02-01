@@ -1987,16 +1987,16 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
       o << int8_t(BinaryConsts::BrOnNull);
       break;
     case BrOnCast:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::BrOnCast);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
       break;
     case BrOnFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::BrOnFunc);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnFunc);
       break;
     case BrOnData:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::BrOnData);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnData);
       break;
     case BrOnI31:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::BrOnI31);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnI31);
       break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
@@ -2087,13 +2087,13 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
       o << int8_t(BinaryConsts::RefAsNonNull);
       break;
     case RefAsFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsFunc);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsFunc);
       break;
     case RefAsData:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsData);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsData);
       break;
     case RefAsI31:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsI31);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsI31);
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
