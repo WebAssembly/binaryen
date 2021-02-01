@@ -35,7 +35,7 @@ Literal::Literal(Type type) : type(type) {
     i32 = 0;
   } else {
     assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
-    if (isGCData()) {
+    if (isData()) {
       new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
       // Allocate a new RttSupers (with no data).
@@ -55,7 +55,7 @@ Literal::Literal(std::shared_ptr<GCData> gcData, Type type)
   // Null data is only allowed if nullable.
   assert(gcData || type.isNullable());
   // The type must be a proper type for GC data.
-  assert(isGCData());
+  assert(isData());
 }
 
 Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
@@ -64,7 +64,7 @@ Literal::Literal(std::unique_ptr<RttSupers>&& rttSupers, Type type)
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
-  if (other.isGCData()) {
+  if (other.isData()) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
   }
@@ -90,6 +90,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
           return;
         case HeapType::func:
         case HeapType::data:
+        std::cout << other.type << '\n';
           WASM_UNREACHABLE("invalid type");
       }
     }
@@ -121,7 +122,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
 }
 
 Literal::~Literal() {
-  if (isGCData()) {
+  if (isData()) {
     gcData.~shared_ptr();
   } else if (type.isRtt()) {
     rttSupers.~unique_ptr();
@@ -241,7 +242,7 @@ std::array<uint8_t, 16> Literal::getv128() const {
 }
 
 std::shared_ptr<GCData> Literal::getGCData() const {
-  assert(isGCData());
+  assert(isData());
   return gcData;
 }
 
@@ -486,7 +487,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "funcref(" << literal.getFunc() << ")";
     }
   } else if (literal.type.isRef()) {
-    if (literal.isGCData()) {
+    if (literal.isData()) {
       auto data = literal.getGCData();
       if (data) {
         o << "[ref " << data->rtt << ' ' << data->values << ']';

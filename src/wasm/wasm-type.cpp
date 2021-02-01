@@ -384,6 +384,15 @@ bool Type::isFunction() const {
   }
 }
 
+bool Type::isData() const {
+  if (isBasic()) {
+    return id == dataref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isData();
+  }
+}
+
 bool Type::isNullable() const {
   if (isBasic()) {
     return id >= funcref && id <= eqref; // except i31ref
@@ -737,6 +746,14 @@ bool HeapType::isFunction() const {
   }
 }
 
+bool HeapType::isData() const {
+  if (isBasic()) {
+    return id == data;
+  } else {
+    return getHeapTypeInfo(*this)->isData();
+  }
+}
+
 bool HeapType::isSignature() const {
   if (isBasic()) {
     return false;
@@ -750,6 +767,14 @@ bool HeapType::isStruct() const {
     return false;
   } else {
     return getHeapTypeInfo(*this)->isStruct();
+  }
+}
+
+bool HeapType::isArray() const {
+  if (isBasic()) {
+    return false;
+  } else {
+    return getHeapTypeInfo(*this)->isArray();
   }
 }
 
@@ -767,14 +792,6 @@ bool HeapType::operator<(const HeapType& other) const {
     return false;
   }
   return *getHeapTypeInfo(*this) < *getHeapTypeInfo(other);
-}
-
-bool HeapType::isArray() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getHeapTypeInfo(*this)->isArray();
-  }
 }
 
 Signature HeapType::getSignature() const {
