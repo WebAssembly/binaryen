@@ -90,7 +90,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
           return;
         case HeapType::func:
         case HeapType::data:
-        std::cout << other.type << '\n';
           WASM_UNREACHABLE("invalid type");
       }
     }
