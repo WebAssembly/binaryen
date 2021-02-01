@@ -242,46 +242,42 @@
  )
  (func $br_on_X (param $x anyref)
   (local $y anyref)
-  (block $label$0
-   (drop
-    (block $label$1 (result anyref)
-     (drop
-      (br_on_null $label$0
-       (local.get $x)
-      )
-     )
-     (unreachable)
+  (local $z anyref)
+  (block $label$1
+   (local.set $z
+    (br_on_null $label$1
+     (local.get $x)
     )
    )
-   (drop
-    (block $label$2 (result funcref)
-     (local.set $y
-      (br_on_func $label$2
-       (local.get $x)
-      )
+  )
+  (drop
+   (block $label$2 (result funcref)
+    (local.set $y
+     (br_on_func $label$2
+      (local.get $x)
      )
-     (ref.null func)
     )
+    (ref.null func)
    )
-   (drop
-    (block $label$3 (result (ref null data))
-     (local.set $y
-      (br_on_data $label$3
-       (local.get $x)
-      )
+  )
+  (drop
+   (block $label$3 (result (ref null data))
+    (local.set $y
+     (br_on_data $label$3
+      (local.get $x)
      )
-     (ref.null data)
     )
+    (ref.null data)
    )
-   (drop
-    (block $label$4 (result (ref null i31))
-     (local.set $y
-      (br_on_i31 $label$4
-       (local.get $x)
-      )
+  )
+  (drop
+   (block $label$4 (result (ref null i31))
+    (local.set $y
+     (br_on_i31 $label$4
+      (local.get $x)
      )
-     (ref.null i31)
     )
+    (ref.null i31)
    )
   )
  )

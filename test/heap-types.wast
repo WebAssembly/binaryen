@@ -195,11 +195,10 @@
   )
   (func $br_on_X (param $x anyref)
     (local $y anyref)
-    (drop
-      (block $null 
-        (local.set $y
-          (br_on_null $null (local.get $x))
-        )
+    (local $z (ref any))
+    (block $null
+      (local.set $z
+        (br_on_null $null (local.get $x))
       )
     )
     (drop
