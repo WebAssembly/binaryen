@@ -2478,7 +2478,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     printExpressionContents(curr);
     incIndent();
     doIndent(o, indent);
-    o << "(do";
+    o << '(';
+    printMedium(o, "do");
     incIndent();
     maybePrintImplicitBlock(curr->body, true);
     decIndent();
@@ -2486,7 +2487,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     for (size_t i = 0; i < curr->catchEvents.size(); i++) {
       doIndent(o, indent);
       printDebugDelimiterLocation(curr, i);
-      o << "(catch ";
+      o << '(';
+      printMedium(o, "catch ");
       printName(curr->catchEvents[i], o);
       incIndent();
       maybePrintImplicitBlock(curr->catchBodies[i], true);
@@ -3268,15 +3270,23 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     case StackInst::IfEnd:
     case StackInst::LoopEnd:
     case StackInst::TryEnd: {
-      o << "end (" << inst->type << ')';
+      printMedium(o, "end");
+      o << " ;; type: ";
+      printTypeName(o, inst->type);
       break;
     }
     case StackInst::IfElse: {
-      o << "else";
+      printMedium(o, "else");
       break;
     }
     case StackInst::Catch: {
-      o << "catch";
+      // Because StackInst does not have info on which catch within a try this
+      // is, we can't print the event name.
+      printMedium(o, "catch");
+      break;
+    }
+    case StackInst::CatchAll: {
+      printMedium(o, "catch_all");
       break;
     }
     default:
@@ -3293,6 +3303,9 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       o << ' ';
     }
   };
+
+  // Stack to track indices of catches within a try
+  SmallVector<Index, 4> catchIndexStack;
   for (Index i = 0; i < (*ir).size(); i++) {
     auto* inst = (*ir)[i];
     if (!inst) {
@@ -3309,35 +3322,48 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         PrintExpressionContents(func, o).visit(inst->origin);
         break;
       }
+      case StackInst::TryBegin:
+        catchIndexStack.push_back(0);
+        // fallthrough
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin:
-      case StackInst::TryBegin: {
+      case StackInst::LoopBegin: {
         doIndent();
         PrintExpressionContents(func, o).visit(inst->origin);
         indent++;
         break;
       }
+      case StackInst::TryEnd:
+        catchIndexStack.pop_back();
+        // fallthrough
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd:
-      case StackInst::TryEnd: {
+      case StackInst::LoopEnd: {
         indent--;
         doIndent();
-        o << "end";
+        printMedium(o, "end");
         break;
       }
       case StackInst::IfElse: {
         indent--;
         doIndent();
-        o << "else";
+        printMedium(o, "else");
         indent++;
         break;
       }
       case StackInst::Catch: {
         indent--;
         doIndent();
-        o << "catch";
+        printMedium(o, "catch ");
+        Try* curr = inst->origin->cast<Try>();
+        printName(curr->catchEvents[catchIndexStack.back()++], o);
+        indent++;
+        break;
+      }
+      case StackInst::CatchAll: {
+        indent--;
+        doIndent();
+        printMedium(o, "catch_all");
         indent++;
         break;
       }
