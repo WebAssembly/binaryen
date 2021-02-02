@@ -172,12 +172,10 @@ handleUnreachable(Block* block,
 }
 
 void Block::finalize() {
-  std::cout << "fin block\n";
   if (list.size() == 0) {
     type = Type::none;
     return;
   }
-  std::cout << "fin block2\n";
   // The default type is what is at the end. Next we need to see if breaks and/
   // or unreachabitily change that.
   type = list.back()->type;
@@ -186,25 +184,20 @@ void Block::finalize() {
     handleUnreachable(this, NoBreak);
     return;
   }
-  std::cout << "fin block3\n";
 
   // The default type is according to the value that flows out.
   BranchUtils::BranchSeeker seeker(this->name);
   Expression* temp = this;
   seeker.walk(temp);
   if (seeker.found) {
-    std::cout << "fin block4\n";
     // Take the branch values into account.
     if (seeker.valueType != Type::none) {
-      std::cout << "fin block5 " << type << " : " << seeker.valueType << "\n";
       type = Type::getLeastUpperBound(type, seeker.valueType);
     } else {
-      std::cout << "fin block6\n";
       // No value is sent, but as we have a branch we are not unreachable.
       type = Type::none;
     }
   } else {
-    std::cout << "fin block7\n";
     // There are no branches, so this block may be unreachable.
     handleUnreachable(this, NoBreak);
   }
