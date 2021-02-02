@@ -678,8 +678,10 @@ Type Type::getLeastUpperBound(Type a, Type b) {
     if (aHeap.isData() && bHeap.isData()) {
       return handleNullability(HeapType::data);
     }
-    if ((aHeap == HeapType::eq || aHeap == HeapType::i31 || aHeap == HeapType::data) &&
-        (bHeap == HeapType::eq || bHeap == HeapType::i31 || bHeap == HeapType::data)) {
+    if ((aHeap == HeapType::eq || aHeap == HeapType::i31 ||
+         aHeap == HeapType::data) &&
+        (bHeap == HeapType::eq || bHeap == HeapType::i31 ||
+         bHeap == HeapType::data)) {
       return handleNullability(HeapType::eq);
     }
     // The LUB of two different reference types is anyref, which may or may
