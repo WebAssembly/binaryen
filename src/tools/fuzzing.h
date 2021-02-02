@@ -424,9 +424,9 @@ private:
   }
 
   void setupTable() {
-    auto table = std::make_unique<Table>();
-    table->setName(Names::getValidTableName(wasm, "fuzzing_table"), true);
-    table->initial = table->max = 0;
+    auto table =
+      builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
+    table->hasExplicitName = true;
     table->segments.emplace_back(builder.makeConst(int32_t(0)));
     wasm.addTable(std::move(table));
   }

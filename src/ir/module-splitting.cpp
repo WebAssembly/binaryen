@@ -200,9 +200,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
 }
 
 Table* TableSlotManager::makeTable() {
-  auto table = std::make_unique<Table>();
-  table->setName(Name::fromInt(0), false);
-  module.addTable(std::move(table));
+  module.addTable(Builder::makeTable(Name::fromInt(0)));
 
   return module.tables.front().get();
 }

@@ -3297,9 +3297,7 @@ void BinaryenSetFunctionTable(BinaryenModuleRef module,
                               BinaryenExpressionRef offset) {
   auto* wasm = (Module*)module;
   if (wasm->tables.empty()) {
-    auto table = std::make_unique<Table>();
-    table->setName(Name::fromInt(0), false);
-    wasm->addTable(std::move(table));
+    wasm->addTable(Builder::makeTable(Name::fromInt(0)));
   }
 
   auto& table = wasm->tables.front();
@@ -3320,10 +3318,8 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   const char** funcNames,
                                   BinaryenIndex numFuncNames,
                                   BinaryenExpressionRef offset) {
-  auto table = std::make_unique<Table>();
-  table->setExplicitName(name);
-  table->initial = initial;
-  table->max = maximum;
+  auto table = Builder::makeTable(name, initial, maximum);
+  table->hasExplicitName = true;
 
   Table::Segment segment((Expression*)offset);
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {

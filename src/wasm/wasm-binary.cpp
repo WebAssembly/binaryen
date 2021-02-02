@@ -1749,10 +1749,9 @@ void WasmBinaryBuilder::readImports() {
       }
       case ExternalKind::Table: {
         Name name(std::string("timport$") + std::to_string(tableCounter++));
-        auto table = std::make_unique<Table>();
+        auto table = builder.makeTable(name);
         table->module = module;
         table->base = base;
-        table->name = name;
         auto elementType = getS32LEB();
         WASM_UNUSED(elementType);
         if (elementType != BinaryConsts::EncodedType::funcref) {
@@ -2497,8 +2496,7 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
     if (elemType != BinaryConsts::EncodedType::funcref) {
       throwError("Non-funcref tables not yet supported");
     }
-    auto table = std::make_unique<Table>();
-    table->setName(Name::fromInt(i), false);
+    auto table = Builder::makeTable(Name::fromInt(i));
     bool is_shared;
     Type indexType;
     getResizableLimits(
