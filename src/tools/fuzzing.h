@@ -827,7 +827,8 @@ private:
   // Fix up changes that may have broken validation - types are correct in our
   // modding, but not necessarily labels.
   void fixLabels(Function* func) {
-    struct Fixer : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
+    struct Fixer
+      : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
       Module& wasm;
       TranslateToFuzzReader& parent;
 
@@ -848,17 +849,16 @@ private:
 
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) \
-  if (cast->name.is()) { \
-    if (seen.count(cast->name)) { \
-      replace(); \
-    } else { \
-      seen.insert(cast->name); \
-    } \
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)                                \
+  if (cast->name.is()) {                                                       \
+    if (seen.count(cast->name)) {                                              \
+      replace();                                                               \
+    } else {                                                                   \
+      seen.insert(cast->name);                                                 \
+    }                                                                          \
   }
 
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) \
-  replaceIfInvalid(cast->name);
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) replaceIfInvalid(cast->name);
 
 #define DELEGATE_FIELD_CHILD(id, name)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)
@@ -873,7 +873,6 @@ private:
 #define DELEGATE_FIELD_ADDRESS(id, name)
 
 #include "wasm-delegations-fields.h"
-
       }
 
       bool replaceIfInvalid(Name target) {
