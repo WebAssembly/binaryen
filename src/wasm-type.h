@@ -136,6 +136,7 @@ public:
   bool isSingle() const { return isConcrete() && !isTuple(); }
   bool isRef() const;
   bool isFunction() const;
+  bool isData() const;
   bool isException() const;
   bool isNullable() const;
   bool isRtt() const;
@@ -314,6 +315,7 @@ public:
   constexpr bool isBasic() const { return id <= _last_basic_type; }
   constexpr bool isCompound() const { return id > _last_basic_type; }
   bool isFunction() const;
+  bool isData() const;
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;

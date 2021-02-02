@@ -90,6 +90,7 @@ struct HeapTypeInfo {
   constexpr bool isSignature() const { return kind == SignatureKind; }
   constexpr bool isStruct() const { return kind == StructKind; }
   constexpr bool isArray() const { return kind == ArrayKind; }
+  constexpr bool isData() const { return isStruct() || isArray(); }
 
   HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
@@ -381,6 +382,15 @@ bool Type::isFunction() const {
   } else {
     auto* info = getTypeInfo(*this);
     return info->isRef() && info->ref.heapType.isFunction();
+  }
+}
+
+bool Type::isData() const {
+  if (isBasic()) {
+    return id == dataref;
+  } else {
+    auto* info = getTypeInfo(*this);
+    return info->isRef() && info->ref.heapType.isData();
   }
 }
 
@@ -737,6 +747,14 @@ bool HeapType::isFunction() const {
   }
 }
 
+bool HeapType::isData() const {
+  if (isBasic()) {
+    return id == data;
+  } else {
+    return getHeapTypeInfo(*this)->isData();
+  }
+}
+
 bool HeapType::isSignature() const {
   if (isBasic()) {
     return false;
@@ -750,6 +768,14 @@ bool HeapType::isStruct() const {
     return false;
   } else {
     return getHeapTypeInfo(*this)->isStruct();
+  }
+}
+
+bool HeapType::isArray() const {
+  if (isBasic()) {
+    return false;
+  } else {
+    return getHeapTypeInfo(*this)->isArray();
   }
 }
 
@@ -767,14 +793,6 @@ bool HeapType::operator<(const HeapType& other) const {
     return false;
   }
   return *getHeapTypeInfo(*this) < *getHeapTypeInfo(other);
-}
-
-bool HeapType::isArray() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getHeapTypeInfo(*this)->isArray();
-  }
 }
 
 Signature HeapType::getSignature() const {

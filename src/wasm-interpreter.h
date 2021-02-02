@@ -1320,7 +1320,7 @@ public:
       case RefIsFunc:
         return Literal(!value.isNull() && value.type.isFunction());
       case RefIsData:
-        return Literal(!value.isNull() && value.isGCData());
+        return Literal(!value.isNull() && value.isData());
       case RefIsI31:
         return Literal(!value.isNull() &&
                        value.type.getHeapType() == HeapType::i31);
@@ -1429,7 +1429,7 @@ public:
     // anyref of null (already handled above) or anything else (handled here,
     // but this is for future use as atm the binaryen interpreter cannot
     // represent external references).
-    if (!cast.originalRef.isGCData()) {
+    if (!cast.originalRef.isData()) {
       cast.outcome = cast.Failure;
       return cast;
     }
@@ -1509,7 +1509,7 @@ public:
         }
         break;
       case BrOnData:
-        if (!value.isGCData()) {
+        if (!value.isData()) {
           return {value};
         }
         break;
@@ -1699,7 +1699,7 @@ public:
         }
         break;
       case RefAsData:
-        if (value.isGCData()) {
+        if (value.isData()) {
           trap("not a data");
         }
         break;
