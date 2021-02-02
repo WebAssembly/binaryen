@@ -662,23 +662,32 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (a.size() != b.size()) {
     return Type::none; // a poison value that must not be consumed
   }
-  if (a.isRef()) {
-    if (b.isRef()) {
-      if (a.isFunction() && b.isFunction()) {
-        return Type::funcref;
-      }
-      if ((a == Type::i31ref && b == Type::eqref) ||
-          (a == Type::eqref && b == Type::i31ref)) {
-        return Type::eqref;
-      }
-      // The LUB of two different reference types is anyref, which may or may
-      // not be a valid type depending on whether the anyref feature is enabled.
-      // When anyref is disabled, it is possible for the finalization of invalid
-      // code to introduce a use of anyref via this function, but that is not a
-      // problem because it will be caught and rejected by validation.
-      return Type::anyref;
+  if (a.isRef() || b.isRef()) {
+    if (!a.isRef() || !b.isRef()) {
+      return Type::none;
     }
-    return Type::none;
+    auto handleNullability = [&](HeapType heapType) {
+      return Type(heapType,
+                  a.isNullable() || b.isNullable() ? Nullable : NonNullable);
+    };
+    auto aHeap = a.getHeapType();
+    auto BHeap = b.getHeapType();
+    if (aHeap.isFunction() && bHeap.isFunction()) {
+      return handleNullability(HeapType::func);
+    }
+    if (aHeap.isData() && bHeap.isData()) {
+      return handleNullability(HeapType::data);
+    }
+    if ((aHeap == HeapType::eq || aHeap == HeapType::i31 || aHeap == HeapType::data) &&
+        (bHeap == HeapType::eq || bHeap == HeapType::i31 || bHeap == HeapType::data)) {
+      return handleNullability(HeapType::eq);
+    }
+    // The LUB of two different reference types is anyref, which may or may
+    // not be a valid type depending on whether the anyref feature is enabled.
+    // When anyref is disabled, it is possible for the finalization of invalid
+    // code to introduce a use of anyref via this function, but that is not a
+    // problem because it will be caught and rejected by validation.
+    return Type::anyref;
   }
   if (a.isTuple()) {
     TypeList types;

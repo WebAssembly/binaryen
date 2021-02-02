@@ -2538,6 +2538,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       // check if a node type is 'stale', i.e., we forgot to finalize() the
       // node.
       auto oldType = curr->type;
+std::cout << "re:\n" << *curr << '\n';
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
       if (newType != oldType) {
