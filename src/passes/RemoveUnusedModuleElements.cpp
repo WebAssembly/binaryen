@@ -214,6 +214,14 @@ struct RemoveUnusedModuleElements : public Pass {
       return analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Event, curr->name)) == 0;
     });
+
+    for (auto& table : module->tables) {
+      table->segments.erase(
+        std::remove_if(table->segments.begin(),
+                       table->segments.end(),
+                       [&](auto& seg) { return seg.data.empty(); }),
+        table->segments.end());
+    }
     module->removeTables([&](Table* curr) {
       return (curr->segments.empty() || !curr->imported()) &&
              analyzer.reachable.count(
