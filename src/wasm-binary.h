@@ -979,6 +979,9 @@ enum ASTNodes {
   F32x4DemoteZeroF64x2 = 0x57,
   F64x2PromoteLowF32x4 = 0x69,
 
+  I32x4WidenSI8x16 = 0x67,
+  I32x4WidenUI8x16 = 0x68,
+
   // prefetch opcodes
 
   PrefetchT = 0xc5,
@@ -1521,6 +1524,7 @@ public:
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDWiden(Expression*& out, uint32_t code);
   bool maybeVisitPrefetch(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);

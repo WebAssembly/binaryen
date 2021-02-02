@@ -1132,6 +1132,7 @@ public:
     }
     WASM_UNREACHABLE("invalid op");
   }
+  Flow visitSIMDWiden(SIMDWiden* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
     Flow ifTrue = visit(curr->ifTrue);

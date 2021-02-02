@@ -1832,6 +1832,17 @@ switch (op[0]) {
                           default: goto parse_error;
                         }
                       }
+                      case 'i': {
+                        switch (op[18]) {
+                          case 's':
+                            if (strcmp(op, "i32x4.widen_i8x16_s") == 0) { return makeSIMDWiden(s, SIMDWidenOp::WidenSVecI8x16ToVecI32x4); }
+                            goto parse_error;
+                          case 'u':
+                            if (strcmp(op, "i32x4.widen_i8x16_u") == 0) { return makeSIMDWiden(s, SIMDWidenOp::WidenUVecI8x16ToVecI32x4); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       case 'l': {
                         switch (op[22]) {
                           case 's':
