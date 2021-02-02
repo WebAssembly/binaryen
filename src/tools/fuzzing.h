@@ -827,7 +827,7 @@ private:
   // Fix up changes that may have broken validation - types are correct in our
   // modding, but not necessarily labels.
   void fixLabels(Function* func) {
-    struct Fixer : public ControlFlowWalker<Fixer> {
+    struct Fixer : public ControlFlowWalker<Fixer, UnifiedExpressionVisitor<Fixer>> {
       Module& wasm;
       TranslateToFuzzReader& parent;
 
@@ -837,36 +837,44 @@ private:
       // Track seen names to find duplication, which is invalid.
       std::set<Name> seen;
 
-      void visitBlock(Block* curr) {
-        if (curr->name.is()) {
-          if (seen.count(curr->name)) {
-            replace();
-          } else {
-            seen.insert(curr->name);
-          }
-        }
-      }
+      void visitExpression(Expression* curr) {
+        // Note all scope names, and fix up all uses.
 
-      void visitLoop(Loop* curr) {
-        if (curr->name.is()) {
-          if (seen.count(curr->name)) {
-            replace();
-          } else {
-            seen.insert(curr->name);
-          }
-        }
-      }
+#define DELEGATE_ID curr->_id
 
-      void visitSwitch(Switch* curr) {
-        for (auto name : curr->targets) {
-          if (replaceIfInvalid(name)) {
-            return;
-          }
-        }
-        replaceIfInvalid(curr->default_);
-      }
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
 
-      void visitBreak(Break* curr) { replaceIfInvalid(curr->name); }
+#define DELEGATE_GET_FIELD(id, name) cast->name
+
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) \
+  if (cast->name.is()) { \
+    if (seen.count(cast->name)) { \
+      replace(); \
+    } else { \
+      seen.insert(cast->name); \
+    } \
+  }
+
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) \
+  replaceIfInvalid(cast->name);
+
+#define DELEGATE_FIELD_CHILD(id, name)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)
+#define DELEGATE_FIELD_INT(id, name)
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#define DELEGATE_FIELD_LITERAL(id, name)
+#define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_NAME_VECTOR(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+#define DELEGATE_FIELD_SIGNATURE(id, name)
+#define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_ADDRESS(id, name)
+
+#include "wasm-delegations-fields.h"
+
+      }
 
       bool replaceIfInvalid(Name target) {
         if (!hasBreakTarget(target)) {
