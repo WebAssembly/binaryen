@@ -6,9 +6,11 @@
   try
    i32.const 0
    throw $e0
-  catch
+  catch $e0
    
    drop
+   rethrow 0
+  catch_all
    rethrow 0
   end
   unreachable
@@ -29,6 +31,9 @@
     (drop
      (pop i32)
     )
+    (rethrow 0)
+   )
+   (catch_all
     (rethrow 0)
    )
   )

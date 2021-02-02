@@ -10,6 +10,9 @@
         (drop (pop i32))
         (rethrow 0)
       )
+      (catch_all
+        (rethrow 0)
+      )
     )
   )
 )
