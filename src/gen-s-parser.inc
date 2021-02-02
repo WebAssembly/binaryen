@@ -71,9 +71,26 @@ switch (op[0]) {
               case 'i':
                 if (strcmp(op, "br_if") == 0) { return makeBreak(s); }
                 goto parse_error;
-              case 'o':
-                if (strcmp(op, "br_on_cast") == 0) { return makeBrOnCast(s); }
-                goto parse_error;
+              case 'o': {
+                switch (op[6]) {
+                  case 'c':
+                    if (strcmp(op, "br_on_cast") == 0) { return makeBrOn(s, BrOnCast); }
+                    goto parse_error;
+                  case 'd':
+                    if (strcmp(op, "br_on_data") == 0) { return makeBrOn(s, BrOnData); }
+                    goto parse_error;
+                  case 'f':
+                    if (strcmp(op, "br_on_func") == 0) { return makeBrOn(s, BrOnFunc); }
+                    goto parse_error;
+                  case 'i':
+                    if (strcmp(op, "br_on_i31") == 0) { return makeBrOn(s, BrOnI31); }
+                    goto parse_error;
+                  case 'n':
+                    if (strcmp(op, "br_on_null") == 0) { return makeBrOn(s, BrOnNull); }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
               case 't':
                 if (strcmp(op, "br_table") == 0) { return makeBreakTable(s); }
                 goto parse_error;
@@ -1815,6 +1832,17 @@ switch (op[0]) {
                           default: goto parse_error;
                         }
                       }
+                      case 'i': {
+                        switch (op[18]) {
+                          case 's':
+                            if (strcmp(op, "i32x4.widen_i8x16_s") == 0) { return makeSIMDWiden(s, SIMDWidenOp::WidenSVecI8x16ToVecI32x4); }
+                            goto parse_error;
+                          case 'u':
+                            if (strcmp(op, "i32x4.widen_i8x16_u") == 0) { return makeSIMDWiden(s, SIMDWidenOp::WidenUVecI8x16ToVecI32x4); }
+                            goto parse_error;
+                          default: goto parse_error;
+                        }
+                      }
                       case 'l': {
                         switch (op[22]) {
                           case 's':
@@ -2834,6 +2862,9 @@ switch (op[0]) {
                     goto parse_error;
                   case 'i':
                     if (strcmp(op, "ref.as_i31") == 0) { return makeRefAs(s, RefAsI31); }
+                    goto parse_error;
+                  case 'n':
+                    if (strcmp(op, "ref.as_non_null") == 0) { return makeRefAs(s, RefAsNonNull); }
                     goto parse_error;
                   default: goto parse_error;
                 }

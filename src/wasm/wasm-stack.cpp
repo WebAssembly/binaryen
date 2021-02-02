@@ -48,9 +48,6 @@ void BinaryInstWriter::visitIf(If* curr) {
 }
 
 void BinaryInstWriter::emitIfElse(If* curr) {
-  assert(!breakStack.empty());
-  breakStack.pop_back();
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE); // TODO same as If
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, BinaryLocations::Else);
   }
@@ -696,6 +693,19 @@ void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   assert(curr->align);
   emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
   o << curr->index;
+}
+
+void BinaryInstWriter::visitSIMDWiden(SIMDWiden* curr) {
+  o << int8_t(BinaryConsts::SIMDPrefix);
+  switch (curr->op) {
+    case WidenSVecI8x16ToVecI32x4:
+      o << U32LEB(BinaryConsts::I32x4WidenSI8x16);
+      break;
+    case WidenUVecI8x16ToVecI32x4:
+      o << U32LEB(BinaryConsts::I32x4WidenUI8x16);
+      break;
+  }
+  o << uint8_t(curr->index);
 }
 
 void BinaryInstWriter::visitPrefetch(Prefetch* curr) {
@@ -1903,9 +1913,6 @@ void BinaryInstWriter::visitTry(Try* curr) {
 }
 
 void BinaryInstWriter::emitCatch(Try* curr, Index i) {
-  assert(!breakStack.empty());
-  breakStack.pop_back();
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
@@ -1914,9 +1921,6 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
-  assert(!breakStack.empty());
-  breakStack.pop_back();
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
   }
@@ -1994,9 +1998,27 @@ void BinaryInstWriter::visitRefCast(RefCast* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefCast);
 }
 
-void BinaryInstWriter::visitBrOnCast(BrOnCast* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast)
-    << U32LEB(getBreakIndex(curr->name));
+void BinaryInstWriter::visitBrOn(BrOn* curr) {
+  switch (curr->op) {
+    case BrOnNull:
+      o << int8_t(BinaryConsts::BrOnNull);
+      break;
+    case BrOnCast:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+      break;
+    case BrOnFunc:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnFunc);
+      break;
+    case BrOnData:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnData);
+      break;
+    case BrOnI31:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnI31);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid br_on_*");
+  }
+  o << U32LEB(getBreakIndex(curr->name));
 }
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
@@ -2078,14 +2100,17 @@ void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
   switch (curr->op) {
+    case RefAsNonNull:
+      o << int8_t(BinaryConsts::RefAsNonNull);
+      break;
     case RefAsFunc:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsFunc);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsFunc);
       break;
     case RefAsData:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsData);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsData);
       break;
     case RefAsI31:
-      o << int8_t(BinaryConsts::GCPrefix) << int8_t(BinaryConsts::RefAsI31);
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefAsI31);
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");

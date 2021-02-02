@@ -481,7 +481,7 @@ enum SIMDReplaceOp {
   ReplaceLaneVecI32x4,
   ReplaceLaneVecI64x2,
   ReplaceLaneVecF32x4,
-  ReplaceLaneVecF64x2
+  ReplaceLaneVecF64x2,
 };
 
 enum SIMDShiftOp {
@@ -537,6 +537,11 @@ enum SIMDTernaryOp {
   SignSelectVec64x2
 };
 
+enum SIMDWidenOp {
+  WidenSVecI8x16ToVecI32x4,
+  WidenUVecI8x16ToVecI32x4,
+};
+
 enum PrefetchOp {
   PrefetchTemporal,
   PrefetchNontemporal,
@@ -550,9 +555,18 @@ enum RefIsOp {
 };
 
 enum RefAsOp {
+  RefAsNonNull,
   RefAsFunc,
   RefAsData,
   RefAsI31,
+};
+
+enum BrOnOp {
+  BrOnNull,
+  BrOnCast,
+  BrOnFunc,
+  BrOnData,
+  BrOnI31,
 };
 
 //
@@ -616,6 +630,7 @@ public:
     SIMDShiftId,
     SIMDLoadId,
     SIMDLoadStoreLaneId,
+    SIMDWidenId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -635,7 +650,7 @@ public:
     CallRefId,
     RefTestId,
     RefCastId,
-    BrOnCastId,
+    BrOnId,
     RttCanonId,
     RttSubId,
     StructNewId,
@@ -1064,6 +1079,18 @@ public:
   void finalize();
 };
 
+class SIMDWiden : public SpecificExpression<Expression::SIMDWidenId> {
+public:
+  SIMDWiden() = default;
+  SIMDWiden(MixedArena& allocator) {}
+
+  SIMDWidenOp op;
+  uint8_t index;
+  Expression* vec;
+
+  void finalize();
+};
+
 class Prefetch : public SpecificExpression<Expression::PrefetchId> {
 public:
   Prefetch() = default;
@@ -1382,13 +1409,22 @@ public:
   Type getCastType();
 };
 
-class BrOnCast : public SpecificExpression<Expression::BrOnCastId> {
+class BrOn : public SpecificExpression<Expression::BrOnId> {
 public:
-  BrOnCast(MixedArena& allocator) {}
+  BrOn(MixedArena& allocator) {}
 
+  BrOnOp op;
   Name name;
   Expression* ref;
+
+  // BrOnCast has an rtt that is used in the cast.
   Expression* rtt;
+
+  // TODO: BrOnNull also has an optional extra value in the spec, which we do
+  //       not support. See also the discussion on
+  //       https://github.com/WebAssembly/function-references/issues/45
+  //       - depending on the decision there, we may want to move BrOnNull into
+  //       Break or a new class of its own.
 
   void finalize();
 

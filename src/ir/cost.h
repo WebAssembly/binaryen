@@ -540,6 +540,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitSIMDShift(SIMDShift* curr) {
     return 1 + visit(curr->vec) + visit(curr->shift);
   }
+  Index visitSIMDWiden(SIMDWiden* curr) { return 1 + visit(curr->vec); }
   Index visitSIMDShuffle(SIMDShuffle* curr) {
     return 1 + visit(curr->left) + visit(curr->right);
   }
@@ -582,8 +583,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitRefCast(RefCast* curr) {
     return 2 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
   }
-  Index visitBrOnCast(BrOnCast* curr) {
-    return 3 + nullCheckCost(curr->ref) + visit(curr->ref) + visit(curr->rtt);
+  Index visitBrOn(BrOn* curr) {
+    // BrOnCast has more work to do with the rtt, so add a little there.
+    Index base = curr->op == BrOnCast ? 3 : 2;
+    return base + nullCheckCost(curr->ref) + visit(curr->ref) +
+           maybeVisit(curr->rtt);
   }
   Index visitRttCanon(RttCanon* curr) {
     // TODO: investigate actual RTT costs in VMs

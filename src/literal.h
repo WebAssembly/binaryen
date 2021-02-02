@@ -97,14 +97,17 @@ public:
   Literal& operator=(const Literal& other);
   ~Literal();
 
-  bool isConcrete() const { return type != Type::none; }
+  bool isConcrete() const { return type.isConcrete(); }
   bool isNone() const { return type == Type::none; }
+  bool isFunction() const { return type.isFunction(); }
+  bool isData() const { return type.isData(); }
+
   bool isNull() const {
     if (type.isNullable()) {
       if (type.isFunction()) {
         return func.isNull();
       }
-      if (isGCData()) {
+      if (isData()) {
         return !gcData;
       }
       return true;
@@ -171,7 +174,6 @@ public:
         WASM_UNREACHABLE("unexpected type");
     }
   }
-  bool isGCData() const { return type.isStruct() || type.isArray(); }
 
   static Literals makeZeros(Type type);
   static Literals makeOnes(Type type);
