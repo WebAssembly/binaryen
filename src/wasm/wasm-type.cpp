@@ -370,7 +370,7 @@ bool Type::isTuple() const {
 
 bool Type::isRef() const {
   if (isBasic()) {
-    return id >= funcref && id <= i31ref;
+    return id >= funcref && id <= dataref;
   } else {
     return getTypeInfo(*this)->isRef();
   }
@@ -396,7 +396,7 @@ bool Type::isData() const {
 
 bool Type::isNullable() const {
   if (isBasic()) {
-    return id >= funcref && id <= eqref; // except i31ref
+    return id >= funcref && id <= eqref; // except i31ref and dataref
   } else {
     return getTypeInfo(*this)->isNullable();
   }
@@ -671,7 +671,7 @@ Type Type::getLeastUpperBound(Type a, Type b) {
                   a.isNullable() || b.isNullable() ? Nullable : NonNullable);
     };
     auto aHeap = a.getHeapType();
-    auto BHeap = b.getHeapType();
+    auto bHeap = b.getHeapType();
     if (aHeap.isFunction() && bHeap.isFunction()) {
       return handleNullability(HeapType::func);
     }
