@@ -1,4 +1,3 @@
-#define STACK_OPT_DEBUG 1
 /*
  * Copyright 2018 WebAssembly Community Group participants
  *
