@@ -2128,11 +2128,10 @@ private:
       // give up
       return makeTrivial(type);
     }
-    // There's no unary ops for reference types
-    if (type.isRef()) {
+    // There are no unary ops for reference or RTT types.
+    if (type.isRef() || type.isRtt()) {
       return makeTrivial(type);
     }
-
     switch (type.getBasic()) {
       case Type::i32: {
         auto singleConcreteType = getSingleConcreteType();
@@ -2354,7 +2353,7 @@ private:
       // give up
       return makeTrivial(type);
     }
-    // There's no binary ops for reference or RTT types.
+    // There are no binary ops for reference or RTT types.
     if (type.isRef() || type.isRtt()) {
       return makeTrivial(type);
     }
