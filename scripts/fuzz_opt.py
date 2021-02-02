@@ -151,8 +151,8 @@ def randomize_fuzz_settings():
 
 
 IMPORTANT_INITIAL_CONTENTS = [
-    os.path.join('lit', 'passes', 'optimize-instructions.wast'),
-    os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+    os.path.join('heap-types.wast'),
+    os.path.join('passes', 'Oz_fuzz-exec_all-features.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
@@ -164,11 +164,11 @@ def pick_initial_contents():
 
     INITIAL_CONTENTS = None
     # half the time don't use any initial contents
-    if random.random() < 0.5:
-        return
+    #if random.random() < 0.5:
+    #    return
     # some of the time use initial contents that are known to be especially
     # important
-    if random.random() < 0.5:
+    if random.random() < 1:#0.5:
         test_name = random.choice(IMPORTANT_INITIAL_CONTENTS)
     else:
         test_name = random.choice(all_tests)
@@ -214,7 +214,7 @@ def pick_initial_contents():
         # has not been fuzzed in general yet
         '--disable-memory64',
         # has not been fuzzed in general yet
-        '--disable-gc',
+        #'--disable-gc',
         # DWARF is incompatible with multivalue atm; it's more important to
         # fuzz multivalue since we aren't actually fuzzing DWARF here
         '--strip-dwarf',

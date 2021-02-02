@@ -1098,7 +1098,7 @@ private:
              &Self::makeSelect)
         .add(FeatureSet::Multivalue, &Self::makeTupleExtract);
     }
-    if (type.isSingle() && !type.isRef()) {
+    if (type.isSingle() && !type.isRef() && !type.isRtt()) {
       options.add(FeatureSet::MVP, {&Self::makeLoad, Important});
       options.add(FeatureSet::SIMD, &Self::makeSIMD);
     }
@@ -2093,6 +2093,15 @@ private:
         builder.makeUnreachable()));
       return builder.makeRefFunc(func->name, type);
     }
+    if (type.isRtt()) {
+      Expression* ret = builder.makeRttCanon(type.getHeapType());
+      if (type.getRtt().hasDepth()) {
+        for (Index i = 0; i < type.getRtt().depth; i++) {
+          ret = builder.makeRttSub(type.getHeapType(), ret);
+        }
+      }
+      return ret;
+    }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
       for (const auto& t : type) {
@@ -2345,11 +2354,10 @@ private:
       // give up
       return makeTrivial(type);
     }
-    // There's no binary ops for reference types
-    if (type.isRef()) {
+    // There's no binary ops for reference or RTT types.
+    if (type.isRef() || type.isRtt()) {
       return makeTrivial(type);
     }
-
     switch (type.getBasic()) {
       case Type::i32: {
         switch (upTo(4)) {
