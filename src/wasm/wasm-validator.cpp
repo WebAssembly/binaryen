@@ -2296,6 +2296,9 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.get requires gc to be enabled");
+  shouldBeTrue(curr->ref->type.isStruct(),
+               curr,
+               "struct.get requires a struct");
   const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
   shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
   auto field = fields[curr->index];
@@ -2315,6 +2318,9 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.set requires gc to be enabled");
+  shouldBeTrue(curr->ref->type.isStruct(),
+               curr,
+               "struct.set requires a struct");
   if (curr->ref->type != Type::unreachable) {
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
