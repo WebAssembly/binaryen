@@ -2471,7 +2471,7 @@ void WasmBinaryBuilder::readDataSegments() {
                  std::to_string(flags));
     }
     curr.isPassive = flags & BinaryConsts::IsPassive;
-    if (flags & BinaryConsts::HasMemIndex) {
+    if (flags & BinaryConsts::HasIndex) {
       auto memIndex = getU32LEB();
       if (memIndex != 0) {
         throwError("nonzero memory index");
@@ -2520,12 +2520,11 @@ void WasmBinaryBuilder::readTableElements() {
   }
   for (size_t i = 0; i < numSegments; i++) {
     auto flags = getU32LEB();
-    bool isInactive = (flags & BinaryConsts::ElementFlags::IsInactive) != 0;
-    bool hasTableIdx = (flags & BinaryConsts::ElementFlags::HasTableIndex) != 0;
-    bool usesExpressions =
-      (flags & BinaryConsts::ElementFlags::UsesExpressions) != 0;
+    bool isPassive = (flags & BinaryConsts::IsPassive) != 0;
+    bool hasTableIdx = (flags & BinaryConsts::HasIndex) != 0;
+    bool usesExpressions = (flags & BinaryConsts::UsesExpressions) != 0;
 
-    if (isInactive) {
+    if (isPassive) {
       throwError("Only active elem segments are supported.");
     }
 
@@ -2549,11 +2548,9 @@ void WasmBinaryBuilder::readTableElements() {
       throwError("Table index out of range.");
     }
 
-    if (flags == 0x2) {
-      auto elemKind = getU32LEB();
-      if (elemKind != 0x0) {
-        throwError("Non-funcref elemKind is not supported yet.");
-      }
+    auto elemKind = getU32LEB();
+    if (elemKind != 0x0) {
+      throwError("Only funcref elem kinds are valid.");
     }
 
     size_t segmentIndex = functionTable[tableIdx].size();

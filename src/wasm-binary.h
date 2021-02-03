@@ -329,7 +329,27 @@ enum Section {
   Event = 13
 };
 
-enum SegmentFlag { IsPassive = 0x01, HasMemIndex = 0x02 };
+// A passive segment is a segment that will not be automatically copied into the
+//   memory or table on instantiation, and must instead be applied manually  
+//   using the instructions memory.init or table.init.
+// An active segment is equivalent to a passive segment, but with an implicit
+//   memory.init followed by a data.drop (or table.init followed by a elem.drop)
+//   that is prepended to the module's start function.
+// A declarative element segment is not available at runtime but merely serves
+//   to forward-declare references that are formed in code with instructions
+//   like ref.func.
+enum SegmentFlag {
+  // Bit 0: 0 = active, 1 = passive
+  IsPassive = 1 << 0,
+  // Bit 1 if passive: 0 = passive, 1 = declarative
+  IsDeclarative = 1 << 1,
+  // Bit 1 if active: 0 = index 0, 1 = index given
+  HasIndex = 1 << 1,
+  // Table element segments only:
+  // Bit 2: 0 = elemType is funcref and vector of func indexes given
+  //        1 = elemType is given and vector of ref expressions is given
+  UsesExpressions = 1 << 2
+};
 
 enum EncodedType {
   // value_type
@@ -1058,18 +1078,6 @@ enum MemoryAccess {
 };
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
-
-enum ElementFlags {
-  // Bit 0: 0 means active segment, 1 means passive or declarative
-  IsInactive = 1 << 0,
-  // Bit 1 if passive or declarative: 0 means passive, 1 means declarative
-  IsDeclarative = 1 << 1,
-  // Bit 1 if active: 0 means table index 0, 1 means table index given
-  HasTableIndex = 1 << 1,
-  // Bit 2: 0 means elemType = funcref and vector of func indexes
-  //        1 means elemType given and vector of ref expressions
-  UsesExpressions = 1 << 2
-};
 
 enum FeaturePrefix {
   FeatureUsed = '+',
