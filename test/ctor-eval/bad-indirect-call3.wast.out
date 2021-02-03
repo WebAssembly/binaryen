@@ -14,7 +14,7 @@
   )
  )
  (func $sig_mismatch
-  (call_indirect (type $funcref_=>_none)
+  (call_indirect $0 (type $funcref_=>_none)
    (ref.null func)
    (i32.const 0)
   )

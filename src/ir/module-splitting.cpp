@@ -99,17 +99,19 @@ namespace ModuleSplitting {
 
 namespace {
 
-template<class F> void forEachElement(Table* table, F f) {
-  for (auto& segment : table->segments) {
-    Name base = "";
-    Index offset = 0;
-    if (auto* c = segment.offset->dynCast<Const>()) {
-      offset = c->value.geti32();
-    } else if (auto* g = segment.offset->dynCast<GlobalGet>()) {
-      base = g->name;
-    }
-    for (size_t i = 0; i < segment.data.size(); ++i) {
-      f(base, offset + i, segment.data[i]);
+template<class F> void forEachElement(Module& module, F f) {
+  for (auto& table : module.tables) {
+    for (auto& segment : table->segments) {
+      Name base = "";
+      Index offset = 0;
+      if (auto* c = segment.offset->dynCast<Const>()) {
+        offset = c->value.geti32();
+      } else if (auto* g = segment.offset->dynCast<GlobalGet>()) {
+        base = g->name;
+      }
+      for (size_t i = 0; i < segment.data.size(); ++i) {
+        f(table->name, base, offset + i, segment.data[i]);
+      }
     }
   }
 }
@@ -194,8 +196,8 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
   }
 
   // Initialize funcIndices with the functions already in the table.
-  forEachElement(activeTable, [&](Name base, Index offset, Name func) {
-    addSlot(func, {activeTable->name, base, offset});
+  forEachElement(module, [&](Name table, Name base, Index offset, Name func) {
+    addSlot(func, {table, base, offset});
   });
 }
 
@@ -215,6 +217,7 @@ TableSlotManager::Slot TableSlotManager::getSlot(Name func) {
   if (activeSegment == nullptr) {
     if (activeTable == nullptr) {
       activeTable = makeTable();
+      activeBase = {activeTable->name, "", 0};
     }
 
     assert(activeTable->segments.size() == 0);
@@ -456,7 +459,7 @@ void ModuleSplitter::setupTablePatching() {
   // Replace table references to secondary functions with an imported
   // placeholder that encodes the table index in its name:
   // `importNamespace`.`index`.
-  forEachElement(tableManager.activeTable, [&](Name, Index index, Name& elem) {
+  forEachElement(primary, [&](Name, Name, Index index, Name& elem) {
     if (secondaryFuncs.count(elem)) {
       replacedElems[index] = elem;
       auto* secondaryFunc = secondary.getFunction(elem);

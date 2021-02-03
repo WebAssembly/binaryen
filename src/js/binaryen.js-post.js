@@ -576,9 +576,9 @@ function wrapModule(module, self = {}) {
   // 'callIndirect', 'returnCall', 'returnCallIndirect' are deprecated and may
   // be removed in a future release. Please use the the snake_case names
   // instead.
-  self['callIndirect'] = self['call_indirect'] = function(target, operands, params, results) {
+  self['callIndirect'] = self['call_indirect'] = function(target, table, operands, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results)
+      Module['_BinaryenCallIndirect'](module, table, target, i32sToStack(operands), operands.length, params, results)
     );
   };
   self['returnCall'] = self['return_call'] = function(name, operands, type) {
@@ -586,9 +586,9 @@ function wrapModule(module, self = {}) {
       Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type)
     );
   };
-  self['returnCallIndirect'] = self['return_call_indirect'] = function(target, operands, params, results) {
+  self['returnCallIndirect'] = self['return_call_indirect'] = function(target, table, operands, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenReturnCallIndirect'](module, target, i32sToStack(operands), operands.length, params, results)
+      Module['_BinaryenReturnCallIndirect'](module, table, target, i32sToStack(operands), operands.length, params, results)
     );
   };
 
@@ -2587,6 +2587,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'isReturn': Boolean(Module['_BinaryenCallIndirectIsReturn'](expr)),
         'target': Module['_BinaryenCallIndirectGetTarget'](expr),
+        'table': Module['_BinaryenCallIndirectGetTable'](expr),
         'operands': getAllNested(expr, Module['_BinaryenCallIndirectGetNumOperands'], Module['_BinaryenCallIndirectGetOperandAt'])
       };
     case Module['LocalGetId']:
@@ -3420,6 +3421,12 @@ Module['CallIndirect'] = makeExpressionWrapper({
   },
   'setTarget'(expr, targetExpr) {
     Module['_BinaryenCallIndirectSetTarget'](expr, targetExpr);
+  },
+  'getTable'(expr, results) {
+    return Module['_BinaryenCallIndirectGetTable'](expr, results);
+  },
+  'setTable'(expr, results) {
+    Module['_BinaryenCallIndirectSetTable'](expr, results);
   },
   'getNumOperands'(expr) {
     return Module['_BinaryenCallIndirectGetNumOperands'](expr);

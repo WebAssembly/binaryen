@@ -308,7 +308,7 @@ struct PrintExpressionContents
       printMedium(o, "call_indirect ");
     }
 
-    if (curr->table.is()) {
+    if (features.hasReferenceTypes()) {
       printName(curr->table, o);
       o << ' ';
     }

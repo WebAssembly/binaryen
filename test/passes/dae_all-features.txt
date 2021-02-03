@@ -268,7 +268,7 @@
    (i32.const 42)
   )
   (drop
-   (return_call_indirect (type $none_=>_i32)
+   (return_call_indirect $0 (type $none_=>_i32)
     (i32.const 0)
    )
   )

@@ -1050,7 +1050,7 @@
    (i32.const -1)
    (block
     (unreachable)
-    (call_indirect (type $i32_i32_=>_none)
+    (call_indirect $0 (type $i32_i32_=>_none)
      (i32.const 123)
      (i32.const 456)
      (unreachable)
@@ -1062,7 +1062,7 @@
    (i32.const -2)
    (block
     (unreachable)
-    (call_indirect (type $i32_i32_=>_none)
+    (call_indirect $0 (type $i32_i32_=>_none)
      (i32.const 139)
      (unreachable)
      (i32.const 0)
@@ -1075,7 +1075,7 @@
    (block
     (unreachable)
     (unreachable)
-    (call_indirect (type $i32_i32_=>_none)
+    (call_indirect $0 (type $i32_i32_=>_none)
      (i32.const 246)
      (unreachable)
      (unreachable)
@@ -1089,7 +1089,7 @@
     (unreachable)
     (unreachable)
     (unreachable)
-    (call_indirect (type $i32_i32_=>_none)
+    (call_indirect $0 (type $i32_i32_=>_none)
      (unreachable)
      (unreachable)
      (unreachable)

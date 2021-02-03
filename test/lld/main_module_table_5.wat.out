@@ -20,7 +20,7 @@
   (nop)
  )
  (func $dynCall_v (param $fptr i32)
-  (call_indirect $0 (type $none_=>_none)
+  (call_indirect (type $none_=>_none)
    (local.get $fptr)
   )
  )

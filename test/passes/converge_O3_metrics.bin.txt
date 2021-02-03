@@ -123,7 +123,7 @@ total
    )
    (block $label$2
     (br_if $label$2
-     (call_indirect $timport$0 (type $i32_i32_i32_=>_i32)
+     (call_indirect (type $i32_i32_i32_=>_i32)
       (local.get $1)
       (i32.const 10888)
       (local.get $0)
@@ -180,7 +180,7 @@ total
       )
      )
      (i32.const 0)
-     (call_indirect $timport$0 (type $i32_i32_=>_i32)
+     (call_indirect (type $i32_i32_=>_i32)
       (local.get $1)
       (i32.const 10)
       (i32.add
@@ -202,7 +202,7 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect $timport$0 (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $i32_i32_i32_=>_i32)
     (i32.const 0)
     (i32.const 0)
     (i32.const 1)
@@ -223,7 +223,7 @@ total
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (drop
-   (call_indirect $timport$0 (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $i32_i32_i32_=>_i32)
     (i32.const 0)
     (local.get $1)
     (local.get $2)
@@ -365,7 +365,7 @@ total
    )
    (block $label$2
     (br_if $label$2
-     (call_indirect $timport$0 (type $i32_i32_i32_=>_i32)
+     (call_indirect (type $i32_i32_i32_=>_i32)
       (local.get $1)
       (i32.const 10888)
       (local.get $0)
@@ -422,7 +422,7 @@ total
       )
      )
      (i32.const 0)
-     (call_indirect $timport$0 (type $i32_i32_=>_i32)
+     (call_indirect (type $i32_i32_=>_i32)
       (local.get $1)
       (i32.const 10)
       (i32.add
@@ -444,7 +444,7 @@ total
    (local.get $1)
   )
   (drop
-   (call_indirect $timport$0 (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $i32_i32_i32_=>_i32)
     (i32.const 0)
     (i32.const 0)
     (i32.const 1)
@@ -465,7 +465,7 @@ total
  )
  (func $__ZNSt3__211__stdoutbufIcE6xsputnEPKci (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (drop
-   (call_indirect $timport$0 (type $i32_i32_i32_=>_i32)
+   (call_indirect (type $i32_i32_i32_=>_i32)
     (i32.const 0)
     (local.get $1)
     (local.get $2)

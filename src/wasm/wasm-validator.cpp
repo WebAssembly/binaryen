@@ -811,18 +811,8 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
                                     "indirect call target must be an i32");
 
   if (curr->target->type != Type::unreachable) {
-    if (curr->table.is()) {
-      auto* table = getModule()->getTableOrNull(curr->table);
-      if (!shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
-        return;
-      } else {
-        shouldBeFalse(
-          getModule()->tables.empty(), curr, "call-indirect table not defined");
-      }
-    } else {
-      shouldBeFalse(
-        getModule()->tables.empty(), curr, "call-indirect no tables found");
-    }
+    auto* table = getModule()->getTableOrNull(curr->table);
+    shouldBeTrue(!!table, curr, "call-indirect table must exist");
   }
 
   validateCallParamsAndResult(curr, curr->sig);

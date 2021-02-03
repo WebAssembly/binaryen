@@ -5,6 +5,7 @@
 
 int main() {
   BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetFeatures(module, BinaryenFeatureReferenceTypes());
 
   // Create a function type for  i32 (i32, i32)
   BinaryenType ii[2] = {BinaryenTypeInt32(), BinaryenTypeInt32()};
@@ -35,12 +36,12 @@ int main() {
                      BinaryenConst(module, BinaryenLiteralInt32(0)));
 
     BinaryenAddTable(module,
-                      "t2",
-                      1,
-                      1,
-                      funcNames,
-                      1,
-                      BinaryenConst(module, BinaryenLiteralInt32(0)));
+                     "t2",
+                     1,
+                     1,
+                     funcNames,
+                     1,
+                     BinaryenConst(module, BinaryenLiteralInt32(0)));
   }
 
   {
@@ -51,12 +52,13 @@ int main() {
 
     BinaryenExpressionRef add_indirect =
       BinaryenCallIndirect(module,
+                           "tab",
                            BinaryenConst(module, BinaryenLiteralInt32(0)),
                            operands,
                            2,
                            params,
                            results);
-    BinaryenCallIndirectSetTableName(add_indirect, "t2");
+    BinaryenCallIndirectSetTable(add_indirect, "t2");
 
     BinaryenFunctionRef call_adder_indirectly = BinaryenAddFunction(
       module, "call_adder_indirect", params, results, NULL, 0, add_indirect);

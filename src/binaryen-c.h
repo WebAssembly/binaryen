@@ -608,6 +608,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module,
                                                 BinaryenType returnType);
 BINARYEN_API BinaryenExpressionRef
 BinaryenCallIndirect(BinaryenModuleRef module,
+                     const char* table,
                      BinaryenExpressionRef target,
                      BinaryenExpressionRef* operands,
                      BinaryenIndex numOperands,
@@ -621,6 +622,7 @@ BinaryenReturnCall(BinaryenModuleRef module,
                    BinaryenType returnType);
 BINARYEN_API BinaryenExpressionRef
 BinaryenReturnCallIndirect(BinaryenModuleRef module,
+                           const char* table,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
                            BinaryenIndex numOperands,
@@ -1045,8 +1047,8 @@ BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
 BINARYEN_API const char*
 BinaryenCallIndirectGetTableName(BinaryenExpressionRef expr);
 // Sets the table name of a `call_indirect` expression.
-BINARYEN_API void BinaryenCallIndirectSetTableName(BinaryenExpressionRef expr,
-                                                   const char* table);
+BINARYEN_API void BinaryenCallIndirectSetTable(BinaryenExpressionRef expr,
+                                               const char* table);
 // Gets the number of operands of a `call_indirect` expression.
 BINARYEN_API BinaryenIndex
 BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr);

@@ -311,7 +311,7 @@ After:
  (export "foo" (func $foo))
  (export "%table" (table $0))
  (func $foo (param $0 i32) (result i32)
-  (call_indirect (type $i32_=>_i32)
+  (call_indirect $0 (type $i32_=>_i32)
    (local.get $0)
    (i32.const 0)
   )
@@ -564,7 +564,7 @@ After:
  (elem (i32.const 0) $placeholder_0)
  (export "%table" (table $0))
  (func $foo
-  (call_indirect (type $none_=>_none)
+  (call_indirect $0 (type $none_=>_none)
    (i32.const 0)
   )
  )
@@ -631,7 +631,7 @@ After:
   (nop)
  )
  (func $bar
-  (call_indirect (type $none_=>_none)
+  (call_indirect $0 (type $none_=>_none)
    (i32.const 0)
   )
  )
@@ -963,7 +963,7 @@ After:
  (export "foo2" (func $foo))
  (export "%table" (table $0))
  (func $foo
-  (call_indirect (type $none_=>_none)
+  (call_indirect $0 (type $none_=>_none)
    (i32.const 0)
   )
  )

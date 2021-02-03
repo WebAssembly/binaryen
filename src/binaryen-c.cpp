@@ -805,6 +805,7 @@ BinaryenExpressionRef BinaryenReturnCall(BinaryenModuleRef module,
 }
 static BinaryenExpressionRef
 makeBinaryenCallIndirect(BinaryenModuleRef module,
+                         const char* table,
                          BinaryenExpressionRef target,
                          BinaryenExpressionRef* operands,
                          BinaryenIndex numOperands,
@@ -812,6 +813,7 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
                          BinaryenType results,
                          bool isReturn) {
   auto* ret = ((Module*)module)->allocator.alloc<CallIndirect>();
+  ret->table = table;
   ret->target = (Expression*)target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
@@ -823,23 +825,25 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
+                                           const char* table,
                                            BinaryenExpressionRef target,
                                            BinaryenExpressionRef* operands,
                                            BinaryenIndex numOperands,
                                            BinaryenType params,
                                            BinaryenType results) {
   return makeBinaryenCallIndirect(
-    module, target, operands, numOperands, params, results, false);
+    module, table, target, operands, numOperands, params, results, false);
 }
 BinaryenExpressionRef
 BinaryenReturnCallIndirect(BinaryenModuleRef module,
+                           const char* table,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
                            BinaryenIndex numOperands,
                            BinaryenType params,
                            BinaryenType results) {
   return makeBinaryenCallIndirect(
-    module, target, operands, numOperands, params, results, true);
+    module, table, target, operands, numOperands, params, results, true);
 }
 BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                        BinaryenIndex index,
@@ -1615,8 +1619,8 @@ const char* BinaryenCallIndirectGetTableName(BinaryenExpressionRef expr) {
   assert(expression->is<CallIndirect>());
   return static_cast<CallIndirect*>(expression)->table.c_str();
 }
-void BinaryenCallIndirectSetTableName(BinaryenExpressionRef expr,
-                                      const char* table) {
+void BinaryenCallIndirectSetTable(BinaryenExpressionRef expr,
+                                  const char* table) {
   Name name(table);
   auto* expression = (Expression*)expr;
 

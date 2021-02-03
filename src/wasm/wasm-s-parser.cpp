@@ -1848,6 +1848,8 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
   auto ret = allocator.alloc<CallIndirect>();
   if (s[i]->isStr()) {
     ret->table = s[i++]->str();
+  } else {
+    ret->table = wasm.tables.front()->name;
   }
   i = parseTypeUse(s, i, ret->sig);
   parseCallOperands(s, i, s.size() - 1, ret);
@@ -2480,22 +2482,18 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
   ex->name = s[1]->str();
   if (s[2]->isList()) {
     auto& inner = *s[2];
-
+    ex->value = inner[1]->str();
     if (elementStartsWith(inner, FUNC)) {
-      ex->value = getFunctionName(*inner[1]);
       ex->kind = ExternalKind::Function;
     } else if (elementStartsWith(inner, MEMORY)) {
       ex->kind = ExternalKind::Memory;
-      ex->value = inner[1]->str();
     } else if (elementStartsWith(inner, TABLE)) {
       ex->kind = ExternalKind::Table;
       ex->value = getTableName(*inner[1]);
     } else if (elementStartsWith(inner, GLOBAL)) {
       ex->kind = ExternalKind::Global;
-      ex->value = getGlobalName(*inner[1]);
     } else if (inner[0]->str() == EVENT) {
       ex->kind = ExternalKind::Event;
-      ex->value = getEventName(*inner[1]);
     } else {
       throw ParseException("invalid export", inner.line, inner.col);
     }

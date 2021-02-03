@@ -43,10 +43,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
-    auto it = tables.begin();
-    if (curr->table.is()) {
-      it = tables.find(curr->table);
-    }
+    auto it = tables.find(curr->table);
     if (it == tables.end()) {
       return;
     }
