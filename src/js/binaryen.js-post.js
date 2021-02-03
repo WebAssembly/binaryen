@@ -576,7 +576,7 @@ function wrapModule(module, self = {}) {
   // 'callIndirect', 'returnCall', 'returnCallIndirect' are deprecated and may
   // be removed in a future release. Please use the the snake_case names
   // instead.
-  self['callIndirect'] = self['call_indirect'] = function(target, table, operands, params, results) {
+  self['callIndirect'] = self['call_indirect'] = function(table, target, operands, params, results) {
     return preserveStack(() =>
       Module['_BinaryenCallIndirect'](module, table, target, i32sToStack(operands), operands.length, params, results)
     );
@@ -586,7 +586,7 @@ function wrapModule(module, self = {}) {
       Module['_BinaryenReturnCall'](module, strToStack(name), i32sToStack(operands), operands.length, type)
     );
   };
-  self['returnCallIndirect'] = self['return_call_indirect'] = function(target, table, operands, params, results) {
+  self['returnCallIndirect'] = self['return_call_indirect'] = function(table, target, operands, params, results) {
     return preserveStack(() =>
       Module['_BinaryenReturnCallIndirect'](module, table, target, i32sToStack(operands), operands.length, params, results)
     );
