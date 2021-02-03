@@ -330,7 +330,7 @@ enum Section {
 };
 
 // A passive segment is a segment that will not be automatically copied into the
-//   memory or table on instantiation, and must instead be applied manually  
+//   memory or table on instantiation, and must instead be applied manually
 //   using the instructions memory.init or table.init.
 // An active segment is equivalent to a passive segment, but with an implicit
 //   memory.init followed by a data.drop (or table.init followed by a elem.drop)
