@@ -2320,6 +2320,10 @@ void StackIRToBinaryWriter::write() {
         writer.emitCatch(inst->origin->cast<Try>(), catchIndexStack.back()++);
         break;
       }
+      case StackInst::CatchAll: {
+        writer.emitCatchAll(inst->origin->cast<Try>());
+        break;
+      }
       default:
         WASM_UNREACHABLE("unexpected op");
     }
