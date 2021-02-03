@@ -49,6 +49,7 @@ set(passes_SOURCES
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
+  Poppify.cpp
   PostAssemblyScript.cpp
   PostEmscripten.cpp
   Precompute.cpp

@@ -215,8 +215,11 @@ public:
 
   std::string toString() const;
 
-  struct Iterator
-    : std::iterator<std::random_access_iterator_tag, Type, long, Type*, Type&> {
+  struct Iterator : std::iterator<std::random_access_iterator_tag,
+                                  Type,
+                                  long,
+                                  Type*,
+                                  const Type&> {
     const Type* parent;
     size_t index;
     Iterator(const Type* parent, size_t index) : parent(parent), index(index) {}
@@ -265,6 +268,12 @@ public:
 
   Iterator begin() const { return Iterator(this, 0); }
   Iterator end() const;
+  std::reverse_iterator<Iterator> rbegin() const {
+    return std::make_reverse_iterator(end());
+  }
+  std::reverse_iterator<Iterator> rend() const {
+    return std::make_reverse_iterator(begin());
+  }
   size_t size() const { return end() - begin(); }
   const Type& operator[](size_t i) const;
 };
