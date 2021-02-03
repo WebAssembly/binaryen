@@ -2519,13 +2519,22 @@ void WasmBinaryBuilder::readTableElements() {
     throwError("Too many segments");
   }
   for (size_t i = 0; i < numSegments; i++) {
-    auto headerFormat = getU32LEB();
-    if (headerFormat != 0x0 && headerFormat != 0x2) {
-      throwError("Table elements must refer to table 0 in MVP");
+    auto flags = getU32LEB();
+    bool isInactive = (flags & BinaryConsts::ElementFlags::IsInactive) != 0;
+    bool hasTableIdx = (flags & BinaryConsts::ElementFlags::HasTableIndex) != 0;
+    bool usesExpressions =
+      (flags & BinaryConsts::ElementFlags::UsesExpressions) != 0;
+
+    if (isInactive) {
+      throwError("Only active elem segments are supported.");
+    }
+
+    if (usesExpressions) {
+      throwError("Only elem segments with function indexes are supported.");
     }
 
     Index tableIdx = 0;
-    if (headerFormat == 0x2) {
+    if (hasTableIdx) {
       tableIdx = getU32LEB();
     }
 
@@ -2540,7 +2549,7 @@ void WasmBinaryBuilder::readTableElements() {
       throwError("Table index out of range.");
     }
 
-    if (headerFormat == 0x2) {
+    if (flags == 0x2) {
       auto elemKind = getU32LEB();
       if (elemKind != 0x0) {
         throwError("Non-funcref elemKind is not supported yet.");

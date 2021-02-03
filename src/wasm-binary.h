@@ -1059,6 +1059,18 @@ enum MemoryAccess {
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
+enum ElementFlags {
+  // Bit 0: 0 means active segment, 1 means passive or declarative
+  IsInactive = 1 << 0,
+  // Bit 1 if passive or declarative: 0 means passive, 1 means declarative
+  IsDeclarative = 1 << 1,
+  // Bit 1 if active: 0 means table index 0, 1 means table index given
+  HasTableIndex = 1 << 1,
+  // Bit 2: 0 means elemType = funcref and vector of func indexes
+  //        1 means elemType given and vector of ref expressions
+  UsesExpressions = 1 << 2
+};
+
 enum FeaturePrefix {
   FeatureUsed = '+',
   FeatureRequired = '=',
