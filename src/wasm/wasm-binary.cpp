@@ -2548,9 +2548,11 @@ void WasmBinaryBuilder::readTableElements() {
       throwError("Table index out of range.");
     }
 
-    auto elemKind = getU32LEB();
-    if (elemKind != 0x0) {
-      throwError("Only funcref elem kinds are valid.");
+    if (hasTableIdx) {
+      auto elemKind = getU32LEB();
+      if (elemKind != 0x0) {
+        throwError("Only funcref elem kinds are valid.");
+      }
     }
 
     size_t segmentIndex = functionTable[tableIdx].size();
