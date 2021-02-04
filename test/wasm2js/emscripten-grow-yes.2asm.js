@@ -50,6 +50,10 @@ function asmFunc(env) {
  var infinity = Infinity;
  // EMSCRIPTEN_START_FUNCS
 ;
+ function $0() {
+  return __wasm_memory_size() | 0;
+ }
+ 
  // EMSCRIPTEN_END_FUNCS
 ;
  bufferView = HEAPU8;
@@ -92,7 +96,8 @@ function asmFunc(env) {
     }
     
    }
-  })
+  }), 
+  "get_size": $0
  };
 }
 
