@@ -163,9 +163,12 @@ StackSignature StackSignature::operator+(const StackSignature& next) const {
 StackSignature StackSignature::getLeastUpperBound(StackSignature a,
                                                   StackSignature b) {
   // Assert an approximation of the conditions for having a LUB
-  assert(a.unreachable || b.unreachable ||
-         (a.params.size() == b.params.size() &&
-          a.results.size() == b.results.size()));
+  assert((a.params.size() >= b.params.size() &&
+          a.results.size() >= b.results.size()) ||
+         a.unreachable);
+  assert((b.params.size() >= a.params.size() &&
+          b.results.size() >= a.results.size()) ||
+         b.unreachable);
   // Canonicalize so that the shorter types are on `a`.
   if (a.params.size() > b.params.size()) {
     std::swap(a.params, b.params);
@@ -175,15 +178,19 @@ StackSignature StackSignature::getLeastUpperBound(StackSignature a,
   }
   std::vector<Type> params;
   for (size_t i = 0, size = a.params.size(); i < size; ++i) {
-    params.push_back(Type::getLeastUpperBound(a.params[i], b.params[i]));
+    Type lub = Type::getLeastUpperBound(a.params[i], b.params[i]);
+    assert(lub != Type::none);
+    params.push_back(lub);
   }
   params.insert(
     params.end(), b.params.begin() + a.params.size(), b.params.end());
   size_t resultsDiff = b.results.size() - a.results.size();
   std::vector<Type> results(b.results.begin(), b.results.begin() + resultsDiff);
   for (size_t i = 0, size = a.results.size(); i < size; ++i) {
-    results.push_back(
-      Type::getLeastUpperBound(a.results[i], b.results[i + resultsDiff]));
+    Type lub =
+      Type::getLeastUpperBound(a.results[i], b.results[i + resultsDiff]);
+    assert(lub != Type::none);
+    results.push_back(lub);
   }
   return StackSignature{
     Type(params), Type(results), a.unreachable && b.unreachable};
