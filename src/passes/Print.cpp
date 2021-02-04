@@ -1841,6 +1841,11 @@ struct PrintExpressionContents
     printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
   void visitStructGet(StructGet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printMedium(o, "struct.get[unreachable] ");
+      o << curr->index;
+      return;
+    }
     const auto& field =
       curr->ref->type.getHeapType().getStruct().fields[curr->index];
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
@@ -1857,6 +1862,11 @@ struct PrintExpressionContents
     o << curr->index;
   }
   void visitStructSet(StructSet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printMedium(o, "struct.set[unreachable] ");
+      o << curr->index;
+      return;
+    }
     printMedium(o, "struct.set ");
     printHeapTypeName(o, curr->ref->type.getHeapType());
     o << ' ';
