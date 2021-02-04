@@ -423,12 +423,19 @@ private:
     }
   }
 
+  // TODO(reference-types): allow the fuzzer to create multiple tables
   void setupTable() {
-    auto table =
-      builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
-    table->hasExplicitName = true;
-    table->segments.emplace_back(builder.makeConst(int32_t(0)));
-    wasm.addTable(std::move(table));
+    if (wasm.tables.size() > 0) {
+      auto& table = wasm.tables[0];
+      table->initial = table->max = 0;
+      table->segments.emplace_back(builder.makeConst(int32_t(0)));
+    } else {
+      auto table =
+        builder.makeTable(Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
+      table->hasExplicitName = true;
+      table->segments.emplace_back(builder.makeConst(int32_t(0)));
+      wasm.addTable(std::move(table));
+    }
   }
 
   std::map<Type, std::vector<Name>> globalsByType;
