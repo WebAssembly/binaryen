@@ -160,6 +160,35 @@ StackSignature StackSignature::operator+(const StackSignature& next) const {
   return sig;
 }
 
+StackSignature StackSignature::getLeastUpperBound(StackSignature a,
+                                                  StackSignature b) {
+  // Assert an approximation of the conditions for having a LUB
+  assert(a.unreachable || b.unreachable ||
+         (a.params.size() == b.params.size() &&
+          a.results.size() == b.results.size()));
+  // Canonicalize so that the shorter types are on `a`.
+  if (a.params.size() > b.params.size()) {
+    std::swap(a.params, b.params);
+  }
+  if (a.results.size() > b.results.size()) {
+    std::swap(a.results, b.results);
+  }
+  std::vector<Type> params;
+  for (size_t i = 0, size = a.params.size(); i < size; ++i) {
+    params.push_back(Type::getLeastUpperBound(a.params[i], b.params[i]));
+  }
+  params.insert(
+    params.end(), b.params.begin() + a.params.size(), b.params.end());
+  size_t resultsDiff = b.results.size() - a.results.size();
+  std::vector<Type> results(b.results.begin(), b.results.begin() + resultsDiff);
+  for (size_t i = 0, size = a.results.size(); i < size; ++i) {
+    results.push_back(
+      Type::getLeastUpperBound(a.results[i], b.results[i + resultsDiff]));
+  }
+  return StackSignature{
+    Type(params), Type(results), a.unreachable || b.unreachable};
+}
+
 StackFlow::StackFlow(Block* block) {
   // Encapsulates the logic for treating the block and its children
   // uniformly. The end of the block is treated as if it consumed values

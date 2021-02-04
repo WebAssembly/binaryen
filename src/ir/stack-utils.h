@@ -16,55 +16,7 @@
 
 //
 // stack-utils.h: Utilities for manipulating and analyzing stack machine code in
-// the form of Poppy IR.
-//
-// Poppy IR represents stack machine code using normal Binaryen IR types by
-// imposing the following constraints:
-//
-//  1. Function bodies and children of control flow (except If conditions) must
-//     be blocks.
-//
-//  2. Blocks may have any Expressions except for Pops as children. The sequence
-//     of instructions in a block follows the same validation rules as in
-//     WebAssembly. That means that any expression may have a concrete type, not
-//     just the final expression in the block.
-//
-//  3. All other children must be Pops, which are used to determine the input
-//     stack type of each instruction. Pops may not have `unreachable` type.
-//
-//  4. Only control flow structures and instructions that have polymorphic
-//     unreachable behavior in WebAssembly may have unreachable type. Blocks may
-//     be unreachable when they are not branch targets and when they have an
-//     unreachable child. Note that this means a block may be unreachable even
-//     if it would otherwise have a concrete type, unlike in Binaryen IR.
-//
-// For example, the following Binaryen IR Function:
-//
-//   (func $foo (result i32)
-//    (i32.add
-//     (i32.const 42)
-//     (i32.const 5)
-//    )
-//   )
-//
-// would look like this in Poppy IR:
-//
-//   (func $foo (result i32)
-//    (block
-//     (i32.const 42)
-//     (i32.const 5)
-//     (i32.add
-//      (i32.pop)
-//      (i32.pop)
-//     )
-//    )
-//   )
-//
-// Notice that the sequence of instructions in the block is now identical to the
-// sequence of instructions in raw WebAssembly. Also note that Poppy IR's
-// validation rules are largely additional on top of the normal Binaryen IR
-// validation rules, with the only exceptions being block body validation and
-// block unreahchability rules.
+// the form of Poppy IR. See src/passes/Stackify.cpp for Poppy IR documentation.
 //
 
 #ifndef wasm_ir_stack_h
@@ -158,6 +110,9 @@ struct StackSignature {
     return params == other.params && results == other.results &&
            unreachable == other.unreachable;
   }
+
+  // Returns the LUB of `a` and `b`. Assumes that a LUB exists.
+  static StackSignature getLeastUpperBound(StackSignature a, StackSignature b);
 };
 
 // Calculates stack machine data flow, associating the sources and destinations

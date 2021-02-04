@@ -297,6 +297,54 @@ void test_signature_satisfaction() {
   }
 }
 
+void test_signature_lub() {
+  std::cout << ";; Test stack signature lub\n";
+  {
+    StackSignature a{Type::none, Type::none, false};
+    StackSignature b{Type::none, Type::none, false};
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::none, Type::none, false}));
+  }
+  {
+    StackSignature a{Type::none, Type::none, true};
+    StackSignature b{Type::none, Type::none, false};
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::none, Type::none, true}));
+  }
+  {
+    StackSignature a{Type::none, Type::none, false};
+    StackSignature b{Type::none, Type::none, true};
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::none, Type::none, true}));
+  }
+  {
+    StackSignature a{Type::i32, Type::none, true};
+    StackSignature b{Type::none, Type::i32, true};
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::i32, Type::i32, true}));
+  }
+  {
+    StackSignature a{Type::none, Type::i32, true};
+    StackSignature b{Type::i32, Type::none, true};
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::i32, Type::i32, true}));
+  }
+  {
+    StackSignature a{Type::funcref, Type::externref, true};
+    StackSignature b{Type::externref, Type::funcref, true};
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{Type::anyref, Type::anyref, true}));
+  }
+  {
+    StackSignature a{{Type::funcref, Type::funcref}, Type::funcref, true};
+    StackSignature b{Type::externref, {Type::externref, Type::externref}, true};
+    assert(StackSignature::getLeastUpperBound(a, b) ==
+           (StackSignature{{Type::anyref, Type::funcref},
+                           {Type::externref, Type::anyref},
+                           true}));
+  }
+}
+
 void test_stack_flow() {
   std::cout << ";; Test stack flow\n";
   {
@@ -436,5 +484,6 @@ int main() {
   test_stack_signatures();
   test_signature_composition();
   test_signature_satisfaction();
+  test_signature_lub();
   test_stack_flow();
 }
