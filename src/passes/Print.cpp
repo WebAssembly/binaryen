@@ -1840,10 +1840,16 @@ struct PrintExpressionContents
     o << "with_rtt ";
     printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
+  void printUnreachableReplacement() {
+    // If we cannot print a valid unreachable instruction (say, a struct.get,
+    // where if the ref is unreachable, we don't know what heap type to print),
+    // then print the children in a block, which is good enough as this
+    // instruction is never reached anyhow.
+    printMedium(o, "block ");
+  }
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable) {
-      printMedium(o, "struct.get[unreachable] ");
-      o << curr->index;
+      printUnreachableReplacement();
       return;
     }
     const auto& field =
@@ -1863,8 +1869,7 @@ struct PrintExpressionContents
   }
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type == Type::unreachable) {
-      printMedium(o, "struct.set[unreachable] ");
-      o << curr->index;
+      printUnreachableReplacement();
       return;
     }
     printMedium(o, "struct.set ");

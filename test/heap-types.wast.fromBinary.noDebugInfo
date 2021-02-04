@@ -281,5 +281,8 @@
    )
   )
  )
+ (func $8
+  (unreachable)
+ )
 )
 

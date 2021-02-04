@@ -226,4 +226,12 @@
       )
     )
   )
+  (func $unreachables
+    (drop
+      (struct.get $struct.A 0 (unreachable))
+    )
+    (drop
+      (struct.set $struct.A 0 (unreachable) (unreachable))
+    )
+  )
 )
