@@ -309,13 +309,13 @@ void test_signature_lub() {
     StackSignature a{Type::none, Type::none, true};
     StackSignature b{Type::none, Type::none, false};
     assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{Type::none, Type::none, true}));
+           (StackSignature{Type::none, Type::none, false}));
   }
   {
     StackSignature a{Type::none, Type::none, false};
     StackSignature b{Type::none, Type::none, true};
     assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{Type::none, Type::none, true}));
+           (StackSignature{Type::none, Type::none, false}));
   }
   {
     StackSignature a{Type::i32, Type::none, true};

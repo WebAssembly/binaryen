@@ -186,7 +186,7 @@ StackSignature StackSignature::getLeastUpperBound(StackSignature a,
       Type::getLeastUpperBound(a.results[i], b.results[i + resultsDiff]));
   }
   return StackSignature{
-    Type(params), Type(results), a.unreachable || b.unreachable};
+    Type(params), Type(results), a.unreachable && b.unreachable};
 }
 
 StackFlow::StackFlow(Block* block) {

@@ -111,7 +111,9 @@ struct StackSignature {
            unreachable == other.unreachable;
   }
 
-  // Returns the LUB of `a` and `b`. Assumes that a LUB exists.
+  // Returns the LUB of `a` and `b`, i.e. the minimal StackSignature that could
+  // type block contents of either type `a` or type `b`. Assumes that a LUB
+  // exists.
   static StackSignature getLeastUpperBound(StackSignature a, StackSignature b);
 };
 
