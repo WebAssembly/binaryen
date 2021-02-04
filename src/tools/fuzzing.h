@@ -548,8 +548,7 @@ private:
         }
         table->initial = std::max(table->initial, maxOffset);
       }
-      table->max =
-        oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
+      table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
       // Avoid an imported table (which the fuzz harness would need to handle).
       table->module = table->base = Name();
     }
