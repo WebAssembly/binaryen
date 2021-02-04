@@ -1840,7 +1840,18 @@ struct PrintExpressionContents
     o << "with_rtt ";
     printHeapTypeName(o, curr->rtt->type.getHeapType());
   }
+  void printUnreachableReplacement() {
+    // If we cannot print a valid unreachable instruction (say, a struct.get,
+    // where if the ref is unreachable, we don't know what heap type to print),
+    // then print the children in a block, which is good enough as this
+    // instruction is never reached anyhow.
+    printMedium(o, "block ");
+  }
   void visitStructGet(StructGet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
     const auto& field =
       curr->ref->type.getHeapType().getStruct().fields[curr->index];
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
@@ -1857,6 +1868,10 @@ struct PrintExpressionContents
     o << curr->index;
   }
   void visitStructSet(StructSet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
     printMedium(o, "struct.set ");
     printHeapTypeName(o, curr->ref->type.getHeapType());
     o << ' ';
