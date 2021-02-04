@@ -2465,7 +2465,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   returnTypes.clear();
   labelNames.clear();
   // validate optional local names
-  std::set<Name> seen;
+  std::unordered_set<Name> seen;
   for (auto& pair : curr->localNames) {
     Name name = pair.second;
     shouldBeTrue(seen.insert(name).second, name, "local names must be unique");
