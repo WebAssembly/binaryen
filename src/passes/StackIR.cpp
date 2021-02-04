@@ -257,6 +257,7 @@ private:
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
       case StackInst::Catch:
+      case StackInst::CatchAll:
       case StackInst::TryEnd: {
         return true;
       }

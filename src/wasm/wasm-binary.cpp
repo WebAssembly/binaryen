@@ -2876,6 +2876,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::RefEq:
       visitRefEq((curr = allocator.alloc<RefEq>())->cast<RefEq>());
       break;
+    case BinaryConsts::RefAsNonNull:
+      visitRefAs((curr = allocator.alloc<RefAs>())->cast<RefAs>(), code);
+      break;
+    case BinaryConsts::BrOnNull:
+      maybeVisitBrOn(curr, code);
+      break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
       break;
@@ -2999,6 +3005,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDLoadStoreLane(curr, opcode)) {
         break;
       }
+      if (maybeVisitSIMDWiden(curr, opcode)) {
+        break;
+      }
       if (maybeVisitPrefetch(curr, opcode)) {
         break;
       }
@@ -3019,7 +3028,7 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitRefCast(curr, opcode)) {
         break;
       }
-      if (maybeVisitBrOnCast(curr, opcode)) {
+      if (maybeVisitBrOn(curr, opcode)) {
         break;
       }
       if (maybeVisitRttCanon(curr, opcode)) {
@@ -5460,6 +5469,27 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
   return true;
 }
 
+bool WasmBinaryBuilder::maybeVisitSIMDWiden(Expression*& out, uint32_t code) {
+  SIMDWidenOp op;
+  switch (code) {
+    case BinaryConsts::I32x4WidenSI8x16:
+      op = WidenSVecI8x16ToVecI32x4;
+      break;
+    case BinaryConsts::I32x4WidenUI8x16:
+      op = WidenUVecI8x16ToVecI32x4;
+      break;
+    default:
+      return false;
+  }
+  auto* curr = allocator.alloc<SIMDWiden>();
+  curr->op = op;
+  curr->index = getLaneIndex(4);
+  curr->vec = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
 bool WasmBinaryBuilder::maybeVisitPrefetch(Expression*& out, uint32_t code) {
   PrefetchOp op;
   switch (code) {
@@ -5825,17 +5855,34 @@ bool WasmBinaryBuilder::maybeVisitRefCast(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryBuilder::maybeVisitBrOnCast(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::BrOnCast) {
-    return false;
+bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
+  BrOnOp op;
+  switch (code) {
+    case BinaryConsts::BrOnNull:
+      op = BrOnNull;
+      break;
+    case BinaryConsts::BrOnCast:
+      op = BrOnCast;
+      break;
+    case BinaryConsts::BrOnFunc:
+      op = BrOnFunc;
+      break;
+    case BinaryConsts::BrOnData:
+      op = BrOnData;
+      break;
+    case BinaryConsts::BrOnI31:
+      op = BrOnI31;
+      break;
+    default:
+      return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
-  auto* rtt = popNonVoidExpression();
-  if (!rtt->type.isRtt()) {
-    throwError("bad rtt for br_on_cast");
+  Expression* rtt = nullptr;
+  if (op == BrOnCast) {
+    rtt = popNonVoidExpression();
   }
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeBrOnCast(name, ref, rtt);
+  out = Builder(wasm).makeBrOn(op, name, ref, rtt);
   return true;
 }
 
@@ -5983,6 +6030,9 @@ bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
 void WasmBinaryBuilder::visitRefAs(RefAs* curr, uint8_t code) {
   BYN_TRACE("zz node: RefAs\n");
   switch (code) {
+    case BinaryConsts::RefAsNonNull:
+      curr->op = RefAsNonNull;
+      break;
     case BinaryConsts::RefAsFunc:
       curr->op = RefAsFunc;
       break;

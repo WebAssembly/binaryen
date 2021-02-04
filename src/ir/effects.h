@@ -430,6 +430,7 @@ private:
       }
       parent.implicitTrap = true;
     }
+    void visitSIMDWiden(SIMDWiden* curr) {}
     void visitPrefetch(Prefetch* curr) {
       // Do not reorder with respect to other memory ops
       parent.writesMemory = true;
@@ -565,9 +566,7 @@ private:
       // Traps if the ref is not null and it has an invalid rtt.
       parent.implicitTrap = true;
     }
-    void visitBrOnCast(BrOnCast* curr) {
-      parent.breakTargets.insert(curr->name);
-    }
+    void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
     void visitRttCanon(RttCanon* curr) {}
     void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {}

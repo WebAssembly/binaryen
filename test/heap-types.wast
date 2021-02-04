@@ -188,8 +188,50 @@
     (if (ref.is_i31 (local.get $x)) (unreachable))
   )
   (func $ref.as_X (param $x anyref)
+    (drop (ref.as_non_null (local.get $x)))
     (drop (ref.as_func (local.get $x)))
     (drop (ref.as_data (local.get $x)))
     (drop (ref.as_i31 (local.get $x)))
+  )
+  (func $br_on_X (param $x anyref)
+    (local $y anyref)
+    (local $z (ref any))
+    (block $null
+      (local.set $z
+        (br_on_null $null (local.get $x))
+      )
+    )
+    (drop
+      (block $func (result funcref)
+        (local.set $y
+          (br_on_func $func (local.get $x))
+        )
+        (ref.null func)
+      )
+    )
+    (drop
+      (block $data (result dataref)
+        (local.set $y
+          (br_on_data $data (local.get $x))
+        )
+        (ref.null data)
+      )
+    )
+    (drop
+      (block $i31 (result i31ref)
+        (local.set $y
+          (br_on_i31 $i31 (local.get $x))
+        )
+        (ref.null i31)
+      )
+    )
+  )
+  (func $unreachables
+    (drop
+      (struct.get $struct.A 0 (unreachable))
+    )
+    (drop
+      (struct.set $struct.A 0 (unreachable) (unreachable))
+    )
   )
 )

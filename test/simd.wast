@@ -1436,4 +1436,14 @@
    (local.get $0)
   )
  )
+ (func $i32x4.widen_i8x16_s (param $0 v128) (result v128)
+  (i32x4.widen_i8x16_s 0
+   (local.get $0)
+  )
+ )
+ (func $i32x4.widen_i8x16_u (param $0 v128) (result v128)
+  (i32x4.widen_i8x16_u 0
+   (local.get $0)
+  )
+ )
 )

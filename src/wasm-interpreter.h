@@ -1132,6 +1132,7 @@ public:
     }
     WASM_UNREACHABLE("invalid op");
   }
+  Flow visitSIMDWiden(SIMDWiden* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
     Flow ifTrue = visit(curr->ifTrue);
@@ -1320,7 +1321,7 @@ public:
       case RefIsFunc:
         return Literal(!value.isNull() && value.type.isFunction());
       case RefIsData:
-        return Literal(!value.isNull() && value.isGCData());
+        return Literal(!value.isNull() && value.isData());
       case RefIsI31:
         return Literal(!value.isNull() &&
                        value.type.getHeapType() == HeapType::i31);
@@ -1429,7 +1430,7 @@ public:
     // anyref of null (already handled above) or anything else (handled here,
     // but this is for future use as atm the binaryen interpreter cannot
     // represent external references).
-    if (!cast.originalRef.isGCData()) {
+    if (!cast.originalRef.isData()) {
       cast.outcome = cast.Failure;
       return cast;
     }
@@ -1469,17 +1470,60 @@ public:
     assert(cast.outcome == cast.Success);
     return cast.castRef;
   }
-  Flow visitBrOnCast(BrOnCast* curr) {
-    NOTE_ENTER("BrOnCast");
-    auto cast = doCast(curr);
-    if (cast.outcome == cast.Break) {
-      return cast.breaking;
+  Flow visitBrOn(BrOn* curr) {
+    NOTE_ENTER("BrOn");
+    // BrOnCast uses the casting infrastructure, so handle it first.
+    if (curr->op == BrOnCast) {
+      auto cast = doCast(curr);
+      if (cast.outcome == cast.Break) {
+        return cast.breaking;
+      }
+      if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
+        return cast.originalRef;
+      }
+      assert(cast.outcome == cast.Success);
+      return Flow(curr->name, cast.castRef);
     }
-    if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
-      return cast.originalRef;
+    // The others do a simpler check for the type.
+    Flow flow = visit(curr->ref);
+    if (flow.breaking()) {
+      return flow;
     }
-    assert(cast.outcome == cast.Success);
-    return Flow(curr->name, cast.castRef);
+    const auto& value = flow.getSingleValue();
+    NOTE_EVAL1(value);
+    if (curr->op == BrOnNull) {
+      // Unlike the others, BrOnNull does not propagate the value if it takes
+      // the branch.
+      if (value.isNull()) {
+        return Flow(curr->name);
+      }
+      // If the branch is not taken, we return the non-null value.
+      return {value};
+    }
+    if (value.isNull()) {
+      return {value};
+    }
+    switch (curr->op) {
+      case BrOnFunc:
+        if (!value.type.isFunction()) {
+          return {value};
+        }
+        break;
+      case BrOnData:
+        if (!value.isData()) {
+          return {value};
+        }
+        break;
+      case BrOnI31:
+        if (value.type.getHeapType() != HeapType::i31) {
+          return {value};
+        }
+        break;
+      default:
+        WASM_UNREACHABLE("invalid br_on_*");
+    }
+    // No problems: take the branch.
+    return Flow(curr->name, value);
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {
@@ -1647,13 +1691,16 @@ public:
       trap("null ref");
     }
     switch (curr->op) {
+      case RefAsNonNull:
+        // We've already checked for a null.
+        break;
       case RefAsFunc:
         if (value.type.isFunction()) {
           trap("not a func");
         }
         break;
       case RefAsData:
-        if (value.isGCData()) {
+        if (value.isData()) {
           trap("not a data");
         }
         break;

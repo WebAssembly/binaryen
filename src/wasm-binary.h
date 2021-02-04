@@ -979,6 +979,9 @@ enum ASTNodes {
   F32x4DemoteZeroF64x2 = 0x57,
   F64x2PromoteLowF32x4 = 0x69,
 
+  I32x4WidenSI8x16 = 0x67,
+  I32x4WidenUI8x16 = 0x68,
+
   // prefetch opcodes
 
   PrefetchT = 0xc5,
@@ -996,6 +999,8 @@ enum ASTNodes {
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
+  RefAsNonNull = 0xd3,
+  BrOnNull = 0xd4,
 
   // exception handling opcodes
 
@@ -1041,6 +1046,9 @@ enum ASTNodes {
   RefAsFunc = 0x58,
   RefAsData = 0x59,
   RefAsI31 = 0x5a,
+  BrOnFunc = 0x60,
+  BrOnData = 0x61,
+  BrOnI31 = 0x62,
 };
 
 enum MemoryAccess {
@@ -1516,6 +1524,7 @@ public:
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDWiden(Expression*& out, uint32_t code);
   bool maybeVisitPrefetch(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
@@ -1525,7 +1534,7 @@ public:
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);
   bool maybeVisitRefCast(Expression*& out, uint32_t code);
-  bool maybeVisitBrOnCast(Expression*& out, uint32_t code);
+  bool maybeVisitBrOn(Expression*& out, uint32_t code);
   bool maybeVisitRttCanon(Expression*& out, uint32_t code);
   bool maybeVisitRttSub(Expression*& out, uint32_t code);
   bool maybeVisitStructNew(Expression*& out, uint32_t code);
