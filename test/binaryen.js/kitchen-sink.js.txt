@@ -1758,7 +1758,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i32.eqz
-        (call_indirect (type $i32_i64_f32_f64_=>_i32)
+        (call_indirect $0 (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -1822,7 +1822,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
+      (return_call_indirect $0 (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)
@@ -3620,7 +3620,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i32.eqz
-        (call_indirect (type $i32_i64_f32_f64_=>_i32)
+        (call_indirect $0 (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -3684,7 +3684,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
+      (return_call_indirect $0 (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)

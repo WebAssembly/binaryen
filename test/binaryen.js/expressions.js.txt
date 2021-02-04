@@ -42,7 +42,7 @@
 )
 
 # CallIndirect
-(call_indirect (type $i32_i32_=>_i32)
+(call_indirect $0 (type $i32_i32_=>_i32)
  (i32.const 7)
  (i32.const 6)
  (i32.const 9000)

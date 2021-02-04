@@ -578,7 +578,7 @@ function wrapModule(module, self = {}) {
   // instead.
   self['callIndirect'] = self['call_indirect'] = function(table, target, operands, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenCallIndirect'](module, table, target, i32sToStack(operands), operands.length, params, results)
+      Module['_BinaryenCallIndirect'](module, strToStack(table), target, i32sToStack(operands), operands.length, params, results)
     );
   };
   self['returnCall'] = self['return_call'] = function(name, operands, type) {
@@ -588,7 +588,7 @@ function wrapModule(module, self = {}) {
   };
   self['returnCallIndirect'] = self['return_call_indirect'] = function(table, target, operands, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenReturnCallIndirect'](module, table, target, i32sToStack(operands), operands.length, params, results)
+      Module['_BinaryenReturnCallIndirect'](module, strToStack(table), target, i32sToStack(operands), operands.length, params, results)
     );
   };
 
@@ -3422,11 +3422,11 @@ Module['CallIndirect'] = makeExpressionWrapper({
   'setTarget'(expr, targetExpr) {
     Module['_BinaryenCallIndirectSetTarget'](expr, targetExpr);
   },
-  'getTable'(expr, results) {
-    return Module['_BinaryenCallIndirectGetTable'](expr, results);
+  'getTable'(expr) {
+    return UTF8ToString(Module['_BinaryenCallIndirectGetTable'](expr));
   },
-  'setTable'(expr, results) {
-    Module['_BinaryenCallIndirectSetTable'](expr, results);
+  'setTable'(expr, table) {
+    preserveStack(() => { Module['_BinaryenCallIndirectSetTable'](expr, strToStack(table)) });
   },
   'getNumOperands'(expr) {
     return Module['_BinaryenCallIndirectGetNumOperands'](expr);

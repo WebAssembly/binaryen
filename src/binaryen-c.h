@@ -1045,7 +1045,7 @@ BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
                               BinaryenExpressionRef targetExpr);
 // Gets the table name of a `call_indirect` expression.
 BINARYEN_API const char*
-BinaryenCallIndirectGetTableName(BinaryenExpressionRef expr);
+BinaryenCallIndirectGetTable(BinaryenExpressionRef expr);
 // Sets the table name of a `call_indirect` expression.
 BINARYEN_API void BinaryenCallIndirectSetTable(BinaryenExpressionRef expr,
                                                const char* table);
