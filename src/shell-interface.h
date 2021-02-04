@@ -166,11 +166,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
                      Type results,
                      ModuleInstance& instance) override {
 
-    auto it = tables.begin();
-    if (tableName.is()) {
-      it = tables.find(tableName);
-    }
-
+    auto it = tables.find(tableName);
     if (it == tables.end()) {
       trap("callTable on non-existing table");
     }
