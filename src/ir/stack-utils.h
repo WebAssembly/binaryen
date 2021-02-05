@@ -16,7 +16,7 @@
 
 //
 // stack-utils.h: Utilities for manipulating and analyzing stack machine code in
-// the form of Poppy IR. See src/passes/Stackify.cpp for Poppy IR documentation.
+// the form of Poppy IR. See src/passes/Poppify.cpp for Poppy IR documentation.
 //
 
 #ifndef wasm_ir_stack_h
