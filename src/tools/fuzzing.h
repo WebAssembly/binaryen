@@ -2101,13 +2101,7 @@ private:
       return builder.makeRefFunc(func->name, type);
     }
     if (type.isRtt()) {
-      Expression* ret = builder.makeRttCanon(type.getHeapType());
-      if (type.getRtt().hasDepth()) {
-        for (Index i = 0; i < type.getRtt().depth; i++) {
-          ret = builder.makeRttSub(type.getHeapType(), ret);
-        }
-      }
-      return ret;
+      return builder.makeRtt(type);
     }
     if (type.isTuple()) {
       std::vector<Expression*> operands;
