@@ -23,12 +23,14 @@
 #include "support/file.h"
 #include "wasm-io.h"
 
+#include "tool-options.h"
+
 using namespace cashew;
 using namespace wasm;
 
 int main(int argc, const char* argv[]) {
   std::string sourceMapFilename;
-  Options options("wasm-dis",
+  ToolOptions options("wasm-dis",
                   "Un-assemble a .wasm (WebAssembly binary format) into a "
                   ".wat (WebAssembly text format)");
   options

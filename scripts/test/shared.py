@@ -466,7 +466,7 @@ def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
     subprocess.check_call(cmd, stdout=subprocess.PIPE)
     assert os.path.exists('a.wasm')
 
-    cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast']
+    cmd = WASM_DIS + ['a.wasm', '-o', 'ab.wast', '-all']
     print('            ', ' '.join(cmd))
     if os.path.exists('ab.wast'):
         os.unlink('ab.wast')

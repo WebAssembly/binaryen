@@ -226,7 +226,7 @@ def update_wasm_opt_tests():
             subprocess.check_call(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             assert os.path.exists('a.wasm')
 
-            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast']
+            cmd = shared.WASM_DIS + ['a.wasm', '-o', 'a.wast', '-all']
             print(' '.join(cmd))
             if os.path.exists('a.wast'):
                 os.unlink('a.wast')
