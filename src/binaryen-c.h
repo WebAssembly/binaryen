@@ -2400,8 +2400,7 @@ BINARYEN_API BinaryenType BinaryenEventGetResults(BinaryenEventRef event);
 // Gets the external module name of the specified import.
 BINARYEN_API const char*
 BinaryenFunctionImportGetModule(BinaryenFunctionRef import);
-BINARYEN_API const char*
-BinaryenTableImportGetModule(BinaryenTableRef import);
+BINARYEN_API const char* BinaryenTableImportGetModule(BinaryenTableRef import);
 BINARYEN_API const char*
 BinaryenGlobalImportGetModule(BinaryenGlobalRef import);
 BINARYEN_API const char* BinaryenEventImportGetModule(BinaryenEventRef import);

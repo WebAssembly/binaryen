@@ -3881,9 +3881,7 @@ int BinaryenTableGetInitial(BinaryenTableRef table) {
 int BinaryenTableHasMax(BinaryenTableRef table) {
   return ((Table*)table)->hasMax();
 }
-int BinaryenTableGetMax(BinaryenTableRef table) {
-  return ((Table*)table)->max;
-}
+int BinaryenTableGetMax(BinaryenTableRef table) { return ((Table*)table)->max; }
 
 //
 // =========== Global operations ===========
