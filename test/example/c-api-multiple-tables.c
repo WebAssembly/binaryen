@@ -1,3 +1,5 @@
+#include <assert.h>
+#include <string.h>
 #include <binaryen-c.h>
 
 // "hello world" type example: create a function that adds two i32s and returns
@@ -11,6 +13,8 @@ int main() {
   BinaryenType ii[2] = {BinaryenTypeInt32(), BinaryenTypeInt32()};
   BinaryenType params = BinaryenTypeCreate(ii, 2);
   BinaryenType results = BinaryenTypeInt32();
+
+  assert(BinaryenGetNumTables(module) == 0);
 
   {
     // Get the 0 and 1 arguments, and add them
@@ -34,6 +38,7 @@ int main() {
                      funcNames,
                      1,
                      BinaryenConst(module, BinaryenLiteralInt32(0)));
+    assert(BinaryenGetTable(module, "tab") != NULL);
 
     BinaryenAddTable(module,
                      "t2",
@@ -42,6 +47,17 @@ int main() {
                      funcNames,
                      1,
                      BinaryenConst(module, BinaryenLiteralInt32(0)));
+    BinaryenTableRef t2 = BinaryenGetTableByIndex(module, 1);
+    assert(t2 != NULL);
+
+    assert(strcmp(BinaryenTableGetName(t2), "t2") == 0);
+    assert(BinaryenTableGetInitial(t2) == 1);
+    assert(BinaryenTableHasMax(t2) == 1);
+    assert(BinaryenTableGetMax(t2) == 1);
+    assert(strcmp(BinaryenTableImportGetModule(t2), "") == 0);
+    assert(strcmp(BinaryenTableImportGetBase(t2), "") == 0);
+
+    assert(BinaryenGetNumTables(module) == 2);
   }
 
   {
