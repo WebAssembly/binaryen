@@ -2211,6 +2211,9 @@ function wrapModule(module, self = {}) {
   self['removeGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenRemoveGlobal'](module, strToStack(name)));
   }
+  self['removeTable'] = function(name) {
+    return preserveStack(() => Module['_BinaryenRemoveTable'](module, strToStack(name)));
+  }
   self['addEvent'] = function(name, attribute, params, results) {
     return preserveStack(() => Module['_BinaryenAddEvent'](module, strToStack(name), attribute, params, results));
   };

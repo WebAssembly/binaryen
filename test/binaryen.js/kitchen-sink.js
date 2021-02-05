@@ -662,17 +662,20 @@ function test_core() {
   module.addEventExport("a-event", "a-event-exp");
 
   // Tables
-  module.addTable("0", 0, 2, []);
-  var tablePtr = module.getTable("0");
+  module.addTable("t1", 0, 2, []);
+  var tablePtr = module.getTable("t1");
   assert(tablePtr !== 0);
   assert(tablePtr === module.getTableByIndex(0));
 
   var table = binaryen.getTableInfo(tablePtr);
-  assert(table.name === "0");
+  assert(table.name === "t1");
   assert(table.module === "");
   assert(table.base === "");
   assert(table.initial === 0);
   assert(table.max === 2);
+
+  module.removeTable("t1");
+  assert(module.getNumTables() === 0);
 
   // Legacy
   module.setFunctionTable(1, 0xffffffff, [ binaryen.getFunctionInfo(sinker).name ]);
