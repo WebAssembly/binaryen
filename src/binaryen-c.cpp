@@ -3337,6 +3337,20 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
 void BinaryenRemoveTable(BinaryenModuleRef module, const char* table) {
   ((Module*)module)->removeTable(table);
 }
+BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module) {
+  return ((Module*)module)->tables.size();
+}
+BinaryenTableRef BinaryenGetTable(BinaryenModuleRef module, const char* name) {
+  return ((Module*)module)->getTableOrNull(name);
+}
+BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
+                                         BinaryenIndex index) {
+  const auto& tables = ((Module*)module)->tables;
+  if (tables.size() <= index) {
+    Fatal() << "invalid table index.";
+  }
+  return tables[index].get();
+}
 
 int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
   if (((Module*)module)->tables.size() > 0) {
@@ -3855,6 +3869,23 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
 }
 
 //
+// =========== Table operations ===========
+//
+
+const char* BinaryenTableGetName(BinaryenTableRef table) {
+  return ((Table*)table)->name.c_str();
+}
+int BinaryenTableGetInitial(BinaryenTableRef table) {
+  return ((Table*)table)->initial;
+}
+int BinaryenTableHasMax(BinaryenTableRef table) {
+  return ((Table*)table)->hasMax();
+}
+int BinaryenTableGetMax(BinaryenTableRef table) {
+  return ((Table*)table)->max;
+}
+
+//
 // =========== Global operations ===========
 //
 
@@ -3901,6 +3932,14 @@ const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
     return "";
   }
 }
+const char* BinaryenTableImportGetModule(BinaryenTableRef import) {
+  auto* table = (Table*)import;
+  if (table->imported()) {
+    return table->module.c_str();
+  } else {
+    return "";
+  }
+}
 const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
   auto* global = (Global*)import;
   if (global->imported()) {
@@ -3921,6 +3960,14 @@ const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
   auto* func = (Function*)import;
   if (func->imported()) {
     return func->base.c_str();
+  } else {
+    return "";
+  }
+}
+const char* BinaryenTableImportGetBase(BinaryenTableRef import) {
+  auto* table = (Table*)import;
+  if (table->imported()) {
+    return table->base.c_str();
   } else {
     return "";
   }

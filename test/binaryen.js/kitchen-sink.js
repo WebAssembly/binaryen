@@ -661,9 +661,22 @@ function test_core() {
   module.addGlobalExport("a-global", "a-global-exp");
   module.addEventExport("a-event", "a-event-exp");
 
-  // Function table. One per module
+  // Tables
+  module.addTable("0", 0, 2, []);
+  var tablePtr = module.getTable("0");
+  assert(tablePtr !== 0);
+  assert(tablePtr === module.getTableByIndex(0));
 
+  var table = binaryen.getTableInfo(tablePtr);
+  assert(table.name === "0");
+  assert(table.module === "");
+  assert(table.base === "");
+  assert(table.initial === 0);
+  assert(table.max === 2);
+
+  // Legacy
   module.setFunctionTable(1, 0xffffffff, [ binaryen.getFunctionInfo(sinker).name ]);
+  assert(module.getNumTables() === 1);
 
   // Memory. One per module
 

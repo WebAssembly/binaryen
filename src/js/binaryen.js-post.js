@@ -2197,6 +2197,17 @@ function wrapModule(module, self = {}) {
   self['getGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetGlobal'](module, strToStack(name)));
   };
+  self['addTable'] = function(table, initial, maximum, funcNames, offset = self['i32']['const'](0)) {
+    return preserveStack(() => Module['_BinaryenAddTable'](module,
+      strToStack(table), initial, maximum,
+      i32sToStack(funcNames.map(strToStack)),
+      funcNames.length,
+      offset)
+    );
+  }
+  self['getTable'] = function(name) {
+    return preserveStack(() => Module['_BinaryenGetTable'](module, strToStack(name)));
+  };
   self['removeGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenRemoveGlobal'](module, strToStack(name)));
   }
@@ -2360,8 +2371,14 @@ function wrapModule(module, self = {}) {
   self['getNumGlobals'] = function() {
     return Module['_BinaryenGetNumGlobals'](module);
   };
+  self['getNumTables'] = function() {
+    return Module['_BinaryenGetNumTables'](module);
+  };
   self['getGlobalByIndex'] = function(index) {
     return Module['_BinaryenGetGlobalByIndex'](module, index);
+  };
+  self['getTableByIndex'] = function(index) {
+    return Module['_BinaryenGetTableByIndex'](module, index);
   };
   self['emitText'] = function() {
     const old = out;
@@ -2972,6 +2989,23 @@ Module['getGlobalInfo'] = function(global) {
     'mutable': Boolean(Module['_BinaryenGlobalIsMutable'](global)),
     'init': Module['_BinaryenGlobalGetInitExpr'](global)
   };
+};
+
+// Obtains information about a 'Table'
+Module['getTableInfo'] = function(table) {
+  var hasMax = Boolean(Module['_BinaryenTableHasMax'](table));
+  var tableInfo = {
+    'name': UTF8ToString(Module['_BinaryenTableGetName'](table)),
+    'module': UTF8ToString(Module['_BinaryenTableImportGetModule'](table)),
+    'base': UTF8ToString(Module['_BinaryenTableImportGetBase'](table)),
+    'initial': Module['_BinaryenTableGetInitial'](table)
+  };
+
+  if (hasMax) {
+    tableInfo.max = Module['_BinaryenTableGetMax'](table);
+  }
+
+  return tableInfo;
 };
 
 // Obtains information about a 'Event'

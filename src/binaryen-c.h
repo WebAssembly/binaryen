@@ -2060,6 +2060,11 @@ BINARYEN_API BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                                BinaryenExpressionRef offset);
 BINARYEN_API void BinaryenRemoveTable(BinaryenModuleRef module,
                                       const char* table);
+BINARYEN_API BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module);
+BINARYEN_API BinaryenTableRef BinaryenGetTable(BinaryenModuleRef module,
+                                               const char* name);
+BINARYEN_API BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
+                                                      BinaryenIndex index);
 
 // Memory. One per module
 
@@ -2352,6 +2357,15 @@ BINARYEN_API void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
                                                    BinaryenIndex columnNumber);
 
 //
+// ========== Table Operations ==========
+//
+
+BINARYEN_API const char* BinaryenTableGetName(BinaryenTableRef table);
+BINARYEN_API int BinaryenTableGetInitial(BinaryenTableRef table);
+BINARYEN_API int BinaryenTableHasMax(BinaryenTableRef table);
+BINARYEN_API int BinaryenTableGetMax(BinaryenTableRef table);
+
+//
 // ========== Global Operations ==========
 //
 
@@ -2387,11 +2401,14 @@ BINARYEN_API BinaryenType BinaryenEventGetResults(BinaryenEventRef event);
 BINARYEN_API const char*
 BinaryenFunctionImportGetModule(BinaryenFunctionRef import);
 BINARYEN_API const char*
+BinaryenTableImportGetModule(BinaryenTableRef import);
+BINARYEN_API const char*
 BinaryenGlobalImportGetModule(BinaryenGlobalRef import);
 BINARYEN_API const char* BinaryenEventImportGetModule(BinaryenEventRef import);
 // Gets the external base name of the specified import.
 BINARYEN_API const char*
 BinaryenFunctionImportGetBase(BinaryenFunctionRef import);
+BINARYEN_API const char* BinaryenTableImportGetBase(BinaryenTableRef import);
 BINARYEN_API const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import);
 BINARYEN_API const char* BinaryenEventImportGetBase(BinaryenEventRef import);
 
