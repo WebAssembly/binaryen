@@ -19,7 +19,6 @@
 //
 
 #include "support/colors.h"
-#include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-io.h"
 
@@ -31,8 +30,8 @@ using namespace wasm;
 int main(int argc, const char* argv[]) {
   std::string sourceMapFilename;
   ToolOptions options("wasm-dis",
-                  "Un-assemble a .wasm (WebAssembly binary format) into a "
-                  ".wat (WebAssembly text format)");
+                      "Un-assemble a .wasm (WebAssembly binary format) into a "
+                      ".wat (WebAssembly text format)");
   options
     .add("--output",
          "-o",
