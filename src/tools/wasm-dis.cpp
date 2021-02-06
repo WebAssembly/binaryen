@@ -72,6 +72,8 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error in parsing wasm source mapping";
   }
 
+  options.applyFeatures(wasm);
+
   if (options.debug) {
     std::cerr << "Printing..." << std::endl;
   }
