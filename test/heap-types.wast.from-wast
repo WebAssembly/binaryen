@@ -282,4 +282,17 @@
    )
   )
  )
+ (func $unreachables
+  (drop
+   (block 
+    (unreachable)
+   )
+  )
+  (drop
+   (block 
+    (unreachable)
+    (unreachable)
+   )
+  )
+ )
 )

@@ -1644,8 +1644,8 @@ public:
   std::unique_ptr<StackIR> stackIR;
 
   // local names. these are optional.
-  std::map<Index, Name> localNames;
-  std::map<Name, Index> localIndices;
+  std::unordered_map<Index, Name> localNames;
+  std::unordered_map<Name, Index> localIndices;
 
   // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
@@ -1874,11 +1874,11 @@ private:
   // TODO: add a build option where Names are just indices, and then these
   // methods are not needed
   // exports map is by the *exported* name, which is unique
-  std::map<Name, Export*> exportsMap;
-  std::map<Name, Function*> functionsMap;
-  std::map<Name, Table*> tablesMap;
-  std::map<Name, Global*> globalsMap;
-  std::map<Name, Event*> eventsMap;
+  std::unordered_map<Name, Export*> exportsMap;
+  std::unordered_map<Name, Function*> functionsMap;
+  std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, Global*> globalsMap;
+  std::unordered_map<Name, Event*> eventsMap;
 
 public:
   Module() = default;

@@ -2302,6 +2302,14 @@ void FunctionValidator::visitStructGet(StructGet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.get requires gc to be enabled");
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isStruct(),
+                    curr->ref,
+                    "struct.get ref must be a struct")) {
+    return;
+  }
   const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
   shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
   auto field = fields[curr->index];
@@ -2321,6 +2329,14 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "struct.set requires gc to be enabled");
+  if (curr->ref->type == Type::unreachable) {
+    return;
+  }
+  if (!shouldBeTrue(curr->ref->type.isStruct(),
+                    curr->ref,
+                    "struct.set ref must be a struct")) {
+    return;
+  }
   if (curr->ref->type != Type::unreachable) {
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
@@ -2455,7 +2471,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   returnTypes.clear();
   labelNames.clear();
   // validate optional local names
-  std::set<Name> seen;
+  std::unordered_set<Name> seen;
   for (auto& pair : curr->localNames) {
     Name name = pair.second;
     shouldBeTrue(seen.insert(name).second, name, "local names must be unique");
