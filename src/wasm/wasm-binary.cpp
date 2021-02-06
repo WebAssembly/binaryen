@@ -1894,7 +1894,7 @@ void WasmBinaryBuilder::readExports() {
   BYN_TRACE("== readExports\n");
   size_t num = getU32LEB();
   BYN_TRACE("num: " << num << std::endl);
-  std::set<Name> names;
+  std::unordered_set<Name> names;
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto curr = new Export;
@@ -2524,7 +2524,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     } else if (nameType ==
                BinaryConsts::UserSections::Subsection::NameFunction) {
       auto num = getU32LEB();
-      std::set<Name> usedNames;
+      std::unordered_set<Name> usedNames;
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
@@ -2563,7 +2563,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
             << std::to_string(funcIndex) << std::endl;
         }
         auto numLocals = getU32LEB();
-        std::set<Name> usedNames;
+        std::unordered_set<Name> usedNames;
         for (size_t j = 0; j < numLocals; j++) {
           auto localIndex = getU32LEB();
           auto rawLocalName = getInlineString();
@@ -2631,7 +2631,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameGlobal) {
       auto num = getU32LEB();
-      std::set<Name> usedNames;
+      std::unordered_set<Name> usedNames;
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
