@@ -633,9 +633,11 @@ void FunctionValidator::validatePoppyBlockElements(Block* curr) {
                  curr,
                  "unreachable block should have unreachable element");
   } else {
-    if (!shouldBeTrue(blockSig.satisfies(Signature(Type::none, curr->type)),
-                      curr,
-                      "block contents should satisfy block type") &&
+    if (!shouldBeTrue(
+          StackSignature::isSubType(
+            blockSig, StackSignature(Type::none, curr->type, false)),
+          curr,
+          "block contents should satisfy block type") &&
         !info.quiet) {
       getStream() << "contents: " << blockSig.results
                   << (blockSig.unreachable ? " [unreachable]" : "") << "\n"

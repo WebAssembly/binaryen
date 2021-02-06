@@ -73,7 +73,7 @@ struct StackSignature {
 
   StackSignature()
     : params(Type::none), results(Type::none), unreachable(false) {}
-  StackSignature(Type params, Type results, bool unreachable = false)
+  StackSignature(Type params, Type results, bool unreachable)
     : params(params), results(results), unreachable(unreachable) {}
 
   StackSignature(const StackSignature&) = default;
@@ -98,10 +98,6 @@ struct StackSignature {
   // Return `true` iff `next` composes after this stack signature.
   bool composes(const StackSignature& next) const;
 
-  // Whether a block whose contents have this stack signature could be typed
-  // with `sig`.
-  bool satisfies(Signature sig) const;
-
   // Compose stack signatures. Assumes they actually compose.
   StackSignature& operator+=(const StackSignature& next);
   StackSignature operator+(const StackSignature& next) const;
@@ -111,9 +107,64 @@ struct StackSignature {
            unreachable == other.unreachable;
   }
 
-  // Returns the LUB of `a` and `b`, i.e. the minimal StackSignature that could
-  // type block contents of either type `a` or type `b`. Assumes that a LUB
-  // exists.
+  // Whether a block whose contents have stack signature `a` could be typed with
+  // stack signature `b`, i.e. whether it could be used in a context that
+  // expects signature `b`. Formally:
+  //
+  // [t1*] -> [t2*] <: [s1* t1'*] -> [s2* t2'*] iff
+  //
+  //  - t1'_i <: t1_i
+  //  - t2_i <: t2'_i
+  //  - s1_i <: s2_i
+  //
+  // [t1*] -> [t2*] {u} <: [s1* t1'*] -> [s2* t2'*] {u?} iff
+  //
+  //  - [t1*] -> [t2*] <: [t1'*] -> [t2'*]
+  //
+  // As an example of the first rule, consider this instruction sequence:
+  //
+  //   ref.as_func
+  //   drop
+  //   i32.add
+  //
+  // The most specific type you could give this sequence is [i32, i32, anyref]
+  // -> [i32]. But it could also be used in a context that expects [i32, i32,
+  // funcref] -> [i32] because ref.as_func can accept funcref or any other
+  // subtype of anyref. That's where the contravariance comes from. This
+  // instruction sequence could also be used anywhere that expects [f32, i32,
+  // i32, anyref] -> [f32, anyref] because the f32 simply stays on the stack
+  // throughout the sequence. That's where the the prefix extension comes from.
+  //
+  // For the second rule, consider this sequence:
+  //
+  //   ref.as_func
+  //   drop
+  //   i32.add
+  //   unreachable
+  //   i32.const 0
+  //
+  // This instruction sequence has the specific type [i32, i32, anyref] -> [i32]
+  // {u}. It can be used in any situation the previous block can be used in, but
+  // can additionally be used in contexts that expect something like [f32, i32,
+  // i32, anyref] -> [v128, i32]. Because of the unreachable polymorphism, the
+  // additional prefixes on the params and results do not need to match.
+  //
+  // Note that a reachable stack signature (without a {u}) is never a subtype of
+  // any unreachable stack signature (with a {u}). This makes sense because a
+  // sequence of instructions that has no polymorphic unreachable behavior
+  // cannot be given a type that says it does have polymorphic unreachable
+  // behavior.
+  //
+  // Also, [] -> [] {u} is the bottom type here; it is a subtype of every other
+  // stack signature. This corresponds to (unreachable) being able to be given
+  // any stack signature.
+  static bool isSubType(StackSignature a, StackSignature b);
+
+  // Returns true iff `a` and `b` have a LUB, i.e. a minimal StackSignature that
+  // could type block contents of either type `a` or type `b`.
+  static bool haveLeastUpperBound(StackSignature a, StackSignature b);
+
+  // Returns the LUB of `a` and `b`. Assumes that the LUB exists.
   static StackSignature getLeastUpperBound(StackSignature a, StackSignature b);
 };
 

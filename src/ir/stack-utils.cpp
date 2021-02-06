@@ -83,48 +83,6 @@ bool StackSignature::composes(const StackSignature& next) const {
                     });
 }
 
-bool StackSignature::satisfies(Signature sig) const {
-  if (sig.params.size() < params.size() ||
-      sig.results.size() < results.size()) {
-    // Not enough values provided or too many produced
-    return false;
-  }
-  bool paramSuffixMatches =
-    std::equal(params.begin(),
-               params.end(),
-               sig.params.end() - params.size(),
-               [](const Type& consumed, const Type& provided) {
-                 return Type::isSubType(provided, consumed);
-               });
-  if (!paramSuffixMatches) {
-    return false;
-  }
-  bool resultSuffixMatches =
-    std::equal(results.begin(),
-               results.end(),
-               sig.results.end() - results.size(),
-               [](const Type& produced, const Type& expected) {
-                 return Type::isSubType(produced, expected);
-               });
-  if (!resultSuffixMatches) {
-    return false;
-  }
-  if (unreachable) {
-    // The unreachable can consume any additional provided params and produce
-    // any additional expected results, so we are done.
-    return true;
-  }
-  // Any additional provided params will pass through untouched, so they must be
-  // equivalent to the additional produced results.
-  return std::equal(sig.params.begin(),
-                    sig.params.end() - params.size(),
-                    sig.results.begin(),
-                    sig.results.end() - results.size(),
-                    [](const Type& produced, const Type& expected) {
-                      return Type::isSubType(produced, expected);
-                    });
-}
-
 StackSignature& StackSignature::operator+=(const StackSignature& next) {
   assert(composes(next));
   std::vector<Type> stack(results.begin(), results.end());
@@ -160,38 +118,117 @@ StackSignature StackSignature::operator+(const StackSignature& next) const {
   return sig;
 }
 
+bool StackSignature::isSubType(StackSignature a, StackSignature b) {
+  if (a.params.size() > b.params.size() ||
+      a.results.size() > b.results.size()) {
+    // `a` consumes or produces more values than `b` can provides or expects.
+    return false;
+  }
+  if (b.unreachable && !a.unreachable) {
+    // Non-polymorphic sequences cannot be typed as being polymorphic.
+    return false;
+  }
+  bool paramSuffixMatches =
+    std::equal(a.params.begin(),
+               a.params.end(),
+               b.params.end() - a.params.size(),
+               [](const Type& consumed, const Type& provided) {
+                 return Type::isSubType(provided, consumed);
+               });
+  if (!paramSuffixMatches) {
+    return false;
+  }
+  bool resultSuffixMatches =
+    std::equal(a.results.begin(),
+               a.results.end(),
+               b.results.end() - a.results.size(),
+               [](const Type& produced, const Type& expected) {
+                 return Type::isSubType(produced, expected);
+               });
+  if (!resultSuffixMatches) {
+    return false;
+  }
+  if (a.unreachable) {
+    // The unreachable can consume any additional provided params and produce
+    // any additional expected results, so we are done.
+    return true;
+  }
+  // Any additional provided params will pass through untouched, so they must be
+  // compatible with the additional produced results.
+  return std::equal(b.params.begin(),
+                    b.params.end() - a.params.size(),
+                    b.results.begin(),
+                    b.results.end() - a.results.size(),
+                    [](const Type& provided, const Type& expected) {
+                      return Type::isSubType(provided, expected);
+                    });
+}
+
+bool StackSignature::haveLeastUpperBound(StackSignature a, StackSignature b) {
+  // Params and results may only be shorter on unreachable stack signatures.
+  if (!a.unreachable && (a.params.size() < b.params.size() ||
+                         a.results.size() < b.results.size())) {
+    return false;
+  }
+  if (!b.unreachable && (b.params.size() < a.params.size() ||
+                         b.results.size() < a.results.size())) {
+    return false;
+  }
+
+  auto valsCompatible = [](auto as, auto bs, auto compatible) -> bool {
+    // Canonicalize so the as are shorter and any unshared prefix is on bs.
+    if (bs.size() < as.size()) {
+      std::swap(as, bs);
+    }
+    // Check that shared values after the unshared prefix have are compatible.
+    size_t diff = bs.size() - as.size();
+    for (size_t i = 0, shared = as.size(); i < shared; ++i) {
+      if (!compatible(as[i], bs[i + diff])) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  bool paramsOk = valsCompatible(a.params, b.params, [](Type a, Type b) {
+    assert(a == b && "TODO: calculate greatest lower bound to handle "
+                     "contravariance correctly");
+    return true;
+  });
+  bool resultsOk = valsCompatible(a.results, b.results, [](Type a, Type b) {
+    return Type::getLeastUpperBound(a, b) != Type::none;
+  });
+  return paramsOk && resultsOk;
+}
+
 StackSignature StackSignature::getLeastUpperBound(StackSignature a,
                                                   StackSignature b) {
-  // Assert an approximation of the conditions for having a LUB
-  assert((a.params.size() >= b.params.size() &&
-          a.results.size() >= b.results.size()) ||
-         a.unreachable);
-  assert((b.params.size() >= a.params.size() &&
-          b.results.size() >= a.results.size()) ||
-         b.unreachable);
-  // Canonicalize so that the shorter types are on `a`.
-  if (a.params.size() > b.params.size()) {
-    std::swap(a.params, b.params);
-  }
-  if (a.results.size() > b.results.size()) {
-    std::swap(a.results, b.results);
-  }
-  std::vector<Type> params;
-  for (size_t i = 0, size = a.params.size(); i < size; ++i) {
-    Type lub = Type::getLeastUpperBound(a.params[i], b.params[i]);
-    assert(lub != Type::none);
-    params.push_back(lub);
-  }
-  params.insert(
-    params.end(), b.params.begin() + a.params.size(), b.params.end());
-  size_t resultsDiff = b.results.size() - a.results.size();
-  std::vector<Type> results(b.results.begin(), b.results.begin() + resultsDiff);
-  for (size_t i = 0, size = a.results.size(); i < size; ++i) {
-    Type lub =
-      Type::getLeastUpperBound(a.results[i], b.results[i + resultsDiff]);
-    assert(lub != Type::none);
-    results.push_back(lub);
-  }
+  assert(haveLeastUpperBound(a, b));
+
+  auto combineVals = [](auto as, auto bs, auto combine) -> std::vector<Type> {
+    // Canonicalize so the as are shorter and any unshared prefix is on bs.
+    if (bs.size() < as.size()) {
+      std::swap(as, bs);
+    }
+    // Combine shared values after the unshared prefix.
+    size_t diff = bs.size() - as.size();
+    std::vector<Type> vals(bs.begin(), bs.begin() + diff);
+    for (size_t i = 0, shared = as.size(); i < shared; ++i) {
+      vals.push_back(combine(as[i], bs[i + diff]));
+    }
+    return vals;
+  };
+
+  auto params = combineVals(a.params, b.params, [&](Type a, Type b) {
+    assert(a == b && "TODO: calculate greatest lower bound to handle "
+                     "contravariance correctly");
+    return a;
+  });
+
+  auto results = combineVals(a.results, b.results, [&](Type a, Type b) {
+    return Type::getLeastUpperBound(a, b);
+  });
+
   return StackSignature{
     Type(params), Type(results), a.unreachable && b.unreachable};
 }
