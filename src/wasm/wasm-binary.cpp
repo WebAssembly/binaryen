@@ -2693,7 +2693,7 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameTable) {
       auto num = getU32LEB();
       for (size_t i = 0; i < num; i++) {
-        std::set<Name> usedNames;
+        std::unordered_set<Name> usedNames;
         auto index = getU32LEB();
         auto rawName = getInlineString();
         auto name = escape(rawName);
