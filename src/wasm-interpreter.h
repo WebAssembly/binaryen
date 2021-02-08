@@ -1448,18 +1448,20 @@ public:
       // each reference has the canonical RTT for the signature.
       auto* func = module->getFunction(cast.originalRef.getFunc());
       seenRtt = Literal(Type(Rtt(func->sig)));
+      cast.castRef =
+        Literal(func->name, Type(intendedRtt.type.getHeapType(), Nullable));
     } else {
       // GC data store an RTT in each instance.
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
       seenRtt = gcData->rtt;
+      cast.castRef =
+        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
     }
     if (!seenRtt.isSubRtt(intendedRtt)) {
       cast.outcome = cast.Failure;
     } else {
       cast.outcome = cast.Success;
-      cast.castRef =
-        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
     }
     return cast;
   }
@@ -1821,8 +1823,8 @@ public:
                            Flags flags,
                            Index maxDepth,
                            Index maxLoopIterations)
-    : ExpressionRunner<SubType>(module, maxDepth, maxLoopIterations)
-        flags(flags) {}
+    : ExpressionRunner<SubType>(module, maxDepth, maxLoopIterations),
+      flags(flags) {}
 
   // Sets a known local value to use.
   void setLocalValue(Index index, Literals& values) {
@@ -1868,8 +1870,8 @@ public:
   Flow visitGlobalGet(GlobalGet* curr) {
     NOTE_ENTER("GlobalGet");
     NOTE_NAME(curr->name);
-    if (module != nullptr) {
-      auto* global = module->getGlobal(curr->name);
+    if (this->module != nullptr) {
+      auto* global = this->module->getGlobal(curr->name);
       // Check if the global has an immutable value anyway
       if (!global->imported() && !global->mutable_) {
         return ExpressionRunner<SubType>::visit(global->init);
@@ -1885,10 +1887,10 @@ public:
   Flow visitGlobalSet(GlobalSet* curr) {
     NOTE_ENTER("GlobalSet");
     NOTE_NAME(curr->name);
-    if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS) && module != nullptr) {
+    if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS) && this->module != nullptr) {
       // If we are evaluating and not replacing the expression, remember the
       // constant value set, if any, for subsequent gets.
-      auto* global = module->getGlobal(curr->name);
+      auto* global = this->module->getGlobal(curr->name);
       assert(global->mutable_);
       auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
       if (!setFlow.breaking()) {
@@ -1905,8 +1907,8 @@ public:
     // when replacing as long as the function does not have any side effects.
     // Might yield something useful for simple functions like `clamp`, sometimes
     // even if arguments are only partially constant or not constant at all.
-    if ((flags & FlagValues::TRAVERSE_CALLS) != 0 && module != nullptr) {
-      auto* func = module->getFunction(curr->target);
+    if ((flags & FlagValues::TRAVERSE_CALLS) != 0 && this->module != nullptr) {
+      auto* func = this->module->getFunction(curr->target);
       if (!func->imported()) {
         if (func->sig.results.isConcrete()) {
           auto numOperands = curr->operands.size();
