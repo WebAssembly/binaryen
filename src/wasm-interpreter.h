@@ -157,6 +157,10 @@ public:
 template<typename SubType>
 class ExpressionRunner : public OverriddenVisitor<SubType, Flow> {
 protected:
+  // Optional module context to search for globals and called functions. NULL if
+  // we are not interested in any context.
+  Module* module = nullptr;
+
   // Maximum depth before giving up.
   Index maxDepth;
   Index depth = 0;
@@ -209,6 +213,9 @@ public:
     depth--;
     return ret;
   }
+
+  // Gets the module this runner is operating on.
+  Module* getModule() { return module; }
 
   Flow visitBlock(Block* curr) {
     NOTE_ENTER("Block");
@@ -1426,23 +1433,38 @@ public:
       cast.outcome = cast.Null;
       return cast;
     }
-    // The input may not be a struct or an array; for example it could be an
+    // The input may not be GC data or a function; for example it could be an
     // anyref of null (already handled above) or anything else (handled here,
     // but this is for future use as atm the binaryen interpreter cannot
     // represent external references).
-    if (!cast.originalRef.isData()) {
+    if (!cast.originalRef.isData() && !cast.originalRef.isFunction()) {
       cast.outcome = cast.Failure;
       return cast;
     }
-    auto gcData = cast.originalRef.getGCData();
-    auto refRtt = gcData->rtt;
-    auto intendedRtt = rtt.getSingleValue();
-    if (!refRtt.isSubRtt(intendedRtt)) {
-      cast.outcome = cast.Failure;
+    // Function casts are simple in that they have no RTT hierarchies; only each
+    // reference has the canonical RTT for the signature.
+    if (cast.originalRef.isFunction()) {
+      auto func = cast.originalRef.getFunc();
+      auto refRtt = gcData->rtt;
+      auto intendedRtt = rtt.getSingleValue();
+      if (!refRtt.isSubRtt(intendedRtt)) {
+        cast.outcome = cast.Failure;
+      } else {
+        cast.outcome = cast.Success;
+        cast.castRef =
+          Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
+      }
     } else {
-      cast.outcome = cast.Success;
-      cast.castRef =
-        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
+      auto gcData = cast.originalRef.getGCData();
+      auto refRtt = gcData->rtt;
+      auto intendedRtt = rtt.getSingleValue();
+      if (!refRtt.isSubRtt(intendedRtt)) {
+        cast.outcome = cast.Failure;
+      } else {
+        cast.outcome = cast.Success;
+        cast.castRef =
+          Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
+      }
     }
     return cast;
   }
@@ -1788,10 +1810,6 @@ public:
   static const Index NO_LIMIT = 0;
 
 protected:
-  // Optional module context to search for globals and called functions. NULL if
-  // we are not interested in any context.
-  Module* module = nullptr;
-
   // Flags indicating special requirements. See FlagValues.
   Flags flags = FlagValues::DEFAULT;
 
@@ -1808,11 +1826,8 @@ public:
                            Flags flags,
                            Index maxDepth,
                            Index maxLoopIterations)
-    : ExpressionRunner<SubType>(maxDepth, maxLoopIterations), module(module),
+    : ExpressionRunner<SubType>(module, maxDepth, maxLoopIterations)
       flags(flags) {}
-
-  // Gets the module this runner is operating on.
-  Module* getModule() { return module; }
 
   // Sets a known local value to use.
   void setLocalValue(Index index, Literals& values) {
