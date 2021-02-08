@@ -1827,7 +1827,7 @@ public:
                            Index maxDepth,
                            Index maxLoopIterations)
     : ExpressionRunner<SubType>(module, maxDepth, maxLoopIterations)
-      flags(flags) {}
+        flags(flags) {}
 
   // Sets a known local value to use.
   void setLocalValue(Index index, Literals& values) {
