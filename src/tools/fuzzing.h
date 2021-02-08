@@ -723,6 +723,14 @@ private:
       builder.makeSequence(makeHangLimitCheck(), func->body, func->sig.results);
   }
 
+  // Recombination and mutation can replace a node with another node of the same
+  // type, but should not do so for certain types that are dangerous. For
+  // example, it would be bad to add an RTT in a tuple, as that would force us
+  // to use temporary locals for the tuple, but RTTs are not defaultable.
+  bool canBeArbitrarilyReplaced(Expression* curr) {
+    return curr->type.isDefaultable();
+  }
+
   void recombine(Function* func) {
     // Don't always do this.
     if (oneIn(2)) {
@@ -776,7 +784,7 @@ private:
         : wasm(wasm), scanner(scanner), parent(parent) {}
 
       void visitExpression(Expression* curr) {
-        if (parent.oneIn(10)) {
+        if (parent.oneIn(10) && parent.canBeArbitrarilyReplaced(curr)) {
           // Replace it!
           auto& candidates = scanner.exprsByType[curr->type];
           assert(!candidates.empty()); // this expression itself must be there
@@ -803,7 +811,7 @@ private:
         : wasm(wasm), parent(parent) {}
 
       void visitExpression(Expression* curr) {
-        if (parent.oneIn(10)) {
+        if (parent.oneIn(10) && parent.canBeArbitrarilyReplaced(curr)) {
           // For constants, perform only a small tweaking in some cases.
           if (auto* c = curr->dynCast<Const>()) {
             if (parent.oneIn(2)) {

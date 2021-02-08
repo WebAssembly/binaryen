@@ -1,39 +1,37 @@
 total
  [events]       : 2       
- [exports]      : 8       
- [funcs]        : 9       
+ [exports]      : 11      
+ [funcs]        : 11      
  [globals]      : 6       
  [imports]      : 5       
  [memory-data]  : 22      
- [table-data]   : 3       
- [total]        : 549     
- [vars]         : 37      
+ [table-data]   : 1       
+ [total]        : 850     
+ [vars]         : 29      
  AtomicFence    : 1       
- AtomicNotify   : 1       
- AtomicRMW      : 1       
- Binary         : 80      
- Block          : 69      
- Break          : 10      
- Call           : 11      
- CallRef        : 3       
- Const          : 117     
- Drop           : 7       
- GlobalGet      : 30      
- GlobalSet      : 16      
- If             : 24      
- Load           : 26      
- LocalGet       : 35      
- LocalSet       : 18      
- Loop           : 9       
+ Binary         : 95      
+ Block          : 122     
+ Break          : 19      
+ Call           : 44      
+ CallRef        : 5       
+ Const          : 126     
+ Drop           : 10      
+ GlobalGet      : 62      
+ GlobalSet      : 30      
+ If             : 35      
+ Load           : 24      
+ LocalGet       : 69      
+ LocalSet       : 39      
+ Loop           : 23      
  MemoryFill     : 1       
- MemoryInit     : 1       
- Nop            : 24      
- RefFunc        : 3       
+ Nop            : 14      
+ RefFunc        : 5       
  RefIs          : 2       
- RefNull        : 9       
- Return         : 18      
- SIMDExtract    : 1       
- Select         : 2       
- Store          : 2       
- TupleMake      : 2       
- Unary          : 26      
+ RefNull        : 28      
+ Return         : 33      
+ SIMDExtract    : 4       
+ Select         : 5       
+ Store          : 3       
+ TupleExtract   : 4       
+ TupleMake      : 6       
+ Unary          : 41      
