@@ -76,62 +76,6 @@ Global* getStackPointerGlobal(Module& wasm) {
 
 const Address UNKNOWN_OFFSET(uint32_t(-1));
 
-std::vector<Address> getSegmentOffsets(Module& wasm) {
-  std::unordered_map<Index, Address> passiveOffsets;
-  if (wasm.features.hasBulkMemory()) {
-    // Fetch passive segment offsets out of memory.init instructions
-    struct OffsetSearcher : PostWalker<OffsetSearcher> {
-      std::unordered_map<Index, Address>& offsets;
-      OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
-        : offsets(offsets) {}
-      void visitMemoryInit(MemoryInit* curr) {
-        // The desitination of the memory.init is either a constant
-        // or the result of an addition with __memory_base in the
-        // case of PIC code.
-        auto* dest = curr->dest->dynCast<Const>();
-        if (!dest) {
-          auto* add = curr->dest->dynCast<Binary>();
-          if (!add) {
-            return;
-          }
-          dest = add->left->dynCast<Const>();
-          if (!dest) {
-            return;
-          }
-        }
-        auto it = offsets.find(curr->segment);
-        if (it != offsets.end()) {
-          Fatal() << "Cannot get offset of passive segment initialized "
-                     "multiple times";
-        }
-        offsets[curr->segment] = dest->value.geti32();
-      }
-    } searcher(passiveOffsets);
-    searcher.walkModule(&wasm);
-  }
-  std::vector<Address> segmentOffsets;
-  for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    auto& segment = wasm.memory.segments[i];
-    if (segment.isPassive) {
-      auto it = passiveOffsets.find(i);
-      if (it != passiveOffsets.end()) {
-        segmentOffsets.push_back(it->second);
-      } else {
-        // This was a non-constant offset (perhaps TLS)
-        segmentOffsets.push_back(UNKNOWN_OFFSET);
-      }
-    } else if (auto* addrConst = segment.offset->dynCast<Const>()) {
-      auto address = addrConst->value.geti32();
-      segmentOffsets.push_back(address);
-    } else {
-      // TODO(sbc): Wasm shared libraries have data segments with non-const
-      // offset.
-      segmentOffsets.push_back(0);
-    }
-  }
-  return segmentOffsets;
-}
-
 std::string escape(const char* input) {
   std::string code = input;
   // replace newlines quotes with escaped newlines
@@ -161,29 +105,88 @@ std::string escape(const char* input) {
   return code;
 }
 
-const char* stringAtAddr(Module& wasm,
-                         std::vector<Address> const& segmentOffsets,
-                         Address address) {
-  for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-    Memory::Segment& segment = wasm.memory.segments[i];
-    Address offset = segmentOffsets[i];
-    if (offset != UNKNOWN_OFFSET && address >= offset &&
-        address < offset + segment.data.size()) {
-      return &segment.data[address - offset];
+class StringConstantTracker {
+public:
+  StringConstantTracker(Module& wasm) : wasm(wasm) { calcSegmentOffsets(); }
+
+  std::string codeForConstAddr(int64_t address) {
+    const char* str = stringAtAddr(address);
+    if (!str) {
+      Fatal() << "unable to find data for ASM/EM_JS const at: " << address;
+    }
+    return escape(str);
+  }
+
+private:
+  void calcSegmentOffsets() {
+    std::unordered_map<Index, Address> passiveOffsets;
+    if (wasm.features.hasBulkMemory()) {
+      // Fetch passive segment offsets out of memory.init instructions
+      struct OffsetSearcher : PostWalker<OffsetSearcher> {
+        std::unordered_map<Index, Address>& offsets;
+        OffsetSearcher(std::unordered_map<unsigned, Address>& offsets)
+          : offsets(offsets) {}
+        void visitMemoryInit(MemoryInit* curr) {
+          // The desitination of the memory.init is either a constant
+          // or the result of an addition with __memory_base in the
+          // case of PIC code.
+          auto* dest = curr->dest->dynCast<Const>();
+          if (!dest) {
+            auto* add = curr->dest->dynCast<Binary>();
+            if (!add) {
+              return;
+            }
+            dest = add->left->dynCast<Const>();
+            if (!dest) {
+              return;
+            }
+          }
+          auto it = offsets.find(curr->segment);
+          if (it != offsets.end()) {
+            Fatal() << "Cannot get offset of passive segment initialized "
+                       "multiple times";
+          }
+          offsets[curr->segment] = dest->value.geti32();
+        }
+      } searcher(passiveOffsets);
+      searcher.walkModule(&wasm);
+    }
+    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
+      auto& segment = wasm.memory.segments[i];
+      if (segment.isPassive) {
+        auto it = passiveOffsets.find(i);
+        if (it != passiveOffsets.end()) {
+          segmentOffsets.push_back(it->second);
+        } else {
+          // This was a non-constant offset (perhaps TLS)
+          segmentOffsets.push_back(UNKNOWN_OFFSET);
+        }
+      } else if (auto* addrConst = segment.offset->dynCast<Const>()) {
+        auto address = addrConst->value.geti32();
+        segmentOffsets.push_back(address);
+      } else {
+        // TODO(sbc): Wasm shared libraries have data segments with non-const
+        // offset.
+        segmentOffsets.push_back(0);
+      }
     }
   }
-  return nullptr;
-}
 
-std::string codeForConstAddr(Module& wasm,
-                             std::vector<Address> const& segmentOffsets,
-                             int64_t address) {
-  const char* str = stringAtAddr(wasm, segmentOffsets, address);
-  if (!str) {
-    Fatal() << "unable to find data for ASM/EM_JS const at: " << address;
+  const char* stringAtAddr(Address address) {
+    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
+      Memory::Segment& segment = wasm.memory.segments[i];
+      Address offset = segmentOffsets[i];
+      if (offset != UNKNOWN_OFFSET && address >= offset &&
+          address < offset + segment.data.size()) {
+        return &segment.data[address - offset];
+      }
+    }
+    return nullptr;
   }
-  return escape(str);
-}
+
+  Module& wasm;
+  std::vector<Address> segmentOffsets; // segment index => address offset
+};
 
 enum class Proxying {
   None,
@@ -206,7 +209,7 @@ std::string proxyingSuffix(Proxying proxy) {
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
   bool minimizeWasmChanges;
-  std::vector<Address> segmentOffsets; // segment index => address offset
+  StringConstantTracker stringTracker;
 
   struct AsmConst {
     std::set<Signature> sigs;
@@ -222,7 +225,7 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
 
   AsmConstWalker(Module& _wasm, bool minimizeWasmChanges)
     : wasm(_wasm), minimizeWasmChanges(minimizeWasmChanges),
-      segmentOffsets(getSegmentOffsets(wasm)) {}
+      stringTracker(_wasm) {}
 
   void noteNonLinear(Expression* curr);
 
@@ -316,7 +319,7 @@ void AsmConstWalker::visitCall(Call* curr) {
 
   auto* value = arg->cast<Const>();
   int64_t address = value->value.getInteger();
-  auto code = codeForConstAddr(wasm, segmentOffsets, address);
+  auto code = stringTracker.codeForConstAddr(address);
   createAsmConst(address, code, sig, importName);
 }
 
@@ -373,13 +376,12 @@ static AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm,
 
 struct EmJsWalker : public PostWalker<EmJsWalker> {
   Module& wasm;
-  std::vector<Address> segmentOffsets; // segment index => address offset
+  StringConstantTracker stringTracker;
   std::vector<Export> toRemove;
 
   std::map<std::string, std::string> codeByName;
 
-  EmJsWalker(Module& _wasm)
-    : wasm(_wasm), segmentOffsets(getSegmentOffsets(wasm)) {}
+  EmJsWalker(Module& _wasm) : wasm(_wasm), stringTracker(_wasm) {}
 
   void visitExport(Export* curr) {
     if (curr->kind != ExternalKind::Function) {
@@ -400,7 +402,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
     }
     auto* addrConst = consts.list[0];
     int64_t address = addrConst->value.getInteger();
-    auto code = codeForConstAddr(wasm, segmentOffsets, address);
+    auto code = stringTracker.codeForConstAddr(address);
     codeByName[funcName] = code;
   }
 };
