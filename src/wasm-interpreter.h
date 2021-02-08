@@ -1441,30 +1441,25 @@ public:
       cast.outcome = cast.Failure;
       return cast;
     }
-    // Function casts are simple in that they have no RTT hierarchies; only each
-    // reference has the canonical RTT for the signature.
+    Literal seenRtt;
+    Literal intendedRtt = rtt.getSingleValue();
     if (cast.originalRef.isFunction()) {
-      auto func = cast.originalRef.getFunc();
-      auto refRtt = gcData->rtt;
-      auto intendedRtt = rtt.getSingleValue();
-      if (!refRtt.isSubRtt(intendedRtt)) {
-        cast.outcome = cast.Failure;
-      } else {
-        cast.outcome = cast.Success;
-        cast.castRef =
-          Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
-      }
+      // Function casts are simple in that they have no RTT hierarchies; instead
+      // each reference has the canonical RTT for the signature.
+      auto* func = module->getFunction(cast.originalRef.getFunc());
+      seenRtt = Literal(Type(Rtt(func->sig)));
     } else {
+      // GC data store an RTT in each instance.
+      assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
-      auto refRtt = gcData->rtt;
-      auto intendedRtt = rtt.getSingleValue();
-      if (!refRtt.isSubRtt(intendedRtt)) {
-        cast.outcome = cast.Failure;
-      } else {
-        cast.outcome = cast.Success;
-        cast.castRef =
-          Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
-      }
+      seenRtt = gcData->rtt;
+    }
+    if (!seenRtt.isSubRtt(intendedRtt)) {
+      cast.outcome = cast.Failure;
+    } else {
+      cast.outcome = cast.Success;
+      cast.castRef =
+        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
     }
     return cast;
   }
