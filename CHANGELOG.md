@@ -15,6 +15,8 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- `wasm-dis` now supports options to enable or disable Wasm features.
+
 v99
 ---
 
