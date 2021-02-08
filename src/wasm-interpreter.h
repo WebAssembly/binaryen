@@ -192,10 +192,6 @@ public:
                    Index maxLoopIterations = NO_LIMIT)
     : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {}
 
-  ExpressionRunner(Index maxDepth = NO_LIMIT,
-                   Index maxLoopIterations = NO_LIMIT)
-    : module(nullptr), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {}
-
   Flow visit(Expression* curr) {
     depth++;
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
@@ -1452,7 +1448,7 @@ public:
       // Function casts are simple in that they have no RTT hierarchies; instead
       // each reference has the canonical RTT for the signature.
       auto* func = module->getFunction(cast.originalRef.getFunc());
-      seenRtt = Literal(Type(Rtt(func->sig)));
+      seenRtt = Literal(Type(Rtt(0, func->sig)));
       cast.castRef =
         Literal(func->name, Type(intendedRtt.type.getHeapType(), Nullable));
     } else {
@@ -2040,7 +2036,7 @@ class InitializerExpressionRunner
 
 public:
   InitializerExpressionRunner(GlobalManager& globals, Index maxDepth)
-    : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(maxDepth),
+    : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(nullptr, maxDepth),
       globals(globals) {}
 
   Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
@@ -2401,7 +2397,7 @@ private:
     RuntimeExpressionRunner(ModuleInstanceBase& instance,
                             FunctionScope& scope,
                             Index maxDepth)
-      : ExpressionRunner<RuntimeExpressionRunner>(maxDepth), instance(instance),
+      : ExpressionRunner<RuntimeExpressionRunner>(&instance.wasm, maxDepth), instance(instance),
         scope(scope) {}
 
     Flow visitCall(Call* curr) {
