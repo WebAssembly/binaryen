@@ -187,9 +187,14 @@ public:
   // Indicates no limit of maxDepth or maxLoopIterations.
   static const Index NO_LIMIT = 0;
 
+  ExpressionRunner(Module* module = nullptr,
+                   Index maxDepth = NO_LIMIT,
+                   Index maxLoopIterations = NO_LIMIT)
+    : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {}
+
   ExpressionRunner(Index maxDepth = NO_LIMIT,
                    Index maxLoopIterations = NO_LIMIT)
-    : maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {}
+    : module(nullptr), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {}
 
   Flow visit(Expression* curr) {
     depth++;
