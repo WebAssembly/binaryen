@@ -1625,9 +1625,9 @@ BINARYEN_API void BinaryenMemoryInitSetSize(BinaryenExpressionRef expr,
 
 // DataDrop
 
-// Gets the index of the segment being dropped by a `memory.drop` expression.
+// Gets the index of the segment being dropped by a `data.drop` expression.
 BINARYEN_API uint32_t BinaryenDataDropGetSegment(BinaryenExpressionRef expr);
-// Sets the index of the segment being dropped by a `memory.drop` expression.
+// Sets the index of the segment being dropped by a `data.drop` expression.
 BINARYEN_API void BinaryenDataDropSetSegment(BinaryenExpressionRef expr,
                                              uint32_t segmentIndex);
 

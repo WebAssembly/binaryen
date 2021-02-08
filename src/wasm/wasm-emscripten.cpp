@@ -117,6 +117,8 @@ public:
     return escape(str);
   }
 
+  std::vector<Address> segmentOffsets; // segment index => address offset
+
 private:
   void calcSegmentOffsets() {
     std::unordered_map<Index, Address> passiveOffsets;
@@ -185,7 +187,6 @@ private:
   }
 
   Module& wasm;
-  std::vector<Address> segmentOffsets; // segment index => address offset
 };
 
 enum class Proxying {
@@ -380,6 +381,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
   std::vector<Export> toRemove;
 
   std::map<std::string, std::string> codeByName;
+  std::map<Address, size_t> codeAddresses; // map from address to string len
 
   EmJsWalker(Module& _wasm) : wasm(_wasm), stringTracker(_wasm) {}
 
@@ -404,7 +406,32 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
     int64_t address = addrConst->value.getInteger();
     auto code = stringTracker.codeForConstAddr(address);
     codeByName[funcName] = code;
+    codeAddresses[address] = code.size() + 1;
   }
+};
+
+struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
+  SegmentRemover(Index segment) : segment(segment) {}
+
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new SegmentRemover(segment); }
+
+  void visitMemoryInit(MemoryInit* curr) {
+    if (segment == curr->segment) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeNop());
+    }
+  }
+
+  void visitDataDrop(DataDrop* curr) {
+    if (segment == curr->segment) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeNop());
+    }
+  }
+
+  Index segment;
 };
 
 EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
@@ -414,6 +441,32 @@ EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
   for (const Export& exp : walker.toRemove) {
     wasm.removeExport(exp.name);
     wasm.removeFunction(exp.value);
+  }
+
+  // With newer versions of emscripten/llvm we pack all EM_JS strings into
+  // single segment.
+  // We can detect this by checking for segments that contain on JS strings.
+  // When we find such segements we remove them from the final binary.
+  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+    Address start = walker.stringTracker.segmentOffsets[0];
+    Address cur = start;
+
+    while (cur < start + wasm.memory.segments[i].data.size()) {
+      if (walker.codeAddresses.count(cur) == 0) {
+        break;
+      }
+      cur.addr += walker.codeAddresses[cur];
+    }
+
+    if (cur == start + wasm.memory.segments[i].data.size()) {
+      // Enture segment is containes JS strings.  Remove it.
+      PassRunner runner(&wasm);
+      SegmentRemover(i).run(&runner, &wasm);
+      // Resize the segment to zero.  In theory we should completely remove it
+      // but that would mean re-numbering the segments that follow which would
+      // mean renumbering.
+      wasm.memory.segments[i].data.resize(0);
+    }
   }
   return walker;
 }
