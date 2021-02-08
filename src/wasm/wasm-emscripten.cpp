@@ -374,6 +374,7 @@ static AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm,
 struct EmJsWalker : public PostWalker<EmJsWalker> {
   Module& wasm;
   std::vector<Address> segmentOffsets; // segment index => address offset
+  std::vector<Export> toRemove;
 
   std::map<std::string, std::string> codeByName;
 
@@ -387,6 +388,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
     if (!curr->name.startsWith(EM_JS_PREFIX.str)) {
       return;
     }
+    toRemove.push_back(*curr);
     auto* func = wasm.getFunction(curr->value);
     auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
     // An EM_JS has a single const in the body. Typically it is just returned,
@@ -407,15 +409,9 @@ EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
   EmJsWalker walker(wasm);
   walker.walkModule(&wasm);
 
-  std::vector<Name> toRemove;
-  for (auto& func : wasm.functions) {
-    if (func->name.startsWith(EM_JS_PREFIX.str)) {
-      toRemove.push_back(func->name);
-    }
-  }
-  for (auto funcName : toRemove) {
-    wasm.removeFunction(funcName);
-    wasm.removeExport(funcName);
+  for (const Export& exp : walker.toRemove) {
+    wasm.removeExport(exp.name);
+    wasm.removeFunction(exp.value);
   }
   return walker;
 }
