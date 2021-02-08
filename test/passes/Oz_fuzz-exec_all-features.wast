@@ -214,13 +214,16 @@
    (rtt.canon $int_func)
   )
   (call $log (i32.const 2))
-  (drop ;; a valid cast
+  ;; a valid cast
+  (call_ref
    (ref.cast $void_func (ref.func $a-void-func) (rtt.canon $void_func))
   )
   (call $log (i32.const 3))
-  (drop ;; an invalid cast
+  ;; an invalid cast
+  (drop (call_ref
    (ref.cast $int_func (ref.func $a-void-func) (rtt.canon $int_func))
-  )
+  ))
+  ;; will never be reached
   (call $log (i32.const 4))
  )
 )

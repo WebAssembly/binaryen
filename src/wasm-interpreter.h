@@ -190,7 +190,8 @@ public:
   ExpressionRunner(Module* module = nullptr,
                    Index maxDepth = NO_LIMIT,
                    Index maxLoopIterations = NO_LIMIT)
-    : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {}
+    : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {
+  }
 
   Flow visit(Expression* curr) {
     depth++;
@@ -1888,7 +1889,8 @@ public:
   Flow visitGlobalSet(GlobalSet* curr) {
     NOTE_ENTER("GlobalSet");
     NOTE_NAME(curr->name);
-    if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS) && this->module != nullptr) {
+    if (!(flags & FlagValues::PRESERVE_SIDEEFFECTS) &&
+        this->module != nullptr) {
       // If we are evaluating and not replacing the expression, remember the
       // constant value set, if any, for subsequent gets.
       auto* global = this->module->getGlobal(curr->name);
@@ -2036,7 +2038,8 @@ class InitializerExpressionRunner
 
 public:
   InitializerExpressionRunner(GlobalManager& globals, Index maxDepth)
-    : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(nullptr, maxDepth),
+    : ExpressionRunner<InitializerExpressionRunner<GlobalManager>>(nullptr,
+                                                                   maxDepth),
       globals(globals) {}
 
   Flow visitGlobalGet(GlobalGet* curr) { return Flow(globals[curr->name]); }
@@ -2397,8 +2400,8 @@ private:
     RuntimeExpressionRunner(ModuleInstanceBase& instance,
                             FunctionScope& scope,
                             Index maxDepth)
-      : ExpressionRunner<RuntimeExpressionRunner>(&instance.wasm, maxDepth), instance(instance),
-        scope(scope) {}
+      : ExpressionRunner<RuntimeExpressionRunner>(&instance.wasm, maxDepth),
+        instance(instance), scope(scope) {}
 
     Flow visitCall(Call* curr) {
       NOTE_ENTER("Call");
