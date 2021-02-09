@@ -838,6 +838,9 @@ public:
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type);
     }
+    if (type.isRtt()) {
+      return makeRtt(value.type);
+    }
     TODO_SINGLE_COMPOUND(type);
     switch (type.getBasic()) {
       case Type::externref:
@@ -863,6 +866,18 @@ public:
       }
       return makeTupleMake(consts);
     }
+  }
+
+  // Given a type, creates an RTT expression of that type, using a combination
+  // of rtt.canon and rtt.subs.
+  Expression* makeRtt(Type type) {
+    Expression* ret = makeRttCanon(type.getHeapType());
+    if (type.getRtt().hasDepth()) {
+      for (Index i = 0; i < type.getRtt().depth; i++) {
+        ret = makeRttSub(type.getHeapType(), ret);
+      }
+    }
+    return ret;
   }
 
   // Additional utility functions for building on top of nodes
