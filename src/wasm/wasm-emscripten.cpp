@@ -188,38 +188,17 @@ private:
   std::vector<Address> segmentOffsets; // segment index => address offset
 };
 
-enum class Proxying {
-  None,
-  Sync,
-  Async,
-};
-
-std::string proxyingSuffix(Proxying proxy) {
-  switch (proxy) {
-    case Proxying::None:
-      return "";
-    case Proxying::Sync:
-      return "sync_on_main_thread_";
-    case Proxying::Async:
-      return "async_on_main_thread_";
-  }
-  WASM_UNREACHABLE("invalid prozy type");
-}
-
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
   bool minimizeWasmChanges;
   StringConstantTracker stringTracker;
 
   struct AsmConst {
-    std::set<Signature> sigs;
     Address id;
     std::string code;
-    Proxying proxy;
   };
 
   std::vector<AsmConst> asmConsts;
-  std::set<std::pair<Signature, Proxying>> allSigs;
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
 
@@ -235,11 +214,8 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   void process();
 
 private:
-  void createAsmConst(uint64_t id, std::string code, Signature sig, Name name);
-  Signature asmConstSig(Signature baseSig);
-  Name nameForImportWithSig(Signature sig, Proxying proxy);
+  void createAsmConst(uint64_t id, std::string code);
   void addImports();
-  Proxying proxyType(Name name);
 
   std::vector<std::unique_ptr<Function>> queuedImports;
 };
@@ -263,8 +239,6 @@ void AsmConstWalker::visitCall(Call* curr) {
     return;
   }
 
-  auto baseSig = wasm.getFunction(curr->target)->sig;
-  auto sig = asmConstSig(baseSig);
   auto* arg = curr->operands[0];
   while (!arg->dynCast<Const>()) {
     if (auto* get = arg->dynCast<LocalGet>()) {
@@ -320,16 +294,7 @@ void AsmConstWalker::visitCall(Call* curr) {
   auto* value = arg->cast<Const>();
   int64_t address = value->value.getInteger();
   auto code = stringTracker.codeForConstAddr(address);
-  createAsmConst(address, code, sig, importName);
-}
-
-Proxying AsmConstWalker::proxyType(Name name) {
-  if (name.hasSubstring("_sync_on_main_thread")) {
-    return Proxying::Sync;
-  } else if (name.hasSubstring("_async_on_main_thread")) {
-    return Proxying::Async;
-  }
-  return Proxying::None;
+  createAsmConst(address, code);
 }
 
 void AsmConstWalker::process() {
@@ -340,25 +305,11 @@ void AsmConstWalker::process() {
   addImports();
 }
 
-void AsmConstWalker::createAsmConst(uint64_t id,
-                                    std::string code,
-                                    Signature sig,
-                                    Name name) {
+void AsmConstWalker::createAsmConst(uint64_t id, std::string code) {
   AsmConst asmConst;
   asmConst.id = id;
   asmConst.code = code;
-  asmConst.sigs.insert(sig);
-  asmConst.proxy = proxyType(name);
   asmConsts.push_back(asmConst);
-}
-
-Signature AsmConstWalker::asmConstSig(Signature baseSig) {
-  assert(baseSig.params.size() >= 1);
-  // Omit the signature of the "code" parameter, taken as a string, as the
-  // first argument
-  return Signature(
-    Type(std::vector<Type>(baseSig.params.begin() + 1, baseSig.params.end())),
-    baseSig.results);
 }
 
 void AsmConstWalker::addImports() {
@@ -367,8 +318,8 @@ void AsmConstWalker::addImports() {
   }
 }
 
-static AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm,
-                                                    bool minimizeWasmChanges) {
+static AsmConstWalker findEmAsmConstsAndReturnWalker(Module& wasm,
+                                                     bool minimizeWasmChanges) {
   AsmConstWalker walker(wasm, minimizeWasmChanges);
   walker.process();
   return walker;
@@ -407,7 +358,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
   }
 };
 
-EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
+EmJsWalker findEmJsFuncsAndReturnWalker(Module& wasm) {
   EmJsWalker walker(wasm);
   walker.walkModule(&wasm);
 
@@ -416,20 +367,6 @@ EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
     wasm.removeFunction(exp.value);
   }
   return walker;
-}
-
-void printSignatures(std::ostream& o, const std::set<Signature>& c) {
-  o << "[";
-  bool first = true;
-  for (auto& sig : c) {
-    if (first) {
-      first = false;
-    } else {
-      o << ",";
-    }
-    o << '"' << getSig(sig.results, sig.params) << '"';
-  }
-  o << "]";
 }
 
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
@@ -447,7 +384,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   meta << "{\n";
 
   AsmConstWalker emAsmWalker =
-    fixEmAsmConstsAndReturnWalker(wasm, minimizeWasmChanges);
+    findEmAsmConstsAndReturnWalker(wasm, minimizeWasmChanges);
 
   // print
   commaFirst = true;
@@ -455,16 +392,12 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     meta << "  \"asmConsts\": {";
     for (auto& asmConst : emAsmWalker.asmConsts) {
       meta << nextElement();
-      meta << '"' << asmConst.id << "\": [\"" << asmConst.code << "\", ";
-      printSignatures(meta, asmConst.sigs);
-      meta << ", [\"" << proxyingSuffix(asmConst.proxy) << "\"]";
-
-      meta << "]";
+      meta << '"' << asmConst.id << "\": \"" << asmConst.code << "\"";
     }
     meta << "\n  },\n";
   }
 
-  EmJsWalker emJsWalker = fixEmJsFuncsAndReturnWalker(wasm);
+  EmJsWalker emJsWalker = findEmJsFuncsAndReturnWalker(wasm);
   if (!emJsWalker.codeByName.empty()) {
     meta << "  \"emJsFuncs\": {";
     commaFirst = true;
