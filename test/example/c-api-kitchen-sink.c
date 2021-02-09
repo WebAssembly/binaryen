@@ -318,6 +318,8 @@ void test_core() {
   BinaryenAddEvent(
     module, "a-event", 0, BinaryenTypeInt32(), BinaryenTypeNone());
 
+  BinaryenAddTable(module, "tab", 0, 100, NULL, 0, makeInt32(module, 0));
+
   // Exception handling
 
   // (try
@@ -680,6 +682,7 @@ void test_core() {
     BinaryenUnary(module,
                   BinaryenEqZInt32(), // check the output type of the call node
                   BinaryenCallIndirect(module,
+                                       "tab",
                                        makeInt32(module, 2449),
                                        callOperands4b,
                                        4,
@@ -704,6 +707,7 @@ void test_core() {
     BinaryenReturnCall(
       module, "kitchen()sinker", callOperands4, 4, BinaryenTypeInt32()),
     BinaryenReturnCallIndirect(module,
+                               "tab",
                                makeInt32(module, 2449),
                                callOperands4b,
                                4,
@@ -840,6 +844,7 @@ void test_core() {
 void test_unreachable() {
   BinaryenModuleRef module = BinaryenModuleCreate();
   BinaryenExpressionRef body = BinaryenCallIndirect(module,
+                                                    "invalid-table",
                                                     BinaryenUnreachable(module),
                                                     NULL,
                                                     0,

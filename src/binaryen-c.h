@@ -608,6 +608,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenCall(BinaryenModuleRef module,
                                                 BinaryenType returnType);
 BINARYEN_API BinaryenExpressionRef
 BinaryenCallIndirect(BinaryenModuleRef module,
+                     const char* table,
                      BinaryenExpressionRef target,
                      BinaryenExpressionRef* operands,
                      BinaryenIndex numOperands,
@@ -621,6 +622,7 @@ BinaryenReturnCall(BinaryenModuleRef module,
                    BinaryenType returnType);
 BINARYEN_API BinaryenExpressionRef
 BinaryenReturnCallIndirect(BinaryenModuleRef module,
+                           const char* table,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
                            BinaryenIndex numOperands,
@@ -1041,6 +1043,12 @@ BinaryenCallIndirectGetTarget(BinaryenExpressionRef expr);
 BINARYEN_API void
 BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
                               BinaryenExpressionRef targetExpr);
+// Gets the table name of a `call_indirect` expression.
+BINARYEN_API const char*
+BinaryenCallIndirectGetTable(BinaryenExpressionRef expr);
+// Sets the table name of a `call_indirect` expression.
+BINARYEN_API void BinaryenCallIndirectSetTable(BinaryenExpressionRef expr,
+                                               const char* table);
 // Gets the number of operands of a `call_indirect` expression.
 BINARYEN_API BinaryenIndex
 BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr);
@@ -2039,6 +2047,25 @@ BINARYEN_API BinaryenIndex BinaryenGetFunctionTableSegmentLength(
 BINARYEN_API const char* BinaryenGetFunctionTableSegmentData(
   BinaryenModuleRef module, BinaryenIndex segmentId, BinaryenIndex dataId);
 
+// Tables
+
+BINARYEN_REF(Table);
+
+BINARYEN_API BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
+                                               const char* table,
+                                               BinaryenIndex initial,
+                                               BinaryenIndex maximum,
+                                               const char** funcNames,
+                                               BinaryenIndex numFuncNames,
+                                               BinaryenExpressionRef offset);
+BINARYEN_API void BinaryenRemoveTable(BinaryenModuleRef module,
+                                      const char* table);
+BINARYEN_API BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module);
+BINARYEN_API BinaryenTableRef BinaryenGetTable(BinaryenModuleRef module,
+                                               const char* name);
+BINARYEN_API BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
+                                                      BinaryenIndex index);
+
 // Memory. One per module
 
 // Each segment has data in segments, a start offset in segmentOffsets, and a
@@ -2330,6 +2357,15 @@ BINARYEN_API void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
                                                    BinaryenIndex columnNumber);
 
 //
+// ========== Table Operations ==========
+//
+
+BINARYEN_API const char* BinaryenTableGetName(BinaryenTableRef table);
+BINARYEN_API int BinaryenTableGetInitial(BinaryenTableRef table);
+BINARYEN_API int BinaryenTableHasMax(BinaryenTableRef table);
+BINARYEN_API int BinaryenTableGetMax(BinaryenTableRef table);
+
+//
 // ========== Global Operations ==========
 //
 
@@ -2364,12 +2400,14 @@ BINARYEN_API BinaryenType BinaryenEventGetResults(BinaryenEventRef event);
 // Gets the external module name of the specified import.
 BINARYEN_API const char*
 BinaryenFunctionImportGetModule(BinaryenFunctionRef import);
+BINARYEN_API const char* BinaryenTableImportGetModule(BinaryenTableRef import);
 BINARYEN_API const char*
 BinaryenGlobalImportGetModule(BinaryenGlobalRef import);
 BINARYEN_API const char* BinaryenEventImportGetModule(BinaryenEventRef import);
 // Gets the external base name of the specified import.
 BINARYEN_API const char*
 BinaryenFunctionImportGetBase(BinaryenFunctionRef import);
+BINARYEN_API const char* BinaryenTableImportGetBase(BinaryenTableRef import);
 BINARYEN_API const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import);
 BINARYEN_API const char* BinaryenEventImportGetBase(BinaryenEventRef import);
 

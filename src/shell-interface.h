@@ -85,14 +85,19 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   } memory;
 
-  std::vector<Name> table;
+  std::unordered_map<Name, std::vector<Name>> tables;
 
   ShellExternalInterface() : memory() {}
   virtual ~ShellExternalInterface() = default;
 
   void init(Module& wasm, ModuleInstance& instance) override {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
-    table.resize(wasm.table.initial);
+
+    if (wasm.tables.size() > 0) {
+      for (auto& table : wasm.tables) {
+        tables[table->name].resize(table->initial);
+      }
+    }
   }
 
   void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
@@ -154,11 +159,20 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             << import->name.str;
   }
 
-  Literals callTable(Index index,
+  Literals callTable(Name tableName,
+                     Index index,
                      Signature sig,
                      LiteralList& arguments,
                      Type results,
                      ModuleInstance& instance) override {
+
+    auto it = tables.find(tableName);
+    if (it == tables.end()) {
+      trap("callTable on non-existing table");
+    }
+
+    auto& table = it->second;
+
     if (index >= table.size()) {
       trap("callTable overflow");
     }
@@ -216,7 +230,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
 
-  void tableStore(Address addr, Name entry) override { table[addr] = entry; }
+  void tableStore(Name tableName, Address addr, Name entry) override {
+    tables[tableName][addr] = entry;
+  }
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {
     // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the

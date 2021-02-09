@@ -80,10 +80,11 @@ void BinaryInstWriter::visitCall(Call* curr) {
 }
 
 void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
+  Index tableIdx = parent.getTableIndex(curr->table);
+
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getTypeIndex(curr->sig))
-    << U32LEB(0); // Reserved flags field
+  o << op << U32LEB(parent.getTypeIndex(curr->sig)) << U32LEB(tableIdx);
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {

@@ -6,6 +6,7 @@ total
  [imports]      : 5       
  [memory-data]  : 22      
  [table-data]   : 1       
+ [tables]       : 1       
  [total]        : 850     
  [vars]         : 29      
  AtomicFence    : 1       

@@ -2069,7 +2069,8 @@ public:
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
-    virtual Literals callTable(Index index,
+    virtual Literals callTable(Name tableName,
+                               Index index,
                                Signature sig,
                                LiteralList& arguments,
                                Type result,
@@ -2220,7 +2221,7 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void tableStore(Address addr, Name entry) {
+    virtual void tableStore(Name tableName, Address addr, Name entry) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2307,17 +2308,20 @@ private:
   std::unordered_set<size_t> droppedSegments;
 
   void initializeTableContents() {
-    for (auto& segment : wasm.table.segments) {
-      Address offset =
-        (uint32_t)InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
-          .visit(segment.offset)
-          .getSingleValue()
-          .geti32();
-      if (offset + segment.data.size() > wasm.table.initial) {
-        externalInterface->trap("invalid offset when initializing table");
-      }
-      for (size_t i = 0; i != segment.data.size(); ++i) {
-        externalInterface->tableStore(offset + i, segment.data[i]);
+    for (auto& table : wasm.tables) {
+      for (auto& segment : table->segments) {
+        Address offset = (uint32_t)InitializerExpressionRunner<GlobalManager>(
+                           globals, maxDepth)
+                           .visit(segment.offset)
+                           .getSingleValue()
+                           .geti32();
+        if (offset + segment.data.size() > table->initial) {
+          externalInterface->trap("invalid offset when initializing table");
+        }
+        for (size_t i = 0; i != segment.data.size(); ++i) {
+          externalInterface->tableStore(
+            table->name, offset + i, segment.data[i]);
+        }
       }
     }
   }
@@ -2443,7 +2447,7 @@ private:
       Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->sig.results : curr->type;
       Flow ret = instance.externalInterface->callTable(
-        index, curr->sig, arguments, type, *instance.self());
+        curr->table, index, curr->sig, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
         ret.breakTo = RETURN_FLOW;

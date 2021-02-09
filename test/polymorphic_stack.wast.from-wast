@@ -36,7 +36,7 @@
   )
   (drop
    (i64.eqz
-    (call_indirect (type $i32_=>_i32)
+    (call_indirect $timport$0 (type $i32_=>_i32)
      (unreachable)
      (unreachable)
     )

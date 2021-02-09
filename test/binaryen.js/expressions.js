@@ -295,6 +295,7 @@ console.log("# CallIndirect");
 (function testCallIndirect() {
   const module = new binaryen.Module();
 
+  var table = "0";
   var target = module.i32.const(42);
   var params = binaryen.none;
   var results = binaryen.none;
@@ -302,9 +303,10 @@ console.log("# CallIndirect");
     module.i32.const(1),
     module.i32.const(2)
   ];
-  const theCallIndirect = binaryen.CallIndirect(module.call_indirect(target, operands, params, results));
+  const theCallIndirect = binaryen.CallIndirect(module.call_indirect(table, target, operands, params, results));
   assert(theCallIndirect instanceof binaryen.CallIndirect);
   assert(theCallIndirect instanceof binaryen.Expression);
+  assert(theCallIndirect.table === table);
   assert(theCallIndirect.target === target);
   assertDeepEqual(theCallIndirect.operands, operands);
   assert(theCallIndirect.params === params);
@@ -346,7 +348,7 @@ console.log("# CallIndirect");
   assert(
     theCallIndirect.toText()
     ==
-    "(call_indirect (type $i32_i32_=>_i32)\n (i32.const 7)\n (i32.const 6)\n (i32.const 9000)\n)\n"
+    "(call_indirect $0 (type $i32_i32_=>_i32)\n (i32.const 7)\n (i32.const 6)\n (i32.const 9000)\n)\n"
   );
 
   module.dispose();

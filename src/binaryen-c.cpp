@@ -805,6 +805,7 @@ BinaryenExpressionRef BinaryenReturnCall(BinaryenModuleRef module,
 }
 static BinaryenExpressionRef
 makeBinaryenCallIndirect(BinaryenModuleRef module,
+                         const char* table,
                          BinaryenExpressionRef target,
                          BinaryenExpressionRef* operands,
                          BinaryenIndex numOperands,
@@ -812,6 +813,7 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
                          BinaryenType results,
                          bool isReturn) {
   auto* ret = ((Module*)module)->allocator.alloc<CallIndirect>();
+  ret->table = table;
   ret->target = (Expression*)target;
   for (BinaryenIndex i = 0; i < numOperands; i++) {
     ret->operands.push_back((Expression*)operands[i]);
@@ -823,23 +825,25 @@ makeBinaryenCallIndirect(BinaryenModuleRef module,
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenCallIndirect(BinaryenModuleRef module,
+                                           const char* table,
                                            BinaryenExpressionRef target,
                                            BinaryenExpressionRef* operands,
                                            BinaryenIndex numOperands,
                                            BinaryenType params,
                                            BinaryenType results) {
   return makeBinaryenCallIndirect(
-    module, target, operands, numOperands, params, results, false);
+    module, table, target, operands, numOperands, params, results, false);
 }
 BinaryenExpressionRef
 BinaryenReturnCallIndirect(BinaryenModuleRef module,
+                           const char* table,
                            BinaryenExpressionRef target,
                            BinaryenExpressionRef* operands,
                            BinaryenIndex numOperands,
                            BinaryenType params,
                            BinaryenType results) {
   return makeBinaryenCallIndirect(
-    module, target, operands, numOperands, params, results, true);
+    module, table, target, operands, numOperands, params, results, true);
 }
 BinaryenExpressionRef BinaryenLocalGet(BinaryenModuleRef module,
                                        BinaryenIndex index,
@@ -1609,6 +1613,19 @@ void BinaryenCallIndirectSetTarget(BinaryenExpressionRef expr,
   assert(expression->is<CallIndirect>());
   assert(targetExpr);
   static_cast<CallIndirect*>(expression)->target = (Expression*)targetExpr;
+}
+const char* BinaryenCallIndirectGetTable(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<CallIndirect>());
+  return static_cast<CallIndirect*>(expression)->table.c_str();
+}
+void BinaryenCallIndirectSetTable(BinaryenExpressionRef expr,
+                                  const char* table) {
+  Name name(table);
+  auto* expression = (Expression*)expr;
+
+  assert(expression->is<CallIndirect>());
+  static_cast<CallIndirect*>(expression)->table = name;
 }
 BinaryenIndex BinaryenCallIndirectGetNumOperands(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -3154,9 +3171,11 @@ void BinaryenAddTableImport(BinaryenModuleRef module,
                             const char* internalName,
                             const char* externalModuleName,
                             const char* externalBaseName) {
-  auto& table = ((Module*)module)->table;
-  table.module = externalModuleName;
-  table.base = externalBaseName;
+  auto table = std::make_unique<Table>();
+  table->name = internalName;
+  table->module = externalModuleName;
+  table->base = externalBaseName;
+  ((Module*)module)->addTable(std::move(table));
 }
 void BinaryenAddMemoryImport(BinaryenModuleRef module,
                              const char* internalName,
@@ -3273,35 +3292,88 @@ BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
   return exports[index].get();
 }
 
-// Function table. One per module
-
+// TODO(reference-types): maybe deprecate this function?
 void BinaryenSetFunctionTable(BinaryenModuleRef module,
                               BinaryenIndex initial,
                               BinaryenIndex maximum,
                               const char** funcNames,
                               BinaryenIndex numFuncNames,
                               BinaryenExpressionRef offset) {
+  auto* wasm = (Module*)module;
+  if (wasm->tables.empty()) {
+    wasm->addTable(Builder::makeTable(Name::fromInt(0)));
+  }
+
+  auto& table = wasm->tables.front();
+  table->initial = initial;
+  table->max = maximum;
+
   Table::Segment segment((Expression*)offset);
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
     segment.data.push_back(funcNames[i]);
   }
-  auto& table = ((Module*)module)->table;
-  table.initial = initial;
-  table.max = maximum;
-  table.exists = true;
-  table.segments.push_back(segment);
+  table->segments.push_back(segment);
+}
+
+BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
+                                  const char* name,
+                                  BinaryenIndex initial,
+                                  BinaryenIndex maximum,
+                                  const char** funcNames,
+                                  BinaryenIndex numFuncNames,
+                                  BinaryenExpressionRef offset) {
+  auto table = Builder::makeTable(name, initial, maximum);
+  table->hasExplicitName = true;
+
+  Table::Segment segment((Expression*)offset);
+  for (BinaryenIndex i = 0; i < numFuncNames; i++) {
+    segment.data.push_back(funcNames[i]);
+  }
+  table->segments.push_back(segment);
+  ((Module*)module)->addTable(std::move(table));
+
+  return ((Module*)module)->getTable(name);
+}
+void BinaryenRemoveTable(BinaryenModuleRef module, const char* table) {
+  ((Module*)module)->removeTable(table);
+}
+BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module) {
+  return ((Module*)module)->tables.size();
+}
+BinaryenTableRef BinaryenGetTable(BinaryenModuleRef module, const char* name) {
+  return ((Module*)module)->getTableOrNull(name);
+}
+BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
+                                         BinaryenIndex index) {
+  const auto& tables = ((Module*)module)->tables;
+  if (tables.size() <= index) {
+    Fatal() << "invalid table index.";
+  }
+  return tables[index].get();
 }
 
 int BinaryenIsFunctionTableImported(BinaryenModuleRef module) {
-  return ((Module*)module)->table.imported();
+  if (((Module*)module)->tables.size() > 0) {
+    return ((Module*)module)->tables[0]->imported();
+  }
+
+  return false;
 }
 BinaryenIndex BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module) {
-  return ((Module*)module)->table.segments.size();
+  if (((Module*)module)->tables.size() > 0) {
+    return ((Module*)module)->tables[0]->segments.size();
+  }
+
+  return 0;
 }
 BinaryenExpressionRef
 BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
                                       BinaryenIndex segmentId) {
-  const auto& segments = ((Module*)module)->table.segments;
+  if (((Module*)module)->tables.empty()) {
+    Fatal() << "module has no tables.";
+  }
+
+  const auto& segments = ((Module*)module)->tables[0]->segments;
   if (segments.size() <= segmentId) {
     Fatal() << "invalid function table segment id.";
   }
@@ -3309,7 +3381,11 @@ BinaryenGetFunctionTableSegmentOffset(BinaryenModuleRef module,
 }
 BinaryenIndex BinaryenGetFunctionTableSegmentLength(BinaryenModuleRef module,
                                                     BinaryenIndex segmentId) {
-  const auto& segments = ((Module*)module)->table.segments;
+  if (((Module*)module)->tables.empty()) {
+    Fatal() << "module has no tables.";
+  }
+
+  const auto& segments = ((Module*)module)->tables[0]->segments;
   if (segments.size() <= segmentId) {
     Fatal() << "invalid function table segment id.";
   }
@@ -3318,7 +3394,11 @@ BinaryenIndex BinaryenGetFunctionTableSegmentLength(BinaryenModuleRef module,
 const char* BinaryenGetFunctionTableSegmentData(BinaryenModuleRef module,
                                                 BinaryenIndex segmentId,
                                                 BinaryenIndex dataId) {
-  const auto& segments = ((Module*)module)->table.segments;
+  if (((Module*)module)->tables.empty()) {
+    Fatal() << "module has no tables.";
+  }
+
+  const auto& segments = ((Module*)module)->tables[0]->segments;
   if (segments.size() <= segmentId ||
       segments[segmentId].data.size() <= dataId) {
     Fatal() << "invalid function table segment or data id.";
@@ -3789,6 +3869,21 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
 }
 
 //
+// =========== Table operations ===========
+//
+
+const char* BinaryenTableGetName(BinaryenTableRef table) {
+  return ((Table*)table)->name.c_str();
+}
+int BinaryenTableGetInitial(BinaryenTableRef table) {
+  return ((Table*)table)->initial;
+}
+int BinaryenTableHasMax(BinaryenTableRef table) {
+  return ((Table*)table)->hasMax();
+}
+int BinaryenTableGetMax(BinaryenTableRef table) { return ((Table*)table)->max; }
+
+//
 // =========== Global operations ===========
 //
 
@@ -3835,6 +3930,14 @@ const char* BinaryenFunctionImportGetModule(BinaryenFunctionRef import) {
     return "";
   }
 }
+const char* BinaryenTableImportGetModule(BinaryenTableRef import) {
+  auto* table = (Table*)import;
+  if (table->imported()) {
+    return table->module.c_str();
+  } else {
+    return "";
+  }
+}
 const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
   auto* global = (Global*)import;
   if (global->imported()) {
@@ -3855,6 +3958,14 @@ const char* BinaryenFunctionImportGetBase(BinaryenFunctionRef import) {
   auto* func = (Function*)import;
   if (func->imported()) {
     return func->base.c_str();
+  } else {
+    return "";
+  }
+}
+const char* BinaryenTableImportGetBase(BinaryenTableRef import) {
+  auto* table = (Table*)import;
+  if (table->imported()) {
+    return table->base.c_str();
   } else {
     return "";
   }

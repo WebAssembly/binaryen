@@ -213,17 +213,19 @@ struct MetaDCEGraph {
     // we can't remove segments, so root what they need
     InitScanner rooter(this, Name());
     rooter.setModule(&wasm);
-    for (auto& segment : wasm.table.segments) {
-      // TODO: currently, all functions in the table are roots, but we
-      //       should add an option to refine that
-      for (auto& name : segment.data) {
-        if (!wasm.getFunction(name)->imported()) {
-          roots.insert(functionToDCENode[name]);
-        } else {
-          roots.insert(importIdToDCENode[getFunctionImportId(name)]);
+    for (auto& table : wasm.tables) {
+      for (auto& segment : table->segments) {
+        // TODO: currently, all functions in the table are roots, but we
+        //       should add an option to refine that
+        for (auto& name : segment.data) {
+          if (!wasm.getFunction(name)->imported()) {
+            roots.insert(functionToDCENode[name]);
+          } else {
+            roots.insert(importIdToDCENode[getFunctionImportId(name)]);
+          }
         }
+        rooter.walk(segment.offset);
       }
-      rooter.walk(segment.offset);
     }
     for (auto& segment : wasm.memory.segments) {
       if (!segment.isPassive) {

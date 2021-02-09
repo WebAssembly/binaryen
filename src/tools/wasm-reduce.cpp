@@ -898,8 +898,14 @@ struct Reducer
     }
     // If we are left with a single function that is not exported or used in
     // a table, that is useful as then we can change the return type.
+    bool allTablesEmpty = std::all_of(
+      module->tables.begin(), module->tables.end(), [&](auto& table) {
+        return std::all_of(table->segments.begin(),
+                           table->segments.end(),
+                           [&](auto& segment) { return segment.data.empty(); });
+      });
     if (module->functions.size() == 1 && module->exports.empty() &&
-        module->table.segments.empty()) {
+        allTablesEmpty) {
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {

@@ -29,7 +29,7 @@
 
 namespace wasm {
 
-enum class ModuleElementKind { Function, Global, Event };
+enum class ModuleElementKind { Function, Global, Event, Table };
 
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
@@ -41,7 +41,6 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   std::vector<ModuleElement> queue;
   std::set<ModuleElement> reachable;
   bool usesMemory = false;
-  bool usesTable = false;
 
   ReachabilityAnalyzer(Module* module, const std::vector<ModuleElement>& roots)
     : module(module) {
@@ -52,9 +51,12 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
         walk(segment.offset);
       }
     }
-    for (auto& segment : module->table.segments) {
-      walk(segment.offset);
+    for (auto& table : module->tables) {
+      for (auto& segment : table->segments) {
+        walk(segment.offset);
+      }
     }
+
     // main loop
     while (queue.size()) {
       auto& curr = queue.back();
@@ -73,6 +75,11 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
           if (!global->imported()) {
             walk(global->init);
           }
+        } else if (curr.first == ModuleElementKind::Table) {
+          auto* table = module->getTable(curr.second);
+          for (auto& segment : table->segments) {
+            walk(segment.offset);
+          }
         }
       }
     }
@@ -84,7 +91,14 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
       queue.emplace_back(ModuleElementKind::Function, curr->target);
     }
   }
-  void visitCallIndirect(CallIndirect* curr) { usesTable = true; }
+  void visitCallIndirect(CallIndirect* curr) {
+    assert(!module->tables.empty() && "call-indirect to undefined table.");
+
+    if (reachable.count(ModuleElement(ModuleElementKind::Table, curr->table)) ==
+        0) {
+      queue.emplace_back(ModuleElementKind::Table, curr->table);
+    }
+  }
 
   void visitGlobalGet(GlobalGet* curr) {
     if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) ==
@@ -152,7 +166,6 @@ struct RemoveUnusedModuleElements : public Pass {
     }
     // Exports are roots.
     bool exportsMemory = false;
-    bool exportsTable = false;
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         roots.emplace_back(ModuleElementKind::Function, curr->value);
@@ -160,25 +173,24 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Global, curr->value);
       } else if (curr->kind == ExternalKind::Event) {
         roots.emplace_back(ModuleElementKind::Event, curr->value);
+      } else if (curr->kind == ExternalKind::Table) {
+        roots.emplace_back(ModuleElementKind::Table, curr->value);
       } else if (curr->kind == ExternalKind::Memory) {
         exportsMemory = true;
-      } else if (curr->kind == ExternalKind::Table) {
-        exportsTable = true;
       }
     }
     // Check for special imports, which are roots.
     bool importsMemory = false;
-    bool importsTable = false;
     if (module->memory.imported()) {
       importsMemory = true;
     }
-    if (module->table.imported()) {
-      importsTable = true;
-    }
     // For now, all functions that can be called indirectly are marked as roots.
-    for (auto& segment : module->table.segments) {
-      for (auto& curr : segment.data) {
-        roots.emplace_back(ModuleElementKind::Function, curr);
+    for (auto& table : module->tables) {
+      // TODO(reference-types): Check whether table's datatype is funcref.
+      for (auto& segment : table->segments) {
+        for (auto& curr : segment.data) {
+          roots.emplace_back(ModuleElementKind::Function, curr);
+        }
       }
     }
     // Compute reachability starting from the root set.
@@ -196,6 +208,19 @@ struct RemoveUnusedModuleElements : public Pass {
       return analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Event, curr->name)) == 0;
     });
+
+    for (auto& table : module->tables) {
+      table->segments.erase(
+        std::remove_if(table->segments.begin(),
+                       table->segments.end(),
+                       [&](auto& seg) { return seg.data.empty(); }),
+        table->segments.end());
+    }
+    module->removeTables([&](Table* curr) {
+      return (curr->segments.empty() || !curr->imported()) &&
+             analyzer.reachable.count(
+               ModuleElement(ModuleElementKind::Table, curr->name)) == 0;
+    });
     // Handle the memory and table
     if (!exportsMemory && !analyzer.usesMemory) {
       if (!importsMemory) {
@@ -208,18 +233,6 @@ struct RemoveUnusedModuleElements : public Pass {
         module->memory.module = module->memory.base = Name();
         module->memory.initial = 0;
         module->memory.max = 0;
-      }
-    }
-    if (!exportsTable && !analyzer.usesTable) {
-      if (!importsTable) {
-        // The table is unobservable to the outside, we can remove the contents.
-        module->table.segments.clear();
-      }
-      if (module->table.segments.empty()) {
-        module->table.exists = false;
-        module->table.module = module->table.base = Name();
-        module->table.initial = 0;
-        module->table.max = 0;
       }
     }
   }

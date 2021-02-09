@@ -6,6 +6,7 @@ total
  [imports]      : 0       
  [memory-data]  : 9       
  [table-data]   : 3       
+ [tables]       : 1       
  [total]        : 27      
  [vars]         : 1       
  Binary         : 1       
@@ -69,6 +70,7 @@ total
  [funcs]        : 0       
  [globals]      : 0       
  [imports]      : 0       
+ [tables]       : 0       
  [total]        : 0       
  [vars]         : 0       
 (module

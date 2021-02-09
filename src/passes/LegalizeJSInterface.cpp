@@ -24,10 +24,10 @@
 //
 // We can also legalize in a "minimal" way, that is, only JS-specific
 // components, that only JS will care about, such as dynCall methods
-// (wasm will never call them, as it can share the table directly). E.g.
+// (wasm will never call them, as it can share the tables directly). E.g.
 // is dynamic linking, where we can avoid legalizing wasm=>wasm calls
 // across modules, we still want to legalize dynCalls so JS can call into the
-// table even to a signature that is not legal.
+// tables even to a signature that is not legal.
 //
 
 #include "asmjs/shared-constants.h"
@@ -94,13 +94,15 @@ struct LegalizeJSInterface : public Pass {
       if (im->imported() && isIllegal(im) && shouldBeLegalized(im)) {
         auto funcName = makeLegalStubForCalledImport(im, module);
         illegalImportsToLegal[im->name] = funcName;
-        // we need to use the legalized version in the table, as the import from
-        // JS is legal for JS. Our stub makes it look like a native wasm
+        // we need to use the legalized version in the tables, as the import
+        // from JS is legal for JS. Our stub makes it look like a native wasm
         // function.
-        for (auto& segment : module->table.segments) {
-          for (auto& name : segment.data) {
-            if (name == im->name) {
-              name = funcName;
+        for (auto& table : module->tables) {
+          for (auto& segment : table->segments) {
+            for (auto& name : segment.data) {
+              if (name == im->name) {
+                name = funcName;
+              }
             }
           }
         }

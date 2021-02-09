@@ -225,6 +225,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::CallIndirectId: {
     DELEGATE_START(CallIndirect);
     DELEGATE_FIELD_CHILD(CallIndirect, target);
+    DELEGATE_FIELD_NAME(CallIndirect, table);
     DELEGATE_FIELD_CHILD_VECTOR(CallIndirect, operands);
     DELEGATE_FIELD_SIGNATURE(CallIndirect, sig);
     DELEGATE_FIELD_INT(CallIndirect, isReturn);

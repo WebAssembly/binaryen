@@ -517,7 +517,7 @@ function test_core() {
       )
     ),
     module.i32.eqz( // check the output type of the call node
-      module.call_indirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32)
+      module.call_indirect("0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32)
     ),
     module.drop(module.local.get(0, binaryen.i32)),
     module.local.set(0, makeInt32(101)),
@@ -532,7 +532,7 @@ function test_core() {
     module.return(makeInt32(1337)),
     // Tail Call
     module.return_call("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], binaryen.i32),
-    module.return_call_indirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
+    module.return_call_indirect("0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
 
     // Reference types
     module.ref.is_null(module.ref.null(binaryen.externref)),
@@ -661,9 +661,25 @@ function test_core() {
   module.addGlobalExport("a-global", "a-global-exp");
   module.addEventExport("a-event", "a-event-exp");
 
-  // Function table. One per module
+  // Tables
+  module.addTable("t1", 0, 2, []);
+  var tablePtr = module.getTable("t1");
+  assert(tablePtr !== 0);
+  assert(tablePtr === module.getTableByIndex(0));
 
+  var table = binaryen.getTableInfo(tablePtr);
+  assert(table.name === "t1");
+  assert(table.module === "");
+  assert(table.base === "");
+  assert(table.initial === 0);
+  assert(table.max === 2);
+
+  module.removeTable("t1");
+  assert(module.getNumTables() === 0);
+
+  // Legacy
   module.setFunctionTable(1, 0xffffffff, [ binaryen.getFunctionInfo(sinker).name ]);
+  assert(module.getNumTables() === 1);
 
   // Memory. One per module
 

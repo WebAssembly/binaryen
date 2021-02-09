@@ -303,10 +303,18 @@ struct PrintExpressionContents
   }
   void visitCallIndirect(CallIndirect* curr) {
     if (curr->isReturn) {
-      printMedium(o, "return_call_indirect (type ");
+      printMedium(o, "return_call_indirect ");
     } else {
-      printMedium(o, "call_indirect (type ");
+      printMedium(o, "call_indirect ");
     }
+
+    if (features.hasReferenceTypes()) {
+      printName(curr->table, o);
+      o << ' ';
+    }
+
+    o << '(';
+    printMinor(o, "type ");
     printHeapTypeName(o, curr->sig);
     o << ')';
   }
@@ -1936,8 +1944,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   const char* maybeSpace;
   const char* maybeNewLine;
 
-  bool full = false; // whether to not elide nodes in output when possible
-                     // (like implicit blocks) and to emit types
+  bool full = false;    // whether to not elide nodes in output when possible
+                        // (like implicit blocks) and to emit types
   bool stackIR = false; // whether to print stack IR if it is present
                         // (if false, and Stack IR is there, we just
                         // note it exists)
@@ -2962,14 +2970,11 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << " funcref)";
   }
   void visitTable(Table* curr) {
-    if (!curr->exists) {
-      return;
-    }
     if (curr->imported()) {
       doIndent(o, indent);
       o << '(';
       emitImportHeader(curr);
-      printTableHeader(&currModule->table);
+      printTableHeader(curr);
       o << ')' << maybeNewLine;
     } else {
       doIndent(o, indent);
@@ -2983,8 +2988,23 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
       doIndent(o, indent);
       o << '(';
-      printMajor(o, "elem ");
+      printMedium(o, "elem ");
+
+      // TODO(reference-types): check for old-style based on the complete spec
+      if (currModule->tables.size() > 1) {
+        // tableuse
+        o << '(';
+        printMedium(o, "table ");
+        printName(curr->name, o);
+        o << ") ";
+      }
+
       visit(segment.offset);
+
+      if (currModule->tables.size() > 1) {
+        o << " func";
+      }
+
       for (auto name : segment.data) {
         o << ' ';
         printName(name, o);
@@ -3334,6 +3354,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         if (inst->origin->is<Pop>()) {
           break;
         }
+
         PrintExpressionContents(func, o).visit(inst->origin);
         break;
       }

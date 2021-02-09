@@ -4,6 +4,7 @@ total
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 0       
+ [tables]       : 0       
  [total]        : 4       
  [vars]         : 65536   
  Block          : 1       
@@ -16,6 +17,7 @@ total
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 0       
+ [tables]       : 0       
  [total]        : 4       
  [vars]         : 65536   
  Block          : 1       

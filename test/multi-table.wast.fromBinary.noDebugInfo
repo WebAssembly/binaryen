@@ -1,0 +1,15 @@
+(module
+ (type $none_=>_none (func))
+ (import "a" "b" (table $timport$0 1 10 funcref))
+ (elem (table $timport$0) (i32.const 0) func $0)
+ (table $0 3 3 funcref)
+ (elem (table $0) (i32.const 0) func $0)
+ (elem (table $0) (i32.const 1) func $0 $1)
+ (func $0
+  (nop)
+ )
+ (func $1
+  (nop)
+ )
+)
+

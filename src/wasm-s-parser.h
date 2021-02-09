@@ -123,6 +123,7 @@ class SExpressionWasmBuilder {
   std::unordered_map<std::string, size_t> typeIndices;
 
   std::vector<Name> functionNames;
+  std::vector<Name> tableNames;
   std::vector<Name> globalNames;
   std::vector<Name> eventNames;
   int functionCounter = 0;
@@ -153,6 +154,7 @@ private:
   UniqueNameMapper nameMapper;
 
   Name getFunctionName(Element& s);
+  Name getTableName(Element& s);
   Name getGlobalName(Element& s);
   Name getEventName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
@@ -297,7 +299,10 @@ private:
   void parseGlobal(Element& s, bool preParseImport = false);
   void parseTable(Element& s, bool preParseImport = false);
   void parseElem(Element& s);
-  void parseInnerElem(Element& s, Index i = 1, Expression* offset = nullptr);
+  void parseInnerElem(Table* table,
+                      Element& s,
+                      Index i = 1,
+                      Expression* offset = nullptr);
 
   // Parses something like (func ..), (array ..), (struct)
   HeapType parseHeapType(Element& s);

@@ -70,6 +70,29 @@ inline Event* copyEvent(Event* event, Module& out) {
   return ret;
 }
 
+inline Table* copyTableWithoutSegments(Table* table, Module& out) {
+  auto ret = std::make_unique<Table>();
+  ret->name = table->name;
+  ret->module = table->module;
+  ret->base = table->base;
+
+  ret->initial = table->initial;
+  ret->max = table->max;
+
+  return out.addTable(std::move(ret));
+}
+
+inline Table* copyTable(Table* table, Module& out) {
+  auto ret = copyTableWithoutSegments(table, out);
+
+  for (auto segment : table->segments) {
+    segment.offset = ExpressionManipulator::copy(segment.offset, out);
+    ret->segments.push_back(segment);
+  }
+
+  return ret;
+}
+
 inline void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
@@ -85,9 +108,8 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.events) {
     copyEvent(curr.get(), out);
   }
-  out.table = in.table;
-  for (auto& segment : out.table.segments) {
-    segment.offset = ExpressionManipulator::copy(segment.offset, out);
+  for (auto& curr : in.tables) {
+    copyTable(curr.get(), out);
   }
   out.memory = in.memory;
   for (auto& segment : out.memory.segments) {
@@ -126,9 +148,11 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
     }
   };
   maybeUpdate(wasm.start);
-  for (auto& segment : wasm.table.segments) {
-    for (auto& name : segment.data) {
-      maybeUpdate(name);
+  for (auto& table : wasm.tables) {
+    for (auto& segment : table->segments) {
+      for (auto& name : segment.data) {
+        maybeUpdate(name);
+      }
     }
   }
   for (auto& exp : wasm.exports) {
@@ -169,14 +193,18 @@ template<typename T> inline void iterDefinedMemories(Module& wasm, T visitor) {
 }
 
 template<typename T> inline void iterImportedTables(Module& wasm, T visitor) {
-  if (wasm.table.exists && wasm.table.imported()) {
-    visitor(&wasm.table);
+  for (auto& import : wasm.tables) {
+    if (import->imported()) {
+      visitor(import.get());
+    }
   }
 }
 
 template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
-  if (wasm.table.exists && !wasm.table.imported()) {
-    visitor(&wasm.table);
+  for (auto& import : wasm.tables) {
+    if (!import->imported()) {
+      visitor(import.get());
+    }
   }
 }
 

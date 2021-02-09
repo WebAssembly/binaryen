@@ -36,25 +36,31 @@ namespace {
 struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionDirectizer(flatTable); }
+  Pass* create() override { return new FunctionDirectizer(tables); }
 
-  FunctionDirectizer(TableUtils::FlatTable* flatTable) : flatTable(flatTable) {}
+  FunctionDirectizer(
+    const std::unordered_map<Name, TableUtils::FlatTable>& tables)
+    : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
-    if (!flatTable) {
+    auto it = tables.find(curr->table);
+    if (it == tables.end()) {
       return;
     }
+
+    auto& flatTable = it->second;
+
     if (auto* c = curr->target->dynCast<Const>()) {
       Index index = c->value.geti32();
       // If the index is invalid, or the type is wrong, we can
       // emit an unreachable here, since in Binaryen it is ok to
       // reorder/replace traps when optimizing (but never to
       // remove them, at least not by default).
-      if (index >= flatTable->names.size()) {
+      if (index >= flatTable.names.size()) {
         replaceWithUnreachable(curr);
         return;
       }
-      auto name = flatTable->names[index];
+      auto name = flatTable.names[index];
       if (!name.is()) {
         replaceWithUnreachable(curr);
         return;
@@ -88,8 +94,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  // If null, then we cannot optimize call_indirects.
-  TableUtils::FlatTable* flatTable;
+  const std::unordered_map<Name, TableUtils::FlatTable> tables;
 
   bool changedTypes = false;
 
@@ -106,31 +111,34 @@ private:
 
 struct Directize : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    bool canOptimizeCallIndirect = true;
-    TableUtils::FlatTable flatTable(module->table);
-    if (!module->table.exists) {
-      canOptimizeCallIndirect = false;
-    } else if (module->table.imported()) {
-      canOptimizeCallIndirect = false;
-    } else {
-      for (auto& ex : module->exports) {
-        if (ex->kind == ExternalKind::Table) {
-          canOptimizeCallIndirect = false;
+    std::unordered_map<Name, TableUtils::FlatTable> validTables;
+
+    for (auto& table : module->tables) {
+      if (!table->imported()) {
+        bool canOptimizeCallIndirect = true;
+
+        for (auto& ex : module->exports) {
+          if (ex->kind == ExternalKind::Table && ex->value == table->name) {
+            canOptimizeCallIndirect = false;
+          }
+        }
+
+        if (canOptimizeCallIndirect) {
+          TableUtils::FlatTable flatTable(*table);
+          if (flatTable.valid) {
+            validTables.emplace(table->name, flatTable);
+          }
         }
       }
-      if (!flatTable.valid) {
-        canOptimizeCallIndirect = false;
-      }
     }
+
     // Without typed function references, all we can do is optimize table
     // accesses, so if we can't do that, stop.
-    if (!canOptimizeCallIndirect &&
-        !module->features.hasTypedFunctionReferences()) {
+    if (validTables.empty() && !module->features.hasTypedFunctionReferences()) {
       return;
     }
     // The table exists and is constant, so this is possible.
-    FunctionDirectizer(canOptimizeCallIndirect ? &flatTable : nullptr)
-      .run(runner, module);
+    FunctionDirectizer(validTables).run(runner, module);
   }
 };
 

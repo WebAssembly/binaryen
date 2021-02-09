@@ -329,7 +329,27 @@ enum Section {
   Event = 13
 };
 
-enum SegmentFlag { IsPassive = 0x01, HasMemIndex = 0x02 };
+// A passive segment is a segment that will not be automatically copied into a
+//   memory or table on instantiation, and must instead be applied manually
+//   using the instructions memory.init or table.init.
+// An active segment is equivalent to a passive segment, but with an implicit
+//   memory.init followed by a data.drop (or table.init followed by a elem.drop)
+//   that is prepended to the module's start function.
+// A declarative element segment is not available at runtime but merely serves
+//   to forward-declare references that are formed in code with instructions
+//   like ref.func.
+enum SegmentFlag {
+  // Bit 0: 0 = active, 1 = passive
+  IsPassive = 1 << 0,
+  // Bit 1 if passive: 0 = passive, 1 = declarative
+  IsDeclarative = 1 << 1,
+  // Bit 1 if active: 0 = index 0, 1 = index given
+  HasIndex = 1 << 1,
+  // Table element segments only:
+  // Bit 2: 0 = elemType is funcref and vector of func indexes given
+  //        1 = elemType is given and vector of ref expressions is given
+  UsesExpressions = 1 << 2
+};
 
 enum EncodedType {
   // value_type
@@ -1079,6 +1099,7 @@ class WasmBinaryWriter {
     std::unordered_map<Name, Index> functionIndexes;
     std::unordered_map<Name, Index> eventIndexes;
     std::unordered_map<Name, Index> globalIndexes;
+    std::unordered_map<Name, Index> tableIndexes;
 
     BinaryIndexes(Module& wasm) {
       auto addIndexes = [&](auto& source, auto& indexes) {
@@ -1099,6 +1120,7 @@ class WasmBinaryWriter {
       };
       addIndexes(wasm.functions, functionIndexes);
       addIndexes(wasm.events, eventIndexes);
+      addIndexes(wasm.tables, tableIndexes);
 
       // Globals may have tuple types in the IR, in which case they lower to
       // multiple globals, one for each tuple element, in the binary. Tuple
@@ -1171,11 +1193,12 @@ public:
   void writeEvents();
 
   uint32_t getFunctionIndex(Name name) const;
+  uint32_t getTableIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getEventIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
 
-  void writeFunctionTableDeclaration();
+  void writeTableDeclarations();
   void writeTableElements();
   void writeNames();
   void writeSourceMapUrl();
@@ -1319,6 +1342,7 @@ public:
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
+  Name getTableName(Index index);
   Name getGlobalName(Index index);
   Name getEventName(Index index);
 
@@ -1354,6 +1378,14 @@ public:
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
+
+  // we store tables here before wasm.addTable after we know their names
+  std::vector<std::unique_ptr<Table>> tables;
+  // we store table imports here before wasm.addTableImport after we know
+  // their names
+  std::vector<Table*> tableImports;
+  // at index i we have all references to the table i
+  std::map<Index, std::vector<Expression*>> tableRefs;
 
   // we store globals here before wasm.addGlobal after we know their names
   std::vector<std::unique_ptr<Global>> globals;
@@ -1459,7 +1491,8 @@ public:
   void readDataSegments();
   void readDataCount();
 
-  std::map<Index, std::vector<Index>> functionTable;
+  // A map from table indexes to the map of segment indexes to their elements
+  std::map<Index, std::map<Index, std::vector<Index>>> functionTable;
 
   void readFunctionTableDeclaration();
   void readTableElements();

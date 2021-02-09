@@ -836,6 +836,7 @@ public:
   Signature sig;
   ExpressionList operands;
   Expression* target;
+  Name table;
   bool isReturn = false;
 
   void finalize();
@@ -1732,18 +1733,12 @@ public:
     }
   };
 
-  // Currently the wasm object always 'has' one Table. It 'exists' if it has
-  // been defined or imported. The table can exist but be empty and have no
-  // defined initial or max size.
-  bool exists = false;
   Address initial = 0;
   Address max = kMaxSize;
   std::vector<Segment> segments;
 
-  Table() { name = Name::fromInt(0); }
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {
-    exists = false;
     name = "";
     initial = 0;
     max = kMaxSize;
@@ -1850,7 +1845,8 @@ public:
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Event>> events;
 
-  Table table;
+  std::vector<std::unique_ptr<Table>> tables;
+
   Memory memory;
   Name start;
 
@@ -1880,6 +1876,7 @@ private:
   // exports map is by the *exported* name, which is unique
   std::unordered_map<Name, Export*> exportsMap;
   std::unordered_map<Name, Function*> functionsMap;
+  std::unordered_map<Name, Table*> tablesMap;
   std::unordered_map<Name, Global*> globalsMap;
   std::unordered_map<Name, Event*> eventsMap;
 
@@ -1888,10 +1885,12 @@ public:
 
   Export* getExport(Name name);
   Function* getFunction(Name name);
+  Table* getTable(Name name);
   Global* getGlobal(Name name);
   Event* getEvent(Name name);
 
   Export* getExportOrNull(Name name);
+  Table* getTableOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Event* getEventOrNull(Name name);
@@ -1903,6 +1902,7 @@ public:
 
   Export* addExport(std::unique_ptr<Export>&& curr);
   Function* addFunction(std::unique_ptr<Function>&& curr);
+  Table* addTable(std::unique_ptr<Table>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
   Event* addEvent(std::unique_ptr<Event>&& curr);
 
@@ -1910,11 +1910,13 @@ public:
 
   void removeExport(Name name);
   void removeFunction(Name name);
+  void removeTable(Name name);
   void removeGlobal(Name name);
   void removeEvent(Name name);
 
   void removeExports(std::function<bool(Export*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
+  void removeTables(std::function<bool(Table*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeEvents(std::function<bool(Event*)> pred);
 

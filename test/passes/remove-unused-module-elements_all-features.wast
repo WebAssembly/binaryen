@@ -73,9 +73,30 @@
   (import "env" "memory" (memory $0 256))
   (import "env" "table" (table 0 funcref))
 )
+(module ;; remove all tables and the memory
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 funcref))
+  (import "env" "table2" (table $1 1 2 funcref))
+  (elem (table $1) (offset (i32.const 0)) func)
+  (elem (table $1) (offset (i32.const 1)) func)
+)
+(module ;; remove the first table and memory, but not the second one
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 funcref))
+  (import "env" "table2" (table $1 1 1 funcref))
+  (elem (table $1) (offset (i32.const 0)) func)
+  (elem (table $1) (offset (i32.const 0)) func $f)
+  (func $f)
+)
 (module ;; also when not imported
   (memory 256)
   (table 1 funcref)
+)
+(module ;; also with multiple tables
+  (memory 256)
+  (table $0 1 funcref)
+  (table $1 1 funcref)
+  (elem (table $1) (i32.const 0) func)
 )
 (module ;; but not when exported
   (import "env" "memory" (memory $0 256))

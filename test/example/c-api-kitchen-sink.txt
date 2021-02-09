@@ -38,7 +38,7 @@ BinaryenFeatureAll: 8191
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
  (data passive "I am passive")
- (table $0 1 1 funcref)
+ (table $tab 1 1 funcref)
  (elem (i32.const 0) "$kitchen()sinker")
  (global $a-global i32 (i32.const 7))
  (global $a-mutable-global (mut f32) (f32.const 7.5))
@@ -1666,7 +1666,7 @@ BinaryenFeatureAll: 8191
       )
       (drop
        (i32.eqz
-        (call_indirect (type $i32_i64_f32_f64_=>_i32)
+        (call_indirect $tab (type $i32_i64_f32_f64_=>_i32)
          (i32.const 13)
          (i64.const 37)
          (f32.const 1.2999999523162842)
@@ -1730,7 +1730,7 @@ BinaryenFeatureAll: 8191
        (f32.const 1.2999999523162842)
        (f64.const 3.7)
       )
-      (return_call_indirect (type $i32_i64_f32_f64_=>_i32)
+      (return_call_indirect $tab (type $i32_i64_f32_f64_=>_i32)
        (i32.const 13)
        (i64.const 37)
        (f32.const 1.2999999523162842)

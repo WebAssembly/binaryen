@@ -6,7 +6,7 @@
   (return_call $1)
  )
  (func $1
-  (return_call_indirect (type $none_=>_none)
+  (return_call_indirect $0 (type $none_=>_none)
    (i32.const 0)
   )
  )

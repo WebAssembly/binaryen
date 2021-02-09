@@ -16,6 +16,32 @@ Current Trunk
 -------------
 
 - `wasm-dis` now supports options to enable or disable Wasm features.
+- Reference types support has been improved by allowing multiple tables in a
+  module.
+- `call_indirect` and `return_call_indirect` now take an additional table name
+  parameter. This is necessary for reference types support.
+- New getter/setter methods have been introduced for `call_indirect` table name:
+  - `BinaryenCallIndirectGetTable`
+  - `BinaryenCallIndirectSetTable`
+  - JS API `CallIndirect.table`
+- New APIs have been added to add and manipulate multiple tables in a module:
+  - `BinaryenAddTable`
+  - `BinaryenRemoveTable`
+  - `BinaryenGetNumTables`
+  - `BinaryenGetTable`
+  - `BinaryenGetTableByIndex`
+  - `BinaryenTableGetName`
+  - `BinaryenTableGetInitial`
+  - `BinaryenTableHasMax`
+  - `BinaryenTableGetMax`
+  - `BinaryenTableImportGetModule`
+  - `BinaryenTableImportGetBase`
+  - `module.addTable`
+  - `module.removeTable`
+  - `module.getTable`
+  - `module.getTableByIndex`
+  - `module.getNumTables`
+  - `binaryen.getTableInfo`
 
 v99
 ---
