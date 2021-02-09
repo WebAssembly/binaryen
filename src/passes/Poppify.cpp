@@ -72,6 +72,7 @@
 // block unreachability rules.
 //
 
+#include "ir/names.h"
 #include "ir/properties.h"
 #include "ir/stack-utils.h"
 #include "ir/utils.h"
@@ -83,8 +84,9 @@ namespace wasm {
 namespace {
 
 // Generate names for the elements of tuple globals
-Name getGlobalElem(Name global, Index i) {
-  return Name(std::string(global.c_str()) + '$' + std::to_string(i));
+Name getGlobalElem(Module* module, Name global, Index i) {
+  return Names::getValidGlobalName(
+    *module, std::string(global.c_str()) + '$' + std::to_string(i));
 }
 
 struct Poppifier : BinaryenIRWriter<Poppifier> {
@@ -107,10 +109,6 @@ struct Poppifier : BinaryenIRWriter<Poppifier> {
   // Records the scratch local to be used for tuple.extracts of each type
   std::unordered_map<Type, Index> scratchLocals;
 
-  // Maps labels to the types they receive. Used for typing breaks.
-  // TODO: is this necessary?
-  std::unordered_map<Name, Type> labelTypes;
-
   Poppifier(Function* func, Module* module);
 
   Index getScratchLocal(Type type);
@@ -122,7 +120,7 @@ struct Poppifier : BinaryenIRWriter<Poppifier> {
   // scope and clear the current scope.
   void patchInstrs(Expression*& expr);
 
-  // BinaryIRWriter methods
+  // BinaryenIRWriter methods
   void emit(Expression* curr);
   void emitHeader() {}
   void emitIfElse(If* curr);
@@ -196,19 +194,10 @@ void Poppifier::emit(Expression* curr) {
     switch (curr->_id) {
       case Expression::BlockId: {
         kind = Scope::Block;
-        auto* block = curr->cast<Block>();
-        if (block->name.is()) {
-          labelTypes[block->name] = block->type;
-        }
         break;
       }
       case Expression::LoopId: {
         kind = Scope::Loop;
-        auto* loop = curr->cast<Loop>();
-        if (loop->name.is()) {
-          // TODO: support loop parameters
-          labelTypes[loop->name] = Type::none;
-        }
         break;
       }
       case Expression::IfId:
@@ -402,7 +391,7 @@ void Poppifier::emitGlobalGet(GlobalGet* curr) {
     auto types = module->getGlobal(curr->name)->type;
     for (Index i = 0; i < types.size(); ++i) {
       instrs.push_back(
-        builder.makeGlobalGet(getGlobalElem(curr->name, i), types[i]));
+        builder.makeGlobalGet(getGlobalElem(module, curr->name, i), types[i]));
     }
   } else {
     instrs.push_back(curr);
@@ -414,8 +403,9 @@ void Poppifier::emitGlobalSet(GlobalSet* curr) {
   if (curr->value->type.isTuple()) {
     auto types = module->getGlobal(curr->name)->type;
     for (Index i = types.size(); i > 0; --i) {
-      instrs.push_back(builder.makeGlobalSet(getGlobalElem(curr->name, i - 1),
-                                             builder.makePop(types[i - 1])));
+      instrs.push_back(
+        builder.makeGlobalSet(getGlobalElem(module, curr->name, i - 1),
+                              builder.makePop(types[i - 1])));
     }
   } else {
     poppify(curr);
@@ -459,7 +449,8 @@ class PoppifyPass : public Pass {
   void run(PassRunner* runner, Module* module) {
     PassRunner subRunner(runner);
     subRunner.add(std::make_unique<PoppifyFunctionsPass>());
-    subRunner.add(std::make_unique<ReFinalize>());
+    // TODO: Enable this once it handles Poppy blocks correctly
+    // subRunner.add(std::make_unique<ReFinalize>());
     subRunner.run();
     lowerTupleGlobals(module);
   }
@@ -469,27 +460,31 @@ class PoppifyPass : public Pass {
     std::vector<std::unique_ptr<Global>> newGlobals;
     for (int g = module->globals.size() - 1; g >= 0; --g) {
       const auto& global = *module->globals[g];
-      if (global.type.isTuple()) {
-        assert(!global.imported());
-        for (Index i = 0; i < global.type.size(); ++i) {
-          Expression* init;
-          if (global.init == nullptr) {
-            init = nullptr;
-          } else if (auto* make = global.init->dynCast<TupleMake>()) {
-            init = make->operands[i];
-          } else if (auto* get = global.init->dynCast<GlobalGet>()) {
-            init = builder.makeGlobalGet(getGlobalElem(get->name, i),
-                                         global.type[i]);
-          } else {
-            WASM_UNREACHABLE("Unexpected tuple global initializer");
-          }
-          auto mutability =
-            global.mutable_ ? Builder::Mutable : Builder::Immutable;
-          newGlobals.emplace_back(builder.makeGlobal(
-            getGlobalElem(global.name, i), global.type[i], init, mutability));
-        }
-        module->removeGlobal(global.name);
+      if (!global.type.isTuple()) {
+        continue;
       }
+      assert(!global.imported());
+      for (Index i = 0; i < global.type.size(); ++i) {
+        Expression* init;
+        if (global.init == nullptr) {
+          init = nullptr;
+        } else if (auto* make = global.init->dynCast<TupleMake>()) {
+          init = make->operands[i];
+        } else if (auto* get = global.init->dynCast<GlobalGet>()) {
+          init = builder.makeGlobalGet(getGlobalElem(module, get->name, i),
+                                       global.type[i]);
+        } else {
+          WASM_UNREACHABLE("Unexpected tuple global initializer");
+        }
+        auto mutability =
+          global.mutable_ ? Builder::Mutable : Builder::Immutable;
+        newGlobals.emplace_back(
+          builder.makeGlobal(getGlobalElem(module, global.name, i),
+                             global.type[i],
+                             init,
+                             mutability));
+      }
+      module->removeGlobal(global.name);
     }
     while (newGlobals.size()) {
       module->addGlobal(std::move(newGlobals.back()));
