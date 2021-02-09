@@ -132,7 +132,7 @@ struct StackSignature {
   // funcref] -> [i32] because ref.as_func can accept funcref or any other
   // subtype of anyref. That's where the contravariance comes from. This
   // instruction sequence could also be used anywhere that expects [f32, i32,
-  // i32, anyref] -> [f32, anyref] because the f32 simply stays on the stack
+  // i32, anyref] -> [f32, i32] because the f32 simply stays on the stack
   // throughout the sequence. That's where the the prefix extension comes from.
   //
   // For the second rule, consider this sequence:
