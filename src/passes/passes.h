@@ -79,6 +79,7 @@ Pass* createOptimizeStackIRPass();
 Pass* createPickLoadSignsPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();
 Pass* createModAsyncifyNeverUnwindPass();
+Pass* createPoppifyPass();
 Pass* createPostAssemblyScriptPass();
 Pass* createPostAssemblyScriptFinalizePass();
 Pass* createPostEmscriptenPass();
