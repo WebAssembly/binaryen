@@ -25,6 +25,13 @@
 [LoggingExternalInterface logging 0]
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
+[fuzz-exec] calling $rtt-and-cast-on-func
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 2]
+[LoggingExternalInterface logging 1337]
+[LoggingExternalInterface logging 3]
+[trap cast error]
 (module
  (type ${mut:i32} (struct (field (mut i32))))
  (type $none_=>_none (func))
@@ -32,6 +39,7 @@
  (type $[mut:i8] (array (mut i8)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
+ (type $none_=>_i32 (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (export "structs" (func $0))
  (export "arrays" (func $1))
@@ -39,6 +47,7 @@
  (export "br_on_cast" (func $3))
  (export "cast-null-anyref-to-gc" (func $4))
  (export "br_on_data" (func $5))
+ (export "$rtt-and-cast-on-func" (func $7))
  (func $0 (; has Stack IR ;)
   (local $0 (ref null ${mut:i32}))
   (call $log
@@ -187,6 +196,42 @@
    )
   )
  )
+ (func $a-void-func (; has Stack IR ;)
+  (call $log
+   (i32.const 1337)
+  )
+ )
+ (func $7 (; has Stack IR ;)
+  (call $log
+   (i32.const 0)
+  )
+  (call $log
+   (i32.const 1)
+  )
+  (call $log
+   (i32.const 2)
+  )
+  (call_ref
+   (ref.cast $none_=>_none
+    (ref.func $a-void-func)
+    (rtt.canon $none_=>_none)
+   )
+  )
+  (call $log
+   (i32.const 3)
+  )
+  (drop
+   (call_ref
+    (ref.cast $none_=>_i32
+     (ref.func $a-void-func)
+     (rtt.canon $none_=>_i32)
+    )
+   )
+  )
+  (call $log
+   (i32.const 4)
+  )
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -215,3 +260,10 @@
 [LoggingExternalInterface logging 0]
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
+[fuzz-exec] calling $rtt-and-cast-on-func
+[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
+[LoggingExternalInterface logging 2]
+[LoggingExternalInterface logging 1337]
+[LoggingExternalInterface logging 3]
+[trap cast error]

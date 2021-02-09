@@ -26,7 +26,6 @@ namespace wasm {
 AsmType wasmToAsmType(Type type);
 
 char getSig(Type type);
-std::string getSig(Function* func);
 std::string getSig(Type results, Type params);
 
 template<typename ListType>
