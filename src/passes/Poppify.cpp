@@ -118,9 +118,9 @@ struct Poppifier : BinaryenIRWriter<Poppifier> {
   // Replace `expr`'s children with Pops of the correct type.
   void poppify(Expression* expr);
 
-  // Replace `expr` with a block containing the instructions for the current
-  // scope and clear the current scope.
-  void patchInstrs(Expression*& expr);
+  // Pops the current scope off the scope stack and replaces `expr` with a block
+  // containing the instructions from that scope.
+  void patchScope(Expression*& expr);
 
   // BinaryenIRWriter methods
   void emit(Expression* curr);
@@ -169,8 +169,10 @@ Index Poppifier::getScratchLocal(Type type) {
   return insert.first->second;
 }
 
-void Poppifier::patchInstrs(Expression*& expr) {
-  auto& instrs = scopeStack.back().instrs;
+void Poppifier::patchScope(Expression*& expr) {
+  auto scope = std::move(scopeStack.back());
+  auto& instrs = scope.instrs;
+  scopeStack.pop_back();
   if (auto* block = expr->dynCast<Block>()) {
     // Reuse blocks, but do not patch a block into itself, which would otherwise
     // happen when emitting if/else or try/catch arms and function bodies.
@@ -184,7 +186,6 @@ void Poppifier::patchInstrs(Expression*& expr) {
     // blocks.
     expr = builder.makeBlock(instrs, expr->type);
   }
-  instrs.clear();
 }
 
 void Poppifier::emit(Expression* curr) {
@@ -243,65 +244,63 @@ void Poppifier::emit(Expression* curr) {
 void Poppifier::emitIfElse(If* curr) {
   auto& scope = scopeStack.back();
   assert(scope.kind == Scope::If);
-  patchInstrs(curr->ifTrue);
-  scope.kind = Scope::Else;
+  patchScope(curr->ifTrue);
+  scopeStack.emplace_back(Scope::Else);
 }
 
 void Poppifier::emitCatch(Try* curr, Index i) {
   auto& scope = scopeStack.back();
   if (i == 0) {
     assert(scope.kind == Scope::Try);
-    patchInstrs(curr->body);
+    patchScope(curr->body);
   } else {
     assert(scope.kind == Scope::Catch);
-    patchInstrs(curr->catchBodies[i - 1]);
+    patchScope(curr->catchBodies[i - 1]);
   }
-  scope.kind = Scope::Catch;
+  scopeStack.emplace_back(Scope::Catch);
 }
 
 void Poppifier::emitCatchAll(Try* curr) {
   auto& scope = scopeStack.back();
   if (curr->catchBodies.size() == 1) {
     assert(scope.kind == Scope::Try);
-    patchInstrs(curr->body);
+    patchScope(curr->body);
   } else {
     assert(scope.kind == Scope::Catch);
-    patchInstrs(curr->catchBodies[curr->catchBodies.size() - 2]);
+    patchScope(curr->catchBodies[curr->catchBodies.size() - 2]);
   }
-  scope.kind = Scope::Catch;
+  scopeStack.emplace_back(Scope::Catch);
 }
 
 void Poppifier::emitScopeEnd(Expression* curr) {
-  auto& scope = scopeStack.back();
-  switch (scope.kind) {
+  switch (scopeStack.back().kind) {
     case Scope::Block:
-      patchInstrs(curr);
+      patchScope(curr);
       break;
     case Scope::Loop:
-      patchInstrs(curr->cast<Loop>()->body);
+      patchScope(curr->cast<Loop>()->body);
       break;
     case Scope::If:
-      patchInstrs(curr->cast<If>()->ifTrue);
+      patchScope(curr->cast<If>()->ifTrue);
       break;
     case Scope::Else:
-      patchInstrs(curr->cast<If>()->ifFalse);
+      patchScope(curr->cast<If>()->ifFalse);
       break;
     case Scope::Catch:
-      patchInstrs(curr->cast<Try>()->catchBodies.back());
+      patchScope(curr->cast<Try>()->catchBodies.back());
       break;
     case Scope::Try:
       WASM_UNREACHABLE("try without catch");
     case Scope::Func:
       WASM_UNREACHABLE("unexpected end of function");
   }
-  scopeStack.pop_back();
   scopeStack.back().instrs.push_back(curr);
 }
 
 void Poppifier::emitFunctionEnd() {
   auto& scope = scopeStack.back();
   assert(scope.kind == Scope::Func);
-  patchInstrs(func->body);
+  patchScope(func->body);
 }
 
 void Poppifier::emitUnreachable() {
