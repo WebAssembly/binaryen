@@ -186,9 +186,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e
-  ;; CHECK-NEXT:    (return
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (i32.const 1)
@@ -203,9 +200,7 @@
         )
       )
       (catch $e
-        (return
-          (pop i32)
-        )
+        (pop i32)
       )
       (catch_all
         (i32.const 1)
