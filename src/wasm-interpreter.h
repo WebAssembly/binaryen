@@ -1448,6 +1448,8 @@ public:
     if (cast.originalRef.isFunction()) {
       // Function casts are simple in that they have no RTT hierarchies; instead
       // each reference has the canonical RTT for the signature.
+      // We must have a module in order to perform the cast, to get the type.
+      assert(module);
       auto* func = module->getFunction(cast.originalRef.getFunc());
       seenRtt = Literal(Type(Rtt(0, func->sig)));
       cast.castRef =
