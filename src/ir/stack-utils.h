@@ -109,17 +109,23 @@ struct StackSignature {
 
   // Whether a block whose contents have stack signature `a` could be typed with
   // stack signature `b`, i.e. whether it could be used in a context that
-  // expects signature `b`. Formally:
+  // expects signature `b`. Formally, where `a` is the LHS and `b` the RHS:
   //
   // [t1*] -> [t2*] <: [s1* t1'*] -> [s2* t2'*] iff
   //
-  //  - t1'_i <: t1_i
-  //  - t2_i <: t2'_i
-  //  - s1_i <: s2_i
+  //  - t1' <: t1
+  //  - t2 <: t2'
+  //  - s1 <: s2
+  //
+  //  Note that neither signature is unreachable in this rule and that the
+  //  cardinalities of t1* and t1'*, t2* and t2'*, and s1* and s2* must match.
   //
   // [t1*] -> [t2*] {u} <: [s1* t1'*] -> [s2* t2'*] {u?} iff
   //
   //  - [t1*] -> [t2*] <: [t1'*] -> [t2'*]
+  //
+  //  Note that s1* and s2* can have different cardinalities and arbitrary types
+  //  in this rule.
   //
   // As an example of the first rule, consider this instruction sequence:
   //

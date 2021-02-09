@@ -241,8 +241,8 @@ void test_signature_subtype() {
   {
     StackSignature a(Type::anyref, Type::none, false);
     StackSignature b(Type::funcref, Type::none, false);
-    // assert(StackSignature::isSubType(a, b));
-    // assert(!StackSignature::isSubType(b, a));
+    assert(StackSignature::isSubType(a, b));
+    assert(!StackSignature::isSubType(b, a));
   }
   // First not unreachable
   {
