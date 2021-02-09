@@ -329,7 +329,7 @@ enum Section {
   Event = 13
 };
 
-// A passive segment is a segment that will not be automatically copied into the
+// A passive segment is a segment that will not be automatically copied into a
 //   memory or table on instantiation, and must instead be applied manually
 //   using the instructions memory.init or table.init.
 // An active segment is equivalent to a passive segment, but with an implicit

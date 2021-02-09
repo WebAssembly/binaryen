@@ -559,17 +559,26 @@ void WasmBinaryWriter::writeTableElements() {
   for (auto& table : wasm->tables) {
     for (auto& segment : table->segments) {
       Index tableIdx = getTableIndex(table->name);
+      // No support for passive element segments yet as they don't belong to a
+      // table.
+      bool isPassive = false;
+      bool isDeclarative = false;
+      bool hasTableIndex = tableIdx > 0;
+      bool usesExpressions = false;
 
-      // header format
-      if (tableIdx < 1) {
-        o << U32LEB(0x0);
-      } else {
-        o << U32LEB(0x2);
+      uint32_t flags =
+        (isPassive ? BinaryConsts::IsPassive |
+                       (isDeclarative ? BinaryConsts::IsDeclarative : 0)
+                   : (hasTableIndex ? BinaryConsts::HasIndex : 0)) |
+        (usesExpressions ? BinaryConsts::UsesExpressions : 0);
+
+      o << U32LEB(flags);
+      if (hasTableIndex) {
         o << U32LEB(tableIdx);
       }
       writeExpression(segment.offset);
       o << int8_t(BinaryConsts::End);
-      if (tableIdx > 0) {
+      if (!usesExpressions && (isPassive || hasTableIndex)) {
         // elemKind funcref
         o << U32LEB(0);
       }

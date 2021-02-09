@@ -116,7 +116,6 @@ int main(int argc, const char* argv[]) {
   }
 
   options.applyFeatures(wasm);
-  wasm.hasFeaturesSection = true;
 
   if (options.extra["validate"] != "none") {
     if (options.debug) {

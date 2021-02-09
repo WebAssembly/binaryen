@@ -215,16 +215,6 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
                               extra);
   }
 
-  Table* getTableOrNull(Name tableName) {
-    if (tableName.is()) {
-      return wasm->getTableOrNull(tableName);
-    } else if (!wasm->tables.empty()) {
-      return wasm->tables.front().get();
-    }
-
-    return nullptr;
-  }
-
   Literals callTable(Name tableName,
                      Index index,
                      Signature sig,
@@ -234,7 +224,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
     std::unordered_map<wasm::Name, std::vector<wasm::Name>>::iterator it;
 
-    auto* table = getTableOrNull(tableName);
+    auto* table = wasm->getTableOrNull(tableName);
     if (!table) {
       throw FailToEvalException("callTable on non-existing table");
     }
