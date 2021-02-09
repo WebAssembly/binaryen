@@ -184,6 +184,36 @@ struct FuncCastEmulation : public Pass {
         }
       }
     }
+    // make sure everything in exports has a thunk
+    // so dlsym works
+    std::unordered_map<Name, Name> exportThunks;
+    for (auto& function : module->exports) {
+      auto& exportName = function->name;
+      auto& exportValue = function->value;
+      if (module->getFunctionOrNull(exportValue)) {
+        Name exportThunkName = std::string("byn$fpcast-emu$") + exportName.str;
+        auto iter = funcThunks.find(exportValue);
+        if (iter == funcThunks.end()) {
+          // an export without a thunk yet - make it and export it
+          auto thunk = makeThunk(exportValue, module, numParams);
+          funcThunks[exportValue] = thunk;
+          exportThunks[exportThunkName] = thunk;
+        } else {
+          // just export existing thunk
+          exportThunks[exportThunkName] = iter->second;
+        }
+      }
+    }
+
+    // add thunks to exports if their unthunked version is in exports
+    for (auto& thunk : exportThunks) {
+      auto* export_ = new Export;
+      export_->name = thunk.first;
+      export_->value = thunk.second;
+      export_->kind = ExternalKind::Function;
+      module->addExport(export_);
+    }
+
     // update call_indirects
     ParallelFuncCastEmulation(ABIType, numParams).run(runner, module);
   }
