@@ -204,7 +204,7 @@
  (func $a-void-func
   (call $log (i32.const 1337))
  )
- (func "$rtt-and-cast-on-func"
+ (func "rtt-and-cast-on-func"
   (call $log (i32.const 0))
   (drop
    (rtt.canon $void_func)
@@ -225,5 +225,13 @@
   ))
   ;; will never be reached
   (call $log (i32.const 4))
+ )
+ (func "array-alloc-failure"
+  (drop
+   (array.new_default_with_rtt $bytes
+    (rtt.canon $bytes)
+    (i32.const -1) ;; un-allocatable size (4GB * sizeof(Literal))
+   )
+  )
  )
 )
