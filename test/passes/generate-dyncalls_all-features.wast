@@ -9,3 +9,11 @@
  (table 2 2 funcref)
  (elem (i32.const 0) $f1 $f2)
 )
+(module
+ (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+ (import "env" "table" (table 1 1 funcref))
+ (elem (i32.const 0) $f)
+ (func $f (result i32)
+  (i32.const 42)
+ )
+)
