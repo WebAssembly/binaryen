@@ -1959,6 +1959,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   Function::DebugLocation lastPrintedLocation;
   bool debugInfo;
 
+  // Used to print delegate's depth argument when it throws to the caller
   int controlFlowDepth = 0;
 
   PrintSExpression(std::ostream& o) : o(o) {

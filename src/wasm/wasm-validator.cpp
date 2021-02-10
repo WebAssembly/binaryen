@@ -2119,10 +2119,6 @@ void FunctionValidator::visitTry(Try* curr) {
                curr,
                "try should have either catches or a delegate");
 
-  // (try $l (delegate $l)) is invalid. So we pop the current try's name before
-  // checking the delegate target.
-  delegateTargetNames.erase(curr->name);
-
   if (curr->isDelegate()) {
     noteDelegate(curr->delegateTarget, curr);
   }

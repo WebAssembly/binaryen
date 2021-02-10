@@ -1859,7 +1859,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
   return ret;
 }
 
-Name SExpressionWasmBuilder::getLabel(Element& s, bool isBranch) {
+Name SExpressionWasmBuilder::getLabel(Element& s, LabelType labelType) {
   if (s.dollared()) {
     return nameMapper.sourceToUnique(s.str());
   } else {
@@ -1876,7 +1876,7 @@ Name SExpressionWasmBuilder::getLabel(Element& s, bool isBranch) {
       throw ParseException("invalid label", s.line, s.col);
     }
     if (offset == nameMapper.labelStack.size()) {
-      if (isBranch) {
+      if (labelType == LabelType::Break) {
         // a break to the function's scope. this means we need an automatic
         // block, with a name
         brokeToAutoBlock = true;
@@ -2048,7 +2048,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     if (inner.size() != 2) {
       throw ParseException("invalid delegate", inner.line, inner.col);
     }
-    ret->delegateTarget = getLabel(*inner[1], false);
+    ret->delegateTarget = getLabel(*inner[1], LabelType::Delegate);
   }
 
   if (i != s.size()) {
