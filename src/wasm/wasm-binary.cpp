@@ -5841,7 +5841,7 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   // and catch body, if any delegate targets those inner blocks, we should make
   // them target the try's label instead.
   curr->name = getNextLabel();
-  if (auto *block = curr->body->dynCast<Block>()) {
+  if (auto* block = curr->body->dynCast<Block>()) {
     if (block->name.is()) {
       if (delegateTargetNames.find(block->name) != delegateTargetNames.end()) {
         BranchUtils::replaceDelegateTargets(block, block->name, curr->name);

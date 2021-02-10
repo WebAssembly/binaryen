@@ -83,9 +83,7 @@ struct RemoveUnusedNames
     }
   }
 
-  void visitTry(Try* curr) {
-    handleBreakTarget(curr->name);
-  }
+  void visitTry(Try* curr) { handleBreakTarget(curr->name); }
 
   void visitFunction(Function* curr) { assert(branchesSeen.empty()); }
 };
