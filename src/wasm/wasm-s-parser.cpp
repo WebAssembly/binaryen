@@ -1997,7 +1997,7 @@ Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
 // block can exist, and if it does, it should be at the end. There should be at
 // least one catch or catch_all body per try.
 //
-// try-delegate is written in the forded format as
+// try-delegate is written in the folded format as
 // (try
 //  (do
 //    ...
