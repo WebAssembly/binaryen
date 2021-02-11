@@ -410,6 +410,21 @@ void test_signature_lub() {
     StackSignature b(Type::i32, Type::none, true);
     assert(!StackSignature::haveLeastUpperBound(a, b));
   }
+  {
+    StackSignature a{Type::none, Type::i32, false};
+    StackSignature b{Type::i32, Type::none, false};
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a{Type::none, Type::i32, true};
+    StackSignature b{Type::i32, Type::none, false};
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
+  {
+    StackSignature a{Type::none, Type::i32, false};
+    StackSignature b{Type::i32, Type::none, true};
+    assert(!StackSignature::haveLeastUpperBound(a, b));
+  }
 }
 
 void test_stack_flow() {

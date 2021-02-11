@@ -165,13 +165,32 @@ bool StackSignature::isSubType(StackSignature a, StackSignature b) {
 }
 
 bool StackSignature::haveLeastUpperBound(StackSignature a, StackSignature b) {
-  // Params and results may only be shorter on unreachable stack signatures.
-  if (!a.unreachable && (a.params.size() < b.params.size() ||
-                         a.results.size() < b.results.size())) {
-    return false;
-  }
-  if (!b.unreachable && (b.params.size() < a.params.size() ||
-                         b.results.size() < a.results.size())) {
+  // If a signature is unreachable, the LUB could extend its params and results
+  // arbitrarily. Otherwise, the LUB must extend its params and results
+  // uniformly so that each additional param is a subtype of the corresponding
+  // additional result.
+  auto extensionCompatible = [](auto self, auto other) -> bool {
+    if (self.unreachable) {
+      return true;
+    }
+    // If no extension, then no problem.
+    if (self.params.size() >= other.params.size() &&
+        self.results.size() >= other.results.size()) {
+      return true;
+    }
+    auto extSize = other.params.size() - self.params.size();
+    if (extSize != other.results.size() - self.results.size()) {
+      return false;
+    }
+    return std::equal(other.params.begin(),
+                      other.params.begin() + extSize,
+                      other.results.begin(),
+                      other.results.begin() + extSize,
+                      [](const Type& param, const Type& result) {
+                        return Type::isSubType(param, result);
+                      });
+  };
+  if (!extensionCompatible(a, b) || !extensionCompatible(b, a)) {
     return false;
   }
 
