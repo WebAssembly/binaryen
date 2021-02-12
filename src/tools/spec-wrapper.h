@@ -19,8 +19,8 @@
 // values, useful for fuzzing.
 //
 
-#include "wasm.h"
 #include "wasm-type.h"
+#include "wasm.h"
 
 namespace wasm {
 

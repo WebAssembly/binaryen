@@ -17,9 +17,9 @@
 #ifndef wasm_wasm_module_building_h
 #define wasm_wasm_module_building_h
 
+#include "pass.h"
 #include <support/threads.h>
 #include <wasm.h>
-#include "pass.h"
 
 namespace wasm {
 

@@ -2206,9 +2206,7 @@ private:
           }
           break;
         }
-        default: {
-          break;
-        }
+        default: { break; }
       }
     }
     return nullptr;

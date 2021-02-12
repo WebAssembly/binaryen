@@ -19,8 +19,8 @@
 // wasm2c, useful for fuzzing.
 //
 
-#include <string>
 #include <sstream>
+#include <string>
 
 #include "wasm.h"
 
