@@ -1,6 +1,6 @@
 #include <assert.h>
-#include <string.h>
 #include <binaryen-c.h>
+#include <string.h>
 
 // "hello world" type example: create a function that adds two i32s and returns
 // the result

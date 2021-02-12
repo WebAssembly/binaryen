@@ -75,6 +75,21 @@ struct FeatureSet {
     }
   }
 
+  std::string toString() {
+    std::string ret;
+    uint32_t x = 1;
+    while (x & Feature::All) {
+      if (features & x) {
+        if (!ret.empty()) {
+          ret += ", ";
+        }
+        ret += toString(Feature(x));
+      }
+      x <<= 1;
+    }
+    return ret;
+  }
+
   FeatureSet() : features(MVP) {}
   FeatureSet(uint32_t features) : features(features) {}
   operator uint32_t() const { return features; }
