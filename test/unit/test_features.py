@@ -351,7 +351,10 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
 
     def test_superset(self):
         # It is ok to enable additional features past what is in the section.
-        self.check_features('signext_target_feature.wasm', ['sign-ext', 'simd'])
+        shared.run_process(
+            shared.WASM_OPT + ['--print', '--detect-features', '-mvp',
+                               '--enable-simd', '--enable-sign-ext',
+                               self.input_path('signext_target_feature.wasm')])
 
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
