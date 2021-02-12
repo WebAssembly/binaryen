@@ -78,7 +78,7 @@ struct FeatureSet {
   std::string toString() {
     std::string ret;
     uint32_t x = 1;
-    while (x != Feature::All + 1) {
+    while (x & Feature::All) {
       if (features & x) {
         if (!ret.empty()) {
           ret += ", ";
