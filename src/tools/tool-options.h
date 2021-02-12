@@ -148,8 +148,8 @@ struct ToolOptions : public Options {
         FeatureSet optionsFeatures = FeatureSet::MVP;
         optionsFeatures.enable(enabledFeatures);
         optionsFeatures.disable(disabledFeatures);
-        if (module.features != optionsFeatures) {
-          Fatal() << "module features do not match specified features. "
+        if (!(module.features <= optionsFeatures)) {
+          Fatal() << "features section is not a subset of specified features. "
                   << "Use --detect-features to resolve.";
         }
       }
