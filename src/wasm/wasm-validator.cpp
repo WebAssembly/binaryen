@@ -236,7 +236,8 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   };
 
   std::unordered_map<Name, BreakInfo> breakInfos;
-  std::unordered_set<Name> exceptionTargetNames;
+  std::unordered_set<Name> delegateTargetNames;
+  std::unordered_set<Name> rethrowTargetNames;
 
   std::set<Type> returnTypes; // types used in returns
 
@@ -280,7 +281,7 @@ public:
   static void visitPreTry(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
     if (curr->name.is()) {
-      self->exceptionTargetNames.insert(curr->name);
+      self->delegateTargetNames.insert(curr->name);
     }
   }
 
@@ -300,7 +301,8 @@ public:
   static void visitPreCatch(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
     if (curr->name.is()) {
-      self->exceptionTargetNames.erase(curr->name);
+      self->delegateTargetNames.erase(curr->name);
+      self->rethrowTargetNames.insert(curr->name);
     }
   }
 
@@ -376,7 +378,8 @@ public:
   void visitRefIs(RefIs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
-  void noteException(Name name, Expression* curr);
+  void noteDelegate(Name name, Expression* curr);
+  void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -2073,12 +2076,18 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
     "ref.eq's right argument should be a subtype of eqref");
 }
 
-void FunctionValidator::noteException(Name name, Expression* curr) {
+void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
-    shouldBeTrue(exceptionTargetNames.find(name) != exceptionTargetNames.end(),
+    shouldBeTrue(delegateTargetNames.find(name) != delegateTargetNames.end(),
                  curr,
                  "all delegate targets must be valid");
   }
+}
+
+void FunctionValidator::noteRethrow(Name name, Expression* curr) {
+  shouldBeTrue(rethrowTargetNames.find(name) != rethrowTargetNames.end(),
+               curr,
+               "all rethrow targets must be valid");
 }
 
 void FunctionValidator::visitTry(Try* curr) {
@@ -2122,8 +2131,10 @@ void FunctionValidator::visitTry(Try* curr) {
                "try should have either catches or a delegate");
 
   if (curr->isDelegate()) {
-    noteException(curr->delegateTarget, curr);
+    noteDelegate(curr->delegateTarget, curr);
   }
+
+  rethrowTargetNames.erase(curr->name);
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
@@ -2167,8 +2178,7 @@ void FunctionValidator::visitRethrow(Rethrow* curr) {
                 Type(Type::unreachable),
                 curr,
                 "rethrow's type must be unreachable");
-  // TODO Validate the depth field. The current LLVM toolchain only generates
-  // depth 0 for C++ support.
+  noteRethrow(curr->target, curr);
 }
 
 void FunctionValidator::visitTupleMake(TupleMake* curr) {
@@ -2533,9 +2543,12 @@ void FunctionValidator::visitFunction(Function* curr) {
 
   shouldBeTrue(
     breakInfos.empty(), curr->body, "all named break targets must exist");
-  shouldBeTrue(exceptionTargetNames.empty(),
+  shouldBeTrue(delegateTargetNames.empty(),
                curr->body,
                "all named delegate targets must exist");
+  shouldBeTrue(rethrowTargetNames.empty(),
+               curr->body,
+               "all named rethrow targets must exist");
   returnTypes.clear();
   labelNames.clear();
   // validate optional local names

@@ -130,17 +130,6 @@
         )
       )
     )
-
-    ;; rethrow
-    (try
-      (do
-        (throw $e-i32 (i32.const 0))
-      )
-      (catch $e-i32
-        (drop (pop i32))
-        (rethrow 0)
-      )
-    )
   )
 
   (func $delegate-test
@@ -198,6 +187,114 @@
         )
       )
       (delegate 0)
+    )
+  )
+
+  (func $rethrow-test
+    ;; Simple try-catch-rethrow
+    (try $l0
+      (do
+        (call $foo)
+      )
+      (catch $e-i32
+        (drop (pop i32))
+        (rethrow $l0) ;; by label
+      )
+      (catch_all
+        (rethrow 0) ;; by depth
+      )
+    )
+
+    ;; When there are both a branch and a rethrow that target the same try
+    ;; label. Because binaryen only allows blocks and loops to be targetted by
+    ;; branches, we wrap the try with a block and make branches that block
+    ;; instead, resulting in the br and rethrow target different labels in the
+    ;; output.
+    (try $l0
+      (do
+        (call $foo)
+      )
+      (catch $e-i32
+        (drop (pop i32))
+        (rethrow $l0)
+      )
+      (catch_all
+        (br $l0)
+      )
+    )
+
+    ;; One more level deep
+    (try $l0
+      (do
+        (call $foo)
+      )
+      (catch_all
+        (try
+          (do
+            (call $foo)
+          )
+          (catch $e-i32
+            (drop (pop i32))
+            (rethrow $l0) ;; by label
+          )
+          (catch_all
+            (rethrow 1) ;; by depth
+          )
+        )
+      )
+    )
+
+    ;; Interleaving block
+    (try $l0
+      (do
+        (call $foo)
+      )
+      (catch_all
+        (try
+          (do
+            (call $foo)
+          )
+          (catch $e-i32
+            (drop (pop i32))
+            (block $b0
+              (rethrow $l0) ;; by label
+            )
+          )
+          (catch_all
+            (block $b1
+              (rethrow 2) ;; by depth
+            )
+          )
+        )
+      )
+    )
+
+    ;; Within nested try, but rather in 'try' part and not 'catch'
+    (try $l0
+      (do
+        (call $foo)
+      )
+      (catch_all
+        (try
+          (do
+            (rethrow $l0) ;; by label
+          )
+          (catch_all)
+        )
+      )
+    )
+    (try $l0
+      (do
+        (call $foo)
+      )
+      (catch_all
+        (try
+          (do
+            (rethrow 1) ;; by depth
+          )
+          (catch_all)
+        )
+      )
     )
   )
 )

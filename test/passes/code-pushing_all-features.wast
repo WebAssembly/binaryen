@@ -72,12 +72,12 @@
       ;; This local.set cannot be pushed down, because there is 'rethrow' within
       ;; the inner catch_all
       (local.set $x (i32.const 1))
-      (try
+      (try $l0
         (do
           (throw $e (i32.const 0))
         )
         (catch_all
-          (rethrow 0)
+          (rethrow $l0)
         )
       )
       (drop (i32.const 1))

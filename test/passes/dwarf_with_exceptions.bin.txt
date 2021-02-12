@@ -93,7 +93,7 @@
        )
       )
       ;; code offset: 0x6c
-      (rethrow 0)
+      (rethrow $label$8)
      )
     )
     ;; code offset: 0x6f
@@ -515,7 +515,7 @@ file_names[  1]:
        )
       )
       ;; code offset: 0x3e
-      (rethrow 0)
+      (rethrow $label$8)
      )
     )
     ;; code offset: 0x41

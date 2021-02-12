@@ -587,9 +587,15 @@
   )
  )
  (func $rethrow
-  (block $label$0
-   (block $label$1
-    (rethrow 0)
+  (try $l0
+   (do
+    (nop)
+   )
+   (catch $e
+    (drop
+     (i32.const 0)
+    )
+    (rethrow $l0)
    )
   )
  )

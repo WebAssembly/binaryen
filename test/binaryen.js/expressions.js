@@ -1585,14 +1585,14 @@ console.log("# Rethrow");
 (function testRethrow() {
   const module = new binaryen.Module();
 
-  const theRethrow = binaryen.Rethrow(module.rethrow(0));
+  const theRethrow = binaryen.Rethrow(module.rethrow("l0"));
   assert(theRethrow instanceof binaryen.Rethrow);
   assert(theRethrow instanceof binaryen.Expression);
-  assert(theRethrow.depth === 0);
+  assert(theRethrow.target === "l0");
   assert(theRethrow.type === binaryen.unreachable);
 
-  theRethrow.depth = 1
-  assert(theRethrow.depth === 1);
+  theRethrow.target = "l1";
+  assert(theRethrow.target === "l1");
   theRethrow.type = binaryen.f64;
   theRethrow.finalize();
   assert(theRethrow.type === binaryen.unreachable);
@@ -1601,7 +1601,7 @@ console.log("# Rethrow");
   assert(
     theRethrow.toText()
     ==
-    "(rethrow 1)\n"
+    "(rethrow $l1)\n"
   );
 
   module.dispose();

@@ -708,9 +708,9 @@ public:
     ret->finalize();
     return ret;
   }
-  Rethrow* makeRethrow(Index depth) {
+  Rethrow* makeRethrow(Name target) {
     auto* ret = wasm.allocator.alloc<Rethrow>();
-    ret->depth = depth;
+    ret->target = target;
     ret->finalize();
     return ret;
   }

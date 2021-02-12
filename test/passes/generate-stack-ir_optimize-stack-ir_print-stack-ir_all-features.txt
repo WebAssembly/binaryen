@@ -3,20 +3,20 @@
  (type $i32_=>_none (func (param i32)))
  (event $e0 (attr 0) (param i32))
  (func $eh
-  try $try
+  try $l0
    i32.const 0
    throw $e0
   catch $e0
    
    drop
   catch_all
-   rethrow 0
+   rethrow $l0
   end
-  try $l0
-   try $try0
+  try $l00
+   try $try
     i32.const 0
     throw $e0
-   delegate $l0
+   delegate $l00
    unreachable
   catch_all
    nop
@@ -31,7 +31,7 @@
  (type $i32_=>_none (func (param i32)))
  (event $e0 (attr 0) (param i32))
  (func $eh (; has Stack IR ;)
-  (try $try
+  (try $l0
    (do
     (throw $e0
      (i32.const 0)
@@ -43,18 +43,18 @@
     )
    )
    (catch_all
-    (rethrow 0)
+    (rethrow $l0)
    )
   )
-  (try $l0
+  (try $l00
    (do
-    (try $try0
+    (try $try
      (do
       (throw $e0
        (i32.const 0)
       )
      )
-     (delegate $l0)
+     (delegate $l00)
     )
    )
    (catch_all

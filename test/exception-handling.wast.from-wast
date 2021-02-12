@@ -169,19 +169,6 @@
     )
    )
   )
-  (try $try10
-   (do
-    (throw $e-i32
-     (i32.const 0)
-    )
-   )
-   (catch $e-i32
-    (drop
-     (pop i32)
-    )
-    (rethrow 0)
-   )
-  )
  )
  (func $delegate-test
   (try $l0
@@ -192,7 +179,7 @@
      )
      (delegate $l0)
     )
-    (try $try11
+    (try $try10
      (do
       (call $foo)
      )
@@ -203,24 +190,24 @@
     (nop)
    )
   )
-  (block $l015
-   (try $l012
+  (block $l014
+   (try $l011
     (do
+     (try $try12
+      (do
+       (br_if $l014
+        (i32.const 1)
+       )
+      )
+      (delegate $l011)
+     )
      (try $try13
       (do
-       (br_if $l015
+       (br_if $l014
         (i32.const 1)
        )
       )
-      (delegate $l012)
-     )
-     (try $try14
-      (do
-       (br_if $l015
-        (i32.const 1)
-       )
-      )
-      (delegate $l012)
+      (delegate $l011)
      )
     )
     (catch_all
@@ -228,16 +215,124 @@
     )
    )
   )
-  (try $l016
+  (try $l015
    (do
-    (try $try17
+    (try $try16
      (do
       (call $foo)
      )
-     (delegate $l016)
+     (delegate $l015)
     )
    )
    (delegate 0)
+  )
+ )
+ (func $rethrow-test
+  (try $l0
+   (do
+    (call $foo)
+   )
+   (catch $e-i32
+    (drop
+     (pop i32)
+    )
+    (rethrow $l0)
+   )
+   (catch_all
+    (rethrow $l0)
+   )
+  )
+  (block $l018
+   (try $l017
+    (do
+     (call $foo)
+    )
+    (catch $e-i32
+     (drop
+      (pop i32)
+     )
+     (rethrow $l017)
+    )
+    (catch_all
+     (br $l018)
+    )
+   )
+  )
+  (try $l019
+   (do
+    (call $foo)
+   )
+   (catch_all
+    (try $try
+     (do
+      (call $foo)
+     )
+     (catch $e-i32
+      (drop
+       (pop i32)
+      )
+      (rethrow $l019)
+     )
+     (catch_all
+      (rethrow $l019)
+     )
+    )
+   )
+  )
+  (try $l020
+   (do
+    (call $foo)
+   )
+   (catch_all
+    (try $try21
+     (do
+      (call $foo)
+     )
+     (catch $e-i32
+      (drop
+       (pop i32)
+      )
+      (block $b0
+       (rethrow $l020)
+      )
+     )
+     (catch_all
+      (block $b1
+       (rethrow $l020)
+      )
+     )
+    )
+   )
+  )
+  (try $l022
+   (do
+    (call $foo)
+   )
+   (catch_all
+    (try $try23
+     (do
+      (rethrow $l022)
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+  )
+  (try $l024
+   (do
+    (call $foo)
+   )
+   (catch_all
+    (try $try25
+     (do
+      (rethrow $l024)
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
   )
  )
 )

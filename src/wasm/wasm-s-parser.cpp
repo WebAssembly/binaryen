@@ -2067,37 +2067,14 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     // We create a different name for the wrapping block, because try's name can
     // be used by internal delegates
     block->name = nameMapper.pushLabelName(sName);
-    // For simplicity, try's name canonly be targeted by delegates. Make the
-    // branches target the new wrapping block instead.
+    // For simplicity, try's name can only be targeted by delegates and
+    // rethrows. Make the branches target the new wrapping block instead.
     BranchUtils::replaceBranchTargets(ret, ret->name, block->name);
     block->list.push_back(ret);
     nameMapper.popLabelName(block->name);
     block->finalize(type);
     return block;
   }
-  return ret;
-}
-
-Expression*
-SExpressionWasmBuilder::makeTryOrCatchBody(Element& s, Type type, bool isTry) {
-  if (isTry && !elementStartsWith(s, "do")) {
-    throw ParseException("invalid try do clause", s.line, s.col);
-  }
-  if (!isTry && !elementStartsWith(s, "catch") &&
-      !elementStartsWith(s, "catch_all")) {
-    throw ParseException("invalid catch clause", s.line, s.col);
-  }
-  if (s.size() == 1) { // (do) / (catch) / (catch_all) without instructions
-    return makeNop();
-  }
-  auto ret = allocator.alloc<Block>();
-  for (size_t i = 1; i < s.size(); i++) {
-    ret->list.push_back(parseExpression(s[i]));
-  }
-  if (ret->list.size() == 1) {
-    return ret->list[0];
-  }
-  ret->finalize(type);
   return ret;
 }
 
@@ -2118,7 +2095,7 @@ Expression* SExpressionWasmBuilder::makeThrow(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeRethrow(Element& s) {
   auto ret = allocator.alloc<Rethrow>();
-  ret->depth = atoi(s[1]->str().c_str());
+  ret->target = getLabel(*s[1], LabelType::Exception);
   ret->finalize();
   return ret;
 }

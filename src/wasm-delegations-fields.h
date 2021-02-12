@@ -532,7 +532,7 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::RethrowId: {
     DELEGATE_START(Rethrow);
-    DELEGATE_FIELD_INT(Rethrow, depth);
+    DELEGATE_FIELD_SCOPE_NAME_USE(Rethrow, target);
     DELEGATE_END(Rethrow);
     break;
   }

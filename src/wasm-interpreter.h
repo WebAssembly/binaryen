@@ -2400,7 +2400,8 @@ private:
     : public ExpressionRunner<RuntimeExpressionRunner> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
-    SmallVector<WasmException, 4> exceptionStack;
+    // Stack of <caught exception, caught catch's try label>
+    SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
 
   public:
     RuntimeExpressionRunner(ModuleInstanceBase& instance,
@@ -3046,7 +3047,7 @@ private:
         auto processCatchBody = [&](Expression* catchBody) {
           // Push the current exception onto the exceptionStack in case
           // 'rethrow's use it
-          exceptionStack.push_back(e);
+          exceptionStack.push_back(std::make_pair(e, curr->name));
           // We need to pop exceptionStack in either case: when the catch body
           // exits normally or when a new exception is thrown
           Flow ret;
@@ -3074,8 +3075,11 @@ private:
       }
     }
     Flow visitRethrow(Rethrow* curr) {
-      assert(exceptionStack.size() > curr->depth);
-      throwException(exceptionStack[exceptionStack.size() - 1 - curr->depth]);
+      for (int i = exceptionStack.size() - 1; i >= 0; i--) {
+        if (exceptionStack[i].second == curr->target) {
+          throwException(exceptionStack[i].first);
+        }
+      }
       WASM_UNREACHABLE("rethrow");
     }
     Flow visitPop(Pop* curr) {
