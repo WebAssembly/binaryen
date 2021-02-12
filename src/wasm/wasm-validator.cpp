@@ -236,6 +236,7 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   };
 
   std::unordered_map<Name, BreakInfo> breakInfos;
+  std::unordered_set<Name> delegateTargetNames;
 
   std::set<Type> returnTypes; // types used in returns
 
@@ -276,11 +277,52 @@ public:
   void visitLoop(Loop* curr);
   void visitIf(If* curr);
 
+  static void visitPreTry(FunctionValidator* self, Expression** currp) {
+    auto* curr = (*currp)->cast<Try>();
+    if (curr->name.is()) {
+      self->delegateTargetNames.insert(curr->name);
+    }
+  }
+
+  // We remove try's label before proceeding to verify catch bodies because the
+  // following is a validation failure:
+  // (try $l0
+  //   (do ... )
+  //   (catch $e
+  //     (try
+  //       (do ...)
+  //       (delegate $l0) ;; validation failure
+  //     )
+  //   )
+  // )
+  // Unlike branches, if delegate's target 'catch' is located above the
+  // delegate, it is a validation failure.
+  static void visitPreCatch(FunctionValidator* self, Expression** currp) {
+    auto* curr = (*currp)->cast<Try>();
+    if (curr->name.is()) {
+      self->delegateTargetNames.erase(curr->name);
+    }
+  }
+
   // override scan to add a pre and a post check task to all nodes
   static void scan(FunctionValidator* self, Expression** currp) {
+    auto* curr = *currp;
+    // Treat 'Try' specially because we need to run visitPreCatch between the
+    // try body and catch bodies
+    if (curr->is<Try>()) {
+      self->pushTask(doVisitTry, currp);
+      auto& list = curr->cast<Try>()->catchBodies;
+      for (int i = int(list.size()) - 1; i >= 0; i--) {
+        self->pushTask(scan, &list[i]);
+      }
+      self->pushTask(visitPreCatch, currp);
+      self->pushTask(scan, &curr->cast<Try>()->body);
+      self->pushTask(visitPreTry, currp);
+      return;
+    }
+
     PostWalker<FunctionValidator>::scan(self, currp);
 
-    auto* curr = *currp;
     if (curr->is<Block>()) {
       self->pushTask(visitPreBlock, currp);
     }
@@ -334,6 +376,7 @@ public:
   void visitRefIs(RefIs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
+  void noteDelegate(Name name, Expression* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -633,9 +676,11 @@ void FunctionValidator::validatePoppyBlockElements(Block* curr) {
                  curr,
                  "unreachable block should have unreachable element");
   } else {
-    if (!shouldBeTrue(blockSig.satisfies(Signature(Type::none, curr->type)),
-                      curr,
-                      "block contents should satisfy block type") &&
+    if (!shouldBeTrue(
+          StackSignature::isSubType(
+            blockSig, StackSignature(Type::none, curr->type, false)),
+          curr,
+          "block contents should satisfy block type") &&
         !info.quiet) {
       getStream() << "contents: " << blockSig.results
                   << (blockSig.unreachable ? " [unreachable]" : "") << "\n"
@@ -765,6 +810,7 @@ void FunctionValidator::noteBreak(Name name, Type valueType, Expression* curr) {
     }
   }
 }
+
 void FunctionValidator::visitBreak(Break* curr) {
   noteBreak(curr->name, curr->value, curr);
   if (curr->value) {
@@ -2027,6 +2073,14 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
     "ref.eq's right argument should be a subtype of eqref");
 }
 
+void FunctionValidator::noteDelegate(Name name, Expression* curr) {
+  if (name != DELEGATE_CALLER_TARGET) {
+    shouldBeTrue(delegateTargetNames.find(name) != delegateTargetNames.end(),
+                 curr,
+                 "all delegate targets must be valid");
+  }
+}
+
 void FunctionValidator::visitTry(Try* curr) {
   shouldBeTrue(getModule()->features.hasExceptionHandling(),
                curr,
@@ -2059,6 +2113,17 @@ void FunctionValidator::visitTry(Try* curr) {
   shouldBeTrue(curr->catchBodies.size() - curr->catchEvents.size() <= 1,
                curr,
                "the number of catch blocks and events do not match");
+
+  shouldBeFalse(curr->isCatch() && curr->isDelegate(),
+                curr,
+                "try cannot have both catch and delegate at the same time");
+  shouldBeTrue(curr->isCatch() || curr->isDelegate(),
+               curr,
+               "try should have either catches or a delegate");
+
+  if (curr->isDelegate()) {
+    noteDelegate(curr->delegateTarget, curr);
+  }
 }
 
 void FunctionValidator::visitThrow(Throw* curr) {
@@ -2468,6 +2533,9 @@ void FunctionValidator::visitFunction(Function* curr) {
 
   shouldBeTrue(
     breakInfos.empty(), curr->body, "all named break targets must exist");
+  shouldBeTrue(delegateTargetNames.empty(),
+               curr->body,
+               "all named delegate targets must exist");
   returnTypes.clear();
   labelNames.clear();
   // validate optional local names

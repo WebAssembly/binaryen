@@ -1027,6 +1027,7 @@ enum ASTNodes {
   Try = 0x06,
   Catch = 0x07,
   CatchAll = 0x05,
+  Delegate = 0x18,
   Throw = 0x08,
   Rethrow = 0x09,
 
@@ -1417,6 +1418,8 @@ public:
   // the names that breaks target. this lets us know if a block has breaks to it
   // or not.
   std::unordered_set<Name> breakTargetNames;
+  // the names that delegates target.
+  std::unordered_set<Name> delegateTargetNames;
 
   std::vector<Expression*> expressionStack;
 
@@ -1521,6 +1524,7 @@ public:
   Expression* getBlockOrSingleton(Type type);
 
   BreakTarget getBreakTarget(int32_t offset);
+  Name getDelegateTargetName(int32_t offset);
 
   void readMemoryAccess(Address& alignment, Address& offset);
 

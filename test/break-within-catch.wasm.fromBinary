@@ -4,7 +4,7 @@
  (event $event$0 (attr 0) (param i32))
  (func $0
   (block $label$2
-   (try
+   (try $label$3
     (do
      (nop)
     )

@@ -1918,7 +1918,9 @@ void WasmBinaryBuilder::readFunctions() {
       debugLocation.clear();
       willBeIgnored = false;
       // process body
-      assert(breakTargetNames.size() == 0);
+      assert(breakStack.empty());
+      assert(breakTargetNames.empty());
+      assert(delegateTargetNames.empty());
       assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(controlFlowStack.empty());
@@ -1926,8 +1928,9 @@ void WasmBinaryBuilder::readFunctions() {
       assert(depth == 0);
       func->body = getBlockOrSingleton(func->sig.results);
       assert(depth == 0);
-      assert(breakStack.size() == 0);
-      assert(breakTargetNames.size() == 0);
+      assert(breakStack.empty());
+      assert(breakTargetNames.empty());
+      assert(delegateTargetNames.empty());
       if (!expressionStack.empty()) {
         throwError("stack not empty on function exit");
       }
@@ -2210,7 +2213,8 @@ void WasmBinaryBuilder::processExpressions() {
       }
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
-          peek == BinaryConsts::Catch || peek == BinaryConsts::CatchAll) {
+          peek == BinaryConsts::Catch || peek == BinaryConsts::CatchAll ||
+          peek == BinaryConsts::Delegate) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
         lastSeparator = BinaryConsts::ASTNodes(peek);
@@ -2987,6 +2991,14 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       }
       break;
     }
+    case BinaryConsts::Delegate: {
+      curr = nullptr;
+      if (DWARF && currFunction) {
+        assert(!controlFlowStack.empty());
+        controlFlowStack.pop_back();
+      }
+      break;
+    }
     case BinaryConsts::RefNull:
       visitRefNull((curr = allocator.alloc<RefNull>())->cast<RefNull>());
       break;
@@ -3376,7 +3388,8 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
   block->name = label;
   block->finalize(type);
   // maybe we don't need a block here?
-  if (breakTargetNames.find(block->name) == breakTargetNames.end()) {
+  if (breakTargetNames.find(block->name) == breakTargetNames.end() &&
+      delegateTargetNames.find(block->name) == delegateTargetNames.end()) {
     block->name = Name();
     if (block->list.size() == 1) {
       return block->list[0];
@@ -3450,6 +3463,28 @@ WasmBinaryBuilder::getBreakTarget(int32_t offset) {
     breakTargetNames.insert(ret.name);
   }
   return ret;
+}
+
+Name WasmBinaryBuilder::getDelegateTargetName(int32_t offset) {
+  BYN_TRACE("getDelegateTarget " << offset << std::endl);
+  // We always start parsing a function by creating a block label and pushing it
+  // in breakStack in getBlockOrSingleton, so if a 'delegate''s target is that
+  // block, it does not mean it targets that block; it throws to the caller.
+  if (breakStack.size() - 1 == size_t(offset)) {
+    return DELEGATE_CALLER_TARGET;
+  }
+  size_t index = breakStack.size() - 1 - offset;
+  if (index > breakStack.size()) {
+    throwError("bad delegate index (high)");
+  }
+  BYN_TRACE("delegate target " << breakStack[index].name << std::endl);
+  auto& ret = breakStack[index];
+  // if the delegate is in literally unreachable code, then we will not emit it
+  // anyhow, so do not note that the target has delegate to it
+  if (!willBeIgnored) {
+    delegateTargetNames.insert(ret.name);
+  }
+  return ret.name;
 }
 
 void WasmBinaryBuilder::visitBreak(Break* curr, uint8_t code) {
@@ -5746,58 +5781,13 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   curr->type = getType();
   curr->body = getBlockOrSingleton(curr->type);
   if (lastSeparator != BinaryConsts::Catch &&
-      lastSeparator != BinaryConsts::CatchAll) {
+      lastSeparator != BinaryConsts::CatchAll &&
+      lastSeparator != BinaryConsts::Delegate) {
     throwError("No catch instruction within a try scope");
   }
 
-  // For simplicity, we create an inner block within the catch body too, but the
-  // one within the 'catch' *must* be omitted when we write out the binary back
-  // later, because the 'catch' instruction pushes a value onto the stack and
-  // the inner block does not support block input parameters without multivalue
-  // support.
-  // try
-  //   ...
-  // catch    ;; Pushes a value onto the stack
-  //   block  ;; Inner block. Should be deleted when writing binary!
-  //     use the pushed value
-  //   end
-  // end
-  //
-  // But when input binary code is like
-  // try
-  //   ...
-  // catch
-  //   br 0
-  // end
-  //
-  // 'br 0' accidentally happens to target the inner block, creating code like
-  // this in Binaryen IR, making the inner block not deletable, resulting in a
-  // validation error:
-  // (try
-  //   ...
-  //   (catch
-  //     (block $label0 ;; Cannot be deleted, because there's a branch to this
-  //       ...
-  //       (br $label0)
-  //     )
-  //   )
-  // )
-  //
-  // When this happens, we fix this by creating a block that wraps the whole
-  // try-catch, and making the branches target that block instead, like this:
-  // (block $label  ;; New enclosing block, new target for the branch
-  //   (try
-  //     ...
-  //     (catch
-  //       (block   ;; Now this can be deleted when writing binary
-  //         ...
-  //         (br $label0)
-  //       )
-  //     )
-  //   )
-  // )
-
   Builder builder(wasm);
+  // A nameless label shared by all catch body blocks
   Name catchLabel = getNextLabel();
   breakStack.push_back({catchLabel, curr->type});
 
@@ -5839,8 +5829,84 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
       readCatchBody(Type::none);
     }
   }
+  breakStack.pop_back();
+
+  if (lastSeparator == BinaryConsts::Delegate) {
+    curr->delegateTarget = getDelegateTargetName(getU32LEB());
+  }
+
+  // For simplicity, we make try's labels only can be targeted by delegates, and
+  // delegates can only target try's labels. (If they target blocks or loops, it
+  // is a validation failure.) Because we create an inner block within each try
+  // and catch body, if any delegate targets those inner blocks, we should make
+  // them target the try's label instead.
+  curr->name = getNextLabel();
+  if (auto* block = curr->body->dynCast<Block>()) {
+    if (block->name.is()) {
+      if (delegateTargetNames.find(block->name) != delegateTargetNames.end()) {
+        BranchUtils::replaceDelegateTargets(block, block->name, curr->name);
+        delegateTargetNames.erase(block->name);
+      }
+      // maybe we don't need a block here?
+      if (block->list.size() == 1) {
+        curr->body = block->list[0];
+      }
+    }
+  }
+  if (delegateTargetNames.find(catchLabel) != delegateTargetNames.end()) {
+    for (auto* catchBody : curr->catchBodies) {
+      BranchUtils::replaceDelegateTargets(catchBody, catchLabel, curr->name);
+    }
+    delegateTargetNames.erase(catchLabel);
+  }
   curr->finalize(curr->type);
 
+  // For simplicity, we create an inner block within the catch body too, but the
+  // one within the 'catch' *must* be omitted when we write out the binary back
+  // later, because the 'catch' instruction pushes a value onto the stack and
+  // the inner block does not support block input parameters without multivalue
+  // support.
+  // try
+  //   ...
+  // catch $e   ;; Pushes value(s) onto the stack
+  //   block  ;; Inner block. Should be deleted when writing binary!
+  //     use the pushed value
+  //   end
+  // end
+  //
+  // But when input binary code is like
+  // try
+  //   ...
+  // catch $e
+  //   br 0
+  // end
+  //
+  // 'br 0' accidentally happens to target the inner block, creating code like
+  // this in Binaryen IR, making the inner block not deletable, resulting in a
+  // validation error:
+  // (try
+  //   ...
+  //   (catch $e
+  //     (block $label0 ;; Cannot be deleted, because there's a branch to this
+  //       ...
+  //       (br $label0)
+  //     )
+  //   )
+  // )
+  //
+  // When this happens, we fix this by creating a block that wraps the whole
+  // try-catch, and making the branches target that block instead, like this:
+  // (block $label  ;; New enclosing block, new target for the branch
+  //   (try
+  //     ...
+  //     (catch $e
+  //       (block   ;; Now this can be deleted when writing binary
+  //         ...
+  //         (br $label0)
+  //       )
+  //     )
+  //   )
+  // )
   if (breakTargetNames.find(catchLabel) == breakTargetNames.end()) {
     out = curr;
   } else {
@@ -5848,7 +5914,6 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     auto* block = builder.makeBlock(catchLabel, curr);
     out = block;
   }
-  breakStack.pop_back();
   breakTargetNames.erase(catchLabel);
 }
 

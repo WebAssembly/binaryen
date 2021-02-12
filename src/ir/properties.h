@@ -69,13 +69,15 @@ inline bool isControlFlowStructure(Expression* curr) {
          curr->is<Try>();
 }
 
-// Check if an expression is a control flow construct with a name,
-// which implies it may have breaks to it.
+// Check if an expression is a control flow construct with a name, which implies
+// it may have breaks or delegates to it.
 inline bool isNamedControlFlow(Expression* curr) {
   if (auto* block = curr->dynCast<Block>()) {
     return block->name.is();
   } else if (auto* loop = curr->dynCast<Loop>()) {
     return loop->name.is();
+  } else if (auto* try_ = curr->dynCast<Try>()) {
+    return try_->name.is();
   }
   return false;
 }
@@ -102,6 +104,10 @@ inline bool isConstantExpression(const Expression* curr) {
     return true;
   }
   return false;
+}
+
+inline bool isBranch(const Expression* curr) {
+  return curr->is<Break>() || curr->is<Switch>() || curr->is<BrOn>();
 }
 
 inline Literal getLiteral(const Expression* curr) {

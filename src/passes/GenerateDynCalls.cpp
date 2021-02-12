@@ -129,9 +129,8 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
   }
   // FIXME: Should the existence of a table be ensured here? i.e. create one if
   // there is none?
-  Expression* call =
-    builder.makeCallIndirect(Name::fromInt(0), fptr, args, sig);
-  f->body = call;
+  assert(wasm->tables.size() > 0);
+  f->body = builder.makeCallIndirect(wasm->tables[0]->name, fptr, args, sig);
 
   wasm->addFunction(std::move(f));
   exportFunction(*wasm, name, true);

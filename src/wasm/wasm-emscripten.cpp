@@ -76,8 +76,7 @@ Global* getStackPointerGlobal(Module& wasm) {
 
 const Address UNKNOWN_OFFSET(uint32_t(-1));
 
-std::string escape(const char* input) {
-  std::string code = input;
+std::string escape(std::string code) {
   // replace newlines quotes with escaped newlines
   size_t curr = 0;
   while ((curr = code.find("\\n", curr)) != std::string::npos) {
@@ -109,13 +108,20 @@ class StringConstantTracker {
 public:
   StringConstantTracker(Module& wasm) : wasm(wasm) { calcSegmentOffsets(); }
 
-  std::string codeForConstAddr(int64_t address) {
-    const char* str = stringAtAddr(address);
-    if (!str) {
-      Fatal() << "unable to find data for ASM/EM_JS const at: " << address;
+  const char* stringAtAddr(Address address) {
+    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
+      Memory::Segment& segment = wasm.memory.segments[i];
+      Address offset = segmentOffsets[i];
+      if (offset != UNKNOWN_OFFSET && address >= offset &&
+          address < offset + segment.data.size()) {
+        return &segment.data[address - offset];
+      }
     }
-    return escape(str);
+    Fatal() << "unable to find data for ASM/EM_JS const at: " << address;
+    return nullptr;
   }
+
+  std::vector<Address> segmentOffsets; // segment index => address offset
 
 private:
   void calcSegmentOffsets() {
@@ -172,54 +178,20 @@ private:
     }
   }
 
-  const char* stringAtAddr(Address address) {
-    for (unsigned i = 0; i < wasm.memory.segments.size(); ++i) {
-      Memory::Segment& segment = wasm.memory.segments[i];
-      Address offset = segmentOffsets[i];
-      if (offset != UNKNOWN_OFFSET && address >= offset &&
-          address < offset + segment.data.size()) {
-        return &segment.data[address - offset];
-      }
-    }
-    return nullptr;
-  }
-
   Module& wasm;
-  std::vector<Address> segmentOffsets; // segment index => address offset
 };
 
-enum class Proxying {
-  None,
-  Sync,
-  Async,
+struct AsmConst {
+  Address id;
+  std::string code;
 };
-
-std::string proxyingSuffix(Proxying proxy) {
-  switch (proxy) {
-    case Proxying::None:
-      return "";
-    case Proxying::Sync:
-      return "sync_on_main_thread_";
-    case Proxying::Async:
-      return "async_on_main_thread_";
-  }
-  WASM_UNREACHABLE("invalid prozy type");
-}
 
 struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   Module& wasm;
   bool minimizeWasmChanges;
   StringConstantTracker stringTracker;
 
-  struct AsmConst {
-    std::set<Signature> sigs;
-    Address id;
-    std::string code;
-    Proxying proxy;
-  };
-
   std::vector<AsmConst> asmConsts;
-  std::set<std::pair<Signature, Proxying>> allSigs;
   // last sets in the current basic block, per index
   std::map<Index, LocalSet*> sets;
 
@@ -235,11 +207,8 @@ struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
   void process();
 
 private:
-  void createAsmConst(uint64_t id, std::string code, Signature sig, Name name);
-  Signature asmConstSig(Signature baseSig);
-  Name nameForImportWithSig(Signature sig, Proxying proxy);
+  void createAsmConst(uint64_t id, std::string code);
   void addImports();
-  Proxying proxyType(Name name);
 
   std::vector<std::unique_ptr<Function>> queuedImports;
 };
@@ -263,8 +232,6 @@ void AsmConstWalker::visitCall(Call* curr) {
     return;
   }
 
-  auto baseSig = wasm.getFunction(curr->target)->sig;
-  auto sig = asmConstSig(baseSig);
   auto* arg = curr->operands[0];
   while (!arg->dynCast<Const>()) {
     if (auto* get = arg->dynCast<LocalGet>()) {
@@ -318,18 +285,8 @@ void AsmConstWalker::visitCall(Call* curr) {
   }
 
   auto* value = arg->cast<Const>();
-  int64_t address = value->value.getInteger();
-  auto code = stringTracker.codeForConstAddr(address);
-  createAsmConst(address, code, sig, importName);
-}
-
-Proxying AsmConstWalker::proxyType(Name name) {
-  if (name.hasSubstring("_sync_on_main_thread")) {
-    return Proxying::Sync;
-  } else if (name.hasSubstring("_async_on_main_thread")) {
-    return Proxying::Async;
-  }
-  return Proxying::None;
+  Address address = value->value.getInteger();
+  asmConsts.push_back({address, stringTracker.stringAtAddr(address)});
 }
 
 void AsmConstWalker::process() {
@@ -340,38 +297,105 @@ void AsmConstWalker::process() {
   addImports();
 }
 
-void AsmConstWalker::createAsmConst(uint64_t id,
-                                    std::string code,
-                                    Signature sig,
-                                    Name name) {
-  AsmConst asmConst;
-  asmConst.id = id;
-  asmConst.code = code;
-  asmConst.sigs.insert(sig);
-  asmConst.proxy = proxyType(name);
-  asmConsts.push_back(asmConst);
-}
-
-Signature AsmConstWalker::asmConstSig(Signature baseSig) {
-  assert(baseSig.params.size() >= 1);
-  // Omit the signature of the "code" parameter, taken as a string, as the
-  // first argument
-  return Signature(
-    Type(std::vector<Type>(baseSig.params.begin() + 1, baseSig.params.end())),
-    baseSig.results);
-}
-
 void AsmConstWalker::addImports() {
   for (auto& import : queuedImports) {
     wasm.addFunction(import.release());
   }
 }
 
-static AsmConstWalker fixEmAsmConstsAndReturnWalker(Module& wasm,
-                                                    bool minimizeWasmChanges) {
-  AsmConstWalker walker(wasm, minimizeWasmChanges);
-  walker.process();
-  return walker;
+struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
+  SegmentRemover(Index segment) : segment(segment) {}
+
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new SegmentRemover(segment); }
+
+  void visitMemoryInit(MemoryInit* curr) {
+    if (segment == curr->segment) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
+                                      builder.makeDrop(curr->offset),
+                                      builder.makeDrop(curr->size)));
+    }
+  }
+
+  void visitDataDrop(DataDrop* curr) {
+    if (segment == curr->segment) {
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeNop());
+    }
+  }
+
+  Index segment;
+};
+
+static void removeSegment(Module& wasm, Index segment) {
+  PassRunner runner(&wasm);
+  SegmentRemover(segment).run(&runner, &wasm);
+  // Resize the segment to zero.  In theory we should completely remove it
+  // but that would mean re-numbering the segments that follow which is
+  // non-trivial.
+  wasm.memory.segments[segment].data.resize(0);
+}
+
+static Address getExportedAddress(Module& wasm, Export* export_) {
+  Global* g = wasm.getGlobal(export_->value);
+  auto* addrConst = g->init->dynCast<Const>();
+  return addrConst->value.getInteger();
+}
+
+static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
+                                             bool minimizeWasmChanges) {
+  Export* start = wasm.getExportOrNull("__start_em_asm");
+  Export* end = wasm.getExportOrNull("__stop_em_asm");
+
+  // Older versions of emscripten don't export these symbols.  Instead
+  // we run AsmConstWalker in an attempt to derive the string addresses
+  // from the code.
+  if (!start || !end) {
+    AsmConstWalker walker(wasm, minimizeWasmChanges);
+    walker.process();
+    return walker.asmConsts;
+  }
+
+  // Newer version of emscripten export this symbols and we
+  // can use it ot find all the EM_ASM constants.   Sadly __start_em_asm and
+  // __stop_em_asm don't alwasy mark the start and end of segment because in
+  // dynamic linking we merge all data segments into one.
+  std::vector<AsmConst> asmConsts;
+  StringConstantTracker stringTracker(wasm);
+  Address startAddress = getExportedAddress(wasm, start);
+  Address endAddress = getExportedAddress(wasm, end);
+  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+    Address segmentStart = stringTracker.segmentOffsets[i];
+    size_t segmentSize = wasm.memory.segments[i].data.size();
+    if (segmentStart <= startAddress &&
+        segmentStart + segmentSize >= endAddress) {
+      Address address = startAddress;
+      while (address < endAddress) {
+        auto code = stringTracker.stringAtAddr(address);
+        asmConsts.push_back({address, code});
+        address.addr += strlen(code) + 1;
+      }
+
+      if (segmentStart == startAddress &&
+          segmentStart + segmentSize == endAddress) {
+        removeSegment(wasm, i);
+      } else {
+        // If we can't remove the whole segment then just set the string
+        // data to zero.
+        size_t segmentOffset = startAddress - segmentStart;
+        char* startElem = &wasm.memory.segments[i].data[segmentOffset];
+        memset(startElem, 0, endAddress - startAddress);
+      }
+      break;
+    }
+  }
+
+  assert(asmConsts.size());
+  wasm.removeExport("__start_em_asm");
+  wasm.removeExport("__stop_em_asm");
+  return asmConsts;
 }
 
 struct EmJsWalker : public PostWalker<EmJsWalker> {
@@ -380,6 +404,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
   std::vector<Export> toRemove;
 
   std::map<std::string, std::string> codeByName;
+  std::map<Address, size_t> codeAddresses; // map from address to string len
 
   EmJsWalker(Module& _wasm) : wasm(_wasm), stringTracker(_wasm) {}
 
@@ -402,12 +427,13 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
     }
     auto* addrConst = consts.list[0];
     int64_t address = addrConst->value.getInteger();
-    auto code = stringTracker.codeForConstAddr(address);
+    auto code = stringTracker.stringAtAddr(address);
     codeByName[funcName] = code;
+    codeAddresses[address] = strlen(code) + 1;
   }
 };
 
-EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
+EmJsWalker findEmJsFuncsAndReturnWalker(Module& wasm) {
   EmJsWalker walker(wasm);
   walker.walkModule(&wasm);
 
@@ -415,21 +441,28 @@ EmJsWalker fixEmJsFuncsAndReturnWalker(Module& wasm) {
     wasm.removeExport(exp.name);
     wasm.removeFunction(exp.value);
   }
-  return walker;
-}
 
-void printSignatures(std::ostream& o, const std::set<Signature>& c) {
-  o << "[";
-  bool first = true;
-  for (auto& sig : c) {
-    if (first) {
-      first = false;
-    } else {
-      o << ",";
+  // With newer versions of emscripten/llvm we pack all EM_JS strings into
+  // single segment.
+  // We can detect this by checking for segments that contain only JS strings.
+  // When we find such segements we remove them from the final binary.
+  for (Index i = 0; i < wasm.memory.segments.size(); i++) {
+    Address start = walker.stringTracker.segmentOffsets[0];
+    Address cur = start;
+
+    while (cur < start + wasm.memory.segments[i].data.size()) {
+      if (walker.codeAddresses.count(cur) == 0) {
+        break;
+      }
+      cur.addr += walker.codeAddresses[cur];
     }
-    o << '"' << getSig(sig.results, sig.params) << '"';
+
+    if (cur == start + wasm.memory.segments[i].data.size()) {
+      // Entire segment is contains JS strings.  Remove it.
+      removeSegment(wasm, i);
+    }
   }
-  o << "]";
+  return walker;
 }
 
 std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
@@ -446,25 +479,20 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   std::stringstream meta;
   meta << "{\n";
 
-  AsmConstWalker emAsmWalker =
-    fixEmAsmConstsAndReturnWalker(wasm, minimizeWasmChanges);
+  std::vector<AsmConst> asmConsts = findEmAsmConsts(wasm, minimizeWasmChanges);
 
   // print
   commaFirst = true;
-  if (!emAsmWalker.asmConsts.empty()) {
+  if (!asmConsts.empty()) {
     meta << "  \"asmConsts\": {";
-    for (auto& asmConst : emAsmWalker.asmConsts) {
+    for (auto& asmConst : asmConsts) {
       meta << nextElement();
-      meta << '"' << asmConst.id << "\": [\"" << asmConst.code << "\", ";
-      printSignatures(meta, asmConst.sigs);
-      meta << ", [\"" << proxyingSuffix(asmConst.proxy) << "\"]";
-
-      meta << "]";
+      meta << '"' << asmConst.id << "\": \"" << escape(asmConst.code) << "\"";
     }
     meta << "\n  },\n";
   }
 
-  EmJsWalker emJsWalker = fixEmJsFuncsAndReturnWalker(wasm);
+  EmJsWalker emJsWalker = findEmJsFuncsAndReturnWalker(wasm);
   if (!emJsWalker.codeByName.empty()) {
     meta << "  \"emJsFuncs\": {";
     commaFirst = true;
@@ -472,7 +500,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
       auto& name = pair.first;
       auto& code = pair.second;
       meta << nextElement();
-      meta << '"' << name << "\": \"" << code << '"';
+      meta << '"' << name << "\": \"" << escape(code) << '"';
     }
     meta << "\n  },\n";
   }

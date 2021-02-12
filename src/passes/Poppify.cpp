@@ -128,6 +128,7 @@ struct Poppifier : BinaryenIRWriter<Poppifier> {
   void emitIfElse(If* curr);
   void emitCatch(Try* curr, Index i);
   void emitCatchAll(Try* curr);
+  void emitDelegate(Try* curr);
   void emitScopeEnd(Expression* curr);
   void emitFunctionEnd();
   void emitUnreachable();
@@ -270,6 +271,13 @@ void Poppifier::emitCatchAll(Try* curr) {
     patchScope(curr->catchBodies[curr->catchBodies.size() - 2]);
   }
   scopeStack.emplace_back(Scope::Catch);
+}
+
+void Poppifier::emitDelegate(Try* curr) {
+  auto& scope = scopeStack.back();
+  assert(scope.kind == Scope::Try);
+  patchScope(curr->body);
+  scopeStack.back().instrs.push_back(curr);
 }
 
 void Poppifier::emitScopeEnd(Expression* curr) {

@@ -4,7 +4,7 @@
 ;; RUN: wasm-emscripten-finalize --enable-bulk-memory %s -o out.wasm | filecheck %s
 
 ;; CHECK:  "asmConsts": {
-;; CHECK:    "3": ["hello", ["iii"], [""]]
+;; CHECK:    "3": "hello"
 ;; CHECK:  },
 
 (module

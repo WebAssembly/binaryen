@@ -95,9 +95,9 @@
 --BEGIN METADATA --
 {
   "asmConsts": {
-    "0": ["{ Module.print(\"Hello world\"); }", ["iii"], [""]],
-    "34": ["{ return $0 + $1; }", ["iii"], [""]],
-    "57": ["{ Module.print(\"Got \" + $0); }", ["iii"], [""]]
+    "0": "{ Module.print(\"Hello world\"); }",
+    "34": "{ return $0 + $1; }",
+    "57": "{ Module.print(\"Got \" + $0); }"
   },
   "tableSize": 0,
   "declares": [

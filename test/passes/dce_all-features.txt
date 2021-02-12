@@ -547,7 +547,7 @@
   (nop)
  )
  (func $try_unreachable
-  (try
+  (try $try
    (do
     (unreachable)
    )
@@ -558,7 +558,7 @@
   (call $foo)
  )
  (func $catch_unreachable
-  (try
+  (try $try
    (do
     (nop)
    )
@@ -569,7 +569,7 @@
   (call $foo)
  )
  (func $both_unreachable
-  (try
+  (try $try
    (do
     (unreachable)
    )
@@ -616,7 +616,7 @@
   )
  )
  (func $unnecessary-concrete-try (result i32)
-  (try
+  (try $try
    (do
     (unreachable)
    )

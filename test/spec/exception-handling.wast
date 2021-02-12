@@ -241,7 +241,7 @@
       )
     )
   )
-   "try's type does not match try body's type"
+  "try's type does not match try body's type"
 )
 
 (assert_invalid
@@ -262,4 +262,40 @@
     )
   )
   "event's param numbers must match"
+)
+
+(assert_invalid
+  (module
+    (func $f0
+      (block $l0
+        (try
+          (do
+            (try
+              (do)
+              (delegate $l0) ;; target is a block
+            )
+          )
+          (catch_all)
+        )
+      )
+    )
+  )
+  "all delegate targets must be valid"
+)
+
+(assert_invalid
+  (module
+    (func $f0
+      (try $l0
+        (do)
+        (catch_all
+          (try
+            (do)
+            (delegate $l0) ;; the target catch is above the delegate
+          )
+        )
+      )
+    )
+  )
+  "all delegate targets must be valid"
 )
