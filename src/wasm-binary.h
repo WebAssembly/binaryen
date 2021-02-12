@@ -1419,7 +1419,7 @@ public:
   // or not.
   std::unordered_set<Name> breakTargetNames;
   // the names that delegates target.
-  std::unordered_set<Name> delegateTargetNames;
+  std::unordered_set<Name> exceptionTargetNames;
 
   std::vector<Expression*> expressionStack;
 
@@ -1524,7 +1524,7 @@ public:
   Expression* getBlockOrSingleton(Type type);
 
   BreakTarget getBreakTarget(int32_t offset);
-  Name getDelegateTargetName(int32_t offset);
+  Name getExceptionTargetName(int32_t offset);
 
   void readMemoryAccess(Address& alignment, Address& offset);
 

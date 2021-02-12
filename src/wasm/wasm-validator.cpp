@@ -236,7 +236,7 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   };
 
   std::unordered_map<Name, BreakInfo> breakInfos;
-  std::unordered_set<Name> delegateTargetNames;
+  std::unordered_set<Name> exceptionTargetNames;
 
   std::set<Type> returnTypes; // types used in returns
 
@@ -280,7 +280,7 @@ public:
   static void visitPreTry(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
     if (curr->name.is()) {
-      self->delegateTargetNames.insert(curr->name);
+      self->exceptionTargetNames.insert(curr->name);
     }
   }
 
@@ -300,7 +300,7 @@ public:
   static void visitPreCatch(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
     if (curr->name.is()) {
-      self->delegateTargetNames.erase(curr->name);
+      self->exceptionTargetNames.erase(curr->name);
     }
   }
 
@@ -376,7 +376,7 @@ public:
   void visitRefIs(RefIs* curr);
   void visitRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
-  void noteDelegate(Name name, Expression* curr);
+  void noteException(Name name, Expression* curr);
   void visitTry(Try* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
@@ -2073,9 +2073,9 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
     "ref.eq's right argument should be a subtype of eqref");
 }
 
-void FunctionValidator::noteDelegate(Name name, Expression* curr) {
+void FunctionValidator::noteException(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
-    shouldBeTrue(delegateTargetNames.find(name) != delegateTargetNames.end(),
+    shouldBeTrue(exceptionTargetNames.find(name) != exceptionTargetNames.end(),
                  curr,
                  "all delegate targets must be valid");
   }
@@ -2122,7 +2122,7 @@ void FunctionValidator::visitTry(Try* curr) {
                "try should have either catches or a delegate");
 
   if (curr->isDelegate()) {
-    noteDelegate(curr->delegateTarget, curr);
+    noteException(curr->delegateTarget, curr);
   }
 }
 
@@ -2533,7 +2533,7 @@ void FunctionValidator::visitFunction(Function* curr) {
 
   shouldBeTrue(
     breakInfos.empty(), curr->body, "all named break targets must exist");
-  shouldBeTrue(delegateTargetNames.empty(),
+  shouldBeTrue(exceptionTargetNames.empty(),
                curr->body,
                "all named delegate targets must exist");
   returnTypes.clear();
