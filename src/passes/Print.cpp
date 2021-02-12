@@ -3240,6 +3240,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
       o << maybeNewLine;
     }
+    if (curr->hasFeaturesSection) {
+      doIndent(o, indent);
+      o << ";; features section: " << curr->features.toString() << '\n';
+    }
     decIndent();
     o << maybeNewLine;
     currModule = nullptr;

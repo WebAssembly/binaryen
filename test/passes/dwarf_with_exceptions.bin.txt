@@ -120,6 +120,7 @@
  ;; custom section ".debug_line", size 92
  ;; custom section ".debug_str", size 194
  ;; custom section "producers", size 137
+ ;; features section: exception-handling, reference-types
 )
 DWARF debug info
 ================
@@ -541,4 +542,5 @@ file_names[  1]:
  ;; custom section ".debug_line", size 145
  ;; custom section ".debug_str", size 194
  ;; custom section "producers", size 137
+ ;; features section: exception-handling, reference-types
 )
