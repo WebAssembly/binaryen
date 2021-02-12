@@ -349,6 +349,10 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.assertIn('anyref', disassembly)
         self.assertIn('eqref', disassembly)
 
+    def test_superset(self):
+        # It is ok to enable additional features past what is in the section.
+        self.check_features('signext_target_feature.wasm', ['sign-ext', 'simd'])
+
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
         p = shared.run_process(
@@ -357,7 +361,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             check=False, capture_output=True
         )
         self.assertNotEqual(p.returncode, 0)
-        self.assertIn('Fatal: module features do not match specified features. ' +
+        self.assertIn('Fatal: features section is not a subset of specified features. ' +
                       'Use --detect-features to resolve.',
                       p.stderr)
 
