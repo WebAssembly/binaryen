@@ -18,7 +18,7 @@
   (local $2 (i32 i64))
   (local $3 i32)
   (local $4 i32)
-  (try
+  (try $label$3
    (do
     (throw $event$0
      (i32.const 0)
@@ -30,7 +30,7 @@
     )
    )
   )
-  (try
+  (try $label$6
    (do
     (throw $event$2
      (i32.const 0)
@@ -69,20 +69,20 @@
     )
    )
   )
-  (block $label$5
-   (try
+  (block $label$7
+   (try $label$10
     (do
-     (br $label$5)
+     (br $label$7)
     )
     (catch $event$0
      (drop
       (pop i32)
      )
-     (br $label$5)
+     (br $label$7)
     )
    )
   )
-  (try
+  (try $label$13
    (do
     (nop)
    )
@@ -92,7 +92,7 @@
     )
    )
   )
-  (try
+  (try $label$16
    (do
     (call $0)
     (call $1)
@@ -105,7 +105,7 @@
     (call $1)
    )
   )
-  (try
+  (try $label$19
    (do
     (throw $event$0
      (i32.const 0)
@@ -122,7 +122,7 @@
     )
    )
   )
-  (try
+  (try $label$22
    (do
     (throw $event$0
      (i32.const 0)
@@ -132,7 +132,7 @@
     (nop)
    )
   )
-  (try
+  (try $label$25
    (do
     (throw $event$0
      (i32.const 0)
@@ -153,7 +153,48 @@
     (call $1)
    )
   )
-  (try
+  (try $label$34
+   (do
+    (try $label$29
+     (do
+      (throw $event$0
+       (i32.const 0)
+      )
+     )
+     (catch $event$0
+      (drop
+       (pop i32)
+      )
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+   (catch $event$0
+    (drop
+     (pop i32)
+    )
+   )
+   (catch_all
+    (try $label$33
+     (do
+      (throw $event$0
+       (i32.const 0)
+      )
+     )
+     (catch $event$0
+      (drop
+       (pop i32)
+      )
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+  )
+  (try $label$37
    (do
     (throw $event$0
      (i32.const 0)
@@ -165,6 +206,67 @@
     )
     (rethrow 0)
    )
+  )
+ )
+ (func $3
+  (try $label$9
+   (do
+    (block $label$1
+     (try $label$4
+      (do
+       (call $0)
+      )
+      (delegate $label$9)
+     )
+     (try $label$7
+      (do
+       (call $0)
+      )
+      (delegate $label$9)
+     )
+    )
+   )
+   (catch_all
+    (nop)
+   )
+  )
+  (block $label$10
+   (try $label$19
+    (do
+     (block $label$11
+      (try $label$14
+       (do
+        (br_if $label$10
+         (i32.const 1)
+        )
+       )
+       (delegate $label$19)
+      )
+      (try $label$17
+       (do
+        (br_if $label$10
+         (i32.const 1)
+        )
+       )
+       (delegate $label$19)
+      )
+     )
+    )
+    (catch_all
+     (nop)
+    )
+   )
+  )
+  (try $label$25
+   (do
+    (try $label$23
+     (do
+      (call $0)
+     )
+     (delegate $label$25)
+    )
+   )
+   (delegate 0)
   )
  )
 )

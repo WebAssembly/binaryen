@@ -1859,7 +1859,7 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
   return ret;
 }
 
-Name SExpressionWasmBuilder::getLabel(Element& s) {
+Name SExpressionWasmBuilder::getLabel(Element& s, LabelType labelType) {
   if (s.dollared()) {
     return nameMapper.sourceToUnique(s.str());
   } else {
@@ -1876,10 +1876,14 @@ Name SExpressionWasmBuilder::getLabel(Element& s) {
       throw ParseException("invalid label", s.line, s.col);
     }
     if (offset == nameMapper.labelStack.size()) {
-      // a break to the function's scope. this means we need an automatic block,
-      // with a name
-      brokeToAutoBlock = true;
-      return FAKE_RETURN;
+      if (labelType == LabelType::Break) {
+        // a break to the function's scope. this means we need an automatic
+        // block, with a name
+        brokeToAutoBlock = true;
+        return FAKE_RETURN;
+      }
+      // This is a delegate that delegates to the caller
+      return DELEGATE_CALLER_TARGET;
     }
     return nameMapper.labelStack[nameMapper.labelStack.size() - 1 - offset];
   }
@@ -1975,12 +1979,13 @@ Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
   return ret;
 }
 
-// try-catch-end is written in the folded wast format as
+// try can be either in the form of try-catch or try-delegate.
+// try-catch is written in the folded wast format as
 // (try
 //  (do
 //    ...
 //  )
-//  (catch
+//  (catch $e
 //    ...
 //  )
 //  ...
@@ -1991,6 +1996,14 @@ Expression* SExpressionWasmBuilder::makeRefEq(Element& s) {
 // Any number of catch blocks can exist, including none. Zero or one catch_all
 // block can exist, and if it does, it should be at the end. There should be at
 // least one catch or catch_all body per try.
+//
+// try-delegate is written in the folded format as
+// (try
+//  (do
+//    ...
+//  )
+//  (delegate $label)
+// )
 Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   auto ret = allocator.alloc<Try>();
   Index i = 1;
@@ -2001,7 +2014,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
   } else {
     sName = "try";
   }
-  auto label = nameMapper.pushLabelName(sName);
+  ret->name = nameMapper.pushLabelName(sName);
   Type type = parseOptionalResultType(s, i); // signature
 
   if (!elementStartsWith(*s[i], "do")) {
@@ -2027,21 +2040,38 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     ret->catchBodies.push_back(makeMaybeBlock(*s[i++], 1, type));
   }
 
+  // 'delegate' cannot target its own try. So we pop the name here.
+  nameMapper.popLabelName(ret->name);
+
+  if (i < s.size() && elementStartsWith(*s[i], "delegate")) {
+    Element& inner = *s[i++];
+    if (inner.size() != 2) {
+      throw ParseException("invalid delegate", inner.line, inner.col);
+    }
+    ret->delegateTarget = getLabel(*inner[1], LabelType::Delegate);
+  }
+
   if (i != s.size()) {
     throw ParseException(
       "there should be at most one catch_all block at the end", s.line, s.col);
   }
-  if (ret->catchBodies.empty()) {
-    throw ParseException("no catch bodies", s.line, s.col);
+  if (ret->catchBodies.empty() && !ret->isDelegate()) {
+    throw ParseException("no catch bodies or delegate", s.line, s.col);
   }
 
   ret->finalize(type);
-  nameMapper.popLabelName(label);
+
   // create a break target if we must
-  if (BranchUtils::BranchSeeker::has(ret, label)) {
+  if (BranchUtils::BranchSeeker::has(ret, ret->name)) {
     auto* block = allocator.alloc<Block>();
-    block->name = label;
+    // We create a different name for the wrapping block, because try's name can
+    // be used by internal delegates
+    block->name = nameMapper.pushLabelName(sName);
+    // For simplicity, try's name canonly be targeted by delegates. Make the
+    // branches target the new wrapping block instead.
+    BranchUtils::replaceBranchTargets(ret, ret->name, block->name);
     block->list.push_back(ret);
+    nameMapper.popLabelName(block->name);
     block->finalize(type);
     return block;
   }

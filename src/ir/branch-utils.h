@@ -40,9 +40,9 @@ inline bool isBranchReachable(Expression* expr) {
   return true;
 }
 
-// Perform a generic operation on uses of scope names (branch targets) in an
-// expression. The provided function receives a Name& which it can modify if it
-// needs to.
+// Perform a generic operation on uses of scope names (branch + delegate
+// targets) in an expression. The provided function receives a Name& which it
+// can modify if it needs to.
 template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #define DELEGATE_ID expr->_id
 
@@ -83,7 +83,7 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->getCastType());
     } else {
-      WASM_UNREACHABLE("bad br type");
+      assert(expr->is<Try>()); // delegate
     }
   });
 }
@@ -133,6 +133,46 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
     }
   });
   return worked;
+}
+
+// Replace all delegate targets within the given AST.
+inline void replaceDelegateTargets(Expression* ast, Name from, Name to) {
+  struct Replacer
+    : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
+    Name from, to;
+    Replacer(Name from, Name to) : from(from), to(to) {}
+    void visitExpression(Expression* curr) {
+      if (curr->is<Try>()) {
+        operateOnScopeNameUses(curr, [&](Name& name) {
+          if (name == from) {
+            name = to;
+          }
+        });
+      }
+    }
+  };
+  Replacer replacer(from, to);
+  replacer.walk(ast);
+}
+
+// Replace all branch targets within the given AST.
+inline void replaceBranchTargets(Expression* ast, Name from, Name to) {
+  struct Replacer
+    : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
+    Name from, to;
+    Replacer(Name from, Name to) : from(from), to(to) {}
+    void visitExpression(Expression* curr) {
+      if (Properties::isBranch(curr)) {
+        operateOnScopeNameUses(curr, [&](Name& name) {
+          if (name == from) {
+            name = to;
+          }
+        });
+      }
+    }
+  };
+  Replacer replacer(from, to);
+  replacer.walk(ast);
 }
 
 // Returns the set of targets to which we branch that are

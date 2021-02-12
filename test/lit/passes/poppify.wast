@@ -178,7 +178,7 @@
   )
 
   ;; CHECK:      (func $try-catch (result i32)
-  ;; CHECK-NEXT:  (try (result i32)
+  ;; CHECK-NEXT:  (try $try (result i32)
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (throw $e
@@ -204,6 +204,42 @@
       )
       (catch_all
         (i32.const 1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $try-delegate (result i32)
+  ;; CHECK-NEXT:  (try $l0 (result i32)
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (throw $e
+  ;; CHECK-NEXT:       (pop i32)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (delegate $l0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-delegate (result i32)
+    (try $l0 i32
+      (do
+        (try
+          (do
+            (throw $e
+              (i32.const 0)
+            )
+          )
+          (delegate $l0)
+        )
+      )
+      (catch $e
+        (pop i32)
       )
     )
   )

@@ -1764,6 +1764,10 @@ struct PrintExpressionContents
   void visitRefEq(RefEq* curr) { printMedium(o, "ref.eq"); }
   void visitTry(Try* curr) {
     printMedium(o, "try");
+    if (curr->name.is()) {
+      o << ' ';
+      printName(curr->name, o);
+    }
     if (curr->type.isConcrete()) {
       o << ' ' << ResultType(curr->type);
     }
@@ -1955,6 +1959,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   Function::DebugLocation lastPrintedLocation;
   bool debugInfo;
 
+  // Used to print delegate's depth argument when it throws to the caller
+  int controlFlowDepth = 0;
+
   PrintSExpression(std::ostream& o) : o(o) {
     setMinify(false);
     if (!full) {
@@ -2100,6 +2107,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         break; // that's all we can recurse, start to unwind
       }
     }
+
+    int startControlFlowDepth = controlFlowDepth;
+    controlFlowDepth += stack.size();
     auto* top = stack.back();
     while (stack.size() > 0) {
       curr = stack.back();
@@ -2129,8 +2139,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << ' ' << curr->name;
       }
     }
+    controlFlowDepth = startControlFlowDepth;
   }
   void visitIf(If* curr) {
+    controlFlowDepth++;
     o << '(';
     printExpressionContents(curr);
     incIndent();
@@ -2147,8 +2159,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (full) {
       o << " ;; end if";
     }
+    controlFlowDepth--;
   }
   void visitLoop(Loop* curr) {
+    controlFlowDepth++;
     o << '(';
     printExpressionContents(curr);
     incIndent();
@@ -2160,6 +2174,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << ' ' << curr->name;
       }
     }
+    controlFlowDepth--;
   }
   void visitBreak(Break* curr) {
     o << '(';
@@ -2490,13 +2505,28 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   //  (do
   //   ...
   //  )
-  //  (catch
-  //   ...
+  //  (catch $e
+  //    ...
+  //  )
+  //  ...
+  //  (catch_all
+  //    ...
   //  )
   // )
-  // The parenthesis wrapping 'catch' is just a syntax and does not affect
-  // nested depths of instructions within.
+  // The parenthesis wrapping do/catch/catch_all is just a syntax and does not
+  // affect nested depths of instructions within.
+  //
+  // try-delegate is written in the forded format as
+  // (try
+  //  (do
+  //    ...
+  //  )
+  //  (delegate $label)
+  // )
+  // When the 'delegate' delegates to the caller, we write the argument as an
+  // immediate.
   void visitTry(Try* curr) {
+    controlFlowDepth++;
     o << '(';
     printExpressionContents(curr);
     incIndent();
@@ -2521,11 +2551,25 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (curr->hasCatchAll()) {
       doIndent(o, indent);
       printDebugDelimiterLocation(curr, curr->catchEvents.size());
-      o << "(catch_all";
+      o << '(';
+      printMedium(o, "catch_all");
       incIndent();
       maybePrintImplicitBlock(curr->catchBodies.back(), true);
       decIndent();
       o << "\n";
+    }
+    controlFlowDepth--;
+
+    if (curr->isDelegate()) {
+      doIndent(o, indent);
+      o << '(';
+      printMedium(o, "delegate ");
+      if (curr->delegateTarget == DELEGATE_CALLER_TARGET) {
+        o << controlFlowDepth;
+      } else {
+        printName(curr->delegateTarget, o);
+      }
+      o << ")\n";
     }
     decIndent();
     if (full) {
@@ -2913,6 +2957,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       } else {
         printFullLine(curr->body);
       }
+      assert(controlFlowDepth == 0);
     } else {
       // Print the stack IR.
       printStackIR(curr->stackIR.get(), o, curr);
@@ -3324,6 +3369,11 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
       printMedium(o, "catch_all");
       break;
     }
+    case StackInst::Delegate: {
+      printMedium(o, "delegate ");
+      printName(inst->origin->cast<Try>()->delegateTarget, o);
+      break;
+    }
     default:
       WASM_UNREACHABLE("unexpeted op");
   }
@@ -3339,6 +3389,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
     }
   };
 
+  int controlFlowDepth = 0;
   // Stack to track indices of catches within a try
   SmallVector<Index, 4> catchIndexStack;
   for (Index i = 0; i < (*ir).size(); i++) {
@@ -3364,6 +3415,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
       case StackInst::LoopBegin: {
+        controlFlowDepth++;
         doIndent();
         PrintExpressionContents(func, o).visit(inst->origin);
         indent++;
@@ -3375,6 +3427,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
       case StackInst::LoopEnd: {
+        controlFlowDepth--;
         indent--;
         doIndent();
         printMedium(o, "end");
@@ -3403,11 +3456,25 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         indent++;
         break;
       }
+      case StackInst::Delegate: {
+        controlFlowDepth--;
+        indent--;
+        doIndent();
+        printMedium(o, "delegate ");
+        Try* curr = inst->origin->cast<Try>();
+        if (curr->delegateTarget == DELEGATE_CALLER_TARGET) {
+          o << controlFlowDepth;
+        } else {
+          printName(curr->delegateTarget, o);
+        }
+        break;
+      }
       default:
         WASM_UNREACHABLE("unexpeted op");
     }
     std::cout << '\n';
   }
+  assert(controlFlowDepth == 0);
   return o;
 }
 

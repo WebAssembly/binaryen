@@ -71,6 +71,7 @@ public:
     TryBegin,   // the beginning of a try
     Catch,      // the catch within a try
     CatchAll,   // the catch_all within a try
+    Delegate,   // the delegate within a try
     TryEnd      // the ending of a try
   } op;
 
@@ -109,6 +110,7 @@ public:
   void emitIfElse(If* curr);
   void emitCatch(Try* curr, Index i);
   void emitCatchAll(Try* curr);
+  void emitDelegate(Try* curr);
   // emit an end at the end of a block/loop/if/try
   void emitScopeEnd(Expression* curr);
   // emit an end at the end of a function
@@ -168,6 +170,9 @@ private:
   }
   void emitCatchAll(Try* curr) {
     static_cast<SubType*>(this)->emitCatchAll(curr);
+  }
+  void emitDelegate(Try* curr) {
+    static_cast<SubType*>(this)->emitDelegate(curr);
   }
   void emitScopeEnd(Expression* curr) {
     static_cast<SubType*>(this)->emitScopeEnd(curr);
@@ -343,7 +348,11 @@ template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
     emitCatchAll(curr);
     visitPossibleBlockContents(curr->catchBodies.back());
   }
-  emitScopeEnd(curr);
+  if (curr->isDelegate()) {
+    emitDelegate(curr);
+  } else {
+    emitScopeEnd(curr);
+  }
   if (curr->type == Type::unreachable) {
     emitUnreachable();
   }
@@ -375,6 +384,7 @@ public:
   void emitIfElse(If* curr) { writer.emitIfElse(curr); }
   void emitCatch(Try* curr, Index i) { writer.emitCatch(curr, i); }
   void emitCatchAll(Try* curr) { writer.emitCatchAll(curr); }
+  void emitDelegate(Try* curr) { writer.emitDelegate(curr); }
   void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(curr); }
   void emitFunctionEnd() {
     if (func->epilogLocation.size()) {
@@ -413,6 +423,9 @@ public:
   }
   void emitCatchAll(Try* curr) {
     stackIR.push_back(makeStackInst(StackInst::CatchAll, curr));
+  }
+  void emitDelegate(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::Delegate, curr));
   }
   void emitFunctionEnd() {}
   void emitUnreachable() {

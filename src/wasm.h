@@ -1306,13 +1306,17 @@ class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchEvents(allocator), catchBodies(allocator) {}
 
+  Name name; // label that can only be targeted by 'delegate's
   Expression* body;
   ArenaVector<Name> catchEvents;
   ExpressionList catchBodies;
+  Name delegateTarget; // target try's label
 
   bool hasCatchAll() const {
     return catchBodies.size() - catchEvents.size() == 1;
   }
+  bool isCatch() const { return !catchBodies.empty(); }
+  bool isDelegate() const { return delegateTarget.is(); }
   void finalize();
   void finalize(Type type_);
 };

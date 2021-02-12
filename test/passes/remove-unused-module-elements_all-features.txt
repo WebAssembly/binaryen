@@ -299,7 +299,7 @@
  (export "e-export" (event $e-export))
  (start $start)
  (func $start
-  (try
+  (try $try
    (do
     (throw $e-throw
      (i32.const 0)

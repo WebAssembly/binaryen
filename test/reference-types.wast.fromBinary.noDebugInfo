@@ -507,7 +507,7 @@
    )
   )
   (drop
-   (try (result externref)
+   (try $label$47 (result externref)
     (do
      (local.get $1)
     )
@@ -520,7 +520,7 @@
    )
   )
   (drop
-   (try (result funcref)
+   (try $label$50 (result funcref)
     (do
      (ref.func $3)
     )
@@ -533,7 +533,7 @@
    )
   )
   (drop
-   (try (result anyref)
+   (try $label$53 (result anyref)
     (do
      (local.get $1)
     )
@@ -546,7 +546,7 @@
    )
   )
   (drop
-   (try (result anyref)
+   (try $label$56 (result anyref)
     (do
      (ref.func $3)
     )

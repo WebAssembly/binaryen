@@ -102,6 +102,35 @@
       )
     )
 
+    ;; nested try-catch
+    (try
+      (do
+        (try
+          (do
+            (throw $e-i32 (i32.const 0))
+          )
+          (catch $e-i32
+            (drop (pop i32))
+          )
+          (catch_all)
+        )
+      )
+      (catch $e-i32
+        (drop (pop i32))
+      )
+      (catch_all
+        (try
+          (do
+            (throw $e-i32 (i32.const 0))
+          )
+          (catch $e-i32
+            (drop (pop i32))
+          )
+          (catch_all)
+        )
+      )
+    )
+
     ;; rethrow
     (try
       (do
@@ -111,6 +140,64 @@
         (drop (pop i32))
         (rethrow 0)
       )
+    )
+  )
+
+  (func $delegate-test
+    ;; Inner delegates target an outer catch
+    (try $l0
+      (do
+        (try
+          (do
+            (call $foo)
+          )
+          (delegate $l0) ;; by label
+        )
+        (try
+          (do
+            (call $foo)
+          )
+          (delegate 0) ;; by depth
+        )
+      )
+      (catch_all)
+    )
+
+    ;; When there are both a branch and a delegate that target the same try
+    ;; label. Because binaryen only allows blocks and loops to be targetted by
+    ;; branches, we wrap the try with a block and make branches that block
+    ;; instead, resulting in the br and delegate target different labels in the
+    ;; output.
+    (try $l0
+      (do
+        (try
+          (do
+            (br_if $l0 (i32.const 1))
+          )
+          (delegate $l0) ;; by label
+        )
+        (try
+          (do
+            (br_if $l0 (i32.const 1))
+          )
+          (delegate 0) ;; by depth
+        )
+      )
+      (catch_all)
+    )
+
+    ;; The inner delegate targets the outer delegate, which in turn targets the
+    ;; caller.
+    (try $l0
+      (do
+        (try
+          (do
+            (call $foo)
+          )
+          (delegate $l0)
+        )
+      )
+      (delegate 0)
     )
   )
 )

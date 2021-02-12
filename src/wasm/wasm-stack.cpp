@@ -1904,7 +1904,7 @@ void BinaryInstWriter::visitRefEq(RefEq* curr) {
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);
   emitResultType(curr->type);
 }
@@ -1922,6 +1922,13 @@ void BinaryInstWriter::emitCatchAll(Try* curr) {
     parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
   }
   o << int8_t(BinaryConsts::CatchAll);
+}
+
+void BinaryInstWriter::emitDelegate(Try* curr) {
+  assert(!breakStack.empty());
+  breakStack.pop_back();
+  o << int8_t(BinaryConsts::Delegate)
+    << U32LEB(getBreakIndex(curr->delegateTarget));
 }
 
 void BinaryInstWriter::visitThrow(Throw* curr) {
@@ -2216,6 +2223,9 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
 }
 
 int32_t BinaryInstWriter::getBreakIndex(Name name) { // -1 if not found
+  if (name == DELEGATE_CALLER_TARGET) {
+    return breakStack.size();
+  }
   for (int i = breakStack.size() - 1; i >= 0; i--) {
     if (breakStack[i] == name) {
       return breakStack.size() - 1 - i;
@@ -2319,6 +2329,10 @@ void StackIRToBinaryWriter::write() {
       }
       case StackInst::CatchAll: {
         writer.emitCatchAll(inst->origin->cast<Try>());
+        break;
+      }
+      case StackInst::Delegate: {
+        writer.emitDelegate(inst->origin->cast<Try>());
         break;
       }
       default:

@@ -444,7 +444,7 @@
  )
  (func $inner-try-catch_all-test
   (local $0 i32)
-  (try
+  (try $try0
    (do
     (throw $e
      (i32.const 0)
@@ -459,9 +459,9 @@
  )
  (func $inner-try-catch-test
   (local $0 i32)
-  (try
+  (try $try
    (do
-    (try
+    (try $try1
      (do
       (throw $e2
        (i32.const 0)
