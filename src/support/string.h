@@ -24,6 +24,7 @@
 #include <cctype>
 #include <string>
 #include <vector>
+#include "support/utilities.h"
 
 namespace wasm {
 

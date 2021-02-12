@@ -192,6 +192,7 @@ public:
                    Index maxLoopIterations = NO_LIMIT)
     : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {
   }
+  virtual ~ExpressionRunner() = default;
 
   Flow visit(Expression* curr) {
     depth++;
@@ -2066,6 +2067,7 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
+    virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;

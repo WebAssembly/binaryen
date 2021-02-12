@@ -94,6 +94,7 @@ struct ReReloop final : public Pass {
   // we work using a stack of control flow tasks
 
   struct Task {
+    virtual ~Task() = default;
     ReReloop& parent;
     Task(ReReloop& parent) : parent(parent) {}
     virtual void run() { WASM_UNREACHABLE("unimpl"); }

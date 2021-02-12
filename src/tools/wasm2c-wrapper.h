@@ -20,6 +20,7 @@
 //
 
 #include <string>
+#include <sstream>
 
 #include "wasm.h"
 

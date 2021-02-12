@@ -19,6 +19,7 @@
 
 #include <support/threads.h>
 #include <wasm.h>
+#include "pass.h"
 
 namespace wasm {
 

@@ -3411,7 +3411,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       }
       case StackInst::TryBegin:
         catchIndexStack.push_back(0);
-        // fallthrough
+        [[fallthrough]];
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
       case StackInst::LoopBegin: {
@@ -3423,7 +3423,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
       }
       case StackInst::TryEnd:
         catchIndexStack.pop_back();
-        // fallthrough
+        [[fallthrough]];
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
       case StackInst::LoopEnd: {

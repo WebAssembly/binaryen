@@ -117,6 +117,7 @@ static Expression* fromABI(Expression* value, Type type, Module* module) {
     }
     case Type::none: {
       value = builder.makeDrop(value);
+      break;
     }
     case Type::unreachable: {
       // can leave it, the call isn't taken anyhow

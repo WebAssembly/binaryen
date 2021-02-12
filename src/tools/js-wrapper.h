@@ -19,6 +19,10 @@
 // values, useful for fuzzing.
 //
 
+#include <string>
+#include "wasm.h"
+#include "wasm-type.h"
+
 namespace wasm {
 
 static std::string generateJSWrapper(Module& wasm) {
