@@ -1210,21 +1210,29 @@ BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
 }
 
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
+                                  const char* name,
                                   BinaryenExpressionRef body,
-                                  const char** catchEvents_,
+                                  const char** catchEvents,
                                   BinaryenIndex numCatchEvents,
-                                  BinaryenExpressionRef* catchBodies_,
-                                  BinaryenIndex numCatchBodies) {
-  std::vector<Name> catchEvents;
-  std::vector<Expression*> catchBodies;
+                                  BinaryenExpressionRef* catchBodies,
+                                  BinaryenIndex numCatchBodies,
+                                  const char* delegateTarget) {
+  auto* ret = ((Module*)module)->allocator.alloc<Try>();
+  if (name) {
+    ret->name = name;
+  }
+  ret->body = (Expression*)body;
   for (BinaryenIndex i = 0; i < numCatchEvents; i++) {
-    catchEvents.push_back(catchEvents_[i]);
+    ret->catchEvents.push_back(catchEvents[i]);
   }
   for (BinaryenIndex i = 0; i < numCatchBodies; i++) {
-    catchBodies.push_back((Expression*)catchBodies_[i]);
+    ret->catchBodies.push_back((Expression*)catchBodies[i]);
   }
-  return static_cast<Expression*>(
-    Builder(*(Module*)module).makeTry(body, catchEvents, catchBodies));
+  if (delegateTarget) {
+    ret->delegateTarget = delegateTarget;
+  }
+  ret->finalize();
+  return static_cast<Expression*>(ret);
 }
 
 BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
@@ -2765,6 +2773,16 @@ void BinaryenRefEqSetRight(BinaryenExpressionRef expr,
   static_cast<RefEq*>(expression)->right = (Expression*)right;
 }
 // Try
+const char* BinaryenTryGetName(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->name.c_str();
+}
+void BinaryenTrySetName(BinaryenExpressionRef expr, const char* name) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  static_cast<Try*>(expression)->name = name;
+}
 BinaryenExpressionRef BinaryenTryGetBody(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
@@ -2872,6 +2890,22 @@ int BinaryenTryHasCatchAll(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
   return static_cast<Try*>(expression)->hasCatchAll();
+}
+const char* BinaryenTryGetDelegateTarget(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->delegateTarget.c_str();
+}
+void BinaryenTrySetDelegateTarget(BinaryenExpressionRef expr,
+                                  const char* delegateTarget) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  static_cast<Try*>(expression)->delegateTarget = delegateTarget;
+}
+int BinaryenTryIsDelegate(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<Try>());
+  return static_cast<Try*>(expression)->isDelegate();
 }
 // Throw
 const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {

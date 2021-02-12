@@ -647,6 +647,18 @@ public:
     ret->finalize();
     return ret;
   }
+  Try* makeTry(Name name,
+               Expression* body,
+               const std::vector<Name>& catchEvents,
+               const std::vector<Expression*>& catchBodies) {
+    auto* ret = wasm.allocator.alloc<Try>();
+    ret->name = name;
+    ret->body = body;
+    ret->catchEvents.set(catchEvents);
+    ret->catchBodies.set(catchBodies);
+    ret->finalize();
+    return ret;
+  }
   Try* makeTry(Expression* body,
                const std::vector<Name>& catchEvents,
                const std::vector<Expression*>& catchBodies,
@@ -655,6 +667,49 @@ public:
     ret->body = body;
     ret->catchEvents.set(catchEvents);
     ret->catchBodies.set(catchBodies);
+    ret->finalize(type);
+    return ret;
+  }
+  Try* makeTry(Name name,
+               Expression* body,
+               const std::vector<Name>& catchEvents,
+               const std::vector<Expression*>& catchBodies,
+               Type type) {
+    auto* ret = wasm.allocator.alloc<Try>();
+    ret->name = name;
+    ret->body = body;
+    ret->catchEvents.set(catchEvents);
+    ret->catchBodies.set(catchBodies);
+    ret->finalize(type);
+    return ret;
+  }
+  Try* makeTry(Expression* body, Name delegateTarget) {
+    auto* ret = wasm.allocator.alloc<Try>();
+    ret->body = body;
+    ret->delegateTarget = delegateTarget;
+    ret->finalize();
+    return ret;
+  }
+  Try* makeTry(Name name, Expression* body, Name delegateTarget) {
+    auto* ret = wasm.allocator.alloc<Try>();
+    ret->name = name;
+    ret->body = body;
+    ret->delegateTarget = delegateTarget;
+    ret->finalize();
+    return ret;
+  }
+  Try* makeTry(Expression* body, Name delegateTarget, Type type) {
+    auto* ret = wasm.allocator.alloc<Try>();
+    ret->body = body;
+    ret->delegateTarget = delegateTarget;
+    ret->finalize(type);
+    return ret;
+  }
+  Try* makeTry(Name name, Expression* body, Name delegateTarget, Type type) {
+    auto* ret = wasm.allocator.alloc<Try>();
+    ret->name = name;
+    ret->body = body;
+    ret->delegateTarget = delegateTarget;
     ret->finalize(type);
     return ret;
   }
