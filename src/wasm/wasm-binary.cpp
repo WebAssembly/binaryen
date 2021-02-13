@@ -1920,7 +1920,7 @@ void WasmBinaryBuilder::readFunctions() {
       // process body
       assert(breakStack.empty());
       assert(breakTargetNames.empty());
-      assert(delegateTargetNames.empty());
+      assert(exceptionTargetNames.empty());
       assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(controlFlowStack.empty());
@@ -1930,7 +1930,7 @@ void WasmBinaryBuilder::readFunctions() {
       assert(depth == 0);
       assert(breakStack.empty());
       assert(breakTargetNames.empty());
-      assert(delegateTargetNames.empty());
+      assert(exceptionTargetNames.empty());
       if (!expressionStack.empty()) {
         throwError("stack not empty on function exit");
       }
@@ -3389,7 +3389,7 @@ Expression* WasmBinaryBuilder::getBlockOrSingleton(Type type) {
   block->finalize(type);
   // maybe we don't need a block here?
   if (breakTargetNames.find(block->name) == breakTargetNames.end() &&
-      delegateTargetNames.find(block->name) == delegateTargetNames.end()) {
+      exceptionTargetNames.find(block->name) == exceptionTargetNames.end()) {
     block->name = Name();
     if (block->list.size() == 1) {
       return block->list[0];
@@ -3465,8 +3465,8 @@ WasmBinaryBuilder::getBreakTarget(int32_t offset) {
   return ret;
 }
 
-Name WasmBinaryBuilder::getDelegateTargetName(int32_t offset) {
-  BYN_TRACE("getDelegateTarget " << offset << std::endl);
+Name WasmBinaryBuilder::getExceptionTargetName(int32_t offset) {
+  BYN_TRACE("getExceptionTarget " << offset << std::endl);
   // We always start parsing a function by creating a block label and pushing it
   // in breakStack in getBlockOrSingleton, so if a 'delegate''s target is that
   // block, it does not mean it targets that block; it throws to the caller.
@@ -3482,7 +3482,7 @@ Name WasmBinaryBuilder::getDelegateTargetName(int32_t offset) {
   // if the delegate is in literally unreachable code, then we will not emit it
   // anyhow, so do not note that the target has delegate to it
   if (!willBeIgnored) {
-    delegateTargetNames.insert(ret.name);
+    exceptionTargetNames.insert(ret.name);
   }
   return ret.name;
 }
@@ -5832,7 +5832,7 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   breakStack.pop_back();
 
   if (lastSeparator == BinaryConsts::Delegate) {
-    curr->delegateTarget = getDelegateTargetName(getU32LEB());
+    curr->delegateTarget = getExceptionTargetName(getU32LEB());
   }
 
   // For simplicity, we make try's labels only can be targeted by delegates, and
@@ -5843,9 +5843,10 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   curr->name = getNextLabel();
   if (auto* block = curr->body->dynCast<Block>()) {
     if (block->name.is()) {
-      if (delegateTargetNames.find(block->name) != delegateTargetNames.end()) {
-        BranchUtils::replaceDelegateTargets(block, block->name, curr->name);
-        delegateTargetNames.erase(block->name);
+      if (exceptionTargetNames.find(block->name) !=
+          exceptionTargetNames.end()) {
+        BranchUtils::replaceExceptionTargets(block, block->name, curr->name);
+        exceptionTargetNames.erase(block->name);
       }
       // maybe we don't need a block here?
       if (block->list.size() == 1) {
@@ -5853,11 +5854,11 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
       }
     }
   }
-  if (delegateTargetNames.find(catchLabel) != delegateTargetNames.end()) {
+  if (exceptionTargetNames.find(catchLabel) != exceptionTargetNames.end()) {
     for (auto* catchBody : curr->catchBodies) {
-      BranchUtils::replaceDelegateTargets(catchBody, catchLabel, curr->name);
+      BranchUtils::replaceExceptionTargets(catchBody, catchLabel, curr->name);
     }
-    delegateTargetNames.erase(catchLabel);
+    exceptionTargetNames.erase(catchLabel);
   }
   curr->finalize(curr->type);
 

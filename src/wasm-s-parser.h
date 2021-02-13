@@ -242,7 +242,7 @@ private:
       i++;
     }
   }
-  enum class LabelType { Break, Delegate };
+  enum class LabelType { Break, Exception };
   Name getLabel(Element& s, LabelType labelType = LabelType::Break);
   Expression* makeBreak(Element& s);
   Expression* makeBreakTable(Element& s);

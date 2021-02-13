@@ -2048,7 +2048,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     if (inner.size() != 2) {
       throw ParseException("invalid delegate", inner.line, inner.col);
     }
-    ret->delegateTarget = getLabel(*inner[1], LabelType::Delegate);
+    ret->delegateTarget = getLabel(*inner[1], LabelType::Exception);
   }
 
   if (i != s.size()) {

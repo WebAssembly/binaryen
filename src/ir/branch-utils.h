@@ -136,7 +136,7 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
 }
 
 // Replace all delegate targets within the given AST.
-inline void replaceDelegateTargets(Expression* ast, Name from, Name to) {
+inline void replaceExceptionTargets(Expression* ast, Name from, Name to) {
   struct Replacer
     : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
     Name from, to;
