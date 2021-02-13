@@ -637,6 +637,7 @@ public:
     ret->finalize();
     return ret;
   }
+
 private:
   Try* makeTry(Name name,
                Expression* body,
@@ -657,6 +658,7 @@ private:
     }
     return ret;
   }
+
 public:
   Try* makeTry(Expression* body,
                const std::vector<Name>& catchEvents,
