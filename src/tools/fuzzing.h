@@ -3105,7 +3105,7 @@ private:
       auto type = getSingleConcreteType();
       // Don't add a non-defaultable type into a tuple, as currently we can't
       // spill them into locals (that would require a "let").
-      if (!type.isDefaultable()) {
+      if (type.isDefaultable()) {
         elements.push_back(type);
       }
     }
