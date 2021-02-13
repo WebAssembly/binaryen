@@ -336,8 +336,11 @@ void test_core() {
   BinaryenExpressionRef catchBody =
     BinaryenDrop(module, BinaryenPop(module, BinaryenTypeInt32()));
   BinaryenExpressionRef catchAllBody = BinaryenNop(module);
-  BinaryenExpressionRef catchBodies[] = {catchBody, catchAllBody};
   const char* catchEvents[] = {"a-event"};
+  BinaryenExpressionRef catchBodies[] = {catchBody, catchAllBody};
+  const char* emptyCatchEvents[] = {};
+  BinaryenExpressionRef emptyCatchBodies[] = {};
+  BinaryenExpressionRef nopCatchBody[] = {BinaryenNop(module)};
 
   BinaryenType i32 = BinaryenTypeInt32();
   BinaryenType i64 = BinaryenTypeInt64();
@@ -727,7 +730,33 @@ void test_core() {
                   BinaryenRefNull(module, BinaryenTypeEqref()),
                   BinaryenRefNull(module, BinaryenTypeEqref())),
     // Exception handling
-    BinaryenTry(module, tryBody, catchEvents, 1, catchBodies, 2),
+    BinaryenTry(module, NULL, tryBody, catchEvents, 1, catchBodies, 2, NULL),
+    // (try $try_outer
+    //   (do
+    //     (try
+    //       (do
+    //         (throw $a-event (i32.const 0))
+    //       )
+    //       (delegate $try_outer)
+    //     )
+    //   )
+    //   (catch_all)
+    // )
+    BinaryenTry(module,
+                "try_outer",
+                BinaryenTry(module,
+                            NULL,
+                            tryBody,
+                            emptyCatchEvents,
+                            0,
+                            emptyCatchBodies,
+                            0,
+                            "try_outer"),
+                emptyCatchEvents,
+                0,
+                nopCatchBody,
+                1,
+                NULL),
     // Atomics
     BinaryenAtomicStore(
       module,

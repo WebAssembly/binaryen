@@ -637,26 +637,66 @@ public:
     ret->finalize();
     return ret;
   }
-  Try* makeTry(Expression* body,
+
+private:
+  Try* makeTry(Name name,
+               Expression* body,
                const std::vector<Name>& catchEvents,
-               const std::vector<Expression*>& catchBodies) {
+               const std::vector<Expression*>& catchBodies,
+               Name delegateTarget,
+               Type type,
+               bool hasType) { // differentiate whether a type was passed in
     auto* ret = wasm.allocator.alloc<Try>();
+    ret->name = name;
     ret->body = body;
     ret->catchEvents.set(catchEvents);
     ret->catchBodies.set(catchBodies);
-    ret->finalize();
+    if (hasType) {
+      ret->finalize(type);
+    } else {
+      ret->finalize();
+    }
     return ret;
+  }
+
+public:
+  Try* makeTry(Expression* body,
+               const std::vector<Name>& catchEvents,
+               const std::vector<Expression*>& catchBodies) {
+    return makeTry(
+      Name(), body, catchEvents, catchBodies, Name(), Type::none, false);
   }
   Try* makeTry(Expression* body,
                const std::vector<Name>& catchEvents,
                const std::vector<Expression*>& catchBodies,
                Type type) {
-    auto* ret = wasm.allocator.alloc<Try>();
-    ret->body = body;
-    ret->catchEvents.set(catchEvents);
-    ret->catchBodies.set(catchBodies);
-    ret->finalize(type);
-    return ret;
+    return makeTry(Name(), body, catchEvents, catchBodies, Name(), type, true);
+  }
+  Try* makeTry(Name name,
+               Expression* body,
+               const std::vector<Name>& catchEvents,
+               const std::vector<Expression*>& catchBodies) {
+    return makeTry(
+      name, body, catchEvents, catchBodies, Name(), Type::none, false);
+  }
+  Try* makeTry(Name name,
+               Expression* body,
+               const std::vector<Name>& catchEvents,
+               const std::vector<Expression*>& catchBodies,
+               Type type) {
+    return makeTry(name, body, catchEvents, catchBodies, Name(), type, true);
+  }
+  Try* makeTry(Expression* body, Name delegateTarget) {
+    return makeTry(Name(), body, {}, {}, delegateTarget, Type::none, false);
+  }
+  Try* makeTry(Expression* body, Name delegateTarget, Type type) {
+    return makeTry(Name(), body, {}, {}, delegateTarget, type, true);
+  }
+  Try* makeTry(Name name, Expression* body, Name delegateTarget) {
+    return makeTry(name, body, {}, {}, delegateTarget, Type::none, false);
+  }
+  Try* makeTry(Name name, Expression* body, Name delegateTarget, Type type) {
+    return makeTry(name, body, {}, {}, delegateTarget, type, true);
   }
   Throw* makeThrow(Event* event, const std::vector<Expression*>& args) {
     return makeThrow(event->name, args);

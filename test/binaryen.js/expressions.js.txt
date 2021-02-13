@@ -283,6 +283,13 @@
  )
 )
 
+(try (result i32)
+ (do
+  (i32.const 4)
+ )
+ (delegate $try_outer)
+)
+
 # Throw
 (throw $bar
  (i32.const 6)

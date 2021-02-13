@@ -1775,6 +1775,21 @@ BinaryenFeatureAll: 8191
         (nop)
        )
       )
+      (try $try_outer
+       (do
+        (try
+         (do
+          (throw $a-event
+           (i32.const 0)
+          )
+         )
+         (delegate $try_outer)
+        )
+       )
+       (catch_all
+        (nop)
+       )
+      )
       (i32.atomic.store
        (i32.const 0)
        (i32.atomic.load

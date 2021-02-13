@@ -545,9 +545,11 @@ function test_core() {
 
     // Exception handling
     module.try(
+      '',
       module.throw("a-event", [module.i32.const(0)]),
       ["a-event"],
-      [module.drop(module.i32.pop())]
+      [module.drop(module.i32.pop())],
+      ''
     ),
 
     // Atomics

@@ -802,13 +802,16 @@ BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                                  BinaryenExpressionRef left,
                                                  BinaryenExpressionRef right);
+// Try: name can be NULL. delegateTarget should be NULL in try-catch.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTry(BinaryenModuleRef module,
+            const char* name,
             BinaryenExpressionRef body,
             const char** catchEvents,
             BinaryenIndex numCatchEvents,
             BinaryenExpressionRef* catchBodies,
-            BinaryenIndex numCatchBodies);
+            BinaryenIndex numCatchBodies,
+            const char* delegateTarget);
 BINARYEN_API BinaryenExpressionRef
 BinaryenThrow(BinaryenModuleRef module,
               const char* event,
@@ -1719,6 +1722,11 @@ BINARYEN_API void BinaryenRefEqSetRight(BinaryenExpressionRef expr,
 
 // Try
 
+// Gets the name (label) of a `try` expression.
+BINARYEN_API const char* BinaryenTryGetName(BinaryenExpressionRef expr);
+// Sets the name (label) of a `try` expression.
+BINARYEN_API void BinaryenTrySetName(BinaryenExpressionRef expr,
+                                     const char* name);
 // Gets the body expression of a `try` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTryGetBody(BinaryenExpressionRef expr);
@@ -1774,8 +1782,16 @@ BINARYEN_API void BinaryenTryInsertCatchBodyAt(BinaryenExpressionRef expr,
 // expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTryRemoveCatchBodyAt(BinaryenExpressionRef expr, BinaryenIndex index);
-// Gets whether an `try` expression has a catch_all clause.
+// Gets whether a `try` expression has a catch_all clause.
 BINARYEN_API int BinaryenTryHasCatchAll(BinaryenExpressionRef expr);
+// Gets the target label of a `delegate`.
+BINARYEN_API const char*
+BinaryenTryGetDelegateTarget(BinaryenExpressionRef expr);
+// Sets the target label of a `delegate`.
+BINARYEN_API void BinaryenTrySetDelegateTarget(BinaryenExpressionRef expr,
+                                               const char* delegateTarget);
+// Gets whether a `try` expression is a try-delegate.
+BINARYEN_API int BinaryenTryIsDelegate(BinaryenExpressionRef expr);
 
 // Throw
 
