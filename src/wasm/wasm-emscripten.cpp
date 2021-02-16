@@ -447,7 +447,7 @@ EmJsWalker findEmJsFuncsAndReturnWalker(Module& wasm) {
   // We can detect this by checking for segments that contain only JS strings.
   // When we find such segements we remove them from the final binary.
   for (Index i = 0; i < wasm.memory.segments.size(); i++) {
-    Address start = walker.stringTracker.segmentOffsets[0];
+    Address start = walker.stringTracker.segmentOffsets[i];
     Address cur = start;
 
     while (cur < start + wasm.memory.segments[i].data.size()) {
