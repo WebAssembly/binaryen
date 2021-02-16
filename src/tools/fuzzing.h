@@ -1576,6 +1576,10 @@ private:
   }
 
   Expression* makeTupleExtract(Type type) {
+    // Tuples can require locals in binary format conversions.
+    if (!type.isDefaultable()) {
+      return makeTrivial(type);
+    }
     assert(wasm.features.hasMultivalue());
     assert(type.isSingle() && type.isConcrete());
     Type tupleType = getTupleType();
@@ -3099,9 +3103,9 @@ private:
     size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
     for (size_t i = 0; i < maxElements; ++i) {
       auto type = getSingleConcreteType();
-      // Don't add a non-nullable type into a tuple, as currently we can't spill
-      // them into locals (that would require a "let").
-      if (!type.isNullable()) {
+      // Don't add a non-defaultable type into a tuple, as currently we can't
+      // spill them into locals (that would require a "let").
+      if (type.isDefaultable()) {
         elements.push_back(type);
       }
     }
