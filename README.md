@@ -484,8 +484,9 @@ Emscripten's WebAssembly processing library (`wasm-emscripten`).
 * Does it compile under Windows and/or Visual Studio?
 
 Yes, it does. Here's a step-by-step [tutorial][win32]  on how to compile it
-under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**. Help
-would be appreciated on Windows and OS X as most of the core devs are on Linux.
+under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**. 
+However, Visual Studio 2017 may now be required. Help would be appreciated on
+Windows and OS X as most of the core devs are on Linux.
 
 [compiling to WebAssembly]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen
 [win32]: https://github.com/brakmic/bazaar/blob/master/webassembly/COMPILING_WIN32.md

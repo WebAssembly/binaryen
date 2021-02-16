@@ -233,6 +233,9 @@ else()
   add_compile_flag("-Wno-implicit-int-float-conversion")
   add_compile_flag("-Wno-unknown-warning-option")
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
+  add_compile_flag("-Wimplicit-fallthrough")
+  add_compile_flag("-Wnon-virtual-dtor")
+
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_compile_flag("-D__STDC_FORMAT_MACROS")

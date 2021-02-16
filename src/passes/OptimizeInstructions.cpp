@@ -2204,6 +2204,7 @@ private:
                 Type::v128);
             }
           }
+          break;
         }
         default: {
         }

@@ -205,7 +205,8 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
         if (op == TRSHIFT) {
           return ASM_UNSIGNED;
         }
-      } // fallthrough
+        [[fallthrough]];
+      }
       case '|':
       case '&':
       case '^':

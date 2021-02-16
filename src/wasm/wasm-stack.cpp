@@ -2302,7 +2302,7 @@ void StackIRToBinaryWriter::write() {
     switch (inst->op) {
       case StackInst::TryBegin:
         catchIndexStack.push_back(0);
-        // fallthrough
+        [[fallthrough]];
       case StackInst::Basic:
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
@@ -2312,7 +2312,7 @@ void StackIRToBinaryWriter::write() {
       }
       case StackInst::TryEnd:
         catchIndexStack.pop_back();
-        // fallthrough
+        [[fallthrough]];
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
       case StackInst::LoopEnd: {

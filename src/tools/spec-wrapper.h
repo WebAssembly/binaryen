@@ -19,6 +19,9 @@
 // values, useful for fuzzing.
 //
 
+#include "wasm-type.h"
+#include "wasm.h"
+
 namespace wasm {
 
 static std::string generateSpecWrapper(Module& wasm) {

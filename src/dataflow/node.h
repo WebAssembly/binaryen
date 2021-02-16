@@ -183,10 +183,12 @@ struct Node {
         }
         break;
       }
-      case Cond:
+      case Cond: {
         if (index != other.index) {
           return false;
         }
+        break;
+      }
       default: {}
     }
     if (values.size() != other.values.size()) {
