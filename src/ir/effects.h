@@ -87,8 +87,8 @@ public:
   // the VM doing something bad - and therefore the VM behaving in a way that is
   // not according to the wasm semantics - and we do not model such things. Note
   // that as a result we do not mark things like GC allocation instructions as
-  // having side effects, which would make it possible to eliminate an allocation
-  // whose result is not captured, which would be beneficial.
+  // having side effects, which would make it possible to eliminate an
+  // allocation whose result is not captured, which would be beneficial.
   bool trap = false;
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
