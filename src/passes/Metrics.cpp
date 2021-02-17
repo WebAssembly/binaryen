@@ -74,11 +74,13 @@ struct Metrics
     }
 
     Index size = 0;
+    ModuleUtils::iterActiveElementSegments(
+      *module, [&](ElementSegment* segment) { size += segment->data.size(); });
     for (auto& table : module->tables) {
       walkTable(table.get());
-      for (auto& segment : table->segments) {
-        size += segment.data.size();
-      }
+    }
+    for (auto& segment : module->elementSegments) {
+      walkElementSegment(segment.get());
     }
     if (!module->tables.empty()) {
       counts["[table-data]"] = size;

@@ -23,7 +23,6 @@
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
-#include "ir/table-utils.h"
 #include "shared-constants.h"
 #include "support/debug.h"
 #include "wasm-builder.h"

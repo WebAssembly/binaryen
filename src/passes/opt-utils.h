@@ -86,13 +86,12 @@ inline void replaceFunctions(PassRunner* runner,
   // replace direct calls
   FunctionRefReplacer(maybeReplace).run(runner, &module);
   // replace in table
-  for (auto& table : module.tables) {
-    for (auto& segment : table->segments) {
-      for (auto& name : segment.data) {
-        maybeReplace(name);
-      }
+  for (auto& segment : module.elementSegments) {
+    for (auto& name : segment->data) {
+      maybeReplace(name);
     }
   }
+
   // replace in start
   if (module.start.is()) {
     maybeReplace(module.start);

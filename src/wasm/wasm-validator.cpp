@@ -2882,21 +2882,25 @@ static void validateTables(Module& module, ValidationInfo& info) {
                       "Only 1 table definition allowed in MVP (requires "
                       "--enable-reference-types)");
   }
-  for (auto& curr : module.tables) {
-    for (auto& segment : curr->segments) {
-      info.shouldBeEqual(segment.offset->type,
+
+  for (auto& segment : module.elementSegments) {
+    if (segment->table.is()) {
+      auto table = module.getTableOrNull(segment->table);
+      info.shouldBeTrue(
+        table != nullptr, "elem", "elem segment must have a valid table name");
+      info.shouldBeEqual(segment->offset->type,
                          Type(Type::i32),
-                         segment.offset,
-                         "segment offset should be i32");
-      info.shouldBeTrue(checkSegmentOffset(segment.offset,
-                                           segment.data.size(),
-                                           curr->initial * Table::kPageSize),
-                        segment.offset,
+                         segment->offset,
+                         "elem segment offset should be i32");
+      info.shouldBeTrue(checkSegmentOffset(segment->offset,
+                                           segment->data.size(),
+                                           table->initial * Table::kPageSize),
+                        segment->offset,
                         "table segment offset should be reasonable");
-      for (auto name : segment.data) {
-        info.shouldBeTrue(
-          module.getFunctionOrNull(name), name, "segment name should be valid");
-      }
+    }
+    for (auto name : segment->data) {
+      info.shouldBeTrue(
+        module.getFunctionOrNull(name), name, "segment name should be valid");
     }
   }
 }

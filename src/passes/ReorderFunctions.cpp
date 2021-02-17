@@ -70,11 +70,9 @@ struct ReorderFunctions : public Pass {
     for (auto& curr : module->exports) {
       counts[curr->value]++;
     }
-    for (auto& table : module->tables) {
-      for (auto& segment : table->segments) {
-        for (auto& curr : segment.data) {
-          counts[curr]++;
-        }
+    for (auto& segment : module->elementSegments) {
+      for (auto& curr : segment->data) {
+        counts[curr]++;
       }
     }
     // sort

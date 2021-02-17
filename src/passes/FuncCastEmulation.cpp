@@ -173,17 +173,15 @@ struct FuncCastEmulation : public Pass {
     Signature ABIType(Type(std::vector<Type>(numParams, Type::i64)), Type::i64);
     // Add a thunk for each function in the table, and do the call through it.
     std::unordered_map<Name, Name> funcThunks;
-    for (auto& table : module->tables) {
-      for (auto& segment : table->segments) {
-        for (auto& name : segment.data) {
-          auto iter = funcThunks.find(name);
-          if (iter == funcThunks.end()) {
-            auto thunk = makeThunk(name, module, numParams);
-            funcThunks[name] = thunk;
-            name = thunk;
-          } else {
-            name = iter->second;
-          }
+    for (auto& segment : module->elementSegments) {
+      for (auto& name : segment->data) {
+        auto iter = funcThunks.find(name);
+        if (iter == funcThunks.end()) {
+          auto thunk = makeThunk(name, module, numParams);
+          funcThunks[name] = thunk;
+          name = thunk;
+        } else {
+          name = iter->second;
         }
       }
     }

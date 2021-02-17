@@ -45,6 +45,8 @@ v100
   - `module.getTableByIndex`
   - `module.getNumTables`
   - `binaryen.getTableInfo`
+- `BinaryenSetFunctionTable` and `module.setFunctionTable` have been removed
+  in favor of `BinaryenAddTable` and `module.addTable` respectively.
 
 v99
 ---

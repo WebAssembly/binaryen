@@ -1550,7 +1550,7 @@ public:
 
 // Globals
 
-struct Importable {
+struct Named {
   Name name;
 
   // Explicit names are ones that we read from the input file and
@@ -1559,17 +1559,19 @@ struct Importable {
   // use only and will not be written the name section.
   bool hasExplicitName = false;
 
-  // If these are set, then this is an import, as module.base
-  Name module, base;
-
-  bool imported() const { return module.is(); }
-
   void setName(Name name_, bool hasExplicitName_) {
     name = name_;
     hasExplicitName = hasExplicitName_;
   }
 
   void setExplicitName(Name name_) { setName(name_, true); }
+};
+
+struct Importable : Named {
+  // If these are set, then this is an import, as module.base
+  Name module, base;
+
+  bool imported() const { return module.is(); }
 };
 
 class Function;
@@ -1720,6 +1722,21 @@ public:
   ExternalKind kind;
 };
 
+class ElementSegment : public Named {
+public:
+  Name table;
+  Expression* offset;
+  std::vector<Name> data;
+
+  ElementSegment() = default;
+  ElementSegment(Name table, Expression* offset)
+    : table(table), offset(offset) {}
+  ElementSegment(Name table, Expression* offset, std::vector<Name>& init)
+    : table(table), offset(offset) {
+    data.swap(init);
+  }
+};
+
 class Table : public Importable {
 public:
   static const Address::address32_t kPageSize = 1;
@@ -1727,26 +1744,14 @@ public:
   // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
-  struct Segment {
-    Expression* offset;
-    std::vector<Name> data;
-    Segment() = default;
-    Segment(Expression* offset) : offset(offset) {}
-    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
-      data.swap(init);
-    }
-  };
-
   Address initial = 0;
   Address max = kMaxSize;
-  std::vector<Segment> segments;
 
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {
     name = "";
     initial = 0;
     max = kMaxSize;
-    segments.clear();
   }
 };
 
@@ -1847,7 +1852,7 @@ public:
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Event>> events;
-
+  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
   Memory memory;
@@ -1890,6 +1895,7 @@ private:
   std::unordered_map<Name, Export*> exportsMap;
   std::unordered_map<Name, Function*> functionsMap;
   std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
   std::unordered_map<Name, Event*> eventsMap;
 
@@ -1899,11 +1905,13 @@ public:
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Table* getTable(Name name);
+  ElementSegment* getElementSegment(Name name);
   Global* getGlobal(Name name);
   Event* getEvent(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
+  ElementSegment* getElementSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Event* getEventOrNull(Name name);
@@ -1916,6 +1924,7 @@ public:
   Export* addExport(std::unique_ptr<Export>&& curr);
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
+  ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
   Event* addEvent(std::unique_ptr<Event>&& curr);
 
@@ -1924,12 +1933,14 @@ public:
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeTable(Name name);
+  void removeElementSegment(Name name);
   void removeGlobal(Name name);
   void removeEvent(Name name);
 
   void removeExports(std::function<bool(Export*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
+  void removeElementSegments(std::function<bool(ElementSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeEvents(std::function<bool(Event*)> pred);
 

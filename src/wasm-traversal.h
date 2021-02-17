@@ -48,6 +48,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitGlobal(Global* curr) { return ReturnType(); }
   ReturnType visitFunction(Function* curr) { return ReturnType(); }
   ReturnType visitTable(Table* curr) { return ReturnType(); }
+  ReturnType visitElementSegment(ElementSegment* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
   ReturnType visitEvent(Event* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
@@ -191,10 +192,14 @@ struct Walker : public VisitorType {
   // override this to provide custom functionality
   void doWalkFunction(Function* func) { walk(func->body); }
 
-  void walkTable(Table* table) {
-    for (auto& segment : table->segments) {
-      walk(segment.offset);
+  void walkElementSegment(ElementSegment* segment) {
+    if (segment->table.is()) {
+      walk(segment->offset);
     }
+    static_cast<SubType*>(this)->visitElementSegment(segment);
+  }
+
+  void walkTable(Table* table) {
     static_cast<SubType*>(this)->visitTable(table);
   }
 
@@ -244,7 +249,10 @@ struct Walker : public VisitorType {
     }
     for (auto& curr : module->tables) {
       self->walkTable(curr.get());
-    };
+    }
+    for (auto& curr : module->elementSegments) {
+      self->walkElementSegment(curr.get());
+    }
     self->walkMemory(&module->memory);
   }
 

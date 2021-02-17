@@ -5,10 +5,17 @@
  (table $0 3 3 funcref)
  (elem (table $0) (i32.const 0) func $0)
  (elem (table $0) (i32.const 1) func $0 $1)
+ (elem func $0 $1)
+ (elem declare func $2)
  (func $0
-  (nop)
+  (drop
+   (ref.func $2)
+  )
  )
  (func $1
+  (nop)
+ )
+ (func $2
   (nop)
  )
 )

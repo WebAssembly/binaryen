@@ -70,7 +70,25 @@ inline Event* copyEvent(Event* event, Module& out) {
   return ret;
 }
 
-inline Table* copyTableWithoutSegments(Table* table, Module& out) {
+inline ElementSegment* copyElementSegment(const ElementSegment* segment,
+                                          Module& out) {
+  auto copy = [&](std::unique_ptr<ElementSegment>&& ret) {
+    ret->name = segment->name;
+    ret->hasExplicitName = segment->hasExplicitName;
+    ret->data = segment->data;
+
+    return out.addElementSegment(std::move(ret));
+  };
+
+  if (segment->table.isNull()) {
+    return copy(std::make_unique<ElementSegment>());
+  } else {
+    auto offset = ExpressionManipulator::copy(segment->offset, out);
+    return copy(std::make_unique<ElementSegment>(segment->table, offset));
+  }
+}
+
+inline Table* copyTable(Table* table, Module& out) {
   auto ret = std::make_unique<Table>();
   ret->name = table->name;
   ret->module = table->module;
@@ -80,17 +98,6 @@ inline Table* copyTableWithoutSegments(Table* table, Module& out) {
   ret->max = table->max;
 
   return out.addTable(std::move(ret));
-}
-
-inline Table* copyTable(Table* table, Module& out) {
-  auto ret = copyTableWithoutSegments(table, out);
-
-  for (auto segment : table->segments) {
-    segment.offset = ExpressionManipulator::copy(segment.offset, out);
-    ret->segments.push_back(segment);
-  }
-
-  return ret;
 }
 
 inline void copyModule(const Module& in, Module& out) {
@@ -108,9 +115,13 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.events) {
     copyEvent(curr.get(), out);
   }
+  for (auto& curr : in.elementSegments) {
+    copyElementSegment(curr.get(), out);
+  }
   for (auto& curr : in.tables) {
     copyTable(curr.get(), out);
   }
+
   out.memory = in.memory;
   for (auto& segment : out.memory.segments) {
     segment.offset = ExpressionManipulator::copy(segment.offset, out);
@@ -148,11 +159,9 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
     }
   };
   maybeUpdate(wasm.start);
-  for (auto& table : wasm.tables) {
-    for (auto& segment : table->segments) {
-      for (auto& name : segment.data) {
-        maybeUpdate(name);
-      }
+  for (auto& segment : wasm.elementSegments) {
+    for (auto& name : segment->data) {
+      maybeUpdate(name);
     }
   }
   for (auto& exp : wasm.exports) {
@@ -204,6 +213,28 @@ template<typename T> inline void iterDefinedTables(Module& wasm, T visitor) {
   for (auto& import : wasm.tables) {
     if (!import->imported()) {
       visitor(import.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterTableSegments(Module& wasm, Name table, T visitor) {
+  // Just a precaution so that we don't iterate over passive elem segments by
+  // accident
+  assert(table.is() && "Table name must not be null");
+
+  for (auto& segment : wasm.elementSegments) {
+    if (segment->table == table) {
+      visitor(segment.get());
+    }
+  }
+}
+
+template<typename T>
+inline void iterActiveElementSegments(Module& wasm, T visitor) {
+  for (auto& segment : wasm.elementSegments) {
+    if (segment->table.is()) {
+      visitor(segment.get());
     }
   }
 }

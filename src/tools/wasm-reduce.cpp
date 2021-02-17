@@ -741,47 +741,39 @@ struct Reducer
 
   // TODO: bisection on segment shrinking?
 
-  void visitTable(Table* curr) {
-    std::cerr << "|    try to simplify table\n";
-    Name first;
-    for (auto& segment : curr->segments) {
-      for (auto item : segment.data) {
-        first = item;
-        break;
-      }
-      if (!first.isNull()) {
-        break;
-      }
-    }
-    visitSegmented(curr, first, 100);
-  }
-
   void visitMemory(Memory* curr) {
     std::cerr << "|    try to simplify memory\n";
-    visitSegmented(curr, 0, 2);
+
+    // try to reduce to first function. first, shrink segment elements.
+    // while we are shrinking successfully, keep going exponentially.
+    bool shrank = false;
+    for (auto& segment : curr->segments) {
+      shrank = shrinkByReduction(&segment, 2);
+    }
+    // the "opposite" of shrinking: copy a 'zero' element
+    for (auto& segment : curr->segments) {
+      reduceByZeroing(&segment, 0, 2, shrank);
+    }
   }
 
-  template<typename T, typename U>
-  void visitSegmented(T* curr, U zero, size_t bonus) {
+  template<typename T> bool shrinkByReduction(T* segment, size_t bonus) {
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool justShrank = false;
     bool shrank = false;
-    for (auto& segment : curr->segments) {
-      auto& data = segment.data;
-      // when we succeed, try to shrink by more and more, similar to bisection
-      size_t skip = 1;
-      for (size_t i = 0; i < data.size() && !data.empty(); i++) {
-        if (!justShrank && !shouldTryToReduce(bonus)) {
-          continue;
-        }
+
+    auto& data = segment->data;
+    // when we succeed, try to shrink by more and more, similar to bisection
+    size_t skip = 1;
+    for (size_t i = 0; i < data.size() && !data.empty(); i++) {
+      if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
           if (!data.empty()) {
             data.pop_back();
           }
         }
-        auto justShrank = writeAndTestReduction();
+        justShrank = writeAndTestReduction();
         if (justShrank) {
           std::cerr << "|      shrank segment (skip: " << skip << ")\n";
           shrank = true;
@@ -793,37 +785,67 @@ struct Reducer
         }
       }
     }
-    // the "opposite" of shrinking: copy a 'zero' element
-    for (auto& segment : curr->segments) {
-      if (segment.data.empty()) {
+
+    return shrank;
+  }
+
+  template<typename T, typename U>
+  void reduceByZeroing(T* segment, U zero, size_t bonus, bool shrank) {
+    if (segment->data.empty()) {
+      return;
+    }
+    for (auto& item : segment->data) {
+      if (!shouldTryToReduce(bonus)) {
         continue;
       }
-      for (auto& item : segment.data) {
-        if (!shouldTryToReduce(bonus)) {
-          continue;
-        }
-        if (item == zero) {
-          continue;
-        }
-        auto save = item;
-        item = zero;
-        if (writeAndTestReduction()) {
-          std::cerr << "|      zeroed segment\n";
-          noteReduction();
-        } else {
-          item = save;
-        }
-        if (shrank) {
-          // zeroing is fairly inefficient. if we are managing to shrink
-          // (which we do exponentially), just zero one per segment at most
-          break;
-        }
+      if (item == zero) {
+        continue;
       }
+      auto save = item;
+      item = zero;
+      if (writeAndTestReduction()) {
+        std::cerr << "|      zeroed elem segment\n";
+        noteReduction();
+      } else {
+        item = save;
+      }
+      if (shrank) {
+        // zeroing is fairly inefficient. if we are managing to shrink
+        // (which we do exponentially), just zero one per segment at most
+        break;
+      }
+    }
+  }
+
+  void shrinkElementSegments(Module* module) {
+    std::cerr << "|    try to simplify elem segments\n";
+    Name first;
+    auto it =
+      std::find_if_not(module->elementSegments.begin(),
+                       module->elementSegments.end(),
+                       [&](auto& segment) { return segment->data.empty(); });
+
+    if (it != module->elementSegments.end()) {
+      first = it->get()->data[0];
+    }
+
+    // try to reduce to first function. first, shrink segment elements.
+    // while we are shrinking successfully, keep going exponentially.
+    bool shrank = false;
+    for (auto& segment : module->elementSegments) {
+      shrank = shrinkByReduction(segment.get(), 100);
+    }
+    // the "opposite" of shrinking: copy a 'zero' element
+    for (auto& segment : module->elementSegments) {
+      reduceByZeroing(segment.get(), first, 100, shrank);
     }
   }
 
   void visitModule(Module* curr) {
     assert(curr == module.get());
+
+    shrinkElementSegments(curr);
+
     // try to remove functions
     std::cerr << "|    try to remove functions\n";
     std::vector<Name> functionNames;
@@ -898,12 +920,11 @@ struct Reducer
     }
     // If we are left with a single function that is not exported or used in
     // a table, that is useful as then we can change the return type.
-    bool allTablesEmpty = std::all_of(
-      module->tables.begin(), module->tables.end(), [&](auto& table) {
-        return std::all_of(table->segments.begin(),
-                           table->segments.end(),
-                           [&](auto& segment) { return segment.data.empty(); });
-      });
+    bool allTablesEmpty =
+      std::all_of(module->elementSegments.begin(),
+                  module->elementSegments.end(),
+                  [&](auto& segment) { return segment->data.empty(); });
+
     if (module->functions.size() == 1 && module->exports.empty() &&
         allTablesEmpty) {
       auto* func = module->functions[0].get();
@@ -962,30 +983,6 @@ struct Reducer
       void visitExport(Export* curr) {
         if (names.count(curr->value)) {
           exportsToRemove.push_back(curr->name);
-        }
-      }
-      void visitTable(Table* curr) {
-        Name other;
-        for (auto& segment : curr->segments) {
-          for (auto name : segment.data) {
-            if (!names.count(name)) {
-              other = name;
-              break;
-            }
-          }
-          if (!other.isNull()) {
-            break;
-          }
-        }
-        if (other.isNull()) {
-          return; // we failed to find a replacement
-        }
-        for (auto& segment : curr->segments) {
-          for (auto& name : segment.data) {
-            if (names.count(name)) {
-              name = other;
-            }
-          }
         }
       }
       void doWalkModule(Module* module) {

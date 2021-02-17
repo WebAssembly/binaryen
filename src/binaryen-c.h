@@ -2069,25 +2069,6 @@ BINARYEN_API BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module,
 BINARYEN_API void BinaryenRemoveEvent(BinaryenModuleRef module,
                                       const char* name);
 
-// Function table. One per module
-
-// TODO: Add support for multiple segments in BinaryenSetFunctionTable.
-BINARYEN_API void BinaryenSetFunctionTable(BinaryenModuleRef module,
-                                           BinaryenIndex initial,
-                                           BinaryenIndex maximum,
-                                           const char** funcNames,
-                                           BinaryenIndex numFuncNames,
-                                           BinaryenExpressionRef offset);
-BINARYEN_API int BinaryenIsFunctionTableImported(BinaryenModuleRef module);
-BINARYEN_API BinaryenIndex
-BinaryenGetNumFunctionTableSegments(BinaryenModuleRef module);
-BINARYEN_API BinaryenExpressionRef BinaryenGetFunctionTableSegmentOffset(
-  BinaryenModuleRef module, BinaryenIndex segmentId);
-BINARYEN_API BinaryenIndex BinaryenGetFunctionTableSegmentLength(
-  BinaryenModuleRef module, BinaryenIndex segmentId);
-BINARYEN_API const char* BinaryenGetFunctionTableSegmentData(
-  BinaryenModuleRef module, BinaryenIndex segmentId, BinaryenIndex dataId);
-
 // Tables
 
 BINARYEN_REF(Table);
@@ -2095,10 +2076,7 @@ BINARYEN_REF(Table);
 BINARYEN_API BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                                const char* table,
                                                BinaryenIndex initial,
-                                               BinaryenIndex maximum,
-                                               const char** funcNames,
-                                               BinaryenIndex numFuncNames,
-                                               BinaryenExpressionRef offset);
+                                               BinaryenIndex maximum);
 BINARYEN_API void BinaryenRemoveTable(BinaryenModuleRef module,
                                       const char* table);
 BINARYEN_API BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module);
@@ -2106,6 +2084,31 @@ BINARYEN_API BinaryenTableRef BinaryenGetTable(BinaryenModuleRef module,
                                                const char* name);
 BINARYEN_API BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
                                                       BinaryenIndex index);
+
+// Elem segments
+
+BINARYEN_REF(ElementSegment);
+
+BINARYEN_API BinaryenElementSegmentRef
+BinaryenAddActiveElementSegment(BinaryenModuleRef module,
+                                const char* table,
+                                const char* name,
+                                const char** funcNames,
+                                BinaryenIndex numFuncNames,
+                                BinaryenExpressionRef offset);
+BINARYEN_API BinaryenElementSegmentRef
+BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
+                                 const char* name,
+                                 const char** funcNames,
+                                 BinaryenIndex numFuncNames);
+BINARYEN_API void BinaryenRemoveElementSegment(BinaryenModuleRef module,
+                                               const char* name);
+BINARYEN_API BinaryenIndex
+BinaryenGetNumElementSegments(BinaryenModuleRef module);
+BINARYEN_API BinaryenElementSegmentRef
+BinaryenGetElementSegment(BinaryenModuleRef module, const char* name);
+BINARYEN_API BinaryenElementSegmentRef
+BinaryenGetElementSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
 // Memory. One per module
 
@@ -2418,6 +2421,35 @@ BINARYEN_API BinaryenIndex BinaryenTableGetMax(BinaryenTableRef table);
 // Sets the maximum number of pages of the specified `Table`.
 BINARYEN_API void BinaryenTableSetMax(BinaryenTableRef table,
                                       BinaryenIndex max);
+
+//
+// ========== Elem Segment Operations ==========
+//
+
+// Gets the name of the specified `ElementSegment`.
+BINARYEN_API const char*
+BinaryenElementSegmentGetName(BinaryenElementSegmentRef elem);
+// Sets the name of the specified `ElementSegment`.
+BINARYEN_API void BinaryenElementSegmentSetName(BinaryenElementSegmentRef elem,
+                                                const char* name);
+// Gets the table name of the specified `ElementSegment`.
+BINARYEN_API const char*
+BinaryenElementSegmentGetTable(BinaryenElementSegmentRef elem);
+// Sets the table name of the specified `ElementSegment`.
+BINARYEN_API void BinaryenElementSegmentSetTable(BinaryenElementSegmentRef elem,
+                                                 const char* table);
+// Gets the segment offset in case of active segments
+BINARYEN_API BinaryenExpressionRef
+BinaryenElementSegmentGetOffset(BinaryenElementSegmentRef elem);
+// Gets the length of items in the segment
+BINARYEN_API BinaryenIndex
+BinaryenElementSegmentGetLength(BinaryenElementSegmentRef elem);
+// Gets the item at the specified index
+BINARYEN_API const char*
+BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
+                              BinaryenIndex dataId);
+// Returns true if the specified elem segment is passive
+BINARYEN_API int BinayenElementSegmentIsPassive(BinaryenElementSegmentRef elem);
 
 //
 // ========== Global Operations ==========

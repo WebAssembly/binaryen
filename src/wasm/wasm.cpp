@@ -70,6 +70,9 @@ Name EXPORT("export");
 Name IMPORT("import");
 Name TABLE("table");
 Name ELEM("elem");
+Name DECLARE("declare");
+Name OFFSET("offset");
+Name ITEM("item");
 Name LOCAL("local");
 Name TYPE("type");
 Name REF("ref");
@@ -802,12 +805,9 @@ void MemoryGrow::finalize() {
 
 void RefNull::finalize(HeapType heapType) { type = Type(heapType, Nullable); }
 
-void RefNull::finalize(Type type_) {
-  type = type_;
-}
+void RefNull::finalize(Type type_) { type = type_; }
 
-void RefNull::finalize() {
-}
+void RefNull::finalize() {}
 
 void RefIs::finalize() {
   if (value->type == Type::unreachable) {
@@ -1169,6 +1169,10 @@ Table* Module::getTable(Name name) {
   return getModuleElement(tablesMap, name, "getTable");
 }
 
+ElementSegment* Module::getElementSegment(Name name) {
+  return getModuleElement(elementSegmentsMap, name, "getElementSegment");
+}
+
 Global* Module::getGlobal(Name name) {
   return getModuleElement(globalsMap, name, "getGlobal");
 }
@@ -1196,6 +1200,10 @@ Function* Module::getFunctionOrNull(Name name) {
 
 Table* Module::getTableOrNull(Name name) {
   return getModuleElementOrNull(tablesMap, name);
+}
+
+ElementSegment* Module::getElementSegmentOrNull(Name name) {
+  return getModuleElementOrNull(elementSegmentsMap, name);
 }
 
 Global* Module::getGlobalOrNull(Name name) {
@@ -1267,6 +1275,12 @@ Table* Module::addTable(std::unique_ptr<Table>&& curr) {
   return addModuleElement(tables, tablesMap, std::move(curr), "addTable");
 }
 
+ElementSegment*
+Module::addElementSegment(std::unique_ptr<ElementSegment>&& curr) {
+  return addModuleElement(
+    elementSegments, elementSegmentsMap, std::move(curr), "addElementSegment");
+}
+
 Global* Module::addGlobal(std::unique_ptr<Global>&& curr) {
   return addModuleElement(globals, globalsMap, std::move(curr), "addGlobal");
 }
@@ -1296,6 +1310,9 @@ void Module::removeFunction(Name name) {
 }
 void Module::removeTable(Name name) {
   removeModuleElement(tables, tablesMap, name);
+}
+void Module::removeElementSegment(Name name) {
+  removeModuleElement(elementSegments, elementSegmentsMap, name);
 }
 void Module::removeGlobal(Name name) {
   removeModuleElement(globals, globalsMap, name);
@@ -1329,6 +1346,9 @@ void Module::removeFunctions(std::function<bool(Function*)> pred) {
 void Module::removeTables(std::function<bool(Table*)> pred) {
   removeModuleElements(tables, tablesMap, pred);
 }
+void Module::removeElementSegments(std::function<bool(ElementSegment*)> pred) {
+  removeModuleElements(elementSegments, elementSegmentsMap, pred);
+}
 void Module::removeGlobals(std::function<bool(Global*)> pred) {
   removeModuleElements(globals, globalsMap, pred);
 }
@@ -1348,6 +1368,10 @@ void Module::updateMaps() {
   tablesMap.clear();
   for (auto& curr : tables) {
     tablesMap[curr->name] = curr.get();
+  }
+  elementSegmentsMap.clear();
+  for (auto& curr : elementSegments) {
+    elementSegmentsMap[curr->name] = curr.get();
   }
   globalsMap.clear();
   for (auto& curr : globals) {
