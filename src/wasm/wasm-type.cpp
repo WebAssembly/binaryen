@@ -1129,8 +1129,9 @@ struct Canonicalizer {
     Item(HeapType* heapType) : kind(HeapTypeKind), heapType(heapType) {}
   };
 
-  // IDs of scanned Types and HeapTypes, used to prevent repeated scanning.
-  std::unordered_set<TypeID> scanned;
+  // Addresses of scanned Types and HeapTypes, used to prevent repeated
+  // scanning.
+  std::unordered_set<void*> scanned;
 
   // The work list of Types and HeapTypes remaining to be scanned.
   std::vector<Item> scanList;
@@ -1231,10 +1232,10 @@ void Canonicalizer::noteChild(T1 parent, T2* child) {
 void Canonicalizer::scanHeapType(HeapType* ht) {
   assert(ht->isCompound());
   visitList.push_back(ht);
-  if (scanned.count(ht->getID())) {
+  if (scanned.count(ht)) {
     return;
   }
-  scanned.insert(ht->getID());
+  scanned.insert(ht);
 
   auto* info = getHeapTypeInfo(*ht);
   switch (info->kind) {
@@ -1256,10 +1257,10 @@ void Canonicalizer::scanHeapType(HeapType* ht) {
 void Canonicalizer::scanType(Type* type) {
   assert(type->isCompound());
   visitList.push_back(type);
-  if (scanned.count(type->getID())) {
+  if (scanned.count(type)) {
     return;
   }
-  scanned.insert(type->getID());
+  scanned.insert(type);
 
   auto* info = getTypeInfo(*type);
   switch (info->kind) {

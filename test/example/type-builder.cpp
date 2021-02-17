@@ -70,10 +70,11 @@ void test_builder() {
 void test_canonicalization() {
   std::cout << ";; Test canonicalization\n";
 
-  // (type $struct (struct (field (ref null $sig))))
+  // (type $struct (struct (field (ref null $sig) (ref null $sig))))
   // (type $sig (func))
   HeapType sig = Signature(Type::none, Type::none);
-  HeapType struct_ = Struct({Field(Type(sig, Nullable), Immutable)});
+  HeapType struct_ = Struct({Field(Type(sig, Nullable), Immutable),
+                             Field(Type(sig, Nullable), Immutable)});
 
   TypeBuilder builder(4);
 
@@ -84,8 +85,10 @@ void test_canonicalization() {
   assert(tempSigRef1 != Type(sig, Nullable));
   assert(tempSigRef2 != Type(sig, Nullable));
 
-  builder.setHeapType(0, Struct({Field(tempSigRef1, Immutable)}));
-  builder.setHeapType(1, Struct({Field(tempSigRef2, Immutable)}));
+  builder.setHeapType(
+    0, Struct({Field(tempSigRef1, Immutable), Field(tempSigRef1, Immutable)}));
+  builder.setHeapType(
+    1, Struct({Field(tempSigRef2, Immutable), Field(tempSigRef2, Immutable)}));
   builder.setHeapType(2, Signature(Type::none, Type::none));
   builder.setHeapType(3, Signature(Type::none, Type::none));
 
