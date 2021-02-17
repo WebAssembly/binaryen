@@ -2078,14 +2078,14 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
-    shouldBeTrue(delegateTargetNames.find(name) != delegateTargetNames.end(),
+    shouldBeTrue(delegateTargetNames.count(name) != 0,
                  curr,
                  "all delegate targets must be valid");
   }
 }
 
 void FunctionValidator::noteRethrow(Name name, Expression* curr) {
-  shouldBeTrue(rethrowTargetNames.find(name) != rethrowTargetNames.end(),
+  shouldBeTrue(rethrowTargetNames.count(name) != 0,
                curr,
                "all rethrow targets must be valid");
 }
