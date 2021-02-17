@@ -1778,7 +1778,7 @@ struct PrintExpressionContents
   }
   void visitRethrow(Rethrow* curr) {
     printMedium(o, "rethrow ");
-    o << curr->depth;
+    printName(curr->target, o);
   }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }

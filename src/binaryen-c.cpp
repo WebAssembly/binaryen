@@ -1248,8 +1248,9 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
 }
 
 BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
-                                      BinaryenIndex depth) {
-  return static_cast<Expression*>(Builder(*(Module*)module).makeRethrow(depth));
+                                      const char* target) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRethrow(target));
 }
 
 BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
@@ -2965,15 +2966,15 @@ BinaryenExpressionRef BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr,
   return static_cast<Throw*>(expression)->operands.removeAt(index);
 }
 // Rethrow
-BinaryenIndex BinaryenRethrowGetDepth(BinaryenExpressionRef expr) {
+const char* BinaryenRethrowGetTarget(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Rethrow>());
-  return static_cast<Rethrow*>(expression)->depth;
+  return static_cast<Rethrow*>(expression)->target.c_str();
 }
-void BinaryenRethrowSetDepth(BinaryenExpressionRef expr, BinaryenIndex depth) {
+void BinaryenRethrowSetTarget(BinaryenExpressionRef expr, const char* target) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Rethrow>());
-  static_cast<Rethrow*>(expression)->depth = depth;
+  static_cast<Rethrow*>(expression)->target = target;
 }
 // TupleMake
 BinaryenIndex BinaryenTupleMakeGetNumOperands(BinaryenExpressionRef expr) {

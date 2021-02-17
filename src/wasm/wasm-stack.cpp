@@ -1936,7 +1936,7 @@ void BinaryInstWriter::visitThrow(Throw* curr) {
 }
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
-  o << int8_t(BinaryConsts::Rethrow) << U32LEB(curr->depth);
+  o << int8_t(BinaryConsts::Rethrow) << U32LEB(getBreakIndex(curr->target));
 }
 
 void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }

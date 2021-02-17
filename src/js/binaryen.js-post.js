@@ -2154,8 +2154,8 @@ function wrapModule(module, self = {}) {
   self['throw'] = function(event_, operands) {
     return preserveStack(() => Module['_BinaryenThrow'](module, strToStack(event_), i32sToStack(operands), operands.length));
   };
-  self['rethrow'] = function(depth) {
-    return Module['_BinaryenRethrow'](module, depth);
+  self['rethrow'] = function(target) {
+    return Module['_BinaryenRethrow'](module, strToStack(target));
   };
 
   self['tuple'] = {
@@ -2916,7 +2916,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'depth': Module['_BinaryenRethrowGetDepth'](expr)
+        'target': UTF8ToString(Module['_BinaryenRethrowGetTarget'](expr))
       };
     case Module['TupleMakeId']:
       return {
@@ -4287,11 +4287,12 @@ Module['Throw'] = makeExpressionWrapper({
 });
 
 Module['Rethrow'] = makeExpressionWrapper({
-  'getDepth'(expr) {
-    return Module['_BinaryenRethrowGetDepth'](expr);
+  'getTarget'(expr) {
+    const target = Module['_BinaryenRethrowGetTarget'](expr);
+    return target ? UTF8ToString(target) : null;
   },
-  'setDepth'(expr, depthExpr) {
-    Module['_BinaryenRethrowSetDepth'](expr, depthExpr);
+  'setTarget'(expr, target) {
+    preserveStack(() => { Module['_BinaryenRethrowSetTarget'](expr, strToStack(target)) });
   }
 });
 

@@ -297,7 +297,7 @@
 )
 
 # Rethrow
-(rethrow 1)
+(rethrow $l1)
 
 # TupleMake
 (tuple.make

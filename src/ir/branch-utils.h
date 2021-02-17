@@ -83,7 +83,7 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->getCastType());
     } else {
-      assert(expr->is<Try>()); // delegate
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
   });
 }
@@ -135,14 +135,14 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
   return worked;
 }
 
-// Replace all delegate targets within the given AST.
+// Replace all delegate/rethrow targets within the given AST.
 inline void replaceExceptionTargets(Expression* ast, Name from, Name to) {
   struct Replacer
     : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
     Name from, to;
     Replacer(Name from, Name to) : from(from), to(to) {}
     void visitExpression(Expression* curr) {
-      if (curr->is<Try>()) {
+      if (curr->is<Try>() || curr->is<Rethrow>()) {
         operateOnScopeNameUses(curr, [&](Name& name) {
           if (name == from) {
             name = to;

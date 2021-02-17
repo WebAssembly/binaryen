@@ -818,7 +818,7 @@ BinaryenThrow(BinaryenModuleRef module,
               BinaryenExpressionRef* operands,
               BinaryenIndex numOperands);
 BINARYEN_API BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
-                                                   BinaryenIndex depth);
+                                                   const char* target);
 BINARYEN_API BinaryenExpressionRef
 BinaryenTupleMake(BinaryenModuleRef module,
                   BinaryenExpressionRef* operands,
@@ -1829,11 +1829,11 @@ BinaryenThrowRemoveOperandAt(BinaryenExpressionRef expr, BinaryenIndex index);
 
 // Rethrow
 
-// Gets the depth of a `rethrow` expression.
-BINARYEN_API BinaryenIndex BinaryenRethrowGetDepth(BinaryenExpressionRef expr);
-// Sets the exception reference expression of a `rethrow` expression.
-BINARYEN_API void BinaryenRethrowSetDepth(BinaryenExpressionRef expr,
-                                          BinaryenIndex depth);
+// Gets the target catch's corresponding try label of a `rethrow` expression.
+BINARYEN_API const char* BinaryenRethrowGetTarget(BinaryenExpressionRef expr);
+// Sets the target catch's corresponding try label of a `rethrow` expression.
+BINARYEN_API void BinaryenRethrowSetTarget(BinaryenExpressionRef expr,
+                                           const char* target);
 
 // TupleMake
 

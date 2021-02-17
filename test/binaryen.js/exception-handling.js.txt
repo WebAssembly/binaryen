@@ -3,7 +3,7 @@
  (type $i32_=>_none (func (param i32)))
  (event $e (attr 0) (param i32))
  (func $test
-  (try
+  (try $l0
    (do
     (throw $e
      (i32.const 0)
@@ -13,7 +13,7 @@
     (drop
      (pop i32)
     )
-    (rethrow 0)
+    (rethrow $l0)
    )
   )
   (try $try_outer
@@ -35,6 +35,6 @@
 )
 
 getExpressionInfo(throw) = {"id":48,"type":1,"event":"e"}
-getExpressionInfo(rethrow) = {"id":49,"type":1,"depth":0}
-getExpressionInfo(try_catch) = {"id":47,"type":1,"name":"","hasCatchAll":0,"delegateTarget":"","isDelegate":0}
+getExpressionInfo(rethrow) = {"id":49,"type":1,"target":"l0"}
+getExpressionInfo(try_catch) = {"id":47,"type":1,"name":"l0","hasCatchAll":0,"delegateTarget":"","isDelegate":0}
 getExpressionInfo(try_delegate) = {"id":47,"type":0,"name":"try_outer","hasCatchAll":1,"delegateTarget":"","isDelegate":0}

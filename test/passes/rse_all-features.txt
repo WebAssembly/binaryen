@@ -569,14 +569,14 @@
   (local $x i32)
   (try $try
    (do
-    (try $try6
+    (try $l0
      (do
       (throw $e
        (i32.const 0)
       )
      )
      (catch_all
-      (rethrow 0)
+      (rethrow $l0)
      )
     )
    )
@@ -594,7 +594,7 @@
   (local $x i32)
   (try $try
    (do
-    (try $try7
+    (try $l0
      (do
       (throw $e
        (i32.const 0)
@@ -604,7 +604,7 @@
       (local.set $x
        (i32.const 1)
       )
-      (rethrow 0)
+      (rethrow $l0)
      )
     )
    )
@@ -620,7 +620,7 @@
   (local $x i32)
   (try $try
    (do
-    (try $try8
+    (try $l0
      (do
       (throw $e
        (i32.const 0)
@@ -633,7 +633,7 @@
       (local.set $x
        (i32.const 1)
       )
-      (rethrow 0)
+      (rethrow $l0)
      )
     )
    )

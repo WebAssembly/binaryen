@@ -3475,12 +3475,12 @@ Name WasmBinaryBuilder::getExceptionTargetName(int32_t offset) {
   }
   size_t index = breakStack.size() - 1 - offset;
   if (index > breakStack.size()) {
-    throwError("bad delegate index (high)");
+    throwError("bad try index (high)");
   }
-  BYN_TRACE("delegate target " << breakStack[index].name << std::endl);
+  BYN_TRACE("exception target " << breakStack[index].name << std::endl);
   auto& ret = breakStack[index];
-  // if the delegate is in literally unreachable code, then we will not emit it
-  // anyhow, so do not note that the target has delegate to it
+  // if the delegate/rethrow is in literally unreachable code, then we will not
+  // emit it anyhow, so do not note that the target has a reference to it
   if (!willBeIgnored) {
     exceptionTargetNames.insert(ret.name);
   }
@@ -5835,11 +5835,12 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     curr->delegateTarget = getExceptionTargetName(getU32LEB());
   }
 
-  // For simplicity, we make try's labels only can be targeted by delegates, and
-  // delegates can only target try's labels. (If they target blocks or loops, it
-  // is a validation failure.) Because we create an inner block within each try
-  // and catch body, if any delegate targets those inner blocks, we should make
-  // them target the try's label instead.
+  // For simplicity, we ensure that try's labels can only be targeted by
+  // delegates and rethrows, and delegates/rethrows can only target try's
+  // labels. (If they target blocks or loops, it is a validation failure.)
+  // Because we create an inner block within each try and catch body, if any
+  // delegate/rethrow targets those inner blocks, we should make them target the
+  // try's label instead.
   curr->name = getNextLabel();
   if (auto* block = curr->body->dynCast<Block>()) {
     if (block->name.is()) {
@@ -5936,7 +5937,9 @@ void WasmBinaryBuilder::visitThrow(Throw* curr) {
 
 void WasmBinaryBuilder::visitRethrow(Rethrow* curr) {
   BYN_TRACE("zz node: Rethrow\n");
-  curr->depth = getU32LEB();
+  curr->target = getExceptionTargetName(getU32LEB());
+  // This special target is valid only for delegates
+  assert(curr->target != DELEGATE_CALLER_TARGET);
   curr->finalize();
 }
 

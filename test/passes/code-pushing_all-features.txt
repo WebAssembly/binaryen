@@ -105,14 +105,14 @@
    (local.set $x
     (i32.const 1)
    )
-   (try $try
+   (try $l0
     (do
      (throw $e
       (i32.const 0)
      )
     )
     (catch_all
-     (rethrow 0)
+     (rethrow $l0)
     )
    )
    (drop
