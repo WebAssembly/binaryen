@@ -5835,7 +5835,7 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     curr->delegateTarget = getExceptionTargetName(getU32LEB());
   }
 
-  // For simplicity, we make try's labels only can be targeted by delegates and
+  // For simplicity, we ensure that try's labels can only be targeted by delegates and
   // rethrows, and delegates/rethrows can only target try's labels. (If they
   // target blocks or loops, it is a validation failure.) Because we create an
   // inner block within each try and catch body, if any delegate/rethrow targets
