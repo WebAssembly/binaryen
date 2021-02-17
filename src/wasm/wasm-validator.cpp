@@ -2541,6 +2541,9 @@ void FunctionValidator::visitFunction(Function* curr) {
       "function result must match, if function has returns");
   }
 
+  assert(breakInfos.empty());
+  assert(delegateTargetNames.empty());
+  assert(rethrowTargetNames.empty());
   returnTypes.clear();
   labelNames.clear();
   // validate optional local names
