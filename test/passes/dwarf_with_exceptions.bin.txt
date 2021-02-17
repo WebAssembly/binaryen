@@ -7,8 +7,7 @@
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
  (memory $0 2)
- (table $0 1 1 funcref)
- (global $global$0 (mut i32) (i32.const 66560))
+ (global $__stack_pointer (mut i32) (i32.const 66560))
  (event $event$0 (attr 0) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
@@ -19,7 +18,7 @@
   ;; code offset: 0xe
   (local.set $0
    ;; code offset: 0x8
-   (global.get $global$0)
+   (global.get $__stack_pointer)
   )
   ;; code offset: 0x10
   (try $label$9
@@ -34,7 +33,7 @@
      (pop i32)
     )
     ;; code offset: 0x22
-    (global.set $global$0
+    (global.set $__stack_pointer
      ;; code offset: 0x20
      (local.get $0)
     )
@@ -52,7 +51,7 @@
       ;; code offset: 0x33
       (call $foo)
       ;; code offset: 0x3b
-      (global.set $global$0
+      (global.set $__stack_pointer
        ;; code offset: 0x39
        (local.get $0)
       )
@@ -72,7 +71,7 @@
          (pop i32)
         )
         ;; code offset: 0x54
-        (global.set $global$0
+        (global.set $__stack_pointer
          ;; code offset: 0x52
          (local.get $0)
         )
@@ -117,18 +116,18 @@
  )
  ;; custom section ".debug_info", size 63
  ;; custom section ".debug_abbrev", size 41
- ;; custom section ".debug_line", size 92
- ;; custom section ".debug_str", size 194
- ;; custom section "producers", size 137
- ;; features section: exception-handling, reference-types
+ ;; custom section ".debug_line", size 104
+ ;; custom section ".debug_str", size 141
+ ;; custom section "producers", size 138
+ ;; features section: exception-handling
 )
 DWARF debug info
 ================
 
 Contains section .debug_info (63 bytes)
 Contains section .debug_abbrev (41 bytes)
-Contains section .debug_line (92 bytes)
-Contains section .debug_str (194 bytes)
+Contains section .debug_line (104 bytes)
+Contains section .debug_str (141 bytes)
 
 .debug_abbrev contents:
 Abbrev table for offset: 0x00000000
@@ -156,11 +155,11 @@ Abbrev table for offset: 0x00000000
 0x00000000: Compile Unit: length = 0x0000003b version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x0000003f)
 
 0x0000000b: DW_TAG_compile_unit [1] *
-              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 12.0.0 (https://github.com/aheejin/llvm-project e74a5010a507b737fcbd40e87cde358f2c9fc812)")
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 13.0.0 (https://github.com/llvm/llvm-project.git 3c4c205060c9398da705eb71b63ddd8a04999de9)")
               DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus_14)
-              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000068] = "test.cpp")
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000069] = "test_debuginfo.cpp")
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
-              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x00000071] = "/usr/local/google/home/aheejin/llvm-git/llvm/tw")
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000007c] = "/")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
               DW_AT_high_pc [DW_FORM_data4]	(0x00000072)
 
@@ -168,10 +167,10 @@ Abbrev table for offset: 0x00000000
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000072)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x0 +0, DW_OP_stack_value)
-                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000a1] = "test_debuginfo")
-                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b0] = "test_terminatepad")
-                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/aheejin/llvm-git/llvm/tw/test.cpp")
-                DW_AT_decl_line [DW_FORM_data1]	(2)
+                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "test_debuginfo")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "test_debuginfo")
+                DW_AT_decl_file [DW_FORM_data1]	("/test_debuginfo.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(3)
                 DW_AT_external [DW_FORM_flag_present]	(true)
 
 0x0000003e:   NULL
@@ -179,9 +178,9 @@ Abbrev table for offset: 0x00000000
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x00000058
+    total_length: 0x00000064
          version: 4
- prologue_length: 0x00000020
+ prologue_length: 0x0000002a
  min_inst_length: 1
 max_ops_per_inst: 1
  default_is_stmt: 1
@@ -201,82 +200,82 @@ standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
 standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
 standard_opcode_lengths[DW_LNS_set_isa] = 1
 file_names[  1]:
-           name: "test.cpp"
+           name: "test_debuginfo.cpp"
       dir_index: 0
        mod_time: 0x00000000
          length: 0x00000000
-0x0000002a: 00 DW_LNE_set_address (0x0000000000000005)
-0x00000031: 13 address += 0,  line += 1
-            0x0000000000000005      2      0      1   0             0  is_stmt
+0x00000034: 00 DW_LNE_set_address (0x0000000000000005)
+0x0000003b: 14 address += 0,  line += 2
+            0x0000000000000005      3      0      1   0             0  is_stmt
 
-0x00000032: 05 DW_LNS_set_column (5)
-0x00000034: 0a DW_LNS_set_prologue_end
-0x00000035: ae address += 11,  line += 2
-            0x0000000000000010      4      5      1   0             0  is_stmt prologue_end
+0x0000003c: 05 DW_LNS_set_column (5)
+0x0000003e: 0a DW_LNS_set_prologue_end
+0x0000003f: ae address += 11,  line += 2
+            0x0000000000000010      5      5      1   0             0  is_stmt prologue_end
 
-0x00000036: 05 DW_LNS_set_column (3)
-0x00000038: 83 address += 8,  line += 1
-            0x0000000000000018      5      3      1   0             0  is_stmt
+0x00000040: 05 DW_LNS_set_column (3)
+0x00000042: 83 address += 8,  line += 1
+            0x0000000000000018      6      3      1   0             0  is_stmt
 
-0x00000039: 05 DW_LNS_set_column (5)
-0x0000003b: 08 DW_LNS_const_add_pc (0x0000000000000011)
-0x0000003c: 83 address += 8,  line += 1
-            0x0000000000000031      6      5      1   0             0  is_stmt
+0x00000043: 05 DW_LNS_set_column (5)
+0x00000045: 08 DW_LNS_const_add_pc (0x0000000000000011)
+0x00000046: 83 address += 8,  line += 1
+            0x0000000000000031      7      5      1   0             0  is_stmt
 
-0x0000003d: 06 DW_LNS_negate_stmt
-0x0000003e: 03 DW_LNS_advance_line (0)
-0x00000040: 82 address += 8,  line += 0
+0x00000047: 06 DW_LNS_negate_stmt
+0x00000048: 03 DW_LNS_advance_line (0)
+0x0000004a: 82 address += 8,  line += 0
             0x0000000000000039      0      5      1   0             0 
 
-0x00000041: 05 DW_LNS_set_column (3)
-0x00000043: 06 DW_LNS_negate_stmt
-0x00000044: 89 address += 8,  line += 7
-            0x0000000000000041      7      3      1   0             0  is_stmt
+0x0000004b: 05 DW_LNS_set_column (3)
+0x0000004d: 06 DW_LNS_negate_stmt
+0x0000004e: 8a address += 8,  line += 8
+            0x0000000000000041      8      3      1   0             0  is_stmt
 
-0x00000045: 06 DW_LNS_negate_stmt
-0x00000046: 03 DW_LNS_advance_line (0)
-0x00000048: 02 DW_LNS_advance_pc (42)
-0x0000004a: 01 DW_LNS_copy
+0x0000004f: 06 DW_LNS_negate_stmt
+0x00000050: 03 DW_LNS_advance_line (0)
+0x00000052: 02 DW_LNS_advance_pc (42)
+0x00000054: 01 DW_LNS_copy
             0x000000000000006b      0      3      1   0             0 
 
 
-0x0000004b: 27 address += 1,  line += 7
-            0x000000000000006c      7      3      1   0             0 
+0x00000055: 28 address += 1,  line += 8
+            0x000000000000006c      8      3      1   0             0 
 
-0x0000004c: 03 DW_LNS_advance_line (0)
-0x0000004e: 2e address += 2,  line += 0
+0x00000056: 03 DW_LNS_advance_line (0)
+0x00000058: 2e address += 2,  line += 0
             0x000000000000006e      0      3      1   0             0 
 
-0x0000004f: 27 address += 1,  line += 7
-            0x000000000000006f      7      3      1   0             0 
+0x00000059: 28 address += 1,  line += 8
+            0x000000000000006f      8      3      1   0             0 
 
-0x00000050: 03 DW_LNS_advance_line (0)
-0x00000052: 66 address += 6,  line += 0
+0x0000005a: 03 DW_LNS_advance_line (0)
+0x0000005c: 66 address += 6,  line += 0
             0x0000000000000075      0      3      1   0             0 
 
-0x00000053: 05 DW_LNS_set_column (1)
-0x00000055: 06 DW_LNS_negate_stmt
-0x00000056: 28 address += 1,  line += 8
-            0x0000000000000076      8      1      1   0             0  is_stmt
+0x0000005d: 05 DW_LNS_set_column (1)
+0x0000005f: 06 DW_LNS_negate_stmt
+0x00000060: 03 DW_LNS_advance_line (9)
+0x00000062: 20 address += 1,  line += 0
+            0x0000000000000076      9      1      1   0             0  is_stmt
 
-0x00000057: 02 DW_LNS_advance_pc (1)
-0x00000059: 00 DW_LNE_end_sequence
-            0x0000000000000077      8      1      1   0             0  is_stmt end_sequence
+0x00000063: 02 DW_LNS_advance_pc (1)
+0x00000065: 00 DW_LNE_end_sequence
+            0x0000000000000077      9      1      1   0             0  is_stmt end_sequence
 
 
 .debug_str contents:
-0x00000000: "clang version 12.0.0 (https://github.com/aheejin/llvm-project e74a5010a507b737fcbd40e87cde358f2c9fc812)"
-0x00000068: "test.cpp"
-0x00000071: "/usr/local/google/home/aheejin/llvm-git/llvm/tw"
-0x000000a1: "test_debuginfo"
-0x000000b0: "test_terminatepad"
+0x00000000: "clang version 13.0.0 (https://github.com/llvm/llvm-project.git 3c4c205060c9398da705eb71b63ddd8a04999de9)"
+0x00000069: "test_debuginfo.cpp"
+0x0000007c: "/"
+0x0000007e: "test_debuginfo"
 DWARF debug info
 ================
 
 Contains section .debug_info (63 bytes)
 Contains section .debug_abbrev (41 bytes)
-Contains section .debug_line (145 bytes)
-Contains section .debug_str (194 bytes)
+Contains section .debug_line (155 bytes)
+Contains section .debug_str (141 bytes)
 
 .debug_abbrev contents:
 Abbrev table for offset: 0x00000000
@@ -304,11 +303,11 @@ Abbrev table for offset: 0x00000000
 0x00000000: Compile Unit: length = 0x0000003b version = 0x0004 abbr_offset = 0x0000 addr_size = 0x04 (next unit at 0x0000003f)
 
 0x0000000b: DW_TAG_compile_unit [1] *
-              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 12.0.0 (https://github.com/aheejin/llvm-project e74a5010a507b737fcbd40e87cde358f2c9fc812)")
+              DW_AT_producer [DW_FORM_strp]	( .debug_str[0x00000000] = "clang version 13.0.0 (https://github.com/llvm/llvm-project.git 3c4c205060c9398da705eb71b63ddd8a04999de9)")
               DW_AT_language [DW_FORM_data2]	(DW_LANG_C_plus_plus_14)
-              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000068] = "test.cpp")
+              DW_AT_name [DW_FORM_strp]	( .debug_str[0x00000069] = "test_debuginfo.cpp")
               DW_AT_stmt_list [DW_FORM_sec_offset]	(0x00000000)
-              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x00000071] = "/usr/local/google/home/aheejin/llvm-git/llvm/tw")
+              DW_AT_comp_dir [DW_FORM_strp]	( .debug_str[0x0000007c] = "/")
               DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
               DW_AT_high_pc [DW_FORM_data4]	(0x00000040)
 
@@ -316,10 +315,10 @@ Abbrev table for offset: 0x00000000
                 DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000005)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000040)
                 DW_AT_frame_base [DW_FORM_exprloc]	(DW_OP_WASM_location 0x0 +0, DW_OP_stack_value)
-                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000a1] = "test_debuginfo")
-                DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000b0] = "test_terminatepad")
-                DW_AT_decl_file [DW_FORM_data1]	("/usr/local/google/home/aheejin/llvm-git/llvm/tw/test.cpp")
-                DW_AT_decl_line [DW_FORM_data1]	(2)
+                DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "test_debuginfo")
+                DW_AT_name [DW_FORM_strp]	( .debug_str[0x0000007e] = "test_debuginfo")
+                DW_AT_decl_file [DW_FORM_data1]	("/test_debuginfo.cpp")
+                DW_AT_decl_line [DW_FORM_data1]	(3)
                 DW_AT_external [DW_FORM_flag_present]	(true)
 
 0x0000003e:   NULL
@@ -327,9 +326,9 @@ Abbrev table for offset: 0x00000000
 .debug_line contents:
 debug_line[0x00000000]
 Line table prologue:
-    total_length: 0x0000008d
+    total_length: 0x00000097
          version: 4
- prologue_length: 0x00000020
+ prologue_length: 0x0000002a
  min_inst_length: 1
 max_ops_per_inst: 1
  default_is_stmt: 1
@@ -349,77 +348,76 @@ standard_opcode_lengths[DW_LNS_set_prologue_end] = 0
 standard_opcode_lengths[DW_LNS_set_epilogue_begin] = 0
 standard_opcode_lengths[DW_LNS_set_isa] = 1
 file_names[  1]:
-           name: "test.cpp"
+           name: "test_debuginfo.cpp"
       dir_index: 0
        mod_time: 0x00000000
          length: 0x00000000
-0x0000002a: 00 DW_LNE_set_address (0x0000000000000005)
-0x00000031: 03 DW_LNS_advance_line (2)
-0x00000033: 01 DW_LNS_copy
-            0x0000000000000005      2      0      1   0             0  is_stmt
+0x00000034: 00 DW_LNE_set_address (0x0000000000000005)
+0x0000003b: 03 DW_LNS_advance_line (3)
+0x0000003d: 01 DW_LNS_copy
+            0x0000000000000005      3      0      1   0             0  is_stmt
 
 
-0x00000034: 00 DW_LNE_set_address (0x000000000000000e)
-0x0000003b: 03 DW_LNS_advance_line (4)
-0x0000003d: 05 DW_LNS_set_column (5)
-0x0000003f: 0a DW_LNS_set_prologue_end
-0x00000040: 01 DW_LNS_copy
-            0x000000000000000e      4      5      1   0             0  is_stmt prologue_end
+0x0000003e: 00 DW_LNE_set_address (0x000000000000000e)
+0x00000045: 03 DW_LNS_advance_line (5)
+0x00000047: 05 DW_LNS_set_column (5)
+0x00000049: 0a DW_LNS_set_prologue_end
+0x0000004a: 01 DW_LNS_copy
+            0x000000000000000e      5      5      1   0             0  is_stmt prologue_end
 
 
-0x00000041: 00 DW_LNE_set_address (0x0000000000000012)
-0x00000048: 03 DW_LNS_advance_line (5)
-0x0000004a: 05 DW_LNS_set_column (3)
-0x0000004c: 01 DW_LNS_copy
-            0x0000000000000012      5      3      1   0             0  is_stmt
+0x0000004b: 00 DW_LNE_set_address (0x0000000000000012)
+0x00000052: 03 DW_LNS_advance_line (6)
+0x00000054: 05 DW_LNS_set_column (3)
+0x00000056: 01 DW_LNS_copy
+            0x0000000000000012      6      3      1   0             0  is_stmt
 
 
-0x0000004d: 00 DW_LNE_set_address (0x000000000000001f)
-0x00000054: 03 DW_LNS_advance_line (6)
-0x00000056: 05 DW_LNS_set_column (5)
-0x00000058: 01 DW_LNS_copy
-            0x000000000000001f      6      5      1   0             0  is_stmt
+0x00000057: 00 DW_LNE_set_address (0x000000000000001f)
+0x0000005e: 03 DW_LNS_advance_line (7)
+0x00000060: 05 DW_LNS_set_column (5)
+0x00000062: 01 DW_LNS_copy
+            0x000000000000001f      7      5      1   0             0  is_stmt
 
 
-0x00000059: 00 DW_LNE_set_address (0x000000000000003e)
-0x00000060: 03 DW_LNS_advance_line (7)
-0x00000062: 05 DW_LNS_set_column (3)
-0x00000064: 06 DW_LNS_negate_stmt
-0x00000065: 01 DW_LNS_copy
-            0x000000000000003e      7      3      1   0             0 
+0x00000063: 00 DW_LNE_set_address (0x000000000000003e)
+0x0000006a: 03 DW_LNS_advance_line (8)
+0x0000006c: 05 DW_LNS_set_column (3)
+0x0000006e: 06 DW_LNS_negate_stmt
+0x0000006f: 01 DW_LNS_copy
+            0x000000000000003e      8      3      1   0             0 
 
 
-0x00000066: 00 DW_LNE_set_address (0x0000000000000041)
-0x0000006d: 01 DW_LNS_copy
-            0x0000000000000041      7      3      1   0             0 
+0x00000070: 00 DW_LNE_set_address (0x0000000000000041)
+0x00000077: 01 DW_LNS_copy
+            0x0000000000000041      8      3      1   0             0 
 
 
-0x0000006e: 00 DW_LNE_set_address (0x0000000000000044)
-0x00000075: 03 DW_LNS_advance_line (8)
-0x00000077: 05 DW_LNS_set_column (1)
-0x00000079: 06 DW_LNS_negate_stmt
-0x0000007a: 01 DW_LNS_copy
-            0x0000000000000044      8      1      1   0             0  is_stmt
+0x00000078: 00 DW_LNE_set_address (0x0000000000000044)
+0x0000007f: 03 DW_LNS_advance_line (9)
+0x00000081: 05 DW_LNS_set_column (1)
+0x00000083: 06 DW_LNS_negate_stmt
+0x00000084: 01 DW_LNS_copy
+            0x0000000000000044      9      1      1   0             0  is_stmt
 
 
-0x0000007b: 00 DW_LNE_set_address (0x0000000000000045)
-0x00000082: 01 DW_LNS_copy
-            0x0000000000000045      8      1      1   0             0  is_stmt
+0x00000085: 00 DW_LNE_set_address (0x0000000000000045)
+0x0000008c: 01 DW_LNS_copy
+            0x0000000000000045      9      1      1   0             0  is_stmt
 
 
-0x00000083: 00 DW_LNE_set_address (0x00000000ffffff61)
-0x0000008a: 03 DW_LNS_advance_line (7)
-0x0000008c: 05 DW_LNS_set_column (3)
-0x0000008e: 00 DW_LNE_end_sequence
-            0x00000000ffffff61      7      3      1   0             0  is_stmt end_sequence
+0x0000008d: 00 DW_LNE_set_address (0x00000000ffffff68)
+0x00000094: 03 DW_LNS_advance_line (8)
+0x00000096: 05 DW_LNS_set_column (3)
+0x00000098: 00 DW_LNE_end_sequence
+            0x00000000ffffff68      8      3      1   0             0  is_stmt end_sequence
 
 
 .debug_str contents:
-0x00000000: "clang version 12.0.0 (https://github.com/aheejin/llvm-project e74a5010a507b737fcbd40e87cde358f2c9fc812)"
-0x00000068: "test.cpp"
-0x00000071: "/usr/local/google/home/aheejin/llvm-git/llvm/tw"
-0x000000a1: "test_debuginfo"
-0x000000b0: "test_terminatepad"
+0x00000000: "clang version 13.0.0 (https://github.com/llvm/llvm-project.git 3c4c205060c9398da705eb71b63ddd8a04999de9)"
+0x00000069: "test_debuginfo.cpp"
+0x0000007c: "/"
+0x0000007e: "test_debuginfo"
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
@@ -429,8 +427,7 @@ file_names[  1]:
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
  (memory $0 2)
- (table $0 1 1 funcref)
- (global $global$0 (mut i32) (i32.const 66560))
+ (global $__stack_pointer (mut i32) (i32.const 66560))
  (event $event$0 (attr 0) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
@@ -441,7 +438,7 @@ file_names[  1]:
   ;; code offset: 0xc
   (local.set $0
    ;; code offset: 0xa
-   (global.get $global$0)
+   (global.get $__stack_pointer)
   )
   ;; code offset: 0xe
   (try $label$9
@@ -456,7 +453,7 @@ file_names[  1]:
      (pop i32)
     )
     ;; code offset: 0x18
-    (global.set $global$0
+    (global.set $__stack_pointer
      ;; code offset: 0x16
      (local.get $0)
     )
@@ -474,7 +471,7 @@ file_names[  1]:
       ;; code offset: 0x21
       (call $foo)
       ;; code offset: 0x25
-      (global.set $global$0
+      (global.set $__stack_pointer
        ;; code offset: 0x23
        (local.get $0)
       )
@@ -494,7 +491,7 @@ file_names[  1]:
          (pop i32)
         )
         ;; code offset: 0x32
-        (global.set $global$0
+        (global.set $__stack_pointer
          ;; code offset: 0x30
          (local.get $0)
         )
@@ -539,8 +536,8 @@ file_names[  1]:
  )
  ;; custom section ".debug_info", size 63
  ;; custom section ".debug_abbrev", size 41
- ;; custom section ".debug_line", size 145
- ;; custom section ".debug_str", size 194
- ;; custom section "producers", size 137
- ;; features section: exception-handling, reference-types
+ ;; custom section ".debug_line", size 155
+ ;; custom section ".debug_str", size 141
+ ;; custom section "producers", size 138
+ ;; features section: exception-handling
 )
