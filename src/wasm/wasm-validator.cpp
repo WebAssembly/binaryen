@@ -2541,14 +2541,6 @@ void FunctionValidator::visitFunction(Function* curr) {
       "function result must match, if function has returns");
   }
 
-  shouldBeTrue(
-    breakInfos.empty(), curr->body, "all named break targets must exist");
-  shouldBeTrue(delegateTargetNames.empty(),
-               curr->body,
-               "all named delegate targets must exist");
-  shouldBeTrue(rethrowTargetNames.empty(),
-               curr->body,
-               "all named rethrow targets must exist");
   returnTypes.clear();
   labelNames.clear();
   // validate optional local names
