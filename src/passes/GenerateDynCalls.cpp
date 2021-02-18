@@ -127,9 +127,9 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
   for (const auto& param : sig.params) {
     args.push_back(builder.makeLocalGet(++i, param));
   }
-  // FIXME: Should the existence of a table be ensured here? i.e. create one if
-  // there is none?
-  assert(wasm->tables.size() > 0);
+  if (wasm->tables.empty()) {
+    wasm->addTable(Builder::makeTable(Name::fromInt(0)));
+  }
   f->body = builder.makeCallIndirect(wasm->tables[0]->name, fptr, args, sig);
 
   wasm->addFunction(std::move(f));
