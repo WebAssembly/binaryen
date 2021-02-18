@@ -291,11 +291,12 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
+ (type $none_=>_none (func))
  (type $i64_=>_none (func (param i64)))
  (event $e-export (attr 0) (param i64))
  (event $e-throw (attr 0) (param i32))
+ (event $e-catch (attr 0) (param i32))
  (export "e-export" (event $e-export))
  (start $start)
  (func $start
