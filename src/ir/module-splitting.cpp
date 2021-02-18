@@ -156,6 +156,7 @@ Expression* TableSlotManager::Slot::makeExpr(Module& module) {
 
 void TableSlotManager::addSlot(Name func, Slot slot) {
   auto it = funcIndices.insert(std::make_pair(func, slot));
+  WASM_UNUSED(it);
   assert(it.second && "Function already has multiple table slots");
 }
 

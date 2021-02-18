@@ -5,7 +5,7 @@
 
 ;; All functions should be stripped from the binary, regardless
 ;; of internal name
-;; CHECK-NOT: (func
+;; CHECK-NOT: (global
 
 ;; The data section that contains only em_js strings should
 ;; be stripped (shrunk to zero size):
@@ -24,18 +24,12 @@
  (data (i32.const 1024) "some JS string data\00xxx")
  (data (i32.const 512) "Only em_js strings here\00")
  (data (i32.const 2048) "more JS string data\00yyy")
- (export "__em_js__foo" (func $__em_js__foo))
- (export "__em_js__bar" (func $bar))
- (export "__em_js__baz" (func $baz))
+ (export "__em_js__foo" (global $__em_js__foo))
+ (export "__em_js__bar" (global $bar))
+ (export "__em_js__baz" (global $baz))
  ;; Name matches export name
- (func $__em_js__foo (result i32)
-  (i32.const 1024)
- )
+ (global $__em_js__foo i32 (i32.const 1024))
  ;; Name does not match export name
- (func $bar (result i32)
-  (i32.const 2048)
- )
- (func $baz (result i32)
-  (i32.const 512)
- )
+ (global $bar i32 (i32.const 2048))
+ (global $baz i32 (i32.const 512))
 )

@@ -1896,8 +1896,7 @@ public:
         this->module != nullptr) {
       // If we are evaluating and not replacing the expression, remember the
       // constant value set, if any, for subsequent gets.
-      auto* global = this->module->getGlobal(curr->name);
-      assert(global->mutable_);
+      assert(this->module->getGlobal(curr->name)->mutable_);
       auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
       if (!setFlow.breaking()) {
         setGlobalValue(curr->name, setFlow.values);

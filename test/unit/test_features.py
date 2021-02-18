@@ -31,9 +31,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-bulk-memory')
 
     def check_exception_handling(self, module, error):
-        # Exception handling implies reference types
-        self.check_feature(module, error, '--enable-exception-handling',
-                           ['--enable-reference-types'])
+        self.check_feature(module, error, '--enable-exception-handling')
 
     def check_tail_call(self, module, error):
         self.check_feature(module, error, '--enable-tail-call')
@@ -46,8 +44,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
 
     def check_multivalue_exception_handling(self, module, error):
         self.check_feature(module, error, '--enable-multivalue',
-                           ['--enable-exception-handling',
-                            '--enable-reference-types'])
+                           ['--enable-exception-handling'])
 
     def check_gc(self, module, error):
         # GC implies reference types
@@ -338,7 +335,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_exception_handling(self):
         filename = 'exception_handling_target_feature.wasm'
         self.roundtrip(filename)
-        self.check_features(filename, ['exception-handling', 'reference-types'])
+        self.check_features(filename, ['exception-handling'])
         self.assertIn('throw', self.disassemble(filename))
 
     def test_gc(self):
