@@ -85,32 +85,26 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
     }
   }
 
-  void visitCall(Call* curr) {
-    if (reachable.count(
-          ModuleElement(ModuleElementKind::Function, curr->target)) == 0) {
-      queue.emplace_back(ModuleElementKind::Function, curr->target);
+  void maybeAdd(ModuleElement element) {
+    if (reachable.count(element) == 0) {
+      queue.emplace_back(element);
     }
+  }
+
+  void visitCall(Call* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
   }
   void visitCallIndirect(CallIndirect* curr) {
     assert(!module->tables.empty() && "call-indirect to undefined table.");
 
-    if (reachable.count(ModuleElement(ModuleElementKind::Table, curr->table)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Table, curr->table);
-    }
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Global, curr->name);
-    }
+    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
   }
   void visitGlobalSet(GlobalSet* curr) {
-    if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Global, curr->name);
-    }
+    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
   }
 
   void visitLoad(Load* curr) { usesMemory = true; }
@@ -127,15 +121,14 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
-    if (reachable.count(
-          ModuleElement(ModuleElementKind::Function, curr->func)) == 0) {
-      queue.emplace_back(ModuleElementKind::Function, curr->func);
-    }
+    maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
   }
   void visitThrow(Throw* curr) {
-    if (reachable.count(ModuleElement(ModuleElementKind::Event, curr->event)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Event, curr->event);
+    maybeAdd(ModuleElement(ModuleElementKind::Event, curr->event));
+  }
+  void visitTry(Try* curr) {
+    for (auto event : curr->catchEvents) {
+      maybeAdd(ModuleElement(ModuleElementKind::Event, event));
     }
   }
 };
