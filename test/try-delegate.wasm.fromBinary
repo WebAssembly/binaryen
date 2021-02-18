@@ -4,10 +4,12 @@
  (func $0
   (try $label$6
    (do
-    (try $label$4
-     (do
+    (block $label$1
+     (try $label$4
+      (do
+      )
+      (delegate $label$6)
      )
-     (delegate $label$6)
     )
    )
    (catch $event$0
@@ -17,17 +19,19 @@
  (func $1
   (try $label$9
    (do
-    (try $label$7
-     (do
-     )
-     (catch $event$0
-      (drop
-       (i32.const 0)
+    (block $label$1
+     (try $label$7
+      (do
       )
-      (try $label$6
-       (do
+      (catch $event$0
+       (drop
+        (i32.const 0)
        )
-       (delegate $label$9)
+       (try $label$6
+        (do
+        )
+        (delegate $label$9)
+       )
       )
      )
     )
