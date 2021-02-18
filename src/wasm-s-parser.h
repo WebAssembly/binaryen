@@ -70,6 +70,8 @@ public:
   List& list();
   Element* operator[](unsigned i);
   size_t size() { return list().size(); }
+  List::Iterator begin() { return list().begin(); }
+  List::Iterator end() { return list().end(); }
 
   // string methods
   cashew::IString str() const;
@@ -140,6 +142,7 @@ public:
   SExpressionWasmBuilder(Module& wasm, Element& module, IRProfile profile);
 
 private:
+  void preParseHeapTypes(Element& module);
   // pre-parse types and function definitions, so we know function return types
   // before parsing their contents
   void preParseFunctionType(Element& s);
@@ -308,7 +311,6 @@ private:
   // Parses something like (func ..), (array ..), (struct)
   HeapType parseHeapType(Element& s);
 
-  void parseType(Element& s);
   void parseEvent(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
