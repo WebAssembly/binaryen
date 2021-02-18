@@ -23,4 +23,12 @@
    )
   )
  )
+ (func $1
+  (try $label$3
+   (do
+    (nop)
+   )
+   (delegate 0) ;; delegates to the caller
+  )
+ )
 )
