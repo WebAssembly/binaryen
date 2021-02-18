@@ -21,6 +21,7 @@
 
 #include <ir/branch-utils.h>
 #include <pass.h>
+#include <shared-constants.h>
 #include <wasm.h>
 
 namespace wasm {
@@ -85,7 +86,11 @@ struct RemoveUnusedNames
     visitExpression(curr);
   }
 
-  void visitFunction(Function* curr) { assert(branchesSeen.empty()); }
+  void visitFunction(Function* curr) {
+    // When we reach the function body we can erase delegations to the caller.
+    branchesSeen.erase(DELEGATE_CALLER_TARGET);
+    assert(branchesSeen.empty());
+  }
 };
 
 Pass* createRemoveUnusedNamesPass() { return new RemoveUnusedNames(); }
