@@ -409,25 +409,34 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
   EmJsWalker(Module& _wasm) : wasm(_wasm), stringTracker(_wasm) {}
 
   void visitExport(Export* curr) {
-    if (curr->kind != ExternalKind::Function) {
-      return;
-    }
     if (!curr->name.startsWith(EM_JS_PREFIX.str)) {
       return;
     }
-    toRemove.push_back(*curr);
-    auto* func = wasm.getFunction(curr->value);
-    auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
-    // An EM_JS has a single const in the body. Typically it is just returned,
-    // but in unoptimized code it might be stored to a local and loaded from
-    // there, and in relocatable code it might get added to __memory_base etc.
-    FindAll<Const> consts(func->body);
-    if (consts.list.size() != 1) {
-      Fatal() << "Unexpected generated __em_js__ function body: " << curr->name;
+
+    int64_t address;
+    if (curr->kind == ExternalKind::Global) {
+      auto* global = wasm.getGlobal(curr->value);
+      Const* const_ = global->init->cast<Const>();
+      address = const_->value.getInteger();
+    } else if (curr->kind == ExternalKind::Function) {
+      auto* func = wasm.getFunction(curr->value);
+      // An EM_JS has a single const in the body. Typically it is just returned,
+      // but in unoptimized code it might be stored to a local and loaded from
+      // there, and in relocatable code it might get added to __memory_base etc.
+      FindAll<Const> consts(func->body);
+      if (consts.list.size() != 1) {
+        Fatal() << "Unexpected generated __em_js__ function body: "
+                << curr->name;
+      }
+      auto* addrConst = consts.list[0];
+      address = addrConst->value.getInteger();
+    } else {
+      return;
     }
-    auto* addrConst = consts.list[0];
-    int64_t address = addrConst->value.getInteger();
+
+    toRemove.push_back(*curr);
     auto code = stringTracker.stringAtAddr(address);
+    auto funcName = std::string(curr->name.stripPrefix(EM_JS_PREFIX.str));
     codeByName[funcName] = code;
     codeAddresses[address] = strlen(code) + 1;
   }
@@ -438,8 +447,12 @@ EmJsWalker findEmJsFuncsAndReturnWalker(Module& wasm) {
   walker.walkModule(&wasm);
 
   for (const Export& exp : walker.toRemove) {
+    if (exp.kind == ExternalKind::Function) {
+      wasm.removeFunction(exp.value);
+    } else {
+      wasm.removeGlobal(exp.value);
+    }
     wasm.removeExport(exp.name);
-    wasm.removeFunction(exp.value);
   }
 
   // With newer versions of emscripten/llvm we pack all EM_JS strings into
