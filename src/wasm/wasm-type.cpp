@@ -1308,25 +1308,29 @@ std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
   std::vector<TypeID> sorted;
   std::unordered_set<TypeID> seen;
 
+  // Topologically sort so that all parents are pushed before their children.
+  // This sort will be reversed later to have children before their parents.
   std::function<void(TypeID)> visit = [&](TypeID i) {
     if (seen.count(i)) {
       return;
     }
-    // Visit all children before the current type.
-    auto childrenIt = ancestors.find(i);
-    if (childrenIt != ancestors.end()) {
-      for (auto child : childrenIt->second) {
-        visit(child);
+    // Push ancestors of the current type before pushing the current type.
+    auto it = ancestors.find(i);
+    if (it != ancestors.end()) {
+      for (auto ancestor : it->second) {
+        visit(ancestor);
       }
     }
     seen.insert(i);
-    // Topological sorting requires prepending here, but we will just append and
-    // reverse the list later.
     sorted.push_back(i);
   };
 
-  // Collect the items to be sorted.
+  // Collect the items to be sorted, including all the result HeapTypes and any
+  // type that participates in the ancestor relation.
   std::set<TypeID> allIDs;
+  for (auto ht : results) {
+    allIDs.insert(ht.getID());
+  }
   for (auto& kv : ancestors) {
     allIDs.insert(kv.first);
     for (auto& id : kv.second) {
@@ -1334,16 +1338,19 @@ std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
     }
   }
 
+  // Perform the sort.
   for (TypeID i : allIDs) {
     visit(i);
   }
 
+  // Swap order to have all children before their parents.
   std::reverse(sorted.begin(), sorted.end());
 
   // Create a list of Items to canonicalize in place according to the
   // topological ordering of types and heap types.
   std::vector<Item> items;
   for (TypeID id : sorted) {
+    // IDs may be Types or HeapTypes, so just try both.
     auto typeIt = typeLocations.find(Type(id));
     if (typeIt != typeLocations.end()) {
       for (Type* loc : typeIt->second) {
