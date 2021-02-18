@@ -128,7 +128,9 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
     args.push_back(builder.makeLocalGet(++i, param));
   }
   if (wasm->tables.empty()) {
-    wasm->addTable(Builder::makeTable(Name::fromInt(0)));
+    auto* table = wasm->addTable(Builder::makeTable(Name::fromInt(0)));
+    table->module = ENV;
+    table->base = "__indirect_function_table";
   }
   f->body = builder.makeCallIndirect(wasm->tables[0]->name, fptr, args, sig);
 
