@@ -67,8 +67,10 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
   return printName(name, o);
 }
 
-static void
-printHeapTypeName(std::ostream& os, HeapType type, Module* wasm = nullptr, bool first = true);
+static void printHeapTypeName(std::ostream& os,
+                              HeapType type,
+                              Module* wasm = nullptr,
+                              bool first = true);
 
 // Prints the name of a type. This output is guaranteed to not contain spaces.
 static void printTypeName(std::ostream& os, Type type, Module* wasm = nullptr) {
@@ -107,7 +109,8 @@ static void printTypeName(std::ostream& os, Type type, Module* wasm = nullptr) {
   WASM_UNREACHABLE("unsupported print type");
 }
 
-static void printFieldName(std::ostream& os, const Field& field, Module* wasm = nullptr) {
+static void
+printFieldName(std::ostream& os, const Field& field, Module* wasm = nullptr) {
   if (field.mutable_) {
     os << "mut:";
   }
@@ -126,7 +129,8 @@ static void printFieldName(std::ostream& os, const Field& field, Module* wasm = 
 
 // Prints the name of a heap type. As with printTypeName, this output is
 // guaranteed to not contain spaces.
-static void printHeapTypeName(std::ostream& os, HeapType type, Module* wasm, bool first) {
+static void
+printHeapTypeName(std::ostream& os, HeapType type, Module* wasm, bool first) {
   if (type.isBasic()) {
     os << type;
     return;
@@ -178,7 +182,9 @@ struct SExprType {
   SExprType(Type type) : type(type){};
 };
 
-static std::ostream& printSExprType(std::ostream& o, const SExprType& sType, Module* wasm = nullptr) {
+static std::ostream& printSExprType(std::ostream& o,
+                                    const SExprType& sType,
+                                    Module* wasm = nullptr) {
   Type type = sType.type;
   if (type.isTuple()) {
     o << '(';
@@ -217,7 +223,9 @@ struct ResultTypeName {
   ResultTypeName(Type type) : type(type) {}
 };
 
-std::ostream& printResultTypeName(std::ostream& os, ResultTypeName typeName, Module* wasm = nullptr) {
+std::ostream& printResultTypeName(std::ostream& os,
+                                  ResultTypeName typeName,
+                                  Module* wasm = nullptr) {
   auto type = typeName.type;
   os << "(result ";
   if (type.isTuple()) {
@@ -253,9 +261,7 @@ struct PrintExpressionContents
   std::ostream& o;
   FeatureSet features;
 
-  PrintExpressionContents(Module* wasm,
-                          Function* currFunction,
-                          std::ostream& o)
+  PrintExpressionContents(Module* wasm, Function* currFunction, std::ostream& o)
     : wasm(wasm), currFunction(currFunction), o(o), features(wasm->features) {}
 
   PrintExpressionContents(Function* currFunction, std::ostream& o)
@@ -2034,8 +2040,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
 
   void printExpressionContents(Expression* curr) {
     if (currModule) {
-      PrintExpressionContents(currModule, currFunction, o)
-        .visit(curr);
+      PrintExpressionContents(currModule, currFunction, o).visit(curr);
     } else {
       PrintExpressionContents(currFunction, o).visit(curr);
     }
@@ -2958,8 +2963,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMinor(o, "local ");
-      printLocal(i, currFunction, o)
-        << ' ';
+      printLocal(i, currFunction, o) << ' ';
       printSExprType(o, curr->getLocalType(i), currModule) << ')';
       o << maybeNewLine;
     }
