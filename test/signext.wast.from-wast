@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (func $signext
   (local $0 i32)
   (local $1 i64)

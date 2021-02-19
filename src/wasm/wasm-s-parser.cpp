@@ -843,6 +843,10 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   });
 
   types = builder.build();
+
+  for (auto& pair : typeIndices) {
+    wasm.typeNames[types[pair.second]].name = pair.first;
+  }
 }
 
 void SExpressionWasmBuilder::preParseFunctionType(Element& s) {

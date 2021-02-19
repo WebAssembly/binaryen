@@ -1,5 +1,5 @@
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $t0 (func (param i32) (result i32)))
  (memory $memory 0)
  (export "fib" (func $fib))
  (export "looped" (func $looped))

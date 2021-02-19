@@ -68,10 +68,10 @@ static std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
 }
 
 static void
-printHeapTypeName(std::ostream& os, HeapType type, bool first = true);
+printHeapTypeName(std::ostream& os, HeapType type, Module* wasm = nullptr, bool first = true);
 
 // Prints the name of a type. This output is guaranteed to not contain spaces.
-static void printTypeName(std::ostream& os, Type type) {
+static void printTypeName(std::ostream& os, Type type, Module* wasm = nullptr) {
   if (type.isBasic()) {
     os << type;
     return;
@@ -82,7 +82,7 @@ static void printTypeName(std::ostream& os, Type type) {
     if (rtt.hasDepth()) {
       os << rtt.depth << '_';
     }
-    printHeapTypeName(os, rtt.heapType);
+    printHeapTypeName(os, rtt.heapType, wasm);
     return;
   }
   if (type.isTuple()) {
@@ -90,7 +90,7 @@ static void printTypeName(std::ostream& os, Type type) {
     for (auto t : type) {
       os << sep;
       sep = "_";
-      printTypeName(os, t);
+      printTypeName(os, t, wasm);
     }
     return;
   }
@@ -100,14 +100,14 @@ static void printTypeName(std::ostream& os, Type type) {
       os << "?";
     }
     os << "|";
-    printHeapTypeName(os, type.getHeapType(), false);
+    printHeapTypeName(os, type.getHeapType(), wasm, false);
     os << "|";
     return;
   }
   WASM_UNREACHABLE("unsupported print type");
 }
 
-static void printFieldName(std::ostream& os, const Field& field) {
+static void printFieldName(std::ostream& os, const Field& field, Module* wasm = nullptr) {
   if (field.mutable_) {
     os << "mut:";
   }
@@ -120,29 +120,38 @@ static void printFieldName(std::ostream& os, const Field& field) {
       WASM_UNREACHABLE("invalid packed type");
     }
   } else {
-    printTypeName(os, field.type);
+    printTypeName(os, field.type, wasm);
   }
 }
 
 // Prints the name of a heap type. As with printTypeName, this output is
 // guaranteed to not contain spaces.
-static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
+static void printHeapTypeName(std::ostream& os, HeapType type, Module* wasm, bool first) {
   if (type.isBasic()) {
     os << type;
     return;
   }
   if (first) {
     os << '$';
+    // If there is a name for this type in this module, use it.
+    // FIXME: in theory there could be two types, one with a name, and one
+    // without, and the one without gets an automatic name that matches the
+    // other's. To check for that, if (first) we could assert at the very end of
+    // this function that the automatic name is not present in the given names.
+    if (wasm && wasm->typeNames.count(type)) {
+      os << wasm->typeNames[type].name;
+      return;
+    }
   }
   if (type.isSignature()) {
     auto sig = type.getSignature();
-    printTypeName(os, sig.params);
+    printTypeName(os, sig.params, wasm);
     if (first) {
       os << "_=>_";
     } else {
       os << "_->_";
     }
-    printTypeName(os, sig.results);
+    printTypeName(os, sig.results, wasm);
   } else if (type.isStruct()) {
     auto struct_ = type.getStruct();
     os << "{";
@@ -150,12 +159,12 @@ static void printHeapTypeName(std::ostream& os, HeapType type, bool first) {
     for (auto& field : struct_.fields) {
       os << sep;
       sep = "_";
-      printFieldName(os, field);
+      printFieldName(os, field, wasm);
     }
     os << "}";
   } else if (type.isArray()) {
     os << "[";
-    printFieldName(os, type.getArray().element);
+    printFieldName(os, type.getArray().element, wasm);
     os << "]";
   } else {
     os << type;
@@ -238,14 +247,15 @@ static Type forceConcrete(Type type) {
 // the children.
 struct PrintExpressionContents
   : public OverriddenVisitor<PrintExpressionContents> {
+  Module* wasm = nullptr;
   Function* currFunction = nullptr;
   std::ostream& o;
   FeatureSet features;
 
-  PrintExpressionContents(Function* currFunction,
-                          FeatureSet features,
+  PrintExpressionContents(Module* wasm,
+                          Function* currFunction,
                           std::ostream& o)
-    : currFunction(currFunction), o(o), features(features) {}
+    : wasm(wasm), currFunction(currFunction), o(o), features(wasm->features) {}
 
   PrintExpressionContents(Function* currFunction, std::ostream& o)
     : currFunction(currFunction), o(o), features(FeatureSet::All) {}
@@ -315,7 +325,7 @@ struct PrintExpressionContents
 
     o << '(';
     printMinor(o, "type ");
-    printHeapTypeName(o, curr->sig);
+    printHeapTypeName(o, curr->sig, wasm);
     o << ')';
   }
   void visitLocalGet(LocalGet* curr) {
@@ -1737,7 +1747,7 @@ struct PrintExpressionContents
   void visitMemoryGrow(MemoryGrow* curr) { printMedium(o, "memory.grow"); }
   void visitRefNull(RefNull* curr) {
     printMedium(o, "ref.null ");
-    printHeapTypeName(o, curr->type.getHeapType());
+    printHeapTypeName(o, curr->type.getHeapType(), wasm);
   }
   void visitRefIs(RefIs* curr) {
     switch (curr->op) {
@@ -1808,11 +1818,11 @@ struct PrintExpressionContents
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test ");
-    printHeapTypeName(o, curr->getCastType().getHeapType());
+    printHeapTypeName(o, curr->getCastType().getHeapType(), wasm);
   }
   void visitRefCast(RefCast* curr) {
     printMedium(o, "ref.cast ");
-    printHeapTypeName(o, curr->getCastType().getHeapType());
+    printHeapTypeName(o, curr->getCastType().getHeapType(), wasm);
   }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
@@ -1838,11 +1848,11 @@ struct PrintExpressionContents
   }
   void visitRttCanon(RttCanon* curr) {
     printMedium(o, "rtt.canon ");
-    printHeapTypeName(o, curr->type.getRtt().heapType);
+    printHeapTypeName(o, curr->type.getRtt().heapType, wasm);
   }
   void visitRttSub(RttSub* curr) {
     printMedium(o, "rtt.sub ");
-    printHeapTypeName(o, curr->type.getRtt().heapType);
+    printHeapTypeName(o, curr->type.getRtt().heapType, wasm);
   }
   void visitStructNew(StructNew* curr) {
     printMedium(o, "struct.new_");
@@ -1850,7 +1860,7 @@ struct PrintExpressionContents
       o << "default_";
     }
     o << "with_rtt ";
-    printHeapTypeName(o, curr->rtt->type.getHeapType());
+    printHeapTypeName(o, curr->rtt->type.getHeapType(), wasm);
   }
   void printUnreachableReplacement() {
     // If we cannot print a valid unreachable instruction (say, a struct.get,
@@ -1875,7 +1885,7 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "struct.get ");
     }
-    printHeapTypeName(o, curr->ref->type.getHeapType());
+    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
     o << ' ';
     o << curr->index;
   }
@@ -1885,7 +1895,7 @@ struct PrintExpressionContents
       return;
     }
     printMedium(o, "struct.set ");
-    printHeapTypeName(o, curr->ref->type.getHeapType());
+    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
     o << ' ';
     o << curr->index;
   }
@@ -1895,7 +1905,7 @@ struct PrintExpressionContents
       o << "default_";
     }
     o << "with_rtt ";
-    printHeapTypeName(o, curr->rtt->type.getHeapType());
+    printHeapTypeName(o, curr->rtt->type.getHeapType(), wasm);
   }
   void visitArrayGet(ArrayGet* curr) {
     const auto& element = curr->ref->type.getHeapType().getArray().element;
@@ -1908,15 +1918,15 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "array.get ");
     }
-    printHeapTypeName(o, curr->ref->type.getHeapType());
+    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
   }
   void visitArraySet(ArraySet* curr) {
     printMedium(o, "array.set ");
-    printHeapTypeName(o, curr->ref->type.getHeapType());
+    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
   }
   void visitArrayLen(ArrayLen* curr) {
     printMedium(o, "array.len ");
-    printHeapTypeName(o, curr->ref->type.getHeapType());
+    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
@@ -2019,7 +2029,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
 
   void printExpressionContents(Expression* curr) {
     if (currModule) {
-      PrintExpressionContents(currFunction, currModule->features, o)
+      PrintExpressionContents(currModule, currFunction, o)
         .visit(curr);
     } else {
       PrintExpressionContents(currFunction, o).visit(curr);
@@ -3175,7 +3185,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       doIndent(o, indent);
       o << '(';
       printMedium(o, "type") << ' ';
-      printHeapTypeName(o, type);
+      printHeapTypeName(o, type, curr);
       o << ' ';
       handleHeapType(type);
       o << ")" << maybeNewLine;
