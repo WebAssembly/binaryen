@@ -1,114 +1,19 @@
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
- (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (import "env" "__linear_memory" (memory $mimport$0 1))
- (data (i32.const 0) "\ff\00\0d\01\02\00\01\01\00\00\00\00\00\00\00\00")
- (import "env" "__stack_pointer" (global $gimport$0 (mut i32)))
- (import "env" "__cxa_allocate_exception" (func $fimport$0 (param i32) (result i32)))
- (import "env" "__cxa_throw" (func $fimport$1 (param i32 i32 i32)))
- (import "env" "_Unwind_CallPersonality" (func $fimport$2 (param i32) (result i32)))
- (import "env" "__cxa_begin_catch" (func $fimport$3 (param i32) (result i32)))
- (import "env" "_Z10getBooleanv" (func $fimport$4 (result i32)))
- (import "env" "__cxa_end_catch" (func $fimport$5))
  (event $event$0 (attr 0) (param i32))
- (func $0 (result i32)
-  (local $0 i32)
-  (local $1 i32)
-  (local.set $0
-   (global.get $gimport$0)
-  )
-  (i32.store
-   (local.tee $1
-    (call $fimport$0
-     (i32.const 4)
-    )
-   )
-   (i32.const 0)
-  )
-  (try $label$8
+ (func $0
+  (try $label$3
    (do
-    (call $fimport$1
-     (local.get $1)
-     (i32.const 0)
-     (i32.const 0)
+    (block $label$1
+     (br $label$1)
     )
    )
    (catch $event$0
-    (local.set $1
+    (drop
      (pop i32)
     )
-    (global.set $gimport$0
-     (local.get $0)
-    )
-    (i32.store offset=4
-     (i32.const 0)
-     (i32.const 0)
-    )
-    (i32.store
-     (i32.const 0)
-     (i32.const 0)
-    )
-    (drop
-     (call $fimport$2
-      (local.get $1)
-     )
-    )
-    (block $label$3
-     (br_if $label$3
-      (i32.ne
-       (i32.load offset=8
-        (i32.const 0)
-       )
-       (i32.const 1)
-      )
-     )
-     (drop
-      (call $fimport$3
-       (local.get $1)
-      )
-     )
-     (try $label$7
-      (do
-       (block $label$4
-        (loop $label$5
-         (local.set $1
-          (call $fimport$4)
-         )
-         (br_if $label$4
-          (i32.eqz
-           (local.get $1)
-          )
-         )
-         (drop
-          (call $fimport$4)
-         )
-         (br $label$5)
-        )
-       )
-      )
-      (catch_all
-       (global.set $gimport$0
-        (local.get $0)
-       )
-       (call $fimport$5)
-       (rethrow $label$7)
-      )
-     )
-     (call $fimport$5)
-     (return
-      (i32.const 0)
-     )
-    )
-    (rethrow $label$8)
    )
   )
-  (unreachable)
- )
- (func $1 (param $0 i32) (param $1 i32) (result i32)
-  (call $0)
  )
 )
