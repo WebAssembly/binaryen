@@ -170,19 +170,23 @@
   )
 
   (func (export "signature-implicit-reused")
+
+    ;; XXX: Use numeric indices in this test again once we have a
+    ;; spec-compliant text parser. Original comment follows.
+
     ;; The implicit index 16 in this test depends on the function and
     ;; type definitions, and may need adapting if they change.
-    (call_indirect (type 16)
+    (call_indirect (type 2) ;; XXX: was `(type 16)`
       (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
       (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
       (i32.const 0)
     )
-    (call_indirect (type 16)
+    (call_indirect (type 2) ;; XXX: was `(type 16)`
       (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
       (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
       (i32.const 2)
     )
-    (call_indirect (type 16)
+    (call_indirect (type 2) ;; XXX: was `(type 16)`
       (f64.const 0) (i64.const 0) (f64.const 0) (i64.const 0)
       (f64.const 0) (i64.const 0) (f32.const 0) (i32.const 0)
       (i32.const 3)

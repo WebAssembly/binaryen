@@ -351,6 +351,9 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
     binaryBuilder.read();
     return;
   }
+
+  preParseHeapTypes(module);
+
   Index implementedFunctions = 0;
   functionCounter = 0;
   for (unsigned j = i; j < module.size(); j++) {
@@ -657,11 +660,193 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
   return parseTypeUse(s, startPos, functionSignature, params);
 }
 
+void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
+  auto forEachType = [&](auto f) {
+    for (auto* elemPtr : module) {
+      auto& elem = *elemPtr;
+      if (elementStartsWith(elem, TYPE)) {
+        f(elem);
+      }
+    }
+  };
+
+  size_t numTypes = 0;
+  forEachType([&](Element& elem) {
+    // Map type names to indices
+    if (elem[1]->dollared()) {
+      std::string name = elem[1]->c_str();
+      if (!typeIndices.insert({name, numTypes}).second) {
+        throw ParseException("duplicate function type", elem.line, elem.col);
+      }
+    }
+    ++numTypes;
+  });
+
+  TypeBuilder builder(numTypes);
+
+  auto parseRefType = [&](Element& elem) -> Type {
+    // '(' 'ref' 'null'? ht ')'
+    bool nullable = elem[1]->isStr() && *elem[1] == NULL_;
+    auto& referent = nullable ? *elem[2] : *elem[1];
+    const char* name = referent.c_str();
+    if (referent.dollared()) {
+      // TODO: Support non-nullable types
+      return builder.getTempRefType(typeIndices[name], Nullable);
+    } else if (String::isNumber(name)) {
+      // TODO: Support non-nullable types
+      return builder.getTempRefType(atoi(name), Nullable);
+    } else {
+      // TODO: Support non-nullable types
+      return Type(stringToHeapType(name), Nullable);
+    }
+  };
+
+  auto parseRttType = [&](Element& elem) -> Type {
+    // '(' 'rtt' depth? typeidx ')'
+    uint32_t depth;
+    Element* idx;
+    switch (elem.size()) {
+      default:
+        throw ParseException(
+          "unexpected number of rtt parameters", elem.line, elem.col);
+      case 2:
+        depth = Rtt::NoDepth;
+        idx = elem[1];
+        break;
+      case 3:
+        if (!String::isNumber(elem[1]->c_str())) {
+          throw ParseException(
+            "invalid rtt depth", elem[1]->line, elem[1]->col);
+        }
+        depth = atoi(elem[1]->c_str());
+        idx = elem[2];
+        break;
+    }
+    if (idx->dollared()) {
+      return builder.getTempRttType(typeIndices[idx->c_str()], depth);
+    } else if (String::isNumber(idx->c_str())) {
+      return builder.getTempRttType(atoi(idx->c_str()), depth);
+    } else {
+      throw ParseException("invalid type index", idx->line, idx->col);
+    }
+  };
+
+  auto parseValType = [&](Element& elem) {
+    if (elem.isStr()) {
+      return stringToType(elem.c_str());
+    } else if (*elem[0] == REF) {
+      return parseRefType(elem);
+    } else if (*elem[0] == RTT) {
+      return parseRttType(elem);
+    } else {
+      throw ParseException("unknown valtype kind", elem[0]->line, elem[0]->col);
+    }
+  };
+
+  auto parseParams = [&](Element& elem) {
+    auto it = ++elem.begin();
+    if (it != elem.end() && (*it)->dollared()) {
+      ++it;
+    }
+    std::vector<Type> params;
+    for (auto end = elem.end(); it != end; ++it) {
+      params.push_back(parseValType(**it));
+    }
+    return params;
+  };
+
+  auto parseResults = [&](Element& elem) {
+    std::vector<Type> results;
+    for (auto it = ++elem.begin(); it != elem.end(); ++it) {
+      results.push_back(parseValType(**it));
+    }
+    return results;
+  };
+
+  auto parseSignatureDef = [&](Element& elem) {
+    // '(' 'func' vec(param) vec(result) ')'
+    // param ::= '(' 'param' id? valtype ')'
+    // result ::= '(' 'result' valtype ')'
+    std::vector<Type> params, results;
+    for (auto it = ++elem.begin(), end = elem.end(); it != end; ++it) {
+      Element& curr = **it;
+      if (elementStartsWith(curr, PARAM)) {
+        auto newParams = parseParams(curr);
+        params.insert(params.end(), newParams.begin(), newParams.end());
+      } else if (elementStartsWith(curr, RESULT)) {
+        auto newResults = parseResults(curr);
+        results.insert(results.end(), newResults.begin(), newResults.end());
+      }
+    }
+    return Signature(builder.getTempTupleType(params),
+                     builder.getTempTupleType(results));
+  };
+
+  auto parseField = [&](Element* elem) {
+    Mutability mutable_ = Immutable;
+    // elem is a list, containing either
+    //   TYPE
+    // or
+    //   (field TYPE)
+    // or
+    //   (field $name TYPE)
+    Name name;
+    if (elementStartsWith(elem, FIELD)) {
+      if (elem->size() == 3) {
+        name = (*elem)[1]->str();
+      }
+      elem = (*elem)[elem->size() - 1];
+    }
+    // The element may also be (mut (..)).
+    if (elementStartsWith(elem, MUT)) {
+      mutable_ = Mutable;
+      elem = (*elem)[1];
+    }
+    if (elem->isStr()) {
+      // elem is a simple string name like "i32". It can be a normal wasm type,
+      // or one of the special types only available in fields.
+      if (*elem == I8) {
+        return Field(Field::i8, mutable_, name);
+      } else if (*elem == I16) {
+        return Field(Field::i16, mutable_, name);
+      }
+    }
+    // Otherwise it's an arbitrary type.
+    return Field(parseValType(*elem), mutable_, name);
+  };
+
+  auto parseStructDef = [&](Element& elem) {
+    FieldList fields;
+    for (auto it = ++elem.begin(); it != elem.end(); ++it) {
+      fields.emplace_back(parseField(*it));
+    }
+    return Struct(fields);
+  };
+
+  auto parseArrayDef = [&](Element& elem) {
+    return Array(parseField(elem[1]));
+  };
+
+  size_t index = 0;
+  forEachType([&](Element& elem) {
+    Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
+    Element& kind = *def[0];
+    if (kind == FUNC) {
+      builder.setHeapType(index++, parseSignatureDef(def));
+    } else if (kind == STRUCT) {
+      builder.setHeapType(index++, parseStructDef(def));
+    } else if (kind == ARRAY) {
+      builder.setHeapType(index++, parseArrayDef(def));
+    } else {
+      throw ParseException("unknown heaptype kind", kind.line, kind.col);
+    }
+  });
+
+  types = builder.build();
+}
+
 void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   IString id = s[0]->str();
-  if (id == TYPE) {
-    return parseType(s);
-  }
   if (id != FUNC) {
     return;
   }
@@ -2935,79 +3120,7 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
       return stringToHeapType(str, /* prefix = */ false);
     }
   }
-  // It's a list.
-  if (*s[0] == FUNC) {
-    std::vector<Type> params;
-    std::vector<Type> results;
-    for (size_t k = 1; k < s.size(); k++) {
-      Element& curr = *s[k];
-      if (elementStartsWith(curr, PARAM)) {
-        auto newParams = parseParamOrLocal(curr);
-        params.insert(params.end(), newParams.begin(), newParams.end());
-      } else if (elementStartsWith(curr, RESULT)) {
-        auto newResults = parseResults(curr);
-        results.insert(results.end(), newResults.begin(), newResults.end());
-      }
-    }
-    return Signature(Type(params), Type(results));
-  }
-  // It's a struct or an array.
-  auto parseField = [&](Element* t) {
-    Mutability mutable_ = Immutable;
-    // t is a list, containing either
-    //   TYPE
-    // or
-    //   (field TYPE)
-    // or
-    //   (field $name TYPE)
-    Name name;
-    if (elementStartsWith(t, FIELD)) {
-      if (t->size() == 3) {
-        name = (*t)[1]->str();
-      }
-      t = (*t)[t->size() - 1];
-    }
-    // The element may also be (mut (..)).
-    if (elementStartsWith(t, MUT)) {
-      mutable_ = Mutable;
-      t = (*t)[1];
-    }
-    if (t->isStr()) {
-      // t is a simple string name like "i32". It can be a normal wasm type, or
-      // one of the special types only available in fields.
-      if (*t == I8) {
-        return Field(Field::i8, mutable_, name);
-      } else if (*t == I16) {
-        return Field(Field::i16, mutable_, name);
-      }
-    }
-    // Otherwise it's an arbitrary type.
-    return Field(elementToType(*t), mutable_, name);
-  };
-  if (elementStartsWith(s, STRUCT)) {
-    FieldList fields;
-    for (size_t k = 1; k < s.size(); k++) {
-      fields.emplace_back(parseField(s[k]));
-    }
-    return Struct(fields);
-  }
-  if (elementStartsWith(s, ARRAY)) {
-    return Array(parseField(s[1]));
-  }
   throw ParseException("invalid heap type", s.line, s.col);
-}
-
-void SExpressionWasmBuilder::parseType(Element& s) {
-  size_t i = 1;
-  if (s[i]->isStr()) {
-    std::string name = s[i]->str().str;
-    if (typeIndices.find(name) != typeIndices.end()) {
-      throw ParseException("duplicate function type", s.line, s.col);
-    }
-    typeIndices[name] = types.size();
-    i++;
-  }
-  types.emplace_back(parseHeapType(*s[i]));
 }
 
 void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
