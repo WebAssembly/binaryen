@@ -774,6 +774,42 @@ void WasmBinaryWriter::writeNames() {
   // TODO: label, type, and element names
   // see: https://github.com/WebAssembly/extended-name-section
 
+  // GC field names
+  if (wasm->features.hasGC()) {
+    Index numTypes = 0;
+    for (auto& type : types) {
+      if (type.isStruct()) {
+        numTypes++;
+      }
+    }
+
+    if (numTypes) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameField);
+      o << U32LEB(numTypes);
+      for (Index i = 0; i < types.size(); i++) {
+        auto& type = types[i];
+        if (type.isStruct()) {
+          o << U32LEB(i);
+          auto fields = type.getStruct().fields;
+          o << U32LEB(fields.size());
+          for (Index i = 0; i < fields.size(); i++) {
+            o << U32LEB(i);
+            const auto& field = fields[i];
+            std::string name;
+            if (field.name.str) {
+              name = field.name.str;
+            } else {
+              name = "field_" + std::to_string(i);
+            }
+            writeEscapedName(name.c_str());
+          }
+        }
+      }
+      finishSubsection(substart);
+    }
+  }
+
   finishSection(start);
 }
 
@@ -2778,6 +2814,27 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                        "global subsection: "
                     << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameField) {
+      auto numTypes = getU32LEB();
+      for (size_t i = 0; i < numTypes; i++) {
+        auto index = getU32LEB();
+        if (index >= types.size() || !types[i].isStruct()) {
+          std::cerr << "warning: invalid type index in name field section\n";
+        } else {
+          auto& fields = types[index].getStruct().fields;
+          auto numFields = getU32LEB();
+          for (size_t i = 0; i < numFields; i++) {
+            auto index = getU32LEB();
+            if (index >= fields.size()) {
+              std::cerr <<
+                  "warning: invalid field index in name field section\n";
+            } else {
+              auto* field = const_cast<Field*>(&fields[index]);
+              field->name = getInlineString();
+            }
+          }
         }
       }
     } else {

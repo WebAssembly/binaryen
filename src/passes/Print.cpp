@@ -1859,6 +1859,13 @@ struct PrintExpressionContents
     // instruction is never reached anyhow.
     printMedium(o, "block ");
   }
+  void printFieldName(const Field& field, Index index) {
+    if (field.name.is()) {
+      o << '$' << field.name;
+    } else {
+      o << index;
+    }
+  }
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable) {
       printUnreachableReplacement();
@@ -1877,7 +1884,7 @@ struct PrintExpressionContents
     }
     printHeapTypeName(o, curr->ref->type.getHeapType());
     o << ' ';
-    o << curr->index;
+    printFieldName(field, curr->index);
   }
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type == Type::unreachable) {
@@ -1887,7 +1894,9 @@ struct PrintExpressionContents
     printMedium(o, "struct.set ");
     printHeapTypeName(o, curr->ref->type.getHeapType());
     o << ' ';
-    o << curr->index;
+    const auto& field =
+      curr->ref->type.getHeapType().getStruct().fields[curr->index];
+    printFieldName(field, curr->index);
   }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new_");

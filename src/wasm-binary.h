@@ -430,7 +430,9 @@ enum Subsection {
   NameMemory = 6,
   NameGlobal = 7,
   NameElem = 8,
-  NameData = 9
+  NameData = 9,
+  // see: https://github.com/WebAssembly/gc/issues/193
+  NameField = 10
 };
 
 } // namespace UserSections
