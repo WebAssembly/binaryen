@@ -32,17 +32,12 @@
    (local.get $x)
   )
   (drop
-   (struct.get ${i32_f32_f64} $field_0
+   (struct.get ${i32_f32_f64} 0
     (local.get $x)
    )
   )
   (drop
-   (struct.get ${i32_f32_f64} $field_1
-    (local.get $x)
-   )
-  )
-  (drop
-   (struct.get ${i32_f32_f64} $named
+   (struct.get ${i32_f32_f64} 1
     (local.get $x)
    )
   )
@@ -52,12 +47,17 @@
    )
   )
   (drop
-   (struct.get_u ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} $field_0
+   (struct.get ${i32_f32_f64} $named
+    (local.get $x)
+   )
+  )
+  (drop
+   (struct.get_u ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} 0
     (local.get $tB)
    )
   )
   (drop
-   (struct.get_s ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} $field_0
+   (struct.get_s ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} 0
     (local.get $tB)
    )
   )

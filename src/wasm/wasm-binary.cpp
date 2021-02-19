@@ -776,9 +776,19 @@ void WasmBinaryWriter::writeNames() {
 
   // GC field names
   if (wasm->features.hasGC()) {
+
+    auto hasNamedField = [](const HeapType& type) {
+      for (auto& field : type.getStruct().fields) {
+        if (field.name.is()) {
+          return true;
+        }
+      }
+      return false;
+    };
+
     Index numTypes = 0;
     for (auto& type : types) {
-      if (type.isStruct()) {
+      if (type.isStruct() && hasNamedField(type)) {
         numTypes++;
       }
     }
@@ -789,20 +799,20 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(numTypes);
       for (Index i = 0; i < types.size(); i++) {
         auto& type = types[i];
-        if (type.isStruct()) {
+        if (type.isStruct() && hasNamedField(type)) {
           o << U32LEB(i);
           auto fields = type.getStruct().fields;
-          o << U32LEB(fields.size());
+          std::vector<std::pair<Index, Name>> pairs;
           for (Index i = 0; i < fields.size(); i++) {
-            o << U32LEB(i);
             const auto& field = fields[i];
-            std::string name;
-            if (field.name.str) {
-              name = field.name.str;
-            } else {
-              name = "field_" + std::to_string(i);
+            if (field.name.is()) {
+              pairs.emplace_back(i, field.name);
             }
-            writeEscapedName(name.c_str());
+          }
+          o << U32LEB(pairs.size());
+          for (auto& pair : pairs) {
+            o << U32LEB(pair.first);
+            writeEscapedName(pair.second.str);
           }
         }
       }
