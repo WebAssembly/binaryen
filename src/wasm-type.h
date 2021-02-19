@@ -315,6 +315,9 @@ public:
   // But converting raw TypeID is more dangerous, so make it explicit
   explicit HeapType(TypeID id) : id(id) {}
 
+  // Choose an arbitrary heap type as the default.
+  constexpr HeapType() : HeapType(func) {}
+
   HeapType(Signature signature);
   HeapType(const Struct& struct_);
   HeapType(Struct&& struct_);

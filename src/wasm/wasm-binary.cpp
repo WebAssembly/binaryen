@@ -1444,45 +1444,91 @@ uint64_t WasmBinaryBuilder::getUPtrLEB() {
   return wasm.memory.is64() ? getU64LEB() : getU32LEB();
 }
 
+bool WasmBinaryBuilder::getBasicType(int32_t code, Type& out) {
+  switch (code) {
+    case BinaryConsts::EncodedType::i32:
+      out = Type::i32;
+      return true;
+    case BinaryConsts::EncodedType::i64:
+      out = Type::i64;
+      return true;
+    case BinaryConsts::EncodedType::f32:
+      out = Type::f32;
+      return true;
+    case BinaryConsts::EncodedType::f64:
+      out = Type::f64;
+      return true;
+    case BinaryConsts::EncodedType::v128:
+      out = Type::v128;
+      return true;
+    case BinaryConsts::EncodedType::funcref:
+      out = Type::funcref;
+      return true;
+    case BinaryConsts::EncodedType::externref:
+      out = Type::externref;
+      return true;
+    case BinaryConsts::EncodedType::anyref:
+      out = Type::anyref;
+      return true;
+    case BinaryConsts::EncodedType::eqref:
+      out = Type::eqref;
+      return true;
+    case BinaryConsts::EncodedType::i31ref:
+      // FIXME: for now, force all inputs to be nullable
+      out = Type(HeapType::i31, Nullable);
+      return true;
+    case BinaryConsts::EncodedType::dataref:
+      // FIXME: for now, force all inputs to be nullable
+      out = Type(HeapType::data, Nullable);
+      return true;
+    default:
+      return false;
+  }
+}
+
+bool WasmBinaryBuilder::getBasicHeapType(int64_t code, HeapType& out) {
+  switch (code) {
+    case BinaryConsts::EncodedHeapType::func:
+      out = HeapType::func;
+      return true;
+    case BinaryConsts::EncodedHeapType::extern_:
+      out = HeapType::ext;
+      return true;
+    case BinaryConsts::EncodedHeapType::any:
+      out = HeapType::any;
+      return true;
+    case BinaryConsts::EncodedHeapType::eq:
+      out = HeapType::eq;
+      return true;
+    case BinaryConsts::EncodedHeapType::i31:
+      out = HeapType::i31;
+      return true;
+    case BinaryConsts::EncodedHeapType::data:
+      out = HeapType::data;
+      return true;
+    default:
+      return false;
+  }
+}
+
 Type WasmBinaryBuilder::getType(int initial) {
   // Single value types are negative; signature indices are non-negative
   if (initial >= 0) {
     // TODO: Handle block input types properly.
     return getSignatureByTypeIndex(initial).results;
   }
+  Type type;
+  if (getBasicType(initial, type)) {
+    return type;
+  }
   switch (initial) {
     // None only used for block signatures. TODO: Separate out?
     case BinaryConsts::EncodedType::Empty:
       return Type::none;
-    case BinaryConsts::EncodedType::i32:
-      return Type::i32;
-    case BinaryConsts::EncodedType::i64:
-      return Type::i64;
-    case BinaryConsts::EncodedType::f32:
-      return Type::f32;
-    case BinaryConsts::EncodedType::f64:
-      return Type::f64;
-    case BinaryConsts::EncodedType::v128:
-      return Type::v128;
-    case BinaryConsts::EncodedType::funcref:
-      return Type::funcref;
-    case BinaryConsts::EncodedType::externref:
-      return Type::externref;
-    case BinaryConsts::EncodedType::anyref:
-      return Type::anyref;
-    case BinaryConsts::EncodedType::eqref:
-      return Type::eqref;
     case BinaryConsts::EncodedType::nullable:
-      return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::nonnullable:
       // FIXME: for now, force all inputs to be nullable
       return Type(getHeapType(), Nullable);
-    case BinaryConsts::EncodedType::i31ref:
-      // FIXME: for now, force all inputs to be nullable
-      return Type(HeapType::BasicHeapType::i31, Nullable);
-    case BinaryConsts::EncodedType::dataref:
-      // FIXME: for now, force all inputs to be nullable
-      return Type(HeapType::BasicHeapType::data, Nullable);
     case BinaryConsts::EncodedType::rtt_n: {
       auto depth = getU32LEB();
       auto heapType = getHeapType();
@@ -1508,52 +1554,13 @@ HeapType WasmBinaryBuilder::getHeapType() {
     }
     return types[type];
   }
-  switch (type) {
-    case BinaryConsts::EncodedHeapType::func:
-      return HeapType::func;
-    case BinaryConsts::EncodedHeapType::extern_:
-      return HeapType::ext;
-    case BinaryConsts::EncodedHeapType::any:
-      return HeapType::any;
-    case BinaryConsts::EncodedHeapType::eq:
-      return HeapType::eq;
-    case BinaryConsts::EncodedHeapType::i31:
-      return HeapType::i31;
-    case BinaryConsts::EncodedHeapType::data:
-      return HeapType::data;
-    default:
-      throwError("invalid wasm heap type: " + std::to_string(type));
+  HeapType ht;
+  if (getBasicHeapType(type, ht)) {
+    return ht;
+  } else {
+    throwError("invalid wasm heap type: " + std::to_string(type));
   }
   WASM_UNREACHABLE("unexpected type");
-}
-
-Mutability WasmBinaryBuilder::getMutability() {
-  switch (getU32LEB()) {
-    case 0:
-      return Immutable;
-    case 1:
-      return Mutable;
-    default:
-      throw ParseException("Expected 0 or 1 for mutability");
-  }
-}
-
-Field WasmBinaryBuilder::getField() {
-  // The value may be a general wasm type, or one of the types only possible in
-  // a field.
-  auto initial = getS32LEB();
-  if (initial == BinaryConsts::EncodedType::i8) {
-    auto mutable_ = getMutability();
-    return Field(Field::i8, mutable_);
-  }
-  if (initial == BinaryConsts::EncodedType::i16) {
-    auto mutable_ = getMutability();
-    return Field(Field::i16, mutable_);
-  }
-  // It's a regular wasm value.
-  auto type = getType(initial);
-  auto mutable_ = getMutability();
-  return Field(type, mutable_);
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -1643,37 +1650,121 @@ void WasmBinaryBuilder::readTypes() {
   BYN_TRACE("== readTypes\n");
   size_t numTypes = getU32LEB();
   BYN_TRACE("num: " << numTypes << std::endl);
+  TypeBuilder builder(numTypes);
+
+  auto makeType = [&](int32_t typeCode) {
+    Type type;
+    if (getBasicType(typeCode, type)) {
+      return type;
+    }
+
+    switch (typeCode) {
+      case BinaryConsts::EncodedType::nullable:
+      case BinaryConsts::EncodedType::nonnullable: {
+        // FIXME: for now, force all inputs to be nullable
+        int64_t htCode = getS64LEB(); // TODO: Actually s33
+        HeapType ht;
+        if (getBasicHeapType(htCode, ht)) {
+          return Type(ht, Nullable);
+        }
+        if (size_t(htCode) >= numTypes) {
+          throwError("invalid type index: " + std::to_string(htCode));
+        }
+        return builder.getTempRefType(size_t(htCode), Nullable);
+      }
+      case BinaryConsts::EncodedType::rtt_n:
+      case BinaryConsts::EncodedType::rtt: {
+        auto depth = typeCode == BinaryConsts::EncodedType::rtt ? Rtt::NoDepth
+                                                                : getU32LEB();
+        int64_t htCode = getS64LEB(); // TODO: Actually s33
+        HeapType ht;
+        if (getBasicHeapType(htCode, ht)) {
+          return Type(Rtt(depth, ht));
+        }
+        if (size_t(htCode) >= numTypes) {
+          throwError("invalid type index: " + std::to_string(htCode));
+        }
+        return builder.getTempRttType(htCode, depth);
+      }
+      default:
+        throwError("unexpected type index: " + std::to_string(typeCode));
+    }
+    WASM_UNREACHABLE("unexpected type");
+  };
+
+  auto readType = [&]() { return makeType(getS32LEB()); };
+
+  auto readSignatureDef = [&]() {
+    std::vector<Type> params;
+    std::vector<Type> results;
+    size_t numParams = getU32LEB();
+    BYN_TRACE("num params: " << numParams << std::endl);
+    for (size_t j = 0; j < numParams; j++) {
+      params.push_back(readType());
+    }
+    auto numResults = getU32LEB();
+    BYN_TRACE("num results: " << numResults << std::endl);
+    for (size_t j = 0; j < numResults; j++) {
+      results.push_back(readType());
+    }
+    return Signature(builder.getTempTupleType(params),
+                     builder.getTempTupleType(results));
+  };
+
+  auto readMutability = [&]() {
+    switch (getU32LEB()) {
+      case 0:
+        return Immutable;
+      case 1:
+        return Mutable;
+      default:
+        throw ParseException("Expected 0 or 1 for mutability");
+    }
+  };
+
+  auto readFieldDef = [&]() {
+    // The value may be a general wasm type, or one of the types only possible
+    // in a field.
+    auto typeCode = getS32LEB();
+    if (typeCode == BinaryConsts::EncodedType::i8) {
+      auto mutable_ = readMutability();
+      return Field(Field::i8, mutable_);
+    }
+    if (typeCode == BinaryConsts::EncodedType::i16) {
+      auto mutable_ = readMutability();
+      return Field(Field::i16, mutable_);
+    }
+    // It's a regular wasm value.
+    auto type = makeType(typeCode);
+    auto mutable_ = readMutability();
+    return Field(type, mutable_);
+  };
+
+  auto readStructDef = [&]() {
+    FieldList fields;
+    size_t numFields = getU32LEB();
+    BYN_TRACE("num fields: " << numFields << std::endl);
+    for (size_t j = 0; j < numFields; j++) {
+      fields.push_back(readFieldDef());
+    }
+    return Struct(std::move(fields));
+  };
+
   for (size_t i = 0; i < numTypes; i++) {
     BYN_TRACE("read one\n");
     auto form = getS32LEB();
     if (form == BinaryConsts::EncodedType::Func) {
-      std::vector<Type> params;
-      std::vector<Type> results;
-      size_t numParams = getU32LEB();
-      BYN_TRACE("num params: " << numParams << std::endl);
-      for (size_t j = 0; j < numParams; j++) {
-        params.push_back(getConcreteType());
-      }
-      auto numResults = getU32LEB();
-      BYN_TRACE("num results: " << numResults << std::endl);
-      for (size_t j = 0; j < numResults; j++) {
-        results.push_back(getConcreteType());
-      }
-      types.emplace_back(Signature(Type(params), Type(results)));
+      builder.setHeapType(i, readSignatureDef());
     } else if (form == BinaryConsts::EncodedType::Struct) {
-      FieldList fields;
-      size_t numFields = getU32LEB();
-      BYN_TRACE("num fields: " << numFields << std::endl);
-      for (size_t j = 0; j < numFields; j++) {
-        fields.push_back(getField());
-      }
-      types.emplace_back(Struct(fields));
+      builder.setHeapType(i, readStructDef());
     } else if (form == BinaryConsts::EncodedType::Array) {
-      types.emplace_back(Array(getField()));
+      builder.setHeapType(i, Array(readFieldDef()));
     } else {
       throwError("bad type form " + std::to_string(form));
     }
   }
+
+  types = builder.build();
 }
 
 Name WasmBinaryBuilder::getFunctionName(Index index) {

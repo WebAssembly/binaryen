@@ -433,10 +433,7 @@ inline void collectHeapTypes(Module& wasm,
                              std::unordered_map<HeapType, Index>& typeIndices) {
   struct Counts : public std::unordered_map<HeapType, size_t> {
     bool isRelevant(Type type) {
-      if (type.isRef()) {
-        return !type.getHeapType().isBasic();
-      }
-      return type.isRtt();
+      return (type.isRef() || type.isRtt()) && !type.getHeapType().isBasic();
     }
     void note(HeapType type) { (*this)[type]++; }
     void maybeNote(Type type) {
@@ -469,10 +466,11 @@ inline void collectHeapTypes(Module& wasm,
         } else if (auto* set = curr->dynCast<StructSet>()) {
           counts.maybeNote(set->ref->type);
         } else if (Properties::isControlFlowStructure(curr)) {
-          counts.maybeNote(curr->type);
           if (curr->type.isTuple()) {
             // TODO: Allow control flow to have input types as well
             counts.note(Signature(Type::none, curr->type));
+          } else {
+            counts.maybeNote(curr->type);
           }
         }
       }
@@ -509,8 +507,7 @@ inline void collectHeapTypes(Module& wasm,
   }
   // A generic utility to traverse the child types of a type.
   // TODO: work with tlively to refactor this to a shared place
-  auto walkRelevantChildren = [&](HeapType type,
-                                  std::function<void(HeapType)> callback) {
+  auto walkRelevantChildren = [&](HeapType type, auto callback) {
     auto callIfRelevant = [&](Type type) {
       if (counts.isRelevant(type)) {
         callback(type.getHeapType());
@@ -538,7 +535,6 @@ inline void collectHeapTypes(Module& wasm,
   // As we do this we may find more and more types, as nested children of
   // previous ones. Each such type will appear in the type section once, so
   // we just need to visit it once.
-  // TODO: handle struct and array fields
   std::unordered_set<HeapType> newTypes;
   for (auto& pair : counts) {
     newTypes.insert(pair.first);
@@ -555,49 +551,9 @@ inline void collectHeapTypes(Module& wasm,
     });
   }
 
-  // We must sort all the dependencies of a type before it. For example,
-  // (func (param (ref (func)))) must appear after (func). To do that, find the
-  // depth of dependencies of each type. For example, if A depends on B
-  // which depends on C, then A's depth is 2, B's is 1, and C's is 0 (assuming
-  // no other dependencies).
-  Counts depthOfDependencies;
-  std::unordered_map<HeapType, std::unordered_set<HeapType>> isDependencyOf;
-  // To calculate the depth of dependencies, we'll do a flow analysis, visiting
-  // each type as we find out new things about it.
-  std::set<HeapType> toVisit;
-  for (auto& pair : counts) {
-    auto type = pair.first;
-    depthOfDependencies[type] = 0;
-    toVisit.insert(type);
-    walkRelevantChildren(type, [&](HeapType childType) {
-      isDependencyOf[childType].insert(type); // XXX flip?
-    });
-  }
-  while (!toVisit.empty()) {
-    auto iter = toVisit.begin();
-    auto type = *iter;
-    toVisit.erase(iter);
-    // Anything that depends on this has a depth of dependencies equal to this
-    // type's, plus this type itself.
-    auto newDepth = depthOfDependencies[type] + 1;
-    if (newDepth > counts.size()) {
-      Fatal() << "Cyclic types detected, cannot sort them.";
-    }
-    for (auto& other : isDependencyOf[type]) {
-      if (depthOfDependencies[other] < newDepth) {
-        // We found something new to propagate.
-        depthOfDependencies[other] = newDepth;
-        toVisit.insert(other);
-      }
-    }
-  }
-  // Sort by frequency and then simplicity, and also keeping every type
-  // before things that depend on it.
+  // Sort by frequency and then simplicity.
   std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
   std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    if (depthOfDependencies[a.first] != depthOfDependencies[b.first]) {
-      return depthOfDependencies[a.first] < depthOfDependencies[b.first];
-    }
     if (a.second != b.second) {
       return a.second > b.second;
     }
