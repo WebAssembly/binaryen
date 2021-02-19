@@ -2841,6 +2841,9 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
               std::cerr
                 << "warning: invalid field index in name field section\n";
             } else {
+              // getStruct() intentionally returns a constant result. However,
+              // here we just adjust the name (which is not part of the hashing
+              // etc.) which is ok to do.
               auto* field = const_cast<Field*>(&fields[index]);
               field->name = getInlineString();
             }
