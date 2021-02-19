@@ -178,13 +178,14 @@ struct SExprType {
   SExprType(Type type) : type(type){};
 };
 
-static std::ostream& operator<<(std::ostream& o, const SExprType& sType) {
+static std::ostream& printSExprType(std::ostream& o, const SExprType& sType, Module* wasm = nullptr) {
   Type type = sType.type;
   if (type.isTuple()) {
     o << '(';
     auto sep = "";
     for (const auto& t : type) {
-      o << sep << SExprType(t);
+      o << sep;
+      printSExprType(o, t, wasm);
       sep = " ";
     }
     o << ')';
@@ -194,17 +195,17 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& sType) {
     if (rtt.hasDepth()) {
       o << rtt.depth << ' ';
     }
-    printHeapTypeName(o, rtt.heapType);
+    printHeapTypeName(o, rtt.heapType, wasm);
     o << ')';
   } else if (type.isRef() && !type.isBasic()) {
     o << "(ref ";
     if (type.isNullable()) {
       o << "null ";
     }
-    printHeapTypeName(o, type.getHeapType());
+    printHeapTypeName(o, type.getHeapType(), wasm);
     o << ')';
   } else {
-    printTypeName(o, sType.type);
+    printTypeName(o, sType.type, wasm);
   }
   return o;
 }
@@ -216,7 +217,7 @@ struct ResultTypeName {
   ResultTypeName(Type type) : type(type) {}
 };
 
-std::ostream& operator<<(std::ostream& os, ResultTypeName typeName) {
+std::ostream& printResultTypeName(std::ostream& os, ResultTypeName typeName, Module* wasm = nullptr) {
   auto type = typeName.type;
   os << "(result ";
   if (type.isTuple()) {
@@ -226,10 +227,10 @@ std::ostream& operator<<(std::ostream& os, ResultTypeName typeName) {
     for (auto t : type) {
       os << sep;
       sep = " ";
-      os << SExprType(t);
+      printSExprType(os, t, wasm);
     }
   } else {
-    os << SExprType(type);
+    printSExprType(os, type, wasm);
   }
   os << ')';
   return os;
@@ -267,13 +268,15 @@ struct PrintExpressionContents
       printName(curr->name, o);
     }
     if (curr->type.isConcrete()) {
-      o << ' ' << ResultTypeName(curr->type);
+      o << ' ';
+      printResultTypeName(o, curr->type, wasm);
     }
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
     if (curr->type.isConcrete()) {
-      o << ' ' << ResultTypeName(curr->type);
+      o << ' ';
+      printResultTypeName(o, curr->type, wasm);
     }
   }
   void visitLoop(Loop* curr) {
@@ -283,7 +286,8 @@ struct PrintExpressionContents
       printName(curr->name, o);
     }
     if (curr->type.isConcrete()) {
-      o << ' ' << ResultTypeName(curr->type);
+      o << ' ';
+      printResultTypeName(o, curr->type, wasm);
     }
   }
   void visitBreak(Break* curr) {
@@ -1738,7 +1742,8 @@ struct PrintExpressionContents
   void visitSelect(Select* curr) {
     prepareColor(o) << "select";
     if (curr->type.isRef()) {
-      o << ' ' << ResultTypeName(curr->type);
+      o << ' ';
+      printResultTypeName(o, curr->type, wasm);
     }
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
@@ -2771,7 +2776,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << "(param ";
       auto sep = "";
       for (auto type : curr.params) {
-        o << sep << SExprType(type);
+        o << sep;
+        printSExprType(o, type, currModule);
         sep = " ";
       }
       o << ')';
@@ -2781,7 +2787,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << "(result ";
       auto sep = "";
       for (auto type : curr.results) {
-        o << sep << SExprType(type);
+        o << sep;
+        printSExprType(o, type, currModule);
         sep = " ";
       }
       o << ')';
@@ -2801,7 +2808,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         WASM_UNREACHABLE("invalid packed type");
       }
     } else {
-      o << SExprType(field.type);
+      printSExprType(o, field.type, currModule);
     }
     if (field.mutable_) {
       o << ')';
@@ -2874,9 +2881,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
   }
   void emitGlobalType(Global* curr) {
     if (curr->mutable_) {
-      o << "(mut " << SExprType(curr->type) << ')';
+      o << "(mut ";
+      printSExprType(o, curr->type, currModule) << ')';
     } else {
-      o << SExprType(curr->type);
+      printSExprType(o, curr->type, currModule);
     }
   }
   void visitImportedGlobal(Global* curr) {
@@ -2936,13 +2944,14 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
         o << '(';
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
-        o << ' ' << SExprType(param) << ')';
+        o << ' ';
+        printSExprType(o, param, currModule) << ')';
         ++i;
       }
     }
     if (curr->sig.results != Type::none) {
       o << maybeSpace;
-      o << ResultTypeName(curr->sig.results);
+      printResultTypeName(o, curr->sig.results, currModule);
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
@@ -2950,7 +2959,8 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o)
-        << ' ' << SExprType(curr->getLocalType(i)) << ')';
+        << ' ';
+      printSExprType(o, curr->getLocalType(i), currModule) << ')';
       o << maybeNewLine;
     }
     // Print the body.
