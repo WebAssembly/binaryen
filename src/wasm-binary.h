@@ -1322,14 +1322,14 @@ public:
   int64_t getS64LEB();
   uint64_t getUPtrLEB();
 
+  bool getBasicType(int32_t code, Type& out);
+  bool getBasicHeapType(int64_t code, HeapType& out);
   // Read a value and get a type for it.
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
   Type getType(int initial);
 
   HeapType getHeapType();
-  Mutability getMutability();
-  Field getField();
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);

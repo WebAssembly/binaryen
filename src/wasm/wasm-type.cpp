@@ -1304,7 +1304,6 @@ void Canonicalizer::makeAncestorsFixedPoint() {
 std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
   // Topologically sort the Types and HeapTypes so that all children are
   // canonicalized before their parents.
-
   std::vector<TypeID> sorted;
   std::unordered_set<TypeID> seen;
 

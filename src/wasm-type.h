@@ -308,6 +308,9 @@ public:
     data,
   };
   static constexpr BasicHeapType _last_basic_type = data;
+  static constexpr uintptr_t _invalid_type = -1;
+
+  constexpr HeapType() : id(_invalid_type) {}
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
