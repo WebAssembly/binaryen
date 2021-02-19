@@ -1247,24 +1247,26 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  std::cerr << "|checking that command has expected behavior on canonicalized "
-               "(read-written) binary\n";
-  {
-    // read and write it
-    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " +
-               test + " " + extraFlags;
-    if (!binary) {
-      cmd += " -S ";
-    }
-    ProgramResult readWrite(cmd);
-    if (readWrite.failed()) {
-      stopIfNotForced("failed to read and write the binary", readWrite);
-    } else {
-      ProgramResult result(command);
-      if (result != expected) {
-        stopIfNotForced("running command on the canonicalized module should "
-                        "give the same results",
-                        result);
+  if (binary) {
+    std::cerr << "|checking that command has expected behavior on canonicalized "
+                 "(read-written) binary\n";
+    {
+      // read and write it
+      auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " +
+                 test + " " + extraFlags;
+      if (!binary) {
+        cmd += " -S ";
+      }
+      ProgramResult readWrite(cmd);
+      if (readWrite.failed()) {
+        stopIfNotForced("failed to read and write the binary", readWrite);
+      } else {
+        ProgramResult result(command);
+        if (result != expected) {
+          stopIfNotForced("running command on the canonicalized module should "
+                          "give the same results",
+                          result);
+        }
       }
     }
   }

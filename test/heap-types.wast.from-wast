@@ -42,12 +42,12 @@
    )
   )
   (drop
-   (struct.get ${i32_f32_f64} 2
+   (struct.get ${i32_f32_f64} $named
     (local.get $x)
    )
   )
   (drop
-   (struct.get ${i32_f32_f64} 2
+   (struct.get ${i32_f32_f64} $named
     (local.get $x)
    )
   )
@@ -88,7 +88,7 @@
     (i32.const 1)
    )
   )
-  (struct.set ${mut:f32} 0
+  (struct.set ${mut:f32} $named-mut
    (ref.null ${mut:f32})
    (f32.const 100)
   )
