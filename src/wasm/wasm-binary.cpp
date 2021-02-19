@@ -5846,10 +5846,6 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
         BranchUtils::replaceExceptionTargets(block, block->name, curr->name);
         exceptionTargetNames.erase(block->name);
       }
-      // maybe we don't need a block here?
-      if (block->list.size() == 1) {
-        curr->body = block->list[0];
-      }
     }
   }
   if (exceptionTargetNames.find(catchLabel) != exceptionTargetNames.end()) {
