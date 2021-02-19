@@ -2838,8 +2838,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
           for (size_t i = 0; i < numFields; i++) {
             auto index = getU32LEB();
             if (index >= fields.size()) {
-              std::cerr <<
-                  "warning: invalid field index in name field section\n";
+              std::cerr
+                << "warning: invalid field index in name field section\n";
             } else {
               auto* field = const_cast<Field*>(&fields[index]);
               field->name = getInlineString();
