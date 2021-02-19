@@ -175,7 +175,7 @@ static std::ostream& operator<<(std::ostream& o, const SExprType& sType) {
     o << '(';
     auto sep = "";
     for (const auto& t : type) {
-      o << sep << t;
+      o << sep << SExprType(t);
       sep = " ";
     }
     o << ')';
