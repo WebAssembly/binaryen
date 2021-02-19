@@ -1138,7 +1138,7 @@ struct Canonicalizer {
 
   // Maps Type and HeapType IDs to the IDs of their ancestor Types and HeapTypes
   // in the type graph. Only considers compound Types and HeapTypes.
-  std::unordered_map<TypeID, std::set<TypeID>> ancestors;
+  std::unordered_map<TypeID, std::unordered_set<TypeID>> ancestors;
 
   // Maps each temporary Type and HeapType to the locations where they will have
   // to be replaced with canonical Types and HeapTypes.
@@ -1327,7 +1327,7 @@ std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
 
   // Collect the items to be sorted, including all the result HeapTypes and any
   // type that participates in the ancestor relation.
-  std::set<TypeID> allIDs;
+  std::unordered_set<TypeID> allIDs;
   for (auto ht : results) {
     allIDs.insert(ht.getID());
   }
