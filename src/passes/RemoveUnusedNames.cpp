@@ -21,6 +21,7 @@
 
 #include <ir/branch-utils.h>
 #include <pass.h>
+#include <shared-constants.h>
 #include <wasm.h>
 
 namespace wasm {
@@ -37,16 +38,11 @@ struct RemoveUnusedNames
   std::map<Name, std::set<Expression*>> branchesSeen;
 
   void visitExpression(Expression* curr) {
-    if (auto* block = curr->dynCast<Block>()) {
-      visitBlock(block);
-      return;
-    }
-    if (auto* loop = curr->dynCast<Loop>()) {
-      visitLoop(loop);
-      return;
-    }
-    BranchUtils::operateOnScopeNameUses(
-      curr, [&](Name& name) { branchesSeen[name].insert(curr); });
+    BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+      if (name.is()) {
+        branchesSeen[name].insert(curr);
+      }
+    });
   }
 
   void handleBreakTarget(Name& name) {
@@ -83,9 +79,18 @@ struct RemoveUnusedNames
     }
   }
 
-  void visitTry(Try* curr) { handleBreakTarget(curr->name); }
+  void visitTry(Try* curr) {
+    handleBreakTarget(curr->name);
+    // Try has not just a break target but also an optional delegate with a
+    // target name, so call the generic visitor as well to handle that.
+    visitExpression(curr);
+  }
 
-  void visitFunction(Function* curr) { assert(branchesSeen.empty()); }
+  void visitFunction(Function* curr) {
+    // When we reach the function body we can erase delegations to the caller.
+    branchesSeen.erase(DELEGATE_CALLER_TARGET);
+    assert(branchesSeen.empty());
+  }
 };
 
 Pass* createRemoveUnusedNamesPass() { return new RemoveUnusedNames(); }
