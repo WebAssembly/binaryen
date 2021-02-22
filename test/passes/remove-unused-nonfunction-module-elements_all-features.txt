@@ -1,7 +1,7 @@
 (module
  (type $0 (func))
  (type $1 (func (param i32)))
- (type $2-dupe (func (param i32) (result i32)))
+ (type $2 (func (param i32) (result i32)))
  (memory $0 0)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $called_indirect)
@@ -72,19 +72,19 @@
    (i32.const 0)
   )
   (drop
-   (call_indirect $0 (type $2-dupe)
+   (call_indirect $0 (type $2)
     (i32.const 0)
     (i32.const 0)
    )
   )
   (drop
-   (call_indirect $0 (type $2-dupe)
+   (call_indirect $0 (type $2)
     (i32.const 0)
     (i32.const 0)
    )
   )
   (drop
-   (call_indirect $0 (type $2-dupe)
+   (call_indirect $0 (type $2)
     (i32.const 0)
     (i32.const 0)
    )

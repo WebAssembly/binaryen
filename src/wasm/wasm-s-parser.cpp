@@ -845,7 +845,15 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   types = builder.build();
 
   for (auto& pair : typeIndices) {
-    wasm.typeNames[types[pair.second]].name = pair.first;
+    auto name = pair.first;
+    auto type = types[pair.second];
+    // A type may appear in the type section more than once, but we canonicalize
+    // types internally, so there will be a single name chosen for that type. Do
+    // so determistically.
+    if (wasm.typeNames.count(type) && wasm.typeNames[type].name.str < name) {
+      continue;
+    }
+    wasm.typeNames[type].name = name;
   }
 }
 
