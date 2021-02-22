@@ -46,7 +46,7 @@
 ;; memory.copy
 (module
   (memory i64 1 1)
-  (data (i32.const 0) "\aa\bb\cc\dd")
+  (data (i64.const 0) "\aa\bb\cc\dd")
 
   (func (export "copy") (param i64 i64 i64)
     (memory.copy
@@ -153,7 +153,7 @@
 (module
   (memory i64 1)
   (data passive "")
-  (data (i32.const 0) "")
+  (data (i64.const 0) "")
 
   (func (export "drop_passive") (data.drop 0))
   (func (export "init_passive")
