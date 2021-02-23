@@ -782,7 +782,12 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
                      builder.getTempTupleType(results));
   };
 
-  auto parseField = [&](Element* elem) {
+  // Mapes type indexes to a mapping of field index => name. We store the data
+  // here while parsing as types have not been created yet.
+  std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
+
+  // Parses a field, and optionally notes the name with a type index.
+  auto parseField = [&](Element* elem, size_t typeIndex = -1, size_t fieldIndex = -1) {
     Mutability mutable_ = Immutable;
     // elem is a list, containing either
     //   TYPE
@@ -790,10 +795,10 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     //   (field TYPE)
     // or
     //   (field $name TYPE)
-    Name name;
     if (elementStartsWith(elem, FIELD)) {
-      if (elem->size() == 3) {
-        name = (*elem)[1]->str();
+      if (elem->size() == 3 && typeIndex != size_t(-1)) {
+        Name name = (*elem)[1]->str();
+        fieldNames[typeIndex][fieldIndex] = name;
       }
       elem = (*elem)[elem->size() - 1];
     }
@@ -806,19 +811,19 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       // elem is a simple string name like "i32". It can be a normal wasm type,
       // or one of the special types only available in fields.
       if (*elem == I8) {
-        return Field(Field::i8, mutable_, name);
+        return Field(Field::i8, mutable_);
       } else if (*elem == I16) {
-        return Field(Field::i16, mutable_, name);
+        return Field(Field::i16, mutable_);
       }
     }
     // Otherwise it's an arbitrary type.
-    return Field(parseValType(*elem), mutable_, name);
+    return Field(parseValType(*elem), mutable_);
   };
 
-  auto parseStructDef = [&](Element& elem) {
+  auto parseStructDef = [&](Element& elem, size_t typeIndex) {
     FieldList fields;
-    for (auto it = ++elem.begin(); it != elem.end(); ++it) {
-      fields.emplace_back(parseField(*it));
+    for (Index i = 1; i < elem.size(); i++) {
+      fields.emplace_back(parseField(elem[i], typeIndex, i - 1));
     }
     return Struct(fields);
   };
@@ -834,7 +839,8 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     if (kind == FUNC) {
       builder.setHeapType(index++, parseSignatureDef(def));
     } else if (kind == STRUCT) {
-      builder.setHeapType(index++, parseStructDef(def));
+      builder.setHeapType(index, parseStructDef(def, index));
+      index++;
     } else if (kind == ARRAY) {
       builder.setHeapType(index++, parseArrayDef(def));
     } else {
@@ -846,14 +852,22 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
 
   for (auto& pair : typeIndices) {
     auto name = pair.first;
-    auto type = types[pair.second];
+    auto index = pair.second;
+    auto type = types[index];
     // A type may appear in the type section more than once, but we canonicalize
     // types internally, so there will be a single name chosen for that type. Do
     // so determistically.
     if (wasm.typeNames.count(type) && wasm.typeNames[type].name.str < name) {
       continue;
     }
-    wasm.typeNames[type].name = name;
+    auto& currTypeNames = wasm.typeNames[type];
+    currTypeNames.name = name;
+    if (type.isStruct()) {
+      auto& currFieldNames = fieldNames[index];
+      for (auto& pair : currFieldNames) {
+        currTypeNames.fieldNames[pair.first] = pair.second;
+      }
+    }
   }
 }
 
@@ -2410,12 +2424,14 @@ Index SExpressionWasmBuilder::getStructIndex(const HeapType& type, Element& s) {
     auto name = s.str();
     auto struct_ = type.getStruct();
     auto& fields = struct_.fields;
+    const auto& fieldNames = wasm.typeNames[type].fieldNames;
     for (Index i = 0; i < fields.size(); i++) {
-      if (fields[i].name == name) {
+      auto it = fieldNames.find(i);
+      if (it != fieldNames.end() && it->second == name) {
         return i;
       }
     }
-    throw ParseException("bad struct name", s.line, s.col);
+    throw ParseException("bad struct field name", s.line, s.col);
   }
   // this is a numeric index
   return atoi(s.c_str());
