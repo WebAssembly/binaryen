@@ -135,17 +135,17 @@ printHeapTypeName(std::ostream& os, HeapType type, Module* wasm, bool first) {
     os << type;
     return;
   }
+  // If there is a name for this type in this module, use it.
+  // FIXME: in theory there could be two types, one with a name, and one
+  // without, and the one without gets an automatic name that matches the
+  // other's. To check for that, if (first) we could assert at the very end of
+  // this function that the automatic name is not present in the given names.
+  if (wasm && wasm->typeNames.count(type)) {
+    os << '$' << wasm->typeNames[type].name;
+    return;
+  }
   if (first) {
     os << '$';
-    // If there is a name for this type in this module, use it.
-    // FIXME: in theory there could be two types, one with a name, and one
-    // without, and the one without gets an automatic name that matches the
-    // other's. To check for that, if (first) we could assert at the very end of
-    // this function that the automatic name is not present in the given names.
-    if (wasm && wasm->typeNames.count(type)) {
-      os << wasm->typeNames[type].name;
-      return;
-    }
   }
   if (type.isSignature()) {
     auto sig = type.getSignature();

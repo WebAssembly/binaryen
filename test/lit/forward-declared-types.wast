@@ -3,7 +3,7 @@
 ;; RUN: wasm-opt %s -all -S -o - | filecheck %s
 
 ;; CHECK: (type $func (func))
-;; CHECK: (type $none_=>_ref?|{ref?|[rtt_2_$func]|_ref?|none_->_none|}| (func (result (ref null $struct))))
+;; CHECK: (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
 ;; CHECK: (type $struct (struct (field (ref null $array)) (field (ref null $func))))
 ;; CHECK: (type $array (array (rtt 2 $func)))
 
