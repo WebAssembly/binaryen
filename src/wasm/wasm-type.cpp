@@ -601,28 +601,10 @@ bool Type::isSubType(Type left, Type right) {
     return true;
   }
   if (left.isRef() && right.isRef()) {
-    // Everything is a subtype of anyref.
-    if (right == Type::anyref) {
-      return true;
-    }
-    // Various things are subtypes of eqref.
-    auto leftHeap = left.getHeapType();
-    auto rightHeap = right.getHeapType();
-    if ((leftHeap == HeapType::i31 || leftHeap.isArray() ||
-         leftHeap.isStruct()) &&
-        rightHeap == HeapType::eq &&
-        (!left.isNullable() || right.isNullable())) {
-      return true;
-    }
-    // All typed function signatures are subtypes of funcref.
-    if (leftHeap.isSignature() && rightHeap == HeapType::func &&
-        (!left.isNullable() || right.isNullable())) {
-      return true;
-    }
-    // A non-nullable type is a supertype of a nullable one
-    if (leftHeap == rightHeap && !left.isNullable()) {
-      // The only difference is the nullability.
-      assert(right.isNullable());
+    // Consider HeapType subtyping as well, and also that a non-nullable type is
+    // potentially a supertype of a nullable one.
+    if (HeapType::isSubType(left.getHeapType(), right.getHeapType()) &&
+        (left.isNullable() == right.isNullable() || !left.isNullable())) {
       return true;
     }
     return false;
@@ -820,6 +802,63 @@ const Struct& HeapType::getStruct() const {
 Array HeapType::getArray() const {
   assert(isArray());
   return getHeapTypeInfo(*this)->array;
+}
+
+static bool isFieldSubType(const Field& left, const Field& right) {
+  if (left == right) {
+    return true;
+  }
+  // Immutable fields can be subtypes.
+  if (left.mutable_ == Immutable && right.mutable_ == Immutable) {
+    return left.packedType == right.packedType &&
+           Type::isSubType(left.type, right.type);
+  }
+  return false;
+}
+
+bool HeapType::isSubType(HeapType left, HeapType right) {
+  // See:
+  // https://github.com/WebAssembly/function-references/blob/master/proposals/function-references/Overview.md#subtyping
+  // https://github.com/WebAssembly/gc/blob/master/proposals/gc/MVP.md#defined-types
+  if (left == right) {
+    return true;
+  }
+  // Everything is a subtype of any.
+  if (right == HeapType::any) {
+    return true;
+  }
+  // Various things are subtypes of eq.
+  if ((left == HeapType::i31 || left.isArray() || left.isStruct()) &&
+      right == HeapType::eq) {
+    return true;
+  }
+  // All typed function signatures are subtypes of funcref.
+  // Note: signatures may get covariance at some point, but do not yet.
+  if (left.isSignature() && right == HeapType::func) {
+    return true;
+  }
+  if (left.isArray() && right.isArray()) {
+    auto leftField = left.getArray().element;
+    auto rightField = left.getArray().element;
+    // Array types support depth subtyping.
+    return isFieldSubType(leftField, rightField);
+  }
+  if (left.isStruct() && right.isStruct()) {
+    // Structure types support width and depth subtyping.
+    auto leftFields = left.getStruct().fields;
+    auto rightFields = left.getStruct().fields;
+    // There may be more fields on the left, but not less.
+    if (leftFields.size() < rightFields.size()) {
+      return false;
+    }
+    for (size_t i = 0; i < rightFields.size(); i++) {
+      if (!isFieldSubType(leftFields[i], rightFields[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 bool Signature::operator<(const Signature& other) const {
