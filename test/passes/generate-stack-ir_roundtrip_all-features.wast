@@ -14,7 +14,7 @@
        ;; the binary writer must properly handle this delegate which is the
        ;; child of other try's, and not get confused by their information on the
        ;; stack (this is a regression test for us properly ending the scope with
-       ;; a delegate and popping the stack of break targets).
+       ;; a delegate and popping the relevant stack).
        (delegate 2)
       )
      )
