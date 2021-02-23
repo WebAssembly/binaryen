@@ -603,7 +603,7 @@ bool Type::isSubType(Type left, Type right) {
   if (left.isRef() && right.isRef()) {
     // Consider HeapType subtyping as well, and also that a non-nullable type is
     // potentially a supertype of a nullable one.
-    if (HeapType::isSubType(leftHeap, rightHeap) &&
+    if (HeapType::isSubType(left.getHeapType(), right.getHeapType()) &&
         (left.isNullable() == right.isNullable() || !left.isNullable())) {
       return true;
     }
@@ -804,14 +804,14 @@ Array HeapType::getArray() const {
   return getHeapTypeInfo(*this)->array;
 }
 
-static bool isSubType(const Field& left, const Field& right) {
+static bool isFieldSubType(const Field& left, const Field& right) {
   if (left == right) {
     return true;
   }
   // Immutable fields can be subtypes.
-  if (left.mutability_ == Immutable && right.mutability_ == Immutable) {
+  if (left.mutable_ == Immutable && right.mutable_ == Immutable) {
     return left.packedType == right.packedType &&
-           Type::isSubType(left.type == right.type);
+           Type::isSubType(left.type, right.type);
   }
   return false;
 }
@@ -841,7 +841,7 @@ bool HeapType::isSubType(HeapType left, HeapType right) {
     auto leftField = left.getArray().element;
     auto rightField = left.getArray().element;
     // Array types support depth subtyping.
-    return isSubType(leftField, rightField);
+    return isFieldSubType(leftField, rightField);
   }
   if (left.isStruct() && right.isStruct()) {
     // Structure types support width and depth subtyping.
@@ -851,8 +851,8 @@ bool HeapType::isSubType(HeapType left, HeapType right) {
     if (leftFields.size() < rightFields.size()) {
       return false;
     }
-    for (Index i = 0; i < rightFields.size(); i++) {
-      if (!isSubType(leftFields[i], rightFields[i])) {
+    for (size_t i = 0; i < rightFields.size(); i++) {
+      if (!isFieldSubType(leftFields[i], rightFields[i])) {
         return false;
       }
     }
