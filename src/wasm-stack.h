@@ -350,6 +350,8 @@ template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   }
   if (curr->isDelegate()) {
     emitDelegate(curr);
+    // Note that when we emit a delegate we do not need to also emit a scope
+    // ending, as the delegate ends the scope.
   } else {
     emitScopeEnd(curr);
   }
