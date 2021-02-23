@@ -1,7 +1,7 @@
 (module
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
+ (type $FUNCSIG$vj (func (param i32 i32)))
+ (type $FUNCSIG$i (func (result i32)))
+ (type $0 (func))
  (type $i64_=>_none (func (param i64)))
  (type $f32_=>_none (func (param f32)))
  (type $f64_=>_none (func (param f64)))

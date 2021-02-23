@@ -34,7 +34,7 @@ func: ifs
  If             : 4       
 (module
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
+ (type $0 (func (param i32)))
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
  (table $0 256 256 funcref)
@@ -256,7 +256,7 @@ export: stackSave (0)
  [removable-bytes-without-it]: 56      
  [total]        : 0       
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $0 (func (result i32)))
  (import "env" "STACKTOP" (global $gimport$0 i32))
  (global $global$0 (mut i32) (global.get $gimport$0))
  (export "stackSave" (func $0))
