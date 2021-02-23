@@ -25,6 +25,7 @@
 #include "ir/module-utils.h"
 #include "shared-constants.h"
 #include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-interpreter.h"
 #include "wasm.h"
 
@@ -119,7 +120,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             globals[import->name] = {Literal(double(666.6))};
             break;
           case Type::v128:
-            assert(false && "v128 not implemented yet");
+            WASM_UNREACHABLE("v128 not implemented yet");
           case Type::funcref:
           case Type::externref:
           case Type::anyref:
