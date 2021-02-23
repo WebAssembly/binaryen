@@ -2097,6 +2097,14 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex numSegments,
                                     uint8_t shared);
 
+BINARYEN_API int BinaryenHasMemory(BinaryenModuleRef module);
+BINARYEN_API size_t BinaryenMemoryGetInitial(BinaryenModuleRef module);
+BINARYEN_API int BinaryenMemoryHasMax(BinaryenModuleRef module);
+BINARYEN_API size_t BinaryenMemoryGetMax(BinaryenModuleRef module);
+BINARYEN_API const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module);
+BINARYEN_API const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module);
+BINARYEN_API int BinaryenMemoryGetShared(BinaryenModuleRef module);
+
 // Memory segments. Query utilities.
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
