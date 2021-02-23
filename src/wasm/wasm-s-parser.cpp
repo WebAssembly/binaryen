@@ -787,38 +787,39 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
 
   // Parses a field, and optionally notes the name with a type index.
-  auto parseField = [&](Element* elem, size_t typeIndex = -1, size_t fieldIndex = -1) {
-    Mutability mutable_ = Immutable;
-    // elem is a list, containing either
-    //   TYPE
-    // or
-    //   (field TYPE)
-    // or
-    //   (field $name TYPE)
-    if (elementStartsWith(elem, FIELD)) {
-      if (elem->size() == 3 && typeIndex != size_t(-1)) {
-        Name name = (*elem)[1]->str();
-        fieldNames[typeIndex][fieldIndex] = name;
+  auto parseField =
+    [&](Element* elem, size_t typeIndex = -1, size_t fieldIndex = -1) {
+      Mutability mutable_ = Immutable;
+      // elem is a list, containing either
+      //   TYPE
+      // or
+      //   (field TYPE)
+      // or
+      //   (field $name TYPE)
+      if (elementStartsWith(elem, FIELD)) {
+        if (elem->size() == 3 && typeIndex != size_t(-1)) {
+          Name name = (*elem)[1]->str();
+          fieldNames[typeIndex][fieldIndex] = name;
+        }
+        elem = (*elem)[elem->size() - 1];
       }
-      elem = (*elem)[elem->size() - 1];
-    }
-    // The element may also be (mut (..)).
-    if (elementStartsWith(elem, MUT)) {
-      mutable_ = Mutable;
-      elem = (*elem)[1];
-    }
-    if (elem->isStr()) {
-      // elem is a simple string name like "i32". It can be a normal wasm type,
-      // or one of the special types only available in fields.
-      if (*elem == I8) {
-        return Field(Field::i8, mutable_);
-      } else if (*elem == I16) {
-        return Field(Field::i16, mutable_);
+      // The element may also be (mut (..)).
+      if (elementStartsWith(elem, MUT)) {
+        mutable_ = Mutable;
+        elem = (*elem)[1];
       }
-    }
-    // Otherwise it's an arbitrary type.
-    return Field(parseValType(*elem), mutable_);
-  };
+      if (elem->isStr()) {
+        // elem is a simple string name like "i32". It can be a normal wasm
+        // type, or one of the special types only available in fields.
+        if (*elem == I8) {
+          return Field(Field::i8, mutable_);
+        } else if (*elem == I16) {
+          return Field(Field::i16, mutable_);
+        }
+      }
+      // Otherwise it's an arbitrary type.
+      return Field(parseValType(*elem), mutable_);
+    };
 
   auto parseStructDef = [&](Element& elem, size_t typeIndex) {
     FieldList fields;
