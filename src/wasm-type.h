@@ -351,6 +351,9 @@ public:
 
   bool operator<(const HeapType& other) const;
   std::string toString() const;
+
+  // Returns true if left is a subtype of right. Subtype includes itself.
+  static bool isSubType(HeapType left, HeapType right);
 };
 
 typedef std::vector<Type> TypeList;
