@@ -267,7 +267,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     doEndThrowingInst(self, currp);
     if (!self->unwindCatchStack.empty()) {
       // exception not thrown. link to the continuation BB
-      self->link(self->currBasicBlock, self->startBasicBlock());
+      auto* last = self->currBasicBlock;
+      self->link(last, self->startBasicBlock());
     }
   }
 
@@ -477,7 +478,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     generateDebugIds();
     for (auto& block : basicBlocks) {
       assert(debugIds.count(block.get()) > 0);
-      std::cout << "  block " << debugIds[block.get()] << ":\n";
+      std::cout << "  block " << debugIds[block.get()] << " (" << block.get()
+                << "):\n";
       block->contents.dump(static_cast<SubType*>(this)->getFunction());
       for (auto& in : block->in) {
         assert(debugIds.count(in) > 0);
