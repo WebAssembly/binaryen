@@ -786,9 +786,9 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   // here while parsing as types have not been created yet.
   std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
 
-  // Parses a field, and optionally notes the name with a type index.
+  // Parses a field, and notes the name if one is found.
   auto parseField =
-    [&](Element* elem, size_t typeIndex = -1, size_t fieldIndex = -1) {
+    [&](Element* elem, Name& name) {
       Mutability mutable_ = Immutable;
       // elem is a list, containing either
       //   TYPE
@@ -797,9 +797,8 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       // or
       //   (field $name TYPE)
       if (elementStartsWith(elem, FIELD)) {
-        if (elem->size() == 3 && typeIndex != size_t(-1)) {
-          Name name = (*elem)[1]->str();
-          fieldNames[typeIndex][fieldIndex] = name;
+        if (elem->size() == 3) {
+          name = (*elem)[1]->str();
         }
         elem = (*elem)[elem->size() - 1];
       }
@@ -824,13 +823,14 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   auto parseStructDef = [&](Element& elem, size_t typeIndex) {
     FieldList fields;
     for (Index i = 1; i < elem.size(); i++) {
-      fields.emplace_back(parseField(elem[i], typeIndex, i - 1));
+      fields.emplace_back(parseField(elem[i], fieldNames[typeIndex][i - 1]));
     }
     return Struct(fields);
   };
 
   auto parseArrayDef = [&](Element& elem) {
-    return Array(parseField(elem[1]));
+    Name dummy;
+    return Array(parseField(elem[1], dummy));
   };
 
   size_t index = 0;
@@ -864,10 +864,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     auto& currTypeNames = wasm.typeNames[type];
     currTypeNames.name = name;
     if (type.isStruct()) {
-      auto& currFieldNames = fieldNames[index];
-      for (auto& pair : currFieldNames) {
-        currTypeNames.fieldNames[pair.first] = pair.second;
-      }
+      currTypeNames.fieldNames = fieldNames[index];
     }
   }
 }
