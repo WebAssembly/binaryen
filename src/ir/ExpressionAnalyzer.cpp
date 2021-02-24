@@ -255,9 +255,9 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
   struct Hasher {
     size_t digest = wasm::hash(0);
 
-    Index internalCounter = 0;
+    size_t internalCounter = 0;
     // for each internal name, its unique id
-    std::map<Name, Index> internalNames;
+    std::map<Name, size_t> internalNames;
     ExpressionStack stack;
 
     Hasher(Expression* curr) {
@@ -350,8 +350,6 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
         return;
       }
       rehash(digest, 2);
-      static_assert(sizeof(Index) == sizeof(int32_t),
-                    "wasm64 will need changes here");
       rehash(digest, internalNames[curr]);
     }
     void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
