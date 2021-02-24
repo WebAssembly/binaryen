@@ -345,7 +345,8 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
       // But if the name is not known to us, hash the absolute one.
       if (!internalNames.count(curr)) {
         rehash(digest, 1);
-        rehash(digest, curr);
+        // Perform the same hashing as a generic name.
+        visitNonScopeName(curr);
         return;
       }
       rehash(digest, 2);
