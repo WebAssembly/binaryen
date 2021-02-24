@@ -782,7 +782,7 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
                      builder.getTempTupleType(results));
   };
 
-  // Mapes type indexes to a mapping of field index => name. We store the data
+  // Maps type indexes to a mapping of field index => name. We store the data
   // here while parsing as types have not been created yet.
   std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
 
