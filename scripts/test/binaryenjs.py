@@ -46,7 +46,7 @@ def do_test_binaryen_js_with(which):
         f.close()
 
         def test(engine):
-            cmd = [engine, 'a.js']
+            cmd = [engine, '--experimental-wasm-eh', 'a.js']
             if 'fatal' not in s:
                 out = support.run_command(cmd, stderr=subprocess.STDOUT)
             else:
