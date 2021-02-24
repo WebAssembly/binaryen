@@ -828,8 +828,8 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   };
 
   auto parseArrayDef = [&](Element& elem) {
-    Name dummy;
-    return Array(parseField(elem[1], dummy));
+    Name unused;
+    return Array(parseField(elem[1], unused));
   };
 
   size_t index = 0;
