@@ -255,9 +255,9 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
   struct Hasher {
     size_t digest = wasm::hash(0);
 
-    size_t internalCounter = 0;
+    Index internalCounter = 0;
     // for each internal name, its unique id
-    std::map<Name, size_t> internalNames;
+    std::map<Name, Index> internalNames;
     ExpressionStack stack;
 
     Hasher(Expression* curr) {
