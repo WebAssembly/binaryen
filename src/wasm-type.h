@@ -405,12 +405,11 @@ struct Field {
     i16,
   } packedType; // applicable iff type=i32
   Mutability mutable_;
-  Name name;
 
-  Field(Type type, Mutability mutable_, Name name = Name())
-    : type(type), packedType(not_packed), mutable_(mutable_), name(name) {}
-  Field(PackedType packedType, Mutability mutable_, Name name = Name())
-    : type(Type::i32), packedType(packedType), mutable_(mutable_), name(name) {}
+  Field(Type type, Mutability mutable_)
+    : type(type), packedType(not_packed), mutable_(mutable_) {}
+  Field(PackedType packedType, Mutability mutable_)
+    : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
 
   constexpr bool isPacked() const {
     if (packedType != not_packed) {
@@ -421,8 +420,6 @@ struct Field {
   }
 
   bool operator==(const Field& other) const {
-    // Note that the name is not checked here - it is pure metadata for printing
-    // purposes only.
     return type == other.type && packedType == other.packedType &&
            mutable_ == other.mutable_;
   }
