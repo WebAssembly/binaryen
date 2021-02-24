@@ -1359,13 +1359,18 @@ console.log("# RefIs");
 (function testRefIs() {
   const module = new binaryen.Module();
 
+  var op = binaryen.Operations.RefIsNull;
   var value = module.local.get(1, binaryen.externref);
   const theRefIs = binaryen.RefIs(module.ref.is_null(value));
   assert(theRefIs instanceof binaryen.RefIs);
   assert(theRefIs instanceof binaryen.Expression);
+  assert(theRefIs.op === op);
   assert(theRefIs.value === value);
   assert(theRefIs.type === binaryen.i32);
 
+  theRefIs.op = op = binaryen.Operations.RefIsFunc;
+  assert(theRefIs.op === op);
+  theRefIs.op = op = binaryen.Operations.RefIsNull;
   theRefIs.value = value = module.local.get(2, binaryen.externref);
   assert(theRefIs.value === value);
   theRefIs.type = binaryen.f64;

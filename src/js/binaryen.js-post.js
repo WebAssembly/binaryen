@@ -4142,6 +4142,12 @@ Module['MemoryFill'] = makeExpressionWrapper({
 });
 
 Module['RefIs'] = makeExpressionWrapper({
+  'getOp'(expr) {
+    return Module['_BinaryenRefIsGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenRefIsSetOp'](expr, op);
+  },
   'getValue'(expr) {
     return Module['_BinaryenRefIsGetValue'](expr);
   },
