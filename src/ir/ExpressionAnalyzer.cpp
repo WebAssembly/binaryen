@@ -351,7 +351,6 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
       rehash(digest, 2);
       static_assert(sizeof(Index) == sizeof(int32_t),
                     "wasm64 will need changes here");
-      assert(internalNames.find(curr) != internalNames.end());
       rehash(digest, internalNames[curr]);
     }
     void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
