@@ -3910,13 +3910,24 @@ void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
 const char* BinaryenTableGetName(BinaryenTableRef table) {
   return ((Table*)table)->name.c_str();
 }
-int BinaryenTableGetInitial(BinaryenTableRef table) {
+void BinaryenTableSetName(BinaryenTableRef table, const char* name) {
+  ((Table*)table)->name = name;
+}
+BinaryenIndex BinaryenTableGetInitial(BinaryenTableRef table) {
   return ((Table*)table)->initial;
+}
+void BinaryenTableSetInitial(BinaryenTableRef table, BinaryenIndex initial) {
+  ((Table*)table)->initial = initial;
 }
 int BinaryenTableHasMax(BinaryenTableRef table) {
   return ((Table*)table)->hasMax();
 }
-int BinaryenTableGetMax(BinaryenTableRef table) { return ((Table*)table)->max; }
+BinaryenIndex BinaryenTableGetMax(BinaryenTableRef table) {
+  return ((Table*)table)->max;
+}
+void BinaryenTableSetMax(BinaryenTableRef table, BinaryenIndex max) {
+  ((Table*)table)->max = max;
+}
 
 //
 // =========== Global operations ===========

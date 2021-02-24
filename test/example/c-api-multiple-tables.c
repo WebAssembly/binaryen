@@ -51,9 +51,15 @@ int main() {
     assert(t2 != NULL);
 
     assert(strcmp(BinaryenTableGetName(t2), "t2") == 0);
+    BinaryenTableSetName(t2, "table2");
+    assert(strcmp(BinaryenTableGetName(t2), "table2") == 0);
     assert(BinaryenTableGetInitial(t2) == 1);
+    BinaryenTableSetInitial(t2, 2);
+    assert(BinaryenTableGetInitial(t2) == 2);
     assert(BinaryenTableHasMax(t2) == 1);
     assert(BinaryenTableGetMax(t2) == 1);
+    BinaryenTableSetMax(t2, 2);
+    assert(BinaryenTableGetMax(t2) == 2);
     assert(strcmp(BinaryenTableImportGetModule(t2), "") == 0);
     assert(strcmp(BinaryenTableImportGetBase(t2), "") == 0);
 

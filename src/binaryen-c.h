@@ -2376,10 +2376,23 @@ BINARYEN_API void BinaryenFunctionSetDebugLocation(BinaryenFunctionRef func,
 // ========== Table Operations ==========
 //
 
+// Gets the name of the specified `Table`.
 BINARYEN_API const char* BinaryenTableGetName(BinaryenTableRef table);
-BINARYEN_API int BinaryenTableGetInitial(BinaryenTableRef table);
+// Sets the name of the specified `Table`.
+BINARYEN_API void BinaryenTableSetName(BinaryenTableRef table,
+                                       const char* name);
+// Gets the initial number of pages of the specified `Table`.
+BINARYEN_API BinaryenIndex BinaryenTableGetInitial(BinaryenTableRef table);
+// Sets the initial number of pages of the specified `Table`.
+BINARYEN_API void BinaryenTableSetInitial(BinaryenTableRef table,
+                                          BinaryenIndex initial);
+// Tests whether the specified `Table` has a maximum number of pages.
 BINARYEN_API int BinaryenTableHasMax(BinaryenTableRef table);
-BINARYEN_API int BinaryenTableGetMax(BinaryenTableRef table);
+// Gets the maximum number of pages of the specified `Table`.
+BINARYEN_API BinaryenIndex BinaryenTableGetMax(BinaryenTableRef table);
+// Sets the maximum number of pages of the specified `Table`.
+BINARYEN_API void BinaryenTableSetMax(BinaryenTableRef table,
+                                      BinaryenIndex max);
 
 //
 // ========== Global Operations ==========
