@@ -475,6 +475,7 @@ struct PrintExpressionContents
     Type type = forceConcrete(curr->expectedType);
     assert(type == Type::i32 || type == Type::i64);
     o << "memory.atomic.wait" << (type == Type::i32 ? "32" : "64");
+    restoreNormalColor(o);
     if (curr->offset) {
       o << " offset=" << curr->offset;
     }
@@ -514,6 +515,7 @@ struct PrintExpressionContents
         o << "f64x2.extract_lane";
         break;
     }
+    restoreNormalColor(o);
     o << " " << int(curr->index);
   }
   void visitSIMDReplace(SIMDReplace* curr) {
@@ -538,11 +540,13 @@ struct PrintExpressionContents
         o << "f64x2.replace_lane";
         break;
     }
+    restoreNormalColor(o);
     o << " " << int(curr->index);
   }
   void visitSIMDShuffle(SIMDShuffle* curr) {
     prepareColor(o);
     o << "v8x16.shuffle";
+    restoreNormalColor(o);
     for (uint8_t mask_index : curr->mask) {
       o << " " << std::to_string(mask_index);
     }
@@ -578,6 +582,7 @@ struct PrintExpressionContents
         o << "v64x2.signselect";
         break;
     }
+    restoreNormalColor(o);
   }
   void visitSIMDShift(SIMDShift* curr) {
     prepareColor(o);
@@ -619,6 +624,7 @@ struct PrintExpressionContents
         o << "i64x2.shr_u";
         break;
     }
+    restoreNormalColor(o);
   }
   void visitSIMDLoad(SIMDLoad* curr) {
     prepareColor(o);
@@ -738,19 +744,25 @@ struct PrintExpressionContents
   }
   void visitMemoryInit(MemoryInit* curr) {
     prepareColor(o);
-    o << "memory.init " << curr->segment;
+    o << "memory.init";
+    restoreNormalColor(o);
+    o << ' ' << curr->segment;
   }
   void visitDataDrop(DataDrop* curr) {
     prepareColor(o);
-    o << "data.drop " << curr->segment;
+    o << "data.drop";
+    restoreNormalColor(o);
+    o << ' ' << curr->segment;
   }
   void visitMemoryCopy(MemoryCopy* curr) {
     prepareColor(o);
     o << "memory.copy";
+    restoreNormalColor(o);
   }
   void visitMemoryFill(MemoryFill* curr) {
     prepareColor(o);
     o << "memory.fill";
+    restoreNormalColor(o);
   }
   void visitConst(Const* curr) {
     o << curr->value.type << ".const " << curr->value;
@@ -1148,6 +1160,7 @@ struct PrintExpressionContents
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
     }
+    restoreNormalColor(o);
   }
   void visitBinary(Binary* curr) {
     prepareColor(o);
@@ -1747,6 +1760,7 @@ struct PrintExpressionContents
   }
   void visitSelect(Select* curr) {
     prepareColor(o) << "select";
+    restoreNormalColor(o);
     if (curr->type.isRef()) {
       o << ' ';
       printResultTypeName(o, curr->type, wasm);
