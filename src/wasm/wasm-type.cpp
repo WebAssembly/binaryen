@@ -285,10 +285,6 @@ template<typename Info> struct Store {
     typeIDs[info] = id;
     return typename Info::type_t(id);
   }
-
-  void insertWithoutCanonicalizing(std::unique_ptr<Info>&& info) {
-    constructedTypes.emplace_back(std::move(info));
-  }
 };
 
 struct TypeStore : Store<TypeInfo> {
@@ -1218,6 +1214,10 @@ struct Canonicalizer {
   void canonicalize(T* type, std::unordered_map<T, T>& canonicals);
 };
 
+// Used to extend the lifetime of self-referential HeapTypes so they don't need
+// to be canonicalized.
+std::vector<std::unique_ptr<HeapTypeInfo>> noncanonicalHeapTypes;
+
 // Traverse the type graph rooted at the initialized HeapTypeInfos in reverse
 // postorder, replacing in place all Types and HeapTypes backed by the
 // TypeBuilder's Stores with equivalent globally canonicalized Types and
@@ -1271,7 +1271,7 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
   // the TypeBuilder without their IDs changing.
   for (auto& entry : builder.impl->entries) {
     if (selfReferentialHeapTypes.count(entry.get().getID())) {
-      globalHeapTypeStore.insertWithoutCanonicalizing(std::move(entry.info));
+      noncanonicalHeapTypes.emplace_back(std::move(entry.info));
     }
   }
 }
