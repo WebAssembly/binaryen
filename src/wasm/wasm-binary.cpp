@@ -685,6 +685,27 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
+  // type names
+  {
+    std::vector<HeapType> namedTypes;
+    for (auto& kv : typeIndices) {
+      auto type = kv.first;
+      if (wasm->typeNames.count(type)) {
+        namedTypes.push_back(type);
+      }
+    }
+    if (!namedTypes.empty()) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameType);
+      o << U32LEB(namedTypes.size());
+      for (auto type : namedTypes) {
+        o << U32LEB(typeIndices[type]);
+        writeEscapedName(wasm->typeNames[type].name.str);
+      }
+      finishSubsection(substart);
+    }
+  }
+
   // table names
   {
     std::vector<std::pair<Index, Table*>> tablesWithNames;
@@ -2803,6 +2824,22 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                       << std::to_string(localIndex) << " in function "
                       << std::string(func->name.str) << std::endl;
           }
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameType) {
+      auto num = getU32LEB();
+      NameProcessor processor;
+      for (size_t i = 0; i < num; i++) {
+        auto index = getU32LEB();
+        auto rawName = getInlineString();
+        auto name = processor.process(rawName);
+        if (index < types.size()) {
+          wasm.typeNames[types[index]].name = name;
+        } else {
+          std::cerr << "warning: type index out of bounds in name section, "
+                       "type subsection: "
+                    << std::string(rawName.str) << " at index "
+                    << std::to_string(index) << std::endl;
         }
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameTable) {

@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (memory $0 (shared 23 256))
  (func $atomic-loadstore
   (local $0 i32)
