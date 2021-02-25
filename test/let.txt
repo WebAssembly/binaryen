@@ -1,0 +1,42 @@
+;; source code for let.wasm, which was created by wasp
+(module
+  (type $vector (array (mut f64)))
+  (func $main
+    (local $x i32)
+    (local $y i32)
+    (drop (local.get $x)) ;; 0 is the index appearing in the binary
+    ;; first let
+    (array.new_with_rtt $vector
+      (f64.const 3.14159)
+      (i32.const 1)
+      (rtt.canon $vector)
+    )
+    (let (local $v (ref $vector))
+      (drop (local.get $v)) ;; 0
+      (drop (local.get $x)) ;; 1
+      ;; another one, nested
+      (array.new_with_rtt $vector
+        (f64.const 1234)
+        (i32.const 2)
+        (rtt.canon $vector)
+      )
+      (let (local $w (ref $vector))
+        (drop (local.get $v)) ;; 1
+        (drop (local.get $w)) ;; 0
+        (drop (local.get $x)) ;; 2
+      )
+    )
+    ;; another one, later
+    (array.new_with_rtt $vector
+      (f64.const 2.1828)
+      (i32.const 3)
+      (rtt.canon $vector)
+    )
+    (let (local $v (ref $vector))
+      (drop (local.get $v)) ;; 0
+      (drop (local.get $x)) ;; 1
+    )
+    (drop (local.get $x)) ;; 0
+  )
+)
+
