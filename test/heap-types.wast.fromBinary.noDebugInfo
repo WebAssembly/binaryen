@@ -99,10 +99,10 @@
   )
   (drop
    (struct.new_with_rtt ${i32_f32_f64}
-    (rtt.canon ${i32_f32_f64})
     (i32.const 1)
     (f32.const 2.3450000286102295)
     (f64.const 3.14159)
+    (rtt.canon ${i32_f32_f64})
    )
   )
   (unreachable)
@@ -114,15 +114,15 @@
   (local $4 (ref null $[mut:f64]))
   (drop
    (array.new_with_rtt $[mut:f64]
-    (rtt.canon $[mut:f64])
-    (i32.const 3)
     (f64.const 3.14159)
+    (i32.const 3)
+    (rtt.canon $[mut:f64])
    )
   )
   (drop
    (array.new_default_with_rtt $[ref?|[mut:f64]|]
-    (rtt.canon $[ref?|[mut:f64]|])
     (i32.const 10)
+    (rtt.canon $[ref?|[mut:f64]|])
    )
   )
   (drop
