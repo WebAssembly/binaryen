@@ -1898,7 +1898,8 @@ BinaryenI31GetGetI31(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenI31GetSetI31(BinaryenExpressionRef expr,
                                        BinaryenExpressionRef i31Expr);
 // Gets whether an `i31.get` expression returns a signed value (`_s`).
-BINARYEN_API int BinaryenI31GetIsSigned(BinaryenExpressionRef expr);
+BINARYEN_API int BinaryenI31GetGetIsSigned(BinaryenExpressionRef expr);
+WASM_DEPRECATED BINARYEN_API int BinaryenI31GetIsSigned(BinaryenExpressionRef expr);
 // Sets whether an `i31.get` expression returns a signed value (`_s`).
 BINARYEN_API void BinaryenI31GetSetSigned(BinaryenExpressionRef expr,
                                           int signed_);

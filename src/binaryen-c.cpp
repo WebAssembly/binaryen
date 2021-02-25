@@ -3075,10 +3075,13 @@ void BinaryenI31GetSetI31(BinaryenExpressionRef expr,
   assert(i31Expr);
   static_cast<I31Get*>(expression)->i31 = (Expression*)i31Expr;
 }
-int BinaryenI31GetIsSigned(BinaryenExpressionRef expr) {
+int BinaryenI31GetGetIsSigned(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<I31Get>());
   return static_cast<I31Get*>(expression)->signed_;
+}
+WASM_DEPRECATED int BinaryenI31GetIsSigned(BinaryenExpressionRef expr) {
+  return BinaryenI31GetGetIsSigned(expr);
 }
 void BinaryenI31GetSetSigned(BinaryenExpressionRef expr, int signed_) {
   auto* expression = (Expression*)expr;
