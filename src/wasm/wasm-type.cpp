@@ -1089,25 +1089,30 @@ std::ostream& operator<<(std::ostream& os, HeapTypeInfo info) {
 
 struct TypeBuilder::Impl {
   TypeStore typeStore;
-  HeapTypeStore heapTypeStore;
 
   struct Entry {
-    // HeapTypeInfo has no default constructor, so pick an arbitrary default.
-    HeapTypeInfo info = Signature();
+    std::unique_ptr<HeapTypeInfo> info;
     bool initialized = false;
+    Entry() {
+      // We need to eagerly allocate the HeapTypeInfo so we have a TypeID to use
+      // to refer to it before it is initialized. Arbitrarily choose a default
+      // value.
+      info = std::make_unique<HeapTypeInfo>(Signature());
+    }
     void set(HeapTypeInfo&& hti) {
-      info = hti;
+      *info = hti;
       initialized = true;
     }
-    HeapType get() { return HeapType(TypeID(&info)); }
+    HeapType get() { return HeapType(TypeID(info.get())); }
   };
 
   std::vector<Entry> entries;
+
+  Impl(size_t n) : entries(n) {}
 };
 
 TypeBuilder::TypeBuilder(size_t n) {
-  impl = std::make_unique<TypeBuilder::Impl>();
-  impl->entries.resize(n);
+  impl = std::make_unique<TypeBuilder::Impl>(n);
 }
 
 TypeBuilder::~TypeBuilder() = default;
@@ -1175,14 +1180,17 @@ struct Canonicalizer {
   // The work list of Types and HeapTypes remaining to be scanned.
   std::vector<Item> scanList;
 
-  // Maps Type and HeapType IDs to the IDs of their ancestor Types and HeapTypes
+  // Maps Type and HeapType IDs to the IDs of their child Types and HeapTypes
   // in the type graph. Only considers compound Types and HeapTypes.
-  std::unordered_map<TypeID, std::unordered_set<TypeID>> ancestors;
+  std::unordered_map<TypeID, std::unordered_set<TypeID>> children;
 
   // Maps each temporary Type and HeapType to the locations where they will have
   // to be replaced with canonical Types and HeapTypes.
   std::unordered_map<Type, std::vector<Type*>> typeLocations;
   std::unordered_map<HeapType, std::vector<HeapType*>> heapTypeLocations;
+
+  // These heap types will not participate in canonicalization.
+  std::unordered_set<TypeID> selfReferentialHeapTypes;
 
   // Maps Types and HeapTypes backed by the TypeBuilder's Stores to globally
   // canonical Types and HeapTypes.
@@ -1196,7 +1204,7 @@ struct Canonicalizer {
   template<typename T1, typename T2> void noteChild(T1 parent, T2* child);
   void scanHeapType(HeapType* ht);
   void scanType(Type* child);
-  void makeAncestorsFixedPoint();
+  void findSelfReferentialHeapTypes();
   std::vector<Item> getOrderedItems();
 
   // Replaces the pointee Type or HeapType of `type` with its globally canonical
@@ -1205,6 +1213,10 @@ struct Canonicalizer {
   template<typename T>
   void canonicalize(T* type, std::unordered_map<T, T>& canonicals);
 };
+
+// Used to extend the lifetime of self-referential HeapTypes so they don't need
+// to be canonicalized.
+std::vector<std::unique_ptr<HeapTypeInfo>> noncanonicalHeapTypes;
 
 // Traverse the type graph rooted at the initialized HeapTypeInfos in reverse
 // postorder, replacing in place all Types and HeapTypes backed by the
@@ -1224,8 +1236,7 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
 
   // Traverse the type graph reachable from the heap types, calculating
   // reachability and collecting a list of types and heap types that need to be
-  // canonicalized. We must scan in depth-first order so that we can do a
-  // postorder traversal later.
+  // canonicalized.
   while (scanList.size() != 0) {
     auto item = scanList.back();
     scanList.pop_back();
@@ -1239,17 +1250,11 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
     }
   }
 
-  // Check for recursive types and heap types. TODO: pre-canonicalize these into
-  // their minimal finite representations.
-  makeAncestorsFixedPoint();
-  for (auto& kv : ancestors) {
-    if (kv.second.count(kv.first) != 0) {
-      WASM_UNREACHABLE("TODO: support recursive types");
-    }
-  }
+  findSelfReferentialHeapTypes();
 
-  // Visit the types and heap types in reverse postorder, replacing them with
-  // their canonicalized versions.
+  // Visit the use sites of Types and HeapTypes, replacing them with their
+  // canonicalized versions in an order that guarantees no temporary types will
+  // be leaked into the global stores.
   for (auto it : getOrderedItems()) {
     switch (it.kind) {
       case Item::TypeKind:
@@ -1260,12 +1265,21 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
         break;
     }
   }
+
+  // Now that all other Types and HeapTypes have been canonicalized, move
+  // self-referential HeapTypes to the global store so that they will outlive
+  // the TypeBuilder without their IDs changing.
+  for (auto& entry : builder.impl->entries) {
+    if (selfReferentialHeapTypes.count(entry.get().getID())) {
+      noncanonicalHeapTypes.emplace_back(std::move(entry.info));
+    }
+  }
 }
 
 template<typename T1, typename T2>
 void Canonicalizer::noteChild(T1 parent, T2* child) {
   if (child->isCompound()) {
-    ancestors[child->getID()].insert(parent.getID());
+    children[parent.getID()].insert(child->getID());
     scanList.push_back(child);
   }
 }
@@ -1319,85 +1333,112 @@ void Canonicalizer::scanType(Type* type) {
   }
 }
 
-void Canonicalizer::makeAncestorsFixedPoint() {
-  // Naively calculate the transitive closure of the reachability graph.
+void Canonicalizer::findSelfReferentialHeapTypes() {
+  // Calculate the fixed point of the reachability relation.
+  auto fixedPoint = children;
   bool changed;
   do {
     changed = false;
-    for (auto& entry : ancestors) {
+    for (auto& entry : fixedPoint) {
       auto& succs = entry.second;
-      std::unordered_set<TypeID> nextAncestors;
+      std::unordered_set<TypeID> newSuccs;
       for (auto& other : succs) {
-        auto& otherAncestors = ancestors[other];
-        nextAncestors.insert(otherAncestors.begin(), otherAncestors.end());
+        auto& otherSuccs = fixedPoint[other];
+        newSuccs.insert(otherSuccs.begin(), otherSuccs.end());
       }
       size_t oldSize = succs.size();
-      succs.insert(nextAncestors.begin(), nextAncestors.end());
+      succs.insert(newSuccs.begin(), newSuccs.end());
       if (succs.size() != oldSize) {
         changed = true;
       }
     }
   } while (changed);
+
+  // Find HeapTypes that reach themselves
+  for (auto& entry : builder.impl->entries) {
+    TypeID id = entry.get().getID();
+    auto it = fixedPoint.find(id);
+    if (it != fixedPoint.end() && it->second.count(id)) {
+      selfReferentialHeapTypes.insert(id);
+    }
+  }
 }
 
 std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
-  // Topologically sort the Types and HeapTypes so that all children are
-  // canonicalized before their parents.
+  // In order to canonicalize Types and HeapTypes without leaking any temporary
+  // types into the global type store, we need to canonicalize children before
+  // parents. In the case of recursive types, this is not possible due to cycles
+  // in the parent-child relation. In principle that can be overcome by
+  // canonicalizing type structures rather than type contents, but for now we
+  // instead cut corners and break the cycles by skipping canonicalization of
+  // self-referential HeapTypes. This works because the path from any Type or
+  // HeapType to itself in the parent-child relation must go through some
+  // self-referential HeapType; it is not possible to have a cycle composed only
+  // of Types, for example. In effect this means that we have a nominal type
+  // system for self-referential HeapTypes and a structural type system for
+  // everything else. Eventually we will have to implement something more
+  // consistent, but this is good enough for getting prototype toolchains up and
+  // running.
+
+  // TODO: None of this is particularly optimized. Benchmark to see if this is a
+  // significant bottleneck and investigate using better data structures and
+  // algorithms.
+
+  // Remove self-referential HeapTypes to cut cycles.
+  auto childrenDAG = children;
+  for (TypeID id : selfReferentialHeapTypes) {
+    childrenDAG.erase(id);
+    for (auto& kv : childrenDAG) {
+      kv.second.erase(id);
+    }
+  }
+
+  // Collect the remaining types that will be sorted.
+  std::unordered_set<TypeID> toSort;
+  for (auto& entry : builder.impl->entries) {
+    TypeID id = entry.get().getID();
+    if (!selfReferentialHeapTypes.count(id)) {
+      toSort.insert(id);
+    }
+  }
+  for (auto& kv : childrenDAG) {
+    toSort.insert(kv.first);
+    for (auto& child : kv.second) {
+      toSort.insert(child);
+    }
+  }
+
+  // Topologically sort so that children come before their parents.
   std::vector<TypeID> sorted;
   std::unordered_set<TypeID> seen;
-
-  // Topologically sort so that all parents are pushed before their children.
-  // This sort will be reversed later to have children before their parents.
-  std::function<void(TypeID)> visit = [&](TypeID i) {
-    if (seen.count(i)) {
+  std::function<void(TypeID)> visit = [&](TypeID id) {
+    if (seen.count(id)) {
       return;
     }
-    // Push ancestors of the current type before pushing the current type.
-    auto it = ancestors.find(i);
-    if (it != ancestors.end()) {
-      for (auto ancestor : it->second) {
-        visit(ancestor);
+    // Push children of the current type before pushing the current type.
+    auto it = childrenDAG.find(id);
+    if (it != childrenDAG.end()) {
+      for (auto child : it->second) {
+        visit(child);
       }
     }
-    seen.insert(i);
-    sorted.push_back(i);
+    seen.insert(id);
+    sorted.push_back(id);
   };
-
-  // Collect the items to be sorted, including all the result HeapTypes and any
-  // type that participates in the ancestor relation.
-  std::unordered_set<TypeID> allIDs;
-  for (auto ht : results) {
-    allIDs.insert(ht.getID());
-  }
-  for (auto& kv : ancestors) {
-    allIDs.insert(kv.first);
-    for (auto& id : kv.second) {
-      allIDs.insert(id);
-    }
-  }
-
-  // Perform the sort.
-  for (TypeID i : allIDs) {
+  for (TypeID i : toSort) {
     visit(i);
   }
 
-  // Swap order to have all children before their parents.
-  std::reverse(sorted.begin(), sorted.end());
-
-  // Create a list of Items to canonicalize in place according to the
-  // topological ordering of types and heap types.
+  // Expand the ordered types into ordered type use sites.
   std::vector<Item> items;
   for (TypeID id : sorted) {
     // IDs may be Types or HeapTypes, so just try both.
-    auto typeIt = typeLocations.find(Type(id));
-    if (typeIt != typeLocations.end()) {
-      for (Type* loc : typeIt->second) {
+    if (typeLocations.count(Type(id))) {
+      for (Type* loc : typeLocations[Type(id)]) {
         items.emplace_back(loc);
       }
     } else {
-      auto heapTypeIt = heapTypeLocations.find(HeapType(id));
-      assert(heapTypeIt != heapTypeLocations.end());
-      for (HeapType* loc : heapTypeIt->second) {
+      for (HeapType* loc : heapTypeLocations[HeapType(id)]) {
         items.emplace_back(loc);
       }
     }
