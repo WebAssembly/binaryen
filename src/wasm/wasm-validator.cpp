@@ -2818,7 +2818,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                       "memory is shared, but atomics are disabled");
   }
   for (auto& segment : curr.segments) {
-    Index size = segment.data.size();
+    auto size = segment.data.size();
     if (segment.isPassive) {
       info.shouldBeTrue(module.features.hasBulkMemory(),
                         segment.offset,
@@ -2828,11 +2828,20 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                          segment.offset,
                          "passive segment should not have an offset");
     } else {
-      if (!info.shouldBeEqual(segment.offset->type,
-                              Type(Type::i32),
-                              segment.offset,
-                              "segment offset should be i32")) {
-        continue;
+      if (curr.is64()) {
+        if (!info.shouldBeEqual(segment.offset->type,
+                                Type(Type::i64),
+                                segment.offset,
+                                "segment offset should be i64")) {
+          continue;
+        }
+      } else {
+        if (!info.shouldBeEqual(segment.offset->type,
+                                Type(Type::i32),
+                                segment.offset,
+                                "segment offset should be i32")) {
+          continue;
+        }
       }
       info.shouldBeTrue(checkSegmentOffset(segment.offset,
                                            segment.data.size(),
@@ -2840,8 +2849,8 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                         segment.offset,
                         "memory segment offset should be reasonable");
       if (segment.offset->is<Const>()) {
-        Index start = segment.offset->cast<Const>()->value.geti32();
-        Index end = start + size;
+        auto start = segment.offset->cast<Const>()->value.getUnsigned();
+        auto end = start + size;
         info.shouldBeTrue(end <= curr.initial * Memory::kPageSize,
                           segment.data.size(),
                           "segment size should fit in memory (end)");
