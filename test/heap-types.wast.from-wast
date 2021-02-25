@@ -1,11 +1,11 @@
 (module
- (type $struct.A (struct (field i32) (field f32) (field f64)))
+ (type $struct.A (struct (field i32) (field f32) (field $named f64)))
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref null $struct.A)) (field (mut (ref null $struct.A)))))
  (type $matrix (array (ref null $vector)))
  (type $vector (array (mut f64)))
  (type $anyref_=>_none (func (param anyref)))
  (type $parent (struct ))
- (type $struct.C (struct (field (mut f32))))
+ (type $struct.C (struct (field $named-mut (mut f32))))
  (type $none_=>_none (func))
  (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
  (type $rtt_$parent_=>_none (func (param (rtt $parent))))
