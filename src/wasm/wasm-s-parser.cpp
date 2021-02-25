@@ -328,6 +328,8 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
     throw ParseException("empty toplevel, expected module");
   }
   if (module[0]->str() != MODULE) {
+    // A wat file does not need to contain (module ..), it is fine to just have
+    // the contents of the module.
     throw ParseException("toplevel does not start with module");
   }
   if (module.size() == 1) {
@@ -822,7 +824,12 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   auto parseStructDef = [&](Element& elem, size_t typeIndex) {
     FieldList fields;
     for (Index i = 1; i < elem.size(); i++) {
-      fields.emplace_back(parseField(elem[i], fieldNames[typeIndex][i - 1]));
+      Name name;
+      fields.emplace_back(parseField(elem[i], name));
+      if (name.is()) {
+        // Only add the name to the map if it exists.
+        fieldNames[typeIndex][i - 1] = name;
+      }
     }
     return Struct(fields);
   };
