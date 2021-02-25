@@ -244,6 +244,27 @@ std::ostream& printResultTypeName(std::ostream& os,
   return os;
 }
 
+// Generic processing of a field, given an optional module. Calls func() with
+// the field name, if it is present, or with a null Name if not.
+template<typename T>
+void processFieldName(Module* wasm, HeapType type, Index index, T func) {
+  if (wasm) {
+    auto it = wasm->typeNames.find(type);
+    if (it != wasm->typeNames.end()) {
+      auto& fieldNames = it->second.fieldNames;
+      auto it = fieldNames.find(index);
+      if (it != fieldNames.end()) {
+        auto name = it->second;
+        if (name.is()) {
+          func(it->second);
+          return;
+        }
+      }
+    }
+  }
+  func(Name());
+}
+
 } // anonymous namespace
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
@@ -1895,21 +1916,13 @@ struct PrintExpressionContents
     printMedium(o, "block ");
   }
   void printFieldName(HeapType type, Index index) {
-    if (wasm) {
-      auto it = wasm->typeNames.find(type);
-      if (it != wasm->typeNames.end()) {
-        auto& fieldNames = it->second.fieldNames;
-        auto it = fieldNames.find(index);
-        if (it != fieldNames.end()) {
-          auto name = it->second;
-          if (name.is()) {
-            o << '$' << it->second;
-            return;
-          }
-        }
+    processFieldName(wasm, type, index, [&](Name name) {
+      if (name.is()) {
+        o << '$' << name;
+      } else {
+        o << index;
       }
-    }
-    o << index;
+    });
   }
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable) {
@@ -2856,12 +2869,18 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     handleFieldBody(curr.element);
     o << ')';
   }
-  void handleStruct(const Struct& curr) {
+  void handleStruct(HeapType type) {
+    const auto& fields = type.getStruct().fields;
     o << "(struct ";
     auto sep = "";
-    for (auto field : curr.fields) {
+    for (Index i = 0; i < fields.size(); i++) {
       o << sep << "(field ";
-      handleFieldBody(field);
+      processFieldName(currModule, type, i, [&](Name name) {
+        if (name.is()) {
+          o << '$' << name << ' ';
+        }
+      });
+      handleFieldBody(fields[i]);
       o << ')';
       sep = " ";
     }
@@ -2873,7 +2892,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     } else if (type.isArray()) {
       handleArray(type.getArray());
     } else if (type.isStruct()) {
-      handleStruct(type.getStruct());
+      handleStruct(type);
     } else {
       o << type;
     }
