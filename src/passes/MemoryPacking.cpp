@@ -228,7 +228,7 @@ bool MemoryPacking::canOptimize(const Memory& memory,
       }
       // Note the maximum address so far.
       maxAddress = std::max(
-        maxAddress, Address(c->value.getInteger() + segment.data.size()));
+        maxAddress, Address(c->value.getUnsigned() + segment.data.size()));
     }
   }
   // All active segments have constant offsets, known at this time, so we may be
@@ -239,7 +239,7 @@ bool MemoryPacking::canOptimize(const Memory& memory,
   for (auto& segment : segments) {
     if (!segment.isPassive) {
       auto* c = segment.offset->cast<Const>();
-      Address start = c->value.getInteger();
+      Address start = c->value.getUnsigned();
       DisjointSpans::Span span{start, start + segment.data.size()};
       if (space.addAndCheckOverlap(span)) {
         std::cerr << "warning: active memory segments have overlap, which "
@@ -523,7 +523,12 @@ void MemoryPacking::createSplitSegments(Builder& builder,
     Expression* offset = nullptr;
     if (!segment.isPassive) {
       if (auto* c = segment.offset->dynCast<Const>()) {
-        offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
+        if (c->value.type == Type::i32) {
+          offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
+        } else {
+          assert(c->value.type == Type::i64);
+          offset = builder.makeConst(int64_t(c->value.geti64() + range.start));
+        }
       } else {
         assert(ranges.size() == 1);
         offset = segment.offset;

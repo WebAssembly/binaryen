@@ -2615,7 +2615,12 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
       }
       // (memory (data ..)) format
       auto j = parseMemoryIndex(inner, 1);
-      auto offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+      auto offset = allocator.alloc<Const>();
+      if (wasm.memory.is64()) {
+        offset->set(Literal(int64_t(0)));
+      } else {
+        offset->set(Literal(int32_t(0)));
+      }
       parseInnerData(inner, j, {}, offset, false);
       wasm.memory.initial = wasm.memory.segments[0].data.size();
       return;
@@ -2641,8 +2646,13 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
     }
     const char* input = curr[j]->c_str();
     auto* offset = allocator.alloc<Const>();
-    offset->type = Type::i32;
-    offset->value = Literal(int32_t(offsetValue));
+    if (wasm.memory.is64()) {
+      offset->type = Type::i64;
+      offset->value = Literal(offsetValue);
+    } else {
+      offset->type = Type::i32;
+      offset->value = Literal(int32_t(offsetValue));
+    }
     if (auto size = strlen(input)) {
       std::vector<char> data;
       stringToBinary(input, size, data);

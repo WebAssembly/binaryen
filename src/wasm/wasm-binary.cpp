@@ -1354,7 +1354,7 @@ WasmBinaryBuilder::getByteView(size_t size) {
     throwError("unexpected end of input");
   }
   pos += size;
-  return {&input[pos - size], &input[pos]};
+  return {input.data() + (pos - size), input.data() + pos};
 }
 
 uint8_t WasmBinaryBuilder::getInt8() {

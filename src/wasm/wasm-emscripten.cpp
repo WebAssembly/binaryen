@@ -168,7 +168,7 @@ private:
           segmentOffsets.push_back(UNKNOWN_OFFSET);
         }
       } else if (auto* addrConst = segment.offset->dynCast<Const>()) {
-        auto address = addrConst->value.geti32();
+        auto address = addrConst->value.getUnsigned();
         segmentOffsets.push_back(address);
       } else {
         // TODO(sbc): Wasm shared libraries have data segments with non-const
@@ -285,7 +285,7 @@ void AsmConstWalker::visitCall(Call* curr) {
   }
 
   auto* value = arg->cast<Const>();
-  Address address = value->value.getInteger();
+  Address address = value->value.getUnsigned();
   asmConsts.push_back({address, stringTracker.stringAtAddr(address)});
 }
 
@@ -341,7 +341,7 @@ static void removeSegment(Module& wasm, Index segment) {
 static Address getExportedAddress(Module& wasm, Export* export_) {
   Global* g = wasm.getGlobal(export_->value);
   auto* addrConst = g->init->dynCast<Const>();
-  return addrConst->value.getInteger();
+  return addrConst->value.getUnsigned();
 }
 
 static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
@@ -413,11 +413,11 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
       return;
     }
 
-    int64_t address;
+    Address address;
     if (curr->kind == ExternalKind::Global) {
       auto* global = wasm.getGlobal(curr->value);
       Const* const_ = global->init->cast<Const>();
-      address = const_->value.getInteger();
+      address = const_->value.getUnsigned();
     } else if (curr->kind == ExternalKind::Function) {
       auto* func = wasm.getFunction(curr->value);
       // An EM_JS has a single const in the body. Typically it is just returned,
@@ -429,7 +429,7 @@ struct EmJsWalker : public PostWalker<EmJsWalker> {
                 << curr->name;
       }
       auto* addrConst = consts.list[0];
-      address = addrConst->value.getInteger();
+      address = addrConst->value.getUnsigned();
     } else {
       return;
     }

@@ -3054,7 +3054,7 @@ private:
           Flow ret;
           try {
             ret = this->visit(catchBody);
-          } catch (const WasmException& e) {
+          } catch (const WasmException&) {
             exceptionStack.pop_back();
             throw;
           }
