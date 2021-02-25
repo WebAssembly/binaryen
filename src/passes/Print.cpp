@@ -2869,8 +2869,9 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     handleFieldBody(curr.element);
     o << ')';
   }
-  void handleStruct(HeapType type) {
-    const auto& fields = type.getStruct().fields;
+  void handleStruct(const Struct& curr) {
+    auto type = HeapType(curr);
+    const auto& fields = curr.fields;
     o << "(struct ";
     auto sep = "";
     for (Index i = 0; i < fields.size(); i++) {
@@ -2892,7 +2893,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     } else if (type.isArray()) {
       handleArray(type.getArray());
     } else if (type.isStruct()) {
-      handleStruct(type);
+      handleStruct(type.getStruct());
     } else {
       o << type;
     }
