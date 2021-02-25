@@ -42,12 +42,12 @@
    )
   )
   (drop
-   (struct.get $struct.A 2
+   (struct.get $struct.A $named
     (local.get $x)
    )
   )
   (drop
-   (struct.get $struct.A 2
+   (struct.get $struct.A $named
     (local.get $x)
    )
   )
@@ -88,7 +88,7 @@
     (i32.const 1)
    )
   )
-  (struct.set $struct.C 0
+  (struct.set $struct.C $named-mut
    (ref.null $struct.C)
    (f32.const 100)
   )

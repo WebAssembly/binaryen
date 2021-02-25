@@ -1894,13 +1894,30 @@ struct PrintExpressionContents
     // instruction is never reached anyhow.
     printMedium(o, "block ");
   }
+  void printFieldName(HeapType type, Index index) {
+    if (wasm) {
+      auto it = wasm->typeNames.find(type);
+      if (it != wasm->typeNames.end()) {
+        auto& fieldNames = it->second.fieldNames;
+        auto it = fieldNames.find(index);
+        if (it != fieldNames.end()) {
+          auto name = it->second;
+          if (name.is()) {
+            o << '$' << it->second;
+            return;
+          }
+        }
+      }
+    }
+    o << index;
+  }
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable) {
       printUnreachableReplacement();
       return;
     }
-    const auto& field =
-      curr->ref->type.getHeapType().getStruct().fields[curr->index];
+    auto heapType = curr->ref->type.getHeapType();
+    const auto& field = heapType.getStruct().fields[curr->index];
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
       if (curr->signed_) {
         printMedium(o, "struct.get_s ");
@@ -1910,9 +1927,9 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "struct.get ");
     }
-    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
+    printHeapTypeName(o, heapType, wasm);
     o << ' ';
-    o << curr->index;
+    printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type == Type::unreachable) {
@@ -1920,9 +1937,10 @@ struct PrintExpressionContents
       return;
     }
     printMedium(o, "struct.set ");
-    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapTypeName(o, heapType, wasm);
     o << ' ';
-    o << curr->index;
+    printFieldName(heapType, curr->index);
   }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new_");
