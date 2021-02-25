@@ -97,22 +97,30 @@ struct HeapTypeInfo {
   bool operator!=(const HeapTypeInfo& other) const { return !(*this == other); }
 };
 
+// Helper for coinductively comparing Types and HeapTypes according to some
+// arbitrary notion of complexity.
 struct TypeComparator {
-  std::unordered_set<std::pair<HeapType, HeapType>> cache;
-  bool cmp(Type a, Type b);
-  bool cmp(HeapType a, HeapType b);
-  bool cmp(const TypeInfo& a, const TypeInfo& b);
-  bool cmp(const HeapTypeInfo& a, const HeapTypeInfo& b);
-  bool cmp(const Tuple& a, const Tuple& b);
-  bool cmp(const Field& a, const Field& b);
-  bool cmp(const Signature& a, const Signature& b);
-  bool cmp(const Struct& a, const Struct& b);
-  bool cmp(const Array& a, const Array& b);
-  bool cmp(const Rtt& a, const Rtt& b);
+  // Set of HeapTypes we are assuming satisfy the relation as long as we cannot
+  // prove otherwise.
+  std::unordered_set<std::pair<HeapType, HeapType>> seen;
+  bool lessThan(Type a, Type b);
+  bool lessThan(HeapType a, HeapType b);
+  bool lessThan(const TypeInfo& a, const TypeInfo& b);
+  bool lessThan(const HeapTypeInfo& a, const HeapTypeInfo& b);
+  bool lessThan(const Tuple& a, const Tuple& b);
+  bool lessThan(const Field& a, const Field& b);
+  bool lessThan(const Signature& a, const Signature& b);
+  bool lessThan(const Struct& a, const Struct& b);
+  bool lessThan(const Array& a, const Array& b);
+  bool lessThan(const Rtt& a, const Rtt& b);
 };
 
+// Helper for coinductively checking whether a pair of Types or HeapTypes are in
+// a subtype relation.
 struct SubTyper {
-  std::unordered_set<std::pair<HeapType, HeapType>> cache;
+  // Set of HeapTypes we are assuming satisfy the relation as long as we cannot
+  // prove otherwise.
+  std::unordered_set<std::pair<HeapType, HeapType>> seen;
   bool isSubType(Type a, Type b);
   bool isSubType(HeapType a, HeapType b);
   bool isSubType(const Tuple& a, const Tuple& b);
@@ -415,7 +423,7 @@ bool Type::isDefaultable() const {
 }
 
 bool Type::operator<(const Type& other) const {
-  return TypeComparator().cmp(*this, other);
+  return TypeComparator().lessThan(*this, other);
 }
 
 unsigned Type::getByteSize() const {
@@ -727,7 +735,7 @@ bool HeapType::isArray() const {
 }
 
 bool HeapType::operator<(const HeapType& other) const {
-  return TypeComparator().cmp(*this, other);
+  return TypeComparator().lessThan(*this, other);
 }
 
 Signature HeapType::getSignature() const {
@@ -750,7 +758,7 @@ bool HeapType::isSubType(HeapType left, HeapType right) {
 }
 
 bool Signature::operator<(const Signature& other) const {
-  return TypeComparator().cmp(*this, other);
+  return TypeComparator().lessThan(*this, other);
 }
 
 namespace {
@@ -957,7 +965,7 @@ std::ostream& operator<<(std::ostream& os, HeapTypeInfo info) {
 
 namespace {
 
-bool TypeComparator::cmp(Type a, Type b) {
+bool TypeComparator::lessThan(Type a, Type b) {
   if (a == b) {
     return false;
   }
@@ -970,14 +978,16 @@ bool TypeComparator::cmp(Type a, Type b) {
   if (b.isBasic()) {
     return false;
   }
-  return cmp(*getTypeInfo(a), *getTypeInfo(b));
+  return lessThan(*getTypeInfo(a), *getTypeInfo(b));
 }
 
-bool TypeComparator::cmp(HeapType a, HeapType b) {
+bool TypeComparator::lessThan(HeapType a, HeapType b) {
   if (a == b) {
     return false;
   }
-  if (cache.count({a, b})) {
+  if (seen.count({a, b})) {
+    // We weren't able to disprove that a < b since we last saw them, so the
+    // relation holds coinductively.
     return true;
   }
   if (a.isBasic() && b.isBasic()) {
@@ -989,87 +999,89 @@ bool TypeComparator::cmp(HeapType a, HeapType b) {
   if (b.isBasic()) {
     return false;
   }
-  cache.insert({a, b});
-  return cmp(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
+  // As we recurse, we will coinductively assume that a < b unless proven
+  // otherwise.
+  seen.insert({a, b});
+  return lessThan(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
 }
 
-bool TypeComparator::cmp(const TypeInfo& a, const TypeInfo& b) {
+bool TypeComparator::lessThan(const TypeInfo& a, const TypeInfo& b) {
   if (a.kind != b.kind) {
     return a.kind < b.kind;
   }
   switch (a.kind) {
     case TypeInfo::TupleKind:
-      return cmp(a.tuple, b.tuple);
+      return lessThan(a.tuple, b.tuple);
     case TypeInfo::RefKind:
       if (a.ref.nullable != b.ref.nullable) {
         return a.ref.nullable < b.ref.nullable;
       }
-      return cmp(a.ref.heapType, b.ref.heapType);
+      return lessThan(a.ref.heapType, b.ref.heapType);
     case TypeInfo::RttKind:
-      return cmp(a.rtt, b.rtt);
+      return lessThan(a.rtt, b.rtt);
   }
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool TypeComparator::cmp(const HeapTypeInfo& a, const HeapTypeInfo& b) {
+bool TypeComparator::lessThan(const HeapTypeInfo& a, const HeapTypeInfo& b) {
   if (a.kind != b.kind) {
     return a.kind < b.kind;
   }
   switch (a.kind) {
     case HeapTypeInfo::SignatureKind:
-      return cmp(a.signature, b.signature);
+      return lessThan(a.signature, b.signature);
     case HeapTypeInfo::StructKind:
-      return cmp(a.struct_, b.struct_);
+      return lessThan(a.struct_, b.struct_);
     case HeapTypeInfo::ArrayKind:
-      return cmp(a.array, b.array);
+      return lessThan(a.array, b.array);
   }
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool TypeComparator::cmp(const Tuple& a, const Tuple& b) {
+bool TypeComparator::lessThan(const Tuple& a, const Tuple& b) {
   return std::lexicographical_compare(
     a.types.begin(),
     a.types.end(),
     b.types.begin(),
     b.types.end(),
-    [&](Type ta, Type tb) { return cmp(ta, tb); });
+    [&](Type ta, Type tb) { return lessThan(ta, tb); });
 }
 
-bool TypeComparator::cmp(const Field& a, const Field& b) {
+bool TypeComparator::lessThan(const Field& a, const Field& b) {
   if (a.mutable_ != b.mutable_) {
     return a.mutable_ < b.mutable_;
   }
   if (a.type == Type::i32 && b.type == Type::i32) {
     return a.packedType < b.packedType;
   }
-  return cmp(a.type, b.type);
+  return lessThan(a.type, b.type);
 }
 
-bool TypeComparator::cmp(const Signature& a, const Signature& b) {
+bool TypeComparator::lessThan(const Signature& a, const Signature& b) {
   if (a.results != b.results) {
-    return cmp(a.results, b.results);
+    return lessThan(a.results, b.results);
   }
-  return cmp(a.params, b.params);
+  return lessThan(a.params, b.params);
 }
 
-bool TypeComparator::cmp(const Struct& a, const Struct& b) {
+bool TypeComparator::lessThan(const Struct& a, const Struct& b) {
   return std::lexicographical_compare(
     a.fields.begin(),
     a.fields.end(),
     b.fields.begin(),
     b.fields.end(),
-    [&](const Field& fa, const Field& fb) { return cmp(fa, fb); });
+    [&](const Field& fa, const Field& fb) { return lessThan(fa, fb); });
 }
 
-bool TypeComparator::cmp(const Array& a, const Array& b) {
-  return cmp(a.element, b.element);
+bool TypeComparator::lessThan(const Array& a, const Array& b) {
+  return lessThan(a.element, b.element);
 }
 
-bool TypeComparator::cmp(const Rtt& a, const Rtt& b) {
+bool TypeComparator::lessThan(const Rtt& a, const Rtt& b) {
   if (a.depth != b.depth) {
     return a.depth < b.depth;
   }
-  return cmp(a.heapType, b.heapType);
+  return lessThan(a.heapType, b.heapType);
 }
 
 bool SubTyper::isSubType(Type a, Type b) {
@@ -1077,7 +1089,7 @@ bool SubTyper::isSubType(Type a, Type b) {
     return true;
   }
   if (a.isRef() && b.isRef()) {
-    return (a.isNullable() == b.isNullable() || !b.isNullable()) &&
+    return (a.isNullable() == b.isNullable() || !a.isNullable()) &&
            isSubType(a.getHeapType(), b.getHeapType());
   }
   if (a.isTuple() && b.isTuple()) {
@@ -1096,7 +1108,9 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (a == b) {
     return true;
   }
-  if (cache.count({a, b})) {
+  if (seen.count({a, b})) {
+    // We weren't able to disprove that a is a subtype of b since we last saw
+    // them, so the relation holds coinductively.
     return true;
   }
   // Everything is a subtype of any.
@@ -1115,7 +1129,9 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (b == HeapType::func) {
     return a.isSignature();
   }
-  cache.insert({a, b});
+  // As we recurse, we will coinductively assume that a is a subtype of b unless
+  // proven otherwise.
+  seen.insert({a, b});
   if (a.isSignature() && b.isSignature()) {
     return isSubType(a.getSignature(), b.getSignature());
   }
