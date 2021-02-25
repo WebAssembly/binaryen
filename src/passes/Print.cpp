@@ -244,8 +244,8 @@ std::ostream& printResultTypeName(std::ostream& os,
   return os;
 }
 
-// Generic processing of a field, given an optional module. Calls func() with
-// the field name, if it is present, or with a null Name if not.
+// Generic processing of a struct's field, given an optional module. Calls func
+// with the field name, if it is present, or with a null Name if not.
 template<typename T>
 void processFieldName(Module* wasm, HeapType type, Index index, T func) {
   if (wasm) {
