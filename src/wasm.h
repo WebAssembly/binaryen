@@ -1790,7 +1790,6 @@ public:
   Address max = kMaxSize32;
   std::vector<Segment> segments;
 
-  // See comment in Table.
   bool shared = false;
   Type indexType = Type::i32;
 
