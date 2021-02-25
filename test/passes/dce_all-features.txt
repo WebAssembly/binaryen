@@ -581,8 +581,7 @@
  (func $throw
   (block $label$0
    (block $label$1
-    (throw $e
-    )
+    (throw $e)
    )
   )
  )

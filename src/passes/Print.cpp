@@ -18,6 +18,7 @@
 // Print out text in s-expression format
 //
 
+#include <ir/iteration.h>
 #include <ir/module-utils.h>
 #include <pass.h>
 #include <pretty_printing.h>
@@ -2006,7 +2007,7 @@ struct PrintExpressionContents
 
 // Prints an expression in s-expr format, including both the
 // internal contents and the nested children.
-struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
+struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   std::ostream& o;
   unsigned indent = 0;
 
@@ -2093,7 +2094,7 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
 
   void visit(Expression* curr) {
     printDebugLocation(curr);
-    OverriddenVisitor<PrintSExpression>::visit(curr);
+    UnifiedExpressionVisitor<PrintSExpression>::visit(curr);
   }
 
   void setMinify(bool minify_) {
@@ -2145,6 +2146,22 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
       }
     } else {
       printFullLine(curr);
+    }
+  }
+
+  // Generic visitor, overridden only when necessary.
+  void visitExpression(Expression* curr) {
+    o << '(';
+    printExpressionContents(curr);
+    auto it = ChildIterator(curr);
+    if (!it.children.empty()) {
+      incIndent();
+      for (auto* child : it) {
+        printFullLine(child);
+      }
+      decIndent();
+    } else {
+      o << ')';
     }
   }
 
@@ -2241,330 +2258,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     }
     controlFlowDepth--;
   }
-  void visitBreak(Break* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    if (curr->condition) {
-      incIndent();
-    } else {
-      if (!curr->value || curr->value->is<Nop>()) {
-        // avoid a new line just for the parens
-        o << ')';
-        return;
-      }
-      incIndent();
-    }
-    if (curr->value && !curr->value->is<Nop>()) {
-      printFullLine(curr->value);
-    }
-    if (curr->condition) {
-      printFullLine(curr->condition);
-    }
-    decIndent();
-  }
-  void visitSwitch(Switch* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    if (curr->value && !curr->value->is<Nop>()) {
-      printFullLine(curr->value);
-    }
-    printFullLine(curr->condition);
-    decIndent();
-  }
-
-  template<typename CallBase> void printCallOperands(CallBase* curr) {
-    if (curr->operands.size() > 0) {
-      incIndent();
-      for (auto operand : curr->operands) {
-        printFullLine(operand);
-      }
-      decIndent();
-    } else {
-      o << ')';
-    }
-  }
-
-  void visitCall(Call* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    printCallOperands(curr);
-  }
-  void visitCallIndirect(CallIndirect* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    for (auto operand : curr->operands) {
-      printFullLine(operand);
-    }
-    printFullLine(curr->target);
-    decIndent();
-  }
-  void visitLocalGet(LocalGet* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitLocalSet(LocalSet* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitGlobalGet(GlobalGet* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitGlobalSet(GlobalSet* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitLoad(Load* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ptr);
-    decIndent();
-  }
-  void visitStore(Store* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->expected);
-    printFullLine(curr->replacement);
-    decIndent();
-  }
-  void visitAtomicWait(AtomicWait* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    restoreNormalColor(o);
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->expected);
-    printFullLine(curr->timeout);
-    decIndent();
-  }
-  void visitAtomicNotify(AtomicNotify* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->notifyCount);
-    decIndent();
-  }
-  void visitAtomicFence(AtomicFence* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitSIMDExtract(SIMDExtract* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->vec);
-    decIndent();
-  }
-  void visitSIMDReplace(SIMDReplace* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->vec);
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitSIMDShuffle(SIMDShuffle* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->left);
-    printFullLine(curr->right);
-    decIndent();
-  }
-  void visitSIMDTernary(SIMDTernary* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->a);
-    printFullLine(curr->b);
-    printFullLine(curr->c);
-    decIndent();
-  }
-  void visitSIMDShift(SIMDShift* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->vec);
-    printFullLine(curr->shift);
-    decIndent();
-  }
-  void visitSIMDLoad(SIMDLoad* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ptr);
-    decIndent();
-  }
-  void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ptr);
-    printFullLine(curr->vec);
-    decIndent();
-  }
-  void visitSIMDWiden(SIMDWiden* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->vec);
-    decIndent();
-  }
-  void visitPrefetch(Prefetch* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ptr);
-    decIndent();
-  }
-  void visitMemoryInit(MemoryInit* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->dest);
-    printFullLine(curr->offset);
-    printFullLine(curr->size);
-    decIndent();
-  }
-  void visitDataDrop(DataDrop* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitMemoryCopy(MemoryCopy* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->dest);
-    printFullLine(curr->source);
-    printFullLine(curr->size);
-    decIndent();
-  }
-  void visitMemoryFill(MemoryFill* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->dest);
-    printFullLine(curr->value);
-    printFullLine(curr->size);
-    decIndent();
-  }
-  void visitConst(Const* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitUnary(Unary* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitBinary(Binary* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->left);
-    printFullLine(curr->right);
-    decIndent();
-  }
-  void visitSelect(Select* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ifTrue);
-    printFullLine(curr->ifFalse);
-    printFullLine(curr->condition);
-    decIndent();
-  }
-  void visitDrop(Drop* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitReturn(Return* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    if (!curr->value) {
-      // avoid a new line just for the parens
-      o << ')';
-      return;
-    }
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitMemorySize(MemorySize* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitMemoryGrow(MemoryGrow* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->delta);
-    decIndent();
-  }
-  void visitRefNull(RefNull* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitRefIs(RefIs* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitRefFunc(RefFunc* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitRefEq(RefEq* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->left);
-    printFullLine(curr->right);
-    decIndent();
-  }
   // try-catch-end is written in the folded wat format as
   // (try
   //  (do
@@ -2640,180 +2333,6 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     if (full) {
       o << " ;; end try";
     }
-  }
-  void visitThrow(Throw* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    for (auto operand : curr->operands) {
-      printFullLine(operand);
-    }
-    decIndent();
-  }
-  void visitRethrow(Rethrow* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitNop(Nop* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitUnreachable(Unreachable* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitPop(Pop* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitTupleMake(TupleMake* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    for (auto operand : curr->operands) {
-      printFullLine(operand);
-    }
-    decIndent();
-  }
-  void visitTupleExtract(TupleExtract* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->tuple);
-    decIndent();
-  }
-  void visitI31New(I31New* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitI31Get(I31Get* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->i31);
-    decIndent();
-  }
-  void visitCallRef(CallRef* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    for (auto operand : curr->operands) {
-      printFullLine(operand);
-    }
-    printFullLine(curr->target);
-    decIndent();
-  }
-  void visitRefTest(RefTest* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ref);
-    printFullLine(curr->rtt);
-    decIndent();
-  }
-  void visitRefCast(RefCast* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ref);
-    printFullLine(curr->rtt);
-    decIndent();
-  }
-  void visitBrOn(BrOn* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ref);
-    if (curr->rtt) {
-      printFullLine(curr->rtt);
-    }
-    decIndent();
-  }
-  void visitRttCanon(RttCanon* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    o << ')';
-  }
-  void visitRttSub(RttSub* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->parent);
-    decIndent();
-  }
-  void visitStructNew(StructNew* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->rtt);
-    for (auto& operand : curr->operands) {
-      printFullLine(operand);
-    }
-    decIndent();
-  }
-  void visitStructGet(StructGet* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ref);
-    decIndent();
-  }
-  void visitStructSet(StructSet* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ref);
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitArrayNew(ArrayNew* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->rtt);
-    printFullLine(curr->size);
-    if (curr->init) {
-      printFullLine(curr->init);
-    }
-    decIndent();
-  }
-  void visitArrayGet(ArrayGet* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ref);
-    printFullLine(curr->index);
-    decIndent();
-  }
-  void visitArraySet(ArraySet* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ref);
-    printFullLine(curr->index);
-    printFullLine(curr->value);
-    decIndent();
-  }
-  void visitArrayLen(ArrayLen* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->ref);
-    decIndent();
-  }
-  void visitRefAs(RefAs* curr) {
-    o << '(';
-    printExpressionContents(curr);
-    incIndent();
-    printFullLine(curr->value);
-    decIndent();
   }
   // Module-level visitors
   void handleSignature(Signature curr, Name name = Name()) {
