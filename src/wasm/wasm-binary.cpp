@@ -2939,8 +2939,8 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       auto numTypes = getU32LEB();
       for (size_t i = 0; i < numTypes; i++) {
         auto typeIndex = getU32LEB();
-        bool validType = typeIndex < types.size() &&
-                         types[typeIndex].isStruct();
+        bool validType =
+          typeIndex < types.size() && types[typeIndex].isStruct();
         if (!validType) {
           std::cerr << "warning: invalid field index in name field section\n";
         }
