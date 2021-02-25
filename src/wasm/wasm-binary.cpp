@@ -2719,6 +2719,27 @@ Name WasmBinaryBuilder::escape(Name name) {
   return escaped;
 }
 
+// Performs necessary processing of names from the name section before using
+// them. Specifically it escapes and deduplicates them.
+class NameProcessor {
+public:
+  Name process(Name name) {
+    return deduplicate(WasmBinaryBuilder::escape(name));
+  }
+
+private:
+  std::unordered_set<Name> usedNames;
+
+  Name deduplicate(Name base) {
+    Name name = base;
+    // De-duplicate names by appending .1, .2, etc.
+    for (int i = 1; !usedNames.insert(name).second; ++i) {
+      name = std::string(base.str) + std::string(".") + std::to_string(i);
+    }
+    return name;
+  }
+};
+
 void WasmBinaryBuilder::readNames(size_t payloadLen) {
   BYN_TRACE("== readNames\n");
   auto sectionPos = pos;
@@ -2731,16 +2752,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
     } else if (nameType ==
                BinaryConsts::UserSections::Subsection::NameFunction) {
       auto num = getU32LEB();
-      std::unordered_set<Name> usedNames;
+      NameProcessor processor;
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        auto name = escape(rawName);
-        // De-duplicate names by appending .1, .2, etc.
-        for (int i = 1; !usedNames.insert(name).second; ++i) {
-          name = std::string(escape(rawName).str) + std::string(".") +
-                 std::to_string(i);
-        }
+        auto name = processor.process(rawName);
         auto numFunctionImports = functionImports.size();
         if (index < numFunctionImports) {
           functionImports[index]->setExplicitName(name);
@@ -2770,19 +2786,14 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
             << std::to_string(funcIndex) << std::endl;
         }
         auto numLocals = getU32LEB();
-        std::unordered_set<Name> usedNames;
+        NameProcessor processor;
         for (size_t j = 0; j < numLocals; j++) {
           auto localIndex = getU32LEB();
           auto rawLocalName = getInlineString();
           if (!func) {
             continue; // read and discard in case of prior error
           }
-          auto localName = escape(rawLocalName);
-          // De-duplicate names by appending .1, .2, etc.
-          for (int i = 1; !usedNames.insert(localName).second; ++i) {
-            localName = std::string(escape(rawLocalName).str) +
-                        std::string(".") + std::to_string(i);
-          }
+          auto localName = processor.process(rawLocalName);
           if (localIndex < func->getNumLocals()) {
             func->localNames[localIndex] = localName;
           } else {
@@ -2796,17 +2807,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameTable) {
       auto num = getU32LEB();
+      NameProcessor processor;
       for (size_t i = 0; i < num; i++) {
-        std::unordered_set<Name> usedNames;
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        auto name = escape(rawName);
-        // De-duplicate names by appending .1, .2, etc.
-        for (int i = 1; !usedNames.insert(name).second; ++i) {
-          name = std::string(escape(rawName).str) + std::string(".") +
-                 std::to_string(i);
-        }
-
+        auto name = processor.process(rawName);
         auto numTableImports = tableImports.size();
         if (index < numTableImports) {
           tableImports[index]->setExplicitName(name);
@@ -2849,16 +2854,11 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
       }
     } else if (nameType == BinaryConsts::UserSections::Subsection::NameGlobal) {
       auto num = getU32LEB();
-      std::unordered_set<Name> usedNames;
+      NameProcessor processor;
       for (size_t i = 0; i < num; i++) {
         auto index = getU32LEB();
         auto rawName = getInlineString();
-        auto name = escape(rawName);
-        // De-duplicate names by appending .1, .2, etc.
-        for (int i = 1; !usedNames.insert(name).second; ++i) {
-          name = std::string(escape(rawName).str) + std::string(".") +
-                 std::to_string(i);
-        }
+        auto name = processor.process(rawName);
         auto numGlobalImports = globalImports.size();
         if (index < numGlobalImports) {
           globalImports[index]->setExplicitName(name);
