@@ -1395,6 +1395,9 @@ std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
 
   // Collect the remaining types that will be sorted.
   std::unordered_set<TypeID> toSort;
+  for (auto& entry : builder.impl->entries) {
+    toSort.insert(entry.get().getID());
+  }
   for (auto& kv : childrenDAG) {
     toSort.insert(kv.first);
     for (auto& child : kv.second) {
