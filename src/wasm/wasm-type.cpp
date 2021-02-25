@@ -1380,6 +1380,10 @@ std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
   // consistent, but this is good enough for getting prototype toolchains up and
   // running.
 
+  // TODO: None of this is particularly optimized. Benchmark to see if this is a
+  // significant bottleneck and investigate using better data structures and
+  // algorithms.
+
   // Remove self-referential HeapTypes to cut cycles.
   auto childrenDAG = children;
   for (TypeID id : selfReferentialHeapTypes) {
