@@ -244,6 +244,27 @@ std::ostream& printResultTypeName(std::ostream& os,
   return os;
 }
 
+// Generic processing of a struct's field, given an optional module. Calls func
+// with the field name, if it is present, or with a null Name if not.
+template<typename T>
+void processFieldName(Module* wasm, HeapType type, Index index, T func) {
+  if (wasm) {
+    auto it = wasm->typeNames.find(type);
+    if (it != wasm->typeNames.end()) {
+      auto& fieldNames = it->second.fieldNames;
+      auto it = fieldNames.find(index);
+      if (it != fieldNames.end()) {
+        auto name = it->second;
+        if (name.is()) {
+          func(it->second);
+          return;
+        }
+      }
+    }
+  }
+  func(Name());
+}
+
 } // anonymous namespace
 
 // Printing "unreachable" as a instruction prefix type is not valid in wasm text
@@ -1894,13 +1915,22 @@ struct PrintExpressionContents
     // instruction is never reached anyhow.
     printMedium(o, "block ");
   }
+  void printFieldName(HeapType type, Index index) {
+    processFieldName(wasm, type, index, [&](Name name) {
+      if (name.is()) {
+        o << '$' << name;
+      } else {
+        o << index;
+      }
+    });
+  }
   void visitStructGet(StructGet* curr) {
     if (curr->ref->type == Type::unreachable) {
       printUnreachableReplacement();
       return;
     }
-    const auto& field =
-      curr->ref->type.getHeapType().getStruct().fields[curr->index];
+    auto heapType = curr->ref->type.getHeapType();
+    const auto& field = heapType.getStruct().fields[curr->index];
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
       if (curr->signed_) {
         printMedium(o, "struct.get_s ");
@@ -1910,9 +1940,9 @@ struct PrintExpressionContents
     } else {
       printMedium(o, "struct.get ");
     }
-    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
+    printHeapTypeName(o, heapType, wasm);
     o << ' ';
-    o << curr->index;
+    printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
     if (curr->ref->type == Type::unreachable) {
@@ -1920,9 +1950,10 @@ struct PrintExpressionContents
       return;
     }
     printMedium(o, "struct.set ");
-    printHeapTypeName(o, curr->ref->type.getHeapType(), wasm);
+    auto heapType = curr->ref->type.getHeapType();
+    printHeapTypeName(o, heapType, wasm);
     o << ' ';
-    o << curr->index;
+    printFieldName(heapType, curr->index);
   }
   void visitArrayNew(ArrayNew* curr) {
     printMedium(o, "array.new_");
@@ -2839,11 +2870,18 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << ')';
   }
   void handleStruct(const Struct& curr) {
+    auto type = HeapType(curr);
+    const auto& fields = curr.fields;
     o << "(struct ";
     auto sep = "";
-    for (auto field : curr.fields) {
+    for (Index i = 0; i < fields.size(); i++) {
       o << sep << "(field ";
-      handleFieldBody(field);
+      processFieldName(currModule, type, i, [&](Name name) {
+        if (name.is()) {
+          o << '$' << name << ' ';
+        }
+      });
+      handleFieldBody(fields[i]);
       o << ')';
       sep = " ";
     }
