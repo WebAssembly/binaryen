@@ -42,12 +42,20 @@
    )
   )
   (drop
+<<<<<<< HEAD
    (struct.get $struct.A 2
+=======
+   (struct.get ${i32_f32_f64} $named
+>>>>>>> gcname
     (local.get $x)
    )
   )
   (drop
+<<<<<<< HEAD
    (struct.get $struct.A 2
+=======
+   (struct.get ${i32_f32_f64} $named
+>>>>>>> gcname
     (local.get $x)
    )
   )
@@ -88,8 +96,13 @@
     (i32.const 1)
    )
   )
+<<<<<<< HEAD
   (struct.set $struct.C 0
    (ref.null $struct.C)
+=======
+  (struct.set ${mut:f32} $named-mut
+   (ref.null ${mut:f32})
+>>>>>>> gcname
    (f32.const 100)
   )
   (drop

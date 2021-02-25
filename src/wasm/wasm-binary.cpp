@@ -795,6 +795,52 @@ void WasmBinaryWriter::writeNames() {
   // TODO: label, type, and element names
   // see: https://github.com/WebAssembly/extended-name-section
 
+  // GC field names
+  if (wasm->features.hasGC()) {
+
+    auto hasNamedField = [](const HeapType& type) {
+      for (auto& field : type.getStruct().fields) {
+        if (field.name.is()) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    Index numTypes = 0;
+    for (auto& type : types) {
+      if (type.isStruct() && hasNamedField(type)) {
+        numTypes++;
+      }
+    }
+
+    if (numTypes) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameField);
+      o << U32LEB(numTypes);
+      for (Index i = 0; i < types.size(); i++) {
+        auto& type = types[i];
+        if (type.isStruct() && hasNamedField(type)) {
+          o << U32LEB(i);
+          auto fields = type.getStruct().fields;
+          std::vector<std::pair<Index, Name>> pairs;
+          for (Index i = 0; i < fields.size(); i++) {
+            const auto& field = fields[i];
+            if (field.name.is()) {
+              pairs.emplace_back(i, field.name);
+            }
+          }
+          o << U32LEB(pairs.size());
+          for (auto& pair : pairs) {
+            o << U32LEB(pair.first);
+            writeEscapedName(pair.second.str);
+          }
+        }
+      }
+      finishSubsection(substart);
+    }
+  }
+
   finishSection(start);
 }
 
@@ -2906,6 +2952,30 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                        "global subsection: "
                     << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameField) {
+      auto numTypes = getU32LEB();
+      for (size_t i = 0; i < numTypes; i++) {
+        auto index = getU32LEB();
+        if (index >= types.size() || !types[index].isStruct()) {
+          std::cerr << "warning: invalid type index in name field section\n";
+        } else {
+          auto& fields = types[index].getStruct().fields;
+          auto numFields = getU32LEB();
+          for (size_t i = 0; i < numFields; i++) {
+            auto index = getU32LEB();
+            if (index >= fields.size()) {
+              std::cerr
+                << "warning: invalid field index in name field section\n";
+            } else {
+              // getStruct() intentionally returns a constant result. However,
+              // here we just adjust the name (which is not part of the hashing
+              // etc.) which is ok to do.
+              auto* field = const_cast<Field*>(&fields[index]);
+              field->name = getInlineString();
+            }
+          }
         }
       }
     } else {
