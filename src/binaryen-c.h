@@ -2084,7 +2084,7 @@ BINARYEN_API BinaryenTableRef BinaryenGetTableByIndex(BinaryenModuleRef module,
 
 // Memory. One per module
 
-// Each segment has data in segments, a start offset in segmentOffsets, and a
+// Each memory has data in segments, a start offset in segmentOffsets, and a
 // size in segmentSizes. exportName can be NULL
 BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex initial,
