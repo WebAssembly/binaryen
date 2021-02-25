@@ -1,5 +1,5 @@
 (module
- (type $none_=>_none (func))
+ (type $f (func))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
  (import "env" "import" (func $import))
@@ -116,7 +116,7 @@
     (local.get $x)
    )
    (block
-    (call_indirect (type $none_=>_none)
+    (call_indirect (type $f)
      (local.get $1)
     )
     (if

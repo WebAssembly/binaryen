@@ -1925,6 +1925,9 @@ void BinaryInstWriter::emitCatchAll(Try* curr) {
 }
 
 void BinaryInstWriter::emitDelegate(Try* curr) {
+  // The delegate ends the scope in effect, and pops the try's name. Note that
+  // the getBreakIndex is intentionally after that pop, as the delegate cannot
+  // target its own try.
   assert(!breakStack.empty());
   breakStack.pop_back();
   o << int8_t(BinaryConsts::Delegate)
@@ -2333,6 +2336,8 @@ void StackIRToBinaryWriter::write() {
       }
       case StackInst::Delegate: {
         writer.emitDelegate(inst->origin->cast<Try>());
+        // Delegates end the try, like a TryEnd.
+        catchIndexStack.pop_back();
         break;
       }
       default:

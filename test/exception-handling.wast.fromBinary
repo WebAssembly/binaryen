@@ -246,11 +246,13 @@
   )
   (try $label$25
    (do
-    (try $label$23
-     (do
-      (call $foo)
+    (block $label$20
+     (try $label$23
+      (do
+       (call $foo)
+      )
+      (delegate $label$25)
      )
-     (delegate $label$25)
     )
    )
    (delegate 0)

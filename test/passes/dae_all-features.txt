@@ -259,7 +259,7 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $T (func (result i32)))
  (type $none_=>_none (func))
  (table $0 1 1 funcref)
  (func $foo (result i32)
@@ -268,7 +268,7 @@
    (i32.const 42)
   )
   (drop
-   (return_call_indirect $0 (type $none_=>_i32)
+   (return_call_indirect $0 (type $T)
     (i32.const 0)
    )
   )
