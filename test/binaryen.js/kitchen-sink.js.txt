@@ -41,6 +41,7 @@ Features.ReferenceTypes: 256
 Features.Multivalue: 512
 Features.GC: 1024
 Features.Memory64: 2048
+Features.TypedFunctionReferences: 4096
 Features.All: 8191
 InvalidId: 0
 BlockId: 1
