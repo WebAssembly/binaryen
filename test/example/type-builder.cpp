@@ -112,6 +112,7 @@ void test_recursive() {
       builder.setHeapType(0, Signature(Type::none, temp));
       built = builder.build();
     }
+    std::cout << built[0] << "\n\n";
     assert(built[0] == built[0].getSignature().results.getHeapType());
     assert(Type(built[0], Nullable) == built[0].getSignature().results);
   }
@@ -127,6 +128,8 @@ void test_recursive() {
       builder.setHeapType(1, Signature(Type::none, temp0));
       built = builder.build();
     }
+    std::cout << built[0] << "\n";
+    std::cout << built[1] << "\n\n";
     assert(built[0].getSignature().results.getHeapType() == built[1]);
     assert(built[1].getSignature().results.getHeapType() == built[0]);
   }
@@ -148,6 +151,11 @@ void test_recursive() {
       builder.setHeapType(4, Signature(Type::none, temp0));
       built = builder.build();
     }
+    std::cout << built[0] << "\n";
+    std::cout << built[1] << "\n";
+    std::cout << built[2] << "\n";
+    std::cout << built[3] << "\n";
+    std::cout << built[4] << "\n\n";
     assert(built[0].getSignature().results.getHeapType() == built[1]);
     assert(built[1].getSignature().results.getHeapType() == built[2]);
     assert(built[2].getSignature().results.getHeapType() == built[3]);
@@ -175,6 +183,12 @@ void test_recursive() {
       builder.setHeapType(5, Signature(Type::none, temp1));
       built = builder.build();
     }
+    std::cout << built[0] << "\n";
+    std::cout << built[1] << "\n";
+    std::cout << built[2] << "\n";
+    std::cout << built[3] << "\n";
+    std::cout << built[4] << "\n";
+    std::cout << built[5] << "\n\n";
     assert(built[0] != built[1]); // TODO: canonicalize recursive types
     assert(built[2] == built[3]);
     assert(built[4] != built[5]); // Contain "different" recursive types

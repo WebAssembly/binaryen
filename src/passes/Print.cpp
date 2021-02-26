@@ -229,17 +229,7 @@ void TypeNamePrinter::print(const Rtt& rtt) {
 
 } // anonymous namespace
 
-// Unlike the default format, tuple types in s-expressions should not have
-// commas.
-struct SExprType {
-  Type type;
-  SExprType(Type type) : type(type){};
-};
-
-static std::ostream& printSExprType(std::ostream& o,
-                                    const SExprType& sType,
-                                    Module* wasm = nullptr) {
-  Type type = sType.type;
+static std::ostream& printType(std::ostream& o, Type type, Module* wasm) {
   if (type.isBasic()) {
     o << type;
   } else if (type.isTuple()) {
@@ -247,7 +237,7 @@ static std::ostream& printSExprType(std::ostream& o,
     auto sep = "";
     for (const auto& t : type) {
       o << sep;
-      printSExprType(o, t, wasm);
+      printType(o, t, wasm);
       sep = " ";
     }
     o << ')';
@@ -272,32 +262,35 @@ static std::ostream& printSExprType(std::ostream& o,
   return o;
 }
 
-// TODO: try to simplify or even remove this, as we may be able to do the same
-//       things with SExprType
-struct ResultTypeName {
-  Type type;
-  ResultTypeName(Type type) : type(type) {}
-};
-
-std::ostream& printResultTypeName(std::ostream& os,
-                                  ResultTypeName typeName,
-                                  Module* wasm = nullptr) {
-  auto type = typeName.type;
-  os << "(result ";
+static std::ostream& printPrefixedTypes(std::ostream& o,
+                                        const char* prefix,
+                                        Type type,
+                                        Module* wasm) {
+  o << '(' << prefix;
+  if (type == Type::none) {
+    return o << ')';
+  }
   if (type.isTuple()) {
     // Tuple types are not printed in parens, we can just emit them one after
     // the other in the same list as the "result".
-    auto sep = "";
     for (auto t : type) {
-      os << sep;
-      sep = " ";
-      printSExprType(os, t, wasm);
+      o << ' ';
+      printType(o, t, wasm);
     }
   } else {
-    printSExprType(os, type, wasm);
+    o << ' ';
+    printType(o, type, wasm);
   }
-  os << ')';
-  return os;
+  o << ')';
+  return o;
+}
+
+static std::ostream& printResultType(std::ostream& o, Type type, Module* wasm) {
+  return printPrefixedTypes(o, "result", type, wasm);
+}
+
+static std::ostream& printParamType(std::ostream& o, Type type, Module* wasm) {
+  return printPrefixedTypes(o, "param", type, wasm);
 }
 
 // Generic processing of a struct's field, given an optional module. Calls func
@@ -352,14 +345,14 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultTypeName(o, curr->type, wasm);
+      printResultType(o, curr->type, wasm);
     }
   }
   void visitIf(If* curr) {
     printMedium(o, "if");
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultTypeName(o, curr->type, wasm);
+      printResultType(o, curr->type, wasm);
     }
   }
   void visitLoop(Loop* curr) {
@@ -370,7 +363,7 @@ struct PrintExpressionContents
     }
     if (curr->type.isConcrete()) {
       o << ' ';
-      printResultTypeName(o, curr->type, wasm);
+      printResultType(o, curr->type, wasm);
     }
   }
   void visitBreak(Break* curr) {
@@ -1840,7 +1833,7 @@ struct PrintExpressionContents
     restoreNormalColor(o);
     if (curr->type.isRef()) {
       o << ' ';
-      printResultTypeName(o, curr->type, wasm);
+      printResultType(o, curr->type, wasm);
     }
   }
   void visitDrop(Drop* curr) { printMedium(o, "drop"); }
@@ -1881,7 +1874,8 @@ struct PrintExpressionContents
       printName(curr->name, o);
     }
     if (curr->type.isConcrete()) {
-      o << ' ' << ResultType(curr->type);
+      o << ' ';
+      printResultType(o, curr->type, wasm);
     }
   }
   void visitThrow(Throw* curr) {
@@ -2401,7 +2395,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       auto sep = "";
       for (auto type : curr.params) {
         o << sep;
-        printSExprType(o, type, currModule);
+        printType(o, type, currModule);
         sep = " ";
       }
       o << ')';
@@ -2412,7 +2406,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       auto sep = "";
       for (auto type : curr.results) {
         o << sep;
-        printSExprType(o, type, currModule);
+        printType(o, type, currModule);
         sep = " ";
       }
       o << ')';
@@ -2432,7 +2426,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         WASM_UNREACHABLE("invalid packed type");
       }
     } else {
-      printSExprType(o, field.type, currModule);
+      printType(o, field.type, currModule);
     }
     if (field.mutable_) {
       o << ')';
@@ -2513,9 +2507,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void emitGlobalType(Global* curr) {
     if (curr->mutable_) {
       o << "(mut ";
-      printSExprType(o, curr->type, currModule) << ')';
+      printType(o, curr->type, currModule) << ')';
     } else {
-      printSExprType(o, curr->type, currModule);
+      printType(o, curr->type, currModule);
     }
   }
   void visitImportedGlobal(Global* curr) {
@@ -2576,13 +2570,13 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         printMinor(o, "param ");
         printLocal(i, currFunction, o);
         o << ' ';
-        printSExprType(o, param, currModule) << ')';
+        printType(o, param, currModule) << ')';
         ++i;
       }
     }
     if (curr->sig.results != Type::none) {
       o << maybeSpace;
-      printResultTypeName(o, curr->sig.results, currModule);
+      printResultType(o, curr->sig.results, currModule);
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {
@@ -2590,7 +2584,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << '(';
       printMinor(o, "local ");
       printLocal(i, currFunction, o) << ' ';
-      printSExprType(o, curr->getLocalType(i), currModule) << ')';
+      printType(o, curr->getLocalType(i), currModule) << ')';
       o << maybeNewLine;
     }
     // Print the body.
@@ -2641,7 +2635,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << "(event ";
     printName(curr->name, o);
     o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
-    o << ParamType(curr->sig.params);
+    printParamType(o, curr->sig.params, currModule);
     o << "))";
     o << maybeNewLine;
   }
@@ -2651,7 +2645,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     printMedium(o, "event ");
     printName(curr->name, o);
     o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
-    o << ParamType(curr->sig.params);
+    printParamType(o, curr->sig.params, currModule);
     o << ")" << maybeNewLine;
   }
   void printTableHeader(Table* curr) {
