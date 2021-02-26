@@ -2333,7 +2333,7 @@ function wrapModule(module, self = {}) {
       'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module)),
       'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module)),
       'initial': Module['_BinaryenMemoryGetInitial'](module),
-      'shared': Boolean(Module['_BinaryenMemoryGetShared'](module))
+      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module))
     };
 
     if (hasMax) {

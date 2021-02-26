@@ -3514,13 +3514,13 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
 int BinaryenHasMemory(BinaryenModuleRef module) {
   return ((Module*)module)->memory.exists;
 }
-size_t BinaryenMemoryGetInitial(BinaryenModuleRef module) {
+BinaryenIndex BinaryenMemoryGetInitial(BinaryenModuleRef module) {
   return ((Module*)module)->memory.initial;
 }
 int BinaryenMemoryHasMax(BinaryenModuleRef module) {
   return ((Module*)module)->memory.hasMax();
 }
-size_t BinaryenMemoryGetMax(BinaryenModuleRef module) {
+BinaryenIndex BinaryenMemoryGetMax(BinaryenModuleRef module) {
   return ((Module*)module)->memory.max;
 }
 const char* BinaryenMemoryImportGetModule(BinaryenModuleRef module) {
@@ -3539,7 +3539,7 @@ const char* BinaryenMemoryImportGetBase(BinaryenModuleRef module) {
     return "";
   }
 }
-int BinaryenMemoryGetShared(BinaryenModuleRef module) {
+int BinaryenMemoryIsShared(BinaryenModuleRef module) {
   return ((Module*)module)->memory.shared;
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
