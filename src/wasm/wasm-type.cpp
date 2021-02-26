@@ -194,9 +194,8 @@ TypeInfo::~TypeInfo() {
 }
 
 bool TypeInfo::operator==(const TypeInfo& other) const {
-  if (kind != other.kind) {
+  if (kind != other.kind)
     return false;
-  }
   switch (kind) {
     case TupleKind:
       return tuple == other.tuple;
