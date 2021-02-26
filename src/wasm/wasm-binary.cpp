@@ -812,7 +812,7 @@ void WasmBinaryWriter::writeNames() {
         auto type = relevantTypes[i];
         o << U32LEB(typeIndices[type]);
         std::unordered_map<Index, Name>& fieldNames =
-            wasm->typeNames.at(type).fieldNames;
+          wasm->typeNames.at(type).fieldNames;
         o << U32LEB(fieldNames.size());
         for (auto& kv : fieldNames) {
           o << U32LEB(kv.first);
