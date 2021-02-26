@@ -797,21 +797,22 @@ void WasmBinaryWriter::writeNames() {
 
   // GC field names
   if (wasm->features.hasGC()) {
-    std::vector<HeapType> namedTypes;
+    std::vector<HeapType> relevantTypes;
     for (auto& type : types) {
       if (type.isStruct() && wasm->typeNames.count(type) &&
           !wasm->typeNames.at(type).fieldNames.empty()) {
-        namedTypes.push_back(type);
+        relevantTypes.push_back(type);
       }
     }
-    if (!namedTypes.empty()) {
+    if (!relevantTypes.empty()) {
       auto substart =
         startSubsection(BinaryConsts::UserSections::Subsection::NameField);
-      o << U32LEB(namedTypes.size());
-      for (Index i = 0; i < namedTypes.size(); i++) {
-        auto type = namedTypes[i];
-        o << U32LEB(i);
-        auto& fieldNames = wasm->typeNames.at(type).fieldNames;
+      o << U32LEB(relevantTypes.size());
+      for (Index i = 0; i < relevantTypes.size(); i++) {
+        auto type = relevantTypes[i];
+        o << U32LEB(typeIndices[type]);
+        std::unordered_map<Index, Name>& fieldNames =
+            wasm->typeNames.at(type).fieldNames;
         o << U32LEB(fieldNames.size());
         for (auto& kv : fieldNames) {
           o << U32LEB(kv.first);
