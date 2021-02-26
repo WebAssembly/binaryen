@@ -2333,6 +2333,16 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
   ret->target = parseExpression(s[s.size() - 1]);
   ret->isReturn = isReturn;
   if (!ret->target->type.isRef()) {
+    if (ret->target->type == Type::unreachable) {
+      // An unreachable target is not supported. Similiar to br_on_cast, just
+      // emit an unreachable sequence, since we don't have enough information to
+      // create a full call_ref.
+      Builder builder(wasm);
+      auto* block = builder.makeBlock(ret->operands);
+      block->list.push_back(ret->target);
+      block->finalize(Type::unreachable);
+      return block;
+    }
     throw ParseException("Non-reference type for a call_ref", s.line, s.col);
   }
   auto heapType = ret->target->type.getHeapType();
@@ -2380,17 +2390,7 @@ Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   auto name = getLabel(*s[1]);
   auto* ref = parseExpression(*s[2]);
   Expression* rtt = nullptr;
-  Builder builder(wasm);
-  if (op == BrOnCast) {
-    rtt = parseExpression(*s[3]);
-    if (rtt->type == Type::unreachable) {
-      // An unreachable rtt is not supported: the text format does not provide
-      // the type, so if it's unreachable we should not even create a br_on_cast
-      // in such a case, as we'd have no idea what it casts to.
-      return builder.makeSequence(builder.makeDrop(ref), rtt);
-    }
-  }
-  return builder.makeBrOn(op, name, ref, rtt);
+  return ValidatingBuilder(wasm, s.line, s.col).validateAndMakeBrOn(op, name, ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {
