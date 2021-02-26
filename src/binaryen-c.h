@@ -1688,12 +1688,16 @@ BinaryenMemoryFillGetSize(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenMemoryFillSetSize(BinaryenExpressionRef expr,
                                             BinaryenExpressionRef sizeExpr);
 
-// RefIsNull
+// RefIs
 
-// Gets the value expression tested to be null of a `ref.is_null` expression.
+// Gets the operation performed by a `ref.is_*` expression.
+BINARYEN_API BinaryenOp BinaryenRefIsGetOp(BinaryenExpressionRef expr);
+// Sets the operation performed by a `ref.is_*` expression.
+BINARYEN_API void BinaryenRefIsSetOp(BinaryenExpressionRef expr, BinaryenOp op);
+// Gets the value expression tested by a `ref.is_*` expression.
 BINARYEN_API BinaryenExpressionRef
 BinaryenRefIsGetValue(BinaryenExpressionRef expr);
-// Sets the value expression tested to be null of a `ref.is_null` expression.
+// Sets the value expression tested by a `ref.is_*` expression.
 BINARYEN_API void BinaryenRefIsSetValue(BinaryenExpressionRef expr,
                                         BinaryenExpressionRef valueExpr);
 

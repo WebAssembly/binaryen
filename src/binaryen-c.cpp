@@ -2727,6 +2727,16 @@ void BinaryenMemoryFillSetSize(BinaryenExpressionRef expr,
   static_cast<MemoryFill*>(expression)->size = (Expression*)sizeExpr;
 }
 // RefIs
+BinaryenOp BinaryenRefIsGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefIs>());
+  return static_cast<RefIs*>(expression)->op;
+}
+void BinaryenRefIsSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefIs>());
+  static_cast<RefIs*>(expression)->op = RefIsOp(op);
+}
 BinaryenExpressionRef BinaryenRefIsGetValue(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<RefIs>());
