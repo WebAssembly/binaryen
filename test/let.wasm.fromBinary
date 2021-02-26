@@ -13,9 +13,9 @@
   (block
    (local.set $2
     (array.new_with_rtt $[mut:f64]
-     (rtt.canon $[mut:f64])
-     (i32.const 1)
      (f64.const 3.14159)
+     (i32.const 1)
+     (rtt.canon $[mut:f64])
     )
    )
    (block
@@ -28,9 +28,9 @@
     (block
      (local.set $3
       (array.new_with_rtt $[mut:f64]
-       (rtt.canon $[mut:f64])
-       (i32.const 2)
        (f64.const 1234)
+       (i32.const 2)
+       (rtt.canon $[mut:f64])
       )
      )
      (block
@@ -50,9 +50,9 @@
   (block
    (local.set $4
     (array.new_with_rtt $[mut:f64]
-     (rtt.canon $[mut:f64])
-     (i32.const 3)
      (f64.const 2.1828)
+     (i32.const 3)
+     (rtt.canon $[mut:f64])
     )
    )
    (block

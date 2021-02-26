@@ -89,9 +89,9 @@
    (array.len $bytes
     (local.tee $0
      (array.new_with_rtt $bytes
-      (rtt.canon $bytes)
-      (i32.const 50)
       (i32.const 42)
+      (i32.const 50)
+      (rtt.canon $bytes)
      )
     )
    )
