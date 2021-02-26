@@ -2,17 +2,10 @@
 
 set -o errexit
 
-# When we are running on travis and *not* part of a pull request we don't
-# have any upstream branch to compare against.
-if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-  echo "Skipping since not running on travis PR"
-  exit 0
-fi
-
-if [ -n "$TRAVIS_BRANCH" ]; then
-  BRANCH=$TRAVIS_BRANCH
+if [ -n "$GITHUB_BASE_REF" ]; then
+  BRANCH="origin/$GITHUB_BASE_REF"
 else
-  BRANCH=origin/main
+  BRANCH="@{upstream}"
 fi
 
 CLANG_TIDY=$(which clang-tidy)
