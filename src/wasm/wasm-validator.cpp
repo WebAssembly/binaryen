@@ -2491,6 +2491,7 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
                 element.type,
                 curr,
                 "array.set must have the proper type");
+  shouldBeTrue(element.mutable_, curr, "array.set type must be mutable");
 }
 
 void FunctionValidator::visitArrayLen(ArrayLen* curr) {

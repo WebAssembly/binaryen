@@ -694,7 +694,11 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
       return builder.getTempRefType(typeIndices[name], Nullable);
     } else if (String::isNumber(name)) {
       // TODO: Support non-nullable types
-      return builder.getTempRefType(atoi(name), Nullable);
+      size_t index = atoi(name);
+      if (index >= numTypes) {
+        throw ParseException("invalid type index", elem.line, elem.col);
+      }
+      return builder.getTempRefType(index, Nullable);
     } else {
       // TODO: Support non-nullable types
       return Type(stringToHeapType(name), Nullable);
