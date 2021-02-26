@@ -238,8 +238,7 @@ private:
   Expression* makeLoop(Element& s);
   Expression* makeCall(Element& s, bool isReturn);
   Expression* makeCallIndirect(Element& s, bool isReturn);
-  template<class T>
-  void parseOperands(Element& s, Index i, Index j, T& list) {
+  template<class T> void parseOperands(Element& s, Index i, Index j, T& list) {
     while (i < j) {
       list.push_back(parseExpression(s[i]));
       i++;
