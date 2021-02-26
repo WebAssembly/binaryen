@@ -2328,10 +2328,10 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
-  ExpressionList operands;
+  std::vector<Expression*> operands;
   parseOperands(s, 1, s.size() - 1, operands);
   auto* target = parseExpression(s[s.size() - 1]);
-  ValidatingBuilder(wasm, s.line, s.col)
+  return ValidatingBuilder(wasm, s.line, s.col)
     .validateAndMakeCallRef(target, operands, isReturn);
 }
 
