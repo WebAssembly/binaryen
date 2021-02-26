@@ -1449,7 +1449,7 @@ void Canonicalizer::findSelfReferentialHeapTypes() {
   // graph to find self-referential types in O(|V|+|E|) time. All HeapTypes in a
   // strongly connected component with multiple elements must be
   // self-referential because they are mutually recursive with all other HeapTypes
-  // in its strongly connected component. HeapTypes in strongly connected
+  // in that strongly connected component. HeapTypes in strongly connected
   // components of size one may also be self-referential, but it is trivial to
   // find these because they must be their own direct children. See
   // https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm.
