@@ -64,7 +64,6 @@ struct TypeInfo {
 
   bool operator==(const TypeInfo& other) const;
   bool operator!=(const TypeInfo& other) const { return !(*this == other); }
-  bool operator<(const TypeInfo& other) const;
 };
 
 struct HeapTypeInfo {
@@ -96,7 +95,41 @@ struct HeapTypeInfo {
   HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
   bool operator!=(const HeapTypeInfo& other) const { return !(*this == other); }
-  bool operator<(const HeapTypeInfo& other) const;
+};
+
+// Helper for coinductively comparing Types and HeapTypes according to some
+// arbitrary notion of complexity.
+struct TypeComparator {
+  // Set of HeapTypes we are assuming satisfy the relation as long as we cannot
+  // prove otherwise.
+  std::unordered_set<std::pair<HeapType, HeapType>> seen;
+  bool lessThan(Type a, Type b);
+  bool lessThan(HeapType a, HeapType b);
+  bool lessThan(const TypeInfo& a, const TypeInfo& b);
+  bool lessThan(const HeapTypeInfo& a, const HeapTypeInfo& b);
+  bool lessThan(const Tuple& a, const Tuple& b);
+  bool lessThan(const Field& a, const Field& b);
+  bool lessThan(const Signature& a, const Signature& b);
+  bool lessThan(const Struct& a, const Struct& b);
+  bool lessThan(const Array& a, const Array& b);
+  bool lessThan(const Rtt& a, const Rtt& b);
+};
+
+// Helper for coinductively checking whether a pair of Types or HeapTypes are in
+// a subtype relation.
+struct SubTyper {
+  // Set of HeapTypes we are assuming satisfy the relation as long as we cannot
+  // prove otherwise.
+  std::unordered_set<std::pair<HeapType, HeapType>> seen;
+  bool isSubType(Type a, Type b);
+  bool isSubType(HeapType a, HeapType b);
+  bool isSubType(const Tuple& a, const Tuple& b);
+  bool isSubType(const Field& a, const Field& b);
+  bool isSubType(const HeapTypeInfo& a, const HeapTypeInfo& b);
+  bool isSubType(const Signature& a, const Signature& b);
+  bool isSubType(const Struct& a, const Struct& b);
+  bool isSubType(const Array& a, const Array& b);
+  bool isSubType(const Rtt& a, const Rtt& b);
 };
 
 } // anonymous namespace
@@ -176,24 +209,6 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool TypeInfo::operator<(const TypeInfo& other) const {
-  if (kind != other.kind) {
-    return kind < other.kind;
-  }
-  switch (kind) {
-    case TupleKind:
-      return tuple < other.tuple;
-    case RefKind:
-      if (ref.nullable != other.ref.nullable) {
-        return ref.nullable < other.ref.nullable;
-      }
-      return ref.heapType < other.ref.heapType;
-    case RttKind:
-      return rtt < other.rtt;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
   switch (kind) {
@@ -244,21 +259,6 @@ bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
       return struct_ == other.struct_;
     case ArrayKind:
       return array == other.array;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-bool HeapTypeInfo::operator<(const HeapTypeInfo& other) const {
-  if (kind != other.kind) {
-    return kind < other.kind;
-  }
-  switch (kind) {
-    case SignatureKind:
-      return signature < other.signature;
-    case StructKind:
-      return struct_ < other.struct_;
-    case ArrayKind:
-      return array < other.array;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -423,20 +423,8 @@ bool Type::isDefaultable() const {
 }
 
 bool Type::operator<(const Type& other) const {
-  if (*this == other) {
-    return false;
-  }
-  if (isBasic() && other.isBasic()) {
-    return getBasic() < other.getBasic();
-  }
-  if (isBasic()) {
-    return true;
-  }
-  if (other.isBasic()) {
-    return false;
-  }
-  return *getTypeInfo(*this) < *getTypeInfo(other);
-};
+  return TypeComparator().lessThan(*this, other);
+}
 
 unsigned Type::getByteSize() const {
   // TODO: alignment?
@@ -536,6 +524,11 @@ FeatureSet Type::getFeatures() const {
   return getSingleFeatures(*this);
 }
 
+const Tuple& Type::getTuple() const {
+  assert(isTuple());
+  return getTypeInfo(*this)->tuple;
+}
+
 HeapType Type::getHeapType() const {
   if (isBasic()) {
     switch (getBasic()) {
@@ -597,39 +590,7 @@ Type Type::get(unsigned byteSize, bool float_) {
 }
 
 bool Type::isSubType(Type left, Type right) {
-  if (left == right) {
-    return true;
-  }
-  if (left.isRef() && right.isRef()) {
-    // Consider HeapType subtyping as well, and also that a non-nullable type is
-    // potentially a supertype of a nullable one.
-    if (HeapType::isSubType(left.getHeapType(), right.getHeapType()) &&
-        (left.isNullable() == right.isNullable() || !left.isNullable())) {
-      return true;
-    }
-    return false;
-  }
-  if (left.isTuple() && right.isTuple()) {
-    if (left.size() != right.size()) {
-      return false;
-    }
-    for (size_t i = 0; i < left.size(); ++i) {
-      if (!isSubType(left[i], right[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  if (left.isRtt() && right.isRtt()) {
-    auto leftRtt = left.getRtt();
-    auto rightRtt = right.getRtt();
-    // (rtt n $x) is a subtype of (rtt $x), that is, if the only difference in
-    // information is that the left side specifies a depth while the right side
-    // allows any depth.
-    return leftRtt.heapType == rightRtt.heapType && leftRtt.hasDepth() &&
-           !rightRtt.hasDepth();
-  }
-  return false;
+  return SubTyper().isSubType(left, right);
 }
 
 Type Type::getLeastUpperBound(Type a, Type b) {
@@ -774,19 +735,7 @@ bool HeapType::isArray() const {
 }
 
 bool HeapType::operator<(const HeapType& other) const {
-  if (*this == other) {
-    return false;
-  }
-  if (isBasic() && other.isBasic()) {
-    return getBasic() < other.getBasic();
-  }
-  if (isBasic()) {
-    return true;
-  }
-  if (other.isBasic()) {
-    return false;
-  }
-  return *getHeapTypeInfo(*this) < *getHeapTypeInfo(other);
+  return TypeComparator().lessThan(*this, other);
 }
 
 Signature HeapType::getSignature() const {
@@ -804,85 +753,12 @@ Array HeapType::getArray() const {
   return getHeapTypeInfo(*this)->array;
 }
 
-static bool isFieldSubType(const Field& left, const Field& right) {
-  if (left == right) {
-    return true;
-  }
-  // Immutable fields can be subtypes.
-  if (left.mutable_ == Immutable && right.mutable_ == Immutable) {
-    return left.packedType == right.packedType &&
-           Type::isSubType(left.type, right.type);
-  }
-  return false;
-}
-
 bool HeapType::isSubType(HeapType left, HeapType right) {
-  // See:
-  // https://github.com/WebAssembly/function-references/blob/master/proposals/function-references/Overview.md#subtyping
-  // https://github.com/WebAssembly/gc/blob/master/proposals/gc/MVP.md#defined-types
-  if (left == right) {
-    return true;
-  }
-  // Everything is a subtype of any.
-  if (right == HeapType::any) {
-    return true;
-  }
-  // Various things are subtypes of eq.
-  if ((left == HeapType::i31 || left.isArray() || left.isStruct()) &&
-      right == HeapType::eq) {
-    return true;
-  }
-  // All typed function signatures are subtypes of funcref.
-  // Note: signatures may get covariance at some point, but do not yet.
-  if (left.isSignature() && right == HeapType::func) {
-    return true;
-  }
-  if (left.isArray() && right.isArray()) {
-    auto leftField = left.getArray().element;
-    auto rightField = left.getArray().element;
-    // Array types support depth subtyping.
-    return isFieldSubType(leftField, rightField);
-  }
-  if (left.isStruct() && right.isStruct()) {
-    // Structure types support width and depth subtyping.
-    auto leftFields = left.getStruct().fields;
-    auto rightFields = left.getStruct().fields;
-    // There may be more fields on the left, but not less.
-    if (leftFields.size() < rightFields.size()) {
-      return false;
-    }
-    for (size_t i = 0; i < rightFields.size(); i++) {
-      if (!isFieldSubType(leftFields[i], rightFields[i])) {
-        return false;
-      }
-    }
-    return true;
-  }
-  return false;
+  return SubTyper().isSubType(left, right);
 }
 
 bool Signature::operator<(const Signature& other) const {
-  if (results != other.results) {
-    return results < other.results;
-  }
-  return params < other.params;
-}
-
-bool Field::operator<(const Field& other) const {
-  if (mutable_ != other.mutable_) {
-    return mutable_ < other.mutable_;
-  }
-  if (type == Type::i32 && other.type == Type::i32) {
-    return packedType < other.packedType;
-  }
-  return type < other.type;
-}
-
-bool Rtt::operator<(const Rtt& other) const {
-  if (depth != other.depth) {
-    return depth < other.depth;
-  }
-  return heapType < other.heapType;
+  return TypeComparator().lessThan(*this, other);
 }
 
 namespace {
@@ -1086,6 +962,241 @@ std::ostream& operator<<(std::ostream& os, HeapTypeInfo info) {
   }
   WASM_UNREACHABLE("unexpected kind");
 }
+
+namespace {
+
+bool TypeComparator::lessThan(Type a, Type b) {
+  if (a == b) {
+    return false;
+  }
+  if (a.isBasic() && b.isBasic()) {
+    return a.getBasic() < b.getBasic();
+  }
+  if (a.isBasic()) {
+    return true;
+  }
+  if (b.isBasic()) {
+    return false;
+  }
+  return lessThan(*getTypeInfo(a), *getTypeInfo(b));
+}
+
+bool TypeComparator::lessThan(HeapType a, HeapType b) {
+  if (a == b) {
+    return false;
+  }
+  if (seen.count({a, b})) {
+    // We weren't able to disprove that a < b since we last saw them, so the
+    // relation holds coinductively.
+    return true;
+  }
+  if (a.isBasic() && b.isBasic()) {
+    return a.getBasic() < b.getBasic();
+  }
+  if (a.isBasic()) {
+    return true;
+  }
+  if (b.isBasic()) {
+    return false;
+  }
+  // As we recurse, we will coinductively assume that a < b unless proven
+  // otherwise.
+  seen.insert({a, b});
+  return lessThan(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
+}
+
+bool TypeComparator::lessThan(const TypeInfo& a, const TypeInfo& b) {
+  if (a.kind != b.kind) {
+    return a.kind < b.kind;
+  }
+  switch (a.kind) {
+    case TypeInfo::TupleKind:
+      return lessThan(a.tuple, b.tuple);
+    case TypeInfo::RefKind:
+      if (a.ref.nullable != b.ref.nullable) {
+        return a.ref.nullable < b.ref.nullable;
+      }
+      return lessThan(a.ref.heapType, b.ref.heapType);
+    case TypeInfo::RttKind:
+      return lessThan(a.rtt, b.rtt);
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+bool TypeComparator::lessThan(const HeapTypeInfo& a, const HeapTypeInfo& b) {
+  if (a.kind != b.kind) {
+    return a.kind < b.kind;
+  }
+  switch (a.kind) {
+    case HeapTypeInfo::SignatureKind:
+      return lessThan(a.signature, b.signature);
+    case HeapTypeInfo::StructKind:
+      return lessThan(a.struct_, b.struct_);
+    case HeapTypeInfo::ArrayKind:
+      return lessThan(a.array, b.array);
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+bool TypeComparator::lessThan(const Tuple& a, const Tuple& b) {
+  return std::lexicographical_compare(
+    a.types.begin(),
+    a.types.end(),
+    b.types.begin(),
+    b.types.end(),
+    [&](Type ta, Type tb) { return lessThan(ta, tb); });
+}
+
+bool TypeComparator::lessThan(const Field& a, const Field& b) {
+  if (a.mutable_ != b.mutable_) {
+    return a.mutable_ < b.mutable_;
+  }
+  if (a.type == Type::i32 && b.type == Type::i32) {
+    return a.packedType < b.packedType;
+  }
+  return lessThan(a.type, b.type);
+}
+
+bool TypeComparator::lessThan(const Signature& a, const Signature& b) {
+  if (a.results != b.results) {
+    return lessThan(a.results, b.results);
+  }
+  return lessThan(a.params, b.params);
+}
+
+bool TypeComparator::lessThan(const Struct& a, const Struct& b) {
+  return std::lexicographical_compare(
+    a.fields.begin(),
+    a.fields.end(),
+    b.fields.begin(),
+    b.fields.end(),
+    [&](const Field& fa, const Field& fb) { return lessThan(fa, fb); });
+}
+
+bool TypeComparator::lessThan(const Array& a, const Array& b) {
+  return lessThan(a.element, b.element);
+}
+
+bool TypeComparator::lessThan(const Rtt& a, const Rtt& b) {
+  if (a.depth != b.depth) {
+    return a.depth < b.depth;
+  }
+  return lessThan(a.heapType, b.heapType);
+}
+
+bool SubTyper::isSubType(Type a, Type b) {
+  if (a == b) {
+    return true;
+  }
+  if (a.isRef() && b.isRef()) {
+    return (a.isNullable() == b.isNullable() || !a.isNullable()) &&
+           isSubType(a.getHeapType(), b.getHeapType());
+  }
+  if (a.isTuple() && b.isTuple()) {
+    return isSubType(a.getTuple(), b.getTuple());
+  }
+  if (a.isRtt() && b.isRtt()) {
+    return isSubType(a.getRtt(), b.getRtt());
+  }
+  return false;
+}
+
+bool SubTyper::isSubType(HeapType a, HeapType b) {
+  // See:
+  // https://github.com/WebAssembly/function-references/blob/master/proposals/function-references/Overview.md#subtyping
+  // https://github.com/WebAssembly/gc/blob/master/proposals/gc/MVP.md#defined-types
+  if (a == b) {
+    return true;
+  }
+  if (seen.count({a, b})) {
+    // We weren't able to disprove that a is a subtype of b since we last saw
+    // them, so the relation holds coinductively.
+    return true;
+  }
+  // Everything is a subtype of any.
+  if (b == HeapType::any) {
+    return true;
+  }
+  // Various things are subtypes of eq.
+  if (b == HeapType::eq) {
+    return a == HeapType::i31 || a.isArray() || a.isStruct();
+  }
+  // Some are also subtypes of data.
+  if (b == HeapType::data) {
+    return a.isData();
+  }
+  // Signatures are subtypes of funcref.
+  if (b == HeapType::func) {
+    return a.isSignature();
+  }
+  // As we recurse, we will coinductively assume that a is a subtype of b unless
+  // proven otherwise.
+  seen.insert({a, b});
+  if (a.isSignature() && b.isSignature()) {
+    return isSubType(a.getSignature(), b.getSignature());
+  }
+  if (a.isArray() && b.isArray()) {
+    return isSubType(a.getArray(), b.getArray());
+  }
+  if (a.isStruct() && b.isStruct()) {
+    return isSubType(a.getStruct(), b.getStruct());
+  }
+  return false;
+}
+
+bool SubTyper::isSubType(const Tuple& a, const Tuple& b) {
+  if (a.types.size() != b.types.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < a.types.size(); ++i) {
+    if (!isSubType(a.types[i], b.types[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool SubTyper::isSubType(const Field& a, const Field& b) {
+  if (a == b) {
+    return true;
+  }
+  // Immutable fields can be subtypes.
+  return a.mutable_ == Immutable && b.mutable_ == Immutable &&
+         a.packedType == b.packedType && isSubType(a.type, b.type);
+}
+
+bool SubTyper::isSubType(const Signature& a, const Signature& b) {
+  // TODO: Implement proper signature subtyping, covariant in results and
+  // contravariant in params, once V8 implements it.
+  // return isSubType(b.params, a.params) && isSubType(a.results, b.results);
+  return a == b;
+}
+
+bool SubTyper::isSubType(const Struct& a, const Struct& b) {
+  // There may be more fields on the left, but not fewer.
+  if (a.fields.size() < b.fields.size()) {
+    return false;
+  }
+  for (size_t i = 0; i < b.fields.size(); ++i) {
+    if (!isSubType(a.fields[i], b.fields[i])) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool SubTyper::isSubType(const Array& a, const Array& b) {
+  return isSubType(a.element, b.element);
+}
+
+bool SubTyper::isSubType(const Rtt& a, const Rtt& b) {
+  // (rtt n $x) is a subtype of (rtt $x), that is, if the only difference in
+  // information is that the left side specifies a depth while the right side
+  // allows any depth.
+  return a.heapType == b.heapType && a.hasDepth() && !b.hasDepth();
+}
+
+} // anonymous namespace
 
 struct TypeBuilder::Impl {
   TypeStore typeStore;

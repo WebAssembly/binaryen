@@ -485,11 +485,8 @@ inline void collectHeapTypes(Module& wasm,
   for (auto& curr : wasm.functions) {
     counts.note(curr->sig);
     for (auto type : curr->vars) {
-      counts.maybeNote(type);
-      if (type.isTuple()) {
-        for (auto t : type) {
-          counts.maybeNote(t);
-        }
+      for (auto t : type) {
+        counts.maybeNote(t);
       }
     }
   }

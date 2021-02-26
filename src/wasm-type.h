@@ -171,7 +171,7 @@ public:
   bool operator!=(const Type& other) const { return id != other.id; }
   bool operator!=(const BasicType& other) const { return id != other; }
 
-  // Order types by some notion of simplicity
+  // Order types by some notion of simplicity.
   bool operator<(const Type& other) const;
 
   // Returns the type size in bytes. Only single types are supported.
@@ -183,6 +183,10 @@ public:
 
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
+
+  // Returns the tuple, assuming that this is a tuple type. Note that it is
+  // normally simpler to use operator[] and size() on the Type directly.
+  const Tuple& getTuple() const;
 
   // Gets the heap type corresponding to this type, assuming that it is a
   // reference or Rtt type.
@@ -349,6 +353,7 @@ public:
   bool operator!=(const HeapType& other) const { return id != other.id; }
   bool operator!=(const BasicHeapType& other) const { return id != other; }
 
+  // Order heap types by some notion of simplicity.
   bool operator<(const HeapType& other) const;
   std::string toString() const;
 
@@ -368,7 +373,6 @@ struct Tuple {
   Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
   bool operator==(const Tuple& other) const { return types == other.types; }
   bool operator!=(const Tuple& other) const { return !(*this == other); }
-  bool operator<(const Tuple& other) const { return types < other.types; }
   std::string toString() const;
 
   // Prevent accidental copies
@@ -424,7 +428,6 @@ struct Field {
            mutable_ == other.mutable_;
   }
   bool operator!=(const Field& other) const { return !(*this == other); }
-  bool operator<(const Field& other) const;
   std::string toString() const;
 };
 
@@ -439,7 +442,6 @@ struct Struct {
   Struct(FieldList&& fields) : fields(std::move(fields)) {}
   bool operator==(const Struct& other) const { return fields == other.fields; }
   bool operator!=(const Struct& other) const { return !(*this == other); }
-  bool operator<(const Struct& other) const { return fields < other.fields; }
   std::string toString() const;
 
   // Prevent accidental copies
@@ -452,7 +454,6 @@ struct Array {
   Array(Field element) : element(element) {}
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
-  bool operator<(const Array& other) const { return element < other.element; }
   std::string toString() const;
 };
 
@@ -467,8 +468,7 @@ struct Rtt {
     return depth == other.depth && heapType == other.heapType;
   }
   bool operator!=(const Rtt& other) const { return !(*this == other); }
-  bool operator<(const Rtt& other) const;
-  bool hasDepth() { return depth != uint32_t(NoDepth); }
+  bool hasDepth() const { return depth != uint32_t(NoDepth); }
   std::string toString() const;
 };
 

@@ -18,6 +18,15 @@
     (field (ref any))
   ))
 
+  ;; Recursive structs
+  (type $struct-rec-one (struct
+    (field (ref $struct-rec-one))
+  ))
+  (type $struct-rec-two (struct
+    (field (ref $struct-rec-two))
+    (field (ref $struct-rec-two))
+  ))
+
   (func $foo (param $no-null (ref $vector-i32))
              (param $yes-null (ref null $vector-i32))
     ;; ok to set a non-nullable reference to a nullable target
@@ -40,5 +49,11 @@
              (param $s-i31_any (ref $struct-i31_any))
     ;; also ok to have extra fields
     (local.set $s-i31 (local.get $s-i31_any))
+  )
+
+  (func $coinductive (param $rec-one (ref $struct-rec-one))
+                     (param $rec-two (ref $struct-rec-two))
+    ;; Do not infinitely recurse when determining this subtype relation!
+    (local.set $rec-one (local.get $rec-two))
   )
 )
