@@ -1301,7 +1301,7 @@ struct Canonicalizer {
   std::unordered_map<HeapType, std::vector<HeapType*>> heapTypeLocations;
 
   // These heap types will not participate in canonicalization.
-  std::unordered_set<TypeID> selfReferentialHeapTypes;
+  std::unordered_set<HeapType> selfReferentialHeapTypes;
 
   // Maps Types and HeapTypes backed by the TypeBuilder's Stores to globally
   // canonical Types and HeapTypes.
@@ -1381,7 +1381,7 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
   // self-referential HeapTypes to the global store so that they will outlive
   // the TypeBuilder without their IDs changing.
   for (auto& entry : builder.impl->entries) {
-    if (selfReferentialHeapTypes.count(entry.get().getID())) {
+    if (selfReferentialHeapTypes.count(entry.get())) {
       noncanonicalHeapTypes.emplace_back(std::move(entry.info));
     }
   }
@@ -1445,33 +1445,93 @@ void Canonicalizer::scanType(Type* type) {
 }
 
 void Canonicalizer::findSelfReferentialHeapTypes() {
-  // Calculate the fixed point of the reachability relation.
-  auto fixedPoint = children;
-  bool changed;
-  do {
-    changed = false;
-    for (auto& entry : fixedPoint) {
-      auto& succs = entry.second;
-      std::unordered_set<TypeID> newSuccs;
-      for (auto& other : succs) {
-        auto& otherSuccs = fixedPoint[other];
-        newSuccs.insert(otherSuccs.begin(), otherSuccs.end());
-      }
-      size_t oldSize = succs.size();
-      succs.insert(newSuccs.begin(), newSuccs.end());
-      if (succs.size() != oldSize) {
-        changed = true;
-      }
-    }
-  } while (changed);
+  // Use Tarjan's strongly connected components algorithm on the parent-child
+  // graph to find self-referential types in O(|V|+|E|) time. Each HeapType in a
+  // strongly connected component with multiple elements must be
+  // self-referential because it is mutually recursive with all other HeapTypes
+  // in that strongly connected component. HeapTypes in strongly connected
+  // components of size one may also be self-referential, but it is trivial to
+  // find these because they must be their own direct children. See
+  // https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm.
 
-  // Find HeapTypes that reach themselves
-  for (auto& entry : builder.impl->entries) {
-    TypeID id = entry.get().getID();
-    auto it = fixedPoint.find(id);
-    if (it != fixedPoint.end() && it->second.count(id)) {
-      selfReferentialHeapTypes.insert(id);
+  // Get the HeapType children of a HeapType, skipping all intermediate Types.
+  auto getChildren = [&](HeapType type) {
+    std::unordered_set<HeapType> results;
+    std::function<void(TypeID, bool)> visit = [&](TypeID id, bool isRoot) {
+      if (isRoot || typeLocations.count(Type(id))) {
+        auto it = children.find(id);
+        if (it != children.end()) {
+          for (TypeID child : it->second) {
+            visit(child, false);
+          }
+        }
+      } else {
+        results.insert(HeapType(id));
+      }
+    };
+    visit(type.getID(), true);
+    return results;
+  };
+
+  // The Tarjan's algorithm stack. Similar to a DFS stack, but elements are only
+  // popped off once they are committed to a strongly connected component.
+  // HeapTypes stay on the stack after they are visited iff they have a back
+  // edge to a HeapType earlier in the stack.
+  std::vector<HeapType> stack;
+  std::unordered_set<HeapType> stackElems;
+  // Indices assigned to each HeapType in the order they are visited.
+  std::unordered_map<HeapType, size_t> indices;
+  // The smallest index of the HeapTypes reachable from each HeapType through
+  // its subtree.
+  std::unordered_map<HeapType, size_t> minReachable;
+
+  std::function<void(HeapType)> visit = [&](HeapType curr) {
+    size_t index = indices.size();
+    indices[curr] = index;
+    minReachable[curr] = index;
+    stack.push_back(curr);
+    stackElems.insert(curr);
+
+    for (HeapType child : getChildren(curr)) {
+      if (!indices.count(child)) {
+        // Child has not been visited yet; visit it.
+        visit(child);
+        minReachable[curr] = std::min(minReachable[curr], minReachable[child]);
+      } else if (stackElems.count(child)) {
+        // Child was already visited but not committed to a strongly connected
+        // component.
+        minReachable[curr] = std::min(minReachable[curr], indices[child]);
+      }
+      // We cannot differentiate self-referential types with strongly connected
+      // component size one from non-self-referential types just by looking at
+      // the strongly connected components. If a type is directly
+      // self-referential, mark it here so we don't miss it later.
+      if (child == curr) {
+        selfReferentialHeapTypes.insert(child);
+      }
     }
+
+    if (minReachable[curr] == indices[curr]) {
+      // Curr doesn't have any back edges to an earlier element, so it is the
+      // root of the strongly connected component including itself and anything
+      // after it still on the stack. If this strongly connected component has
+      // more than one element, they are all self referential HeapTypes.
+      // Self-referential types with SCC size one were already accounted for.
+      if (stack.back() != curr) {
+        selfReferentialHeapTypes.insert(curr);
+        while (stack.back() != curr) {
+          selfReferentialHeapTypes.insert(stack.back());
+          stackElems.erase(stack.back());
+          stack.pop_back();
+        }
+      }
+      stack.pop_back();
+      stackElems.erase(curr);
+    }
+  };
+
+  for (auto& entry : builder.impl->entries) {
+    visit(entry.get());
   }
 }
 
@@ -1497,19 +1557,19 @@ std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
 
   // Remove self-referential HeapTypes to cut cycles.
   auto childrenDAG = children;
-  for (TypeID id : selfReferentialHeapTypes) {
-    childrenDAG.erase(id);
+  for (HeapType type : selfReferentialHeapTypes) {
+    childrenDAG.erase(type.getID());
     for (auto& kv : childrenDAG) {
-      kv.second.erase(id);
+      kv.second.erase(type.getID());
     }
   }
 
   // Collect the remaining types that will be sorted.
   std::unordered_set<TypeID> toSort;
   for (auto& entry : builder.impl->entries) {
-    TypeID id = entry.get().getID();
-    if (!selfReferentialHeapTypes.count(id)) {
-      toSort.insert(id);
+    HeapType curr = entry.get();
+    if (!selfReferentialHeapTypes.count(curr)) {
+      toSort.insert(curr.getID());
     }
   }
   for (auto& kv : childrenDAG) {
