@@ -1446,9 +1446,9 @@ void Canonicalizer::scanType(Type* type) {
 
 void Canonicalizer::findSelfReferentialHeapTypes() {
   // Use Tarjan's strongly connected components algorithm on the parent-child
-  // graph to find self-referential types in O(|V|+|E|) time. All HeapTypes in a
+  // graph to find self-referential types in O(|V|+|E|) time. Each HeapType in a
   // strongly connected component with multiple elements must be
-  // self-referential because they are mutually recursive with all other HeapTypes
+  // self-referential because it is mutually recursive with all other HeapTypes
   // in that strongly connected component. HeapTypes in strongly connected
   // components of size one may also be self-referential, but it is trivial to
   // find these because they must be their own direct children. See
@@ -1481,7 +1481,8 @@ void Canonicalizer::findSelfReferentialHeapTypes() {
   std::unordered_set<HeapType> stackElems;
   // Indices assigned to each HeapType in the order they are visited.
   std::unordered_map<HeapType, size_t> indices;
-  // The smallest index of the HeapTypes reachable from each HeapType.
+  // The smallest index of the HeapTypes reachable from each HeapType through
+  // its subtree.
   std::unordered_map<HeapType, size_t> minReachable;
 
   std::function<void(HeapType)> visit = [&](HeapType curr) {
