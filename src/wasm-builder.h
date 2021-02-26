@@ -18,6 +18,7 @@
 #define wasm_wasm_builder_h
 
 #include "ir/manipulation.h"
+#include "parsing.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -1127,23 +1128,24 @@ class ValidatingBuilder : public Builder {
 
 public:
   ValidatingBuilder(Module& wasm, size_t line) : Builder(wasm), line(line) {}
-  ValidatingBuilder(Module& wasm, size_t line, size_t col) : Builder(wasm), line(line), col(col) {}
+  ValidatingBuilder(Module& wasm, size_t line, size_t col)
+    : Builder(wasm), line(line), col(col) {}
 
   Expression* validateAndMakeBrOn(BrOnOp op,
-                            Name name,
-                            Expression* ref,
-                            Expression* rtt = nullptr) {
+                                  Name name,
+                                  Expression* ref,
+                                  Expression* rtt = nullptr) {
     if (op == BrOnCast) {
       if (rtt->type == Type::unreachable) {
         // An unreachable rtt is not supported: the text format does not provide
-        // the type, so if it's unreachable we should not even create a br_on_cast
-        // in such a case, as we'd have no idea what it casts to.
+        // the type, so if it's unreachable we should not even create a
+        // br_on_cast in such a case, as we'd have no idea what it casts to.
         return makeSequence(makeDrop(ref), rtt);
       }
     }
     if (op == BrOnNull) {
       if (!ref->type.isRef() && ref->type != Type::unreachable) {
-        throw ParseError("Invalid ref for br_on_null", line, col);
+        throw ParseException("Invalid ref for br_on_null", line, col);
       }
     }
     return makeBrOn(op, name, ref, rtt);
