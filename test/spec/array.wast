@@ -1,3 +1,5 @@
+;; XXX BINARYEN: rename array.new_default => array.new_default_with_rtt
+
 ;; Type syntax
 
 (module
