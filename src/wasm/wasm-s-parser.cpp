@@ -2331,7 +2331,8 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
   ExpressionList operands;
   parseOperands(s, 1, s.size() - 1, operands);
   auto* target = parseExpression(s[s.size() - 1]);
-  ValidatingBuilder(wasm, s.line, s.col).validateAndMakeCallRef(target, operands, isReturn);
+  ValidatingBuilder(wasm, s.line, s.col)
+    .validateAndMakeCallRef(target, operands, isReturn);
 }
 
 Expression* SExpressionWasmBuilder::makeI31New(Element& s) {

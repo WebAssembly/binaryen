@@ -1138,8 +1138,8 @@ public:
     if (!target->type.isRef()) {
       if (target->type == Type::unreachable) {
         // An unreachable target is not supported. Similiar to br_on_cast, just
-        // emit an unreachable sequence, since we don't have enough information to
-        // create a full call_ref.
+        // emit an unreachable sequence, since we don't have enough information
+        // to create a full call_ref.
         auto* block = makeBlock(args);
         block->list.push_back(target);
         block->finalize(Type::unreachable);
@@ -1149,8 +1149,7 @@ public:
     }
     auto heapType = target->type.getHeapType();
     if (!heapType.isSignature()) {
-      throw ParseException(
-        "Invalid reference type for a call_ref", line, col);
+      throw ParseException("Invalid reference type for a call_ref", line, col);
     }
     return makeCallRef(target, args, heapType.getSignature().results, isReturn);
   }
