@@ -19,6 +19,8 @@ jobs:
       with:
         python-version: '3.x'
     - uses: actions/checkout@v2
+      with:
+        ref: ${{ github.event.pull_request.head.sha }}
     - name: install tools
       run: |
         sudo pip3 install -r requirements-dev.txt
