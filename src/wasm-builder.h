@@ -1131,6 +1131,30 @@ public:
   ValidatingBuilder(Module& wasm, size_t line, size_t col)
     : Builder(wasm), line(line), col(col) {}
 
+  template<typename T>
+  Expression* validateAndMakeCallRef(Expression* target,
+                                     const T& args,
+                                     bool isReturn = false) {
+    if (!target->type.isRef()) {
+      if (target->type == Type::unreachable) {
+        // An unreachable target is not supported. Similiar to br_on_cast, just
+        // emit an unreachable sequence, since we don't have enough information to
+        // create a full call_ref.
+        auto* block = makeBlock(args);
+        block->list.push_back(target);
+        block->finalize(Type::unreachable);
+        return block;
+      }
+      throw ParseException("Non-reference type for a call_ref", line, col);
+    }
+    auto heapType = target->type.getHeapType();
+    if (!heapType.isSignature()) {
+      throw ParseException(
+        "Invalid reference type for a call_ref", line, col);
+    }
+    return makeCallRef(target, args, heapType.getSignature().results, isReturn);
+  }
+
   Expression* validateAndMakeBrOn(BrOnOp op,
                                   Name name,
                                   Expression* ref,

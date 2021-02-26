@@ -2328,31 +2328,10 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
-  auto ret = allocator.alloc<CallRef>();
-  parseCallOperands(s, 1, s.size() - 1, ret);
-  ret->target = parseExpression(s[s.size() - 1]);
-  ret->isReturn = isReturn;
-  if (!ret->target->type.isRef()) {
-    if (ret->target->type == Type::unreachable) {
-      // An unreachable target is not supported. Similiar to br_on_cast, just
-      // emit an unreachable sequence, since we don't have enough information to
-      // create a full call_ref.
-      Builder builder(wasm);
-      auto* block = builder.makeBlock(ret->operands);
-      block->list.push_back(ret->target);
-      block->finalize(Type::unreachable);
-      return block;
-    }
-    throw ParseException("Non-reference type for a call_ref", s.line, s.col);
-  }
-  auto heapType = ret->target->type.getHeapType();
-  if (!heapType.isSignature()) {
-    throw ParseException(
-      "Invalid reference type for a call_ref", s.line, s.col);
-  }
-  auto sig = heapType.getSignature();
-  ret->finalize(sig.results);
-  return ret;
+  ExpressionList operands;
+  parseOperands(s, 1, s.size() - 1, operands);
+  auto* target = parseExpression(s[s.size() - 1]);
+  ValidatingBuilder(wasm, s.line, s.col).validateAndMakeCallRef(target, operands, isReturn);
 }
 
 Expression* SExpressionWasmBuilder::makeI31New(Element& s) {
