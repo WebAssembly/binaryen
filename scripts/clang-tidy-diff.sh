@@ -4,7 +4,7 @@ set -o errexit
 
 # When we are running on travis and *not* part of a pull request we don't
 # have any upstream branch to compare against.
-if [ -n "$GITHUB_BASE_REF" ]; then
+if [ -z "$GITHUB_BASE_REF" ]; then
   echo "Skipping since not running on GitHub Actions"
   exit 0
 fi
