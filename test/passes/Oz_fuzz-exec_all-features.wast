@@ -46,9 +46,9 @@
   (local $x (ref null $bytes))
   (local.set $x
    (array.new_with_rtt $bytes
-    (rtt.canon $bytes)
-    (i32.const 50) ;; size
     (i32.const 42) ;; value to splat into the array
+    (i32.const 50) ;; size
+    (rtt.canon $bytes)
    )
   )
   ;; The length should be 50
@@ -87,9 +87,9 @@
   (call $log
    (ref.test $struct
     (array.new_with_rtt $bytes
-     (rtt.canon $bytes)
-     (i32.const 10)
      (i32.const 20)
+     (i32.const 10)
+     (rtt.canon $bytes)
     )
     (rtt.canon $struct)
    )

@@ -2752,10 +2752,10 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printExpressionContents(curr);
     incIndent();
-    printFullLine(curr->rtt);
     for (auto& operand : curr->operands) {
       printFullLine(operand);
     }
+    printFullLine(curr->rtt);
     decIndent();
   }
   void visitStructGet(StructGet* curr) {
@@ -2777,11 +2777,11 @@ struct PrintSExpression : public OverriddenVisitor<PrintSExpression> {
     o << '(';
     printExpressionContents(curr);
     incIndent();
-    printFullLine(curr->rtt);
-    printFullLine(curr->size);
     if (curr->init) {
       printFullLine(curr->init);
     }
+    printFullLine(curr->size);
+    printFullLine(curr->rtt);
     decIndent();
   }
   void visitArrayGet(ArrayGet* curr) {
