@@ -2,16 +2,16 @@
 
 set -o errexit
 
+if [ -n "$GITHUB_BASE_REF" ]; then
+  BRANCH="origin/$GITHUB_BASE_REF"
+else
+  BRANCH="@{upstream}"
+fi
+
 CLANG_TIDY=$(which clang-tidy)
 if [ ! -e "$CLANG_TIDY" ]; then
   echo "Failed to find clang-tidy ($CLANG_TIDY)"
   exit 1
-fi
-
-if [ -n "$GITHUB_BASE_REF" ]; then
-  BRANCH="origin/$GITHUB_BASE_REF"
-else
-  BRANCH=origin/main
 fi
 
 CLANG_DIR=$(dirname $(dirname $(readlink -f $CLANG_TIDY)))
