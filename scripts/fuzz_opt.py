@@ -1133,12 +1133,16 @@ on valid wasm files.)
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
+echo "At least one of the next two values should be 0:"
 %(wasm_opt)s --detect-features %(temp_wasm)s
-echo "should be 0:" $?
+echo "  " $?
+%(wasm_opt)s --all-features %(temp_wasm)s
+echo ":" $?
 
 # run the command
+echo "The following value should be 1:"
 ./scripts/fuzz_opt.py --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
-echo "should be 1:" $?
+echo "  " $?
 
 #
 # You may want to print out part of "o" or "e", if the output matters and not
@@ -1195,10 +1199,17 @@ vvvv
 ^^^^
 ||||
 
-Make sure to verify by eye that the output says
+Make sure to verify by eye that the output says something like this:
 
-should be 0: 0
-should be 1: 1
+At least one of the next two values should be 0:
+  0
+  1
+The following value should be 1:
+  1
+
+(If it does not, then one possible issue is that -ttf fails to write a valid
+binary. If so, you can print the output of ttf in text form and run the
+reduction from that, passing --text to the reducer.)
 
 You can also read "%(reduce_sh)s" which has been filled out for you and includes
 docs and suggestions.
