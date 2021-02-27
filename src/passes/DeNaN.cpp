@@ -33,7 +33,6 @@ namespace wasm {
 struct DeNaN : public WalkerPass<
                  ControlFlowWalker<DeNaN, UnifiedExpressionVisitor<DeNaN>>> {
 
-
   Name deNan32, deNan64;
 
   void visitExpression(Expression* expr) {
@@ -115,7 +114,8 @@ struct DeNaN : public WalkerPass<
     deNan32 = Names::getValidFunctionName(*module, "deNan32");
     deNan64 = Names::getValidFunctionName(*module, "deNan64");
 
-    ControlFlowWalker<DeNaN, UnifiedExpressionVisitor<DeNaN>>::doWalkModule(module);
+    ControlFlowWalker<DeNaN, UnifiedExpressionVisitor<DeNaN>>::doWalkModule(
+      module);
 
     // Add helper functions after the walk, so they are not instrumented.
     Builder builder(*module);
