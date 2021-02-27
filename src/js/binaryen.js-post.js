@@ -2328,18 +2328,17 @@ function wrapModule(module, self = {}) {
     return Boolean(Module['_BinaryenHasMemory'](module));
   };
   self['getMemoryInfo'] = function() {
-    var hasMax = Boolean(Module['_BinaryenMemoryHasMax'](module));
     var memoryInfo = {
       'module': UTF8ToString(Module['_BinaryenMemoryImportGetModule'](module)),
       'base': UTF8ToString(Module['_BinaryenMemoryImportGetBase'](module)),
-      'initial': Module['_BinaryenMemoryGetInitial'](module),
-      'shared': Boolean(Module['_BinaryenMemoryIsShared'](module))
     };
-
-    if (hasMax) {
-      memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
+    if (memoryInfo['module'] === '' && memoryInfo['base'] === '') {
+      memoryInfo['initial'] = Module['_BinaryenMemoryGetInitial'](module);
+      if (Module['_BinaryenMemoryHasMax'](module)) {
+        memoryInfo['max'] = Module['_BinaryenMemoryGetMax'](module);
+      }
     }
-
+    memoryInfo['shared'] = Boolean(Module['_BinaryenMemoryIsShared'](module));
     return memoryInfo;
   };
   self['getNumMemorySegments'] = function() {
