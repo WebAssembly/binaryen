@@ -306,18 +306,21 @@ template<typename Info> struct Store {
   // Maps from constructed types to their canonical Type IDs.
   std::unordered_map<Info, uintptr_t> typeIDs;
 
+  TypeID recordCanonical(std::unique_ptr<Info>&& info) {
+    TypeID id = uintptr_t(info.get());
+    assert(id > Info::type_t::_last_basic_type);
+    typeIDs[*info] = id;
+    constructedTypes.emplace_back(std::move(info));
+    return id;
+  }
+
   typename Info::type_t canonicalize(const Info& info) {
     std::lock_guard<std::mutex> lock(mutex);
     auto indexIt = typeIDs.find(info);
     if (indexIt != typeIDs.end()) {
       return typename Info::type_t(indexIt->second);
     }
-    auto ptr = std::make_unique<Info>(info);
-    auto id = uintptr_t(ptr.get());
-    constructedTypes.push_back(std::move(ptr));
-    assert(id > Info::type_t::_last_basic_type);
-    typeIDs[info] = id;
-    return typename Info::type_t(id);
+    return typename Info::type_t(recordCanonical(std::make_unique<Info>(info)));
   }
 };
 
@@ -1360,10 +1363,6 @@ struct Canonicalizer {
   void canonicalize(T* type, std::unordered_map<T, T>& canonicals);
 };
 
-// Used to extend the lifetime of self-referential HeapTypes so they don't need
-// to be canonicalized.
-std::vector<std::unique_ptr<HeapTypeInfo>> noncanonicalHeapTypes;
-
 // Traverse the type graph rooted at the initialized HeapTypeInfos in reverse
 // postorder, replacing in place all Types and HeapTypes backed by the
 // TypeBuilder's Stores with equivalent globally canonicalized Types and
@@ -1413,11 +1412,12 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
   }
 
   // Now that all other Types and HeapTypes have been canonicalized, move
-  // self-referential HeapTypes to the global store so that they will outlive
-  // the TypeBuilder without their IDs changing.
+  // self-referential HeapTypes to the global store so that they will be
+  // considered canonical and outlive the TypeBuilder.
+  std::lock_guard<std::mutex> lock(globalHeapTypeStore.mutex);
   for (auto& entry : builder.impl->entries) {
     if (selfReferentialHeapTypes.count(entry.get())) {
-      noncanonicalHeapTypes.emplace_back(std::move(entry.info));
+      globalHeapTypeStore.recordCanonical(std::move(entry.info));
     }
   }
 }
