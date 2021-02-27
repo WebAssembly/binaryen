@@ -281,20 +281,6 @@ public:
   const Type& operator[](size_t i) const;
 };
 
-// Wrapper type for formatting types as "(param i32 i64 f32)"
-struct ParamType {
-  Type type;
-  ParamType(Type type) : type(type) {}
-  std::string toString() const;
-};
-
-// Wrapper type for formatting types as "(result i32 i64 f32)"
-struct ResultType {
-  Type type;
-  ResultType(Type type) : type(type) {}
-  std::string toString() const;
-};
-
 class HeapType {
   // Unlike `Type`, which represents the types of values on the WebAssembly
   // stack, `HeapType` is used to describe the structures that reference types
@@ -509,14 +495,12 @@ struct TypeBuilder {
 };
 
 std::ostream& operator<<(std::ostream&, Type);
-std::ostream& operator<<(std::ostream&, ParamType);
-std::ostream& operator<<(std::ostream&, ResultType);
+std::ostream& operator<<(std::ostream&, HeapType);
 std::ostream& operator<<(std::ostream&, Tuple);
 std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
-std::ostream& operator<<(std::ostream&, HeapType);
 std::ostream& operator<<(std::ostream&, Rtt);
 
 } // namespace wasm

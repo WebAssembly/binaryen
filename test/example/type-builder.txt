@@ -22,3 +22,21 @@ After building types:
 
 ;; Test canonicalization
 ;; Test recursive types
+(func (result (ref null ...1)))
+
+(func (result (ref null (func (result (ref null ...3))))))
+(func (result (ref null (func (result (ref null ...3))))))
+
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+(func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null (func (result (ref null ...9)))))))))))))))
+
+(func (result (ref null ...1) (ref null (func))))
+(func (result (ref null ...1) (ref null (func))))
+(func)
+(func)
+(func (result (ref null (func (result ...1 (ref null (func)))))))
+(func (result (ref null (func (result ...1 (ref null (func)))))))
+

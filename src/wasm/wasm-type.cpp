@@ -132,6 +132,40 @@ struct SubTyper {
   bool isSubType(const Rtt& a, const Rtt& b);
 };
 
+// Helper for printing types without infinitely recursing on recursive types.
+struct TypePrinter {
+  size_t currDepth = 0;
+  std::unordered_map<TypeID, size_t> depths;
+
+  // The stream we are printing to.
+  std::ostream& os;
+
+  TypePrinter(std::ostream& os) : os(os) {}
+
+  std::ostream& print(Type type);
+  std::ostream& print(HeapType heapType);
+  std::ostream& print(const Tuple& tuple);
+  std::ostream& print(const Field& field);
+  std::ostream& print(const Signature& sig);
+  std::ostream& print(const Struct& struct_);
+  std::ostream& print(const Array& array);
+  std::ostream& print(const Rtt& rtt);
+
+private:
+  template<typename T, typename F> std::ostream& printChild(T curr, F printer) {
+    auto it = depths.find(curr.getID());
+    if (it != depths.end()) {
+      assert(it->second <= currDepth);
+      size_t relativeDepth = currDepth - it->second;
+      return os << "..." << relativeDepth;
+    }
+    depths[curr.getID()] = ++currDepth;
+    printer();
+    depths.erase(curr.getID());
+    return os;
+  }
+};
+
 } // anonymous namespace
 } // namespace wasm
 
@@ -761,206 +795,41 @@ bool Signature::operator<(const Signature& other) const {
   return TypeComparator().lessThan(*this, other);
 }
 
-namespace {
-
-std::ostream&
-printPrefixedTypes(std::ostream& os, const char* prefix, Type type) {
-  os << '(' << prefix;
-  for (const auto& t : type) {
-    os << " " << t;
-  }
-  os << ')';
-  return os;
-}
-
-template<typename T> std::string genericToString(const T& t) {
+template<typename T> static std::string genericToString(const T& t) {
   std::ostringstream ss;
   ss << t;
   return ss.str();
 }
-
-} // anonymous namespace
-
 std::string Type::toString() const { return genericToString(*this); }
-
-std::string ParamType::toString() const { return genericToString(*this); }
-
-std::string ResultType::toString() const { return genericToString(*this); }
-
-std::string Tuple::toString() const { return genericToString(*this); }
-
-std::string Signature::toString() const { return genericToString(*this); }
-
-std::string Struct::toString() const { return genericToString(*this); }
-
-std::string Array::toString() const { return genericToString(*this); }
-
 std::string HeapType::toString() const { return genericToString(*this); }
-
+std::string Tuple::toString() const { return genericToString(*this); }
+std::string Signature::toString() const { return genericToString(*this); }
+std::string Struct::toString() const { return genericToString(*this); }
+std::string Array::toString() const { return genericToString(*this); }
 std::string Rtt::toString() const { return genericToString(*this); }
-
-std::ostream& operator<<(std::ostream&, TypeInfo);
-std::ostream& operator<<(std::ostream&, HeapTypeInfo);
-
 std::ostream& operator<<(std::ostream& os, Type type) {
-  if (type.isBasic()) {
-    switch (type.getBasic()) {
-      case Type::none:
-        return os << "none";
-      case Type::unreachable:
-        return os << "unreachable";
-      case Type::i32:
-        return os << "i32";
-      case Type::i64:
-        return os << "i64";
-      case Type::f32:
-        return os << "f32";
-      case Type::f64:
-        return os << "f64";
-      case Type::v128:
-        return os << "v128";
-      case Type::funcref:
-        return os << "funcref";
-      case Type::externref:
-        return os << "externref";
-      case Type::anyref:
-        return os << "anyref";
-      case Type::eqref:
-        return os << "eqref";
-      case Type::i31ref:
-        return os << "i31ref";
-      case Type::dataref:
-        return os << "dataref";
-    }
-  }
-  return os << *getTypeInfo(type);
+  return TypePrinter(os).print(type);
 }
-
-std::ostream& operator<<(std::ostream& os, ParamType param) {
-  return printPrefixedTypes(os, "param", param.type);
-}
-
-std::ostream& operator<<(std::ostream& os, ResultType param) {
-  return printPrefixedTypes(os, "result", param.type);
-}
-
-std::ostream& operator<<(std::ostream& os, Tuple tuple) {
-  auto& types = tuple.types;
-  auto size = types.size();
-  os << "(";
-  if (size) {
-    os << types[0];
-    for (size_t i = 1; i < size; ++i) {
-      os << " " << types[i];
-    }
-  }
-  return os << ")";
-}
-
-std::ostream& operator<<(std::ostream& os, Signature sig) {
-  os << "(func";
-  if (sig.params.getID() != Type::none) {
-    os << " ";
-    printPrefixedTypes(os, "param", sig.params);
-  }
-  if (sig.results.getID() != Type::none) {
-    os << " ";
-    printPrefixedTypes(os, "result", sig.results);
-  }
-  return os << ")";
-}
-
-std::ostream& operator<<(std::ostream& os, Field field) {
-  if (field.mutable_) {
-    os << "(mut ";
-  }
-  if (field.isPacked()) {
-    auto packedType = field.packedType;
-    if (packedType == Field::PackedType::i8) {
-      os << "i8";
-    } else if (packedType == Field::PackedType::i16) {
-      os << "i16";
-    } else {
-      WASM_UNREACHABLE("unexpected packed type");
-    }
-  } else {
-    os << field.type;
-  }
-  if (field.mutable_) {
-    os << ")";
-  }
-  return os;
-};
-
-std::ostream& operator<<(std::ostream& os, Struct struct_) {
-  os << "(struct";
-  if (struct_.fields.size()) {
-    os << " (field";
-    for (auto f : struct_.fields) {
-      os << " " << f;
-    }
-    os << ")";
-  }
-  return os << ")";
-}
-
-std::ostream& operator<<(std::ostream& os, Array array) {
-  return os << "(array " << array.element << ")";
-}
-
 std::ostream& operator<<(std::ostream& os, HeapType heapType) {
-  if (heapType.isBasic()) {
-    switch (heapType.getBasic()) {
-      case HeapType::func:
-        return os << "func";
-      case HeapType::ext:
-        return os << "extern";
-      case HeapType::any:
-        return os << "any";
-      case HeapType::eq:
-        return os << "eq";
-      case HeapType::i31:
-        return os << "i31";
-      case HeapType::data:
-        return os << "data";
-    }
-  }
-  return os << *getHeapTypeInfo(heapType);
+  return TypePrinter(os).print(heapType);
 }
-
+std::ostream& operator<<(std::ostream& os, Tuple tuple) {
+  return TypePrinter(os).print(tuple);
+}
+std::ostream& operator<<(std::ostream& os, Signature sig) {
+  return TypePrinter(os).print(sig);
+}
+std::ostream& operator<<(std::ostream& os, Field field) {
+  return TypePrinter(os).print(field);
+}
+std::ostream& operator<<(std::ostream& os, Struct struct_) {
+  return TypePrinter(os).print(struct_);
+}
+std::ostream& operator<<(std::ostream& os, Array array) {
+  return TypePrinter(os).print(array);
+}
 std::ostream& operator<<(std::ostream& os, Rtt rtt) {
-  return os << "(rtt " << rtt.depth << " " << rtt.heapType << ")";
-}
-
-std::ostream& operator<<(std::ostream& os, TypeInfo info) {
-  switch (info.kind) {
-    case TypeInfo::TupleKind: {
-      return os << info.tuple;
-    }
-    case TypeInfo::RefKind: {
-      os << "(ref ";
-      if (info.ref.nullable) {
-        os << "null ";
-      }
-      return os << info.ref.heapType << ")";
-    }
-    case TypeInfo::RttKind: {
-      return os << info.rtt;
-    }
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-std::ostream& operator<<(std::ostream& os, HeapTypeInfo info) {
-  switch (info.kind) {
-    case HeapTypeInfo::SignatureKind:
-      return os << info.signature;
-    case HeapTypeInfo::StructKind:
-      return os << info.struct_;
-    case HeapTypeInfo::ArrayKind:
-      return os << info.array;
-  }
-  WASM_UNREACHABLE("unexpected kind");
+  return TypePrinter(os).print(rtt);
 }
 
 namespace {
@@ -1194,6 +1063,172 @@ bool SubTyper::isSubType(const Rtt& a, const Rtt& b) {
   // information is that the left side specifies a depth while the right side
   // allows any depth.
   return a.heapType == b.heapType && a.hasDepth() && !b.hasDepth();
+}
+
+std::ostream& TypePrinter::print(Type type) {
+  if (type.isBasic()) {
+    switch (type.getBasic()) {
+      case Type::none:
+        return os << "none";
+      case Type::unreachable:
+        return os << "unreachable";
+      case Type::i32:
+        return os << "i32";
+      case Type::i64:
+        return os << "i64";
+      case Type::f32:
+        return os << "f32";
+      case Type::f64:
+        return os << "f64";
+      case Type::v128:
+        return os << "v128";
+      case Type::funcref:
+        return os << "funcref";
+      case Type::externref:
+        return os << "externref";
+      case Type::anyref:
+        return os << "anyref";
+      case Type::eqref:
+        return os << "eqref";
+      case Type::i31ref:
+        return os << "i31ref";
+      case Type::dataref:
+        return os << "dataref";
+    }
+  }
+
+  return printChild(type, [&]() {
+    if (type.isTuple()) {
+      print(type.getTuple());
+    } else if (type.isRef()) {
+      os << "(ref ";
+      if (type.isNullable()) {
+        os << "null ";
+      }
+      print(type.getHeapType());
+      os << ')';
+    } else if (type.isRtt()) {
+      print(type.getRtt());
+    } else {
+      WASM_UNREACHABLE("unexpected type");
+    }
+  });
+}
+
+std::ostream& TypePrinter::print(HeapType heapType) {
+  if (heapType.isBasic()) {
+    switch (heapType.getBasic()) {
+      case HeapType::func:
+        return os << "func";
+      case HeapType::ext:
+        return os << "extern";
+      case HeapType::any:
+        return os << "any";
+      case HeapType::eq:
+        return os << "eq";
+      case HeapType::i31:
+        return os << "i31";
+      case HeapType::data:
+        return os << "data";
+    }
+  }
+
+  return printChild(heapType, [&]() {
+    if (heapType.isSignature()) {
+      print(heapType.getSignature());
+    } else if (heapType.isStruct()) {
+      print(heapType.getStruct());
+    } else if (heapType.isArray()) {
+      print(heapType.getArray());
+    } else {
+      WASM_UNREACHABLE("unexpected type");
+    }
+  });
+}
+
+std::ostream& TypePrinter::print(const Tuple& tuple) {
+  os << '(';
+  auto sep = "";
+  for (Type type : tuple.types) {
+    os << sep;
+    sep = " ";
+    print(type);
+  }
+  return os << ')';
+}
+
+std::ostream& TypePrinter::print(const Field& field) {
+  if (field.mutable_) {
+    os << "(mut ";
+  }
+  if (field.isPacked()) {
+    auto packedType = field.packedType;
+    if (packedType == Field::PackedType::i8) {
+      os << "i8";
+    } else if (packedType == Field::PackedType::i16) {
+      os << "i16";
+    } else {
+      WASM_UNREACHABLE("unexpected packed type");
+    }
+  } else {
+    print(field.type);
+  }
+  if (field.mutable_) {
+    os << ')';
+  }
+  return os;
+}
+
+std::ostream& TypePrinter::print(const Signature& sig) {
+  auto printPrefixed = [&](const char* prefix, Type type) {
+    os << '(' << prefix;
+    for (Type t : type) {
+      os << ' ';
+      print(t);
+    }
+    os << ')';
+  };
+
+  os << "(func";
+  if (sig.params.getID() != Type::none) {
+    os << ' ';
+    printPrefixed("param", sig.params);
+  }
+  if (sig.results.getID() != Type::none) {
+    os << ' ';
+    printPrefixed("result", sig.results);
+  }
+  return os << ')';
+}
+
+std::ostream& TypePrinter::print(const Struct& struct_) {
+  os << "(struct";
+  if (struct_.fields.size()) {
+    os << " (field";
+  }
+  for (const Field& field : struct_.fields) {
+    os << ' ';
+    print(field);
+  }
+  if (struct_.fields.size()) {
+    os << ')';
+  }
+  return os << ')';
+}
+
+std::ostream& TypePrinter::print(const Array& array) {
+  os << "(array ";
+  print(array.element);
+  return os << ')';
+}
+
+std::ostream& TypePrinter::print(const Rtt& rtt) {
+  os << "(rtt ";
+  if (rtt.hasDepth()) {
+    os << rtt.depth << ' ';
+  }
+  print(rtt.heapType);
+  return os << ')';
 }
 
 } // anonymous namespace
