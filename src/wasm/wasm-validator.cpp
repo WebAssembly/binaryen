@@ -666,8 +666,8 @@ void FunctionValidator::validatePoppyBlockElements(Block* curr) {
         !info.quiet) {
       getStream() << "(on index " << i << ":\n"
                   << expr << "\n), required: " << sig.params << ", available: ";
-      if (blockSig.unreachable) {
-        getStream() << "unreachable, ";
+      if (blockSig.kind == StackSignature::Polymorphic) {
+        getStream() << "polymorphic, ";
       }
       getStream() << blockSig.results << "\n";
       return;
@@ -675,18 +675,22 @@ void FunctionValidator::validatePoppyBlockElements(Block* curr) {
     blockSig += sig;
   }
   if (curr->type == Type::unreachable) {
-    shouldBeTrue(blockSig.unreachable,
+    shouldBeTrue(blockSig.kind == StackSignature::Polymorphic,
                  curr,
                  "unreachable block should have unreachable element");
   } else {
     if (!shouldBeTrue(
           StackSignature::isSubType(
-            blockSig, StackSignature(Type::none, curr->type, false)),
+            blockSig,
+            StackSignature(Type::none, curr->type, StackSignature::Fixed)),
           curr,
           "block contents should satisfy block type") &&
         !info.quiet) {
       getStream() << "contents: " << blockSig.results
-                  << (blockSig.unreachable ? " [unreachable]" : "") << "\n"
+                  << (blockSig.kind == StackSignature::Polymorphic
+                        ? " [polymorphic]"
+                        : "")
+                  << "\n"
                   << "expected: " << curr->type << "\n";
     }
   }
