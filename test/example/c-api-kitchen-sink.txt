@@ -1761,6 +1761,41 @@ BinaryenFeatureAll: 8191
         (ref.null eq)
        )
       )
+      (drop
+       (ref.is_func
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.is_data
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.is_i31
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.as_non_null
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.as_func
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.as_data
+        (ref.null any)
+       )
+      )
+      (drop
+       (ref.as_i31
+        (ref.null any)
+       )
+      )
       (try
        (do
         (throw $a-event

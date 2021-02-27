@@ -491,6 +491,10 @@ function initializeConstants() {
     'RefIsFunc',
     'RefIsData',
     'RefIsI31',
+    'RefAsNonNull',
+    'RefAsFunc',
+    'RefAsData',
+    'RefAsI31',
   ].forEach(name => {
     Module['Operations'][name] = Module[name] = Module['_Binaryen' + name]();
   });
@@ -2118,6 +2122,18 @@ function wrapModule(module, self = {}) {
     'is_i31'(value) {
       return Module['_BinaryenRefIs'](module, Module['RefIsI31'], value);
     },
+    'as_non_null'(value) {
+      return Module['_BinaryenRefAs'](module, Module['RefAsNonNull'], value);
+    },
+    'as_func'(value) {
+      return Module['_BinaryenRefAs'](module, Module['RefAsFunc'], value);
+    },
+    'as_data'(value) {
+      return Module['_BinaryenRefAs'](module, Module['RefAsData'], value);
+    },
+    'as_i31'(value) {
+      return Module['_BinaryenRefAs'](module, Module['RefAsI31'], value);
+    },
     'func'(func, type) {
       return preserveStack(() => Module['_BinaryenRefFunc'](module, strToStack(func), type));
     },
@@ -2879,7 +2895,15 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
+        'op': Module['_BinaryenRefIsGetOp'](expr),
         'value': Module['_BinaryenRefIsGetValue'](expr)
+      };
+    case Module['RefAsId']:
+      return {
+        'id': id,
+        'type': type,
+        'op': Module['_BinaryenRefAsGetOp'](expr),
+        'value': Module['_BinaryenRefAsGetValue'](expr)
       };
     case Module['RefFuncId']:
       return {
@@ -4154,6 +4178,21 @@ Module['RefIs'] = makeExpressionWrapper({
   },
   'setValue'(expr, valueExpr) {
     Module['_BinaryenRefIsSetValue'](expr, valueExpr);
+  }
+});
+
+Module['RefAs'] = makeExpressionWrapper({
+  'getOp'(expr) {
+    return Module['_BinaryenRefAsGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenRefAsSetOp'](expr, op);
+  },
+  'getValue'(expr) {
+    return Module['_BinaryenRefAsGetValue'](expr);
+  },
+  'setValue'(expr, valueExpr) {
+    Module['_BinaryenRefAsSetValue'](expr, valueExpr);
   }
 });
 

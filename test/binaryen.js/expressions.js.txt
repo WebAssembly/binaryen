@@ -207,6 +207,11 @@
  (local.get $2)
 )
 
+# RefAs
+(ref.as_non_null
+ (local.get $2)
+)
+
 # RefFunc
 (ref.func $b)
 
