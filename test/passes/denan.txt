@@ -155,3 +155,58 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (type $f32_=>_f32 (func (param f32) (result f32)))
+ (type $f64_=>_f64 (func (param f64) (result f64)))
+ (func $deNan32
+  (nop)
+ )
+ (func $deNan64
+  (nop)
+ )
+ (func $foo32 (param $x f32) (result f32)
+  (local.set $x
+   (call $deNan32_0
+    (local.get $x)
+   )
+  )
+  (call $deNan32_0
+   (call $foo32
+    (local.get $x)
+   )
+  )
+ )
+ (func $foo64 (param $x f64) (result f64)
+  (local.set $x
+   (call $deNan64_0
+    (local.get $x)
+   )
+  )
+  (call $deNan64_0
+   (call $foo64
+    (local.get $x)
+   )
+  )
+ )
+ (func $deNan32_0 (param $0 f32) (result f32)
+  (if (result f32)
+   (f32.eq
+    (local.get $0)
+    (local.get $0)
+   )
+   (local.get $0)
+   (f32.const 0)
+  )
+ )
+ (func $deNan64_0 (param $0 f64) (result f64)
+  (if (result f64)
+   (f64.eq
+    (local.get $0)
+    (local.get $0)
+   )
+   (local.get $0)
+   (f64.const 0)
+  )
+ )
+)
