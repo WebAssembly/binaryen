@@ -2237,7 +2237,7 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
 
   while (i < s.size() && elementStartsWith(*s[i], "catch")) {
     Element& inner = *s[i++];
-    if (inner.size() < 3) {
+    if (inner.size() < 2) {
       throw ParseException("invalid catch block", inner.line, inner.col);
     }
     Name event = getEventName(*inner[1]);

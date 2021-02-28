@@ -2,6 +2,7 @@
   (event $e-i32 (attr 0) (param i32))
   (event $e-i64 (attr 0) (param i64))
   (event $e-i32-i64 (attr 0) (param i32 i64))
+  (event $e-empty (attr 0))
 
   (func $foo)
   (func $bar)
@@ -187,6 +188,12 @@
         )
       )
       (delegate 0)
+    )
+
+    ;; 'catch' body can be empty when the event's type is none.
+    (try
+      (do)
+      (catch $e-empty)
     )
   )
 
