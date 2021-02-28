@@ -2033,7 +2033,6 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.empty());
       assert(breakTargetNames.empty());
       assert(exceptionTargetNames.empty());
-      assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(controlFlowStack.empty());
       assert(letStack.empty());
