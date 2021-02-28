@@ -2098,6 +2098,9 @@ void FunctionValidator::visitTry(Try* curr) {
   shouldBeTrue(getModule()->features.hasExceptionHandling(),
                curr,
                "try requires exception-handling to be enabled");
+  if (curr->name.is()) {
+    noteLabelName(curr->name);
+  }
   if (curr->type != Type::unreachable) {
     shouldBeSubTypeOrFirstIsUnreachable(
       curr->body->type,

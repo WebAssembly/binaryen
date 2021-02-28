@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 
+#include "ir/branch-utils.h"
 #include "mixed_arena.h"
 #include "shared-constants.h"
 #include "support/colors.h"
@@ -344,42 +345,32 @@ struct UniqueNameMapper {
 
   // Given an expression, ensures all names are unique
   static void uniquify(Expression* curr) {
-    struct Walker : public ControlFlowWalker<Walker, Visitor<Walker>> {
+    struct Walker : public ControlFlowWalker<Walker,
+                                             UnifiedExpressionVisitor<Walker>> {
       UniqueNameMapper mapper;
 
       static void doPreVisitControlFlow(Walker* self, Expression** currp) {
-        auto* curr = *currp;
-        if (auto* block = curr->dynCast<Block>()) {
-          if (block->name.is()) {
-            block->name = self->mapper.pushLabelName(block->name);
+        BranchUtils::operateOnScopeNameDefs(*currp, [&](Name& name) {
+          if (name.is()) {
+            name = self->mapper.pushLabelName(name);
           }
-        } else if (auto* loop = curr->dynCast<Loop>()) {
-          if (loop->name.is()) {
-            loop->name = self->mapper.pushLabelName(loop->name);
-          }
-        }
-      }
-      static void doPostVisitControlFlow(Walker* self, Expression** currp) {
-        auto* curr = *currp;
-        if (auto* block = curr->dynCast<Block>()) {
-          if (block->name.is()) {
-            self->mapper.popLabelName(block->name);
-          }
-        } else if (auto* loop = curr->dynCast<Loop>()) {
-          if (loop->name.is()) {
-            self->mapper.popLabelName(loop->name);
-          }
-        }
+        });
       }
 
-      void visitBreak(Break* curr) {
-        curr->name = mapper.sourceToUnique(curr->name);
+      static void doPostVisitControlFlow(Walker* self, Expression** currp) {
+        BranchUtils::operateOnScopeNameDefs(*currp, [&](Name& name) {
+          if (name.is()) {
+            self->mapper.popLabelName(name);
+          }
+        });
       }
-      void visitSwitch(Switch* curr) {
-        for (auto& target : curr->targets) {
-          target = mapper.sourceToUnique(target);
-        }
-        curr->default_ = mapper.sourceToUnique(curr->default_);
+
+      void visitExpression(Expression* curr) {
+        BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+          if (name.is()) {
+            name = mapper.sourceToUnique(name);
+          }
+        });
       }
     };
 
