@@ -43,3 +43,24 @@
   (call $0)
  )
 )
+;; properly ensure unique try labels after an inlining
+(module
+ (import "a" "b" (func $foo (result i32)))
+ (event $event$0 (attr 0) (param i32))
+ (func $0
+  (try $label
+   (do)
+   (catch $event$0
+    (nop)
+   )
+  )
+ )
+ (func "exported" (param $x i32)
+  (loop $label ;; the same label as the try that will be inlined into here
+   (call $0)
+   (br_if $label
+    (call $foo)
+   )
+  )
+ )
+)
