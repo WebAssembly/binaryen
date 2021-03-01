@@ -64,3 +64,18 @@
   )
  )
 )
+;; for now, do not inline a try-delegate
+(module
+ (type $none_=>_none (func))
+ (func $0
+  (try $label$3
+   (do
+    (nop)
+   )
+   (delegate 0)
+  )
+ )
+ (func $1
+  (call $0)
+ )
+)
