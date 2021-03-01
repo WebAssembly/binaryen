@@ -1285,13 +1285,12 @@ BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
 // TODO (gc): br_on_cast
 // TODO (gc): rtt.canon
 // TODO (gc): rtt.sub
-// TODO (gc): struct.new
-// TODO (gc): struct.get
-// TODO (gc): struct.set
 // TODO (gc): array.new
 // TODO (gc): array.get
 // TODO (gc): array.set
 // TODO (gc): array.len
+
+#include "binaryen-c.autogen.cpp"
 
 // Expression utility
 
