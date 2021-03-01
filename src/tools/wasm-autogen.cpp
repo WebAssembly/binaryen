@@ -25,8 +25,11 @@ using namespace wasm;
 
 namespace {
 
+// Emit a declaration. If "startOfImpl" is true then we emit the beginning of
+// the implementation, which is identical to the declaration except it has no
+// ";" at the end.
 template<typename T>
-void autogenOneCAPIDecl() {
+void autogenOneCAPIDecl(bool startOfImpl = false) {
   MixedArena allocator;
   T curr(allocator);
 
@@ -81,65 +84,89 @@ void autogenOneCAPIDecl() {
 
 #include "wasm-delegations-fields.h"
 
-  std::cout << ");\n";
+  std::cout << ')';
+
+  if (!startOfImpl) {
+    std::cout << ";\n";
+  }
 }
+
+#if 0
+BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
+                                    const char* event,
+                                    BinaryenExpressionRef* operands,
+                                    BinaryenIndex numOperands) {
+  std::vector<Expression*> args;
+  for (BinaryenIndex i = 0; i < numOperands; i++) {
+    args.push_back((Expression*)operands[i]);
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeThrow(event, args));
+}
+#endif
 
 template<typename T>
 void autogenOneCAPIImpl() {
+  autogenOneCAPIDecl<T>(true /* startOfImpl */);
+  std::cout << " {\n";
+
   MixedArena allocator;
   T curr(allocator);
 
-  std::cout << '\n';
+  std::vector<std::string> params;
 
 #define DELEGATE_ID curr._id
 
 #define DELEGATE_START(id) \
-  std::cout << "BINARYEN_API BinaryenExpressionRef\n" \
-            << "Binaryen" << #id << "(BinaryenModuleRef module";
+  std::cout << "  return static_cast<Expression*>(\n"; \
+  std::cout << "    Builder(*(Module*)module).make" << #id << '(';
 
 #define DELEGATE_FIELD_CHILD(id, name) \
-  std::cout << ", BinaryenExpressionRef " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_INT(id, name) \
-  std::cout << ", uint32_t " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) \
-  std::cout << ", const uint8_t mask[16] " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_LITERAL(id, name) \
-  std::cout << ", struct BinaryenLiteral " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_NAME(id, name) \
-  std::cout << ", const char* " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_NAME_VECTOR(id, name) \
-  std::cout << ", const char** " << #name << ", BinaryenIndex num_" << #name;
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name) \
-  std::cout << ", const char* " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) \
-  std::cout << ", const char* " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name) \
-  std::cout << ", const char** " << #name << ", BinaryenIndex num_" << #name;
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_SIGNATURE(id, name) \
-  std::cout << ", BinaryenType " << #name << "_params, BinaryenType " << #name \
-               "_results";
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_TYPE(id, name) \
-  std::cout << ", BinaryenType " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_ADDRESS(id, name) \
-  std::cout << ", uint32_t " << #name
+  params.push_back(#name);
 
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name) \
-  std::cout << ", BinaryenExpressionRef* " << #name << ", BinaryenIndex num_" \
-            << #name;
+  params.push_back(#name);
 
 #include "wasm-delegations-fields.h"
 
+  std::string sep = "";
+  for (auto& param : params) {
+    std::cout << sep << param;
+    sep = ", ";
+  }
   std::cout << ");\n";
 }
 
@@ -164,9 +191,9 @@ static void autogenCAPIImpl() {
   // existing handwritten code in binaryen-c.h and append specific classes to
   // it.
 
-  autogenOneCAPIDecl<StructNew>();
-  autogenOneCAPIDecl<StructGet>();
-  autogenOneCAPIDecl<StructSet>();
+  autogenOneCAPIImpl<StructNew>();
+  autogenOneCAPIImpl<StructGet>();
+  autogenOneCAPIImpl<StructSet>();
 }
 
 int main(int argc, const char* argv[]) {
