@@ -22,7 +22,6 @@
 #include <sstream>
 #include <string>
 
-#include "ir/branch-utils.h"
 #include "mixed_arena.h"
 #include "shared-constants.h"
 #include "support/colors.h"
@@ -292,91 +291,21 @@ struct UniqueNameMapper {
 
   Index otherIndex = 0;
 
-  Name getPrefixedName(Name prefix) {
-    if (reverseLabelMapping.find(prefix) == reverseLabelMapping.end()) {
-      return prefix;
-    }
-    // make sure to return a unique name not already on the stack
-    while (1) {
-      Name ret = Name(prefix.str + std::to_string(otherIndex++));
-      if (reverseLabelMapping.find(ret) == reverseLabelMapping.end()) {
-        return ret;
-      }
-    }
-  }
+  Name getPrefixedName(Name prefix);
 
   // receives a source name. generates a unique name, pushes it, and returns it
-  Name pushLabelName(Name sName) {
-    Name name = getPrefixedName(sName);
-    labelStack.push_back(name);
-    labelMappings[sName].push_back(name);
-    reverseLabelMapping[name] = sName;
-    return name;
-  }
+  Name pushLabelName(Name sName);
 
-  void popLabelName(Name name) {
-    assert(labelStack.back() == name);
-    labelStack.pop_back();
-    labelMappings[reverseLabelMapping[name]].pop_back();
-  }
+  void popLabelName(Name name);
 
-  Name sourceToUnique(Name sName) {
-    if (labelMappings.find(sName) == labelMappings.end()) {
-      throw ParseException("bad label in sourceToUnique");
-    }
-    if (labelMappings[sName].empty()) {
-      throw ParseException("use of popped label in sourceToUnique");
-    }
-    return labelMappings[sName].back();
-  }
+  Name sourceToUnique(Name sName);
 
-  Name uniqueToSource(Name name) {
-    if (reverseLabelMapping.find(name) == reverseLabelMapping.end()) {
-      throw ParseException("label mismatch in uniqueToSource");
-    }
-    return reverseLabelMapping[name];
-  }
+  Name uniqueToSource(Name name);
 
-  void clear() {
-    labelStack.clear();
-    labelMappings.clear();
-    reverseLabelMapping.clear();
-  }
+  void clear();
 
   // Given an expression, ensures all names are unique
-  static void uniquify(Expression* curr) {
-    struct Walker
-      : public ControlFlowWalker<Walker, UnifiedExpressionVisitor<Walker>> {
-      UniqueNameMapper mapper;
-
-      static void doPreVisitControlFlow(Walker* self, Expression** currp) {
-        BranchUtils::operateOnScopeNameDefs(*currp, [&](Name& name) {
-          if (name.is()) {
-            name = self->mapper.pushLabelName(name);
-          }
-        });
-      }
-
-      static void doPostVisitControlFlow(Walker* self, Expression** currp) {
-        BranchUtils::operateOnScopeNameDefs(*currp, [&](Name& name) {
-          if (name.is()) {
-            self->mapper.popLabelName(name);
-          }
-        });
-      }
-
-      void visitExpression(Expression* curr) {
-        BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
-          if (name.is()) {
-            name = mapper.sourceToUnique(name);
-          }
-        });
-      }
-    };
-
-    Walker walker;
-    walker.walk(curr);
-  }
+  static void uniquify(Expression* curr);
 };
 
 } // namespace wasm

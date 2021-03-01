@@ -1361,4 +1361,90 @@ void Module::updateMaps() {
 
 void Module::clearDebugInfo() { debugInfoFileNames.clear(); }
 
+// UniqueNameMapper
+
+Name UniqueNameMapper::getPrefixedName(Name prefix) {
+  if (reverseLabelMapping.find(prefix) == reverseLabelMapping.end()) {
+    return prefix;
+  }
+  // make sure to return a unique name not already on the stack
+  while (1) {
+    Name ret = Name(prefix.str + std::to_string(otherIndex++));
+    if (reverseLabelMapping.find(ret) == reverseLabelMapping.end()) {
+      return ret;
+    }
+  }
+}
+
+Name UniqueNameMapper::pushLabelName(Name sName) {
+  Name name = getPrefixedName(sName);
+  labelStack.push_back(name);
+  labelMappings[sName].push_back(name);
+  reverseLabelMapping[name] = sName;
+  return name;
+}
+
+void UniqueNameMapper::popLabelName(Name name) {
+  assert(labelStack.back() == name);
+  labelStack.pop_back();
+  labelMappings[reverseLabelMapping[name]].pop_back();
+}
+
+Name UniqueNameMapper::sourceToUnique(Name sName) {
+  if (labelMappings.find(sName) == labelMappings.end()) {
+    throw ParseException("bad label in sourceToUnique");
+  }
+  if (labelMappings[sName].empty()) {
+    throw ParseException("use of popped label in sourceToUnique");
+  }
+  return labelMappings[sName].back();
+}
+
+Name UniqueNameMapper::uniqueToSource(Name name) {
+  if (reverseLabelMapping.find(name) == reverseLabelMapping.end()) {
+    throw ParseException("label mismatch in uniqueToSource");
+  }
+  return reverseLabelMapping[name];
+}
+
+void UniqueNameMapper::clear() {
+  labelStack.clear();
+  labelMappings.clear();
+  reverseLabelMapping.clear();
+}
+
+void UniqueNameMapper::uniquify(Expression* curr) {
+  struct Walker
+    : public ControlFlowWalker<Walker, UnifiedExpressionVisitor<Walker>> {
+    UniqueNameMapper mapper;
+
+    static void doPreVisitControlFlow(Walker* self, Expression** currp) {
+      BranchUtils::operateOnScopeNameDefs(*currp, [&](Name& name) {
+        if (name.is()) {
+          name = self->mapper.pushLabelName(name);
+        }
+      });
+    }
+
+    static void doPostVisitControlFlow(Walker* self, Expression** currp) {
+      BranchUtils::operateOnScopeNameDefs(*currp, [&](Name& name) {
+        if (name.is()) {
+          self->mapper.popLabelName(name);
+        }
+      });
+    }
+
+    void visitExpression(Expression* curr) {
+      BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+        if (name.is()) {
+          name = mapper.sourceToUnique(name);
+        }
+      });
+    }
+  };
+
+  Walker walker;
+  walker.walk(curr);
+}
+
 } // namespace wasm

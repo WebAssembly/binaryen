@@ -2370,6 +2370,9 @@ Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   auto name = getLabel(*s[1]);
   auto* ref = parseExpression(*s[2]);
   Expression* rtt = nullptr;
+  if (op == BrOnCast) {
+    rtt = parseExpression(*s[3]);
+  }
   return ValidatingBuilder(wasm, s.line, s.col)
     .validateAndMakeBrOn(op, name, ref, rtt);
 }
