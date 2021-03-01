@@ -168,6 +168,8 @@ void autogenOneCAPIImpl() {
     sep = ", ";
   }
   std::cout << ");\n";
+
+  std::cout << "}\n";
 }
 
 } // anonymous namespace
