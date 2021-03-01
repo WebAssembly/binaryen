@@ -93,3 +93,19 @@
   (call $0)
  )
 )
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (func $1 (result i32)
+  (try $label$3
+   (do
+    (nop)
+   )
+   (delegate 0)
+  )
+  (block (result i32)
+   (block $__inlined_func$0 (result i32)
+    (i32.const 42)
+   )
+  )
+ )
+)

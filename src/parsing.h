@@ -321,6 +321,11 @@ struct UniqueNameMapper {
   }
 
   Name sourceToUnique(Name sName) {
+    // DELEGATE_CALLER_TARGET is a fake target used to denote delegating to the
+    // caller. We do not need to modify it, as it has no definitions, only uses.
+    if (sName == DELEGATE_CALLER_TARGET) {
+      return DELEGATE_CALLER_TARGET;
+    }
     if (labelMappings.find(sName) == labelMappings.end()) {
       throw ParseException("bad label in sourceToUnique");
     }
