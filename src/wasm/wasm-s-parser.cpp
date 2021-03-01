@@ -1456,8 +1456,8 @@ Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
   return ret;
 }
 
-static
-Expression* parseConst(cashew::IString s, Type type, MixedArena& allocator) {
+static Expression*
+parseConst(cashew::IString s, Type type, MixedArena& allocator) {
   const char* str = s.str;
   auto ret = allocator.alloc<Const>();
   ret->type = type;
