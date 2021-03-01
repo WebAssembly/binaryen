@@ -6,6 +6,7 @@
  (event $e-i32 (attr 0) (param i32))
  (event $e-i64 (attr 0) (param i64))
  (event $e-i32-i64 (attr 0) (param i32 i64))
+ (event $e-empty (attr 0) (param))
  (func $foo
   (nop)
  )
@@ -226,6 +227,14 @@
    )
    (delegate 0)
   )
+  (try $try17
+   (do
+    (nop)
+   )
+   (catch $e-empty
+    (nop)
+   )
+  )
  )
  (func $rethrow-test
   (try $l0
@@ -242,8 +251,8 @@
     (rethrow $l0)
    )
   )
-  (block $l018
-   (try $l017
+  (block $l019
+   (try $l018
     (do
      (call $foo)
     )
@@ -251,14 +260,14 @@
      (drop
       (pop i32)
      )
-     (rethrow $l017)
+     (rethrow $l018)
     )
     (catch_all
-     (br $l018)
+     (br $l019)
     )
    )
   )
-  (try $l019
+  (try $l020
    (do
     (call $foo)
    )
@@ -271,20 +280,20 @@
       (drop
        (pop i32)
       )
-      (rethrow $l019)
+      (rethrow $l020)
      )
      (catch_all
-      (rethrow $l019)
+      (rethrow $l020)
      )
     )
    )
   )
-  (try $l020
+  (try $l021
    (do
     (call $foo)
    )
    (catch_all
-    (try $try21
+    (try $try22
      (do
       (call $foo)
      )
@@ -293,25 +302,25 @@
        (pop i32)
       )
       (block $b0
-       (rethrow $l020)
+       (rethrow $l021)
       )
      )
      (catch_all
       (block $b1
-       (rethrow $l020)
+       (rethrow $l021)
       )
      )
     )
    )
   )
-  (try $l022
+  (try $l023
    (do
     (call $foo)
    )
    (catch_all
-    (try $try23
+    (try $try24
      (do
-      (rethrow $l022)
+      (rethrow $l023)
      )
      (catch_all
       (nop)
@@ -319,14 +328,14 @@
     )
    )
   )
-  (try $l024
+  (try $l025
    (do
     (call $foo)
    )
    (catch_all
-    (try $try25
+    (try $try26
      (do
-      (rethrow $l024)
+      (rethrow $l025)
      )
      (catch_all
       (nop)

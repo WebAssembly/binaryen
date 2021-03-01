@@ -6,6 +6,7 @@
  (event $event$0 (attr 0) (param i32))
  (event $event$1 (attr 0) (param i64))
  (event $event$2 (attr 0) (param i32 i64))
+ (event $event$3 (attr 0) (param))
  (func $foo
   (nop)
  )
@@ -256,6 +257,14 @@
     )
    )
    (delegate 0)
+  )
+  (try $label$28
+   (do
+    (nop)
+   )
+   (catch $event$3
+    (nop)
+   )
   )
  )
  (func $rethrow-test

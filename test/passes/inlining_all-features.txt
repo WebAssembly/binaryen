@@ -53,3 +53,29 @@
   )
  )
 )
+(module
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (import "a" "b" (func $foo (result i32)))
+ (event $event$0 (attr 0) (param i32))
+ (export "exported" (func $1))
+ (func $1 (param $x i32)
+  (loop $label
+   (block
+    (block $__inlined_func$0
+     (try $label0
+      (do
+       (nop)
+      )
+      (catch $event$0
+       (nop)
+      )
+     )
+    )
+   )
+   (br_if $label
+    (call $foo)
+   )
+  )
+ )
+)
