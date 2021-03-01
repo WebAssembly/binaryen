@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ir/branch-utils.h"
 #include "parsing.h"
+#include "ir/branch-utils.h"
 
 namespace wasm {
 
