@@ -1,6 +1,7 @@
 file(GLOB wasm_HEADERS ../*.h)
 set(wasm_SOURCES
   literal.cpp
+  parsing.cpp
   wasm.cpp
   wasm-binary.cpp
   wasm-debug.cpp
