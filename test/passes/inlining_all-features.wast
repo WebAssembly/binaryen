@@ -64,3 +64,30 @@
   )
  )
 )
+;; for now, do not inline a try-delegate
+(module
+ (type $none_=>_none (func))
+ (func $0
+  (try $label$3
+   (do)
+   (delegate 0)
+  )
+ )
+ (func $1
+  (call $0)
+ )
+)
+;; properly support inlining into a function with a try-delegate
+(module
+ (type $none_=>_none (func))
+ (func $0 (result i32)
+  (i32.const 42)
+ )
+ (func $1 (result i32)
+  (try $label$3
+   (do)
+   (delegate 0)
+  )
+  (call $0)
+ )
+)
