@@ -18,6 +18,34 @@
 
 namespace wasm {
 
+void ParseException::dump(std::ostream& o) const {
+  Colors::magenta(o);
+  o << "[";
+  Colors::red(o);
+  o << "parse exception: ";
+  Colors::green(o);
+  o << text;
+  if (line != size_t(-1)) {
+    Colors::normal(o);
+    o << " (at " << line << ":" << col << ")";
+  }
+  Colors::magenta(o);
+  o << "]";
+  Colors::normal(o);
+}
+
+void MapParseException::dump(std::ostream& o) const {
+  Colors::magenta(o);
+  o << "[";
+  Colors::red(o);
+  o << "map parse exception: ";
+  Colors::green(o);
+  o << text;
+  Colors::magenta(o);
+  o << "]";
+  Colors::normal(o);
+}
+
 // UniqueNameMapper
 
 Name UniqueNameMapper::getPrefixedName(Name prefix) {
