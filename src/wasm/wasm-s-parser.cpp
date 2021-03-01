@@ -826,7 +826,12 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   auto parseStructDef = [&](Element& elem, size_t typeIndex) {
     FieldList fields;
     for (Index i = 1; i < elem.size(); i++) {
-      fields.emplace_back(parseField(elem[i], fieldNames[typeIndex][i - 1]));
+      Name name;
+      fields.emplace_back(parseField(elem[i], name));
+      if (name.is()) {
+        // Only add the name to the map if it exists.
+        fieldNames[typeIndex][i - 1] = name;
+      }
     }
     return Struct(fields);
   };

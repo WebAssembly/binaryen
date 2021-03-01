@@ -795,6 +795,34 @@ void WasmBinaryWriter::writeNames() {
   // TODO: label, type, and element names
   // see: https://github.com/WebAssembly/extended-name-section
 
+  // GC field names
+  if (wasm->features.hasGC()) {
+    std::vector<HeapType> relevantTypes;
+    for (auto& type : types) {
+      if (type.isStruct() && wasm->typeNames.count(type) &&
+          !wasm->typeNames.at(type).fieldNames.empty()) {
+        relevantTypes.push_back(type);
+      }
+    }
+    if (!relevantTypes.empty()) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameField);
+      o << U32LEB(relevantTypes.size());
+      for (Index i = 0; i < relevantTypes.size(); i++) {
+        auto type = relevantTypes[i];
+        o << U32LEB(typeIndices[type]);
+        std::unordered_map<Index, Name>& fieldNames =
+          wasm->typeNames.at(type).fieldNames;
+        o << U32LEB(fieldNames.size());
+        for (auto& kv : fieldNames) {
+          o << U32LEB(kv.first);
+          writeEscapedName(kv.second.str);
+        }
+      }
+      finishSubsection(substart);
+    }
+  }
+
   finishSection(start);
 }
 
@@ -2906,6 +2934,26 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
                        "global subsection: "
                     << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameField) {
+      auto numTypes = getU32LEB();
+      for (size_t i = 0; i < numTypes; i++) {
+        auto typeIndex = getU32LEB();
+        bool validType =
+          typeIndex < types.size() && types[typeIndex].isStruct();
+        if (!validType) {
+          std::cerr << "warning: invalid field index in name field section\n";
+        }
+        auto numFields = getU32LEB();
+        NameProcessor processor;
+        for (size_t i = 0; i < numFields; i++) {
+          auto fieldIndex = getU32LEB();
+          auto rawName = getInlineString();
+          auto name = processor.process(rawName);
+          if (validType) {
+            wasm.typeNames[types[typeIndex]].fieldNames[fieldIndex] = name;
+          }
         }
       }
     } else {
