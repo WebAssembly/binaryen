@@ -167,7 +167,7 @@ void autogenOneCAPIImpl() {
     std::cout << sep << param;
     sep = ", ";
   }
-  std::cout << ");\n";
+  std::cout << "));\n";
 
   std::cout << "}\n";
 }
