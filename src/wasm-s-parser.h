@@ -238,12 +238,15 @@ private:
   Expression* makeLoop(Element& s);
   Expression* makeCall(Element& s, bool isReturn);
   Expression* makeCallIndirect(Element& s, bool isReturn);
-  template<class T>
-  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+  template<class T> void parseOperands(Element& s, Index i, Index j, T& list) {
     while (i < j) {
-      call->operands.push_back(parseExpression(s[i]));
+      list.push_back(parseExpression(s[i]));
       i++;
     }
+  }
+  template<class T>
+  void parseCallOperands(Element& s, Index i, Index j, T* call) {
+    parseOperands(s, i, j, call->operands);
   }
   enum class LabelType { Break, Exception };
   Name getLabel(Element& s, LabelType labelType = LabelType::Break);

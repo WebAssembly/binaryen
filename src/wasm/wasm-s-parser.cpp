@@ -2533,21 +2533,11 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
-  auto ret = allocator.alloc<CallRef>();
-  parseCallOperands(s, 1, s.size() - 1, ret);
-  ret->target = parseExpression(s[s.size() - 1]);
-  ret->isReturn = isReturn;
-  if (!ret->target->type.isRef()) {
-    throw ParseException("Non-reference type for a call_ref", s.line, s.col);
-  }
-  auto heapType = ret->target->type.getHeapType();
-  if (!heapType.isSignature()) {
-    throw ParseException(
-      "Invalid reference type for a call_ref", s.line, s.col);
-  }
-  auto sig = heapType.getSignature();
-  ret->finalize(sig.results);
-  return ret;
+  std::vector<Expression*> operands;
+  parseOperands(s, 1, s.size() - 1, operands);
+  auto* target = parseExpression(s[s.size() - 1]);
+  return ValidatingBuilder(wasm, s.line, s.col)
+    .validateAndMakeCallRef(target, operands, isReturn);
 }
 
 Expression* SExpressionWasmBuilder::makeI31New(Element& s) {
@@ -2585,17 +2575,11 @@ Expression* SExpressionWasmBuilder::makeBrOn(Element& s, BrOnOp op) {
   auto name = getLabel(*s[1]);
   auto* ref = parseExpression(*s[2]);
   Expression* rtt = nullptr;
-  Builder builder(wasm);
   if (op == BrOnCast) {
     rtt = parseExpression(*s[3]);
-    if (rtt->type == Type::unreachable) {
-      // An unreachable rtt is not supported: the text format does not provide
-      // the type, so if it's unreachable we should not even create a br_on_cast
-      // in such a case, as we'd have no idea what it casts to.
-      return builder.makeSequence(builder.makeDrop(ref), rtt);
-    }
   }
-  return builder.makeBrOn(op, name, ref, rtt);
+  return ValidatingBuilder(wasm, s.line, s.col)
+    .validateAndMakeBrOn(op, name, ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {

@@ -6193,7 +6193,7 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     rtt = popNonVoidExpression();
   }
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeBrOn(op, name, ref, rtt);
+  out = ValidatingBuilder(wasm, pos).validateAndMakeBrOn(op, name, ref, rtt);
   return true;
 }
 
