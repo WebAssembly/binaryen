@@ -354,6 +354,7 @@ binaryen_add_executable(wasm-dis src/tools/wasm-dis.cpp)
 binaryen_add_executable(wasm-ctor-eval src/tools/wasm-ctor-eval.cpp)
 binaryen_add_executable(wasm-reduce src/tools/wasm-reduce.cpp)
 binaryen_add_executable(wasm-split src/tools/wasm-split.cpp)
+binaryen_add_executable(wasm-autogen src/tools/wasm-autogen.cpp)
 
 
 # binaryen.js

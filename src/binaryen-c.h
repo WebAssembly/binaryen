@@ -810,6 +810,7 @@ BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
                                                  BinaryenExpressionRef left,
                                                  BinaryenExpressionRef right);
+                                                 
 // Try: name can be NULL. delegateTarget should be NULL in try-catch.
 BINARYEN_API BinaryenExpressionRef
 BinaryenTry(BinaryenModuleRef module,
@@ -845,13 +846,12 @@ BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
 // TODO (gc): br_on_cast
 // TODO (gc): rtt.canon
 // TODO (gc): rtt.sub
-// TODO (gc): struct.new
-// TODO (gc): struct.get
-// TODO (gc): struct.set
 // TODO (gc): array.new
 // TODO (gc): array.get
 // TODO (gc): array.set
 // TODO (gc): array.len
+
+#include "binaryen-c.autogen.h"
 
 // Expression
 
