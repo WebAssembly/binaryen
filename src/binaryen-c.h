@@ -563,6 +563,10 @@ BINARYEN_API BinaryenOp BinaryenRefIsNull(void);
 BINARYEN_API BinaryenOp BinaryenRefIsFunc(void);
 BINARYEN_API BinaryenOp BinaryenRefIsData(void);
 BINARYEN_API BinaryenOp BinaryenRefIsI31(void);
+BINARYEN_API BinaryenOp BinaryenRefAsNonNull(void);
+BINARYEN_API BinaryenOp BinaryenRefAsFunc(void);
+BINARYEN_API BinaryenOp BinaryenRefAsData(void);
+BINARYEN_API BinaryenOp BinaryenRefAsI31(void);
 
 BINARYEN_REF(Expression);
 
@@ -795,6 +799,9 @@ BinaryenMemoryFill(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenRefNull(BinaryenModuleRef module,
                                                    BinaryenType type);
 BINARYEN_API BinaryenExpressionRef BinaryenRefIs(BinaryenModuleRef module,
+                                                 BinaryenOp op,
+                                                 BinaryenExpressionRef value);
+BINARYEN_API BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
                                                  BinaryenOp op,
                                                  BinaryenExpressionRef value);
 BINARYEN_API BinaryenExpressionRef BinaryenRefFunc(BinaryenModuleRef module,
@@ -1700,6 +1707,19 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenRefIsGetValue(BinaryenExpressionRef expr);
 // Sets the value expression tested by a `ref.is_*` expression.
 BINARYEN_API void BinaryenRefIsSetValue(BinaryenExpressionRef expr,
+                                        BinaryenExpressionRef valueExpr);
+
+// RefAs
+
+// Gets the operation performed by a `ref.as_*` expression.
+BINARYEN_API BinaryenOp BinaryenRefAsGetOp(BinaryenExpressionRef expr);
+// Sets the operation performed by a `ref.as_*` expression.
+BINARYEN_API void BinaryenRefAsSetOp(BinaryenExpressionRef expr, BinaryenOp op);
+// Gets the value expression tested by a `ref.as_*` expression.
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefAsGetValue(BinaryenExpressionRef expr);
+// Sets the value expression tested by a `ref.as_*` expression.
+BINARYEN_API void BinaryenRefAsSetValue(BinaryenExpressionRef expr,
                                         BinaryenExpressionRef valueExpr);
 
 // RefFunc

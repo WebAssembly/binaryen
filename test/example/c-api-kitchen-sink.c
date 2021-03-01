@@ -731,6 +731,13 @@ void test_core() {
     BinaryenRefEq(module,
                   BinaryenRefNull(module, BinaryenTypeEqref()),
                   BinaryenRefNull(module, BinaryenTypeEqref())),
+    BinaryenRefIs(module, BinaryenRefIsFunc(), BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefIs(module, BinaryenRefIsData(), BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefIs(module, BinaryenRefIsI31(), BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module, BinaryenRefAsNonNull(), BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module, BinaryenRefAsFunc(), BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module, BinaryenRefAsData(), BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module, BinaryenRefAsI31(), BinaryenRefNull(module, BinaryenTypeAnyref())),
     // Exception handling
     BinaryenTry(module, NULL, tryBody, catchEvents, 1, catchBodies, 2, NULL),
     // (try $try_outer

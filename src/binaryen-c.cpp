@@ -712,6 +712,10 @@ BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
 BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
 BinaryenOp BinaryenRefIsData(void) { return RefIsData; }
 BinaryenOp BinaryenRefIsI31(void) { return RefIsI31; }
+BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; };
+BinaryenOp BinaryenRefAsFunc(void) { return RefAsFunc; }
+BinaryenOp BinaryenRefAsData(void) { return RefAsData; };
+BinaryenOp BinaryenRefAsI31(void) { return RefAsI31; };
 
 BinaryenExpressionRef BinaryenBlock(BinaryenModuleRef module,
                                     const char* name,
@@ -1196,6 +1200,13 @@ BinaryenExpressionRef BinaryenRefIs(BinaryenModuleRef module,
                                     BinaryenExpressionRef value) {
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeRefIs(RefIsOp(op), (Expression*)value));
+}
+
+BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
+                                    BinaryenOp op,
+                                    BinaryenExpressionRef value) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefAs(RefAsOp(op), (Expression*)value));
 }
 
 BinaryenExpressionRef
@@ -2751,6 +2762,29 @@ void BinaryenRefIsSetValue(BinaryenExpressionRef expr,
   assert(expression->is<RefIs>());
   assert(valueExpr);
   static_cast<RefIs*>(expression)->value = (Expression*)valueExpr;
+}
+// RefAs
+BinaryenOp BinaryenRefAsGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefAs>());
+  return static_cast<RefAs*>(expression)->op;
+}
+void BinaryenRefAsSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefAs>());
+  static_cast<RefAs*>(expression)->op = RefAsOp(op);
+}
+BinaryenExpressionRef BinaryenRefAsGetValue(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefAs>());
+  return static_cast<RefAs*>(expression)->value;
+}
+void BinaryenRefAsSetValue(BinaryenExpressionRef expr,
+                           BinaryenExpressionRef valueExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<RefAs>());
+  assert(valueExpr);
+  static_cast<RefAs*>(expression)->value = (Expression*)valueExpr;
 }
 // RefFunc
 const char* BinaryenRefFuncGetFunc(BinaryenExpressionRef expr) {

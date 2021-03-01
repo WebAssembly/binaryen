@@ -1403,6 +1403,54 @@ console.log("# RefIs");
   module.dispose();
 })();
 
+console.log("# RefAs");
+(function testRefAs() {
+  const module = new binaryen.Module();
+
+  var op = binaryen.Operations.RefAsNonNull;
+  var value = module.local.get(1, binaryen.anyref);
+  const theRefAs = binaryen.RefAs(module.ref.as_non_null(value));
+  assert(theRefAs instanceof binaryen.RefAs);
+  assert(theRefAs instanceof binaryen.Expression);
+  assert(theRefAs.op === op);
+  assert(theRefAs.value === value);
+  assert(theRefAs.type !== binaryen.i32); // TODO: === (ref any)
+
+  theRefAs.op = op = binaryen.Operations.RefAsFunc;
+  assert(theRefAs.op === op);
+  theRefAs.op = op = binaryen.Operations.RefAsNull;
+  theRefAs.value = value = module.local.get(2, binaryen.anyref);
+  assert(theRefAs.value === value);
+  theRefAs.type = binaryen.f64;
+  theRefAs.finalize();
+  assert(theRefAs.type !== binaryen.f64); // TODO: === (ref any)
+
+  console.log(theRefAs.toText());
+  assert(
+    theRefAs.toText()
+    ==
+    "(ref.as_non_null\n (local.get $2)\n)\n"
+  );
+
+  assert(
+    binaryen.RefAs(module.ref.as_func(value)).toText()
+    ==
+    "(ref.as_func\n (local.get $2)\n)\n"
+  );
+  assert(
+    binaryen.RefAs(module.ref.as_data(value)).toText()
+    ==
+    "(ref.as_data\n (local.get $2)\n)\n"
+  );
+  assert(
+    binaryen.RefAs(module.ref.as_i31(value)).toText()
+    ==
+    "(ref.as_i31\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# RefFunc");
 (function testRefFunc() {
   const module = new binaryen.Module();
