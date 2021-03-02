@@ -1422,6 +1422,19 @@ void test_func_opt() {
   BinaryenModuleDispose(module);
 }
 
+void test_gc() {
+  // Parse a module in s-expression text format
+  BinaryenModuleRef module = BinaryenModuleParse(strdup(
+    "(module "
+    "  (type $vec2 (struct i32 i32)) "
+    ")"
+  ));
+
+  BinaryenModulePrint(module);
+
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_types();
   test_features();
@@ -1434,6 +1447,7 @@ int main() {
   test_color_status();
   test_for_each();
   test_func_opt();
+  test_gc();
 
   return 0;
 }
