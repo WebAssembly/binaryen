@@ -1137,7 +1137,7 @@ echo "At least one of the next two values should be 0:"
 %(wasm_opt)s --detect-features %(temp_wasm)s
 echo "  " $?
 %(wasm_opt)s --all-features %(temp_wasm)s
-echo ":" $?
+echo "  " $?
 
 # run the command
 echo "The following value should be 1:"
