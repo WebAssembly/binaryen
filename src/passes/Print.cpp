@@ -1912,12 +1912,8 @@ struct PrintExpressionContents
       printMedium(o, "call_ref");
     }
   }
-  void visitRefTest(RefTest* curr) {
-    printMedium(o, "ref.test");
-  }
-  void visitRefCast(RefCast* curr) {
-    printMedium(o, "ref.cast");
-  }
+  void visitRefTest(RefTest* curr) { printMedium(o, "ref.test"); }
+  void visitRefCast(RefCast* curr) { printMedium(o, "ref.cast"); }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:
