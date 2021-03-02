@@ -58,6 +58,10 @@
       (struct.get_s $struct.B 0 (local.get $tB))
     )
     (drop
+      ;; immutable fields allow subtyping.
+      (struct.get $child 0 (ref.null $grandchild))
+    )
+    (drop
       (ref.null $struct.A)
     )
     (drop
