@@ -81,11 +81,11 @@
   ))
   ;; Testing null returns 0.
   (call $log
-   (ref.test $struct (ref.null $struct) (rtt.canon $struct))
+   (ref.test (ref.null $struct) (rtt.canon $struct))
   )
   ;; Testing something completely wrong (struct vs array) returns 0.
   (call $log
-   (ref.test $struct
+   (ref.test
     (array.new_with_rtt $bytes
      (i32.const 20)
      (i32.const 10)
@@ -96,7 +96,7 @@
   )
   ;; Testing a thing with the same RTT returns 1.
   (call $log
-   (ref.test $struct
+   (ref.test
     (struct.new_default_with_rtt $struct
      (rtt.canon $struct)
     )
@@ -105,7 +105,7 @@
   )
   ;; A bad downcast returns 0: we create a struct, which is not a extendedstruct.
   (call $log
-   (ref.test $extendedstruct
+   (ref.test
     (struct.new_default_with_rtt $struct
      (rtt.canon $struct)
     )
@@ -120,21 +120,21 @@
   )
   ;; Casting to y, the exact same RTT, works.
   (call $log
-   (ref.test $extendedstruct
+   (ref.test
     (local.get $any)
     (rtt.sub $extendedstruct (rtt.canon $struct))
    )
   )
   ;; Casting to z, another RTT of the same data type, fails.
   (call $log
-   (ref.test $extendedstruct
+   (ref.test
     (local.get $any)
     (rtt.canon $extendedstruct)
    )
   )
   ;; Casting to x, the parent of y, works.
   (call $log
-   (ref.test $struct
+   (ref.test
     (local.get $any)
     (rtt.canon $struct)
    )
@@ -183,7 +183,7 @@
   ;; array or a struct, so our casting code should not assume it is. it is ok
   ;; to try to cast it, and the result should be 0.
   (call $log
-   (ref.test $struct
+   (ref.test
     (ref.null any)
     (rtt.canon $struct)
    )

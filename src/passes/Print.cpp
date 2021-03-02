@@ -1914,7 +1914,6 @@ struct PrintExpressionContents
   }
   void visitRefTest(RefTest* curr) {
     printMedium(o, "ref.test ");
-    TypeNamePrinter(o, wasm).print(curr->getCastType().getHeapType());
   }
   void visitRefCast(RefCast* curr) {
     printMedium(o, "ref.cast ");
