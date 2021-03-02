@@ -5,6 +5,7 @@
  (type $vector (array (mut f64)))
  (type $anyref_=>_none (func (param anyref)))
  (type $parent (struct ))
+ (type $grandchild (struct (field i32) (field i64)))
  (type $struct.C (struct (field $named-mut (mut f32))))
  (type $none_=>_none (func))
  (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
@@ -12,7 +13,6 @@
  (type $ref?|$struct.A|_=>_ref?|$struct.B| (func (param (ref null $struct.A)) (result (ref null $struct.B))))
  (type $ref?|$vector|_=>_ref?|$matrix| (func (param (ref null $vector)) (result (ref null $matrix))))
  (type $child (struct (field i32)))
- (type $grandchild (struct (field i32) (field i64)))
  (type $words (array (mut i32)))
  (type $bytes (array (mut i8)))
  (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
@@ -59,6 +59,11 @@
   (drop
    (struct.get_s $struct.B 0
     (local.get $tB)
+   )
+  )
+  (drop
+   (struct.get $grandchild 0
+    (ref.null $grandchild)
    )
   )
   (drop
