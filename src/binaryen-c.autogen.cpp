@@ -9,7 +9,7 @@ BinaryenStructNew(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenE
 BINARYEN_API BinaryenExpressionRef
 BinaryenStructGet(BinaryenModuleRef module, uint32_t index, BinaryenExpressionRef ref, uint32_t signed_, BinaryenType type) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeStructGet(index, ref, signed_, type));
+    Builder(*(Module*)module).makeStructGet(index, ref, signed_, Type(type)));
 }
 
 BINARYEN_API BinaryenExpressionRef

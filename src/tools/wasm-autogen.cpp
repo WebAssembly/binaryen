@@ -142,7 +142,7 @@ template<typename T> void autogenOneCAPIImpl() {
 
 #define DELEGATE_FIELD_SIGNATURE(id, name) params.push_back(#name);
 
-#define DELEGATE_FIELD_TYPE(id, name) params.push_back(#name);
+#define DELEGATE_FIELD_TYPE(id, name) params.push_back("Type(" #name ")");
 
 #define DELEGATE_FIELD_ADDRESS(id, name) params.push_back(#name);
 
@@ -154,7 +154,7 @@ template<typename T> void autogenOneCAPIImpl() {
   // given their type, as it is not inferred from the operands but from global
   // structures.
   if (std::is_same<T, StructGet>()) {
-    params.push_back("type");
+    params.push_back("Type(type)");
   }
 
   std::string sep = "";
