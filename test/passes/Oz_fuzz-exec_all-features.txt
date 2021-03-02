@@ -212,7 +212,7 @@
    (i32.const 2)
   )
   (call_ref
-   (ref.cast $void_func
+   (ref.cast 
     (ref.func $a-void-func)
     (rtt.canon $void_func)
    )
@@ -222,7 +222,7 @@
   )
   (drop
    (call_ref
-    (ref.cast $int_func
+    (ref.cast 
      (ref.func $a-void-func)
      (rtt.canon $int_func)
     )

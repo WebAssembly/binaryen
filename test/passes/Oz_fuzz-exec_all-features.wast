@@ -77,7 +77,7 @@
   (local $any anyref)
   ;; Casting null returns null.
   (call $log (ref.is_null
-   (ref.cast $struct (ref.null $struct) (rtt.canon $struct))
+   (ref.cast (ref.null $struct) (rtt.canon $struct))
   ))
   ;; Testing null returns 0.
   (call $log
@@ -216,12 +216,12 @@
   (call $log (i32.const 2))
   ;; a valid cast
   (call_ref
-   (ref.cast $void_func (ref.func $a-void-func) (rtt.canon $void_func))
+   (ref.cast (ref.func $a-void-func) (rtt.canon $void_func))
   )
   (call $log (i32.const 3))
   ;; an invalid cast
   (drop (call_ref
-   (ref.cast $int_func (ref.func $a-void-func) (rtt.canon $int_func))
+   (ref.cast (ref.func $a-void-func) (rtt.canon $int_func))
   ))
   ;; will never be reached
   (call $log (i32.const 4))

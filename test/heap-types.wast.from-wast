@@ -176,7 +176,7 @@
    )
   )
   (drop
-   (ref.cast $struct.B
+   (ref.cast 
     (ref.null $struct.A)
     (rtt.canon $struct.B)
    )

@@ -2569,10 +2569,8 @@ Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  auto* ref = parseExpression(*s[2]);
-  auto* rtt = parseExpression(*s[3]);
-  validateHeapTypeUsingChild(rtt, heapType, s);
+  auto* ref = parseExpression(*s[1]);
+  auto* rtt = parseExpression(*s[2]);
   return Builder(wasm).makeRefCast(ref, rtt);
 }
 

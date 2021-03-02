@@ -1918,7 +1918,6 @@ struct PrintExpressionContents
   }
   void visitRefCast(RefCast* curr) {
     printMedium(o, "ref.cast ");
-    TypeNamePrinter(o, wasm).print(curr->getCastType().getHeapType());
   }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {

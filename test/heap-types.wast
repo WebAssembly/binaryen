@@ -166,7 +166,7 @@
       (ref.test $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
     )
     (drop
-      (ref.cast $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+      (ref.cast (ref.null $struct.A) (rtt.canon $struct.B))
     )
     (drop
       (block $out (result (ref $struct.B))

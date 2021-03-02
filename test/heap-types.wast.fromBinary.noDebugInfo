@@ -176,7 +176,7 @@
    )
   )
   (drop
-   (ref.cast ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}
+   (ref.cast 
     (ref.null ${i32_f32_f64})
     (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
    )
