@@ -50,9 +50,7 @@
      )
     )
     (catch_all
-     (drop
-      (pop i32)
-     )
+     (nop)
     )
    )
    (drop
