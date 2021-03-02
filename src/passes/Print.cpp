@@ -1913,10 +1913,10 @@ struct PrintExpressionContents
     }
   }
   void visitRefTest(RefTest* curr) {
-    printMedium(o, "ref.test ");
+    printMedium(o, "ref.test");
   }
   void visitRefCast(RefCast* curr) {
-    printMedium(o, "ref.cast ");
+    printMedium(o, "ref.cast");
   }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
