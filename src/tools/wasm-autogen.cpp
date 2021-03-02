@@ -79,6 +79,13 @@ template<typename T> void autogenOneCAPIDecl(bool startOfImpl = false) {
 
 #include "wasm-delegations-fields.h"
 
+  // Some classes have extra fields, like local.get/struct.get etc. must be
+  // given their type, as it is not inferred from the operands but from global
+  // structures.
+  if (std::is_same<T, StructGet>()) {
+    std::cout << ", BinaryenType type";
+  }
+
   std::cout << ')';
 
   if (!startOfImpl) {
@@ -142,6 +149,13 @@ template<typename T> void autogenOneCAPIImpl() {
 #define DELEGATE_FIELD_CHILD_VECTOR(id, name) params.push_back(#name);
 
 #include "wasm-delegations-fields.h"
+
+  // Some classes have extra fields, like local.get/struct.get etc. must be
+  // given their type, as it is not inferred from the operands but from global
+  // structures.
+  if (std::is_same<T, StructGet>()) {
+    params.push_back("type");
+  }
 
   std::string sep = "";
   for (auto& param : params) {
