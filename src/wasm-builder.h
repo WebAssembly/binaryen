@@ -799,7 +799,7 @@ public:
     return ret;
   }
   StructGet*
-  makeStructGet(Index index, Expression* ref, Type type, bool signed_ = false) {
+  makeStructGet(Index index, Expression* ref, bool signed_ = false, Type type) {
     auto* ret = wasm.allocator.alloc<StructGet>();
     ret->index = index;
     ret->ref = ref;

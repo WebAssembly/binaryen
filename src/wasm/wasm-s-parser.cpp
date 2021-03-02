@@ -2638,7 +2638,7 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
   auto type = heapType.getStruct().fields[index].type;
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
-  return Builder(wasm).makeStructGet(index, ref, type, signed_);
+  return Builder(wasm).makeStructGet(index, ref, signed_, type);
 }
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
