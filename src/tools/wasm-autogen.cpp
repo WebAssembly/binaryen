@@ -114,13 +114,13 @@ template<typename T> void autogenOneCAPIImpl() {
   MixedArena allocator;
   T curr(allocator);
 
+  std::string className;
   std::vector<std::string> params;
 
 #define DELEGATE_ID curr._id
 
 #define DELEGATE_START(id)                                                     \
-  std::cout << "  return static_cast<Expression*>(\n";                         \
-  std::cout << "    Builder(*(Module*)module).make" << #id << '(';
+  className = #id;
 
 #define DELEGATE_FIELD_CHILD(id, name) params.push_back(#name);
 
@@ -146,7 +146,12 @@ template<typename T> void autogenOneCAPIImpl() {
 
 #define DELEGATE_FIELD_ADDRESS(id, name) params.push_back(#name);
 
-#define DELEGATE_FIELD_CHILD_VECTOR(id, name) params.push_back(#name);
+#define DELEGATE_FIELD_CHILD_VECTOR(id, name) \
+  std::cout << "  std::vector<Expression*> " #name "_list;\n"; \
+  std::cout << "  for (BinaryenIndex i = 0; i < num_" #name "; i++) {\n"; \
+  std::cout << "    " #name "_list.push_back((Expression*)" #name "[i]);\n"; \
+  std::cout << "  }\n"; \
+  params.push_back(#name "_list");
 
 #include "wasm-delegations-fields.h"
 
@@ -156,6 +161,9 @@ template<typename T> void autogenOneCAPIImpl() {
   if (std::is_same<T, StructGet>()) {
     params.push_back("Type(type)");
   }
+
+  std::cout << "  return static_cast<Expression*>(\n";
+  std::cout << "    Builder(*(Module*)module).make" << className << '(';
 
   std::string sep = "";
   for (auto& param : params) {
