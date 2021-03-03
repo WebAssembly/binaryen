@@ -35,9 +35,7 @@
         (do
           (throw $e (i32.const 0))
         )
-        (catch_all
-          (drop (pop i32))
-        )
+        (catch_all)
       )
       (drop (i32.const 1))
       (br_if $out (i32.const 2))
