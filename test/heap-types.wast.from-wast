@@ -52,6 +52,11 @@
    )
   )
   (drop
+   (struct.get $struct.A $named
+    (ref.null $struct.A)
+   )
+  )
+  (drop
    (struct.get_u $struct.B 0
     (local.get $tB)
    )

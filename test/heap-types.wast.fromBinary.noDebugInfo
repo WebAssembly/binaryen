@@ -52,6 +52,11 @@
    )
   )
   (drop
+   (struct.get ${i32_f32_f64} 2
+    (ref.null ${i32_f32_f64})
+   )
+  )
+  (drop
    (struct.get_u ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} 0
     (local.get $2)
    )

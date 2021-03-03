@@ -6,6 +6,13 @@
     (field f32)
     (field $named f64)
   ))
+  ;; identical to $struct.A, so will be canonicalized with it, but field names
+  ;; are different
+  (type $struct.A.prime (struct
+    i32
+    (field f32)
+    (field $othername f64)
+  ))
   (type $struct.B (struct
     (field i8)
     (field (mut i16))
@@ -50,6 +57,9 @@
     )
     (drop
       (struct.get $struct.A $named (local.get $x))
+    )
+    (drop
+      (struct.get $struct.A.prime $othername (ref.null $struct.A.prime))
     )
     (drop
       (struct.get_u $struct.B 0 (local.get $tB))
