@@ -786,10 +786,6 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
                      builder.getTempTupleType(results));
   };
 
-  // Maps type indexes to a mapping of field index => name. We store the data
-  // here while parsing as types have not been created yet.
-  std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
-
   // Parses a field, and notes the name if one is found.
   auto parseField = [&](Element* elem, Name& name) {
     Mutability mutable_ = Immutable;
@@ -2610,27 +2606,28 @@ Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   return Builder(wasm).makeStructNew(rtt, operands);
 }
 
-Index SExpressionWasmBuilder::getStructIndex(const HeapType& type, Element& s) {
-  if (s.dollared()) {
-    auto name = s.str();
-    auto struct_ = type.getStruct();
+Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
+  if (field.dollared()) {
+    auto name = field.str();
+    auto index = typeIndices[type.str().str];
+    auto struct_ = types[index].getStruct();
     auto& fields = struct_.fields;
-    const auto& fieldNames = wasm.typeNames[type].fieldNames;
+    const auto& names = fieldNames[index];
     for (Index i = 0; i < fields.size(); i++) {
-      auto it = fieldNames.find(i);
-      if (it != fieldNames.end() && it->second == name) {
+      auto it = names.find(i);
+      if (it != names.end() && it->second == name) {
         return i;
       }
     }
-    throw ParseException("bad struct field name", s.line, s.col);
+    throw ParseException("bad struct field name", field.line, field.col);
   }
   // this is a numeric index
-  return atoi(s.c_str());
+  return atoi(field.c_str());
 }
 
 Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
   auto heapType = parseHeapType(*s[1]);
-  auto index = getStructIndex(heapType, *s[2]);
+  auto index = getStructIndex(*s[1], *s[2]);
   auto type = heapType.getStruct().fields[index].type;
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
@@ -2639,7 +2636,7 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
   auto heapType = parseHeapType(*s[1]);
-  auto index = getStructIndex(heapType, *s[2]);
+  auto index = getStructIndex(*s[1], *s[2]);
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
   auto value = parseExpression(*s[4]);
