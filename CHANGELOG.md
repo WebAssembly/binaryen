@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v100
+----
+
 - `wasm-dis` now supports options to enable or disable Wasm features.
 - Reference types support has been improved by allowing multiple tables in a
   module.
