@@ -148,6 +148,42 @@ jobs:
     - name: test
       run: python check.py --binaryen-bin=out/bin
 
+  # Build with gcc 6.3 and run tests on Alpine Linux (inside chroot).
+  # Note: Alpine uses musl libc.
+  # Keep in sync with build_release.yml
+  build-alpine:
+    name: alpine
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+    - name: start docker
+      run: |
+        docker run -w /src -dit --name alpine -v $PWD:/src node:lts-alpine
+        echo 'docker exec alpine "$@";' > ./alpine.sh
+        chmod +x ./alpine.sh
+
+    - name: install packages
+      run: |
+        ./alpine.sh apk update
+        ./alpine.sh apk add build-base cmake git python3 clang ninja
+
+    - name: install python dev dependencies
+      run: ./alpine.sh pip3 install -r requirements-dev.txt
+
+    - name: cmake
+      run: |
+        ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install
+
+    - name: build
+      run: |
+        ./alpine.sh ninja install
+
+    - name: test
+      run: ./alpine.sh python3 ./check.py
+
   # Duplicates build-asan.  Please keep in sync
   build-ubsan:
     name: ubsan
