@@ -859,7 +859,7 @@ bool TypeComparator::lessThan(HeapType a, HeapType b) {
   }
   if (seen.count({a, b})) {
     // We weren't able to disprove that a == b since we last saw them, so it
-    // holds coinductively that a < b is therefore false.
+    // holds coinductively that a < b is false.
     return false;
   }
   if (a.isBasic() && b.isBasic()) {
