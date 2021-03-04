@@ -44,6 +44,9 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
 
   ModuleUtils::ParallelFunctionAnalysis<Names> analysis(
     wasm, [&](Function* func, Names& names) {
+      if (func->imported()) {
+        return;
+      }
       for (auto* refFunc : FindAll<RefFunc>(func->body).list) {
         names.insert(refFunc->func);
       }
