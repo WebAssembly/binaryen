@@ -689,7 +689,8 @@ void WasmBinaryWriter::writeNames() {
           auto indexInFunc = indexedLocal.first;
           auto name = indexedLocal.second;
           // TODO: handle multivalue
-          auto indexInBinary = funcMappedLocals.at(func->name)[std::pair(indexInFunc, 0)];
+          auto indexInBinary =
+            funcMappedLocals.at(func->name)[std::pair(indexInFunc, 0)];
           o << U32LEB(localIndexInFunc);
           writeEscapedName(name.str);
         }
