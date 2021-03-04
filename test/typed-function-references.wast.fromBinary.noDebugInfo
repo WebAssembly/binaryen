@@ -51,8 +51,8 @@
  )
  (func $7
   (local $0 i32)
-  (local $1 f64)
-  (local $2 (ref null $none_=>_anyref))
+  (local $1 (ref null $none_=>_anyref))
+  (local $2 f64)
   (nop)
  )
  (func $8
