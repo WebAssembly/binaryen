@@ -18,6 +18,7 @@
 #include <fstream>
 
 #include "ir/module-utils.h"
+#include "ir/table-utils.h"
 #include "support/bits.h"
 #include "support/debug.h"
 #include "wasm-binary.h"
@@ -548,6 +549,10 @@ void WasmBinaryWriter::writeTableElements() {
   for (auto& table : wasm->tables) {
     elemCount += table->segments.size();
   }
+  auto needingElemDecl = TableUtils::getFunctionsNeedingElemDeclare(*wasm);
+  if (!needingElemDecl.empty()) {
+    elemCount++;
+  }
   if (elemCount == 0) {
     return;
   }
@@ -588,6 +593,16 @@ void WasmBinaryWriter::writeTableElements() {
       }
     }
   }
+
+  if (!needingElemDecl.empty()) {
+    o << U32LEB(BinaryConsts::IsPassive | BinaryConsts::IsDeclarative);
+    o << U32LEB(0); // type (indicating funcref)
+    o << U32LEB(needingElemDecl.size());
+    for (auto name : needingElemDecl) {
+      o << U32LEB(indexes.functionIndexes[name]);
+    }
+  }
+
   finishSection(start);
 }
 
@@ -2681,7 +2696,7 @@ void WasmBinaryBuilder::readTableElements() {
       if (isDeclarative) {
         // "elem declare" is needed in wasm text and binary, but not in Binaryen
         // IR; read and ignore the contents.
-        auto type = getType();
+        auto type = getU32LEB();
         WASM_UNUSED(type);
         auto num = getU32LEB();
         for (Index i = 0; i < num; i++) {
