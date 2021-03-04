@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
+#include "table-utils.h"
 #include "find_all.h"
 #include "module-utils.h"
-#include "table-utils.h"
 
 namespace wasm {
 
@@ -42,11 +42,12 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   // Find all the names in ref.funcs.
   using Names = std::unordered_set<Name>;
 
-  ModuleUtils::ParallelFunctionAnalysis<Refs> analysis(wasm, [&](Function* func, Names& names) {
-    for (auto* refFunc : FindAll<RefFunc>(func->body).list) {
-      names.insert(refFunc->func);
-    }
-  });
+  ModuleUtils::ParallelFunctionAnalysis<Refs> analysis(
+    wasm, [&](Function* func, Names& names) {
+      for (auto* refFunc : FindAll<RefFunc>(func->body).list) {
+        names.insert(refFunc->func);
+      }
+    });
 
   // Find the names that need to be declared.
 
