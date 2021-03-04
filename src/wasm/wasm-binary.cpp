@@ -674,7 +674,7 @@ void WasmBinaryWriter::writeNames() {
       for (auto& kv : functionsWithLocalNames) {
         auto index = kv.first;
         auto* func = kv.second;
-        // Pairs of (local index in function, name).
+        // Pairs of (local index in IR, name).
         std::vector<std::pair<Index, Name>> localsWithNames;
         auto numLocals = func->getNumLocals();
         for (Index i = 0; i < numLocals; ++i) {

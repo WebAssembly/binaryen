@@ -82,9 +82,6 @@ public:
   Type type;
 };
 
-// (local index, tuple index) => binary local index
-using MappedLocals = std::unordered_map<std::pair<Index, Index>, size_t>;
-
 class BinaryInstWriter : public OverriddenVisitor<BinaryInstWriter> {
 public:
   BinaryInstWriter(WasmBinaryWriter& parent,

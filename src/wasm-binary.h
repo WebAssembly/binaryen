@@ -1090,6 +1090,9 @@ enum FeaturePrefix {
 
 } // namespace BinaryConsts
 
+// (local index in IR, tuple index) => binary local index
+using MappedLocals = std::unordered_map<std::pair<Index, Index>, size_t>;
+
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
