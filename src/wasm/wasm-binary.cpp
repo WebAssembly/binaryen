@@ -2689,7 +2689,7 @@ void WasmBinaryBuilder::readTableElements() {
         }
         continue;
       }
- 
+
       throwError("Only active elem segments are supported.");
     }
 

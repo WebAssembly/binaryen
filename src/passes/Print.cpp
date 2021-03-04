@@ -2835,8 +2835,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
                                    [&](Table* table) { visitTable(table); });
     for (auto name : TableUtils::getFunctionsNeedingElemDeclare(*curr)) {
       doIndent(o, indent);
-      printMedium(o, "(elem") << " declare func $" << name << ')'
-                             << maybeNewLine;
+      printMedium(o, "(elem")
+        << " declare func $" << name << ')' << maybeNewLine;
     }
     ModuleUtils::iterDefinedGlobals(
       *curr, [&](Global* global) { visitGlobal(global); });
