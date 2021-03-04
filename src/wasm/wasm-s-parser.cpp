@@ -3272,7 +3272,8 @@ void SExpressionWasmBuilder::parseElem(Element& s) {
   if (!s[i]->isList()) {
     // optional segment id OR 'declare' OR start of elemList
     if (s[i]->str() == DECLARE) {
-      // elem declare is needed in wasm text and binary, but not in Binaryen IR
+      // "elem declare" is needed in wasm text and binary, but not in Binaryen
+      // IR; ignore the contents.
       return;
     }
     i += 1;

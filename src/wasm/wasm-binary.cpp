@@ -2673,8 +2673,21 @@ void WasmBinaryBuilder::readTableElements() {
   for (size_t i = 0; i < numSegments; i++) {
     auto flags = getU32LEB();
     bool isPassive = (flags & BinaryConsts::IsPassive) != 0;
+    bool isDeclarative = (flags & BinaryConsts::IsDeclarative) != 0;
     bool hasTableIdx = (flags & BinaryConsts::HasIndex) != 0;
     bool usesExpressions = (flags & BinaryConsts::UsesExpressions) != 0;
+
+    if (isDeclarative) {
+      // "elem declare" is needed in wasm text and binary, but not in Binaryen
+      // IR; read and ignore the contents.
+      auto type = getType();
+      WASM_UNUSED(type);
+      auto num = getU32LEB();
+      for (Index i = 0; i < num; i++) {
+        getU32LEB();
+      }
+      continue;
+    }
 
     if (isPassive) {
       throwError("Only active elem segments are supported.");
