@@ -32,7 +32,7 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
 
   std::unordered_set<Name> tableNames;
   for (auto& table : wasm.tables) {
-    for (auto& segment : table.segments) {
+    for (auto& segment : table->segments) {
       for (auto name : segment.data) {
         tableNames.insert(name);
       }
@@ -42,7 +42,7 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   // Find all the names in ref.funcs.
   using Names = std::unordered_set<Name>;
 
-  ModuleUtils::ParallelFunctionAnalysis<Refs> analysis(
+  ModuleUtils::ParallelFunctionAnalysis<Names> analysis(
     wasm, [&](Function* func, Names& names) {
       for (auto* refFunc : FindAll<RefFunc>(func->body).list) {
         names.insert(refFunc->func);
