@@ -41,6 +41,7 @@
  (type $anyref_=>_none (func (param anyref)))
  (type $int_func (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (elem declare func $a-void-func)
  (export "structs" (func $0))
  (export "arrays" (func $1))
  (export "rtts" (func $2))

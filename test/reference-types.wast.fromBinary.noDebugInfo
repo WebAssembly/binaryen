@@ -3,15 +3,17 @@
  (type $anyref_=>_none (func (param anyref)))
  (type $funcref_=>_none (func (param funcref)))
  (type $none_=>_funcref (func (result funcref)))
+ (type $none_=>_none (func))
  (type $externref_=>_none (func (param externref)))
  (type $none_=>_externref (func (result externref)))
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $externref_=>_funcref (func (param externref) (result funcref)))
  (import "env" "import_global" (global $gimport$0 externref))
  (import "env" "import_func" (func $fimport$0 (param externref) (result funcref)))
  (table $0 3 3 funcref)
  (elem (i32.const 0) $0 $1 $2)
+ (elem declare func $27)
+ (elem declare func $3)
  (global $global$0 (mut externref) (ref.null extern))
  (global $global$1 (mut funcref) (ref.null func))
  (global $global$2 (mut funcref) (ref.func $3))
@@ -724,6 +726,14 @@
   (return
    (local.get $1)
   )
+ )
+ (func $26
+  (drop
+   (ref.func $27)
+  )
+ )
+ (func $27
+  (nop)
  )
 )
 
