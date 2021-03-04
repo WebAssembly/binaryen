@@ -1275,6 +1275,11 @@ private:
   // the function is written out.
   std::vector<Expression*> binaryLocationTrackedExpressionsForFunc;
 
+  // Maps function names to their mapped locals. This is used when we emit the
+  // local names section: we map the locals when writing the function, save that
+  // info here, and then use it when writing the names.
+  std::unordered_map<Name, MappedLocals> funcMappedLocals;
+
   void prepare();
 };
 

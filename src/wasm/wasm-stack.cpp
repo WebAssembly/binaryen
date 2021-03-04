@@ -2166,7 +2166,7 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   }
   for (auto type : func->vars) {
     for (const auto& t : type) {
-      numLocalsByType[t]++;
+      noteLocalType(t);
     }
   }
   countScratchLocals();
@@ -2176,22 +2176,29 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     for (const auto& type : func->getLocalType(i)) {
       auto fullIndex = std::make_pair(i, j++);
       Index index = func->getVarIndexBase();
-      for (auto& typeCount : numLocalsByType) {
-        if (type == typeCount.first) {
-          mappedLocals[fullIndex] = index + currLocalsByType[typeCount.first];
+      for (auto& localType : localTypes) {
+        if (type == localType) {
+          mappedLocals[fullIndex] = index + currLocalsByType[localType];
           currLocalsByType[type]++;
           break;
         }
-        index += typeCount.second;
+        index += numLocalsByType.at(localType);
       }
     }
   }
   setScratchLocals();
   o << U32LEB(numLocalsByType.size());
-  for (auto& typeCount : numLocalsByType) {
-    o << U32LEB(typeCount.second);
-    parent.writeType(typeCount.first);
+  for (auto& localType : localTypes) {
+    o << U32LEB(numLocalsByType.at(localType));
+    parent.writeType(localType);
   }
+}
+
+void BinaryInstWriter::noteLocalType(Type type) {
+  if (!numLocalsByType.count(type)) {
+    localTypes.push_back(type);
+  }
+  numLocalsByType[type]++;
 }
 
 void BinaryInstWriter::countScratchLocals() {
@@ -2204,16 +2211,16 @@ void BinaryInstWriter::countScratchLocals() {
     }
   }
   for (auto t : scratchLocals) {
-    numLocalsByType[t.first]++;
+    noteLocalType(t.first);
   }
 }
 
 void BinaryInstWriter::setScratchLocals() {
   Index index = func->getVarIndexBase();
-  for (auto& typeCount : numLocalsByType) {
-    index += typeCount.second;
-    if (scratchLocals.find(typeCount.first) != scratchLocals.end()) {
-      scratchLocals[typeCount.first] = index - 1;
+  for (auto& localType : localTypes) {
+    index += numLocalsByType[localType];
+    if (scratchLocals.find(localType) != scratchLocals.end()) {
+      scratchLocals[localType] = index - 1;
     }
   }
 }
