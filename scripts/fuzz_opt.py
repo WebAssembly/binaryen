@@ -1207,9 +1207,10 @@ At least one of the next two values should be 0:
 The following value should be 1:
   1
 
-(If it does not, then one possible issue is that -ttf fails to write a valid
-binary. If so, you can print the output of ttf in text form and run the
-reduction from that, passing --text to the reducer.)
+(If it does not, then one possible issue is that the fuzzer fails to write a
+valid binary. If so, you can print the output of the fuzzer's first command
+(using -ttf / --translate-to-fuzz) in text form and run the reduction from that,
+passing --text to the reducer.)
 
 You can also read "%(reduce_sh)s" which has been filled out for you and includes
 docs and suggestions.
