@@ -51,7 +51,7 @@ int unhex(char c) {
 namespace wasm {
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), I8("i8"),
-  I16("i16"), RTT("rtt");
+  I16("i16"), RTT("rtt"), DECLARE("declare");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -3257,6 +3257,7 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
 // elem  ::= (elem (expr) vec(funcidx))
 //         | (elem (offset (expr)) func vec(funcidx))
 //         | (elem (table tableidx) (offset (expr)) func vec(funcidx))
+//         | (elem declare func $foo)
 //
 // abbreviation:
 //   (offset (expr)) ≡ (expr)
@@ -3270,6 +3271,10 @@ void SExpressionWasmBuilder::parseElem(Element& s) {
 
   if (!s[i]->isList()) {
     // optional segment id OR 'declare' OR start of elemList
+    if (s[i]->str() == DECLARE) {
+      // elem declare is needed in wasm text and binary, but not in Binaryen IR
+      return;
+    }
     i += 1;
   }
 
