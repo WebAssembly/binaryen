@@ -338,14 +338,14 @@ void WasmBinaryWriter::writeFunctions() {
       StackIRToBinaryWriter writer(*this, o, func);
       writer.write();
       if (debugInfo) {
-        funcMappedLocals[func->name].swap(writer.getMappedLocals());
+        funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
       }
     } else {
       BYN_TRACE("write Binaryen IR\n");
       BinaryenIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
       writer.write();
       if (debugInfo) {
-        funcMappedLocals[func->name].swap(writer.getMappedLocals());
+        funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
       }
     }
     size_t size = o.size() - start;
