@@ -550,7 +550,7 @@ inline void collectHeapTypes(Module& wasm,
 
   // Sort by frequency and then simplicity.
   std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
-  std::sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
+  std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
     if (a.second != b.second) {
       return a.second > b.second;
     }
