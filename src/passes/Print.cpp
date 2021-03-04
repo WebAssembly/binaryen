@@ -2833,10 +2833,15 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       *curr, [&](Memory* memory) { visitMemory(memory); });
     ModuleUtils::iterDefinedTables(*curr,
                                    [&](Table* table) { visitTable(table); });
-    for (auto name : TableUtils::getFunctionsNeedingElemDeclare(*curr)) {
+    auto elemDeclareNames = TableUtils::getFunctionsNeedingElemDeclare(*curr);
+    if (!elemDeclareNames.empty()) {
       doIndent(o, indent);
-      printMedium(o, "(elem")
-        << " declare func $" << name << ')' << maybeNewLine;
+      printMedium(o, "(elem");
+      o << " declare func";
+      for (auto name : elemDeclareNames) {
+        o << " $" << name;
+      }
+      o << ')' << maybeNewLine;
     }
     ModuleUtils::iterDefinedGlobals(
       *curr, [&](Global* global) { visitGlobal(global); });
