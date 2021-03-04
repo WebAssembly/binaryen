@@ -5,6 +5,7 @@ set(ir_SOURCES
   LocalGraph.cpp
   ReFinalize.cpp
   stack-utils.cpp
+  table-utils.cpp
   module-splitting.cpp
   ${ir_HEADERS}
 )
