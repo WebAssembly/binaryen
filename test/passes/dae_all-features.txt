@@ -282,6 +282,7 @@
 (module
  (type $funcref_i32_f64_=>_i64 (func (param funcref i32 f64) (result i64)))
  (type $f32_=>_funcref (func (param f32) (result funcref)))
+ (elem declare func $0)
  (export "export" (func $1))
  (func $0 (param $0 funcref) (param $1 i32) (param $2 f64) (result i64)
   (nop)

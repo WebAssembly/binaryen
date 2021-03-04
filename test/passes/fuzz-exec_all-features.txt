@@ -211,6 +211,7 @@
 [fuzz-exec] note result: func => funcref(func)
 (module
  (type $none_=>_funcref (func (result funcref)))
+ (elem declare func $func)
  (export "func" (func $func))
  (func $func (result funcref)
   (ref.func $func)

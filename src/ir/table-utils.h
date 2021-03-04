@@ -94,6 +94,10 @@ inline Index getOrAppend(Table& table, Name name, Module& wasm) {
   return append(table, name, wasm);
 }
 
+// Functions that we take a reference to, but are not in a Table, but get an
+// "elem declare" mention in the text and binary formats.
+std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm);
+
 } // namespace TableUtils
 
 } // namespace wasm

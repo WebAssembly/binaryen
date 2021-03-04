@@ -120,6 +120,12 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      and so they are observable externally. To support that, Binaryen may use
      `push` and `pop` as mentioned earlier; another option is to add LLVM-like
      `extractvalue/composevalue` instructions.
+ * Reference Types
+  * The wasm text and binary formats require that a function whose address is
+    taken by `ref.func` must be either in the table, or declared via an
+    `(elem declare func $..)`. Binaryen will emit that data when necessary, but
+    it does not represent it in IR. That is, IR can be worked on without needing
+    to think about declaring function references.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.

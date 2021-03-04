@@ -316,6 +316,7 @@
 )
 (module
  (type $none_=>_none (func))
+ (elem declare func $foo)
  (export "test" (func $test))
  (func $foo
   (nop)

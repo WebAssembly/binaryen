@@ -8,6 +8,7 @@
  (type $none_=>_anyref (func (result anyref)))
  (type $none_=>_i32_ref?|none_->_anyref_f32_anyref_f32|_f64 (func (result i32 (ref null $none_=>_anyref_f32_anyref_f32) f64)))
  (type $f64_=>_ref?|none_->_eqref| (func (param f64) (result (ref null $none_=>_eqref))))
+ (elem declare func $0 $2)
  (func $0
   (call_ref
    (ref.func $0)

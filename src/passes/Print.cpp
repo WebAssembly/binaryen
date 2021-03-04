@@ -20,6 +20,7 @@
 
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
+#include <ir/table-utils.h>
 #include <pass.h>
 #include <pretty_printing.h>
 #include <wasm-stack.h>
@@ -2832,6 +2833,16 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       *curr, [&](Memory* memory) { visitMemory(memory); });
     ModuleUtils::iterDefinedTables(*curr,
                                    [&](Table* table) { visitTable(table); });
+    auto elemDeclareNames = TableUtils::getFunctionsNeedingElemDeclare(*curr);
+    if (!elemDeclareNames.empty()) {
+      doIndent(o, indent);
+      printMedium(o, "(elem");
+      o << " declare func";
+      for (auto name : elemDeclareNames) {
+        o << " $" << name;
+      }
+      o << ')' << maybeNewLine;
+    }
     ModuleUtils::iterDefinedGlobals(
       *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterDefinedEvents(*curr,
