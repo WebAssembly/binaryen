@@ -3032,9 +3032,8 @@ Module['getGlobalInfo'] = function(global) {
 // Obtains information about a 'Table'
 Module['getTableInfo'] = function(table) {
   var hasMax = Boolean(Module['_BinaryenTableHasMax'](table));
-  var tableName = UTF8ToString(Module['_BinaryenTableGetName'](table))
   var tableInfo = {
-    'name': tableName,
+    'name': UTF8ToString(Module['_BinaryenTableGetName'](table)),
     'module': UTF8ToString(Module['_BinaryenTableImportGetModule'](table)),
     'base': UTF8ToString(Module['_BinaryenTableImportGetBase'](table)),
     'initial': Module['_BinaryenTableGetInitial'](table),
