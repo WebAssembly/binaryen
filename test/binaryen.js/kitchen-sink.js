@@ -680,8 +680,8 @@ function test_core() {
   module.removeTable("t1");
   assert(module.getNumTables() === 0);
   
-  module.addTable("0", 1, 0xffffffff);
-  module.addActiveElementSegment("0", "0", [ binaryen.getFunctionInfo(sinker).name ]);
+  module.addTable("t0", 1, 0xffffffff);
+  module.addActiveElementSegment("t0", "e0", [ binaryen.getFunctionInfo(sinker).name ]);
   assert(module.getNumTables() === 1);
   assert(module.getNumElementSegments() === 1);
 
@@ -1073,10 +1073,10 @@ function test_for_each() {
     assert(expected_passive[i] === segment.passive);
   }
 
-  module.addTable("0", 1, 0xffffffff);
-  var ftable = module.getTable("0");
+  module.addTable("t0", 1, 0xffffffff);
+  var ftable = module.getTable("t0");
   var constExprRef = module.i32.const(0);
-  module.addActiveElementSegment("0", "0", funcNames, constExprRef);
+  module.addActiveElementSegment("t0", "e0", funcNames, constExprRef);
 
   var tableInfo = binaryen.getTableInfo(ftable);
   assert("" === tableInfo.module);

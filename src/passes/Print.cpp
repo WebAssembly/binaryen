@@ -2675,7 +2675,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (curr->table.is()) {
       return;
     }
-
     printElementSegment(curr);
   }
   void printElementSegment(ElementSegment* curr, bool isDeclarative = false) {

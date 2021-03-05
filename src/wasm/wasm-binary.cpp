@@ -554,8 +554,6 @@ void WasmBinaryWriter::writeElementSegments() {
     return;
   }
 
-  std::set<Name> referencedFuncs;
-
   BYN_TRACE("== writeElementSegments\n");
   auto start = startSection(BinaryConsts::Section::Element);
   o << U32LEB(elemCount);
@@ -2721,9 +2719,9 @@ void WasmBinaryBuilder::readElementSegments() {
   for (size_t i = 0; i < numSegments; i++) {
     auto flags = getU32LEB();
     bool isPassive = (flags & BinaryConsts::IsPassive) != 0;
-    bool hasTableIdx = !isPassive & ((flags & BinaryConsts::HasIndex) != 0);
+    bool hasTableIdx = !isPassive && ((flags & BinaryConsts::HasIndex) != 0);
     bool isDeclarative =
-      isPassive & ((flags & BinaryConsts::IsDeclarative) != 0);
+      isPassive && ((flags & BinaryConsts::IsDeclarative) != 0);
     bool usesExpressions = (flags & BinaryConsts::UsesExpressions) != 0;
 
     if (isDeclarative) {
