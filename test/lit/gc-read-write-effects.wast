@@ -12,14 +12,14 @@
 
   ;; Check that this:
   ;;
-  ;;   c = a.b.c
-  ;;   a.b = a.b.b
-  ;;   return c
+  ;;   y = a.0
+  ;;   a.0 = 10
+  ;;   return y
   ;;
   ;; Is not turned into this:
   ;;
-  ;;   a.b = a.b.b
-  ;;   return a.b.c
+  ;;   a.0 = 10
+  ;;   return a.0
   ;;
   ;; CHECK:      (func $test (param $x (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
