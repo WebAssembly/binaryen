@@ -571,8 +571,9 @@ void test_literals() {
 
 void test_LUB() {
   // b is a subtype of a, and so the least upper bound is a.
-  auto a = Type(Struct({ Field(Type::i32, Mutable) }), Nullable);
-  auto b = Type(Struct({ Field(Type::i32, Mutable), Field(Type::f64, Mutable) }), Nullable);
+  auto a = Type(Struct({Field(Type::i32, Mutable)}), Nullable);
+  auto b = Type(Struct({Field(Type::i32, Mutable), Field(Type::f64, Mutable)}),
+                Nullable);
   assert_equal(Type::getLeastUpperBound(a, b), a);
   assert_equal(Type::getLeastUpperBound(b, a), a);
 }
