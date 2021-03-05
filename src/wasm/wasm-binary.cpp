@@ -336,10 +336,18 @@ void WasmBinaryWriter::writeFunctions() {
     // Emit Stack IR if present, and if we can
     if (func->stackIR && !sourceMap && !DWARF) {
       BYN_TRACE("write Stack IR\n");
-      StackIRToBinaryWriter(*this, o, func).write();
+      StackIRToBinaryWriter writer(*this, o, func);
+      writer.write();
+      if (debugInfo) {
+        funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
+      }
     } else {
       BYN_TRACE("write Binaryen IR\n");
-      BinaryenIRToBinaryWriter(*this, o, func, sourceMap, DWARF).write();
+      BinaryenIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
+      writer.write();
+      if (debugInfo) {
+        funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
+      }
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
@@ -678,20 +686,28 @@ void WasmBinaryWriter::writeNames() {
         startSubsection(BinaryConsts::UserSections::Subsection::NameLocal);
       o << U32LEB(functionsWithLocalNames.size());
       Index emitted = 0;
-      for (auto& indexedFunc : functionsWithLocalNames) {
+      for (auto& kv : functionsWithLocalNames) {
+        auto index = kv.first;
+        auto* func = kv.second;
+        // Pairs of (local index in IR, name).
         std::vector<std::pair<Index, Name>> localsWithNames;
-        auto numLocals = indexedFunc.second->getNumLocals();
+        auto numLocals = func->getNumLocals();
         for (Index i = 0; i < numLocals; ++i) {
-          if (indexedFunc.second->hasLocalName(i)) {
-            localsWithNames.push_back({i, indexedFunc.second->getLocalName(i)});
+          if (func->hasLocalName(i)) {
+            localsWithNames.push_back({i, func->getLocalName(i)});
           }
         }
         assert(localsWithNames.size());
-        o << U32LEB(indexedFunc.first);
+        o << U32LEB(index);
         o << U32LEB(localsWithNames.size());
         for (auto& indexedLocal : localsWithNames) {
-          o << U32LEB(indexedLocal.first);
-          writeEscapedName(indexedLocal.second.str);
+          auto indexInFunc = indexedLocal.first;
+          auto name = indexedLocal.second;
+          // TODO: handle multivalue
+          auto indexInBinary =
+            funcMappedLocals.at(func->name)[{indexInFunc, 0}];
+          o << U32LEB(indexInBinary);
+          writeEscapedName(name.str);
         }
         emitted++;
       }

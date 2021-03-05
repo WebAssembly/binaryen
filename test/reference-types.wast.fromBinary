@@ -36,28 +36,28 @@
   (nop)
  )
  (func $test
-  (local $local_externref funcref)
-  (local $local_funcref externref)
+  (local $local_externref externref)
+  (local $local_funcref funcref)
   (local $local_anyref anyref)
-  (local.set $local_funcref
-   (local.get $local_funcref)
-  )
-  (local.set $local_funcref
-   (global.get $global_externref)
-  )
-  (local.set $local_funcref
-   (ref.null extern)
-  )
   (local.set $local_externref
    (local.get $local_externref)
   )
   (local.set $local_externref
+   (global.get $global_externref)
+  )
+  (local.set $local_externref
+   (ref.null extern)
+  )
+  (local.set $local_funcref
+   (local.get $local_funcref)
+  )
+  (local.set $local_funcref
    (global.get $global_funcref)
   )
-  (local.set $local_externref
+  (local.set $local_funcref
    (ref.null func)
   )
-  (local.set $local_externref
+  (local.set $local_funcref
    (ref.func $foo)
   )
   (local.set $local_anyref
@@ -70,7 +70,7 @@
    (ref.null any)
   )
   (local.set $local_anyref
-   (local.get $local_funcref)
+   (local.get $local_externref)
   )
   (local.set $local_anyref
    (global.get $global_externref)
@@ -79,7 +79,7 @@
    (ref.null extern)
   )
   (local.set $local_anyref
-   (local.get $local_externref)
+   (local.get $local_funcref)
   )
   (local.set $local_anyref
    (global.get $global_funcref)
@@ -94,7 +94,7 @@
    (global.get $global_externref)
   )
   (global.set $global_externref
-   (local.get $local_funcref)
+   (local.get $local_externref)
   )
   (global.set $global_externref
    (ref.null extern)
@@ -103,7 +103,7 @@
    (global.get $global_funcref)
   )
   (global.set $global_funcref
-   (local.get $local_externref)
+   (local.get $local_funcref)
   )
   (global.set $global_funcref
    (ref.null func)
@@ -124,7 +124,7 @@
    (global.get $global_externref)
   )
   (global.set $global_anyref
-   (local.get $local_funcref)
+   (local.get $local_externref)
   )
   (global.set $global_anyref
    (ref.null extern)
@@ -133,7 +133,7 @@
    (global.get $global_funcref)
   )
   (global.set $global_anyref
-   (local.get $local_externref)
+   (local.get $local_funcref)
   )
   (global.set $global_anyref
    (ref.null func)
@@ -142,7 +142,7 @@
    (ref.func $foo)
   )
   (call $take_externref
-   (local.get $local_funcref)
+   (local.get $local_externref)
   )
   (call $take_externref
    (global.get $global_externref)
@@ -151,7 +151,7 @@
    (ref.null extern)
   )
   (call $take_funcref
-   (local.get $local_externref)
+   (local.get $local_funcref)
   )
   (call $take_funcref
    (global.get $global_funcref)
@@ -172,7 +172,7 @@
    (ref.null any)
   )
   (call $take_anyref
-   (local.get $local_funcref)
+   (local.get $local_externref)
   )
   (call $take_anyref
    (global.get $global_externref)
@@ -181,7 +181,7 @@
    (ref.null extern)
   )
   (call $take_anyref
-   (local.get $local_externref)
+   (local.get $local_funcref)
   )
   (call $take_anyref
    (global.get $global_funcref)
@@ -193,7 +193,7 @@
    (ref.func $foo)
   )
   (call_indirect $0 (type $sig_externref)
-   (local.get $local_funcref)
+   (local.get $local_externref)
    (i32.const 0)
   )
   (call_indirect $0 (type $sig_externref)
@@ -205,7 +205,7 @@
    (i32.const 0)
   )
   (call_indirect $0 (type $sig_funcref)
-   (local.get $local_externref)
+   (local.get $local_funcref)
    (i32.const 1)
   )
   (call_indirect $0 (type $sig_funcref)
@@ -233,7 +233,7 @@
    (i32.const 3)
   )
   (call_indirect $0 (type $sig_anyref)
-   (local.get $local_funcref)
+   (local.get $local_externref)
    (i32.const 3)
   )
   (call_indirect $0 (type $sig_anyref)
@@ -245,7 +245,7 @@
    (i32.const 3)
   )
   (call_indirect $0 (type $sig_anyref)
-   (local.get $local_externref)
+   (local.get $local_funcref)
    (i32.const 3)
   )
   (call_indirect $0 (type $sig_anyref)
@@ -263,7 +263,7 @@
   (drop
    (block $label$1 (result externref)
     (br_if $label$1
-     (local.get $local_funcref)
+     (local.get $local_externref)
      (i32.const 1)
     )
    )
@@ -287,7 +287,7 @@
   (drop
    (block $label$4 (result funcref)
     (br_if $label$4
-     (local.get $local_externref)
+     (local.get $local_funcref)
      (i32.const 1)
     )
    )
@@ -343,7 +343,7 @@
   (drop
    (block $label$11 (result anyref)
     (br_if $label$11
-     (local.get $local_funcref)
+     (local.get $local_externref)
      (i32.const 1)
     )
    )
@@ -351,7 +351,7 @@
   (drop
    (block $label$12 (result anyref)
     (br_if $label$12
-     (local.get $local_externref)
+     (local.get $local_funcref)
      (i32.const 1)
     )
    )
@@ -382,7 +382,7 @@
   )
   (drop
    (loop $label$16 (result externref)
-    (local.get $local_funcref)
+    (local.get $local_externref)
    )
   )
   (drop
@@ -397,7 +397,7 @@
   )
   (drop
    (loop $label$19 (result funcref)
-    (local.get $local_externref)
+    (local.get $local_funcref)
    )
   )
   (drop
@@ -432,7 +432,7 @@
   )
   (drop
    (loop $label$26 (result anyref)
-    (local.get $local_funcref)
+    (local.get $local_externref)
    )
   )
   (drop
@@ -447,7 +447,7 @@
   )
   (drop
    (loop $label$29 (result anyref)
-    (local.get $local_externref)
+    (local.get $local_funcref)
    )
   )
   (drop
@@ -468,14 +468,14 @@
   (drop
    (if (result externref)
     (i32.const 1)
-    (local.get $local_funcref)
+    (local.get $local_externref)
     (ref.null extern)
    )
   )
   (drop
    (if (result funcref)
     (i32.const 1)
-    (local.get $local_externref)
+    (local.get $local_funcref)
     (ref.null func)
    )
   )
@@ -489,8 +489,8 @@
   (drop
    (if (result anyref)
     (i32.const 1)
-    (local.get $local_funcref)
     (local.get $local_externref)
+    (local.get $local_funcref)
    )
   )
   (drop
@@ -510,7 +510,7 @@
   (drop
    (try $label$47 (result externref)
     (do
-     (local.get $local_funcref)
+     (local.get $local_externref)
     )
     (catch $event$0
      (drop
@@ -536,7 +536,7 @@
   (drop
    (try $label$53 (result anyref)
     (do
-     (local.get $local_funcref)
+     (local.get $local_externref)
     )
     (catch $event$0
      (drop
@@ -555,20 +555,20 @@
      (drop
       (pop i32)
      )
-     (local.get $local_funcref)
+     (local.get $local_externref)
     )
    )
   )
   (drop
    (select (result externref)
-    (local.get $local_funcref)
+    (local.get $local_externref)
     (ref.null extern)
     (i32.const 1)
    )
   )
   (drop
    (select (result funcref)
-    (local.get $local_externref)
+    (local.get $local_funcref)
     (ref.null func)
     (i32.const 1)
    )
@@ -582,21 +582,21 @@
   )
   (drop
    (select (result anyref)
-    (local.get $local_funcref)
     (local.get $local_externref)
+    (local.get $local_funcref)
     (i32.const 1)
    )
   )
   (drop
    (select (result anyref)
-    (local.get $local_externref)
     (local.get $local_funcref)
+    (local.get $local_externref)
     (i32.const 1)
    )
   )
   (drop
    (ref.is_null
-    (local.get $local_funcref)
+    (local.get $local_externref)
    )
   )
   (drop
@@ -611,7 +611,7 @@
   )
   (drop
    (ref.is_null
-    (local.get $local_externref)
+    (local.get $local_funcref)
    )
   )
   (drop
@@ -720,10 +720,10 @@
   )
  )
  (func $returns_anyref2 (result anyref)
-  (local $local_externref funcref)
-  (local $local_funcref externref)
+  (local $local_externref externref)
+  (local $local_funcref funcref)
   (return
-   (local.get $local_funcref)
+   (local.get $local_externref)
   )
  )
  (func $ref-user

@@ -1,0 +1,58 @@
+(module
+ (type $none_=>_none (func))
+ (func $a
+  (local $x i32)
+  (local $y f64)
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $y)
+  )
+ )
+ (func $b
+  (local $y f64)
+  (local $x i32)
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (func $a
+  (local $x i32)
+  (local $y f64)
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $y)
+  )
+ )
+ (func $b
+  (local $y f64)
+  (local $x i32)
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $y)
+  )
+  (drop
+   (local.get $y)
+  )
+ )
+)

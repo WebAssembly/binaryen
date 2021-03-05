@@ -1090,6 +1090,9 @@ enum FeaturePrefix {
 
 } // namespace BinaryConsts
 
+// (local index in IR, tuple index) => binary local index
+using MappedLocals = std::unordered_map<std::pair<Index, Index>, size_t>;
+
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
@@ -1274,6 +1277,11 @@ private:
   // written, so that we can update those specific binary locations when
   // the function is written out.
   std::vector<Expression*> binaryLocationTrackedExpressionsForFunc;
+
+  // Maps function names to their mapped locals. This is used when we emit the
+  // local names section: we map the locals when writing the function, save that
+  // info here, and then use it when writing the names.
+  std::unordered_map<Name, MappedLocals> funcMappedLocals;
 
   void prepare();
 };
