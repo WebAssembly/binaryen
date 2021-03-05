@@ -3,71 +3,48 @@
 ;; Check that writing a struct field is not reordered with reading the same
 ;; struct field.
 
-;; RUN: wasm-opt -all -O1 %s -S -o - | filecheck %s
+;; RUN: wasm-opt -all --simplify-locals %s -S -o - | filecheck %s
 
 (module
- (type $A (struct
-   (field $i (mut i32))
-   (field $b (mut (ref null $B)))
- ))
- (type $B (struct
-   (field $i (mut i32))
-   (field $c (mut (ref null $C)))
-   (field $b (mut (ref null $B)))
- ))
- (type $C (struct
-   (field (mut i32))
-   (field (mut i64))
- ))
- (export "f" (func $f))
+  (type $A (struct
+    (field (mut i32))
+  ))
 
- ;; Check that this:
- ;;
- ;;   c = a.b.c
- ;;   a.b = a.b.b
- ;;   return c
- ;;
- ;; Is not turned into this:
- ;;
- ;;   a.b = a.b.b
- ;;   return a.b.c
- ;;
- ;; CHECK:      (func $f (param $0 (ref null $A)) (result (ref null $C))
- ;; CHECK-NEXT:  (local $1 (ref null $C))
- ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (struct.get $B $c
- ;; CHECK-NEXT:    (struct.get $A $b
- ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (struct.set $A $b
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (struct.get $B $b
- ;; CHECK-NEXT:    (struct.get $A $b
- ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.get $1)
- ;; CHECK-NEXT: )
- (func $f (param $0 (ref null $A)) (result (ref null $C))
-  (local $1 (ref null $C))
-  (local.set $1
-   (struct.get $B 1
-    (struct.get $A 1
-     (local.get $0)
+  ;; Check that this:
+  ;;
+  ;;   c = a.b.c
+  ;;   a.b = a.b.b
+  ;;   return c
+  ;;
+  ;; Is not turned into this:
+  ;;
+  ;;   a.b = a.b.b
+  ;;   return a.b.c
+  ;;
+  ;; CHECK:      (func $test (param $x (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (local $y i32)
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $y)
+  ;; CHECK-NEXT: )
+  (func $test (export "test") (param $x (ref null $A)) (result i32)
+    (local $y i32)
+    (local.set $y
+      (struct.get $A 0
+        (local.get $x)
+      )
     )
-   )
-  )
-  (struct.set $A 1
-   (local.get $0)
-   (struct.get $B 2
-    (struct.get $A 1
-     (local.get $0)
+    (struct.set $A 0
+      (local.get $x)
+      (i32.const 10)
     )
-   )
+    (local.get $y)
   )
-  (local.get $1)
- )
 )
