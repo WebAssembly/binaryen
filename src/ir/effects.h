@@ -71,6 +71,10 @@ public:
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
+  // TODO: Type-based alias analysis. For example, writes to Arrays never
+  // interfere with reads from Structs.
+  bool readsHeap = false;
+  bool writesHeap = false;
   // A trap, either from an unreachable instruction, or from an implicit trap
   // that we do not ignore (see below).
   // Note that we ignore trap differences, so it is ok to reorder traps with
@@ -105,6 +109,7 @@ public:
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
+  bool accessesHeap() const { return calls || readsHeap || writesHeap; }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
   // or a throw (if the throw is not known to be caught inside this expression;
@@ -143,6 +148,8 @@ public:
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         ((other.writesMemory || other.calls) && accessesMemory()) ||
+        ((writesHeap || calls) && other.accessesHeap()) ||
+        ((other.writesHeap || other.calls) && accessesHeap()) ||
         (danglingPop || other.danglingPop)) {
       return true;
     }
@@ -202,6 +209,8 @@ public:
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
+    readsHeap = readsHeap || other.readsHeap;
+    writesHeap = writesHeap || other.writesHeap;
     trap = trap || other.trap;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
@@ -571,12 +580,14 @@ private:
     void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
+      parent.readsHeap = true;
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
     }
     void visitStructSet(StructSet* curr) {
+      parent.writesHeap = true;
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
@@ -584,10 +595,12 @@ private:
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayGet(ArrayGet* curr) {
+      parent.readsHeap = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
     }
     void visitArraySet(ArraySet* curr) {
+      parent.writesHeap = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
     }
