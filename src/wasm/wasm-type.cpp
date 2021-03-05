@@ -640,6 +640,12 @@ Type Type::getLeastUpperBound(Type a, Type b) {
   if (b == Type::unreachable) {
     return a;
   }
+  if (isSubType(a, b)) {
+    return b;
+  }
+  if (isSubType(b, a)) {
+    return a;
+  }
   if (a.size() != b.size()) {
     return Type::none; // a poison value that must not be consumed
   }
