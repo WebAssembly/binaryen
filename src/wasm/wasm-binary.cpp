@@ -562,6 +562,8 @@ void WasmBinaryWriter::writeElementSegments() {
     Index tableIdx = 0;
 
     bool isPassive = segment->table.isNull();
+    // TODO(reference-types): add support for writing expressions instead of 
+    // function indices.
     bool usesExpressions = false;
 
     bool hasTableIndex = false;

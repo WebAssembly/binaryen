@@ -3298,29 +3298,35 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     return;
   }
 
-  // old style refers to the pre-reftypes form of (elem (expr) vec(funcidx))
+  // old style refers to the pre-reftypes form of (elem 0? (expr) vec(funcidx))
   bool oldStyle = true;
 
+  // At this point, we know that we're parsing an active element segment. A
+  // table will be mandatory now.
+  if (wasm.tables.empty()) {
+    throw ParseException("elem without table", s.line, s.col);
+  }
+
+  // Old style table index (elem 0 (i32.const 0) ...)
+  if (s[i]->isStr()) {
+    i += 1;
+  }
+
+  if (s[i]->isList() && elementStartsWith(s[i], TABLE)) {
+    oldStyle = false;
+    auto& inner = *s[i++];
+    Name tableName = getTableName(*inner[1]);
+    table = wasm.getTable(tableName);
+  }
+
   Expression* offset = nullptr;
-  while (1) {
-    // Old style table index (elem 0 (i32.const 0) ...)
-    if (s[i]->isStr() && s[i]->str() == "0") {
-      table = wasm.tables.front().get();
-      i += 1;
-    } else if (s[i]->isList()) {
-      auto& inner = *s[i++];
-      if (elementStartsWith(inner, TABLE)) {
-        oldStyle = false;
-        Name tableName = getTableName(*inner[1]);
-        table = wasm.getTable(tableName);
-      } else {
-        if (elementStartsWith(inner, OFFSET)) {
-          offset = parseExpression(inner[1]);
-        } else {
-          offset = parseExpression(inner);
-        }
-        break;
-      }
+  if (s[i]->isList()) {
+    auto& inner = *s[i++];
+    if (elementStartsWith(inner, OFFSET)) {
+      offset = parseExpression(inner[1]);
+      oldStyle = false;
+    } else {
+      offset = parseExpression(inner);
     }
   }
 
@@ -3333,10 +3339,8 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     i += 1;
   }
 
-  if (wasm.tables.empty()) {
-    throw ParseException("elem without table", s.line, s.col);
-  } else if (!table) {
-    table = wasm.tables[0].get();
+  if (!table) {
+    table = wasm.tables.front().get();
   }
 
   auto segment = std::make_unique<ElementSegment>(table->name, offset);

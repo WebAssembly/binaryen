@@ -2677,7 +2677,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     printElementSegment(curr);
   }
-  void printElementSegment(ElementSegment* curr, bool isDeclarative = false) {
+  void printElementSegment(ElementSegment* curr) {
     // Don't print empty segments
     if (curr->data.empty()) {
       return;
@@ -2707,10 +2707,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         TypeNamePrinter(o, currModule).print(HeapType::func);
       }
     } else {
-      if (isDeclarative) {
-        o << ' ';
-        printMinor(o, "declare");
-      }
       o << ' ';
       TypeNamePrinter(o, currModule).print(HeapType::func);
     }
