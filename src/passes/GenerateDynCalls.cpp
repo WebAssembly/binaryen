@@ -45,10 +45,20 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
 
   void visitTable(Table* table) {
     // Generate dynCalls for functions in the table
-    if (table->segments.size() > 0) {
+    Module* wasm = getModule();
+    auto& segments = wasm->elementSegments;
+
+    // Find a single elem segment for the table. We only care about one, since
+    // wasm-ld emits only one table with a single segment.
+    auto it = std::find_if(segments.begin(),
+                           segments.end(),
+                           [&](std::unique_ptr<ElementSegment>& segment) {
+                             return segment->table == table->name;
+                           });
+    if (it != segments.end()) {
       std::vector<Name> tableSegmentData;
-      for (const auto& indirectFunc : table->segments[0].data) {
-        generateDynCallThunk(getModule()->getFunction(indirectFunc)->sig);
+      for (const auto& indirectFunc : it->get()->data) {
+        generateDynCallThunk(wasm->getFunction(indirectFunc)->sig);
       }
     }
   }

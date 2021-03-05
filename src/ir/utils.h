@@ -121,6 +121,7 @@ struct ReFinalize
   void visitExport(Export* curr);
   void visitGlobal(Global* curr);
   void visitTable(Table* curr);
+  void visitElementSegment(ElementSegment* curr);
   void visitMemory(Memory* curr);
   void visitEvent(Event* curr);
   void visitModule(Module* curr);
@@ -144,6 +145,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
   void visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitElementSegment(ElementSegment* curr) { WASM_UNREACHABLE("unimp"); }
   void visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
   void visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
   void visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }

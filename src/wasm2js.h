@@ -325,11 +325,9 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       functionsCallableFromOutside.insert(exp->value);
     }
   }
-  for (auto& table : wasm->tables) {
-    for (auto& segment : table->segments) {
-      for (auto name : segment.data) {
-        functionsCallableFromOutside.insert(name);
-      }
+  for (auto& segment : wasm->elementSegments) {
+    for (auto name : segment->data) {
+      functionsCallableFromOutside.insert(name);
     }
   }
 
@@ -635,7 +633,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   Ref theArray = ValueBuilder::makeArray();
   for (auto& table : wasm->tables) {
     if (!table->imported()) {
-      TableUtils::FlatTable flat(*table);
+      TableUtils::FlatTable flat(*wasm, *table);
       if (flat.valid) {
         Name null("null");
         for (auto& name : flat.names) {
@@ -679,28 +677,30 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
 
     if (perElementInit) {
       // TODO: optimize for size
-      for (auto& segment : table->segments) {
-        auto offset = segment.offset;
-        for (Index i = 0; i < segment.data.size(); i++) {
-          Ref index;
-          if (auto* c = offset->dynCast<Const>()) {
-            index = ValueBuilder::makeInt(c->value.geti32() + i);
-          } else if (auto* get = offset->dynCast<GlobalGet>()) {
-            index = ValueBuilder::makeBinary(
-              ValueBuilder::makeName(stringToIString(asmangle(get->name.str))),
-              PLUS,
-              ValueBuilder::makeNum(i));
-          } else {
-            WASM_UNREACHABLE("unexpected expr type");
+      ModuleUtils::iterTableSegments(
+        *wasm, table->name, [&](ElementSegment* segment) {
+          auto offset = segment->offset;
+          for (Index i = 0; i < segment->data.size(); i++) {
+            Ref index;
+            if (auto* c = offset->dynCast<Const>()) {
+              index = ValueBuilder::makeInt(c->value.geti32() + i);
+            } else if (auto* get = offset->dynCast<GlobalGet>()) {
+              index =
+                ValueBuilder::makeBinary(ValueBuilder::makeName(stringToIString(
+                                           asmangle(get->name.str))),
+                                         PLUS,
+                                         ValueBuilder::makeNum(i));
+            } else {
+              WASM_UNREACHABLE("unexpected expr type");
+            }
+            ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+              ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                    index),
+              SET,
+              ValueBuilder::makeName(
+                fromName(segment->data[i], NameScope::Top)))));
           }
-          ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-            ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
-                                  index),
-            SET,
-            ValueBuilder::makeName(
-              fromName(segment.data[i], NameScope::Top)))));
-        }
-      }
+        });
     }
   }
 }

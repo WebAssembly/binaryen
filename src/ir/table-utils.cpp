@@ -31,11 +31,9 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   // Find all the names in the tables.
 
   std::unordered_set<Name> tableNames;
-  for (auto& table : wasm.tables) {
-    for (auto& segment : table->segments) {
-      for (auto name : segment.data) {
-        tableNames.insert(name);
-      }
+  for (auto& segment : wasm.elementSegments) {
+    for (auto name : segment->data) {
+      tableNames.insert(name);
     }
   }
 

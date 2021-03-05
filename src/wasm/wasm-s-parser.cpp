@@ -51,7 +51,7 @@ int unhex(char c) {
 namespace wasm {
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), I8("i8"),
-  I16("i16"), RTT("rtt"), DECLARE("declare");
+  I16("i16"), RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -3215,15 +3215,25 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
     wasm.addTable(std::move(table));
     return;
   }
+
+  auto parseTableElem = [&](Table* table, Element& s) {
+    parseElem(s, table);
+    auto it = std::find_if(wasm.elementSegments.begin(),
+                           wasm.elementSegments.end(),
+                           [&](std::unique_ptr<ElementSegment>& segment) {
+                             return segment->table == table->name;
+                           });
+    if (it != wasm.elementSegments.end()) {
+      table->initial = table->max = it->get()->data.size();
+    } else {
+      table->initial = table->max = 0;
+    }
+  };
+
   if (!s[i]->dollared()) {
     if (s[i]->str() == FUNCREF) {
       // (table type (elem ..))
-      parseInnerElem(table.get(), *s[i + 1]);
-      if (table->segments.size() > 0) {
-        table->initial = table->max = table->segments[0].data.size();
-      } else {
-        table->initial = table->max = 0;
-      }
+      parseTableElem(table.get(), *s[i + 1]);
       wasm.addTable(std::move(table));
       return;
     }
@@ -3243,13 +3253,7 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
     }
   }
   // old notation (table func1 func2 ..)
-  parseInnerElem(table.get(), s, i);
-  if (table->segments.size() > 0) {
-    table->initial = table->max = table->segments[0].data.size();
-  } else {
-    table->initial = table->max = 0;
-  }
-
+  parseTableElem(table.get(), s);
   wasm.addTable(std::move(table));
 }
 
@@ -3257,49 +3261,77 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
 // elem  ::= (elem (expr) vec(funcidx))
 //         | (elem (offset (expr)) func vec(funcidx))
 //         | (elem (table tableidx) (offset (expr)) func vec(funcidx))
-//         | (elem declare func $foo)
+//         | (elem func vec(funcidx))
+//         | (elem declare func vec(funcidx))
 //
 // abbreviation:
 //   (offset (expr)) ≡ (expr)
 //   (elem (expr) vec(funcidx)) ≡ (elem (table 0) (offset (expr)) func
 //                                vec(funcidx))
 //
-void SExpressionWasmBuilder::parseElem(Element& s) {
+void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
   Index i = 1;
-  Table* table = nullptr;
-  Expression* offset = nullptr;
+  Name name = Name::fromInt(elemCounter++);
+  bool hasExplicitName = false;
 
-  if (!s[i]->isList()) {
-    // optional segment id OR 'declare' OR start of elemList
-    if (s[i]->str() == DECLARE) {
-      // "elem declare" is needed in wasm text and binary, but not in Binaryen
-      // IR; ignore the contents.
-      return;
-    }
+  if (table) {
+    Expression* offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+    auto segment = std::make_unique<ElementSegment>(table->name, offset);
+    segment->setName(name, hasExplicitName);
+    parseElemFinish(s, segment, i);
+    return;
+  }
+
+  if (s[i]->isStr() && s[i]->dollared()) {
+    name = s[i++]->str();
+    hasExplicitName = true;
+  }
+  if (s[i]->isStr() && s[i]->str() == DECLARE) {
+    // We don't store declared segments in the IR
+    return;
+  }
+
+  if (s[i]->isStr() && s[i]->str() == FUNC) {
+    auto segment = std::make_unique<ElementSegment>();
+    segment->setName(name, hasExplicitName);
+    parseElemFinish(s, segment, i + 1);
+    return;
+  }
+
+  // old style refers to the pre-reftypes form of (elem 0? (expr) vec(funcidx))
+  bool oldStyle = true;
+
+  // At this point, we know that we're parsing an active element segment. A
+  // table will be mandatory now.
+  if (wasm.tables.empty()) {
+    throw ParseException("elem without table", s.line, s.col);
+  }
+
+  // Old style table index (elem 0 (i32.const 0) ...)
+  if (s[i]->isStr()) {
     i += 1;
   }
 
-  // old style refers to the pre-reftypes form of (elem (expr) vec(funcidx))
-  bool oldStyle = true;
-
-  while (1) {
+  if (s[i]->isList() && elementStartsWith(s[i], TABLE)) {
+    oldStyle = false;
     auto& inner = *s[i++];
-    if (elementStartsWith(inner, TABLE)) {
+    Name tableName = getTableName(*inner[1]);
+    table = wasm.getTable(tableName);
+  }
+
+  Expression* offset = nullptr;
+  if (s[i]->isList()) {
+    auto& inner = *s[i++];
+    if (elementStartsWith(inner, OFFSET)) {
+      offset = parseExpression(inner[1]);
       oldStyle = false;
-      Name tableName = getTableName(*inner[1]);
-      table = wasm.getTable(tableName);
     } else {
-      if (elementStartsWith(inner, "offset")) {
-        offset = parseExpression(inner[1]);
-      } else {
-        offset = parseExpression(inner);
-      }
-      break;
+      offset = parseExpression(inner);
     }
   }
 
   if (!oldStyle) {
-    if (strcmp(s[i]->c_str(), "func") != 0) {
+    if (s[i]->str() != FUNC) {
       throw ParseException(
         "only the abbreviated form of elemList is supported.");
     }
@@ -3307,27 +3339,21 @@ void SExpressionWasmBuilder::parseElem(Element& s) {
     i += 1;
   }
 
-  if (wasm.tables.empty()) {
-    throw ParseException("elem without table", s.line, s.col);
-  } else if (!table) {
-    table = wasm.tables[0].get();
+  if (!table) {
+    table = wasm.tables.front().get();
   }
 
-  parseInnerElem(table, s, i, offset);
+  auto segment = std::make_unique<ElementSegment>(table->name, offset);
+  segment->setName(name, hasExplicitName);
+  parseElemFinish(s, segment, i);
 }
 
-void SExpressionWasmBuilder::parseInnerElem(Table* table,
-                                            Element& s,
-                                            Index i,
-                                            Expression* offset) {
-  if (!offset) {
-    offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
-  }
-  Table::Segment segment(offset);
+ElementSegment* SExpressionWasmBuilder::parseElemFinish(
+  Element& s, std::unique_ptr<ElementSegment>& segment, Index i) {
   for (; i < s.size(); i++) {
-    segment.data.push_back(getFunctionName(*s[i]));
+    segment->data.push_back(getFunctionName(*s[i]));
   }
-  table->segments.push_back(segment);
+  return wasm.addElementSegment(std::move(segment));
 }
 
 HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {

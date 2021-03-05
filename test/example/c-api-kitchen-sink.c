@@ -320,7 +320,7 @@ void test_core() {
   BinaryenAddEvent(
     module, "a-event", 0, BinaryenTypeInt32(), BinaryenTypeNone());
 
-  BinaryenAddTable(module, "tab", 0, 100, NULL, 0, makeInt32(module, 0));
+  BinaryenAddTable(module, "tab", 0, 100);
 
   // Exception handling
 
@@ -855,7 +855,17 @@ void test_core() {
 
   // Function table. One per module
   const char* funcNames[] = { BinaryenFunctionGetName(sinker) };
-  BinaryenSetFunctionTable(module, 1, 1, funcNames, 1, BinaryenConst(module, BinaryenLiteralInt32(0)));
+  BinaryenAddTable(module, "0", 1, 1);
+  BinaryenAddActiveElementSegment(
+    module,
+    "0",
+    "0",
+    funcNames,
+    1,
+    BinaryenConst(module, BinaryenLiteralInt32(0)));
+  BinaryenAddPassiveElementSegment(module, "passive", funcNames, 1);
+  BinaryenAddPassiveElementSegment(module, "p2", funcNames, 1);
+  BinaryenRemoveElementSegment(module, "p2");
 
   // Memory. One per module
 
@@ -1382,14 +1392,15 @@ void test_for_each() {
       BinaryenFunctionGetName(fns[2])
     };
     BinaryenExpressionRef constExprRef = BinaryenConst(module, BinaryenLiteralInt32(0));
-    BinaryenSetFunctionTable(module, 1, 1, funcNames, 3, constExprRef);
-    assert(0 == BinaryenIsFunctionTableImported(module));
-    assert(1 == BinaryenGetNumFunctionTableSegments(module));
-    assert(constExprRef == BinaryenGetFunctionTableSegmentOffset(module, 0));
-    assert(3 == BinaryenGetFunctionTableSegmentLength(module, 0));
-    for (i = 0; i != BinaryenGetFunctionTableSegmentLength(module, 0); ++i)
-    {
-      const char * str = BinaryenGetFunctionTableSegmentData(module, 0, i);
+    BinaryenAddTable(module, "0", 1, 1);
+    BinaryenAddActiveElementSegment(
+      module, "0", "0", funcNames, 3, constExprRef);
+    assert(1 == BinaryenGetNumElementSegments(module));
+    BinaryenElementSegmentRef segment =
+      BinaryenGetElementSegmentByIndex(module, 0);
+    assert(constExprRef == BinaryenElementSegmentGetOffset(segment));
+    for (i = 0; i != BinaryenElementSegmentGetLength(segment); ++i) {
+      const char* str = BinaryenElementSegmentGetData(segment, i);
       assert(0 == strcmp(funcNames[i], str));
     }
   }

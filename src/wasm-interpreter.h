@@ -2309,20 +2309,19 @@ private:
   std::unordered_set<size_t> droppedSegments;
 
   void initializeTableContents() {
-    for (auto& table : wasm.tables) {
-      for (auto& segment : table->segments) {
-        Address offset = (uint32_t)InitializerExpressionRunner<GlobalManager>(
-                           globals, maxDepth)
-                           .visit(segment.offset)
-                           .getSingleValue()
-                           .geti32();
-        if (offset + segment.data.size() > table->initial) {
-          externalInterface->trap("invalid offset when initializing table");
-        }
-        for (size_t i = 0; i != segment.data.size(); ++i) {
-          externalInterface->tableStore(
-            table->name, offset + i, segment.data[i]);
-        }
+    for (auto& segment : wasm.elementSegments) {
+      if (segment->table.isNull()) {
+        continue;
+      }
+
+      Address offset =
+        (uint32_t)InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
+          .visit(segment->offset)
+          .getSingleValue()
+          .geti32();
+      for (size_t i = 0; i != segment->data.size(); ++i) {
+        externalInterface->tableStore(
+          segment->table, offset + i, segment->data[i]);
       }
     }
   }

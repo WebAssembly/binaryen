@@ -1106,6 +1106,7 @@ class WasmBinaryWriter {
     std::unordered_map<Name, Index> eventIndexes;
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
+    std::unordered_map<Name, Index> elemIndexes;
 
     BinaryIndexes(Module& wasm) {
       auto addIndexes = [&](auto& source, auto& indexes) {
@@ -1127,6 +1128,11 @@ class WasmBinaryWriter {
       addIndexes(wasm.functions, functionIndexes);
       addIndexes(wasm.events, eventIndexes);
       addIndexes(wasm.tables, tableIndexes);
+
+      for (auto& curr : wasm.elementSegments) {
+        auto index = elemIndexes.size();
+        elemIndexes[curr->name] = index;
+      }
 
       // Globals may have tuple types in the IR, in which case they lower to
       // multiple globals, one for each tuple element, in the binary. Tuple
@@ -1205,7 +1211,7 @@ public:
   uint32_t getTypeIndex(HeapType type) const;
 
   void writeTableDeclarations();
-  void writeTableElements();
+  void writeElementSegments();
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
@@ -1398,6 +1404,12 @@ public:
   // at index i we have all references to the table i
   std::map<Index, std::vector<Expression*>> tableRefs;
 
+  std::map<Index, Name> elemTables;
+
+  // we store elems here after being read from binary, until when we know their
+  // names
+  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+
   // we store globals here before wasm.addGlobal after we know their names
   std::vector<std::unique_ptr<Global>> globals;
   // we store global imports here before wasm.addGlobalImport after we know
@@ -1504,11 +1516,11 @@ public:
   void readDataSegments();
   void readDataCount();
 
-  // A map from table indexes to the map of segment indexes to their elements
-  std::map<Index, std::map<Index, std::vector<Index>>> functionTable;
+  // A map from elem segment indexes to their entries
+  std::map<Index, std::vector<Index>> functionTable;
 
-  void readFunctionTableDeclaration();
-  void readTableElements();
+  void readTableDeclarations();
+  void readElementSegments();
 
   void readEvents();
 

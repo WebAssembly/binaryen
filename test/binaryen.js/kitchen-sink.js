@@ -518,7 +518,7 @@ function test_core() {
       )
     ),
     module.i32.eqz( // check the output type of the call node
-      module.call_indirect("0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32)
+      module.call_indirect("t0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32)
     ),
     module.drop(module.local.get(0, binaryen.i32)),
     module.local.set(0, makeInt32(101)),
@@ -533,7 +533,7 @@ function test_core() {
     module.return(makeInt32(1337)),
     // Tail Call
     module.return_call("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], binaryen.i32),
-    module.return_call_indirect("0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
+    module.return_call_indirect("t0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
 
     // Reference types
     module.ref.is_null(module.ref.null(binaryen.externref)),
@@ -665,7 +665,7 @@ function test_core() {
   module.addEventExport("a-event", "a-event-exp");
 
   // Tables
-  module.addTable("t1", 0, 2, []);
+  module.addTable("t1", 0, 2);
   var tablePtr = module.getTable("t1");
   assert(tablePtr !== 0);
   assert(tablePtr === module.getTableByIndex(0));
@@ -676,13 +676,14 @@ function test_core() {
   assert(table.base === "");
   assert(table.initial === 0);
   assert(table.max === 2);
-
+  
   module.removeTable("t1");
   assert(module.getNumTables() === 0);
-
-  // Legacy
-  module.setFunctionTable(1, 0xffffffff, [ binaryen.getFunctionInfo(sinker).name ]);
+  
+  module.addTable("t0", 1, 0xffffffff);
+  module.addActiveElementSegment("t0", "e0", [ binaryen.getFunctionInfo(sinker).name ]);
   assert(module.getNumTables() === 1);
+  assert(module.getNumElementSegments() === 1);
 
   // Memory. One per module
 
@@ -1072,16 +1073,23 @@ function test_for_each() {
     assert(expected_passive[i] === segment.passive);
   }
 
+  module.addTable("t0", 1, 0xffffffff);
+  var ftable = module.getTable("t0");
   var constExprRef = module.i32.const(0);
-  module.setFunctionTable(1, 0xffffffff, funcNames, constExprRef);
+  module.addActiveElementSegment("t0", "e0", funcNames, constExprRef);
 
-  var ftable = module.getFunctionTable();
-  assert(false === ftable.imported);
-  assert(1 === ftable.segments.length);
-  assert(constExprRef === ftable.segments[0].offset);
-  assert(3 === ftable.segments[0].names.length);
-  for (i = 0; i < ftable.segments[0].names.length; i++) {
-    assert(funcNames[i] === ftable.segments[0].names[i]);
+  var tableInfo = binaryen.getTableInfo(ftable);
+  assert("" === tableInfo.module);
+  assert("" === tableInfo.base);
+
+  var segments = module.getTableSegments(ftable);
+  assert(1 === segments.length);
+
+  var elemSegment = binaryen.getElementSegmentInfo(segments[0]);
+  assert(constExprRef === elemSegment.offset);
+  assert(3 === elemSegment.data.length);
+  for (i = 0; i < elemSegment.data.length; i++) {
+    assert(funcNames[i] === elemSegment.data[i]);
   }
 
   console.log(module.emitText());

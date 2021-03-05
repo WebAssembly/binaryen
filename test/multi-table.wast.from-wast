@@ -4,11 +4,18 @@
  (elem (table $t1) (i32.const 0) func $f)
  (table $t2 3 3 funcref)
  (elem (table $t2) (i32.const 0) func $f)
- (elem (table $t2) (i32.const 1) func $f $g)
+ (elem $activeNonZeroOffset (table $t2) (i32.const 1) func $f $g)
+ (elem $passive func $f $g)
+ (elem declare func $h)
  (func $f
-  (nop)
+  (drop
+   (ref.func $h)
+  )
  )
  (func $g
+  (nop)
+ )
+ (func $h
   (nop)
  )
 )

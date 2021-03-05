@@ -132,6 +132,7 @@ class SExpressionWasmBuilder {
   int globalCounter = 0;
   int eventCounter = 0;
   int tableCounter = 0;
+  int elemCounter = 0;
   int memoryCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, Signature> functionSignatures;
@@ -313,11 +314,10 @@ private:
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);
   void parseTable(Element& s, bool preParseImport = false);
-  void parseElem(Element& s);
-  void parseInnerElem(Table* table,
-                      Element& s,
-                      Index i = 1,
-                      Expression* offset = nullptr);
+  void parseElem(Element& s, Table* table = nullptr);
+  ElementSegment* parseElemFinish(Element& s,
+                                  std::unique_ptr<ElementSegment>& segment,
+                                  Index i = 1);
 
   // Parses something like (func ..), (array ..), (struct)
   HeapType parseHeapType(Element& s);
