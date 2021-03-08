@@ -2035,7 +2035,7 @@ void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
-  parent.writeHeapType(curr->type.getRtt().heapType);
+  parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
