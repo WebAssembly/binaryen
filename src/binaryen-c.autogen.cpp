@@ -21,3 +21,27 @@ BinaryenStructSet(BinaryenModuleRef module, uint32_t index, BinaryenExpressionRe
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeStructSet(index, value, ref));
 }
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNew(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExpressionRef size, BinaryenExpressionRef init) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeArrayNew(rtt, size, init));
+}
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayGet(BinaryenModuleRef module, BinaryenExpressionRef index, BinaryenExpressionRef ref, uint32_t signed_) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeArrayGet(index, ref, signed_));
+}
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArraySet(BinaryenModuleRef module, BinaryenExpressionRef value, BinaryenExpressionRef index, BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeArraySet(value, index, ref));
+}
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayLen(BinaryenModuleRef module, BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeArrayLen(ref));
+}

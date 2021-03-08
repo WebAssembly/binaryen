@@ -167,6 +167,10 @@ template<typename T> void autogenOneCAPIImpl() {
   T<StructNew>(); \
   T<StructGet>(); \
   T<StructSet>(); \
+  T<ArrayNew>(); \
+  T<ArrayGet>(); \
+  T<ArraySet>(); \
+  T<ArrayLen>(); \
 }
 
 void autogenCAPIDecl() {

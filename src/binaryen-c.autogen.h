@@ -8,3 +8,15 @@ BinaryenStructGet(BinaryenModuleRef module, uint32_t index, BinaryenExpressionRe
 
 BINARYEN_API BinaryenExpressionRef
 BinaryenStructSet(BinaryenModuleRef module, uint32_t index, BinaryenExpressionRef value, BinaryenExpressionRef ref);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNew(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExpressionRef size, BinaryenExpressionRef init);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayGet(BinaryenModuleRef module, BinaryenExpressionRef index, BinaryenExpressionRef ref, uint32_t signed_);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArraySet(BinaryenModuleRef module, BinaryenExpressionRef value, BinaryenExpressionRef index, BinaryenExpressionRef ref);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayLen(BinaryenModuleRef module, BinaryenExpressionRef ref);
