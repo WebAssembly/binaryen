@@ -6417,7 +6417,7 @@ bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::ArraySet) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   auto* value = popNonVoidExpression();
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();

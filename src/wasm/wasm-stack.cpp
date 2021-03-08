@@ -2097,7 +2097,7 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
-  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
