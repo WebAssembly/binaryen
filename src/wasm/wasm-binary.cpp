@@ -1234,6 +1234,10 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
   o << S64LEB(ret); // TODO: Actually s33
 }
 
+void WasmBinaryWriter::writeIndexedHeapType(HeapType type) {
+  o << U32LEB(getTypeIndex(type));
+}
+
 void WasmBinaryWriter::writeField(const Field& field) {
   if (field.type == Type::i32 && field.packedType != Field::not_packed) {
     if (field.packedType == Field::i8) {
@@ -1641,6 +1645,14 @@ HeapType WasmBinaryBuilder::getHeapType() {
     throwError("invalid wasm heap type: " + std::to_string(type));
   }
   WASM_UNREACHABLE("unexpected type");
+}
+
+HeapType WasmBinaryBuilder::getIndexedHeapType() {
+  auto index = getU32LEB();
+  if (index >= types.size()) {
+    throwError("invalid heap type index: " + std::to_string(index));
+  }
+  return types[index];
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -6292,7 +6304,7 @@ bool WasmBinaryBuilder::maybeVisitRttCanon(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RttCanon) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   out = Builder(wasm).makeRttCanon(heapType);
   return true;
 }

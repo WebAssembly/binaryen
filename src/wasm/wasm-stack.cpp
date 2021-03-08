@@ -2030,7 +2030,7 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttCanon);
-  parent.writeHeapType(curr->type.getRtt().heapType);
+  parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
