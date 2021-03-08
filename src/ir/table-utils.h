@@ -18,6 +18,7 @@
 #define wasm_ir_table_h
 
 #include "ir/literal-utils.h"
+#include "ir/module-utils.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -29,32 +30,38 @@ struct FlatTable {
   std::vector<Name> names;
   bool valid;
 
-  FlatTable(Table& table) {
+  FlatTable(Module& wasm, Table& table) {
     valid = true;
-    for (auto& segment : table.segments) {
-      auto offset = segment.offset;
-      if (!offset->is<Const>()) {
-        // TODO: handle some non-constant segments
-        valid = false;
-        return;
-      }
-      Index start = offset->cast<Const>()->value.geti32();
-      Index end = start + segment.data.size();
-      if (end > names.size()) {
-        names.resize(end);
-      }
-      for (Index i = 0; i < segment.data.size(); i++) {
-        names[start + i] = segment.data[i];
-      }
-    }
+    ModuleUtils::iterTableSegments(
+      wasm, table.name, [&](ElementSegment* segment) {
+        auto offset = segment->offset;
+        if (!offset->is<Const>()) {
+          // TODO: handle some non-constant segments
+          valid = false;
+          return;
+        }
+        Index start = offset->cast<Const>()->value.geti32();
+        Index end = start + segment->data.size();
+        if (end > names.size()) {
+          names.resize(end);
+        }
+        for (Index i = 0; i < segment->data.size(); i++) {
+          names[start + i] = segment->data[i];
+        }
+      });
   }
 };
 
-inline Table::Segment& getSingletonSegment(Table& table, Module& wasm) {
-  if (table.segments.size() != 1) {
+inline ElementSegment* getSingletonSegment(Table& table, Module& wasm) {
+  std::vector<ElementSegment*> tableSegments;
+  ModuleUtils::iterTableSegments(
+    wasm, table.name, [&](ElementSegment* segment) {
+      tableSegments.push_back(segment);
+    });
+  if (tableSegments.size() != 1) {
     Fatal() << "Table doesn't have a singleton segment.";
   }
-  return table.segments[0];
+  return tableSegments[0];
 }
 
 // Appends a name to the table. This assumes the table has 0 or 1 segments,
@@ -65,10 +72,10 @@ inline Table::Segment& getSingletonSegment(Table& table, Module& wasm) {
 // module has a single table segment, and that the dylink section indicates
 // we can validly append to that segment, see the check below.
 inline Index append(Table& table, Name name, Module& wasm) {
-  auto& segment = getSingletonSegment(table, wasm);
-  auto tableIndex = segment.data.size();
+  auto* segment = getSingletonSegment(table, wasm);
+  auto tableIndex = segment->data.size();
   if (wasm.dylinkSection) {
-    if (segment.data.size() != wasm.dylinkSection->tableSize) {
+    if (segment->data.size() != wasm.dylinkSection->tableSize) {
       Fatal() << "Appending to the table in a module with a dylink section "
                  "that has tableSize which indicates it wants to reserve more "
                  "table space than the actual table elements in the module. "
@@ -77,7 +84,7 @@ inline Index append(Table& table, Name name, Module& wasm) {
     }
     wasm.dylinkSection->tableSize++;
   }
-  segment.data.push_back(name);
+  segment->data.push_back(name);
   table.initial = table.initial + 1;
   return tableIndex;
 }
@@ -85,14 +92,18 @@ inline Index append(Table& table, Name name, Module& wasm) {
 // Checks if a function is already in the table. Returns that index if so,
 // otherwise appends it.
 inline Index getOrAppend(Table& table, Name name, Module& wasm) {
-  auto& segment = getSingletonSegment(table, wasm);
-  for (Index i = 0; i < segment.data.size(); i++) {
-    if (segment.data[i] == name) {
+  auto segment = getSingletonSegment(table, wasm);
+  for (Index i = 0; i < segment->data.size(); i++) {
+    if (segment->data[i] == name) {
       return i;
     }
   }
   return append(table, name, wasm);
 }
+
+// Functions that we take a reference to, but are not in a Table, but get an
+// "elem declare" mention in the text and binary formats.
+std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm);
 
 } // namespace TableUtils
 

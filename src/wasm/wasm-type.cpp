@@ -100,8 +100,8 @@ struct HeapTypeInfo {
 // Helper for coinductively comparing Types and HeapTypes according to some
 // arbitrary notion of complexity.
 struct TypeComparator {
-  // Set of HeapTypes we are assuming satisfy the relation as long as we cannot
-  // prove otherwise.
+  // Set of HeapTypes we are assuming are equivalent as long as we cannot prove
+  // otherwise.
   std::unordered_set<std::pair<HeapType, HeapType>> seen;
   bool lessThan(Type a, Type b);
   bool lessThan(HeapType a, HeapType b);
@@ -118,8 +118,8 @@ struct TypeComparator {
 // Helper for coinductively checking whether a pair of Types or HeapTypes are in
 // a subtype relation.
 struct SubTyper {
-  // Set of HeapTypes we are assuming satisfy the relation as long as we cannot
-  // prove otherwise.
+  // Set of HeapTypes we are assuming are equivalent as long as we cannot prove
+  // otherwise.
   std::unordered_set<std::pair<HeapType, HeapType>> seen;
   bool isSubType(Type a, Type b);
   bool isSubType(HeapType a, HeapType b);
@@ -858,9 +858,9 @@ bool TypeComparator::lessThan(HeapType a, HeapType b) {
     return false;
   }
   if (seen.count({a, b})) {
-    // We weren't able to disprove that a < b since we last saw them, so the
-    // relation holds coinductively.
-    return true;
+    // We weren't able to disprove that a == b since we last saw them, so it
+    // holds coinductively that a < b is false.
+    return false;
   }
   if (a.isBasic() && b.isBasic()) {
     return a.getBasic() < b.getBasic();

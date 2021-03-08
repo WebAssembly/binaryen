@@ -8,6 +8,7 @@
  (type $=>anyref (func (result anyref)))
  (type $none_=>_i32_ref?|$mixed_results|_f64 (func (result i32 (ref null $mixed_results) f64)))
  (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $=>eqref))))
+ (elem declare func $call-ref $call-ref-more)
  (func $call-ref
   (call_ref
    (ref.func $call-ref)
@@ -51,8 +52,8 @@
  )
  (func $type-only-in-tuple-local
   (local $x i32)
-  (local $1 f64)
-  (local $2 (ref null $=>anyref))
+  (local $1 (ref null $=>anyref))
+  (local $2 f64)
   (nop)
  )
  (func $type-only-in-tuple-block

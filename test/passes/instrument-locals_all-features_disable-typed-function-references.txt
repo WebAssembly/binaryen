@@ -34,6 +34,7 @@
  (import "env" "set_dataref" (func $set_dataref (param i32 i32 dataref) (result dataref)))
  (import "env" "get_v128" (func $get_v128 (param i32 i32 v128) (result v128)))
  (import "env" "set_v128" (func $set_v128 (param i32 i32 v128) (result v128)))
+ (elem declare func $test)
  (event $e (attr 0) (param i32))
  (func $test
   (local $x i32)

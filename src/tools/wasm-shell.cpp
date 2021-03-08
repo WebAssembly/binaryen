@@ -166,20 +166,18 @@ run_asserts(Name moduleName,
             reportUnknownImport(import);
           }
         });
-        ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
-          for (auto& segment : table->segments) {
-            for (auto name : segment.data) {
-              // spec tests consider it illegal to use spectest.print in a table
-              if (auto* import = wasm.getFunction(name)) {
-                if (import->imported() && import->module == SPECTEST &&
-                    import->base.startsWith(PRINT)) {
-                  std::cerr << "cannot put spectest.print in table\n";
-                  invalid = true;
-                }
+        for (auto& segment : wasm.elementSegments) {
+          for (auto name : segment->data) {
+            // spec tests consider it illegal to use spectest.print in a table
+            if (auto* import = wasm.getFunction(name)) {
+              if (import->imported() && import->module == SPECTEST &&
+                  import->base.startsWith(PRINT)) {
+                std::cerr << "cannot put spectest.print in table\n";
+                invalid = true;
               }
             }
           }
-        });
+        }
         if (wasm.memory.imported()) {
           reportUnknownImport(&wasm.memory);
         }

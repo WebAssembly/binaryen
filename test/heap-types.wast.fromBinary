@@ -5,6 +5,7 @@
  (type $vector (array (mut f64)))
  (type $anyref_=>_none (func (param anyref)))
  (type $parent (struct ))
+ (type $grandchild (struct (field i32) (field i64)))
  (type $struct.C (struct (field $named-mut (mut f32))))
  (type $none_=>_none (func))
  (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
@@ -12,7 +13,6 @@
  (type $ref?|$struct.A|_=>_ref?|$struct.B| (func (param (ref null $struct.A)) (result (ref null $struct.B))))
  (type $ref?|$vector|_=>_ref?|$matrix| (func (param (ref null $vector)) (result (ref null $matrix))))
  (type $child (struct (field i32)))
- (type $grandchild (struct (field i32) (field i64)))
  (type $words (array (mut i32)))
  (type $bytes (array (mut i8)))
  (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
@@ -26,8 +26,8 @@
   (local $tA (ref null $struct.A))
   (local $tB (ref null $struct.B))
   (local $tc (ref null $struct.C))
-  (local $tv (ref null $matrix))
-  (local $tm (ref null $vector))
+  (local $tv (ref null $vector))
+  (local $tm (ref null $matrix))
   (drop
    (local.get $x)
   )
@@ -52,6 +52,11 @@
    )
   )
   (drop
+   (struct.get $struct.A $named
+    (ref.null $struct.A)
+   )
+  )
+  (drop
    (struct.get_u $struct.B 0
     (local.get $tB)
    )
@@ -59,6 +64,11 @@
   (drop
    (struct.get_s $struct.B 0
     (local.get $tB)
+   )
+  )
+  (drop
+   (struct.get $grandchild 0
+    (ref.null $grandchild)
    )
   )
   (drop
@@ -108,10 +118,10 @@
   (unreachable)
  )
  (func $arrays (param $x (ref null $vector)) (result (ref null $matrix))
-  (local $tv (ref null $matrix))
-  (local $tm (ref null $words))
+  (local $tv (ref null $vector))
+  (local $tm (ref null $matrix))
   (local $tb (ref null $bytes))
-  (local $tw (ref null $vector))
+  (local $tw (ref null $words))
   (drop
    (array.new_with_rtt $vector
     (f64.const 3.14159)
@@ -143,7 +153,7 @@
   )
   (drop
    (array.get $words
-    (local.get $tm)
+    (local.get $tw)
     (i32.const 1)
    )
   )
@@ -170,13 +180,13 @@
  (func $rtt-operations
   (local $temp.A (ref null $struct.A))
   (drop
-   (ref.test $struct.B
+   (ref.test
     (ref.null $struct.A)
     (rtt.canon $struct.B)
    )
   )
   (drop
-   (ref.cast $struct.B
+   (ref.cast
     (ref.null $struct.A)
     (rtt.canon $struct.B)
    )

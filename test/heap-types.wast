@@ -6,6 +6,13 @@
     (field f32)
     (field $named f64)
   ))
+  ;; identical to $struct.A, so will be canonicalized with it, but field names
+  ;; are different
+  (type $struct.A.prime (struct
+    i32
+    (field f32)
+    (field $othername f64)
+  ))
   (type $struct.B (struct
     (field i8)
     (field (mut i16))
@@ -52,10 +59,17 @@
       (struct.get $struct.A $named (local.get $x))
     )
     (drop
+      (struct.get $struct.A.prime $othername (ref.null $struct.A.prime))
+    )
+    (drop
       (struct.get_u $struct.B 0 (local.get $tB))
     )
     (drop
       (struct.get_s $struct.B 0 (local.get $tB))
+    )
+    (drop
+      ;; immutable fields allow subtyping.
+      (struct.get $child 0 (ref.null $grandchild))
     )
     (drop
       (ref.null $struct.A)
@@ -163,10 +177,10 @@
   (func $rtt-operations
     (local $temp.A (ref null $struct.A))
     (drop
-      (ref.test $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+      (ref.test (ref.null $struct.A) (rtt.canon $struct.B))
     )
     (drop
-      (ref.cast $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+      (ref.cast (ref.null $struct.A) (rtt.canon $struct.B))
     )
     (drop
       (block $out (result (ref $struct.B))

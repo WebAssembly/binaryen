@@ -132,10 +132,19 @@ class SExpressionWasmBuilder {
   int globalCounter = 0;
   int eventCounter = 0;
   int tableCounter = 0;
+  int elemCounter = 0;
   int memoryCounter = 0;
   // we need to know function return types before we parse their contents
   std::map<Name, Signature> functionSignatures;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
+
+  // Maps type indexes to a mapping of field index => name. This is not the same
+  // as the field names stored on the wasm object, as that maps types after
+  // their canonicalization. Canonicalization loses information, which means
+  // that structurally identical types cannot have different names. However,
+  // while parsing the text format we keep this mapping of type indexes to names
+  // which does allow reading such content.
+  std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
 
 public:
   // Assumes control of and modifies the input.
@@ -272,7 +281,7 @@ private:
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
-  Index getStructIndex(const HeapType& type, Element& s);
+  Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);
   Expression* makeStructSet(Element& s);
   Expression* makeArrayNew(Element& s, bool default_);
@@ -305,11 +314,10 @@ private:
   void parseImport(Element& s);
   void parseGlobal(Element& s, bool preParseImport = false);
   void parseTable(Element& s, bool preParseImport = false);
-  void parseElem(Element& s);
-  void parseInnerElem(Table* table,
-                      Element& s,
-                      Index i = 1,
-                      Expression* offset = nullptr);
+  void parseElem(Element& s, Table* table = nullptr);
+  ElementSegment* parseElemFinish(Element& s,
+                                  std::unique_ptr<ElementSegment>& segment,
+                                  Index i = 1);
 
   // Parses something like (func ..), (array ..), (struct)
   HeapType parseHeapType(Element& s);

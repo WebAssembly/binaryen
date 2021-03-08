@@ -348,11 +348,9 @@ struct Inlining : public Pass {
         infos[ex->value].usedGlobally = true;
       }
     }
-    for (auto& table : module->tables) {
-      for (auto& segment : table->segments) {
-        for (auto name : segment.data) {
-          infos[name].usedGlobally = true;
-        }
+    for (auto& segment : module->elementSegments) {
+      for (auto name : segment->data) {
+        infos[name].usedGlobally = true;
       }
     }
 

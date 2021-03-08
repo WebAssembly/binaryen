@@ -2214,23 +2214,55 @@ function wrapModule(module, self = {}) {
   self['getGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetGlobal'](module, strToStack(name)));
   };
-  self['addTable'] = function(table, initial, maximum, funcNames, offset = self['i32']['const'](0)) {
-    return preserveStack(() => Module['_BinaryenAddTable'](module,
-      strToStack(table), initial, maximum,
-      i32sToStack(funcNames.map(strToStack)),
-      funcNames.length,
-      offset)
-    );
+  self['addTable'] = function(table, initial, maximum) {
+    return preserveStack(() => Module['_BinaryenAddTable'](module, strToStack(table), initial, maximum));
   }
   self['getTable'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetTable'](module, strToStack(name)));
   };
+  self['addActiveElementSegment'] = function(table, name, funcNames, offset = self['i32']['const'](0)) {
+    return preserveStack(() => Module['_BinaryenAddActiveElementSegment'](
+      module,
+      strToStack(table),
+      strToStack(name),
+      i32sToStack(funcNames.map(strToStack)),
+      funcNames.length,
+      offset
+    ));
+  };
+  self['addPassiveElementSegment'] = function(name, funcNames) {
+    return preserveStack(() => Module['_BinaryenAddPassiveElementSegment'](
+      module,
+      strToStack(name),
+      i32sToStack(funcNames.map(strToStack)),
+      funcNames.length
+    ));
+  };
+  self['getElementSegment'] = function(name) {
+    return preserveStack(() => Module['_BinaryenGetElementSegment'](module, strToStack(name)));
+  };
+  self['getTableSegments'] = function(table) {
+    var numElementSegments = Module['_BinaryenGetNumElementSegments'](module);
+    var tableName = UTF8ToString(Module['_BinaryenTableGetName'](table));
+    var ret = [];
+    for (var i = 0; i < numElementSegments; i++) {
+      var segment = Module['_BinaryenGetElementSegmentByIndex'](module, i);
+      var elemTableName = UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment));
+      if (tableName === elemTableName) {
+        ret.push(segment);
+      }
+    }
+    return ret;
+  }
   self['removeGlobal'] = function(name) {
     return preserveStack(() => Module['_BinaryenRemoveGlobal'](module, strToStack(name)));
   }
   self['removeTable'] = function(name) {
     return preserveStack(() => Module['_BinaryenRemoveTable'](module, strToStack(name)));
-  }
+  };
+  self['removeElementSegment'] = function(name) {
+    return preserveStack(() => Module['_BinaryenRemoveElementSegment'](module, strToStack(name)));
+  };
   self['addEvent'] = function(name, attribute, params, results) {
     return preserveStack(() => Module['_BinaryenAddEvent'](module, strToStack(name), attribute, params, results));
   };
@@ -2283,37 +2315,6 @@ function wrapModule(module, self = {}) {
   };
   self['removeExport'] = function(externalName) {
     return preserveStack(() => Module['_BinaryenRemoveExport'](module, strToStack(externalName)));
-  };
-  self['setFunctionTable'] = function(initial, maximum, funcNames, offset = self['i32']['const'](0)) {
-    return preserveStack(() => {
-      return Module['_BinaryenSetFunctionTable'](module, initial, maximum,
-        i32sToStack(funcNames.map(strToStack)),
-        funcNames.length,
-        offset
-      );
-    });
-  };
-  self['getFunctionTable'] = function() {
-    return {
-      'imported': Boolean(Module['_BinaryenIsFunctionTableImported'](module)),
-      'segments': (function() {
-        const numSegments = Module['_BinaryenGetNumFunctionTableSegments'](module)
-        const arr = new Array(numSegments);
-        for (let i = 0; i !== numSegments; ++i) {
-          const segmentLength = Module['_BinaryenGetFunctionTableSegmentLength'](module, i);
-          const names = new Array(segmentLength);
-          for (let j = 0; j !== segmentLength; ++j) {
-            const ptr = Module['_BinaryenGetFunctionTableSegmentData'](module, i, j);
-            names[j] = UTF8ToString(ptr);
-          }
-          arr[i] = {
-            'offset': Module['_BinaryenGetFunctionTableSegmentOffset'](module, i),
-            'names': names
-          };
-        }
-        return arr;
-      })()
-    };
   };
   self['setMemory'] = function(initial, maximum, exportName, segments = [], shared = false) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
@@ -2394,11 +2395,17 @@ function wrapModule(module, self = {}) {
   self['getNumTables'] = function() {
     return Module['_BinaryenGetNumTables'](module);
   };
+  self['getNumElementSegments'] = function() {
+    return Module['_BinaryenGetNumElementSegments'](module);
+  };
   self['getGlobalByIndex'] = function(index) {
     return Module['_BinaryenGetGlobalByIndex'](module, index);
   };
   self['getTableByIndex'] = function(index) {
     return Module['_BinaryenGetTableByIndex'](module, index);
+  };
+  self['getElementSegmentByIndex'] = function(index) {
+    return Module['_BinaryenGetElementSegmentByIndex'](module, index);
   };
   self['emitText'] = function() {
     const old = out;
@@ -3029,8 +3036,8 @@ Module['getTableInfo'] = function(table) {
     'name': UTF8ToString(Module['_BinaryenTableGetName'](table)),
     'module': UTF8ToString(Module['_BinaryenTableImportGetModule'](table)),
     'base': UTF8ToString(Module['_BinaryenTableImportGetBase'](table)),
-    'initial': Module['_BinaryenTableGetInitial'](table)
-  };
+    'initial': Module['_BinaryenTableGetInitial'](table),
+  }
 
   if (hasMax) {
     tableInfo.max = Module['_BinaryenTableGetMax'](table);
@@ -3038,6 +3045,22 @@ Module['getTableInfo'] = function(table) {
 
   return tableInfo;
 };
+
+Module['getElementSegmentInfo'] = function(segment) {
+  var segmentLength = Module['_BinaryenElementSegmentGetLength'](segment);
+  var names = new Array(segmentLength);
+  for (let j = 0; j !== segmentLength; ++j) {
+    var ptr = Module['_BinaryenElementSegmentGetData'](segment, j);
+    names[j] = UTF8ToString(ptr);
+  }
+
+  return {
+    'name': UTF8ToString(Module['_BinaryenElementSegmentGetName'](segment)),
+    'table': UTF8ToString(Module['_BinaryenElementSegmentGetTable'](segment)),
+    'offset': Module['_BinaryenElementSegmentGetOffset'](segment),
+    'data': names
+  }
+}
 
 // Obtains information about a 'Event'
 Module['getEventInfo'] = function(event_) {

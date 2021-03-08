@@ -20,6 +20,7 @@
 
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
+#include <ir/table-utils.h>
 #include <pass.h>
 #include <pretty_printing.h>
 #include <wasm-stack.h>
@@ -1912,14 +1913,8 @@ struct PrintExpressionContents
       printMedium(o, "call_ref");
     }
   }
-  void visitRefTest(RefTest* curr) {
-    printMedium(o, "ref.test ");
-    TypeNamePrinter(o, wasm).print(curr->getCastType().getHeapType());
-  }
-  void visitRefCast(RefCast* curr) {
-    printMedium(o, "ref.cast ");
-    TypeNamePrinter(o, wasm).print(curr->getCastType().getHeapType());
-  }
+  void visitRefTest(RefTest* curr) { printMedium(o, "ref.test"); }
+  void visitRefCast(RefCast* curr) { printMedium(o, "ref.cast"); }
   void visitBrOn(BrOn* curr) {
     switch (curr->op) {
       case BrOnNull:
@@ -2670,36 +2665,57 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printTableHeader(curr);
       o << maybeNewLine;
     }
-    for (auto& segment : curr->segments) {
-      // Don't print empty segments
-      if (segment.data.empty()) {
-        continue;
-      }
-      doIndent(o, indent);
-      o << '(';
-      printMedium(o, "elem ");
 
+    ModuleUtils::iterTableSegments(
+      *currModule, curr->name, [&](ElementSegment* segment) {
+        printElementSegment(segment);
+      });
+  }
+  void visitElementSegment(ElementSegment* curr) {
+    if (curr->table.is()) {
+      return;
+    }
+    printElementSegment(curr);
+  }
+  void printElementSegment(ElementSegment* curr) {
+    // Don't print empty segments
+    if (curr->data.empty()) {
+      return;
+    }
+    doIndent(o, indent);
+    o << '(';
+    printMedium(o, "elem");
+    if (curr->hasExplicitName) {
+      o << ' ';
+      printName(curr->name, o);
+    }
+
+    if (curr->table.is()) {
       // TODO(reference-types): check for old-style based on the complete spec
       if (currModule->tables.size() > 1) {
         // tableuse
-        o << '(';
-        printMedium(o, "table ");
-        printName(curr->name, o);
-        o << ") ";
+        o << " (table ";
+        printName(curr->table, o);
+        o << ")";
       }
 
-      visit(segment.offset);
+      o << ' ';
+      visit(curr->offset);
 
       if (currModule->tables.size() > 1) {
-        o << " func";
-      }
-
-      for (auto name : segment.data) {
         o << ' ';
-        printName(name, o);
+        TypeNamePrinter(o, currModule).print(HeapType::func);
       }
-      o << ')' << maybeNewLine;
+    } else {
+      o << ' ';
+      TypeNamePrinter(o, currModule).print(HeapType::func);
     }
+
+    for (auto name : curr->data) {
+      o << ' ';
+      printName(name, o);
+    }
+    o << ')' << maybeNewLine;
   }
   void printMemoryHeader(Memory* curr) {
     o << '(';
@@ -2838,6 +2854,19 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       *curr, [&](Memory* memory) { visitMemory(memory); });
     ModuleUtils::iterDefinedTables(*curr,
                                    [&](Table* table) { visitTable(table); });
+    for (auto& segment : curr->elementSegments) {
+      visitElementSegment(segment.get());
+    }
+    auto elemDeclareNames = TableUtils::getFunctionsNeedingElemDeclare(*curr);
+    if (!elemDeclareNames.empty()) {
+      doIndent(o, indent);
+      printMedium(o, "(elem");
+      o << " declare func";
+      for (auto name : elemDeclareNames) {
+        o << " $" << name;
+      }
+      o << ')' << maybeNewLine;
+    }
     ModuleUtils::iterDefinedGlobals(
       *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterDefinedEvents(*curr,

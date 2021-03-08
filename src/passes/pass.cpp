@@ -140,11 +140,12 @@ void PassRegistry::registerPasses() {
   registerPass("generate-dyncalls",
                "generate dynCall fuctions used by emscripten ABI",
                createGenerateDynCallsPass);
-  registerPass("generate-i64-dyncalls",
-               "generate dynCall functions used by emscripten ABI, but only for "
-               "functions with i64 in their signature (which cannot be invoked "
-               "via the wasm table without JavaScript BigInt support).",
-               createGenerateI64DynCallsPass);
+  registerPass(
+    "generate-i64-dyncalls",
+    "generate dynCall functions used by emscripten ABI, but only for "
+    "functions with i64 in their signature (which cannot be invoked "
+    "via the wasm table without JavaScript BigInt support).",
+    createGenerateI64DynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
   registerPass(
@@ -237,12 +238,6 @@ void PassRegistry::registerPasses() {
                createPickLoadSignsPass);
   registerPass(
     "poppify", "Tranform Binaryen IR into Poppy IR", createPoppifyPass);
-  registerPass("post-assemblyscript",
-               "eliminates redundant ARC patterns in AssemblyScript output",
-               createPostAssemblyScriptPass);
-  registerPass("post-assemblyscript-finalize",
-               "eliminates collapsed ARC patterns after other optimizations",
-               createPostAssemblyScriptFinalizePass);
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);

@@ -178,6 +178,9 @@ void ReFinalize::visitFunction(Function* curr) {
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitElementSegment(ElementSegment* curr) {
+  WASM_UNREACHABLE("unimp");
+}
 void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }

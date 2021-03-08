@@ -51,7 +51,7 @@ int unhex(char c) {
 namespace wasm {
 
 static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), I8("i8"),
-  I16("i16"), RTT("rtt");
+  I16("i16"), RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -785,10 +785,6 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     return Signature(builder.getTempTupleType(params),
                      builder.getTempTupleType(results));
   };
-
-  // Maps type indexes to a mapping of field index => name. We store the data
-  // here while parsing as types have not been created yet.
-  std::unordered_map<size_t, std::unordered_map<Index, Name>> fieldNames;
 
   // Parses a field, and notes the name if one is found.
   auto parseField = [&](Element* elem, Name& name) {
@@ -2561,18 +2557,14 @@ Expression* SExpressionWasmBuilder::makeI31Get(Element& s, bool signed_) {
 }
 
 Expression* SExpressionWasmBuilder::makeRefTest(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  auto* ref = parseExpression(*s[2]);
-  auto* rtt = parseExpression(*s[3]);
-  validateHeapTypeUsingChild(rtt, heapType, s);
+  auto* ref = parseExpression(*s[1]);
+  auto* rtt = parseExpression(*s[2]);
   return Builder(wasm).makeRefTest(ref, rtt);
 }
 
 Expression* SExpressionWasmBuilder::makeRefCast(Element& s) {
-  auto heapType = parseHeapType(*s[1]);
-  auto* ref = parseExpression(*s[2]);
-  auto* rtt = parseExpression(*s[3]);
-  validateHeapTypeUsingChild(rtt, heapType, s);
+  auto* ref = parseExpression(*s[1]);
+  auto* rtt = parseExpression(*s[2]);
   return Builder(wasm).makeRefCast(ref, rtt);
 }
 
@@ -2614,27 +2606,28 @@ Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   return Builder(wasm).makeStructNew(rtt, operands);
 }
 
-Index SExpressionWasmBuilder::getStructIndex(const HeapType& type, Element& s) {
-  if (s.dollared()) {
-    auto name = s.str();
-    auto struct_ = type.getStruct();
+Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
+  if (field.dollared()) {
+    auto name = field.str();
+    auto index = typeIndices[type.str().str];
+    auto struct_ = types[index].getStruct();
     auto& fields = struct_.fields;
-    const auto& fieldNames = wasm.typeNames[type].fieldNames;
+    const auto& names = fieldNames[index];
     for (Index i = 0; i < fields.size(); i++) {
-      auto it = fieldNames.find(i);
-      if (it != fieldNames.end() && it->second == name) {
+      auto it = names.find(i);
+      if (it != names.end() && it->second == name) {
         return i;
       }
     }
-    throw ParseException("bad struct field name", s.line, s.col);
+    throw ParseException("bad struct field name", field.line, field.col);
   }
   // this is a numeric index
-  return atoi(s.c_str());
+  return atoi(field.c_str());
 }
 
 Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
   auto heapType = parseHeapType(*s[1]);
-  auto index = getStructIndex(heapType, *s[2]);
+  auto index = getStructIndex(*s[1], *s[2]);
   auto type = heapType.getStruct().fields[index].type;
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
@@ -2643,7 +2636,7 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
   auto heapType = parseHeapType(*s[1]);
-  auto index = getStructIndex(heapType, *s[2]);
+  auto index = getStructIndex(*s[1], *s[2]);
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
   auto value = parseExpression(*s[4]);
@@ -3222,15 +3215,25 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
     wasm.addTable(std::move(table));
     return;
   }
+
+  auto parseTableElem = [&](Table* table, Element& s) {
+    parseElem(s, table);
+    auto it = std::find_if(wasm.elementSegments.begin(),
+                           wasm.elementSegments.end(),
+                           [&](std::unique_ptr<ElementSegment>& segment) {
+                             return segment->table == table->name;
+                           });
+    if (it != wasm.elementSegments.end()) {
+      table->initial = table->max = it->get()->data.size();
+    } else {
+      table->initial = table->max = 0;
+    }
+  };
+
   if (!s[i]->dollared()) {
     if (s[i]->str() == FUNCREF) {
       // (table type (elem ..))
-      parseInnerElem(table.get(), *s[i + 1]);
-      if (table->segments.size() > 0) {
-        table->initial = table->max = table->segments[0].data.size();
-      } else {
-        table->initial = table->max = 0;
-      }
+      parseTableElem(table.get(), *s[i + 1]);
       wasm.addTable(std::move(table));
       return;
     }
@@ -3250,13 +3253,7 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
     }
   }
   // old notation (table func1 func2 ..)
-  parseInnerElem(table.get(), s, i);
-  if (table->segments.size() > 0) {
-    table->initial = table->max = table->segments[0].data.size();
-  } else {
-    table->initial = table->max = 0;
-  }
-
+  parseTableElem(table.get(), s);
   wasm.addTable(std::move(table));
 }
 
@@ -3264,43 +3261,77 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
 // elem  ::= (elem (expr) vec(funcidx))
 //         | (elem (offset (expr)) func vec(funcidx))
 //         | (elem (table tableidx) (offset (expr)) func vec(funcidx))
+//         | (elem func vec(funcidx))
+//         | (elem declare func vec(funcidx))
 //
 // abbreviation:
 //   (offset (expr)) ≡ (expr)
 //   (elem (expr) vec(funcidx)) ≡ (elem (table 0) (offset (expr)) func
 //                                vec(funcidx))
 //
-void SExpressionWasmBuilder::parseElem(Element& s) {
+void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
   Index i = 1;
-  Table* table = nullptr;
-  Expression* offset = nullptr;
+  Name name = Name::fromInt(elemCounter++);
+  bool hasExplicitName = false;
 
-  if (!s[i]->isList()) {
-    // optional segment id OR 'declare' OR start of elemList
+  if (table) {
+    Expression* offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
+    auto segment = std::make_unique<ElementSegment>(table->name, offset);
+    segment->setName(name, hasExplicitName);
+    parseElemFinish(s, segment, i);
+    return;
+  }
+
+  if (s[i]->isStr() && s[i]->dollared()) {
+    name = s[i++]->str();
+    hasExplicitName = true;
+  }
+  if (s[i]->isStr() && s[i]->str() == DECLARE) {
+    // We don't store declared segments in the IR
+    return;
+  }
+
+  if (s[i]->isStr() && s[i]->str() == FUNC) {
+    auto segment = std::make_unique<ElementSegment>();
+    segment->setName(name, hasExplicitName);
+    parseElemFinish(s, segment, i + 1);
+    return;
+  }
+
+  // old style refers to the pre-reftypes form of (elem 0? (expr) vec(funcidx))
+  bool oldStyle = true;
+
+  // At this point, we know that we're parsing an active element segment. A
+  // table will be mandatory now.
+  if (wasm.tables.empty()) {
+    throw ParseException("elem without table", s.line, s.col);
+  }
+
+  // Old style table index (elem 0 (i32.const 0) ...)
+  if (s[i]->isStr()) {
     i += 1;
   }
 
-  // old style refers to the pre-reftypes form of (elem (expr) vec(funcidx))
-  bool oldStyle = true;
-
-  while (1) {
+  if (s[i]->isList() && elementStartsWith(s[i], TABLE)) {
+    oldStyle = false;
     auto& inner = *s[i++];
-    if (elementStartsWith(inner, TABLE)) {
+    Name tableName = getTableName(*inner[1]);
+    table = wasm.getTable(tableName);
+  }
+
+  Expression* offset = nullptr;
+  if (s[i]->isList()) {
+    auto& inner = *s[i++];
+    if (elementStartsWith(inner, OFFSET)) {
+      offset = parseExpression(inner[1]);
       oldStyle = false;
-      Name tableName = getTableName(*inner[1]);
-      table = wasm.getTable(tableName);
     } else {
-      if (elementStartsWith(inner, "offset")) {
-        offset = parseExpression(inner[1]);
-      } else {
-        offset = parseExpression(inner);
-      }
-      break;
+      offset = parseExpression(inner);
     }
   }
 
   if (!oldStyle) {
-    if (strcmp(s[i]->c_str(), "func") != 0) {
+    if (s[i]->str() != FUNC) {
       throw ParseException(
         "only the abbreviated form of elemList is supported.");
     }
@@ -3308,27 +3339,21 @@ void SExpressionWasmBuilder::parseElem(Element& s) {
     i += 1;
   }
 
-  if (wasm.tables.empty()) {
-    throw ParseException("elem without table", s.line, s.col);
-  } else if (!table) {
-    table = wasm.tables[0].get();
+  if (!table) {
+    table = wasm.tables.front().get();
   }
 
-  parseInnerElem(table, s, i, offset);
+  auto segment = std::make_unique<ElementSegment>(table->name, offset);
+  segment->setName(name, hasExplicitName);
+  parseElemFinish(s, segment, i);
 }
 
-void SExpressionWasmBuilder::parseInnerElem(Table* table,
-                                            Element& s,
-                                            Index i,
-                                            Expression* offset) {
-  if (!offset) {
-    offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
-  }
-  Table::Segment segment(offset);
+ElementSegment* SExpressionWasmBuilder::parseElemFinish(
+  Element& s, std::unique_ptr<ElementSegment>& segment, Index i) {
   for (; i < s.size(); i++) {
-    segment.data.push_back(getFunctionName(*s[i]));
+    segment->data.push_back(getFunctionName(*s[i]));
   }
-  table->segments.push_back(segment);
+  return wasm.addElementSegment(std::move(segment));
 }
 
 HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
@@ -3451,7 +3476,7 @@ void SExpressionWasmBuilder::validateHeapTypeUsingChild(Expression* child,
     return;
   }
   if ((!child->type.isRef() && !child->type.isRtt()) ||
-      child->type.getHeapType() != heapType) {
+      !HeapType::isSubType(child->type.getHeapType(), heapType)) {
     throw ParseException("bad heap type: expected " + heapType.toString() +
                            " but found " + child->type.toString(),
                          s.line,

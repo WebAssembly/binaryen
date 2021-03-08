@@ -3,15 +3,16 @@
  (type $sig_anyref (func (param anyref)))
  (type $sig_funcref (func (param funcref)))
  (type $none_=>_funcref (func (result funcref)))
+ (type $none_=>_none (func))
  (type $sig_externref (func (param externref)))
  (type $none_=>_externref (func (result externref)))
- (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (type $externref_=>_funcref (func (param externref) (result funcref)))
  (import "env" "import_global" (global $import_global externref))
  (import "env" "import_func" (func $import_func (param externref) (result funcref)))
  (table $0 3 3 funcref)
  (elem (i32.const 0) $take_externref $take_funcref $take_anyref)
+ (elem declare func $foo $ref-taken-but-not-in-table)
  (global $global_externref (mut externref) (ref.null extern))
  (global $global_funcref (mut funcref) (ref.null func))
  (global $global_funcref_func (mut funcref) (ref.func $foo))
@@ -763,5 +764,13 @@
   (return
    (ref.null func)
   )
+ )
+ (func $ref-user
+  (drop
+   (ref.func $ref-taken-but-not-in-table)
+  )
+ )
+ (func $ref-taken-but-not-in-table
+  (nop)
  )
 )

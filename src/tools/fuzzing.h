@@ -195,7 +195,7 @@ public:
     if (allowMemory) {
       setupMemory();
     }
-    setupTable();
+    setupTables();
     setupGlobals();
     if (wasm.features.hasExceptionHandling()) {
       setupEvents();
@@ -424,16 +424,23 @@ private:
   }
 
   // TODO(reference-types): allow the fuzzer to create multiple tables
-  void setupTable() {
+  void setupTables() {
     if (wasm.tables.size() > 0) {
       auto& table = wasm.tables[0];
       table->initial = table->max = 0;
-      table->segments.emplace_back(builder.makeConst(int32_t(0)));
+
+      auto segment = std::make_unique<ElementSegment>(
+        table->name, builder.makeConst(int32_t(0)));
+      segment->setName(Name::fromInt(0), false);
+      wasm.addElementSegment(std::move(segment));
     } else {
       auto table = builder.makeTable(
         Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
       table->hasExplicitName = true;
-      table->segments.emplace_back(builder.makeConst(int32_t(0)));
+      auto segment = std::make_unique<ElementSegment>(
+        table->name, builder.makeConst(int32_t(0)));
+      segment->setName(Name::fromInt(0), false);
+      wasm.addElementSegment(std::move(segment));
       wasm.addTable(std::move(table));
     }
   }
@@ -532,22 +539,23 @@ private:
 
   void finalizeTable() {
     for (auto& table : wasm.tables) {
-      for (auto& segment : table->segments) {
-        // If the offset is a global that was imported (which is ok) but no
-        // longer is (not ok) we need to change that.
-        if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
-          if (!wasm.getGlobal(offset->name)->imported()) {
-            // TODO: the segments must not overlap...
-            segment.offset =
-              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+      ModuleUtils::iterTableSegments(
+        wasm, table->name, [&](ElementSegment* segment) {
+          // If the offset is a global that was imported (which is ok) but no
+          // longer is (not ok) we need to change that.
+          if (auto* offset = segment->offset->dynCast<GlobalGet>()) {
+            if (!wasm.getGlobal(offset->name)->imported()) {
+              // TODO: the segments must not overlap...
+              segment->offset =
+                builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+            }
           }
-        }
-        Address maxOffset = segment.data.size();
-        if (auto* offset = segment.offset->dynCast<Const>()) {
-          maxOffset = maxOffset + offset->value.getInteger();
-        }
-        table->initial = std::max(table->initial, maxOffset);
-      }
+          Address maxOffset = segment->data.size();
+          if (auto* offset = segment->offset->dynCast<Const>()) {
+            maxOffset = maxOffset + offset->value.getInteger();
+          }
+          table->initial = std::max(table->initial, maxOffset);
+        });
       table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
       // Avoid an imported table (which the fuzz harness would need to handle).
       table->module = table->base = Name();
@@ -713,9 +721,11 @@ private:
       export_->kind = ExternalKind::Function;
       wasm.addExport(export_);
     }
-    // add some to the table
+    // add some to an elem segment
     while (oneIn(3) && !finishedInput) {
-      wasm.tables[0]->segments[0].data.push_back(func->name);
+      auto& randomElem =
+        wasm.elementSegments[upTo(wasm.elementSegments.size())];
+      randomElem->data.push_back(func->name);
     }
     numAddedFunctions++;
     return func;
@@ -1435,7 +1445,8 @@ private:
   }
 
   Expression* makeCallIndirect(Type type) {
-    auto& data = wasm.tables[0]->segments[0].data;
+    auto& randomElem = wasm.elementSegments[upTo(wasm.elementSegments.size())];
+    auto& data = randomElem->data;
     if (data.empty()) {
       return make(type);
     }

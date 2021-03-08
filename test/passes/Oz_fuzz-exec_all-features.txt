@@ -41,6 +41,7 @@
  (type $anyref_=>_none (func (param anyref)))
  (type $int_func (func (result i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
+ (elem declare func $a-void-func)
  (export "structs" (func $0))
  (export "arrays" (func $1))
  (export "rtts" (func $2))
@@ -144,7 +145,7 @@
    (i32.const 0)
   )
   (call $log
-   (ref.test $extendedstruct
+   (ref.test
     (local.tee $0
      (struct.new_default_with_rtt $extendedstruct
       (rtt.sub $extendedstruct
@@ -158,13 +159,13 @@
    )
   )
   (call $log
-   (ref.test $extendedstruct
+   (ref.test
     (local.get $0)
     (rtt.canon $extendedstruct)
    )
   )
   (call $log
-   (ref.test $struct
+   (ref.test
     (local.get $0)
     (rtt.canon $struct)
    )
@@ -212,7 +213,7 @@
    (i32.const 2)
   )
   (call_ref
-   (ref.cast $void_func
+   (ref.cast
     (ref.func $a-void-func)
     (rtt.canon $void_func)
    )
@@ -222,7 +223,7 @@
   )
   (drop
    (call_ref
-    (ref.cast $int_func
+    (ref.cast
      (ref.func $a-void-func)
      (rtt.canon $int_func)
     )

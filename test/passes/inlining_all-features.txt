@@ -1,6 +1,7 @@
 (module
  (type $none_=>_none (func))
  (type $none_=>_funcref (func (result funcref)))
+ (elem declare func $foo)
  (export "ref_func_test" (func $ref_func_test))
  (func $foo
   (nop)

@@ -18,6 +18,7 @@
 #include <fstream>
 
 #include "ir/module-utils.h"
+#include "ir/table-utils.h"
 #include "support/bits.h"
 #include "support/debug.h"
 #include "wasm-binary.h"
@@ -54,7 +55,7 @@ void WasmBinaryWriter::write() {
   writeGlobals();
   writeExports();
   writeStart();
-  writeTableElements();
+  writeElementSegments();
   writeDataCount();
   writeFunctions();
   writeDataSegments();
@@ -335,10 +336,18 @@ void WasmBinaryWriter::writeFunctions() {
     // Emit Stack IR if present, and if we can
     if (func->stackIR && !sourceMap && !DWARF) {
       BYN_TRACE("write Stack IR\n");
-      StackIRToBinaryWriter(*this, o, func).write();
+      StackIRToBinaryWriter writer(*this, o, func);
+      writer.write();
+      if (debugInfo) {
+        funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
+      }
     } else {
       BYN_TRACE("write Binaryen IR\n");
-      BinaryenIRToBinaryWriter(*this, o, func, sourceMap, DWARF).write();
+      BinaryenIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
+      writer.write();
+      if (debugInfo) {
+        funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
+      }
     }
     size_t size = o.size() - start;
     assert(size <= std::numeric_limits<uint32_t>::max());
@@ -543,51 +552,72 @@ void WasmBinaryWriter::writeTableDeclarations() {
   finishSection(start);
 }
 
-void WasmBinaryWriter::writeTableElements() {
-  size_t elemCount = 0;
-  for (auto& table : wasm->tables) {
-    elemCount += table->segments.size();
+void WasmBinaryWriter::writeElementSegments() {
+  size_t elemCount = wasm->elementSegments.size();
+  auto needingElemDecl = TableUtils::getFunctionsNeedingElemDeclare(*wasm);
+  if (!needingElemDecl.empty()) {
+    elemCount++;
   }
   if (elemCount == 0) {
     return;
   }
 
-  BYN_TRACE("== writeTableElements\n");
+  BYN_TRACE("== writeElementSegments\n");
   auto start = startSection(BinaryConsts::Section::Element);
   o << U32LEB(elemCount);
 
-  for (auto& table : wasm->tables) {
-    for (auto& segment : table->segments) {
-      Index tableIdx = getTableIndex(table->name);
-      // No support for passive element segments yet as they don't belong to a
-      // table.
-      bool isPassive = false;
-      bool isDeclarative = false;
-      bool hasTableIndex = tableIdx > 0;
-      bool usesExpressions = false;
+  for (auto& segment : wasm->elementSegments) {
+    Index tableIdx = 0;
 
-      uint32_t flags =
-        (isPassive ? BinaryConsts::IsPassive |
-                       (isDeclarative ? BinaryConsts::IsDeclarative : 0)
-                   : (hasTableIndex ? BinaryConsts::HasIndex : 0)) |
-        (usesExpressions ? BinaryConsts::UsesExpressions : 0);
+    bool isPassive = segment->table.isNull();
+    // TODO(reference-types): add support for writing expressions instead of
+    // function indices.
+    bool usesExpressions = false;
 
-      o << U32LEB(flags);
+    bool hasTableIndex = false;
+    if (!isPassive) {
+      tableIdx = getTableIndex(segment->table);
+      hasTableIndex = tableIdx > 0;
+    }
+
+    uint32_t flags = 0;
+    if (usesExpressions) {
+      flags |= BinaryConsts::UsesExpressions;
+    }
+    if (isPassive) {
+      flags |= BinaryConsts::IsPassive;
+    } else if (hasTableIndex) {
+      flags |= BinaryConsts::HasIndex;
+    }
+
+    o << U32LEB(flags);
+    if (!isPassive) {
       if (hasTableIndex) {
         o << U32LEB(tableIdx);
       }
-      writeExpression(segment.offset);
+      writeExpression(segment->offset);
       o << int8_t(BinaryConsts::End);
-      if (!usesExpressions && (isPassive || hasTableIndex)) {
-        // elemKind funcref
-        o << U32LEB(0);
-      }
-      o << U32LEB(segment.data.size());
-      for (auto name : segment.data) {
-        o << U32LEB(getFunctionIndex(name));
-      }
+    }
+
+    if (!usesExpressions && (isPassive || hasTableIndex)) {
+      // elemKind funcref
+      o << U32LEB(0);
+    }
+    o << U32LEB(segment->data.size());
+    for (auto& name : segment->data) {
+      o << U32LEB(getFunctionIndex(name));
     }
   }
+
+  if (!needingElemDecl.empty()) {
+    o << U32LEB(BinaryConsts::IsPassive | BinaryConsts::IsDeclarative);
+    o << U32LEB(0); // type (indicating funcref)
+    o << U32LEB(needingElemDecl.size());
+    for (auto name : needingElemDecl) {
+      o << U32LEB(indexes.functionIndexes[name]);
+    }
+  }
+
   finishSection(start);
 }
 
@@ -663,20 +693,28 @@ void WasmBinaryWriter::writeNames() {
         startSubsection(BinaryConsts::UserSections::Subsection::NameLocal);
       o << U32LEB(functionsWithLocalNames.size());
       Index emitted = 0;
-      for (auto& indexedFunc : functionsWithLocalNames) {
+      for (auto& kv : functionsWithLocalNames) {
+        auto index = kv.first;
+        auto* func = kv.second;
+        // Pairs of (local index in IR, name).
         std::vector<std::pair<Index, Name>> localsWithNames;
-        auto numLocals = indexedFunc.second->getNumLocals();
+        auto numLocals = func->getNumLocals();
         for (Index i = 0; i < numLocals; ++i) {
-          if (indexedFunc.second->hasLocalName(i)) {
-            localsWithNames.push_back({i, indexedFunc.second->getLocalName(i)});
+          if (func->hasLocalName(i)) {
+            localsWithNames.push_back({i, func->getLocalName(i)});
           }
         }
         assert(localsWithNames.size());
-        o << U32LEB(indexedFunc.first);
+        o << U32LEB(index);
         o << U32LEB(localsWithNames.size());
         for (auto& indexedLocal : localsWithNames) {
-          o << U32LEB(indexedLocal.first);
-          writeEscapedName(indexedLocal.second.str);
+          auto indexInFunc = indexedLocal.first;
+          auto name = indexedLocal.second;
+          // TODO: handle multivalue
+          auto indexInBinary =
+            funcMappedLocals.at(func->name)[{indexInFunc, 0}];
+          o << U32LEB(indexInBinary);
+          writeEscapedName(name.str);
         }
         emitted++;
       }
@@ -728,6 +766,32 @@ void WasmBinaryWriter::writeNames() {
       for (auto& indexedTable : tablesWithNames) {
         o << U32LEB(indexedTable.first);
         writeEscapedName(indexedTable.second->name.str);
+      }
+
+      finishSubsection(substart);
+    }
+  }
+
+  // elem names
+  {
+    std::vector<std::pair<Index, ElementSegment*>> elemsWithNames;
+    Index checked = 0;
+    for (auto& curr : wasm->elementSegments) {
+      if (curr->hasExplicitName) {
+        elemsWithNames.push_back({checked, curr.get()});
+      }
+      checked++;
+    }
+    assert(checked == indexes.elemIndexes.size());
+
+    if (elemsWithNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameElem);
+      o << U32LEB(elemsWithNames.size());
+
+      for (auto& indexedElem : elemsWithNames) {
+        o << U32LEB(indexedElem.first);
+        writeEscapedName(indexedElem.second->name.str);
       }
 
       finishSubsection(substart);
@@ -1306,7 +1370,7 @@ void WasmBinaryBuilder::read() {
         readExports();
         break;
       case BinaryConsts::Section::Element:
-        readTableElements();
+        readElementSegments();
         break;
       case BinaryConsts::Section::Global:
         readGlobals();
@@ -1318,7 +1382,7 @@ void WasmBinaryBuilder::read() {
         readDataCount();
         break;
       case BinaryConsts::Section::Table:
-        readFunctionTableDeclaration();
+        readTableDeclarations();
         break;
       case BinaryConsts::Section::Event:
         readEvents();
@@ -2061,7 +2125,6 @@ void WasmBinaryBuilder::readFunctions() {
       assert(breakStack.empty());
       assert(breakTargetNames.empty());
       assert(exceptionTargetNames.empty());
-      assert(breakStack.empty());
       assert(expressionStack.empty());
       assert(controlFlowStack.empty());
       assert(letStack.empty());
@@ -2519,6 +2582,9 @@ void WasmBinaryBuilder::processNames() {
   for (auto& table : tables) {
     wasm.addTable(std::move(table));
   }
+  for (auto& segment : elementSegments) {
+    wasm.addElementSegment(std::move(segment));
+  }
 
   // now that we have names, apply things
 
@@ -2577,14 +2643,11 @@ void WasmBinaryBuilder::processNames() {
     }
   }
 
-  for (auto& table_pair : functionTable) {
-    for (auto& pair : table_pair.second) {
-      auto i = pair.first;
-      auto& indices = pair.second;
-      for (auto j : indices) {
-        wasm.tables[table_pair.first]->segments[i].data.push_back(
-          getFunctionName(j));
-      }
+  for (auto& pair : functionTable) {
+    auto i = pair.first;
+    auto& indices = pair.second;
+    for (auto j : indices) {
+      wasm.elementSegments[i]->data.push_back(getFunctionName(j));
     }
   }
 
@@ -2640,8 +2703,8 @@ void WasmBinaryBuilder::readDataSegments() {
   }
 }
 
-void WasmBinaryBuilder::readFunctionTableDeclaration() {
-  BYN_TRACE("== readFunctionTableDeclaration\n");
+void WasmBinaryBuilder::readTableDeclarations() {
+  BYN_TRACE("== readTableDeclarations\n");
   auto numTables = getU32LEB();
 
   for (size_t i = 0; i < numTables; i++) {
@@ -2665,8 +2728,8 @@ void WasmBinaryBuilder::readFunctionTableDeclaration() {
   }
 }
 
-void WasmBinaryBuilder::readTableElements() {
-  BYN_TRACE("== readTableElements\n");
+void WasmBinaryBuilder::readElementSegments() {
+  BYN_TRACE("== readElementSegments\n");
   auto numSegments = getU32LEB();
   if (numSegments >= Table::kMaxSize) {
     throwError("Too many segments");
@@ -2674,42 +2737,63 @@ void WasmBinaryBuilder::readTableElements() {
   for (size_t i = 0; i < numSegments; i++) {
     auto flags = getU32LEB();
     bool isPassive = (flags & BinaryConsts::IsPassive) != 0;
-    bool hasTableIdx = (flags & BinaryConsts::HasIndex) != 0;
+    bool hasTableIdx = !isPassive && ((flags & BinaryConsts::HasIndex) != 0);
+    bool isDeclarative =
+      isPassive && ((flags & BinaryConsts::IsDeclarative) != 0);
     bool usesExpressions = (flags & BinaryConsts::UsesExpressions) != 0;
 
-    if (isPassive) {
-      throwError("Only active elem segments are supported.");
+    if (isDeclarative) {
+      // Declared segments are needed in wasm text and binary, but not in
+      // Binaryen IR; skip over the segment
+      auto type = getU32LEB();
+      WASM_UNUSED(type);
+      auto num = getU32LEB();
+      for (Index i = 0; i < num; i++) {
+        getU32LEB();
+      }
+      continue;
     }
 
     if (usesExpressions) {
       throwError("Only elem segments with function indexes are supported.");
     }
 
-    Index tableIdx = 0;
-    if (hasTableIdx) {
-      tableIdx = getU32LEB();
-    }
+    if (!isPassive) {
+      Index tableIdx = 0;
+      if (hasTableIdx) {
+        tableIdx = getU32LEB();
+      }
 
-    auto numTableImports = tableImports.size();
-    if (tableIdx < numTableImports) {
-      auto table = tableImports[tableIdx];
-      table->segments.emplace_back(readExpression());
-    } else if (tableIdx - numTableImports < tables.size()) {
-      auto table = tables[tableIdx - numTableImports].get();
-      table->segments.emplace_back(readExpression());
+      auto makeActiveElem = [&](Table* table) {
+        auto segment =
+          std::make_unique<ElementSegment>(table->name, readExpression());
+        segment->setName(Name::fromInt(i), false);
+        elementSegments.push_back(std::move(segment));
+      };
+
+      auto numTableImports = tableImports.size();
+      if (tableIdx < numTableImports) {
+        makeActiveElem(tableImports[tableIdx]);
+      } else if (tableIdx - numTableImports < tables.size()) {
+        makeActiveElem(tables[tableIdx - numTableImports].get());
+      } else {
+        throwError("Table index out of range.");
+      }
     } else {
-      throwError("Table index out of range.");
+      auto segment = std::make_unique<ElementSegment>();
+      segment->setName(Name::fromInt(i), false);
+      elementSegments.push_back(std::move(segment));
     }
 
-    if (hasTableIdx) {
+    if (isPassive || hasTableIdx) {
       auto elemKind = getU32LEB();
       if (elemKind != 0x0) {
         throwError("Only funcref elem kinds are valid.");
       }
     }
 
-    size_t segmentIndex = functionTable[tableIdx].size();
-    auto& indexSegment = functionTable[tableIdx][segmentIndex];
+    size_t segmentIndex = functionTable.size();
+    auto& indexSegment = functionTable[segmentIndex];
     auto size = getU32LEB();
     for (Index j = 0; j < size; j++) {
       indexSegment.push_back(getU32LEB());
@@ -2878,13 +2962,39 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
         auto numTableImports = tableImports.size();
+        auto setTableName = [&](Table* table) {
+          for (auto& segment : elementSegments) {
+            if (segment->table == table->name) {
+              segment->table = name;
+            }
+          }
+          table->setExplicitName(name);
+        };
+
         if (index < numTableImports) {
-          tableImports[index]->setExplicitName(name);
+          setTableName(tableImports[index]);
         } else if (index - numTableImports < tables.size()) {
-          tables[index - numTableImports]->setExplicitName(name);
+          setTableName(tables[index - numTableImports].get());
         } else {
           std::cerr << "warning: table index out of bounds in name section, "
                        "table subsection: "
+                    << std::string(rawName.str) << " at index "
+                    << std::to_string(index) << std::endl;
+        }
+      }
+    } else if (nameType == BinaryConsts::UserSections::Subsection::NameElem) {
+      auto num = getU32LEB();
+      NameProcessor processor;
+      for (size_t i = 0; i < num; i++) {
+        auto index = getU32LEB();
+        auto rawName = getInlineString();
+        auto name = processor.process(rawName);
+
+        if (index < elementSegments.size()) {
+          elementSegments[index]->setExplicitName(name);
+        } else {
+          std::cerr << "warning: elem index out of bounds in name section, "
+                       "elem subsection: "
                     << std::string(rawName.str) << " at index "
                     << std::to_string(index) << std::endl;
         }
@@ -6418,7 +6528,7 @@ void WasmBinaryBuilder::validateHeapTypeUsingChild(Expression* child,
     return;
   }
   if ((!child->type.isRef() && !child->type.isRtt()) ||
-      child->type.getHeapType() != heapType) {
+      !HeapType::isSubType(child->type.getHeapType(), heapType)) {
     throwError("bad heap type: expected " + heapType.toString() +
                " but found " + child->type.toString());
   }
