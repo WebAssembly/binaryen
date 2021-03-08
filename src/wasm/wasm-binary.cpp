@@ -1152,7 +1152,7 @@ void WasmBinaryWriter::writeType(Type type) {
     } else {
       o << S32LEB(BinaryConsts::EncodedType::rtt);
     }
-    writeHeapType(rtt.heapType);
+    writeIndexedHeapType(rtt.heapType);
     return;
   }
   int ret = 0;
@@ -1768,11 +1768,7 @@ void WasmBinaryBuilder::readTypes() {
       case BinaryConsts::EncodedType::rtt: {
         auto depth = typeCode == BinaryConsts::EncodedType::rtt ? Rtt::NoDepth
                                                                 : getU32LEB();
-        int64_t htCode = getS64LEB(); // TODO: Actually s33
-        HeapType ht;
-        if (getBasicHeapType(htCode, ht)) {
-          return Type(Rtt(depth, ht));
-        }
+        auto htCode = getU32LEB();
         if (size_t(htCode) >= numTypes) {
           throwError("invalid type index: " + std::to_string(htCode));
         }
