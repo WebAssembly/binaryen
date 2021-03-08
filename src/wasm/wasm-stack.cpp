@@ -2092,7 +2092,7 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
     op = BinaryConsts::ArrayGetU;
   }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
-  parent.writeHeapType(heapType);
+  parent.writeIndexedHeapType(heapType);
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
