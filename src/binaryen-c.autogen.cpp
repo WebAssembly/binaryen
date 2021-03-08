@@ -1,9 +1,9 @@
 // src/binaryen-c.autogen.cpp
 
 BINARYEN_API BinaryenExpressionRef
-BinaryenRttCanon(BinaryenModuleRef module) {
+BinaryenRttCanon(BinaryenModuleRef module, HeapType heapType) {
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRttCanon());
+    Builder(*(Module*)module).makeRttCanon(HeapType(heapType)));
 }
 
 BINARYEN_API BinaryenExpressionRef

@@ -778,7 +778,7 @@ public:
     ret->finalize();
     return ret;
   }
-  RttSub* makeRttSub(HeapType heapType, Expression* parent) {
+  RttSub* makeRttSub(Expression* parent, HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RttSub>();
     ret->parent = parent;
     auto parentRtt = parent->type.getRtt();

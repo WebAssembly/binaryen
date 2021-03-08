@@ -85,6 +85,9 @@ template<typename T> void autogenOneCAPIDecl(bool impl = false) {
   if (std::is_same<T, StructGet>()) {
     std::cout << ", BinaryenType type";
   }
+  if (std::is_same<T, RttCanon>()) {
+    std::cout << ", HeapType heapType";
+  }
 
   std::cout << ')';
 
@@ -145,6 +148,9 @@ template<typename T> void autogenOneCAPIImpl() {
   // structures.
   if (std::is_same<T, StructGet>()) {
     params.push_back("Type(type)");
+  }
+  if (std::is_same<T, RttCanon>()) {
+    params.push_back("HeapType(heapType)");
   }
 
   std::cout << "  return static_cast<Expression*>(\n";
