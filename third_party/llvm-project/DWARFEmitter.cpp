@@ -133,8 +133,10 @@ void DWARFYAML::EmitDebugRanges(raw_ostream &OS, const DWARFYAML::Data &DI) {
 // XXX BINARYEN
 void DWARFYAML::EmitDebugLoc(raw_ostream &OS, const DWARFYAML::Data &DI) {
   for (auto Loc : DI.Locs) {
-    writeInteger((uint32_t)Loc.Start, OS, DI.IsLittleEndian);
-    writeInteger((uint32_t)Loc.End, OS, DI.IsLittleEndian);
+    auto AddrSize = DI.CompileUnits[0].AddrSize;  // XXX BINARYEN
+    // FIXME: Loc.Start etc should probably not be 32-bit.
+    writeVariableSizedInteger((uint64_t)(int32_t)Loc.Start, AddrSize, OS, DI.IsLittleEndian);
+    writeVariableSizedInteger((uint64_t)(int32_t)Loc.End, AddrSize, OS, DI.IsLittleEndian);
     if (Loc.Start == 0 && Loc.End == 0) {
       // End of a list.
       continue;
