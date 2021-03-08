@@ -31,9 +31,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-bulk-memory')
 
     def check_exception_handling(self, module, error):
-        # Exception handling implies reference types
-        self.check_feature(module, error, '--enable-exception-handling',
-                           ['--enable-reference-types'])
+        self.check_feature(module, error, '--enable-exception-handling')
 
     def check_tail_call(self, module, error):
         self.check_feature(module, error, '--enable-tail-call')
@@ -42,8 +40,16 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-reference-types')
 
     def check_multivalue(self, module, error):
+        self.check_feature(module, error, '--enable-multivalue')
+
+    def check_multivalue_exception_handling(self, module, error):
         self.check_feature(module, error, '--enable-multivalue',
                            ['--enable-exception-handling'])
+
+    def check_gc(self, module, error):
+        # GC implies reference types
+        self.check_feature(module, error, '--enable-gc',
+                           ['--enable-reference-types'])
 
     def test_v128_signature(self):
         module = '''
@@ -144,7 +150,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_tail_call(module, 'return_call requires tail calls to be enabled')
+        self.check_tail_call(module, 'return_call* requires tail calls to be enabled')
 
     def test_tail_call_indirect(self):
         module = '''
@@ -158,16 +164,16 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          )
         )
         '''
-        self.check_tail_call(module, 'return_call_indirect requires tail calls to be enabled')
+        self.check_tail_call(module, 'return_call* requires tail calls to be enabled')
 
-    def test_reference_types_anyref(self):
+    def test_reference_types_externref(self):
         module = '''
         (module
-         (import "env" "test1" (func $test1 (param anyref) (result anyref)))
-         (import "env" "test2" (global $test2 anyref))
-         (export "test1" (func $test1 (param anyref) (result anyref)))
+         (import "env" "test1" (func $test1 (param externref) (result externref)))
+         (import "env" "test2" (global $test2 externref))
+         (export "test1" (func $test1 (param externref) (result externref)))
          (export "test2" (global $test2))
-         (func $anyref_test (param $0 anyref) (result anyref)
+         (func $externref_test (param $0 externref) (result externref)
           (return
            (call $test1
             (local.get $0)
@@ -177,16 +183,6 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         )
         '''
         self.check_reference_types(module, 'all used types should be allowed')
-
-    def test_exnref_local(self):
-        module = '''
-        (module
-         (func $foo
-            (local exnref)
-         )
-        )
-        '''
-        self.check_exception_handling(module, 'all used types should be allowed')
 
     def test_event(self):
         module = '''
@@ -228,8 +224,8 @@ class FeatureValidationTest(utils.BinaryenTestCase):
          (event $foo (attr 0) (param i32 i64))
         )
         '''
-        self.check_multivalue(module, 'Multivalue event type ' +
-                              '(multivalue is not enabled)')
+        self.check_multivalue_exception_handling(module, 'Multivalue event type ' +
+                                                 '(multivalue is not enabled)')
 
     def test_multivalue_block(self):
         module = '''
@@ -248,6 +244,42 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         '''
         self.check_multivalue(module, 'Multivalue block type ' +
                               '(multivalue is not enabled)')
+
+    def test_anyref_global(self):
+        module = '''
+        (module
+         (global $foo anyref (ref.null any))
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_anyref_local(self):
+        module = '''
+        (module
+         (func $foo
+          (local $0 anyref)
+         )
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_eqref_global(self):
+        module = '''
+        (module
+         (global $foo eqref (ref.null eq))
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
+
+    def test_eqref_local(self):
+        module = '''
+        (module
+         (func $foo
+          (local $0 eqref)
+         )
+        )
+        '''
+        self.check_gc(module, 'all used types should be allowed')
 
 
 class TargetFeaturesSectionTest(utils.BinaryenTestCase):
@@ -298,13 +330,28 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         filename = 'reference_types_target_feature.wasm'
         self.roundtrip(filename)
         self.check_features(filename, ['reference-types'])
-        self.assertIn('anyref', self.disassemble(filename))
+        self.assertIn('externref', self.disassemble(filename))
 
     def test_exception_handling(self):
         filename = 'exception_handling_target_feature.wasm'
         self.roundtrip(filename)
         self.check_features(filename, ['exception-handling'])
         self.assertIn('throw', self.disassemble(filename))
+
+    def test_gc(self):
+        filename = 'gc_target_feature.wasm'
+        self.roundtrip(filename)
+        self.check_features(filename, ['reference-types', 'gc'])
+        disassembly = self.disassemble(filename)
+        self.assertIn('anyref', disassembly)
+        self.assertIn('eqref', disassembly)
+
+    def test_superset(self):
+        # It is ok to enable additional features past what is in the section.
+        shared.run_process(
+            shared.WASM_OPT + ['--print', '--detect-features', '-mvp',
+                               '--enable-simd', '--enable-sign-ext',
+                               self.input_path('signext_target_feature.wasm')])
 
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
@@ -314,7 +361,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             check=False, capture_output=True
         )
         self.assertNotEqual(p.returncode, 0)
-        self.assertIn('Fatal: module features do not match specified features. ' +
+        self.assertIn('Fatal: features section is not a subset of specified features. ' +
                       'Use --detect-features to resolve.',
                       p.stderr)
 
@@ -353,5 +400,8 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-exception-handling',
             '--enable-tail-call',
             '--enable-reference-types',
-            '--enable-multivalue'
-        ], p2.stdout.split())
+            '--enable-multivalue',
+            '--enable-gc',
+            '--enable-memory64',
+            '--enable-typed-function-references',
+        ], p2.stdout.splitlines())

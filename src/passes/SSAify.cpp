@@ -69,6 +69,10 @@ static LocalSet IMPOSSIBLE_SET;
 struct SSAify : public Pass {
   bool isFunctionParallel() override { return true; }
 
+  // SSAify maps each original local to a number of new ones.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new SSAify(allowMerges); }
 
   SSAify(bool allowMerges) : allowMerges(allowMerges) {}

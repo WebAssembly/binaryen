@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (memory $0 1)
- (func $a (; 0 ;)
+ (func $a
   (local $y i32)
   (local.set $y
    (i32.load8_u
@@ -16,7 +16,7 @@
    )
   )
  )
- (func $b (; 1 ;)
+ (func $b
   (local $y i32)
   (local.set $y
    (i32.load16_u
@@ -30,7 +30,7 @@
    )
   )
  )
- (func $c (; 2 ;)
+ (func $c
   (local $y i32)
   (local.set $y
    (i32.load8_u
@@ -44,7 +44,7 @@
    )
   )
  )
- (func $d (; 3 ;)
+ (func $d
   (local $y i32)
   (local.set $y
    (i32.load16_u
@@ -58,7 +58,7 @@
    )
   )
  )
- (func $one-of-each (; 4 ;)
+ (func $one-of-each
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -81,7 +81,7 @@
    )
   )
  )
- (func $more-of-one (; 5 ;)
+ (func $more-of-one
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -110,7 +110,7 @@
    )
   )
  )
- (func $many-more-of-one (; 6 ;)
+ (func $many-more-of-one
   (local $y i32)
   (local.set $y
    (i32.load8_u
@@ -145,7 +145,7 @@
    )
   )
  )
- (func $a-sign (; 7 ;)
+ (func $a-sign
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -162,7 +162,7 @@
    )
   )
  )
- (func $multivar (; 8 ;)
+ (func $multivar
   (local $x i32)
   (local $y i32)
   (local.set $x
@@ -191,7 +191,7 @@
    )
   )
  )
- (func $corners (; 9 ;)
+ (func $corners
   (local $y i32)
   (drop
    (i32.load8_s
@@ -207,7 +207,7 @@
    (i32.const 1024)
   )
  )
- (func $wrong-size (; 10 ;)
+ (func $wrong-size
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -221,7 +221,7 @@
    )
   )
  )
- (func $wrong-size_s (; 11 ;)
+ (func $wrong-size_s
   (local $y i32)
   (local.set $y
    (i32.load8_u
@@ -238,7 +238,7 @@
    )
   )
  )
- (func $non-sign-or-unsigned-use (; 12 ;)
+ (func $non-sign-or-unsigned-use
   (local $y i32)
   (local.set $y
    (i32.load8_s
@@ -255,12 +255,12 @@
    (local.get $y)
   )
  )
- (func $toplevel-load (; 13 ;) (result i32)
+ (func $toplevel-load (result i32)
   (i32.load8_s
    (i32.const 1024)
   )
  )
- (func $tees (; 14 ;)
+ (func $tees
   (local $y i32)
   (drop
    (local.tee $y

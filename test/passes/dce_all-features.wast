@@ -739,19 +739,22 @@
 ;; reachable
 (module
   (func $foo)
+  (event $e (attr 0))
 
   (func $try_unreachable
     (try
-      (unreachable)
-      (catch
+      (do
+        (unreachable)
       )
+      (catch_all)
     )
     (call $foo) ;; shouldn't be dce'd
   )
 
   (func $catch_unreachable
     (try
-      (catch
+      (do)
+      (catch_all
         (unreachable)
       )
     )
@@ -760,22 +763,102 @@
 
   (func $both_unreachable
     (try
-      (unreachable)
-      (catch
+      (do
+        (unreachable)
+      )
+      (catch_all
         (unreachable)
       )
     )
     (call $foo) ;; should be dce'd
   )
-)
 
-;; Push-pop
-(module
-  (func $foo)
-  (func $push_unreachable
-    (push
+  (func $throw
+    ;; All these wrapping expressions before 'throw' will be dce'd
+    (drop
+      (block $label$0 (result externref)
+        (if
+          (i32.clz
+            (block $label$1 (result i32)
+              (throw $e)
+            )
+          )
+          (nop)
+        )
+        (ref.null extern)
+      )
+    )
+  )
+
+  (func $rethrow
+    (try $l0
+      (do)
+      (catch $e
+        (drop
+          ;; This i32.add will be dce'd
+          (i32.add
+            (i32.const 0)
+            (rethrow $l0)
+          )
+        )
+      )
+    )
+  )
+
+  (func $unnecessary-concrete-block (result i32)
+    (block $foo (result i32) ;; unnecessary type
+      (nop)
       (unreachable)
     )
-    (call $foo) ;; should be dce'd
+  )
+  (func $necessary-concrete-block (result i32)
+    (block $foo (result i32)
+      (br $foo (i32.const 1))
+      (unreachable)
+    )
+  )
+  (func $unnecessary-concrete-if (result i32)
+    (if (result i32) ;; unnecessary type
+      (i32.const 0)
+      (return (i32.const 1))
+      (unreachable)
+    )
+  )
+  (func $unnecessary-concrete-try (result i32)
+    (try (result i32)
+      (do
+        (unreachable)
+      )
+      (catch_all
+        (unreachable)
+      )
+    )
+  )
+  (func $note-loss-of-if-children
+    (block $label$1
+     (if ;; begins unreachable - type never changes - but after the condition
+         ;; becomes unreachable, it will lose the children, which means no more
+         ;; br to the outer block, changing that type.
+       (block $label$2 (result i32)
+         (nop)
+         (unreachable)
+       )
+       (unreachable)
+       (br $label$1)
+      )
+    )
+  )
+  (func $note-loss-of-non-control-flow-children
+    (block $out
+      (drop
+       (i32.add
+         (block (result i32)
+            (nop)
+            (unreachable)
+         )
+         (br $out) ;; when this is removed as dead, the block becomes unreachable
+       )
+     )
+    )
   )
 )

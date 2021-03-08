@@ -28,7 +28,6 @@
 // value.
 //
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include <pass.h>
@@ -71,8 +70,7 @@ private:
     static Index id = 0;
     Builder builder(*getModule());
     return builder.makeSequence(
-      builder.makeCall(
-        LOGGER, {builder.makeConst(Literal(int32_t(id++)))}, Type::none),
+      builder.makeCall(LOGGER, {builder.makeConst(int32_t(id++))}, Type::none),
       curr);
   }
 };

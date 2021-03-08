@@ -48,42 +48,56 @@ function makeDroppedInt32(x) {
 
 function test_types() {
   console.log("  // BinaryenTypeNone: " + binaryen.none);
-  console.log("  //", binaryen.expandType(binaryen.none));
+  console.log("  //", binaryen.expandType(binaryen.none).join(","));
 
   console.log("  // BinaryenTypeUnreachable: " + binaryen.unreachable);
-  console.log("  //", binaryen.expandType(binaryen.unreachable));
+  console.log("  //", binaryen.expandType(binaryen.unreachable).join(","));
 
   console.log("  // BinaryenTypeInt32: " + binaryen.i32);
-  console.log("  //", binaryen.expandType(binaryen.i32));
+  console.log("  //", binaryen.expandType(binaryen.i32).join(","));
 
   console.log("  // BinaryenTypeInt64: " + binaryen.i64);
-  console.log("  //", binaryen.expandType(binaryen.i64));
+  console.log("  //", binaryen.expandType(binaryen.i64).join(","));
 
   console.log("  // BinaryenTypeFloat32: " + binaryen.f32);
-  console.log("  //", binaryen.expandType(binaryen.f32));
+  console.log("  //", binaryen.expandType(binaryen.f32).join(","));
 
   console.log("  // BinaryenTypeFloat64: " + binaryen.f64);
-  console.log("  //", binaryen.expandType(binaryen.f64));
+  console.log("  //", binaryen.expandType(binaryen.f64).join(","));
 
   console.log("  // BinaryenTypeVec128: " + binaryen.v128);
-  console.log("  //", binaryen.expandType(binaryen.v128));
+  console.log("  //", binaryen.expandType(binaryen.v128).join(","));
+
+  console.log("  // BinaryenTypeFuncref: " + binaryen.funcref);
+  console.log("  //", binaryen.expandType(binaryen.funcref).join(","));
+
+  console.log("  // BinaryenTypeExternref: " + binaryen.externref);
+  console.log("  //", binaryen.expandType(binaryen.externref).join(","));
 
   console.log("  // BinaryenTypeAnyref: " + binaryen.anyref);
-  console.log("  //", binaryen.expandType(binaryen.anyref));
+  console.log("  //", binaryen.expandType(binaryen.anyref).join(","));
 
-  console.log("  // BinaryenTypeExnref: " + binaryen.exnref);
-  console.log("  //", binaryen.expandType(binaryen.exnref));
+  console.log("  // BinaryenTypeEqref: " + binaryen.eqref);
+  console.log("  //", binaryen.expandType(binaryen.eqref).join(","));
+
+  console.log("  // BinaryenTypeI31ref: " + binaryen.i31ref);
+  console.log("  //", binaryen.expandType(binaryen.i31ref).join(","));
+
+  console.log("  // BinaryenTypeDataref: " + binaryen.dataref);
+  console.log("  //", binaryen.expandType(binaryen.dataref).join(","));
 
   console.log("  // BinaryenTypeAuto: " + binaryen.auto);
 
   var i32_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-  console.log("  //", i32_pair, binaryen.expandType(i32_pair));
+  console.log("  //", binaryen.expandType(i32_pair).join(","));
 
   var duplicate_pair = binaryen.createType([binaryen.i32, binaryen.i32]);
-  console.log("  //", duplicate_pair, binaryen.expandType(duplicate_pair));
+  console.log("  //", binaryen.expandType(duplicate_pair).join(","));
+
+  assert(i32_pair == duplicate_pair);
 
   var f32_pair = binaryen.createType([binaryen.f32, binaryen.f32]);
-  console.log("  //", f32_pair, binaryen.expandType(f32_pair));
+  console.log("  //", binaryen.expandType(f32_pair).join(","));
 }
 
 function test_features() {
@@ -98,6 +112,9 @@ function test_features() {
   console.log("Features.TailCall: " + binaryen.Features.TailCall);
   console.log("Features.ReferenceTypes: " + binaryen.Features.ReferenceTypes);
   console.log("Features.Multivalue: " + binaryen.Features.Multivalue);
+  console.log("Features.GC: " + binaryen.Features.GC);
+  console.log("Features.Memory64: " + binaryen.Features.Memory64);
+  console.log("Features.TypedFunctionReferences: " + binaryen.Features.TypedFunctionReferences);
   console.log("Features.All: " + binaryen.Features.All);
 }
 
@@ -122,7 +139,8 @@ function test_ids() {
   console.log("SelectId: " + binaryen.SelectId);
   console.log("DropId: " + binaryen.DropId);
   console.log("ReturnId: " + binaryen.ReturnId);
-  console.log("HostId: " + binaryen.HostId);
+  console.log("MemorySizeId: " + binaryen.MemorySizeId);
+  console.log("MemoryGrowId: " + binaryen.MemoryGrowId);
   console.log("NopId: " + binaryen.NopId);
   console.log("UnreachableId: " + binaryen.UnreachableId);
   console.log("AtomicCmpxchgId: " + binaryen.AtomicCmpxchgId);
@@ -139,12 +157,31 @@ function test_ids() {
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
   console.log("MemoryFillId: " + binaryen.MemoryFillId);
+  console.log("PopId: " + binaryen.PopId);
+  console.log("RefNullId: " + binaryen.RefNullId);
+  console.log("RefIsId: " + binaryen.RefIsId);
+  console.log("RefFuncId: " + binaryen.RefFuncId);
+  console.log("RefEqId: " + binaryen.RefEqId);
   console.log("TryId: " + binaryen.TryId);
   console.log("ThrowId: " + binaryen.ThrowId);
   console.log("RethrowId: " + binaryen.RethrowId);
-  console.log("BrOnExnId: " + binaryen.BrOnExnId);
-  console.log("PushId: " + binaryen.PushId);
-  console.log("PopId: " + binaryen.PopId);
+  console.log("TupleMakeId: " + binaryen.TupleMakeId);
+  console.log("TupleExtractId: " + binaryen.TupleExtractId);
+  console.log("I31NewId: " + binaryen.I31NewId);
+  console.log("I31GetId: " + binaryen.I31GetId);
+  console.log("CallRefId: " + binaryen.CallRefId);
+  console.log("RefTestId: " + binaryen.RefTestId);
+  console.log("RefCastId: " + binaryen.RefCastId);
+  console.log("BrOnId: " + binaryen.BrOnId);
+  console.log("RttCanonId: " + binaryen.RttCanonId);
+  console.log("RttSubId: " + binaryen.RttSubId);
+  console.log("StructNewId: " + binaryen.StructNewId);
+  console.log("StructGetId: " + binaryen.StructGetId);
+  console.log("StructSetId: " + binaryen.StructSetId);
+  console.log("ArrayNewId: " + binaryen.ArrayNewId);
+  console.log("ArrayGetId: " + binaryen.ArrayGetId);
+  console.log("ArraySetId: " + binaryen.ArraySetId);
+  console.log("ArrayLenId: " + binaryen.ArrayLenId);
 }
 
 function test_core() {
@@ -244,8 +281,6 @@ function test_core() {
     module.i32x4.all_true(module.v128.const(v128_bytes)),
     module.i32x4.bitmask(module.v128.const(v128_bytes)),
     module.i64x2.neg(module.v128.const(v128_bytes)),
-    module.i64x2.any_true(module.v128.const(v128_bytes)),
-    module.i64x2.all_true(module.v128.const(v128_bytes)),
     module.f32x4.abs(module.v128.const(v128_bytes)),
     module.f32x4.neg(module.v128.const(v128_bytes)),
     module.f32x4.sqrt(module.v128.const(v128_bytes)),
@@ -381,18 +416,31 @@ function test_core() {
     module.i32x4.dot_i16x8_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i64x2.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i64x2.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.div(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.min(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f32x4.max(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.pmin(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.pmax(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.ceil(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.floor(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.trunc(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f32x4.nearest(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.add(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.sub(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.mul(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.div(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.min(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.f64x2.max(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.pmin(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.pmax(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.ceil(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.floor(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.trunc(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.f64x2.nearest(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.narrow_i16x8_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i8x16.narrow_i16x8_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.narrow_i32x4_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
@@ -470,7 +518,7 @@ function test_core() {
       )
     ),
     module.i32.eqz( // check the output type of the call node
-      module.callIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32)
+      module.call_indirect("t0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32)
     ),
     module.drop(module.local.get(0, binaryen.i32)),
     module.local.set(0, makeInt32(101)),
@@ -484,29 +532,25 @@ function test_core() {
     module.select(temp10, temp11, temp12),
     module.return(makeInt32(1337)),
     // Tail Call
-    module.returnCall("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], binaryen.i32),
-    module.returnCallIndirect(makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
+    module.return_call("kitchen()sinker", [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], binaryen.i32),
+    module.return_call_indirect("t0", makeInt32(2449), [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ], iIfF, binaryen.i32),
 
     // Reference types
-    module.ref.is_null(module.ref.null()),
-    module.ref.is_null(module.ref.func("kitchen()sinker")),
-    module.select(temp10, module.ref.null(), module.ref.func("kitchen()sinker"), binaryen.funcref),
+    module.ref.is_null(module.ref.null(binaryen.externref)),
+    module.ref.is_null(module.ref.null(binaryen.funcref)),
+    module.ref.is_null(module.ref.func("kitchen()sinker", binaryen.funcref)),
+    module.select(temp10, module.ref.null(binaryen.funcref), module.ref.func("kitchen()sinker", binaryen.funcref), binaryen.funcref),
+
+    // GC
+    module.ref.eq(module.ref.null(binaryen.eqref), module.ref.null(binaryen.eqref)),
 
     // Exception handling
     module.try(
+      '',
       module.throw("a-event", [module.i32.const(0)]),
-      module.block(null, [
-        module.local.set(5, module.exnref.pop()),
-        module.drop(
-          module.block("try-block", [
-            module.rethrow(
-              module.br_on_exn("try-block", "a-event",
-                module.local.get(5, binaryen.exnref)),
-            )
-          ], binaryen.i32)
-        )
-      ]
-      )
+      ["a-event"],
+      [module.drop(module.i32.pop())],
+      ''
     ),
 
     // Atomics
@@ -517,31 +561,63 @@ function test_core() {
       )
     ),
     module.drop(
-      module.i32.atomic.wait(
+      module.memory.atomic.wait32(
         module.i32.const(0),
         module.i32.const(0),
         module.i64.const(0)
       )
     ),
     module.drop(
-      module.atomic.notify(
+      module.memory.atomic.notify(
         module.i32.const(0),
         module.i32.const(0)
       )
     ),
     module.atomic.fence(),
 
-    // Push and pop
-    module.push(module.i32.pop()),
-    module.push(module.i64.pop()),
-    module.push(module.f32.pop()),
-    module.push(module.f64.pop()),
-    module.push(module.v128.pop()),
-    module.push(module.anyref.pop()),
-    module.push(module.funcref.pop()),
-    module.push(module.nullref.pop()),
-    module.push(module.exnref.pop()),
-    // TODO: Host
+    // Tuples
+    module.tuple.make(
+      [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ]
+    ),
+    module.tuple.extract(
+      module.tuple.make(
+        [ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ]
+      ), 2
+    ),
+
+    // Pop
+    module.i32.pop(),
+    module.i64.pop(),
+    module.f32.pop(),
+    module.f64.pop(),
+    module.v128.pop(),
+    module.funcref.pop(),
+    module.externref.pop(),
+    module.anyref.pop(),
+    module.eqref.pop(),
+    module.i31ref.pop(),
+    module.dataref.pop(),
+
+    // Memory
+    module.memory.size(),
+    module.memory.grow(makeInt32(0)),
+
+    // GC
+    module.i31.new(
+      module.i32.const(0)
+    ),
+    module.i31.get_s(
+      module.i31.new(
+        module.i32.const(1)
+      )
+    ),
+    module.i31.get_u(
+      module.i31.new(
+        module.i32.const(2)
+      )
+    ),
+
+    // Other
     module.nop(),
     module.unreachable(),
   ];
@@ -554,6 +630,12 @@ function test_core() {
   console.log("getExpressionInfo(i64.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.i64.const(6, 7))));
   console.log("getExpressionInfo(f32.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.f32.const(8.5))));
   console.log("getExpressionInfo(f64.const)=" + JSON.stringify(binaryen.getExpressionInfo(module.f64.const(9.5))));
+  var elements = binaryen.getExpressionInfo(
+    module.tuple.make([ makeInt32(13), makeInt64(37, 0), makeFloat32(1.3), makeFloat64(3.7) ])
+  ).operands;
+  for (var i = 0; i < elements.length; i++) {
+    console.log("getExpressionInfo(tuple[" + i + "])=" + JSON.stringify(binaryen.getExpressionInfo(elements[i])));
+  }
 
   // Make the main body of the function. and one block with a return value, one without
   var value = module.block("the-value", valueList);
@@ -562,7 +644,7 @@ function test_core() {
   var body = module.block("the-body", [ nothing, makeInt32(42) ]);
 
   // Create the function
-  var sinker = module.addFunction("kitchen()sinker", iIfF, binaryen.i32, [ binaryen.i32, binaryen.exnref ], body);
+  var sinker = module.addFunction("kitchen()sinker", iIfF, binaryen.i32, [ binaryen.i32 ], body);
 
   // Create a global
   var initExpr = module.i32.const(1);
@@ -582,9 +664,26 @@ function test_core() {
   module.addGlobalExport("a-global", "a-global-exp");
   module.addEventExport("a-event", "a-event-exp");
 
-  // Function table. One per module
+  // Tables
+  module.addTable("t1", 0, 2);
+  var tablePtr = module.getTable("t1");
+  assert(tablePtr !== 0);
+  assert(tablePtr === module.getTableByIndex(0));
 
-  module.setFunctionTable(1, 0xffffffff, [ binaryen.getFunctionInfo(sinker).name ]);
+  var table = binaryen.getTableInfo(tablePtr);
+  assert(table.name === "t1");
+  assert(table.module === "");
+  assert(table.base === "");
+  assert(table.initial === 0);
+  assert(table.max === 2);
+  
+  module.removeTable("t1");
+  assert(module.getNumTables() === 0);
+  
+  module.addTable("t0", 1, 0xffffffff);
+  module.addActiveElementSegment("t0", "e0", [ binaryen.getFunctionInfo(sinker).name ]);
+  assert(module.getNumTables() === 1);
+  assert(module.getNumElementSegments() === 1);
 
   // Memory. One per module
 
@@ -879,14 +978,6 @@ function test_nonvalid() {
   module.dispose();
 }
 
-function test_tracing() {
-  binaryen.setAPITracing(1);
-  test_core();
-  test_relooper();
-  test_types();
-  binaryen.setAPITracing(0);
-}
-
 function test_parsing() {
   var text;
 
@@ -951,7 +1042,16 @@ function test_for_each() {
   var expected_data = ["hello, world", "segment data 2"];
   var expected_passive = [false, false];
 
-  var global = module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1]))
+  var glos = [
+    module.addGlobal("a-global", binaryen.i32, false, module.i32.const(expected_offsets[1])),
+    module.addGlobal("a-global2", binaryen.i32, false, module.i32.const(2)),
+    module.addGlobal("a-global3", binaryen.i32, false, module.i32.const(3))
+  ];
+
+  for (i = 0; i < module.getNumGlobals(); i++) {
+    assert(module.getGlobalByIndex(i) === glos[i]);
+  }
+
   module.setMemory(1, 256, "mem", [
     {
       passive: expected_passive[0],
@@ -973,16 +1073,23 @@ function test_for_each() {
     assert(expected_passive[i] === segment.passive);
   }
 
+  module.addTable("t0", 1, 0xffffffff);
+  var ftable = module.getTable("t0");
   var constExprRef = module.i32.const(0);
-  module.setFunctionTable(1, 0xffffffff, funcNames, constExprRef);
+  module.addActiveElementSegment("t0", "e0", funcNames, constExprRef);
 
-  var ftable = module.getFunctionTable();
-  assert(false === ftable.imported);
-  assert(1 === ftable.segments.length);
-  assert(constExprRef === ftable.segments[0].offset);
-  assert(3 === ftable.segments[0].names.length);
-  for (i = 0; i < ftable.segments[0].names.length; i++) {
-    assert(funcNames[i] === ftable.segments[0].names[i]);
+  var tableInfo = binaryen.getTableInfo(ftable);
+  assert("" === tableInfo.module);
+  assert("" === tableInfo.base);
+
+  var segments = module.getTableSegments(ftable);
+  assert(1 === segments.length);
+
+  var elemSegment = binaryen.getElementSegmentInfo(segments[0]);
+  assert(constExprRef === elemSegment.offset);
+  assert(3 === elemSegment.data.length);
+  for (i = 0; i < elemSegment.data.length; i++) {
+    assert(funcNames[i] === elemSegment.data[i]);
   }
 
   console.log(module.emitText());
@@ -1001,8 +1108,6 @@ function test_expression_info() {
   module.dispose();
 }
 
-// Tracing must be first so it starts with a fresh set of interned types
-test_tracing();
 test_types();
 test_features();
 test_ids();

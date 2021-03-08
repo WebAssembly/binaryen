@@ -1,5 +1,5 @@
-
-export const FUNCTION_TABLE = [];
+// This is the name by which the tests import the wasm table.
+export const table = [];
 
 var tempRet0 = 0;
 

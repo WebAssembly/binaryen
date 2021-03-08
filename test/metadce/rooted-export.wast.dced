@@ -4,7 +4,7 @@
  (event $b_wasm_event (attr 0) (param i32))
  (export "wasm_func_b" (func $b_wasm_func))
  (export "wasm_event_b" (event $b_wasm_event))
- (func $b_wasm_func (; 0 ;)
+ (func $b_wasm_func
   (unreachable)
  )
 )

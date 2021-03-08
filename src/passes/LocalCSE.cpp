@@ -52,6 +52,10 @@ namespace wasm {
 struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   bool isFunctionParallel() override { return true; }
 
+  // CSE adds and reuses locals.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new LocalCSE(); }
 
   struct Usable {
@@ -62,14 +66,16 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   };
 
   struct UsableHasher {
-    HashType operator()(const Usable value) const {
-      return rehash(value.hashed.hash, value.localType.getID());
+    size_t operator()(const Usable value) const {
+      auto digest = value.hashed.digest;
+      wasm::rehash(digest, value.localType.getID());
+      return digest;
     }
   };
 
   struct UsableComparer {
     bool operator()(const Usable a, const Usable b) const {
-      if (a.hashed.hash != b.hashed.hash || a.localType != b.localType) {
+      if (a.hashed.digest != b.hashed.digest || a.localType != b.localType) {
         return false;
       }
       return ExpressionAnalyzer::equal(a.hashed.expr, b.hashed.expr);

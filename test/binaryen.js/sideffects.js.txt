@@ -10,4 +10,5 @@ SideEffects.WritesMemory=128
 SideEffects.ImplicitTrap=256
 SideEffects.IsAtomic=512
 SideEffects.Throws=1024
-SideEffects.Any=2047
+SideEffects.DanglingPop=2048
+SideEffects.Any=4095

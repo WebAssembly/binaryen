@@ -146,7 +146,7 @@ void Options::parse(int argc, const char* argv[]) {
                       << currentOption << "' for " << positionalName << '\n';
             exit(EXIT_FAILURE);
           }
-        // Fallthrough.
+          [[fallthrough]];
         case Arguments::N:
           positionalAction(this, currentOption);
           ++positionalsSeen;
@@ -186,7 +186,7 @@ void Options::parse(int argc, const char* argv[]) {
                     << currentOption << "'\n";
           exit(EXIT_FAILURE);
         }
-      // Fallthrough.
+        [[fallthrough]];
       case Arguments::N:
         if (!argument.size()) {
           if (i + 1 == e) {

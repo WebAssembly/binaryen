@@ -15,7 +15,7 @@
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
  (export "asyncify_stop_rewind" (func $asyncify_stop_unwind))
  (export "asyncify_get_state" (func $asyncify_get_state))
- (func $calls-import (; 1 ;) (; has Stack IR ;)
+ (func $calls-import (; has Stack IR ;)
   (local $0 i32)
   (call $import)
   (i32.store
@@ -34,7 +34,7 @@
    )
   )
  )
- (func $asyncify_start_unwind (; 2 ;) (; has Stack IR ;) (param $0 i32)
+ (func $asyncify_start_unwind (; has Stack IR ;) (param $0 i32)
   (global.set $__asyncify_state
    (i32.const 1)
   )
@@ -53,7 +53,7 @@
    (unreachable)
   )
  )
- (func $asyncify_stop_unwind (; 3 ;) (; has Stack IR ;)
+ (func $asyncify_stop_unwind (; has Stack IR ;)
   (global.set $__asyncify_state
    (i32.const 0)
   )
@@ -69,7 +69,7 @@
    (unreachable)
   )
  )
- (func $asyncify_start_rewind (; 4 ;) (; has Stack IR ;) (param $0 i32)
+ (func $asyncify_start_rewind (; has Stack IR ;) (param $0 i32)
   (global.set $__asyncify_state
    (i32.const 2)
   )
@@ -88,7 +88,7 @@
    (unreachable)
   )
  )
- (func $asyncify_get_state (; 5 ;) (; has Stack IR ;) (result i32)
+ (func $asyncify_get_state (; has Stack IR ;) (result i32)
   (global.get $__asyncify_state)
  )
 )

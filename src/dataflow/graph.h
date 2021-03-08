@@ -157,9 +157,7 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
     return ret;
   }
 
-  Node* makeZero(wasm::Type type) {
-    return makeConst(Literal::makeSingleZero(type));
-  }
+  Node* makeZero(wasm::Type type) { return makeConst(Literal::makeZero(type)); }
 
   // Add a new node to our list of owned nodes.
   Node* addNode(Node* node) {
@@ -230,6 +228,8 @@ struct Graph : public UnifiedExpressionVisitor<Graph, Node*> {
       return doVisitUnreachable(unreachable);
     } else if (auto* drop = curr->dynCast<Drop>()) {
       return doVisitDrop(drop);
+    } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>()) {
+      Fatal() << "DataFlow does not support EH instructions yet";
     } else {
       return doVisitGeneric(curr);
     }

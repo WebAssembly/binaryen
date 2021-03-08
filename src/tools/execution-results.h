@@ -18,7 +18,6 @@
 // Shared execution result checking code
 //
 
-#include "ir/import-utils.h"
 #include "shell-interface.h"
 #include "wasm.h"
 
@@ -29,6 +28,14 @@ typedef std::vector<Literal> Loggings;
 // Logs every relevant import call parameter.
 struct LoggingExternalInterface : public ShellExternalInterface {
   Loggings& loggings;
+
+  struct State {
+    // Legalization for JS emits get/setTempRet0 calls ("temp ret 0" means a
+    // temporary return value of 32 bits; "0" is the only important value for
+    // 64-bit legalization, which needs one such 32-bit chunk in addition to
+    // the normal return value which can handle 32 bits).
+    uint32_t tempRet0 = 0;
+  } state;
 
   LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
@@ -41,7 +48,24 @@ struct LoggingExternalInterface : public ShellExternalInterface {
         loggings.push_back(argument);
       }
       std::cout << "]\n";
+      return {};
+    } else if (import->module == ENV) {
+      if (import->base == "log_execution") {
+        std::cout << "[LoggingExternalInterface log-execution";
+        for (auto argument : arguments) {
+          std::cout << ' ' << argument;
+        }
+        std::cout << "]\n";
+        return {};
+      } else if (import->base == "setTempRet0") {
+        state.tempRet0 = arguments[0].geti32();
+        return {};
+      } else if (import->base == "getTempRet0") {
+        return {Literal(state.tempRet0)};
+      }
     }
+    std::cerr << "[LoggingExternalInterface ignoring an unknown import "
+              << import->module << " . " << import->base << '\n';
     return {};
   }
 };
@@ -70,14 +94,6 @@ struct ExecutionResults {
         if (func->sig.results != Type::none) {
           // this has a result
           Literals ret = run(func, wasm, instance);
-          // We cannot compare funcrefs by name because function names can
-          // change (after duplicate function elimination or roundtripping)
-          // while the function contents are still the same
-          for (Literal& val : ret) {
-            if (val.type == Type::funcref) {
-              val = Literal::makeFuncref(Name("funcref"));
-            }
-          }
           results[exp->name] = ret;
           // ignore the result if we hit an unreachable and returned no value
           if (ret.size() > 0) {
@@ -99,9 +115,44 @@ struct ExecutionResults {
     ExecutionResults optimizedResults;
     optimizedResults.get(wasm);
     if (optimizedResults != *this) {
-      std::cout << "[fuzz-exec] optimization passes changed execution results";
-      abort();
+      std::cout << "[fuzz-exec] optimization passes changed results\n";
+      exit(1);
     }
+  }
+
+  bool areEqual(Literal a, Literal b) {
+    if (a.type != b.type) {
+      std::cout << "types not identical! " << a << " != " << b << '\n';
+      return false;
+    }
+    if (a.type.isRef()) {
+      // Don't compare references - only their types. There are several issues
+      // here that we can't fully handle, see
+      // https://github.com/WebAssembly/binaryen/issues/3378, but the core issue
+      // is that we are comparing results between two separate wasm modules (and
+      // a separate instance of each) - we can't really identify an identical
+      // reference between such things. We can only compare things structurally,
+      // for which we compare the types.
+      return true;
+    }
+    if (a != b) {
+      std::cout << "values not identical! " << a << " != " << b << '\n';
+      return false;
+    }
+    return true;
+  }
+
+  bool areEqual(Literals a, Literals b) {
+    if (a.size() != b.size()) {
+      std::cout << "literal counts not identical! " << a << " != " << b << '\n';
+      return false;
+    }
+    for (Index i = 0; i < a.size(); i++) {
+      if (!areEqual(a[i], b[i])) {
+        return false;
+      }
+    }
+    return true;
   }
 
   bool operator==(ExecutionResults& other) {
@@ -112,14 +163,18 @@ struct ExecutionResults {
         return false;
       }
       std::cout << "[fuzz-exec] comparing " << name << '\n';
-      if (results[name] != other.results[name]) {
-        std::cout << "not identical!\n";
+      if (!areEqual(results[name], other.results[name])) {
         return false;
       }
     }
-    if (loggings != other.loggings) {
-      std::cout << "logging not identical!\n";
+    if (loggings.size() != other.loggings.size()) {
+      std::cout << "logging counts not identical!\n";
       return false;
+    }
+    for (Index i = 0; i < loggings.size(); i++) {
+      if (!areEqual(loggings[i], other.loggings[i])) {
+        return false;
+      }
     }
     return true;
   }
@@ -145,9 +200,9 @@ struct ExecutionResults {
         instance.callFunction(ex->value, arguments);
       }
       // call the method
-      for (Type param : func->sig.params.expand()) {
+      for (const auto& param : func->sig.params) {
         // zeros in arguments TODO: more?
-        arguments.push_back(Literal::makeSingleZero(param));
+        arguments.push_back(Literal::makeZero(param));
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {

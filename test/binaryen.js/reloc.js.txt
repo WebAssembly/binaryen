@@ -5,8 +5,8 @@
  (memory $0 1)
  (data (global.get $memory_base) "data data")
  (table $0 1 funcref)
- (elem (global.get $table_base) $func $func)
- (func $func (; 0 ;)
+ (elem $0 (global.get $table_base) $func $func)
+ (func $func
   (nop)
  )
 )

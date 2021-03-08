@@ -31,6 +31,7 @@ struct ToolOptions : public Options {
   PassOptions passOptions;
 
   bool quiet = false;
+  IRProfile profile = IRProfile::Normal;
 
   ToolOptions(const std::string& command, const std::string& description)
     : Options(command, description) {
@@ -67,7 +68,13 @@ struct ToolOptions : public Options {
            "-q",
            "Emit less verbose output and hide trivial warnings.",
            Arguments::Zero,
-           [this](Options*, const std::string&) { quiet = true; });
+           [this](Options*, const std::string&) { quiet = true; })
+      .add(
+        "--experimental-poppy",
+        "",
+        "Parse wast files as Poppy IR for testing purposes.",
+        Arguments::Zero,
+        [this](Options*, const std::string&) { profile = IRProfile::Poppy; });
     (*this)
       .addFeature(FeatureSet::SignExt, "sign extension operations")
       .addFeature(FeatureSet::Atomics, "atomic operations")
@@ -80,6 +87,10 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::TailCall, "tail call operations")
       .addFeature(FeatureSet::ReferenceTypes, "reference types")
       .addFeature(FeatureSet::Multivalue, "multivalue functions")
+      .addFeature(FeatureSet::GC, "garbage collection")
+      .addFeature(FeatureSet::Memory64, "memory64")
+      .addFeature(FeatureSet::TypedFunctionReferences,
+                  "typed function references")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",
@@ -131,14 +142,14 @@ struct ToolOptions : public Options {
     return *this;
   }
 
-  void applyFeatures(Module& module) {
+  void applyFeatures(Module& module) const {
     if (hasFeatureOptions) {
       if (!detectFeatures && module.hasFeaturesSection) {
         FeatureSet optionsFeatures = FeatureSet::MVP;
         optionsFeatures.enable(enabledFeatures);
         optionsFeatures.disable(disabledFeatures);
-        if (module.features != optionsFeatures) {
-          Fatal() << "module features do not match specified features. "
+        if (!(module.features <= optionsFeatures)) {
+          Fatal() << "features section is not a subset of specified features. "
                   << "Use --detect-features to resolve.";
         }
       }

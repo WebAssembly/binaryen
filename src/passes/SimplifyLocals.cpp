@@ -126,8 +126,7 @@ struct SimplifyLocals
                   Expression** currp) {
     // Main processing.
     auto* curr = *currp;
-    if (curr->is<Break>()) {
-      auto* br = curr->cast<Break>();
+    if (auto* br = curr->dynCast<Break>()) {
       if (br->value) {
         // value means the block already has a return value
         self->unoptimizableBlocks.insert(br->name);
@@ -162,10 +161,9 @@ struct SimplifyLocals
   static void
   doNoteIfTrue(SimplifyLocals<allowTee, allowStructure, allowNesting>* self,
                Expression** currp) {
-    auto* iff = (*currp)->dynCast<If>();
+    auto* iff = (*currp)->cast<If>();
     if (iff->ifFalse) {
       // We processed the ifTrue side of this if-else, save it on the stack.
-      assert((*currp)->cast<If>()->ifFalse);
       self->ifStack.push_back(std::move(self->sinkables));
     } else {
       // This is an if without an else.
@@ -300,6 +298,20 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
+    // Expressions that may throw cannot be sinked into 'try'. At the start of
+    // 'try', we drop all sinkables that may throw.
+    if (curr->is<Try>()) {
+      std::vector<Index> invalidated;
+      for (auto& sinkable : self->sinkables) {
+        if (sinkable.second.effects.throws) {
+          invalidated.push_back(sinkable.first);
+        }
+      }
+      for (auto index : invalidated) {
+        self->sinkables.erase(index);
+      }
+    }
+
     EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
     if (effects.checkPre(curr)) {
       self->checkInvalidations(effects);
@@ -407,6 +419,14 @@ struct SimplifyLocals
   bool canSink(LocalSet* set) {
     // we can never move a tee
     if (set->isTee()) {
+      return false;
+    }
+    // We cannot move expressions containing pops that are not enclosed in
+    // 'catch', because 'pop' should follow right after 'catch'.
+    FeatureSet features = this->getModule()->features;
+    if (features.hasExceptionHandling() &&
+        EffectAnalyzer(this->getPassOptions(), features, set->value)
+          .danglingPop) {
       return false;
     }
     // if in the first cycle, or not allowing tees, then we cannot sink if >1
@@ -787,6 +807,9 @@ struct SimplifyLocals
   }
 
   void doWalkFunction(Function* func) {
+    if (func->getNumLocals() == 0) {
+      return; // nothing to do
+    }
     // scan local.gets
     getCounter.analyze(func);
     // multiple passes may be required per function, consider this:
@@ -937,16 +960,23 @@ struct SimplifyLocals
               }
               anotherCycle = true;
             }
+            // Nothing more to do, ignore the copy.
+            return;
           } else if (func->getLocalType(curr->index) ==
                      func->getLocalType(get->index)) {
-            // There is a new equivalence now.
+            // There is a new equivalence now. Remove all the old ones, and add
+            // the new one.
+            // Note that we ignore the case of subtyping here, to keep this
+            // optimization simple by assuming all equivalent indexes also have
+            // the same type. TODO: consider optimizing this.
             equivalences.reset(curr->index);
             equivalences.add(curr->index, get->index);
+            return;
           }
-        } else {
-          // A new value is assigned here.
-          equivalences.reset(curr->index);
         }
+        // A new value of some kind is assigned here, and it's not something we
+        // could handle earlier, so remove all the old equivalent ones.
+        equivalences.reset(curr->index);
       }
 
       void visitLocalGet(LocalGet* curr) {

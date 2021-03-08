@@ -17,6 +17,8 @@
 //
 // Flattens code into "Flat IR" form. See ir/flat.h.
 //
+// TODO: handle non-nullability
+//
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
@@ -49,6 +51,11 @@ struct Flatten
       ExpressionStackWalker<Flatten, UnifiedExpressionVisitor<Flatten>>> {
   bool isFunctionParallel() override { return true; }
 
+  // Flattening splits the original locals into a great many other ones, losing
+  // track of the originals that DWARF refers to.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
   Pass* create() override { return new Flatten; }
 
   // For each expression, a bunch of expressions that should execute right
@@ -62,9 +69,8 @@ struct Flatten
     std::vector<Expression*> ourPreludes;
     Builder builder(*getModule());
 
-    // Nothing to do for constants, nop, and unreachable
-    if (Properties::isConstantExpression(curr) || curr->is<Nop>() ||
-        curr->is<Unreachable>()) {
+    // Nothing to do for constants and nop.
+    if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
 
@@ -208,18 +214,18 @@ struct Flatten
             // not be the same with the innermost block's return type. For
             // example,
             // (block $any (result anyref)
-            //   (block (result nullref)
+            //   (block (result funcref)
             //     (local.tee $0
             //       (br_if $any
-            //         (ref.null)
+            //         (ref.null func)
             //         (i32.const 0)
             //       )
             //     )
             //   )
             // )
             // In this case we need two locals to store (ref.null); one with
-            // anyref type that's for the target block ($label0) and one more
-            // with nullref type in case for flowing out. Here we create the
+            // funcref type that's for the target block ($label0) and one more
+            // with anyref type in case for flowing out. Here we create the
             // second 'flowing out' local in case two block's types are
             // different.
             if (type != blockType) {
@@ -271,7 +277,6 @@ struct Flatten
         }
       }
     }
-    // TODO Handle br_on_exn
 
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it

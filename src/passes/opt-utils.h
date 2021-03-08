@@ -86,18 +86,21 @@ inline void replaceFunctions(PassRunner* runner,
   // replace direct calls
   FunctionRefReplacer(maybeReplace).run(runner, &module);
   // replace in table
-  for (auto& segment : module.table.segments) {
-    for (auto& name : segment.data) {
+  for (auto& segment : module.elementSegments) {
+    for (auto& name : segment->data) {
       maybeReplace(name);
     }
   }
+
   // replace in start
   if (module.start.is()) {
     maybeReplace(module.start);
   }
   // replace in exports
   for (auto& exp : module.exports) {
-    maybeReplace(exp->value);
+    if (exp->kind == ExternalKind::Function) {
+      maybeReplace(exp->value);
+    }
   }
 }
 

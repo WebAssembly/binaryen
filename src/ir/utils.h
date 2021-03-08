@@ -78,7 +78,7 @@ struct ExpressionAnalyzer {
 
   // hash an expression, ignoring superficial details like specific internal
   // names
-  static HashType hash(Expression* curr);
+  static size_t hash(Expression* curr);
 };
 
 // Re-Finalizes all node types. This can be run after code was modified in
@@ -111,60 +111,17 @@ struct ReFinalize
 
   std::map<Name, Type> breakValues;
 
-  void visitBlock(Block* curr);
-  void visitIf(If* curr);
-  void visitLoop(Loop* curr);
-  void visitBreak(Break* curr);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallIndirect(CallIndirect* curr);
-  void visitLocalGet(LocalGet* curr);
-  void visitLocalSet(LocalSet* curr);
-  void visitGlobalGet(GlobalGet* curr);
-  void visitGlobalSet(GlobalSet* curr);
-  void visitLoad(Load* curr);
-  void visitStore(Store* curr);
-  void visitAtomicRMW(AtomicRMW* curr);
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr);
-  void visitAtomicWait(AtomicWait* curr);
-  void visitAtomicNotify(AtomicNotify* curr);
-  void visitAtomicFence(AtomicFence* curr);
-  void visitSIMDExtract(SIMDExtract* curr);
-  void visitSIMDReplace(SIMDReplace* curr);
-  void visitSIMDShuffle(SIMDShuffle* curr);
-  void visitSIMDTernary(SIMDTernary* curr);
-  void visitSIMDShift(SIMDShift* curr);
-  void visitSIMDLoad(SIMDLoad* curr);
-  void visitMemoryInit(MemoryInit* curr);
-  void visitDataDrop(DataDrop* curr);
-  void visitMemoryCopy(MemoryCopy* curr);
-  void visitMemoryFill(MemoryFill* curr);
-  void visitConst(Const* curr);
-  void visitUnary(Unary* curr);
-  void visitBinary(Binary* curr);
-  void visitSelect(Select* curr);
-  void visitDrop(Drop* curr);
-  void visitReturn(Return* curr);
-  void visitHost(Host* curr);
-  void visitRefNull(RefNull* curr);
-  void visitRefIsNull(RefIsNull* curr);
-  void visitRefFunc(RefFunc* curr);
-  void visitTry(Try* curr);
-  void visitThrow(Throw* curr);
-  void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
-  void visitNop(Nop* curr);
-  void visitUnreachable(Unreachable* curr);
-  void visitPush(Push* curr);
-  void visitPop(Pop* curr);
-  void visitTupleMake(TupleMake* curr);
-  void visitTupleExtract(TupleExtract* curr);
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
+
+#include "wasm-delegations.h"
 
   void visitFunction(Function* curr);
 
   void visitExport(Export* curr);
   void visitGlobal(Global* curr);
   void visitTable(Table* curr);
+  void visitElementSegment(ElementSegment* curr);
   void visitMemory(Memory* curr);
   void visitEvent(Event* curr);
   void visitModule(Module* curr);
@@ -180,58 +137,15 @@ private:
 // Re-finalize a single node. This is slow, if you want to refinalize
 // an entire ast, use ReFinalize
 struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
-  void visitBlock(Block* curr) { curr->finalize(); }
-  void visitIf(If* curr) { curr->finalize(); }
-  void visitLoop(Loop* curr) { curr->finalize(); }
-  void visitBreak(Break* curr) { curr->finalize(); }
-  void visitSwitch(Switch* curr) { curr->finalize(); }
-  void visitCall(Call* curr) { curr->finalize(); }
-  void visitCallIndirect(CallIndirect* curr) { curr->finalize(); }
-  void visitLocalGet(LocalGet* curr) { curr->finalize(); }
-  void visitLocalSet(LocalSet* curr) { curr->finalize(); }
-  void visitGlobalGet(GlobalGet* curr) { curr->finalize(); }
-  void visitGlobalSet(GlobalSet* curr) { curr->finalize(); }
-  void visitLoad(Load* curr) { curr->finalize(); }
-  void visitStore(Store* curr) { curr->finalize(); }
-  void visitAtomicRMW(AtomicRMW* curr) { curr->finalize(); }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) { curr->finalize(); }
-  void visitAtomicWait(AtomicWait* curr) { curr->finalize(); }
-  void visitAtomicNotify(AtomicNotify* curr) { curr->finalize(); }
-  void visitAtomicFence(AtomicFence* curr) { curr->finalize(); }
-  void visitSIMDExtract(SIMDExtract* curr) { curr->finalize(); }
-  void visitSIMDReplace(SIMDReplace* curr) { curr->finalize(); }
-  void visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
-  void visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
-  void visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
-  void visitSIMDLoad(SIMDLoad* curr) { curr->finalize(); }
-  void visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
-  void visitDataDrop(DataDrop* curr) { curr->finalize(); }
-  void visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
-  void visitMemoryFill(MemoryFill* curr) { curr->finalize(); }
-  void visitConst(Const* curr) { curr->finalize(); }
-  void visitUnary(Unary* curr) { curr->finalize(); }
-  void visitBinary(Binary* curr) { curr->finalize(); }
-  void visitSelect(Select* curr) { curr->finalize(); }
-  void visitDrop(Drop* curr) { curr->finalize(); }
-  void visitReturn(Return* curr) { curr->finalize(); }
-  void visitHost(Host* curr) { curr->finalize(); }
-  void visitRefNull(RefNull* curr) { curr->finalize(); }
-  void visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
-  void visitRefFunc(RefFunc* curr) { curr->finalize(); }
-  void visitTry(Try* curr) { curr->finalize(); }
-  void visitThrow(Throw* curr) { curr->finalize(); }
-  void visitRethrow(Rethrow* curr) { curr->finalize(); }
-  void visitBrOnExn(BrOnExn* curr) { curr->finalize(); }
-  void visitNop(Nop* curr) { curr->finalize(); }
-  void visitUnreachable(Unreachable* curr) { curr->finalize(); }
-  void visitPush(Push* curr) { curr->finalize(); }
-  void visitPop(Pop* curr) { curr->finalize(); }
-  void visitTupleMake(TupleMake* curr) { curr->finalize(); }
-  void visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
+#define DELEGATE(CLASS_TO_VISIT)                                               \
+  void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { curr->finalize(); }
+
+#include "wasm-delegations.h"
 
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
   void visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitElementSegment(ElementSegment* curr) { WASM_UNREACHABLE("unimp"); }
   void visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
   void visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
   void visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
@@ -310,8 +224,10 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
     if (maybeDrop(curr->body)) {
       acted = true;
     }
-    if (maybeDrop(curr->catchBody)) {
-      acted = true;
+    for (auto* catchBody : curr->catchBodies) {
+      if (maybeDrop(catchBody)) {
+        acted = true;
+      }
     }
     if (acted) {
       reFinalize();
@@ -337,7 +253,7 @@ struct I64Utilities {
       builder.makeUnary(ExtendUInt32, low),
       builder.makeBinary(ShlInt64,
                          builder.makeUnary(ExtendUInt32, high),
-                         builder.makeConst(Literal(int64_t(32)))));
+                         builder.makeConst(int64_t(32))));
   };
 
   static Expression* recreateI64(Builder& builder, Index low, Index high) {
@@ -351,7 +267,7 @@ struct I64Utilities {
       WrapInt64,
       builder.makeBinary(ShrUInt64,
                          builder.makeLocalGet(index, Type::i64),
-                         builder.makeConst(Literal(int64_t(32)))));
+                         builder.makeConst(int64_t(32))));
   }
 
   static Expression* getI64Low(Builder& builder, Index index) {

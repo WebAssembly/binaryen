@@ -6,6 +6,7 @@ add_custom_command(
   COMMAND ${PYTHON_EXECUTABLE} ${PROJECT_SOURCE_DIR}/scripts/embedwat.py ${PROJECT_SOURCE_DIR}/src/passes/wasm-intrinsics.wat ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
   DEPENDS ${PROJECT_SOURCE_DIR}/scripts/embedwat.py wasm-intrinsics.wat)
 
+FILE(GLOB passes_HEADERS *.h)
 set(passes_SOURCES
   pass.cpp
   AlignmentLowering.cpp
@@ -18,6 +19,8 @@ set(passes_SOURCES
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
+  DeAlign.cpp
+  DeNaN.cpp
   Directize.cpp
   DuplicateImportElimination.cpp
   DuplicateFunctionElimination.cpp
@@ -25,6 +28,7 @@ set(passes_SOURCES
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
+  GenerateDynCalls.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
@@ -34,6 +38,7 @@ set(passes_SOURCES
   LocalCSE.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
+  Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
   MergeLocals.cpp
@@ -44,7 +49,7 @@ set(passes_SOURCES
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
-  PostAssemblyScript.cpp
+  Poppify.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
@@ -56,7 +61,6 @@ set(passes_SOURCES
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
-  RelooperJumpThreading.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
@@ -71,10 +75,11 @@ set(passes_SOURCES
   SimplifyGlobals.cpp
   SimplifyLocals.cpp
   Souperify.cpp
-  SpillPointers.cpp
+  StackCheck.cpp
   SSAify.cpp
   Untee.cpp
   Vacuum.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/WasmIntrinsics.cpp
+  ${passes_HEADERS}
 )
 add_library(passes OBJECT ${passes_SOURCES})

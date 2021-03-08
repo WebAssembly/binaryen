@@ -6,12 +6,6 @@ var WebAssembly = {
   Memory: function(opts) {
     return {
       buffer: new ArrayBuffer(opts['initial'] * 64 * 1024),
-      grow: function(amount) {
-        var oldBuffer = this.buffer;
-        var ret = __growWasmMemory(amount);
-        assert(this.buffer !== oldBuffer); // the call should have updated us
-        return ret;
-      }
     };
   },
 
@@ -72,7 +66,7 @@ var WebAssembly = {
     // Additional imports
     asmLibraryArg['__tempMemory__'] = 0; // risky!
     // This will be replaced by the actual wasm2js code.
-    var exports = instantiate(asmLibraryArg, wasmMemory, wasmTable);
+    var exports = instantiate(asmLibraryArg, wasmMemory);
     return {
       'exports': exports
     };
@@ -130,12 +124,8 @@ var asmLibraryArg = {
     console.log('get_f64 ' + [loc, index, value]);
     return value;
   },
-  get_anyref: function(loc, index, value) {
-    console.log('get_anyref ' + [loc, index, value]);
-    return value;
-  },
-  get_exnref: function(loc, index, value) {
-    console.log('get_exnref ' + [loc, index, value]);
+  get_externref: function(loc, index, value) {
+    console.log('get_externref ' + [loc, index, value]);
     return value;
   },
   set_i32: function(loc, index, value) {
@@ -155,12 +145,8 @@ var asmLibraryArg = {
     console.log('set_f64 ' + [loc, index, value]);
     return value;
   },
-  set_anyref: function(loc, index, value) {
-    console.log('set_anyref ' + [loc, index, value]);
-    return value;
-  },
-  set_exnref: function(loc, index, value) {
-    console.log('set_exnref ' + [loc, index, value]);
+  set_externref: function(loc, index, value) {
+    console.log('set_externref ' + [loc, index, value]);
     return value;
   },
   load_ptr: function(loc, bytes, offset, ptr) {
@@ -208,5 +194,3 @@ var asmLibraryArg = {
 };
 
 var wasmMemory = new WebAssembly.Memory({ initial: 1 });
-var wasmTable = new WebAssembly.Table({ initial: 1 });
-

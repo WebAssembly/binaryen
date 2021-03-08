@@ -235,10 +235,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
       curr->targets.resize(curr->targets.size() - removable);
       Builder builder(*getModule());
-      curr->condition =
-        builder.makeBinary(SubInt32,
-                           curr->condition,
-                           builder.makeConst(Literal(int32_t(removable))));
+      curr->condition = builder.makeBinary(
+        SubInt32, curr->condition, builder.makeConst(int32_t(removable)));
     }
     // when there isn't a value, we can do some trivial optimizations without
     // worrying about the value being executed before the condition
@@ -287,17 +285,16 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         Builder builder(*getModule());
         auto temp = builder.addVar(getFunction(), Type::i32);
         Expression* z;
-        replaceCurrent(
-          z = builder.makeIf(
-            builder.makeLocalTee(temp, curr->condition, Type::i32),
-            builder.makeIf(
-              builder.makeBinary(
-                EqInt32,
-                builder.makeLocalGet(temp, Type::i32),
-                builder.makeConst(Literal(int32_t(curr->targets.size() - 1)))),
-              builder.makeBreak(curr->targets.back()),
-              builder.makeBreak(curr->default_)),
-            builder.makeBreak(curr->targets.front())));
+        replaceCurrent(z = builder.makeIf(
+                         builder.makeLocalTee(temp, curr->condition, Type::i32),
+                         builder.makeIf(builder.makeBinary(
+                                          EqInt32,
+                                          builder.makeLocalGet(temp, Type::i32),
+                                          builder.makeConst(
+                                            int32_t(curr->targets.size() - 1))),
+                                        builder.makeBreak(curr->targets.back()),
+                                        builder.makeBreak(curr->default_)),
+                         builder.makeBreak(curr->targets.front())));
       }
     }
   }
@@ -322,7 +319,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // be further optimizable, and if select does not branch we also
             // avoid one branch.
             // Multivalue selects are not supported
-            if (br->value && br->value->type.isMulti()) {
+            if (br->value && br->value->type.isTuple()) {
               return;
             }
             // If running the br's condition unconditionally is too expensive,
@@ -831,11 +828,18 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       void visitSwitch(Switch* curr) {
         if (BranchUtils::getUniqueTargets(curr).size() == 1) {
-          // This switch has just one target no matter what; replace with a br.
-          Builder builder(*getModule());
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(curr->condition), // might have side effects
-            builder.makeBreak(curr->default_, curr->value)));
+          // This switch has just one target no matter what; replace with a br
+          // if we can (to do so, we must put the condition before a possible
+          // value).
+          if (!curr->value || EffectAnalyzer::canReorder(passOptions,
+                                                         getModule()->features,
+                                                         curr->condition,
+                                                         curr->value)) {
+            Builder builder(*getModule());
+            replaceCurrent(builder.makeSequence(
+              builder.makeDrop(curr->condition), // might have side effects
+              builder.makeBreak(curr->default_, curr->value)));
+          }
         }
       }
 
@@ -926,6 +930,17 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             !iff->ifFalse->type.isSingle()) {
           return nullptr;
         }
+        if (iff->condition->type == Type::unreachable) {
+          // An if with an unreachable condition may nonetheless have a type
+          // that is not unreachable,
+          //
+          // (if (result i32) (unreachable) ..)
+          //
+          // Turning such an if into a select would change the type of the
+          // expression, which would require updating types further up. Avoid
+          // that, leaving dead code elimination to that dedicated pass.
+          return nullptr;
+        }
         // This is always helpful for code size, but can be a tradeoff with
         // performance as we run both code paths. So when shrinking we always
         // try to do this, but otherwise must consider more carefully.
@@ -933,20 +948,23 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               passOptions, iff->ifTrue, iff->ifFalse)) {
           return nullptr;
         }
-        // Check if side effects allow this.
+        // Check if side effects allow this: we need to execute the two arms
+        // unconditionally, and also to make the condition run last.
         FeatureSet features = getModule()->features;
-        EffectAnalyzer condition(passOptions, features, iff->condition);
-        if (!condition.hasSideEffects()) {
-          EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
-          if (!ifTrue.hasSideEffects()) {
-            EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
-            if (!ifFalse.hasSideEffects()) {
-              return Builder(*getModule())
-                .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
-            }
-          }
+        EffectAnalyzer ifTrue(passOptions, features, iff->ifTrue);
+        if (ifTrue.hasSideEffects()) {
+          return nullptr;
         }
-        return nullptr;
+        EffectAnalyzer ifFalse(passOptions, features, iff->ifFalse);
+        if (ifFalse.hasSideEffects()) {
+          return nullptr;
+        }
+        EffectAnalyzer condition(passOptions, features, iff->condition);
+        if (condition.invalidates(ifTrue) || condition.invalidates(ifFalse)) {
+          return nullptr;
+        }
+        return Builder(*getModule())
+          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
       }
 
       void visitLocalSet(LocalSet* curr) {
@@ -1262,10 +1280,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               Builder builder(*getModule());
               // the table and condition are offset by the min
               if (min != 0) {
-                conditionValue =
-                  builder.makeBinary(SubInt32,
-                                     conditionValue,
-                                     builder.makeConst(Literal(int32_t(min))));
+                conditionValue = builder.makeBinary(
+                  SubInt32, conditionValue, builder.makeConst(int32_t(min)));
               }
               list[end - 1] = builder.makeBlock(
                 defaultName,

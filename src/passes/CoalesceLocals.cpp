@@ -19,6 +19,11 @@
 // is similar to register allocation, however, there is never any
 // spilling, and there isn't a fixed number of locals.
 //
+// NB: This pass is nonlinear in the number of locals. It is best to run it
+//     after the number of locals has been somewhat reduced by other passes,
+//     for example by simplify-locals (to remove unneeded uses of locals) and
+//     reorder-locals (to sort them by # of uses and remove all unneeded ones).
+//
 
 #include <algorithm>
 #include <memory>
@@ -40,6 +45,10 @@ namespace wasm {
 struct CoalesceLocals
   : public WalkerPass<LivenessWalker<CoalesceLocals, Visitor<CoalesceLocals>>> {
   bool isFunctionParallel() override { return true; }
+
+  // This pass merges locals, mapping the originals to new ones.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
 
   Pass* create() override { return new CoalesceLocals; }
 

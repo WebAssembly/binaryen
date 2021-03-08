@@ -1,13 +1,12 @@
 (module
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
  (type $none_=>_funcref (func (result funcref)))
- (event $e (attr 0) (param i32))
+ (elem declare func $foo)
  (export "ref_func_test" (func $ref_func_test))
- (func $foo (; 0 ;)
+ (func $foo
   (nop)
  )
- (func $ref_func_test (; 1 ;) (result funcref)
+ (func $ref_func_test (result funcref)
   (block
    (block $__inlined_func$foo
     (nop)
@@ -15,34 +14,98 @@
   )
   (ref.func $foo)
  )
- (func $br_on_exn_name_uniquify_test (; 2 ;)
-  (local $exn exnref)
-  (local $1 exnref)
-  (drop
-   (block $l (result i32)
-    (block
-     (block $__inlined_func$func_inner
-      (local.set $1
-       (ref.null)
+)
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (global $global$0 (mut funcref) (ref.func $0))
+ (func $0 (result i32)
+  (i32.const 1337)
+ )
+ (func $1 (result i32)
+  (block $__inlined_func$0 (result i32)
+   (i32.const 1337)
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (start $0)
+ (func $0
+  (nop)
+ )
+ (func $1
+  (block $__inlined_func$0
+   (nop)
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (export "func_36_invoker" (func $1))
+ (func $1
+  (block $__inlined_func$0
+   (block
+    (call_ref
+     (ref.null $none_=>_none)
+    )
+    (br $__inlined_func$0)
+   )
+   (br $__inlined_func$0)
+  )
+ )
+)
+(module
+ (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
+ (import "a" "b" (func $foo (result i32)))
+ (event $event$0 (attr 0) (param i32))
+ (export "exported" (func $1))
+ (func $1 (param $x i32)
+  (loop $label
+   (block
+    (block $__inlined_func$0
+     (try $label0
+      (do
+       (nop)
       )
-      (drop
-       (block $l0 (result i32)
-        (drop
-         (br_on_exn $l0 $e
-          (local.get $1)
-         )
-        )
-        (i32.const 0)
-       )
+      (catch $event$0
+       (nop)
       )
      )
     )
-    (drop
-     (br_on_exn $l $e
-      (local.get $exn)
-     )
-    )
-    (i32.const 0)
+   )
+   (br_if $label
+    (call $foo)
+   )
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (func $0
+  (try $label$3
+   (do
+    (nop)
+   )
+   (delegate 0)
+  )
+ )
+ (func $1
+  (call $0)
+ )
+)
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (func $1 (result i32)
+  (try $label$3
+   (do
+    (nop)
+   )
+   (delegate 0)
+  )
+  (block (result i32)
+   (block $__inlined_func$0 (result i32)
+    (i32.const 42)
    )
   )
  )

@@ -30,13 +30,17 @@
 
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/space.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
+
+namespace {
 
 // A subsection of an orginal memory segment. If `isZero` is true, memory.fill
 // will be used instead of memory.init for this range.
@@ -74,25 +78,26 @@ const size_t MEMORY_FILL_SIZE = 9;
 // data.drop: 2 byte opcode + ~1 byte index immediate
 const size_t DATA_DROP_SIZE = 3;
 
-namespace {
-
-Expression* makeShiftedMemorySize(Builder& builder) {
-  return builder.makeBinary(ShlInt32,
-                            builder.makeHost(MemorySize, Name(), {}),
-                            builder.makeConst(Literal(int32_t(16))));
+Expression*
+makeGtShiftedMemorySize(Builder& builder, Module& module, MemoryInit* curr) {
+  return builder.makeBinary(
+    module.memory.is64() ? GtUInt64 : GtUInt32,
+    curr->dest,
+    builder.makeBinary(module.memory.is64() ? ShlInt64 : ShlInt32,
+                       builder.makeMemorySize(),
+                       builder.makeConstPtr(16)));
 }
 
 } // anonymous namespace
 
 struct MemoryPacking : public Pass {
-  size_t dropStateGlobalCount = 0;
-
   // FIXME: Chrome has a bug decoding section indices that prevents it from
   // using more than 63. Just use WebLimitations::MaxDataSegments once this is
   // fixed. See https://bugs.chromium.org/p/v8/issues/detail?id=10151.
   uint32_t maxSegments;
 
   void run(PassRunner* runner, Module* module) override;
+  bool canOptimize(const Memory& memory, const PassOptions& passOptions);
   void optimizeBulkMemoryOps(PassRunner* runner, Module* module);
   void getSegmentReferrers(Module* module, std::vector<Referrers>& referrers);
   void dropUnusedSegments(std::vector<Memory::Segment>& segments,
@@ -117,13 +122,14 @@ struct MemoryPacking : public Pass {
 };
 
 void MemoryPacking::run(PassRunner* runner, Module* module) {
-  if (!module->memory.exists) {
+  if (!canOptimize(module->memory, runner->options)) {
     return;
   }
 
   maxSegments = module->features.hasBulkMemory()
                   ? 63
                   : uint32_t(WebLimitations::MaxDataSegments);
+
   auto& segments = module->memory.segments;
 
   // For each segment, a list of bulk memory instructions that refer to it
@@ -150,6 +156,7 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
     auto& currReferrers = referrers[origIndex];
 
     std::vector<Range> ranges;
+
     if (canSplit(segment, currReferrers)) {
       calculateRanges(segment, currReferrers, ranges);
     } else {
@@ -172,8 +179,88 @@ void MemoryPacking::run(PassRunner* runner, Module* module) {
   }
 }
 
+bool MemoryPacking::canOptimize(const Memory& memory,
+                                const PassOptions& passOptions) {
+  if (!memory.exists) {
+    return false;
+  }
+
+  // We must optimize under the assumption that memory has been initialized to
+  // zero. That is the case for a memory declared in the module, but for a
+  // memory that is imported, we must be told that it is zero-initialized.
+  if (memory.imported() && !passOptions.zeroFilledMemory) {
+    return false;
+  }
+
+  auto& segments = memory.segments;
+
+  // One segment is always ok to optimize, as it does not have the potential
+  // problems handled below.
+  if (segments.size() <= 1) {
+    return true;
+  }
+  // Check if it is ok for us to optimize.
+  Address maxAddress = 0;
+  for (auto& segment : segments) {
+    if (!segment.isPassive) {
+      auto* c = segment.offset->dynCast<Const>();
+      // If an active segment has a non-constant offset, then what gets written
+      // cannot be known until runtime. That is, the active segments are written
+      // out at startup, in order, and one may trample the data of another, like
+      //
+      //  (data (i32.const 100) "a")
+      //  (data (i32.const 100) "\00")
+      //
+      // It is *not* ok to optimize out the zero in the last segment, as it is
+      // actually needed, it will zero out the "a" that was written earlier. And
+      // if a segment has an imported offset,
+      //
+      //  (data (i32.const 100) "a")
+      //  (data (global.get $x) "\00")
+      //
+      // then we can't tell if that last segment will end up overwriting or not.
+      // The only case we can easily handle is if there is just a single
+      // segment, which we handled earlier. (Note that that includes the main
+      // case of having a non-constant offset, dynamic linking, in which we have
+      // a single segment.)
+      if (!c) {
+        return false;
+      }
+      // Note the maximum address so far.
+      maxAddress = std::max(
+        maxAddress, Address(c->value.getUnsigned() + segment.data.size()));
+    }
+  }
+  // All active segments have constant offsets, known at this time, so we may be
+  // able to optimize, but must still check for the trampling problem mentioned
+  // earlier.
+  // TODO: optimize in the trampling case
+  DisjointSpans space;
+  for (auto& segment : segments) {
+    if (!segment.isPassive) {
+      auto* c = segment.offset->cast<Const>();
+      Address start = c->value.getUnsigned();
+      DisjointSpans::Span span{start, start + segment.data.size()};
+      if (space.addAndCheckOverlap(span)) {
+        std::cerr << "warning: active memory segments have overlap, which "
+                  << "prevents some optimizations.\n";
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 bool MemoryPacking::canSplit(const Memory::Segment& segment,
                              const Referrers& referrers) {
+  // Don't mess with segments related to llvm coverage tools such as
+  // __llvm_covfun. There segments are expected/parsed by external downstream
+  // tools (llvm-cov) so they need to be left intact.
+  // See https://clang.llvm.org/docs/SourceBasedCodeCoverage.html
+  if (segment.name.is() && segment.name.startsWith("__llvm")) {
+    return false;
+  }
+
   if (segment.isPassive) {
     for (auto* referrer : referrers) {
       if (auto* init = referrer->dynCast<MemoryInit>()) {
@@ -184,10 +271,10 @@ bool MemoryPacking::canSplit(const Memory::Segment& segment,
       }
     }
     return true;
-  } else {
-    // Active segments can only be split if they have constant offsets
-    return segment.offset->is<Const>();
   }
+
+  // Active segments can only be split if they have constant offsets
+  return segment.offset->is<Const>();
 }
 
 void MemoryPacking::calculateRanges(const Memory::Segment& segment,
@@ -318,10 +405,9 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
       assert(!mustNop || !mustTrap);
       if (mustNop) {
         // Offset and size are 0, so just trap if dest > memory.size
-        replaceCurrent(builder.makeIf(
-          builder.makeBinary(
-            GtUInt32, curr->dest, makeShiftedMemorySize(builder)),
-          builder.makeUnreachable()));
+        replaceCurrent(
+          builder.makeIf(makeGtShiftedMemorySize(builder, *getModule(), curr),
+                         builder.makeUnreachable()));
       } else if (mustTrap) {
         // Drop dest, offset, and size then trap
         replaceCurrent(builder.blockify(builder.makeDrop(curr->dest),
@@ -334,8 +420,7 @@ void MemoryPacking::optimizeBulkMemoryOps(PassRunner* runner, Module* module) {
         replaceCurrent(builder.makeIf(
           builder.makeBinary(
             OrInt32,
-            builder.makeBinary(
-              GtUInt32, curr->dest, makeShiftedMemorySize(builder)),
+            makeGtShiftedMemorySize(builder, *getModule(), curr),
             builder.makeBinary(OrInt32, curr->offset, curr->size)),
           builder.makeUnreachable()));
       }
@@ -429,6 +514,7 @@ void MemoryPacking::createSplitSegments(Builder& builder,
                                         std::vector<Range>& ranges,
                                         std::vector<Memory::Segment>& packed,
                                         size_t segmentsRemaining) {
+  size_t segmentCount = 0;
   for (size_t i = 0; i < ranges.size(); ++i) {
     Range& range = ranges[i];
     if (range.isZero) {
@@ -437,8 +523,12 @@ void MemoryPacking::createSplitSegments(Builder& builder,
     Expression* offset = nullptr;
     if (!segment.isPassive) {
       if (auto* c = segment.offset->dynCast<Const>()) {
-        offset =
-          builder.makeConst(Literal(int32_t(c->value.geti32() + range.start)));
+        if (c->value.type == Type::i32) {
+          offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
+        } else {
+          assert(c->value.type == Type::i64);
+          offset = builder.makeConst(int64_t(c->value.geti64() + range.start));
+        }
       } else {
         assert(ranges.size() == 1);
         offset = segment.offset;
@@ -453,7 +543,22 @@ void MemoryPacking::createSplitSegments(Builder& builder,
       range.end = lastNonzero->end;
       ranges.erase(ranges.begin() + i + 1, lastNonzero + 1);
     }
-    packed.emplace_back(segment.isPassive,
+    Name name;
+    if (segment.name.is()) {
+      // Name the first range after the original segment and all following
+      // ranges get numbered accordingly.  This means that for segments that
+      // canot be split (segments that contains a single range) the input and
+      // output segment have the same name.
+      if (!segmentCount) {
+        name = segment.name;
+      } else {
+        name = std::string(segment.name.c_str()) + "." +
+               std::to_string(segmentCount);
+      }
+      segmentCount++;
+    }
+    packed.emplace_back(name,
+                        segment.isPassive,
                         offset,
                         &segment.data[range.start],
                         range.end - range.start);
@@ -493,11 +598,11 @@ void MemoryPacking::createReplacements(Module* module,
     if (dropStateGlobal != Name()) {
       return dropStateGlobal;
     }
-    dropStateGlobal = Name(std::string("__mem_segment_drop_state_") +
-                           std::to_string(dropStateGlobalCount++));
+    dropStateGlobal =
+      Names::getValidGlobalName(*module, "__mem_segment_drop_state");
     module->addGlobal(builder.makeGlobal(dropStateGlobal,
                                          Type::i32,
-                                         builder.makeConst(Literal(int32_t(0))),
+                                         builder.makeConst(int32_t(0)),
                                          Builder::Mutable));
     return dropStateGlobal;
   };
@@ -513,10 +618,16 @@ void MemoryPacking::createReplacements(Module* module,
     size_t start = init->offset->cast<Const>()->value.geti32();
     size_t end = start + init->size->cast<Const>()->value.geti32();
 
+    // Segment index used in emitted memory.init instructions
+    size_t initIndex = segmentIndex;
+
     // Index of the range from which this memory.init starts reading
     size_t firstRangeIdx = 0;
     while (firstRangeIdx < ranges.size() &&
            ranges[firstRangeIdx].end <= start) {
+      if (!ranges[firstRangeIdx].isZero) {
+        ++initIndex;
+      }
       ++firstRangeIdx;
     }
 
@@ -529,8 +640,7 @@ void MemoryPacking::createReplacements(Module* module,
       Expression* result = builder.makeIf(
         builder.makeBinary(
           OrInt32,
-          builder.makeBinary(
-            GtUInt32, init->dest, makeShiftedMemorySize(builder)),
+          makeGtShiftedMemorySize(builder, *module, init),
           builder.makeGlobalGet(getDropStateGlobal(), Type::i32)),
         builder.makeUnreachable());
       replacements[init] = [result](Function*) { return result; };
@@ -568,7 +678,6 @@ void MemoryPacking::createReplacements(Module* module,
 
     size_t bytesWritten = 0;
 
-    size_t initIndex = segmentIndex;
     for (size_t i = firstRangeIdx; i < ranges.size() && ranges[i].start < end;
          ++i) {
       auto& range = ranges[i];
@@ -576,31 +685,29 @@ void MemoryPacking::createReplacements(Module* module,
       // Calculate dest, either as a const or as an addition to the dest local
       Expression* dest;
       if (auto* c = init->dest->dynCast<Const>()) {
-        dest =
-          builder.makeConst(Literal(int32_t(c->value.geti32() + bytesWritten)));
+        dest = builder.makeConst(int32_t(c->value.geti32() + bytesWritten));
       } else {
         auto* get = builder.makeLocalGet(-1, Type::i32);
         getVars.push_back(&get->index);
         dest = get;
         if (bytesWritten > 0) {
-          Const* addend = builder.makeConst(Literal(int32_t(bytesWritten)));
+          Const* addend = builder.makeConst(int32_t(bytesWritten));
           dest = builder.makeBinary(AddInt32, dest, addend);
         }
       }
 
       // How many bytes are read from this range
       size_t bytes = std::min(range.end, end) - std::max(range.start, start);
-      Expression* size = builder.makeConst(Literal(int32_t(bytes)));
+      Expression* size = builder.makeConst(int32_t(bytes));
       bytesWritten += bytes;
 
       // Create new memory.init or memory.fill
       if (range.isZero) {
-        Expression* value =
-          builder.makeConst(Literal::makeSingleZero(Type::i32));
+        Expression* value = builder.makeConst(Literal::makeZero(Type::i32));
         appendResult(builder.makeMemoryFill(dest, value, size));
       } else {
         size_t offsetBytes = std::max(start, range.start) - range.start;
-        Expression* offset = builder.makeConst(Literal(int32_t(offsetBytes)));
+        Expression* offset = builder.makeConst(int32_t(offsetBytes));
         appendResult(builder.makeMemoryInit(initIndex, dest, offset, size));
         initIndex++;
       }
@@ -634,8 +741,8 @@ void MemoryPacking::createReplacements(Module* module,
 
     // Track drop state in a global only if some memory.init required it
     if (dropStateGlobal != Name()) {
-      appendResult(builder.makeGlobalSet(
-        dropStateGlobal, builder.makeConst(Literal(int32_t(1)))));
+      appendResult(
+        builder.makeGlobalSet(dropStateGlobal, builder.makeConst(int32_t(1))));
     }
     size_t dropIndex = segmentIndex;
     for (auto range : ranges) {

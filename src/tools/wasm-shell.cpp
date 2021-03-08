@@ -28,7 +28,6 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-interpreter.h"
-#include "wasm-printing.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
@@ -43,13 +42,6 @@ Name ASSERT_UNLINKABLE("assert_unlinkable");
 Name INVOKE("invoke");
 Name GET("get");
 
-// Modules named in the file
-
-std::map<Name, std::unique_ptr<Module>> modules;
-std::map<Name, std::unique_ptr<SExpressionWasmBuilder>> builders;
-std::map<Name, std::unique_ptr<ShellExternalInterface>> interfaces;
-std::map<Name, std::unique_ptr<ModuleInstance>> instances;
-
 //
 // An operation on a module
 //
@@ -62,7 +54,8 @@ struct Operation {
 
   Operation(Element& element,
             ModuleInstance* instanceInit,
-            SExpressionWasmBuilder& builder)
+            SExpressionWasmBuilder& builder,
+            std::map<Name, std::unique_ptr<ModuleInstance>>& instances)
     : instance(instanceInit) {
     operation = element[0]->str();
     Index i = 1;
@@ -74,7 +67,7 @@ struct Operation {
     name = element[i++]->str();
     for (size_t j = i; j < element.size(); j++) {
       Expression* argument = builder.parseExpression(*element[j]);
-      arguments.push_back(getSingleLiteralFromConstExpression(argument));
+      arguments.push_back(getLiteralFromConstExpression(argument));
     }
   }
 
@@ -89,13 +82,16 @@ struct Operation {
   }
 };
 
-static void run_asserts(Name moduleName,
-                        size_t* i,
-                        bool* checked,
-                        Module* wasm,
-                        Element* root,
-                        SExpressionWasmBuilder* builder,
-                        Name entry) {
+static void
+run_asserts(Name moduleName,
+            size_t* i,
+            bool* checked,
+            Module* wasm,
+            Element* root,
+            SExpressionWasmBuilder* builder,
+            Name entry,
+            std::map<Name, std::unique_ptr<ShellExternalInterface>>& interfaces,
+            std::map<Name, std::unique_ptr<ModuleInstance>>& instances) {
   ModuleInstance* instance = nullptr;
   if (wasm) {
     // prefix make_unique to work around visual studio bugs
@@ -111,7 +107,7 @@ static void run_asserts(Name moduleName,
         std::cerr << "Unknown entry " << entry << std::endl;
       } else {
         LiteralList arguments;
-        for (Type param : function->sig.params.expand()) {
+        for (const auto& param : function->sig.params) {
           arguments.push_back(Literal(param));
         }
         try {
@@ -146,7 +142,7 @@ static void run_asserts(Name moduleName,
       std::unique_ptr<SExpressionWasmBuilder> builder;
       try {
         builder = std::unique_ptr<SExpressionWasmBuilder>(
-          new SExpressionWasmBuilder(wasm, *curr[1]));
+          new SExpressionWasmBuilder(wasm, *curr[1], IRProfile::Normal));
       } catch (const ParseException&) {
         invalid = true;
       }
@@ -162,6 +158,7 @@ static void run_asserts(Name moduleName,
           invalid = true;
         };
         ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
+        ModuleUtils::iterImportedTables(wasm, reportUnknownImport);
         ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
           if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
             // We can handle it.
@@ -169,14 +166,8 @@ static void run_asserts(Name moduleName,
             reportUnknownImport(import);
           }
         });
-        if (wasm.memory.imported()) {
-          reportUnknownImport(&wasm.memory);
-        }
-        if (wasm.table.imported()) {
-          reportUnknownImport(&wasm.table);
-        }
-        for (auto& segment : wasm.table.segments) {
-          for (auto name : segment.data) {
+        for (auto& segment : wasm.elementSegments) {
+          for (auto name : segment->data) {
             // spec tests consider it illegal to use spectest.print in a table
             if (auto* import = wasm.getFunction(name)) {
               if (import->imported() && import->module == SPECTEST &&
@@ -187,17 +178,19 @@ static void run_asserts(Name moduleName,
             }
           }
         }
+        if (wasm.memory.imported()) {
+          reportUnknownImport(&wasm.memory);
+        }
       }
       if (!invalid) {
         Colors::red(std::cerr);
         std::cerr << "[should have been invalid]\n";
         Colors::normal(std::cerr);
-        std::cerr << &wasm << '\n';
-        abort();
+        Fatal() << &wasm << '\n';
       }
     } else if (id == INVOKE) {
       assert(wasm);
-      Operation operation(curr, instance, *builder);
+      Operation operation(curr, instance, *builder, instances);
       operation.operate();
     } else if (wasm) { // if no wasm, we skipped the module
       // an invoke test
@@ -205,9 +198,12 @@ static void run_asserts(Name moduleName,
       WASM_UNUSED(trapped);
       Literals result;
       try {
-        Operation operation(*curr[1], instance, *builder);
+        Operation operation(*curr[1], instance, *builder, instances);
         result = operation.operate();
       } catch (const TrapException&) {
+        trapped = true;
+      } catch (const WasmException& e) {
+        std::cout << "[exception thrown: " << e << "]" << std::endl;
         trapped = true;
       }
       if (id == ASSERT_RETURN) {
@@ -219,8 +215,7 @@ static void run_asserts(Name moduleName,
         }
         std::cerr << "seen " << result << ", expected " << expected << '\n';
         if (expected != result) {
-          std::cout << "unexpected, should be identical\n";
-          abort();
+          Fatal() << "unexpected, should be identical\n";
         }
       }
       if (id == ASSERT_TRAP) {
@@ -274,6 +269,13 @@ int main(int argc, const char* argv[]) {
 
   bool checked = false;
 
+  // Modules named in the file
+
+  std::map<Name, std::unique_ptr<Module>> modules;
+  std::map<Name, std::unique_ptr<SExpressionWasmBuilder>> builders;
+  std::map<Name, std::unique_ptr<ShellExternalInterface>> interfaces;
+  std::map<Name, std::unique_ptr<ModuleInstance>> instances;
+
   try {
     if (options.debug) {
       std::cerr << "parsing text to s-expressions...\n";
@@ -301,32 +303,42 @@ int main(int argc, const char* argv[]) {
         std::cerr << "BUILDING MODULE [line: " << curr.line << "]\n";
         Colors::normal(std::cerr);
         auto module = wasm::make_unique<Module>();
-        Name moduleName;
         auto builder = wasm::make_unique<SExpressionWasmBuilder>(
-          *module, *root[i], &moduleName);
+          *module, *root[i], IRProfile::Normal);
+        auto moduleName = module->name;
         builders[moduleName].swap(builder);
         modules[moduleName].swap(module);
         i++;
         modules[moduleName]->features = FeatureSet::All;
         bool valid = WasmValidator().validate(*modules[moduleName]);
         if (!valid) {
-          WasmPrinter::printModule(modules[moduleName].get());
+          std::cout << *modules[moduleName] << '\n';
+          Fatal() << "module failed to validate, see above";
         }
-        assert(valid);
         run_asserts(moduleName,
                     &i,
                     &checked,
                     modules[moduleName].get(),
                     &root,
                     builders[moduleName].get(),
-                    entry);
+                    entry,
+                    interfaces,
+                    instances);
       } else {
-        run_asserts(Name(), &i, &checked, nullptr, &root, nullptr, entry);
+        run_asserts(Name(),
+                    &i,
+                    &checked,
+                    nullptr,
+                    &root,
+                    nullptr,
+                    entry,
+                    interfaces,
+                    instances);
       }
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);
-    abort();
+    exit(1);
   }
 
   if (checked) {

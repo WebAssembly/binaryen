@@ -109,6 +109,11 @@ void ReFinalize::visitSIMDShuffle(SIMDShuffle* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDTernary(SIMDTernary* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDShift(SIMDShift* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDLoad(SIMDLoad* curr) { curr->finalize(); }
+void ReFinalize::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+  curr->finalize();
+}
+void ReFinalize::visitSIMDWiden(SIMDWiden* curr) { curr->finalize(); }
+void ReFinalize::visitPrefetch(Prefetch* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
 void ReFinalize::visitDataDrop(DataDrop* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
@@ -119,26 +124,47 @@ void ReFinalize::visitBinary(Binary* curr) { curr->finalize(); }
 void ReFinalize::visitSelect(Select* curr) { curr->finalize(); }
 void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
-void ReFinalize::visitHost(Host* curr) { curr->finalize(); }
+void ReFinalize::visitMemorySize(MemorySize* curr) { curr->finalize(); }
+void ReFinalize::visitMemoryGrow(MemoryGrow* curr) { curr->finalize(); }
 void ReFinalize::visitRefNull(RefNull* curr) { curr->finalize(); }
-void ReFinalize::visitRefIsNull(RefIsNull* curr) { curr->finalize(); }
-void ReFinalize::visitRefFunc(RefFunc* curr) { curr->finalize(); }
+void ReFinalize::visitRefIs(RefIs* curr) { curr->finalize(); }
+void ReFinalize::visitRefFunc(RefFunc* curr) {
+  // TODO: should we look up the function and update the type from there? This
+  // could handle a change to the function's type, but is also not really what
+  // this class has been meant to do.
+}
+void ReFinalize::visitRefEq(RefEq* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
-void ReFinalize::visitBrOnExn(BrOnExn* curr) {
-  curr->finalize();
-  if (curr->exnref->type == Type::unreachable) {
-    replaceUntaken(curr->exnref, nullptr);
-  }
-  updateBreakValueType(curr->name, curr->sent);
-}
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
-void ReFinalize::visitPush(Push* curr) { curr->finalize(); }
 void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
 void ReFinalize::visitTupleMake(TupleMake* curr) { curr->finalize(); }
 void ReFinalize::visitTupleExtract(TupleExtract* curr) { curr->finalize(); }
+void ReFinalize::visitI31New(I31New* curr) { curr->finalize(); }
+void ReFinalize::visitI31Get(I31Get* curr) { curr->finalize(); }
+void ReFinalize::visitCallRef(CallRef* curr) { curr->finalize(); }
+void ReFinalize::visitRefTest(RefTest* curr) { curr->finalize(); }
+void ReFinalize::visitRefCast(RefCast* curr) { curr->finalize(); }
+void ReFinalize::visitBrOn(BrOn* curr) {
+  curr->finalize();
+  if (curr->type == Type::unreachable) {
+    replaceUntaken(curr->ref, nullptr);
+  } else {
+    updateBreakValueType(curr->name, curr->getCastType());
+  }
+}
+void ReFinalize::visitRttCanon(RttCanon* curr) { curr->finalize(); }
+void ReFinalize::visitRttSub(RttSub* curr) { curr->finalize(); }
+void ReFinalize::visitStructNew(StructNew* curr) { curr->finalize(); }
+void ReFinalize::visitStructGet(StructGet* curr) { curr->finalize(); }
+void ReFinalize::visitStructSet(StructSet* curr) { curr->finalize(); }
+void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
+void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
+void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
+void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
+void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
@@ -152,6 +178,9 @@ void ReFinalize::visitFunction(Function* curr) {
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitElementSegment(ElementSegment* curr) {
+  WASM_UNREACHABLE("unimp");
+}
 void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
@@ -186,7 +215,7 @@ void ReFinalize::replaceUntaken(Expression* value, Expression* condition) {
       condition = builder.makeDrop(condition);
     }
     replacement = builder.makeSequence(value, condition);
-    assert(replacement->type.getSingle());
+    assert(replacement->type.isBasic() && "Basic type expected");
   }
   replaceCurrent(replacement);
 }

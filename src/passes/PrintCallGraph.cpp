@@ -96,8 +96,8 @@ struct PrintCallGraph : public Pass {
     CallPrinter printer(module);
 
     // Indirect Targets
-    for (auto& segment : module->table.segments) {
-      for (auto& curr : segment.data) {
+    for (auto& segment : module->elementSegments) {
+      for (auto& curr : segment->data) {
         auto* func = module->getFunction(curr);
         o << "  \"" << func->name << "\" [style=\"filled, rounded\"];\n";
       }

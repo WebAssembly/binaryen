@@ -18,11 +18,6 @@
 
 namespace wasm {
 
-cashew::IString GLOBAL("global");
-cashew::IString NAN_("NaN");
-cashew::IString INFINITY_("Infinity");
-cashew::IString NAN__("nan");
-cashew::IString INFINITY__("infinity");
 cashew::IString TOPMOST("topmost");
 cashew::IString INT8ARRAY("Int8Array");
 cashew::IString INT16ARRAY("Int16Array");
@@ -34,7 +29,6 @@ cashew::IString FLOAT32ARRAY("Float32Array");
 cashew::IString FLOAT64ARRAY("Float64Array");
 cashew::IString ARRAY_BUFFER("ArrayBuffer");
 cashew::IString ASM_MODULE("asmModule");
-cashew::IString IMPOSSIBLE_CONTINUE("impossible-continue");
 cashew::IString MATH("Math");
 cashew::IString IMUL("imul");
 cashew::IString CLZ32("clz32");
@@ -55,10 +49,10 @@ cashew::IString I32S_DIV("i32s-div");
 cashew::IString I32U_DIV("i32u-div");
 cashew::IString I32S_REM("i32s-rem");
 cashew::IString I32U_REM("i32u-rem");
-cashew::IString GLOBAL_MATH("global.Math");
 cashew::IString ABS("abs");
 cashew::IString FLOOR("floor");
 cashew::IString CEIL("ceil");
+cashew::IString TRUNC("trunc");
 cashew::IString SQRT("sqrt");
 cashew::IString POW("pow");
 cashew::IString I32_TEMP("asm2wasm_i32_temp");
@@ -93,25 +87,35 @@ cashew::IString WASM_FETCH_HIGH_BITS("__wasm_fetch_high_bits");
 cashew::IString INT64_TO_32_HIGH_BITS("i64toi32_i32$HIGH_BITS");
 cashew::IString WASM_NEAREST_F32("__wasm_nearest_f32");
 cashew::IString WASM_NEAREST_F64("__wasm_nearest_f64");
-cashew::IString WASM_TRUNC_F32("__wasm_trunc_f32");
-cashew::IString WASM_TRUNC_F64("__wasm_trunc_f64");
 cashew::IString WASM_I64_MUL("__wasm_i64_mul");
 cashew::IString WASM_I64_SDIV("__wasm_i64_sdiv");
 cashew::IString WASM_I64_UDIV("__wasm_i64_udiv");
 cashew::IString WASM_I64_SREM("__wasm_i64_srem");
 cashew::IString WASM_I64_UREM("__wasm_i64_urem");
 
+cashew::IString ASM_FUNC("asmFunc");
+cashew::IString ABORT_FUNC("abort");
+cashew::IString FUNCTION_TABLE("FUNCTION_TABLE");
+cashew::IString NO_RESULT("wasm2js$noresult"); // no result at all
+// result in an expression, no temp var
+cashew::IString EXPRESSION_RESULT("wasm2js$expresult");
+
 namespace ABI {
 namespace wasm2js {
 
 cashew::IString SCRATCH_LOAD_I32("wasm2js_scratch_load_i32");
 cashew::IString SCRATCH_STORE_I32("wasm2js_scratch_store_i32");
-cashew::IString SCRATCH_LOAD_I64("wasm2js_scratch_load_i64");
-cashew::IString SCRATCH_STORE_I64("wasm2js_scratch_store_i64");
 cashew::IString SCRATCH_LOAD_F32("wasm2js_scratch_load_f32");
 cashew::IString SCRATCH_STORE_F32("wasm2js_scratch_store_f32");
 cashew::IString SCRATCH_LOAD_F64("wasm2js_scratch_load_f64");
 cashew::IString SCRATCH_STORE_F64("wasm2js_scratch_store_f64");
+cashew::IString MEMORY_INIT("wasm2js_memory_init");
+cashew::IString MEMORY_FILL("wasm2js_memory_fill");
+cashew::IString MEMORY_COPY("wasm2js_memory_copy");
+cashew::IString DATA_DROP("wasm2js_data_drop");
+cashew::IString ATOMIC_WAIT_I32("wasm2js_atomic_wait_i32");
+cashew::IString ATOMIC_RMW_I64("wasm2js_atomic_rmw_i64");
+cashew::IString GET_STASHED_BITS("wasm2js_get_stashed_bits");
 
 } // namespace wasm2js
 } // namespace ABI

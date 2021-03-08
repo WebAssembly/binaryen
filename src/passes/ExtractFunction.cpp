@@ -42,12 +42,13 @@ struct ExtractFunction : public Pass {
       }
     }
     if (!found) {
-      std::cerr << "could not find the function to extract\n";
-      abort();
+      Fatal() << "could not find the function to extract\n";
     }
     // clear data
     module->memory.segments.clear();
-    module->table.segments.clear();
+    // TODO: if the extracted function contains a call_indirect, the referenced
+    // table should not be removed.
+    module->tables.clear();
     // leave just an export for the thing we want
     if (!module->getExportOrNull(name)) {
       module->exports.clear();

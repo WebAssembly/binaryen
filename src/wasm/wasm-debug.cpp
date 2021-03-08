@@ -86,6 +86,10 @@ void dumpDWARF(const Module& wasm) {
   info.context->dump(llvm::outs(), options);
 }
 
+bool shouldPreserveDWARF(PassOptions& options, Module& wasm) {
+  return options.debugInfo && hasDWARFSections(wasm);
+}
+
 //
 // Big picture: We use a DWARFContext to read data, then DWARFYAML support
 // code to write it. That is not the main LLVM Dwarf code used for writing
@@ -123,11 +127,17 @@ struct LineState {
   bool basicBlock = false;
   bool prologueEnd = false;
   bool epilogueBegin = false;
-  bool endSequence = false;
+  // Each instruction is part of a sequence, all of which get the same ID. The
+  // order within a sequence may change if binaryen reorders things, which means
+  // that we can't track the end_sequence location and assume it is at the end -
+  // we must track sequences and then emit an end for each one.
+  // -1 is an invalid marker value (note that this assumes we can fit all ids
+  // into just under 32 bits).
+  uint32_t sequenceId = -1;
 
   LineState(const LineState& other) = default;
-  LineState(const llvm::DWARFYAML::LineTable& table)
-    : isStmt(table.DefaultIsStmt) {}
+  LineState(const llvm::DWARFYAML::LineTable& table, uint32_t sequenceId)
+    : isStmt(table.DefaultIsStmt), sequenceId(sequenceId) {}
 
   LineState& operator=(const LineState& other) = default;
 
@@ -143,7 +153,6 @@ struct LineState {
             break;
           }
           case llvm::dwarf::DW_LNE_end_sequence: {
-            endSequence = true;
             return true;
           }
           case llvm::dwarf::DW_LNE_set_discriminator: {
@@ -250,7 +259,8 @@ struct LineState {
   // table entry (that will be emitted in the updated DWARF debug line section).
   void emitDiff(const LineState& old,
                 std::vector<llvm::DWARFYAML::LineTableOpcode>& newOpcodes,
-                const llvm::DWARFYAML::LineTable& table) {
+                const llvm::DWARFYAML::LineTable& table,
+                bool endSequence) const {
     bool useSpecial = false;
     if (addr != old.addr || line != old.line) {
       // Try to use a special opcode TODO
@@ -298,8 +308,7 @@ struct LineState {
       assert(basicBlock);
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_basic_block));
     }
-    if (prologueEnd != old.prologueEnd) {
-      assert(prologueEnd);
+    if (prologueEnd) {
       newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_set_prologue_end));
     }
     if (epilogueBegin != old.epilogueBegin) {
@@ -313,27 +322,25 @@ struct LineState {
       if (endSequence) {
         // len = 1 (subopcode)
         newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNE_end_sequence, 1));
-        // Reset the state.
-        *this = LineState(table);
       } else {
         newOpcodes.push_back(makeItem(llvm::dwarf::DW_LNS_copy));
       }
     }
-    resetAfterLine();
   }
 
   // Some flags are automatically reset after each debug line.
   void resetAfterLine() { prologueEnd = false; }
 
 private:
-  llvm::DWARFYAML::LineTableOpcode makeItem(llvm::dwarf::LineNumberOps opcode) {
+  llvm::DWARFYAML::LineTableOpcode
+  makeItem(llvm::dwarf::LineNumberOps opcode) const {
     llvm::DWARFYAML::LineTableOpcode item = {};
     item.Opcode = opcode;
     return item;
   }
 
   llvm::DWARFYAML::LineTableOpcode
-  makeItem(llvm::dwarf::LineNumberExtendedOps opcode, uint64_t len) {
+  makeItem(llvm::dwarf::LineNumberExtendedOps opcode, uint64_t len) const {
     auto item = makeItem(llvm::dwarf::LineNumberOps(0));
     // All the length after the len field itself, including the subopcode
     // (1 byte).
@@ -358,7 +365,7 @@ struct AddrExprMap {
   // bloat the common case which is represented in the earlier maps.
   struct DelimiterInfo {
     Expression* expr;
-    BinaryLocations::DelimiterId id;
+    size_t id;
   };
   std::unordered_map<BinaryLocation, DelimiterInfo> delimiterMap;
 
@@ -411,8 +418,7 @@ private:
     for (Index i = 0; i < delimiter.size(); i++) {
       if (delimiter[i] != 0) {
         assert(delimiterMap.count(delimiter[i]) == 0);
-        delimiterMap[delimiter[i]] =
-          DelimiterInfo{expr, BinaryLocations::DelimiterId(i)};
+        delimiterMap[delimiter[i]] = DelimiterInfo{expr, i};
       }
     }
   }
@@ -470,8 +476,18 @@ struct LocationUpdater {
   AddrExprMap oldExprAddrMap;
   FuncAddrMap oldFuncAddrMap;
 
+  // Map offsets of location list entries in the debug_loc section to the index
+  // of their compile unit.
+  std::unordered_map<BinaryLocation, size_t> locToUnitMap;
+
   // Map start of line tables in the debug_line section to their new locations.
-  std::map<BinaryLocation, BinaryLocation> debugLineMap;
+  std::unordered_map<BinaryLocation, BinaryLocation> debugLineMap;
+
+  typedef std::pair<BinaryLocation, BinaryLocation> OldToNew;
+
+  // Map of compile unit index => old and new base offsets (i.e., in the
+  // original binary and in the new one).
+  std::unordered_map<size_t, OldToNew> compileUnitBases;
 
   // TODO: for memory efficiency, we may want to do this in a streaming manner,
   //       binary to binary, without YAML IR.
@@ -610,15 +626,37 @@ struct LocationUpdater {
   BinaryLocation getNewDebugLineLocation(BinaryLocation old) const {
     return debugLineMap.at(old);
   }
+
+  // Given an offset in .debug_loc, get the old and new compile unit bases.
+  OldToNew getCompileUnitBasesForLoc(size_t offset) const {
+    auto index = locToUnitMap.at(offset);
+    auto iter = compileUnitBases.find(index);
+    if (iter != compileUnitBases.end()) {
+      return iter->second;
+    }
+    return OldToNew{0, 0};
+  }
 };
+
+// A tombstone value is a value that is placed where something used to exist,
+// but no longer does, like a reference to a function that was DCE'd out during
+// linking. In theory the value can be any invalid location, and tools will
+// basically ignore it.
+// Earlier LLVM used to use 0 there, and newer versions use -1 or -2 depending
+// on the DWARF section. For now, support them all, but TODO stop supporting 0,
+// as there are apparently some possible corner cases where 0 is a valid value.
+static bool isTombstone(uint32_t x) {
+  return x == 0 || x == uint32_t(-1) || x == uint32_t(-2);
+}
 
 // Update debug lines, and update the locationUpdater with debug line offset
 // changes so we can update offsets into the debug line section.
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
                              LocationUpdater& locationUpdater) {
   for (auto& table : data.DebugLines) {
+    uint32_t sequenceId = 0;
     // Parse the original opcodes and emit new ones.
-    LineState state(table);
+    LineState state(table, sequenceId);
     // All the addresses we need to write out.
     std::vector<BinaryLocation> newAddrs;
     std::unordered_map<BinaryLocation, LineState> newAddrInfo;
@@ -632,11 +670,11 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         omittingRange = false;
       }
       if (state.update(opcode, table)) {
-        if (state.addr == 0) {
+        if (isTombstone(state.addr)) {
           omittingRange = true;
         }
         if (omittingRange) {
-          state = LineState(table);
+          state = LineState(table, sequenceId);
           continue;
         }
         // An expression may not exist for this line table item, if we optimized
@@ -656,8 +694,10 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
           newAddr = locationUpdater.getNewFuncStart(oldAddr);
         } else if (locationUpdater.hasOldDelimiter(oldAddr)) {
           newAddr = locationUpdater.getNewDelimiter(oldAddr);
+        } else if (locationUpdater.hasOldExprEnd(oldAddr)) {
+          newAddr = locationUpdater.getNewExprEnd(oldAddr);
         }
-        if (newAddr) {
+        if (newAddr && state.needToEmit()) {
           // LLVM sometimes emits the same address more than once. We should
           // probably investigate that.
           if (newAddrInfo.count(newAddr)) {
@@ -673,7 +713,11 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
         }
         if (opcode.Opcode == 0 &&
             opcode.SubOpcode == llvm::dwarf::DW_LNE_end_sequence) {
-          state = LineState(table);
+          sequenceId++;
+          // We assume the number of sequences can fit in 32 bits, and -1 is
+          // an invalid value.
+          assert(sequenceId != uint32_t(-1));
+          state = LineState(table, sequenceId);
         }
       }
     }
@@ -683,15 +727,24 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     // Emit a new line table.
     {
       std::vector<llvm::DWARFYAML::LineTableOpcode> newOpcodes;
-      LineState state(table);
-      for (BinaryLocation addr : newAddrs) {
-        LineState oldState(state);
-        state = newAddrInfo.at(addr);
-        if (state.needToEmit()) {
-          state.emitDiff(oldState, newOpcodes, table);
-        } else {
-          state = oldState;
+      for (size_t i = 0; i < newAddrs.size(); i++) {
+        LineState state = newAddrInfo.at(newAddrs[i]);
+        assert(state.needToEmit());
+        LineState lastState(table, -1);
+        if (i != 0) {
+          lastState = newAddrInfo.at(newAddrs[i - 1]);
+          // If the last line is in another sequence, clear the old state, as
+          // there is nothing to diff to.
+          if (lastState.sequenceId != state.sequenceId) {
+            lastState = LineState(table, -1);
+          }
         }
+        // This line ends a sequence if there is no next line after it, or if
+        // the next line is in a different sequence.
+        bool endSequence =
+          i + 1 == newAddrs.size() ||
+          newAddrInfo.at(newAddrs[i + 1]).sequenceId != state.sequenceId;
+        state.emitDiff(lastState, newOpcodes, table, endSequence);
       }
       table.Opcodes.swap(newOpcodes);
     }
@@ -724,10 +777,14 @@ static void iterContextAndYAML(const T& contextList, U& yamlList, W func) {
   assert(yamlValue == yamlList.end());
 }
 
+// Updates a YAML entry from a DWARF DIE. Also updates LocationUpdater
+// associating each .debug_loc entry with the base address of its corresponding
+// compilation unit.
 static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                       llvm::DWARFYAML::Entry& yamlEntry,
                       const llvm::DWARFAbbreviationDeclaration* abbrevDecl,
-                      const LocationUpdater& locationUpdater) {
+                      LocationUpdater& locationUpdater,
+                      size_t compileUnitIndex) {
   auto tag = DIE.getTag();
   // Pairs of low/high_pc require some special handling, as the high
   // may be an offset relative to the low. First, process everything but
@@ -746,9 +803,14 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
             tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
             tag == llvm::dwarf::DW_TAG_lexical_block ||
             tag == llvm::dwarf::DW_TAG_label) {
-          newValue = locationUpdater.getNewExprStart(oldValue);
-        } else if (tag == llvm::dwarf::DW_TAG_compile_unit ||
-                   tag == llvm::dwarf::DW_TAG_subprogram) {
+          newValue = locationUpdater.getNewStart(oldValue);
+        } else if (tag == llvm::dwarf::DW_TAG_compile_unit) {
+          newValue = locationUpdater.getNewFuncStart(oldValue);
+          // Per the DWARF spec, "The base address of a compile unit is
+          // defined as the value of the DW_AT_low_pc attribute, if present."
+          locationUpdater.compileUnitBases[compileUnitIndex] =
+            LocationUpdater::OldToNew{oldValue, newValue};
+        } else if (tag == llvm::dwarf::DW_TAG_subprogram) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
         } else {
           Fatal() << "unknown tag with low_pc "
@@ -761,6 +823,10 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
         // This is an offset into the debug line section.
         yamlValue.Value =
           locationUpdater.getNewDebugLineLocation(yamlValue.Value);
+      } else if (attr == llvm::dwarf::DW_AT_location &&
+                 attrSpec.Form == llvm::dwarf::DW_FORM_sec_offset) {
+        BinaryLocation locOffset = yamlValue.Value;
+        locationUpdater.locToUnitMap[locOffset] = compileUnitIndex;
       }
     });
   // Next, process the high_pcs.
@@ -801,14 +867,23 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
 
 static void updateCompileUnits(const BinaryenDWARFInfo& info,
                                llvm::DWARFYAML::Data& yaml,
-                               const LocationUpdater& locationUpdater) {
+                               LocationUpdater& locationUpdater,
+                               bool is64) {
   // The context has the high-level information we need, and the YAML is where
   // we write changes. First, iterate over the compile units.
+  size_t compileUnitIndex = 0;
   iterContextAndYAML(
     info.context->compile_units(),
     yaml.CompileUnits,
     [&](const std::unique_ptr<llvm::DWARFUnit>& CU,
         llvm::DWARFYAML::Unit& yamlUnit) {
+      // Our Memory64Lowering pass may change the "architecture" of the DWARF
+      // data. AddrSize will cause all DW_AT_low_pc to be written as 32/64-bit.
+      auto NewAddrSize = is64 ? 8 : 4;
+      if (NewAddrSize != yamlUnit.AddrSize) {
+        yamlUnit.AddrSize = NewAddrSize;
+        yamlUnit.AddrSizeChanged = true;
+      }
       // Process the DIEs in each compile unit.
       iterContextAndYAML(
         CU->dies(),
@@ -820,9 +895,11 @@ static void updateCompileUnits(const BinaryenDWARFInfo& info,
           auto abbrevDecl = DIE.getAbbreviationDeclarationPtr();
           if (abbrevDecl) {
             // This is relevant; look for things to update.
-            updateDIE(DIE, yamlEntry, abbrevDecl, locationUpdater);
+            updateDIE(
+              DIE, yamlEntry, abbrevDecl, locationUpdater, compileUnitIndex);
           }
         });
+      compileUnitIndex++;
     });
 }
 
@@ -838,14 +915,14 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
     // If this is an end marker (0, 0), or an invalid range (0, x) or (x, 0)
     // then just emit it as it is - either to mark the end, or to mark an
     // invalid entry.
-    if (oldStart == 0 || oldEnd == 0) {
+    if (isTombstone(oldStart) || isTombstone(oldEnd)) {
       newStart = oldStart;
       newEnd = oldEnd;
     } else {
       // This was a valid entry; update it.
       newStart = locationUpdater.getNewStart(oldStart);
       newEnd = locationUpdater.getNewEnd(oldEnd);
-      if (newStart == 0 || newEnd == 0) {
+      if (isTombstone(newStart) || isTombstone(newEnd)) {
         // This part of the range no longer has a mapping, so we must skip it.
         // Don't use (0, 0) as that would be an end marker; emit something
         // invalid for the debugger to ignore.
@@ -867,39 +944,98 @@ static void updateRanges(llvm::DWARFYAML::Data& yaml,
 // would indicate an end or a base in .debug_loc).
 static const BinaryLocation IGNOREABLE_LOCATION = 1;
 
+static bool isNewBaseLoc(const llvm::DWARFYAML::Loc& loc) {
+  return loc.Start == BinaryLocation(-1);
+}
+
+static bool isEndMarkerLoc(const llvm::DWARFYAML::Loc& loc) {
+  return isTombstone(loc.Start) && isTombstone(loc.End);
+}
+
 // Update the .debug_loc section.
 static void updateLoc(llvm::DWARFYAML::Data& yaml,
                       const LocationUpdater& locationUpdater) {
   // Similar to ranges, try to update the start and end. Note that here we
   // can't skip since the location description is a variable number of bytes,
   // so we mark no longer valid addresses as empty.
-  // Locations have an optional base.
-  BinaryLocation base = 0;
-  for (size_t i = 0; i < yaml.Locs.size(); i++) {
-    auto& loc = yaml.Locs[i];
+  bool atStart = true;
+  // We need to keep positions in the .debug_loc section identical to before
+  // (or else we'd need to update their positions too) and so we need to keep
+  // base entries around (a base entry is added to every entry after it in the
+  // list). However, we may change the base's value as after moving instructions
+  // around the old base may not be smaller than all the values relative to it.
+  BinaryLocation oldBase, newBase;
+  auto& locs = yaml.Locs;
+  for (size_t i = 0; i < locs.size(); i++) {
+    auto& loc = locs[i];
+    if (atStart) {
+      std::tie(oldBase, newBase) =
+        locationUpdater.getCompileUnitBasesForLoc(loc.CompileUnitOffset);
+      atStart = false;
+    }
+    // By default we copy values over, unless we modify them below.
     BinaryLocation newStart = loc.Start, newEnd = loc.End;
-    if (newStart == BinaryLocation(-1)) {
+    if (isNewBaseLoc(loc)) {
       // This is a new base.
       // Note that the base is not the address of an instruction, necessarily -
       // it's just a number (seems like it could always be an instruction, but
       // that's not what LLVM emits).
-      base = newEnd;
-    } else if (newStart == 0 && newEnd == 0) {
-      // This is an end marker, this list is done.
-      base = 0;
+      // We must look forward at everything relative to this base, so that we
+      // can emit a new proper base (as mentioned earlier, the original base may
+      // not be valid if instructions moved to a position before it - they must
+      // be positive offsets from it).
+      oldBase = newBase = newEnd;
+      BinaryLocation smallest = -1;
+      for (size_t j = i + 1; j < locs.size(); j++) {
+        auto& futureLoc = locs[j];
+        if (isNewBaseLoc(futureLoc) || isEndMarkerLoc(futureLoc)) {
+          break;
+        }
+        auto updatedStart =
+          locationUpdater.getNewStart(futureLoc.Start + oldBase);
+        // If we found a valid mapping, this is a relevant value for us. If the
+        // optimizer removed it, it's a 0, and we can ignore it here - we will
+        // emit IGNOREABLE_LOCATION for it later anyhow.
+        if (updatedStart != 0) {
+          smallest = std::min(smallest, updatedStart);
+        }
+      }
+      // If we found no valid values that will be relativized here, just use 0
+      // as the new (never-to-be-used) base, which is less confusing (otherwise
+      // the value looks like it means something).
+      if (smallest == BinaryLocation(-1)) {
+        smallest = 0;
+      }
+      newBase = newEnd = smallest;
+    } else if (isEndMarkerLoc(loc)) {
+      // This is an end marker, this list is done; reset the base.
+      atStart = true;
     } else {
       // This is a normal entry, try to find what it should be updated to. First
       // de-relativize it to the base to get the absolute address, then look for
       // a new address for it.
-      newStart = locationUpdater.getNewStart(loc.Start + base);
-      newEnd = locationUpdater.getNewEnd(loc.End + base);
-      if (newStart == 0 || newEnd == 0) {
-        // This part of the loc no longer has a mapping, so we must ignore it.
+      newStart = locationUpdater.getNewStart(loc.Start + oldBase);
+      newEnd = locationUpdater.getNewEnd(loc.End + oldBase);
+      if (newStart == 0 || newEnd == 0 || newStart > newEnd) {
+        // This part of the loc no longer has a mapping, or after the mapping
+        // it is no longer a proper span, so we must ignore it.
         newStart = newEnd = IGNOREABLE_LOCATION;
       } else {
-        // Finally, relativize it against the base.
-        newStart -= base;
-        newEnd -= base;
+        // We picked a new base that ensures it is smaller than the values we
+        // will relativize to it.
+        assert(newStart >= newBase && newEnd >= newBase);
+        newStart -= newBase;
+        newEnd -= newBase;
+        if (newStart == 0 && newEnd == 0) {
+          // After mapping to the new positions, and after relativizing to the
+          // base, if we end up with (0, 0) then we must emit something else, as
+          // that would be interpreted as the end of a list. As it is an empty
+          // span, the actual value doesn't matter, it just has to be != 0.
+          // This can happen if the very first span in a compile unit is an
+          // empty span, in which case relative to the base of the compile unit
+          // we would have (0, 0).
+          newStart = newEnd = IGNOREABLE_LOCATION;
+        }
       }
       // The loc start and end markers have been preserved. However, TODO
       // instructions in the middle may have moved around, making the loc no
@@ -925,7 +1061,7 @@ void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
 
   updateDebugLines(data, locationUpdater);
 
-  updateCompileUnits(info, data, locationUpdater);
+  updateCompileUnits(info, data, locationUpdater, wasm.memory.is64());
 
   updateRanges(data, locationUpdater);
 
@@ -958,6 +1094,8 @@ void dumpDWARF(const Module& wasm) {
 void writeDWARFSections(Module& wasm, const BinaryLocations& newLocations) {
   std::cerr << "warning: no DWARF updating support present\n";
 }
+
+bool shouldPreserveDWARF(PassOptions& options, Module& wasm) { return false; }
 
 #endif // BUILD_LLVM_DWARF
 

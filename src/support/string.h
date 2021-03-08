@@ -21,6 +21,7 @@
 #ifndef wasm_support_string_h
 #define wasm_support_string_h
 
+#include "support/utilities.h"
 #include <cctype>
 #include <string>
 #include <vector>
@@ -113,6 +114,10 @@ inline std::string trim(const std::string& input) {
     size--;
   }
   return input.substr(0, size);
+}
+
+inline bool isNumber(const std::string& str) {
+  return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
 } // namespace String

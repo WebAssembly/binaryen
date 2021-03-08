@@ -33,6 +33,8 @@ public:
   // the binary, so that we can update DWARF sections later when writing.
   void setDWARF(bool DWARF_) { DWARF = DWARF_; }
 
+  void setProfile(IRProfile profile_) { profile = profile_; }
+
   // read text
   void readText(std::string filename, Module& wasm);
   // read binary
@@ -48,6 +50,8 @@ public:
 
 private:
   bool DWARF = false;
+
+  IRProfile profile = IRProfile::Normal;
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
 

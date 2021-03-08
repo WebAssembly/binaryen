@@ -1,0 +1,11 @@
+(module
+ (memory $0 i64 1 1)
+ (func $test
+  (drop (i32.load         (i64.const 4)))
+  (drop (i32.load align=1 (i64.const 8)))
+  (drop (i32.load align=2 (i64.const 12)))
+  (i32.store         (i64.const 16) (i32.const 28))
+  (i32.store align=1 (i64.const 20) (i32.const 32))
+  (i32.store align=2 (i64.const 24) (i32.const 36))
+ )
+)

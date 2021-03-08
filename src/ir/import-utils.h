@@ -29,6 +29,7 @@ struct ImportInfo {
 
   std::vector<Global*> importedGlobals;
   std::vector<Function*> importedFunctions;
+  std::vector<Table*> importedTables;
   std::vector<Event*> importedEvents;
 
   ImportInfo(Module& wasm) : wasm(wasm) {
@@ -40,6 +41,11 @@ struct ImportInfo {
     for (auto& import : wasm.functions) {
       if (import->imported()) {
         importedFunctions.push_back(import.get());
+      }
+    }
+    for (auto& import : wasm.tables) {
+      if (import->imported()) {
+        importedTables.push_back(import.get());
       }
     }
     for (auto& import : wasm.events) {
@@ -80,12 +86,14 @@ struct ImportInfo {
 
   Index getNumImportedFunctions() { return importedFunctions.size(); }
 
+  Index getNumImportedTables() { return importedTables.size(); }
+
   Index getNumImportedEvents() { return importedEvents.size(); }
 
   Index getNumImports() {
     return getNumImportedGlobals() + getNumImportedFunctions() +
            getNumImportedEvents() + (wasm.memory.imported() ? 1 : 0) +
-           (wasm.table.imported() ? 1 : 0);
+           getNumImportedTables();
   }
 
   Index getNumDefinedGlobals() {
@@ -94,6 +102,10 @@ struct ImportInfo {
 
   Index getNumDefinedFunctions() {
     return wasm.functions.size() - getNumImportedFunctions();
+  }
+
+  Index getNumDefinedTables() {
+    return wasm.tables.size() - getNumImportedTables();
   }
 
   Index getNumDefinedEvents() {

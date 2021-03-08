@@ -25,8 +25,6 @@
 #include <ostream>
 #include <type_traits>
 
-#include "asm_v_wasm.h"
-#include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "ir/module-utils.h"
 #include "parsing.h"
@@ -331,9 +329,26 @@ enum Section {
   Event = 13
 };
 
+// A passive segment is a segment that will not be automatically copied into a
+//   memory or table on instantiation, and must instead be applied manually
+//   using the instructions memory.init or table.init.
+// An active segment is equivalent to a passive segment, but with an implicit
+//   memory.init followed by a data.drop (or table.init followed by a elem.drop)
+//   that is prepended to the module's start function.
+// A declarative element segment is not available at runtime but merely serves
+//   to forward-declare references that are formed in code with instructions
+//   like ref.func.
 enum SegmentFlag {
-  IsPassive = 0x01,
-  HasMemIndex = 0x02,
+  // Bit 0: 0 = active, 1 = passive
+  IsPassive = 1 << 0,
+  // Bit 1 if passive: 0 = passive, 1 = declarative
+  IsDeclarative = 1 << 1,
+  // Bit 1 if active: 0 = index 0, 1 = index given
+  HasIndex = 1 << 1,
+  // Table element segments only:
+  // Bit 2: 0 = elemType is funcref and vector of func indexes given
+  //        1 = elemType is given and vector of ref expressions is given
+  UsesExpressions = 1 << 2
 };
 
 enum EncodedType {
@@ -343,18 +358,42 @@ enum EncodedType {
   f32 = -0x3,  // 0x7d
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
+  i8 = -0x6,   // 0x7a
+  i16 = -0x7,  // 0x79
   // function reference type
   funcref = -0x10, // 0x70
-  // opaque reference type
-  anyref = -0x11, // 0x6f
-  // null reference type
-  nullref = -0x12, // 0x6e
-  // exception reference type
-  exnref = -0x18, // 0x68
+  // opaque host reference type
+  externref = -0x11, // 0x6f
+  // any reference type
+  anyref = -0x12, // 0x6e
+  // comparable reference type
+  eqref = -0x13, // 0x6d
+  // nullable typed function reference type, with parameter
+  nullable = -0x14, // 0x6c
+  // non-nullable typed function reference type, with parameter
+  nonnullable = -0x15, // 0x6b
+  // integer reference type
+  i31ref = -0x16, // 0x6a
+  // run-time type info type, with depth index n
+  rtt_n = -0x17, // 0x69
+  // run-time type info type, without depth index n
+  rtt = -0x18,     // 0x68
+  dataref = -0x19, // 0x67
   // func_type form
-  Func = -0x20, // 0x60
+  Func = -0x20,   // 0x60
+  Struct = -0x21, // 0x5f
+  Array = -0x22,  // 0x5e
   // block_type
   Empty = -0x40 // 0x40
+};
+
+enum EncodedHeapType {
+  func = -0x10,    // 0x70
+  extern_ = -0x11, // 0x6f
+  any = -0x12,     // 0x6e
+  eq = -0x13,      // 0x6d
+  i31 = -0x16,     // 0x6a
+  data = -0x19,    // 0x67
 };
 
 namespace UserSections {
@@ -376,10 +415,24 @@ extern const char* ExceptionHandlingFeature;
 extern const char* TailCallFeature;
 extern const char* ReferenceTypesFeature;
 extern const char* MultivalueFeature;
+extern const char* GCFeature;
+extern const char* Memory64Feature;
+extern const char* TypedFunctionReferencesFeature;
 
 enum Subsection {
+  NameModule = 0,
   NameFunction = 1,
   NameLocal = 2,
+  // see: https://github.com/WebAssembly/extended-name-section
+  NameLabel = 3,
+  NameType = 4,
+  NameTable = 5,
+  NameMemory = 6,
+  NameGlobal = 7,
+  NameElem = 8,
+  NameData = 9,
+  // see: https://github.com/WebAssembly/gc/issues/193
+  NameField = 10
 };
 
 } // namespace UserSections
@@ -586,6 +639,7 @@ enum ASTNodes {
 
   // prefixes
 
+  GCPrefix = 0xfb,
   MiscPrefix = 0xfc,
   SIMDPrefix = 0xfd,
   AtomicPrefix = 0xfe,
@@ -681,194 +735,279 @@ enum ASTNodes {
   // SIMD opcodes
 
   V128Load = 0x00,
-  V128Store = 0x01,
-  V128Const = 0x02,
-  V8x16Shuffle = 0x03,
-  I8x16Splat = 0x04,
-  I8x16ExtractLaneS = 0x05,
-  I8x16ExtractLaneU = 0x06,
-  I8x16ReplaceLane = 0x07,
-  I16x8Splat = 0x08,
-  I16x8ExtractLaneS = 0x09,
-  I16x8ExtractLaneU = 0x0a,
-  I16x8ReplaceLane = 0x0b,
-  I32x4Splat = 0x0c,
-  I32x4ExtractLane = 0x0d,
-  I32x4ReplaceLane = 0x0e,
-  I64x2Splat = 0x0f,
-  I64x2ExtractLane = 0x10,
-  I64x2ReplaceLane = 0x11,
-  F32x4Splat = 0x12,
-  F32x4ExtractLane = 0x13,
-  F32x4ReplaceLane = 0x14,
-  F64x2Splat = 0x15,
-  F64x2ExtractLane = 0x16,
-  F64x2ReplaceLane = 0x17,
-  I8x16Eq = 0x18,
-  I8x16Ne = 0x19,
-  I8x16LtS = 0x1a,
-  I8x16LtU = 0x1b,
-  I8x16GtS = 0x1c,
-  I8x16GtU = 0x1d,
-  I8x16LeS = 0x1e,
-  I8x16LeU = 0x1f,
-  I8x16GeS = 0x20,
-  I8x16GeU = 0x21,
-  I16x8Eq = 0x22,
-  I16x8Ne = 0x23,
-  I16x8LtS = 0x24,
-  I16x8LtU = 0x25,
-  I16x8GtS = 0x26,
-  I16x8GtU = 0x27,
-  I16x8LeS = 0x28,
-  I16x8LeU = 0x29,
-  I16x8GeS = 0x2a,
-  I16x8GeU = 0x2b,
-  I32x4Eq = 0x2c,
-  I32x4Ne = 0x2d,
-  I32x4LtS = 0x2e,
-  I32x4LtU = 0x2f,
-  I32x4GtS = 0x30,
-  I32x4GtU = 0x31,
-  I32x4LeS = 0x32,
-  I32x4LeU = 0x33,
-  I32x4GeS = 0x34,
-  I32x4GeU = 0x35,
-  F32x4Eq = 0x40,
-  F32x4Ne = 0x41,
-  F32x4Lt = 0x42,
-  F32x4Gt = 0x43,
-  F32x4Le = 0x44,
-  F32x4Ge = 0x45,
-  F64x2Eq = 0x46,
-  F64x2Ne = 0x47,
-  F64x2Lt = 0x48,
-  F64x2Gt = 0x49,
-  F64x2Le = 0x4a,
-  F64x2Ge = 0x4b,
-  V128Not = 0x4c,
-  V128And = 0x4d,
-  V128Or = 0x4e,
-  V128Xor = 0x4f,
-  V128AndNot = 0xd8,
-  V128Bitselect = 0x50,
-  I8x16Abs = 0xe1,
-  I8x16Neg = 0x51,
-  I8x16AnyTrue = 0x52,
-  I8x16AllTrue = 0x53,
-  I8x16Bitmask = 0xe4,
-  I8x16Shl = 0x54,
-  I8x16ShrS = 0x55,
-  I8x16ShrU = 0x56,
-  I8x16Add = 0x57,
-  I8x16AddSatS = 0x58,
-  I8x16AddSatU = 0x59,
-  I8x16Sub = 0x5a,
-  I8x16SubSatS = 0x5b,
-  I8x16SubSatU = 0x5c,
-  I8x16Mul = 0x5d,
-  I8x16MinS = 0x5e,
-  I8x16MinU = 0x5f,
-  I8x16MaxS = 0x60,
-  I8x16MaxU = 0x61,
-  I8x16AvgrU = 0xd9,
-  I16x8Abs = 0xe2,
-  I16x8Neg = 0x62,
-  I16x8AnyTrue = 0x63,
-  I16x8AllTrue = 0x64,
-  I16x8Bitmask = 0xe5,
-  I16x8Shl = 0x65,
-  I16x8ShrS = 0x66,
-  I16x8ShrU = 0x67,
-  I16x8Add = 0x68,
-  I16x8AddSatS = 0x69,
-  I16x8AddSatU = 0x6a,
-  I16x8Sub = 0x6b,
-  I16x8SubSatS = 0x6c,
-  I16x8SubSatU = 0x6d,
-  I16x8Mul = 0x6e,
-  I16x8MinS = 0x6f,
-  I16x8MinU = 0x70,
-  I16x8MaxS = 0x71,
-  I16x8MaxU = 0x72,
-  I16x8AvgrU = 0xda,
-  I32x4Abs = 0xe3,
-  I32x4Neg = 0x73,
-  I32x4AnyTrue = 0x74,
-  I32x4AllTrue = 0x75,
-  I32x4Bitmask = 0xe6,
-  I32x4Shl = 0x76,
-  I32x4ShrS = 0x77,
-  I32x4ShrU = 0x78,
-  I32x4Add = 0x79,
-  I32x4Sub = 0x7c,
-  I32x4Mul = 0x7f,
-  I32x4MinS = 0x80,
-  I32x4MinU = 0x81,
-  I32x4MaxS = 0x82,
-  I32x4MaxU = 0x83,
-  I32x4DotSVecI16x8 = 0xdb,
-  I64x2Neg = 0x84,
-  I64x2AnyTrue = 0x85,
-  I64x2AllTrue = 0x86,
-  I64x2Shl = 0x87,
-  I64x2ShrS = 0x88,
-  I64x2ShrU = 0x89,
-  I64x2Add = 0x8a,
-  I64x2Sub = 0x8d,
-  F32x4Abs = 0x95,
-  F32x4Neg = 0x96,
-  F32x4Sqrt = 0x97,
-  F32x4QFMA = 0x98,
-  F32x4QFMS = 0x99,
-  F32x4Add = 0x9a,
-  F32x4Sub = 0x9b,
-  F32x4Mul = 0x9c,
-  F32x4Div = 0x9d,
-  F32x4Min = 0x9e,
-  F32x4Max = 0x9f,
-  F64x2Abs = 0xa0,
-  F64x2Neg = 0xa1,
-  F64x2Sqrt = 0xa2,
-  F64x2QFMA = 0xa3,
-  F64x2QFMS = 0xa4,
-  F64x2Add = 0xa5,
-  F64x2Sub = 0xa6,
-  F64x2Mul = 0xa7,
-  F64x2Div = 0xa8,
-  F64x2Min = 0xa9,
-  F64x2Max = 0xaa,
-  I32x4TruncSatSF32x4 = 0xab,
-  I32x4TruncSatUF32x4 = 0xac,
-  I64x2TruncSatSF64x2 = 0xad,
-  I64x2TruncSatUF64x2 = 0xae,
-  F32x4ConvertSI32x4 = 0xaf,
-  F32x4ConvertUI32x4 = 0xb0,
-  F64x2ConvertSI64x2 = 0xb1,
-  F64x2ConvertUI64x2 = 0xb2,
-  V8x16LoadSplat = 0xc2,
-  V16x8LoadSplat = 0xc3,
-  V32x4LoadSplat = 0xc4,
-  V64x2LoadSplat = 0xc5,
-  I8x16NarrowSI16x8 = 0xc6,
-  I8x16NarrowUI16x8 = 0xc7,
-  I16x8NarrowSI32x4 = 0xc8,
-  I16x8NarrowUI32x4 = 0xc9,
-  I16x8WidenLowSI8x16 = 0xca,
-  I16x8WidenHighSI8x16 = 0xcb,
-  I16x8WidenLowUI8x16 = 0xcc,
-  I16x8WidenHighUI8x16 = 0xcd,
-  I32x4WidenLowSI16x8 = 0xce,
-  I32x4WidenHighSI16x8 = 0xcf,
-  I32x4WidenLowUI16x8 = 0xd0,
-  I32x4WidenHighUI16x8 = 0xd1,
-  I16x8LoadExtSVec8x8 = 0xd2,
-  I16x8LoadExtUVec8x8 = 0xd3,
-  I32x4LoadExtSVec16x4 = 0xd4,
-  I32x4LoadExtUVec16x4 = 0xd5,
-  I64x2LoadExtSVec32x2 = 0xd6,
-  I64x2LoadExtUVec32x2 = 0xd7,
-  V8x16Swizzle = 0xc0,
+  I16x8LoadExtSVec8x8 = 0x01,
+  I16x8LoadExtUVec8x8 = 0x02,
+  I32x4LoadExtSVec16x4 = 0x03,
+  I32x4LoadExtUVec16x4 = 0x04,
+  I64x2LoadExtSVec32x2 = 0x05,
+  I64x2LoadExtUVec32x2 = 0x06,
+  V8x16LoadSplat = 0x07,
+  V16x8LoadSplat = 0x08,
+  V32x4LoadSplat = 0x09,
+  V64x2LoadSplat = 0x0a,
+  V128Store = 0x0b,
+
+  V128Const = 0x0c,
+  V8x16Shuffle = 0x0d,
+  V8x16Swizzle = 0x0e,
+
+  I8x16Splat = 0x0f,
+  I16x8Splat = 0x10,
+  I32x4Splat = 0x11,
+  I64x2Splat = 0x12,
+  F32x4Splat = 0x13,
+  F64x2Splat = 0x14,
+
+  I8x16ExtractLaneS = 0x15,
+  I8x16ExtractLaneU = 0x16,
+  I8x16ReplaceLane = 0x17,
+  I16x8ExtractLaneS = 0x18,
+  I16x8ExtractLaneU = 0x19,
+  I16x8ReplaceLane = 0x1a,
+  I32x4ExtractLane = 0x1b,
+  I32x4ReplaceLane = 0x1c,
+  I64x2ExtractLane = 0x1d,
+  I64x2ReplaceLane = 0x1e,
+  F32x4ExtractLane = 0x1f,
+  F32x4ReplaceLane = 0x20,
+  F64x2ExtractLane = 0x21,
+  F64x2ReplaceLane = 0x22,
+
+  I8x16Eq = 0x23,
+  I8x16Ne = 0x24,
+  I8x16LtS = 0x25,
+  I8x16LtU = 0x26,
+  I8x16GtS = 0x27,
+  I8x16GtU = 0x28,
+  I8x16LeS = 0x29,
+  I8x16LeU = 0x2a,
+  I8x16GeS = 0x2b,
+  I8x16GeU = 0x2c,
+  I16x8Eq = 0x2d,
+  I16x8Ne = 0x2e,
+  I16x8LtS = 0x2f,
+  I16x8LtU = 0x30,
+  I16x8GtS = 0x31,
+  I16x8GtU = 0x32,
+  I16x8LeS = 0x33,
+  I16x8LeU = 0x34,
+  I16x8GeS = 0x35,
+  I16x8GeU = 0x36,
+  I32x4Eq = 0x37,
+  I32x4Ne = 0x38,
+  I32x4LtS = 0x39,
+  I32x4LtU = 0x3a,
+  I32x4GtS = 0x3b,
+  I32x4GtU = 0x3c,
+  I32x4LeS = 0x3d,
+  I32x4LeU = 0x3e,
+  I32x4GeS = 0x3f,
+  I32x4GeU = 0x40,
+  I64x2Eq = 0xc0,
+  F32x4Eq = 0x41,
+  F32x4Ne = 0x42,
+  F32x4Lt = 0x43,
+  F32x4Gt = 0x44,
+  F32x4Le = 0x45,
+  F32x4Ge = 0x46,
+  F64x2Eq = 0x47,
+  F64x2Ne = 0x48,
+  F64x2Lt = 0x49,
+  F64x2Gt = 0x4a,
+  F64x2Le = 0x4b,
+  F64x2Ge = 0x4c,
+
+  V128Not = 0x4d,
+  V128And = 0x4e,
+  V128AndNot = 0x4f,
+  V128Or = 0x50,
+  V128Xor = 0x51,
+  V128Bitselect = 0x52,
+
+  V8x16SignSelect = 0x7d,
+  V16x8SignSelect = 0x7e,
+  V32x4SignSelect = 0x7f,
+  V64x2SignSelect = 0x94,
+
+  V128Load8Lane = 0x58,
+  V128Load16Lane = 0x59,
+  V128Load32Lane = 0x5a,
+  V128Load64Lane = 0x5b,
+  V128Store8Lane = 0x5c,
+  V128Store16Lane = 0x5d,
+  V128Store32Lane = 0x5e,
+  V128Store64Lane = 0x5f,
+
+  I8x16Abs = 0x60,
+  I8x16Neg = 0x61,
+  I8x16AnyTrue = 0x62,
+  I8x16AllTrue = 0x63,
+  I8x16Bitmask = 0x64,
+  I8x16NarrowSI16x8 = 0x65,
+  I8x16NarrowUI16x8 = 0x66,
+  I8x16Shl = 0x6b,
+  I8x16ShrS = 0x6c,
+  I8x16ShrU = 0x6d,
+  I8x16Add = 0x6e,
+  I8x16AddSatS = 0x6f,
+  I8x16AddSatU = 0x70,
+  I8x16Sub = 0x71,
+  I8x16SubSatS = 0x72,
+  I8x16SubSatU = 0x73,
+  I8x16Mul = 0x75,
+  I8x16MinS = 0x76,
+  I8x16MinU = 0x77,
+  I8x16MaxS = 0x78,
+  I8x16MaxU = 0x79,
+  I8x16AvgrU = 0x7b,
+
+  I8x16Popcnt = 0x7c,
+
+  I16x8Abs = 0x80,
+  I16x8Neg = 0x81,
+  I16x8AnyTrue = 0x82,
+  I16x8AllTrue = 0x83,
+  I16x8Bitmask = 0x84,
+  I16x8NarrowSI32x4 = 0x85,
+  I16x8NarrowUI32x4 = 0x86,
+  I16x8WidenLowSI8x16 = 0x87,
+  I16x8WidenHighSI8x16 = 0x88,
+  I16x8WidenLowUI8x16 = 0x89,
+  I16x8WidenHighUI8x16 = 0x8a,
+  I16x8Shl = 0x8b,
+  I16x8ShrS = 0x8c,
+  I16x8ShrU = 0x8d,
+  I16x8Add = 0x8e,
+  I16x8AddSatS = 0x8f,
+  I16x8AddSatU = 0x90,
+  I16x8Sub = 0x91,
+  I16x8SubSatS = 0x92,
+  I16x8SubSatU = 0x93,
+  I16x8Mul = 0x95,
+  I16x8MinS = 0x96,
+  I16x8MinU = 0x97,
+  I16x8MaxS = 0x98,
+  I16x8MaxU = 0x99,
+  I16x8AvgrU = 0x9b,
+  I16x8Q15MulrSatS = 0x9c,
+
+  I32x4Abs = 0xa0,
+  I32x4Neg = 0xa1,
+  I32x4AnyTrue = 0xa2,
+  I32x4AllTrue = 0xa3,
+  I32x4Bitmask = 0xa4,
+  I32x4WidenLowSI16x8 = 0xa7,
+  I32x4WidenHighSI16x8 = 0xa8,
+  I32x4WidenLowUI16x8 = 0xa9,
+  I32x4WidenHighUI16x8 = 0xaa,
+  I32x4Shl = 0xab,
+  I32x4ShrS = 0xac,
+  I32x4ShrU = 0xad,
+  I32x4Add = 0xae,
+  I32x4Sub = 0xb1,
+  I32x4Mul = 0xb5,
+  I32x4MinS = 0xb6,
+  I32x4MinU = 0xb7,
+  I32x4MaxS = 0xb8,
+  I32x4MaxU = 0xb9,
+  I32x4DotSVecI16x8 = 0xba,
+
+  I64x2Bitmask = 0xc4,
+  I64x2WidenLowSI32x4 = 0xc7,
+  I64x2WidenHighSI32x4 = 0xc8,
+  I64x2WidenLowUI32x4 = 0xc9,
+  I64x2WidenHighUI32x4 = 0xca,
+  I64x2Neg = 0xc1,
+  I64x2Shl = 0xcb,
+  I64x2ShrS = 0xcc,
+  I64x2ShrU = 0xcd,
+  I64x2Add = 0xce,
+  I64x2Sub = 0xd1,
+  I64x2Mul = 0xd5,
+
+  F32x4Abs = 0xe0,
+  F32x4Neg = 0xe1,
+  F32x4Sqrt = 0xe3,
+  F32x4Add = 0xe4,
+  F32x4Sub = 0xe5,
+  F32x4Mul = 0xe6,
+  F32x4Div = 0xe7,
+  F32x4Min = 0xe8,
+  F32x4Max = 0xe9,
+  F32x4PMin = 0xea,
+  F32x4PMax = 0xeb,
+
+  F32x4Ceil = 0xd8,
+  F32x4Floor = 0xd9,
+  F32x4Trunc = 0xda,
+  F32x4Nearest = 0xdb,
+  F64x2Ceil = 0xdc,
+  F64x2Floor = 0xdd,
+  F64x2Trunc = 0xde,
+  F64x2Nearest = 0xdf,
+
+  F64x2Abs = 0xec,
+  F64x2Neg = 0xed,
+  F64x2Sqrt = 0xef,
+  F64x2Add = 0xf0,
+  F64x2Sub = 0xf1,
+  F64x2Mul = 0xf2,
+  F64x2Div = 0xf3,
+  F64x2Min = 0xf4,
+  F64x2Max = 0xf5,
+  F64x2PMin = 0xf6,
+  F64x2PMax = 0xf7,
+
+  I16x8ExtAddPairWiseSI8x16 = 0xc2,
+  I16x8ExtAddPairWiseUI8x16 = 0xc3,
+  I32x4ExtAddPairWiseSI16x8 = 0xa5,
+  I32x4ExtAddPairWiseUI16x8 = 0xa6,
+
+  I32x4TruncSatSF32x4 = 0xf8,
+  I32x4TruncSatUF32x4 = 0xf9,
+  F32x4ConvertSI32x4 = 0xfa,
+  F32x4ConvertUI32x4 = 0xfb,
+
+  V128Load32Zero = 0xfc,
+  V128Load64Zero = 0xfd,
+
+  F32x4QFMA = 0xb4,
+  F32x4QFMS = 0xd4,
+  F64x2QFMA = 0xfe,
+  F64x2QFMS = 0xff,
+
+  I64x2TruncSatSF64x2 = 0x0100,
+  I64x2TruncSatUF64x2 = 0x0101,
+  F64x2ConvertSI64x2 = 0x0102,
+  F64x2ConvertUI64x2 = 0x0103,
+
+  I16x8ExtMulLowSI8x16 = 0x9a,
+  I16x8ExtMulHighSI8x16 = 0x9d,
+  I16x8ExtMulLowUI8x16 = 0x9e,
+  I16x8ExtMulHighUI8x16 = 0x9f,
+  I32x4ExtMulLowSI16x8 = 0xbb,
+  I32x4ExtMulHighSI16x8 = 0xbd,
+  I32x4ExtMulLowUI16x8 = 0xbe,
+  I32x4ExtMulHighUI16x8 = 0xbf,
+  I64x2ExtMulLowSI32x4 = 0xd2,
+  I64x2ExtMulHighSI32x4 = 0xd3,
+  I64x2ExtMulLowUI32x4 = 0xd6,
+  I64x2ExtMulHighUI32x4 = 0xd7,
+
+  F64x2ConvertLowSI32x4 = 0x53,
+  F64x2ConvertLowUI32x4 = 0x54,
+  I32x4TruncSatZeroSF64x2 = 0x55,
+  I32x4TruncSatZeroUF64x2 = 0x56,
+  F32x4DemoteZeroF64x2 = 0x57,
+  F64x2PromoteLowF32x4 = 0x69,
+
+  I32x4WidenSI8x16 = 0x67,
+  I32x4WidenUI8x16 = 0x68,
+
+  // prefetch opcodes
+
+  PrefetchT = 0xc5,
+  PrefetchNT = 0xc6,
 
   // bulk memory opcodes
 
@@ -882,14 +1021,57 @@ enum ASTNodes {
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
+  RefAsNonNull = 0xd3,
+  BrOnNull = 0xd4,
 
   // exception handling opcodes
 
   Try = 0x06,
   Catch = 0x07,
+  CatchAll = 0x19,
+  Delegate = 0x18,
   Throw = 0x08,
   Rethrow = 0x09,
-  BrOnExn = 0x0a
+
+  // typed function references opcodes
+
+  CallRef = 0x14,
+  RetCallRef = 0x15,
+  Let = 0x17,
+
+  // gc opcodes
+
+  RefEq = 0xd5,
+  StructNewWithRtt = 0x01,
+  StructNewDefaultWithRtt = 0x02,
+  StructGet = 0x03,
+  StructGetS = 0x04,
+  StructGetU = 0x05,
+  StructSet = 0x06,
+  ArrayNewWithRtt = 0x11,
+  ArrayNewDefaultWithRtt = 0x12,
+  ArrayGet = 0x13,
+  ArrayGetS = 0x14,
+  ArrayGetU = 0x15,
+  ArraySet = 0x16,
+  ArrayLen = 0x17,
+  I31New = 0x20,
+  I31GetS = 0x21,
+  I31GetU = 0x22,
+  RttCanon = 0x30,
+  RttSub = 0x31,
+  RefTest = 0x40,
+  RefCast = 0x41,
+  BrOnCast = 0x42,
+  RefIsFunc = 0x50,
+  RefIsData = 0x51,
+  RefIsI31 = 0x52,
+  RefAsFunc = 0x58,
+  RefAsData = 0x59,
+  RefAsI31 = 0x5a,
+  BrOnFunc = 0x60,
+  BrOnData = 0x61,
+  BrOnI31 = 0x62,
 };
 
 enum MemoryAccess {
@@ -898,7 +1080,7 @@ enum MemoryAccess {
   NaturalAlignment = 0
 };
 
-enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1 };
+enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
 enum FeaturePrefix {
   FeatureUsed = '+',
@@ -908,49 +1090,72 @@ enum FeaturePrefix {
 
 } // namespace BinaryConsts
 
-inline S32LEB binaryType(Type type) {
-  int ret = 0;
-  switch (type.getSingle()) {
-    // None only used for block signatures. TODO: Separate out?
-    case Type::none:
-      ret = BinaryConsts::EncodedType::Empty;
-      break;
-    case Type::i32:
-      ret = BinaryConsts::EncodedType::i32;
-      break;
-    case Type::i64:
-      ret = BinaryConsts::EncodedType::i64;
-      break;
-    case Type::f32:
-      ret = BinaryConsts::EncodedType::f32;
-      break;
-    case Type::f64:
-      ret = BinaryConsts::EncodedType::f64;
-      break;
-    case Type::v128:
-      ret = BinaryConsts::EncodedType::v128;
-      break;
-    case Type::funcref:
-      ret = BinaryConsts::EncodedType::funcref;
-      break;
-    case Type::anyref:
-      ret = BinaryConsts::EncodedType::anyref;
-      break;
-    case Type::nullref:
-      ret = BinaryConsts::EncodedType::nullref;
-      break;
-    case Type::exnref:
-      ret = BinaryConsts::EncodedType::exnref;
-      break;
-    case Type::unreachable:
-      WASM_UNREACHABLE("unexpected type");
-  }
-  return S32LEB(ret);
-}
+// (local index in IR, tuple index) => binary local index
+using MappedLocals = std::unordered_map<std::pair<Index, Index>, size_t>;
 
 // Writes out wasm to the binary format
 
 class WasmBinaryWriter {
+  // Computes the indexes in a wasm binary, i.e., with function imports
+  // and function implementations sharing a single index space, etc.,
+  // and with the imports first (the Module's functions and globals
+  // arrays are not assumed to be in a particular order, so we can't
+  // just use them directly).
+  struct BinaryIndexes {
+    std::unordered_map<Name, Index> functionIndexes;
+    std::unordered_map<Name, Index> eventIndexes;
+    std::unordered_map<Name, Index> globalIndexes;
+    std::unordered_map<Name, Index> tableIndexes;
+    std::unordered_map<Name, Index> elemIndexes;
+
+    BinaryIndexes(Module& wasm) {
+      auto addIndexes = [&](auto& source, auto& indexes) {
+        auto addIndex = [&](auto* curr) {
+          auto index = indexes.size();
+          indexes[curr->name] = index;
+        };
+        for (auto& curr : source) {
+          if (curr->imported()) {
+            addIndex(curr.get());
+          }
+        }
+        for (auto& curr : source) {
+          if (!curr->imported()) {
+            addIndex(curr.get());
+          }
+        }
+      };
+      addIndexes(wasm.functions, functionIndexes);
+      addIndexes(wasm.events, eventIndexes);
+      addIndexes(wasm.tables, tableIndexes);
+
+      for (auto& curr : wasm.elementSegments) {
+        auto index = elemIndexes.size();
+        elemIndexes[curr->name] = index;
+      }
+
+      // Globals may have tuple types in the IR, in which case they lower to
+      // multiple globals, one for each tuple element, in the binary. Tuple
+      // globals therefore occupy multiple binary indices, and we have to take
+      // that into account when calculating indices.
+      Index globalCount = 0;
+      auto addGlobal = [&](auto* curr) {
+        globalIndexes[curr->name] = globalCount;
+        globalCount += curr->type.size();
+      };
+      for (auto& curr : wasm.globals) {
+        if (curr->imported()) {
+          addGlobal(curr.get());
+        }
+      }
+      for (auto& curr : wasm.globals) {
+        if (!curr->imported()) {
+          addGlobal(curr.get());
+        }
+      }
+    }
+  };
+
 public:
   WasmBinaryWriter(Module* input, BufferWithRandomAccess& o)
     : wasm(input), o(o), indexes(*input) {
@@ -979,10 +1184,8 @@ public:
   void write();
   void writeHeader();
   int32_t writeU32LEBPlaceholder();
-  void writeResizableLimits(Address initial,
-                            Address maximum,
-                            bool hasMaximum,
-                            bool shared);
+  void writeResizableLimits(
+    Address initial, Address maximum, bool hasMaximum, bool shared, bool is64);
   template<typename T> int32_t startSection(T code);
   void finishSection(int32_t start);
   int32_t startSubsection(BinaryConsts::UserSections::Subsection code);
@@ -1002,19 +1205,20 @@ public:
   void writeEvents();
 
   uint32_t getFunctionIndex(Name name) const;
+  uint32_t getTableIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
   uint32_t getEventIndex(Name name) const;
-  uint32_t getTypeIndex(Signature sig) const;
+  uint32_t getTypeIndex(HeapType type) const;
 
-  void writeFunctionTableDeclaration();
-  void writeTableElements();
+  void writeTableDeclarations();
+  void writeElementSegments();
   void writeNames();
   void writeSourceMapUrl();
   void writeSymbolMap();
-  void writeEarlyUserSections();
   void writeLateUserSections();
   void writeUserSection(const UserSection& section);
   void writeFeaturesSection();
+  void writeDylinkSection();
 
   void initializeDebugInfo();
   void writeSourceMapProlog();
@@ -1022,9 +1226,7 @@ public:
   void writeDebugLocation(const Function::DebugLocation& loc);
   void writeDebugLocation(Expression* curr, Function* func);
   void writeDebugLocationEnd(Expression* curr, Function* func);
-  void writeExtraDebugLocation(Expression* curr,
-                               Function* func,
-                               BinaryLocations::DelimiterId id);
+  void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
 
   // helpers
   void writeInlineString(const char* name);
@@ -1047,12 +1249,16 @@ public:
 
   Module* getModule() { return wasm; }
 
+  void writeType(Type type);
+  void writeHeapType(HeapType type);
+  void writeField(const Field& field);
+
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
-  ModuleUtils::BinaryIndexes indexes;
-  std::unordered_map<Signature, Index> typeIndices;
-  std::vector<Signature> types;
+  BinaryIndexes indexes;
+  std::unordered_map<HeapType, Index> typeIndices;
+  std::vector<HeapType> types;
 
   bool debugInfo = true;
   std::ostream* sourceMap = nullptr;
@@ -1078,6 +1284,11 @@ private:
   // the function is written out.
   std::vector<Expression*> binaryLocationTrackedExpressionsForFunc;
 
+  // Maps function names to their mapped locals. This is used when we emit the
+  // local names section: we map the locals when writing the function, save that
+  // info here, and then use it when writing the names.
+  std::unordered_map<Name, MappedLocals> funcMappedLocals;
+
   void prepare();
 };
 
@@ -1096,8 +1307,8 @@ class WasmBinaryBuilder {
 
   std::set<BinaryConsts::Section> seenSections;
 
-  // All signatures present in the type section
-  std::vector<Signature> signatures;
+  // All types defined in the type section
+  std::vector<HeapType> types;
 
 public:
   WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
@@ -1110,6 +1321,7 @@ public:
 
   bool more() { return pos < input.size(); }
 
+  std::pair<const char*, const char*> getByteView(size_t size);
   uint8_t getInt8();
   uint16_t getInt16();
   uint32_t getInt32();
@@ -1124,27 +1336,37 @@ public:
   uint64_t getU64LEB();
   int32_t getS32LEB();
   int64_t getS64LEB();
+  uint64_t getUPtrLEB();
+
+  bool getBasicType(int32_t code, Type& out);
+  bool getBasicHeapType(int64_t code, HeapType& out);
+  // Read a value and get a type for it.
   Type getType();
+  // Get a type given the initial S32LEB has already been read, and is provided.
+  Type getType(int initial);
+
+  HeapType getHeapType();
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);
   void verifyInt16(int16_t x);
   void verifyInt32(int32_t x);
   void verifyInt64(int64_t x);
-  void ungetInt8();
   void readHeader();
   void readStart();
   void readMemory();
-  void readSignatures();
+  void readTypes();
 
   // gets a name in the combined import+defined space
   Name getFunctionName(Index index);
+  Name getTableName(Index index);
   Name getGlobalName(Index index);
   Name getEventName(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,
                           bool& shared,
+                          Type& indexType,
                           Address defaultIfNoMax);
   void readImports();
 
@@ -1152,12 +1374,15 @@ public:
   std::vector<Signature> functionSignatures;
 
   void readFunctionSignatures();
+  Signature getSignatureByFunctionIndex(Index index);
+  Signature getSignatureByTypeIndex(Index index);
+
   size_t nextLabel;
 
   Name getNextLabel();
 
-  // We read functions before we know their names, so we need to backpatch the
-  // names later
+  // We read functions and globals before we know their names, so we need to
+  // backpatch the names later
 
   // we store functions here before wasm.addFunction after we know their names
   std::vector<Function*> functions;
@@ -1171,10 +1396,33 @@ public:
   // function to check
   Index endOfFunction = -1;
 
+  // we store tables here before wasm.addTable after we know their names
+  std::vector<std::unique_ptr<Table>> tables;
+  // we store table imports here before wasm.addTableImport after we know
+  // their names
+  std::vector<Table*> tableImports;
+  // at index i we have all references to the table i
+  std::map<Index, std::vector<Expression*>> tableRefs;
+
+  std::map<Index, Name> elemTables;
+
+  // we store elems here after being read from binary, until when we know their
+  // names
+  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
+
+  // we store globals here before wasm.addGlobal after we know their names
+  std::vector<std::unique_ptr<Global>> globals;
+  // we store global imports here before wasm.addGlobalImport after we know
+  // their names
+  std::vector<Global*> globalImports;
+  // at index i we have all refs to the global i
+  std::map<Index, std::vector<Expression*>> globalRefs;
+
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
 
   void readFunctions();
+  void readVars();
 
   std::map<Export*, Index> exportIndices;
   std::vector<Export*> exportOrder;
@@ -1192,8 +1440,33 @@ public:
   // the names that breaks target. this lets us know if a block has breaks to it
   // or not.
   std::unordered_set<Name> breakTargetNames;
+  // the names that delegates target.
+  std::unordered_set<Name> exceptionTargetNames;
 
   std::vector<Expression*> expressionStack;
+
+  // Each let block in the binary adds new locals to the bottom of the index
+  // space. That is, all previously-existing indexes are bumped to higher
+  // indexes. getAbsoluteLocalIndex does this computation.
+  // Note that we must track not just the number of locals added in each let,
+  // but also the absolute index from which they were allocated, as binaryen
+  // will add new locals as it goes for things like stacky code and tuples (so
+  // there isn't a simple way to get to the absolute index from a relative one).
+  // Hence each entry here is a pair of the number of items, and the absolute
+  // index they begin at.
+  struct LetData {
+    // How many items are defined in this let.
+    Index num;
+    // The absolute index from which they are allocated from. That is, if num is
+    // 5 and absoluteStart is 10, then we use indexes 10-14.
+    Index absoluteStart;
+  };
+  std::vector<LetData> letStack;
+
+  // Given a relative index of a local (the one used in the wasm binary), get
+  // the absolute one which takes into account lets, and is the one used in
+  // Binaryen IR.
+  Index getAbsoluteLocalIndex(Index index);
 
   // Control flow structure parsing: these have not just the normal binary
   // data for an instruction, but also some bytes later on like "end" or "else".
@@ -1202,10 +1475,6 @@ public:
 
   // Called when we parse the beginning of a control flow structure.
   void startControlFlow(Expression* curr);
-
-  // Called when we parse a later part of a control flow structure, like "end"
-  // or "else".
-  void continueControlFlow(BinaryLocations::DelimiterId id, BinaryLocation pos);
 
   // set when we know code is unreachable in the sense of the wasm spec: we are
   // in a block and after an unreachable element. this helps parse stacky wasm
@@ -1239,7 +1508,7 @@ public:
   Expression* popTypedExpression(Type type);
 
   void validateBinary(); // validations that cannot be performed on the Module
-  void processFunctions();
+  void processNames();
 
   size_t dataCount = 0;
   bool hasDataCount = false;
@@ -1247,24 +1516,24 @@ public:
   void readDataSegments();
   void readDataCount();
 
+  // A map from elem segment indexes to their entries
   std::map<Index, std::vector<Index>> functionTable;
 
-  void readFunctionTableDeclaration();
-  void readTableElements();
+  void readTableDeclarations();
+  void readElementSegments();
 
   void readEvents();
 
   static Name escape(Name name);
   void readNames(size_t);
   void readFeatures(size_t);
+  void readDylink(size_t);
 
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }
   std::unordered_map<std::string, Index> debugInfoFileIndices;
   void readNextDebugLocation();
   void readSourceMapHeader();
-
-  void handleBrOnExnNotTaken(Expression* curr);
 
   // AST reading
   int depth = 0; // only for debugging
@@ -1274,21 +1543,23 @@ public:
   void visitBlock(Block* curr);
 
   // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(Type type, unsigned numPops = 0);
+  Expression* getBlockOrSingleton(Type type);
+
+  BreakTarget getBreakTarget(int32_t offset);
+  Name getExceptionTargetName(int32_t offset);
+
+  void readMemoryAccess(Address& alignment, Address& offset);
 
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
-  BreakTarget getBreakTarget(int32_t offset);
   void visitBreak(Break* curr, uint8_t code);
   void visitSwitch(Switch* curr);
-
   void visitCall(Call* curr);
   void visitCallIndirect(CallIndirect* curr);
   void visitLocalGet(LocalGet* curr);
   void visitLocalSet(LocalSet* curr, uint8_t code);
   void visitGlobalGet(GlobalGet* curr);
   void visitGlobalSet(GlobalSet* curr);
-  void readMemoryAccess(Address& alignment, Address& offset);
   bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
   bool maybeVisitNontrappingTrunc(Expression*& out, uint32_t code);
@@ -1311,25 +1582,54 @@ public:
   bool maybeVisitSIMDTernary(Expression*& out, uint32_t code);
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
+  bool maybeVisitSIMDWiden(Expression*& out, uint32_t code);
+  bool maybeVisitPrefetch(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
   bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
+  bool maybeVisitI31New(Expression*& out, uint32_t code);
+  bool maybeVisitI31Get(Expression*& out, uint32_t code);
+  bool maybeVisitRefTest(Expression*& out, uint32_t code);
+  bool maybeVisitRefCast(Expression*& out, uint32_t code);
+  bool maybeVisitBrOn(Expression*& out, uint32_t code);
+  bool maybeVisitRttCanon(Expression*& out, uint32_t code);
+  bool maybeVisitRttSub(Expression*& out, uint32_t code);
+  bool maybeVisitStructNew(Expression*& out, uint32_t code);
+  bool maybeVisitStructGet(Expression*& out, uint32_t code);
+  bool maybeVisitStructSet(Expression*& out, uint32_t code);
+  bool maybeVisitArrayNew(Expression*& out, uint32_t code);
+  bool maybeVisitArrayGet(Expression*& out, uint32_t code);
+  bool maybeVisitArraySet(Expression*& out, uint32_t code);
+  bool maybeVisitArrayLen(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
-  bool maybeVisitHost(Expression*& out, uint8_t code);
+  void visitMemorySize(MemorySize* curr);
+  void visitMemoryGrow(MemoryGrow* curr);
   void visitNop(Nop* curr);
   void visitUnreachable(Unreachable* curr);
   void visitDrop(Drop* curr);
   void visitRefNull(RefNull* curr);
-  void visitRefIsNull(RefIsNull* curr);
+  void visitRefIs(RefIs* curr, uint8_t code);
   void visitRefFunc(RefFunc* curr);
-  void visitTry(Try* curr);
+  void visitRefEq(RefEq* curr);
+  void visitTryOrTryInBlock(Expression*& out);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
-  void visitBrOnExn(BrOnExn* curr);
+  void visitCallRef(CallRef* curr);
+  void visitRefAs(RefAs* curr, uint8_t code);
+  // Let is lowered into a block.
+  void visitLet(Block* curr);
 
   void throwError(std::string text);
+
+  // Struct/Array instructions have an unnecessary heap type that is just for
+  // validation (except for the case of unreachability, but that's not a problem
+  // anyhow, we can ignore it there). That is, we also have a reference / rtt
+  // child from which we can infer the type anyhow, and we just need to check
+  // that type is the same.
+  void validateHeapTypeUsingChild(Expression* child, HeapType heapType);
 
 private:
   bool hasDWARFSections();

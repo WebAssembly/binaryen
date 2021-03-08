@@ -1,6 +1,6 @@
 (module
  (type $none_=>_none (func))
- (func $contrast (; 0 ;)
+ (func $contrast
   (local $x i32)
   (local $y i32)
   (local $z i32)

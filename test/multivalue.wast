@@ -1,7 +1,8 @@
 (module
  (import "env" "pair" (func $pair (result i32 i64)))
-
- ;; Test basic lowering of tuple.make, tuple.extract, and tuple locals
+ (global $g1 (mut (i32 i64)) (tuple.make (i32.const 0) (i64.const 0)))
+ (global $g2 (i32 i64) (tuple.make (i32.const 0) (i64.const 0)))
+ ;; Test basic lowering of tuple.make, tuple.extract, and tuple variables
  (func $triple (result i32 i64 f32)
   (tuple.make
    (i32.const 42)
@@ -49,6 +50,17 @@
     (unreachable)
    )
   )
+ )
+
+ ;; Test multivalue globals
+ (func $global (result i32 i64)
+  (global.set $g1
+   (tuple.make
+    (i32.const 42)
+    (i64.const 7)
+   )
+  )
+  (global.get $g2)
  )
 
  ;; Test lowering of multivalue drops
@@ -116,18 +128,18 @@
    )
   )
  )
- (func $mv-if (result i32 i64 anyref)
-  (if (result i32 i64 nullref)
+ (func $mv-if (result i32 i64 externref)
+  (if (result i32 i64 externref)
    (i32.const 1)
    (tuple.make
     (i32.const 42)
     (i64.const 42)
-    (ref.null)
+    (ref.null extern)
    )
    (tuple.make
     (i32.const 42)
     (i64.const 42)
-    (ref.null)
+    (ref.null extern)
    )
   )
  )

@@ -121,6 +121,22 @@
 (assert_trap (invoke "i32.trunc_f64_s" (f64.const -nan)) "invalid conversion to integer")
 (assert_trap (invoke "i32.trunc_f64_s" (f64.const -nan:0x4000000000000)) "invalid conversion to integer")
 
+;; f64 -> i32 rounding to the exact i32 limit
+(assert_return (invoke "i32.trunc_f64_s" (f64.const -2147483648.9)) (i32.const -2147483648))
+(assert_return (invoke "i32.trunc_f64_s" (f64.const  2147483647.9)) (i32.const  2147483647))
+(assert_return (invoke "i32.trunc_f64_u" (f64.const -0.9)) (i32.const 0))
+(assert_return (invoke "i32.trunc_f64_u" (f64.const 4294967295.9)) (i32.const 4294967295))
+
+;; f64 -> i32 rounding at the exact boundary + float parsing
+(assert_return (invoke "i32.trunc_f64_s" (f64.const -2147483648.9999997)) (i32.const -2147483648))
+(assert_trap   (invoke "i32.trunc_f64_s" (f64.const -2147483648.9999998)) "integer overflow")
+(assert_return (invoke "i32.trunc_f64_s" (f64.const  2147483647.9999998)) (i32.const 2147483647))
+(assert_trap   (invoke "i32.trunc_f64_s" (f64.const  2147483647.9999999)) "integer overflow")
+(assert_return (invoke "i32.trunc_f64_u" (f64.const -0.99999999999999994)) (i32.const 0))
+(assert_trap   (invoke "i32.trunc_f64_u" (f64.const -0.99999999999999995)) "integer overflow")
+(assert_return (invoke "i32.trunc_f64_u" (f64.const  4294967295.9999997)) (i32.const 4294967295))
+(assert_trap   (invoke "i32.trunc_f64_u" (f64.const  4294967295.9999998)) "integer overflow")
+
 (assert_return (invoke "i32.trunc_f64_u" (f64.const 0.0)) (i32.const 0))
 (assert_return (invoke "i32.trunc_f64_u" (f64.const -0.0)) (i32.const 0))
 (assert_return (invoke "i32.trunc_f64_u" (f64.const 0x0.0000000000001p-1022)) (i32.const 0))

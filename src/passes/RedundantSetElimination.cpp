@@ -81,6 +81,9 @@ struct RedundantSetElimination
 
   void doWalkFunction(Function* func) {
     numLocals = func->getNumLocals();
+    if (numLocals == 0) {
+      return; // nothing to do
+    }
     // create the CFG by walking the IR
     CFGWalker<RedundantSetElimination, Visitor<RedundantSetElimination>, Info>::
       doWalkFunction(func);
@@ -188,7 +191,7 @@ struct RedundantSetElimination
             start[i] = getUniqueValue();
           } else {
             start[i] =
-              getLiteralValue(Literal::makeZero(func->getLocalType(i)));
+              getLiteralValue(Literal::makeZeros(func->getLocalType(i)));
           }
         }
       } else {

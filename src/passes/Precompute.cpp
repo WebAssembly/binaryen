@@ -39,106 +39,54 @@
 
 namespace wasm {
 
-static const Name NOTPRECOMPUTABLE_FLOW("Binaryen|notprecomputable");
-
-// Limit evaluation depth for 2 reasons: first, it is highly unlikely
-// that we can do anything useful to precompute a hugely nested expression
-// (we should succed at smaller parts of it first). Second, a low limit is
-// helpful to avoid platform differences in native stack sizes.
-static const Index MAX_DEPTH = 50;
-
 typedef std::unordered_map<LocalGet*, Literals> GetValues;
 
 // Precomputes an expression. Errors if we hit anything that can't be
-// precomputed.
+// precomputed. Inherits most of its functionality from
+// ConstantExpressionRunner, which it shares with the C-API, but adds handling
+// of GetValues computed during the precompute pass.
 class PrecomputingExpressionRunner
-  : public ExpressionRunner<PrecomputingExpressionRunner> {
-  Module* module;
+  : public ConstantExpressionRunner<PrecomputingExpressionRunner> {
 
-  // map gets to constant values, if they are known to be constant
+  // Concrete values of gets computed during the pass, which the runner does not
+  // know about since it only records values of sets it visits.
   GetValues& getValues;
 
-  // Whether we are trying to precompute down to an expression (which we can do
-  // on say 5 + 6) or to a value (which we can't do on a local.tee that flows a
-  // 7 through it). When we want to replace the expression, we can only do so
-  // when it has no side effects. When we don't care about replacing the
-  // expression, we just want to know if it will contain a known constant.
-  bool replaceExpression;
+  // Limit evaluation depth for 2 reasons: first, it is highly unlikely
+  // that we can do anything useful to precompute a hugely nested expression
+  // (we should succed at smaller parts of it first). Second, a low limit is
+  // helpful to avoid platform differences in native stack sizes.
+  static const Index MAX_DEPTH = 50;
+
+  // Limit loop iterations since loops might be infinite. Since we are going to
+  // replace the expression and must preserve side effects, we limit this to the
+  // very first iteration because a side effect would be necessary to achieve
+  // more than one iteration before becoming concrete.
+  static const Index MAX_LOOP_ITERATIONS = 1;
 
 public:
   PrecomputingExpressionRunner(Module* module,
                                GetValues& getValues,
                                bool replaceExpression)
-    : ExpressionRunner<PrecomputingExpressionRunner>(MAX_DEPTH), module(module),
-      getValues(getValues), replaceExpression(replaceExpression) {}
+    : ConstantExpressionRunner<PrecomputingExpressionRunner>(
+        module,
+        replaceExpression ? FlagValues::PRESERVE_SIDEEFFECTS
+                          : FlagValues::DEFAULT,
+        MAX_DEPTH,
+        MAX_LOOP_ITERATIONS),
+      getValues(getValues) {}
 
-  struct NonstandaloneException {
-  }; // TODO: use a flow with a special name, as this is likely very slow
-
-  Flow visitLoop(Loop* curr) {
-    // loops might be infinite, so must be careful
-    // but we can't tell if non-infinite, since we don't have state, so loops
-    // are just impossible to optimize for now
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-
-  Flow visitCall(Call* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitCallIndirect(CallIndirect* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
   Flow visitLocalGet(LocalGet* curr) {
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {
       auto values = iter->second;
       if (values.isConcrete()) {
-        return Flow(std::move(values));
+        return Flow(values);
       }
     }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
+    return ConstantExpressionRunner<
+      PrecomputingExpressionRunner>::visitLocalGet(curr);
   }
-  Flow visitLocalSet(LocalSet* curr) {
-    // If we don't need to replace the whole expression, see if there
-    // is a value flowing through a tee.
-    if (!replaceExpression) {
-      if (curr->type.isConcrete()) {
-        assert(curr->isTee());
-        return visit(curr->value);
-      }
-    }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitGlobalGet(GlobalGet* curr) {
-    auto* global = module->getGlobal(curr->name);
-    if (!global->imported() && !global->mutable_) {
-      return visit(global->init);
-    }
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitGlobalSet(GlobalSet* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitLoad(Load* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitStore(Store* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitAtomicRMW(AtomicRMW* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitAtomicWait(AtomicWait* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitAtomicNotify(AtomicNotify* curr) {
-    return Flow(NOTPRECOMPUTABLE_FLOW);
-  }
-  Flow visitSIMDLoad(SIMDLoad* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitMemoryInit(MemoryInit* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitDataDrop(DataDrop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitMemoryCopy(MemoryCopy* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitMemoryFill(MemoryFill* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitHost(Host* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitTry(Try* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitThrow(Throw* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitRethrow(Rethrow* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitBrOnExn(BrOnExn* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitPush(Push* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-  Flow visitPop(Pop* curr) { return Flow(NOTPRECOMPUTABLE_FLOW); }
-
-  void trap(const char* why) override { throw NonstandaloneException(); }
 };
 
 struct Precompute
@@ -174,6 +122,40 @@ struct Precompute
     } while (propagate && worked);
   }
 
+  template<typename T> void reuseConstantNode(T* curr, Flow flow) {
+    if (flow.values.isConcrete()) {
+      // reuse a const / ref.null / ref.func node if there is one
+      if (curr->value && flow.values.size() == 1) {
+        Literal singleValue = flow.getSingleValue();
+        if (singleValue.type.isNumber()) {
+          if (auto* c = curr->value->template dynCast<Const>()) {
+            c->value = singleValue;
+            c->finalize();
+            curr->finalize();
+            return;
+          }
+        } else if (singleValue.isNull()) {
+          if (auto* n = curr->value->template dynCast<RefNull>()) {
+            n->finalize(singleValue.type);
+            curr->finalize();
+            return;
+          }
+        } else if (singleValue.type == Type::funcref) {
+          if (auto* r = curr->value->template dynCast<RefFunc>()) {
+            r->func = singleValue.getFunc();
+            r->finalize();
+            curr->finalize();
+            return;
+          }
+        }
+      }
+      curr->value = flow.getConstExpression(*getModule());
+    } else {
+      curr->value = nullptr;
+    }
+    curr->finalize();
+  }
+
   void visitExpression(Expression* curr) {
     // TODO: if local.get, only replace with a constant if we don't care about
     // size...?
@@ -192,26 +174,17 @@ struct Precompute
       return;
     }
     if (flow.breaking()) {
-      if (flow.breakTo == NOTPRECOMPUTABLE_FLOW) {
+      if (flow.breakTo == NONCONSTANT_FLOW) {
+        return;
+      }
+      if (!canEmitConstantFor(flow.values)) {
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
         // this expression causes a return. if it's already a return, reuse the
         // node
         if (auto* ret = curr->dynCast<Return>()) {
-          if (flow.values.isConcrete()) {
-            // reuse a const value if there is one
-            if (ret->value && flow.values.size() == 1) {
-              if (auto* value = ret->value->dynCast<Const>()) {
-                value->value = flow.getSingleValue();
-                value->finalize();
-                return;
-              }
-            }
-            ret->value = flow.getConstExpression(*getModule());
-          } else {
-            ret->value = nullptr;
-          }
+          reuseConstantNode(ret, flow);
         } else {
           Builder builder(*getModule());
           replaceCurrent(builder.makeReturn(
@@ -225,21 +198,7 @@ struct Precompute
       if (auto* br = curr->dynCast<Break>()) {
         br->name = flow.breakTo;
         br->condition = nullptr;
-        if (flow.values.isConcrete()) {
-          // reuse a const value if there is one
-          if (br->value && flow.values.size() == 1) {
-            if (auto* value = br->value->dynCast<Const>()) {
-              value->value = flow.getSingleValue();
-              value->finalize();
-              br->finalize();
-              return;
-            }
-          }
-          br->value = flow.getConstExpression(*getModule());
-        } else {
-          br->value = nullptr;
-        }
-        br->finalize();
+        reuseConstantNode(br, flow);
       } else {
         Builder builder(*getModule());
         replaceCurrent(builder.makeBreak(
@@ -267,12 +226,15 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
+    if (!canEmitConstantFor(curr->type)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
     try {
       return PrecomputingExpressionRunner(
                getModule(), getValues, replaceExpression)
         .visit(curr);
-    } catch (PrecomputingExpressionRunner::NonstandaloneException&) {
-      return Flow(NOTPRECOMPUTABLE_FLOW);
+    } catch (PrecomputingExpressionRunner::NonconstantException&) {
+      return Flow(NONCONSTANT_FLOW);
     }
   }
 
@@ -344,7 +306,8 @@ private:
           Literals curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
-              curr = Literal::makeZero(getFunction()->getLocalType(get->index));
+              curr =
+                Literal::makeZeros(getFunction()->getLocalType(get->index));
             } else {
               // it's a param, so it's hopeless
               values = {};
@@ -380,6 +343,37 @@ private:
         }
       }
     }
+  }
+
+  bool canEmitConstantFor(const Literals& values) {
+    for (auto& value : values) {
+      if (!canEmitConstantFor(value)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool canEmitConstantFor(const Literal& value) {
+    // A null is fine to emit a constant for - we'll emit a RefNull. Otherwise,
+    // see below about references to GC data.
+    if (value.isNull()) {
+      return true;
+    }
+    // A function is fine to emit a constant for - we'll emit a RefFunc, which
+    // is compact and immutable, so there can't be a problem.
+    if (value.type.isFunction()) {
+      return true;
+    }
+    return canEmitConstantFor(value.type);
+  }
+
+  bool canEmitConstantFor(Type type) {
+    // Don't try to precompute a reference. We can't replace it with a constant
+    // expression, as that would make a copy of it by value.
+    // For now, don't try to precompute an Rtt. TODO figure out when that would
+    // be safe and useful.
+    return !type.isRef() && !type.isRtt();
   }
 };
 

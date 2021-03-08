@@ -24,6 +24,7 @@
 
 #include <memory>
 
+#include "asmjs/shared-constants.h"
 #include "ir/global-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
@@ -48,7 +49,7 @@ struct FailToEvalException {
 // We do not have access to imported globals
 class EvallingGlobalManager {
   // values of globals
-  std::map<Name, Literal> globals;
+  std::map<Name, Literals> globals;
 
   // globals that are dangerous to modify in the module
   std::set<Name> dangerousGlobals;
@@ -70,7 +71,7 @@ public:
     return !(*this == other);
   }
 
-  Literal& operator[](Name name) {
+  Literals& operator[](Name name) {
     if (dangerousGlobals.count(name) > 0) {
       std::string extra;
       if (name == "___dso_handle") {
@@ -87,11 +88,11 @@ public:
 
   struct Iterator {
     Name first;
-    Literal second;
+    Literals second;
     bool found;
 
     Iterator() : found(false) {}
-    Iterator(Name name, Literal value)
+    Iterator(Name name, Literals value)
       : first(name), second(value), found(true) {}
 
     bool operator==(const Iterator& other) {
@@ -177,28 +178,28 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     // fill usable values for stack imports, and globals initialized to them
     ImportInfo imports(wasm_);
     if (auto* stackTop = imports.getImportedGlobal(ENV, STACKTOP)) {
-      globals[stackTop->name] = Literal(int32_t(STACK_START));
+      globals[stackTop->name] = {Literal(int32_t(STACK_START))};
       if (auto* stackTop =
             GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACKTOP)) {
-        globals[stackTop->name] = Literal(int32_t(STACK_START));
+        globals[stackTop->name] = {Literal(int32_t(STACK_START))};
       }
     }
     if (auto* stackMax = imports.getImportedGlobal(ENV, STACK_MAX)) {
-      globals[stackMax->name] = Literal(int32_t(STACK_START));
+      globals[stackMax->name] = {Literal(int32_t(STACK_START))};
       if (auto* stackMax =
             GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACK_MAX)) {
-        globals[stackMax->name] = Literal(int32_t(STACK_START));
+        globals[stackMax->name] = {Literal(int32_t(STACK_START))};
       }
     }
     // fill in fake values for everything else, which is dangerous to use
     ModuleUtils::iterDefinedGlobals(wasm_, [&](Global* defined) {
       if (globals.find(defined->name) == globals.end()) {
-        globals[defined->name] = Literal::makeSingleZero(defined->type);
+        globals[defined->name] = Literal::makeZeros(defined->type);
       }
     });
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* import) {
       if (globals.find(import->name) == globals.end()) {
-        globals[import->name] = Literal::makeSingleZero(import->type);
+        globals[import->name] = Literal::makeZeros(import->type);
       }
     });
   }
@@ -214,30 +215,43 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
                               extra);
   }
 
-  Literals callTable(Index index,
+  Literals callTable(Name tableName,
+                     Index index,
                      Signature sig,
                      LiteralList& arguments,
                      Type result,
                      EvallingModuleInstance& instance) override {
+
+    std::unordered_map<wasm::Name, std::vector<wasm::Name>>::iterator it;
+
+    auto* table = wasm->getTableOrNull(tableName);
+    if (!table) {
+      throw FailToEvalException("callTable on non-existing table");
+    }
+
     // we assume the table is not modified (hmm)
     // look through the segments, try to find the function
-    for (auto& segment : wasm->table.segments) {
+    for (auto& segment : wasm->elementSegments) {
+      if (segment->table != tableName) {
+        continue;
+      }
+
       Index start;
       // look for the index in this segment. if it has a constant offset, we
       // look in the proper range. if it instead gets a global, we rely on the
       // fact that when not dynamically linking then the table is loaded at
       // offset 0.
-      if (auto* c = segment.offset->dynCast<Const>()) {
+      if (auto* c = segment->offset->dynCast<Const>()) {
         start = c->value.getInteger();
-      } else if (segment.offset->is<GlobalGet>()) {
+      } else if (segment->offset->is<GlobalGet>()) {
         start = 0;
       } else {
         // wasm spec only allows const and global.get there
         WASM_UNREACHABLE("invalid expr type");
       }
-      auto end = start + segment.data.size();
+      auto end = start + segment->data.size();
       if (start <= index && index < end) {
-        auto name = segment.data[index - start];
+        auto name = segment->data[index - start];
         // if this is one of our functions, we can call it; if it was imported,
         // fail
         auto* func = wasm->getFunction(name);
@@ -281,14 +295,20 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   // called during initialization, but we don't keep track of a table
-  void tableStore(Address addr, Name value) override {}
+  void tableStore(Name tableName, Address addr, Name value) override {}
 
-  void growMemory(Address /*oldSize*/, Address newSize) override {
+  bool growMemory(Address /*oldSize*/, Address newSize) override {
     throw FailToEvalException("grow memory");
   }
 
   void trap(const char* why) override {
     throw FailToEvalException(std::string("trap: ") + why);
+  }
+
+  void throwException(const WasmException& exn) override {
+    std::stringstream ss;
+    ss << "exception thrown: " << exn;
+    throw FailToEvalException(ss.str());
   }
 
 private:
@@ -310,7 +330,7 @@ private:
       std::vector<char> temp;
       Builder builder(*wasm);
       wasm->memory.segments.push_back(
-        Memory::Segment(builder.makeConst(Literal(int32_t(0))), temp));
+        Memory::Segment(builder.makeConst(int32_t(0)), temp));
     }
     // memory should already have been flattened
     assert(wasm->memory.segments[0].offset->cast<Const>()->value.getInteger() ==
@@ -459,7 +479,7 @@ int main(int argc, const char* argv[]) {
   options.applyFeatures(wasm);
 
   if (!WasmValidator().validate(wasm)) {
-    WasmPrinter::printModule(&wasm);
+    std::cout << wasm << '\n';
     Fatal() << "error in validating input";
   }
 

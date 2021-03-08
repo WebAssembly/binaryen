@@ -1,0 +1,21 @@
+(module
+ (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
+ (event $event$0 (attr 0) (param i32))
+ (func $0
+  (block $label$2
+   (try $label$3
+    (do
+     (nop)
+    )
+    (catch $event$0
+     (drop
+      (pop i32)
+     )
+     (br $label$2)
+    )
+   )
+  )
+ )
+)
+

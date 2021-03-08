@@ -1,6 +1,6 @@
 (module
  (type $i32_=>_none (func (param i32)))
- (func $func (; 0 ;) (param $x i32)
+ (func $func (param $x i32)
   (loop $loop
    (block $out
     (block

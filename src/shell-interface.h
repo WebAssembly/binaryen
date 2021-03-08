@@ -25,6 +25,7 @@
 #include "ir/module-utils.h"
 #include "shared-constants.h"
 #include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-interpreter.h"
 #include "wasm.h"
 
@@ -85,41 +86,51 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   } memory;
 
-  std::vector<Name> table;
+  std::unordered_map<Name, std::vector<Name>> tables;
 
   ShellExternalInterface() : memory() {}
   virtual ~ShellExternalInterface() = default;
 
   void init(Module& wasm, ModuleInstance& instance) override {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
-    table.resize(wasm.table.initial);
+
+    if (wasm.tables.size() > 0) {
+      for (auto& table : wasm.tables) {
+        tables[table->name].resize(table->initial);
+      }
+    }
   }
 
-  void importGlobals(std::map<Name, Literal>& globals, Module& wasm) override {
+  void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
     // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (import->module == SPECTEST && import->base.startsWith(GLOBAL)) {
-        switch (import->type.getSingle()) {
+      if (import->module == SPECTEST && import->base.startsWith("global_")) {
+        TODO_SINGLE_COMPOUND(import->type);
+        switch (import->type.getBasic()) {
           case Type::i32:
-            globals[import->name] = Literal(int32_t(666));
+            globals[import->name] = {Literal(int32_t(666))};
             break;
           case Type::i64:
-            globals[import->name] = Literal(int64_t(666));
+            globals[import->name] = {Literal(int64_t(666))};
             break;
           case Type::f32:
-            globals[import->name] = Literal(float(666.6));
+            globals[import->name] = {Literal(float(666.6))};
             break;
           case Type::f64:
-            globals[import->name] = Literal(double(666.6));
+            globals[import->name] = {Literal(double(666.6))};
             break;
           case Type::v128:
-            assert(false && "v128 not implemented yet");
+            WASM_UNREACHABLE("v128 not implemented yet");
           case Type::funcref:
+          case Type::externref:
           case Type::anyref:
-          case Type::nullref:
-          case Type::exnref:
-            globals[import->name] = Literal::makeNullref();
+          case Type::eqref:
+            globals[import->name] = {Literal::makeNull(import->type)};
             break;
+          case Type::i31ref:
+            WASM_UNREACHABLE("TODO: i31ref");
+          case Type::dataref:
+            WASM_UNREACHABLE("TODO: dataref");
           case Type::none:
           case Type::unreachable:
             WASM_UNREACHABLE("unexpected type");
@@ -149,11 +160,20 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             << import->name.str;
   }
 
-  Literals callTable(Index index,
+  Literals callTable(Name tableName,
+                     Index index,
                      Signature sig,
                      LiteralList& arguments,
                      Type results,
                      ModuleInstance& instance) override {
+
+    auto it = tables.find(tableName);
+    if (it == tables.end()) {
+      trap("callTable on non-existing table");
+    }
+
+    auto& table = it->second;
+
     if (index >= table.size()) {
       trap("callTable overflow");
     }
@@ -164,12 +184,12 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (sig != func->sig) {
       trap("callIndirect: function signatures don't match");
     }
-    const std::vector<Type>& params = func->sig.params.expand();
-    if (params.size() != arguments.size()) {
+    if (func->sig.params.size() != arguments.size()) {
       trap("callIndirect: bad # of arguments");
     }
-    for (size_t i = 0; i < params.size(); i++) {
-      if (!Type::isSubType(arguments[i].type, params[i])) {
+    size_t i = 0;
+    for (const auto& param : func->sig.params) {
+      if (!Type::isSubType(arguments[i++].type, param)) {
         trap("callIndirect: bad argument type");
       }
     }
@@ -211,16 +231,26 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
 
-  void tableStore(Address addr, Name entry) override { table[addr] = entry; }
+  void tableStore(Name tableName, Address addr, Name entry) override {
+    tables[tableName][addr] = entry;
+  }
 
-  void growMemory(Address /*oldSize*/, Address newSize) override {
+  bool growMemory(Address /*oldSize*/, Address newSize) override {
+    // Apply a reasonable limit on memory size, 1GB, to avoid DOS on the
+    // interpreter.
+    if (newSize > 1024 * 1024 * 1024) {
+      return false;
+    }
     memory.resize(newSize);
+    return true;
   }
 
   void trap(const char* why) override {
-    std::cerr << "[trap " << why << "]\n";
+    std::cout << "[trap " << why << "]\n";
     throw TrapException();
   }
+
+  void throwException(const WasmException& exn) override { throw exn; }
 };
 
 } // namespace wasm

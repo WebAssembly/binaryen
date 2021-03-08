@@ -2,21 +2,21 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (event $e (attr 0) (param i32))
- (func $dummy (; 0 ;)
+ (func $dummy
   (nop)
  )
- (func $getFallthrough (; 1 ;)
+ (func $getFallthrough
   (local $x0 i32)
   (local $x1 i32)
   (local $x2 i32)
   (local $x3 i32)
+  (local $x4 i32)
   (local.set $x0
    (try (result i32)
-    (i32.const 1)
-    (catch
-     (drop
-      (exnref.pop)
-     )
+    (do
+     (i32.const 1)
+    )
+    (catch_all
      (i32.const 3)
     )
    )
@@ -26,14 +26,11 @@
   )
   (local.set $x1
    (try (result i32)
-    (block (result i32)
+    (do
      (call $dummy)
      (i32.const 1)
     )
-    (catch
-     (drop
-      (exnref.pop)
-     )
+    (catch_all
      (i32.const 3)
     )
    )
@@ -46,49 +43,24 @@
   )
   (local.set $x2
    (try (result i32)
-    (block (result i32)
+    (do
      (try
-      (throw $e
-       (i32.const 0)
-      )
-      (catch
-       (drop
-        (exnref.pop)
-       )
-      )
-     )
-     (i32.const 1)
-    )
-    (catch
-     (drop
-      (exnref.pop)
-     )
-     (i32.const 3)
-    )
-   )
-  )
-  (drop
-   (local.get $x2)
-  )
-  (local.set $x3
-   (try (result i32)
-    (block (result i32)
-     (try
-      (nop)
-      (catch
-       (drop
-        (exnref.pop)
-       )
+      (do
        (throw $e
         (i32.const 0)
        )
       )
+      (catch $e
+       (drop
+        (pop i32)
+       )
+      )
      )
      (i32.const 1)
     )
-    (catch
+    (catch $e
      (drop
-      (exnref.pop)
+      (pop i32)
      )
      (i32.const 3)
     )
@@ -96,7 +68,56 @@
   )
   (drop
    (i32.and
-    (local.get $x3)
+    (local.get $x2)
+    (i32.const 7)
+   )
+  )
+  (local.set $x3
+   (try (result i32)
+    (do
+     (try
+      (do
+       (throw $e
+        (i32.const 0)
+       )
+      )
+      (catch_all
+       (nop)
+      )
+     )
+     (i32.const 1)
+    )
+    (catch_all
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (local.get $x3)
+  )
+  (local.set $x4
+   (try (result i32)
+    (do
+     (try
+      (do
+       (nop)
+      )
+      (catch_all
+       (throw $e
+        (i32.const 0)
+       )
+      )
+     )
+     (i32.const 1)
+    )
+    (catch_all
+     (i32.const 3)
+    )
+   )
+  )
+  (drop
+   (i32.and
+    (local.get $x4)
     (i32.const 7)
    )
   )

@@ -1,0 +1,182 @@
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_f32 (func (result f32)))
+ (memory $0 i64 1)
+ (func $simple
+  (drop
+   (f32.load
+    (i64.const 1024)
+   )
+  )
+  (drop
+   (i32.load
+    (i64.const 1024)
+   )
+  )
+  (drop
+   (f64.load
+    (i64.const 1024)
+   )
+  )
+  (drop
+   (i64.load
+    (i64.const 1024)
+   )
+  )
+ )
+ (func $one
+  (local $x i32)
+  (local $1 i64)
+  (local $2 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $1
+     (i64.const 1024)
+    )
+    (local.set $2
+     (f32.load
+      (local.get $1)
+     )
+    )
+    (i32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $one-b
+  (local $x f32)
+  (local $1 i64)
+  (local $2 i32)
+  (local.set $x
+   (block (result f32)
+    (local.set $1
+     (i64.const 1024)
+    )
+    (local.set $2
+     (i32.load
+      (local.get $1)
+     )
+    )
+    (f32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $both
+  (local $x i32)
+  (local $1 i64)
+  (local $2 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $1
+     (i64.const 1024)
+    )
+    (local.set $2
+     (f32.load
+      (local.get $1)
+     )
+    )
+    (i32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $2)
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $half
+  (local $x i32)
+  (local $1 i64)
+  (local $2 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $1
+     (i64.const 1024)
+    )
+    (local.set $2
+     (f32.load
+      (local.get $1)
+     )
+    )
+    (i32.load
+     (local.get $1)
+    )
+   )
+  )
+  (drop
+   (local.get $x)
+  )
+  (drop
+   (local.get $2)
+  )
+ )
+ (func $copy
+  (local $x i32)
+  (local $y i32)
+  (local $2 i64)
+  (local $3 f32)
+  (local.set $x
+   (block (result i32)
+    (local.set $2
+     (i64.const 1024)
+    )
+    (local.set $3
+     (f32.load
+      (local.get $2)
+     )
+    )
+    (i32.load
+     (local.get $2)
+    )
+   )
+  )
+  (local.set $y
+   (local.get $x)
+  )
+  (drop
+   (local.get $3)
+  )
+ )
+ (func $partial1 (result f32)
+  (f32.reinterpret_i32
+   (i32.load16_u
+    (i64.const 3)
+   )
+  )
+ )
+ (func $partial2 (result f32)
+  (f32.reinterpret_i32
+   (i32.load8_u
+    (i64.const 3)
+   )
+  )
+ )
+ (func $nofallthrough
+  (local $x i32)
+  (local.set $x
+   (i32.load
+    (i64.const 1024)
+   )
+  )
+  (drop
+   (f32.reinterpret_i32
+    (block $block (result i32)
+     (nop)
+     (local.get $x)
+    )
+   )
+  )
+ )
+)

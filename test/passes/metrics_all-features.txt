@@ -6,15 +6,16 @@ total
  [imports]      : 0       
  [memory-data]  : 9       
  [table-data]   : 3       
+ [tables]       : 1       
  [total]        : 27      
  [vars]         : 1       
- binary         : 1       
- block          : 1       
- const          : 15      
- drop           : 6       
- if             : 4       
+ Binary         : 1       
+ Block          : 1       
+ Const          : 15      
+ Drop           : 6       
+ If             : 4       
 (module
- (type $i32_=>_none (func (param i32)))
+ (type $0 (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (memory $0 256 256)
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
@@ -23,7 +24,7 @@ total
  (global $glob i32 (i32.const 1337))
  (event $e0 (attr 0) (param i32))
  (event $e1 (attr 0) (param i32 i32))
- (func $ifs (; 0 ;) (param $x i32)
+ (func $ifs (param $x i32)
   (local $y f32)
   (block $block0
    (if
@@ -69,6 +70,7 @@ total
  [funcs]        : 0       
  [globals]      : 0       
  [imports]      : 0       
+ [tables]       : 0       
  [total]        : 0       
  [vars]         : 0       
 (module

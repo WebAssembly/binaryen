@@ -6,3 +6,17 @@ getExpressionInfo(body)={"id":14,"value":3}
 (module
 )
 
+(module
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (func $b-function (param $a i32) (param $b i32) (result i32)
+  (local $res i32)
+  (local $unused f64)
+  (local.tee $res
+   (i32.add
+    (local.get $a)
+    (local.get $b)
+   )
+  )
+ )
+)
+

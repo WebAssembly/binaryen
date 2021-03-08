@@ -1,5 +1,3 @@
-binaryen.setAPITracing(true);
-
 console.log("// alwaysInlineMaxSize=" + binaryen.getAlwaysInlineMaxSize());
 binaryen.setAlwaysInlineMaxSize(11);
 assert(binaryen.getAlwaysInlineMaxSize() == 11);
@@ -12,4 +10,6 @@ console.log("// oneCallerInlineMaxSize=" + binaryen.getOneCallerInlineMaxSize())
 binaryen.setOneCallerInlineMaxSize(33);
 assert(binaryen.getOneCallerInlineMaxSize() == 33);
 
-binaryen.setAPITracing(false);
+console.log("// allowInliningFunctionsWithLoops=" + binaryen.getAllowInliningFunctionsWithLoops());
+binaryen.setAllowInliningFunctionsWithLoops(true);
+assert(binaryen.getAllowInliningFunctionsWithLoops() == true);

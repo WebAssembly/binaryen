@@ -17,6 +17,7 @@
 #ifndef wasm_ir_type_updating_h
 #define wasm_ir_type_updating_h
 
+#include "ir/branch-utils.h"
 #include "wasm-traversal.h"
 
 namespace wasm {
@@ -56,17 +57,11 @@ struct TypeUpdater
       if (block->name.is()) {
         blockInfos[block->name].block = block;
       }
-    } else if (auto* br = curr->dynCast<Break>()) {
-      // ensure info exists, discoverBreaks can then fill it
-      blockInfos[br->name];
-    } else if (auto* sw = curr->dynCast<Switch>()) {
-      // ensure info exists, discoverBreaks can then fill it
-      for (auto target : sw->targets) {
-        blockInfos[target];
-      }
-      blockInfos[sw->default_];
-    } else if (auto* br = curr->dynCast<BrOnExn>()) {
-      blockInfos[br->name];
+    } else {
+      BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+        // ensure info exists, discoverBreaks can then fill it
+        blockInfos[name];
+      });
     }
     // add a break to the info, for break and switch
     discoverBreaks(curr, +1);
@@ -147,32 +142,22 @@ struct TypeUpdater
     discoverBreaks(curr, parent ? +1 : -1);
   }
 
+  // Applies a type change to a node, and potentially to its parents.
+  void changeType(Expression* curr, Type type) {
+    if (curr->type != type) {
+      curr->type = type;
+      propagateTypesUp(curr);
+    }
+  }
+
   // adds (or removes) breaks depending on break/switch contents
   void discoverBreaks(Expression* curr, int change) {
-    if (auto* br = curr->dynCast<Break>()) {
-      noteBreakChange(br->name, change, br->value);
-    } else if (auto* sw = curr->dynCast<Switch>()) {
-      applySwitchChanges(sw, change);
-    } else if (auto* br = curr->dynCast<BrOnExn>()) {
-      noteBreakChange(br->name, change, br->sent);
-    }
-  }
-
-  void applySwitchChanges(Switch* sw, int change) {
-    std::set<Name> seen;
-    for (auto target : sw->targets) {
-      if (seen.insert(target).second) {
-        noteBreakChange(target, change, sw->value);
-      }
-    }
-    if (seen.insert(sw->default_).second) {
-      noteBreakChange(sw->default_, change, sw->value);
-    }
-  }
-
-  // note the addition of a node
-  void noteBreakChange(Name name, int change, Expression* value) {
-    noteBreakChange(name, change, value ? value->type : Type::none);
+    BranchUtils::operateOnScopeNameUsesAndSentTypes(
+      curr,
+      [&](Name& name, Type type) { noteBreakChange(name, change, type); });
+    // TODO: it may be faster to accumulate all changes to a set first, then
+    // call noteBreakChange on the unique values, as a switch can be quite
+    // large and have lots of repeated targets.
   }
 
   void noteBreakChange(Name name, int change, Type type) {
@@ -313,6 +298,10 @@ struct TypeUpdater
     if (curr->type == Type::unreachable) {
       propagateTypesUp(curr);
     }
+  }
+
+  bool hasBreaks(Block* block) {
+    return block->name.is() && blockInfos[block->name].numBreaks > 0;
   }
 };
 

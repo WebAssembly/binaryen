@@ -28,7 +28,10 @@
 #include <pass.h>
 #include <shared-constants.h>
 #include <wasm-builder.h>
+#include <wasm-emscripten.h>
 #include <wasm.h>
+
+#define DEBUG_TYPE "post-emscripten"
 
 namespace wasm {
 
@@ -38,81 +41,10 @@ static bool isInvoke(Function* F) {
   return F->imported() && F->module == ENV && F->base.startsWith("invoke_");
 }
 
-struct OptimizeCalls : public WalkerPass<PostWalker<OptimizeCalls>> {
-  bool isFunctionParallel() override { return true; }
-
-  Pass* create() override { return new OptimizeCalls; }
-
-  void visitCall(Call* curr) {
-    // special asm.js imports can be optimized
-    auto* func = getModule()->getFunction(curr->target);
-    if (!func->imported()) {
-      return;
-    }
-    if (func->module == GLOBAL_MATH) {
-      if (func->base == POW) {
-        if (auto* exponent = curr->operands[1]->dynCast<Const>()) {
-          if (exponent->value == Literal(double(2.0))) {
-            // This is just a square operation, do a multiply
-            Localizer localizer(curr->operands[0], getFunction(), getModule());
-            Builder builder(*getModule());
-            replaceCurrent(builder.makeBinary(
-              MulFloat64,
-              localizer.expr,
-              builder.makeLocalGet(localizer.index, localizer.expr->type)));
-          } else if (exponent->value == Literal(double(0.5))) {
-            // This is just a square root operation
-            replaceCurrent(
-              Builder(*getModule()).makeUnary(SqrtFloat64, curr->operands[0]));
-          }
-        }
-      }
-    }
-  }
-};
-
 } // namespace
 
 struct PostEmscripten : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    // Apply the sbrk ptr, if it was provided.
-    auto sbrkPtrStr =
-      runner->options.getArgumentOrDefault("emscripten-sbrk-ptr", "");
-    if (sbrkPtrStr != "") {
-      auto sbrkPtr = std::stoi(sbrkPtrStr);
-      ImportInfo imports(*module);
-      auto* func = imports.getImportedFunction(ENV, "emscripten_get_sbrk_ptr");
-      if (func) {
-        Builder builder(*module);
-        func->body = builder.makeConst(Literal(int32_t(sbrkPtr)));
-        func->module = func->base = Name();
-      }
-      // Apply the sbrk ptr value, if it was provided. This lets emscripten set
-      // up sbrk entirely in wasm, without depending on the JS side to init
-      // anything; this is necessary for standalone wasm mode, in which we do
-      // not have any JS. Otherwise, the JS would set this value during
-      // startup.
-      auto sbrkValStr =
-        runner->options.getArgumentOrDefault("emscripten-sbrk-val", "");
-      if (sbrkValStr != "") {
-        uint32_t sbrkVal = std::stoi(sbrkValStr);
-        auto end = sbrkPtr + sizeof(sbrkVal);
-        // Flatten memory to make it simple to write to. Later passes can
-        // re-optimize it.
-        MemoryUtils::ensureExists(module->memory);
-        if (!MemoryUtils::flatten(module->memory, end, module)) {
-          Fatal() << "cannot apply sbrk-val since memory is not flattenable\n";
-        }
-        auto& segment = module->memory.segments[0];
-        assert(segment.offset->cast<Const>()->value.geti32() == 0);
-        assert(end <= segment.data.size());
-        memcpy(segment.data.data() + sbrkPtr, &sbrkVal, sizeof(sbrkVal));
-      }
-    }
-
-    // Optimize calls
-    OptimizeCalls().run(runner, module);
-
     // Optimize exceptions
     optimizeExceptions(runner, module);
   }
@@ -129,13 +61,13 @@ struct PostEmscripten : public Pass {
         hasInvokes = true;
       }
     }
-    if (!hasInvokes) {
+    if (!hasInvokes || module->tables.empty()) {
       return;
     }
     // Next, see if the Table is flat, which we need in order to see where
     // invokes go statically. (In dynamic linking, the table is not flat,
     // and we can't do this.)
-    FlatTable flatTable(module->table);
+    TableUtils::FlatTable flatTable(*module, *module->tables[0]);
     if (!flatTable.valid) {
       return;
     }
@@ -154,11 +86,12 @@ struct PostEmscripten : public Pass {
         }
       });
 
-    // Assume an indirect call might throw.
-    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
-                           [](const Info& info) { return true; },
-                           [](Info& info) { info.canThrow = true; },
-                           analyzer.IndirectCallsHaveProperty);
+    // Assume a non-direct call might throw.
+    analyzer.propagateBack(
+      [](const Info& info) { return info.canThrow; },
+      [](const Info& info) { return true; },
+      [](Info& info, Function* reason) { info.canThrow = true; },
+      analyzer.NonDirectCallsHaveProperty);
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
@@ -167,9 +100,10 @@ struct PostEmscripten : public Pass {
       Pass* create() override { return new OptimizeInvokes(map, flatTable); }
 
       std::map<Function*, Info>& map;
-      FlatTable& flatTable;
+      TableUtils::FlatTable& flatTable;
 
-      OptimizeInvokes(std::map<Function*, Info>& map, FlatTable& flatTable)
+      OptimizeInvokes(std::map<Function*, Info>& map,
+                      TableUtils::FlatTable& flatTable)
         : map(map), flatTable(flatTable) {}
 
       void visitCall(Call* curr) {

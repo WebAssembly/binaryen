@@ -24,13 +24,12 @@
 //
 // We can also legalize in a "minimal" way, that is, only JS-specific
 // components, that only JS will care about, such as dynCall methods
-// (wasm will never call them, as it can share the table directly). E.g.
+// (wasm will never call them, as it can share the tables directly). E.g.
 // is dynamic linking, where we can avoid legalizing wasm=>wasm calls
 // across modules, we still want to legalize dynCalls so JS can call into the
-// table even to a signature that is not legal.
+// tables even to a signature that is not legal.
 //
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
@@ -54,7 +53,7 @@ struct LegalizeJSInterface : public Pass {
          .getArgumentOrDefault("legalize-js-interface-export-originals", "")
          .empty();
     // for each illegal export, we must export a legalized stub instead
-    std::vector<Export*> newExports;
+    std::vector<std::unique_ptr<Export>> newExports;
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
@@ -82,8 +81,8 @@ struct LegalizeJSInterface : public Pass {
         }
       }
     }
-    for (auto* ex : newExports) {
-      module->addExport(ex);
+    for (auto& ex : newExports) {
+      module->addExport(std::move(ex));
     }
     // Avoid iterator invalidation later.
     std::vector<Function*> originalFunctions;
@@ -95,11 +94,11 @@ struct LegalizeJSInterface : public Pass {
       if (im->imported() && isIllegal(im) && shouldBeLegalized(im)) {
         auto funcName = makeLegalStubForCalledImport(im, module);
         illegalImportsToLegal[im->name] = funcName;
-        // we need to use the legalized version in the table, as the import from
-        // JS is legal for JS. Our stub makes it look like a native wasm
+        // we need to use the legalized version in the tables, as the import
+        // from JS is legal for JS. Our stub makes it look like a native wasm
         // function.
-        for (auto& segment : module->table.segments) {
-          for (auto& name : segment.data) {
+        for (auto& segment : module->elementSegments) {
+          for (auto& name : segment->data) {
             if (name == im->name) {
               name = funcName;
             }
@@ -167,8 +166,10 @@ struct LegalizeJSInterface : public Pass {
             // call
             return;
           }
-          replaceCurrent(Builder(*getModule())
-                           .makeCall(iter->second, curr->operands, curr->type));
+          replaceCurrent(
+            Builder(*getModule())
+              .makeCall(
+                iter->second, curr->operands, curr->type, curr->isReturn));
         }
       };
 
@@ -181,7 +182,7 @@ private:
   std::map<Name, Name> illegalImportsToLegal;
 
   template<typename T> bool isIllegal(T* t) {
-    for (auto param : t->sig.params.expand()) {
+    for (const auto& param : t->sig.params) {
       if (param == Type::i64) {
         return true;
       }
@@ -212,17 +213,23 @@ private:
   // JS calls the export, so it must call a legal stub that calls the actual
   // wasm function
   Name makeLegalStub(Function* func, Module* module) {
+    Name legalName(std::string("legalstub$") + func->name.str);
+
+    // a method may be exported multiple times
+    if (module->getFunctionOrNull(legalName)) {
+      return legalName;
+    }
+
     Builder builder(*module);
     auto* legal = new Function();
-    legal->name = Name(std::string("legalstub$") + func->name.str);
+    legal->name = legalName;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = func->name;
     call->type = func->sig.results;
 
-    const std::vector<Type>& params = func->sig.params.expand();
     std::vector<Type> legalParams;
-    for (auto param : params) {
+    for (const auto& param : func->sig.params) {
       if (param == Type::i64) {
         call->operands.push_back(I64Utilities::recreateI64(
           builder, legalParams.size(), legalParams.size() + 1));
@@ -253,11 +260,7 @@ private:
       legal->body = call;
     }
 
-    // a method may be exported multiple times
-    if (!module->getFunctionOrNull(legal->name)) {
-      module->addFunction(legal);
-    }
-    return legal->name;
+    return module->addFunction(legal)->name;
   }
 
   // wasm calls the import, so it must call a stub that calls the actual legal
@@ -275,18 +278,19 @@ private:
     auto* call = module->allocator.alloc<Call>();
     call->target = legalIm->name;
 
-    const std::vector<Type>& imParams = im->sig.params.expand();
     std::vector<Type> params;
-    for (size_t i = 0; i < imParams.size(); ++i) {
-      if (imParams[i] == Type::i64) {
+    Index i = 0;
+    for (const auto& param : im->sig.params) {
+      if (param == Type::i64) {
         call->operands.push_back(I64Utilities::getI64Low(builder, i));
         call->operands.push_back(I64Utilities::getI64High(builder, i));
         params.push_back(Type::i32);
         params.push_back(Type::i32);
       } else {
-        call->operands.push_back(builder.makeLocalGet(i, imParams[i]));
-        params.push_back(imParams[i]);
+        call->operands.push_back(builder.makeLocalGet(i, param));
+        params.push_back(param);
       }
+      ++i;
     }
 
     if (im->sig.results == Type::i64) {

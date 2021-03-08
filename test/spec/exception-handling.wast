@@ -1,36 +1,229 @@
 (module
-  (event $e0 (attr 0) (param i32))
-  (event $e1 (attr 0) (param i32 f32))
+  (event $e-v (attr 0))
+  (event $e-i32 (attr 0) (param i32))
+  (event $e-f32 (attr 0) (param f32))
+  (event $e-i32-f32 (attr 0) (param i32 f32))
 
-  (func $exnref_test (param $0 exnref) (result exnref)
-    (local.get $0)
+  (func $throw_single_value (export "throw_single_value")
+    (throw $e-i32 (i32.const 5))
   )
 
-  (func $eh_test (local $exn exnref)
-    (try
-      (throw $e0 (i32.const 0))
-      (catch
-        ;; Multi-value is not available yet, so block can't take a value from
-        ;; stack. So this uses locals for now.
-        (local.set $exn (exnref.pop))
-        (drop
-          (block $l0 (result i32)
-            (rethrow
-              (br_on_exn $l0 $e0 (local.get $exn))
+  (func (export "throw_multiple_values")
+    (throw $e-i32-f32 (i32.const 3) (f32.const 3.5))
+  )
+
+  (func (export "try_nothrow") (result i32)
+    (try (result i32)
+      (do
+        (i32.const 3)
+      )
+      (catch $e-i32
+        (drop (pop i32))
+        (i32.const 0)
+      )
+    )
+  )
+
+  (func (export "try_throw_catch") (result i32)
+    (try (result i32)
+      (do
+        (throw $e-i32 (i32.const 5))
+      )
+      (catch $e-i32
+        (drop (pop i32))
+        (i32.const 3)
+      )
+    )
+  )
+
+  (func (export "try_throw_nocatch") (result i32)
+    (try (result i32)
+      (do
+        (throw $e-i32 (i32.const 5))
+      )
+      (catch $e-f32
+        (drop (pop f32))
+        (i32.const 3)
+      )
+    )
+  )
+
+  (func (export "try_throw_catchall") (result i32)
+    (try (result i32)
+      (do
+        (throw $e-i32 (i32.const 5))
+      )
+      (catch $e-f32
+        (drop (pop f32))
+        (i32.const 4)
+      )
+      (catch_all
+        (i32.const 3)
+      )
+    )
+  )
+
+  (func (export "try_call_catch") (result i32)
+    (try (result i32)
+      (do
+        (call $throw_single_value)
+        (unreachable)
+      )
+      (catch $e-i32
+        (pop i32)
+      )
+    )
+  )
+
+  (func (export "try_throw_multivalue_catch") (result i32) (local $x (i32 f32))
+    (try (result i32)
+      (do
+        (throw $e-i32-f32 (i32.const 5) (f32.const 1.5))
+      )
+      (catch $e-i32-f32
+        (local.set $x
+          (pop i32 f32)
+        )
+        (tuple.extract 0
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  (func (export "try_throw_rethrow")
+    (try $l0
+      (do
+        (throw $e-i32 (i32.const 5))
+      )
+      (catch $e-i32
+        (drop (pop i32))
+        (rethrow $l0)
+      )
+    )
+  )
+
+  (func (export "try_call_rethrow")
+    (try $l0
+      (do
+        (call $throw_single_value)
+      )
+      (catch_all
+        (rethrow $l0)
+      )
+    )
+  )
+
+  (func (export "rethrow_target_test1") (result i32)
+    (try (result i32)
+      (do
+        (try
+          (do
+            (throw $e-i32 (i32.const 1))
+          )
+          (catch_all
+            (try $l0
+              (do
+                (throw $e-i32 (i32.const 2))
+              )
+              (catch $e-i32
+                (drop (pop i32))
+                (rethrow $l0) ;; rethrow (i32.const 2)
+              )
             )
           )
         )
+      )
+      (catch $e-i32
+        (pop i32) ;; result is (i32.const 2)
+      )
+    )
+  )
+
+  ;; Can we handle rethrows with the depth > 0?
+  (func (export "rethrow_target_test2") (result i32)
+    (try (result i32)
+      (do
+        (try $l0
+          (do
+            (throw $e-i32 (i32.const 1))
+          )
+          (catch_all
+            (try
+              (do
+                (throw $e-i32 (i32.const 2))
+              )
+              (catch $e-i32
+                (drop (pop i32))
+                (rethrow 1) ;; rethrow (i32.const 1)
+              )
+            )
+          )
+        )
+      )
+      (catch $e-i32
+        (pop i32) ;; result is (i32.const 1)
+      )
+    )
+  )
+
+  ;; Tests whether the exception stack is managed correctly after rethrows
+  (func (export "rethrow_target_test3") (result i32)
+    (try (result i32)
+      (do
+        (try $l0
+          (do
+            (try $l1
+              (do
+                (throw $e-i32 (i32.const 1))
+              )
+              (catch_all
+                (try
+                  (do
+                    (throw $e-i32 (i32.const 2))
+                  )
+                  (catch $e-i32
+                    (drop (pop i32))
+                    (rethrow $l1) ;; rethrow (i32.const 1)
+                  )
+                )
+              )
+            )
+          )
+          (catch $e-i32
+            (rethrow $l0) ;; rethrow (i32.const 1) again
+          )
+        )
+      )
+      (catch $e-i32
+        (pop i32) ;; result is (i32.const 1)
       )
     )
   )
 )
 
+(assert_trap (invoke "throw_single_value"))
+(assert_trap (invoke "throw_multiple_values"))
+(assert_return (invoke "try_nothrow") (i32.const 3))
+(assert_return (invoke "try_throw_catch") (i32.const 3))
+(assert_trap (invoke "try_throw_nocatch"))
+(assert_return (invoke "try_throw_catchall") (i32.const 3))
+(assert_return (invoke "try_call_catch") (i32.const 5))
+(assert_return (invoke "try_throw_multivalue_catch") (i32.const 5))
+(assert_trap (invoke "try_throw_rethrow"))
+(assert_trap (invoke "try_call_rethrow"))
+(assert_return (invoke "rethrow_target_test1") (i32.const 2))
+(assert_return (invoke "rethrow_target_test2") (i32.const 1))
+(assert_return (invoke "rethrow_target_test3") (i32.const 1))
+
 (assert_invalid
   (module
     (func $f0
       (try
-        (nop)
-        (catch (i32.const 0))
+        (do (nop))
+        (catch $e-i32
+          (pop i32)
+        )
       )
     )
   )
@@ -41,19 +234,21 @@
   (module
     (func $f0
       (try
-        (i32.const 0)
-        (catch (i32.const 0))
+        (do (i32.const 0))
+        (catch $e-i32
+          (pop i32)
+        )
       )
     )
   )
-   "try's type does not match try body's type"
+  "try's type does not match try body's type"
 )
 
 (assert_invalid
   (module
-    (event $e0 (attr 0) (param i32))
+    (event $e-i32 (attr 0) (param i32))
     (func $f0
-      (throw $e0 (f32.const 0))
+      (throw $e-i32 (f32.const 0))
     )
   )
   "event param types must match"
@@ -61,9 +256,9 @@
 
 (assert_invalid
   (module
-    (event $e0 (attr 0) (param i32 f32))
+    (event $e-i32 (attr 0) (param i32 f32))
     (func $f0
-      (throw $e0 (f32.const 0))
+      (throw $e-i32 (f32.const 0))
     )
   )
   "event's param numbers must match"
@@ -72,52 +267,65 @@
 (assert_invalid
   (module
     (func $f0
-      (rethrow (i32.const 0))
-    )
-  )
-  "rethrow's argument must be exnref type"
-)
-
-(assert_invalid
-  (module
-    (event $e0 (attr 0) (param i32))
-    (func $f0 (result i32)
-      (block $l0 (result i32)
-        (drop
-          (br_on_exn $l0 $e0 (i32.const 0))
-        )
-        (i32.const 0)
-      )
-    )
-  )
-  "br_on_exn's argument must be unreachable or exnref type"
-)
-
-(assert_invalid
-  (module
-    (event $e0 (attr 0) (param i32))
-    (func $f0 (result i32) (local $0 exnref)
-      (block $l0 (result i32)
-        (i32.eqz
-          (br_on_exn $l0 $e0 (local.get $0))
+      (block $l0
+        (try
+          (do
+            (try
+              (do)
+              (delegate $l0) ;; target is a block
+            )
+          )
+          (catch_all)
         )
       )
     )
   )
-  "i32.eqz input must be i32"
+  "all delegate targets must be valid"
 )
 
 (assert_invalid
   (module
-    (event $e0 (attr 0) (param i32))
-    (func $f0 (result f32) (local $0 exnref)
-      (block $l0 (result f32)
-        (drop
-          (br_on_exn $l0 $e0 (local.get $0))
+    (func $f0
+      (try $l0
+        (do)
+        (catch_all
+          (try
+            (do)
+            (delegate $l0) ;; the target catch is above the delegate
+          )
         )
-        (f32.const 0)
       )
     )
   )
-  "block+breaks must have right type if breaks return a value"
+  "all delegate targets must be valid"
+)
+
+(assert_invalid
+  (module
+    (func $f0
+      (block $l0
+        (try
+          (do)
+          (catch_all
+            (rethrow $l0) ;; target is a block
+          )
+        )
+      )
+    )
+  )
+  "all rethrow targets must be valid"
+)
+
+(assert_invalid
+  (module
+    (func $f0
+      (try $l0
+        (do
+          (rethrow $l0) ;; Not within the target try's catch
+        )
+        (catch_all)
+      )
+    )
+  )
+  "all rethrow targets must be valid"
 )

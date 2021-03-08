@@ -20,14 +20,12 @@
 // generates a check and replaces the result with zero in that case.
 //
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "ir/trapping.h"
 #include "mixed_arena.h"
 #include "pass.h"
 #include "support/name.h"
 #include "wasm-builder.h"
-#include "wasm-printing.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -37,6 +35,18 @@ Name I64S_REM("i64s-rem");
 Name I64U_REM("i64u-rem");
 Name I64S_DIV("i64s-div");
 Name I64U_DIV("i64u-div");
+
+static Expression* ensureDouble(Expression* expr, MixedArena& allocator) {
+  if (expr->type == Type::f32) {
+    auto conv = allocator.alloc<Unary>();
+    conv->op = PromoteFloat32;
+    conv->value = expr;
+    conv->type = Type::f64;
+    return conv;
+  }
+  assert(expr->type == Type::f64);
+  return expr;
+}
 
 Name getBinaryFuncName(Binary* curr) {
   switch (curr->op) {

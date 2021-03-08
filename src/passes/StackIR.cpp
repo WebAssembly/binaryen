@@ -36,7 +36,7 @@ struct GenerateStackIR : public WalkerPass<PostWalker<GenerateStackIR>> {
   bool modifiesBinaryenIR() override { return false; }
 
   void doWalkFunction(Function* func) {
-    StackIRGenerator stackIRGen(getModule()->allocator, func);
+    StackIRGenerator stackIRGen(*getModule(), func);
     stackIRGen.write();
     func->stackIR = make_unique<StackIR>();
     func->stackIR->swap(stackIRGen.getStackIR());
@@ -257,6 +257,8 @@ private:
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
       case StackInst::Catch:
+      case StackInst::CatchAll:
+      case StackInst::Delegate:
       case StackInst::TryEnd: {
         return true;
       }
@@ -283,7 +285,8 @@ private:
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
-      case StackInst::TryEnd: {
+      case StackInst::TryEnd:
+      case StackInst::Delegate: {
         return true;
       }
       default: { return false; }

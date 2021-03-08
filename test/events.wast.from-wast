@@ -3,7 +3,7 @@
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_none (func))
  (import "env" "im0" (event $e-import (attr 0) (param i32)))
- (import "env" "im1" (event $import$event1 (attr 0) (param i32 f32)))
+ (import "env" "im1" (event $eimport$1 (attr 0) (param i32 f32)))
  (event $2 (attr 0) (param i32))
  (event $e (attr 0) (param i32 f32))
  (event $empty (attr 0) (param))

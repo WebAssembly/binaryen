@@ -19,7 +19,7 @@
 
 #include "ir/bits.h"
 #include "ir/effects.h"
-#include "ir/iteration.h"
+#include "ir/match.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -52,6 +52,11 @@ inline bool isSymmetric(Binary* binary) {
     case XorInt64:
     case EqInt64:
     case NeInt64:
+
+    case EqFloat32:
+    case NeFloat32:
+    case EqFloat64:
+    case NeFloat64:
       return true;
 
     default:
@@ -64,24 +69,35 @@ inline bool isControlFlowStructure(Expression* curr) {
          curr->is<Try>();
 }
 
-// Check if an expression is a control flow construct with a name,
-// which implies it may have breaks to it.
+// Check if an expression is a control flow construct with a name, which implies
+// it may have breaks or delegates to it.
 inline bool isNamedControlFlow(Expression* curr) {
   if (auto* block = curr->dynCast<Block>()) {
     return block->name.is();
   } else if (auto* loop = curr->dynCast<Loop>()) {
     return loop->name.is();
+  } else if (auto* try_ = curr->dynCast<Try>()) {
+    return try_->name.is();
   }
   return false;
 }
 
+// A constant expression is something like a Const: it has a fixed value known
+// at compile time, and passes that propagate constants can try to propagate it.
+// Constant expressions are also allowed in global initializers in wasm.
+// TODO: look into adding more things here like RttCanon.
+inline bool isSingleConstantExpression(const Expression* curr) {
+  return curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>() ||
+         (curr->is<I31New>() && curr->cast<I31New>()->value->is<Const>());
+}
+
 inline bool isConstantExpression(const Expression* curr) {
-  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
+  if (isSingleConstantExpression(curr)) {
     return true;
   }
   if (auto* tuple = curr->dynCast<TupleMake>()) {
     for (auto* op : tuple->operands) {
-      if (!op->is<Const>() && !op->is<RefNull>() && !op->is<RefFunc>()) {
+      if (!isSingleConstantExpression(op)) {
         return false;
       }
     }
@@ -90,25 +106,32 @@ inline bool isConstantExpression(const Expression* curr) {
   return false;
 }
 
-inline Literal getSingleLiteral(const Expression* curr) {
+inline bool isBranch(const Expression* curr) {
+  return curr->is<Break>() || curr->is<Switch>() || curr->is<BrOn>();
+}
+
+inline Literal getLiteral(const Expression* curr) {
   if (auto* c = curr->dynCast<Const>()) {
     return c->value;
-  } else if (curr->is<RefNull>()) {
-    return Literal(Type::nullref);
-  } else if (auto* c = curr->dynCast<RefFunc>()) {
-    return Literal(c->func);
-  } else {
-    WASM_UNREACHABLE("non-constant expression");
+  } else if (auto* n = curr->dynCast<RefNull>()) {
+    return Literal(n->type);
+  } else if (auto* r = curr->dynCast<RefFunc>()) {
+    return Literal(r->func, r->type);
+  } else if (auto* i = curr->dynCast<I31New>()) {
+    if (auto* c = i->value->dynCast<Const>()) {
+      return Literal::makeI31(c->value.geti32());
+    }
   }
+  WASM_UNREACHABLE("non-constant expression");
 }
 
 inline Literals getLiterals(const Expression* curr) {
-  if (curr->is<Const>() || curr->is<RefNull>() || curr->is<RefFunc>()) {
-    return {getSingleLiteral(curr)};
+  if (isSingleConstantExpression(curr)) {
+    return {getLiteral(curr)};
   } else if (auto* tuple = curr->dynCast<TupleMake>()) {
     Literals literals;
     for (auto* op : tuple->operands) {
-      literals.push_back(getSingleLiteral(op));
+      literals.push_back(getLiteral(op));
     }
     return literals;
   } else {
@@ -119,88 +142,87 @@ inline Literals getLiterals(const Expression* curr) {
 // Check if an expression is a sign-extend, and if so, returns the value
 // that is extended, otherwise nullptr
 inline Expression* getSignExtValue(Expression* curr) {
-  if (auto* outer = curr->dynCast<Binary>()) {
-    if (outer->op == ShrSInt32) {
-      if (auto* outerConst = outer->right->dynCast<Const>()) {
-        if (outerConst->value.geti32() != 0) {
-          if (auto* inner = outer->left->dynCast<Binary>()) {
-            if (inner->op == ShlInt32) {
-              if (auto* innerConst = inner->right->dynCast<Const>()) {
-                if (outerConst->value == innerConst->value) {
-                  return inner->left;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  // We only care about i32s here, and ignore i64s, unreachables, etc.
+  if (curr->type != Type::i32) {
+    return nullptr;
+  }
+  using namespace Match;
+  int32_t leftShift = 0, rightShift = 0;
+  Expression* extended = nullptr;
+  if (matches(curr,
+              binary(ShrSInt32,
+                     binary(ShlInt32, any(&extended), i32(&leftShift)),
+                     i32(&rightShift))) &&
+      leftShift == rightShift && leftShift != 0) {
+    return extended;
   }
   return nullptr;
 }
 
 // gets the size of the sign-extended value
 inline Index getSignExtBits(Expression* curr) {
-  return 32 - Bits::getEffectiveShifts(curr->cast<Binary>()->right);
+  assert(curr->type == Type::i32);
+  auto* rightShift = curr->cast<Binary>()->right;
+  return 32 - Bits::getEffectiveShifts(rightShift);
 }
 
 // Check if an expression is almost a sign-extend: perhaps the inner shift
 // is too large. We can split the shifts in that case, which is sometimes
 // useful (e.g. if we can remove the signext)
 inline Expression* getAlmostSignExt(Expression* curr) {
-  if (auto* outer = curr->dynCast<Binary>()) {
-    if (outer->op == ShrSInt32) {
-      if (auto* outerConst = outer->right->dynCast<Const>()) {
-        if (outerConst->value.geti32() != 0) {
-          if (auto* inner = outer->left->dynCast<Binary>()) {
-            if (inner->op == ShlInt32) {
-              if (auto* innerConst = inner->right->dynCast<Const>()) {
-                if (Bits::getEffectiveShifts(outerConst) <=
-                    Bits::getEffectiveShifts(innerConst)) {
-                  return inner->left;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
+  using namespace Match;
+  int32_t leftShift = 0, rightShift = 0;
+  Expression* extended = nullptr;
+  if (matches(curr,
+              binary(ShrSInt32,
+                     binary(ShlInt32, any(&extended), i32(&leftShift)),
+                     i32(&rightShift))) &&
+      Bits::getEffectiveShifts(rightShift, Type::i32) <=
+        Bits::getEffectiveShifts(leftShift, Type::i32) &&
+      rightShift != 0) {
+    return extended;
   }
   return nullptr;
 }
 
 // gets the size of the almost sign-extended value, as well as the
 // extra shifts, if any
-inline Index getAlmostSignExtBits(Expression* curr, Index& extraShifts) {
-  extraShifts = Bits::getEffectiveShifts(
-                  curr->cast<Binary>()->left->cast<Binary>()->right) -
-                Bits::getEffectiveShifts(curr->cast<Binary>()->right);
+inline Index getAlmostSignExtBits(Expression* curr, Index& extraLeftShifts) {
+  auto* leftShift = curr->cast<Binary>()->left->cast<Binary>()->right;
+  auto* rightShift = curr->cast<Binary>()->right;
+  extraLeftShifts =
+    Bits::getEffectiveShifts(leftShift) - Bits::getEffectiveShifts(rightShift);
   return getSignExtBits(curr);
 }
 
 // Check if an expression is a zero-extend, and if so, returns the value
 // that is extended, otherwise nullptr
 inline Expression* getZeroExtValue(Expression* curr) {
-  if (auto* binary = curr->dynCast<Binary>()) {
-    if (binary->op == AndInt32) {
-      if (auto* c = binary->right->dynCast<Const>()) {
-        if (Bits::getMaskedBits(c->value.geti32())) {
-          return binary->right;
-        }
-      }
-    }
+  // We only care about i32s here, and ignore i64s, unreachables, etc.
+  if (curr->type != Type::i32) {
+    return nullptr;
+  }
+  using namespace Match;
+  int32_t mask = 0;
+  Expression* extended = nullptr;
+  if (matches(curr, binary(AndInt32, any(&extended), i32(&mask))) &&
+      Bits::getMaskedBits(mask) != 0) {
+    return extended;
   }
   return nullptr;
 }
 
 // gets the size of the sign-extended value
 inline Index getZeroExtBits(Expression* curr) {
-  return Bits::getMaskedBits(
-    curr->cast<Binary>()->right->cast<Const>()->value.geti32());
+  assert(curr->type == Type::i32);
+  int32_t mask = curr->cast<Binary>()->right->cast<Const>()->value.geti32();
+  return Bits::getMaskedBits(mask);
 }
 
 // Returns a falling-through value, that is, it looks through a local.tee
-// and other operations that receive a value and let it flow through them.
+// and other operations that receive a value and let it flow through them. If
+// there is no value falling through, returns the node itself (as that is the
+// value that trivially falls through, with 0 steps in the middle).
 inline Expression* getFallthrough(Expression* curr,
                                   const PassOptions& passOptions,
                                   FeatureSet features) {
@@ -239,6 +261,25 @@ inline Expression* getFallthrough(Expression* curr,
     }
   }
   return curr;
+}
+
+// Returns whether the resulting value here must fall through without being
+// modified. For example, a tee always does so. That is, this returns false if
+// and only if the return value may have some computation performed on it to
+// change it from the inputs the instruction receives.
+// This differs from getFallthrough() which returns a single value that falls
+// through - here if more than one value can fall through, like in if-else,
+// we can return true. That is, there we care about a value falling through and
+// for us to get that actual value to look at; here we just care whether the
+// value falls through without being changed, even if it might be one of
+// several options.
+inline bool isResultFallthrough(Expression* curr) {
+  // Note that we don't check if there is a return value here; the node may be
+  // unreachable, for example, but then there is no meaningful answer to give
+  // anyhow.
+  return curr->is<LocalSet>() || curr->is<Block>() || curr->is<If>() ||
+         curr->is<Loop>() || curr->is<Try>() || curr->is<Select>() ||
+         curr->is<Break>();
 }
 
 } // namespace Properties

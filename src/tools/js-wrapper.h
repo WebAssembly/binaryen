@@ -19,6 +19,10 @@
 // values, useful for fuzzing.
 //
 
+#include "wasm-type.h"
+#include "wasm.h"
+#include <string>
+
 namespace wasm {
 
 static std::string generateJSWrapper(Module& wasm) {
@@ -47,13 +51,13 @@ static std::string generateJSWrapper(Module& wasm) {
          "  }\n"
          "}\n"
          "function literal(x, type) {\n"
-         "  var ret = type + '.const ';\n"
+         "  var ret = '';\n"
          "  switch (type) {\n"
          "    case 'i32': ret += (x | 0); break;\n"
          "    case 'f32':\n"
          "    case 'f64': {\n"
          "      if (x == 0 && (1 / x) < 0) ret += '-';\n"
-         "      ret += x;\n"
+         "      ret += Number(x).toString();\n"
          "      break;\n"
          "    }\n"
          "    default: throw 'what?';\n"
@@ -82,24 +86,24 @@ static std::string generateJSWrapper(Module& wasm) {
          "  },\n"
          "});\n";
   for (auto& exp : wasm.exports) {
-    auto* func = wasm.getFunctionOrNull(exp->value);
-    if (!func) {
+    if (exp->kind != ExternalKind::Function) {
       continue; // something exported other than a function
     }
+    auto* func = wasm.getFunction(exp->value);
     ret += "if (instance.exports.hangLimitInitializer) "
            "instance.exports.hangLimitInitializer();\n";
     ret += "try {\n";
-    ret += std::string("  console.log('[fuzz-exec] calling $") + exp->name.str +
+    ret += std::string("  console.log('[fuzz-exec] calling ") + exp->name.str +
            "');\n";
     if (func->sig.results != Type::none) {
-      ret += std::string("  console.log('[fuzz-exec] note result: $") +
+      ret += std::string("  console.log('[fuzz-exec] note result: ") +
              exp->name.str + " => ' + literal(";
     } else {
       ret += "  ";
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
-    for (Type param : func->sig.params.expand()) {
+    for (const auto& param : func->sig.params) {
       // zeros in arguments TODO more?
       if (first) {
         first = false;

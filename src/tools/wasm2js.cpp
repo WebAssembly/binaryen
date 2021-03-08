@@ -25,7 +25,6 @@
 #include "support/command-line.h"
 #include "support/file.h"
 #include "wasm-s-parser.h"
-#include "wasm2js.h"
 
 using namespace cashew;
 using namespace wasm;
@@ -63,7 +62,7 @@ static void optimizeWasm(Module& wasm, PassOptions options) {
 template<typename T> static void printJS(Ref ast, T& output) {
   JSPrinter jser(true, true, ast);
   jser.printAst();
-  output << jser.buffer << std::endl;
+  output << jser.buffer << '\n';
 }
 
 // Traversals
@@ -124,7 +123,8 @@ static void traversePrePost(Ref node,
 }
 
 static void traversePost(Ref node, std::function<void(Ref)> visit) {
-  traversePrePost(node, [](Ref node) {}, visit);
+  traversePrePost(
+    node, [](Ref node) {}, visit);
 }
 
 static void replaceInPlace(Ref target, Ref value) {
@@ -141,7 +141,7 @@ static void replaceInPlaceIfPossible(Ref target, Ref value) {
   }
 }
 
-static void optimizeJS(Ref ast) {
+static void optimizeJS(Ref ast, Wasm2JSBuilder::Flags flags) {
   // Helpers
 
   auto isBinary = [](Ref node, IString op) {
@@ -255,16 +255,34 @@ static void optimizeJS(Ref ast) {
     return false;
   };
 
+  // Optimize given that the expression is flowing into a boolean context
   auto optimizeBoolean = [&](Ref node) {
-    if (isConstantBinary(node, XOR, 1)) {
-      // x ^ 1  =>  !x
-      node[0]->setString(UNARY_PREFIX);
-      node[1]->setString(L_NOT);
-      node[3]->setNull();
-    } else if (isOrZero(node) || isTrshiftZero(node)) {
-      // Just being different from 0 is enough, casts don't matter.
-      return node[2];
-    }
+    // TODO: in some cases it may be possible to turn
+    //
+    //   if (x | 0)
+    //
+    // into
+    //
+    //   if (x)
+    //
+    // In general this is unsafe if e.g. x is -2147483648 + -2147483648 (which
+    // the | 0 turns into 0, but without it is a truthy value).
+    //
+    // Another issue is that in deterministic mode we care about corner cases
+    // that would trap in wasm, like an integer divide by zero:
+    //
+    //  if ((1 / 0) | 0)  =>  condition is Infinity | 0 = 0 which is falsey
+    //
+    // while
+    //
+    //  if (1 / 0)  =>  condition is Infinity which is truthy
+    //
+    // Thankfully this is not common, and does not occur on % (1 % 0 is a NaN
+    // which has the right truthiness), so we could perhaps do
+    //
+    //   if (!(flags.deterministic && isBinary(node[2], DIV))) return node[2];
+    //
+    // (but there is still the first issue).
     return node;
   };
 
@@ -511,7 +529,7 @@ static void emitWasm(Module& wasm,
   Wasm2JSBuilder wasm2js(flags, options);
   auto js = wasm2js.processWasm(&wasm, name);
   if (options.optimizeLevel >= 2) {
-    optimizeJS(js);
+    optimizeJS(js, flags);
   }
   Wasm2JSGlue glue(wasm, output, flags, name);
   glue.emitPre();
@@ -551,6 +569,11 @@ private:
                          Element& e,
                          Name testFuncName,
                          Name asmModule);
+  Ref emitInvokeFunc(Builder& wasmBuilder,
+                     Element& e,
+                     Name testFuncName,
+                     Name asmModule);
+  bool isInvokeHandled(Element& e);
   bool isAssertHandled(Element& e);
   void fixCalls(Ref asmjs, Name asmModule);
 
@@ -574,8 +597,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   Expression* body = nullptr;
   if (e.size() == 2) {
     if (actual->type == Type::none) {
-      body = wasmBuilder.blockify(actual,
-                                  wasmBuilder.makeConst(Literal(uint32_t(1))));
+      body = wasmBuilder.blockify(actual, wasmBuilder.makeConst(uint32_t(1)));
     } else {
       body = actual;
     }
@@ -583,7 +605,8 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
     Expression* expected = sexpBuilder.parseExpression(e[2]);
     Type resType = expected->type;
     actual->type = resType;
-    switch (resType.getSingle()) {
+    TODO_SINGLE_COMPOUND(resType);
+    switch (resType.getBasic()) {
       case Type::i32:
         body = wasmBuilder.makeBinary(EqInt32, actual, expected);
         break;
@@ -607,8 +630,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
       }
 
       default: {
-        std::cerr << "Unhandled type in assert: " << resType << std::endl;
-        abort();
+        Fatal() << "Unhandled type in assert: " << resType;
       }
     }
   } else {
@@ -676,6 +698,28 @@ Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
   outerFunc[3]->push_back(ValueBuilder::makeReturn(ValueBuilder::makeInt(0)));
   emitFunction(outerFunc);
   return outerFunc;
+}
+
+Ref AssertionEmitter::emitInvokeFunc(Builder& wasmBuilder,
+                                     Element& e,
+                                     Name testFuncName,
+                                     Name asmModule) {
+  Expression* body = sexpBuilder.parseExpression(e);
+  std::unique_ptr<Function> testFunc(
+    wasmBuilder.makeFunction(testFuncName,
+                             std::vector<NameType>{},
+                             body->type,
+                             std::vector<NameType>{},
+                             body));
+  Ref jsFunc = processFunction(testFunc.get());
+  fixCalls(jsFunc, asmModule);
+  emitFunction(jsFunc);
+  return jsFunc;
+}
+
+bool AssertionEmitter::isInvokeHandled(Element& e) {
+  return e.isList() && e.size() >= 2 && e[0]->isStr() &&
+         e[0]->str() == Name("invoke");
 }
 
 bool AssertionEmitter::isAssertHandled(Element& e) {
@@ -766,7 +810,7 @@ void AssertionEmitter::emit() {
     }
   )";
 
-  Builder wasmBuilder(sexpBuilder.getAllocator());
+  Builder wasmBuilder(sexpBuilder.getModule());
   Name asmModule = std::string("ret") + ASM_FUNC.str;
   for (size_t i = 0; i < root.size(); ++i) {
     Element& e = *root[i];
@@ -780,23 +824,35 @@ void AssertionEmitter::emit() {
       asmModule = Name(moduleNameS.str().c_str());
       Module wasm;
       options.applyFeatures(wasm);
-      SExpressionWasmBuilder builder(wasm, e);
+      SExpressionWasmBuilder builder(wasm, e, options.profile);
       emitWasm(wasm, out, flags, options.passOptions, funcName);
       continue;
     }
-    if (!isAssertHandled(e)) {
+    if (!isInvokeHandled(e) && !isAssertHandled(e)) {
       std::cerr << "skipping " << e << std::endl;
       continue;
     }
     Name testFuncName(IString(("check" + std::to_string(i)).c_str(), false));
+    bool isInvoke = (e[0]->str() == Name("invoke"));
     bool isReturn = (e[0]->str() == Name("assert_return"));
     bool isReturnNan = (e[0]->str() == Name("assert_return_nan"));
-    Element& testOp = *e[1];
+    Element* assertOp;
+    // An assertion of an invoke has the invoke inside the assert.
+    if (isAssertHandled(e)) {
+      assertOp = e[1];
+    } else {
+      assertOp = &e;
+    }
     // Replace "invoke" with "call"
-    testOp[0]->setString(IString("call"), false, false);
+    (*assertOp)[0]->setString(IString("call"), false, false);
     // Need to claim dollared to get string as function target
-    testOp[1]->setString(testOp[1]->str(), /*dollared=*/true, false);
-
+    (*assertOp)[1]->setString((*assertOp)[1]->str(), /*dollared=*/true, false);
+    if (isInvoke) {
+      emitInvokeFunc(wasmBuilder, e, testFuncName, asmModule);
+      out << testFuncName.str << "();\n";
+      continue;
+    }
+    // Otherwise, this is some form of assertion.
     if (isReturn) {
       emitAssertReturnFunc(wasmBuilder, e, testFuncName, asmModule);
     } else if (isReturnNan) {
@@ -848,6 +904,18 @@ int main(int argc, const char* argv[]) {
       "form)",
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { flags.emscripten = true; })
+    .add(
+      "--deterministic",
+      "",
+      "Replace WebAssembly trapping behavior deterministically "
+      "(the default is to not care about what would trap in wasm, like a load "
+      "out of bounds or integer divide by zero; with this flag, we try to be "
+      "deterministic at least in what happens, which might or might not be "
+      "to trap like wasm, but at least should not vary)",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) {
+        flags.deterministic = true;
+      })
     .add(
       "--symbols-file",
       "",
@@ -903,7 +971,8 @@ int main(int argc, const char* argv[]) {
       if (options.debug) {
         std::cerr << "w-parsing..." << std::endl;
       }
-      sexprBuilder = make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0]);
+      sexprBuilder =
+        make_unique<SExpressionWasmBuilder>(wasm, *(*root)[0], options.profile);
     }
   } catch (ParseException& p) {
     p.dump(std::cerr);
@@ -913,9 +982,14 @@ int main(int argc, const char* argv[]) {
                "request for silly amounts of memory)";
   }
 
+  // TODO: Remove this restriction when wasm2js can handle multiple tables
+  if (wasm.tables.size() > 1) {
+    Fatal() << "error: modules with multiple tables are not supported yet.";
+  }
+
   if (options.passOptions.validate) {
     if (!WasmValidator().validate(wasm)) {
-      WasmPrinter::printModule(&wasm);
+      std::cout << wasm << '\n';
       Fatal() << "error in validating input";
     }
   }

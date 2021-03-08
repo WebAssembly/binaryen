@@ -39,6 +39,10 @@
 ;; Writing 0 bytes outside of memory limit is NOT allowed.
 (assert_trap (invoke "fill" (i32.const 0x10001) (i32.const 0) (i32.const 0)))
 
+;; Negative size
+(assert_trap (invoke "fill" (i32.const 15) (i32.const 14) (i32.const -2)))
+(assert_return (invoke "load8_u" (i32.const 15)) (i32.const 0))
+
 ;; memory.copy
 (module
   (memory 1 1)

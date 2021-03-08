@@ -7,7 +7,7 @@
  (elem (i32.const 0) $foo $foo)
  (export "baz" (func $0))
  (start $foo)
- (func $0 (; 2 ;)
+ (func $0
   (call $foo)
   (call $foo)
   (call $wrong

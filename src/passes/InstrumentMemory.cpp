@@ -52,7 +52,6 @@
 //    )
 //   )
 
-#include "asm_v_wasm.h"
 #include "asmjs/shared-constants.h"
 #include "shared-constants.h"
 #include <pass.h>
@@ -78,15 +77,16 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
   void visitLoad(Load* curr) {
     id++;
     Builder builder(*getModule());
-    curr->ptr =
-      builder.makeCall(load_ptr,
-                       {builder.makeConst(Literal(int32_t(id))),
-                        builder.makeConst(Literal(int32_t(curr->bytes))),
-                        builder.makeConst(Literal(int32_t(curr->offset.addr))),
-                        curr->ptr},
-                       Type::i32);
+    auto indexType = getModule()->memory.indexType;
+    auto offset = builder.makeConstPtr(curr->offset.addr);
+    curr->ptr = builder.makeCall(load_ptr,
+                                 {builder.makeConst(int32_t(id)),
+                                  builder.makeConst(int32_t(curr->bytes)),
+                                  offset,
+                                  curr->ptr},
+                                 indexType);
     Name target;
-    switch (curr->type.getSingle()) {
+    switch (curr->type.getBasic()) {
       case Type::i32:
         target = load_val_i32;
         break;
@@ -103,21 +103,22 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
         return; // TODO: other types, unreachable, etc.
     }
     replaceCurrent(builder.makeCall(
-      target, {builder.makeConst(Literal(int32_t(id))), curr}, curr->type));
+      target, {builder.makeConst(int32_t(id)), curr}, curr->type));
   }
 
   void visitStore(Store* curr) {
     id++;
     Builder builder(*getModule());
-    curr->ptr =
-      builder.makeCall(store_ptr,
-                       {builder.makeConst(Literal(int32_t(id))),
-                        builder.makeConst(Literal(int32_t(curr->bytes))),
-                        builder.makeConst(Literal(int32_t(curr->offset.addr))),
-                        curr->ptr},
-                       Type::i32);
+    auto indexType = getModule()->memory.indexType;
+    auto offset = builder.makeConstPtr(curr->offset.addr);
+    curr->ptr = builder.makeCall(store_ptr,
+                                 {builder.makeConst(int32_t(id)),
+                                  builder.makeConst(int32_t(curr->bytes)),
+                                  offset,
+                                  curr->ptr},
+                                 indexType);
     Name target;
-    switch (curr->value->type.getSingle()) {
+    switch (curr->value->type.getBasic()) {
       case Type::i32:
         target = store_val_i32;
         break;
@@ -133,21 +134,20 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
       default:
         return; // TODO: other types, unreachable, etc.
     }
-    curr->value =
-      builder.makeCall(target,
-                       {builder.makeConst(Literal(int32_t(id))), curr->value},
-                       curr->value->type);
+    curr->value = builder.makeCall(
+      target, {builder.makeConst(int32_t(id)), curr->value}, curr->value->type);
   }
 
   void visitModule(Module* curr) {
+    auto indexType = curr->memory.indexType;
     addImport(
-      curr, load_ptr, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+      curr, load_ptr, {Type::i32, Type::i32, indexType, indexType}, indexType);
     addImport(curr, load_val_i32, {Type::i32, Type::i32}, Type::i32);
     addImport(curr, load_val_i64, {Type::i32, Type::i64}, Type::i64);
     addImport(curr, load_val_f32, {Type::i32, Type::f32}, Type::f32);
     addImport(curr, load_val_f64, {Type::i32, Type::f64}, Type::f64);
     addImport(
-      curr, store_ptr, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::i32);
+      curr, store_ptr, {Type::i32, Type::i32, indexType, indexType}, indexType);
     addImport(curr, store_val_i32, {Type::i32, Type::i32}, Type::i32);
     addImport(curr, store_val_i64, {Type::i32, Type::i64}, Type::i64);
     addImport(curr, store_val_f32, {Type::i32, Type::f32}, Type::f32);

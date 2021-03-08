@@ -11,13 +11,13 @@
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
  (export "asyncify_stop_rewind" (func $asyncify_stop_rewind))
  (export "asyncify_get_state" (func $asyncify_get_state))
- (func $foo (; 1 ;)
+ (func $foo
   (call $import)
  )
- (func $bar (; 2 ;)
+ (func $bar
   (call $import)
  )
- (func $baz (; 3 ;)
+ (func $baz
   (local $0 i32)
   (local $1 i32)
   (if
@@ -104,10 +104,10 @@
   )
   (nop)
  )
- (func $other1 (; 4 ;)
+ (func $other1
   (call $foo)
  )
- (func $other2 (; 5 ;)
+ (func $other2
   (local $0 i32)
   (local $1 i32)
   (if
@@ -194,7 +194,7 @@
   )
   (nop)
  )
- (func $asyncify_start_unwind (; 6 ;) (param $0 i32)
+ (func $asyncify_start_unwind (param $0 i32)
   (global.set $__asyncify_state
    (i32.const 1)
   )
@@ -213,7 +213,7 @@
    (unreachable)
   )
  )
- (func $asyncify_stop_unwind (; 7 ;)
+ (func $asyncify_stop_unwind
   (global.set $__asyncify_state
    (i32.const 0)
   )
@@ -229,7 +229,7 @@
    (unreachable)
   )
  )
- (func $asyncify_start_rewind (; 8 ;) (param $0 i32)
+ (func $asyncify_start_rewind (param $0 i32)
   (global.set $__asyncify_state
    (i32.const 2)
   )
@@ -248,7 +248,7 @@
    (unreachable)
   )
  )
- (func $asyncify_stop_rewind (; 9 ;)
+ (func $asyncify_stop_rewind
   (global.set $__asyncify_state
    (i32.const 0)
   )
@@ -264,7 +264,7 @@
    (unreachable)
   )
  )
- (func $asyncify_get_state (; 10 ;) (result i32)
+ (func $asyncify_get_state (result i32)
   (global.get $__asyncify_state)
  )
 )

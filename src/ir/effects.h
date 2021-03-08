@@ -25,15 +25,15 @@ namespace wasm {
 // Look for side effects, including control flow
 // TODO: optimize
 
-struct EffectAnalyzer
-  : public PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>> {
+class EffectAnalyzer {
+public:
   EffectAnalyzer(const PassOptions& passOptions,
                  FeatureSet features,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
       debugInfo(passOptions.debugInfo), features(features) {
     if (ast) {
-      analyze(ast);
+      walk(ast);
     }
   }
 
@@ -41,20 +41,29 @@ struct EffectAnalyzer
   bool debugInfo;
   FeatureSet features;
 
-  void analyze(Expression* ast) {
-    breakNames.clear();
-    walk(ast);
-    // if we are left with breaks, they are external
-    if (breakNames.size() > 0) {
-      branches = true;
-    }
-    assert(tryDepth == 0);
+  // Walk an expression and all its children.
+  void walk(Expression* ast) {
+    pre();
+    InternalAnalyzer(*this).walk(ast);
+    post();
+  }
+
+  // Visit an expression, without any children.
+  void visit(Expression* ast) {
+    pre();
+    InternalAnalyzer(*this).visit(ast);
+    post();
   }
 
   // Core effect tracking
 
-  // branches out of this expression, returns, infinite loops, etc
-  bool branches = false;
+  // Definitely branches out of this expression, or does a return, etc.
+  // breakTargets tracks individual targets, which we may eventually see are
+  // internal, while this is set when we see something that will definitely
+  // not be internal, or is otherwise special like an infinite loop (which
+  // does not technically branch "out", but it does break the normal assumption
+  // of control flow proceeding normally).
+  bool branchesOut = false;
   bool calls = false;
   std::set<Index> localsRead;
   std::set<Index> localsWritten;
@@ -62,44 +71,34 @@ struct EffectAnalyzer
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
-  // a load or div/rem, which may trap. we ignore trap differences, so it is ok
-  // to reorder these, but we can't remove them, as they count as side effects,
-  // and we can't move them in a way that would cause other noticeable (global)
-  // side effects
+  // TODO: Type-based alias analysis. For example, writes to Arrays never
+  // interfere with reads from Structs.
+  bool readsHeap = false;
+  bool writesHeap = false;
+  // A trap, either from an unreachable instruction, or from an implicit trap
+  // that we do not ignore (see below).
+  // Note that we ignore trap differences, so it is ok to reorder traps with
+  // each other, but it is not ok to remove them or reorder them with other
+  // effects in a noticeable way.
+  bool trap = false;
+  // A trap from an instruction like a load or div/rem, which may trap on corner
+  // cases. If we do not ignore implicit traps then these are counted as a trap.
   bool implicitTrap = false;
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
   bool throws = false;
-  // The nested depth of try. If an instruction that may throw is inside an
-  // inner try, we don't mark it as 'throws', because it will be caught by an
-  // inner catch.
+  // The nested depth of try-catch_all. If an instruction that may throw is
+  // inside an inner try-catch_all, we don't mark it as 'throws', because it
+  // will be caught by an inner catch_all. We only count 'try's with a
+  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
+  // still throw outside of the try.
   size_t tryDepth = 0;
-
-  static void scan(EffectAnalyzer* self, Expression** currp) {
-    Expression* curr = *currp;
-    // We need to decrement try depth before catch starts, so handle it
-    // separately
-    if (curr->is<Try>()) {
-      self->pushTask(doVisitTry, currp);
-      self->pushTask(scan, &curr->cast<Try>()->catchBody);
-      self->pushTask(doStartCatch, currp);
-      self->pushTask(scan, &curr->cast<Try>()->body);
-      self->pushTask(doStartTry, currp);
-      return;
-    }
-    PostWalker<EffectAnalyzer, OverriddenVisitor<EffectAnalyzer>>::scan(self,
-                                                                        currp);
-  }
-
-  static void doStartTry(EffectAnalyzer* self, Expression** currp) {
-    self->tryDepth++;
-  }
-
-  static void doStartCatch(EffectAnalyzer* self, Expression** currp) {
-    assert(self->tryDepth > 0 && "try depth cannot be negative");
-    self->tryDepth--;
-  }
+  // The nested depth of catch. This is necessary to track danglng pops.
+  size_t catchDepth = 0;
+  // If this expression contains 'pop's that are not enclosed in 'catch' body.
+  // For example, (drop (pop i32)) should set this to true.
+  bool danglingPop = false;
 
   // Helper functions to check for various effect types
 
@@ -110,28 +109,37 @@ struct EffectAnalyzer
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool transfersControlFlow() const { return branches || throws; }
-
-  bool hasGlobalSideEffects() const {
-    return calls || globalsWritten.size() > 0 || writesMemory || isAtomic ||
-           throws;
+  bool accessesHeap() const { return calls || readsHeap || writesHeap; }
+  // Check whether this may transfer control flow to somewhere outside of this
+  // expression (aside from just flowing out normally). That includes a break
+  // or a throw (if the throw is not known to be caught inside this expression;
+  // note that if the throw is not caught in this expression then it might be
+  // caught in this function but outside of this expression, or it might not be
+  // caught in the function at all, which would mean control flow cannot be
+  // transferred inside the function, but this expression does not know that).
+  bool transfersControlFlow() const {
+    return branchesOut || throws || hasExternalBreakTargets();
   }
+
+  // Changes something in globally-stored state.
+  bool writesGlobalState() const {
+    return globalsWritten.size() || writesMemory || isAtomic || calls;
+  }
+  bool readsGlobalState() const {
+    return globalsRead.size() || readsMemory || isAtomic || calls;
+  }
+
   bool hasSideEffects() const {
-    return hasGlobalSideEffects() || localsWritten.size() > 0 || branches ||
-           implicitTrap;
+    return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
+           trap || throws || transfersControlFlow();
   }
   bool hasAnything() const {
-    return calls || accessesLocal() || readsMemory || writesMemory ||
-           accessesGlobal() || implicitTrap || isAtomic ||
-           transfersControlFlow();
-  }
-
-  bool noticesGlobalSideEffects() {
-    return calls || readsMemory || isAtomic || globalsRead.size();
+    return hasSideEffects() || accessesLocal() || readsMemory ||
+           accessesGlobal();
   }
 
   // check if we break to anything external from ourselves
-  bool hasExternalBreakTargets() { return !breakNames.empty(); }
+  bool hasExternalBreakTargets() const { return !breakTargets.empty(); }
 
   // checks if these effects would invalidate another set (e.g., if we write, we
   // invalidate someone that reads, they can't be moved past us)
@@ -139,7 +147,10 @@ struct EffectAnalyzer
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
-        (accessesMemory() && (other.writesMemory || other.calls))) {
+        ((other.writesMemory || other.calls) && accessesMemory()) ||
+        ((writesHeap || calls) && other.accessesHeap()) ||
+        ((other.writesHeap || other.calls) && accessesHeap()) ||
+        (danglingPop || other.danglingPop)) {
       return true;
     }
     // All atomics are sequentially consistent for now, and ordered wrt other
@@ -149,7 +160,7 @@ struct EffectAnalyzer
       return true;
     }
     for (auto local : localsWritten) {
-      if (other.localsWritten.count(local) || other.localsRead.count(local)) {
+      if (other.localsRead.count(local) || other.localsWritten.count(local)) {
         return true;
       }
     }
@@ -158,13 +169,13 @@ struct EffectAnalyzer
         return true;
       }
     }
-    if ((accessesGlobal() && other.calls) ||
-        (other.accessesGlobal() && calls)) {
+    if ((other.calls && accessesGlobal()) ||
+        (calls && other.accessesGlobal())) {
       return true;
     }
     for (auto global : globalsWritten) {
-      if (other.globalsWritten.count(global) ||
-          other.globalsRead.count(global)) {
+      if (other.globalsRead.count(global) ||
+          other.globalsWritten.count(global)) {
         return true;
       }
     }
@@ -173,27 +184,38 @@ struct EffectAnalyzer
         return true;
       }
     }
-    // we are ok to reorder implicit traps, but not conditionalize them
-    if ((implicitTrap && other.transfersControlFlow()) ||
-        (other.implicitTrap && transfersControlFlow())) {
+    // We are ok to reorder implicit traps, but not conditionalize them.
+    if ((trap && other.transfersControlFlow()) ||
+        (other.trap && transfersControlFlow())) {
       return true;
     }
-    // we can't reorder an implicit trap in a way that alters global state
-    if ((implicitTrap && other.hasGlobalSideEffects()) ||
-        (other.implicitTrap && hasGlobalSideEffects())) {
+    // Note that the above includes disallowing the reordering of a trap with an
+    // exception (as an exception can transfer control flow inside the current
+    // function, so transfersControlFlow would be true) - while we allow the
+    // reordering of traps with each other, we do not reorder exceptions with
+    // anything.
+    assert(!((trap && other.throws) || (throws && other.trap)));
+    // We can't reorder an implicit trap in a way that could alter what global
+    // state is modified.
+    if ((trap && other.writesGlobalState()) ||
+        (other.trap && writesGlobalState())) {
       return true;
     }
     return false;
   }
 
   void mergeIn(EffectAnalyzer& other) {
-    branches = branches || other.branches;
+    branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
+    readsHeap = readsHeap || other.readsHeap;
+    writesHeap = writesHeap || other.writesHeap;
+    trap = trap || other.trap;
     implicitTrap = implicitTrap || other.implicitTrap;
     isAtomic = isAtomic || other.isAtomic;
     throws = throws || other.throws;
+    danglingPop = danglingPop || other.danglingPop;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
@@ -206,6 +228,9 @@ struct EffectAnalyzer
     for (auto i : other.globalsWritten) {
       globalsWritten.insert(i);
     }
+    for (auto i : other.breakTargets) {
+      breakTargets.insert(i);
+    }
   }
 
   // the checks above happen after the node's children were processed, in the
@@ -213,7 +238,7 @@ struct EffectAnalyzer
   // the children, i.e., loops
   bool checkPre(Expression* curr) {
     if (curr->is<Loop>()) {
-      branches = true;
+      branchesOut = true;
       return true;
     }
     return false;
@@ -222,172 +247,226 @@ struct EffectAnalyzer
   bool checkPost(Expression* curr) {
     visit(curr);
     if (curr->is<Loop>()) {
-      branches = true;
+      branchesOut = true;
     }
     return hasAnything();
   }
 
-  std::set<Name> breakNames;
+  std::set<Name> breakTargets;
 
-  void visitBlock(Block* curr) {
-    if (curr->name.is()) {
-      breakNames.erase(curr->name); // these were internal breaks
-    }
-  }
-  void visitIf(If* curr) {}
-  void visitLoop(Loop* curr) {
-    if (curr->name.is()) {
-      breakNames.erase(curr->name); // these were internal breaks
-    }
-    // if the loop is unreachable, then there is branching control flow:
-    //  (1) if the body is unreachable because of a (return), uncaught (br)
-    //      etc., then we already noted branching, so it is ok to mark it again
-    //      (if we have *caught* (br)s, then they did not lead to the loop body
-    //      being unreachable). (same logic applies to blocks)
-    //  (2) if the loop is unreachable because it only has branches up to the
-    //      loop top, but no way to get out, then it is an infinite loop, and we
-    //      consider that a branching side effect (note how the same logic does
-    //      not apply to blocks).
-    if (curr->type == Type::unreachable) {
-      branches = true;
-    }
-  }
-  void visitBreak(Break* curr) { breakNames.insert(curr->name); }
-  void visitSwitch(Switch* curr) {
-    for (auto name : curr->targets) {
-      breakNames.insert(name);
-    }
-    breakNames.insert(curr->default_);
-  }
+private:
+  struct InternalAnalyzer
+    : public PostWalker<InternalAnalyzer, OverriddenVisitor<InternalAnalyzer>> {
 
-  void visitCall(Call* curr) {
-    calls = true;
-    // When EH is enabled, any call can throw.
-    if (features.hasExceptionHandling() && tryDepth == 0) {
-      throws = true;
+    EffectAnalyzer& parent;
+
+    InternalAnalyzer(EffectAnalyzer& parent) : parent(parent) {}
+
+    static void scan(InternalAnalyzer* self, Expression** currp) {
+      Expression* curr = *currp;
+      // We need to decrement try depth before catch starts, so handle it
+      // separately
+      if (curr->is<Try>()) {
+        self->pushTask(doVisitTry, currp);
+        self->pushTask(doEndCatch, currp);
+        auto& catchBodies = curr->cast<Try>()->catchBodies;
+        for (int i = int(catchBodies.size()) - 1; i >= 0; i--) {
+          self->pushTask(scan, &catchBodies[i]);
+        }
+        self->pushTask(doStartCatch, currp);
+        self->pushTask(scan, &curr->cast<Try>()->body);
+        self->pushTask(doStartTry, currp);
+        return;
+      }
+      PostWalker<InternalAnalyzer, OverriddenVisitor<InternalAnalyzer>>::scan(
+        self, currp);
     }
-    if (curr->isReturn) {
-      branches = true;
+
+    static void doStartTry(InternalAnalyzer* self, Expression** currp) {
+      Try* curr = (*currp)->cast<Try>();
+      // We only count 'try's with a 'catch_all' because instructions within a
+      // 'try' without a 'catch_all' can still throw outside of the try.
+      if (curr->hasCatchAll()) {
+        self->parent.tryDepth++;
+      }
     }
-    if (debugInfo) {
-      // debugInfo call imports must be preserved very strongly, do not
-      // move code around them
-      // FIXME: we could check if the call is to an import
-      branches = true;
+
+    static void doStartCatch(InternalAnalyzer* self, Expression** currp) {
+      Try* curr = (*currp)->cast<Try>();
+      // We only count 'try's with a 'catch_all' because instructions within a
+      // 'try' without a 'catch_all' can still throw outside of the try.
+      if (curr->hasCatchAll()) {
+        assert(self->parent.tryDepth > 0 && "try depth cannot be negative");
+        self->parent.tryDepth--;
+      }
+      self->parent.catchDepth++;
     }
-  }
-  void visitCallIndirect(CallIndirect* curr) {
-    calls = true;
-    if (features.hasExceptionHandling() && tryDepth == 0) {
-      throws = true;
+
+    static void doEndCatch(InternalAnalyzer* self, Expression** currp) {
+      assert(self->parent.catchDepth > 0 && "catch depth cannot be negative");
+      self->parent.catchDepth--;
     }
-    if (curr->isReturn) {
-      branches = true;
+
+    void visitBlock(Block* curr) {
+      if (curr->name.is()) {
+        parent.breakTargets.erase(curr->name); // these were internal breaks
+      }
     }
-  }
-  void visitLocalGet(LocalGet* curr) { localsRead.insert(curr->index); }
-  void visitLocalSet(LocalSet* curr) { localsWritten.insert(curr->index); }
-  void visitGlobalGet(GlobalGet* curr) { globalsRead.insert(curr->name); }
-  void visitGlobalSet(GlobalSet* curr) { globalsWritten.insert(curr->name); }
-  void visitLoad(Load* curr) {
-    readsMemory = true;
-    isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitIf(If* curr) {}
+    void visitLoop(Loop* curr) {
+      if (curr->name.is()) {
+        parent.breakTargets.erase(curr->name); // these were internal breaks
+      }
+      // if the loop is unreachable, then there is branching control flow:
+      //  (1) if the body is unreachable because of a (return), uncaught (br)
+      //      etc., then we already noted branching, so it is ok to mark it
+      //      again (if we have *caught* (br)s, then they did not lead to the
+      //      loop body being unreachable). (same logic applies to blocks)
+      //  (2) if the loop is unreachable because it only has branches up to the
+      //      loop top, but no way to get out, then it is an infinite loop, and
+      //      we consider that a branching side effect (note how the same logic
+      //      does not apply to blocks).
+      if (curr->type == Type::unreachable) {
+        parent.branchesOut = true;
+      }
     }
-  }
-  void visitStore(Store* curr) {
-    writesMemory = true;
-    isAtomic |= curr->isAtomic;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitBreak(Break* curr) { parent.breakTargets.insert(curr->name); }
+    void visitSwitch(Switch* curr) {
+      for (auto name : curr->targets) {
+        parent.breakTargets.insert(name);
+      }
+      parent.breakTargets.insert(curr->default_);
     }
-  }
-  void visitAtomicRMW(AtomicRMW* curr) {
-    readsMemory = true;
-    writesMemory = true;
-    isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+
+    void visitCall(Call* curr) {
+      parent.calls = true;
+      // When EH is enabled, any call can throw.
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws = true;
+      }
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+      if (parent.debugInfo) {
+        // debugInfo call imports must be preserved very strongly, do not
+        // move code around them
+        // FIXME: we could check if the call is to an import
+        parent.branchesOut = true;
+      }
     }
-  }
-  void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
-    readsMemory = true;
-    writesMemory = true;
-    isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitCallIndirect(CallIndirect* curr) {
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws = true;
+      }
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
     }
-  }
-  void visitAtomicWait(AtomicWait* curr) {
-    readsMemory = true;
-    // AtomicWait doesn't strictly write memory, but it does modify the waiters
-    // list associated with the specified address, which we can think of as a
-    // write.
-    writesMemory = true;
-    isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitLocalGet(LocalGet* curr) {
+      parent.localsRead.insert(curr->index);
     }
-  }
-  void visitAtomicNotify(AtomicNotify* curr) {
-    // AtomicNotify doesn't strictly write memory, but it does modify the
-    // waiters list associated with the specified address, which we can think of
-    // as a write.
-    readsMemory = true;
-    writesMemory = true;
-    isAtomic = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitLocalSet(LocalSet* curr) {
+      parent.localsWritten.insert(curr->index);
     }
-  }
-  void visitAtomicFence(AtomicFence* curr) {
-    // AtomicFence should not be reordered with any memory operations, so we set
-    // these to true.
-    readsMemory = true;
-    writesMemory = true;
-    isAtomic = true;
-  }
-  void visitSIMDExtract(SIMDExtract* curr) {}
-  void visitSIMDReplace(SIMDReplace* curr) {}
-  void visitSIMDShuffle(SIMDShuffle* curr) {}
-  void visitSIMDTernary(SIMDTernary* curr) {}
-  void visitSIMDShift(SIMDShift* curr) {}
-  void visitSIMDLoad(SIMDLoad* curr) {
-    readsMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitGlobalGet(GlobalGet* curr) {
+      parent.globalsRead.insert(curr->name);
     }
-  }
-  void visitMemoryInit(MemoryInit* curr) {
-    writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitGlobalSet(GlobalSet* curr) {
+      parent.globalsWritten.insert(curr->name);
     }
-  }
-  void visitDataDrop(DataDrop* curr) {
-    // prevent reordering with memory.init
-    readsMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitLoad(Load* curr) {
+      parent.readsMemory = true;
+      parent.isAtomic |= curr->isAtomic;
+      parent.implicitTrap = true;
     }
-  }
-  void visitMemoryCopy(MemoryCopy* curr) {
-    readsMemory = true;
-    writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitStore(Store* curr) {
+      parent.writesMemory = true;
+      parent.isAtomic |= curr->isAtomic;
+      parent.implicitTrap = true;
     }
-  }
-  void visitMemoryFill(MemoryFill* curr) {
-    writesMemory = true;
-    if (!ignoreImplicitTraps) {
-      implicitTrap = true;
+    void visitAtomicRMW(AtomicRMW* curr) {
+      parent.readsMemory = true;
+      parent.writesMemory = true;
+      parent.isAtomic = true;
+      parent.implicitTrap = true;
     }
-  }
-  void visitConst(Const* curr) {}
-  void visitUnary(Unary* curr) {
-    if (!ignoreImplicitTraps) {
+    void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
+      parent.readsMemory = true;
+      parent.writesMemory = true;
+      parent.isAtomic = true;
+      parent.implicitTrap = true;
+    }
+    void visitAtomicWait(AtomicWait* curr) {
+      parent.readsMemory = true;
+      // AtomicWait doesn't strictly write memory, but it does modify the
+      // waiters list associated with the specified address, which we can think
+      // of as a write.
+      parent.writesMemory = true;
+      parent.isAtomic = true;
+      parent.implicitTrap = true;
+    }
+    void visitAtomicNotify(AtomicNotify* curr) {
+      // AtomicNotify doesn't strictly write memory, but it does modify the
+      // waiters list associated with the specified address, which we can think
+      // of as a write.
+      parent.readsMemory = true;
+      parent.writesMemory = true;
+      parent.isAtomic = true;
+      parent.implicitTrap = true;
+    }
+    void visitAtomicFence(AtomicFence* curr) {
+      // AtomicFence should not be reordered with any memory operations, so we
+      // set these to true.
+      parent.readsMemory = true;
+      parent.writesMemory = true;
+      parent.isAtomic = true;
+    }
+    void visitSIMDExtract(SIMDExtract* curr) {}
+    void visitSIMDReplace(SIMDReplace* curr) {}
+    void visitSIMDShuffle(SIMDShuffle* curr) {}
+    void visitSIMDTernary(SIMDTernary* curr) {}
+    void visitSIMDShift(SIMDShift* curr) {}
+    void visitSIMDLoad(SIMDLoad* curr) {
+      parent.readsMemory = true;
+      parent.implicitTrap = true;
+    }
+    void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
+      if (curr->isLoad()) {
+        parent.readsMemory = true;
+      } else {
+        parent.writesMemory = true;
+      }
+      parent.implicitTrap = true;
+    }
+    void visitSIMDWiden(SIMDWiden* curr) {}
+    void visitPrefetch(Prefetch* curr) {
+      // Do not reorder with respect to other memory ops
+      parent.writesMemory = true;
+      parent.readsMemory = true;
+    }
+    void visitMemoryInit(MemoryInit* curr) {
+      parent.writesMemory = true;
+      parent.implicitTrap = true;
+    }
+    void visitDataDrop(DataDrop* curr) {
+      // data.drop does not actually write memory, but it does alter the size of
+      // a segment, which can be noticeable later by memory.init, so we need to
+      // mark it as having a global side effect of some kind.
+      parent.writesMemory = true;
+      parent.implicitTrap = true;
+    }
+    void visitMemoryCopy(MemoryCopy* curr) {
+      parent.readsMemory = true;
+      parent.writesMemory = true;
+      parent.implicitTrap = true;
+    }
+    void visitMemoryFill(MemoryFill* curr) {
+      parent.writesMemory = true;
+      parent.implicitTrap = true;
+    }
+    void visitConst(Const* curr) {}
+    void visitUnary(Unary* curr) {
       switch (curr->op) {
         case TruncSFloat32ToInt32:
         case TruncSFloat32ToInt64:
@@ -397,15 +476,13 @@ struct EffectAnalyzer
         case TruncSFloat64ToInt64:
         case TruncUFloat64ToInt32:
         case TruncUFloat64ToInt64: {
-          implicitTrap = true;
+          parent.implicitTrap = true;
           break;
         }
         default: {}
       }
     }
-  }
-  void visitBinary(Binary* curr) {
-    if (!ignoreImplicitTraps) {
+    void visitBinary(Binary* curr) {
       switch (curr->op) {
         case DivSInt32:
         case DivUInt32:
@@ -415,46 +492,133 @@ struct EffectAnalyzer
         case DivUInt64:
         case RemSInt64:
         case RemUInt64: {
-          implicitTrap = true;
+          // div and rem may contain implicit trap only if RHS is
+          // non-constant or constant which equal zero or -1 for
+          // signed divisions. Reminder traps only with zero
+          // divider.
+          if (auto* c = curr->right->dynCast<Const>()) {
+            if (c->value.isZero()) {
+              parent.implicitTrap = true;
+            } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
+                       c->value.getInteger() == -1LL) {
+              parent.implicitTrap = true;
+            }
+          } else {
+            parent.implicitTrap = true;
+          }
           break;
         }
         default: {}
       }
     }
-  }
-  void visitSelect(Select* curr) {}
-  void visitDrop(Drop* curr) {}
-  void visitReturn(Return* curr) { branches = true; }
-  void visitHost(Host* curr) {
-    calls = true;
-    // memory.grow modifies the set of valid addresses, and thus can be modeled
-    // as modifying memory
-    writesMemory = true;
-    // Atomics are also sequentially consistent with memory.grow.
-    isAtomic = true;
-  }
-  void visitRefNull(RefNull* curr) {}
-  void visitRefIsNull(RefIsNull* curr) {}
-  void visitRefFunc(RefFunc* curr) {}
-  void visitTry(Try* curr) {}
-  void visitThrow(Throw* curr) {
-    if (tryDepth == 0) {
-      throws = true;
+    void visitSelect(Select* curr) {}
+    void visitDrop(Drop* curr) {}
+    void visitReturn(Return* curr) { parent.branchesOut = true; }
+    void visitMemorySize(MemorySize* curr) {
+      // memory.size accesses the size of the memory, and thus can be modeled as
+      // reading memory
+      parent.readsMemory = true;
+      // Atomics are sequentially consistent with memory.size.
+      parent.isAtomic = true;
     }
-  }
-  void visitRethrow(Rethrow* curr) {
-    if (tryDepth == 0) {
-      throws = true;
+    void visitMemoryGrow(MemoryGrow* curr) {
+      parent.calls = true;
+      // memory.grow technically does a read-modify-write operation on the
+      // memory size in the successful case, modifying the set of valid
+      // addresses, and just a read operation in the failure case
+      parent.readsMemory = true;
+      parent.writesMemory = true;
+      // Atomics are also sequentially consistent with memory.grow.
+      parent.isAtomic = true;
     }
-  }
-  void visitBrOnExn(BrOnExn* curr) { breakNames.insert(curr->name); }
-  void visitNop(Nop* curr) {}
-  void visitUnreachable(Unreachable* curr) { branches = true; }
-  void visitPush(Push* curr) { calls = true; }
-  void visitPop(Pop* curr) { calls = true; }
-  void visitTupleMake(TupleMake* curr) {}
-  void visitTupleExtract(TupleExtract* curr) {}
+    void visitRefNull(RefNull* curr) {}
+    void visitRefIs(RefIs* curr) {}
+    void visitRefFunc(RefFunc* curr) {}
+    void visitRefEq(RefEq* curr) {}
+    void visitTry(Try* curr) {}
+    void visitThrow(Throw* curr) {
+      if (parent.tryDepth == 0) {
+        parent.throws = true;
+      }
+    }
+    void visitRethrow(Rethrow* curr) {
+      if (parent.tryDepth == 0) {
+        parent.throws = true;
+      }
+      // traps when the arg is null
+      parent.implicitTrap = true;
+    }
+    void visitNop(Nop* curr) {}
+    void visitUnreachable(Unreachable* curr) { parent.trap = true; }
+    void visitPop(Pop* curr) {
+      if (parent.catchDepth == 0) {
+        parent.danglingPop = true;
+      }
+    }
+    void visitTupleMake(TupleMake* curr) {}
+    void visitTupleExtract(TupleExtract* curr) {}
+    void visitI31New(I31New* curr) {}
+    void visitI31Get(I31Get* curr) {}
+    void visitCallRef(CallRef* curr) {
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws = true;
+      }
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+      // traps when the arg is null
+      parent.implicitTrap = true;
+    }
+    void visitRefTest(RefTest* curr) {}
+    void visitRefCast(RefCast* curr) {
+      // Traps if the ref is not null and it has an invalid rtt.
+      parent.implicitTrap = true;
+    }
+    void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
+    void visitRttCanon(RttCanon* curr) {}
+    void visitRttSub(RttSub* curr) {}
+    void visitStructNew(StructNew* curr) {}
+    void visitStructGet(StructGet* curr) {
+      parent.readsHeap = true;
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+    }
+    void visitStructSet(StructSet* curr) {
+      parent.writesHeap = true;
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+    }
+    void visitArrayNew(ArrayNew* curr) {}
+    void visitArrayGet(ArrayGet* curr) {
+      parent.readsHeap = true;
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
+    }
+    void visitArraySet(ArraySet* curr) {
+      parent.writesHeap = true;
+      // traps when the arg is null or the index out of bounds
+      parent.implicitTrap = true;
+    }
+    void visitArrayLen(ArrayLen* curr) {
+      // traps when the arg is null
+      if (curr->ref->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+    }
+    void visitRefAs(RefAs* curr) {
+      // traps when the arg is not valid
+      if (curr->value->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+    }
+  };
 
+public:
   // Helpers
 
   static bool canReorder(const PassOptions& passOptions,
@@ -481,11 +645,12 @@ struct EffectAnalyzer
     ImplicitTrap = 1 << 8,
     IsAtomic = 1 << 9,
     Throws = 1 << 10,
-    Any = (1 << 11) - 1
+    DanglingPop = 1 << 11,
+    Any = (1 << 12) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
-    if (branches) {
+    if (branchesOut || hasExternalBreakTargets()) {
       effects |= SideEffects::Branches;
     }
     if (calls) {
@@ -518,7 +683,28 @@ struct EffectAnalyzer
     if (throws) {
       effects |= SideEffects::Throws;
     }
+    if (danglingPop) {
+      effects |= SideEffects::DanglingPop;
+    }
     return effects;
+  }
+
+  void ignoreBranches() {
+    branchesOut = false;
+    breakTargets.clear();
+  }
+
+private:
+  void pre() { breakTargets.clear(); }
+
+  void post() {
+    assert(tryDepth == 0);
+
+    if (ignoreImplicitTraps) {
+      implicitTrap = false;
+    } else if (implicitTrap) {
+      trap = true;
+    }
   }
 };
 

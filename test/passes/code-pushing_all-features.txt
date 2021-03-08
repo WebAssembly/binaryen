@@ -2,7 +2,7 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (event $e (attr 0) (param i32))
- (func $cant-push-past-call (; 0 ;)
+ (func $cant-push-past-call
   (local $x i32)
   (block $out
    (local.set $x
@@ -20,7 +20,7 @@
    )
   )
  )
- (func $cant-push-past-throw (; 1 ;)
+ (func $cant-push-past-throw
   (local $x i32)
   (block $out
    (local.set $x
@@ -40,16 +40,49 @@
    )
   )
  )
- (func $can-push-past-throw-within-try (; 2 ;)
+ (func $can-push-past-try
   (local $x i32)
   (block $out
-   (try
-    (throw $e
-     (i32.const 0)
+   (try $try
+    (do
+     (throw $e
+      (i32.const 0)
+     )
     )
-    (catch
+    (catch_all
+     (nop)
+    )
+   )
+   (drop
+    (i32.const 1)
+   )
+   (br_if $out
+    (i32.const 2)
+   )
+   (local.set $x
+    (i32.const 1)
+   )
+   (drop
+    (local.get $x)
+   )
+  )
+ )
+ (func $foo
+  (nop)
+ )
+ (func $cant-push-past-try
+  (local $x i32)
+  (block $out
+   (local.set $x
+    (i32.const 1)
+   )
+   (try $try
+    (do
+     (call $foo)
+    )
+    (catch $e
      (drop
-      (exnref.pop)
+      (pop i32)
      )
     )
    )
@@ -59,28 +92,25 @@
    (br_if $out
     (i32.const 2)
    )
-   (local.set $x
-    (i32.const 1)
-   )
    (drop
     (local.get $x)
    )
   )
  )
- (func $cant-push-past-rethrow-within-catch (; 3 ;)
+ (func $cant-push-past-rethrow-within-catch
   (local $x i32)
   (block $out
    (local.set $x
     (i32.const 1)
    )
-   (try
-    (throw $e
-     (i32.const 0)
-    )
-    (catch
-     (rethrow
-      (exnref.pop)
+   (try $l0
+    (do
+     (throw $e
+      (i32.const 0)
      )
+    )
+    (catch_all
+     (rethrow $l0)
     )
    )
    (drop
@@ -90,23 +120,6 @@
     (i32.const 2)
    )
    (drop
-    (local.get $x)
-   )
-  )
- )
- (func $push-past-br-on-exn (; 4 ;)
-  (local $x i32)
-  (local $y exnref)
-  (drop
-   (block $out (result i32)
-    (drop
-     (br_on_exn $out $e
-      (local.get $y)
-     )
-    )
-    (local.set $x
-     (i32.const 1)
-    )
     (local.get $x)
    )
   )

@@ -73,9 +73,30 @@
   (import "env" "memory" (memory $0 256))
   (import "env" "table" (table 0 funcref))
 )
+(module ;; remove all tables and the memory
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 funcref))
+  (import "env" "table2" (table $1 1 2 funcref))
+  (elem (table $1) (offset (i32.const 0)) func)
+  (elem (table $1) (offset (i32.const 1)) func)
+)
+(module ;; remove the first table and memory, but not the second one
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 funcref))
+  (import "env" "table2" (table $1 1 1 funcref))
+  (elem (table $1) (offset (i32.const 0)) func)
+  (elem (table $1) (offset (i32.const 0)) func $f)
+  (func $f)
+)
 (module ;; also when not imported
   (memory 256)
   (table 1 funcref)
+)
+(module ;; also with multiple tables
+  (memory 256)
+  (table $0 1 funcref)
+  (table $1 1 funcref)
+  (elem (table $1) (i32.const 0) func)
 )
 (module ;; but not when exported
   (import "env" "memory" (memory $0 256))
@@ -128,7 +149,7 @@
     (local $0 i32)
     (local $1 i64)
     (drop
-     (i32.atomic.wait
+     (memory.atomic.wait32
       (local.get $0)
       (local.get $0)
       (local.get $1)
@@ -140,7 +161,7 @@
   (memory $0 (shared 23 256))
   (export "user" $user)
   (func $user (result i32)
-    (atomic.notify (i32.const 0) (i32.const 0))
+    (memory.atomic.notify (i32.const 0) (i32.const 0))
   )
 )
 (module ;; more use checks
@@ -266,22 +287,17 @@
  (event $e-remove (attr 0) (type $0))   ;; can be removed
  (event $e-export (attr 0) (param i64)) ;; cannot be removed (exported)
  (event $e-throw (attr 0) (type $0))    ;; cannot be removed (used in throw)
- (event $e-bronexn (attr 0) (type $0))  ;; cannot be removed (used in br_on_exn)
+ (event $e-catch (attr 0) (type $0))    ;; cannot be removed (used in catch)
  (export "e-export" (event $e-export))
  (import "env" "e" (event $e-import (attr 0) (param i32)))
  (start $start)
- (func $start (local $exn exnref) (; 0 ;)
+ (func $start
   (try
-   (throw $e-throw (i32.const 0))
-   (catch
-    (local.set $exn (exnref.pop))
-    (drop
-     (block $l0 (result i32)
-      (rethrow
-       (br_on_exn $l0 $e-bronexn (local.get $exn))
-      )
-     )
-    )
+   (do
+    (throw $e-throw (i32.const 0))
+   )
+   (catch $e-catch
+    (drop (pop i32))
    )
   )
  )

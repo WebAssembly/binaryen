@@ -71,8 +71,12 @@ std::string GetLastErrorStdStr() {
 #endif
 using namespace wasm;
 
-// a timeout on every execution of the command
-size_t timeout = 2;
+// A timeout on every execution of the command.
+static size_t timeout = 2;
+
+// A string of feature flags and other things to pass while reducing. The
+// default of enabling all features should work in most cases.
+static std::string extraFlags = "-all";
 
 struct ProgramResult {
   int code;
@@ -282,11 +286,12 @@ struct Reducer
       // compensated for), and without
       for (auto pass : passes) {
         std::string currCommand = Path::getBinaryenBinaryTool("wasm-opt") + " ";
-        // TODO(tlively): -all should be replaced with an option to use the
-        // existing feature set, once implemented.
-        currCommand += working + " -all -o " + test + " " + pass;
+        currCommand += working + " -o " + test + " " + pass + " " + extraFlags;
         if (debugInfo) {
           currCommand += " -g ";
+        }
+        if (!binary) {
+          currCommand += " -S ";
         }
         if (verbose) {
           std::cerr << "|    trying pass command: " << currCommand << "\n";
@@ -341,10 +346,14 @@ struct Reducer
 
   void loadWorking() {
     module = make_unique<Module>();
-    Module wasm;
     ModuleReader reader;
     reader.read(working, *module);
-    wasm.features = FeatureSet::All;
+    // If there is no features section, assume we may need them all (without
+    // this, a module with no features section but that uses e.g. atomics and
+    // bulk memory would not work).
+    if (!module->hasFeaturesSection) {
+      module->features = FeatureSet::All;
+    }
     builder = make_unique<Builder>(*module);
     setModule(module.get());
   }
@@ -577,9 +586,14 @@ struct Reducer
           continue; // no conversion
         }
         Expression* fixed = nullptr;
-        switch (curr->type.getSingle()) {
+        if (!curr->type.isBasic() || !child->type.isBasic()) {
+          // TODO: handle compound types
+          continue;
+        }
+        switch (curr->type.getBasic()) {
           case Type::i32: {
-            switch (child->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(child->type);
+            switch (child->type.getBasic()) {
               case Type::i32:
                 WASM_UNREACHABLE("invalid type");
               case Type::i64:
@@ -593,9 +607,11 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
+              case Type::externref:
               case Type::anyref:
-              case Type::nullref:
-              case Type::exnref:
+              case Type::eqref:
+              case Type::i31ref:
+              case Type::dataref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -604,7 +620,8 @@ struct Reducer
             break;
           }
           case Type::i64: {
-            switch (child->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(child->type);
+            switch (child->type.getBasic()) {
               case Type::i32:
                 fixed = builder->makeUnary(ExtendSInt32, child);
                 break;
@@ -618,9 +635,11 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
+              case Type::externref:
               case Type::anyref:
-              case Type::nullref:
-              case Type::exnref:
+              case Type::eqref:
+              case Type::i31ref:
+              case Type::dataref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -629,7 +648,8 @@ struct Reducer
             break;
           }
           case Type::f32: {
-            switch (child->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(child->type);
+            switch (child->type.getBasic()) {
               case Type::i32:
                 fixed = builder->makeUnary(ConvertSInt32ToFloat32, child);
                 break;
@@ -643,9 +663,11 @@ struct Reducer
                 break;
               case Type::v128:
               case Type::funcref:
+              case Type::externref:
               case Type::anyref:
-              case Type::nullref:
-              case Type::exnref:
+              case Type::eqref:
+              case Type::i31ref:
+              case Type::dataref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -654,7 +676,8 @@ struct Reducer
             break;
           }
           case Type::f64: {
-            switch (child->type.getSingle()) {
+            TODO_SINGLE_COMPOUND(child->type);
+            switch (child->type.getBasic()) {
               case Type::i32:
                 fixed = builder->makeUnary(ConvertSInt32ToFloat64, child);
                 break;
@@ -668,9 +691,11 @@ struct Reducer
                 WASM_UNREACHABLE("unexpected type");
               case Type::v128:
               case Type::funcref:
+              case Type::externref:
               case Type::anyref:
-              case Type::nullref:
-              case Type::exnref:
+              case Type::eqref:
+              case Type::i31ref:
+              case Type::dataref:
                 continue; // not implemented yet
               case Type::none:
               case Type::unreachable:
@@ -680,9 +705,11 @@ struct Reducer
           }
           case Type::v128:
           case Type::funcref:
+          case Type::externref:
           case Type::anyref:
-          case Type::nullref:
-          case Type::exnref:
+          case Type::eqref:
+          case Type::i31ref:
+          case Type::dataref:
             continue; // not implemented yet
           case Type::none:
           case Type::unreachable:
@@ -714,47 +741,39 @@ struct Reducer
 
   // TODO: bisection on segment shrinking?
 
-  void visitTable(Table* curr) {
-    std::cerr << "|    try to simplify table\n";
-    Name first;
-    for (auto& segment : curr->segments) {
-      for (auto item : segment.data) {
-        first = item;
-        break;
-      }
-      if (!first.isNull()) {
-        break;
-      }
-    }
-    visitSegmented(curr, first, 100);
-  }
-
   void visitMemory(Memory* curr) {
     std::cerr << "|    try to simplify memory\n";
-    visitSegmented(curr, 0, 2);
+
+    // try to reduce to first function. first, shrink segment elements.
+    // while we are shrinking successfully, keep going exponentially.
+    bool shrank = false;
+    for (auto& segment : curr->segments) {
+      shrank = shrinkByReduction(&segment, 2);
+    }
+    // the "opposite" of shrinking: copy a 'zero' element
+    for (auto& segment : curr->segments) {
+      reduceByZeroing(&segment, 0, 2, shrank);
+    }
   }
 
-  template<typename T, typename U>
-  void visitSegmented(T* curr, U zero, size_t bonus) {
+  template<typename T> bool shrinkByReduction(T* segment, size_t bonus) {
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool justShrank = false;
     bool shrank = false;
-    for (auto& segment : curr->segments) {
-      auto& data = segment.data;
-      // when we succeed, try to shrink by more and more, similar to bisection
-      size_t skip = 1;
-      for (size_t i = 0; i < data.size() && !data.empty(); i++) {
-        if (!justShrank && !shouldTryToReduce(bonus)) {
-          continue;
-        }
+
+    auto& data = segment->data;
+    // when we succeed, try to shrink by more and more, similar to bisection
+    size_t skip = 1;
+    for (size_t i = 0; i < data.size() && !data.empty(); i++) {
+      if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
           if (!data.empty()) {
             data.pop_back();
           }
         }
-        auto justShrank = writeAndTestReduction();
+        justShrank = writeAndTestReduction();
         if (justShrank) {
           std::cerr << "|      shrank segment (skip: " << skip << ")\n";
           shrank = true;
@@ -766,37 +785,67 @@ struct Reducer
         }
       }
     }
-    // the "opposite" of shrinking: copy a 'zero' element
-    for (auto& segment : curr->segments) {
-      if (segment.data.empty()) {
+
+    return shrank;
+  }
+
+  template<typename T, typename U>
+  void reduceByZeroing(T* segment, U zero, size_t bonus, bool shrank) {
+    if (segment->data.empty()) {
+      return;
+    }
+    for (auto& item : segment->data) {
+      if (!shouldTryToReduce(bonus)) {
         continue;
       }
-      for (auto& item : segment.data) {
-        if (!shouldTryToReduce(bonus)) {
-          continue;
-        }
-        if (item == zero) {
-          continue;
-        }
-        auto save = item;
-        item = zero;
-        if (writeAndTestReduction()) {
-          std::cerr << "|      zeroed segment\n";
-          noteReduction();
-        } else {
-          item = save;
-        }
-        if (shrank) {
-          // zeroing is fairly inefficient. if we are managing to shrink
-          // (which we do exponentially), just zero one per segment at most
-          break;
-        }
+      if (item == zero) {
+        continue;
       }
+      auto save = item;
+      item = zero;
+      if (writeAndTestReduction()) {
+        std::cerr << "|      zeroed elem segment\n";
+        noteReduction();
+      } else {
+        item = save;
+      }
+      if (shrank) {
+        // zeroing is fairly inefficient. if we are managing to shrink
+        // (which we do exponentially), just zero one per segment at most
+        break;
+      }
+    }
+  }
+
+  void shrinkElementSegments(Module* module) {
+    std::cerr << "|    try to simplify elem segments\n";
+    Name first;
+    auto it =
+      std::find_if_not(module->elementSegments.begin(),
+                       module->elementSegments.end(),
+                       [&](auto& segment) { return segment->data.empty(); });
+
+    if (it != module->elementSegments.end()) {
+      first = it->get()->data[0];
+    }
+
+    // try to reduce to first function. first, shrink segment elements.
+    // while we are shrinking successfully, keep going exponentially.
+    bool shrank = false;
+    for (auto& segment : module->elementSegments) {
+      shrank = shrinkByReduction(segment.get(), 100);
+    }
+    // the "opposite" of shrinking: copy a 'zero' element
+    for (auto& segment : module->elementSegments) {
+      reduceByZeroing(segment.get(), first, 100, shrank);
     }
   }
 
   void visitModule(Module* curr) {
     assert(curr == module.get());
+
+    shrinkElementSegments(curr);
+
     // try to remove functions
     std::cerr << "|    try to remove functions\n";
     std::vector<Name> functionNames;
@@ -871,8 +920,13 @@ struct Reducer
     }
     // If we are left with a single function that is not exported or used in
     // a table, that is useful as then we can change the return type.
+    bool allTablesEmpty =
+      std::all_of(module->elementSegments.begin(),
+                  module->elementSegments.end(),
+                  [&](auto& segment) { return segment->data.empty(); });
+
     if (module->functions.size() == 1 && module->exports.empty() &&
-        module->table.segments.empty()) {
+        allTablesEmpty) {
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {
@@ -921,33 +975,14 @@ struct Reducer
           replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
         }
       }
+      void visitRefFunc(RefFunc* curr) {
+        if (names.count(curr->func)) {
+          replaceCurrent(Builder(*getModule()).replaceWithIdenticalType(curr));
+        }
+      }
       void visitExport(Export* curr) {
         if (names.count(curr->value)) {
           exportsToRemove.push_back(curr->name);
-        }
-      }
-      void visitTable(Table* curr) {
-        Name other;
-        for (auto& segment : curr->segments) {
-          for (auto name : segment.data) {
-            if (!names.count(name)) {
-              other = name;
-              break;
-            }
-          }
-          if (!other.isNull()) {
-            break;
-          }
-        }
-        if (other.isNull()) {
-          return; // we failed to find a replacement
-        }
-        for (auto& segment : curr->segments) {
-          for (auto& name : segment.data) {
-            if (names.count(name)) {
-              name = other;
-            }
-          }
         }
       }
       void doWalkModule(Module* module) {
@@ -981,7 +1016,7 @@ struct Reducer
     if (condition->is<Const>()) {
       return;
     }
-    auto* c = builder->makeConst(Literal(int32_t(0)));
+    auto* c = builder->makeConst(int32_t(0));
     if (!tryToReplaceChild(condition, c)) {
       c->value = Literal(int32_t(1));
       tryToReplaceChild(condition, c);
@@ -1009,20 +1044,25 @@ struct Reducer
       return false;
     }
     // try to replace with a trivial value
-    if (curr->type.isRef()) {
-      RefNull* n = builder->makeRefNull();
+    if (curr->type.isNullable()) {
+      RefNull* n = builder->makeRefNull(curr->type);
       return tryToReplaceCurrent(n);
     }
-    if (curr->type.isMulti()) {
+    if (curr->type.isTuple()) {
       Expression* n =
-        builder->makeConstantExpression(Literal::makeZero(curr->type));
+        builder->makeConstantExpression(Literal::makeZeros(curr->type));
       return tryToReplaceCurrent(n);
     }
-    Const* c = builder->makeConst(Literal(int32_t(0)));
+    if (!curr->type.isNumber()) {
+      return false;
+    }
+    // It's a number: try to replace it with a 0 or a 1 (trying more values
+    // could make sense too, but these handle most cases).
+    auto* c = builder->makeConst(Literal::makeZero(curr->type));
     if (tryToReplaceCurrent(c)) {
       return true;
     }
-    c->value = Literal::makeFromInt32(1, curr->type);
+    c->value = Literal::makeOne(curr->type);
     c->type = curr->type;
     return tryToReplaceCurrent(c);
   }
@@ -1122,6 +1162,15 @@ int main(int argc, const char* argv[]) {
            timeout = atoi(argument.c_str());
            std::cout << "|applying timeout: " << timeout << "\n";
          })
+    .add("--extra-flags",
+         "-ef",
+         "Extra commandline flags to pass to wasm-opt while reducing. "
+         "(default: --enable-all)",
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           extraFlags = argument;
+           std::cout << "|applying extraFlags: " << extraFlags << "\n";
+         })
     .add_positional(
       "INFILE",
       Options::Arguments::One,
@@ -1168,19 +1217,30 @@ int main(int argc, const char* argv[]) {
                     expected);
   }
 
-  std::cerr
-    << "|checking that command has different behavior on invalid binary (this "
-       "verifies that the test file is used by the command)\n";
-  {
+  if (!force) {
+    std::cerr << "|checking that command has different behavior on different "
+                 "inputs (this "
+                 "verifies that the test file is used by the command)\n";
+    // Try it on an invalid input.
     {
       std::ofstream dst(test, std::ios::binary);
       dst << "waka waka\n";
     }
-    ProgramResult result(command);
-    if (result == expected) {
-      stopIfNotForced(
-        "running command on an invalid module should give different results",
-        result);
+    ProgramResult resultOnInvalid(command);
+    if (resultOnInvalid == expected) {
+      // Try it on a valid input.
+      Module emptyModule;
+      ModuleWriter writer;
+      writer.setBinary(true);
+      writer.write(emptyModule, test);
+      ProgramResult resultOnValid(command);
+      if (resultOnValid == expected) {
+        Fatal()
+          << "running the command on the given input gives the same result as "
+             "when running it on either a trivial valid wasm or a file with "
+             "nonsense in it. does the script not look at the test file (" +
+               test + ")? (use -f to ignore this check)";
+      }
     }
   }
 
@@ -1188,12 +1248,10 @@ int main(int argc, const char* argv[]) {
                "(read-written) binary\n";
   {
     // read and write it
-    // TODO(tlively): -all should be replaced with an option to use the existing
-    // feature set, once implemented.
-    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input +
-               " -all -o " + test;
+    auto cmd = Path::getBinaryenBinaryTool("wasm-opt") + " " + input + " -o " +
+               test + " " + extraFlags;
     if (!binary) {
-      cmd += " -S";
+      cmd += " -S ";
     }
     ProgramResult readWrite(cmd);
     if (readWrite.failed()) {

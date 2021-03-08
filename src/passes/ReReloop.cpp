@@ -31,10 +31,6 @@
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-#ifdef RERELOOP_DEBUG
-#include <wasm-printing.h>
-#endif
-
 namespace wasm {
 
 struct ReReloop final : public Pass {
@@ -50,9 +46,7 @@ struct ReReloop final : public Pass {
   CFG::Block* currCFGBlock = nullptr;
 
   CFG::Block* makeCFGBlock() {
-    auto* ret = new CFG::Block(builder->makeBlock());
-    relooper->AddBlock(ret);
-    return ret;
+    return relooper->AddBlock(builder->makeBlock());
   }
 
   CFG::Block* setCurrCFGBlock(CFG::Block* curr) {
@@ -100,6 +94,7 @@ struct ReReloop final : public Pass {
   // we work using a stack of control flow tasks
 
   struct Task {
+    virtual ~Task() = default;
     ReReloop& parent;
     Task(ReReloop& parent) : parent(parent) {}
     virtual void run() { WASM_UNREACHABLE("unimpl"); }
@@ -284,6 +279,8 @@ struct ReReloop final : public Pass {
       ReturnTask::handle(*this, ret);
     } else if (auto* un = curr->dynCast<Unreachable>()) {
       UnreachableTask::handle(*this, un);
+    } else if (curr->is<Try>() || curr->is<Throw>() || curr->is<Rethrow>()) {
+      Fatal() << "ReReloop does not support EH instructions yet";
     } else {
       // not control flow, so just a simple element
       getCurrBlock()->list.push_back(curr);
@@ -318,7 +315,7 @@ struct ReReloop final : public Pass {
     // blocks that do not have any exits are dead ends in the relooper. we need
     // to make sure that are in fact dead ends, and do not flow control
     // anywhere. add a return as needed
-    for (auto* cfgBlock : relooper->Blocks) {
+    for (auto& cfgBlock : relooper->Blocks) {
       auto* block = cfgBlock->Code->cast<Block>();
       if (cfgBlock->BranchesOut.empty() && block->type != Type::unreachable) {
         block->list.push_back(function->sig.results == Type::none
@@ -361,7 +358,7 @@ struct ReReloop final : public Pass {
       }
     }
     // TODO: should this be in the relooper itself?
-    ReFinalize().walk(function->body);
+    ReFinalize().walkFunctionInModule(function, module);
   }
 };
 

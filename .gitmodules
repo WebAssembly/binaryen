@@ -1,6 +1,0 @@
-[submodule "test/spec"]
-	path = test/spec
-	url = https://github.com/WebAssembly/testsuite.git
-[submodule "test/emscripten"]
-	path = test/emscripten
-	url = https://github.com/kripken/emscripten.git

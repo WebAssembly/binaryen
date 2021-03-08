@@ -20,7 +20,6 @@
 // TODO: non-function imports too
 //
 
-#include "asm_v_wasm.h"
 #include "ir/import-utils.h"
 #include "opt-utils.h"
 #include "pass.h"

@@ -2,47 +2,70 @@
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (event $e0 (attr 0) (param i32))
- (func $eh (; 0 ;)
-  (local $exn exnref)
-  try
+ (func $eh
+  try $l0
    i32.const 0
    throw $e0
-  catch
+  catch $e0
    
-   local.set $exn
-   block $l0 (result i32)
-    local.get $exn
-    br_on_exn $l0 $e0
-    rethrow
-   end
    drop
+  catch_all
+   rethrow $l0
   end
+  try $l00
+   try $try
+    i32.const 0
+    throw $e0
+   delegate $l00
+   unreachable
+  catch_all
+   nop
+  end
+  try $l01
+   nop
+  delegate 0
  )
 )
 (module
  (type $none_=>_none (func))
  (type $i32_=>_none (func (param i32)))
  (event $e0 (attr 0) (param i32))
- (func $eh (; 0 ;) (; has Stack IR ;)
-  (local $exn exnref)
-  (try
-   (throw $e0
-    (i32.const 0)
-   )
-   (catch
-    (local.set $exn
-     (exnref.pop)
+ (func $eh (; has Stack IR ;)
+  (try $l0
+   (do
+    (throw $e0
+     (i32.const 0)
     )
+   )
+   (catch $e0
     (drop
-     (block $l0 (result i32)
-      (rethrow
-       (br_on_exn $l0 $e0
-        (local.get $exn)
-       )
+     (pop i32)
+    )
+   )
+   (catch_all
+    (rethrow $l0)
+   )
+  )
+  (try $l00
+   (do
+    (try $try
+     (do
+      (throw $e0
+       (i32.const 0)
       )
      )
+     (delegate $l00)
     )
    )
+   (catch_all
+    (nop)
+   )
+  )
+  (try $l01
+   (do
+    (nop)
+   )
+   (delegate 0)
   )
  )
 )

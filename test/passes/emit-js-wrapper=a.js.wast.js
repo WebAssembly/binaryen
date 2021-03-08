@@ -21,13 +21,13 @@ if (typeof process === 'object' && typeof require === 'function' /* node.js dete
   }
 }
 function literal(x, type) {
-  var ret = type + '.const ';
+  var ret = '';
   switch (type) {
     case 'i32': ret += (x | 0); break;
     case 'f32':
     case 'f64': {
       if (x == 0 && (1 / x) < 0) ret += '-';
-      ret += x;
+      ret += Number(x).toString();
       break;
     }
     default: throw 'what?';
@@ -48,36 +48,36 @@ var instance = new WebAssembly.Instance(new WebAssembly.Module(binary), {
 });
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('[fuzz-exec] calling $add');
-  console.log('[fuzz-exec] note result: $add => ' + literal(instance.exports.add(0, 0), 'i32'));
+  console.log('[fuzz-exec] calling add');
+  console.log('[fuzz-exec] note result: add => ' + literal(instance.exports.add(0, 0), 'i32'));
 } catch (e) {
   console.log('exception!' /* + e */);
 }
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('[fuzz-exec] calling $no_return');
+  console.log('[fuzz-exec] calling no_return');
   instance.exports.no_return(0);
 } catch (e) {
   console.log('exception!' /* + e */);
 }
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('[fuzz-exec] calling $types');
+  console.log('[fuzz-exec] calling types');
   instance.exports.types(0, 0, 0, 0, 0);
 } catch (e) {
   console.log('exception!' /* + e */);
 }
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('[fuzz-exec] calling $types2');
+  console.log('[fuzz-exec] calling types2');
   instance.exports.types2(0, 0, 0);
 } catch (e) {
   console.log('exception!' /* + e */);
 }
 if (instance.exports.hangLimitInitializer) instance.exports.hangLimitInitializer();
 try {
-  console.log('[fuzz-exec] calling $types3');
-  console.log('[fuzz-exec] note result: $types3 => ' + literal(instance.exports.types3(0, 0, 0), 'i32'));
+  console.log('[fuzz-exec] calling types3');
+  console.log('[fuzz-exec] note result: types3 => ' + literal(instance.exports.types3(0, 0, 0), 'i32'));
 } catch (e) {
   console.log('exception!' /* + e */);
 }

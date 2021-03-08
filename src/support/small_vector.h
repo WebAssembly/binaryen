@@ -46,6 +46,7 @@ public:
       push_back(item);
     }
   }
+  SmallVector(size_t initialSize) { resize(initialSize); }
 
   T& operator[](size_t i) {
     if (i < N) {
@@ -111,6 +112,13 @@ public:
     flexible.clear();
   }
 
+  void resize(size_t newSize) {
+    usedFixed = std::min(N, newSize);
+    if (newSize > N) {
+      flexible.resize(newSize - N);
+    }
+  }
+
   bool operator==(const SmallVector<T, N>& other) const {
     if (usedFixed != other.usedFixed) {
       return false;
@@ -171,6 +179,30 @@ public:
   Iterator end() { return Iterator(this, size()); }
   ConstIterator begin() const { return ConstIterator(this, 0); }
   ConstIterator end() const { return ConstIterator(this, size()); }
+};
+
+// A SmallVector for which some values may be read before they are written, and
+// in that case they have the value zero.
+template<typename T, size_t N>
+struct ZeroInitSmallVector : public SmallVector<T, N> {
+  T& operator[](size_t i) {
+    if (i >= this->size()) {
+      resize(i + 1);
+    }
+    return SmallVector<T, N>::operator[](i);
+  }
+
+  const T& operator[](size_t i) const {
+    return const_cast<ZeroInitSmallVector<T, N>&>(*this)[i];
+  }
+
+  void resize(size_t newSize) {
+    auto oldSize = this->size();
+    SmallVector<T, N>::resize(newSize);
+    for (size_t i = oldSize; i < this->size(); i++) {
+      (*this)[i] = 0;
+    }
+  }
 };
 
 } // namespace wasm

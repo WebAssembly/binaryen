@@ -1,5 +1,4 @@
-[![Build Status](https://travis-ci.org/WebAssembly/binaryen.svg?branch=master)](https://travis-ci.org/WebAssembly/binaryen)
-[![Windows CI](https://ci.appveyor.com/api/projects/status/nvm9tuwxnup9h5ar/branch/master?svg=true)](https://ci.appveyor.com/project/WebAssembly/binaryen/branch/master)
+[![CI](https://github.com/WebAssembly/binaryen/workflows/CI/badge.svg?branch=main&event=push)](https://github.com/WebAssembly/binaryen/actions?query=workflow%3ACI)
 
 # Binaryen
 
@@ -17,22 +16,20 @@ effective**:
    cores. Binaryen's IR also compiles down to WebAssembly extremely easily and
    quickly because it is essentially a subset of WebAssembly.
 
- * **Effective**: Binaryen's optimizer has many [passes] that can improve code
-   very significantly (e.g. local coloring to coalesce local variables; dead
-   code elimination; precomputing expressions when possible at compile time;
-   etc.). These optimizations aim to make Binaryen powerful enough to be used as
-   a [compiler backend][backend] by itself.  One specific area of focus is on
-   WebAssembly-specific optimizations (that general-purpose compilers might not
-   do), which you can think of as wasm [minification] , similar to minification
-   for JavaScript, CSS, etc., all of which are language-specific (an example of
-   such an optimization is block return value generation in `SimplifyLocals`).
+ * **Effective**: Binaryen's optimizer has many passes (see an overview later
+   down) that can improve code size and speed. These optimizations aim to make
+   Binaryen powerful enough to be used as a [compiler backend][backend] by
+   itself.  One specific area of focus is on WebAssembly-specific optimizations
+   (that general-purpose compilers might not do), which you can think of as
+   wasm [minification], similar to minification for JavaScript, CSS, etc., all
+   of which are language-specific.
 
-Compilers built using Binaryen include
+Compilers using Binaryen include:
 
- * [`asm2wasm`](https://github.com/WebAssembly/binaryen/blob/master/src/asm2wasm.h) which compiles asm.js to WebAssembly
- * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles TypeScript to Binaryen IR
- * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/master/src/wasm2js.h) which compiles WebAssembly to JS
+ * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles a variant of TypeScript to WebAssembly
+ * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/main/src/wasm2js.h) which compiles WebAssembly to JS
  * [`Asterius`](https://github.com/tweag/asterius) which compiles Haskell to WebAssembly
+ * [`Grain`](https://github.com/grain-lang/grain) which compiles Grain to WebAssembly
 
 Binaryen also provides a set of **toolchain utilities** that can
 
@@ -69,9 +66,11 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      it can read a wasm text file if it contains only s-expressions.
    * Binaryen uses Stack IR to optimize "stacky" code (that can't be
      represented in structured form).
-   * In rare cases stacky code must be represented in Binaryen IR as well, like
-     popping a value in an exception catch. To support that Binaryen IR has
-     `push` and `pop` instructions.
+   * When stacky code must be represented in Binaryen IR, such as with
+     multivalue instructions and blocks, it is represented with tuple types that
+     do not exist in the WebAssembly language. In addition to multivalue
+     instructions, locals and globals can also have tuple types in Binaryen IR
+     but not in WebAssembly.
  * Types and unreachable code
    * WebAssembly limits block/if/loop types to none and the concrete value types
      (i32, i64, f32, f64). Binaryen IR has an unreachable type, and it allows
@@ -121,6 +120,12 @@ There are a few differences between Binaryen IR and the WebAssembly language:
      and so they are observable externally. To support that, Binaryen may use
      `push` and `pop` as mentioned earlier; another option is to add LLVM-like
      `extractvalue/composevalue` instructions.
+ * Reference Types
+  * The wasm text and binary formats require that a function whose address is
+    taken by `ref.func` must be either in the table, or declared via an
+    `(elem declare func $..)`. Binaryen will emit that data when necessary, but
+    it does not represent it in IR. That is, IR can be worked on without needing
+    to think about declaring function references.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
@@ -166,14 +171,106 @@ This repository contains code that builds the following tools in `bin/`:
    also run the spec test suite.
  * **wasm-emscripten-finalize**: Takes a wasm binary produced by llvm+lld and
    performs emscripten-specific passes over it.
- * **asm2wasm**: An asm.js-to-WebAssembly compiler, using Emscripten's asm
-   optimizer infrastructure. This is used by Emscripten in Binaryen mode when it
-   uses Emscripten's fastcomp asm.js backend.
  * **wasm-ctor-eval**: A tool that can execute C++ global constructors ahead of
    time. Used by Emscripten.
- * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/master/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
+ * **binaryen.js**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing WASM modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [github](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js), [rawgit](https://cdn.rawgit.com/AssemblyScript/binaryen.js/master/index.js), or [unpkg](https://unpkg.com/binaryen@latest/index.js)).
 
 Usage instructions for each are below.
+
+## Binaryen Optimizations
+
+Binaryen contains
+[a lot of optimization passes](https://github.com/WebAssembly/binaryen/tree/main/src/passes)
+to make WebAssembly smaller and faster. You can run the Binaryen optimizer by
+using ``wasm-opt``, but also they can be run while using other tools, like
+``wasm2js`` and ``wasm-metadce``.
+
+* The default optimization pipeline is set up by functions like
+  [`addDefaultFunctionOptimizationPasses`](https://github.com/WebAssembly/binaryen/blob/369b8bdd3d9d49e4d9e0edf62e14881c14d9e352/src/passes/pass.cpp#L396).
+* There are various
+  [pass options](https://github.com/WebAssembly/binaryen/blob/369b8bdd3d9d49e4d9e0edf62e14881c14d9e352/src/pass.h#L85)
+  that you can set, to adjust the optimization and shrink levels, whether to
+  ignore unlikely traps, inlining heuristics, fast-math, and so forth. See
+  ``wasm-opt --help`` for how to set them and other details.
+
+See each optimization pass for details of what it does, but here is a quick
+overview of some of the relevant ones:
+
+* **CoalesceLocals** - Key “register allocation” pass. Does a live range
+  analysis and then reuses locals in order to minimize their number, as well as
+  to remove copies between them.
+* **CodeFolding** - Avoids duplicate code by merging it (e.g. if two `if` arms
+  have some shared instructions at their end).
+* **CodePushing** - “Pushes” code forward past branch operations, potentially
+  allowing the code to not be run if the branch is taken.
+* **DeadArgumentElimination** - LTO pass to remove arguments to a function if it
+  is always called with the same constants.
+* **DeadCodeElimination**
+* **Directize** - Turn an indirect call into a normal call, when the table index
+  is constant.
+* **DuplicateFunctionElimination** - LTO pass.
+* **Inlining** - LTO pass.
+* **LocalCSE** - Simple local common subexpression elimination.
+* **LoopInvariantCodeMotion**
+* **MemoryPacking** - Key "optimize data segments" pass that combines segments,
+  removes unneeded parts, etc.
+* **MergeBlocks** - Merge a `block` to an outer one where possible, reducing
+  their number.
+* **MergeLocals** - When two locals have the same value in part of their
+  overlap, pick in a way to help CoalesceLocals do better later (split off from
+  CoalesceLocals to keep the latter simple).
+* **MinifyImportsAndExports** - Minifies them to “a”, “b”, etc.
+* **OptimizeAddedConstants** - Optimize a load/store with an added constant into
+  a constant offset.
+* **OptimizeInstructions** - Key peephole optimization pass with a constantly
+  increasing list of patterns.
+* **PickLoadSigns** - Adjust whether a load is signed or unsigned in order to
+  avoid sign/unsign operations later.
+* **Precompute** - Calculates constant expressions at compile time, using the
+  built-in interpreter (which is guaranteed to be able to handle any constant
+  expression).
+* **ReReloop** - Transforms wasm structured control flow to a CFG and then goes
+  back to structured form using the Relooper algorithm, which may find more
+  optimal shapes.
+* **RedundantSetElimination** - Removes a `local.set` of a value that is already
+  present in a local. (Overlaps with CoalesceLocals; this achieves the specific
+  operation just mentioned without all the other work CoalesceLocals does, and
+  therefore is useful in other places in the optimization pipeline.)
+* **RemoveUnsedBrs** - Key “minor control flow optimizations” pass, including
+  jump threading and various transforms that can get rid of a `br` or `br_table`
+  (like turning a `block` with a `br` in the middle into an `if` when possible).
+* **RemoveUnusedModuleElements** - “Global DCE”, an LTO pass that removes
+  imports, functions, globals, etc., when they are not used.
+* **ReorderFunctions** - Put more-called functions first, potentially allowing
+  the LEB emitted to call them to be smaller (in a very large program).
+* **ReorderLocals** - Put more-used locals first, potentially allowing the LEB
+  emitted to use them to be smaller (in a very large function). After the
+  sorting, it also removes locals not used at all.
+* **SimplifyGlobals** - Optimizes globals in various ways, for example,
+  coalescing them, removing mutability from a global never modified, applying a
+  constant value from an immutable global, etc.
+* **SimplifyLocals** - Key “`local.get/set/tee`” optimization pass, doing things
+  like replacing a set and a get with moving the set’s value to the get (and
+  creating a tee) where possible. Also creates `block/if/loop` return values
+  instead of using a local to pass the value.
+* **Vacuum** - Key “remove silly unneeded code” pass, doing things like removing
+  an `if` arm that has no contents, a drop of a constant value with no side
+  effects, a `block` with a single child, etc.
+
+“LTO” in the above means an optimization is Link Time Optimization-like in that
+it works across multiple functions, but in a sense Binaryen is always “LTO” as
+it usually is run on the final linked wasm.
+
+Advanced optimization techniques in the Binaryen optimizer include
+[SSAification](https://github.com/WebAssembly/binaryen/blob/main/src/passes/SSAify.cpp),
+[Flat IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/flat.h), and
+[Stack/Poppy IR](https://github.com/WebAssembly/binaryen/blob/main/src/ir/stack-utils.h).
+
+Binaryen also contains various passes that do other things than optimizations,
+like
+[legalization for JavaScript](https://github.com/WebAssembly/binaryen/blob/main/src/passes/LegalizeJSInterface.cpp),
+[Asyncify](https://github.com/WebAssembly/binaryen/blob/main/src/passes/Asyncify.cpp),
+etc.
 
 ## Building
 
@@ -244,7 +341,7 @@ commands.
 
 It's easy to add your own transformation passes to the shell, just add `.cpp`
 files into `src/passes`, and rebuild the shell. For example code, take a look at
-the [`lower-if-else` pass](https://github.com/WebAssembly/binaryen/blob/master/src/passes/LowerIfElse.cpp).
+the [`lower-if-else` pass](https://github.com/WebAssembly/binaryen/blob/main/src/passes/LowerIfElse.cpp).
 
 Some more notes:
 
@@ -321,66 +418,13 @@ Things keep to in mind with wasm2js's output:
    int/float conversions do not trap, and so forth. There may also be slight
    differences in corner cases of conversions, like non-trapping float to int.
 
-### asm2wasm
-
-Run
-
-```
-bin/asm2wasm [input.asm.js file]
-```
-
-This will print out a WebAssembly module in s-expression format to the console.
-
-For example, try
-
-```
-$ bin/asm2wasm test/hello_world.asm.js
-```
-
-That input file contains
-
-```javascript
-function () {
-  "use asm";
-  function add(x, y) {
-    x = x | 0;
-    y = y | 0;
-    return x + y | 0;
-  }
-  return { add: add };
-}
-```
-
-You should see something like this:
-
-![example output](https://raw.github.com/WebAssembly/wasm-emscripten/master/media/example.png)
-
-By default you should see pretty colors as in that image. Set `COLORS=0` in the
-env to disable colors if you prefer that. On Linux and Mac, you can set
-`COLORS=1` in the env to force colors (useful when piping to `more`, for
-example). For Windows, pretty colors are only available when `stdout/stderr` are
-not redirected/piped.
-
-Pass `--debug` on the command line to see debug info, about asm.js functions as
-they are parsed, etc.
-
-### C/C++ Source ⇒ asm2wasm ⇒ WebAssembly
-
-When using `emcc` with the `BINARYEN` option, it will use Binaryen to build to
-WebAssembly. This lets you compile C and C++ to WebAssembly, with emscripten
-using asm.js internally as a build step. Since emscripten's asm.js generation is
-very stable, and asm2wasm is a fairly simple process, this method of compiling C
-and C++ to WebAssembly is usable already. See the [emscripten
-wiki](https://github.com/kripken/emscripten/wiki/WebAssembly) for more details
-about how to use it.
-
 ## Testing
 
 ```
 ./check.py
 ```
 
-(or `python check.py`) will run `wasm-shell`, `wasm-opt`, `asm2wasm`, etc. on the testcases in `test/`, and verify their outputs.
+(or `python check.py`) will run `wasm-shell`, `wasm-opt`, etc. on the testcases in `test/`, and verify their outputs.
 
 The `check.py` script supports some options:
 
@@ -396,6 +440,28 @@ The `check.py` script supports some options:
    tool cannot be found, and you'll see a warning.
  * We have tests from upstream in `tests/spec`, in git submodules. Running
    `./check.py` should update those.
+
+### Setting up dependencies
+
+```
+./third_party/setup.py [mozjs|v8|wabt|all]
+```
+
+(or `python third_party/setup.py`) installs required dependencies like the SpiderMonkey JS shell, the V8 JS shell
+and WABT in `third_party/`. Other scripts automatically pick these up when installed.
+
+Run `pip3 install -r requirements-dev.txt` to get the requirements for the `lit`
+tests. Note that you need to have the location `pip` installs to in your `$PATH`
+(on linux, `~/.local/bin`).
+
+### Fuzzing
+
+```
+./scripts/fuzz_opt.py [--binaryen-bin=build/bin]
+```
+
+(or `python scripts/fuzz_opt.py`) will run various fuzzing modes on random inputs with random passes until it finds
+a possible bug. See [the wiki page](https://github.com/WebAssembly/binaryen/wiki/Fuzzing) for all the details.
 
 ## Design Principles
 
@@ -424,8 +490,9 @@ Emscripten's WebAssembly processing library (`wasm-emscripten`).
 * Does it compile under Windows and/or Visual Studio?
 
 Yes, it does. Here's a step-by-step [tutorial][win32]  on how to compile it
-under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**. Help
-would be appreciated on Windows and OS X as most of the core devs are on Linux.
+under **Windows 10 x64** with with **CMake** and **Visual Studio 2015**. 
+However, Visual Studio 2017 may now be required. Help would be appreciated on
+Windows and OS X as most of the core devs are on Linux.
 
 [compiling to WebAssembly]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen
 [win32]: https://github.com/brakmic/bazaar/blob/master/webassembly/COMPILING_WIN32.md
@@ -433,7 +500,6 @@ would be appreciated on Windows and OS X as most of the core devs are on Linux.
 [control flow graph]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#cfg-api
 [JS_API]: https://github.com/WebAssembly/binaryen/wiki/binaryen.js-API
 [compile_to_wasm]: https://github.com/WebAssembly/binaryen/wiki/Compiling-to-WebAssembly-with-Binaryen#what-do-i-need-to-have-in-order-to-use-binaryen-to-compile-to-webassembly
-[passes]: https://github.com/WebAssembly/binaryen/tree/master/src/passes
 [backend]: https://kripken.github.io/talks/binaryen.html#/9
 [minification]: https://kripken.github.io/talks/binaryen.html#/2
 [unreachable]: https://github.com/WebAssembly/binaryen/issues/903

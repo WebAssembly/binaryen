@@ -141,7 +141,7 @@ private:
     if (auto* drop = curr->dynCast<Drop>()) {
       curr = drop->value;
     }
-    if (curr->is<If>() || curr->is<BrOnExn>()) {
+    if (curr->is<If>()) {
       return true;
     }
     if (auto* br = curr->dynCast<Break>()) {
@@ -160,10 +160,12 @@ private:
            firstPushable < pushPoint);
     // everything that matters if you want to be pushed past the pushPoint
     EffectAnalyzer cumulativeEffects(passOptions, features);
-    cumulativeEffects.analyze(list[pushPoint]);
+    cumulativeEffects.walk(list[pushPoint]);
     // it is ok to ignore the branching here, that is the crucial point of this
     // opt
-    cumulativeEffects.branches = false;
+    // TODO: it would be ok to ignore thrown exceptions here, if we know they
+    //       could not be caught and must go outside of the function
+    cumulativeEffects.ignoreBranches();
     std::vector<LocalSet*> toPush;
     Index i = pushPoint - 1;
     while (1) {
@@ -192,7 +194,7 @@ private:
         }
       } else {
         // something that can't be pushed, so it might block further pushing
-        cumulativeEffects.analyze(list[i]);
+        cumulativeEffects.walk(list[i]);
       }
       assert(i > 0);
       i--;

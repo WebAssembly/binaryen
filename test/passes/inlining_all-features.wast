@@ -7,32 +7,87 @@
     (call $foo)
     (ref.func $foo)
   )
-
-  ;; Tests if UniqueNameMapper works correctly for br_on_exn labels.
-  ;; We have $l in br_on_exns in both $func_inner and $br_on_name_uniquify_test,
-  ;; which should become unique names respectively after inlining.
-  (event $e (attr 0) (param i32))
-  (func $func_inner
-    (local $exn exnref)
-    (drop
-      (block $l (result i32)
-        (drop
-          (br_on_exn $l $e (local.get $exn))
-        )
-        (i32.const 0)
-      )
-    )
+)
+(module
+ ;; a function reference in a global's init should be noticed, and prevent us
+ ;; from removing an inlined function
+ (global $global$0 (mut funcref) (ref.func $0))
+ (func $0 (result i32)
+  (i32.const 1337)
+ )
+ (func $1 (result i32)
+  (call $0)
+ )
+)
+(module
+ ;; a function reference in the start should be noticed, and prevent us
+ ;; from removing an inlined function
+ (start $0)
+ (func $0
+  (nop)
+ )
+ (func $1
+  (call $0)
+ )
+)
+;; inline a return_call_ref
+(module
+ (type $none_=>_none (func))
+ (export "func_36_invoker" (func $1))
+ (func $0
+  (return_call_ref
+   (ref.null $none_=>_none)
   )
-  (func $br_on_exn_name_uniquify_test
-    (local $exn exnref)
-    (drop
-      (block $l (result i32)
-        (call $func_inner)
-        (drop
-          (br_on_exn $l $e (local.get $exn))
-        )
-        (i32.const 0)
-      )
-    )
+ )
+ (func $1
+  (call $0)
+ )
+)
+;; properly ensure unique try labels after an inlining
+(module
+ (import "a" "b" (func $foo (result i32)))
+ (event $event$0 (attr 0) (param i32))
+ (func $0
+  (try $label
+   (do)
+   (catch $event$0
+    (nop)
+   )
   )
+ )
+ (func "exported" (param $x i32)
+  (loop $label ;; the same label as the try that will be inlined into here
+   (call $0)
+   (br_if $label
+    (call $foo)
+   )
+  )
+ )
+)
+;; for now, do not inline a try-delegate
+(module
+ (type $none_=>_none (func))
+ (func $0
+  (try $label$3
+   (do)
+   (delegate 0)
+  )
+ )
+ (func $1
+  (call $0)
+ )
+)
+;; properly support inlining into a function with a try-delegate
+(module
+ (type $none_=>_none (func))
+ (func $0 (result i32)
+  (i32.const 42)
+ )
+ (func $1 (result i32)
+  (try $label$3
+   (do)
+   (delegate 0)
+  )
+  (call $0)
+ )
 )

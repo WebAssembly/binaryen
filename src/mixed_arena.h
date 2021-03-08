@@ -364,6 +364,27 @@ public:
   void allocate(size_t size) {
     abort(); // must be implemented in children
   }
+
+  // C-API
+
+  void insertAt(size_t index, T item) {
+    assert(index <= size()); // appending is ok
+    resize(size() + 1);
+    for (auto i = size() - 1; i > index; --i) {
+      data[i] = data[i - 1];
+    }
+    data[index] = item;
+  }
+
+  T removeAt(size_t index) {
+    assert(index < size());
+    auto item = data[index];
+    for (auto i = index; i < size() - 1; ++i) {
+      data[i] = data[i + 1];
+    }
+    resize(size() - 1);
+    return item;
+  }
 };
 
 // A vector that has an allocator for arena allocation
