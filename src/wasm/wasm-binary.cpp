@@ -6320,7 +6320,7 @@ bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
       code != BinaryConsts::StructNewDefaultWithRtt) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   auto* rtt = popNonVoidExpression();
   validateHeapTypeUsingChild(rtt, heapType);
   std::vector<Expression*> operands;

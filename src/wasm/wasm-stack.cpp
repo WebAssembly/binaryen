@@ -2045,7 +2045,7 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
   } else {
     o << U32LEB(BinaryConsts::StructNewWithRtt);
   }
-  parent.writeHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
