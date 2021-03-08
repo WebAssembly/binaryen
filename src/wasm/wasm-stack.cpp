@@ -2077,7 +2077,7 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   } else {
     o << U32LEB(BinaryConsts::ArrayNewWithRtt);
   }
-  parent.writeHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {

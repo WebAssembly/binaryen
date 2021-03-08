@@ -6381,7 +6381,7 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
       code != BinaryConsts::ArrayNewDefaultWithRtt) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   auto* rtt = popNonVoidExpression();
   validateHeapTypeUsingChild(rtt, heapType);
   auto* size = popNonVoidExpression();
