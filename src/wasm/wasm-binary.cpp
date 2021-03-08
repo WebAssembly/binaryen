@@ -6352,7 +6352,7 @@ bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   curr->index = getU32LEB();
   curr->ref = popNonVoidExpression();
   validateHeapTypeUsingChild(curr->ref, heapType);

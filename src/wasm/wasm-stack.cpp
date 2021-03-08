@@ -2060,7 +2060,7 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
     op = BinaryConsts::StructGetU;
   }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
-  parent.writeHeapType(heapType);
+  parent.writeIndexedHeapType(heapType);
   o << U32LEB(curr->index);
 }
 
