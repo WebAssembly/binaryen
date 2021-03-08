@@ -1435,11 +1435,10 @@ void test_func_opt() {
 
 void test_gc() {
   // Parse a module in s-expression text format
-  BinaryenModuleRef module = BinaryenModuleParse(strdup(
-    "(module "
-    "  (type $vec2 (struct i32 i32)) "
-    ")"
-  ));
+  BinaryenModuleRef module =
+    BinaryenModuleParse(strdup("(module "
+                               "  (type $vec2 (struct i32 i32)) "
+                               ")"));
 
   BinaryenModulePrint(module);
 
