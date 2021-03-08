@@ -164,6 +164,8 @@ template<typename T> void autogenOneCAPIImpl() {
 // existing handwritten code in binaryen-c.h and append specific classes to
 // it.
 #define applyToRelevantClasses(T) { \
+  T<RttCanon>(); \
+  T<RttSub>(); \
   T<StructNew>(); \
   T<StructGet>(); \
   T<StructSet>(); \

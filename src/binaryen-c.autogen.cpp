@@ -1,6 +1,18 @@
 // src/binaryen-c.autogen.cpp
 
 BINARYEN_API BinaryenExpressionRef
+BinaryenRttCanon(BinaryenModuleRef module) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRttCanon());
+}
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenRttSub(BinaryenModuleRef module, BinaryenExpressionRef parent) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRttSub(parent));
+}
+
+BINARYEN_API BinaryenExpressionRef
 BinaryenStructNew(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExpressionRef* operands, BinaryenIndex num_operands) {
   std::vector<Expression*> operands_list;
   for (BinaryenIndex i = 0; i < num_operands; i++) {
