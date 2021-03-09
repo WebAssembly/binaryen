@@ -1280,16 +1280,6 @@ BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
     Builder(*(Module*)module).makeI31Get((Expression*)i31, signed_ != 0));
 }
 
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
-// TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
-
 #include "binaryen-c.autogen.cpp"
 
 // Expression utility
