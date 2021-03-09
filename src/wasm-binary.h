@@ -1250,7 +1250,15 @@ public:
   Module* getModule() { return wasm; }
 
   void writeType(Type type);
+
+  // Writes an arbitrary heap type, which may be indexed or one of the
+  // basic types like funcref.
   void writeHeapType(HeapType type);
+  // Writes an indexed heap type. Note that this is encoded differently than a
+  // general heap type because it does not allow negative values for basic heap
+  // types.
+  void writeIndexedHeapType(HeapType type);
+
   void writeField(const Field& field);
 
 private:
@@ -1344,8 +1352,9 @@ public:
   Type getType();
   // Get a type given the initial S32LEB has already been read, and is provided.
   Type getType(int initial);
-
   HeapType getHeapType();
+  HeapType getIndexedHeapType();
+
   Type getConcreteType();
   Name getInlineString();
   void verifyInt8(int8_t x);
