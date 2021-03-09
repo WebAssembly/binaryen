@@ -2423,10 +2423,10 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
     const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     shouldBeTrue(curr->index < fields.size(), curr, "bad struct.get field");
     auto& field = fields[curr->index];
-    shouldBeEqual(curr->value->type,
-                  field.type,
-                  curr,
-                  "struct.set must have the proper type");
+    shouldBeSubType(curr->value->type,
+                    field.type,
+                    curr,
+                    "struct.set must have the proper type");
     shouldBeEqual(
       field.mutable_, Mutable, curr, "struct.set field must be mutable");
   }
@@ -2494,10 +2494,10 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
     return;
   }
   const auto& element = curr->ref->type.getHeapType().getArray().element;
-  shouldBeEqual(curr->value->type,
-                element.type,
-                curr,
-                "array.set must have the proper type");
+  shouldBeSubType(curr->value->type,
+                  element.type,
+                  curr,
+                  "array.set must have the proper type");
   shouldBeTrue(element.mutable_, curr, "array.set type must be mutable");
 }
 
