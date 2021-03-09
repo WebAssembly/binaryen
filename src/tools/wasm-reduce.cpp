@@ -470,6 +470,25 @@ struct Reducer
   // since we don't need to duplicate work that they do
 
   void visitExpression(Expression* curr) {
+    if (getFunction() && curr == getFunction()->body) {
+      // At the top level, we can try to reduce anything to an unreachable, and
+      // it is useful to do so when possible.
+      if (!curr->is<Unreachable>() && !curr->is<Nop>() &&
+          shouldTryToReduce(1000)) {
+        auto* save = curr;
+        Unreachable un;
+        replaceCurrent(&un);
+        if (writeAndTestReduction()) {
+          replaceCurrent(builder->makeUnreachable());
+          std::cerr << "|        body unreachified (" << getFunction()->name
+                    << ")\n";
+          noteReduction();
+          return;
+        } else {
+          replaceCurrent(save);
+        }
+      }
+    }
     // type-based reductions
     if (curr->type == Type::none) {
       if (tryToReduceCurrentToNop()) {
@@ -724,11 +743,6 @@ struct Reducer
   }
 
   void visitFunction(Function* curr) {
-    if (!curr->imported()) {
-      // extra chance to work on the function toplevel element, as if it can
-      // be reduced it's great
-      visitExpression(curr->body);
-    }
     // finish function
     funcsSeen++;
     static int last = 0;
@@ -1272,7 +1286,8 @@ int main(int argc, const char* argv[]) {
 
   std::cerr << "|starting reduction!\n";
 
-  int factor = workingSize * 2;
+  int factor = binary ? workingSize * 2 : workingSize / 10;
+
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
 
