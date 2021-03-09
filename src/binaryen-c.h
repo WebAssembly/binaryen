@@ -841,15 +841,6 @@ BINARYEN_API BinaryenExpressionRef BinaryenI31New(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenI31Get(BinaryenModuleRef module,
                                                   BinaryenExpressionRef i31,
                                                   int signed_);
-// TODO (gc): ref.test
-// TODO (gc): ref.cast
-// TODO (gc): br_on_cast
-// TODO (gc): rtt.canon
-// TODO (gc): rtt.sub
-// TODO (gc): array.new
-// TODO (gc): array.get
-// TODO (gc): array.set
-// TODO (gc): array.len
 
 #include "binaryen-c.autogen.h"
 
