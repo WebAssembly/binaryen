@@ -79,3 +79,9 @@ BinaryenRefCast(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExp
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeRefCast(rtt, ref));
 }
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenBrOn(BinaryenModuleRef module, uint32_t op, const char* name, BinaryenExpressionRef rtt, BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeBrOn(BrOnOp(op), name, rtt, ref));
+}

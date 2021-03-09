@@ -35,3 +35,6 @@ BinaryenRefTest(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExp
 
 BINARYEN_API BinaryenExpressionRef
 BinaryenRefCast(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExpressionRef ref);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenBrOn(BinaryenModuleRef module, uint32_t op, const char* name, BinaryenExpressionRef rtt, BinaryenExpressionRef ref);

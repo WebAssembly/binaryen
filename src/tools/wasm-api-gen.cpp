@@ -27,13 +27,19 @@ namespace {
 
 // Some classes have extra fields, like local.get/struct.get etc. must be
 // given their type, as it is not inferred from the operands but from global
-// structures.
+// structures. The extra type is always at the end.
 template<typename T> bool hasExtraType() {
   return std::is_same<T, StructGet>() || std::is_same<T, CallRef>();
 }
 
 template<typename T> bool hasExtraHeapType() {
  return std::is_same<T, RttCanon>() || std::is_same<T, RttSub>();
+}
+
+// Some classes have an initial "op" enum (that always goes at the front). If
+// so, then we must cast to it from a uint32_t.
+template<typename T> bool hasOp() {
+ return std::is_same<T, BrOn>();
 }
 
 // Emit a declaration. If "impl" is true then we emit the beginning of
@@ -120,7 +126,12 @@ template<typename T> void autogenOneCAPIImpl() {
 
 #define DELEGATE_FIELD_CHILD(id, name) params.push_back(#name);
 
-#define DELEGATE_FIELD_INT(id, name) params.push_back(#name);
+#define DELEGATE_FIELD_INT(id, name) \
+  if (hasOp<T>()) { \
+    params.push_back(#id "Op(" #name ")"); \
+  } else { \
+    params.push_back(#name); \
+  } 
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) params.push_back(#name);
 
@@ -188,9 +199,8 @@ template<typename T> void autogenOneCAPIImpl() {
     T<ArrayLen>();                                                             \
     T<RefTest>(); \
     T<RefCast>(); \
+    T<BrOn>(); \
   }
-
-//    T<BrOn>();
 
 void autogenCAPIDecl() {
   std::cout << "// src/binaryen-c.autogen.h\n";
