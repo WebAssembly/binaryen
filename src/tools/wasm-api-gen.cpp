@@ -82,7 +82,7 @@ template<typename T> void autogenOneCAPIDecl(bool impl = false) {
   // Some classes have extra fields, like local.get/struct.get etc. must be
   // given their type, as it is not inferred from the operands but from global
   // structures.
-  if (std::is_same<T, StructGet>()) {
+  if (std::is_same<T, StructGet>() || std::is_same<T, CallRef>()) {
     std::cout << ", BinaryenType type";
   }
   if (std::is_same<T, RttCanon>() || std::is_same<T, RttSub>()) {
@@ -146,7 +146,7 @@ template<typename T> void autogenOneCAPIImpl() {
   // Some classes have extra fields, like local.get/struct.get etc. must be
   // given their type, as it is not inferred from the operands but from global
   // structures.
-  if (std::is_same<T, StructGet>()) {
+  if (std::is_same<T, StructGet>() || std::is_same<T, CallRef>()) {
     params.push_back("Type(type)");
   }
   if (std::is_same<T, RttCanon>() || std::is_same<T, RttSub>()) {
@@ -171,6 +171,7 @@ template<typename T> void autogenOneCAPIImpl() {
 // it.
 #define applyToRelevantClasses(T)                                              \
   {                                                                            \
+    T<CallRef>(); \
     T<RttCanon>();                                                             \
     T<RttSub>();                                                               \
     T<StructNew>();                                                            \
@@ -183,7 +184,6 @@ template<typename T> void autogenOneCAPIImpl() {
   }
 
 /*
-    CallRefId,
     RefTestId,
     RefCastId,
     BrOnId,

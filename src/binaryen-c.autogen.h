@@ -1,6 +1,9 @@
 // src/binaryen-c.autogen.h
 
 BINARYEN_API BinaryenExpressionRef
+BinaryenCallRef(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex num_operands, uint32_t isReturn, BinaryenType type);
+
+BINARYEN_API BinaryenExpressionRef
 BinaryenRttCanon(BinaryenModuleRef module, BinaryenType heapType);
 
 BINARYEN_API BinaryenExpressionRef

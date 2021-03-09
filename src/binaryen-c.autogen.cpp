@@ -1,6 +1,16 @@
 // src/binaryen-c.autogen.cpp
 
 BINARYEN_API BinaryenExpressionRef
+BinaryenCallRef(BinaryenModuleRef module, BinaryenExpressionRef target, BinaryenExpressionRef* operands, BinaryenIndex num_operands, uint32_t isReturn, BinaryenType type) {
+  std::vector<Expression*> operands_list;
+  for (BinaryenIndex i = 0; i < num_operands; i++) {
+    operands_list.push_back((Expression*)operands[i]);
+  }
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeCallRef(target, operands_list, isReturn, Type(type)));
+}
+
+BINARYEN_API BinaryenExpressionRef
 BinaryenRttCanon(BinaryenModuleRef module, BinaryenType heapType) {
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeRttCanon(HeapType(heapType)));

@@ -273,8 +273,8 @@ public:
   template<typename T>
   CallRef* makeCallRef(Expression* target,
                        const T& args,
-                       Type type,
-                       bool isReturn = false) {
+                       bool isReturn,
+                       Type type) {
     auto* call = wasm.allocator.alloc<CallRef>();
     call->type = type;
     call->target = target;
@@ -1172,7 +1172,7 @@ public:
     if (!heapType.isSignature()) {
       throw ParseException("Invalid reference type for a call_ref", line, col);
     }
-    return makeCallRef(target, args, heapType.getSignature().results, isReturn);
+    return makeCallRef(target, args, isReturn, heapType.getSignature().results);
   }
 };
 
