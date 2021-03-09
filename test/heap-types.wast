@@ -37,6 +37,9 @@
   (global $rttchild (rtt 1 $child) (rtt.sub $child (global.get $rttparent)))
   (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild (global.get $rttchild)))
 
+  (type $nested-child-struct (struct (field (mut (ref $child)))))
+  (type $nested-child-array (array (mut (ref $child))))
+
   (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
     (local $tA (ref null $struct.A))
     (local $tB (ref null $struct.B))
@@ -67,8 +70,8 @@
     (drop
       (struct.get_s $struct.B 0 (local.get $tB))
     )
+    ;; immutable fields allow subtyping.
     (drop
-      ;; immutable fields allow subtyping.
       (struct.get $child 0 (ref.null $grandchild))
     )
     (drop
@@ -101,6 +104,11 @@
     (struct.set $struct.C 0
       (ref.null $struct.C)
       (f32.const 100)
+    )
+    ;; values may be subtypes
+    (struct.set $nested-child-struct 0
+      (ref.null $nested-child-struct)
+      (ref.null $grandchild)
     )
     (drop
       (struct.new_default_with_rtt $struct.A
@@ -145,6 +153,12 @@
       (local.get $x)
       (i32.const 2)
       (f64.const 2.18281828)
+    )
+    ;; values may be subtypes
+    (array.set $nested-child-array
+      (ref.null $nested-child-array)
+      (i32.const 3)
+      (ref.null $grandchild)
     )
     (drop
       (array.len $vector
