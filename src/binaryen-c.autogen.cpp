@@ -67,3 +67,15 @@ BinaryenArrayLen(BinaryenModuleRef module, BinaryenExpressionRef ref) {
   return static_cast<Expression*>(
     Builder(*(Module*)module).makeArrayLen(ref));
 }
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefTest(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefTest(rtt, ref));
+}
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefCast(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExpressionRef ref) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module).makeRefCast(rtt, ref));
+}

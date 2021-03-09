@@ -181,11 +181,11 @@ template<typename T> void autogenOneCAPIImpl() {
     T<ArrayGet>();                                                             \
     T<ArraySet>();                                                             \
     T<ArrayLen>();                                                             \
+    T<RefTest>(); \
+    T<RefCast>(); \
   }
 
 /*
-    RefTestId,
-    RefCastId,
     BrOnId,
 */
 

@@ -29,3 +29,9 @@ BinaryenArraySet(BinaryenModuleRef module, BinaryenExpressionRef value, Binaryen
 
 BINARYEN_API BinaryenExpressionRef
 BinaryenArrayLen(BinaryenModuleRef module, BinaryenExpressionRef ref);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefTest(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExpressionRef ref);
+
+BINARYEN_API BinaryenExpressionRef
+BinaryenRefCast(BinaryenModuleRef module, BinaryenExpressionRef rtt, BinaryenExpressionRef ref);
