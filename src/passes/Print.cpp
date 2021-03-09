@@ -96,9 +96,27 @@ struct TypeNamePrinter {
   void print(const Struct& struct_);
   void print(const Array& array);
   void print(const Rtt& rtt);
+
+  // FIXME: This limit avoids infinite recursion and ensures reasonable-sized
+  // output, but we should have a better mechanism for this.
+  static const size_t MaxPrints = 10;
+
+  size_t prints = 0;
+
+  bool exceededLimit() {
+    if (prints >= MaxPrints) {
+      os << "?";
+      return true;
+    }
+    prints++;
+    return false;
+  }
 };
 
 void TypeNamePrinter::print(Type type) {
+  if (exceededLimit()) {
+    return;
+  }
   if (type.isBasic()) {
     os << type;
   } else if (type.isTuple()) {
@@ -119,6 +137,9 @@ void TypeNamePrinter::print(Type type) {
 }
 
 void TypeNamePrinter::print(HeapType type) {
+  if (exceededLimit()) {
+    return;
+  }
   if (type.isBasic()) {
     os << type;
     return;
