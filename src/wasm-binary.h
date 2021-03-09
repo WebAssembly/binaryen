@@ -1245,11 +1245,11 @@ public:
 
   void writeType(Type type);
 
-  // Gets an arbitrary heap type, which may be an indexed one or one of the
+  // Writes an arbitrary heap type, which may be indexed or one of the
   // basic types like funcref.
   void writeHeapType(HeapType type);
-  // Gets an indexed heap type. Note that this is encoded differently than a
-  // general heap type - a U32 LEB is used as negative values (for basic types)
+  // Writes an indexed heap type. Note that this is encoded differently than a
+  // general heap type because it does not allow negative values for basic heap types.
   // are not needed.
   void writeIndexedHeapType(HeapType type);
 
