@@ -25,6 +25,17 @@ using namespace wasm;
 
 namespace {
 
+// Some classes have extra fields, like local.get/struct.get etc. must be
+// given their type, as it is not inferred from the operands but from global
+// structures.
+template<typename T> bool hasExtraType() {
+  return std::is_same<T, StructGet>() || std::is_same<T, CallRef>();
+}
+
+template<typename T> bool hasExtraHeapType() {
+ return std::is_same<T, RttCanon>() || std::is_same<T, RttSub>();
+}
+
 // Emit a declaration. If "impl" is true then we emit the beginning of
 // the implementation, which is identical to the declaration except it has no
 // ";" at the end.
@@ -79,13 +90,10 @@ template<typename T> void autogenOneCAPIDecl(bool impl = false) {
 
 #include "wasm-delegations-fields.h"
 
-  // Some classes have extra fields, like local.get/struct.get etc. must be
-  // given their type, as it is not inferred from the operands but from global
-  // structures.
-  if (std::is_same<T, StructGet>() || std::is_same<T, CallRef>()) {
+  if (hasExtraType<T>()) {
     std::cout << ", BinaryenType type";
   }
-  if (std::is_same<T, RttCanon>() || std::is_same<T, RttSub>()) {
+  if (hasExtraHeapType<T>()) {
     std::cout << ", BinaryenType heapType";
   }
 
@@ -143,13 +151,10 @@ template<typename T> void autogenOneCAPIImpl() {
 
 #include "wasm-delegations-fields.h"
 
-  // Some classes have extra fields, like local.get/struct.get etc. must be
-  // given their type, as it is not inferred from the operands but from global
-  // structures.
-  if (std::is_same<T, StructGet>() || std::is_same<T, CallRef>()) {
+  if (hasExtraType<T>()) {
     params.push_back("Type(type)");
   }
-  if (std::is_same<T, RttCanon>() || std::is_same<T, RttSub>()) {
+  if (hasExtraHeapType<T>()) {
     params.push_back("HeapType(heapType)");
   }
 
@@ -185,9 +190,7 @@ template<typename T> void autogenOneCAPIImpl() {
     T<RefCast>(); \
   }
 
-/*
-    BrOnId,
-*/
+//    T<BrOn>();
 
 void autogenCAPIDecl() {
   std::cout << "// src/binaryen-c.autogen.h\n";
