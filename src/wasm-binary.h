@@ -1249,8 +1249,8 @@ public:
   // basic types like funcref.
   void writeHeapType(HeapType type);
   // Writes an indexed heap type. Note that this is encoded differently than a
-  // general heap type because it does not allow negative values for basic heap types.
-  // are not needed.
+  // general heap type because it does not allow negative values for basic heap
+  // types. are not needed.
   void writeIndexedHeapType(HeapType type);
 
   void writeField(const Field& field);
