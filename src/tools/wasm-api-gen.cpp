@@ -33,14 +33,12 @@ template<typename T> bool hasExtraType() {
 }
 
 template<typename T> bool hasExtraHeapType() {
- return std::is_same<T, RttCanon>() || std::is_same<T, RttSub>();
+  return std::is_same<T, RttCanon>() || std::is_same<T, RttSub>();
 }
 
 // Some classes have an initial "op" enum (that always goes at the front). If
 // so, then we must cast to it from a uint32_t.
-template<typename T> bool hasOp() {
- return std::is_same<T, BrOn>();
-}
+template<typename T> bool hasOp() { return std::is_same<T, BrOn>(); }
 
 // Emit a declaration. If "impl" is true then we emit the beginning of
 // the implementation, which is identical to the declaration except it has no
@@ -126,12 +124,12 @@ template<typename T> void autogenOneCAPIImpl() {
 
 #define DELEGATE_FIELD_CHILD(id, name) params.push_back(#name);
 
-#define DELEGATE_FIELD_INT(id, name) \
-  if (hasOp<T>()) { \
-    params.push_back(#id "Op(" #name ")"); \
-  } else { \
-    params.push_back(#name); \
-  } 
+#define DELEGATE_FIELD_INT(id, name)                                           \
+  if (hasOp<T>()) {                                                            \
+    params.push_back(#id "Op(" #name ")");                                     \
+  } else {                                                                     \
+    params.push_back(#name);                                                   \
+  }
 
 #define DELEGATE_FIELD_INT_ARRAY(id, name) params.push_back(#name);
 
@@ -187,7 +185,7 @@ template<typename T> void autogenOneCAPIImpl() {
 // it.
 #define applyToRelevantClasses(T)                                              \
   {                                                                            \
-    T<CallRef>(); \
+    T<CallRef>();                                                              \
     T<RttCanon>();                                                             \
     T<RttSub>();                                                               \
     T<StructNew>();                                                            \
@@ -197,9 +195,9 @@ template<typename T> void autogenOneCAPIImpl() {
     T<ArrayGet>();                                                             \
     T<ArraySet>();                                                             \
     T<ArrayLen>();                                                             \
-    T<RefTest>(); \
-    T<RefCast>(); \
-    T<BrOn>(); \
+    T<RefTest>();                                                              \
+    T<RefCast>();                                                              \
+    T<BrOn>();                                                                 \
   }
 
 void autogenCAPIDecl() {
