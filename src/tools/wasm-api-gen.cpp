@@ -86,7 +86,7 @@ template<typename T> void autogenOneCAPIDecl(bool impl = false) {
     std::cout << ", BinaryenType type";
   }
   if (std::is_same<T, RttCanon>()) {
-    std::cout << ", HeapType heapType";
+    std::cout << ", BinaryenType heapType";
   }
 
   std::cout << ')';

@@ -915,7 +915,7 @@ public:
     Expression* ret = makeRttCanon(type.getHeapType());
     if (type.getRtt().hasDepth()) {
       for (Index i = 0; i < type.getRtt().depth; i++) {
-        ret = makeRttSub(type.getHeapType(), ret);
+        ret = makeRttSub(ret, type.getHeapType());
       }
     }
     return ret;
