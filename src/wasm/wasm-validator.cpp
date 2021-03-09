@@ -357,8 +357,10 @@ public:
   void visitMemorySize(MemorySize* curr);
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
+  void validateRefNull(RefNull* curr);
   void visitRefIs(RefIs* curr);
   void visitRefFunc(RefFunc* curr);
+  void validateRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
@@ -1959,12 +1961,16 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
                                     "memory.grow must match memory index type");
 }
 
+void FunctionValidator::validateRefNull(RefNull* curr) {
+  shouldBeTrue(
+    curr->type.isNullable(), curr, "ref.null types must be nullable");
+}
+
 void FunctionValidator::visitRefNull(RefNull* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
                "ref.null requires reference-types to be enabled");
-  shouldBeTrue(
-    curr->type.isNullable(), curr, "ref.null types must be nullable");
+  validateRefNull(curr);
 }
 
 void FunctionValidator::visitRefIs(RefIs* curr) {
@@ -1977,6 +1983,15 @@ void FunctionValidator::visitRefIs(RefIs* curr) {
                "ref.is_*'s argument should be a reference type");
 }
 
+void FunctionValidator::validateRefFunc(RefFunc* curr) {
+  auto* func = getModule()->getFunctionOrNull(curr->func);
+  shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
+  shouldBeTrue(curr->type.isFunction(),
+               curr,
+               "ref.func must have a function reference type");
+  // TODO: check for non-nullability
+}
+
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
@@ -1984,12 +1999,7 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  auto* func = getModule()->getFunctionOrNull(curr->func);
-  shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
-  shouldBeTrue(curr->type.isFunction(),
-               curr,
-               "ref.func must have a function reference type");
-  // TODO: check for non-nullability
+  validateRefFunc(curr);
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -2801,11 +2811,29 @@ static void validateMemory(Module& module, ValidationInfo& info) {
 }
 
 static void validateTables(Module& module, ValidationInfo& info) {
+  FunctionValidator validator(module, &info);
+
   if (!module.features.hasReferenceTypes()) {
     info.shouldBeTrue(module.tables.size() <= 1,
                       "table",
                       "Only 1 table definition allowed in MVP (requires "
                       "--enable-reference-types)");
+    if (!module.tables.empty()) {
+      auto& table = module.tables.front();
+      for (auto& segment : module.elementSegments) {
+        info.shouldBeTrue(segment->table == table->name,
+                          "elem",
+                          "all element segments should refer to a single table "
+                          "in MVP.");
+        for (auto* expr : segment->data) {
+          info.shouldBeTrue(
+            expr->is<RefFunc>(),
+            expr,
+            "all table elements must be non-null funcrefs in MVP.");
+          validator.validateRefFunc(expr->cast<RefFunc>());
+        }
+      }
+    }
   }
 
   for (auto& segment : module.elementSegments) {
@@ -2822,11 +2850,21 @@ static void validateTables(Module& module, ValidationInfo& info) {
                                            table->initial * Table::kPageSize),
                         segment->offset,
                         "table segment offset should be reasonable");
-      FunctionValidator(module, &info).validate(segment->offset);
+      validator.validate(segment->offset);
     }
-    for (auto name : segment->data) {
-      info.shouldBeTrue(
-        module.getFunctionOrNull(name), name, "segment name should be valid");
+    // Avoid double checking items
+    if (module.features.hasReferenceTypes()) {
+      for (auto* expr : segment->data) {
+        info.shouldBeTrue(
+          expr->is<RefFunc>() || expr->is<RefNull>(),
+          expr,
+          "element segment items must be either ref.func or ref.null func.");
+        if (auto* get = expr->dynCast<RefFunc>()) {
+          validator.validateRefFunc(get);
+        } else {
+          validator.validateRefNull(expr->cast<RefNull>());
+        }
+      }
     }
   }
 }

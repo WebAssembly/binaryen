@@ -317,7 +317,8 @@ private:
   void parseElem(Element& s, Table* table = nullptr);
   ElementSegment* parseElemFinish(Element& s,
                                   std::unique_ptr<ElementSegment>& segment,
-                                  Index i = 1);
+                                  Index i = 1,
+                                  bool usesExpressions = false);
 
   // Parses something like (func ..), (array ..), (struct)
   HeapType parseHeapType(Element& s);

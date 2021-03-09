@@ -723,7 +723,9 @@ private:
     while (oneIn(3) && !finishedInput) {
       auto& randomElem =
         wasm.elementSegments[upTo(wasm.elementSegments.size())];
-      randomElem->data.push_back(func->name);
+      // FIXME: make the type NonNullable when we support it!
+      auto type = Type(HeapType(func->sig), Nullable);
+      randomElem->data.push_back(builder.makeRefFunc(func->name, type));
     }
     numAddedFunctions++;
     return func;
@@ -1436,11 +1438,13 @@ private:
     bool isReturn;
     while (1) {
       // TODO: handle unreachable
-      targetFn = wasm.getFunction(data[i]);
-      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 funcContext->func->sig.results == targetFn->sig.results;
-      if (targetFn->sig.results == type || isReturn) {
-        break;
+      if (auto* get = data[i]->dynCast<RefFunc>()) {
+        targetFn = wasm.getFunction(get->func);
+        isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
+                   funcContext->func->sig.results == targetFn->sig.results;
+        if (targetFn->sig.results == type || isReturn) {
+          break;
+        }
       }
       i++;
       if (i == data.size()) {

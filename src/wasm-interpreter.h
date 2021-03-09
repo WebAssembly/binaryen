@@ -2222,7 +2222,7 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void tableStore(Name tableName, Address addr, Name entry) {
+    virtual void tableStore(Name tableName, Address addr, Literal entry) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2309,21 +2309,22 @@ private:
   std::unordered_set<size_t> droppedSegments;
 
   void initializeTableContents() {
-    for (auto& segment : wasm.elementSegments) {
-      if (segment->table.isNull()) {
-        continue;
-      }
-
+    ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Address offset =
         (uint32_t)InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(segment->offset)
           .getSingleValue()
           .geti32();
-      for (size_t i = 0; i != segment->data.size(); ++i) {
+
+      Function dummyFunc;
+      FunctionScope dummyScope(&dummyFunc, {});
+      RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
+      for (Index i = 0; i < segment->data.size(); ++i) {
+        Flow ret = runner.visit(segment->data[i]);
         externalInterface->tableStore(
-          segment->table, offset + i, segment->data[i]);
+          segment->table, offset + i, ret.getSingleValue());
       }
-    }
+    });
   }
 
   void initializeMemoryContents() {

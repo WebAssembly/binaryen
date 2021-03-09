@@ -26,6 +26,7 @@
 
 #include <memory>
 
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/colors.h"
@@ -216,13 +217,14 @@ struct MetaDCEGraph {
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       // TODO: currently, all functions in the table are roots, but we
       //       should add an option to refine that
-      for (auto& name : segment->data) {
-        if (!wasm.getFunction(name)->imported()) {
-          roots.insert(functionToDCENode[name]);
-        } else {
-          roots.insert(importIdToDCENode[getFunctionImportId(name)]);
-        }
-      }
+      ElementUtils::iterElementSegmentFunctionNames(
+        segment, [&](Name name, Index) {
+          if (!wasm.getFunction(name)->imported()) {
+            roots.insert(functionToDCENode[name]);
+          } else {
+            roots.insert(importIdToDCENode[getFunctionImportId(name)]);
+          }
+        });
       rooter.walk(segment->offset);
     });
     for (auto& segment : wasm.memory.segments) {

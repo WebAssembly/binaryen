@@ -5,7 +5,10 @@
  (table $t2 3 3 funcref)
  (elem (table $t2) (i32.const 0) func $f)
  (elem $activeNonZeroOffset (table $t2) (i32.const 1) func $f $g)
- (elem $passive func $f $g)
+ (table $t3 4 4 funcref)
+ (elem $e3-1 (table $t3) (i32.const 0) funcref (ref.func $f) (ref.null func))
+ (elem $e3-2 (table $t3) (i32.const 2) func $f $g)
+ (elem $passive funcref (ref.func $f) (ref.func $g) (ref.null func))
  (elem declare func $h)
  (func $f
   (drop

@@ -2704,6 +2704,18 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (curr->data.empty()) {
       return;
     }
+    bool useAbbreviatedForm =
+      std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
+        return entry->is<RefFunc>();
+      });
+    auto printElemType = [&]() {
+      if (useAbbreviatedForm) {
+        TypeNamePrinter(o, currModule).print(HeapType::func);
+      } else {
+        TypeNamePrinter(o, currModule).print(Type::funcref);
+      }
+    };
+
     doIndent(o, indent);
     o << '(';
     printMedium(o, "elem");
@@ -2726,16 +2738,24 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
       if (currModule->tables.size() > 1) {
         o << ' ';
-        TypeNamePrinter(o, currModule).print(HeapType::func);
+        printElemType();
       }
     } else {
       o << ' ';
-      TypeNamePrinter(o, currModule).print(HeapType::func);
+      printElemType();
     }
 
-    for (auto name : curr->data) {
-      o << ' ';
-      printName(name, o);
+    if (useAbbreviatedForm) {
+      for (auto* entry : curr->data) {
+        auto* refFunc = entry->cast<RefFunc>();
+        o << ' ';
+        printName(refFunc->func, o);
+      }
+    } else {
+      for (auto* entry : curr->data) {
+        o << ' ';
+        printExpression(entry, o);
+      }
     }
     o << ')' << maybeNewLine;
   }

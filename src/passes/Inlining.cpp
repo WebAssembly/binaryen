@@ -31,6 +31,7 @@
 #include <atomic>
 
 #include "ir/debug.h"
+#include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
@@ -348,11 +349,8 @@ struct Inlining : public Pass {
         infos[ex->value].usedGlobally = true;
       }
     }
-    for (auto& segment : module->elementSegments) {
-      for (auto name : segment->data) {
-        infos[name].usedGlobally = true;
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(
+      module, [&](Name name) { infos[name].usedGlobally = true; });
 
     for (auto& global : module->globals) {
       if (!global->imported()) {
