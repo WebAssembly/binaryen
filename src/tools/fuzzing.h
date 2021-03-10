@@ -425,7 +425,9 @@ private:
 
   // TODO(reference-types): allow the fuzzer to create multiple tables
   void setupTables() {
-    if (wasm.tables.size() > 0) {
+    // Ensure an element segment, adding one or even adding a whole table as
+    // needed.
+    if (wasm.tables.size() > 0 && wasm.elementSegments.empty()) {
       auto& table = wasm.tables[0];
       table->initial = table->max = 0;
 
@@ -433,7 +435,9 @@ private:
         table->name, builder.makeConst(int32_t(0)));
       segment->setName(Name::fromInt(0), false);
       wasm.addElementSegment(std::move(segment));
-    } else {
+      return;
+    }
+    if (wasm.tables.empty()) {
       auto table = builder.makeTable(
         Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
       table->hasExplicitName = true;
