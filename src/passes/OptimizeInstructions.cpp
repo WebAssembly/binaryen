@@ -863,13 +863,14 @@ struct OptimizeInstructions
           // sides are identical, fold
           // if we can replace the if with one arm, and no side effects in the
           // condition, do that
-          auto needCondition = effects(iff->condition).hasSideEffects();
-          auto isSubType = Type::isSubType(iff->ifTrue->type, iff->type);
-          if (isSubType && !needCondition) {
+          bool needCondition = effects(iff->condition).hasSideEffects();
+          bool wouldBecomeUnreachable =
+            iff->type.isConcrete() && iff->ifTrue->type == Type::unreachable;
+          if (!wouldBecomeUnreachable && !needCondition) {
             return iff->ifTrue;
           } else {
             Builder builder(*getModule());
-            if (isSubType) {
+            if (!wouldBecomeUnreachable) {
               return builder.makeSequence(builder.makeDrop(iff->condition),
                                           iff->ifTrue);
             } else {
