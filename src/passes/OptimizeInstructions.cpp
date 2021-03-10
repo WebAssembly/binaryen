@@ -867,15 +867,14 @@ struct OptimizeInstructions
           bool needCondition = effects(iff->condition).hasSideEffects();
           bool wouldBecomeUnreachable =
             iff->type.isConcrete() && iff->ifTrue->type == Type::unreachable;
-
+          Builder builder(*getModule());
           if (!wouldBecomeUnreachable && !needCondition) {
             return iff->ifTrue;
           } else if (!wouldBecomeUnreachable) {
-            Builder builder(*getModule());
             return builder.makeSequence(builder.makeDrop(iff->condition),
                                         iff->ifTrue);
           } else {
-            // Emit a block with the original concrete type
+            // Emit a block with the original concrete type.
             auto* ret = builder.makeBlock();
             if (needCondition) {
               ret->list.push_back(builder.makeDrop(iff->condition));
