@@ -2473,7 +2473,7 @@ BinaryenGlobalGetInitExpr(BinaryenGlobalRef global);
 // Gets the name of the specified `Event`.
 BINARYEN_API const char* BinaryenEventGetName(BinaryenEventRef event);
 // Gets the attribute of the specified `Event`.
-BINARYEN_API int BinaryenEventGetAttribute(BinaryenEventRef event);
+BINARYEN_API uint32_t BinaryenEventGetAttribute(BinaryenEventRef event);
 // Gets the parameters type of the specified `Event`.
 BINARYEN_API BinaryenType BinaryenEventGetParams(BinaryenEventRef event);
 // Gets the results type of the specified `Event`.
