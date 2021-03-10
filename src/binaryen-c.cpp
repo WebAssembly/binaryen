@@ -3996,7 +3996,7 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 const char* BinaryenEventGetName(BinaryenEventRef event) {
   return ((Event*)event)->name.c_str();
 }
-int BinaryenEventGetAttribute(BinaryenEventRef event) {
+uint32_t BinaryenEventGetAttribute(BinaryenEventRef event) {
   return ((Event*)event)->attribute;
 }
 BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
