@@ -80,6 +80,11 @@ inline Name getValidTableName(Module& module, Name root) {
   return getValidName(
     module, root, [&](Name test) { return !module.getTableOrNull(test); });
 }
+inline Name getValidElementSegmentName(Module& module, Name root) {
+  return getValidName(module, root, [&](Name test) {
+    return !module.getElementSegmentOrNull(test);
+  });
+}
 inline Name getValidEventName(Module& module, Name root) {
   return getValidName(
     module, root, [&](Name test) { return !module.getEventOrNull(test); });

@@ -428,10 +428,10 @@ private:
     if (wasm.tables.size() > 0) {
       auto& table = wasm.tables[0];
       table->initial = table->max = 0;
-
       auto segment = std::make_unique<ElementSegment>(
         table->name, builder.makeConst(int32_t(0)));
-      segment->setName(Name::fromInt(0), false);
+      segment->setName(
+        Names::getValidElementSegmentName(wasm, Name::fromInt(0)), false);
       wasm.addElementSegment(std::move(segment));
     } else {
       auto table = builder.makeTable(
@@ -439,7 +439,8 @@ private:
       table->hasExplicitName = true;
       auto segment = std::make_unique<ElementSegment>(
         table->name, builder.makeConst(int32_t(0)));
-      segment->setName(Name::fromInt(0), false);
+      segment->setName(
+        Names::getValidElementSegmentName(wasm, Name::fromInt(0)), false);
       wasm.addElementSegment(std::move(segment));
       wasm.addTable(std::move(table));
     }
