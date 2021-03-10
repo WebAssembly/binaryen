@@ -180,9 +180,9 @@ void Block::finalize() {
     type = Type::none;
     return;
   }
+  type = list.back()->type;
   // The default type is what is at the end. Next we need to see if breaks and/
   // or unreachabitily change that.
-  type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
     handleUnreachable(this, NoBreak);
@@ -194,12 +194,14 @@ void Block::finalize() {
   Expression* temp = this;
   seeker.walk(temp);
   if (seeker.found) {
-    // Take the branch values into account.
-    if (seeker.valueType != Type::none) {
-      type = Type::getLeastUpperBound(type, seeker.valueType);
-    } else {
-      // No value is sent, but as we have a branch we are not unreachable.
-      type = Type::none;
+    // Calculate the supertype of the branch types and the flowed-out type. If
+    // there is no supertype among the available types, assume the current type
+    // is already correct. TODO: calculate proper LUBs to compute a new correct
+    // type in this situation.
+    seeker.types.insert(type);
+    Type supertype;
+    if (Type::getSuperType(seeker.types, supertype)) {
+      type = supertype;
     }
   } else {
     // There are no branches, so this block may be unreachable.
@@ -231,8 +233,17 @@ void If::finalize(Type type_) {
 }
 
 void If::finalize() {
-  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
-                 : Type::none;
+  if (ifFalse) {
+    // If neither arm's type is a supertype of the other, assume the current
+    // type is already correct. TODO: Calculate a proper LUB.
+    Type supertype;
+    std::array<Type, 2> types{{ifTrue->type, ifFalse->type}};
+    if (Type::getSuperType(types, supertype)) {
+      type = supertype;
+    }
+  } else {
+    type = Type::none;
+  }
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
@@ -779,7 +790,13 @@ void Select::finalize() {
       condition->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type::getLeastUpperBound(ifTrue->type, ifFalse->type);
+    // If neither arm's type is a supertype of the other, assume the current
+    // type is already correct. TODO: Calculate a proper LUB.
+    Type supertype;
+    std::array<Type, 2> types{{ifTrue->type, ifFalse->type}};
+    if (Type::getSuperType(types, supertype)) {
+      type = supertype;
+    }
   }
 }
 
@@ -833,9 +850,15 @@ void RefEq::finalize() {
 }
 
 void Try::finalize() {
-  type = body->type;
+  // If none of the component bodies' type is a supertype of the others, assume
+  // the current type is already correct. TODO: Calculate a proper LUB.
+  std::unordered_set<Type> types{body->type};
   for (auto catchBody : catchBodies) {
-    type = Type::getLeastUpperBound(type, catchBody->type);
+    types.insert(catchBody->type);
+  }
+  Type supertype;
+  if (Type::getSuperType(types, supertype)) {
+    type = supertype;
   }
 }
 

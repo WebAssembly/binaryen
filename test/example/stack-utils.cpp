@@ -354,118 +354,6 @@ void test_signature_subtype() {
   }
 }
 
-void test_signature_lub() {
-  std::cout << ";; Test stack signature lub\n";
-  {
-    StackSignature a{Type::none, Type::none, StackSignature::Fixed};
-    StackSignature b{Type::none, Type::none, StackSignature::Fixed};
-    assert(StackSignature::haveLeastUpperBound(a, b));
-    assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{Type::none, Type::none, StackSignature::Fixed}));
-  }
-  {
-    StackSignature a{Type::none, Type::none, StackSignature::Polymorphic};
-    StackSignature b{Type::none, Type::none, StackSignature::Fixed};
-    assert(StackSignature::haveLeastUpperBound(a, b));
-    assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{Type::none, Type::none, StackSignature::Fixed}));
-  }
-  {
-    StackSignature a{Type::none, Type::none, StackSignature::Fixed};
-    StackSignature b{Type::none, Type::none, StackSignature::Polymorphic};
-    assert(StackSignature::haveLeastUpperBound(a, b));
-    assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{Type::none, Type::none, StackSignature::Fixed}));
-  }
-  {
-    StackSignature a{Type::i32, Type::none, StackSignature::Polymorphic};
-    StackSignature b{Type::none, Type::i32, StackSignature::Polymorphic};
-    assert(StackSignature::haveLeastUpperBound(a, b));
-    assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{Type::i32, Type::i32, StackSignature::Polymorphic}));
-  }
-  {
-    StackSignature a{Type::none, Type::i32, StackSignature::Polymorphic};
-    StackSignature b{Type::i32, Type::none, StackSignature::Polymorphic};
-    assert(StackSignature::haveLeastUpperBound(a, b));
-    assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{Type::i32, Type::i32, StackSignature::Polymorphic}));
-  }
-  {
-    StackSignature a{Type::none, Type::externref, StackSignature::Polymorphic};
-    StackSignature b{Type::none, Type::funcref, StackSignature::Polymorphic};
-    assert(StackSignature::haveLeastUpperBound(a, b));
-    assert(
-      StackSignature::getLeastUpperBound(a, b) ==
-      (StackSignature{Type::none, Type::anyref, StackSignature::Polymorphic}));
-  }
-  {
-    StackSignature a{Type::anyref, Type::none, StackSignature::Polymorphic};
-    StackSignature b{Type::funcref, Type::none, StackSignature::Polymorphic};
-    // assert(StackSignature::haveLeastUpperBound(a, b));
-    // assert(StackSignature::getLeastUpperBound(a, b) ==
-    //        (StackSignature{Type::funcref, Type::none,
-    //        StackSignature::Polymorphic}));
-  }
-  {
-    StackSignature a{
-      {Type::i32, Type::funcref}, Type::funcref, StackSignature::Polymorphic};
-    StackSignature b{
-      Type::funcref, {Type::f32, Type::externref}, StackSignature::Polymorphic};
-    assert(StackSignature::haveLeastUpperBound(a, b));
-    assert(StackSignature::getLeastUpperBound(a, b) ==
-           (StackSignature{{Type::i32, Type::funcref},
-                           {Type::f32, Type::anyref},
-                           StackSignature::Polymorphic}));
-  }
-  // No LUB
-  {
-    StackSignature a(Type::none, Type::i32, StackSignature::Fixed);
-    StackSignature b(Type::none, Type::f32, StackSignature::Fixed);
-    assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-  {
-    StackSignature a(Type::none, Type::i32, StackSignature::Polymorphic);
-    StackSignature b(Type::none, Type::f32, StackSignature::Polymorphic);
-    assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-  {
-    StackSignature a(Type::i32, Type::none, StackSignature::Fixed);
-    StackSignature b(Type::f32, Type::none, StackSignature::Fixed);
-    // assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-  {
-    StackSignature a(Type::i32, Type::none, StackSignature::Polymorphic);
-    StackSignature b(Type::f32, Type::none, StackSignature::Polymorphic);
-    // assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-  {
-    StackSignature a(Type::none, Type::none, StackSignature::Fixed);
-    StackSignature b(Type::none, Type::i32, StackSignature::Polymorphic);
-    assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-  {
-    StackSignature a(Type::none, Type::none, StackSignature::Fixed);
-    StackSignature b(Type::i32, Type::none, StackSignature::Polymorphic);
-    assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-  {
-    StackSignature a{Type::none, Type::i32, StackSignature::Fixed};
-    StackSignature b{Type::i32, Type::none, StackSignature::Fixed};
-    assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-  {
-    StackSignature a{Type::none, Type::i32, StackSignature::Polymorphic};
-    StackSignature b{Type::i32, Type::none, StackSignature::Fixed};
-    assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-  {
-    StackSignature a{Type::none, Type::i32, StackSignature::Fixed};
-    StackSignature b{Type::i32, Type::none, StackSignature::Polymorphic};
-    assert(!StackSignature::haveLeastUpperBound(a, b));
-  }
-}
-
 void test_stack_flow() {
   std::cout << ";; Test stack flow\n";
   {
@@ -605,6 +493,5 @@ int main() {
   test_stack_signatures();
   test_signature_composition();
   test_signature_subtype();
-  test_signature_lub();
   test_stack_flow();
 }

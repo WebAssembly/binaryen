@@ -44,16 +44,22 @@ void ReFinalize::visitBlock(Block* curr) {
     curr->type = Type::none;
     return;
   }
-  // Get the least upper bound type of the last element and all branch return
-  // values
-  curr->type = curr->list.back()->type;
   if (curr->name.is()) {
-    auto iter = breakValues.find(curr->name);
-    if (iter != breakValues.end()) {
-      curr->type = Type::getLeastUpperBound(curr->type, iter->second);
+    auto iter = breakTypes.find(curr->name);
+    if (iter != breakTypes.end()) {
+      // Calculate the supertype of the branch types and the flowed-out type. If
+      // there is no supertype among the available types, assume the current
+      // type is already correct. TODO: calculate proper LUBs to compute a new
+      // correct type in this situation.
+      iter->second.insert(curr->list.back()->type);
+      Type supertype;
+      if (Type::getSuperType(iter->second, supertype)) {
+        curr->type = supertype;
+      }
       return;
     }
   }
+  curr->type = curr->list.back()->type;
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -187,11 +193,7 @@ void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {
   if (type != Type::unreachable) {
-    if (breakValues.count(name) == 0) {
-      breakValues[name] = type;
-    } else {
-      breakValues[name] = Type::getLeastUpperBound(breakValues[name], type);
-    }
+    breakTypes[name].insert(type);
   }
 }
 

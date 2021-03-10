@@ -109,7 +109,7 @@ struct ReFinalize
   // block finalization is O(bad) if we do each block by itself, so do it in
   // bulk, tracking break value types so we just do a linear pass
 
-  std::map<Name, Type> breakValues;
+  std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
 
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
