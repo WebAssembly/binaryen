@@ -3,6 +3,13 @@
 ;; RUN:   | filecheck %s
 
 (module
+  (type $struct (struct
+    (field $i8  (mut i8))
+    (field $i16 (mut i16))
+    (field $i32 (mut i32))
+    (field $i64 (mut i64))
+  ))
+
   ;; These functions test if an `if` with subtyped arms is correctly folded
   ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
   ;; CHECK:      (func $if-arms-subtype-fold (result anyref)
@@ -28,6 +35,28 @@
       (i32.const 0)
       (ref.null extern)
       (ref.null func)
+    )
+  )
+
+  ;; Stored values automatically truncate unneeded bytes.
+  ;; CHECK:      (func $store-trunc (param $x (ref null $struct))
+  ;; CHECK-NEXT:  (struct.set $struct $i8
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 35)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct $i16
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 9029)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $store-trunc (param $x (ref null $struct))
+    (struct.set $struct $i8
+      (local.get $x)
+      (i32.const 0x123)
+    )
+    (struct.set $struct $i16
+      (local.get $x)
+      (i32.const 0x12345)
     )
   )
 )

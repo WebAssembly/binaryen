@@ -964,8 +964,10 @@ struct OptimizeInstructions
   }
 
   void visitStructSet(StructSet* curr) {
-    if (curr->value->type.isInteger()) {
-      optimizeStoredValue(curr->value, curr->type.getByteSize());
+    if (curr->ref->type != Type::unreachable &&
+        curr->value->type.isInteger()) {
+      const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+      optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
     }
   }
 
