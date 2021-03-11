@@ -569,11 +569,43 @@ void test_literals() {
   }
 }
 
+void test_field() {
+struct Field {
+  Type type;
+  enum PackedType {
+    not_packed,
+    i8,
+    i16,
+  } packedType; // applicable iff type=i32
+  Mutability mutable_;
+
+  Field(Type type, Mutability mutable_)
+    : type(type), packedType(not_packed), mutable_(mutable_) {}
+  Field(PackedType packedType, Mutability mutable_)
+    : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
+
+  // Simple types
+  assert_equal(Field(Type::i32, Immutable).getByteSize(), 4);
+  assert_equal(Field(Type::i64, Immutable).getByteSize(), 8);
+
+  // Packed types
+  assert_equal(
+    Field(Type::i32, Field::PackedType::i8, Immutable).getByteSize(),
+    1);
+  assert_equal(
+    Field(Type::i32, Field::PackedType::i16, Immutable).getByteSize(),
+    2);
+  assert_equal(
+    Field(Type::i32, Field::PackedType::not_packed, Immutable).getByteSize(),
+    4);
+}
+
 int main() {
   test_bits();
   test_cost();
   test_effects();
   test_literals();
+  test_field();
 
   if (failsCount > 0) {
     abort();
