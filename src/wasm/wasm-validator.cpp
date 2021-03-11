@@ -209,21 +209,7 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
   FunctionValidator(ValidationInfo* info) : info(*info) {}
 
-  struct BreakInfo {
-    enum { UnsetArity = Index(-1), PoisonArity = Index(-2) };
-
-    Type type;
-    Index arity;
-    BreakInfo() : arity(UnsetArity) {}
-    BreakInfo(Type type, Index arity) : type(type), arity(arity) {}
-
-    bool hasBeenSet() {
-      // Compare to the impossible value.
-      return arity != UnsetArity;
-    }
-  };
-
-  std::unordered_map<Name, BreakInfo> breakInfos;
+  std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
 
@@ -248,7 +234,7 @@ public:
   static void visitPreBlock(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Block>();
     if (curr->name.is()) {
-      self->breakInfos[curr->name];
+      self->breakTypes[curr->name];
     }
   }
 
@@ -259,7 +245,7 @@ public:
   static void visitPreLoop(FunctionValidator* self, Expression** currp) {
     auto* curr = (*currp)->cast<Loop>();
     if (curr->name.is()) {
-      self->breakInfos[curr->name];
+      self->breakTypes[curr->name];
     }
   }
 
@@ -533,49 +519,17 @@ void FunctionValidator::visitBlock(Block* curr) {
   // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
     noteLabelName(curr->name);
-    auto iter = breakInfos.find(curr->name);
-    assert(iter != breakInfos.end()); // we set it ourselves
-    auto& info = iter->second;
-    if (info.hasBeenSet()) {
-      if (curr->type.isConcrete()) {
-        shouldBeTrue(info.arity != 0,
-                     curr,
-                     "break arities must be > 0 if block has a value");
-      } else {
-        shouldBeTrue(info.arity == 0,
-                     curr,
-                     "break arities must be 0 if block has no value");
-      }
+    auto iter = breakTypes.find(curr->name);
+    assert(iter != breakTypes.end()); // we set it ourselves
+    for (Type breakType : iter->second) {
       // none or unreachable means a poison value that we should ignore - if
       // consumed, it will error
-      if (info.type.isConcrete() && curr->type.isConcrete()) {
-        shouldBeSubType(
-          info.type,
-          curr->type,
-          curr,
-          "block+breaks must have right type if breaks return a value");
-      }
-      if (curr->type.isConcrete() && info.arity &&
-          info.type != Type::unreachable) {
-        shouldBeSubType(
-          info.type,
-          curr->type,
-          curr,
-          "block+breaks must have right type if breaks have arity");
-      }
-      shouldBeTrue(
-        info.arity != BreakInfo::PoisonArity, curr, "break arities must match");
-      if (curr->list.size() > 0) {
-        auto last = curr->list.back()->type;
-        if (last == Type::none) {
-          shouldBeTrue(info.arity == Index(0),
-                       curr,
-                       "if block ends with a none, breaks cannot send a value "
-                       "of any type");
-        }
-      }
+      shouldBeSubType(breakType,
+                      curr->type,
+                      curr,
+                      "break type must be a subtype of the target block type");
     }
-    breakInfos.erase(iter);
+    breakTypes.erase(iter);
   }
   switch (getFunction()->profile) {
     case IRProfile::Normal:
@@ -679,14 +633,15 @@ void FunctionValidator::validatePoppyBlockElements(Block* curr) {
 void FunctionValidator::visitLoop(Loop* curr) {
   if (curr->name.is()) {
     noteLabelName(curr->name);
-    auto iter = breakInfos.find(curr->name);
-    assert(iter != breakInfos.end()); // we set it ourselves
-    auto& info = iter->second;
-    if (info.hasBeenSet()) {
-      shouldBeEqual(
-        info.arity, Index(0), curr, "breaks to a loop cannot pass a value");
+    auto iter = breakTypes.find(curr->name);
+    assert(iter != breakTypes.end()); // we set it ourselves
+    for (Type breakType : iter->second) {
+      shouldBeEqual(breakType,
+                    Type(Type::none),
+                    curr,
+                    "breaks to a loop cannot pass a value");
     }
-    breakInfos.erase(iter);
+    breakTypes.erase(iter);
   }
   if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),
@@ -775,24 +730,12 @@ void FunctionValidator::noteBreak(Name name,
 }
 
 void FunctionValidator::noteBreak(Name name, Type valueType, Expression* curr) {
-  Index arity = 0;
-  if (valueType != Type::none) {
-    arity = 1;
-  }
-  auto iter = breakInfos.find(name);
+  auto iter = breakTypes.find(name);
   if (!shouldBeTrue(
-        iter != breakInfos.end(), curr, "all break targets must be valid")) {
+        iter != breakTypes.end(), curr, "all break targets must be valid")) {
     return;
   }
-  auto& info = iter->second;
-  if (!info.hasBeenSet()) {
-    info = BreakInfo(valueType, arity);
-  } else {
-    info.type = Type::getLeastUpperBound(info.type, valueType);
-    if (arity != info.arity) {
-      info.arity = BreakInfo::PoisonArity;
-    }
-  }
+  iter->second.insert(valueType);
 }
 
 void FunctionValidator::visitBreak(Break* curr) {
@@ -2518,7 +2461,7 @@ void FunctionValidator::visitFunction(Function* curr) {
                     "function result must match, if function has returns");
   }
 
-  assert(breakInfos.empty());
+  assert(breakTypes.empty());
   assert(delegateTargetNames.empty());
   assert(rethrowTargetNames.empty());
   returnTypes.clear();

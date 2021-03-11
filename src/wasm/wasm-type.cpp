@@ -630,62 +630,6 @@ bool Type::isSubType(Type left, Type right) {
   return SubTyper().isSubType(left, right);
 }
 
-Type Type::getLeastUpperBound(Type a, Type b) {
-  if (a == b) {
-    return a;
-  }
-  if (a == Type::unreachable) {
-    return b;
-  }
-  if (b == Type::unreachable) {
-    return a;
-  }
-  if (a.size() != b.size()) {
-    return Type::none; // a poison value that must not be consumed
-  }
-  if (a.isRef() || b.isRef()) {
-    if (!a.isRef() || !b.isRef()) {
-      return Type::none;
-    }
-    auto handleNullability = [&](HeapType heapType) {
-      return Type(heapType,
-                  a.isNullable() || b.isNullable() ? Nullable : NonNullable);
-    };
-    auto aHeap = a.getHeapType();
-    auto bHeap = b.getHeapType();
-    if (aHeap.isFunction() && bHeap.isFunction()) {
-      return handleNullability(HeapType::func);
-    }
-    if (aHeap.isData() && bHeap.isData()) {
-      return handleNullability(HeapType::data);
-    }
-    if ((aHeap == HeapType::eq || aHeap == HeapType::i31 ||
-         aHeap == HeapType::data) &&
-        (bHeap == HeapType::eq || bHeap == HeapType::i31 ||
-         bHeap == HeapType::data)) {
-      return handleNullability(HeapType::eq);
-    }
-    // The LUB of two different reference types is anyref, which may or may
-    // not be a valid type depending on whether the GC feature is enabled. When
-    // GC is disabled, it is possible for the finalization of invalid code to
-    // introduce a use of anyref via this function, but that is not a problem
-    // because it will be caught and rejected by validation.
-    return Type::anyref;
-  }
-  if (a.isTuple()) {
-    TypeList types;
-    types.resize(a.size());
-    for (size_t i = 0; i < types.size(); ++i) {
-      types[i] = getLeastUpperBound(a[i], b[i]);
-      if (types[i] == Type::none) {
-        return Type::none;
-      }
-    }
-    return Type(types);
-  }
-  return Type::none;
-}
-
 Type::Iterator Type::end() const {
   if (isTuple()) {
     return Iterator(this, getTypeInfo(*this)->tuple.types.size());
