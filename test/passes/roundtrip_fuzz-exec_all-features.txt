@@ -1,0 +1,13 @@
+[fuzz-exec] calling foo
+[fuzz-exec] note result: foo => funcref(null)
+(module
+ (type $A (func (result (ref null $A))))
+ (type $none_=>_funcref (func (result funcref)))
+ (export "foo" (func $0))
+ (func $0 (result funcref)
+  (ref.null $A)
+ )
+)
+[fuzz-exec] calling foo
+[fuzz-exec] note result: foo => funcref(null)
+[fuzz-exec] comparing foo
