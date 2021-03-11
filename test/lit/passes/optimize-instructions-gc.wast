@@ -3,6 +3,8 @@
 ;; RUN:   | filecheck %s
 
 (module
+  (import "env" "get-i32" (func $get-i32 (result i32)))
+
   (type $struct (struct
     (field $i8  (mut i8))
     (field $i16 (mut i16))
@@ -48,15 +50,26 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 9029)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct $i8
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (call $get-i32)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $store-trunc (param $x (ref null $struct))
     (struct.set $struct $i8
       (local.get $x)
-      (i32.const 0x123)
+      (i32.const 0x123) ;; data over 0xff is unnecessary
     )
     (struct.set $struct $i16
       (local.get $x)
-      (i32.const 0x12345)
+      (i32.const 0x12345) ;; data over 0xffff is unnecessary
+    )
+    (struct.set $struct $i8
+      (local.get $x)
+      (i32.and ;; truncating bits using an and is unnecessary
+       (call $get-i32)
+       (i32.const 0xff)
+      )
     )
   )
 )
