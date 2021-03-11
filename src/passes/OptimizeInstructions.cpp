@@ -269,6 +269,13 @@ struct OptimizeInstructions
   }
 
   void visitBinary(Binary* curr) {
+    // If this contains dead code, don't bother trying to optimize it, the type
+    // might change (if might not be unreachable if just one arm is, for
+    // example). This optimization pass focuses on actually executing code.
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     if (shouldCanonicalize(curr)) {
       canonicalize(curr);
     }
@@ -737,6 +744,10 @@ struct OptimizeInstructions
   }
 
   void visitUnary(Unary* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     {
       using namespace Match;
       using namespace Abstract;
