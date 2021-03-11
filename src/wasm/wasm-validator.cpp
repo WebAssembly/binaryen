@@ -196,18 +196,6 @@ struct ValidationInfo {
     fail(text, curr, func);
     return false;
   }
-
-  // Type 'left' should be a subtype of 'right', or unreachable.
-  bool shouldBeSubTypeOrFirstIsUnreachable(Type left,
-                                           Type right,
-                                           Expression* curr,
-                                           const char* text,
-                                           Function* func = nullptr) {
-    if (left == Type::unreachable) {
-      return true;
-    }
-    return shouldBeSubType(left, right, curr, text, func);
-  }
 };
 
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
@@ -441,14 +429,6 @@ private:
     return info.shouldBeSubType(left, right, curr, text, getFunction());
   }
 
-  bool shouldBeSubTypeOrFirstIsUnreachable(Type left,
-                                           Type right,
-                                           Expression* curr,
-                                           const char* text) {
-    return info.shouldBeSubTypeOrFirstIsUnreachable(
-      left, right, curr, text, getFunction());
-  }
-
   void validateAlignment(
     size_t align, Type type, Index bytes, bool isAtomic, Expression* curr);
   void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
@@ -468,10 +448,10 @@ private:
     }
     size_t i = 0;
     for (const auto& param : sig.params) {
-      if (!shouldBeSubTypeOrFirstIsUnreachable(curr->operands[i]->type,
-                                               param,
-                                               curr,
-                                               "call param types must match") &&
+      if (!shouldBeSubType(curr->operands[i]->type,
+                           param,
+                           curr,
+                           "call param types must match") &&
           !info.quiet) {
         getStream() << "(on argument " << i << ")\n";
       }
@@ -724,11 +704,10 @@ void FunctionValidator::visitLoop(Loop* curr) {
                     "if loop is not returning a value, final element should "
                     "not flow out a value");
     } else {
-      shouldBeSubTypeOrFirstIsUnreachable(
-        curr->body->type,
-        curr->type,
-        curr,
-        "loop with value and body must match types");
+      shouldBeSubType(curr->body->type,
+                      curr->type,
+                      curr,
+                      "loop with value and body must match types");
     }
   }
 }
@@ -750,16 +729,14 @@ void FunctionValidator::visitIf(If* curr) {
     }
   } else {
     if (curr->type != Type::unreachable) {
-      shouldBeSubTypeOrFirstIsUnreachable(
-        curr->ifTrue->type,
-        curr->type,
-        curr,
-        "returning if-else's true must have right type");
-      shouldBeSubTypeOrFirstIsUnreachable(
-        curr->ifFalse->type,
-        curr->type,
-        curr,
-        "returning if-else's false must have right type");
+      shouldBeSubType(curr->ifTrue->type,
+                      curr->type,
+                      curr,
+                      "returning if-else's true must have right type");
+      shouldBeSubType(curr->ifFalse->type,
+                      curr->type,
+                      curr,
+                      "returning if-else's false must have right type");
     } else {
       if (curr->condition->type != Type::unreachable) {
         shouldBeEqual(curr->ifTrue->type,
@@ -929,11 +906,10 @@ void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
                    "global.set name must be valid (and not an import; imports "
                    "can't be modified)")) {
     shouldBeTrue(global->mutable_, curr, "global.set global must be mutable");
-    shouldBeSubTypeOrFirstIsUnreachable(
-      curr->value->type,
-      global->type,
-      curr,
-      "global.set value must have right type");
+    shouldBeSubType(curr->value->type,
+                    global->type,
+                    curr,
+                    "global.set value must have right type");
   }
 }
 
@@ -2068,16 +2044,14 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
 void FunctionValidator::visitRefEq(RefEq* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.eq requires gc to be enabled");
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->left->type,
-    Type::eqref,
-    curr->left,
-    "ref.eq's left argument should be a subtype of eqref");
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->right->type,
-    Type::eqref,
-    curr->right,
-    "ref.eq's right argument should be a subtype of eqref");
+  shouldBeSubType(curr->left->type,
+                  Type::eqref,
+                  curr->left,
+                  "ref.eq's left argument should be a subtype of eqref");
+  shouldBeSubType(curr->right->type,
+                  Type::eqref,
+                  curr->right,
+                  "ref.eq's right argument should be a subtype of eqref");
 }
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
@@ -2102,17 +2076,15 @@ void FunctionValidator::visitTry(Try* curr) {
     noteLabelName(curr->name);
   }
   if (curr->type != Type::unreachable) {
-    shouldBeSubTypeOrFirstIsUnreachable(
-      curr->body->type,
-      curr->type,
-      curr->body,
-      "try's type does not match try body's type");
+    shouldBeSubType(curr->body->type,
+                    curr->type,
+                    curr->body,
+                    "try's type does not match try body's type");
     for (auto catchBody : curr->catchBodies) {
-      shouldBeSubTypeOrFirstIsUnreachable(
-        catchBody->type,
-        curr->type,
-        catchBody,
-        "try's type does not match catch's body type");
+      shouldBeSubType(catchBody->type,
+                      curr->type,
+                      catchBody,
+                      "try's type does not match catch's body type");
     }
   } else {
     shouldBeEqual(curr->body->type,
@@ -2166,10 +2138,10 @@ void FunctionValidator::visitThrow(Throw* curr) {
   }
   size_t i = 0;
   for (const auto& param : event->sig.params) {
-    if (!shouldBeSubTypeOrFirstIsUnreachable(curr->operands[i]->type,
-                                             param,
-                                             curr->operands[i],
-                                             "event param types must match") &&
+    if (!shouldBeSubType(curr->operands[i]->type,
+                         param,
+                         curr->operands[i],
+                         "event param types must match") &&
         !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
@@ -2250,10 +2222,10 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
 void FunctionValidator::visitI31New(I31New* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "i31.new requires gc to be enabled");
-  shouldBeSubTypeOrFirstIsUnreachable(curr->value->type,
-                                      Type::i32,
-                                      curr->value,
-                                      "i31.new's argument should be i32");
+  shouldBeSubType(curr->value->type,
+                  Type::i32,
+                  curr->value,
+                  "i31.new's argument should be i32");
 }
 
 void FunctionValidator::visitI31Get(I31Get* curr) {
@@ -2262,11 +2234,10 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
                "i31.get_s/u requires gc to be enabled");
   // FIXME: use i31ref here, which is non-nullable, when we support non-
   // nullability.
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->i31->type,
-    Type(HeapType::i31, Nullable),
-    curr->i31,
-    "i31.get_s/u's argument should be i31ref");
+  shouldBeSubType(curr->i31->type,
+                  Type(HeapType::i31, Nullable),
+                  curr->i31,
+                  "i31.get_s/u's argument should be i31ref");
 }
 
 void FunctionValidator::visitRefTest(RefTest* curr) {
@@ -2536,17 +2507,15 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->body->type,
-    curr->sig.results,
-    curr->body,
-    "function body type must match, if function returns");
+  shouldBeSubType(curr->body->type,
+                  curr->sig.results,
+                  curr->body,
+                  "function body type must match, if function returns");
   for (Type returnType : returnTypes) {
-    shouldBeSubTypeOrFirstIsUnreachable(
-      returnType,
-      curr->sig.results,
-      curr->body,
-      "function result must match, if function has returns");
+    shouldBeSubType(returnType,
+                    curr->sig.results,
+                    curr->body,
+                    "function result must match, if function has returns");
   }
 
   assert(breakInfos.empty());
