@@ -856,12 +856,18 @@ struct OptimizeInstructions
   }
 
   void visitSelect(Select* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
     if (auto* ret = optimizeSelect(curr)) {
       return replaceCurrent(ret);
     }
   }
 
   void visitGlobalSet(GlobalSet* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
     // optimize out a set of a get
     auto* get = curr->value->dynCast<GlobalGet>();
     if (get && get->name == curr->name) {
@@ -915,9 +921,17 @@ struct OptimizeInstructions
     }
   }
 
-  void visitLoad(Load* curr) { optimizeMemoryAccess(curr->ptr, curr->offset); }
+  void visitLoad(Load* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    optimizeMemoryAccess(curr->ptr, curr->offset);
+  }
 
   void visitStore(Store* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
     optimizeMemoryAccess(curr->ptr, curr->offset);
     if (curr->valueType.isInteger()) {
       // truncates constant values during stores
@@ -962,6 +976,9 @@ struct OptimizeInstructions
   }
 
   void visitMemoryCopy(MemoryCopy* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
     assert(getModule()->features.hasBulkMemory());
     if (auto* ret = optimizeMemoryCopy(curr)) {
       return replaceCurrent(ret);
