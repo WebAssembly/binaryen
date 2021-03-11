@@ -228,27 +228,30 @@ struct OptimizeInstructions
   // node or modifying it).
   bool changed;
 
-  void replaceCurrent(Expression* rep) {
-    changed = true;
-    WalkerPass<PostWalker<OptimizeInstructions>>::replaceCurrent(rep);
-  }
+  // Used to avoid recursion in replaceCurrent, see below.
+  bool inReplaceCurrent = false;
 
-  void visit(Expression* curr) {
-    // if this contains dead code, don't bother trying to optimize it, the type
-    // might change (if might not be unreachable if just one arm is, for
-    // example). this optimization pass focuses on actually executing code. the
-    // only exceptions are control flow changes
-    if (curr->is<Const>() || curr->is<Call>() || curr->is<Nop>() ||
-        (curr->type == Type::unreachable && !curr->is<Break>() &&
-         !curr->is<Switch>() && !curr->is<If>())) {
+  void replaceCurrent(Expression* rep) {
+    WalkerPass<PostWalker<OptimizeInstructions>>::replaceCurrent(rep);
+    // We may be able to apply multiple patterns as one may open opportunities
+    // for others. NB: patterns must not have cycles
+    // To avoid recursion, this uses the following pattern: the initial call to
+    // this method comes from one of the visit*() methods. We then loop in here,
+    // and if we are called again we set |changed| instead of recursing, so that
+    // we can loop on that value.
+    if (inReplaceCurrent) {
+      // We are in the replaceCurrent loop(), so just report a change and return
+      // to there.
+      changed = true;
       return;
     }
-    // we may be able to apply multiple patterns, one may open opportunities
-    // that look deeper NB: patterns must not have cycles
+    // Loop on further changes.
+    inReplaceCurrent = true;
     do {
       changed = false;
-      WalkerPass<PostWalker<OptimizeInstructions>>::visit(curr);
+      visit(getCurrent());
     } while (changed);
+    inReplaceCurrent = false;
   }
 
   EffectAnalyzer effects(Expression* expr) {
