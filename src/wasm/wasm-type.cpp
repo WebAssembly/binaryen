@@ -960,9 +960,6 @@ bool SubTyper::isSubType(Type a, Type b) {
   if (a == b) {
     return true;
   }
-  if (a == Type::unreachable) {
-    return true;
-  }
   if (a.isRef() && b.isRef()) {
     return (a.isNullable() == b.isNullable() || !a.isNullable()) &&
            isSubType(a.getHeapType(), b.getHeapType());

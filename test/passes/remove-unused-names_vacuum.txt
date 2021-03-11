@@ -15,7 +15,9 @@
  )
  (func $to-drop-unreachable
   (drop
-   (unreachable)
+   (block (result i32)
+    (unreachable)
+   )
   )
  )
  (func $return-i32-but-body-is-unreachable5 (result i32)

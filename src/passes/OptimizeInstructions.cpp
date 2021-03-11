@@ -860,28 +860,32 @@ struct OptimizeInstructions
         }
         if (iff->condition->type != Type::unreachable &&
             ExpressionAnalyzer::equal(iff->ifTrue, iff->ifFalse)) {
-          // The sides are identical, so fold. If we can replace the If with one
-          // arm and there are no side effects in the condition, replace it. But
-          // make sure not to change a concrete expression to an unreachable
-          // expression because we want to avoid having to refinalize.
-          bool needCondition = effects(iff->condition).hasSideEffects();
-          bool wouldBecomeUnreachable =
-            iff->type.isConcrete() && iff->ifTrue->type == Type::unreachable;
-          Builder builder(*getModule());
-          if (!wouldBecomeUnreachable && !needCondition) {
+          // sides are identical, fold
+          // if we can replace the if with one arm, and no side effects in the
+          // condition, do that
+          auto needCondition = effects(iff->condition).hasSideEffects();
+          auto isSubType = Type::isSubType(iff->ifTrue->type, iff->type);
+          if (isSubType && !needCondition) {
             return iff->ifTrue;
-          } else if (!wouldBecomeUnreachable) {
-            return builder.makeSequence(builder.makeDrop(iff->condition),
-                                        iff->ifTrue);
           } else {
-            // Emit a block with the original concrete type.
-            auto* ret = builder.makeBlock();
-            if (needCondition) {
-              ret->list.push_back(builder.makeDrop(iff->condition));
+            Builder builder(*getModule());
+            if (isSubType) {
+              return builder.makeSequence(builder.makeDrop(iff->condition),
+                                          iff->ifTrue);
+            } else {
+              // the types diff. as the condition is reachable, that means the
+              // if must be concrete while the arm is not
+              assert(iff->type.isConcrete() &&
+                     iff->ifTrue->type == Type::unreachable);
+              // emit a block with a forced type
+              auto* ret = builder.makeBlock();
+              if (needCondition) {
+                ret->list.push_back(builder.makeDrop(iff->condition));
+              }
+              ret->list.push_back(iff->ifTrue);
+              ret->finalize(iff->type);
+              return ret;
             }
-            ret->list.push_back(iff->ifTrue);
-            ret->finalize(iff->type);
-            return ret;
           }
         }
       }
