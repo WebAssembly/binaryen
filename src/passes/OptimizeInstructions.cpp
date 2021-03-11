@@ -416,7 +416,7 @@ struct OptimizeInstructions
       auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
       if (extraLeftShifts == 0) {
         if (auto* load =
-              Properties::getFallthrough(ext, getPassOptions(), features)
+              Properties::getFallthrough(ext, getPassOptions(), getModule()->features)
                 ->dynCast<Load>()) {
           // pattern match a load of 8 bits and a sign extend using a shl of
           // 24 then shr_s of 24 as well, etc.
@@ -490,7 +490,8 @@ struct OptimizeInstructions
             Builder builder(*getModule());
             // The result is either always true, or always false.
             c->value = Literal::makeFromInt32(curr->op == NeInt32, c->type);
-            return replaceCurrent(builder.makeSequence(builder.makeDrop(ext), c));
+            return replaceCurrent(
+              builder.makeSequence(builder.makeDrop(ext), c));
           }
         }
       } else if (auto* left = Properties::getSignExtValue(curr->left)) {
@@ -536,8 +537,7 @@ struct OptimizeInstructions
                curr->op == DivFloat32 || curr->op == DivFloat64) {
       if (curr->left->type == curr->right->type) {
         if (auto* leftUnary = curr->left->dynCast<Unary>()) {
-          if (leftUnary->op ==
-              Abstract::getUnary(curr->type, Abstract::Abs)) {
+          if (leftUnary->op == Abstract::getUnary(curr->type, Abstract::Abs)) {
             if (auto* rightUnary = curr->right->dynCast<Unary>()) {
               if (leftUnary->op == rightUnary->op) { // both are abs ops
                 // abs(x) * abs(y)   ==>   abs(x * y)
@@ -579,7 +579,7 @@ struct OptimizeInstructions
         return replaceCurrent(ret);
       }
       // the square of some operations can be merged
-      if (auto* left = curr->left->dynCast<curr>()) {
+      if (auto* left = curr->left->dynCast<Binary>()) {
         if (left->op == curr->op) {
           if (auto* leftRight = left->right->dynCast<Const>()) {
             if (left->op == AndInt32 || left->op == AndInt64) {
@@ -620,8 +620,7 @@ struct OptimizeInstructions
         // possible. Some unsigned operations like div_u or rem_u are usually
         // faster on VMs. Also this opens more possibilities for further
         // simplifications afterwards.
-        if (c >= 0 &&
-            (op = makeUnsignedBinaryOp(curr->op)) != InvalidBinary &&
+        if (c >= 0 && (op = makeUnsignedBinaryOp(curr->op)) != InvalidBinary &&
             Bits::getMaxBits(curr->left, this) <= 31) {
           curr->op = op;
         }
@@ -651,14 +650,12 @@ struct OptimizeInstructions
         BinaryOp op;
         int64_t c = right->value.geti64();
         // See description above for Type::i32
-        if (c >= 0 &&
-            (op = makeUnsignedcurrOp(curr->op)) != InvalidBinary &&
+        if (c >= 0 && (op = makeUnsignedBinaryOp(curr->op)) != InvalidBinary &&
             Bits::getMaxBits(curr->left, this) <= 63) {
           curr->op = op;
         }
         if (getPassOptions().shrinkLevel == 0 && c < 0 &&
-            c > std::numeric_limits<int64_t>::min() &&
-            curr->op == DivUInt64) {
+            c > std::numeric_limits<int64_t>::min() && curr->op == DivUInt64) {
           // u64(x) / C   ==>   u64(u64(x) >= C)  iff C > 2^63
           // We avoid applying this for C == 2^31 due to conflict
           // with other rule which transform to more prefereble
@@ -667,7 +664,8 @@ struct OptimizeInstructions
           // increasing size by one byte.
           curr->op = c == -1LL ? EqInt64 : GeUInt64;
           curr->type = Type::i32;
-          return replaceCurrent(Builder(*getModule()).makeUnary(ExtendUInt32, curr));
+          return replaceCurrent(
+            Builder(*getModule()).makeUnary(ExtendUInt32, curr));
         }
         if (Bits::isPowerOf2((uint64_t)c)) {
           switch (curr->op) {
@@ -820,8 +818,7 @@ struct OptimizeInstructions
       // abs(x / x)   ==>   x / x
       if (auto* binary = curr->value->dynCast<Binary>()) {
         if ((binary->op == Abstract::getBinary(binary->type, Abstract::Mul) ||
-             binary->op ==
-               Abstract::getBinary(binary->type, Abstract::DivS)) &&
+             binary->op == Abstract::getBinary(binary->type, Abstract::DivS)) &&
             ExpressionAnalyzer::equal(binary->left, binary->right)) {
           return replaceCurrent(binary);
         }
@@ -844,7 +841,7 @@ struct OptimizeInstructions
     }
   }
 
-  void visitSelect(Select* select) {
+  void visitSelect(Select* curr) {
     if (auto* ret = optimizeSelect(curr)) {
       return replaceCurrent(ret);
     }
@@ -853,7 +850,7 @@ struct OptimizeInstructions
   void visitGlobalSet(GlobalSet* curr) {
     // optimize out a set of a get
     auto* get = curr->value->dynCast<GlobalGet>();
-    if (get && get->name == set->name) {
+    if (get && get->name == curr->name) {
       ExpressionManipulator::nop(curr);
       return replaceCurrent(curr);
     }
@@ -882,8 +879,8 @@ struct OptimizeInstructions
         if (!wouldBecomeUnreachable && !needCondition) {
           return replaceCurrent(curr->ifTrue);
         } else if (!wouldBecomeUnreachable) {
-          return replaceCurrent(builder.makeSequence(builder.makeDrop(curr->condition),
-                                      curr->ifTrue));
+          return replaceCurrent(builder.makeSequence(
+            builder.makeDrop(curr->condition), curr->ifTrue));
         } else {
           // Emit a block with the original concrete type.
           auto* ret = builder.makeBlock();
@@ -904,9 +901,7 @@ struct OptimizeInstructions
     }
   }
 
-  void visitLoad(Load* curr) {
-    optimizeMemoryAccess(curr->ptr, curr->offset);
-  }
+  void visitLoad(Load* curr) { optimizeMemoryAccess(curr->ptr, curr->offset); }
 
   void visitStore(Store* curr) {
     optimizeMemoryAccess(curr->ptr, curr->offset);
@@ -953,7 +948,7 @@ struct OptimizeInstructions
   }
 
   void visitMemoryCopy(MemoryCopy* curr) {
-    assert(features.hasBulkMemory());
+    assert(getModule()->features.hasBulkMemory());
     if (auto* ret = optimizeMemoryCopy(curr)) {
       return replaceCurrent(ret);
     }
@@ -961,7 +956,7 @@ struct OptimizeInstructions
 
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
-    return replaceCurrent(localInfo[get->index].maxBits);
+    return localInfo[get->index].maxBits;
   }
 
 private:
