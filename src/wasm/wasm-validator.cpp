@@ -209,9 +209,7 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
   FunctionValidator(ValidationInfo* info) : info(*info) {}
 
-  // TODO: Switch to std::unordered_set once types are properly canonicalized
-  // so determinism isn't an issue.
-  std::unordered_map<Name, std::set<Type>> breakTypes;
+  std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
 
