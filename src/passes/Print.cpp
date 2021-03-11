@@ -100,7 +100,7 @@ struct TypeNamePrinter {
   // FIXME: This hard limit on how many times we call print() avoids extremely
   //        large outputs, which can be inconveniently large in some cases, but
   //        we should have a better mechanism for this.
-  static const size_t MaxPrints = 10;
+  static const size_t MaxPrints = 100;
 
   size_t prints = 0;
 
