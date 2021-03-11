@@ -418,9 +418,9 @@ struct OptimizeInstructions
       Index extraLeftShifts;
       auto bits = Properties::getAlmostSignExtBits(curr, extraLeftShifts);
       if (extraLeftShifts == 0) {
-        if (auto* load =
-              Properties::getFallthrough(ext, getPassOptions(), getModule()->features)
-                ->dynCast<Load>()) {
+        if (auto* load = Properties::getFallthrough(
+                           ext, getPassOptions(), getModule()->features)
+                           ->dynCast<Load>()) {
           // pattern match a load of 8 bits and a sign extend using a shl of
           // 24 then shr_s of 24 as well, etc.
           if (LoadUtils::canBeSigned(load) &&
