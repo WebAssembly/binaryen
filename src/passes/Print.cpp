@@ -97,8 +97,9 @@ struct TypeNamePrinter {
   void print(const Array& array);
   void print(const Rtt& rtt);
 
-  // FIXME: This limit avoids infinite recursion and ensures reasonable-sized
-  // output, but we should have a better mechanism for this.
+  // FIXME: This hard limit on how many times we call print() avoids extremely
+  //        large outputs, which can be inconveniently large in some cases, but
+  //        we should have a better mechanism for this.
   static const size_t MaxPrints = 10;
 
   size_t prints = 0;
