@@ -199,10 +199,7 @@ void Block::finalize() {
     // is already correct. TODO: calculate proper LUBs to compute a new correct
     // type in this situation.
     seeker.types.insert(type);
-    Type supertype;
-    if (Type::getSuperType(seeker.types, supertype)) {
-      type = supertype;
-    }
+    Type::ensureSuperType(seeker.types, type);
   } else {
     // There are no branches, so this block may be unreachable.
     handleUnreachable(this, NoBreak);
@@ -234,13 +231,9 @@ void If::finalize(Type type_) {
 
 void If::finalize() {
   if (ifFalse) {
-    // If neither arm's type is a supertype of the other, assume the current
-    // type is already correct. TODO: Calculate a proper LUB.
-    Type supertype;
-    std::array<Type, 2> types{{ifTrue->type, ifFalse->type}};
-    if (Type::getSuperType(types, supertype)) {
-      type = supertype;
-    }
+    // TODO: Calculate a proper LUB.
+    Type::ensureSuperType(std::array<Type, 2>{{ifTrue->type, ifFalse->type}},
+                          type);
   } else {
     type = Type::none;
   }
@@ -249,10 +242,12 @@ void If::finalize() {
   // (if (result i32)
   //  (unreachable)
   //  (i32.const 10)
-  //  (i32.const 20
+  //  (i32.const 20)
   // )
   // otherwise, if the condition is unreachable, so is the if
-  if (type == Type::none && condition->type == Type::unreachable) {
+  if ((type == Type::none && condition->type == Type::unreachable) ||
+      (ifTrue->type == Type::unreachable && ifFalse &&
+       ifFalse->type == Type::unreachable)) {
     type = Type::unreachable;
   }
 }
@@ -790,13 +785,9 @@ void Select::finalize() {
       condition->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    // If neither arm's type is a supertype of the other, assume the current
-    // type is already correct. TODO: Calculate a proper LUB.
-    Type supertype;
-    std::array<Type, 2> types{{ifTrue->type, ifFalse->type}};
-    if (Type::getSuperType(types, supertype)) {
-      type = supertype;
-    }
+    // TODO: Calculate a proper LUB.
+    Type::ensureSuperType(std::array<Type, 2>{{ifTrue->type, ifFalse->type}},
+                          type);
   }
 }
 
@@ -856,10 +847,7 @@ void Try::finalize() {
   for (auto catchBody : catchBodies) {
     types.insert(catchBody->type);
   }
-  Type supertype;
-  if (Type::getSuperType(types, supertype)) {
-    type = supertype;
-  }
+  Type::ensureSuperType(types, type);
 }
 
 void Try::finalize(Type type_) {

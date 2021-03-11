@@ -47,15 +47,11 @@ void ReFinalize::visitBlock(Block* curr) {
   if (curr->name.is()) {
     auto iter = breakTypes.find(curr->name);
     if (iter != breakTypes.end()) {
-      // Calculate the supertype of the branch types and the flowed-out type. If
-      // there is no supertype among the available types, assume the current
-      // type is already correct. TODO: calculate proper LUBs to compute a new
-      // correct type in this situation.
+      // Set the type to be a supertype of the branch types and the flowed-out
+      // type. TODO: calculate proper LUBs to compute a new correct type in this
+      // situation.
       iter->second.insert(curr->list.back()->type);
-      Type supertype;
-      if (Type::getSuperType(iter->second, supertype)) {
-        curr->type = supertype;
-      }
+      Type::ensureSuperType(iter->second, curr->type);
       return;
     }
   }

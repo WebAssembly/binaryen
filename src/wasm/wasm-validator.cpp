@@ -694,12 +694,6 @@ void FunctionValidator::visitIf(If* curr) {
                       curr->type,
                       curr,
                       "returning if-else's false must have right type");
-      shouldBeTrue(curr->ifTrue->type.isConcrete(),
-                   curr,
-                   "returning if-else's true must be concrete");
-      shouldBeTrue(curr->ifFalse->type.isConcrete(),
-                   curr,
-                   "returning if-else's false must be concrete");
     } else {
       if (curr->condition->type != Type::unreachable) {
         shouldBeEqual(curr->ifTrue->type,

@@ -207,15 +207,13 @@ public:
   // supertype of all types in the range iff such a type exists. This is similar
   // to but more limited than calculating a proper least upper bound on the
   // types.
-  // FIXME: This is not necessarily deterministic as long as we are not
-  // canonicalizing structurally identical recursive types because it may end up
-  // choosing any of multiple identical candidates.
   template<typename T> static bool getSuperType(const T& types, Type& super) {
     // Sort the types so that the supertype will be at the back.
     std::vector<Type> sorted(types.begin(), types.end());
-    std::sort(sorted.begin(), sorted.end(), [&](const Type& a, const Type& b) {
-      return Type::isSubType(a, b);
-    });
+    std::stable_sort(
+      sorted.begin(), sorted.end(), [&](const Type& a, const Type& b) {
+        return Type::isSubType(a, b);
+      });
     // Check that the "highest" type found by the sort is actually a supertype
     // of all the other sorted.
     for (auto t : sorted) {
@@ -225,6 +223,22 @@ public:
     }
     super = sorted.back();
     return true;
+  }
+
+  // Ensure that `type` is a supertype of `types`. If it is not already a
+  // supertype, then use `getSuperType` on `types` to set `type` to a supertype.
+  // Assumes `getSuperType` will be able to find an appropriate type in that
+  // case.
+  template<typename T>
+  static void ensureSuperType(const T& types, Type& super) {
+    if (std::all_of(types.begin(), types.end(), [&](const Type& type) {
+          return isSubType(type, super);
+        })) {
+      return;
+    }
+    if (!getSuperType(types, super)) {
+      WASM_UNREACHABLE("Could not ensure supertype");
+    }
   }
 
   std::string toString() const;
