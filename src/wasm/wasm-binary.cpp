@@ -1185,7 +1185,7 @@ void WasmBinaryWriter::writeType(Type type) {
     } else {
       o << S32LEB(BinaryConsts::EncodedType::rtt);
     }
-    writeHeapType(rtt.heapType);
+    writeIndexedHeapType(rtt.heapType);
     return;
   }
   int ret = 0;
@@ -1265,6 +1265,10 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     WASM_UNREACHABLE("TODO: compound GC types");
   }
   o << S64LEB(ret); // TODO: Actually s33
+}
+
+void WasmBinaryWriter::writeIndexedHeapType(HeapType type) {
+  o << U32LEB(getTypeIndex(type));
 }
 
 void WasmBinaryWriter::writeField(const Field& field) {
@@ -1644,11 +1648,11 @@ Type WasmBinaryBuilder::getType(int initial) {
       return Type(getHeapType(), Nullable);
     case BinaryConsts::EncodedType::rtt_n: {
       auto depth = getU32LEB();
-      auto heapType = getHeapType();
+      auto heapType = getIndexedHeapType();
       return Type(Rtt(depth, heapType));
     }
     case BinaryConsts::EncodedType::rtt: {
-      return Type(Rtt(getHeapType()));
+      return Type(Rtt(getIndexedHeapType()));
     }
     default:
       throwError("invalid wasm type: " + std::to_string(initial));
@@ -1674,6 +1678,14 @@ HeapType WasmBinaryBuilder::getHeapType() {
     throwError("invalid wasm heap type: " + std::to_string(type));
   }
   WASM_UNREACHABLE("unexpected type");
+}
+
+HeapType WasmBinaryBuilder::getIndexedHeapType() {
+  auto index = getU32LEB();
+  if (index >= types.size()) {
+    throwError("invalid heap type index: " + std::to_string(index));
+  }
+  return types[index];
 }
 
 Type WasmBinaryBuilder::getConcreteType() {
@@ -1789,11 +1801,7 @@ void WasmBinaryBuilder::readTypes() {
       case BinaryConsts::EncodedType::rtt: {
         auto depth = typeCode == BinaryConsts::EncodedType::rtt ? Rtt::NoDepth
                                                                 : getU32LEB();
-        int64_t htCode = getS64LEB(); // TODO: Actually s33
-        HeapType ht;
-        if (getBasicHeapType(htCode, ht)) {
-          return Type(Rtt(depth, ht));
-        }
+        auto htCode = getU32LEB();
         if (size_t(htCode) >= numTypes) {
           throwError("invalid type index: " + std::to_string(htCode));
         }
@@ -6359,7 +6367,7 @@ bool WasmBinaryBuilder::maybeVisitRttCanon(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RttCanon) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   out = Builder(wasm).makeRttCanon(heapType);
   return true;
 }
@@ -6368,7 +6376,7 @@ bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::RttSub) {
     return false;
   }
-  auto targetHeapType = getHeapType();
+  auto targetHeapType = getIndexedHeapType();
   auto* parent = popNonVoidExpression();
   out = Builder(wasm).makeRttSub(targetHeapType, parent);
   return true;
@@ -6379,7 +6387,7 @@ bool WasmBinaryBuilder::maybeVisitStructNew(Expression*& out, uint32_t code) {
       code != BinaryConsts::StructNewDefaultWithRtt) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   auto* rtt = popNonVoidExpression();
   validateHeapTypeUsingChild(rtt, heapType);
   std::vector<Expression*> operands;
@@ -6411,7 +6419,7 @@ bool WasmBinaryBuilder::maybeVisitStructGet(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   curr->index = getU32LEB();
   curr->ref = popNonVoidExpression();
   validateHeapTypeUsingChild(curr->ref, heapType);
@@ -6425,7 +6433,7 @@ bool WasmBinaryBuilder::maybeVisitStructSet(Expression*& out, uint32_t code) {
     return false;
   }
   auto* curr = allocator.alloc<StructSet>();
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   curr->index = getU32LEB();
   curr->value = popNonVoidExpression();
   curr->ref = popNonVoidExpression();
@@ -6440,7 +6448,7 @@ bool WasmBinaryBuilder::maybeVisitArrayNew(Expression*& out, uint32_t code) {
       code != BinaryConsts::ArrayNewDefaultWithRtt) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   auto* rtt = popNonVoidExpression();
   validateHeapTypeUsingChild(rtt, heapType);
   auto* size = popNonVoidExpression();
@@ -6464,7 +6472,7 @@ bool WasmBinaryBuilder::maybeVisitArrayGet(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
@@ -6476,7 +6484,7 @@ bool WasmBinaryBuilder::maybeVisitArraySet(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::ArraySet) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   auto* value = popNonVoidExpression();
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
@@ -6489,7 +6497,7 @@ bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::ArrayLen) {
     return false;
   }
-  auto heapType = getHeapType();
+  auto heapType = getIndexedHeapType();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
   out = Builder(wasm).makeArrayLen(ref);

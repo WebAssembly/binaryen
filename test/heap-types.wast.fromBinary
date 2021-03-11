@@ -1,20 +1,22 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref null $struct.A)) (field (mut (ref null $struct.A)))))
+ (type $grandchild (struct (field i32) (field i64)))
  (type $matrix (array (ref null $vector)))
  (type $vector (array (mut f64)))
  (type $anyref_=>_none (func (param anyref)))
  (type $parent (struct ))
- (type $grandchild (struct (field i32) (field i64)))
+ (type $child (struct (field i32)))
  (type $struct.C (struct (field $named-mut (mut f32))))
  (type $none_=>_none (func))
+ (type $nested-child-struct (struct (field (mut (ref null $child)))))
  (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
  (type $rtt_$parent_=>_none (func (param (rtt $parent))))
  (type $ref?|$struct.A|_=>_ref?|$struct.B| (func (param (ref null $struct.A)) (result (ref null $struct.B))))
  (type $ref?|$vector|_=>_ref?|$matrix| (func (param (ref null $vector)) (result (ref null $matrix))))
- (type $child (struct (field i32)))
  (type $words (array (mut i32)))
  (type $bytes (array (mut i8)))
+ (type $nested-child-array (array (mut (ref null $child))))
  (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
  (global $rttchild (rtt 1 $child) (rtt.sub $child
   (global.get $rttparent)
@@ -102,6 +104,10 @@
    (ref.null $struct.C)
    (f32.const 100)
   )
+  (struct.set $nested-child-struct 0
+   (ref.null $nested-child-struct)
+   (ref.null $grandchild)
+  )
   (drop
    (struct.new_default_with_rtt $struct.A
     (rtt.canon $struct.A)
@@ -145,6 +151,11 @@
    (local.get $x)
    (i32.const 2)
    (f64.const 2.18281828)
+  )
+  (array.set $nested-child-array
+   (ref.null $nested-child-array)
+   (i32.const 3)
+   (ref.null $grandchild)
   )
   (drop
    (array.len $vector
