@@ -235,13 +235,13 @@ struct OptimizeInstructions
     WalkerPass<PostWalker<OptimizeInstructions>>::replaceCurrent(rep);
     // We may be able to apply multiple patterns as one may open opportunities
     // for others. NB: patterns must not have cycles
+
     // To avoid recursion, this uses the following pattern: the initial call to
     // this method comes from one of the visit*() methods. We then loop in here,
     // and if we are called again we set |changed| instead of recursing, so that
     // we can loop on that value.
     if (inReplaceCurrent) {
-      // We are in the replaceCurrent loop(), so just report a change and return
-      // to there.
+      // We are in the loop below so just note a change and return to there.
       changed = true;
       return;
     }
