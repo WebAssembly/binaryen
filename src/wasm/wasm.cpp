@@ -847,7 +847,11 @@ void Try::finalize() {
   for (auto catchBody : catchBodies) {
     types.insert(catchBody->type);
   }
-  Type::ensureSuperType(types, type);
+  if (types.size() == 1 && *types.begin() == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    Type::ensureSuperType(types, type);
+  }
 }
 
 void Try::finalize(Type type_) {
