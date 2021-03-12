@@ -134,7 +134,8 @@ struct ExecutionResults {
       // reference between such things. We can only compare things structurally,
       // for which we compare the types.
       // Another issue is that the same module, when passed through --roundtrip,
-      // will end up with a type that does not compare equallygi.
+      // will end up with a type that does not compare equally as we do not
+      // currently globally canonicalize recursive types.
       return true;
     }
     if (a != b) {
