@@ -427,25 +427,17 @@ private:
   void setupTables() {
     // Ensure an element segment, adding one or even adding a whole table as
     // needed.
-    if (wasm.tables.size() > 0 && wasm.elementSegments.empty()) {
-      auto& table = wasm.tables[0];
-      table->initial = table->max = 0;
-
-      auto segment = std::make_unique<ElementSegment>(
-        table->name, builder.makeConst(int32_t(0)));
-      segment->setName(Name::fromInt(0), false);
-      wasm.addElementSegment(std::move(segment));
-      return;
-    }
     if (wasm.tables.empty()) {
       auto table = builder.makeTable(
         Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
       table->hasExplicitName = true;
-      auto segment = std::make_unique<ElementSegment>(
-        table->name, builder.makeConst(int32_t(0)));
-      segment->setName(Name::fromInt(0), false);
-      wasm.addElementSegment(std::move(segment));
       wasm.addTable(std::move(table));
+    }
+    if (wasm.elementSegments.empty()) {
+      auto segment = std::make_unique<ElementSegment>(
+        wasm.tables[0]->name, builder.makeConst(int32_t(0)));
+      segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
+      wasm.addElementSegment(std::move(segment));
     }
   }
 
