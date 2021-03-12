@@ -225,20 +225,14 @@ struct BranchSeeker
   Name target;
 
   Index found = 0;
-  // None indicates no value is sent.
-  Type valueType = Type::none;
+
+  std::unordered_set<Type> types;
 
   BranchSeeker(Name target) : target(target) {}
 
   void noteFound(Type newType) {
     found++;
-    if (newType != Type::none) {
-      if (found == 1) {
-        valueType = newType;
-      } else {
-        valueType = Type::getLeastUpperBound(valueType, newType);
-      }
-    }
+    types.insert(newType);
   }
 
   void visitExpression(Expression* curr) {

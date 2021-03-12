@@ -19,6 +19,7 @@
 
 #include "support/name.h"
 #include "wasm-features.h"
+#include <algorithm>
 #include <ostream>
 #include <vector>
 
@@ -202,18 +203,42 @@ public:
   // Returns true if left is a subtype of right. Subtype includes itself.
   static bool isSubType(Type left, Type right);
 
-  // Computes the least upper bound from the type lattice.
-  // If one of the type is unreachable, the other type becomes the result. If
-  // the common supertype does not exist, returns none, a poison value.
-  static Type getLeastUpperBound(Type a, Type b);
-
-  // Computes the least upper bound for all types in the given list.
-  template<typename T> static Type mergeTypes(const T& types) {
-    Type type = Type::unreachable;
-    for (auto other : types) {
-      type = Type::getLeastUpperBound(type, other);
+  // Returns true and sets `super` to the type in range [begin,end) that is a
+  // supertype of all types in the range iff such a type exists. This is similar
+  // to but more limited than calculating a proper least upper bound on the
+  // types.
+  template<typename T> static bool getSuperType(const T& types, Type& super) {
+    // Sort the types so that the supertype will be at the back.
+    std::vector<Type> sorted(types.begin(), types.end());
+    std::stable_sort(
+      sorted.begin(), sorted.end(), [&](const Type& a, const Type& b) {
+        return Type::isSubType(a, b);
+      });
+    // Check that the "highest" type found by the sort is actually a supertype
+    // of all the other sorted.
+    for (auto t : sorted) {
+      if (!Type::isSubType(t, sorted.back())) {
+        return false;
+      }
     }
-    return type;
+    super = sorted.back();
+    return true;
+  }
+
+  // Ensure that `type` is a supertype of `types`. If it is not already a
+  // supertype, then use `getSuperType` on `types` to set `type` to a supertype.
+  // Assumes `getSuperType` will be able to find an appropriate type in that
+  // case.
+  template<typename T>
+  static void ensureSuperType(const T& types, Type& super) {
+    if (std::all_of(types.begin(), types.end(), [&](const Type& type) {
+          return isSubType(type, super);
+        })) {
+      return;
+    }
+    if (!getSuperType(types, super)) {
+      WASM_UNREACHABLE("Could not ensure supertype");
+    }
   }
 
   std::string toString() const;
