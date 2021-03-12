@@ -67,6 +67,8 @@ def generate_wat_files(llvm_bin, emscripten_root):
             obj_path, '-o', wasm_path,
             '--allow-undefined',
             '--export', '__wasm_call_ctors',
+            '--export', '__start_em_asm',
+            '--export', '__stop_em_asm',
             '--global-base=568',
         ]
         # We had a regression where this test only worked if debug names
