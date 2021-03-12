@@ -779,6 +779,21 @@ std::ostream& operator<<(std::ostream& os, Rtt rtt) {
   return TypePrinter(os).print(rtt);
 }
 
+unsigned Field::getByteSize() const {
+  if (type != Type::i32) {
+    return type.getByteSize();
+  }
+  switch (packedType) {
+    case Field::PackedType::i8:
+      return 1;
+    case Field::PackedType::i16:
+      return 2;
+    case Field::PackedType::not_packed:
+      return 4;
+  }
+  WASM_UNREACHABLE("impossible packed type");
+}
+
 namespace {
 
 bool TypeComparator::lessThan(Type a, Type b) {

@@ -440,6 +440,8 @@ struct Field {
   }
   bool operator!=(const Field& other) const { return !(*this == other); }
   std::string toString() const;
+
+  unsigned getByteSize() const;
 };
 
 typedef std::vector<Field> FieldList;

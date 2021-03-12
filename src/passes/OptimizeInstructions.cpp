@@ -933,28 +933,40 @@ struct OptimizeInstructions
       return;
     }
     optimizeMemoryAccess(curr->ptr, curr->offset);
-    if (curr->valueType.isInteger()) {
-      // truncates constant values during stores
-      // (i32|i64).store(8|16|32)(p, C)   ==>
-      //    (i32|i64).store(8|16|32)(p, C & mask)
-      if (auto* c = curr->value->dynCast<Const>()) {
-        if (curr->valueType == Type::i64 && curr->bytes == 4) {
-          c->value = c->value.and_(Literal(uint64_t(0xffffffff)));
-        } else {
-          c->value = c->value.and_(Literal::makeFromInt32(
-            Bits::lowBitMask(curr->bytes * 8), curr->valueType));
-        }
+    optimizeStoredValue(curr->value, curr->bytes);
+    if (auto* unary = curr->value->dynCast<Unary>()) {
+      if (unary->op == WrapInt64) {
+        // instead of wrapping to 32, just store some of the bits in the i64
+        curr->valueType = Type::i64;
+        curr->value = unary->value;
+      }
+    }
+  }
+
+  void optimizeStoredValue(Expression*& value, Index bytes) {
+    if (!value->type.isInteger()) {
+      return;
+    }
+    // truncates constant values during stores
+    // (i32|i64).store(8|16|32)(p, C)   ==>
+    //    (i32|i64).store(8|16|32)(p, C & mask)
+    if (auto* c = value->dynCast<Const>()) {
+      if (value->type == Type::i64 && bytes == 4) {
+        c->value = c->value.and_(Literal(uint64_t(0xffffffff)));
+      } else {
+        c->value = c->value.and_(
+          Literal::makeFromInt32(Bits::lowBitMask(bytes * 8), value->type));
       }
     }
     // stores of fewer bits truncates anyhow
-    if (auto* binary = curr->value->dynCast<Binary>()) {
+    if (auto* binary = value->dynCast<Binary>()) {
       if (binary->op == AndInt32) {
         if (auto* right = binary->right->dynCast<Const>()) {
           if (right->type == Type::i32) {
             auto mask = right->value.geti32();
-            if ((curr->bytes == 1 && mask == 0xff) ||
-                (curr->bytes == 2 && mask == 0xffff)) {
-              curr->value = binary->left;
+            if ((bytes == 1 && mask == 0xff) ||
+                (bytes == 2 && mask == 0xffff)) {
+              value = binary->left;
             }
           }
         }
@@ -962,15 +974,9 @@ struct OptimizeInstructions
         // if sign extending the exact bit size we store, we can skip the
         // extension if extending something bigger, then we just alter bits we
         // don't save anyhow
-        if (Properties::getSignExtBits(binary) >= Index(curr->bytes) * 8) {
-          curr->value = ext;
+        if (Properties::getSignExtBits(binary) >= Index(bytes) * 8) {
+          value = ext;
         }
-      }
-    } else if (auto* unary = curr->value->dynCast<Unary>()) {
-      if (unary->op == WrapInt64) {
-        // instead of wrapping to 32, just store some of the bits in the i64
-        curr->valueType = Type::i64;
-        curr->value = unary->value;
       }
     }
   }
@@ -982,6 +988,13 @@ struct OptimizeInstructions
     assert(getModule()->features.hasBulkMemory());
     if (auto* ret = optimizeMemoryCopy(curr)) {
       return replaceCurrent(ret);
+    }
+  }
+
+  void visitStructSet(StructSet* curr) {
+    if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
+      const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
+      optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
     }
   }
 
