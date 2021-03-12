@@ -269,6 +269,13 @@ struct OptimizeInstructions
   }
 
   void visitBinary(Binary* curr) {
+    // If this contains dead code, don't bother trying to optimize it, the type
+    // might change (if might not be unreachable if just one arm is, for
+    // example). This optimization pass focuses on actually executing code.
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     if (shouldCanonicalize(curr)) {
       canonicalize(curr);
     }
@@ -737,6 +744,10 @@ struct OptimizeInstructions
   }
 
   void visitUnary(Unary* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     {
       using namespace Match;
       using namespace Abstract;
@@ -845,12 +856,18 @@ struct OptimizeInstructions
   }
 
   void visitSelect(Select* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
     if (auto* ret = optimizeSelect(curr)) {
       return replaceCurrent(ret);
     }
   }
 
   void visitGlobalSet(GlobalSet* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
     // optimize out a set of a get
     auto* get = curr->value->dynCast<GlobalGet>();
     if (get && get->name == curr->name) {
@@ -904,9 +921,17 @@ struct OptimizeInstructions
     }
   }
 
-  void visitLoad(Load* curr) { optimizeMemoryAccess(curr->ptr, curr->offset); }
+  void visitLoad(Load* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    optimizeMemoryAccess(curr->ptr, curr->offset);
+  }
 
   void visitStore(Store* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
     optimizeMemoryAccess(curr->ptr, curr->offset);
     optimizeStoredValue(curr->value, curr->bytes);
     if (auto* unary = curr->value->dynCast<Unary>()) {
@@ -957,6 +982,9 @@ struct OptimizeInstructions
   }
 
   void visitMemoryCopy(MemoryCopy* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
     assert(getModule()->features.hasBulkMemory());
     if (auto* ret = optimizeMemoryCopy(curr)) {
       return replaceCurrent(ret);
