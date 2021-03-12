@@ -569,11 +569,24 @@ void test_literals() {
   }
 }
 
+void test_field() {
+  // Simple types
+  assert_equal(Field(Type::i32, Immutable).getByteSize(), 4);
+  assert_equal(Field(Type::i64, Immutable).getByteSize(), 8);
+
+  // Packed types
+  assert_equal(Field(Field::PackedType::i8, Immutable).getByteSize(), 1);
+  assert_equal(Field(Field::PackedType::i16, Immutable).getByteSize(), 2);
+  assert_equal(Field(Field::PackedType::not_packed, Immutable).getByteSize(),
+               4);
+}
+
 int main() {
   test_bits();
   test_cost();
   test_effects();
   test_literals();
+  test_field();
 
   if (failsCount > 0) {
     abort();
