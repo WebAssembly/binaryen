@@ -185,123 +185,6 @@ struct AsmConst {
   std::string code;
 };
 
-struct AsmConstWalker : public LinearExecutionWalker<AsmConstWalker> {
-  Module& wasm;
-  bool minimizeWasmChanges;
-  StringConstantTracker stringTracker;
-
-  std::vector<AsmConst> asmConsts;
-  // last sets in the current basic block, per index
-  std::map<Index, LocalSet*> sets;
-
-  AsmConstWalker(Module& _wasm, bool minimizeWasmChanges)
-    : wasm(_wasm), minimizeWasmChanges(minimizeWasmChanges),
-      stringTracker(_wasm) {}
-
-  void noteNonLinear(Expression* curr);
-
-  void visitLocalSet(LocalSet* curr);
-  void visitCall(Call* curr);
-
-  void process();
-
-private:
-  void createAsmConst(uint64_t id, std::string code);
-  void addImports();
-
-  std::vector<std::unique_ptr<Function>> queuedImports;
-};
-
-void AsmConstWalker::noteNonLinear(Expression* curr) {
-  // End of this basic block; clear sets.
-  sets.clear();
-}
-
-void AsmConstWalker::visitLocalSet(LocalSet* curr) { sets[curr->index] = curr; }
-
-void AsmConstWalker::visitCall(Call* curr) {
-  auto* import = wasm.getFunction(curr->target);
-  // Find calls to emscripten_asm_const* functions whose first argument is
-  // is always a string constant.
-  if (!import->imported()) {
-    return;
-  }
-  auto importName = import->base;
-  if (!importName.hasSubstring(EM_ASM_PREFIX)) {
-    return;
-  }
-
-  auto* arg = curr->operands[0];
-  while (!arg->dynCast<Const>()) {
-    if (auto* get = arg->dynCast<LocalGet>()) {
-      // The argument may be a local.get, in which case, the last set in this
-      // basic block has the value.
-      auto* set = sets[get->index];
-      if (set) {
-        assert(set->index == get->index);
-        arg = set->value;
-      } else {
-        Fatal() << "local.get of unknown in arg0 of call to " << importName
-                << " (used by EM_ASM* macros) in function "
-                << getFunction()->name
-                << ".\nThis might be caused by aggressive compiler "
-                   "transformations. Consider using EM_JS instead.";
-      }
-      continue;
-    }
-
-    if (auto* setlocal = arg->dynCast<LocalSet>()) {
-      // The argument may be a local.tee, in which case we take first child
-      // which is the value being copied into the local.
-      if (setlocal->isTee()) {
-        arg = setlocal->value;
-        continue;
-      }
-    }
-
-    if (auto* bin = arg->dynCast<Binary>()) {
-      if (bin->op == AddInt32 || bin->op == AddInt64) {
-        // In the dynamic linking case the address of the string constant
-        // is the result of adding its offset to __memory_base.
-        // In this case are only looking for the offset from __memory_base
-        // the RHS of the addition is just what we want.
-        arg = bin->right;
-        continue;
-      }
-    }
-
-    if (auto* unary = arg->dynCast<Unary>()) {
-      if (unary->op == WrapInt64) {
-        // This cast may be inserted around the string constant in the
-        // Memory64Lowering pass.
-        arg = unary->value;
-        continue;
-      }
-    }
-
-    Fatal() << "Unexpected arg0 type (" << *arg
-            << ") in call to: " << importName;
-  }
-
-  auto* value = arg->cast<Const>();
-  Address address = value->value.getUnsigned();
-  asmConsts.push_back({address, stringTracker.stringAtAddr(address)});
-}
-
-void AsmConstWalker::process() {
-  // Find and queue necessary imports
-  walkModule(&wasm);
-  // Add them after the walk, to avoid iterator invalidation on
-  // the list of functions.
-  addImports();
-}
-
-void AsmConstWalker::addImports() {
-  for (auto& import : queuedImports) {
-    wasm.addFunction(import.release());
-  }
-}
-
 struct SegmentRemover : WalkerPass<PostWalker<SegmentRemover>> {
   SegmentRemover(Index segment) : segment(segment) {}
 
@@ -345,22 +228,21 @@ static Address getExportedAddress(Module& wasm, Export* export_) {
 
 static std::vector<AsmConst> findEmAsmConsts(Module& wasm,
                                              bool minimizeWasmChanges) {
+  // Newer version of emscripten/llvm export these symbols so we can use them to
+  // find all the EM_ASM constants.   Sadly __start_em_asm and __stop_em_asm
+  // don't alwasy mark the start and end of segment because in dynamic linking
+  // we merge all data segments into one.
   Export* start = wasm.getExportOrNull("__start_em_asm");
   Export* end = wasm.getExportOrNull("__stop_em_asm");
-
-  // Older versions of emscripten don't export these symbols.  Instead
-  // we run AsmConstWalker in an attempt to derive the string addresses
-  // from the code.
-  if (!start || !end) {
-    AsmConstWalker walker(wasm, minimizeWasmChanges);
-    walker.process();
-    return walker.asmConsts;
+  if (!start && !end) {
+    BYN_TRACE("findEmAsmConsts: no start/stop symbols\n");
+    return {};
   }
 
-  // Newer version of emscripten export this symbols and we
-  // can use it ot find all the EM_ASM constants.   Sadly __start_em_asm and
-  // __stop_em_asm don't alwasy mark the start and end of segment because in
-  // dynamic linking we merge all data segments into one.
+  if (!start || !end) {
+    Fatal() << "Found only one of __start_em_asm and __stop_em_asm";
+  }
+
   std::vector<AsmConst> asmConsts;
   StringConstantTracker stringTracker(wasm);
   Address startAddress = getExportedAddress(wasm, start);
