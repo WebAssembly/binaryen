@@ -434,6 +434,7 @@ private:
       wasm.addTable(std::move(table));
     }
     if (wasm.elementSegments.empty()) {
+      // TODO: use a random table
       auto segment = std::make_unique<ElementSegment>(
         wasm.tables[0]->name, builder.makeConst(int32_t(0)));
       segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
@@ -1479,6 +1480,7 @@ private:
     for (const auto& type : targetFn->sig.params) {
       args.push_back(make(type));
     }
+    // TODO: use a random table
     return builder.makeCallIndirect(
       wasm.tables[0]->name, target, args, targetFn->sig, isReturn);
   }
