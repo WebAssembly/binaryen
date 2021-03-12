@@ -242,7 +242,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         if (left->type == right->type) {
           curr->ifTrue = left;
           curr->ifFalse = right;
-          curr->finalize();
+          curr->finalize(left->type);
           replaceCurrent(Builder(*getModule()).makeDrop(curr));
         }
       }
@@ -285,19 +285,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       if (last->type.isConcrete() && block->type == last->type) {
         last = optimize(last, false, false);
         if (!last) {
-          // we may be able to remove this, if there are no brs
-          bool canPop = true;
-          if (block->name.is()) {
-            BranchUtils::BranchSeeker seeker(block->name);
-            Expression* temp = block;
-            seeker.walk(temp);
-            Type supertype;
-            if (seeker.found && Type::getSuperType(seeker.types, supertype) &&
-                supertype != Type::none) {
-              canPop = false;
-            }
-          }
-          if (canPop) {
+          // we can remove this, if there are no brs
+          if (!BranchUtils::BranchSeeker::has(block, block->name)) {
             block->list.back() = last;
             block->list.pop_back();
             block->type = Type::none;

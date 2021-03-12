@@ -869,3 +869,32 @@
     )
   )
 )
+;; Multiple brs to a a block that is dropped must be taken into account before
+;; deciding to remove the block's value entirely.
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_eqref_v128_i32_i64_externref_eqref (func (result eqref v128 i32 i64 externref eqref)))
+ (global $global$0 (mut i32) (i32.const 10))
+ (func $0
+  (drop
+   (block $label$1 (result funcref)
+    (drop
+     (br_if $label$1
+      (ref.null $none_=>_eqref_v128_i32_i64_externref_eqref)
+      (i32.const 0)
+     )
+    )
+    (drop
+     (br_if $label$1
+      (ref.null $none_=>_none)
+      (i32.const 1)
+     )
+    )
+    (global.set $global$0
+     (i32.const 0)
+    )
+    (ref.null func)
+   )
+  )
+ )
+)
