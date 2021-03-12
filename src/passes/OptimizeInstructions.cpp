@@ -954,8 +954,8 @@ struct OptimizeInstructions
       if (value->type == Type::i64 && bytes == 4) {
         c->value = c->value.and_(Literal(uint64_t(0xffffffff)));
       } else {
-        c->value = c->value.and_(Literal::makeFromInt32(
-          Bits::lowBitMask(bytes * 8), value->type));
+        c->value = c->value.and_(
+          Literal::makeFromInt32(Bits::lowBitMask(bytes * 8), value->type));
       }
     }
     // stores of fewer bits truncates anyhow
@@ -992,8 +992,7 @@ struct OptimizeInstructions
   }
 
   void visitStructSet(StructSet* curr) {
-    if (curr->ref->type != Type::unreachable &&
-        curr->value->type.isInteger()) {
+    if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
       const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
       optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
     }

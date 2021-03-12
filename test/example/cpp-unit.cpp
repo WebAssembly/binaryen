@@ -575,15 +575,10 @@ void test_field() {
   assert_equal(Field(Type::i64, Immutable).getByteSize(), 8);
 
   // Packed types
-  assert_equal(
-    Field(Field::PackedType::i8, Immutable).getByteSize(),
-    1);
-  assert_equal(
-    Field(Field::PackedType::i16, Immutable).getByteSize(),
-    2);
-  assert_equal(
-    Field(Field::PackedType::not_packed, Immutable).getByteSize(),
-    4);
+  assert_equal(Field(Field::PackedType::i8, Immutable).getByteSize(), 1);
+  assert_equal(Field(Field::PackedType::i16, Immutable).getByteSize(), 2);
+  assert_equal(Field(Field::PackedType::not_packed, Immutable).getByteSize(),
+               4);
 }
 
 int main() {

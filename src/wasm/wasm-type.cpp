@@ -840,9 +840,12 @@ unsigned Field::getByteSize() const {
     return type.getByteSize();
   }
   switch (packedType) {
-    case Field::PackedType::i8: return 1;
-    case Field::PackedType::i16: return 2;
-    case Field::PackedType::not_packed: return 4;
+    case Field::PackedType::i8:
+      return 1;
+    case Field::PackedType::i16:
+      return 2;
+    case Field::PackedType::not_packed:
+      return 4;
   }
   WASM_UNREACHABLE("impossible packed type");
 }
