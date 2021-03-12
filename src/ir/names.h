@@ -84,6 +84,11 @@ inline Name getValidEventName(Module& module, Name root) {
   return getValidName(
     module, root, [&](Name test) { return !module.getEventOrNull(test); });
 }
+inline Name getValidElementSegmentName(Module& module, Name root) {
+  return getValidName(module, root, [&](Name test) {
+    return !module.getElementSegmentOrNull(test);
+  });
+}
 
 } // namespace Names
 
