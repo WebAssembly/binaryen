@@ -867,12 +867,12 @@ private:
       void visitExpression(Expression* curr) {
         // Note all scope names, and fix up all uses.
         BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
-          if (name.is()) {                                                      
+          if (name.is()) {
             if (seen.count(name)) {
-              replace();        
-            } else {            
+              replace();
+            } else {
               seen.insert(name);
-            }                                                                     
+            }
           }
         });
         BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
