@@ -935,7 +935,7 @@ struct OptimizeInstructions
     optimizeMemoryAccess(curr->ptr, curr->offset);
     optimizeStoredValue(curr->value, curr->bytes);
     if (auto* unary = curr->value->dynCast<Unary>()) {
-      if (unary->op == WrapInt64 && curr->bytes == 4) {
+      if (unary->op == WrapInt64) {
         // instead of wrapping to 32, just store some of the bits in the i64
         curr->valueType = Type::i64;
         curr->value = unary->value;
