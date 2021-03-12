@@ -1780,3 +1780,54 @@
   )
  )
 )
+;; proper supertyping after return value additions. in each of the cases here
+;; we take ref.func of functions with different signatures, and whose supertype
+;; is funcref, which we must infer from the local type (as we do not calculate a
+;; general LUB)
+(module
+ (func $foo (result i32)
+  (unreachable)
+ )
+ (func $bar (result f64)
+  (unreachable)
+ )
+ (func $pick
+  (local $x funcref)
+  ;; if-else
+  (if
+   (i32.const 1)
+   (local.set $x (ref.func $foo))
+   (local.set $x (ref.func $bar))
+  )
+  (drop
+   (local.get $x)
+  )
+  ;; if
+  (if
+   (i32.const 1)
+   (local.set $x (ref.func $foo))
+  )
+  (drop
+   (local.get $x)
+  )
+  ;; block
+  (block $out
+   (if (i32.const 1)
+    (block
+     (local.set $x (ref.func $foo))
+     (br $out)
+    )
+   )
+   (if (i32.const 1)
+    (block
+     (local.set $x (ref.func $bar))
+     (br $out)
+    )
+   )
+   (local.set $x (ref.func $pick))
+  )
+  (drop
+   (local.get $x)
+  )
+ )
+)

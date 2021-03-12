@@ -572,6 +572,7 @@ struct SimplifyLocals
     auto* value = (*blockLocalSetPointer)->template cast<LocalSet>()->value;
     block->list[block->list.size() - 1] = value;
     ExpressionManipulator::nop(*blockLocalSetPointer);
+    auto localType = this->getFunction()->getLocalType(sharedIndex);
     for (size_t j = 0; j < breaks.size(); j++) {
       // move break local.set's value to the break
       auto* breakLocalSetPointer = breaks[j].sinkables.at(sharedIndex).item;
@@ -583,7 +584,7 @@ struct SimplifyLocals
       auto* set = (*breakLocalSetPointer)->template cast<LocalSet>();
       if (br->condition) {
         br->value = set;
-        set->makeTee(this->getFunction()->getLocalType(set->index));
+        set->makeTee(localType);
         *breakLocalSetPointer =
           this->getModule()->allocator.template alloc<Nop>();
         // in addition, as this is a conditional br that now has a value, it now
@@ -601,7 +602,7 @@ struct SimplifyLocals
     this->replaceCurrent(newLocalSet);
     sinkables.clear();
     anotherCycle = true;
-    block->finalize();
+    block->finalize(localType);
   }
 
   // optimize local.sets from both sides of an if into a return value
@@ -697,7 +698,12 @@ struct SimplifyLocals
       ifFalseBlock->finalize();
       assert(ifFalseBlock->type != Type::none);
     }
-    iff->finalize(); // update type
+    // Update the type of the if to that of the local.
+    // TODO: there may be a more specific type possible here, for example if
+    //       both sides are an identical subtype of the local type, which may
+    //       have some benefits in theory.
+    auto localType = this->getFunction()->getLocalType(goodIndex);
+    iff->finalize(localType);
     assert(iff->type != Type::none);
     // finally, create a local.set on the iff itself
     auto* newLocalSet =
@@ -754,13 +760,14 @@ struct SimplifyLocals
     *item = builder.makeNop();
     ifTrueBlock->finalize();
     assert(ifTrueBlock->type != Type::none);
+    auto localType = this->getFunction()->getLocalType(set->index);
     // Update the ifFalse side.
-    iff->ifFalse = builder.makeLocalGet(
-      set->index, this->getFunction()->getLocalType(set->index));
-    iff->finalize(); // update type
+    iff->ifFalse = builder.makeLocalGet(set->index, localType);
+    // Update the type of the if to that of the local.
+    iff->finalize(localType);
+    assert(iff->type != Type::none);
     // Update the get count.
     getCounter.num[set->index]++;
-    assert(iff->type != Type::none);
     // Finally, reuse the local.set on the iff itself.
     set->value = iff;
     set->finalize();
