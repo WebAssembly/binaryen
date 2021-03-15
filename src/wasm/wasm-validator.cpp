@@ -209,6 +209,13 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
   FunctionValidator(ValidationInfo* info) : info(*info) {}
 
+  void validateInModule(Module& wasm, Expression* curr) {
+    auto* oldModule = getModule();
+    setModule(&wasm);
+    walk(curr);
+    setModule(oldModule);
+  }
+
   std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
@@ -2710,6 +2717,7 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
         !info.quiet) {
       info.getStream(nullptr) << "(on global " << curr->name << ")\n";
     }
+    FunctionValidator(&info).validateInModule(module, curr->init);
   });
 }
 
@@ -2775,6 +2783,7 @@ static void validateMemory(Module& module, ValidationInfo& info) {
                           segment.data.size(),
                           "segment size should fit in memory (end)");
       }
+      FunctionValidator(&info).validateInModule(module, segment.offset);
     }
     // If the memory is imported we don't actually know its initial size.
     // Specifically wasm dll's import a zero sized memory which is perfectly
@@ -2809,6 +2818,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
                                            table->initial * Table::kPageSize),
                         segment->offset,
                         "table segment offset should be reasonable");
+      FunctionValidator(&info).validateInModule(module, segment->offset);
     }
     for (auto name : segment->data) {
       info.shouldBeTrue(
