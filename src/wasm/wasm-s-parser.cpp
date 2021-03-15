@@ -125,6 +125,9 @@ std::ostream& operator<<(std::ostream& o, Element& e) {
     }
     o << " )";
   } else {
+    if (e.dollared()) {
+      o << '$';
+    }
     o << e.str_.str;
   }
   return o;
