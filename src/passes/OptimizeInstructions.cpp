@@ -998,6 +998,13 @@ struct OptimizeInstructions
     }
   }
 
+  void visitArraySet(ArraySet* curr) {
+    if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
+      auto element = curr->ref->type.getHeapType().getArray().element;
+      optimizeStoredValue(curr->value, element.getByteSize());
+    }
+  }
+
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
     return localInfo[get->index].maxBits;
