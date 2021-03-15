@@ -2586,7 +2586,7 @@ Expression* SExpressionWasmBuilder::makeRttCanon(Element& s) {
 Expression* SExpressionWasmBuilder::makeRttSub(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto parent = parseExpression(*s[2]);
-  return Builder(wasm).makeRttSub(heapType, parent);
+  return Builder(wasm).makeRttSub(parent, heapType);
 }
 
 Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
@@ -2631,7 +2631,7 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
   auto type = heapType.getStruct().fields[index].type;
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
-  return Builder(wasm).makeStructGet(index, ref, type, signed_);
+  return Builder(wasm).makeStructGet(index, ref, signed_, type);
 }
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {

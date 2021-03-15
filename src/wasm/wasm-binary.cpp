@@ -6378,7 +6378,7 @@ bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
   }
   auto targetHeapType = getIndexedHeapType();
   auto* parent = popNonVoidExpression();
-  out = Builder(wasm).makeRttSub(targetHeapType, parent);
+  out = Builder(wasm).makeRttSub(parent, targetHeapType);
   return true;
 }
 

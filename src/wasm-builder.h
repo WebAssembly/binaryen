@@ -271,10 +271,8 @@ public:
     return call;
   }
   template<typename T>
-  CallRef* makeCallRef(Expression* target,
-                       const T& args,
-                       Type type,
-                       bool isReturn = false) {
+  CallRef*
+  makeCallRef(Expression* target, const T& args, bool isReturn, Type type) {
     auto* call = wasm.allocator.alloc<CallRef>();
     call->type = type;
     call->target = target;
@@ -778,7 +776,7 @@ public:
     ret->finalize();
     return ret;
   }
-  RttSub* makeRttSub(HeapType heapType, Expression* parent) {
+  RttSub* makeRttSub(Expression* parent, HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RttSub>();
     ret->parent = parent;
     auto parentRtt = parent->type.getRtt();
@@ -799,7 +797,7 @@ public:
     return ret;
   }
   StructGet*
-  makeStructGet(Index index, Expression* ref, Type type, bool signed_ = false) {
+  makeStructGet(Index index, Expression* ref, bool signed_, Type type) {
     auto* ret = wasm.allocator.alloc<StructGet>();
     ret->index = index;
     ret->ref = ref;
@@ -915,7 +913,7 @@ public:
     Expression* ret = makeRttCanon(type.getHeapType());
     if (type.getRtt().hasDepth()) {
       for (Index i = 0; i < type.getRtt().depth; i++) {
-        ret = makeRttSub(type.getHeapType(), ret);
+        ret = makeRttSub(ret, type.getHeapType());
       }
     }
     return ret;
@@ -1172,7 +1170,7 @@ public:
     if (!heapType.isSignature()) {
       throw ParseException("Invalid reference type for a call_ref", line, col);
     }
-    return makeCallRef(target, args, heapType.getSignature().results, isReturn);
+    return makeCallRef(target, args, isReturn, heapType.getSignature().results);
   }
 };
 

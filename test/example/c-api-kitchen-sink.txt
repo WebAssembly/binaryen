@@ -2496,3 +2496,11 @@ optimized:
   (i32.const 4)
  )
 )
+(module
+ (type $none_=>_none (func))
+ (func $foo
+  (call_ref
+   (unreachable)
+  )
+ )
+)
