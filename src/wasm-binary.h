@@ -1307,6 +1307,7 @@ class WasmBinaryBuilder {
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
   bool DWARF = false;
+  bool skipFunctionBodies = false;
 
   size_t pos = 0;
   Index startIndex = -1;
@@ -1324,6 +1325,9 @@ public:
       nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
 
   void setDWARF(bool value) { DWARF = value; }
+  void setSkipFunctionBodies(bool skipFunctionBodies_) {
+    skipFunctionBodies = skipFunctionBodies_;
+  }
   void read();
   void readUserSection(size_t payloadLen);
 
