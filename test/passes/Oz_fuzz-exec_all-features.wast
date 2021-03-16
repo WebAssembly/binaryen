@@ -1,6 +1,6 @@
 (module
  (type $struct (struct (mut i32)))
- (type $extendedstruct (struct i32 f64))
+ (type $extendedstruct (struct (mut i32) f64))
  (type $bytes (array (mut i8)))
 
  (type $void_func (func))
