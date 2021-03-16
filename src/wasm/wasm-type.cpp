@@ -1514,7 +1514,7 @@ void Canonicalizer::findSelfReferentialHeapTypes() {
   auto mark = [&](HeapType type) {
     auto* info = getHeapTypeInfo(type);
     info->isSelfReferential = true;
-    info->temp = false;
+    info->isTemp = false;
   };
 
   // Get the HeapType children of a HeapType, skipping all intermediate Types.
