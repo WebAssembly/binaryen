@@ -96,3 +96,12 @@
   )
   "type mismatch"
 )
+
+(assert_invalid
+  (module
+    (type $A (struct (field i32)))
+    (type $B (struct (field i64)))
+    (global $glob (rtt $A) (rtt.sub $A (rtt.canon $B)))
+  )
+  "invalid rtt"
+)
