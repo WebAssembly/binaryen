@@ -106,7 +106,7 @@
   (array.set $bytes
    (local.get $0)
    (i32.const 10)
-   (i32.const 65408)
+   (i32.const 128)
   )
   (call $log
    (array.get_u $bytes
