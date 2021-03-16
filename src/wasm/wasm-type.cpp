@@ -1439,7 +1439,6 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
   std::lock_guard<std::mutex> lock(globalHeapTypeStore.mutex);
   for (auto& entry : builder.impl->entries) {
     if (isSelfReferential(entry.get())) {
-      getHeapTypeInfo(entry.get())->isTemp = false;
       globalHeapTypeStore.recordCanonical(std::move(entry.info));
     }
   }
@@ -1512,6 +1511,12 @@ void Canonicalizer::findSelfReferentialHeapTypes() {
   // find these because they must be their own direct children. See
   // https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm.
 
+  auto mark = [&](HeapType type) {
+    auto* info = getHeapTypeInfo(type);
+    info->isSelfReferential = true;
+    info->temp = false;
+  };
+
   // Get the HeapType children of a HeapType, skipping all intermediate Types.
   auto getChildren = [&](HeapType type) {
     std::unordered_set<HeapType> results;
@@ -1565,7 +1570,7 @@ void Canonicalizer::findSelfReferentialHeapTypes() {
       // the strongly connected components. If a type is directly
       // self-referential, mark it here so we don't miss it later.
       if (child == curr) {
-        getHeapTypeInfo(curr)->isSelfReferential = true;
+        mark(curr);
       }
     }
 
@@ -1576,9 +1581,9 @@ void Canonicalizer::findSelfReferentialHeapTypes() {
       // more than one element, they are all self referential HeapTypes.
       // Self-referential types with SCC size one were already accounted for.
       if (stack.back() != curr) {
-        getHeapTypeInfo(curr)->isSelfReferential = true;
+        mark(curr);
         while (stack.back() != curr) {
-          getHeapTypeInfo(stack.back())->isSelfReferential = true;
+          mark(stack.back());
           stackElems.erase(stack.back());
           stack.pop_back();
         }
