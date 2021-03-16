@@ -253,7 +253,7 @@ func: 0
  [vars]         : 0       
  GlobalGet      : 1       
 export: stackSave (0)
- [removable-bytes-without-it]: 56      
+ [removable-bytes-without-it]: 62      
  [total]        : 0       
 (module
  (type $0 (func (result i32)))
