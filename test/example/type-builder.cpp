@@ -132,6 +132,7 @@ void test_recursive() {
     std::cout << built[1] << "\n\n";
     assert(built[0].getSignature().results.getHeapType() == built[1]);
     assert(built[1].getSignature().results.getHeapType() == built[0]);
+    assert(built[0] == built[1]);
   }
 
   {
@@ -161,6 +162,10 @@ void test_recursive() {
     assert(built[2].getSignature().results.getHeapType() == built[3]);
     assert(built[3].getSignature().results.getHeapType() == built[4]);
     assert(built[4].getSignature().results.getHeapType() == built[0]);
+    assert(built[0] == built[1]);
+    assert(built[1] == built[2]);
+    assert(built[2] == built[3]);
+    assert(built[3] == built[4]);
   }
 
   {
@@ -189,15 +194,32 @@ void test_recursive() {
     std::cout << built[3] << "\n";
     std::cout << built[4] << "\n";
     std::cout << built[5] << "\n\n";
-    assert(built[0] != built[1]); // TODO: canonicalize recursive types
+    assert(built[0] == built[1]);
     assert(built[2] == built[3]);
-    assert(built[4] != built[5]); // Contain "different" recursive types
+    assert(built[4] == built[5]);
     assert(built[4].getSignature().results.getHeapType() == built[0]);
     assert(built[5].getSignature().results.getHeapType() == built[1]);
     assert(built[0].getSignature().results ==
            Type({Type(built[0], Nullable), Type(built[2], Nullable)}));
     assert(built[1].getSignature().results ==
            Type({Type(built[1], Nullable), Type(built[3], Nullable)}));
+  }
+
+  {
+    // Folded and unfolded
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(2);
+      Type temp0 = builder.getTempRefType(0, Nullable);
+      builder.setHeapType(0, Signature(Type::none, temp0));
+      builder.setHeapType(1, Signature(Type::none, temp0));
+      built = builder.build();
+    }
+    std::cout << built[0] << "\n";
+    std::cout << built[1] << "\n\n";
+    assert(built[0].getSignature().results.getHeapType() == built[0]);
+    assert(built[1].getSignature().results.getHeapType() == built[0]);
+    assert(built[0] == built[1]);
   }
 }
 
