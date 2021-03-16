@@ -35,7 +35,7 @@
 (module
  (type $struct (struct (field (mut i32))))
  (type $void_func (func))
- (type $extendedstruct (struct (field i32) (field f64)))
+ (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $bytes (array (mut i8)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
