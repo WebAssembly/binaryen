@@ -12,6 +12,8 @@
     (field $i64 (mut i64))
   ))
 
+  (type $array (array (mut i8)))
+
   ;; These functions test if an `if` with subtyped arms is correctly folded
   ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
   ;; CHECK:      (func $if-arms-subtype-fold (result anyref)
@@ -70,6 +72,22 @@
        (call $get-i32)
        (i32.const 0xff)
       )
+    )
+  )
+
+  ;; Similar, but for arrays.
+  ;; CHECK:      (func $store-trunc2 (param $x (ref null $array))
+  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 35)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $store-trunc2 (param $x (ref null $array))
+    (array.set $array
+      (local.get $x)
+      (i32.const 0)
+      (i32.const 0x123) ;; data over 0xff is unnecessary
     )
   )
 )
