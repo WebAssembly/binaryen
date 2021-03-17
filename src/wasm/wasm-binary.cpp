@@ -2137,7 +2137,17 @@ void WasmBinaryBuilder::readFunctions() {
       assert(controlFlowStack.empty());
       assert(letStack.empty());
       assert(depth == 0);
-      func->body = getBlockOrSingleton(func->sig.results);
+      if (!skipFunctionBodies) {
+        func->body = getBlockOrSingleton(func->sig.results);
+      } else {
+        // When skipping the function body we need to put something valid in
+        // their place so we validate. An unreachable is always acceptable
+        // there.
+        func->body = Builder(wasm).makeUnreachable();
+
+        // Skip reading the contents.
+        pos = endOfFunction;
+      }
       assert(depth == 0);
       assert(breakStack.empty());
       assert(breakTargetNames.empty());

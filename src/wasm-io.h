@@ -35,6 +35,11 @@ public:
 
   void setProfile(IRProfile profile_) { profile = profile_; }
 
+  // TODO: add support for this in the text format as well
+  void setSkipFunctionBodies(bool skipFunctionBodies_) {
+    skipFunctionBodies = skipFunctionBodies_;
+  }
+
   // read text
   void readText(std::string filename, Module& wasm);
   // read binary
@@ -52,6 +57,8 @@ private:
   bool DWARF = false;
 
   IRProfile profile = IRProfile::Normal;
+
+  bool skipFunctionBodies = false;
 
   void readStdin(Module& wasm, std::string sourceMapFilename);
 
