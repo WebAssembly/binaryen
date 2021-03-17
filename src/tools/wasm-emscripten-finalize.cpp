@@ -210,6 +210,7 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
   ModuleReader reader;
+  reader.setDebugInfo(debugInfo);
   reader.setDWARF(DWARF);
   if (!writeOutput) {
     // If we are not writing the output then all we are doing is simple parsing

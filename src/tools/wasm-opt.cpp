@@ -243,6 +243,7 @@ int main(int argc, const char* argv[]) {
     // asked to remove it.
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
+    reader.setDebugInfo(options.passOptions.debugInfo);
     reader.setProfile(options.profile);
     try {
       reader.read(inputFile, wasm, inputSourceMapFilename);
