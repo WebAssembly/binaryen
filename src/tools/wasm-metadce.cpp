@@ -498,7 +498,6 @@ int main(int argc, const char* argv[]) {
       std::cerr << "reading...\n";
     }
     ModuleReader reader;
-    reader.setDebugInfo(debugInfo);
     reader.setDWARF(debugInfo);
     try {
       reader.read(options.extra["infile"], wasm);
