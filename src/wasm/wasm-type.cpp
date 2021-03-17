@@ -265,6 +265,7 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
 
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
+  isSelfReferential = other.isSelfReferential;
   switch (kind) {
     case SignatureKind:
       new (&signature) auto(other.signature);
@@ -1311,7 +1312,13 @@ void TypeBuilder::setHeapType(size_t i, Array array) {
 }
 
 Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
-  return markTemp(impl->typeStore.canonicalize(tuple));
+  Type ret = impl->typeStore.canonicalize(tuple);
+  if (tuple.types.size() > 1) {
+    return markTemp(ret);
+  } else {
+    // No new tuple was created, so the result might not be temporary.
+    return ret;
+  }
 }
 
 Type TypeBuilder::getTempRefType(size_t i, Nullability nullable) {
