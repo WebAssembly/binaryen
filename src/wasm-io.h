@@ -40,9 +40,7 @@ class ModuleReader : public ModuleIOBase {
 public:
   // Reading defaults to loading the names section. Name section info is used in
   // various internal ways that we do not opt-in to currently.
-  ModuleReader() {
-    setDebugInfo(true);
-  }
+  ModuleReader() { setDebugInfo(true); }
 
   // If DWARF support is enabled, we track the locations of all IR nodes in
   // the binary, so that we can update DWARF sections later when writing.
@@ -91,9 +89,7 @@ class ModuleWriter : public ModuleIOBase {
 public:
   // Writing defaults to not storing the names section. Storing it is a user-
   // observable fact that must be opted into.
-  ModuleWriter() {
-    setDebugInfo(false);
-  }
+  ModuleWriter() { setDebugInfo(false); }
 
   void setBinary(bool binary_) { binary = binary_; }
   void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }
