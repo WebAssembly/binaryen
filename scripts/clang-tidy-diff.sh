@@ -5,7 +5,7 @@ set -o errexit
 if [ -n "$GITHUB_BASE_REF" ]; then
   BRANCH="origin/$GITHUB_BASE_REF"
 else
-  BRANCH="@{upstream}"
+  BRANCH=origin/main
 fi
 
 CLANG_TIDY=$(which clang-tidy)
