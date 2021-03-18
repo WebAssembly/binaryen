@@ -1306,6 +1306,7 @@ class WasmBinaryBuilder {
   const std::vector<char>& input;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
+  bool debugInfo = true;
   bool DWARF = false;
   bool skipFunctionBodies = false;
 
@@ -1324,6 +1325,7 @@ public:
     : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
       nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
 
+  void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
   void setSkipFunctionBodies(bool skipFunctionBodies_) {
     skipFunctionBodies = skipFunctionBodies_;

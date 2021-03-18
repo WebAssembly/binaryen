@@ -27,8 +27,21 @@
 
 namespace wasm {
 
-class ModuleReader {
+class ModuleIOBase {
+protected:
+  bool debugInfo;
+
 public:
+  // Whether we support debug info (the names section).
+  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
+};
+
+class ModuleReader : public ModuleIOBase {
+public:
+  // Reading defaults to loading the names section. Name section info is used in
+  // various internal ways that we do not opt-in to currently.
+  ModuleReader() { setDebugInfo(true); }
+
   // If DWARF support is enabled, we track the locations of all IR nodes in
   // the binary, so that we can update DWARF sections later when writing.
   void setDWARF(bool DWARF_) { DWARF = DWARF_; }
@@ -67,16 +80,18 @@ private:
                       std::string sourceMapFilename);
 };
 
-class ModuleWriter {
+class ModuleWriter : public ModuleIOBase {
   bool binary = true;
-  bool debugInfo = false;
   std::string symbolMap;
   std::string sourceMapFilename;
   std::string sourceMapUrl;
 
 public:
+  // Writing defaults to not storing the names section. Storing it is a user-
+  // observable fact that must be opted into.
+  ModuleWriter() { setDebugInfo(false); }
+
   void setBinary(bool binary_) { binary = binary_; }
-  void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
   void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }
   void setSourceMapFilename(std::string sourceMapFilename_) {
     sourceMapFilename = sourceMapFilename_;

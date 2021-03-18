@@ -210,7 +210,12 @@ int main(int argc, const char* argv[]) {
 
   Module wasm;
   ModuleReader reader;
-  reader.setDWARF(DWARF);
+  // If we are not writing output then we definitely don't need to read debug
+  // info, as it does not affect the metadata we will emit. (However, if we
+  // emit output then definitely load the names section so that we roundtrip
+  // names properly.)
+  reader.setDebugInfo(writeOutput);
+  reader.setDWARF(DWARF && writeOutput);
   if (!writeOutput) {
     // If we are not writing the output then all we are doing is simple parsing
     // of metadata from global parts of the wasm such as imports and exports. In

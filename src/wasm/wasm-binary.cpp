@@ -1424,7 +1424,11 @@ void WasmBinaryBuilder::readUserSection(size_t payloadLen) {
   }
   payloadLen -= read;
   if (sectionName.equals(BinaryConsts::UserSections::Name)) {
-    readNames(payloadLen);
+    if (debugInfo) {
+      readNames(payloadLen);
+    } else {
+      pos += payloadLen;
+    }
   } else if (sectionName.equals(BinaryConsts::UserSections::TargetFeatures)) {
     readFeatures(payloadLen);
   } else if (sectionName.equals(BinaryConsts::UserSections::Dylink)) {
