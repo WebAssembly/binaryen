@@ -635,6 +635,11 @@ if (debugLineMap.count(old) == 0) {
 
   // Given an offset in .debug_loc, get the old and new compile unit bases.
   OldToNew getCompileUnitBasesForLoc(size_t offset) const {
+    if (locToUnitMap.count(offset) == 0) {
+      // There is no compile unit for this loc. It doesn't matter what we set
+      // here.
+      return OldToNew{0, 0};
+    }
     auto index = locToUnitMap.at(offset);
     auto iter = compileUnitBases.find(index);
     if (iter != compileUnitBases.end()) {
