@@ -760,12 +760,13 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
   // debug_line section.
   std::vector<size_t> computedLengths;
   llvm::DWARFYAML::ComputeDebugLine(data, computedLengths);
-  BinaryLocation oldLocation = 0, newLocation = 0;
+  BinaryLocation newLocation = 0;
   for (size_t i = 0; i < data.DebugLines.size(); i++) {
     auto& table = data.DebugLines[i];
+    auto oldLocation = table.Position;
     locationUpdater.debugLineMap[oldLocation] = newLocation;
-    oldLocation += table.Length.getLength() + AddressSize;
     newLocation += computedLengths[i] + AddressSize;
+    table.Position = newLocation;
     table.Length.setLength(computedLengths[i]);
   }
 }

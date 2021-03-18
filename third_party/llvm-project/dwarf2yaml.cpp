@@ -330,7 +330,8 @@ std::cout << "dDL2\n";
       DataExtractor LineData(DCtx.getDWARFObj().getLineSection().Data,
                              DCtx.isLittleEndian(), CU->getAddressByteSize());
       uint64_t Offset = *StmtOffset;
-
+      DebugLines.Position = Offset;
+std::cout << "offset: " << Offset << '\n';
 {
 StringRef ref = DCtx.getDWARFObj().getLineSection().Data;
 size_t size = ref.size();
