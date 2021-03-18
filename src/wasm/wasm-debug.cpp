@@ -764,8 +764,8 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
     auto& table = data.DebugLines[i];
     auto oldLocation = table.Position;
     locationUpdater.debugLineMap[oldLocation] = newLocation;
-    newLocation += computedLengths[i] + AddressSize;
     table.Position = newLocation;
+    newLocation += computedLengths[i] + AddressSize;
     table.Length.setLength(computedLengths[i]);
   }
 }
