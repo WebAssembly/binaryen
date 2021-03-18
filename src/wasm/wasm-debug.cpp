@@ -624,12 +624,6 @@ struct LocationUpdater {
   }
 
   BinaryLocation getNewDebugLineLocation(BinaryLocation old) const {
-if (debugLineMap.count(old) == 0) {
-  std::cout << "sad " << old << '\n';
-  for (auto& kv : debugLineMap) {
-    std::cout << kv.first << " : " << kv.second << '\n';
-  }
-}
     return debugLineMap.at(old);
   }
 
