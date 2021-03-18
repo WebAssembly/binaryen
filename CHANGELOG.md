@@ -48,6 +48,7 @@ Current Trunk
   `BinaryenElementSegmentGetLength`.
 - `BinaryenGetFunctionTableSegmentData` is replaced with
   `BinaryenElementSegmentGetData`.
+- Boolean values in the C API now should use `bool` instead of `int`.
 
 v100
 ----
