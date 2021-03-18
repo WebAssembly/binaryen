@@ -16,7 +16,7 @@ int main() {
   BinaryenModuleAutoDrop(the_module);
   {
     const char* segments[] = { 0 };
-    bool segmentPassive[] = { false };
+    bool segmentPassive[] = {false};
     BinaryenExpressionRef segmentOffsets[] = { 0 };
     BinaryenIndex segmentSizes[] = { 0 };
     BinaryenSetMemory(the_module, 256, 256, "memory", segments, segmentPassive, segmentOffsets, segmentSizes, 0, 0);
@@ -437,7 +437,7 @@ int main() {
   {
     const char* segments[] = { 0 };
     BinaryenExpressionRef segmentOffsets[] = { 0 };
-    bool segmentPassive[] = { false };
+    bool segmentPassive[] = {false};
     BinaryenIndex segmentSizes[] = { 0 };
     BinaryenSetMemory(the_module, 1, 1, NULL, segments, segmentPassive, segmentOffsets, segmentSizes, 0, 0);
   }

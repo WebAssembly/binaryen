@@ -84,7 +84,9 @@ namespace wasm {
 // Looks for reasons we can't remove the values from breaks to an origin
 // For example, if there is a switch targeting us, we can't do it - we can't
 // remove the value from other targets
-struct ProblemFinder : public ControlFlowWalker<ProblemFinder, UnifiedExpressionVisitor<ProblemFinder>> {
+struct ProblemFinder
+  : public ControlFlowWalker<ProblemFinder,
+                             UnifiedExpressionVisitor<ProblemFinder>> {
   Name origin;
   bool foundProblem = false;
   // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow
