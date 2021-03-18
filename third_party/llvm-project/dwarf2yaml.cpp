@@ -1,3 +1,4 @@
+#include <iostream>
 //===------ dwarf2yaml.cpp - obj2yaml conversion tool -----------*- C++ -*-===//
 //
 // Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
@@ -316,21 +317,38 @@ bool dumpFileEntry(DataExtractor &Data, uint64_t &Offset,
 
 void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   for (const auto &CU : DCtx.compile_units()) {
+std::cout << "dDL1\n";
     auto CUDIE = CU->getUnitDIE();
-    if (!CUDIE)
+    if (!CUDIE) {
+std::cout << " dDL skipp\n";
       continue;
+    }
     if (auto StmtOffset =
             dwarf::toSectionOffset(CUDIE.find(dwarf::DW_AT_stmt_list))) {
+std::cout << "dDL2\n";
       DWARFYAML::LineTable DebugLines;
       DataExtractor LineData(DCtx.getDWARFObj().getLineSection().Data,
                              DCtx.isLittleEndian(), CU->getAddressByteSize());
       uint64_t Offset = *StmtOffset;
+
+{
+StringRef ref = DCtx.getDWARFObj().getLineSection().Data;
+size_t size = ref.size();
+std::cout << "\n\n\nnew LT\n";// of data size " << size << '\n';
+for (size_t i = 0; i < 20; i++ ) {
+  std::cout << ' ' << std::hex << unsigned(uint8_t(ref.data()[Offset + i])) << std::dec;
+}
+std::cout << '\n';
+}
+
       dumpInitialLength(LineData, Offset, DebugLines.Length);
       uint64_t LineTableLength = DebugLines.Length.getLength();
+errs() << "LTL " << LineTableLength << '\n';//" (" << hex << LineTableLength << std::dec << ")\n";
       uint64_t SizeOfPrologueLength = DebugLines.Length.isDWARF64() ? 8 : 4;
       DebugLines.Version = LineData.getU16(&Offset);
       DebugLines.PrologueLength =
           LineData.getUnsigned(&Offset, SizeOfPrologueLength);
+errs() << "  " << DebugLines.Version << " : " << DebugLines.PrologueLength << '\n';
       const uint64_t EndPrologue = DebugLines.PrologueLength + Offset;
 
       DebugLines.MinInstLength = LineData.getU8(&Offset);
@@ -339,6 +357,7 @@ void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
       DebugLines.DefaultIsStmt = LineData.getU8(&Offset);
       DebugLines.LineBase = LineData.getU8(&Offset);
       DebugLines.LineRange = LineData.getU8(&Offset);
+errs() << "  line range " << int(DebugLines.LineRange) << '\n';
       DebugLines.OpcodeBase = LineData.getU8(&Offset);
 
       DebugLines.StandardOpcodeLengths.reserve(DebugLines.OpcodeBase - 1);
@@ -419,6 +438,7 @@ void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
         DebugLines.Opcodes.push_back(NewOp);
       }
       Y.DebugLines.push_back(DebugLines);
+std::cout << "dDL3\n";
     }
   }
 }
