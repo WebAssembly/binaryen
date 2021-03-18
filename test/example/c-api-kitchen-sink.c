@@ -870,7 +870,7 @@ void test_core() {
   // Memory. One per module
 
   const char* segments[] = { "hello, world", "I am passive" };
-  int8_t segmentPassive[] = { 0, 1 };
+  bool segmentPassive[] = { false, true };
   BinaryenExpressionRef segmentOffsets[] = { BinaryenConst(module, BinaryenLiteralInt32(10)), NULL };
   BinaryenIndex segmentSizes[] = { 12, 12 };
   BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
@@ -1367,7 +1367,7 @@ void test_for_each() {
 
     const char* segments[] = { "hello, world", "segment data 2" };
     const uint32_t expected_offsets[] = { 10, 125 };
-    int8_t segmentPassive[] = { 0, 0 };
+    bool segmentPassive[] = { false, false };
     BinaryenIndex segmentSizes[] = { 12, 14 };
 
     BinaryenExpressionRef segmentOffsets[] = {
