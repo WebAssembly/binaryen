@@ -220,8 +220,9 @@ int main(int argc, const char* argv[]) {
     // If we are not writing the output then all we are doing is simple parsing
     // of metadata from global parts of the wasm such as imports and exports. In
     // that case, it is unnecessary to parse function contents which are the
-    // great bulk of the work, and we can skip all that.
-    reader.setSkipFunctionBodies(true);
+    // great bulk of the work, and we can skip all that. However, the one
+    // exception is pthreads, which does require scanning the code, and so for
+    // now we cannot do reader.setSkipFunctionBodies(true); here yet.
   }
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
