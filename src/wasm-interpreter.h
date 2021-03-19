@@ -1486,7 +1486,7 @@ public:
       return cast.breaking;
     }
     if (cast.outcome == cast.Null) {
-      return Literal::makeNull(curr->type);
+      return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
     }
     if (cast.outcome == cast.Failure) {
       trap("cast error");
