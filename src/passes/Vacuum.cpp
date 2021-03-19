@@ -148,10 +148,10 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         auto childType = child->type;
         if (childType.isConcrete()) {
           if (LiteralUtils::canMakeZero(childType)) {
-            // We can't just skip a final concrete element, even if it isn't used.
-            // Instead, replace it with something that's easy to optimize out (for
-            // example, code-folding can merge out identical zeros at the end of
-            // if arms).
+            // We can't just skip a final concrete element, even if it isn't
+            // used. Instead, replace it with something that's easy to optimize
+            // out (for example, code-folding can merge out identical zeros at
+            // the end of if arms).
             optimized = LiteralUtils::makeZero(childType, *getModule());
           } else {
             // Don't optimize it out.
