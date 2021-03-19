@@ -189,6 +189,9 @@
    )
   )
  )
+ (func $get_data (result dataref)
+  (unreachable)
+ )
  (func "br_on_data" (param $x anyref)
   (local $y anyref)
   (drop
@@ -197,7 +200,7 @@
      (br_on_data $data (local.get $x))
     )
     (call $log (i32.const 1))
-    (ref.null data)
+    (call $get_data)
    )
   )
  )
