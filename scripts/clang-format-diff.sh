@@ -1,6 +1,7 @@
 #!/bin/bash
 
 set -o errexit
+set -o pipefail
 
 # When we are running on travis and *not* part of a pull request we don't
 # have any upstream branch to compare against.

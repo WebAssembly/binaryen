@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-set -e
+set -o errexit
+set -o pipefail
 
 mkdir -p emcc-build
 echo "emcc-tests: build:wasm"
