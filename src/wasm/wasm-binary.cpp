@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <fstream>
 
+#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/table-utils.h"
 #include "support/bits.h"
@@ -2165,6 +2166,38 @@ void WasmBinaryBuilder::readFunctions() {
         throwError("binary offset at function exit not at expected location");
       }
     }
+
+    // Until the issue of non-nullable locals is resolved, use a hack of
+    // converting them to nullables ones. It is ok to store non-nullable values
+    // in them; for loading, we apply ref.as_non_nulls. FIXME
+    // Check if this is an issue.
+    bool hasNonNullable = false;
+    for (auto type : func->vars) {
+      if (type.isRef() && !type.isNullable()) {
+        hasNonNullable = true;
+      }
+    }
+    if (hasNonNullable) {
+      // Rewrite the local.gets.
+      Builder builder(wasm);
+      for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
+        auto* get = (*getp)->cast<LocalGet>();
+        auto type = func->getLocalType(get->index);
+        if (type.isRef() && !type.isNullable()) {
+          // The get should now return a nullable value, and a ref.as_non_null
+          // fixes that up.
+          get->type = Type(type.getHeapType(), Nullable);
+          *getp = builder.makeRefAs(RefAsNonNull, get);
+        }
+      }
+      // Rewrite the types after using them to know which local.gets to fix.
+      for (auto& type : func->vars) {
+        if (type.isRef() && !type.isNullable()) {
+          type = Type(type.getHeapType(), Nullable);
+        }
+      }
+    }
+
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
