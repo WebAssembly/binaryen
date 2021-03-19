@@ -110,3 +110,18 @@
   )
  )
 )
+(module
+ (type $none_=>_ref|func| (func (result (ref func))))
+ (elem declare func $1)
+ (func $1 (result (ref func))
+  (local $0 funcref)
+  (block $__inlined_func$0 (result (ref func))
+   (local.set $0
+    (ref.func $1)
+   )
+   (ref.as_non_null
+    (local.get $0)
+   )
+  )
+ )
+)
