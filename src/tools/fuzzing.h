@@ -1490,7 +1490,7 @@ private:
     for (const auto& type : target->sig.params) {
       args.push_back(make(type));
     }
-    auto targetType = Type(HeapType(target->sig), Nullable);
+    auto targetType = Type(HeapType(target->sig), NonNullable);
     // TODO: half the time make a completely random item with that type.
     return builder.makeCallRef(
       builder.makeRefFunc(target->name, targetType), args, type, isReturn);
@@ -2096,9 +2096,7 @@ private:
       }
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
-        // FIXME: RefFunc type should be non-nullable, but we emit nullable
-        //        types for now.
-        if (type == Type(HeapType(func->sig), Nullable)) {
+        if (type == Type(HeapType(func->sig), NonNullable)) {
           return builder.makeRefFunc(func->name, type);
         }
       }
