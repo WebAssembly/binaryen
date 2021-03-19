@@ -3,17 +3,12 @@
 set -o errexit
 set -o pipefail
 
-# When we are running on travis and *not* part of a pull request we don't
-# have any upstream branch to compare against.
-if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
-  echo "Skipping since not running on travis PR"
-  exit 0
-fi
-
-if [ -n "$TRAVIS_BRANCH" ]; then
-  BRANCH=$TRAVIS_BRANCH
+if [ -n "$1" ]; then
+  BRANCH="$1"
+elif [ -n "$GITHUB_BASE_REF" ]; then
+  BRANCH="origin/$GITHUB_BASE_REF"
 else
-  BRANCH=origin/main
+  BRANCH="@{upstream}"
 fi
 
 MERGE_BASE=$(git merge-base $BRANCH HEAD)
