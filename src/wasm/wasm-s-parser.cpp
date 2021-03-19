@@ -660,9 +660,7 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
   return parseTypeUse(s, startPos, functionSignature, params);
 }
 
-static Nullablility isNullable(bool is) {
-  return is ? Nullable : NonNullable;
-}
+static Nullablility isNullable(bool is) { return is ? Nullable : NonNullable; }
 
 void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   auto forEachType = [&](auto f) {

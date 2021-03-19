@@ -1788,7 +1788,9 @@ void WasmBinaryBuilder::readTypes() {
     switch (typeCode) {
       case BinaryConsts::EncodedType::nullable:
       case BinaryConsts::EncodedType::nonnullable: {
-        auto nullability = typeCode == BinaryConsts::EncodedType::nullable ? Nullable : NonNullable;
+        auto nullability = typeCode == BinaryConsts::EncodedType::nullable
+                             ? Nullable
+                             : NonNullable;
         int64_t htCode = getS64LEB(); // TODO: Actually s33
         HeapType ht;
         if (getBasicHeapType(htCode, ht)) {
@@ -6063,7 +6065,8 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   functionRefs[index].push_back(curr); // we don't know function names yet
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
-  curr->finalize(Type(HeapType(getSignatureByFunctionIndex(index)), NonNullable));
+  curr->finalize(
+    Type(HeapType(getSignatureByFunctionIndex(index)), NonNullable));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
