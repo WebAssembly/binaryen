@@ -25,7 +25,6 @@
 [LoggingExternalInterface logging 0]
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
-[trap unreachable]
 [fuzz-exec] calling $rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
@@ -194,7 +193,9 @@
     (call $log
      (i32.const 1)
     )
-    (unreachable)
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
    )
   )
  )
@@ -262,7 +263,6 @@
 [LoggingExternalInterface logging 0]
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
-[trap unreachable]
 [fuzz-exec] calling $rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
