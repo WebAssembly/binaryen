@@ -190,7 +190,9 @@
   )
  )
  (func $get_data (result dataref)
-  (unreachable)
+  (struct.new_default_with_rtt $struct
+   (rtt.canon $struct)
+  )
  )
  (func "br_on_data" (param $x anyref)
   (local $y anyref)
