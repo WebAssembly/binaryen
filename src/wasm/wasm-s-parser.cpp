@@ -660,8 +660,6 @@ size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
   return parseTypeUse(s, startPos, functionSignature, params);
 }
 
-static Nullablility isNullable(bool is) { return is ? Nullable : NonNullable; }
-
 void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
   auto forEachType = [&](auto f) {
     for (auto* elemPtr : module) {
@@ -688,7 +686,8 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
 
   auto parseRefType = [&](Element& elem) -> Type {
     // '(' 'ref' 'null'? ht ')'
-    auto nullable = isNullable(elem[1]->isStr() && *elem[1] == NULL_);
+    auto nullable =
+      elem[1]->isStr() && *elem[1] == NULL_ ? Nullable : NonNullable;
     auto& referent = nullable ? *elem[2] : *elem[1];
     const char* name = referent.c_str();
     if (referent.dollared()) {
