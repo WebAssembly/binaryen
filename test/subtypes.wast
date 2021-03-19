@@ -30,7 +30,7 @@
   (func $foo (param $no-null (ref $vector-i32))
              (param $yes-null (ref null $vector-i32))
     ;; ok to set a non-nullable reference to a nullable target
-    (local.set $no-null (local.get $yes-null))
+    (local.set $yes-null (local.get $no-null))
   )
 
   (func $bar (param $v-i31 (ref $vector-i31))
