@@ -297,7 +297,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }
-  TypeUpdating::handleNonNullableLocals(func, wasm);
+  TypeUpdating::handleNonNullableLocals(into, wasm);
   return block;
 }
 

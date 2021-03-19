@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <fstream>
 
-#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"

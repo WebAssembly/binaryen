@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include "find_all.h"
 #include "type-updating.h"
 
 namespace wasm {
