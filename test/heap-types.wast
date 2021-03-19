@@ -25,7 +25,7 @@
 
   ;; Arrays
   (type $vector (array (mut f64)))
-  (type $matrix (array (ref $vector)))
+  (type $matrix (array (mut (ref null $vector))))
   (type $bytes (array (mut i8)))
   (type $words (array (mut i32)))
 
@@ -108,7 +108,9 @@
     ;; values may be subtypes
     (struct.set $nested-child-struct 0
       (ref.null $nested-child-struct)
-      (ref.null $grandchild)
+      (ref.as_non_null
+       (ref.null $grandchild)
+      )
     )
     (drop
       (struct.new_default_with_rtt $struct.A
@@ -158,7 +160,9 @@
     (array.set $nested-child-array
       (ref.null $nested-child-array)
       (i32.const 3)
-      (ref.null $grandchild)
+      (ref.as_non_null
+       (ref.null $grandchild)
+      )
     )
     (drop
       (array.len $vector
@@ -223,7 +227,7 @@
   )
   (func $br_on_X (param $x anyref)
     (local $y anyref)
-    (local $z (ref any))
+    (local $z (ref null any))
     (block $null
       (local.set $z
         (br_on_null $null (local.get $x))
@@ -238,7 +242,7 @@
       )
     )
     (drop
-      (block $data (result dataref)
+      (block $data (result (ref null data))
         (local.set $y
           (br_on_data $data (local.get $x))
         )
@@ -246,7 +250,7 @@
       )
     )
     (drop
-      (block $i31 (result i31ref)
+      (block $i31 (result (ref null i31))
         (local.set $y
           (br_on_i31 $i31 (local.get $x))
         )
