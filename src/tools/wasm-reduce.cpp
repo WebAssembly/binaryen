@@ -845,6 +845,10 @@ struct Reducer
       shrank = shrinkByReduction(segment.get(), 100);
     }
     // the "opposite" of shrinking: copy a 'zero' element
+    if (!first) {
+      return;
+    }
+
     for (auto& segment : module->elementSegments) {
       reduceByZeroing(
         segment.get(),
