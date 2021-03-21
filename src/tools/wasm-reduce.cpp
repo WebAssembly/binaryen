@@ -829,7 +829,7 @@ struct Reducer
 
   void shrinkElementSegments(Module* module) {
     std::cerr << "|    try to simplify elem segments\n";
-    Expression* first;
+    Expression* first = nullptr;
     auto it =
       std::find_if_not(module->elementSegments.begin(),
                        module->elementSegments.end(),
@@ -845,7 +845,7 @@ struct Reducer
       shrank = shrinkByReduction(segment.get(), 100);
     }
     // the "opposite" of shrinking: copy a 'zero' element
-    if (!first) {
+    if (first == nullptr) {
       return;
     }
 
@@ -857,7 +857,7 @@ struct Reducer
           if (entry->is<RefNull>()) {
             // we don't need to replace a ref.null
             return true;
-          } else if (first->is<RefNull>()) {
+          } else if (!first || first->is<RefNull>()) {
             return false;
           } else {
             // Both are ref.func
