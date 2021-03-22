@@ -357,10 +357,8 @@ public:
   void visitMemorySize(MemorySize* curr);
   void visitMemoryGrow(MemoryGrow* curr);
   void visitRefNull(RefNull* curr);
-  void validateRefNull(RefNull* curr);
   void visitRefIs(RefIs* curr);
   void visitRefFunc(RefFunc* curr);
-  void validateRefFunc(RefFunc* curr);
   void visitRefEq(RefEq* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
@@ -1961,16 +1959,12 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
                                     "memory.grow must match memory index type");
 }
 
-void FunctionValidator::validateRefNull(RefNull* curr) {
-  shouldBeTrue(
-    curr->type.isNullable(), curr, "ref.null types must be nullable");
-}
-
 void FunctionValidator::visitRefNull(RefNull* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+  shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.null requires reference-types to be enabled");
-  validateRefNull(curr);
+  shouldBeTrue(
+    curr->type.isNullable(), curr, "ref.null types must be nullable");
 }
 
 void FunctionValidator::visitRefIs(RefIs* curr) {
@@ -1983,23 +1977,19 @@ void FunctionValidator::visitRefIs(RefIs* curr) {
                "ref.is_*'s argument should be a reference type");
 }
 
-void FunctionValidator::validateRefFunc(RefFunc* curr) {
+void FunctionValidator::visitRefFunc(RefFunc* curr) {
+  shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
+               curr,
+               "ref.func requires reference-types to be enabled");
+  if (!info.validateGlobally) {
+    return;
+  }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
   // TODO: check for non-nullability
-}
-
-void FunctionValidator::visitRefFunc(RefFunc* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
-               curr,
-               "ref.func requires reference-types to be enabled");
-  if (!info.validateGlobally) {
-    return;
-  }
-  validateRefFunc(curr);
 }
 
 void FunctionValidator::visitRefEq(RefEq* curr) {
@@ -2830,7 +2820,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
             expr->is<RefFunc>(),
             expr,
             "all table elements must be non-null funcrefs in MVP.");
-          validator.validateRefFunc(expr->cast<RefFunc>());
+          validator.validate(expr);
         }
       }
     }
@@ -2859,11 +2849,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
           expr->is<RefFunc>() || expr->is<RefNull>(),
           expr,
           "element segment items must be either ref.func or ref.null func.");
-        if (auto* get = expr->dynCast<RefFunc>()) {
-          validator.validateRefFunc(get);
-        } else {
-          validator.validateRefNull(expr->cast<RefNull>());
-        }
+        validator.validate(expr);
       }
     }
   }
