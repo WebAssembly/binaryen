@@ -16,6 +16,7 @@
    (ref.null $struct)
   )
  )
+
  (func $test-prefinalize (result f64)
   (loop $loop (result f64)
    (block $block (result f64)
@@ -35,6 +36,21 @@
     ;; invalid.
     (br $loop)
    )
+  )
+ )
+
+ (func $none_=>_i32 (result i32)
+  (unreachable)
+ )
+ (func $i32_=>_none (param i32)
+ )
+ (func $selectify (param $x i32) (result funcref)
+  ;; this if has arms with different function types, for which funcref is the
+  ;; LUB
+  (if (result funcref)
+   (local.get $x)
+   (ref.func $none_=>_i32)
+   (ref.func $i32_=>_none)
   )
  )
 )
