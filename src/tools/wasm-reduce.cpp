@@ -858,13 +858,13 @@ struct Reducer
           if (entry->is<RefNull>()) {
             // we don't need to replace a ref.null
             return true;
-          } else if (!first || first->is<RefNull>()) {
+          } else if (first->is<RefNull>()) {
             return false;
           } else {
             // Both are ref.func
             auto* f = first->cast<RefFunc>();
             auto* e = entry->cast<RefFunc>();
-            return f->func == e->func && f->type == e->type;
+            return f->func == e->func;
           }
         },
         100,

@@ -1960,6 +1960,9 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
 }
 
 void FunctionValidator::visitRefNull(RefNull* curr) {
+  // If we are not in a function, this is a global location like a table. We
+  // allow RefNull there as we represent tables that way regardless of what
+  // features are enabled.
   shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.null requires reference-types to be enabled");
@@ -1978,6 +1981,9 @@ void FunctionValidator::visitRefIs(RefIs* curr) {
 }
 
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
+  // If we are not in a function, this is a global location like a table. We
+  // allow RefFunc there as we represent tables that way regardless of what
+  // features are enabled.
   shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.func requires reference-types to be enabled");
