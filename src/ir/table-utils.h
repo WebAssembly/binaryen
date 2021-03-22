@@ -86,9 +86,7 @@ inline Index append(Table& table, Name name, Module& wasm) {
   }
 
   auto* func = wasm.getFunctionOrNull(name);
-  if (func == nullptr) {
-    Fatal() << "Cannot append non-existing function to a table.";
-  }
+  assert(func != nullptr && "Cannot append non-existing function to a table.");
   // FIXME: make the type NonNullable when we support it!
   auto type = Type(HeapType(func->sig), Nullable);
   segment->data.push_back(Builder(wasm).makeRefFunc(name, type));

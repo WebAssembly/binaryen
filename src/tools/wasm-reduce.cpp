@@ -838,6 +838,11 @@ struct Reducer
     if (it != module->elementSegments.end()) {
       first = it->get()->data[0];
     }
+    if (first == nullptr) {
+      // The elements are all empty, nothing to shrink
+      return;
+    }
+
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool shrank = false;
@@ -845,10 +850,6 @@ struct Reducer
       shrank = shrinkByReduction(segment.get(), 100);
     }
     // the "opposite" of shrinking: copy a 'zero' element
-    if (first == nullptr) {
-      return;
-    }
-
     for (auto& segment : module->elementSegments) {
       reduceByZeroing(
         segment.get(),
