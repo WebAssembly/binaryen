@@ -34,7 +34,8 @@ namespace wasm {
 // either another block with the contents (if more than 1) or a single
 // expression.
 // This does not finalize the input block; it leaves that for the caller.
-static Expression* stealSlice(Builder& builder, Block* input, Index from, Index to) {
+static Expression*
+stealSlice(Builder& builder, Block* input, Index from, Index to) {
   Expression* ret;
   if (to == from + 1) {
     // just one
