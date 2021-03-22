@@ -2704,12 +2704,12 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (curr->data.empty()) {
       return;
     }
-    bool useAbbreviatedForm =
+    bool allElementsRefFunc =
       std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
         return entry->is<RefFunc>();
       });
     auto printElemType = [&]() {
-      if (useAbbreviatedForm) {
+      if (allElementsRefFunc) {
         TypeNamePrinter(o, currModule).print(HeapType::func);
       } else {
         TypeNamePrinter(o, currModule).print(Type::funcref);
@@ -2726,7 +2726,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
     if (curr->table.is()) {
       // TODO(reference-types): check for old-style based on the complete spec
-      if (currModule->tables.size() > 1) {
+      if (!allElementsRefFunc || currModule->tables.size() > 1) {
         // tableuse
         o << " (table ";
         printName(curr->table, o);
@@ -2736,7 +2736,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ' ';
       visit(curr->offset);
 
-      if (currModule->tables.size() > 1) {
+      if (!allElementsRefFunc || currModule->tables.size() > 1) {
         o << ' ';
         printElemType();
       }
@@ -2745,7 +2745,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printElemType();
     }
 
-    if (useAbbreviatedForm) {
+    if (allElementsRefFunc) {
       for (auto* entry : curr->data) {
         auto* refFunc = entry->cast<RefFunc>();
         o << ' ';
