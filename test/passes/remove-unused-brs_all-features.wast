@@ -16,4 +16,25 @@
    (ref.null $struct)
   )
  )
+ (func $test-prefinalize (result f64)
+  (loop $loop (result f64)
+   (block $block (result f64)
+    (drop
+     (br_if $block
+      (f64.const 0)
+      (i32.const 1)
+     )
+    )
+    (if
+     (i32.const 0)
+     (unreachable)
+    )
+    ;; this will be moved from $block into the if right before it. we must be
+    ;; careful to properly finalize() things, as if we finalize the block too
+    ;; early - before the if - then the block ends in a none type, which is
+    ;; invalid.
+    (br $loop)
+   )
+  )
+ )
 )

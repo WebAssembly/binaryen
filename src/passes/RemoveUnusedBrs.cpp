@@ -30,6 +30,34 @@
 
 namespace wasm {
 
+// Grab a slice out of a block, replacing it with nops, and returning
+// either another block with the contents (if more than 1) or a single
+// expression.
+// This does not finalize the input block; it leaves that for the caller.
+static Expression*
+stealSlice(Builder& builder, Block* input, Index from, Index to) {
+  Expression* ret;
+  if (to == from + 1) {
+    // just one
+    ret = input->list[from];
+  } else {
+    auto* block = builder.makeBlock();
+    for (Index i = from; i < to; i++) {
+      block->list.push_back(input->list[i]);
+    }
+    block->finalize();
+    ret = block;
+  }
+  if (to == input->list.size()) {
+    input->list.resize(from);
+  } else {
+    for (Index i = from; i < to; i++) {
+      input->list[i] = builder.makeNop();
+    }
+  }
+  return ret;
+}
+
 // to turn an if into a br-if, we must be able to reorder the
 // condition and possible value, and the possible value must
 // not have side effects (as they would run unconditionally)
@@ -431,7 +459,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // we need the ifTrue to break, so it cannot reach the code we want to
           // move
           if (iff->ifTrue->type == Type::unreachable) {
-            iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
+            iff->ifFalse = stealSlice(builder, block, i + 1, list.size());
             iff->finalize();
             block->finalize();
             return true;
@@ -476,13 +504,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
           if (iff->ifTrue->type == Type::unreachable) {
             iff->ifFalse = blockifyMerge(
-              iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+              iff->ifFalse, stealSlice(builder, block, i + 1, list.size()));
             iff->finalize();
             block->finalize();
             return true;
           } else if (iff->ifFalse->type == Type::unreachable) {
             iff->ifTrue = blockifyMerge(
-              iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+              iff->ifTrue, stealSlice(builder, block, i + 1, list.size()));
             iff->finalize();
             block->finalize();
             return true;
@@ -517,7 +545,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               list[i] =
                 builder.makeIf(brIf->condition,
                                builder.makeBreak(brIf->name),
-                               builder.stealSlice(block, i + 1, list.size()));
+                               stealSlice(builder, block, i + 1, list.size()));
+              block->finalize();
               return true;
             }
           }
