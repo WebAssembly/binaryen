@@ -1,2 +1,0 @@
-// Uses an emscripten header which tidy sees as invalid for this project.
-test/lld/em_asm_pthread.cpp
