@@ -220,9 +220,12 @@ int main(int argc, const char* argv[]) {
     // If we are not writing the output then all we are doing is simple parsing
     // of metadata from global parts of the wasm such as imports and exports. In
     // that case, it is unnecessary to parse function contents which are the
-    // great bulk of the work, and we can skip all that. However, the one
-    // exception is pthreads, which does require scanning the code, and so for
-    // now we cannot do reader.setSkipFunctionBodies(true); here yet.
+    // great bulk of the work, and we can skip all that.
+    // Note that the one case we do need function bodies for, pthreads + EM_ASM
+    // parsing, requires special handling. The start function has code that we
+    // parse in order to find the EM_ASMs, and for that reason the binary reader
+    // will still parse the start function even in this mode.
+    reader.setSkipFunctionBodies(true);
   }
   try {
     reader.read(infile, wasm, inputSourceMapFilename);

@@ -2141,7 +2141,14 @@ void WasmBinaryBuilder::readFunctions() {
       assert(controlFlowStack.empty());
       assert(letStack.empty());
       assert(depth == 0);
-      if (!skipFunctionBodies) {
+      // Even if we are skipping function bodies we need to not skip the start
+      // function. That contains important code for wasm-emscripten-finalize in
+      // the form of pthread-related segment initializations. As this is just
+      // one function, it doesn't add significant time, so the optimization of
+      // skipping bodies is still very useful.
+      auto currFunctionIndex = functionImports.size() + functions.size();
+      bool isStart = startIndex == currFunctionIndex;
+      if (!skipFunctionBodies || isStart) {
         func->body = getBlockOrSingleton(func->sig.results);
       } else {
         // When skipping the function body we need to put something valid in
