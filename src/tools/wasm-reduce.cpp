@@ -303,8 +303,7 @@ struct Reducer
             // see if it is still has the property we are preserving
             if (ProgramResult(command) == expected) {
               std::cerr << "|    command \"" << currCommand
-                        << "\" succeeded, reduced size to " << newSize
-                        << ", and preserved the property\n";
+                        << "\" succeeded, reduced size to " << newSize << '\n';
               copy_file(test, working);
               more = true;
               oldSize = newSize;
@@ -897,6 +896,7 @@ struct Reducer
         skip = std::min(size_t(factor), 2 * skip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
+        i += factor / 100;
       }
     }
     // try to remove exports
