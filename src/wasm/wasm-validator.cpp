@@ -2293,7 +2293,9 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                    "struct.new_with_default value type must be defaultable");
     }
   } else {
-    shouldBeEqual(curr->operands.size(), fields.size(), curr,
+    shouldBeEqual(curr->operands.size(),
+                  fields.size(),
+                  curr,
                   "struct.new must have the right number of operands");
     // All the fields must have the proper type.
     for (Index i = 0; i < fields.size(); i++) {
