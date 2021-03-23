@@ -1005,11 +1005,7 @@ struct OptimizeInstructions
     }
   }
 
-  enum RefEvaluationKind {
-    IsFunc,
-    IsData,
-    IsI31
-  };
+  enum RefEvaluationKind { IsFunc, IsData, IsI31 };
 
   enum RefEvaluationResult {
     // The result is not known at compile time.
@@ -1031,7 +1027,10 @@ struct OptimizeInstructions
 
     if (isFunc || isData || isI31) {
       // We know what this is at compile time.
-      return (op == IsFunc && isFunc) || (op == IsData && isData) || (op == IsI31 && isI31) ? Success : Failure;
+      return (op == IsFunc && isFunc) || (op == IsData && isData) ||
+                 (op == IsI31 && isI31)
+               ? Success
+               : Failure;
     }
 
     return Unknown;
@@ -1040,11 +1039,11 @@ struct OptimizeInstructions
   void visitRefIs(RefIs* curr) {
     // Optimization RefIs is not that obvious, since even if we know the result
     // evaluates to 0 or 1 then the replacement may not actually save code size,
-    // since RefIsNull is a single byte (the others are 2), while adding a Const of 0 would be two
-    // bytes. Other factors are that we can remove the input if it has no
-    // side effects, and that replacing with a constant may allow further
-    // optimizations later. For now, replace with a constant, but this warrants
-    // more investigation. TODO
+    // since RefIsNull is a single byte (the others are 2), while adding a Const
+    // of 0 would be two bytes. Other factors are that we can remove the input
+    // if it has no side effects, and that replacing with a constant may allow
+    // further optimizations later. For now, replace with a constant, but this
+    // warrants more investigation. TODO
 
     Builder builder(*getModule());
 
@@ -1055,7 +1054,8 @@ struct OptimizeInstructions
     switch (curr->op) {
       case RefIsNull: {
         if (notNull) {
-          return builder.makeSequence(builder.makeDrop(curr->value), Literal::makeZero(Type::i32));
+          return builder.makeSequence(builder.makeDrop(curr->value),
+                                      Literal::makeZero(Type::i32));
         }
         break;
       }
@@ -1073,10 +1073,12 @@ struct OptimizeInstructions
     if (result == Success) {
       // The kind is what we want, so all we need to check is non-nullability.
       if (notNull) {
-        return builder.makeSequence(builder.makeDrop(curr->value), Literal::makeOne(Type::i32));
+        return builder.makeSequence(builder.makeDrop(curr->value),
+                                    Literal::makeOne(Type::i32));
       }
     } else if (result == Failure) {
-      return builder.makeSequence(builder.makeDrop(curr->value), Literal::makeZero(Type::i32));
+      return builder.makeSequence(builder.makeDrop(curr->value),
+                                  Literal::makeZero(Type::i32));
     }
   }
 
@@ -1110,7 +1112,8 @@ struct OptimizeInstructions
       // and space.
       // TODO: take into account ignoreImplicitTraps
       Builder builder(*getModule());
-      return builder.makeSequence(builder.makeDrop(curr->ref), builder.makeUnreachable());
+      return builder.makeSequence(builder.makeDrop(curr->ref),
+                                  builder.makeUnreachable());
     }
 
     // Finally, see if we can remove a null check.
