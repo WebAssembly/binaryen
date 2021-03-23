@@ -4,7 +4,7 @@
 
 (module
  (type $anyref_=>_none (func (param anyref)))
- ;; CHECK:       (func $br_on_to_drop
+ ;; CHECK:      (func $br_on_to_drop
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $label$1 (result (ref null i31))
@@ -14,6 +14,9 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (ref.null i31)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $br_on_to_drop
   (nop) ;; ensure a block at the function level
   (drop
