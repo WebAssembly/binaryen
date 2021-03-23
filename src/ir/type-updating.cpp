@@ -46,7 +46,8 @@ void handleNonNullableLocals(Function* func, Module& wasm) {
     }
   }
 
-  // Rewrite the types after using them to know which local.gets to fix.
+  // Rewrite the types of the function's vars (which we can do now, after we
+  // are done using them to know which local.gets to fix).
   for (auto& type : func->vars) {
     if (type.isRef() && !type.isNullable()) {
       type = Type(type.getHeapType(), Nullable);

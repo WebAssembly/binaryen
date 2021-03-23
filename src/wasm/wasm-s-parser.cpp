@@ -1089,10 +1089,10 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     return Type::eqref;
   }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
-    return Type(HeapType::BasicHeapType::i31, NonNullable);
+    return Type::i31ref;
   }
   if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
-    return Type(HeapType::BasicHeapType::data, NonNullable);
+    return Type::dataref;
   }
   if (allowError) {
     return Type::none;
