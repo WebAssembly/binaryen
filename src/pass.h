@@ -71,7 +71,7 @@ struct InliningOptions {
   Index alwaysInlineMaxSize = 2;
   // Function size which we inline when there is only one caller.
   // FIXME: this should logically be higher than flexibleInlineMaxSize.
-  Index oneCallerInlineMaxSize = 15;
+  Index oneCallerInlineMaxSize = -1;
   // Function size above which we never inline, ignoring the various flexible
   // factors (like whether we are optimizing for size or speed) that could
   // influence us.
