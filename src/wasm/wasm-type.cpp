@@ -199,7 +199,8 @@ struct TypeStructureEquator {
   size_t currDepth = 0;
   std::unordered_map<HeapType, size_t> depthsA, depthsB;
 
-  TypeStructureEquator(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
+  TypeStructureEquator(bool topLevelOnly = false)
+    : topLevelOnly(topLevelOnly) {}
 
   bool eq(Type a, Type b);
   bool eq(HeapType a, HeapType b);
