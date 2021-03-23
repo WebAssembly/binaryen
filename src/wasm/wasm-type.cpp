@@ -1677,7 +1677,7 @@ struct ShapeCanonicalizer {
   // The new, minimal type definition graph.
   std::vector<std::unique_ptr<HeapTypeInfo>> infos;
 
-  // Maps each input HeapTypes to the index of its partition in `partitions`,
+  // Maps each input HeapType to the index of its partition in `partitions`,
   // which is also the index of its canonicalized HeapTypeInfo in infos.
   std::unordered_map<HeapType, size_t> partitionIndices;
 
@@ -1715,7 +1715,7 @@ ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
 
   // The Hopcroft's algorithm's list of partitions that may still be
   // distinguishing partitions. Starts out containing all partitions.
-  std::unordered_set<size_t> distinguishers;
+  std::set<size_t> distinguishers;
   for (size_t i = 0; i < partitions.size(); ++i) {
     distinguishers.insert(i);
   }
@@ -1994,8 +1994,9 @@ GlobalCanonicalizer::GlobalCanonicalizer(
   // to become the canonical version. These new canonical HeapTypes still
   // contain references to temporary Types owned by the TypeBuilder, so we must
   // subsequently replace those references with references to canonical Types.
-  // Canonicalize non-tuple types before tuple types to avoid canonicalizing a
-  // tuple that still contains non-canonical Types.
+  // Canonicalize non-tuple Types (which never directly refer to other Types)
+  // before tuple Types to avoid canonicalizing a tuple that still contains
+  // non-canonical Types.
   for (auto& info : infos) {
     HeapType original = asHeapType(info);
     HeapType canonical = globalHeapTypeStore.canonicalize(std::move(info));
