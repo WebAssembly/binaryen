@@ -180,9 +180,9 @@ void Block::finalize() {
     type = Type::none;
     return;
   }
-  type = list.back()->type;
   // The default type is what is at the end. Next we need to see if breaks and/
   // or unreachabitily change that.
+  type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
     handleUnreachable(this, NoBreak);
@@ -199,7 +199,7 @@ void Block::finalize() {
     // is already correct. TODO: calculate proper LUBs to compute a new correct
     // type in this situation.
     seeker.types.insert(type);
-    Type::ensureSuperType(seeker.types, type);
+    type = Type::getLeastUpperBound(seeker.types);
   } else {
     // There are no branches, so this block may be unreachable.
     handleUnreachable(this, NoBreak);
@@ -230,13 +230,8 @@ void If::finalize(Type type_) {
 }
 
 void If::finalize() {
-  if (ifFalse) {
-    // TODO: Calculate a proper LUB.
-    Type::ensureSuperType(std::array<Type, 2>{{ifTrue->type, ifFalse->type}},
-                          type);
-  } else {
-    type = Type::none;
-  }
+  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
+                 : Type::none;
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
@@ -245,9 +240,7 @@ void If::finalize() {
   //  (i32.const 20)
   // )
   // otherwise, if the condition is unreachable, so is the if
-  if ((type == Type::none && condition->type == Type::unreachable) ||
-      (ifTrue->type == Type::unreachable && ifFalse &&
-       ifFalse->type == Type::unreachable)) {
+  if (type == Type::none && condition->type == Type::unreachable) {
     type = Type::unreachable;
   }
 }
@@ -785,9 +778,7 @@ void Select::finalize() {
       condition->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    // TODO: Calculate a proper LUB.
-    Type::ensureSuperType(std::array<Type, 2>{{ifTrue->type, ifFalse->type}},
-                          type);
+    type = Type::getLeastUpperBound(ifTrue->type, ifFalse->type);
   }
 }
 
@@ -847,11 +838,7 @@ void Try::finalize() {
   for (auto catchBody : catchBodies) {
     types.insert(catchBody->type);
   }
-  if (types.size() == 1 && *types.begin() == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    Type::ensureSuperType(types, type);
-  }
+  type = Type::getLeastUpperBound(types);
 }
 
 void Try::finalize(Type type_) {
