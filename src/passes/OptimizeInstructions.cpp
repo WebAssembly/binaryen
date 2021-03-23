@@ -1038,12 +1038,27 @@ struct OptimizeInstructions
   }
 
   void visitRefIs(RefIs* curr) {
+    // Optimization RefIs is not that obvious, since even if we know the result
+    // evaluates to 0 or 1 then the replacement may not actually save code size,
+    // since RefIsNull is a single byte (the others are 2), while adding a Const of 0 would be two
+    // bytes. Other factors are that we can remove the input if it has no
+    // side effects, and that replacing with a constant may allow further
+    // optimizations later. For now, replace with a constant, but this warrants
+    // more investigation. TODO
+
+    Builder builder(*getModule());
+
+    auto notNull = !curr->value->type.isNullable();
+
     RefEvaluationResult result = Unknown;
 
     switch (curr->op) {
-      case RefIsNonNull:
-        // Handled lower down.
+      case RefIsNull: {
+        if (notNull) {
+          return builder.makeSequence(builder.makeDrop(curr->value), Literal::makeZero(Type::i32));
+        }
         break;
+      }
       case RefIsFunc:
         result = evaluateRef(curr->value, IsFunc);
         break;
@@ -1056,20 +1071,12 @@ struct OptimizeInstructions
     }
 
     if (result == Success) {
-      // The kind is what we want, so all we need to check is non-nullability,
-      // which we do lower down.
-FIXME
+      // The kind is what we want, so all we need to check is non-nullability.
+      if (notNull) {
+        return builder.makeSequence(builder.makeDrop(curr->value), Literal::makeOne(Type::i32));
+      }
     } else if (result == Failure) {
-      // This is the wrong kind, so it will trap. The binaryen optimizer does
-      // not differentiate traps, so we can perform a replacement here. We
-      // replace 2 bytes of ref.as_* with one byte of unreachable (as the block
-      // will go away in the binary format) so this saves both work and space.
-      // TODO: take into account ignoreImplicitTraps
-fIXME    }
-
-    // Finally, see if we can remove a null check.
-    if (curr->op == RefIsNull && curr->value->type.isNullable()) {
-FIXME
+      return builder.makeSequence(builder.makeDrop(curr->value), Literal::makeZero(Type::i32));
     }
   }
 
@@ -1098,11 +1105,12 @@ FIXME
     } else if (result == Failure) {
       // This is the wrong kind, so it will trap. The binaryen optimizer does
       // not differentiate traps, so we can perform a replacement here. We
-      // replace 2 bytes of ref.as_* with one byte of unreachable (as the block
-      // will go away in the binary format) so this saves both work and space.
+      // replace 2 bytes of ref.as_* with one byte of unreachable and one of a
+      // drop, and the drop can be optimized out later, so this saves both work
+      // and space.
       // TODO: take into account ignoreImplicitTraps
       Builder builder(*getModule());
-      return builder.makeSequence(curr->ref, builder.makeUnreachable());
+      return builder.makeSequence(builder.makeDrop(curr->ref), builder.makeUnreachable());
     }
 
     // Finally, see if we can remove a null check.
