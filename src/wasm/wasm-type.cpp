@@ -75,9 +75,9 @@ struct HeapTypeInfo {
   // global store.
   bool isTemp = false;
   // If `isFinalized`, then hashing and equality are performed on the finite
-  // structure of the type definition tree rooted at the HeapTypeInfo.
-  // Otherwise, the type definition tree is still being constructed so hashing
-  // and equality use pointer identity.
+  // shape of the type definition tree rooted at the HeapTypeInfo.
+  // Otherwise, the type definition tree is still being constructed via the
+  // TypeBuilder interface, so hashing and equality use pointer identity.
   bool isFinalized = true;
   enum Kind {
     SignatureKind,
@@ -166,17 +166,17 @@ private:
   template<typename T, typename F> std::ostream& printChild(T curr, F printer);
 };
 
-// Helper for hashing the structures of TypeInfos and HeapTypeInfos. Keeps track
-// of previously seen HeapTypes to avoid traversing them more than once. Infos
-// referring to different type IDs but sharing a finite structure will compare
-// and hash the same.
-struct TypeStructureHasher {
+// Helper for hashing the shapes of TypeInfos and HeapTypeInfos. Keeps track of
+// previously seen HeapTypes to avoid traversing them more than once. Infos
+// referring to different type IDs but sharing a finite shape will compare and
+// hash the same.
+struct FiniteShapeHasher {
   bool topLevelOnly;
   size_t currDepth = 0;
   size_t currStep = 0;
   std::unordered_map<HeapType, size_t> seen;
 
-  TypeStructureHasher(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
+  FiniteShapeHasher(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
 
   size_t hash(Type type);
   size_t hash(HeapType heapType);
@@ -190,20 +190,19 @@ struct TypeStructureHasher {
   size_t hash(const Rtt& rtt);
 };
 
-// Helper for comparing the structures of TypeInfos and HeapTypeInfos for
-// equality. Like TypeStructureHasher, keeps track of previously seen HeapTypes.
-// Note that this does not test for coinductive equality of the infinite
-// expansion of the type structure, but rather tests for equality of the finite
-// structure. If TypeStructureEquator reports that two type structures are
-// equal, TypeStructureHasher should produce the same hash for them.
-struct TypeStructureEquator {
+// Helper for comparing the shapes of TypeInfos and HeapTypeInfos for equality.
+// Like FiniteShapeHasher, keeps track of previously seen HeapTypes. Note that
+// this does not test for coinductive equality of the infinite expansion of the
+// type tree, but rather tests for equality of the finite shape of the graph. If
+// FiniteShapeEquator reports that two type shapes are equal, FiniteShapeHasher
+// should produce the same hash for them.
+struct FiniteShapeEquator {
   bool topLevelOnly;
   size_t currDepth = 0;
   size_t currStep = 0;
   std::unordered_map<HeapType, size_t> seenA, seenB;
 
-  TypeStructureEquator(bool topLevelOnly = false)
-    : topLevelOnly(topLevelOnly) {}
+  FiniteShapeEquator(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
 
   bool eq(Type a, Type b);
   bool eq(HeapType a, HeapType b);
@@ -225,14 +224,14 @@ namespace std {
 template<> class hash<wasm::TypeInfo> {
 public:
   size_t operator()(const wasm::TypeInfo& info) const {
-    return wasm::TypeStructureHasher().hash(info);
+    return wasm::FiniteShapeHasher().hash(info);
   }
 };
 
 template<> class hash<wasm::HeapTypeInfo> {
 public:
   size_t operator()(const wasm::HeapTypeInfo& info) const {
-    return wasm::TypeStructureHasher().hash(info);
+    return wasm::FiniteShapeHasher().hash(info);
   }
 };
 
@@ -278,20 +277,10 @@ Type markTemp(Type type) {
 }
 
 bool isTemp(Type type) {
-  // Avoid compiler warnings on this function not being used, as it is only used
-  // in assertions, which might be off.
-  bool (*func)(Type) = isTemp;
-  WASM_UNUSED(func);
-
   return !type.isBasic() && getTypeInfo(type)->isTemp;
 }
 
 bool isTemp(HeapType type) {
-  // Avoid compiler warnings on this function not being used, as it is only used
-  // in assertions, which might be off.
-  bool (*func)(HeapType) = isTemp;
-  WASM_UNUSED(func);
-
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;
 }
 
@@ -327,7 +316,10 @@ TypeInfo::~TypeInfo() {
 }
 
 bool TypeInfo::operator==(const TypeInfo& other) const {
-  return TypeStructureEquator().eq(*this, other);
+  // TypeInfos with the same shape are considered equivalent. This is important
+  // during global canonicalization, when newly created canonically-shaped
+  // graphs are checked against the existing globally canonical graphs.
+  return FiniteShapeEquator().eq(*this, other);
 }
 
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
@@ -370,7 +362,7 @@ HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
-  return TypeStructureEquator().eq(*this, other);
+  return FiniteShapeEquator().eq(*this, other);
 }
 
 template<typename Info> struct Store {
@@ -1349,7 +1341,7 @@ std::ostream& TypePrinter::print(const Rtt& rtt) {
   return os << ')';
 }
 
-size_t TypeStructureHasher::hash(Type type) {
+size_t FiniteShapeHasher::hash(Type type) {
   size_t digest = wasm::hash(type.isBasic());
   if (type.isBasic()) {
     rehash(digest, type.getID());
@@ -1359,7 +1351,7 @@ size_t TypeStructureHasher::hash(Type type) {
   return digest;
 }
 
-size_t TypeStructureHasher::hash(HeapType heapType) {
+size_t FiniteShapeHasher::hash(HeapType heapType) {
   size_t digest = wasm::hash(heapType.isBasic());
   if (heapType.isBasic()) {
     rehash(digest, heapType.getID());
@@ -1381,7 +1373,7 @@ size_t TypeStructureHasher::hash(HeapType heapType) {
   return digest;
 }
 
-size_t TypeStructureHasher::hash(const TypeInfo& info) {
+size_t FiniteShapeHasher::hash(const TypeInfo& info) {
   size_t digest = wasm::hash(info.kind);
   switch (info.kind) {
     case TypeInfo::TupleKind:
@@ -1398,8 +1390,8 @@ size_t TypeStructureHasher::hash(const TypeInfo& info) {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-size_t TypeStructureHasher::hash(const HeapTypeInfo& info) {
-  // If the HeapTypeInfo is not finalized, then it is mutable and its structure
+size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
+  // If the HeapTypeInfo is not finalized, then it is mutable and its shape
   // might change in the future. In that case, fall back to pointer identity to
   // keep the hash consistent until all the TypeBuilder's types are finalized.
   size_t digest = wasm::hash(info.isFinalized);
@@ -1422,7 +1414,7 @@ size_t TypeStructureHasher::hash(const HeapTypeInfo& info) {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-size_t TypeStructureHasher::hash(const Tuple& tuple) {
+size_t FiniteShapeHasher::hash(const Tuple& tuple) {
   size_t digest = wasm::hash(tuple.types.size());
   for (auto type : tuple.types) {
     hash_combine(digest, hash(type));
@@ -1430,20 +1422,20 @@ size_t TypeStructureHasher::hash(const Tuple& tuple) {
   return digest;
 }
 
-size_t TypeStructureHasher::hash(const Field& field) {
+size_t FiniteShapeHasher::hash(const Field& field) {
   size_t digest = wasm::hash(field.packedType);
   rehash(digest, field.mutable_);
   hash_combine(digest, hash(field.type));
   return digest;
 }
 
-size_t TypeStructureHasher::hash(const Signature& sig) {
+size_t FiniteShapeHasher::hash(const Signature& sig) {
   size_t digest = hash(sig.params);
   hash_combine(digest, hash(sig.results));
   return digest;
 }
 
-size_t TypeStructureHasher::hash(const Struct& struct_) {
+size_t FiniteShapeHasher::hash(const Struct& struct_) {
   size_t digest = wasm::hash(struct_.fields.size());
   for (const auto& field : struct_.fields) {
     hash_combine(digest, hash(field));
@@ -1451,17 +1443,17 @@ size_t TypeStructureHasher::hash(const Struct& struct_) {
   return digest;
 }
 
-size_t TypeStructureHasher::hash(const Array& array) {
+size_t FiniteShapeHasher::hash(const Array& array) {
   return hash(array.element);
 }
 
-size_t TypeStructureHasher::hash(const Rtt& rtt) {
-  size_t digest = rtt.depth;
+size_t FiniteShapeHasher::hash(const Rtt& rtt) {
+  size_t digest = wasm::hash(rtt.depth);
   hash_combine(digest, hash(rtt.heapType));
   return digest;
 }
 
-bool TypeStructureEquator::eq(Type a, Type b) {
+bool FiniteShapeEquator::eq(Type a, Type b) {
   if (a.isBasic() != b.isBasic()) {
     return false;
   } else if (a.isBasic()) {
@@ -1471,7 +1463,7 @@ bool TypeStructureEquator::eq(Type a, Type b) {
   }
 }
 
-bool TypeStructureEquator::eq(HeapType a, HeapType b) {
+bool FiniteShapeEquator::eq(HeapType a, HeapType b) {
   if (a.isBasic() != b.isBasic()) {
     return false;
   } else if (a.isBasic()) {
@@ -1494,7 +1486,7 @@ bool TypeStructureEquator::eq(HeapType a, HeapType b) {
   return ret;
 }
 
-bool TypeStructureEquator::eq(const TypeInfo& a, const TypeInfo& b) {
+bool FiniteShapeEquator::eq(const TypeInfo& a, const TypeInfo& b) {
   if (a.kind != b.kind) {
     return false;
   }
@@ -1510,11 +1502,11 @@ bool TypeStructureEquator::eq(const TypeInfo& a, const TypeInfo& b) {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool TypeStructureEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
+bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
   if (a.isFinalized != b.isFinalized) {
     return false;
   } else if (!a.isFinalized) {
-    // See comment on corresponding TypeStructureHasher method.
+    // See comment on corresponding FiniteShapeHasher method.
     return &a == &b;
   }
   if (a.kind != b.kind) {
@@ -1531,7 +1523,7 @@ bool TypeStructureEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-bool TypeStructureEquator::eq(const Tuple& a, const Tuple& b) {
+bool FiniteShapeEquator::eq(const Tuple& a, const Tuple& b) {
   return std::equal(a.types.begin(),
                     a.types.end(),
                     b.types.begin(),
@@ -1539,16 +1531,16 @@ bool TypeStructureEquator::eq(const Tuple& a, const Tuple& b) {
                     [&](const Type& x, const Type& y) { return eq(x, y); });
 }
 
-bool TypeStructureEquator::eq(const Field& a, const Field& b) {
+bool FiniteShapeEquator::eq(const Field& a, const Field& b) {
   return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&
          eq(a.type, b.type);
 }
 
-bool TypeStructureEquator::eq(const Signature& a, const Signature& b) {
+bool FiniteShapeEquator::eq(const Signature& a, const Signature& b) {
   return eq(a.params, b.params) && eq(a.results, b.results);
 }
 
-bool TypeStructureEquator::eq(const Struct& a, const Struct& b) {
+bool FiniteShapeEquator::eq(const Struct& a, const Struct& b) {
   return std::equal(a.fields.begin(),
                     a.fields.end(),
                     b.fields.begin(),
@@ -1556,11 +1548,11 @@ bool TypeStructureEquator::eq(const Struct& a, const Struct& b) {
                     [&](const Field& x, const Field& y) { return eq(x, y); });
 }
 
-bool TypeStructureEquator::eq(const Array& a, const Array& b) {
+bool FiniteShapeEquator::eq(const Array& a, const Array& b) {
   return eq(a.element, b.element);
 }
 
-bool TypeStructureEquator::eq(const Rtt& a, const Rtt& b) {
+bool FiniteShapeEquator::eq(const Rtt& a, const Rtt& b) {
   return a.depth == b.depth && eq(a.heapType, b.heapType);
 }
 
@@ -1644,9 +1636,9 @@ Type TypeBuilder::getTempRttType(size_t i, uint32_t depth) {
 namespace {
 
 // A wrapper around a HeapType that provides equality and hashing based only on
-// its top-level structure, up to but not including its closest HeapType
-// descendants. This is the structure that determines the most fine-grained
-// initial partitions for Hopcroft's algorithm and also the structure that
+// its top-level shape, up to but not including its closest HeapType
+// descendants. This is the shape that determines the most fine-grained
+// initial partitions for Hopcroft's algorithm and also the shape that
 // determines the "alphabet" for transitioning to the child HeapTypes in the DFA
 // view of the type definition.
 struct ShallowHeapType {
@@ -1657,7 +1649,7 @@ struct ShallowHeapType {
 };
 
 bool ShallowHeapType::operator==(const ShallowHeapType& other) const {
-  return TypeStructureEquator(/*topLevelOnly=*/true)
+  return FiniteShapeEquator(/*topLevelOnly=*/true)
     .eq(this->heapType, other.heapType);
 }
 
@@ -1669,7 +1661,7 @@ namespace std {
 template<> class hash<wasm::ShallowHeapType> {
 public:
   size_t operator()(const wasm::ShallowHeapType& type) const {
-    return wasm::TypeStructureHasher(/*topLevelOnly=*/true).hash(type.heapType);
+    return wasm::FiniteShapeHasher(/*topLevelOnly=*/true).hash(type.heapType);
   }
 };
 
@@ -1681,7 +1673,7 @@ namespace {
 // Uses Hopcroft's DFA minimization algorithm to construct a minimal type
 // definition graph from an input graph. See
 // https://en.wikipedia.org/wiki/DFA_minimization#Hopcroft's_algorithm.
-struct TypeStructureCanonicalizer {
+struct ShapeCanonicalizer {
   // The new, minimal type definition graph.
   std::vector<std::unique_ptr<HeapTypeInfo>> infos;
 
@@ -1689,7 +1681,7 @@ struct TypeStructureCanonicalizer {
   // which is also the index of its canonicalized HeapTypeInfo in infos.
   std::unordered_map<HeapType, size_t> partitionIndices;
 
-  TypeStructureCanonicalizer(const std::vector<HeapType>& input);
+  ShapeCanonicalizer(const std::vector<HeapType>& input);
 
 private:
   using TypeSet = std::unordered_set<HeapType>;
@@ -1716,8 +1708,7 @@ private:
   TypeSet getDifference(const TypeSet& a, const TypeSet& b);
 };
 
-TypeStructureCanonicalizer::TypeStructureCanonicalizer(
-  const std::vector<HeapType>& input)
+ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
   : input(input) {
   initializePredecessors();
   initializePartitions();
@@ -1785,7 +1776,7 @@ TypeStructureCanonicalizer::TypeStructureCanonicalizer(
   translatePartitionsToTypes();
 }
 
-void TypeStructureCanonicalizer::initializePredecessors() {
+void ShapeCanonicalizer::initializePredecessors() {
   for (auto heapType : input) {
     size_t childIndex = 0;
     for (auto* child : getChildren(heapType)) {
@@ -1795,8 +1786,8 @@ void TypeStructureCanonicalizer::initializePredecessors() {
   }
 }
 
-void TypeStructureCanonicalizer::initializePartitions() {
-  // Create the initial partitions based on the top-level structure of the input
+void ShapeCanonicalizer::initializePartitions() {
+  // Create the initial partitions based on the top-level shape of the input
   // heap types. If two heap types are differentiable without recursing into
   // their child heap types, then they are obviously not equivalent and can be
   // placed in different partitions. Starting with this fine-grained partition
@@ -1809,12 +1800,12 @@ void TypeStructureCanonicalizer::initializePartitions() {
     ShallowHeapType shallow(type);
     auto inserted = initialIndices.insert({shallow, partitions.size()});
     if (inserted.second) {
-      // We have not seen a type with this structure before; create a new
+      // We have not seen a type with this shape before; create a new
       // partition.
       partitionIndices[type] = partitions.size();
       partitions.emplace_back(TypeSet{type});
     } else {
-      // Add to the partition we have already created for this type structure.
+      // Add to the partition we have already created for this type shape.
       size_t index = inserted.first->second;
       partitionIndices[type] = index;
       partitions[index].insert(type);
@@ -1822,13 +1813,13 @@ void TypeStructureCanonicalizer::initializePartitions() {
   }
 }
 
-void TypeStructureCanonicalizer::translatePartitionsToTypes() {
+void ShapeCanonicalizer::translatePartitionsToTypes() {
   // Create a single new HeapTypeInfo for each partition. Initialize each new
   // HeapTypeInfo as a copy of a representative HeapTypeInfo from its partition,
   // then patch all the children of the new HeapTypeInfos to refer to other new
   // HeapTypeInfos rather than the original HeapTypeInfos. This newly formed
-  // graph will have a structure coinductively equivalent to the original
-  // graph's structure, but each type definition will be minimal and distinct.
+  // graph will have a shape coinductively equivalent to the original graph's
+  // shape, but each type definition will be minimal and distinct.
   for (auto& partition : partitions) {
     const auto& representative = *getHeapTypeInfo(*partition.begin());
     infos.push_back(std::make_unique<HeapTypeInfo>(representative));
@@ -1846,8 +1837,7 @@ void TypeStructureCanonicalizer::translatePartitionsToTypes() {
   }
 }
 
-std::vector<HeapType*>
-TypeStructureCanonicalizer::getChildren(HeapType heapType) {
+std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType heapType) {
   std::vector<HeapType*> children;
 
   auto noteChild = [&](HeapType* child) {
@@ -1896,7 +1886,7 @@ TypeStructureCanonicalizer::getChildren(HeapType heapType) {
 }
 
 const std::unordered_set<HeapType>&
-TypeStructureCanonicalizer::getPredsOf(HeapType type, size_t symbol) {
+ShapeCanonicalizer::getPredsOf(HeapType type, size_t symbol) {
   static TypeSet empty;
   auto predsIt = preds.find(type);
   if (predsIt == preds.end()) {
@@ -1911,8 +1901,7 @@ TypeStructureCanonicalizer::getPredsOf(HeapType type, size_t symbol) {
 }
 
 std::unordered_set<HeapType>
-TypeStructureCanonicalizer::getIntersection(const TypeSet& a,
-                                            const TypeSet& b) {
+ShapeCanonicalizer::getIntersection(const TypeSet& a, const TypeSet& b) {
   TypeSet ret;
   const TypeSet& smaller = a.size() < b.size() ? a : b;
   const TypeSet& bigger = a.size() < b.size() ? b : a;
@@ -1925,7 +1914,7 @@ TypeStructureCanonicalizer::getIntersection(const TypeSet& a,
 }
 
 std::unordered_set<HeapType>
-TypeStructureCanonicalizer::getDifference(const TypeSet& a, const TypeSet& b) {
+ShapeCanonicalizer::getDifference(const TypeSet& a, const TypeSet& b) {
   TypeSet ret;
   for (auto type : a) {
     if (!b.count(type)) {
@@ -1938,10 +1927,10 @@ TypeStructureCanonicalizer::getDifference(const TypeSet& a, const TypeSet& b) {
 // Replaces temporary types and heap types in a type definition graph with their
 // globally canonical versions to prevent temporary types or heap type from
 // leaking into the global stores.
-struct TypeCanonicalizer {
+struct GlobalCanonicalizer {
 
   std::vector<HeapType> results;
-  TypeCanonicalizer(std::vector<std::unique_ptr<HeapTypeInfo>>& infos);
+  GlobalCanonicalizer(std::vector<std::unique_ptr<HeapTypeInfo>>& infos);
 
 private:
   struct Item {
@@ -1976,7 +1965,7 @@ private:
 // Traverse the type graph rooted at the initialized HeapTypeInfos, replacing in
 // place all Types and HeapTypes backed by the TypeBuilder's Stores with
 // equivalent globally canonicalized Types and HeapTypes.
-TypeCanonicalizer::TypeCanonicalizer(
+GlobalCanonicalizer::GlobalCanonicalizer(
   std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
   // Seed the scan list with the HeapTypes to canonicalize.
   results.reserve(infos.size());
@@ -2033,13 +2022,13 @@ TypeCanonicalizer::TypeCanonicalizer(
 }
 
 template<typename T1, typename T2>
-void TypeCanonicalizer::noteChild(T1 parent, T2* child) {
+void GlobalCanonicalizer::noteChild(T1 parent, T2* child) {
   if (child->isCompound()) {
     scanList.push_back(child);
   }
 }
 
-void TypeCanonicalizer::scanHeapType(HeapType* ht) {
+void GlobalCanonicalizer::scanHeapType(HeapType* ht) {
   assert(ht->isCompound());
   heapTypeLocations[*ht].push_back(ht);
   if (scanned.count(ht->getID())) {
@@ -2064,7 +2053,7 @@ void TypeCanonicalizer::scanHeapType(HeapType* ht) {
   }
 };
 
-void TypeCanonicalizer::scanType(Type* type) {
+void GlobalCanonicalizer::scanType(Type* type) {
   assert(type->isCompound());
   typeLocations[*type].push_back(type);
   if (scanned.count(type->getID())) {
@@ -2098,15 +2087,15 @@ std::vector<HeapType> TypeBuilder::build() {
     heapTypes.push_back(entry.get());
   }
 
-  // Canonicalize the structure of the type definition graph.
-  TypeStructureCanonicalizer minimized(heapTypes);
+  // Canonicalize the shape of the type definition graph.
+  ShapeCanonicalizer minimized(heapTypes);
 
-  // The structure of the definition graph is now canonicalized, but it is still
+  // The shape of the definition graph is now canonicalized, but it is still
   // comprised of temporary types and heap types. Get or create their globally
   // canonical versions.
-  TypeCanonicalizer globallyCanonical(minimized.infos);
+  GlobalCanonicalizer globallyCanonical(minimized.infos);
 
-  // Map the original heap types to their structurally and globally canonical
+  // Map the original heap types to their minimized and globally canonical
   // versions.
   for (auto& type : heapTypes) {
     type = globallyCanonical.results[minimized.partitionIndices[type]];
