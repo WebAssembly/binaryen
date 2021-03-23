@@ -144,6 +144,8 @@ public:
   bool isArray() const;
   bool isDefaultable() const;
 
+  Nullability getNullability() const;
+
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
     for (const auto& type : *this) {

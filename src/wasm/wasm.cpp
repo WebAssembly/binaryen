@@ -932,8 +932,9 @@ void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    // The output of ref.cast may be null (a null is passed through).
-    type = Type(rtt->type.getHeapType(), Nullable);
+    // The output of ref.cast may be null if the input is null (in that case the
+    // null is passed through).
+    type = Type(rtt->type.getHeapType(), ref->type.getNullability());
   }
 }
 
@@ -958,7 +959,7 @@ Type BrOn::getCastType() {
       // BrOnNull does not send a value on the branch.
       return Type::none;
     case BrOnCast:
-      return Type(rtt->type.getHeapType(), NonNullable);
+      return Type(rtt->type.getHeapType(), ref->type.getNullability());
     case BrOnFunc:
       return Type::funcref;
     case BrOnData:
