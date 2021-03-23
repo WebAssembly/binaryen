@@ -166,13 +166,15 @@ private:
   template<typename T, typename F> std::ostream& printChild(T curr, F printer);
 };
 
-// Helper for hashing the structures of TypeInfos and HeapTypeInfos. Uses de
-// Bruijn indices to represent back edges so that infos referring to different
-// type IDs but sharing a finite structure will compare and hash the same.
+// Helper for hashing the structures of TypeInfos and HeapTypeInfos. Keeps track
+// of previously seen HeapTypes to avoid traversing them more than once. Infos
+// referring to different type IDs but sharing a finite structure will compare
+// and hash the same.
 struct TypeStructureHasher {
   bool topLevelOnly;
   size_t currDepth = 0;
-  std::unordered_map<HeapType, size_t> depths;
+  size_t currStep = 0;
+  std::unordered_map<HeapType, size_t> seen;
 
   TypeStructureHasher(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
 
@@ -189,15 +191,16 @@ struct TypeStructureHasher {
 };
 
 // Helper for comparing the structures of TypeInfos and HeapTypeInfos for
-// equality. Like TypeStructureHasher, uses de Bruijn indices to represent back
-// edges. Note that this does not test for coinductive equality of the infinite
+// equality. Like TypeStructureHasher, keeps track of previously seen HeapTypes.
+// Note that this does not test for coinductive equality of the infinite
 // expansion of the type structure, but rather tests for equality of the finite
 // structure. If TypeStructureEquator reports that two type structures are
 // equal, TypeStructureHasher should produce the same hash for them.
 struct TypeStructureEquator {
   bool topLevelOnly;
   size_t currDepth = 0;
-  std::unordered_map<HeapType, size_t> depthsA, depthsB;
+  size_t currStep = 0;
+  std::unordered_map<HeapType, size_t> seenA, seenB;
 
   TypeStructureEquator(bool topLevelOnly = false)
     : topLevelOnly(topLevelOnly) {}
@@ -1365,17 +1368,16 @@ size_t TypeStructureHasher::hash(HeapType heapType) {
   if (topLevelOnly && currDepth > 0) {
     return digest;
   }
-  auto it = depths.find(heapType);
-  rehash(digest, it != depths.end());
-  if (it != depths.end()) {
-    assert(it->second <= currDepth);
-    size_t relativeDepth = currDepth - it->second;
-    rehash(digest, relativeDepth);
+  auto it = seen.find(heapType);
+  rehash(digest, it != seen.end());
+  if (it != seen.end()) {
+    rehash(digest, it->second);
     return digest;
   }
-  depths[heapType] = ++currDepth;
+  seen[heapType] = ++currStep;
+  ++currDepth;
   hash_combine(digest, hash(*getHeapTypeInfo(heapType)));
-  depths.erase(heapType);
+  --currDepth;
   return digest;
 }
 
@@ -1478,17 +1480,17 @@ bool TypeStructureEquator::eq(HeapType a, HeapType b) {
   if (topLevelOnly && currDepth > 0) {
     return true;
   }
-  auto itA = depthsA.find(a);
-  auto itB = depthsB.find(b);
-  if ((itA != depthsA.end()) != (itB != depthsB.end())) {
+  auto itA = seenA.find(a);
+  auto itB = seenB.find(b);
+  if ((itA != seenA.end()) != (itB != seenB.end())) {
     return false;
-  } else if (itA != depthsA.end()) {
+  } else if (itA != seenA.end()) {
     return itA->second == itB->second;
   }
-  depthsA[a] = depthsB[b] = ++currDepth;
+  seenA[a] = seenB[b] = ++currStep;
+  ++currDepth;
   bool ret = eq(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
-  depthsA.erase(a);
-  depthsB.erase(b);
+  --currDepth;
   return ret;
 }
 
