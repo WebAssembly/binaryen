@@ -1005,6 +1005,112 @@ struct OptimizeInstructions
     }
   }
 
+  enum RefEvaluationKind {
+    IsFunc,
+    IsData,
+    IsI31
+  };
+
+  enum RefEvaluationResult {
+    // The result is not known at compile time.
+    Unknown,
+    // The evaluation is known to succeed (i.e., we find what we are looking
+    // for), or fail, at compile time.
+    Success,
+    Failure
+  };
+
+  // Evaluate a reference at compile time, checking if it is of a certain kind.
+  // This ignores nullability.
+  RefEvaluationResult evaluateRef(Expression* ref, RefEvaluationKind op) {
+    auto valueType = ref->type;
+
+    auto isFunc = valueType.isFunction();
+    auto isData = valueType.isData();
+    auto isI31 = valueType.getHeapType() == HeapType::i31;
+
+    if (isFunc || isData || isI31) {
+      // We know what this is at compile time.
+      return (op == IsFunc && isFunc) || (op == IsData && isData) || (op == IsI31 && isI31) ? Success : Failure;
+    }
+
+    return Unknown;
+  }
+
+  void visitRefIs(RefIs* curr) {
+    RefEvaluationResult result = Unknown;
+
+    switch (curr->op) {
+      case RefIsNonNull:
+        // Handled lower down.
+        break;
+      case RefIsFunc:
+        result = evaluateRef(curr->value, IsFunc);
+        break;
+      case RefIsData:
+        result = evaluateRef(curr->value, IsData);
+        break;
+      case RefIsI31:
+        result = evaluateRef(curr->value, IsI31);
+        break;
+    }
+
+    if (result == Success) {
+      // The kind is what we want, so all we need to check is non-nullability,
+      // which we do lower down.
+FIXME
+    } else if (result == Failure) {
+      // This is the wrong kind, so it will trap. The binaryen optimizer does
+      // not differentiate traps, so we can perform a replacement here. We
+      // replace 2 bytes of ref.as_* with one byte of unreachable (as the block
+      // will go away in the binary format) so this saves both work and space.
+      // TODO: take into account ignoreImplicitTraps
+fIXME    }
+
+    // Finally, see if we can remove a null check.
+    if (curr->op == RefIsNull && curr->value->type.isNullable()) {
+FIXME
+    }
+  }
+
+  void visitRefAs(RefAs* curr) {
+    RefEvaluationResult result = Unknown;
+
+    switch (curr->op) {
+      case RefAsNonNull:
+        // Handled lower down.
+        break;
+      case RefAsFunc:
+        result = evaluateRef(curr->value, IsFunc);
+        break;
+      case RefAsData:
+        result = evaluateRef(curr->value, IsData);
+        break;
+      case RefAsI31:
+        result = evaluateRef(curr->value, IsI31);
+        break;
+    }
+
+    if (result == Success) {
+      // The kind is what we want, so all we need to check is non-nullability,
+      // which we do lower down.
+      curr->op = IsNonNull;
+    } else if (result == Failure) {
+      // This is the wrong kind, so it will trap. The binaryen optimizer does
+      // not differentiate traps, so we can perform a replacement here. We
+      // replace 2 bytes of ref.as_* with one byte of unreachable (as the block
+      // will go away in the binary format) so this saves both work and space.
+      // TODO: take into account ignoreImplicitTraps
+      Builder builder(*getModule());
+      return builder.makeSequence(curr->ref, builder.makeUnreachable());
+    }
+
+    // Finally, see if we can remove a null check.
+    if (curr->op == RefAsNonNull && curr->value->type.isNullable()) {
+      replaceCurrent(curr->value);
+    }
+  }
+
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
     return localInfo[get->index].maxBits;
