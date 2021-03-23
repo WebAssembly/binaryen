@@ -874,7 +874,7 @@
  (func $foo
   (drop
    (block (result dataref)
-    ;; this dropped item can be vaccuumed out in principle, but it is a non-
+    ;; this dropped item can be vacuumed out in principle, but it is a non-
     ;; nullable reference type and we don't have a type to put in its place, so
     ;; don't try to replace it. (later operations will remove all the body of
     ;; this function; this test verifies we don't crash along the way)

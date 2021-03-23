@@ -34,7 +34,7 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
 inline bool canMakeZero(Type type) {
   // We can make a "zero" - a 0, or a null, or a trivial rtt, etc. - for pretty
   // much anything except a non-nullable reference type.
-  return !(type.isRef() && !type.isNullable());
+  return !type.isRef() || type.isNullable();
 }
 
 inline Expression* makeZero(Type type, Module& wasm) {

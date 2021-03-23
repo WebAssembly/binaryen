@@ -27,6 +27,7 @@ void handleNonNullableLocals(Function* func, Module& wasm) {
   for (auto type : func->vars) {
     if (type.isRef() && !type.isNullable()) {
       hasNonNullable = true;
+      break;
     }
   }
   if (!hasNonNullable) {
