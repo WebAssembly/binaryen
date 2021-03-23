@@ -403,12 +403,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     switch (curr->op) {
       case BrOnNull: {
-        if (!refType.isNullable()) {
-          // This cannot be null, so the br is never taken, and the non-null
-          // value flows through.
-          replaceCurrent(curr->ref);
-          anotherCycle = true;
-        }
+        // This cannot be null, so the br is never taken, and the non-null value
+        // flows through.
+        replaceCurrent(curr->ref);
+        anotherCycle = true;
         break;
       }
       case BrOnCast: {
