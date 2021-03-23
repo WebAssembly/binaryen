@@ -520,6 +520,10 @@ bool Type::isDefaultable() const {
   return isConcrete() && (!isRef() || isNullable()) && !isRtt();
 }
 
+Nullability Type::getNullability() const {
+  return isNullable() ? Nullable : NonNullable;
+}
+
 bool Type::operator<(const Type& other) const {
   return TypeComparator().lessThan(*this, other);
 }

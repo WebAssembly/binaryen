@@ -33,6 +33,7 @@
 #include "ir/debug.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "parsing.h"
 #include "pass.h"
@@ -296,6 +297,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }
+  TypeUpdating::handleNonNullableLocals(into, *module);
   return block;
 }
 

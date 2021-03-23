@@ -47,8 +47,8 @@
  (export "rtts" (func $2))
  (export "br_on_cast" (func $3))
  (export "cast-null-anyref-to-gc" (func $4))
- (export "br_on_data" (func $5))
- (export "$rtt-and-cast-on-func" (func $7))
+ (export "br_on_data" (func $6))
+ (export "$rtt-and-cast-on-func" (func $8))
  (func $0 (; has Stack IR ;)
   (local $0 (ref null $struct))
   (call $log
@@ -182,9 +182,9 @@
    (i32.const 0)
   )
  )
- (func $5 (; has Stack IR ;) (param $0 anyref)
+ (func $6 (; has Stack IR ;) (param $0 anyref)
   (drop
-   (block $data (result (ref null data))
+   (block $data (result dataref)
     (drop
      (br_on_data $data
       (local.get $0)
@@ -193,7 +193,9 @@
     (call $log
      (i32.const 1)
     )
-    (ref.null data)
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
    )
   )
  )
@@ -202,7 +204,7 @@
    (i32.const 1337)
   )
  )
- (func $7 (; has Stack IR ;)
+ (func $8 (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )

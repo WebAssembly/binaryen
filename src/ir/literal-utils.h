@@ -31,6 +31,12 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
   return ret;
 }
 
+inline bool canMakeZero(Type type) {
+  // We can make a "zero" - a 0, or a null, or a trivial rtt, etc. - for pretty
+  // much anything except a non-nullable reference type.
+  return !type.isRef() || type.isNullable();
+}
+
 inline Expression* makeZero(Type type, Module& wasm) {
   // TODO: Remove this function once V8 supports v128.const
   // (https://bugs.chromium.org/p/v8/issues/detail?id=8460)

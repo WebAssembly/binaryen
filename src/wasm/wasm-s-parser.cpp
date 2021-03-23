@@ -686,22 +686,20 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
 
   auto parseRefType = [&](Element& elem) -> Type {
     // '(' 'ref' 'null'? ht ')'
-    bool nullable = elem[1]->isStr() && *elem[1] == NULL_;
+    auto nullable =
+      elem[1]->isStr() && *elem[1] == NULL_ ? Nullable : NonNullable;
     auto& referent = nullable ? *elem[2] : *elem[1];
     const char* name = referent.c_str();
     if (referent.dollared()) {
-      // TODO: Support non-nullable types
-      return builder.getTempRefType(typeIndices[name], Nullable);
+      return builder.getTempRefType(typeIndices[name], nullable);
     } else if (String::isNumber(name)) {
-      // TODO: Support non-nullable types
       size_t index = atoi(name);
       if (index >= numTypes) {
         throw ParseException("invalid type index", elem.line, elem.col);
       }
-      return builder.getTempRefType(index, Nullable);
+      return builder.getTempRefType(index, nullable);
     } else {
-      // TODO: Support non-nullable types
-      return Type(stringToHeapType(name), Nullable);
+      return Type(stringToHeapType(name), nullable);
     }
   };
 
@@ -1091,12 +1089,10 @@ Type SExpressionWasmBuilder::stringToType(const char* str,
     return Type::eqref;
   }
   if (strncmp(str, "i31ref", 6) == 0 && (prefix || str[6] == 0)) {
-    // FIXME: for now, force all inputs to be nullable
-    return Type(HeapType::BasicHeapType::i31, Nullable);
+    return Type::i31ref;
   }
   if (strncmp(str, "dataref", 7) == 0 && (prefix || str[7] == 0)) {
-    // FIXME: for now, force all inputs to be nullable
-    return Type(HeapType::BasicHeapType::data, Nullable);
+    return Type::dataref;
   }
   if (allowError) {
     return Type::none;
@@ -1161,8 +1157,7 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
       throw ParseException(
         std::string("invalid reference type qualifier"), s.line, s.col);
     }
-    // FIXME: for now, force all inputs to be nullable
-    Nullability nullable = Nullable;
+    Nullability nullable = NonNullable;
     size_t i = 1;
     if (size == 3) {
       nullable = Nullable;
@@ -2385,7 +2380,7 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   ret->func = func;
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
-  ret->finalize(Type(HeapType(functionSignatures[func]), Nullable));
+  ret->finalize(Type(HeapType(functionSignatures[func]), NonNullable));
   return ret;
 }
 

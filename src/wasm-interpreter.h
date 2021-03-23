@@ -207,7 +207,7 @@ public:
         if (!Type::isSubType(type, curr->type)) {
           std::cerr << "expected " << curr->type << ", seeing " << type
                     << " from\n"
-                    << curr << '\n';
+                    << *curr << '\n';
         }
 #endif
         assert(Type::isSubType(type, curr->type));
@@ -1454,14 +1454,14 @@ public:
       auto* func = module->getFunction(cast.originalRef.getFunc());
       seenRtt = Literal(Type(Rtt(0, func->sig)));
       cast.castRef =
-        Literal(func->name, Type(intendedRtt.type.getHeapType(), Nullable));
+        Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
     } else {
       // GC data store an RTT in each instance.
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
       seenRtt = gcData->rtt;
       cast.castRef =
-        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
+        Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
     }
     if (!seenRtt.isSubRtt(intendedRtt)) {
       cast.outcome = cast.Failure;
@@ -1486,7 +1486,7 @@ public:
       return cast.breaking;
     }
     if (cast.outcome == cast.Null) {
-      return Literal::makeNull(curr->type);
+      return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
     }
     if (cast.outcome == cast.Failure) {
       trap("cast error");
