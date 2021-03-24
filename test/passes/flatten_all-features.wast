@@ -1055,3 +1055,13 @@
   )
  )
 )
+;; non-nullable temp vars we add must be handled properly, as non-nullable
+;; locals are not allowed
+(module
+ (type $none_=>_none (func))
+ (func $0 (result funcref)
+  (ref.as_non_null
+   (ref.null $none_=>_none)
+  )
+ )
+)
