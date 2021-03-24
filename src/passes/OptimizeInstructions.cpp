@@ -1073,8 +1073,6 @@ struct OptimizeInstructions
     if (curr->op == RefAsNonNull && !curr->value->type.isNullable()) {
       replaceCurrent(curr->value);
     }
-
-    // TODO: optimize an actual null (not just a possible null) into a trap
   }
 
   Index getMaxBitsForLocal(LocalGet* get) {
