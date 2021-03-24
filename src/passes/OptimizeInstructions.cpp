@@ -1006,26 +1006,15 @@ struct OptimizeInstructions
     }
   }
 
-  // Optimization RefIs/As is not that obvious, since even if we know the result
-  // evaluates to 0 or 1 then the replacement may not actually save code size,
-  // since RefIsNull is a single byte (the others are 2), while adding a Const
-  // of 0 would be two bytes. Other factors are that we can remove the input
-  // if it has no side effects, and that replacing with a constant may allow
-  // further optimizations later. For now, replace with a constant, but this
-  // warrants more investigation. TODO
-
-  // First, check for a possible null which would prevent all other
-  // optimizations.
-  // (Note: if the spec had RefIsNonNull, instead of RefIsNull, then we could
-  // replace a ref_is_func whose input is (ref null func) with ref_is_non_null
-  // as only the null check would be needed. But as things are, we cannot do
-  // such a thing.)
-  // RefIsNull is a single byte
-
-  //    if (curr->value->type.isNullable()) {
-  //  }
-
   void visitRefIs(RefIs* curr) {
+    // Optimization RefIs is not that obvious, since even if we know the result
+    // evaluates to 0 or 1 then the replacement may not actually save code size,
+    // since RefIsNull is a single byte (the others are 2), while adding a Const
+    // of 0 would be two bytes. Other factors are that we can remove the input
+    // if it has no side effects, and that replacing with a constant may allow
+    // further optimizations later. For now, replace with a constant, but this
+    // warrants more investigation. TODO
+
     Builder builder(*getModule());
 
     auto nonNull = !curr->value->type.isNullable();
