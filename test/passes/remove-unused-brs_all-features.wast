@@ -108,4 +108,78 @@
    )
   )
  )
+
+ ;; a br_on of the obviously incorrect kind can just flow out the value as the
+ ;; break is never taken
+ (func $br_on-to-flow
+  ;; brs to data
+  (drop
+   (block $data (result (ref null data))
+    (drop
+     (br_on_data $data
+      (ref.func $br_on-to-flow)
+     )
+    )
+    (ref.null data)
+   )
+  )
+  (drop
+   (block $datab (result (ref null data))
+    (drop
+     (br_on_data $datab
+      (i31.new (i32.const 1337))
+     )
+    )
+    (ref.null data)
+   )
+  )
+  ;; brs to func
+  (drop
+   (block $func (result (ref null func))
+    (drop
+     (br_on_func $func
+      (array.new_default_with_rtt $vector
+       (i32.const 2)
+       (rtt.canon $vector)
+      )
+     )
+    )
+    (ref.null func)
+   )
+  )
+  (drop
+   (block $funcb (result (ref null func))
+    (drop
+     (br_on_func $funcb
+      (i31.new (i32.const 1337))
+     )
+    )
+    (ref.null func)
+   )
+  )
+  ;; brs to i31
+  (drop
+   (block $i31 (result (ref null i31))
+    (drop
+     (br_on_i31 $i31
+      (array.new_default_with_rtt $vector
+       (i32.const 2)
+       (rtt.canon $vector)
+      )
+     )
+    )
+    (ref.null i31)
+   )
+  )
+  (drop
+   (block $i31b (result (ref null i31))
+    (drop
+     (br_on_i31 $i31b
+      (ref.func $br_on-to-flow)
+     )
+    )
+    (ref.null i31)
+   )
+  )
+ )
 )
