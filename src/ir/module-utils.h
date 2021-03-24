@@ -17,6 +17,7 @@
 #ifndef wasm_ir_module_h
 #define wasm_ir_module_h
 
+#include "ir/element-utils.h"
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
 #include "ir/properties.h"
@@ -75,7 +76,10 @@ inline ElementSegment* copyElementSegment(const ElementSegment* segment,
   auto copy = [&](std::unique_ptr<ElementSegment>&& ret) {
     ret->name = segment->name;
     ret->hasExplicitName = segment->hasExplicitName;
-    ret->data = segment->data;
+    ret->data.reserve(segment->data.size());
+    for (auto* item : segment->data) {
+      ret->data.push_back(ExpressionManipulator::copy(item, out));
+    }
 
     return out.addElementSegment(std::move(ret));
   };
@@ -161,11 +165,7 @@ template<typename T> inline void renameFunctions(Module& wasm, T& map) {
     }
   };
   maybeUpdate(wasm.start);
-  for (auto& segment : wasm.elementSegments) {
-    for (auto& name : segment->data) {
-      maybeUpdate(name);
-    }
-  }
+  ElementUtils::iterAllElementFunctionNames(&wasm, maybeUpdate);
   for (auto& exp : wasm.exports) {
     if (exp->kind == ExternalKind::Function) {
       maybeUpdate(exp->value);

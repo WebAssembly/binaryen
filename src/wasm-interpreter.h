@@ -207,7 +207,7 @@ public:
         if (!Type::isSubType(type, curr->type)) {
           std::cerr << "expected " << curr->type << ", seeing " << type
                     << " from\n"
-                    << curr << '\n';
+                    << *curr << '\n';
         }
 #endif
         assert(Type::isSubType(type, curr->type));
@@ -1454,14 +1454,14 @@ public:
       auto* func = module->getFunction(cast.originalRef.getFunc());
       seenRtt = Literal(Type(Rtt(0, func->sig)));
       cast.castRef =
-        Literal(func->name, Type(intendedRtt.type.getHeapType(), Nullable));
+        Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
     } else {
       // GC data store an RTT in each instance.
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
       seenRtt = gcData->rtt;
       cast.castRef =
-        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
+        Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
     }
     if (!seenRtt.isSubRtt(intendedRtt)) {
       cast.outcome = cast.Failure;
@@ -1486,7 +1486,7 @@ public:
       return cast.breaking;
     }
     if (cast.outcome == cast.Null) {
-      return Literal::makeNull(curr->type);
+      return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
     }
     if (cast.outcome == cast.Failure) {
       trap("cast error");
@@ -2222,7 +2222,7 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void tableStore(Name tableName, Address addr, Name entry) {
+    virtual void tableStore(Name tableName, Address addr, Literal entry) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2309,21 +2309,22 @@ private:
   std::unordered_set<size_t> droppedSegments;
 
   void initializeTableContents() {
-    for (auto& segment : wasm.elementSegments) {
-      if (segment->table.isNull()) {
-        continue;
-      }
-
+    ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Address offset =
         (uint32_t)InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
           .visit(segment->offset)
           .getSingleValue()
           .geti32();
-      for (size_t i = 0; i != segment->data.size(); ++i) {
+
+      Function dummyFunc;
+      FunctionScope dummyScope(&dummyFunc, {});
+      RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
+      for (Index i = 0; i < segment->data.size(); ++i) {
+        Flow ret = runner.visit(segment->data[i]);
         externalInterface->tableStore(
-          segment->table, offset + i, segment->data[i]);
+          segment->table, offset + i, ret.getSingleValue());
       }
-    }
+    });
   }
 
   void initializeMemoryContents() {

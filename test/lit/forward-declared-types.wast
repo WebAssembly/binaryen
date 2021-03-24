@@ -4,7 +4,7 @@
 
 ;; CHECK: (type $func (func))
 ;; CHECK: (type $none_=>_ref?|$struct| (func (result (ref null $struct))))
-;; CHECK: (type $struct (struct (field (ref null $array)) (field (ref null $func))))
+;; CHECK: (type $struct (struct (field (ref $array)) (field (ref null $func))))
 ;; CHECK: (type $array (array (rtt 2 $func)))
 
 (module

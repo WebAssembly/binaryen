@@ -305,6 +305,15 @@ struct TypeUpdater
   }
 };
 
+namespace TypeUpdating {
+
+// Finds non-nullable locals, which are currently not supported, and handles
+// them. Atm this turns them into nullable ones, and adds ref.as_non_null on
+// their uses (which keeps the type of the users identical).
+void handleNonNullableLocals(Function* func, Module& wasm);
+
+} // namespace TypeUpdating
+
 } // namespace wasm
 
 #endif // wasm_ir_type_updating_h

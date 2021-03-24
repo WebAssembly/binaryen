@@ -20,7 +20,9 @@
    )
    (block
     (drop
-     (local.get $2)
+     (ref.as_non_null
+      (local.get $2)
+     )
     )
     (drop
      (local.get $0)
@@ -35,10 +37,14 @@
      )
      (block
       (drop
-       (local.get $2)
+       (ref.as_non_null
+        (local.get $2)
+       )
       )
       (drop
-       (local.get $3)
+       (ref.as_non_null
+        (local.get $3)
+       )
       )
       (drop
        (local.get $0)
@@ -57,7 +63,9 @@
    )
    (block
     (drop
-     (local.get $4)
+     (ref.as_non_null
+      (local.get $4)
+     )
     )
     (drop
      (local.get $0)

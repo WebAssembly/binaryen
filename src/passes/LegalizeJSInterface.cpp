@@ -31,6 +31,7 @@
 //
 
 #include "asmjs/shared-constants.h"
+#include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
@@ -97,13 +98,11 @@ struct LegalizeJSInterface : public Pass {
         // we need to use the legalized version in the tables, as the import
         // from JS is legal for JS. Our stub makes it look like a native wasm
         // function.
-        for (auto& segment : module->elementSegments) {
-          for (auto& name : segment->data) {
-            if (name == im->name) {
-              name = funcName;
-            }
+        ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+          if (name == im->name) {
+            name = funcName;
           }
-        }
+        });
       }
     }
 

@@ -30,6 +30,7 @@
 
 #include <string>
 
+#include <ir/element-utils.h>
 #include <ir/literal-utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -173,18 +174,16 @@ struct FuncCastEmulation : public Pass {
     Signature ABIType(Type(std::vector<Type>(numParams, Type::i64)), Type::i64);
     // Add a thunk for each function in the table, and do the call through it.
     std::unordered_map<Name, Name> funcThunks;
-    for (auto& segment : module->elementSegments) {
-      for (auto& name : segment->data) {
-        auto iter = funcThunks.find(name);
-        if (iter == funcThunks.end()) {
-          auto thunk = makeThunk(name, module, numParams);
-          funcThunks[name] = thunk;
-          name = thunk;
-        } else {
-          name = iter->second;
-        }
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+      auto iter = funcThunks.find(name);
+      if (iter == funcThunks.end()) {
+        auto thunk = makeThunk(name, module, numParams);
+        funcThunks[name] = thunk;
+        name = thunk;
+      } else {
+        name = iter->second;
       }
-    }
+    });
 
     // update call_indirects
     ParallelFuncCastEmulation(ABIType, numParams).run(runner, module);

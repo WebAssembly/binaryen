@@ -766,7 +766,31 @@ struct Reducer
     }
     // the "opposite" of shrinking: copy a 'zero' element
     for (auto& segment : curr->segments) {
-      reduceByZeroing(&segment, 0, 2, shrank);
+      reduceByZeroing(
+        &segment, 0, [](char item) { return item == 0; }, 2, shrank);
+    }
+  }
+
+  template<typename T, typename U, typename C>
+  void
+  reduceByZeroing(T* segment, U zero, C isZero, size_t bonus, bool shrank) {
+    for (auto& item : segment->data) {
+      if (!shouldTryToReduce(bonus) || isZero(item)) {
+        continue;
+      }
+      auto save = item;
+      item = zero;
+      if (writeAndTestReduction()) {
+        std::cerr << "|      zeroed elem segment\n";
+        noteReduction();
+      } else {
+        item = save;
+      }
+      if (shrank) {
+        // zeroing is fairly inefficient. if we are managing to shrink
+        // (which we do exponentially), just zero one per segment at most
+        break;
+      }
     }
   }
 
@@ -803,37 +827,9 @@ struct Reducer
     return shrank;
   }
 
-  template<typename T, typename U>
-  void reduceByZeroing(T* segment, U zero, size_t bonus, bool shrank) {
-    if (segment->data.empty()) {
-      return;
-    }
-    for (auto& item : segment->data) {
-      if (!shouldTryToReduce(bonus)) {
-        continue;
-      }
-      if (item == zero) {
-        continue;
-      }
-      auto save = item;
-      item = zero;
-      if (writeAndTestReduction()) {
-        std::cerr << "|      zeroed elem segment\n";
-        noteReduction();
-      } else {
-        item = save;
-      }
-      if (shrank) {
-        // zeroing is fairly inefficient. if we are managing to shrink
-        // (which we do exponentially), just zero one per segment at most
-        break;
-      }
-    }
-  }
-
   void shrinkElementSegments(Module* module) {
     std::cerr << "|    try to simplify elem segments\n";
-    Name first;
+    Expression* first = nullptr;
     auto it =
       std::find_if_not(module->elementSegments.begin(),
                        module->elementSegments.end(),
@@ -841,6 +837,10 @@ struct Reducer
 
     if (it != module->elementSegments.end()) {
       first = it->get()->data[0];
+    }
+    if (first == nullptr) {
+      // The elements are all empty, nothing to shrink
+      return;
     }
 
     // try to reduce to first function. first, shrink segment elements.
@@ -851,7 +851,24 @@ struct Reducer
     }
     // the "opposite" of shrinking: copy a 'zero' element
     for (auto& segment : module->elementSegments) {
-      reduceByZeroing(segment.get(), first, 100, shrank);
+      reduceByZeroing(
+        segment.get(),
+        first,
+        [&](Expression* entry) {
+          if (entry->is<RefNull>()) {
+            // we don't need to replace a ref.null
+            return true;
+          } else if (first->is<RefNull>()) {
+            return false;
+          } else {
+            // Both are ref.func
+            auto* f = first->cast<RefFunc>();
+            auto* e = entry->cast<RefFunc>();
+            return f->func == e->func;
+          }
+        },
+        100,
+        shrank);
     }
   }
 

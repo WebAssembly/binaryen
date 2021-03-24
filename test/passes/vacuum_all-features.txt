@@ -488,3 +488,16 @@
   (unreachable)
  )
 )
+(module
+ (type $none_=>_none (func))
+ (func $foo
+  (nop)
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (global $global$0 (mut i32) (i32.const 10))
+ (func $1
+  (nop)
+ )
+)

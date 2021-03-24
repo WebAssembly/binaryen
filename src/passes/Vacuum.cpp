@@ -145,13 +145,19 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         ExpressionAnalyzer::isResultUsed(expressionStack, getFunction());
       auto* optimized = optimize(child, used, true);
       if (!optimized) {
-        if (child->type.isConcrete()) {
-          // We can't just skip a final concrete element, even if it isn't used.
-          // Instead, replace it with something that's easy to optimize out (for
-          // example, code-folding can merge out identical zeros at the end of
-          // if arms).
-          optimized = LiteralUtils::makeZero(child->type, *getModule());
-        } else if (child->type == Type::unreachable) {
+        auto childType = child->type;
+        if (childType.isConcrete()) {
+          if (LiteralUtils::canMakeZero(childType)) {
+            // We can't just skip a final concrete element, even if it isn't
+            // used. Instead, replace it with something that's easy to optimize
+            // out (for example, code-folding can merge out identical zeros at
+            // the end of if arms).
+            optimized = LiteralUtils::makeZero(childType, *getModule());
+          } else {
+            // Don't optimize it out.
+            optimized = child;
+          }
+        } else if (childType == Type::unreachable) {
           // Don't try to optimize out an unreachable child (dce can do that
           // properly).
           optimized = child;

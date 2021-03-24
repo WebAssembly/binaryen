@@ -20,6 +20,7 @@
 #include <functional>
 #include <unordered_set>
 
+#include <ir/element-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
@@ -86,11 +87,7 @@ inline void replaceFunctions(PassRunner* runner,
   // replace direct calls
   FunctionRefReplacer(maybeReplace).run(runner, &module);
   // replace in table
-  for (auto& segment : module.elementSegments) {
-    for (auto& name : segment->data) {
-      maybeReplace(name);
-    }
-  }
+  ElementUtils::iterAllElementFunctionNames(&module, maybeReplace);
 
   // replace in start
   if (module.start.is()) {

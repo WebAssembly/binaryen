@@ -1764,16 +1764,16 @@
 ;; it is no longer equivalent
 ;; (see https://github.com/WebAssembly/binaryen/issues/3266)
 (module
- (func "test" (param $0 eqref) (param $1 i31ref) (result i32)
+ (func "test" (param $0 eqref) (param $1 (ref null i31)) (result i32)
   (local $2 eqref)
-  (local $3 i31ref)
+  (local $3 (ref null i31))
   (local.set $2
    (local.get $0) ;; $0 and $2 are equivalent
   )
   (local.set $0   ;; set $0 to something with another type
    (local.get $3)
   )
-  ;; compares a null eqref and a zero i31ref - should be false
+  ;; compares a null eqref and a zero (ref null i31) - should be false
   (ref.eq
    (local.get $2)
    (local.get $1)

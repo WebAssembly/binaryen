@@ -928,29 +928,15 @@ void RefTest::finalize() {
   }
 }
 
-// Helper to get the cast type for a cast instruction. They all look at the rtt
-// operand's type.
-template<typename T> static Type doGetCastType(T* curr) {
-  if (curr->rtt->type == Type::unreachable) {
-    // We don't have the RTT type, so just return unreachable. The type in this
-    // case should not matter in practice, but it may be seen while debugging.
-    return Type::unreachable;
-  }
-  // TODO: make non-nullable when we support that
-  return Type(curr->rtt->type.getHeapType(), Nullable);
-}
-
-Type RefTest::getCastType() { return doGetCastType(this); }
-
 void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = getCastType();
+    // The output of ref.cast may be null if the input is null (in that case the
+    // null is passed through).
+    type = Type(rtt->type.getHeapType(), ref->type.getNullability());
   }
 }
-
-Type RefCast::getCastType() { return doGetCastType(this); }
 
 void BrOn::finalize() {
   if (ref->type == Type::unreachable ||
@@ -960,8 +946,7 @@ void BrOn::finalize() {
     if (op == BrOnNull) {
       // If BrOnNull does not branch, it flows out the existing value as
       // non-null.
-      // FIXME: When we support non-nullable types, this should be non-nullable.
-      type = Type(ref->type.getHeapType(), Nullable);
+      type = Type(ref->type.getHeapType(), NonNullable);
     } else {
       type = ref->type;
     }
@@ -974,8 +959,7 @@ Type BrOn::getCastType() {
       // BrOnNull does not send a value on the branch.
       return Type::none;
     case BrOnCast:
-      // FIXME: When we support non-nullable types, this should be non-nullable.
-      return Type(rtt->type.getHeapType(), Nullable);
+      return Type(rtt->type.getHeapType(), NonNullable);
     case BrOnFunc:
       return Type::funcref;
     case BrOnData:
@@ -1007,8 +991,7 @@ void StructNew::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  // TODO: make non-nullable when we support that
-  type = Type(rtt->type.getHeapType(), Nullable);
+  type = Type(rtt->type.getHeapType(), NonNullable);
 }
 
 void StructGet::finalize() {
@@ -1033,8 +1016,7 @@ void ArrayNew::finalize() {
     type = Type::unreachable;
     return;
   }
-  // TODO: make non-nullable when we support that
-  type = Type(rtt->type.getHeapType(), Nullable);
+  type = Type(rtt->type.getHeapType(), NonNullable);
 }
 
 void ArrayGet::finalize() {
@@ -1069,8 +1051,7 @@ void RefAs::finalize() {
   }
   switch (op) {
     case RefAsNonNull:
-      // FIXME: when we support non-nullable types, switch to NonNullable
-      type = Type(value->type.getHeapType(), Nullable);
+      type = Type(value->type.getHeapType(), NonNullable);
       break;
     case RefAsFunc:
       type = Type::funcref;

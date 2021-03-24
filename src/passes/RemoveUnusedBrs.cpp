@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
 #include <parsing.h>
@@ -380,6 +381,47 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     //       later down, see visitLocalSet.
   }
 
+  void visitBrOn(BrOn* curr) {
+    // Ignore unreachable BrOns which we cannot improve anyhow.
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // First, check for a possible null which would prevent all other
+    // optimizations.
+    // (Note: if the spec had BrOnNonNull, instead of BrOnNull, then we could
+    // replace a br_on_func whose input is (ref null func) with br_on_non_null,
+    // as only the null check would be needed. But as things are, we cannot do
+    // such a thing.)
+    auto refType = curr->ref->type;
+    if (refType.isNullable()) {
+      return;
+    }
+
+    if (curr->op == BrOnNull) {
+      // This cannot be null, so the br is never taken, and the non-null value
+      // flows through.
+      replaceCurrent(curr->ref);
+      anotherCycle = true;
+      return;
+    }
+
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+    if (result == GCTypeUtils::Success) {
+      // The type is what we are looking for, so we can switch from BrOn to a
+      // simple br which is always taken.
+      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
+      anotherCycle = true;
+    } else if (result == GCTypeUtils::Failure) {
+      // The type is not what we are looking for, so the branch is never taken,
+      // and the value just flows through.
+      replaceCurrent(curr->ref);
+      anotherCycle = true;
+    }
+  }
+
   // override scan to add a pre and a post check task to all nodes
   static void scan(RemoveUnusedBrs* self, Expression** currp) {
     self->pushTask(visitAny, currp);
@@ -657,12 +699,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (!flow->value) {
           // return => nop
           ExpressionManipulator::nop(flow);
-          anotherCycle = true;
         } else {
           // return with value => value
           *flows[i] = flow->value;
-          anotherCycle = true;
         }
+        anotherCycle = true;
       }
       flows.clear();
       // optimize loops (we don't do it while tracking flows, as they can
