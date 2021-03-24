@@ -84,6 +84,24 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
         WASM_UNREACHABLE("unhandled BrOn");
     }
     child = is->value;
+  } else if (auto* as = curr->dynCast<RefAs>()) {
+    switch (as->op) {
+      // We don't check nullability here.
+      case RefAsNonNull:
+        return Unknown;
+      case RefAsFunc:
+        expected = Func;
+        break;
+      case RefAsData:
+        expected = Data;
+        break;
+      case RefAsI31:
+        expected = I31;
+        break;
+      default:
+        WASM_UNREACHABLE("unhandled BrOn");
+    }
+    child = as->value;
   } else {
     WASM_UNREACHABLE("invalid input to evaluateKindCheck");
   }

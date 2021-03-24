@@ -1072,53 +1072,32 @@ struct OptimizeInstructions
     }
   }
 
-/*
   void visitRefAs(RefAs* curr) {
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
 
-      // The value may be null. Unlike in RefIs and BrOn, we can still do useful
-      // things here, as we can reduce a ref_as_func to a ref_as_non_null, that
-      // is, if the kind is known to be correct, we can leave only a null check.
-
-    RefEvaluationResult result = Unknown;
-
-    switch (curr->op) {
-      case RefAsNonNull:
-        // Handled lower down.
-        break;
-      case RefAsFunc:
-        result = evaluateRef(curr->value, IsFunc);
-        break;
-      case RefAsData:
-        result = evaluateRef(curr->value, IsData);
-        break;
-      case RefAsI31:
-        result = evaluateRef(curr->value, IsI31);
-        break;
-    }
-
-    if (result == Success) {
-      // The kind is what we want, so all we need to check is non-nullability,
-      // which we do lower down.
-      curr->op = IsNonNull;
-    } else if (result == Failure) {
+    if (result == GCTypeUtils::Success) {
+      // We know the kind is correct, so all that is left is a check for
+      // non-nullability, which we do lower down.
+      curr->op = RefAsNonNull;
+    } else if (result == GCTypeUtils::Failure) {
       // This is the wrong kind, so it will trap. The binaryen optimizer does
       // not differentiate traps, so we can perform a replacement here. We
       // replace 2 bytes of ref.as_* with one byte of unreachable and one of a
-      // drop, and the drop can be optimized out later, so this saves both
-  work
+      // drop, and the drop can be optimized out later, so this saves both work
       // and space.
-      // TODO: take into account ignoreImplicitTraps
       Builder builder(*getModule());
-      return builder.makeSequence(builder.makeDrop(curr->ref),
-                                  builder.makeUnreachable());
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value),
+                                          builder.makeUnreachable()));
+      return;
     }
 
-    // Finally, see if we can remove a null check.
-    if (curr->op == RefAsNonNull && curr->value->type.isNullable()) {
+    if (curr->op == RefAsNonNull && !curr->value->type.isNullable()) {
       replaceCurrent(curr->value);
     }
+
+  // TODO: optimize an actual null (not just a possible null) into a trap
   }
-*/
 
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
