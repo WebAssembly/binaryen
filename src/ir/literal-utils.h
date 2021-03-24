@@ -42,11 +42,6 @@ inline bool canMakeZero(Type type) {
       }
     }
   }
-  if (type.isFunction()) {
-    // Making a "zero" function is possible, but requires global knowledge - a
-    // function, and of the right type - so skip that.
-    return false;
-  }
   return true;
 }
 
