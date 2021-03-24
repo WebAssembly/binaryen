@@ -1005,6 +1005,120 @@ struct OptimizeInstructions
     }
   }
 
+  // Optimization RefIs/As is not that obvious, since even if we know the result
+  // evaluates to 0 or 1 then the replacement may not actually save code size,
+  // since RefIsNull is a single byte (the others are 2), while adding a Const
+  // of 0 would be two bytes. Other factors are that we can remove the input
+  // if it has no side effects, and that replacing with a constant may allow
+  // further optimizations later. For now, replace with a constant, but this
+  // warrants more investigation. TODO
+
+    // First, check for a possible null which would prevent all other
+    // optimizations.
+    // (Note: if the spec had RefIsNonNull, instead of RefIsNull, then we could
+    // replace a ref_is_func whose input is (ref null func) with ref_is_non_null
+    // as only the null check would be needed. But as things are, we cannot do
+    // such a thing.)
+    // RefIsNull is a single byte
+
+//    if (curr->value->type.isNullable()) {
+  //  }
+
+
+  void visitRefIs(RefIs* curr) {
+    Builder builder(*getModule());
+
+    auto nonNull = !curr->value->type.isNullable();
+
+    if (curr->op = RefIsNull) {
+      if (nonNull) {
+        replaceCurrent(
+          builder.makeSequence(
+            builder.makeDrop(curr->value),
+            Literal::makeOne(Type::i32)
+          )
+        );
+        anotherCycle = true;
+      }
+      return;
+    }
+
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+    if (result != GCTypeUtils::Unknown) {
+      // We know the kind.
+      if (nonNull) {
+        // We know the entire result.
+        replaceCurrent(
+          builder.makeSequence(
+            builder.makeDrop(curr->value),
+            result == GCTypeUtils::Success ? Literal::makeOne(Type::i32) ? Literal::makeZero(Type::i32)
+          )
+        );
+      } else {
+        // The value may be null. Leave only a check for that.
+        // Note that even after adding an eqz here we do not regress code size,
+        // as RefIsNull is a single byte while the others are two. So we keep
+        // code size identical while reducing work.
+        curr->op = RefIsNull;
+        replaceCurrent(
+          builder.makeUnary(
+            EqZInt32,
+            curr
+          )
+        );
+      }
+      anotherCycle = true;
+    }
+  }
+
+  void visitRefAs(RefAs* curr) {
+
+      // The value may be null. Unlike in RefIs and BrOn, we can still do useful
+      // things here, as we can reduce a ref_as_func to a ref_as_non_null, that
+      // is, if the kind is known to be correct, we can leave only a null check.
+
+    RefEvaluationResult result = Unknown;
+
+    switch (curr->op) {
+      case RefAsNonNull:
+        // Handled lower down.
+        break;
+      case RefAsFunc:
+        result = evaluateRef(curr->value, IsFunc);
+        break;
+      case RefAsData:
+        result = evaluateRef(curr->value, IsData);
+        break;
+      case RefAsI31:
+        result = evaluateRef(curr->value, IsI31);
+        break;
+    }
+
+    if (result == Success) {
+      // The kind is what we want, so all we need to check is non-nullability,
+      // which we do lower down.
+      curr->op = IsNonNull;
+    } else if (result == Failure) {
+      // This is the wrong kind, so it will trap. The binaryen optimizer does
+      // not differentiate traps, so we can perform a replacement here. We
+      // replace 2 bytes of ref.as_* with one byte of unreachable and one of a
+      // drop, and the drop can be optimized out later, so this saves both
+  work
+      // and space.
+      // TODO: take into account ignoreImplicitTraps
+      Builder builder(*getModule());
+      return builder.makeSequence(builder.makeDrop(curr->ref),
+                                  builder.makeUnreachable());
+    }
+
+    // Finally, see if we can remove a null check.
+    if (curr->op == RefAsNonNull && curr->value->type.isNullable()) {
+      replaceCurrent(curr->value);
+    }
+  }
+
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
     return localInfo[get->index].maxBits;
