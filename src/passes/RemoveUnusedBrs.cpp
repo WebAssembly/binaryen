@@ -380,6 +380,60 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     //       later down, see visitLocalSet.
   }
 
+  void visitBrOn(BrOn* curr) {
+    // Ignore unreachable BrOns which we cannot improve anyhow.
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // If the type provides enough information we may be able to know if this
+    // br is taken or not. If so, the br_on* may be unneeded. First, check for a
+    // possible null which would prevent such an optimization.
+    auto refType = curr->ref->type;
+    if (refType.isNullable()) {
+      return;
+    }
+
+    // Nulls are not possible, so specialization may be achievable, either
+    // removing the br_on* entirely or replacing it with a br.
+    auto replaceWithBr = [&]() {
+      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
+      anotherCycle = true;
+    };
+
+    switch (curr->op) {
+      case BrOnNull: {
+        // This cannot be null, so the br is never taken, and the non-null value
+        // flows through.
+        replaceCurrent(curr->ref);
+        anotherCycle = true;
+        break;
+      }
+      case BrOnCast: {
+        // Casts can only be done at runtime, using RTTs.
+        break;
+      }
+      case BrOnFunc: {
+        if (refType.isFunction()) {
+          replaceWithBr();
+        }
+        break;
+      }
+      case BrOnData: {
+        if (refType.isData()) {
+          replaceWithBr();
+        }
+        break;
+      }
+      case BrOnI31: {
+        if (refType.getHeapType() == HeapType::i31) {
+          replaceWithBr();
+        }
+        break;
+      }
+    }
+  }
+
   // override scan to add a pre and a post check task to all nodes
   static void scan(RemoveUnusedBrs* self, Expression** currp) {
     self->pushTask(visitAny, currp);
@@ -657,12 +711,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (!flow->value) {
           // return => nop
           ExpressionManipulator::nop(flow);
-          anotherCycle = true;
         } else {
           // return with value => value
           *flows[i] = flow->value;
-          anotherCycle = true;
         }
+        anotherCycle = true;
       }
       flows.clear();
       // optimize loops (we don't do it while tracking flows, as they can
