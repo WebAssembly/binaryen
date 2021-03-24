@@ -5346,9 +5346,8 @@
                                        (i32.gt_s
                                         (local.tee $5
                                          (i32.add
-                                          (i32.xor
+                                          (i32.eqz
                                            (local.get $31)
-                                           (i32.const 1)
                                           )
                                           (local.get $19)
                                          )
@@ -6721,15 +6720,14 @@
                    (local.get $6)
                    (local.tee $5
                     (i32.add
+                     (i32.eqz
+                      (local.get $11)
+                     )
                      (i32.sub
                       (local.get $37)
                       (local.tee $7
                        (local.get $5)
                       )
-                     )
-                     (i32.xor
-                      (local.get $11)
-                      (i32.const 1)
                      )
                     )
                    )

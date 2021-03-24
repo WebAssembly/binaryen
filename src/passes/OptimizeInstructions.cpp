@@ -1694,7 +1694,9 @@ private:
       return builder.makeUnary(WrapInt64, left);
     }
     // bool(x) != 1  ==>  !bool(x)
-    if (matches(curr, binary(Ne, any(&left), ival(1))) &&
+    // bool(x)  ^ 1  ==>  !bool(x)
+    if ((matches(curr, binary(Ne, any(&left), ival(1))) ||
+         matches(curr, binary(Xor, any(&left), ival(1)))) &&
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
     }

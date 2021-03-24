@@ -8337,6 +8337,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.wrap_i64
   ;; CHECK-NEXT:    (i64.shr_u
   ;; CHECK-NEXT:     (local.get $y)
@@ -8475,6 +8483,14 @@
     ))
     ;; i32(bool(expr)) != 1 -> !bool(expr)
     (drop (i32.ne
+      (i32.and
+        (local.get $x)
+        (i32.const 1)
+      )
+      (i32.const 1)
+    ))
+    ;; i32(bool(expr)) ^ 1 -> !bool(expr)
+    (drop (i32.xor
       (i32.and
         (local.get $x)
         (i32.const 1)
