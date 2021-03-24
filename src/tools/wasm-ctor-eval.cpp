@@ -251,19 +251,25 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
       }
       auto end = start + segment->data.size();
       if (start <= index && index < end) {
-        auto name = segment->data[index - start];
-        // if this is one of our functions, we can call it; if it was imported,
-        // fail
-        auto* func = wasm->getFunction(name);
-        if (func->sig != sig) {
-          throw FailToEvalException(
-            std::string("callTable signature mismatch: ") + name.str);
-        }
-        if (!func->imported()) {
-          return instance.callFunctionInternal(name, arguments);
+        auto entry = segment->data[index - start];
+        if (auto* get = entry->dynCast<RefFunc>()) {
+          auto name = get->func;
+          // if this is one of our functions, we can call it; if it was
+          // imported, fail
+          auto* func = wasm->getFunction(name);
+          if (func->sig != sig) {
+            throw FailToEvalException(
+              std::string("callTable signature mismatch: ") + name.str);
+          }
+          if (!func->imported()) {
+            return instance.callFunctionInternal(name, arguments);
+          } else {
+            throw FailToEvalException(
+              std::string("callTable on imported function: ") + name.str);
+          }
         } else {
           throw FailToEvalException(
-            std::string("callTable on imported function: ") + name.str);
+            std::string("callTable on uninitialized entry"));
         }
       }
     }
@@ -295,7 +301,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   // called during initialization, but we don't keep track of a table
-  void tableStore(Name tableName, Address addr, Name value) override {}
+  void tableStore(Name tableName, Address addr, Literal value) override {}
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {
     throw FailToEvalException("grow memory");

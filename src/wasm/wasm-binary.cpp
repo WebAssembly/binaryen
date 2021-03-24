@@ -571,9 +571,11 @@ void WasmBinaryWriter::writeElementSegments() {
     Index tableIdx = 0;
 
     bool isPassive = segment->table.isNull();
-    // TODO(reference-types): add support for writing expressions instead of
-    // function indices.
-    bool usesExpressions = false;
+    // if all items are ref.func, we can use the shorter form.
+    bool usesExpressions =
+      std::any_of(segment->data.begin(),
+                  segment->data.end(),
+                  [](Expression* curr) { return !curr->is<RefFunc>(); });
 
     bool hasTableIndex = false;
     if (!isPassive) {
@@ -600,13 +602,27 @@ void WasmBinaryWriter::writeElementSegments() {
       o << int8_t(BinaryConsts::End);
     }
 
-    if (!usesExpressions && (isPassive || hasTableIndex)) {
-      // elemKind funcref
-      o << U32LEB(0);
+    if (isPassive || hasTableIndex) {
+      if (usesExpressions) {
+        // elemType funcref
+        writeType(Type::funcref);
+      } else {
+        // elemKind funcref
+        o << U32LEB(0);
+      }
     }
     o << U32LEB(segment->data.size());
-    for (auto& name : segment->data) {
-      o << U32LEB(getFunctionIndex(name));
+    if (usesExpressions) {
+      for (auto* item : segment->data) {
+        writeExpression(item);
+        o << int8_t(BinaryConsts::End);
+      }
+    } else {
+      for (auto& item : segment->data) {
+        // We've ensured that all items are ref.func.
+        auto& name = item->cast<RefFunc>()->func;
+        o << U32LEB(getFunctionIndex(name));
+      }
     }
   }
 
@@ -2676,14 +2692,6 @@ void WasmBinaryBuilder::processNames() {
     }
   }
 
-  for (auto& pair : functionTable) {
-    auto i = pair.first;
-    auto& indices = pair.second;
-    for (auto j : indices) {
-      wasm.elementSegments[i]->data.push_back(getFunctionName(j));
-    }
-  }
-
   for (auto& iter : globalRefs) {
     size_t index = iter.first;
     auto& refs = iter.second;
@@ -2787,10 +2795,6 @@ void WasmBinaryBuilder::readElementSegments() {
       continue;
     }
 
-    if (usesExpressions) {
-      throwError("Only elem segments with function indexes are supported.");
-    }
-
     if (!isPassive) {
       Index tableIdx = 0;
       if (hasTableIdx) {
@@ -2819,17 +2823,35 @@ void WasmBinaryBuilder::readElementSegments() {
     }
 
     if (isPassive || hasTableIdx) {
-      auto elemKind = getU32LEB();
-      if (elemKind != 0x0) {
-        throwError("Only funcref elem kinds are valid.");
+      if (usesExpressions) {
+        auto type = getType();
+        if (type != Type::funcref) {
+          throwError("Only funcref elem kinds are valid.");
+        }
+      } else {
+        auto elemKind = getU32LEB();
+        if (elemKind != 0x0) {
+          throwError("Only funcref elem kinds are valid.");
+        }
       }
     }
 
-    size_t segmentIndex = functionTable.size();
-    auto& indexSegment = functionTable[segmentIndex];
+    auto& segmentData = elementSegments.back()->data;
     auto size = getU32LEB();
-    for (Index j = 0; j < size; j++) {
-      indexSegment.push_back(getU32LEB());
+    if (usesExpressions) {
+      for (Index j = 0; j < size; j++) {
+        segmentData.push_back(readExpression());
+      }
+    } else {
+      for (Index j = 0; j < size; j++) {
+        Index index = getU32LEB();
+        auto sig = getSignatureByFunctionIndex(index);
+        // Use a placeholder name for now
+        auto* refFunc = Builder(wasm).makeRefFunc(
+          Name::fromInt(index), Type(HeapType(sig), Nullable));
+        functionRefs[index].push_back(refFunc);
+        segmentData.push_back(refFunc);
+      }
     }
   }
 }

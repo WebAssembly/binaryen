@@ -17,6 +17,7 @@
 #ifndef wasm_ir_table_h
 #define wasm_ir_table_h
 
+#include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
 #include "wasm-traversal.h"
@@ -45,9 +46,8 @@ struct FlatTable {
         if (end > names.size()) {
           names.resize(end);
         }
-        for (Index i = 0; i < segment->data.size(); i++) {
-          names[start + i] = segment->data[i];
-        }
+        ElementUtils::iterElementSegmentFunctionNames(
+          segment, [&](Name entry, Index i) { names[start + i] = entry; });
       });
   }
 };
@@ -84,7 +84,12 @@ inline Index append(Table& table, Name name, Module& wasm) {
     }
     wasm.dylinkSection->tableSize++;
   }
-  segment->data.push_back(name);
+
+  auto* func = wasm.getFunctionOrNull(name);
+  assert(func != nullptr && "Cannot append non-existing function to a table.");
+  // FIXME: make the type NonNullable when we support it!
+  auto type = Type(HeapType(func->sig), Nullable);
+  segment->data.push_back(Builder(wasm).makeRefFunc(name, type));
   table.initial = table.initial + 1;
   return tableIndex;
 }
@@ -94,8 +99,10 @@ inline Index append(Table& table, Name name, Module& wasm) {
 inline Index getOrAppend(Table& table, Name name, Module& wasm) {
   auto segment = getSingletonSegment(table, wasm);
   for (Index i = 0; i < segment->data.size(); i++) {
-    if (segment->data[i] == name) {
-      return i;
+    if (auto* get = segment->data[i]->dynCast<RefFunc>()) {
+      if (get->func == name) {
+        return i;
+      }
     }
   }
   return append(table, name, wasm);

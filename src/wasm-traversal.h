@@ -196,6 +196,9 @@ struct Walker : public VisitorType {
     if (segment->table.is()) {
       walk(segment->offset);
     }
+    for (auto* expr : segment->data) {
+      walk(expr);
+    }
     static_cast<SubType*>(this)->visitElementSegment(segment);
   }
 

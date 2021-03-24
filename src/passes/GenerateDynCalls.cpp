@@ -24,6 +24,7 @@
 
 #include "abi/js.h"
 #include "asm_v_wasm.h"
+#include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "pass.h"
 #include "support/debug.h"
@@ -57,9 +58,10 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
                            });
     if (it != segments.end()) {
       std::vector<Name> tableSegmentData;
-      for (const auto& indirectFunc : it->get()->data) {
-        generateDynCallThunk(wasm->getFunction(indirectFunc)->sig);
-      }
+      ElementUtils::iterElementSegmentFunctionNames(
+        it->get(), [&](Name name, Index) {
+          generateDynCallThunk(wasm->getFunction(name)->sig);
+        });
     }
   }
 

@@ -1722,12 +1722,12 @@ class ElementSegment : public Named {
 public:
   Name table;
   Expression* offset;
-  std::vector<Name> data;
+  std::vector<Expression*> data;
 
   ElementSegment() = default;
   ElementSegment(Name table, Expression* offset)
     : table(table), offset(offset) {}
-  ElementSegment(Name table, Expression* offset, std::vector<Name>& init)
+  ElementSegment(Name table, Expression* offset, std::vector<Expression*>& init)
     : table(table), offset(offset) {
     data.swap(init);
   }

@@ -23,6 +23,7 @@
 #include <memory>
 
 #include "execution-results.h"
+#include "ir/element-utils.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/command-line.h"
@@ -166,18 +167,16 @@ run_asserts(Name moduleName,
             reportUnknownImport(import);
           }
         });
-        for (auto& segment : wasm.elementSegments) {
-          for (auto name : segment->data) {
-            // spec tests consider it illegal to use spectest.print in a table
-            if (auto* import = wasm.getFunction(name)) {
-              if (import->imported() && import->module == SPECTEST &&
-                  import->base.startsWith(PRINT)) {
-                std::cerr << "cannot put spectest.print in table\n";
-                invalid = true;
-              }
+        ElementUtils::iterAllElementFunctionNames(&wasm, [&](Name name) {
+          // spec tests consider it illegal to use spectest.print in a table
+          if (auto* import = wasm.getFunction(name)) {
+            if (import->imported() && import->module == SPECTEST &&
+                import->base.startsWith(PRINT)) {
+              std::cerr << "cannot put spectest.print in table\n";
+              invalid = true;
             }
           }
-        }
+        });
         if (wasm.memory.imported()) {
           reportUnknownImport(&wasm.memory);
         }

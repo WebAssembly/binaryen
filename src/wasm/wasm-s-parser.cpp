@@ -3268,12 +3268,14 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
   Index i = 1;
   Name name = Name::fromInt(elemCounter++);
   bool hasExplicitName = false;
+  bool isPassive = false;
+  bool usesExpressions = false;
 
   if (table) {
     Expression* offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     auto segment = std::make_unique<ElementSegment>(table->name, offset);
     segment->setName(name, hasExplicitName);
-    parseElemFinish(s, segment, i);
+    parseElemFinish(s, segment, i, false);
     return;
   }
 
@@ -3286,10 +3288,20 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     return;
   }
 
-  if (s[i]->isStr() && s[i]->str() == FUNC) {
+  if (s[i]->isStr()) {
+    if (s[i]->str() == FUNC) {
+      isPassive = true;
+      usesExpressions = false;
+    } else if (s[i]->str() == FUNCREF) {
+      isPassive = true;
+      usesExpressions = true;
+    }
+  }
+
+  if (isPassive) {
     auto segment = std::make_unique<ElementSegment>();
     segment->setName(name, hasExplicitName);
-    parseElemFinish(s, segment, i + 1);
+    parseElemFinish(s, segment, i + 1, usesExpressions);
     return;
   }
 
@@ -3326,11 +3338,11 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
   }
 
   if (!oldStyle) {
-    if (s[i]->str() != FUNC) {
-      throw ParseException(
-        "only the abbreviated form of elemList is supported.");
+    if (s[i]->str() == FUNCREF) {
+      usesExpressions = true;
+    } else if (s[i]->str() != FUNC) {
+      throw ParseException("expected func or funcref.");
     }
-    // ignore elemType for now
     i += 1;
   }
 
@@ -3340,13 +3352,40 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
 
   auto segment = std::make_unique<ElementSegment>(table->name, offset);
   segment->setName(name, hasExplicitName);
-  parseElemFinish(s, segment, i);
+  parseElemFinish(s, segment, i, usesExpressions);
 }
 
 ElementSegment* SExpressionWasmBuilder::parseElemFinish(
-  Element& s, std::unique_ptr<ElementSegment>& segment, Index i) {
-  for (; i < s.size(); i++) {
-    segment->data.push_back(getFunctionName(*s[i]));
+  Element& s,
+  std::unique_ptr<ElementSegment>& segment,
+  Index i,
+  bool usesExpressions) {
+
+  if (usesExpressions) {
+    for (; i < s.size(); i++) {
+      if (!s[i]->isList()) {
+        throw ParseException("expected a ref.* expression.");
+      }
+      auto& inner = *s[i];
+      if (elementStartsWith(inner, ITEM)) {
+        if (inner[1]->isList()) {
+          // (item (ref.func $f))
+          segment->data.push_back(parseExpression(inner[1]));
+        } else {
+          // (item ref.func $f)
+          inner.list().removeAt(0);
+          segment->data.push_back(parseExpression(inner));
+        }
+      } else {
+        segment->data.push_back(parseExpression(inner));
+      }
+    }
+  } else {
+    for (; i < s.size(); i++) {
+      auto func = getFunctionName(*s[i]);
+      segment->data.push_back(Builder(wasm).makeRefFunc(
+        func, Type(HeapType(functionSignatures[func]), Nullable)));
+    }
   }
   return wasm.addElementSegment(std::move(segment));
 }
