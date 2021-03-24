@@ -195,28 +195,30 @@
    )
   )
   ;; similar to $unneeded_is, but the values are of mixed kind (is_func of
-  ;; data, etc.). here if the input is nullable we must leave a null check, and
-  ;; if non-nullable then we know the full result.
+  ;; data, etc.). regardless of nullability the result here is always 0.
   ;; CHECK:      (func $unneeded_is_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $data)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $i31)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $func)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop

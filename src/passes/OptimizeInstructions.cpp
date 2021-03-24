@@ -1032,7 +1032,7 @@ struct OptimizeInstructions
     auto result = GCTypeUtils::evaluateKindCheck(curr);
 
     if (result != GCTypeUtils::Unknown) {
-      // We know the kind.
+      // We know the kind. Now we must also take into account nullability.
       if (nonNull) {
         // We know the entire result.
         replaceCurrent(
@@ -1041,11 +1041,26 @@ struct OptimizeInstructions
                                  result == GCTypeUtils::Success, Type::i32))));
       } else {
         // The value may be null. Leave only a check for that.
-        // Note that even after adding an eqz here we do not regress code size,
-        // as RefIsNull is a single byte while the others are two. So we keep
-        // code size identical while reducing work.
         curr->op = RefIsNull;
-        replaceCurrent(builder.makeUnary(EqZInt32, curr));
+        if (result == GCTypeUtils::Success) {
+          // The input is of the right kind. If it is not null then the result
+          // is 1, and otherwise it is 0, so we need to flip the result of
+          // RefIsNull.
+          // Note that even after adding an eqz here we do not regress code size
+          // as RefIsNull is a single byte while the others are two. So we keep
+          // code size identical. However, in theory this may be more work, if
+          // a VM considers ref.is_X to be as fast as ref.is_null, and if eqz is
+          // not free, so this is worth more investigation. TODO
+          replaceCurrent(builder.makeUnary(EqZInt32, curr));
+        } else {
+          // The input is of the wrong kind. In this case if it is null we
+          // return zero because of that, and if it is not then we return zero
+          // because of the kind, so the result is always the same.
+          assert(result == GCTypeUtils::Failure);
+          replaceCurrent(
+            builder.makeSequence(builder.makeDrop(curr->value),
+                                 builder.makeConst(Literal::makeZero(Type::i32))));
+        }
       }
     }
   }
