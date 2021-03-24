@@ -2443,3 +2443,20 @@
   (unreachable)
  )
 )
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_funcref (func (result funcref)))
+ (func $0 (result funcref)
+  (local $0 (ref null $none_=>_none))
+  (local.set $0
+   (ref.as_non_null
+    (ref.null $none_=>_none)
+   )
+  )
+  (return
+   (ref.as_non_null
+    (local.get $0)
+   )
+  )
+ )
+)
