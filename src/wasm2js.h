@@ -32,6 +32,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
+#include "ir/element-utils.h"
 #include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
@@ -325,11 +326,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       functionsCallableFromOutside.insert(exp->value);
     }
   }
-  for (auto& segment : wasm->elementSegments) {
-    for (auto name : segment->data) {
-      functionsCallableFromOutside.insert(name);
-    }
-  }
+  ElementUtils::iterAllElementFunctionNames(
+    wasm, [&](Name name) { functionsCallableFromOutside.insert(name); });
 
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
@@ -680,26 +678,27 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
       ModuleUtils::iterTableSegments(
         *wasm, table->name, [&](ElementSegment* segment) {
           auto offset = segment->offset;
-          for (Index i = 0; i < segment->data.size(); i++) {
-            Ref index;
-            if (auto* c = offset->dynCast<Const>()) {
-              index = ValueBuilder::makeInt(c->value.geti32() + i);
-            } else if (auto* get = offset->dynCast<GlobalGet>()) {
-              index =
-                ValueBuilder::makeBinary(ValueBuilder::makeName(stringToIString(
-                                           asmangle(get->name.str))),
-                                         PLUS,
-                                         ValueBuilder::makeNum(i));
-            } else {
-              WASM_UNREACHABLE("unexpected expr type");
-            }
-            ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-              ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
-                                    index),
-              SET,
-              ValueBuilder::makeName(
-                fromName(segment->data[i], NameScope::Top)))));
-          }
+          ElementUtils::iterElementSegmentFunctionNames(
+            segment, [&](Name entry, Index i) {
+              Ref index;
+              if (auto* c = offset->dynCast<Const>()) {
+                index = ValueBuilder::makeInt(c->value.geti32() + i);
+              } else if (auto* get = offset->dynCast<GlobalGet>()) {
+                index = ValueBuilder::makeBinary(
+                  ValueBuilder::makeName(
+                    stringToIString(asmangle(get->name.str))),
+                  PLUS,
+                  ValueBuilder::makeNum(i));
+              } else {
+                WASM_UNREACHABLE("unexpected expr type");
+              }
+              ast->push_back(
+                ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+                  ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                        index),
+                  SET,
+                  ValueBuilder::makeName(fromName(entry, NameScope::Top)))));
+            });
         });
     }
   }

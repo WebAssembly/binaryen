@@ -1531,9 +1531,6 @@ public:
   void readDataSegments();
   void readDataCount();
 
-  // A map from elem segment indexes to their entries
-  std::map<Index, std::vector<Index>> functionTable;
-
   void readTableDeclarations();
   void readElementSegments();
 

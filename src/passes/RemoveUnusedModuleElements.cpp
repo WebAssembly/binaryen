@@ -22,6 +22,7 @@
 
 #include <memory>
 
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -194,11 +195,9 @@ struct RemoveUnusedModuleElements : public Pass {
       importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
-    for (auto& segment : module->elementSegments) {
-      for (auto& curr : segment->data) {
-        roots.emplace_back(ModuleElementKind::Function, curr);
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+      roots.emplace_back(ModuleElementKind::Function, name);
+    });
     // Compute reachability starting from the root set.
     ReachabilityAnalyzer analyzer(module, roots);
     // Remove unreachable elements.

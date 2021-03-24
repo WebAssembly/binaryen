@@ -22,6 +22,7 @@
 // look at all the rest of the code).
 //
 
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "wasm.h"
@@ -49,11 +50,8 @@ struct RemoveImports : public WalkerPass<PostWalker<RemoveImports>> {
       *curr, [&](Function* func) { names.push_back(func->name); });
     // Do not remove names referenced in a table
     std::set<Name> indirectNames;
-    for (auto& segment : curr->elementSegments) {
-      for (auto& name : segment->data) {
-        indirectNames.insert(name);
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(
+      curr, [&](Name& name) { indirectNames.insert(name); });
     for (auto& name : names) {
       if (indirectNames.find(name) == indirectNames.end()) {
         curr->removeFunction(name);

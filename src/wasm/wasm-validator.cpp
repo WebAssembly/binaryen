@@ -1960,7 +1960,10 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
 }
 
 void FunctionValidator::visitRefNull(RefNull* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+  // If we are not in a function, this is a global location like a table. We
+  // allow RefNull there as we represent tables that way regardless of what
+  // features are enabled.
+  shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.null requires reference-types to be enabled");
   shouldBeTrue(
@@ -1978,7 +1981,10 @@ void FunctionValidator::visitRefIs(RefIs* curr) {
 }
 
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+  // If we are not in a function, this is a global location like a table. We
+  // allow RefFunc there as we represent tables that way regardless of what
+  // features are enabled.
+  shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.func requires reference-types to be enabled");
   if (!info.validateGlobally) {
@@ -2799,11 +2805,29 @@ static void validateMemory(Module& module, ValidationInfo& info) {
 }
 
 static void validateTables(Module& module, ValidationInfo& info) {
+  FunctionValidator validator(module, &info);
+
   if (!module.features.hasReferenceTypes()) {
     info.shouldBeTrue(module.tables.size() <= 1,
                       "table",
                       "Only 1 table definition allowed in MVP (requires "
                       "--enable-reference-types)");
+    if (!module.tables.empty()) {
+      auto& table = module.tables.front();
+      for (auto& segment : module.elementSegments) {
+        info.shouldBeTrue(segment->table == table->name,
+                          "elem",
+                          "all element segments should refer to a single table "
+                          "in MVP.");
+        for (auto* expr : segment->data) {
+          info.shouldBeTrue(
+            expr->is<RefFunc>(),
+            expr,
+            "all table elements must be non-null funcrefs in MVP.");
+          validator.validate(expr);
+        }
+      }
+    }
   }
 
   for (auto& segment : module.elementSegments) {
@@ -2820,11 +2844,17 @@ static void validateTables(Module& module, ValidationInfo& info) {
                                            table->initial * Table::kPageSize),
                         segment->offset,
                         "table segment offset should be reasonable");
-      FunctionValidator(module, &info).validate(segment->offset);
+      validator.validate(segment->offset);
     }
-    for (auto name : segment->data) {
-      info.shouldBeTrue(
-        module.getFunctionOrNull(name), name, "segment name should be valid");
+    // Avoid double checking items
+    if (module.features.hasReferenceTypes()) {
+      for (auto* expr : segment->data) {
+        info.shouldBeTrue(
+          expr->is<RefFunc>() || expr->is<RefNull>(),
+          expr,
+          "element segment items must be either ref.func or ref.null func.");
+        validator.validate(expr);
+      }
     }
   }
 }

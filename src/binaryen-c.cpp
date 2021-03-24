@@ -3409,7 +3409,13 @@ BinaryenAddActiveElementSegment(BinaryenModuleRef module,
   auto segment = std::make_unique<ElementSegment>(table, (Expression*)offset);
   segment->setExplicitName(name);
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
-    segment->data.push_back(funcNames[i]);
+    auto* func = ((Module*)module)->getFunctionOrNull(funcNames[i]);
+    if (func == nullptr) {
+      Fatal() << "invalid function '" << funcNames[i] << "'.";
+    }
+    Type type(HeapType(func->sig), Nullable);
+    segment->data.push_back(
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], type));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -3421,7 +3427,13 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
   auto segment = std::make_unique<ElementSegment>();
   segment->setExplicitName(name);
   for (BinaryenIndex i = 0; i < numFuncNames; i++) {
-    segment->data.push_back(funcNames[i]);
+    auto* func = ((Module*)module)->getFunctionOrNull(funcNames[i]);
+    if (func == nullptr) {
+      Fatal() << "invalid function '" << funcNames[i] << "'.";
+    }
+    Type type(HeapType(func->sig), Nullable);
+    segment->data.push_back(
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], type));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -3460,7 +3472,13 @@ const char* BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
   if (data.size() <= dataId) {
     Fatal() << "invalid segment data id.";
   }
-  return data[dataId].c_str();
+  if (data[dataId]->is<RefNull>()) {
+    return NULL;
+  } else if (auto* get = data[dataId]->dynCast<RefFunc>()) {
+    return get->func.c_str();
+  } else {
+    Fatal() << "invalid expression in segment data.";
+  }
 }
 
 // Memory. One per module

@@ -7,8 +7,9 @@ global
  [memory-data]  : 9       
  [table-data]   : 3       
  [tables]       : 1       
- [total]        : 3       
+ [total]        : 6       
  Const          : 3       
+ RefFunc        : 3       
 func: empty
  [binary-bytes] : 3       
  [total]        : 1       
