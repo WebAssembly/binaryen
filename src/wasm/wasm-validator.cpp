@@ -35,14 +35,15 @@ template<typename T,
          typename std::enable_if<!std::is_base_of<
            Expression,
            typename std::remove_pointer<T>::type>::value>::type* = nullptr>
-inline std::ostream& printModuleComponent(T curr, std::ostream& stream, Module& wasm) {
+inline std::ostream&
+printModuleComponent(T curr, std::ostream& stream, Module& wasm) {
   stream << curr << std::endl;
   return stream;
 }
 
 // Extra overload for Expressions, to print their contents.
-inline std::ostream& printModuleComponent(Expression* curr,
-                                          std::ostream& stream, Module& wasm) {
+inline std::ostream&
+printModuleComponent(Expression* curr, std::ostream& stream, Module& wasm) {
   if (curr) {
     stream << ModuleExpression(wasm, curr) << '\n';
   }
