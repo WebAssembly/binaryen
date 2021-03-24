@@ -389,7 +389,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     // First, check for a possible null which would prevent all other
     // optimizations.
-    // (Note: if the spec has BrOnNonNull, instead of BrOnNull, then we could
+    // (Note: if the spec had BrOnNonNull, instead of BrOnNull, then we could
     // replace a br_on_func whose input is (ref null func) with br_on_non_null,
     // as only the null check would be needed. But as things are, we cannot do
     // such a thing.)
