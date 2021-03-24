@@ -885,3 +885,31 @@
   )
  )
 )
+(module
+ (global $global$0 (mut i32) (i32.const 10))
+ (func $1
+  (drop
+   (block $block (result funcref i32)
+    ;; we can vaccum out all parts of this block: the br_if is not taken, there
+    ;; is a nop, and the tuple at the end goes to a dropped block anyhow. this
+    ;; test specifically verifies handling of tuples containing non-nullable
+    ;; types, for which we try to create a zero in an intermediate step along
+    ;; the way.
+    (drop
+     (br_if $block
+      (tuple.make
+       (ref.func $1)
+       (i32.const 0)
+      )
+      (i32.const 0)
+     )
+    )
+    (nop)
+    (tuple.make
+     (ref.func $1)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+)

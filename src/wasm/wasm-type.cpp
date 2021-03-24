@@ -33,6 +33,8 @@ namespace {
 
 struct TypeInfo {
   using type_t = Type;
+  // Used in assertions to ensure that temporary types don't leak into the
+  // global store.
   bool isTemp = false;
   enum Kind {
     TupleKind,
@@ -69,8 +71,14 @@ struct TypeInfo {
 
 struct HeapTypeInfo {
   using type_t = HeapType;
+  // Used in assertions to ensure that temporary types don't leak into the
+  // global store.
   bool isTemp = false;
-  bool isSelfReferential = false;
+  // If `isFinalized`, then hashing and equality are performed on the finite
+  // shape of the type definition tree rooted at the HeapTypeInfo.
+  // Otherwise, the type definition tree is still being constructed via the
+  // TypeBuilder interface, so hashing and equality use pointer identity.
+  bool isFinalized = true;
   enum Kind {
     SignatureKind,
     StructKind,
@@ -155,18 +163,57 @@ struct TypePrinter {
   std::ostream& print(const Rtt& rtt);
 
 private:
-  template<typename T, typename F> std::ostream& printChild(T curr, F printer) {
-    auto it = depths.find(curr.getID());
-    if (it != depths.end()) {
-      assert(it->second <= currDepth);
-      size_t relativeDepth = currDepth - it->second;
-      return os << "..." << relativeDepth;
-    }
-    depths[curr.getID()] = ++currDepth;
-    printer();
-    depths.erase(curr.getID());
-    return os;
-  }
+  template<typename T, typename F> std::ostream& printChild(T curr, F printer);
+};
+
+// Helper for hashing the shapes of TypeInfos and HeapTypeInfos. Keeps track of
+// previously seen HeapTypes to avoid traversing them more than once. Infos
+// referring to different type IDs but sharing a finite shape will compare and
+// hash the same.
+struct FiniteShapeHasher {
+  bool topLevelOnly;
+  size_t currDepth = 0;
+  size_t currStep = 0;
+  std::unordered_map<HeapType, size_t> seen;
+
+  FiniteShapeHasher(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
+
+  size_t hash(Type type);
+  size_t hash(HeapType heapType);
+  size_t hash(const TypeInfo& info);
+  size_t hash(const HeapTypeInfo& info);
+  size_t hash(const Tuple& tuple);
+  size_t hash(const Field& field);
+  size_t hash(const Signature& sig);
+  size_t hash(const Struct& struct_);
+  size_t hash(const Array& array);
+  size_t hash(const Rtt& rtt);
+};
+
+// Helper for comparing the shapes of TypeInfos and HeapTypeInfos for equality.
+// Like FiniteShapeHasher, keeps track of previously seen HeapTypes. Note that
+// this does not test for coinductive equality of the infinite expansion of the
+// type tree, but rather tests for equality of the finite shape of the graph. If
+// FiniteShapeEquator reports that two type shapes are equal, FiniteShapeHasher
+// should produce the same hash for them.
+struct FiniteShapeEquator {
+  bool topLevelOnly;
+  size_t currDepth = 0;
+  size_t currStep = 0;
+  std::unordered_map<HeapType, size_t> seenA, seenB;
+
+  FiniteShapeEquator(bool topLevelOnly = false) : topLevelOnly(topLevelOnly) {}
+
+  bool eq(Type a, Type b);
+  bool eq(HeapType a, HeapType b);
+  bool eq(const TypeInfo& a, const TypeInfo& b);
+  bool eq(const HeapTypeInfo& a, const HeapTypeInfo& b);
+  bool eq(const Tuple& a, const Tuple& b);
+  bool eq(const Field& a, const Field& b);
+  bool eq(const Signature& a, const Signature& b);
+  bool eq(const Struct& a, const Struct& b);
+  bool eq(const Array& a, const Array& b);
+  bool eq(const Rtt& a, const Rtt& b);
 };
 
 } // anonymous namespace
@@ -176,12 +223,31 @@ namespace std {
 
 template<> class hash<wasm::TypeInfo> {
 public:
-  size_t operator()(const wasm::TypeInfo&) const;
+  size_t operator()(const wasm::TypeInfo& info) const {
+    return wasm::FiniteShapeHasher().hash(info);
+  }
 };
 
 template<> class hash<wasm::HeapTypeInfo> {
 public:
-  size_t operator()(const wasm::HeapTypeInfo&) const;
+  size_t operator()(const wasm::HeapTypeInfo& info) const {
+    return wasm::FiniteShapeHasher().hash(info);
+  }
+};
+
+template<typename T> class hash<reference_wrapper<const T>> {
+public:
+  size_t operator()(const reference_wrapper<const T>& ref) const {
+    return hash<T>{}(ref.get());
+  }
+};
+
+template<typename T> class equal_to<reference_wrapper<const T>> {
+public:
+  bool operator()(const reference_wrapper<const T>& a,
+                  const reference_wrapper<const T>& b) const {
+    return equal_to<T>{}(a.get(), b.get());
+  }
 };
 
 } // namespace std
@@ -199,6 +265,10 @@ HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   return (HeapTypeInfo*)ht.getID();
 }
 
+HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
+  return HeapType(uintptr_t(info.get()));
+}
+
 Type markTemp(Type type) {
   if (!type.isBasic()) {
     getTypeInfo(type)->isTemp = true;
@@ -207,25 +277,11 @@ Type markTemp(Type type) {
 }
 
 bool isTemp(Type type) {
-  // Avoid compiler warnings on this function not being used, as it is only used
-  // in assertions, which might be off.
-  bool (*func)(Type) = isTemp;
-  WASM_UNUSED(func);
-
   return !type.isBasic() && getTypeInfo(type)->isTemp;
 }
 
 bool isTemp(HeapType type) {
-  // Avoid compiler warnings on this function not being used, as it is only used
-  // in assertions, which might be off.
-  bool (*func)(HeapType) = isTemp;
-  WASM_UNUSED(func);
-
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;
-}
-
-bool isSelfReferential(HeapType type) {
-  return !type.isBasic() && getHeapTypeInfo(type)->isSelfReferential;
 }
 
 TypeInfo::TypeInfo(const TypeInfo& other) {
@@ -260,24 +316,14 @@ TypeInfo::~TypeInfo() {
 }
 
 bool TypeInfo::operator==(const TypeInfo& other) const {
-  if (kind != other.kind) {
-    return false;
-  }
-  switch (kind) {
-    case TupleKind:
-      return tuple == other.tuple;
-    case RefKind:
-      return ref.heapType == other.ref.heapType &&
-             ref.nullable == other.ref.nullable;
-    case RttKind:
-      return rtt == other.rtt;
-  }
-  WASM_UNREACHABLE("unexpected kind");
+  // TypeInfos with the same shape are considered equivalent. This is important
+  // during global canonicalization, when newly created canonically-shaped
+  // graphs are checked against the existing globally canonical graphs.
+  return FiniteShapeEquator().eq(*this, other);
 }
 
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
-  isSelfReferential = other.isSelfReferential;
   switch (kind) {
     case SignatureKind:
       new (&signature) auto(other.signature);
@@ -316,18 +362,7 @@ HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
-  if (kind != other.kind) {
-    return false;
-  }
-  switch (kind) {
-    case SignatureKind:
-      return signature == other.signature;
-    case StructKind:
-      return struct_ == other.struct_;
-    case ArrayKind:
-      return array == other.array;
-  }
-  WASM_UNREACHABLE("unexpected kind");
+  return FiniteShapeEquator().eq(*this, other);
 }
 
 template<typename Info> struct Store {
@@ -337,7 +372,7 @@ template<typename Info> struct Store {
   std::vector<std::unique_ptr<Info>> constructedTypes;
 
   // Maps from constructed types to their canonical Type IDs.
-  std::unordered_map<Info, uintptr_t> typeIDs;
+  std::unordered_map<std::reference_wrapper<const Info>, uintptr_t> typeIDs;
 
   bool isGlobalStore();
 
@@ -349,7 +384,12 @@ struct TypeStore : Store<TypeInfo> {
   Type canonicalize(TypeInfo info);
 };
 
-using HeapTypeStore = Store<HeapTypeInfo>;
+struct HeapTypeStore : Store<HeapTypeInfo> {
+  HeapType canonicalize(const HeapTypeInfo& other) {
+    return Store<HeapTypeInfo>::canonicalize(other);
+  }
+  HeapType canonicalize(std::unique_ptr<HeapTypeInfo>&& info);
+};
 
 TypeStore globalTypeStore;
 HeapTypeStore globalHeapTypeStore;
@@ -384,11 +424,21 @@ TypeID Store<Info>::recordCanonical(std::unique_ptr<Info>&& info) {
 template<typename Info>
 typename Info::type_t Store<Info>::canonicalize(const Info& info) {
   std::lock_guard<std::mutex> lock(mutex);
-  auto indexIt = typeIDs.find(info);
+  auto indexIt = typeIDs.find(std::cref(info));
   if (indexIt != typeIDs.end()) {
     return typename Info::type_t(indexIt->second);
   }
   return typename Info::type_t(recordCanonical(std::make_unique<Info>(info)));
+}
+
+HeapType HeapTypeStore::canonicalize(std::unique_ptr<HeapTypeInfo>&& info) {
+  std::lock_guard<std::mutex> lock(mutex);
+  auto indexIt = typeIDs.find(std::cref(*info));
+  if (indexIt != typeIDs.end()) {
+    return HeapType(indexIt->second);
+  }
+  info->isTemp = false;
+  return HeapType(recordCanonical(std::move(info)));
 }
 
 Type TypeStore::canonicalize(TypeInfo info) {
@@ -1108,6 +1158,21 @@ bool SubTyper::isSubType(const Rtt& a, const Rtt& b) {
   return a.heapType == b.heapType && a.hasDepth() && !b.hasDepth();
 }
 
+template<typename T, typename F>
+std::ostream& TypePrinter::printChild(T curr, F printer) {
+  auto it = depths.find(curr.getID());
+  if (it != depths.end()) {
+    assert(it->second <= currDepth);
+    size_t relativeDepth = currDepth - it->second;
+    return os << "..." << relativeDepth;
+  }
+  depths[curr.getID()] = ++currDepth;
+  printer();
+  depths.erase(curr.getID());
+  --currDepth;
+  return os;
+}
+
 std::ostream& TypePrinter::print(Type type) {
   if (type.isBasic()) {
     switch (type.getBasic()) {
@@ -1141,6 +1206,9 @@ std::ostream& TypePrinter::print(Type type) {
   }
 
   return printChild(type, [&]() {
+    if (isTemp(type)) {
+      os << "[T]";
+    }
     if (type.isTuple()) {
       print(type.getTuple());
     } else if (type.isRef()) {
@@ -1177,6 +1245,9 @@ std::ostream& TypePrinter::print(HeapType heapType) {
   }
 
   return printChild(heapType, [&]() {
+    if (isTemp(heapType)) {
+      os << "[T]";
+    }
     if (heapType.isSignature()) {
       print(heapType.getSignature());
     } else if (heapType.isStruct()) {
@@ -1274,6 +1345,221 @@ std::ostream& TypePrinter::print(const Rtt& rtt) {
   return os << ')';
 }
 
+size_t FiniteShapeHasher::hash(Type type) {
+  size_t digest = wasm::hash(type.isBasic());
+  if (type.isBasic()) {
+    rehash(digest, type.getID());
+  } else {
+    hash_combine(digest, hash(*getTypeInfo(type)));
+  }
+  return digest;
+}
+
+size_t FiniteShapeHasher::hash(HeapType heapType) {
+  size_t digest = wasm::hash(heapType.isBasic());
+  if (heapType.isBasic()) {
+    rehash(digest, heapType.getID());
+    return digest;
+  }
+  if (topLevelOnly && currDepth > 0) {
+    return digest;
+  }
+  auto it = seen.find(heapType);
+  rehash(digest, it != seen.end());
+  if (it != seen.end()) {
+    rehash(digest, it->second);
+    return digest;
+  }
+  seen[heapType] = ++currStep;
+  ++currDepth;
+  hash_combine(digest, hash(*getHeapTypeInfo(heapType)));
+  --currDepth;
+  return digest;
+}
+
+size_t FiniteShapeHasher::hash(const TypeInfo& info) {
+  size_t digest = wasm::hash(info.kind);
+  switch (info.kind) {
+    case TypeInfo::TupleKind:
+      hash_combine(digest, hash(info.tuple));
+      return digest;
+    case TypeInfo::RefKind:
+      rehash(digest, info.ref.nullable);
+      hash_combine(digest, hash(info.ref.heapType));
+      return digest;
+    case TypeInfo::RttKind:
+      hash_combine(digest, hash(info.rtt));
+      return digest;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
+  // If the HeapTypeInfo is not finalized, then it is mutable and its shape
+  // might change in the future. In that case, fall back to pointer identity to
+  // keep the hash consistent until all the TypeBuilder's types are finalized.
+  size_t digest = wasm::hash(info.isFinalized);
+  if (!info.isFinalized) {
+    rehash(digest, uintptr_t(&info));
+    return digest;
+  }
+  rehash(digest, info.kind);
+  switch (info.kind) {
+    case HeapTypeInfo::SignatureKind:
+      hash_combine(digest, hash(info.signature));
+      return digest;
+    case HeapTypeInfo::StructKind:
+      hash_combine(digest, hash(info.struct_));
+      return digest;
+    case HeapTypeInfo::ArrayKind:
+      hash_combine(digest, hash(info.array));
+      return digest;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+size_t FiniteShapeHasher::hash(const Tuple& tuple) {
+  size_t digest = wasm::hash(tuple.types.size());
+  for (auto type : tuple.types) {
+    hash_combine(digest, hash(type));
+  }
+  return digest;
+}
+
+size_t FiniteShapeHasher::hash(const Field& field) {
+  size_t digest = wasm::hash(field.packedType);
+  rehash(digest, field.mutable_);
+  hash_combine(digest, hash(field.type));
+  return digest;
+}
+
+size_t FiniteShapeHasher::hash(const Signature& sig) {
+  size_t digest = hash(sig.params);
+  hash_combine(digest, hash(sig.results));
+  return digest;
+}
+
+size_t FiniteShapeHasher::hash(const Struct& struct_) {
+  size_t digest = wasm::hash(struct_.fields.size());
+  for (const auto& field : struct_.fields) {
+    hash_combine(digest, hash(field));
+  }
+  return digest;
+}
+
+size_t FiniteShapeHasher::hash(const Array& array) {
+  return hash(array.element);
+}
+
+size_t FiniteShapeHasher::hash(const Rtt& rtt) {
+  size_t digest = wasm::hash(rtt.depth);
+  hash_combine(digest, hash(rtt.heapType));
+  return digest;
+}
+
+bool FiniteShapeEquator::eq(Type a, Type b) {
+  if (a.isBasic() != b.isBasic()) {
+    return false;
+  } else if (a.isBasic()) {
+    return a.getID() == b.getID();
+  } else {
+    return eq(*getTypeInfo(a), *getTypeInfo(b));
+  }
+}
+
+bool FiniteShapeEquator::eq(HeapType a, HeapType b) {
+  if (a.isBasic() != b.isBasic()) {
+    return false;
+  } else if (a.isBasic()) {
+    return a.getID() == b.getID();
+  }
+  if (topLevelOnly && currDepth > 0) {
+    return true;
+  }
+  auto itA = seenA.find(a);
+  auto itB = seenB.find(b);
+  if ((itA != seenA.end()) != (itB != seenB.end())) {
+    return false;
+  } else if (itA != seenA.end()) {
+    return itA->second == itB->second;
+  }
+  seenA[a] = seenB[b] = ++currStep;
+  ++currDepth;
+  bool ret = eq(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
+  --currDepth;
+  return ret;
+}
+
+bool FiniteShapeEquator::eq(const TypeInfo& a, const TypeInfo& b) {
+  if (a.kind != b.kind) {
+    return false;
+  }
+  switch (a.kind) {
+    case TypeInfo::TupleKind:
+      return eq(a.tuple, b.tuple);
+    case TypeInfo::RefKind:
+      return a.ref.nullable == b.ref.nullable &&
+             eq(a.ref.heapType, b.ref.heapType);
+    case TypeInfo::RttKind:
+      return eq(a.rtt, b.rtt);
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
+  if (a.isFinalized != b.isFinalized) {
+    return false;
+  } else if (!a.isFinalized) {
+    // See comment on corresponding FiniteShapeHasher method.
+    return &a == &b;
+  }
+  if (a.kind != b.kind) {
+    return false;
+  }
+  switch (a.kind) {
+    case HeapTypeInfo::SignatureKind:
+      return eq(a.signature, b.signature);
+    case HeapTypeInfo::StructKind:
+      return eq(a.struct_, b.struct_);
+    case HeapTypeInfo::ArrayKind:
+      return eq(a.array, b.array);
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+bool FiniteShapeEquator::eq(const Tuple& a, const Tuple& b) {
+  return std::equal(a.types.begin(),
+                    a.types.end(),
+                    b.types.begin(),
+                    b.types.end(),
+                    [&](const Type& x, const Type& y) { return eq(x, y); });
+}
+
+bool FiniteShapeEquator::eq(const Field& a, const Field& b) {
+  return a.packedType == b.packedType && a.mutable_ == b.mutable_ &&
+         eq(a.type, b.type);
+}
+
+bool FiniteShapeEquator::eq(const Signature& a, const Signature& b) {
+  return eq(a.params, b.params) && eq(a.results, b.results);
+}
+
+bool FiniteShapeEquator::eq(const Struct& a, const Struct& b) {
+  return std::equal(a.fields.begin(),
+                    a.fields.end(),
+                    b.fields.begin(),
+                    b.fields.end(),
+                    [&](const Field& x, const Field& y) { return eq(x, y); });
+}
+
+bool FiniteShapeEquator::eq(const Array& a, const Array& b) {
+  return eq(a.element, b.element);
+}
+
+bool FiniteShapeEquator::eq(const Rtt& a, const Rtt& b) {
+  return a.depth == b.depth && eq(a.heapType, b.heapType);
+}
+
 } // anonymous namespace
 
 struct TypeBuilder::Impl {
@@ -1287,10 +1573,12 @@ struct TypeBuilder::Impl {
       // to refer to it before it is initialized. Arbitrarily choose a default
       // value.
       info = std::make_unique<HeapTypeInfo>(Signature());
+      set(Signature());
     }
     void set(HeapTypeInfo&& hti) {
       *info = std::move(hti);
       info->isTemp = true;
+      info->isFinalized = false;
       initialized = true;
     }
     HeapType get() { return HeapType(TypeID(info.get())); }
@@ -1351,13 +1639,304 @@ Type TypeBuilder::getTempRttType(size_t i, uint32_t depth) {
 
 namespace {
 
-// Implements the algorithm to canonicalize the HeapTypes in a TypeBuilder,
-// replacing and deduplicating the temporary type and heaptypes backed by
-// storage owned by the TypeBuilder into normal types and heap types backed by
-// the global stores.
-struct Canonicalizer {
-  TypeBuilder& builder;
+// A wrapper around a HeapType that provides equality and hashing based only on
+// its top-level shape, up to but not including its closest HeapType
+// descendants. This is the shape that determines the most fine-grained
+// initial partitions for Hopcroft's algorithm and also the shape that
+// determines the "alphabet" for transitioning to the child HeapTypes in the DFA
+// view of the type definition.
+struct ShallowHeapType {
+  HeapType heapType;
 
+  ShallowHeapType(HeapType heapType) : heapType(heapType) {}
+  bool operator==(const ShallowHeapType& other) const;
+};
+
+bool ShallowHeapType::operator==(const ShallowHeapType& other) const {
+  return FiniteShapeEquator(/*topLevelOnly=*/true)
+    .eq(this->heapType, other.heapType);
+}
+
+} // anonymous namespace
+} // namespace wasm
+
+namespace std {
+
+template<> class hash<wasm::ShallowHeapType> {
+public:
+  size_t operator()(const wasm::ShallowHeapType& type) const {
+    return wasm::FiniteShapeHasher(/*topLevelOnly=*/true).hash(type.heapType);
+  }
+};
+
+} // namespace std
+
+namespace wasm {
+namespace {
+
+// Uses Hopcroft's DFA minimization algorithm to construct a minimal type
+// definition graph from an input graph. See
+// https://en.wikipedia.org/wiki/DFA_minimization#Hopcroft's_algorithm.
+struct ShapeCanonicalizer {
+  // The new, minimal type definition graph.
+  std::vector<std::unique_ptr<HeapTypeInfo>> infos;
+
+  // Maps each input HeapType to the index of its partition in `partitions`,
+  // which is also the index of its canonicalized HeapTypeInfo in infos.
+  std::unordered_map<HeapType, size_t> partitionIndices;
+
+  ShapeCanonicalizer(const std::vector<HeapType>& input);
+
+private:
+  using TypeSet = std::unordered_set<HeapType>;
+
+  // The HeapTypes in the type definition graph to canonicalize.
+  const std::vector<HeapType>& input;
+
+  // The partitioning of the input HeapTypes used by Hopcroft's algorithm.
+  std::vector<TypeSet> partitions;
+
+  // Hopcroft's algorithm needs to be able to find the predecessors of a
+  // particular state via a given symbol in the alphabet. We use simple child
+  // indices as the alphabet.
+  size_t alphabetSize = 0;
+  std::unordered_map<HeapType, std::unordered_map<size_t, TypeSet>> preds;
+
+  void initializePredecessors();
+  void initializePartitions();
+  void translatePartitionsToTypes();
+
+  std::vector<HeapType*> getChildren(HeapType type);
+  const TypeSet& getPredsOf(HeapType type, size_t symbol);
+  TypeSet getIntersection(const TypeSet& a, const TypeSet& b);
+  TypeSet getDifference(const TypeSet& a, const TypeSet& b);
+};
+
+ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
+  : input(input) {
+  initializePredecessors();
+  initializePartitions();
+
+  // The Hopcroft's algorithm's list of partitions that may still be
+  // distinguishing partitions. Starts out containing all partitions.
+  std::set<size_t> distinguishers;
+  for (size_t i = 0; i < partitions.size(); ++i) {
+    distinguishers.insert(i);
+  }
+
+  // Hopcroft's algorithm
+  while (distinguishers.size()) {
+    // Choose a partition that might be able to distinguish between the members
+    // of some other partition.
+    auto distinguishingIndexIt = distinguishers.begin();
+    TypeSet distinguishing = partitions[*distinguishingIndexIt];
+    distinguishers.erase(distinguishingIndexIt);
+    // For each possibly distinguishing transition symbol...
+    for (size_t symbol = 0; symbol < alphabetSize; ++symbol) {
+      // Find all types that reach one of the current distinguishing types via
+      // `symbol`.
+      TypeSet currPreds;
+      for (auto type : distinguishing) {
+        const TypeSet& specificPreds = getPredsOf(type, symbol);
+        currPreds.insert(specificPreds.begin(), specificPreds.end());
+      }
+      // Find partitions that contain some elements that are predecessors of the
+      // current distinguishing partition and some elements that are not
+      // predecessors of the current distinguishing partition.
+      for (size_t distinguishedIndex = 0, end = partitions.size();
+           distinguishedIndex < end;
+           ++distinguishedIndex) {
+        TypeSet& distinguished = partitions[distinguishedIndex];
+        TypeSet intersection = getIntersection(distinguished, currPreds);
+        if (intersection.empty()) {
+          continue;
+        }
+        TypeSet difference = getDifference(distinguished, currPreds);
+        if (difference.empty()) {
+          continue;
+        }
+        // We can split the partition! Replace it with the intersection and add
+        // the difference as a new partition.
+        partitions[distinguishedIndex] = std::move(intersection);
+        size_t newPartitionIndex = partitions.size();
+        for (auto movedType : difference) {
+          partitionIndices[movedType] = newPartitionIndex;
+        }
+        partitions.emplace_back(std::move(difference));
+        // If the split partition was a potential distinguisher, both smaller
+        // partitions are as well. Otherwise, we only need to add the smaller of
+        // the two smaller partitions as a new potential distinguisher.
+        if (distinguishers.count(distinguishedIndex) ||
+            partitions[newPartitionIndex].size() <=
+              partitions[distinguishedIndex].size()) {
+          distinguishers.insert(newPartitionIndex);
+        } else {
+          distinguishers.insert(distinguishedIndex);
+        }
+      }
+    }
+  }
+
+  translatePartitionsToTypes();
+}
+
+void ShapeCanonicalizer::initializePredecessors() {
+  for (auto heapType : input) {
+    size_t childIndex = 0;
+    for (auto* child : getChildren(heapType)) {
+      alphabetSize = std::max(alphabetSize, childIndex + 1);
+      preds[*child][childIndex++].insert(heapType);
+    }
+  }
+}
+
+void ShapeCanonicalizer::initializePartitions() {
+  // Create the initial partitions based on the top-level shape of the input
+  // heap types. If two heap types are differentiable without recursing into
+  // their child heap types, then they are obviously not equivalent and can be
+  // placed in different partitions. Starting with this fine-grained partition
+  // lets us use simple child indices as our transition alphabet since we will
+  // never mix up equivalent indices from different kinds of types, for example
+  // considering a struct and a signature with the same children to be the same
+  // type.
+  std::unordered_map<ShallowHeapType, size_t> initialIndices;
+  for (auto type : input) {
+    ShallowHeapType shallow(type);
+    auto inserted = initialIndices.insert({shallow, partitions.size()});
+    if (inserted.second) {
+      // We have not seen a type with this shape before; create a new
+      // partition.
+      partitionIndices[type] = partitions.size();
+      partitions.emplace_back(TypeSet{type});
+    } else {
+      // Add to the partition we have already created for this type shape.
+      size_t index = inserted.first->second;
+      partitionIndices[type] = index;
+      partitions[index].insert(type);
+    }
+  }
+}
+
+void ShapeCanonicalizer::translatePartitionsToTypes() {
+  // Create a single new HeapTypeInfo for each partition. Initialize each new
+  // HeapTypeInfo as a copy of a representative HeapTypeInfo from its partition,
+  // then patch all the children of the new HeapTypeInfos to refer to other new
+  // HeapTypeInfos rather than the original HeapTypeInfos. This newly formed
+  // graph will have a shape coinductively equivalent to the original graph's
+  // shape, but each type definition will be minimal and distinct.
+  for (auto& partition : partitions) {
+    const auto& representative = *getHeapTypeInfo(*partition.begin());
+    infos.push_back(std::make_unique<HeapTypeInfo>(representative));
+    infos.back()->isTemp = true;
+  }
+  for (auto& info : infos) {
+    for (auto* child : getChildren(asHeapType(info))) {
+      auto partitionIt = partitionIndices.find(*child);
+      if (partitionIt == partitionIndices.end()) {
+        // This child has already been replaced.
+        continue;
+      }
+      *child = asHeapType(infos.at(partitionIt->second));
+    }
+  }
+}
+
+std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType heapType) {
+  std::vector<HeapType*> children;
+
+  auto noteChild = [&](HeapType* child) {
+    if (!child->isBasic()) {
+      children.push_back(child);
+    }
+  };
+
+  // Scan through Types to find the next HeapType.
+  std::function<void(Type)> scanType = [&](Type type) {
+    if (type.isBasic()) {
+      return;
+    }
+    auto* info = getTypeInfo(type);
+    switch (info->kind) {
+      case TypeInfo::TupleKind:
+        for (Type t : info->tuple.types) {
+          scanType(t);
+        }
+        return;
+      case TypeInfo::RefKind:
+        return noteChild(&info->ref.heapType);
+      case TypeInfo::RttKind:
+        return noteChild(&info->rtt.heapType);
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  };
+
+  assert(!heapType.isBasic() && "Cannot have basic defined HeapType");
+  auto* info = getHeapTypeInfo(heapType);
+  switch (info->kind) {
+    case HeapTypeInfo::SignatureKind:
+      scanType(info->signature.params);
+      scanType(info->signature.results);
+      return children;
+    case HeapTypeInfo::StructKind:
+      for (auto& field : info->struct_.fields) {
+        scanType(field.type);
+      }
+      return children;
+    case HeapTypeInfo::ArrayKind:
+      scanType(info->array.element.type);
+      return children;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+const std::unordered_set<HeapType>&
+ShapeCanonicalizer::getPredsOf(HeapType type, size_t symbol) {
+  static TypeSet empty;
+  auto predsIt = preds.find(type);
+  if (predsIt == preds.end()) {
+    return empty;
+  }
+  auto& predsOfType = predsIt->second;
+  auto specificPredsIt = predsOfType.find(symbol);
+  if (specificPredsIt == predsOfType.end()) {
+    return empty;
+  }
+  return specificPredsIt->second;
+}
+
+std::unordered_set<HeapType>
+ShapeCanonicalizer::getIntersection(const TypeSet& a, const TypeSet& b) {
+  TypeSet ret;
+  const TypeSet& smaller = a.size() < b.size() ? a : b;
+  const TypeSet& bigger = a.size() < b.size() ? b : a;
+  for (auto type : smaller) {
+    if (bigger.count(type)) {
+      ret.insert(type);
+    }
+  }
+  return ret;
+}
+
+std::unordered_set<HeapType>
+ShapeCanonicalizer::getDifference(const TypeSet& a, const TypeSet& b) {
+  TypeSet ret;
+  for (auto type : a) {
+    if (!b.count(type)) {
+      ret.insert(type);
+    }
+  }
+  return ret;
+}
+
+// Replaces temporary types and heap types in a type definition graph with their
+// globally canonical versions to prevent temporary types or heap type from
+// leaking into the global stores.
+struct GlobalCanonicalizer {
+
+  std::vector<HeapType> results;
+  GlobalCanonicalizer(std::vector<std::unique_ptr<HeapTypeInfo>>& infos);
+
+private:
   struct Item {
     enum Kind {
       TypeKind,
@@ -1377,56 +1956,30 @@ struct Canonicalizer {
   // The work list of Types and HeapTypes remaining to be scanned.
   std::vector<Item> scanList;
 
-  // Maps Type and HeapType IDs to the IDs of their child Types and HeapTypes
-  // in the type graph. Only considers compound Types and HeapTypes.
-  std::unordered_map<TypeID, std::unordered_set<TypeID>> children;
-
   // Maps each temporary Type and HeapType to the locations where they will have
   // to be replaced with canonical Types and HeapTypes.
   std::unordered_map<Type, std::vector<Type*>> typeLocations;
   std::unordered_map<HeapType, std::vector<HeapType*>> heapTypeLocations;
 
-  // Maps Types and HeapTypes backed by the TypeBuilder's Stores to globally
-  // canonical Types and HeapTypes.
-  std::unordered_map<Type, Type> canonicalTypes;
-  std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
-
-  // The fully canonicalized heap types.
-  std::vector<HeapType> results;
-
-  Canonicalizer(TypeBuilder& builder);
   template<typename T1, typename T2> void noteChild(T1 parent, T2* child);
   void scanHeapType(HeapType* ht);
   void scanType(Type* child);
-  void findSelfReferentialHeapTypes();
-  std::vector<Item> getOrderedItems();
-
-  // Replaces the pointee Type or HeapType of `type` with its globally canonical
-  // equivalent, recording the substitution for future use in either
-  // `canonicalTypes` or `canonicalHeapTypes`.
-  template<typename T>
-  void canonicalize(T* type, std::unordered_map<T, T>& canonicals);
 };
 
-// Traverse the type graph rooted at the initialized HeapTypeInfos in reverse
-// postorder, replacing in place all Types and HeapTypes backed by the
-// TypeBuilder's Stores with equivalent globally canonicalized Types and
-// HeapTypes.
-Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
-  // Initialize `results` to hold all the temporary HeapTypes. Since we are
-  // canonicalizing all Types and HeapTypes in place, this will end up holding
-  // all the canonicalized HeapTypes instead. Also seed the scan list with these
-  // HeapTypes.
-  results.reserve(builder.impl->entries.size());
-  for (auto& entry : builder.impl->entries) {
-    assert(entry.initialized && "Cannot access uninitialized HeapType");
-    results.push_back(entry.get());
+// Traverse the type graph rooted at the initialized HeapTypeInfos, replacing in
+// place all Types and HeapTypes backed by the TypeBuilder's Stores with
+// equivalent globally canonicalized Types and HeapTypes.
+GlobalCanonicalizer::GlobalCanonicalizer(
+  std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
+  // Seed the scan list with the HeapTypes to canonicalize.
+  results.reserve(infos.size());
+  for (auto& info : infos) {
+    results.push_back(asHeapType(info));
     scanList.push_back(&results.back());
   }
 
-  // Traverse the type graph reachable from the heap types, calculating
-  // reachability and collecting a list of types and heap types that need to be
-  // canonicalized.
+  // Traverse the type graph reachable from the heap types, collecting a list of
+  // type and heap type use sites that need to be patched with canonical types.
   while (scanList.size() != 0) {
     auto item = scanList.back();
     scanList.pop_back();
@@ -1440,42 +1993,47 @@ Canonicalizer::Canonicalizer(TypeBuilder& builder) : builder(builder) {
     }
   }
 
-  findSelfReferentialHeapTypes();
-
-  // Visit the use sites of Types and HeapTypes, replacing them with their
-  // canonicalized versions in an order that guarantees no temporary types will
-  // be leaked into the global stores.
-  for (auto it : getOrderedItems()) {
-    switch (it.kind) {
-      case Item::TypeKind:
-        canonicalize(it.type, canonicalTypes);
-        break;
-      case Item::HeapTypeKind:
-        canonicalize(it.heapType, canonicalHeapTypes);
-        break;
+  // Canonicalize HeapTypes at all their use sites. HeapTypes for which there
+  // was not already a globally canonical version are moved to the global store
+  // to become the canonical version. These new canonical HeapTypes still
+  // contain references to temporary Types owned by the TypeBuilder, so we must
+  // subsequently replace those references with references to canonical Types.
+  // Canonicalize non-tuple Types (which never directly refer to other Types)
+  // before tuple Types to avoid canonicalizing a tuple that still contains
+  // non-canonical Types.
+  for (auto& info : infos) {
+    HeapType original = asHeapType(info);
+    HeapType canonical = globalHeapTypeStore.canonicalize(std::move(info));
+    if (original != canonical) {
+      for (HeapType* use : heapTypeLocations.at(original)) {
+        *use = canonical;
+      }
     }
   }
-
-  // Now that all other Types and HeapTypes have been canonicalized, move
-  // self-referential HeapTypes to the global store so that they will be
-  // considered canonical and outlive the TypeBuilder.
-  std::lock_guard<std::mutex> lock(globalHeapTypeStore.mutex);
-  for (auto& entry : builder.impl->entries) {
-    if (isSelfReferential(entry.get())) {
-      globalHeapTypeStore.recordCanonical(std::move(entry.info));
+  auto canonicalizeTypes = [&](bool tuples) {
+    for (auto& pair : typeLocations) {
+      Type original = pair.first;
+      std::vector<Type*>& uses = pair.second;
+      if (original.isTuple() == tuples) {
+        Type canonical = globalTypeStore.canonicalize(*getTypeInfo(original));
+        for (Type* use : uses) {
+          *use = canonical;
+        }
+      }
     }
-  }
+  };
+  canonicalizeTypes(false);
+  canonicalizeTypes(true);
 }
 
 template<typename T1, typename T2>
-void Canonicalizer::noteChild(T1 parent, T2* child) {
+void GlobalCanonicalizer::noteChild(T1 parent, T2* child) {
   if (child->isCompound()) {
-    children[parent.getID()].insert(child->getID());
     scanList.push_back(child);
   }
 }
 
-void Canonicalizer::scanHeapType(HeapType* ht) {
+void GlobalCanonicalizer::scanHeapType(HeapType* ht) {
   assert(ht->isCompound());
   heapTypeLocations[*ht].push_back(ht);
   if (scanned.count(ht->getID())) {
@@ -1500,7 +2058,7 @@ void Canonicalizer::scanHeapType(HeapType* ht) {
   }
 };
 
-void Canonicalizer::scanType(Type* type) {
+void GlobalCanonicalizer::scanType(Type* type) {
   assert(type->isCompound());
   typeLocations[*type].push_back(type);
   if (scanned.count(type->getID())) {
@@ -1524,202 +2082,31 @@ void Canonicalizer::scanType(Type* type) {
   }
 }
 
-void Canonicalizer::findSelfReferentialHeapTypes() {
-  // Use Tarjan's strongly connected components algorithm on the parent-child
-  // graph to find self-referential types in O(|V|+|E|) time. Each HeapType in a
-  // strongly connected component with multiple elements must be
-  // self-referential because it is mutually recursive with all other HeapTypes
-  // in that strongly connected component. HeapTypes in strongly connected
-  // components of size one may also be self-referential, but it is trivial to
-  // find these because they must be their own direct children. See
-  // https://en.wikipedia.org/wiki/Tarjan%27s_strongly_connected_components_algorithm.
-
-  auto mark = [&](HeapType type) {
-    auto* info = getHeapTypeInfo(type);
-    info->isSelfReferential = true;
-    info->isTemp = false;
-  };
-
-  // Get the HeapType children of a HeapType, skipping all intermediate Types.
-  auto getChildren = [&](HeapType type) {
-    std::unordered_set<HeapType> results;
-    std::function<void(TypeID, bool)> visit = [&](TypeID id, bool isRoot) {
-      if (isRoot || typeLocations.count(Type(id))) {
-        auto it = children.find(id);
-        if (it != children.end()) {
-          for (TypeID child : it->second) {
-            visit(child, false);
-          }
-        }
-      } else {
-        results.insert(HeapType(id));
-      }
-    };
-    visit(type.getID(), true);
-    return results;
-  };
-
-  // The Tarjan's algorithm stack. Similar to a DFS stack, but elements are only
-  // popped off once they are committed to a strongly connected component.
-  // HeapTypes stay on the stack after they are visited iff they have a back
-  // edge to a HeapType earlier in the stack.
-  std::vector<HeapType> stack;
-  std::unordered_set<HeapType> stackElems;
-  // Indices assigned to each HeapType in the order they are visited.
-  std::unordered_map<HeapType, size_t> indices;
-  // The smallest index of the HeapTypes reachable from each HeapType through
-  // its subtree.
-  std::unordered_map<HeapType, size_t> minReachable;
-
-  std::function<void(HeapType)> visit = [&](HeapType curr) {
-    size_t index = indices.size();
-    indices[curr] = index;
-    minReachable[curr] = index;
-    stack.push_back(curr);
-    stackElems.insert(curr);
-
-    for (HeapType child : getChildren(curr)) {
-      if (!indices.count(child)) {
-        // Child has not been visited yet; visit it.
-        visit(child);
-        minReachable[curr] = std::min(minReachable[curr], minReachable[child]);
-      } else if (stackElems.count(child)) {
-        // Child was already visited but not committed to a strongly connected
-        // component.
-        minReachable[curr] = std::min(minReachable[curr], indices[child]);
-      }
-      // We cannot differentiate self-referential types with strongly connected
-      // component size one from non-self-referential types just by looking at
-      // the strongly connected components. If a type is directly
-      // self-referential, mark it here so we don't miss it later.
-      if (child == curr) {
-        mark(curr);
-      }
-    }
-
-    if (minReachable[curr] == indices[curr]) {
-      // Curr doesn't have any back edges to an earlier element, so it is the
-      // root of the strongly connected component including itself and anything
-      // after it still on the stack. If this strongly connected component has
-      // more than one element, they are all self referential HeapTypes.
-      // Self-referential types with SCC size one were already accounted for.
-      if (stack.back() != curr) {
-        mark(curr);
-        while (stack.back() != curr) {
-          mark(stack.back());
-          stackElems.erase(stack.back());
-          stack.pop_back();
-        }
-      }
-      stack.pop_back();
-      stackElems.erase(curr);
-    }
-  };
-
-  for (auto& entry : builder.impl->entries) {
-    visit(entry.get());
-  }
-}
-
-std::vector<Canonicalizer::Item> Canonicalizer::getOrderedItems() {
-  // In order to canonicalize Types and HeapTypes without leaking any temporary
-  // types into the global type store, we need to canonicalize children before
-  // parents. In the case of recursive types, this is not possible due to cycles
-  // in the parent-child relation. In principle that can be overcome by
-  // canonicalizing type structures rather than type contents, but for now we
-  // instead cut corners and break the cycles by skipping canonicalization of
-  // self-referential HeapTypes. This works because the path from any Type or
-  // HeapType to itself in the parent-child relation must go through some
-  // self-referential HeapType; it is not possible to have a cycle composed only
-  // of Types, for example. In effect this means that we have a nominal type
-  // system for self-referential HeapTypes and a structural type system for
-  // everything else. Eventually we will have to implement something more
-  // consistent, but this is good enough for getting prototype toolchains up and
-  // running.
-
-  // TODO: None of this is particularly optimized. Benchmark to see if this is a
-  // significant bottleneck and investigate using better data structures and
-  // algorithms.
-
-  // Remove self-referential HeapTypes to cut cycles and collect the remaining
-  // types to be sorted.
-  auto childrenDAG = children;
-  std::unordered_set<TypeID> toSort;
-  for (auto& entry : builder.impl->entries) {
-    HeapType curr = entry.get();
-    if (isSelfReferential(curr)) {
-      childrenDAG.erase(curr.getID());
-      for (auto& kv : childrenDAG) {
-        kv.second.erase(curr.getID());
-      }
-    } else {
-      toSort.insert(curr.getID());
-    }
-  }
-  for (auto& kv : childrenDAG) {
-    toSort.insert(kv.first);
-    for (auto& child : kv.second) {
-      toSort.insert(child);
-    }
-  }
-
-  // Topologically sort so that children come before their parents.
-  std::vector<TypeID> sorted;
-  std::unordered_set<TypeID> seen;
-  std::function<void(TypeID)> visit = [&](TypeID id) {
-    if (seen.count(id)) {
-      return;
-    }
-    // Push children of the current type before pushing the current type.
-    auto it = childrenDAG.find(id);
-    if (it != childrenDAG.end()) {
-      for (auto child : it->second) {
-        visit(child);
-      }
-    }
-    seen.insert(id);
-    sorted.push_back(id);
-  };
-  for (TypeID i : toSort) {
-    visit(i);
-  }
-
-  // Expand the ordered types into ordered type use sites.
-  std::vector<Item> items;
-  for (TypeID id : sorted) {
-    // IDs may be Types or HeapTypes, so just try both.
-    if (typeLocations.count(Type(id))) {
-      for (Type* loc : typeLocations[Type(id)]) {
-        items.emplace_back(loc);
-      }
-    } else {
-      for (HeapType* loc : heapTypeLocations[HeapType(id)]) {
-        items.emplace_back(loc);
-      }
-    }
-  }
-  return items;
-}
-
-template<typename T>
-void Canonicalizer::canonicalize(T* type,
-                                 std::unordered_map<T, T>& canonicals) {
-  auto it = canonicals.find(*type);
-  if (it != canonicals.end()) {
-    *type = it->second;
-  } else {
-    // Get the globally canonicalized version of the type
-    auto* info = MetaTypeInfo<T>::getInfo(*type);
-    T canonical = MetaTypeInfo<T>::globalStore.canonicalize(*info);
-    canonicals.insert({*type, canonical});
-    *type = canonical;
-  }
-}
-
 } // anonymous namespace
 
 std::vector<HeapType> TypeBuilder::build() {
-  return Canonicalizer(*this).results;
+  std::vector<HeapType> heapTypes;
+  for (auto& entry : impl->entries) {
+    assert(entry.initialized && "Cannot access uninitialized HeapType");
+    entry.info->isFinalized = true;
+    heapTypes.push_back(entry.get());
+  }
+
+  // Canonicalize the shape of the type definition graph.
+  ShapeCanonicalizer minimized(heapTypes);
+
+  // The shape of the definition graph is now canonicalized, but it is still
+  // comprised of temporary types and heap types. Get or create their globally
+  // canonical versions.
+  GlobalCanonicalizer globallyCanonical(minimized.infos);
+
+  // Map the original heap types to their minimized and globally canonical
+  // versions.
+  for (auto& type : heapTypes) {
+    type = globallyCanonical.results[minimized.partitionIndices[type]];
+  }
+
+  return heapTypes;
 }
 
 } // namespace wasm
@@ -1748,40 +2135,6 @@ public:
   }
 };
 
-size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
-  auto digest = wasm::hash(info.kind);
-  switch (info.kind) {
-    case wasm::TypeInfo::TupleKind:
-      wasm::rehash(digest, info.tuple);
-      return digest;
-    case wasm::TypeInfo::RefKind:
-      wasm::rehash(digest, info.ref.heapType);
-      wasm::rehash(digest, info.ref.nullable);
-      return digest;
-    case wasm::TypeInfo::RttKind:
-      wasm::rehash(digest, info.rtt);
-      return digest;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-size_t hash<wasm::HeapTypeInfo>::
-operator()(const wasm::HeapTypeInfo& info) const {
-  auto digest = wasm::hash(info.kind);
-  switch (info.kind) {
-    case wasm::HeapTypeInfo::SignatureKind:
-      wasm::rehash(digest, info.signature);
-      return digest;
-    case wasm::HeapTypeInfo::StructKind:
-      wasm::rehash(digest, info.struct_);
-      return digest;
-    case wasm::HeapTypeInfo::ArrayKind:
-      wasm::rehash(digest, info.array);
-      return digest;
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
 size_t hash<wasm::Type>::operator()(const wasm::Type& type) const {
   return wasm::hash(type.getID());
 }
@@ -1800,8 +2153,6 @@ size_t hash<wasm::Field>::operator()(const wasm::Field& field) const {
   auto digest = wasm::hash(field.type);
   wasm::rehash(digest, field.packedType);
   wasm::rehash(digest, field.mutable_);
-  // Note that the name is not hashed here - it is pure metadata for printing
-  // purposes only.
   return digest;
 }
 
