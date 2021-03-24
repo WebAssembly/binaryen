@@ -1014,17 +1014,16 @@ struct OptimizeInstructions
   // further optimizations later. For now, replace with a constant, but this
   // warrants more investigation. TODO
 
-    // First, check for a possible null which would prevent all other
-    // optimizations.
-    // (Note: if the spec had RefIsNonNull, instead of RefIsNull, then we could
-    // replace a ref_is_func whose input is (ref null func) with ref_is_non_null
-    // as only the null check would be needed. But as things are, we cannot do
-    // such a thing.)
-    // RefIsNull is a single byte
+  // First, check for a possible null which would prevent all other
+  // optimizations.
+  // (Note: if the spec had RefIsNonNull, instead of RefIsNull, then we could
+  // replace a ref_is_func whose input is (ref null func) with ref_is_non_null
+  // as only the null check would be needed. But as things are, we cannot do
+  // such a thing.)
+  // RefIsNull is a single byte
 
-//    if (curr->value->type.isNullable()) {
+  //    if (curr->value->type.isNullable()) {
   //  }
-
 
   void visitRefIs(RefIs* curr) {
     Builder builder(*getModule());
@@ -1034,11 +1033,8 @@ struct OptimizeInstructions
     if (curr->op == RefIsNull) {
       if (nonNull) {
         replaceCurrent(
-          builder.makeSequence(
-            builder.makeDrop(curr->value),
-            builder.makeConst(Literal::makeOne(Type::i32))
-          )
-        );
+          builder.makeSequence(builder.makeDrop(curr->value),
+                               builder.makeConst(Literal::makeOne(Type::i32))));
       }
       return;
     }
@@ -1051,23 +1047,16 @@ struct OptimizeInstructions
       if (nonNull) {
         // We know the entire result.
         replaceCurrent(
-          builder.makeSequence(
-            builder.makeDrop(curr->value),
-            builder.makeConst(Literal::makeFromInt32(result == GCTypeUtils::Success, Type::i32))
-          )
-        );
+          builder.makeSequence(builder.makeDrop(curr->value),
+                               builder.makeConst(Literal::makeFromInt32(
+                                 result == GCTypeUtils::Success, Type::i32))));
       } else {
         // The value may be null. Leave only a check for that.
         // Note that even after adding an eqz here we do not regress code size,
         // as RefIsNull is a single byte while the others are two. So we keep
         // code size identical while reducing work.
         curr->op = RefIsNull;
-        replaceCurrent(
-          builder.makeUnary(
-            EqZInt32,
-            curr
-          )
-        );
+        replaceCurrent(builder.makeUnary(EqZInt32, curr));
       }
     }
   }
@@ -1096,7 +1085,7 @@ struct OptimizeInstructions
       replaceCurrent(curr->value);
     }
 
-  // TODO: optimize an actual null (not just a possible null) into a trap
+    // TODO: optimize an actual null (not just a possible null) into a trap
   }
 
   Index getMaxBitsForLocal(LocalGet* get) {
