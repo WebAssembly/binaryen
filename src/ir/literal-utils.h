@@ -32,9 +32,22 @@ inline Expression* makeFromInt32(int32_t x, Type type, Module& wasm) {
 }
 
 inline bool canMakeZero(Type type) {
-  // We can make a "zero" - a 0, or a null, or a trivial rtt, etc. - for pretty
-  // much anything except a non-nullable reference type.
-  return !type.isRef() || type.isNullable();
+  if (type.isRef() && !type.isNullable()) {
+    return false;
+  }
+  if (type.isTuple()) {
+    for (auto t : type) {
+      if (!canMakeZero(t)) {
+        return false;
+      }
+    }
+  }
+  if (type.isFunction()) {
+    // Making a "zero" function is possible, but requires global knowledge - a
+    // function, and of the right type - so skip that.
+    return false;
+  }
+  return true;
 }
 
 inline Expression* makeZero(Type type, Module& wasm) {
