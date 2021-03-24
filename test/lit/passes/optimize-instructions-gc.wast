@@ -93,7 +93,7 @@
 
   ;; ref.as_non_null is not needed on a non-nullable value, and if something is
   ;; a func we don't need that either etc.
-  ;; CHECK:      (func $unneeded_as (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK:      (func $unneeded_as (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $struct)

@@ -1005,37 +1005,7 @@ struct OptimizeInstructions
     }
   }
 
-  enum RefEvaluationKind { IsFunc, IsData, IsI31 };
-
-  enum RefEvaluationResult {
-    // The result is not known at compile time.
-    Unknown,
-    // The evaluation is known to succeed (i.e., we find what we are looking
-    // for), or fail, at compile time.
-    Success,
-    Failure
-  };
-
-  // Evaluate a reference at compile time, checking if it is of a certain kind.
-  // This ignores nullability.
-  RefEvaluationResult evaluateRef(Expression* ref, RefEvaluationKind op) {
-    auto valueType = ref->type;
-
-    auto isFunc = valueType.isFunction();
-    auto isData = valueType.isData();
-    auto isI31 = valueType.getHeapType() == HeapType::i31;
-
-    if (isFunc || isData || isI31) {
-      // We know what this is at compile time.
-      return (op == IsFunc && isFunc) || (op == IsData && isData) ||
-                 (op == IsI31 && isI31)
-               ? Success
-               : Failure;
-    }
-
-    return Unknown;
-  }
-
+/*
   void visitRefIs(RefIs* curr) {
     // Optimization RefIs is not that obvious, since even if we know the result
     // evaluates to 0 or 1 then the replacement may not actually save code size,
@@ -1121,6 +1091,7 @@ struct OptimizeInstructions
       replaceCurrent(curr->value);
     }
   }
+*/
 
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
