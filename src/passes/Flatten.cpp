@@ -24,7 +24,7 @@
 #include <ir/effects.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
-#include "ir/type-updating.h"
+#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
