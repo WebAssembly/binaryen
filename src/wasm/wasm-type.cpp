@@ -80,16 +80,19 @@ struct HeapTypeInfo {
   // TypeBuilder interface, so hashing and equality use pointer identity.
   bool isFinalized = true;
   enum Kind {
+    BasicKind,
     SignatureKind,
     StructKind,
     ArrayKind,
   } kind;
   union {
+    HeapType::BasicHeapType basic;
     Signature signature;
     Struct struct_;
     Array array;
   };
 
+  HeapTypeInfo(HeapType::BasicHeapType basic) : kind(BasicKind), basic(basic) {}
   HeapTypeInfo(Signature sig) : kind(SignatureKind), signature(sig) {}
   HeapTypeInfo(const Struct& struct_) : kind(StructKind), struct_(struct_) {}
   HeapTypeInfo(Struct&& struct_)
@@ -323,6 +326,9 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
   switch (kind) {
+    case BasicKind:
+      new (&basic) auto(other.basic);
+      return;
     case SignatureKind:
       new (&signature) auto(other.signature);
       return;
@@ -338,6 +344,9 @@ HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
 
 HeapTypeInfo::~HeapTypeInfo() {
   switch (kind) {
+    case BasicKind:
+      basic.HeapType::~BasicHeapType();
+      return;
     case SignatureKind:
       signature.~Signature();
       return;
@@ -383,8 +392,11 @@ struct TypeStore : Store<TypeInfo> {
 };
 
 struct HeapTypeStore : Store<HeapTypeInfo> {
-  HeapType canonicalize(const HeapTypeInfo& other) {
-    return Store<HeapTypeInfo>::canonicalize(other);
+  HeapType canonicalize(const HeapTypeInfo& info) {
+    if (info.kind == HeapTypeInfo::BasicKind) {
+      return info.basic;
+    }
+    return Store<HeapTypeInfo>::canonicalize(info);
   }
   HeapType canonicalize(std::unique_ptr<HeapTypeInfo>&& info);
 };
@@ -430,6 +442,9 @@ typename Info::type_t Store<Info>::canonicalize(const Info& info) {
 }
 
 HeapType HeapTypeStore::canonicalize(std::unique_ptr<HeapTypeInfo>&& info) {
+  if (info->kind == HeapTypeInfo::BasicKind) {
+    return info->basic;
+  }
   std::lock_guard<std::mutex> lock(mutex);
   auto indexIt = typeIDs.find(std::cref(*info));
   if (indexIt != typeIDs.end()) {
@@ -985,6 +1000,8 @@ bool TypeComparator::lessThan(const HeapTypeInfo& a, const HeapTypeInfo& b) {
     return a.kind < b.kind;
   }
   switch (a.kind) {
+    case HeapTypeInfo::BasicKind:
+      return a.basic < b.basic;
     case HeapTypeInfo::SignatureKind:
       return lessThan(a.signature, b.signature);
     case HeapTypeInfo::StructKind:
@@ -1403,6 +1420,9 @@ size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
   }
   rehash(digest, info.kind);
   switch (info.kind) {
+    case HeapTypeInfo::BasicKind:
+      hash_combine(digest, wasm::hash(info.basic));
+      return digest;
     case HeapTypeInfo::SignatureKind:
       hash_combine(digest, hash(info.signature));
       return digest;
@@ -1515,6 +1535,8 @@ bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
     return false;
   }
   switch (a.kind) {
+    case HeapTypeInfo::BasicKind:
+      return a.basic == b.basic;
     case HeapTypeInfo::SignatureKind:
       return eq(a.signature, b.signature);
     case HeapTypeInfo::StructKind:
@@ -1593,24 +1615,41 @@ TypeBuilder::TypeBuilder(size_t n) {
 
 TypeBuilder::~TypeBuilder() = default;
 
+void TypeBuilder::grow(size_t n) {
+  assert(size() + n > size());
+  impl->entries.resize(size() + n);
+}
+
+size_t TypeBuilder::size() { return impl->entries.size(); }
+
+void TypeBuilder::setHeapType(size_t i, HeapType::BasicHeapType basic) {
+  assert(i < size() && "Index out of bounds");
+  impl->entries[i].set(basic);
+}
+
 void TypeBuilder::setHeapType(size_t i, Signature signature) {
-  assert(i < impl->entries.size() && "Index out of bounds");
+  assert(i < size() && "Index out of bounds");
   impl->entries[i].set(signature);
 }
 
 void TypeBuilder::setHeapType(size_t i, const Struct& struct_) {
-  assert(i < impl->entries.size() && "index out of bounds");
+  assert(i < size() && "index out of bounds");
   impl->entries[i].set(struct_);
 }
 
 void TypeBuilder::setHeapType(size_t i, Struct&& struct_) {
-  assert(i < impl->entries.size() && "index out of bounds");
+  assert(i < size() && "index out of bounds");
   impl->entries[i].set(std::move(struct_));
 }
 
 void TypeBuilder::setHeapType(size_t i, Array array) {
-  assert(i < impl->entries.size() && "index out of bounds");
+  assert(i < size() && "index out of bounds");
   impl->entries[i].set(array);
+}
+
+HeapType TypeBuilder::getTempHeapType(size_t i) {
+  assert(i < size() && "index out of bounds");
+  return impl->entries[i].get();
 }
 
 Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
@@ -1623,16 +1662,12 @@ Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
   }
 }
 
-Type TypeBuilder::getTempRefType(size_t i, Nullability nullable) {
-  assert(i < impl->entries.size() && "Index out of bounds");
-  return markTemp(
-    impl->typeStore.canonicalize(TypeInfo(impl->entries[i].get(), nullable)));
+Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
+  return markTemp(impl->typeStore.canonicalize(TypeInfo(type, nullable)));
 }
 
-Type TypeBuilder::getTempRttType(size_t i, uint32_t depth) {
-  assert(i < impl->entries.size() && "Index out of bounds");
-  return markTemp(
-    impl->typeStore.canonicalize(Rtt(depth, impl->entries[i].get())));
+Type TypeBuilder::getTempRttType(Rtt rtt) {
+  return markTemp(impl->typeStore.canonicalize(rtt));
 }
 
 namespace {
@@ -1871,6 +1906,8 @@ std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType heapType) {
   assert(!heapType.isBasic() && "Cannot have basic defined HeapType");
   auto* info = getHeapTypeInfo(heapType);
   switch (info->kind) {
+    case HeapTypeInfo::BasicKind:
+      return children;
     case HeapTypeInfo::SignatureKind:
       scanType(info->signature.params);
       scanType(info->signature.results);
@@ -2041,6 +2078,8 @@ void GlobalCanonicalizer::scanHeapType(HeapType* ht) {
 
   auto* info = getHeapTypeInfo(*ht);
   switch (info->kind) {
+    case HeapTypeInfo::BasicKind:
+      break;
     case HeapTypeInfo::SignatureKind:
       noteChild(*ht, &info->signature.params);
       noteChild(*ht, &info->signature.results);
