@@ -372,7 +372,9 @@ template<typename Info> struct Store {
   // Maps from constructed types to their canonical Type IDs.
   std::unordered_map<std::reference_wrapper<const Info>, uintptr_t> typeIDs;
 
+#ifndef NDEBUG
   bool isGlobalStore();
+#endif
 
   TypeID recordCanonical(std::unique_ptr<Info>&& info);
   typename Info::type_t canonicalize(const Info& info);
@@ -396,18 +398,24 @@ HeapTypeStore globalHeapTypeStore;
 template<typename T> struct MetaTypeInfo {};
 
 template<> struct MetaTypeInfo<Type> {
+#ifndef NDEBUG
   constexpr static TypeStore& globalStore = globalTypeStore;
+#endif
   static TypeInfo* getInfo(Type type) { return getTypeInfo(type); }
 };
 
 template<> struct MetaTypeInfo<HeapType> {
+#ifndef NDEBUG
   constexpr static HeapTypeStore& globalStore = globalHeapTypeStore;
+#endif
   static HeapTypeInfo* getInfo(HeapType ht) { return getHeapTypeInfo(ht); }
 };
 
+#ifndef NDEBUG
 template<typename Info> bool Store<Info>::isGlobalStore() {
   return this == &MetaTypeInfo<typename Info::type_t>::globalStore;
 }
+#endif
 
 template<typename Info>
 TypeID Store<Info>::recordCanonical(std::unique_ptr<Info>&& info) {
