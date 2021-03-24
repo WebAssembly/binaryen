@@ -93,18 +93,38 @@
 
   ;; ref.is_null is not needed on a non-nullable value, and if something is
   ;; a func we don't need that either etc. if we know the result
-  ;; CHECK:      (func $unneeded_as (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; CHECK:      (func $unneeded_is (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $func)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $data)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $i31)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_is
@@ -126,26 +146,33 @@
    )
   )
 
-  ;; similar to $unneeded_is, but the values are nullable.
+  ;; similar to $unneeded_is, but the values are nullable. we can at least
+  ;; leave just the null check.
   ;; CHECK:      (func $unneeded_is_null (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_non_null
+  ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_non_null
-  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_non_null
-  ;; CHECK-NEXT:    (local.get $data)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $data)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.is_non_null
-  ;; CHECK-NEXT:    (local.get $i31)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -155,7 +182,7 @@
    (param $data (ref null data))
    (param $i31 (ref null i31))
    (drop
-    (ref.is_non_null (local.get $struct))
+    (ref.is_null (local.get $struct))
    )
    (drop
     (ref.is_func (local.get $func))
@@ -168,30 +195,58 @@
    )
   )
   ;; similar to $unneeded_is, but the values are of mixed kind (is_func of
-  ;; data, etc.), so we know we will trap
-  ;; CHECK:      (func $unneeded_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; data, etc.). here if the input is nullable we must leave a null check, and
+  ;; if non-nullable then we know the full result.
+  ;; CHECK:      (func $unneeded_is_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
   ;; CHECK-NEXT:     (local.get $data)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
   ;; CHECK-NEXT:     (local.get $i31)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
   ;; CHECK-NEXT:     (local.get $func)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $data)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $i31)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $func)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -207,6 +262,15 @@
    )
    (drop
     (ref.is_i31 (local.get $func))
+   )
+   (drop
+    (ref.is_func (ref.as_non_null (local.get $data)))
+   )
+   (drop
+    (ref.is_data (ref.as_non_null (local.get $i31)))
+   )
+   (drop
+    (ref.is_i31 (ref.as_non_null (local.get $func)))
    )
   )
 
@@ -289,7 +353,7 @@
   )
   ;; similar to $unneeded_as, but the values are of mixed kind (as_func of
   ;; data, etc.), so we know we will trap
-  ;; CHECK:      (func $unneeded_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK:      (func $unneeded_as_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
