@@ -26,6 +26,7 @@
 #include <ir/bits.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
@@ -1030,15 +1031,14 @@ struct OptimizeInstructions
 
     auto nonNull = !curr->value->type.isNullable();
 
-    if (curr->op = RefIsNull) {
+    if (curr->op == RefIsNull) {
       if (nonNull) {
         replaceCurrent(
           builder.makeSequence(
             builder.makeDrop(curr->value),
-            Literal::makeOne(Type::i32)
+            builder.makeConst(Literal::makeOne(Type::i32))
           )
         );
-        anotherCycle = true;
       }
       return;
     }
@@ -1053,7 +1053,7 @@ struct OptimizeInstructions
         replaceCurrent(
           builder.makeSequence(
             builder.makeDrop(curr->value),
-            result == GCTypeUtils::Success ? Literal::makeOne(Type::i32) ? Literal::makeZero(Type::i32)
+            builder.makeConst(Literal::makeFromInt32(result == GCTypeUtils::Success, Type::i32))
           )
         );
       } else {
@@ -1069,10 +1069,10 @@ struct OptimizeInstructions
           )
         );
       }
-      anotherCycle = true;
     }
   }
 
+/*
   void visitRefAs(RefAs* curr) {
 
       // The value may be null. Unlike in RefIs and BrOn, we can still do useful
@@ -1118,6 +1118,7 @@ struct OptimizeInstructions
       replaceCurrent(curr->value);
     }
   }
+*/
 
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
