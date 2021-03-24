@@ -276,9 +276,7 @@ Type markTemp(Type type) {
   return type;
 }
 
-bool isTemp(Type type) {
-  return !type.isBasic() && getTypeInfo(type)->isTemp;
-}
+bool isTemp(Type type) { return !type.isBasic() && getTypeInfo(type)->isTemp; }
 
 bool isTemp(HeapType type) {
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;

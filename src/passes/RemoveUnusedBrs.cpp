@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
 #include <parsing.h>
@@ -386,51 +387,38 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       return;
     }
 
-    // If the type provides enough information we may be able to know if this
-    // br is taken or not. If so, the br_on* may be unneeded. First, check for a
-    // possible null which would prevent such an optimization.
+    // First, check for a possible null which would prevent all other
+    // optimizations.
+    // (Note: if the spec had BrOnNonNull, instead of BrOnNull, then we could
+    // replace a br_on_func whose input is (ref null func) with br_on_non_null,
+    // as only the null check would be needed. But as things are, we cannot do
+    // such a thing.)
     auto refType = curr->ref->type;
     if (refType.isNullable()) {
       return;
     }
 
-    // Nulls are not possible, so specialization may be achievable, either
-    // removing the br_on* entirely or replacing it with a br.
-    auto replaceWithBr = [&]() {
+    if (curr->op == BrOnNull) {
+      // This cannot be null, so the br is never taken, and the non-null value
+      // flows through.
+      replaceCurrent(curr->ref);
+      anotherCycle = true;
+      return;
+    }
+
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+    if (result == GCTypeUtils::Success) {
+      // The type is what we are looking for, so we can switch from BrOn to a
+      // simple br which is always taken.
       replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
       anotherCycle = true;
-    };
-
-    switch (curr->op) {
-      case BrOnNull: {
-        // This cannot be null, so the br is never taken, and the non-null value
-        // flows through.
-        replaceCurrent(curr->ref);
-        anotherCycle = true;
-        break;
-      }
-      case BrOnCast: {
-        // Casts can only be done at runtime, using RTTs.
-        break;
-      }
-      case BrOnFunc: {
-        if (refType.isFunction()) {
-          replaceWithBr();
-        }
-        break;
-      }
-      case BrOnData: {
-        if (refType.isData()) {
-          replaceWithBr();
-        }
-        break;
-      }
-      case BrOnI31: {
-        if (refType.getHeapType() == HeapType::i31) {
-          replaceWithBr();
-        }
-        break;
-      }
+    } else if (result == GCTypeUtils::Failure) {
+      // The type is not what we are looking for, so the branch is never taken,
+      // and the value just flows through.
+      replaceCurrent(curr->ref);
+      anotherCycle = true;
     }
   }
 
