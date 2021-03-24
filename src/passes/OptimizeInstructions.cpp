@@ -1007,7 +1007,7 @@ struct OptimizeInstructions
   }
 
   void visitRefIs(RefIs* curr) {
-    // Optimization RefIs is not that obvious, since even if we know the result
+    // Optimizating RefIs is not that obvious, since even if we know the result
     // evaluates to 0 or 1 then the replacement may not actually save code size,
     // since RefIsNull is a single byte (the others are 2), while adding a Const
     // of 0 would be two bytes. Other factors are that we can remove the input
