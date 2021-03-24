@@ -92,27 +92,19 @@
   )
 
   ;; ref.as_non_null is not needed on a non-nullable value, and if something is
-  ;; a func we don't need that either etc.
+  ;; a func we don't need that either etc., and can just return the value.
   ;; CHECK:      (func $unneeded_as (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $struct)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (local.get $func)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $func)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_data
-  ;; CHECK-NEXT:    (local.get $data)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $data)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_i31
-  ;; CHECK-NEXT:    (local.get $i31)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $i31)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_as
@@ -134,7 +126,8 @@
    )
   )
 
-  ;; similar to $unneeded_as, but the values are nullable
+  ;; similar to $unneeded_as, but the values are nullable. we can turn the
+  ;; more specific things into ref.as_non_null.
   ;; CHECK:      (func $unneeded_as_null (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
@@ -142,17 +135,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $func)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_data
+  ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $data)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_i31
+  ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $i31)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -176,25 +169,34 @@
    )
   )
   ;; similar to $unneeded_as, but the values are of mixed kind (as_func of
-  ;; data, etc.)
+  ;; data, etc.), so we know we will trap
   ;; CHECK:      (func $unneeded_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
-  ;; CHECK-NEXT:    (local.get $data)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $data)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_data
-  ;; CHECK-NEXT:    (local.get $i31)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_i31
-  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unneeded_bad_kinds
+  (func $unneeded_as_bad_kinds
    (param $func (ref null func))
    (param $data (ref null data))
    (param $i31 (ref null i31))
