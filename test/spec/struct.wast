@@ -108,7 +108,7 @@
 
 (assert_invalid
   (module
-    (type $vec (struct (field (ref func))))
+    (type $vec (struct (field i32)))
     (func $test
       (drop
         ;; too many arguments
@@ -116,12 +116,12 @@
       )
     )
   )
-  "invalid numbe of arguments to struct.new"
+  "invalid number of arguments to struct.new"
 )
 
 (assert_invalid
   (module
-    (type $vec (struct (field (ref func)) (field f64)))
+    (type $vec (struct (field i32) (field i32)))
     (func $test
       (drop
         ;; too few arguments
@@ -129,5 +129,5 @@
       )
     )
   )
-  "invalid numbe of arguments to struct.new"
+  "invalid number of arguments to struct.new"
 )
