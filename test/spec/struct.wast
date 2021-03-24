@@ -105,3 +105,29 @@
   )
   "invalid rtt"
 )
+
+(assert_invalid
+  (module
+    (type $vec (struct (field (ref func))))
+    (func $test
+      (drop
+        ;; too many arguments
+        (struct.new_with_rtt $vec (i32.const 1) (i32.const 2) (rtt.canon $vec))
+      )
+    )
+  )
+  "invalid numbe of arguments to struct.new"
+)
+
+(assert_invalid
+  (module
+    (type $vec (struct (field (ref func)) (field f64)))
+    (func $test
+      (drop
+        ;; too few arguments
+        (struct.new_with_rtt $vec (i32.const 1) (rtt.canon $vec))
+      )
+    )
+  )
+  "invalid numbe of arguments to struct.new"
+)
