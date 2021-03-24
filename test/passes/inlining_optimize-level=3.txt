@@ -28,7 +28,7 @@
   )
   (drop
    (block (result i32)
-    (block $__inlined_func$no-tooBig (result i32)
+    (block $__inlined_func$yes-big-but-single-use (result i32)
      (block (result i32)
       (nop)
       (nop)
