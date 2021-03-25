@@ -345,7 +345,6 @@ HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
 HeapTypeInfo::~HeapTypeInfo() {
   switch (kind) {
     case BasicKind:
-      basic.HeapType::~BasicHeapType();
       return;
     case SignatureKind:
       signature.~Signature();
