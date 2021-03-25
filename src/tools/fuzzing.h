@@ -2096,8 +2096,16 @@ private:
       if (oneIn(2) && type.isNullable()) {
         return builder.makeRefNull(type);
       }
-      if (type == Type::dataref) {
-        WASM_UNREACHABLE("TODO: dataref");
+      if (!type.isFunction()) {
+        // We don't know how to create an externref or GC data yet TODO
+        // For now, create a null, and if it must be non-null, cast it to such
+        // even though that traps at runtime.
+        auto nullable = Type(type.getHeapType(), Nullable);
+        Expression* ret = builder.makeRefNull(nullable);
+        if (!type.isNullable()) {
+          ret = builder.makeRefAs(RefAsNonNull, ret);
+        }
+        return ret;
       }
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
@@ -2115,12 +2123,9 @@ private:
       if (heapType.isSignature()) {
         sig = heapType.getSignature();
       } else {
-        // This is something like funcref or externref, and so the specific
-        // signature does not matter.
+        assert(heapType == HeapType::func);
+        // The specific signature does not matter.
         sig = Signature(Type::none, Type::none);
-        // When we set the type of the ref.func, it must be funcref and not
-        // externref or such.
-        type = Type::funcref;
       }
       auto* func = wasm.addFunction(builder.makeFunction(
         Names::getValidFunctionName(wasm, "ref_func_target"),
