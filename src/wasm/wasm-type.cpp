@@ -156,13 +156,13 @@ struct TypeBounder {
   Type getLeastUpperBound(Type a, Type b);
 
   // Return true and set `out` to be the LUB iff a LUB was found. The HeapType
-  // overload is exceptional because it is infallible.
+  // and Struct overloads are exceptional because they are infallible.
   bool lub(Type a, Type b, Type& out);
   HeapType lub(HeapType a, HeapType b);
   bool lub(const Tuple& a, const Tuple& b, Tuple& out);
   bool lub(const Field& a, const Field& b, Field& out);
   bool lub(const Signature& a, const Signature& b, Signature& out);
-  bool lub(const Struct& a, const Struct& b, Struct& out);
+  Struct lub(const Struct& a, const Struct& b);
   bool lub(const Array& a, const Array& b, Array& out);
   bool lub(const Rtt& a, const Rtt& b, Rtt& out);
 };
@@ -1122,8 +1122,8 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
     return true;
   }
   if (seen.count({a, b})) {
-    // We weren't able to disprove that a is a subtype of b since we last saw
-    // them, so the relation holds coinductively.
+    // We weren't able to disprove that a == b since we last saw them, so the
+    // relation holds coinductively.
     return true;
   }
   // Everything is a subtype of any.
@@ -1132,7 +1132,7 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   }
   // Various things are subtypes of eq.
   if (b == HeapType::eq) {
-    return a == HeapType::i31 || a.isArray() || a.isStruct();
+    return a == HeapType::i31 || a == HeapType::data || a.isData();
   }
   // Some are also subtypes of data.
   if (b == HeapType::data) {
@@ -1142,8 +1142,8 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (b == HeapType::func) {
     return a.isSignature();
   }
-  // As we recurse, we will coinductively assume that a is a subtype of b unless
-  // proven otherwise.
+  // As we recurse, we will coinductively assume that a == b unless proven
+  // otherwise.
   seen.insert({a, b});
   if (a.isSignature() && b.isSignature()) {
     return isSubType(a.getSignature(), b.getSignature());
@@ -1328,12 +1328,7 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
       return builder[index] = HeapType::func;
     }
   } else if (a.isStruct() && b.isStruct()) {
-    Struct struct_;
-    if (lub(a.getStruct(), b.getStruct(), struct_)) {
-      return builder[index] = std::move(struct_);
-    } else {
-      return builder[index] = HeapType::data;
-    }
+    return builder[index] = lub(a.getStruct(), b.getStruct());
   } else if (a.isArray() && b.isArray()) {
     Array array;
     if (lub(a.getArray(), b.getArray(), array)) {
@@ -1390,33 +1385,29 @@ bool TypeBounder::lub(const Field& a, const Field& b, Field& out) {
 }
 
 bool TypeBounder::lub(const Signature& a, const Signature& b, Signature& out) {
-  // TODO: Implement contravariance in parameters once V8 implements it. Until
-  // then, implementing it here could produce modules that V8 would not
-  // validate.
-  if (a.params != b.params) {
+  // TODO: Implement proper signature subtyping, covariant in results and
+  // contravariant in params, once V8 implements it.
+  if (a != b) {
     return false;
-  }
-  Type results;
-  if (lub(a.results, b.results, results)) {
-    out = Signature(a.params, results);
-    return true;
   } else {
-    return false;
+    out = a;
+    return true;
   }
 }
 
-bool TypeBounder::lub(const Struct& a, const Struct& b, Struct& out) {
+Struct TypeBounder::lub(const Struct& a, const Struct& b) {
+  Struct out;
   size_t numFields = std::min(a.fields.size(), b.fields.size());
-  out.fields.clear();
   for (size_t i = 0; i < numFields; ++i) {
     Field field;
     if (lub(a.fields[i], b.fields[i], field)) {
       out.fields.push_back(field);
     } else {
-      return false;
+      // Stop at the common prefix and ignore the rest.
+      break;
     }
   }
-  return true;
+  return out;
 }
 
 bool TypeBounder::lub(const Array& a, const Array& b, Array& out) {
