@@ -2115,8 +2115,8 @@ private:
       if (heapType.isSignature()) {
         sig = heapType.getSignature();
       } else {
-        assert(heapType == HeapType::func);
-        // The specific signature does not matter.
+        // This is something like funcref or externref, and so the specific
+        // signature does not matter.
         sig = Signature(Type::none, Type::none);
       }
       auto* func = wasm.addFunction(builder.makeFunction(
