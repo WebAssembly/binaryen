@@ -21,7 +21,7 @@
 //
 // Ensures each type has a name. This can be useful for debugging.
 //
-// TODO: keep existing useful (short-enough) names, and just replaces ones that
+// TODO: keep existing useful (short-enough) names, and just replace ones that
 //       are bothersome
 //
 
@@ -35,6 +35,8 @@ struct NameTypes : public Pass {
     std::vector<HeapType> types;
     std::unordered_map<HeapType, Index> typeIndices;
     ModuleUtils::collectHeapTypes(*module, types, typeIndices);
+
+    // Ensure simple names.
     size_t i = 0;
     for (auto& type : types) {
       module->typeNames[type].name = "type$" + std::to_string(i++);
