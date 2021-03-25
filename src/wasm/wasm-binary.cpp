@@ -1816,7 +1816,7 @@ void WasmBinaryBuilder::readTypes() {
         if (size_t(htCode) >= numTypes) {
           throwError("invalid type index: " + std::to_string(htCode));
         }
-        return builder.getTempRefType(size_t(htCode), nullability);
+        return builder.getTempRefType(builder[size_t(htCode)], nullability);
       }
       case BinaryConsts::EncodedType::rtt_n:
       case BinaryConsts::EncodedType::rtt: {
@@ -1826,7 +1826,7 @@ void WasmBinaryBuilder::readTypes() {
         if (size_t(htCode) >= numTypes) {
           throwError("invalid type index: " + std::to_string(htCode));
         }
-        return builder.getTempRttType(htCode, depth);
+        return builder.getTempRttType(Rtt(depth, builder[htCode]));
       }
       default:
         throwError("unexpected type index: " + std::to_string(typeCode));
@@ -1896,11 +1896,11 @@ void WasmBinaryBuilder::readTypes() {
     BYN_TRACE("read one\n");
     auto form = getS32LEB();
     if (form == BinaryConsts::EncodedType::Func) {
-      builder.setHeapType(i, readSignatureDef());
+      builder[i] = readSignatureDef();
     } else if (form == BinaryConsts::EncodedType::Struct) {
-      builder.setHeapType(i, readStructDef());
+      builder[i] = readStructDef();
     } else if (form == BinaryConsts::EncodedType::Array) {
-      builder.setHeapType(i, Array(readFieldDef()));
+      builder[i] = Array(readFieldDef());
     } else {
       throwError("bad type form " + std::to_string(form));
     }
