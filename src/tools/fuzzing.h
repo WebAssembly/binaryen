@@ -2110,9 +2110,18 @@ private:
         return builder.makeRefNull(type);
       }
       // Last resort: create a function.
+      auto heapType = type.getHeapType();
+      Signature sig;
+      if (heapType.isSignature()) {
+        sig = heapType.getSignature();
+      } else {
+        assert(heapType == HeapType::func);
+        // The specific signature does not matter.
+        sig = Signature(Type::none, Type::none);
+      }
       auto* func = wasm.addFunction(builder.makeFunction(
         Names::getValidFunctionName(wasm, "ref_func_target"),
-        type.getHeapType().getSignature(),
+        sig,
         {},
         builder.makeUnreachable()));
       return builder.makeRefFunc(func->name, type);
