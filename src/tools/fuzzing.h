@@ -2118,6 +2118,9 @@ private:
         // This is something like funcref or externref, and so the specific
         // signature does not matter.
         sig = Signature(Type::none, Type::none);
+        // When we set the type of the ref.func, it must be funcref and not
+        // externref or such.
+        type = Type::funcref;
       }
       auto* func = wasm.addFunction(builder.makeFunction(
         Names::getValidFunctionName(wasm, "ref_func_target"),
