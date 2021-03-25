@@ -673,8 +673,9 @@ private:
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
-      if (type.isRef() && !type.isNullable()) {
-        // We can't use a nullable type as a var, which is null-initialized.
+      if (!type.isDefaultable()) {
+        // We can't use a nondefaultable type as a var, as those must be
+        // initialized to some default value.
         continue;
       }
       funcContext->typeLocals[type].push_back(params.size() +
