@@ -248,8 +248,41 @@ void test_recursive() {
   }
 }
 
+void test_lub() {
+  std::cout << ";; Test LUBs\n";
+
+  auto LUB = [&](Type a, Type b) {
+    // std::cerr << "LUB of " << a << ", " << b << ": ";
+    Type lubAB = Type::getLeastUpperBound(a, b);
+    Type lubBA = Type::getLeastUpperBound(b, a);
+    assert(lubAB == lubBA);
+    // std::cerr << lubAB << "\n";
+    return lubAB;
+  };
+
+  {
+    // Basic Types
+    for (auto other : {Type::anyref, Type::eqref, Type::i31ref,
+                       Type::dataref, Type::funcref}) {
+      assert(LUB(Type::anyref, othero) == Type::anyref);
+    }
+    assert(LUB(Type::eqref, Type::funcref) == Type::anyref);
+    assert(LUB(Type::i31ref, Type::dataref) == Type(HeapType::eq, NonNullable));
+  }
+
+  {
+    // Nullable and non-nullable references
+    Type nullable(HeapType::any, Nullable);
+    Type nonNullable(HeapType::any, NonNullable);
+    assert(LUB(nullable, nullable) == nullable);
+    assert(LUB(nullable, nonNullable) == nullable);
+    assert(LUB(nonNullable, nonNullable) == nonNullable);
+  }
+}
+
 int main() {
   test_builder();
   test_canonicalization();
   test_recursive();
+  test_lub();
 }

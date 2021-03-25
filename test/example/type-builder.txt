@@ -46,3 +46,4 @@ After building types:
 (func (param anyref) (result (ref null ...1)))
 (func (param anyref) (result (ref null ...1)))
 
+;; Test LUBs

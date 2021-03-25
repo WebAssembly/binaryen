@@ -1291,7 +1291,7 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
         return HeapType::any;
       }
     case HeapType::i31:
-      if (b.isData()) {
+      if (b == HeapType::data || b.isData()) {
         return HeapType::eq;
       } else {
         return HeapType::any;
