@@ -269,8 +269,12 @@ void test_lub() {
 
   {
     // Basic Types
-    for (auto other : {Type::funcref, Type::externref, Type::anyref,
-                       Type::eqref, Type::i31ref, Type::dataref}) {
+    for (auto other : {Type::funcref,
+                       Type::externref,
+                       Type::anyref,
+                       Type::eqref,
+                       Type::i31ref,
+                       Type::dataref}) {
       assert(LUB(Type::anyref, other) == Type::anyref);
     }
     assert(LUB(Type::eqref, Type::funcref) == Type::anyref);
@@ -301,7 +305,8 @@ void test_lub() {
   {
     // Signatures incompatible in tuple size
     Type a(Signature(Type::none, {Type::anyref, Type::anyref}), Nullable);
-    Type b(Signature(Type::none, {Type::anyref, Type::anyref, Type::anyref}), Nullable);
+    Type b(Signature(Type::none, {Type::anyref, Type::anyref, Type::anyref}),
+           Nullable);
     assert(LUB(a, b) == Type::funcref);
   }
 
@@ -309,7 +314,8 @@ void test_lub() {
   //   // Covariance of function results
   //   Type a(Signature(Type::none, {Type::eqref, Type::funcref}), Nullable);
   //   Type b(Signature(Type::none, {Type::funcref, Type::eqref}), Nullable);
-  //   assert(LUB(a, b) == Type(Signature(Type::none, {Type::anyref, Type::anyref}), Nullable));
+  //   assert(LUB(a, b) == Type(Signature(Type::none, {Type::anyref,
+  //   Type::anyref}), Nullable));
   // }
 
   // TODO: Test contravariance in function parameters once that is supported.
@@ -353,30 +359,40 @@ void test_lub() {
   {
     // Width subtyping
     Type a(Struct({Field(Type::i32, Immutable)}), Nullable);
-    Type b(Struct({Field(Type::i32, Immutable), Field(Type::i32, Immutable)}), Nullable);
+    Type b(Struct({Field(Type::i32, Immutable), Field(Type::i32, Immutable)}),
+           Nullable);
     assert(LUB(a, b) == a);
   }
 
   {
     // Width subtyping with different suffixes
-    Type a(Struct({Field(Type::i32, Immutable), Field(Type::i64, Immutable)}), Nullable);
-    Type b(Struct({Field(Type::i32, Immutable), Field(Type::f32, Immutable)}), Nullable);
+    Type a(Struct({Field(Type::i32, Immutable), Field(Type::i64, Immutable)}),
+           Nullable);
+    Type b(Struct({Field(Type::i32, Immutable), Field(Type::f32, Immutable)}),
+           Nullable);
     Type lub(Struct({Field(Type::i32, Immutable)}), Nullable);
     assert(LUB(a, b) == lub);
   }
 
   {
     // Width and depth subtyping with different suffixes
-    Type a(Struct({Field(Type::eqref, Immutable), Field(Type::i64, Immutable)}), Nullable);
-    Type b(Struct({Field(Type::funcref, Immutable), Field(Type::f32, Immutable)}), Nullable);
+    Type a(Struct({Field(Type::eqref, Immutable), Field(Type::i64, Immutable)}),
+           Nullable);
+    Type b(
+      Struct({Field(Type::funcref, Immutable), Field(Type::f32, Immutable)}),
+      Nullable);
     Type lub(Struct({Field(Type::anyref, Immutable)}), Nullable);
     assert(LUB(a, b) == lub);
   }
 
   {
     // No common prefix
-    Type a(Struct({Field(Type::i32, Immutable), Field(Type::anyref, Immutable)}), Nullable);
-    Type b(Struct({Field(Type::f32, Immutable), Field(Type::anyref, Immutable)}), Nullable);
+    Type a(
+      Struct({Field(Type::i32, Immutable), Field(Type::anyref, Immutable)}),
+      Nullable);
+    Type b(
+      Struct({Field(Type::f32, Immutable), Field(Type::anyref, Immutable)}),
+      Nullable);
     Type lub(Struct(), Nullable);
     assert(LUB(a, b) == lub);
   }
@@ -397,15 +413,18 @@ void test_lub() {
     TypeBuilder builder(2);
     Type tempA = builder.getTempRefType(builder[0], Nullable);
     Type tempB = builder.getTempRefType(builder[1], Nullable);
-    builder[0] = Struct({Field(tempB, Immutable), Field(Type::eqref, Immutable)});
-    builder[1] = Struct({Field(tempA, Immutable), Field(Type::funcref, Immutable)});
+    builder[0] =
+      Struct({Field(tempB, Immutable), Field(Type::eqref, Immutable)});
+    builder[1] =
+      Struct({Field(tempA, Immutable), Field(Type::funcref, Immutable)});
     auto built = builder.build();
     Type a(built[0], Nullable);
     Type b(built[1], Nullable);
 
     TypeBuilder lubBuilder(1);
     Type tempLub = builder.getTempRefType(lubBuilder[0], Nullable);
-    lubBuilder[0] = Struct({Field(tempLub, Immutable), Field(Type::anyref, Immutable)});
+    lubBuilder[0] =
+      Struct({Field(tempLub, Immutable), Field(Type::anyref, Immutable)});
     built = lubBuilder.build();
     Type lub(built[0], Nullable);
 

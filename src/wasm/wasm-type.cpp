@@ -1249,7 +1249,7 @@ bool TypeBounder::lub(Type a, Type b, Type& out) {
     return true;
   } else if (a.isRef() && b.isRef()) {
     auto nullability =
-        (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
+      (a.isNullable() || b.isNullable()) ? Nullable : NonNullable;
     HeapType heapType = lub(a.getHeapType(), b.getHeapType());
     out = builder.getTempRefType(heapType, nullability);
     return true;
@@ -1274,43 +1274,43 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
   }
   if (a.isBasic()) {
     switch (a.getBasic()) {
-    case HeapType::func:
-      if (b.isFunction()) {
-        return HeapType::func;
-      } else {
+      case HeapType::func:
+        if (b.isFunction()) {
+          return HeapType::func;
+        } else {
+          return HeapType::any;
+        }
+      case HeapType::ext:
         return HeapType::any;
-      }
-    case HeapType::ext:
-      return HeapType::any;
-    case HeapType::any:
-      return HeapType::any;
-    case HeapType::eq:
-      if (b == HeapType::i31 || b.isData()) {
-        return HeapType::eq;
-      } else {
+      case HeapType::any:
         return HeapType::any;
-      }
-    case HeapType::i31:
-      if (b == HeapType::data || b.isData()) {
-        return HeapType::eq;
-      } else {
-        return HeapType::any;
-      }
-    case HeapType::data:
-      if (b.isData()) {
-        return HeapType::data;
-      } else if (b == HeapType::i31) {
-        return HeapType::eq;
-      } else {
-        return HeapType::any;
-      }
+      case HeapType::eq:
+        if (b == HeapType::i31 || b.isData()) {
+          return HeapType::eq;
+        } else {
+          return HeapType::any;
+        }
+      case HeapType::i31:
+        if (b == HeapType::data || b.isData()) {
+          return HeapType::eq;
+        } else {
+          return HeapType::any;
+        }
+      case HeapType::data:
+        if (b.isData()) {
+          return HeapType::data;
+        } else if (b == HeapType::i31) {
+          return HeapType::eq;
+        } else {
+          return HeapType::any;
+        }
     }
   }
   // Allocate a new slot to construct the LUB of this pair if we have not
   // already seen it before. Canonicalize the pair to have the element with the
   // smaller ID first since order does not matter.
   auto pair =
-      a.getID() < b.getID() ? std::make_pair(a, b) : std::make_pair(b, a);
+    a.getID() < b.getID() ? std::make_pair(a, b) : std::make_pair(b, a);
   size_t index = builder.size();
   auto result = indices.insert({pair, index});
   if (result.second) {
@@ -1422,7 +1422,6 @@ bool TypeBounder::lub(const Rtt& a, const Rtt& b, Rtt& out) {
   out = Rtt(depth, a.heapType);
   return true;
 }
-
 
 template<typename T, typename F>
 std::ostream& TypePrinter::printChild(T curr, F printer) {
