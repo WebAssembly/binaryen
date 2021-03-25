@@ -86,8 +86,8 @@ inline void verifyFlatness(Function* func) {
                "set values cannot be control flow");
       } else {
         for (auto* child : ChildIterator(curr)) {
-          bool isRefAsNonNull = child->is<RefAs>() &&
-                                child->cast<RefAs>()->op == RefAsNonNull;
+          bool isRefAsNonNull =
+            child->is<RefAs>() && child->cast<RefAs>()->op == RefAsNonNull;
           verify(Properties::isConstantExpression(child) ||
                    child->is<LocalGet>() || child->is<Unreachable>() ||
                    isRefAsNonNull,
