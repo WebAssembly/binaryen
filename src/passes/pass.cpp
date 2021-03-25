@@ -217,6 +217,7 @@ void PassRegistry::registerPasses() {
                "apply the assumption that asyncify never unwinds",
                createModAsyncifyNeverUnwindPass);
   registerPass("nm", "name list", createNameListPass);
+  registerPass("name-types", "(re)name all heap types", createNameTypesPass);
   registerPass("no-exit-runtime",
                "removes calls to atexit(), which is valid if the C runtime "
                "will never be exited",
