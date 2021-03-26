@@ -1995,9 +1995,15 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
-  shouldBeTrue(curr->type.isFunction(),
-               curr,
-               "ref.func must have a function reference type");
+  if (shouldBeTrue(curr->type.isFunction() &&
+                   curr->type.getHeapType().isSignature(),
+                   curr,
+                   "ref.func must have a function reference type")) {
+    shouldBeEqual(curr->type.getHeapType().getSignature(),
+                  func->sig,
+                  curr,
+                  "ref.func must have the right type");
+  }
   // TODO: check for non-nullability
 }
 

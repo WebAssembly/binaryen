@@ -279,6 +279,7 @@ struct DAE : public Pass {
     for (auto& func : module->functions) {
       infoMap[func->name];
     }
+    DAEScanner scanner(&infoMap);
     // Check the influence of the table and exports.
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
@@ -287,8 +288,12 @@ struct DAE : public Pass {
     }
     ElementUtils::iterAllElementFunctionNames(
       module, [&](Name name) { infoMap[name].hasUnseenCalls = true; });
+    // Check the influence of globals.
+    ModuleUtils::iterDefinedGlobals(*module, [&](Global* glob) {
+      scanner.walk(glob->init);
+    });
     // Scan all the functions.
-    DAEScanner(&infoMap).run(runner, module);
+    scanner.run(runner, module);
     // Combine all the info.
     std::unordered_map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
