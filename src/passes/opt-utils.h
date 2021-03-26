@@ -21,6 +21,7 @@
 #include <unordered_set>
 
 #include <ir/element-utils.h>
+#include <ir/module-utils.h>
 #include <pass.h>
 #include <wasm.h>
 
@@ -88,6 +89,10 @@ inline void replaceFunctions(PassRunner* runner,
   FunctionRefReplacer(maybeReplace).run(runner, &module);
   // replace in table
   ElementUtils::iterAllElementFunctionNames(&module, maybeReplace);
+  // replace in globals
+  ModuleUtils::iterDefinedGlobals(module, [&](Global* glob) {
+    FunctionRefReplacer(maybeReplace).walk(glob->init);
+  });
 
   // replace in start
   if (module.start.is()) {
