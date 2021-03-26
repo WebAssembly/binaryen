@@ -934,8 +934,14 @@ private:
     // Pick a chance to fuzz the contents of a function.
     const int RESOLUTION = 10;
     auto chance = upTo(RESOLUTION + 1);
+    // Do not iterate on wasm.functions itself, as we may add to it as we go
+    // through the functions (make() can add new functions to implement a
+    // RefFunc).
+    std::vector<Function*> functions;
     for (auto& ref : wasm.functions) {
-      auto* func = ref.get();
+      functions.push_back(ref.get());
+    }
+    for (auto* func : functions) {
       FunctionCreationContext context(*this, func);
       if (func->imported()) {
         // We can't allow extra imports, as the fuzzing infrastructure wouldn't
