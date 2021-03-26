@@ -45,6 +45,7 @@ set(passes_SOURCES
   Metrics.cpp
   MinifyImportsAndExports.cpp
   NameList.cpp
+  NameTypes.cpp
   NoExitRuntime.cpp
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp

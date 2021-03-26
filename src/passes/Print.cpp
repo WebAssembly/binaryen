@@ -31,7 +31,8 @@ namespace wasm {
 static std::ostream& printExpression(Expression* expression,
                                      std::ostream& o,
                                      bool minify = false,
-                                     bool full = false);
+                                     bool full = false,
+                                     Module* wasm = nullptr);
 
 static std::ostream&
 printStackInst(StackInst* inst, std::ostream& o, Function* func = nullptr);
@@ -2704,6 +2705,18 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (curr->data.empty()) {
       return;
     }
+    bool allElementsRefFunc =
+      std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
+        return entry->is<RefFunc>();
+      });
+    auto printElemType = [&]() {
+      if (allElementsRefFunc) {
+        TypeNamePrinter(o, currModule).print(HeapType::func);
+      } else {
+        TypeNamePrinter(o, currModule).print(Type::funcref);
+      }
+    };
+
     doIndent(o, indent);
     o << '(';
     printMedium(o, "elem");
@@ -2714,7 +2727,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
     if (curr->table.is()) {
       // TODO(reference-types): check for old-style based on the complete spec
-      if (currModule->tables.size() > 1) {
+      if (!allElementsRefFunc || currModule->tables.size() > 1) {
         // tableuse
         o << " (table ";
         printName(curr->table, o);
@@ -2724,18 +2737,26 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ' ';
       visit(curr->offset);
 
-      if (currModule->tables.size() > 1) {
+      if (!allElementsRefFunc || currModule->tables.size() > 1) {
         o << ' ';
-        TypeNamePrinter(o, currModule).print(HeapType::func);
+        printElemType();
       }
     } else {
       o << ' ';
-      TypeNamePrinter(o, currModule).print(HeapType::func);
+      printElemType();
     }
 
-    for (auto name : curr->data) {
-      o << ' ';
-      printName(name, o);
+    if (allElementsRefFunc) {
+      for (auto* entry : curr->data) {
+        auto* refFunc = entry->cast<RefFunc>();
+        o << ' ';
+        printName(refFunc->func, o);
+      }
+    } else {
+      for (auto* entry : curr->data) {
+        o << ' ';
+        printExpression(entry, o);
+      }
     }
     o << ')' << maybeNewLine;
   }
@@ -3019,13 +3040,15 @@ Pass* createPrintStackIRPass() { return new PrintStackIR(); }
 static std::ostream& printExpression(Expression* expression,
                                      std::ostream& o,
                                      bool minify,
-                                     bool full) {
+                                     bool full,
+                                     Module* wasm) {
   if (!expression) {
     o << "(null expression)";
     return o;
   }
   PrintSExpression print(o);
   print.setMinify(minify);
+  print.currModule = wasm;
   if (full || isFullForced()) {
     print.setFull(true);
     o << "[" << expression->type << "] ";
@@ -3193,6 +3216,10 @@ std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
 
 std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
   return wasm::printExpression(expression, o);
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
+  return wasm::printExpression(pair.second, o, false, false, &pair.first);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {

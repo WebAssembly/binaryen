@@ -35,22 +35,25 @@ template<typename T,
          typename std::enable_if<!std::is_base_of<
            Expression,
            typename std::remove_pointer<T>::type>::value>::type* = nullptr>
-inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
+inline std::ostream&
+printModuleComponent(T curr, std::ostream& stream, Module& wasm) {
   stream << curr << std::endl;
   return stream;
 }
 
 // Extra overload for Expressions, to print their contents.
-inline std::ostream& printModuleComponent(Expression* curr,
-                                          std::ostream& stream) {
+inline std::ostream&
+printModuleComponent(Expression* curr, std::ostream& stream, Module& wasm) {
   if (curr) {
-    stream << *curr << '\n';
+    stream << ModuleExpression(wasm, curr) << '\n';
   }
   return stream;
 }
 
 // For parallel validation, we have a helper struct for coordination
 struct ValidationInfo {
+  Module& wasm;
+
   bool validateWeb;
   bool validateGlobally;
   bool quiet;
@@ -63,7 +66,7 @@ struct ValidationInfo {
   std::mutex mutex;
   std::unordered_map<Function*, std::unique_ptr<std::ostringstream>> outputs;
 
-  ValidationInfo() { valid.store(true); }
+  ValidationInfo(Module& wasm) : wasm(wasm) { valid.store(true); }
 
   std::ostringstream& getStream(Function* func) {
     std::unique_lock<std::mutex> lock(mutex);
@@ -86,7 +89,7 @@ struct ValidationInfo {
     }
     auto& ret = printFailureHeader(func);
     ret << text << ", on \n";
-    return printModuleComponent(curr, ret);
+    return printModuleComponent(curr, ret, wasm);
   }
 
   std::ostream& printFailureHeader(Function* func) {
@@ -1960,7 +1963,10 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
 }
 
 void FunctionValidator::visitRefNull(RefNull* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+  // If we are not in a function, this is a global location like a table. We
+  // allow RefNull there as we represent tables that way regardless of what
+  // features are enabled.
+  shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.null requires reference-types to be enabled");
   shouldBeTrue(
@@ -1978,7 +1984,10 @@ void FunctionValidator::visitRefIs(RefIs* curr) {
 }
 
 void FunctionValidator::visitRefFunc(RefFunc* curr) {
-  shouldBeTrue(getModule()->features.hasReferenceTypes(),
+  // If we are not in a function, this is a global location like a table. We
+  // allow RefFunc there as we represent tables that way regardless of what
+  // features are enabled.
+  shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
                curr,
                "ref.func requires reference-types to be enabled");
   if (!info.validateGlobally) {
@@ -2293,12 +2302,17 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                    "struct.new_with_default value type must be defaultable");
     }
   } else {
-    // All the fields must have the proper type.
-    for (Index i = 0; i < fields.size(); i++) {
-      shouldBeSubType(curr->operands[i]->type,
-                      fields[i].type,
+    if (shouldBeEqual(curr->operands.size(),
+                      fields.size(),
                       curr,
-                      "struct.new operand must have proper type");
+                      "struct.new must have the right number of operands")) {
+      // All the fields must have the proper type.
+      for (Index i = 0; i < fields.size(); i++) {
+        shouldBeSubType(curr->operands[i]->type,
+                        fields[i].type,
+                        curr,
+                        "struct.new operand must have proper type");
+      }
     }
   }
 }
@@ -2799,11 +2813,29 @@ static void validateMemory(Module& module, ValidationInfo& info) {
 }
 
 static void validateTables(Module& module, ValidationInfo& info) {
+  FunctionValidator validator(module, &info);
+
   if (!module.features.hasReferenceTypes()) {
     info.shouldBeTrue(module.tables.size() <= 1,
                       "table",
                       "Only 1 table definition allowed in MVP (requires "
                       "--enable-reference-types)");
+    if (!module.tables.empty()) {
+      auto& table = module.tables.front();
+      for (auto& segment : module.elementSegments) {
+        info.shouldBeTrue(segment->table == table->name,
+                          "elem",
+                          "all element segments should refer to a single table "
+                          "in MVP.");
+        for (auto* expr : segment->data) {
+          info.shouldBeTrue(
+            expr->is<RefFunc>(),
+            expr,
+            "all table elements must be non-null funcrefs in MVP.");
+          validator.validate(expr);
+        }
+      }
+    }
   }
 
   for (auto& segment : module.elementSegments) {
@@ -2820,11 +2852,17 @@ static void validateTables(Module& module, ValidationInfo& info) {
                                            table->initial * Table::kPageSize),
                         segment->offset,
                         "table segment offset should be reasonable");
-      FunctionValidator(module, &info).validate(segment->offset);
+      validator.validate(segment->offset);
     }
-    for (auto name : segment->data) {
-      info.shouldBeTrue(
-        module.getFunctionOrNull(name), name, "segment name should be valid");
+    // Avoid double checking items
+    if (module.features.hasReferenceTypes()) {
+      for (auto* expr : segment->data) {
+        info.shouldBeTrue(
+          expr->is<RefFunc>() || expr->is<RefNull>(),
+          expr,
+          "element segment items must be either ref.func or ref.null func.");
+        validator.validate(expr);
+      }
     }
   }
 }
@@ -2885,7 +2923,7 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
 // then Using PassRunner::getPassDebug causes a circular dependence. We should
 // fix that, perhaps by moving some of the pass infrastructure into libsupport.
 bool WasmValidator::validate(Module& module, Flags flags) {
-  ValidationInfo info;
+  ValidationInfo info(module);
   info.validateWeb = (flags & Web) != 0;
   info.validateGlobally = (flags & Globally) != 0;
   info.quiet = (flags & Quiet) != 0;

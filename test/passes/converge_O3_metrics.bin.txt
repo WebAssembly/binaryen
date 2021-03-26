@@ -7,7 +7,7 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
- [total]        : 129     
+ [total]        : 558     
  [vars]         : 4       
  Binary         : 12      
  Block          : 8       
@@ -23,6 +23,7 @@ total
  LocalGet       : 18      
  LocalSet       : 7       
  Loop           : 1       
+ RefFunc        : 429     
  Store          : 5       
 (module
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
@@ -249,7 +250,7 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
- [total]        : 129     
+ [total]        : 558     
  [vars]         : 4       
  Binary         : 12      
  Block          : 8       
@@ -265,6 +266,7 @@ total
  LocalGet       : 18      
  LocalSet       : 7       
  Loop           : 1       
+ RefFunc        : 429     
  Store          : 5       
 (module
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))

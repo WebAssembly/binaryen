@@ -499,28 +499,70 @@ struct TypeBuilder {
   std::unique_ptr<Impl> impl;
 
   TypeBuilder(size_t n);
+  TypeBuilder() : TypeBuilder(0) {}
   ~TypeBuilder();
 
   TypeBuilder(TypeBuilder& other) = delete;
   TypeBuilder(TypeBuilder&& other) = delete;
   TypeBuilder& operator=(TypeBuilder&) = delete;
 
+  // Append `n` new uninitialized HeapType slots to the end of the TypeBuilder.
+  void grow(size_t n);
+
+  // The number of HeapType slots in the TypeBuilder.
+  size_t size();
+
   // Sets the heap type at index `i`. May only be called before `build`.
+  void setHeapType(size_t i, HeapType::BasicHeapType basic);
   void setHeapType(size_t i, Signature signature);
   void setHeapType(size_t i, const Struct& struct_);
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
 
+  // Gets the temporary HeapType at index `i`. This HeapType should only be used
+  // to construct temporary Types using the methods below.
+  HeapType getTempHeapType(size_t i);
+
   // Gets a temporary type or heap type for use in initializing the
-  // TypeBuilder's HeapTypes. Temporary Ref and Rtt types are backed by the
-  // HeapType at index `i`.
+  // TypeBuilder's HeapTypes. For Ref and Rtt types, the HeapType may be a
+  // temporary HeapType owned by this builder or a canonical HeapType. HeapType
   Type getTempTupleType(const Tuple&);
-  Type getTempRefType(size_t i, Nullability nullable);
-  Type getTempRttType(size_t i, uint32_t depth);
+  Type getTempRefType(HeapType heapType, Nullability nullable);
+  Type getTempRttType(Rtt rtt);
 
   // Canonicalizes and returns all of the heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`.
   std::vector<HeapType> build();
+
+  // Utility for ergonomically using operator[] instead of explicit setHeapType
+  // and getTempHeapType methods.
+  struct Entry {
+    TypeBuilder& builder;
+    size_t index;
+    operator HeapType() const { return builder.getTempHeapType(index); }
+    Entry& operator=(HeapType::BasicHeapType basic) {
+      builder.setHeapType(index, basic);
+      return *this;
+    }
+    Entry& operator=(Signature signature) {
+      builder.setHeapType(index, signature);
+      return *this;
+    }
+    Entry& operator=(const Struct& struct_) {
+      builder.setHeapType(index, struct_);
+      return *this;
+    }
+    Entry& operator=(Struct&& struct_) {
+      builder.setHeapType(index, std::move(struct_));
+      return *this;
+    }
+    Entry& operator=(Array array) {
+      builder.setHeapType(index, array);
+      return *this;
+    }
+  };
+
+  Entry operator[](size_t i) { return Entry{*this, i}; }
 };
 
 std::ostream& operator<<(std::ostream&, Type);

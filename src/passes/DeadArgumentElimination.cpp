@@ -39,6 +39,7 @@
 
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
@@ -284,11 +285,8 @@ struct DAE : public Pass {
         infoMap[curr->value].hasUnseenCalls = true;
       }
     }
-    for (auto& segment : module->elementSegments) {
-      for (auto name : segment->data) {
-        infoMap[name].hasUnseenCalls = true;
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(
+      module, [&](Name name) { infoMap[name].hasUnseenCalls = true; });
     // Scan all the functions.
     DAEScanner(&infoMap).run(runner, module);
     // Combine all the info.
