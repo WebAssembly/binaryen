@@ -416,7 +416,8 @@ struct Field {
   } packedType; // applicable iff type=i32
   Mutability mutable_;
 
-  Field() = default;
+  // Arbitrary defaults for convenience.
+  Field() : type(Type::i32), packedType(not_packed), mutable_(Mutable) {}
   Field(Type type, Mutability mutable_)
     : type(type), packedType(not_packed), mutable_(mutable_) {}
   Field(PackedType packedType, Mutability mutable_)

@@ -155,8 +155,12 @@ struct TypeBounder {
   bool hasLeastUpperBound(Type a, Type b);
   Type getLeastUpperBound(Type a, Type b);
 
+private:
   // Return true and set `out` to be the LUB iff a LUB was found. The HeapType
-  // and Struct overloads are exceptional because they are infallible.
+  // and Struct overloads are exceptional because they are infallible;
+  // HeapType::any is an upper bound of all HeapTypes and the empty struct is an
+  // upper bound of all struct types. Note that these methods can return
+  // temporary types, so they should never be used directly.
   bool lub(Type a, Type b, Type& out);
   HeapType lub(HeapType a, HeapType b);
   bool lub(const Tuple& a, const Tuple& b, Tuple& out);
@@ -1221,7 +1225,8 @@ Type TypeBounder::getLeastUpperBound(Type a, Type b) {
   }
   // `tempLUB` is a temporary type owned by `builder`. Since TypeBuilder::build
   // returns HeapTypes rather than Types, create a new HeapType definition meant
-  // only to get `tempLUB` canonicalized in a known location.
+  // only to get `tempLUB` canonicalized in a known location. The use of an
+  // Array is arbitrary; it might as well have been a Struct.
   builder.grow(1);
   builder[builder.size() - 1] = Array(Field(tempLUB, Mutable));
   return builder.build().back().getArray().element.type;
