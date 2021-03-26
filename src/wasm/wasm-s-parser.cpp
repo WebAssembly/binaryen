@@ -691,13 +691,13 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     auto& referent = nullable ? *elem[2] : *elem[1];
     const char* name = referent.c_str();
     if (referent.dollared()) {
-      return builder.getTempRefType(typeIndices[name], nullable);
+      return builder.getTempRefType(builder[typeIndices[name]], nullable);
     } else if (String::isNumber(name)) {
       size_t index = atoi(name);
       if (index >= numTypes) {
         throw ParseException("invalid type index", elem.line, elem.col);
       }
-      return builder.getTempRefType(index, nullable);
+      return builder.getTempRefType(builder[index], nullable);
     } else {
       return Type(stringToHeapType(name), nullable);
     }
@@ -725,12 +725,15 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
         break;
     }
     if (idx->dollared()) {
-      return builder.getTempRttType(typeIndices[idx->c_str()], depth);
+      HeapType type = builder[typeIndices[idx->c_str()]];
+      return builder.getTempRttType(Rtt(depth, type));
     } else if (String::isNumber(idx->c_str())) {
-      return builder.getTempRttType(atoi(idx->c_str()), depth);
-    } else {
-      throw ParseException("invalid type index", idx->line, idx->col);
+      size_t index = atoi(idx->c_str());
+      if (index < numTypes) {
+        return builder.getTempRttType(Rtt(depth, builder[index]));
+      }
     }
+    throw ParseException("invalid type index", idx->line, idx->col);
   };
 
   auto parseValType = [&](Element& elem) {
@@ -840,12 +843,12 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
     if (kind == FUNC) {
-      builder.setHeapType(index++, parseSignatureDef(def));
+      builder[index++] = parseSignatureDef(def);
     } else if (kind == STRUCT) {
-      builder.setHeapType(index, parseStructDef(def, index));
+      builder[index] = parseStructDef(def, index);
       index++;
     } else if (kind == ARRAY) {
-      builder.setHeapType(index++, parseArrayDef(def));
+      builder[index++] = parseArrayDef(def);
     } else {
       throw ParseException("unknown heaptype kind", kind.line, kind.col);
     }

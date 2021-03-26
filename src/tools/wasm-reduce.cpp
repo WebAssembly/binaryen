@@ -347,7 +347,13 @@ struct Reducer
   void loadWorking() {
     module = make_unique<Module>();
     ModuleReader reader;
-    reader.read(working, *module);
+    try {
+      reader.read(working, *module);
+    } catch (ParseException& p) {
+      p.dump(std::cerr);
+      std::cerr << '\n';
+      Fatal() << "error in parsing working wasm binary";
+    }
     // If there is no features section, assume we may need them all (without
     // this, a module with no features section but that uses e.g. atomics and
     // bulk memory would not work).

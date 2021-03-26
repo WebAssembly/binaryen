@@ -31,7 +31,8 @@ namespace wasm {
 static std::ostream& printExpression(Expression* expression,
                                      std::ostream& o,
                                      bool minify = false,
-                                     bool full = false);
+                                     bool full = false,
+                                     Module* wasm = nullptr);
 
 static std::ostream&
 printStackInst(StackInst* inst, std::ostream& o, Function* func = nullptr);
@@ -3039,13 +3040,15 @@ Pass* createPrintStackIRPass() { return new PrintStackIR(); }
 static std::ostream& printExpression(Expression* expression,
                                      std::ostream& o,
                                      bool minify,
-                                     bool full) {
+                                     bool full,
+                                     Module* wasm) {
   if (!expression) {
     o << "(null expression)";
     return o;
   }
   PrintSExpression print(o);
   print.setMinify(minify);
+  print.currModule = wasm;
   if (full || isFullForced()) {
     print.setFull(true);
     o << "[" << expression->type << "] ";
@@ -3213,6 +3216,10 @@ std::ostream& operator<<(std::ostream& o, wasm::Expression& expression) {
 
 std::ostream& operator<<(std::ostream& o, wasm::Expression* expression) {
   return wasm::printExpression(expression, o);
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair) {
+  return wasm::printExpression(pair.second, o, false, false, &pair.first);
 }
 
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {

@@ -71,6 +71,7 @@ Pass* createMinifyImportsAndExportsPass();
 Pass* createMinifyImportsAndExportsAndModulesPass();
 Pass* createMetricsPass();
 Pass* createNameListPass();
+Pass* createNameTypesPass();
 Pass* createNoExitRuntimePass();
 Pass* createOptimizeAddedConstantsPass();
 Pass* createOptimizeAddedConstantsPropagatePass();
