@@ -38,7 +38,7 @@ void handleNonNullableLocals(Function* func, Module& wasm) {
   for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
     auto* get = (*getp)->cast<LocalGet>();
     if (!func->isVar(get->index)) {
-      // We do not need to process params, which can be non-nullable
+      // We do not need to process params, which can legally be non-nullable.
       continue;
     }
     auto type = func->getLocalType(get->index);
