@@ -1023,7 +1023,7 @@ struct OptimizeInstructions
       if (nonNull) {
         replaceCurrent(
           builder.makeSequence(builder.makeDrop(curr->value),
-                               builder.makeConst(Literal::makeOne(Type::i32))));
+                               builder.makeConst(Literal::makeZero(Type::i32))));
       }
       return;
     }
