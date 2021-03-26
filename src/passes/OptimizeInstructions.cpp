@@ -1021,9 +1021,9 @@ struct OptimizeInstructions
 
     if (curr->op == RefIsNull) {
       if (nonNull) {
-        replaceCurrent(
-          builder.makeSequence(builder.makeDrop(curr->value),
-                               builder.makeConst(Literal::makeZero(Type::i32))));
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->value),
+          builder.makeConst(Literal::makeZero(Type::i32))));
       }
       return;
     }
@@ -1057,9 +1057,9 @@ struct OptimizeInstructions
           // return zero because of that, and if it is not then we return zero
           // because of the kind, so the result is always the same.
           assert(result == GCTypeUtils::Failure);
-          replaceCurrent(
-            builder.makeSequence(builder.makeDrop(curr->value),
-                                 builder.makeConst(Literal::makeZero(Type::i32))));
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(curr->value),
+            builder.makeConst(Literal::makeZero(Type::i32))));
         }
       }
     }
