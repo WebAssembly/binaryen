@@ -395,4 +395,26 @@
     (ref.as_i31 (local.get $func))
    )
   )
+
+  ;; CHECK:      (func $unneeded_unreachability
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_func
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unneeded_unreachability
+   ;; unreachable instructions can simply be ignored
+   (drop
+    (ref.is_func (unreachable))
+   )
+   (drop
+    (ref.as_func (unreachable))
+   )
+  )
 )
