@@ -43,3 +43,6 @@ After building types:
 (func (result (ref null ...1)))
 (func (result (ref null ...1)))
 
+(func (param anyref) (result (ref null ...1)))
+(func (param anyref) (result (ref null ...1)))
+

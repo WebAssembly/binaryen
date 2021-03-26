@@ -35,22 +35,25 @@ template<typename T,
          typename std::enable_if<!std::is_base_of<
            Expression,
            typename std::remove_pointer<T>::type>::value>::type* = nullptr>
-inline std::ostream& printModuleComponent(T curr, std::ostream& stream) {
+inline std::ostream&
+printModuleComponent(T curr, std::ostream& stream, Module& wasm) {
   stream << curr << std::endl;
   return stream;
 }
 
 // Extra overload for Expressions, to print their contents.
-inline std::ostream& printModuleComponent(Expression* curr,
-                                          std::ostream& stream) {
+inline std::ostream&
+printModuleComponent(Expression* curr, std::ostream& stream, Module& wasm) {
   if (curr) {
-    stream << *curr << '\n';
+    stream << ModuleExpression(wasm, curr) << '\n';
   }
   return stream;
 }
 
 // For parallel validation, we have a helper struct for coordination
 struct ValidationInfo {
+  Module& wasm;
+
   bool validateWeb;
   bool validateGlobally;
   bool quiet;
@@ -63,7 +66,7 @@ struct ValidationInfo {
   std::mutex mutex;
   std::unordered_map<Function*, std::unique_ptr<std::ostringstream>> outputs;
 
-  ValidationInfo() { valid.store(true); }
+  ValidationInfo(Module& wasm) : wasm(wasm) { valid.store(true); }
 
   std::ostringstream& getStream(Function* func) {
     std::unique_lock<std::mutex> lock(mutex);
@@ -86,7 +89,7 @@ struct ValidationInfo {
     }
     auto& ret = printFailureHeader(func);
     ret << text << ", on \n";
-    return printModuleComponent(curr, ret);
+    return printModuleComponent(curr, ret, wasm);
   }
 
   std::ostream& printFailureHeader(Function* func) {
@@ -2299,16 +2302,17 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                    "struct.new_with_default value type must be defaultable");
     }
   } else {
-    shouldBeEqual(curr->operands.size(),
-                  fields.size(),
-                  curr,
-                  "struct.new must have the right number of operands");
-    // All the fields must have the proper type.
-    for (Index i = 0; i < fields.size(); i++) {
-      shouldBeSubType(curr->operands[i]->type,
-                      fields[i].type,
+    if (shouldBeEqual(curr->operands.size(),
+                      fields.size(),
                       curr,
-                      "struct.new operand must have proper type");
+                      "struct.new must have the right number of operands")) {
+      // All the fields must have the proper type.
+      for (Index i = 0; i < fields.size(); i++) {
+        shouldBeSubType(curr->operands[i]->type,
+                        fields[i].type,
+                        curr,
+                        "struct.new operand must have proper type");
+      }
     }
   }
 }
@@ -2919,7 +2923,7 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
 // then Using PassRunner::getPassDebug causes a circular dependence. We should
 // fix that, perhaps by moving some of the pass infrastructure into libsupport.
 bool WasmValidator::validate(Module& module, Flags flags) {
-  ValidationInfo info;
+  ValidationInfo info(module);
   info.validateWeb = (flags & Web) != 0;
   info.validateGlobally = (flags & Globally) != 0;
   info.quiet = (flags & Quiet) != 0;
