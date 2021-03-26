@@ -158,9 +158,9 @@ struct OptimizationOptions : public ToolOptions {
            "caller (default -1, which means all such functions are inlined)",
            Options::Arguments::One,
            [this](Options* o, const std::string& argument) {
-             static_assert(
-                InliningOptions().oneCallerInlineMaxSize == Index(-1),
-                "the help text here is written to assume -1");
+             static_assert(InliningOptions().oneCallerInlineMaxSize ==
+                             Index(-1),
+                           "the help text here is written to assume -1");
              passOptions.inlining.oneCallerInlineMaxSize =
                static_cast<Index>(atoi(argument.c_str()));
            })
