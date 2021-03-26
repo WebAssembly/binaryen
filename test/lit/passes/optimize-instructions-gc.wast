@@ -99,7 +99,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $struct)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
