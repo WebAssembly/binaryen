@@ -2077,9 +2077,9 @@ private:
     if (type.isRef()) {
       assert(wasm.features.hasReferenceTypes());
       // Check if we can use ref.func.
-      // 'func' is the pointer to the last created function and can be null when
-      // we set up globals (before we create any functions), in which case we
-      // can't use ref.func.
+      // 'funcContext->func' is the pointer to the last created function and can
+      // be null when we set up globals (before we create any functions), in
+      // which case we can't use ref.func.
       if (type == Type::funcref && funcContext && oneIn(2)) {
         // First set to target to the last created function, and try to select
         // among other existing function if possible
