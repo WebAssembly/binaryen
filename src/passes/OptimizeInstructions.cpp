@@ -1007,6 +1007,10 @@ struct OptimizeInstructions
   }
 
   void visitRefIs(RefIs* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     // Optimizating RefIs is not that obvious, since even if we know the result
     // evaluates to 0 or 1 then the replacement may not actually save code size,
     // since RefIsNull is a single byte (the others are 2), while adding a Const
@@ -1066,6 +1070,10 @@ struct OptimizeInstructions
   }
 
   void visitRefAs(RefAs* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
     // Check if the type is the kind we are checking for.
     auto result = GCTypeUtils::evaluateKindCheck(curr);
 
