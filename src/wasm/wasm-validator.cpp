@@ -1995,19 +1995,8 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
-  if (shouldBeTrue(
-        curr->type.isFunction(), curr, "ref.func must have a function type")) {
-    // TODO: verify it also has a typed function references type,
-    //                    curr->type.getHeapType().isSignature(),
-    // That is blocked on having the ability to create signature types in the C
-    // API. For now those users create the type with funcref.
-    if (curr->type.getHeapType().isSignature()) {
-      shouldBeEqual(curr->type.getHeapType().getSignature(),
-                    func->sig,
-                    curr,
-                    "ref.func must have the right type");
-    }
-  }
+  shouldBeTrue(
+      curr->type.isFunction(), curr, "ref.func must have a function type");
   // TODO: check for non-nullability
 }
 
