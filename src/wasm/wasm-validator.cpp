@@ -2003,8 +2003,8 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   //   curr->type.getHeapType().getSignature()
   // That is blocked on having the ability to create signature types in the C
   // API (for now those users create the type with funcref). This also needs to
-  // be fixed in LegalizeJSInterface and other places that update function
-  // types.
+  // be fixed in LegalizeJSInterface and FuncCastEmulation and other places that
+  // update function types.
   // TODO: check for non-nullability
 }
 
