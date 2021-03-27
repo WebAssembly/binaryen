@@ -272,6 +272,9 @@ struct Walker : public VisitorType {
       if (curr->offset) {
         self->walk(curr->offset);
       }
+      for (auto* item : curr->data) {
+        self->walk(item);
+      }
     }
   }
 

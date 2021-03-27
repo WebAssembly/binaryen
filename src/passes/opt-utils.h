@@ -89,12 +89,6 @@ inline void replaceFunctions(PassRunner* runner,
   FunctionRefReplacer replacer(maybeReplace);
   replacer.run(runner, &module);
   replacer.walkModuleCode(&module);
-  // replace in table
-  ElementUtils::iterAllElementFunctionNames(&module, maybeReplace);
-  // replace in globals
-  ModuleUtils::iterDefinedGlobals(module, [&](Global* glob) {
-    FunctionRefReplacer(maybeReplace).walk(glob->init);
-  });
 
   // replace in start
   if (module.start.is()) {
