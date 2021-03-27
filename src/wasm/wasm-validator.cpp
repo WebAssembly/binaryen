@@ -1995,9 +1995,8 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   }
   auto* func = getModule()->getFunctionOrNull(curr->func);
   shouldBeTrue(!!func, curr, "function argument of ref.func must exist");
-  if (shouldBeTrue(curr->type.isFunction(),
-                   curr,
-                   "ref.func must have a function type")) {
+  if (shouldBeTrue(
+        curr->type.isFunction(), curr, "ref.func must have a function type")) {
     // TODO: verify it also has a typed function references type,
     //                    curr->type.getHeapType().isSignature(),
     // That is blocked on having the ability to create signature types in the C

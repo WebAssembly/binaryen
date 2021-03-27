@@ -175,24 +175,26 @@ struct FuncCastEmulation : public Pass {
     Signature ABIType(Type(std::vector<Type>(numParams, Type::i64)), Type::i64);
     // Add a thunk for each function in the table, and do the call through it.
     std::unordered_map<Name, Name> funcThunks;
-    ModuleUtils::iterActiveElementSegments(*module, [&](ElementSegment* segment) {
-      for (auto* item : segment->data) {
-        if (auto* ref = item->dynCast<RefFunc>()) {
-          // Update the name.
-          auto& name = ref->func;
-          auto iter = funcThunks.find(name);
-          if (iter == funcThunks.end()) {
-            auto thunk = makeThunk(name, module, numParams);
-            funcThunks[name] = thunk;
-            name = thunk;
-          } else {
-            name = iter->second;
+    ModuleUtils::iterActiveElementSegments(
+      *module, [&](ElementSegment* segment) {
+        for (auto* item : segment->data) {
+          if (auto* ref = item->dynCast<RefFunc>()) {
+            // Update the name.
+            auto& name = ref->func;
+            auto iter = funcThunks.find(name);
+            if (iter == funcThunks.end()) {
+              auto thunk = makeThunk(name, module, numParams);
+              funcThunks[name] = thunk;
+              name = thunk;
+            } else {
+              name = iter->second;
+            }
+            // Update the type.
+            ref->finalize(
+              Type(HeapType(module->getFunction(name)->sig), NonNullable));
           }
-          // Update the type.
-          ref->finalize(Type(HeapType(module->getFunction(name)->sig), NonNullable));
         }
-      }
-    });
+      });
     // update call_indirects
     ParallelFuncCastEmulation(ABIType, numParams).run(runner, module);
   }

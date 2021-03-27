@@ -289,9 +289,8 @@ struct DAE : public Pass {
     ElementUtils::iterAllElementFunctionNames(
       module, [&](Name name) { infoMap[name].hasUnseenCalls = true; });
     // Check the influence of globals.
-    ModuleUtils::iterDefinedGlobals(*module, [&](Global* glob) {
-      scanner.walk(glob->init);
-    });
+    ModuleUtils::iterDefinedGlobals(
+      *module, [&](Global* glob) { scanner.walk(glob->init); });
     // Scan all the functions.
     scanner.run(runner, module);
     // Combine all the info.
