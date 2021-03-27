@@ -2851,7 +2851,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(
         table != nullptr, "elem", "elem segment must have a valid table name");
       info.shouldBeTrue(!!segment->offset,
-                        segment,
+                        "elem",
                         "table segment offset should have an offset");
       info.shouldBeEqual(segment->offset->type,
                          Type(Type::i32),
@@ -2865,7 +2865,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
       validator.validate(segment->offset);
     } else {
       info.shouldBeTrue(!segment->offset,
-                        segment,
+                        "elem",
                         "non-table segment offset should have no offset");
     }
     // Avoid double checking items

@@ -88,7 +88,7 @@ inline void replaceFunctions(PassRunner* runner,
   // replace direct calls in code both functions and module elements
   FunctionRefReplacer replacer(maybeReplace);
   replacer.run(runner, &module);
-  replacer.walkModuleCode(module);
+  replacer.walkModuleCode(&module);
   // replace in table
   ElementUtils::iterAllElementFunctionNames(&module, maybeReplace);
   // replace in globals
