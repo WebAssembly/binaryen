@@ -85,8 +85,10 @@ inline void replaceFunctions(PassRunner* runner,
       name = iter->second;
     }
   };
-  // replace direct calls
-  FunctionRefReplacer(maybeReplace).run(runner, &module);
+  // replace direct calls in code both functions and module elements
+  FunctionRefReplacer replacer(maybeReplace);
+  replacer.run(runner, &module);
+  replacer.walkModuleCode(module);
   // replace in table
   ElementUtils::iterAllElementFunctionNames(&module, maybeReplace);
   // replace in globals

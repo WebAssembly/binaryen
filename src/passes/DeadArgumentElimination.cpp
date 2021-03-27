@@ -280,17 +280,12 @@ struct DAE : public Pass {
       infoMap[func->name];
     }
     DAEScanner scanner(&infoMap);
-    // Check the influence of the table and exports.
+    scanner.walkModuleCode(module);
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         infoMap[curr->value].hasUnseenCalls = true;
       }
     }
-    ElementUtils::iterAllElementFunctionNames(
-      module, [&](Name name) { infoMap[name].hasUnseenCalls = true; });
-    // Check the influence of globals.
-    ModuleUtils::iterDefinedGlobals(
-      *module, [&](Global* glob) { scanner.walk(glob->init); });
     // Scan all the functions.
     scanner.run(runner, module);
     // Combine all the info.

@@ -2850,6 +2850,9 @@ static void validateTables(Module& module, ValidationInfo& info) {
       auto table = module.getTableOrNull(segment->table);
       info.shouldBeTrue(
         table != nullptr, "elem", "elem segment must have a valid table name");
+      info.shouldBeTrue(!!segment->offset,
+                        segment,
+                        "table segment offset should have an offset");
       info.shouldBeEqual(segment->offset->type,
                          Type(Type::i32),
                          segment->offset,
@@ -2860,6 +2863,10 @@ static void validateTables(Module& module, ValidationInfo& info) {
                         segment->offset,
                         "table segment offset should be reasonable");
       validator.validate(segment->offset);
+    } else {
+      info.shouldBeTrue(!segment->offset,
+                        segment,
+                        "non-table segment offset should have no offset");
     }
     // Avoid double checking items
     if (module.features.hasReferenceTypes()) {
