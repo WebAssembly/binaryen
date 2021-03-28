@@ -1694,11 +1694,23 @@ private:
       return builder.makeUnary(WrapInt64, left);
     }
     // bool(x) != 1  ==>  !bool(x)
-    // bool(x)  ^ 1  ==>  !bool(x)
-    if ((matches(curr, binary(Ne, any(&left), ival(1))) ||
-         matches(curr, binary(Xor, any(&left), ival(1)))) &&
+    if (matches(curr, binary(Ne, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
+    }
+    // bool(x)  ^ 1  ==>  !bool(x)
+    if (matches(curr, binary(Xor, any(&left), ival(1))) &&
+        Bits::getMaxBits(left, this) == 1) {
+      auto* result = builder.makeUnary(Abstract::getUnary(type, EqZ), left);
+      if (left->type == Type::i64) {
+        // Xor's result is also an i64 in this case, but EqZ returns i32, so we
+        // must expand it so that we keep returning the same value as before.
+        // This means we replace a xor and a const with a xor and and extend,
+        // which is still smaller (the const is 2 bytes, the extend just 1), and
+        // also the extend may be removed by further work.
+        result = builder.makeUnary(ExtendUInt32, result);
+      }
+      return result;
     }
     // bool(x) | 1  ==>  1
     if (matches(curr, binary(Or, pure(&left), ival(1))) &&
