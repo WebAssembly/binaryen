@@ -7,7 +7,7 @@
   (func $yes (result i32) ;; inlinable: small, lightweight, even with multi uses and a global use, ok when opt-level=3
     (i32.const 1)
   )
-  (func $no-tooBig (result i32)
+  (func $yes-big-but-single-use (result i32)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
@@ -44,7 +44,7 @@
   )
   (func $intoHere
     (drop (call $yes))
-    (drop (call $no-tooBig))
+    (drop (call $yes-big-but-single-use))
     (drop (call $no-calls))
     (drop (call $no-calls))
     (drop (call $yes-calls-but-one-use))

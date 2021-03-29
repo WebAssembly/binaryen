@@ -172,3 +172,24 @@
   (ref.func $0)
  )
 )
+(module
+ (type $i64 (func (param i64)))
+ (global $global$0 (ref $i64) (ref.func $0))
+ (export "even" (func $1))
+ ;; the argument to this function cannot be removed due to the ref.func of it
+ ;; in a global
+ (func $0 (param $0 i64)
+  (unreachable)
+ )
+ (func $1
+  (call_ref
+   (i64.const 0)
+   (global.get $global$0)
+  )
+ )
+ (func $2
+  (call $0
+   (i64.const 0)
+  )
+ )
+)

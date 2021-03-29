@@ -69,9 +69,10 @@ struct InliningOptions {
   // More generally, with 2 items we may have a local.get, but no way to
   // require it to be saved instead of directly consumed.
   Index alwaysInlineMaxSize = 2;
-  // Function size which we inline when there is only one caller.
-  // FIXME: this should logically be higher than flexibleInlineMaxSize.
-  Index oneCallerInlineMaxSize = 15;
+  // Function size which we inline when there is only one caller. By default we
+  // inline all such functions (as after inlining we can remove the original
+  // function).
+  Index oneCallerInlineMaxSize = -1;
   // Function size above which we never inline, ignoring the various flexible
   // factors (like whether we are optimizing for size or speed) that could
   // influence us.
