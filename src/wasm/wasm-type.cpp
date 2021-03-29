@@ -27,6 +27,12 @@
 #include "wasm-features.h"
 #include "wasm-type.h"
 
+#define TRACE_CANONICALIZATION 0
+
+#if TRACE_CANONICALIZATION
+#include <iostream>
+#endif
+
 namespace wasm {
 
 namespace {
@@ -64,6 +70,8 @@ struct TypeInfo {
   constexpr bool isRtt() const { return kind == RttKind; }
 
   bool isNullable() const { return kind == RefKind && ref.nullable; }
+
+  bool getCanonical(Type& out) const;
 
   bool operator==(const TypeInfo& other) const;
   bool operator!=(const TypeInfo& other) const { return !(*this == other); }
@@ -105,6 +113,8 @@ struct HeapTypeInfo {
   constexpr bool isStruct() const { return kind == StructKind; }
   constexpr bool isArray() const { return kind == ArrayKind; }
   constexpr bool isData() const { return isStruct() || isArray(); }
+
+  bool getCanonical(HeapType& out) const;
 
   HeapTypeInfo& operator=(const HeapTypeInfo& other);
   bool operator==(const HeapTypeInfo& other) const;
@@ -251,9 +261,7 @@ namespace std {
 
 template<> class hash<wasm::TypeInfo> {
 public:
-  size_t operator()(const wasm::TypeInfo& info) const {
-    return wasm::FiniteShapeHasher().hash(info);
-  }
+  size_t operator()(const wasm::TypeInfo& info) const;
 };
 
 template<> class hash<wasm::HeapTypeInfo> {
@@ -310,6 +318,20 @@ bool isTemp(HeapType type) {
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;
 }
 
+Type asCanonical(Type type) {
+  if (!type.isBasic()) {
+    getTypeInfo(type)->getCanonical(type);
+  }
+  return type;
+}
+
+HeapType asCanonical(HeapType type) {
+  if (!type.isBasic()) {
+    getHeapTypeInfo(type)->getCanonical(type);
+  }
+  return type;
+}
+
 TypeInfo::TypeInfo(const TypeInfo& other) {
   kind = other.kind;
   switch (kind) {
@@ -341,11 +363,67 @@ TypeInfo::~TypeInfo() {
   WASM_UNREACHABLE("unexpected kind");
 }
 
+bool TypeInfo::getCanonical(Type& out) const {
+  if (isTuple()) {
+    if (tuple.types.size() == 0) {
+      out = Type::none;
+      return true;
+    }
+    if (tuple.types.size() == 1) {
+      out = tuple.types[0];
+      return true;
+    }
+  }
+  if (isRef()) {
+    HeapType basic = asCanonical(ref.heapType);
+    if (basic.isBasic()) {
+      if (ref.nullable) {
+        switch (basic.getBasic()) {
+          case HeapType::func:
+            out = Type::funcref;
+            return true;
+          case HeapType::ext:
+            out = Type::externref;
+            return true;
+          case HeapType::any:
+            out = Type::anyref;
+            return true;
+          case HeapType::eq:
+            out = Type::eqref;
+            return true;
+          case HeapType::i31:
+          case HeapType::data:
+            break;
+        }
+      } else {
+        if (basic == HeapType::i31) {
+          out = Type::i31ref;
+          return true;
+        }
+        if (basic == HeapType::data) {
+          out = Type::dataref;
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
 bool TypeInfo::operator==(const TypeInfo& other) const {
-  // TypeInfos with the same shape are considered equivalent. This is important
-  // during global canonicalization, when newly created canonically-shaped
-  // graphs are checked against the existing globally canonical graphs.
-  return FiniteShapeEquator().eq(*this, other);
+  if (kind != other.kind) {
+    return false;
+  }
+  switch (kind) {
+    case TupleKind:
+      return tuple == other.tuple;
+    case RefKind:
+      return ref.nullable == other.ref.nullable &&
+             ref.heapType == other.ref.heapType;
+    case RttKind:
+      return rtt == other.rtt;
+  }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
@@ -384,6 +462,14 @@ HeapTypeInfo::~HeapTypeInfo() {
   WASM_UNREACHABLE("unexpected kind");
 }
 
+bool HeapTypeInfo::getCanonical(HeapType& out) const {
+  if (isFinalized && kind == BasicKind) {
+    out = basic;
+    return true;
+  }
+  return false;
+}
+
 HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
   if (&other != this) {
     this->~HeapTypeInfo();
@@ -393,6 +479,10 @@ HeapTypeInfo& HeapTypeInfo::operator=(const HeapTypeInfo& other) {
 }
 
 bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
+  // HeapTypeInfos with the same shape are considered equivalent. This is
+  // important during global canonicalization, when newly created
+  // canonically-shaped graphs are checked against the existing globally
+  // canonical graphs.
   return FiniteShapeEquator().eq(*this, other);
 }
 
@@ -409,23 +499,15 @@ template<typename Info> struct Store {
   bool isGlobalStore();
 #endif
 
-  TypeID recordCanonical(std::unique_ptr<Info>&& info);
   typename Info::type_t canonicalize(const Info& info);
+  typename Info::type_t canonicalize(std::unique_ptr<Info>&& info);
+
+private:
+  TypeID recordCanonical(std::unique_ptr<Info>&& info);
 };
 
-struct TypeStore : Store<TypeInfo> {
-  Type canonicalize(TypeInfo info);
-};
-
-struct HeapTypeStore : Store<HeapTypeInfo> {
-  HeapType canonicalize(const HeapTypeInfo& info) {
-    if (info.kind == HeapTypeInfo::BasicKind) {
-      return info.basic;
-    }
-    return Store<HeapTypeInfo>::canonicalize(info);
-  }
-  HeapType canonicalize(std::unique_ptr<HeapTypeInfo>&& info);
-};
+using TypeStore = Store<TypeInfo>;
+using HeapTypeStore = Store<HeapTypeInfo>;
 
 TypeStore globalTypeStore;
 HeapTypeStore globalHeapTypeStore;
@@ -454,17 +536,11 @@ template<typename Info> bool Store<Info>::isGlobalStore() {
 #endif
 
 template<typename Info>
-TypeID Store<Info>::recordCanonical(std::unique_ptr<Info>&& info) {
-  assert((!isGlobalStore() || !info->isTemp) && "Leaking temporary type!");
-  TypeID id = uintptr_t(info.get());
-  assert(id > Info::type_t::_last_basic_type);
-  typeIDs[*info] = id;
-  constructedTypes.emplace_back(std::move(info));
-  return id;
-}
-
-template<typename Info>
 typename Info::type_t Store<Info>::canonicalize(const Info& info) {
+  typename Info::type_t canonical;
+  if (info.getCanonical(canonical)) {
+    return canonical;
+  }
   std::lock_guard<std::mutex> lock(mutex);
   auto indexIt = typeIDs.find(std::cref(info));
   if (indexIt != typeIDs.end()) {
@@ -473,9 +549,11 @@ typename Info::type_t Store<Info>::canonicalize(const Info& info) {
   return typename Info::type_t(recordCanonical(std::make_unique<Info>(info)));
 }
 
-HeapType HeapTypeStore::canonicalize(std::unique_ptr<HeapTypeInfo>&& info) {
-  if (info->kind == HeapTypeInfo::BasicKind) {
-    return info->basic;
+template<typename Info>
+typename Info::type_t Store<Info>::canonicalize(std::unique_ptr<Info>&& info) {
+  typename Info::type_t canonical;
+  if (info->getCanonical(canonical)) {
+    return canonical;
   }
   std::lock_guard<std::mutex> lock(mutex);
   auto indexIt = typeIDs.find(std::cref(*info));
@@ -486,40 +564,14 @@ HeapType HeapTypeStore::canonicalize(std::unique_ptr<HeapTypeInfo>&& info) {
   return HeapType(recordCanonical(std::move(info)));
 }
 
-Type TypeStore::canonicalize(TypeInfo info) {
-  if (info.isTuple()) {
-    if (info.tuple.types.size() == 0) {
-      return Type::none;
-    }
-    if (info.tuple.types.size() == 1) {
-      return info.tuple.types[0];
-    }
-  }
-  if (info.isRef() && info.ref.heapType.isBasic()) {
-    if (info.ref.nullable) {
-      switch (info.ref.heapType.getBasic()) {
-        case HeapType::func:
-          return Type::funcref;
-        case HeapType::ext:
-          return Type::externref;
-        case HeapType::any:
-          return Type::anyref;
-        case HeapType::eq:
-          return Type::eqref;
-        case HeapType::i31:
-        case HeapType::data:
-          break;
-      }
-    } else {
-      if (info.ref.heapType == HeapType::i31) {
-        return Type::i31ref;
-      }
-      if (info.ref.heapType == HeapType::data) {
-        return Type::dataref;
-      }
-    }
-  }
-  return Store<TypeInfo>::canonicalize(info);
+template<typename Info>
+TypeID Store<Info>::recordCanonical(std::unique_ptr<Info>&& info) {
+  assert((!isGlobalStore() || !info->isTemp) && "Leaking temporary type!");
+  TypeID id = uintptr_t(info.get());
+  assert(id > Info::type_t::_last_basic_type);
+  typeIDs[*info] = id;
+  constructedTypes.emplace_back(std::move(info));
+  return id;
 }
 
 } // anonymous namespace
@@ -1237,7 +1289,8 @@ Type TypeBounder::getLeastUpperBound(Type a, Type b) {
   // Array is arbitrary; it might as well have been a Struct.
   builder.grow(1);
   builder[builder.size() - 1] = Array(Field(tempLUB, Mutable));
-  return builder.build().back().getArray().element.type;
+  std::vector<HeapType> built = builder.build();
+  return built.back().getArray().element.type;
 }
 
 bool TypeBounder::lub(Type a, Type b, Type& out) {
@@ -1524,7 +1577,10 @@ std::ostream& TypePrinter::print(HeapType heapType) {
     if (isTemp(heapType)) {
       os << "[T]";
     }
-    if (heapType.isSignature()) {
+    if (getHeapTypeInfo(heapType)->kind == HeapTypeInfo::BasicKind) {
+      os << '*';
+      print(getHeapTypeInfo(heapType)->basic);
+    } else if (heapType.isSignature()) {
       print(heapType.getSignature());
     } else if (heapType.isStruct()) {
       print(heapType.getStruct());
@@ -1622,6 +1678,7 @@ std::ostream& TypePrinter::print(const Rtt& rtt) {
 }
 
 size_t FiniteShapeHasher::hash(Type type) {
+  type = asCanonical(type);
   size_t digest = wasm::hash(type.isBasic());
   if (type.isBasic()) {
     rehash(digest, type.getID());
@@ -1632,6 +1689,7 @@ size_t FiniteShapeHasher::hash(Type type) {
 }
 
 size_t FiniteShapeHasher::hash(HeapType heapType) {
+  heapType = asCanonical(heapType);
   size_t digest = wasm::hash(heapType.isBasic());
   if (heapType.isBasic()) {
     rehash(digest, heapType.getID());
@@ -1682,8 +1740,7 @@ size_t FiniteShapeHasher::hash(const HeapTypeInfo& info) {
   rehash(digest, info.kind);
   switch (info.kind) {
     case HeapTypeInfo::BasicKind:
-      hash_combine(digest, wasm::hash(info.basic));
-      return digest;
+      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
     case HeapTypeInfo::SignatureKind:
       hash_combine(digest, hash(info.signature));
       return digest;
@@ -1737,6 +1794,8 @@ size_t FiniteShapeHasher::hash(const Rtt& rtt) {
 }
 
 bool FiniteShapeEquator::eq(Type a, Type b) {
+  a = asCanonical(a);
+  b = asCanonical(b);
   if (a.isBasic() != b.isBasic()) {
     return false;
   } else if (a.isBasic()) {
@@ -1747,6 +1806,8 @@ bool FiniteShapeEquator::eq(Type a, Type b) {
 }
 
 bool FiniteShapeEquator::eq(HeapType a, HeapType b) {
+  a = asCanonical(a);
+  b = asCanonical(b);
   if (a.isBasic() != b.isBasic()) {
     return false;
   } else if (a.isBasic()) {
@@ -1797,7 +1858,7 @@ bool FiniteShapeEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) {
   }
   switch (a.kind) {
     case HeapTypeInfo::BasicKind:
-      return a.basic == b.basic;
+      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
     case HeapTypeInfo::SignatureKind:
       return eq(a.signature, b.signature);
     case HeapTypeInfo::StructKind:
@@ -2000,16 +2061,39 @@ private:
   void initializePartitions();
   void translatePartitionsToTypes();
 
-  std::vector<HeapType*> getChildren(HeapType type);
+  // Returns pointers to the HeapType's immediate descendant compound HeapTypes.
+  // For determining partitions and state transitions, BasicKind HeapTypes are
+  // treated identically to basic HeapTypes and are not included in the results
+  // of `getChildren`. For translating the partitions back into types, though,
+  // it is important that BasicKind children are included so they can be updated
+  // to refer to their corresponding shape-canonicalized HeapTypeInfo in the
+  // results. TODO: Consolidate all type scanning in one utility.
+  std::vector<HeapType*> getChildren(HeapType type, bool includeBasic = false);
   const TypeSet& getPredsOf(HeapType type, size_t symbol);
   TypeSet getIntersection(const TypeSet& a, const TypeSet& b);
   TypeSet getDifference(const TypeSet& a, const TypeSet& b);
+
+#if TRACE_CANONICALIZATION
+  void dumpPartitions() {
+    for (auto& partition : partitions) {
+      for (HeapType type : partition) {
+        std::cerr << type << '\n';
+      }
+      std::cerr << '\n';
+    }
+  }
+#endif
 };
 
 ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
   : input(input) {
   initializePredecessors();
   initializePartitions();
+
+#if TRACE_CANONICALIZATION
+  std::cerr << "Initial partitions:\n";
+  dumpPartitions();
+#endif
 
   // The Hopcroft's algorithm's list of partitions that may still be
   // distinguishing partitions. Starts out containing all partitions.
@@ -2071,6 +2155,11 @@ ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
     }
   }
 
+#if TRACE_PARTITIONS
+  std::cerr << "Final partitions:\n";
+  dumpPartitions();
+#endif
+
   translatePartitionsToTypes();
 }
 
@@ -2124,7 +2213,7 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
     infos.back()->isTemp = true;
   }
   for (auto& info : infos) {
-    for (auto* child : getChildren(asHeapType(info))) {
+    for (auto* child : getChildren(asHeapType(info), true)) {
       auto partitionIt = partitionIndices.find(*child);
       if (partitionIt == partitionIndices.end()) {
         // This child has already been replaced.
@@ -2135,11 +2224,16 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
   }
 }
 
-std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType heapType) {
+std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType heapType,
+                                                       bool includeBasic) {
   std::vector<HeapType*> children;
 
   auto noteChild = [&](HeapType* child) {
-    if (!child->isBasic()) {
+    HeapType type = *child;
+    if (!includeBasic) {
+      type = asCanonical(type);
+    }
+    if (!type.isBasic()) {
       children.push_back(child);
     }
   };
@@ -2274,6 +2368,14 @@ GlobalCanonicalizer::GlobalCanonicalizer(
     scanList.push_back(&results.back());
   }
 
+#if TRACE_CANONICALIZATION
+  std::cerr << "Initial Types:\n";
+  for (HeapType type : results) {
+    std::cerr << type << '\n';
+  }
+  std::cerr << '\n';
+#endif
+
   // Traverse the type graph reachable from the heap types, collecting a list of
   // type and heap type use sites that need to be patched with canonical types.
   while (scanList.size() != 0) {
@@ -2297,13 +2399,19 @@ GlobalCanonicalizer::GlobalCanonicalizer(
   // Canonicalize non-tuple Types (which never directly refer to other Types)
   // before tuple Types to avoid canonicalizing a tuple that still contains
   // non-canonical Types.
+  std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
   for (auto& info : infos) {
     HeapType original = asHeapType(info);
     HeapType canonical = globalHeapTypeStore.canonicalize(std::move(info));
     if (original != canonical) {
-      for (HeapType* use : heapTypeLocations.at(original)) {
-        *use = canonical;
-      }
+      canonicalHeapTypes[original] = canonical;
+    }
+  }
+  for (auto& pair : canonicalHeapTypes) {
+    HeapType original = pair.first;
+    HeapType canonical = pair.second;
+    for (HeapType* use : heapTypeLocations.at(original)) {
+      *use = canonical;
     }
   }
   auto canonicalizeTypes = [&](bool tuples) {
@@ -2320,6 +2428,14 @@ GlobalCanonicalizer::GlobalCanonicalizer(
   };
   canonicalizeTypes(false);
   canonicalizeTypes(true);
+
+#if TRACE_CANONICALIZATION
+  std::cerr << "Final Types:\n";
+  for (HeapType type : results) {
+    std::cerr << type << '\n';
+  }
+  std::cerr << '\n';
+#endif
 }
 
 template<typename T1, typename T2>
@@ -2470,6 +2586,23 @@ size_t hash<wasm::Rtt>::operator()(const wasm::Rtt& rtt) const {
   auto digest = wasm::hash(rtt.depth);
   wasm::rehash(digest, rtt.heapType);
   return digest;
+}
+
+size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
+  auto digest = wasm::hash(info.kind);
+  switch (info.kind) {
+    case wasm::TypeInfo::TupleKind:
+      wasm::rehash(digest, info.tuple);
+      return digest;
+    case wasm::TypeInfo::RefKind:
+      wasm::rehash(digest, info.ref.nullable);
+      wasm::rehash(digest, info.ref.heapType);
+      return digest;
+    case wasm::TypeInfo::RttKind:
+      wasm::rehash(digest, info.rtt);
+      return digest;
+  }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 } // namespace std
