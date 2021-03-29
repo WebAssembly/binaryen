@@ -2222,7 +2222,8 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void tableStore(Name tableName, Address addr, Literal entry) {
+    virtual void
+    tableStore(Name tableName, Address addr, const Literal& entry) {
       WASM_UNREACHABLE("unimp");
     }
   };

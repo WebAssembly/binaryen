@@ -430,7 +430,7 @@ private:
     // needed.
     if (wasm.tables.empty()) {
       auto table = builder.makeTable(
-        Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
+        Names::getValidTableName(wasm, "fuzzing_table"), Type::funcref, 0, 0);
       table->hasExplicitName = true;
       wasm.addTable(std::move(table));
     }

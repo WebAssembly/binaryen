@@ -76,6 +76,7 @@ inline ElementSegment* copyElementSegment(const ElementSegment* segment,
   auto copy = [&](std::unique_ptr<ElementSegment>&& ret) {
     ret->name = segment->name;
     ret->hasExplicitName = segment->hasExplicitName;
+    ret->type = segment->type;
     ret->data.reserve(segment->data.size());
     for (auto* item : segment->data) {
       ret->data.push_back(ExpressionManipulator::copy(item, out));
@@ -92,9 +93,11 @@ inline ElementSegment* copyElementSegment(const ElementSegment* segment,
   }
 }
 
-inline Table* copyTable(Table* table, Module& out) {
+inline Table* copyTable(const Table* table, Module& out) {
   auto ret = std::make_unique<Table>();
   ret->name = table->name;
+  ret->hasExplicitName = table->hasExplicitName;
+  ret->type = table->type;
   ret->module = table->module;
   ret->base = table->base;
 
@@ -509,6 +512,12 @@ inline void collectHeapTypes(Module& wasm,
   CodeScanner(counts).walkModuleCode(&wasm);
   for (auto& curr : wasm.events) {
     counts.note(curr->sig);
+  }
+  for (auto& curr : wasm.tables) {
+    counts.maybeNote(curr->type);
+  }
+  for (auto& curr : wasm.elementSegments) {
+    counts.maybeNote(curr->type);
   }
 
   // Collect info from functions in parallel.

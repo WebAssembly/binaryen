@@ -3378,7 +3378,7 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenIndex initial,
                                   BinaryenIndex maximum) {
-  auto table = Builder::makeTable(name, initial, maximum);
+  auto table = Builder::makeTable(name, Type::funcref, initial, maximum);
   table->hasExplicitName = true;
   return ((Module*)module)->addTable(std::move(table));
 }

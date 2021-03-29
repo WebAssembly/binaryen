@@ -28,7 +28,10 @@ namespace ElementUtils {
 template<typename T>
 inline void iterElementSegmentFunctionNames(ElementSegment* segment,
                                             T visitor) {
-  // TODO(reference-types): return early if segment type is non-funcref
+  if (!segment->type.isFunction()) {
+    return;
+  }
+
   for (Index i = 0; i < segment->data.size(); i++) {
     if (auto* get = segment->data[i]->dynCast<RefFunc>()) {
       visitor(get->func, i);

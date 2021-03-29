@@ -797,6 +797,9 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   if (curr->target->type != Type::unreachable) {
     auto* table = getModule()->getTableOrNull(curr->table);
     shouldBeTrue(!!table, curr, "call-indirect table must exist");
+    shouldBeTrue(table->type.isFunction(),
+                 curr,
+                 "call-indirect table must be of function type.");
   }
 
   validateCallParamsAndResult(curr, curr->sig);
@@ -2829,6 +2832,10 @@ static void validateTables(Module& module, ValidationInfo& info) {
                       "--enable-reference-types)");
     if (!module.tables.empty()) {
       auto& table = module.tables.front();
+      info.shouldBeTrue(table->type == Type::funcref,
+                        "table",
+                        "Only funcref is valid for table type (when reference "
+                        "types are disabled)");
       for (auto& segment : module.elementSegments) {
         info.shouldBeTrue(segment->table == table->name,
                           "elem",
@@ -2845,23 +2852,73 @@ static void validateTables(Module& module, ValidationInfo& info) {
     }
   }
 
+  for (auto& table : module.tables) {
+    info.shouldBeTrue(table->initial <= table->max,
+                      "table",
+                      "size minimum must not be greater than maximum");
+    info.shouldBeTrue(
+      table->type.isNullable(),
+      "table",
+      "Non-nullable reference types are not yet supported for tables");
+    if (!module.features.hasGC()) {
+      info.shouldBeTrue(table->type.isFunction() ||
+                          table->type == Type::externref,
+                        "table",
+                        "Only function reference types or externref are valid "
+                        "for table type (when GC is disabled)");
+    }
+    if (!module.features.hasTypedFunctionReferences()) {
+      info.shouldBeTrue(table->type == Type::funcref ||
+                          table->type == Type::externref,
+                        "table",
+                        "Only funcref and externref are valid for table type "
+                        "(when typed-function references are disabled)");
+    }
+  }
+
   for (auto& segment : module.elementSegments) {
+    // Since element segment items need to be constant expressions, that leaves
+    // us with ref.null, ref.func and global.get. The GC proposal adds rtt.canon
+    // and rtt.sub to the list, but Binaryen doesn't consider RTTs as reference-
+    // types yet. As a result, the only possible type for element segments will
+    // be function references.
+    info.shouldBeTrue(segment->type.isFunction(),
+                      "elem",
+                      "element segment type must be of function type.");
+    info.shouldBeTrue(
+      segment->type.isNullable(),
+      "elem",
+      "Non-nullable reference types are not yet supported for tables");
+
     if (segment->table.is()) {
       auto table = module.getTableOrNull(segment->table);
-      info.shouldBeTrue(
-        table != nullptr, "elem", "elem segment must have a valid table name");
+      info.shouldBeTrue(table != nullptr,
+                        "elem",
+                        "element segment must have a valid table name");
       info.shouldBeTrue(!!segment->offset,
                         "elem",
                         "table segment offset should have an offset");
       info.shouldBeEqual(segment->offset->type,
                          Type(Type::i32),
                          segment->offset,
-                         "elem segment offset should be i32");
+                         "element segment offset should be i32");
       info.shouldBeTrue(checkSegmentOffset(segment->offset,
                                            segment->data.size(),
                                            table->initial * Table::kPageSize),
                         segment->offset,
                         "table segment offset should be reasonable");
+      if (module.features.hasTypedFunctionReferences()) {
+        info.shouldBeTrue(
+          Type::isSubType(segment->type, table->type),
+          "elem",
+          "element segment type must be a subtype of the table type");
+      } else {
+        info.shouldBeEqual(
+          segment->type,
+          table->type,
+          "elem",
+          "element segment type must be the same as the table type");
+      }
       validator.validate(segment->offset);
     } else {
       info.shouldBeTrue(!segment->offset,
@@ -2871,10 +2928,22 @@ static void validateTables(Module& module, ValidationInfo& info) {
     // Avoid double checking items
     if (module.features.hasReferenceTypes()) {
       for (auto* expr : segment->data) {
-        info.shouldBeTrue(
-          expr->is<RefFunc>() || expr->is<RefNull>(),
-          expr,
-          "element segment items must be either ref.func or ref.null func.");
+        if (auto* globalExpr = expr->dynCast<GlobalGet>()) {
+          auto* global = module.getGlobal(globalExpr->name);
+          info.shouldBeFalse(
+            global->mutable_, expr, "expected a constant expression");
+        } else {
+          info.shouldBeTrue(expr->is<RefFunc>() || expr->is<RefNull>() ||
+                              expr->is<GlobalGet>(),
+                            expr,
+                            "element segment items must be one of global.get, "
+                            "ref.func, ref.null func");
+        }
+        info.shouldBeSubType(expr->type,
+                             segment->type,
+                             expr,
+                             "element segment item expressions must return a "
+                             "subtype of the segment type");
         validator.validate(expr);
       }
     }

@@ -157,11 +157,16 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
 TableSlotManager::TableSlotManager(Module& module) : module(module) {
   // TODO: Reject or handle passive element segments
 
-  if (module.tables.empty()) {
+  auto it = std::find_if(module.tables.begin(),
+                         module.tables.end(),
+                         [&](std::unique_ptr<Table>& table) {
+                           return table->type == Type::funcref;
+                         });
+  if (it == module.tables.end()) {
     return;
   }
 
-  activeTable = module.tables.front().get();
+  activeTable = it->get();
   ModuleUtils::iterTableSegments(
     module, activeTable->name, [&](ElementSegment* segment) {
       activeTableSegments.push_back(segment);
@@ -172,6 +177,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
   // append new items at constant offsets after all existing items at constant
   // offsets.
   if (activeTableSegments.size() == 1 &&
+      activeTableSegments[0]->type == Type::funcref &&
       !activeTableSegments[0]->offset->is<Const>()) {
     assert(activeTableSegments[0]->offset->is<GlobalGet>() &&
            "Unexpected initializer instruction");
@@ -204,7 +210,8 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
 }
 
 Table* TableSlotManager::makeTable() {
-  return module.addTable(Builder::makeTable(Name::fromInt(0)));
+  return module.addTable(
+    Builder::makeTable(Names::getValidTableName(module, Name::fromInt(0))));
 }
 
 TableSlotManager::Slot TableSlotManager::getSlot(RefFunc* entry) {
@@ -533,7 +540,7 @@ void ModuleSplitter::setupTablePatching() {
 
     auto offset = ExpressionManipulator::copy(primarySeg->offset, secondary);
     auto secondarySeg = std::make_unique<ElementSegment>(
-      secondaryTable->name, offset, secondaryElems);
+      secondaryTable->name, offset, secondaryTable->type, secondaryElems);
     secondarySeg->setName(primarySeg->name, primarySeg->hasExplicitName);
     secondary.addElementSegment(std::move(secondarySeg));
     return;
@@ -545,8 +552,8 @@ void ModuleSplitter::setupTablePatching() {
   std::vector<Expression*> currData;
   auto finishSegment = [&]() {
     auto* offset = Builder(secondary).makeConst(int32_t(currBase));
-    auto secondarySeg =
-      std::make_unique<ElementSegment>(secondaryTable->name, offset, currData);
+    auto secondarySeg = std::make_unique<ElementSegment>(
+      secondaryTable->name, offset, secondaryTable->type, currData);
     secondarySeg->setName(Name::fromInt(secondary.elementSegments.size()),
                           false);
     secondary.addElementSegment(std::move(secondarySeg));
