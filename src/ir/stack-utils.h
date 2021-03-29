@@ -166,6 +166,13 @@ struct StackSignature {
   // other stack signature. This corresponds to the `unreachable` instruction
   // being able to be given any stack signature.
   static bool isSubType(StackSignature a, StackSignature b);
+
+  // Returns true iff `a` and `b` have a LUB, i.e. a minimal StackSignature that
+  // could type block contents of either type `a` or type `b`.
+  static bool haveLeastUpperBound(StackSignature a, StackSignature b);
+
+  // Returns the LUB of `a` and `b`. Assumes that the LUB exists.
+  static StackSignature getLeastUpperBound(StackSignature a, StackSignature b);
 };
 
 // Calculates stack machine data flow, associating the sources and destinations

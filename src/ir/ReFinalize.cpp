@@ -50,8 +50,9 @@ void ReFinalize::visitBlock(Block* curr) {
       // Set the type to be a supertype of the branch types and the flowed-out
       // type. TODO: calculate proper LUBs to compute a new correct type in this
       // situation.
-      iter->second.insert(curr->list.back()->type);
-      Type::ensureSuperType(iter->second, curr->type);
+      auto& types = iter->second;
+      types.insert(curr->list.back()->type);
+      curr->type = Type::getLeastUpperBound(types);
       return;
     }
   }
