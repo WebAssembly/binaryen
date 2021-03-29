@@ -433,8 +433,8 @@ void test_lub() {
 
   {
     // Incompatible Rtts
-    Type a(Rtt(HeapType::eq));
-    Type b(Rtt(HeapType::func));
+    Type a{Rtt(HeapType::eq)};
+    Type b{Rtt(HeapType::func)};
     assert(LUB(a, b) == Type::none);
   }
 
@@ -448,20 +448,20 @@ void test_lub() {
     // Rtts with mismatched depth
     Type a(Rtt(42, HeapType::any));
     Type b(Rtt(50, HeapType::any));
-    Type lub(Rtt(HeapType::any));
+    Type lub{Rtt(HeapType::any)};
     assert(LUB(a, b) == lub);
   }
 
   {
     // Rtts with and without depth
     Type a(Rtt(42, HeapType::any));
-    Type b(Rtt(HeapType::any));
+    Type b{Rtt(HeapType::any)};
     assert(LUB(a, b) == b);
   }
 
   {
     // Rtts without depth
-    Type a(Rtt(HeapType::any));
+    Type a{Rtt(HeapType::any)};
     assert(LUB(a, a) == a);
   }
 }
