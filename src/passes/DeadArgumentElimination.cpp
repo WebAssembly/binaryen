@@ -279,16 +279,15 @@ struct DAE : public Pass {
     for (auto& func : module->functions) {
       infoMap[func->name];
     }
-    // Check the influence of the table and exports.
+    DAEScanner scanner(&infoMap);
+    scanner.walkModuleCode(module);
     for (auto& curr : module->exports) {
       if (curr->kind == ExternalKind::Function) {
         infoMap[curr->value].hasUnseenCalls = true;
       }
     }
-    ElementUtils::iterAllElementFunctionNames(
-      module, [&](Name name) { infoMap[name].hasUnseenCalls = true; });
     // Scan all the functions.
-    DAEScanner(&infoMap).run(runner, module);
+    scanner.run(runner, module);
     // Combine all the info.
     std::unordered_map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
