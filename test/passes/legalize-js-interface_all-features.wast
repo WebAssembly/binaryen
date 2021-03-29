@@ -29,3 +29,18 @@
   )
 )
 (module)
+(;;
+(module
+ (type $none_=>_none (func))
+ (type $i64_=>_none (func (param i64)))
+ (import "fuzzing-support" "log-i64" (func $fimport$0 (param i64)))
+ (elem declare func $fimport$0)
+ (export "func_1_invoker" (func $0))
+ (func $0
+  (call_ref
+   (i64.const -14828)
+   (ref.func $fimport$0)
+  )
+ )
+)
+;;)
