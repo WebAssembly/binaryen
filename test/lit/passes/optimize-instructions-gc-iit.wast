@@ -7,7 +7,9 @@
   (type $B (struct (field i32) (field f64)))
   (type $C (struct (field i64) (field f32)))
 
-  ;; CHECK:      (func $store-trunc2 (param $a (ref $A)) (param $b (ref $B)) (param $c (ref $C)) (param $a-rtt (rtt $A)) (param $b-rtt (rtt $B)) (param $c-rtt (rtt $C))
+  (func $foo)
+
+  ;; CHECK:      (func $ref-cast-iit (param $a (ref $A)) (param $b (ref $B)) (param $c (ref $C)) (param $a-rtt (rtt $A)) (param $b-rtt (rtt $B)) (param $c-rtt (rtt $C))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $A))
   ;; CHECK-NEXT:    (drop
@@ -37,7 +39,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $store-trunc2
+  (func $ref-cast-iit
     (param $a (ref $A))
     (param $b (ref $B))
     (param $c (ref $C))
@@ -72,6 +74,70 @@
       (ref.cast
         (local.get $b)
         (local.get $c-rtt)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-cast-iit-bad (param $a (ref $A)) (param $b (ref $B)) (param $c (ref $C)) (param $a-rtt (rtt $A)) (param $b-rtt (rtt $B)) (param $c-rtt (rtt $C))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (block $block (result (ref $A))
+  ;; CHECK-NEXT:     (call $foo)
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $block0 (result (rtt $A))
+  ;; CHECK-NEXT:     (call $foo)
+  ;; CHECK-NEXT:     (local.get $a-rtt)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (local.get $a-rtt)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-iit-bad
+    (param $a (ref $A))
+    (param $b (ref $B))
+    (param $c (ref $C))
+
+    (param $a-rtt (rtt $A))
+    (param $b-rtt (rtt $B))
+    (param $c-rtt (rtt $C))
+
+    ;; ignore due to the inability to reorder
+    (drop
+      (ref.cast
+        (block (result (ref $A))
+          (call $foo)
+          (local.get $a)
+        )
+        (block (result (rtt $A))
+          (call $foo)
+          (local.get $a-rtt)
+        )
+      )
+    )
+
+    ;; ignore unreachability
+    (drop
+      (ref.cast
+        (local.get $a)
+        (unreachable)
+      )
+    )
+    (drop
+      (ref.cast
+        (unreachable)
+        (local.get $a-rtt)
       )
     )
   )
