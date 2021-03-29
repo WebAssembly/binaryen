@@ -1035,8 +1035,8 @@ struct OptimizeInstructions
                               curr->rtt->type.getHeapType()) &&
           canReorder(curr->ref, curr->rtt)) {
         Builder builder(*getModule());
-        replaceCurrent(builder.makeSequence(builder.makeDrop(curr->rtt),
-                                            curr->ref));
+        replaceCurrent(
+          builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
       }
     }
   }
