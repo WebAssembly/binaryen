@@ -1705,7 +1705,7 @@ private:
       if (left->type == Type::i64) {
         // Xor's result is also an i64 in this case, but EqZ returns i32, so we
         // must expand it so that we keep returning the same value as before.
-        // This means we replace a xor and a const with a xor and and extend,
+        // This means we replace a xor and a const with a xor and an extend,
         // which is still smaller (the const is 2 bytes, the extend just 1), and
         // also the extend may be removed by further work.
         result = builder.makeUnary(ExtendUInt32, result);
