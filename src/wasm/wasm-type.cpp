@@ -1136,7 +1136,7 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   }
   // Various things are subtypes of eq.
   if (b == HeapType::eq) {
-    return a == HeapType::i31 || a == HeapType::data || a.isData();
+    return a == HeapType::i31 || a.isData();
   }
   // Some are also subtypes of data.
   if (b == HeapType::data) {
@@ -1296,7 +1296,7 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
           return HeapType::any;
         }
       case HeapType::i31:
-        if (b == HeapType::data || b.isData()) {
+        if (b.isData()) {
           return HeapType::eq;
         } else {
           return HeapType::any;
@@ -1314,17 +1314,15 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
   // Allocate a new slot to construct the LUB of this pair if we have not
   // already seen it before. Canonicalize the pair to have the element with the
   // smaller ID first since order does not matter.
-  auto pair =
-    a.getID() < b.getID() ? std::make_pair(a, b) : std::make_pair(b, a);
+  auto pair = std::make_pair(std::min(a, b), std::max(a, b));
   size_t index = builder.size();
   auto result = indices.insert({pair, index});
-  if (result.second) {
-    builder.grow(1);
-  } else {
+  if (!result.second) {
     // We've seen this pair before; stop recursing and do not allocate.
     return builder[result.first->second];
   }
 
+  builder.grow(1);
   if (a.isSignature() && b.isSignature()) {
     Signature sig;
     if (lub(a.getSignature(), b.getSignature(), sig)) {
