@@ -476,65 +476,63 @@ inline void collectHeapTypes(Module& wasm,
     }
   };
 
-  // Collect the type use counts for a single function
-  auto updateCounts = [&](Function* func, Counts& counts) {
-    if (func->imported()) {
-      return;
-    }
-    struct TypeCounter
-      : PostWalker<TypeCounter, UnifiedExpressionVisitor<TypeCounter>> {
-      Counts& counts;
+  struct CodeScanner
+    : PostWalker<CodeScanner, UnifiedExpressionVisitor<CodeScanner>> {
+    Counts& counts;
 
-      TypeCounter(Counts& counts) : counts(counts) {}
+    CodeScanner(Counts& counts) : counts(counts) {}
 
-      void visitExpression(Expression* curr) {
-        if (auto* call = curr->dynCast<CallIndirect>()) {
-          counts.note(call->sig);
-        } else if (curr->is<RefNull>()) {
+    void visitExpression(Expression* curr) {
+      if (auto* call = curr->dynCast<CallIndirect>()) {
+        counts.note(call->sig);
+      } else if (curr->is<RefNull>()) {
+        counts.maybeNote(curr->type);
+      } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
+        counts.note(curr->type.getRtt().heapType);
+      } else if (auto* get = curr->dynCast<StructGet>()) {
+        counts.maybeNote(get->ref->type);
+      } else if (auto* set = curr->dynCast<StructSet>()) {
+        counts.maybeNote(set->ref->type);
+      } else if (Properties::isControlFlowStructure(curr)) {
+        if (curr->type.isTuple()) {
+          // TODO: Allow control flow to have input types as well
+          counts.note(Signature(Type::none, curr->type));
+        } else {
           counts.maybeNote(curr->type);
-        } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
-          counts.note(curr->type.getRtt().heapType);
-        } else if (auto* get = curr->dynCast<StructGet>()) {
-          counts.maybeNote(get->ref->type);
-        } else if (auto* set = curr->dynCast<StructSet>()) {
-          counts.maybeNote(set->ref->type);
-        } else if (Properties::isControlFlowStructure(curr)) {
-          if (curr->type.isTuple()) {
-            // TODO: Allow control flow to have input types as well
-            counts.note(Signature(Type::none, curr->type));
-          } else {
-            counts.maybeNote(curr->type);
-          }
         }
       }
-    };
-    TypeCounter(counts).walk(func->body);
+    }
   };
 
-  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(wasm, updateCounts);
-
-  // Collect all the counts.
+  // Collect module-level info.
   Counts counts;
-  for (auto& curr : wasm.functions) {
-    counts.note(curr->sig);
-    for (auto type : curr->vars) {
-      for (auto t : type) {
-        counts.maybeNote(t);
-      }
-    }
-  }
+  CodeScanner(counts).walkModuleCode(&wasm);
   for (auto& curr : wasm.events) {
     counts.note(curr->sig);
   }
-  for (auto& curr : wasm.globals) {
-    counts.maybeNote(curr->type);
-  }
+
+  // Collect info from functions in parallel.
+  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
+    wasm, [&](Function* func, Counts& counts) {
+      counts.note(func->sig);
+      for (auto type : func->vars) {
+        for (auto t : type) {
+          counts.maybeNote(t);
+        }
+      }
+      if (!func->imported()) {
+        CodeScanner(counts).walk(func->body);
+      }
+    });
+
+  // Combine the function info with the module info.
   for (auto& pair : analysis.map) {
     Counts& functionCounts = pair.second;
     for (auto& innerPair : functionCounts) {
       counts[innerPair.first] += innerPair.second;
     }
   }
+
   // A generic utility to traverse the child types of a type.
   // TODO: work with tlively to refactor this to a shared place
   auto walkRelevantChildren = [&](HeapType type, auto callback) {
