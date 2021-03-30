@@ -303,6 +303,9 @@ void PassRegistry::registerPasses() {
   registerPass("safe-heap",
                "instrument loads and stores to check for invalid behavior",
                createSafeHeapPass);
+  registerPass("set-globals",
+               "sets specified globals to specified values",
+               createSetGlobalsPass);
   registerPass("simplify-globals",
                "miscellaneous globals-related optimizations",
                createSimplifyGlobalsPass);
