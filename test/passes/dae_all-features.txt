@@ -312,3 +312,13 @@
   )
  )
 )
+(module
+ (type $none_=>_none (func))
+ (func $0
+  (local $0 (ref null i31))
+  (nop)
+ )
+ (func $1
+  (call $0)
+ )
+)
