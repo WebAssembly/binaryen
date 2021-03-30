@@ -988,6 +988,9 @@ def randomize_opt_flags():
             if '--disable-exception-handling' not in FEATURE_OPTS:
                 print('avoiding --flatten due to exception catching which does not support it yet')
                 continue
+            if '--disable-multivalue' not in FEATURE_OPTS and '--disable-reference-types' not in FEATURE_OPTS:
+                print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
+                continue
             if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
                 print('avoiding --flatten due using a large amount of initial contents, which may blow up')
                 continue
