@@ -26,6 +26,7 @@
 #include <ir/bits.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
@@ -1002,6 +1003,98 @@ struct OptimizeInstructions
     if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
       auto element = curr->ref->type.getHeapType().getArray().element;
       optimizeStoredValue(curr->value, element.getByteSize());
+    }
+  }
+
+  void visitRefIs(RefIs* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // Optimizating RefIs is not that obvious, since even if we know the result
+    // evaluates to 0 or 1 then the replacement may not actually save code size,
+    // since RefIsNull is a single byte (the others are 2), while adding a Const
+    // of 0 would be two bytes. Other factors are that we can remove the input
+    // and the added drop on it if it has no side effects, and that replacing
+    // with a constant may allow further optimizations later. For now, replace
+    // with a constant, but this warrants more investigation. TODO
+
+    Builder builder(*getModule());
+
+    auto nonNull = !curr->value->type.isNullable();
+
+    if (curr->op == RefIsNull) {
+      if (nonNull) {
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->value),
+          builder.makeConst(Literal::makeZero(Type::i32))));
+      }
+      return;
+    }
+
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+    if (result != GCTypeUtils::Unknown) {
+      // We know the kind. Now we must also take into account nullability.
+      if (nonNull) {
+        // We know the entire result.
+        replaceCurrent(
+          builder.makeSequence(builder.makeDrop(curr->value),
+                               builder.makeConst(Literal::makeFromInt32(
+                                 result == GCTypeUtils::Success, Type::i32))));
+      } else {
+        // The value may be null. Leave only a check for that.
+        curr->op = RefIsNull;
+        if (result == GCTypeUtils::Success) {
+          // The input is of the right kind. If it is not null then the result
+          // is 1, and otherwise it is 0, so we need to flip the result of
+          // RefIsNull.
+          // Note that even after adding an eqz here we do not regress code size
+          // as RefIsNull is a single byte while the others are two. So we keep
+          // code size identical. However, in theory this may be more work, if
+          // a VM considers ref.is_X to be as fast as ref.is_null, and if eqz is
+          // not free, so this is worth more investigation. TODO
+          replaceCurrent(builder.makeUnary(EqZInt32, curr));
+        } else {
+          // The input is of the wrong kind. In this case if it is null we
+          // return zero because of that, and if it is not then we return zero
+          // because of the kind, so the result is always the same.
+          assert(result == GCTypeUtils::Failure);
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(curr->value),
+            builder.makeConst(Literal::makeZero(Type::i32))));
+        }
+      }
+    }
+  }
+
+  void visitRefAs(RefAs* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+    if (result == GCTypeUtils::Success) {
+      // We know the kind is correct, so all that is left is a check for
+      // non-nullability, which we do lower down.
+      curr->op = RefAsNonNull;
+    } else if (result == GCTypeUtils::Failure) {
+      // This is the wrong kind, so it will trap. The binaryen optimizer does
+      // not differentiate traps, so we can perform a replacement here. We
+      // replace 2 bytes of ref.as_* with one byte of unreachable and one of a
+      // drop, which is no worse, and the value and the drop can be optimized
+      // out later if the value has no side effects.
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value),
+                                          builder.makeUnreachable()));
+      return;
+    }
+
+    if (curr->op == RefAsNonNull && !curr->value->type.isNullable()) {
+      replaceCurrent(curr->value);
     }
   }
 
