@@ -43,6 +43,9 @@
     )
   )
 
+  ;; A simple case where a local has a single assignment that we can use as a
+  ;; more specific type. A similar thing with a parameter, however, is not a
+  ;; thing we can optimize. Also, ignore a local with zero assignments.
   ;; CHECK:      (func $simple-local-but-not-param (param $x anyref)
   ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
   ;; CHECK-NEXT:  (local $unused anyref)
@@ -106,7 +109,7 @@
     (local.set $x
       (ref.func $i64)
     )
-    ;; y and z are assigned the same type
+    ;; y and z are assigned the same more specific type twice
     (local.set $y
       (ref.func $i32)
     )
@@ -119,12 +122,43 @@
     (local.set $z
       (ref.func $i64)
     )
-    ;; w is assigned two different types *without* a new LUB possible
+    ;; w is assigned two different types *without* a new LUB possible, as it
+    ;; already had the optimal LUB
     (local.set $w
       (ref.func $i32)
     )
     (local.set $w
       (ref.func $i64)
+    )
+  )
+
+  ;; In some cases multiple iterations are necessary.
+  ;; CHECK:      (func $multiple-iterations
+  ;; CHECK-NEXT:  (local $x (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local $z (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multiple-iterations
+    (local $x anyref)
+    (local $y anyref)
+    (local $z anyref)
+    (local.set $x
+      (ref.func $i32)
+    )
+    (local.set $y
+      (local.get $x)
+    )
+    (local.set $z
+      (local.get $y)
     )
   )
 )

@@ -31,12 +31,19 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
     auto numLocals = func->getNumLocals();
     bool more;
 
-    // Map local index to the sets for it.
+    // Map local index to the sets and gets for it.
     std::vector<std::vector<LocalSet*>> setsForLocal;
     setsForLocal.resize(numLocals);
     FindAll<LocalSet> sets(func->body);
     for (auto* set : sets.list) {
       setsForLocal[set->index].push_back(set);
+    }
+
+    std::vector<std::vector<LocalGet*>> getsForLocal;
+    getsForLocal.resize(numLocals);
+    FindAll<LocalGet> gets(func->body);
+    for (auto* get : gets.list) {
+      getsForLocal[get->index].push_back(get);
     }
 
     // Keep iterating while we find things to change. There can be chains like
@@ -93,9 +100,13 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
           func->vars[i - varBase] = newType;
           more = true;
 
-          // Update tees.
-          // NB: this code will not be needed if the type of tees becomes that
-          //     of their value.
+          // Update gets and tees.
+          for (auto* get : getsForLocal[i]) {
+            get->type = newType;
+          }
+
+          // NB: the tee code will not be needed if the type of tees becomes
+          //     that of their value.
           for (auto* set : setsForLocal[i]) {
             if (set->isTee() && set->type != Type::unreachable) {
               set->type = newType;
