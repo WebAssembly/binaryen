@@ -2870,6 +2870,8 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   if (s[i]->isList()) {
     // Optional (memory <memoryidx>)
     if (elementStartsWith(s[i], MEMORY)) {
+      // TODO: we're just skipping memory since we have only one. Assign the
+      //  memory name to the segment when we support multiple memories.
       i += 1;
     }
 
