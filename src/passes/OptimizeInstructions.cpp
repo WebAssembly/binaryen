@@ -1085,8 +1085,8 @@ struct OptimizeInstructions
       // This is the wrong kind, so it will trap. The binaryen optimizer does
       // not differentiate traps, so we can perform a replacement here. We
       // replace 2 bytes of ref.as_* with one byte of unreachable and one of a
-      // drop, and the drop can be optimized out later, so this saves both work
-      // and space.
+      // drop, which is no worse, and the value and the drop can be optimized
+      // out later if the value has no side effects.
       Builder builder(*getModule());
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value),
                                           builder.makeUnreachable()));
