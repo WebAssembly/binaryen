@@ -127,7 +127,7 @@ public:
      calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsHeap || isAtomic || calls;
   }
 
   bool hasSideEffects() const {
