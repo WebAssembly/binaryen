@@ -3,126 +3,121 @@
 ;; RUN:   | filecheck %s
 
 (module
-  (type $A (struct (field i32)))
-  (type $B (struct (field i32) (field f64)))
-  (type $C (struct (field i64) (field f32)))
+  (type $parent    (struct (field i32)))
+  (type $otherhild (struct (field i32) (field f64)))
+  (type $other     (struct (field i64) (field f32)))
 
   (func $foo)
 
-  ;; CHECK:      (func $ref-cast-iit (param $a (ref $A)) (param $b (ref $B)) (param $c (ref $C)) (param $a-rtt (rtt $A)) (param $b-rtt (rtt $B)) (param $c-rtt (rtt $C))
+  ;; CHECK:      (func $ref-cast-iit (param $parent (ref $parent)) (param $otherhild (ref $otherhild)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $otherhild-rtt (rtt $otherhild)) (param $other-rtt (rtt $other))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $A))
+  ;; CHECK-NEXT:   (block (result (ref $parent))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $a-rtt)
+  ;; CHECK-NEXT:     (local.get $parent-rtt)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $B))
+  ;; CHECK-NEXT:   (block (result (ref $otherhild))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $a-rtt)
+  ;; CHECK-NEXT:     (local.get $parent-rtt)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:    (local.get $otherhild)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:    (local.get $b-rtt)
+  ;; CHECK-NEXT:    (local.get $parent)
+  ;; CHECK-NEXT:    (local.get $otherhild-rtt)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:    (local.get $c-rtt)
+  ;; CHECK-NEXT:    (local.get $otherhild)
+  ;; CHECK-NEXT:    (local.get $other-rtt)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-cast-iit
-    (param $a (ref $A))
-    (param $b (ref $B))
-    (param $c (ref $C))
+    (param $parent (ref $parent))
+    (param $otherhild (ref $otherhild))
+    (param $other (ref $other))
 
-    (param $a-rtt (rtt $A))
-    (param $b-rtt (rtt $B))
-    (param $c-rtt (rtt $C))
+    (param $parent-rtt (rtt $parent))
+    (param $otherhild-rtt (rtt $otherhild))
+    (param $other-rtt (rtt $other))
 
-    ;; a cast of A to an rtt of A: static subtyping matches.
+    ;; a cast of parent to an rtt of parent: static subtyping matches.
     (drop
       (ref.cast
-        (local.get $a)
-        (local.get $a-rtt)
+        (local.get $parent)
+        (local.get $parent-rtt)
       )
     )
-    ;; a cast of B to a supertype: static subtyping matches.
+    ;; a cast of child to a supertype: static subtyping matches.
     (drop
       (ref.cast
-        (local.get $b)
-        (local.get $a-rtt)
+        (local.get $otherhild)
+        (local.get $parent-rtt)
       )
     )
-    ;; a cast of A to a subtype: static subtyping does not match.
+    ;; a cast of parent to a subtype: static subtyping does not match.
     (drop
       (ref.cast
-        (local.get $a)
-        (local.get $b-rtt)
+        (local.get $parent)
+        (local.get $otherhild-rtt)
       )
     )
-    ;; a cast of B to an unrelated type: static subtyping does not match.
+    ;; a cast of child to an unrelated type: static subtyping does not match.
     (drop
       (ref.cast
-        (local.get $b)
-        (local.get $c-rtt)
+        (local.get $otherhild)
+        (local.get $other-rtt)
       )
     )
   )
 
-  ;; CHECK:      (func $ref-cast-iit-bad (param $a (ref $A)) (param $b (ref $B)) (param $c (ref $C)) (param $a-rtt (rtt $A)) (param $b-rtt (rtt $B)) (param $c-rtt (rtt $C))
+  ;; CHECK:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $otherhild (ref $otherhild)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $otherhild-rtt (rtt $otherhild)) (param $other-rtt (rtt $other))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (block $block (result (ref $A))
+  ;; CHECK-NEXT:    (block $otherhildlock (result (ref $parent))
   ;; CHECK-NEXT:     (call $foo)
-  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:     (local.get $parent)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $block0 (result (rtt $A))
+  ;; CHECK-NEXT:    (block $otherhildlock0 (result (rtt $parent))
   ;; CHECK-NEXT:     (call $foo)
-  ;; CHECK-NEXT:     (local.get $a-rtt)
+  ;; CHECK-NEXT:     (local.get $parent-rtt)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:    (local.get $parent)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
   ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (local.get $a-rtt)
+  ;; CHECK-NEXT:    (local.get $parent-rtt)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-cast-iit-bad
-    (param $a (ref $A))
-    (param $b (ref $B))
-    (param $c (ref $C))
-
-    (param $a-rtt (rtt $A))
-    (param $b-rtt (rtt $B))
-    (param $c-rtt (rtt $C))
+    (param $parent (ref $parent))
+    (param $parent-rtt (rtt $parent))
 
     ;; ignore due to the inability to reorder
     (drop
       (ref.cast
-        (block (result (ref $A))
+        (block (result (ref $parent))
           (call $foo)
-          (local.get $a)
+          (local.get $parent)
         )
-        (block (result (rtt $A))
+        (block (result (rtt $parent))
           (call $foo)
-          (local.get $a-rtt)
+          (local.get $parent-rtt)
         )
       )
     )
@@ -130,14 +125,14 @@
     ;; ignore unreachability
     (drop
       (ref.cast
-        (local.get $a)
+        (local.get $parent)
         (unreachable)
       )
     )
     (drop
       (ref.cast
         (unreachable)
-        (local.get $a-rtt)
+        (local.get $parent-rtt)
       )
     )
   )
