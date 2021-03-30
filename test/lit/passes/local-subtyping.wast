@@ -42,4 +42,23 @@
       )
     )
   )
+
+  ;; CHECK:      (func $simple-local-but-not-param (param $x anyref)
+  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simple-local-but-not-param (param $x anyref)
+    (local $y anyref)
+    (local.set $x
+      (ref.func $i32)
+    )
+    (local.set $y
+      (ref.func $i32)
+    )
+  )
 )

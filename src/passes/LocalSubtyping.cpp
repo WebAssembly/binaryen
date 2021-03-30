@@ -68,6 +68,12 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
         auto newType = Type::getLeastUpperBound(types);
         auto oldType = func->getLocalType(i);
         assert(newType != Type::none); // in valid wasm there must be a LUB
+
+        // Remove non-nullability, which cant be stored in a local
+        if (newType.isRef() && !newType.isNullable()) {
+          newType = Type(newType.getHeapType(), Nullable);
+        }
+
         if (newType != oldType) {
           // We found a more specific type!
           assert(Type::isSubType(newType, oldType));
