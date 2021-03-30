@@ -1085,7 +1085,7 @@ struct Reducer
       RefNull* n = builder->makeRefNull(curr->type);
       return tryToReplaceCurrent(n);
     }
-    if (curr->type.isTuple()) {
+    if (curr->type.isTuple() && curr->type.isDefaultable()) {
       Expression* n =
         builder->makeConstantExpression(Literal::makeZeros(curr->type));
       return tryToReplaceCurrent(n);
