@@ -1226,8 +1226,12 @@ private:
       // i32(x) >> 31 | 1
       // i64(x) >> 63 | 1
       Binary* bin;
-      if (matches(curr, select(ival(-1), ival(1), binary(&bin, LtS, any(), ival(0)))) ||
-          matches(curr, select(ival(1), ival(-1), binary(&bin, GeS, any(), ival(0))))) {
+      if (matches(
+            curr,
+            select(ival(-1), ival(1), binary(&bin, LtS, any(), ival(0)))) ||
+          matches(
+            curr,
+            select(ival(1), ival(-1), binary(&bin, GeS, any(), ival(0))))) {
         auto c = bin->right->cast<Const>();
         auto type = curr->ifTrue->type;
         if (type == c->type) {
