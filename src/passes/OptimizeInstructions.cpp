@@ -1015,9 +1015,9 @@ struct OptimizeInstructions
     // evaluates to 0 or 1 then the replacement may not actually save code size,
     // since RefIsNull is a single byte (the others are 2), while adding a Const
     // of 0 would be two bytes. Other factors are that we can remove the input
-    // if it has no side effects, and that replacing with a constant may allow
-    // further optimizations later. For now, replace with a constant, but this
-    // warrants more investigation. TODO
+    // and the added drop on it if it has no side effects, and that replacing
+    // with a constant may allow further optimizations later. For now, replace
+    // with a constant, but this warrants more investigation. TODO
 
     Builder builder(*getModule());
 
