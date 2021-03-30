@@ -6,6 +6,19 @@
   (type $struct (struct (field (mut i32))))
 
   ;; Writes to heap objects cannot be reordered with reads.
+  ;; CHECK:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
+  ;; CHECK-NEXT:  (local $temp i32)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $temp)
+  ;; CHECK-NEXT: )
   (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
     (local $temp i32)
     (local.set $temp
