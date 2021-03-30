@@ -123,10 +123,11 @@ public:
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return globalsWritten.size() || writesMemory || isAtomic || calls;
+    return globalsWritten.size() || writesMemory || writesHeap || isAtomic ||
+           calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsHeap || isAtomic || calls;
   }
 
   bool hasSideEffects() const {
