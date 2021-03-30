@@ -128,22 +128,22 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_is
-   (param $struct (ref $struct))
-   (param $func (ref func))
-   (param $data (ref data))
-   (param $i31 (ref i31))
-   (drop
-    (ref.is_null (local.get $struct))
-   )
-   (drop
-    (ref.is_func (local.get $func))
-   )
-   (drop
-    (ref.is_data (local.get $data))
-   )
-   (drop
-    (ref.is_i31 (local.get $i31))
-   )
+    (param $struct (ref $struct))
+    (param $func (ref func))
+    (param $data (ref data))
+    (param $i31 (ref i31))
+    (drop
+      (ref.is_null (local.get $struct))
+    )
+    (drop
+       (ref.is_func (local.get $func))
+     )
+    (drop
+      (ref.is_data (local.get $data))
+    )
+    (drop
+      (ref.is_i31 (local.get $i31))
+    )
   )
 
   ;; similar to $unneeded_is, but the values are nullable. we can at least
@@ -178,21 +178,21 @@
   ;; CHECK-NEXT: )
   (func $unneeded_is_null
    (param $struct (ref null $struct))
-   (param $func (ref null func))
-   (param $data (ref null data))
-   (param $i31 (ref null i31))
-   (drop
-    (ref.is_null (local.get $struct))
-   )
-   (drop
-    (ref.is_func (local.get $func))
-   )
-   (drop
-    (ref.is_data (local.get $data))
-   )
-   (drop
-    (ref.is_i31 (local.get $i31))
-   )
+    (param $func (ref null func))
+    (param $data (ref null data))
+    (param $i31 (ref null i31))
+    (drop
+      (ref.is_null (local.get $struct))
+    )
+    (drop
+      (ref.is_func (local.get $func))
+    )
+    (drop
+      (ref.is_data (local.get $data))
+    )
+    (drop
+      (ref.is_i31 (local.get $i31))
+    )
   )
   ;; similar to $unneeded_is, but the values are of mixed kind (is_func of
   ;; data, etc.). regardless of nullability the result here is always 0.
@@ -253,27 +253,27 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_is_bad_kinds
-   (param $func (ref null func))
-   (param $data (ref null data))
-   (param $i31 (ref null i31))
-   (drop
-    (ref.is_func (local.get $data))
-   )
-   (drop
-    (ref.is_data (local.get $i31))
-   )
-   (drop
-    (ref.is_i31 (local.get $func))
-   )
-   (drop
-    (ref.is_func (ref.as_non_null (local.get $data)))
-   )
-   (drop
-    (ref.is_data (ref.as_non_null (local.get $i31)))
-   )
-   (drop
-    (ref.is_i31 (ref.as_non_null (local.get $func)))
-   )
+    (param $func (ref null func))
+    (param $data (ref null data))
+    (param $i31 (ref null i31))
+    (drop
+      (ref.is_func (local.get $data))
+    )
+    (drop
+      (ref.is_data (local.get $i31))
+    )
+    (drop
+      (ref.is_i31 (local.get $func))
+    )
+    (drop
+      (ref.is_func (ref.as_non_null (local.get $data)))
+    )
+    (drop
+      (ref.is_data (ref.as_non_null (local.get $i31)))
+    )
+    (drop
+      (ref.is_i31 (ref.as_non_null (local.get $func)))
+    )
   )
 
   ;; ref.as_non_null is not needed on a non-nullable value, and if something is
@@ -293,22 +293,22 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_as
-   (param $struct (ref $struct))
-   (param $func (ref func))
-   (param $data (ref data))
-   (param $i31 (ref i31))
-   (drop
-    (ref.as_non_null (local.get $struct))
-   )
-   (drop
-    (ref.as_func (local.get $func))
-   )
-   (drop
-    (ref.as_data (local.get $data))
-   )
-   (drop
-    (ref.as_i31 (local.get $i31))
-   )
+    (param $struct (ref $struct))
+    (param $func (ref func))
+    (param $data (ref data))
+    (param $i31 (ref i31))
+    (drop
+      (ref.as_non_null (local.get $struct))
+    )
+    (drop
+      (ref.as_func (local.get $func))
+    )
+    (drop
+      (ref.as_data (local.get $data))
+    )
+    (drop
+      (ref.as_i31 (local.get $i31))
+    )
   )
 
   ;; similar to $unneeded_as, but the values are nullable. we can turn the
@@ -336,22 +336,22 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_as_null
-   (param $struct (ref null $struct))
-   (param $func (ref null func))
-   (param $data (ref null data))
-   (param $i31 (ref null i31))
-   (drop
-    (ref.as_non_null (local.get $struct))
-   )
-   (drop
-    (ref.as_func (local.get $func))
-   )
-   (drop
-    (ref.as_data (local.get $data))
-   )
-   (drop
-    (ref.as_i31 (local.get $i31))
-   )
+    (param $struct (ref null $struct))
+    (param $func (ref null func))
+    (param $data (ref null data))
+    (param $i31 (ref null i31))
+    (drop
+      (ref.as_non_null (local.get $struct))
+    )
+    (drop
+      (ref.as_func (local.get $func))
+    )
+    (drop
+      (ref.as_data (local.get $data))
+    )
+    (drop
+      (ref.as_i31 (local.get $i31))
+    )
   )
   ;; similar to $unneeded_as, but the values are of mixed kind (as_func of
   ;; data, etc.), so we know we will trap
@@ -382,18 +382,18 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_as_bad_kinds
-   (param $func (ref null func))
-   (param $data (ref null data))
-   (param $i31 (ref null i31))
-   (drop
-    (ref.as_func (local.get $data))
-   )
-   (drop
-    (ref.as_data (local.get $i31))
-   )
-   (drop
-    (ref.as_i31 (local.get $func))
-   )
+    (param $func (ref null func))
+    (param $data (ref null data))
+    (param $i31 (ref null i31))
+    (drop
+      (ref.as_func (local.get $data))
+    )
+    (drop
+      (ref.as_data (local.get $i31))
+    )
+    (drop
+      (ref.as_i31 (local.get $func))
+    )
   )
 
   ;; CHECK:      (func $unneeded_unreachability
@@ -409,12 +409,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_unreachability
-   ;; unreachable instructions can simply be ignored
-   (drop
-    (ref.is_func (unreachable))
-   )
-   (drop
-    (ref.as_func (unreachable))
-   )
+    ;; unreachable instructions can simply be ignored
+    (drop
+      (ref.is_func (unreachable))
+    )
+    (drop
+      (ref.as_func (unreachable))
+    )
   )
 )
