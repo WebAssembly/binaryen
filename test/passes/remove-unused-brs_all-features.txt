@@ -2,8 +2,8 @@
  (type $vector (array (mut i32)))
  (type $struct (struct (field (ref null $vector))))
  (type $i32_=>_none (func (param i32)))
- (type $none_=>_none (func))
  (type $ref|func|_=>_none (func (param (ref func))))
+ (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
  (type $none_=>_f64 (func (result f64)))
  (type $i32_=>_funcref (func (param i32) (result funcref)))
@@ -69,7 +69,7 @@
    (i32.const 2)
   )
   (drop
-   (block $func (result funcref)
+   (block $func (result (ref $ref|func|_=>_none))
     (drop
      (br $func
       (ref.func $br_on-to-br)
@@ -85,7 +85,7 @@
    (i32.const 4)
   )
   (drop
-   (block $data (result dataref)
+   (block $data (result (ref $vector))
     (drop
      (br $data
       (array.new_default_with_rtt $vector

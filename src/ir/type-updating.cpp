@@ -37,6 +37,10 @@ void handleNonNullableLocals(Function* func, Module& wasm) {
   Builder builder(wasm);
   for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
     auto* get = (*getp)->cast<LocalGet>();
+    if (!func->isVar(get->index)) {
+      // We do not need to process params, which can legally be non-nullable.
+      continue;
+    }
     auto type = func->getLocalType(get->index);
     if (type.isRef() && !type.isNullable()) {
       // The get should now return a nullable value, and a ref.as_non_null

@@ -893,11 +893,11 @@ void test_core() {
   BinaryenModuleSetFeatures(module, features);
   assert(BinaryenModuleGetFeatures(module) == features);
 
-  // Verify it validates
-  assert(BinaryenModuleValidate(module));
-
   // Print it out
   BinaryenModulePrint(module);
+
+  // Verify it validates
+  assert(BinaryenModuleValidate(module));
 
   // Clean up the module, which owns all the objects we created above
   BinaryenModuleDispose(module);
