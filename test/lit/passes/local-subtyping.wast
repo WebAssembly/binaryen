@@ -132,7 +132,8 @@
     )
   )
 
-  ;; In some cases multiple iterations are necessary.
+  ;; In some cases multiple iterations are necessary, as one inferred new type
+  ;; applies to a get which then allows another inference.
   ;; CHECK:      (func $multiple-iterations
   ;; CHECK-NEXT:  (local $x (ref null $none_=>_i32))
   ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
@@ -159,6 +160,44 @@
     )
     (local.set $z
       (local.get $y)
+    )
+  )
+
+  ;; Sometimes a refinalize is necessary in between the iterations.
+  ;; CHECK:      (func $multiple-iterations-refinalize (param $i i32)
+  ;; CHECK-NEXT:  (local $x (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i64))
+  ;; CHECK-NEXT:  (local $z funcref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (ref.func $i64)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (select (result funcref)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (local.get $i)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multiple-iterations-refinalize (param $i i32)
+    (local $x anyref)
+    (local $y anyref)
+    (local $z anyref)
+    (local.set $x
+      (ref.func $i32)
+    )
+    (local.set $y
+      (ref.func $i64)
+    )
+    (local.set $z
+      (select
+        (local.get $x)
+        (local.get $y)
+        (local.get $i)
+      )
     )
   )
 )
