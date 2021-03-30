@@ -342,7 +342,9 @@ struct Flatten
     // top of the file.
     for (auto type : func->vars) {
       if (!type.isDefaultable()) {
-        Fatal() << "Flatten was forced to add a local of a type it cannot handle yet: " << type;
+        Fatal() << "Flatten was forced to add a local of a type it cannot "
+                   "handle yet: "
+                << type;
       }
     }
   }
