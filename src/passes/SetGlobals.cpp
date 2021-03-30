@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-// Removes code from all functions but one, leaving a valid module
-// with (mostly) just the code you want to debug (function-parallel,
-// non-lto) passes on.
+// Assigns values to specified globals. This can be useful to perform a minor
+// customization of an existing wasm file.
 
 #include "pass.h"
 #include "support/string.h"
