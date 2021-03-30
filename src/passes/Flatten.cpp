@@ -340,7 +340,7 @@ struct Flatten
     TypeUpdating::handleNonNullableLocals(curr, *getModule());
     // We cannot handle non-nullable tuples currently, see the comment at the
     // top of the file.
-    for (auto type : func->vars) {
+    for (auto type : curr->vars) {
       if (!type.isDefaultable()) {
         Fatal() << "Flatten was forced to add a local of a type it cannot "
                    "handle yet: "
