@@ -115,11 +115,10 @@ struct ExecutionResults {
               // Don't print reference values, as funcref(N) contains an index
               // for example, which is not guaranteed to remain identical after
               // optimizations.
-              std::cout << resultType;
+              std::cout << resultType << '\n';
             } else {
-              std::cout << ret;
+              std::cout << ret << '\n';
             }
-            std::cout << '\n';
           }
         } else {
           // no result, run it anyhow (it might modify memory etc.)
