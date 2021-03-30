@@ -60,10 +60,17 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
       // type.
 
       for (Index i = varBase; i < numLocals; i++) {
-        // Find all the types assigned to the var.
+        // Find all the types assigned to the var, and compute the optimal LUB.
+        // Note that we do not need to take into account the initial value of
+        // zero or null that locals have: that value has the type of the local,
+        // which is a supertype of all the assigned values anyhow. It will never
+        // be able to tell us of a more specific subtype that is possible.
         std::unordered_set<Type> types;
         for (auto* set : setsForLocal[i]) {
           types.insert(set->value->type);
+        }
+        if (types.empty()) {
+          continue;
         }
         auto newType = Type::getLeastUpperBound(types);
         auto oldType = func->getLocalType(i);
