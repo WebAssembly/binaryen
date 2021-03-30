@@ -223,7 +223,8 @@ struct ExecutionResults {
       for (const auto& param : func->sig.params) {
         // zeros in arguments TODO: more?
         if (!param.isDefaultable()) {
-          std::cout << "[trap fuzzer can only send nullable parameters to exports]\n";
+          std::cout
+            << "[trap fuzzer can only send defaultable parameters to exports]\n";
         }
         arguments.push_back(Literal::makeZero(param));
       }
