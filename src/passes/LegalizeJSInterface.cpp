@@ -125,12 +125,6 @@ struct LegalizeJSInterface : public Pass {
             return;
           }
 
-          if (iter->second == getFunction()->name) {
-            // inside the stub function itself, is the one safe place to do the
-            // call
-            return;
-          }
-
           replaceCurrent(
             Builder(*getModule())
               .makeCall(
@@ -143,14 +137,7 @@ struct LegalizeJSInterface : public Pass {
             return;
           }
 
-          auto newName = iter->second;
-          if (newName == getFunction()->name) {
-            // inside the stub function itself, is the one safe place to do the
-            // call
-            return;
-          }
-
-          curr->func = newName;
+          curr->func = iter->second;
         }
       };
 
