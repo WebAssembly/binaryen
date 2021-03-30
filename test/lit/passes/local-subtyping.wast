@@ -3,11 +3,28 @@
 ;; RUN:   | filecheck %s
 
 (module
-  (func $i32 (result i32) (unreachable))
-  (func $i64 (result i64) (unreachable))
+  (import "out" "i32" (func $i32 (result i32)))
+  (import "out" "i64" (func $i64 (result i64)))
 
   ;; refinalization can find a more specific type, where the declared type was
   ;; no the optimal LUB
+  ;; CHECK:      (func $refinalize (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref func))
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (ref.func $i32)
+  ;; CHECK-NEXT:    (ref.func $i64)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref func))
+  ;; CHECK-NEXT:    (br $block
+  ;; CHECK-NEXT:     (ref.func $i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.func $i64)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $refinalize (param $x i32)
     (drop
       (if (result anyref)
