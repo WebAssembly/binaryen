@@ -590,6 +590,82 @@
       )
     )
   )
+  ;; CHECK:      (func $select-sign-32-lt (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 31)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-32-lt (param $x i32) (result i32)
+    (select
+      (i32.const -1)
+      (i32.const 1)
+      (i32.lt_s
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-32-ge (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.or
+  ;; CHECK-NEXT:   (i32.shr_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 31)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-32-ge (param $x i32) (result i32)
+    (select
+      (i32.const 1)
+      (i32.const -1)
+      (i32.ge_s
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-64-lt (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.or
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 63)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-64-lt (param $x i64) (result i64)
+    (select
+      (i64.const -1)
+      (i64.const 1)
+      (i64.lt_s
+        (local.get $x)
+        (i64.const 0)
+      )
+    )
+  )
+  ;; CHECK:      (func $select-sign-64-ge (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (i64.or
+  ;; CHECK-NEXT:   (i64.shr_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 63)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $select-sign-64-ge (param $x i64) (result i64)
+    (select
+      (i64.const 1)
+      (i64.const -1)
+      (i64.ge_s
+        (local.get $x)
+        (i64.const 0)
+      )
+    )
+  )
   ;; CHECK:      (func $load8_s-and-255 (result i32)
   ;; CHECK-NEXT:  (i32.load8_u
   ;; CHECK-NEXT:   (i32.const 0)
