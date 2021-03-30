@@ -194,6 +194,7 @@
       (ref.is_i31 (local.get $i31))
     )
   )
+
   ;; similar to $unneeded_is, but the values are of mixed kind (is_func of
   ;; data, etc.). regardless of nullability the result here is always 0.
   ;; CHECK:      (func $unneeded_is_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
