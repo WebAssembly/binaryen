@@ -3,13 +3,13 @@
 ;; RUN:   | filecheck %s
 
 (module
-  (type $parent    (struct (field i32)))
-  (type $otherhild (struct (field i32) (field f64)))
-  (type $other     (struct (field i64) (field f32)))
+  (type $parent (struct (field i32)))
+  (type $child  (struct (field i32) (field f64)))
+  (type $other  (struct (field i64) (field f32)))
 
   (func $foo)
 
-  ;; CHECK:      (func $ref-cast-iit (param $parent (ref $parent)) (param $otherhild (ref $otherhild)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $otherhild-rtt (rtt $otherhild)) (param $other-rtt (rtt $other))
+  ;; CHECK:      (func $ref-cast-iit (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $child-rtt (rtt $child)) (param $other-rtt (rtt $other))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $parent))
   ;; CHECK-NEXT:    (drop
@@ -19,33 +19,33 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $otherhild))
+  ;; CHECK-NEXT:   (block (result (ref $child))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $parent-rtt)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $otherhild)
+  ;; CHECK-NEXT:    (local.get $child)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
   ;; CHECK-NEXT:    (local.get $parent)
-  ;; CHECK-NEXT:    (local.get $otherhild-rtt)
+  ;; CHECK-NEXT:    (local.get $child-rtt)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (local.get $otherhild)
+  ;; CHECK-NEXT:    (local.get $child)
   ;; CHECK-NEXT:    (local.get $other-rtt)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-cast-iit
     (param $parent (ref $parent))
-    (param $otherhild (ref $otherhild))
+    (param $child (ref $child))
     (param $other (ref $other))
 
     (param $parent-rtt (rtt $parent))
-    (param $otherhild-rtt (rtt $otherhild))
+    (param $child-rtt (rtt $child))
     (param $other-rtt (rtt $other))
 
     ;; a cast of parent to an rtt of parent: static subtyping matches.
@@ -58,7 +58,7 @@
     ;; a cast of child to a supertype: static subtyping matches.
     (drop
       (ref.cast
-        (local.get $otherhild)
+        (local.get $child)
         (local.get $parent-rtt)
       )
     )
@@ -66,13 +66,13 @@
     (drop
       (ref.cast
         (local.get $parent)
-        (local.get $otherhild-rtt)
+        (local.get $child-rtt)
       )
     )
     ;; a cast of child to an unrelated type: static subtyping does not match.
     (drop
       (ref.cast
-        (local.get $otherhild)
+        (local.get $child)
         (local.get $other-rtt)
       )
     )
