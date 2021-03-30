@@ -112,9 +112,7 @@ struct LegalizeJSInterface : public Pass {
       struct Fixer : public WalkerPass<PostWalker<Fixer>> {
         bool isFunctionParallel() override { return true; }
 
-        Pass* create() override {
-          return new Fixer(illegalImportsToLegal);
-        }
+        Pass* create() override { return new Fixer(illegalImportsToLegal); }
 
         std::map<Name, Name>* illegalImportsToLegal;
 
