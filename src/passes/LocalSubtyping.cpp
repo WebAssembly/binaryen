@@ -26,25 +26,25 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
 
   Pass* create() { return new LocalSubtyping(); }
 
+  // Shared code to find all sets or gets for each local index.
+  template<typename T>
+  std::vector<std::vector<T*>> getLocalOperations(Function* func) {
+    std::vector<std::vector<T*>> ret;
+    ret.resize(func->getNumLocals());
+    FindAll<T> operations(func->body);
+    for (auto* operation : operations.list) {
+      ret[operation->index].push_back(operation);
+    }
+    return ret;
+  }
+
   void doWalkFunction(Function* func) {
     auto varBase = func->getVarIndexBase();
     auto numLocals = func->getNumLocals();
     bool more;
 
-    // Map local index to the sets and gets for it.
-    std::vector<std::vector<LocalSet*>> setsForLocal;
-    setsForLocal.resize(numLocals);
-    FindAll<LocalSet> sets(func->body);
-    for (auto* set : sets.list) {
-      setsForLocal[set->index].push_back(set);
-    }
-
-    std::vector<std::vector<LocalGet*>> getsForLocal;
-    getsForLocal.resize(numLocals);
-    FindAll<LocalGet> gets(func->body);
-    for (auto* get : gets.list) {
-      getsForLocal[get->index].push_back(get);
-    }
+    auto setsForLocal = getLocalOperations<LocalSet>(func);
+    auto getsForLocal = getLocalOperations<LocalGet>(func);
 
     // Keep iterating while we find things to change. There can be chains like
     // X -> Y -> Z where one change enables more. Note that we are O(N^2) on
