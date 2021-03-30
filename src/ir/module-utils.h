@@ -512,17 +512,18 @@ inline void collectHeapTypes(Module& wasm,
   }
 
   // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(wasm, [&](Function* func, Counts& counts) {
-    counts.note(func->sig);
-    for (auto type : func->vars) {
-      for (auto t : type) {
-        counts.maybeNote(t);
+  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
+    wasm, [&](Function* func, Counts& counts) {
+      counts.note(func->sig);
+      for (auto type : func->vars) {
+        for (auto t : type) {
+          counts.maybeNote(t);
+        }
       }
-    }
-    if (!func->imported()) {
-      CodeScanner(counts).walk(func->body);
-    }
-  });
+      if (!func->imported()) {
+        CodeScanner(counts).walk(func->body);
+      }
+    });
 
   // Combine the function info with the module info.
   for (auto& pair : analysis.map) {
