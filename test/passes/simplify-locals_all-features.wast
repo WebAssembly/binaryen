@@ -1548,7 +1548,7 @@
 )
 (module
  (memory 256 256)
- (data passive "hello, there!")
+ (data "hello, there!")
  (func $memory-init-load
   (local $x i32)
   (local.set $x
@@ -1745,7 +1745,7 @@
 ;; data.drop has global side effects
 (module
  (memory $0 (shared 1 1))
- (data passive "data")
+ (data "data")
  (func "foo" (result i32)
   (local $0 i32)
   (block (result i32)

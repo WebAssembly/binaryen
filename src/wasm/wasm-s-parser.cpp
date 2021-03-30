@@ -2858,27 +2858,34 @@ void SExpressionWasmBuilder::parseData(Element& s) {
   if (!wasm.memory.exists) {
     throw ParseException("data but no memory", s.line, s.col);
   }
-  bool isPassive = false;
+  bool isPassive = true;
   Expression* offset = nullptr;
   Index i = 1;
   Name name;
-  if (s[i]->dollared()) {
+
+  if (s[i]->isStr() && s[i]->dollared()) {
     name = s[i++]->str();
   }
-  if (s[i]->isStr()) {
-    // data is passive or named
-    if (s[i]->str() == PASSIVE) {
-      isPassive = true;
+
+  if (s[i]->isList()) {
+    // Optional (memory <memoryidx>)
+    if (elementStartsWith(s[i], MEMORY)) {
+      // TODO: we're just skipping memory since we have only one. Assign the
+      //  memory name to the segment when we support multiple memories.
+      i += 1;
     }
-    i++;
+
+    // Offset expression (offset (<expr>)) | (<expr>)
+    auto& inner = *s[i++];
+    if (elementStartsWith(inner, OFFSET)) {
+      offset = parseExpression(inner[1]);
+    } else {
+      offset = parseExpression(inner);
+    }
+    isPassive = false;
   }
-  if (!isPassive) {
-    offset = parseExpression(s[i]);
-  }
-  if (s.size() != 3 && s.size() != 4) {
-    throw ParseException("Unexpected data items", s.line, s.col);
-  }
-  parseInnerData(s, s.size() - 1, name, offset, isPassive);
+
+  parseInnerData(s, i, name, offset, isPassive);
 }
 
 void SExpressionWasmBuilder::parseInnerData(

@@ -1,7 +1,7 @@
 (module
  (memory 1 1)
  ;; this can be removed destructively
- (data passive "some-data")
+ (data "some-data")
  (func "foo" (result i32)
   ;; this can be removed destructively
   (memory.init 0

@@ -1726,7 +1726,7 @@
 (module
  (type $none_=>_none (func))
  (memory $0 256 256)
- (data passive "hello, there!")
+ (data "hello, there!")
  (func $memory-init-load
   (local $x i32)
   (local.set $x
@@ -1983,7 +1983,7 @@
 (module
  (type $none_=>_i32 (func (result i32)))
  (memory $0 (shared 1 1))
- (data passive "data")
+ (data "data")
  (export "foo" (func $0))
  (func $0 (result i32)
   (local $0 i32)

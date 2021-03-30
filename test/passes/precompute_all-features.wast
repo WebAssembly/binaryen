@@ -1,6 +1,6 @@
 (module
   (memory 512 512
-   (data passive "hello!")
+   (data "hello!")
   )
   (type $0 (func (param i32)))
   (global $global i32 (i32.const 1))

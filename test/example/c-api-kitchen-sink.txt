@@ -38,7 +38,7 @@ BinaryenFeatureAll: 8191
  (import "module" "base" (func $an-imported (param i32 f64) (result f32)))
  (memory $0 (shared 1 256))
  (data (i32.const 10) "hello, world")
- (data passive "I am passive")
+ (data "I am passive")
  (table $tab 0 100 funcref)
  (table $0 1 1 funcref)
  (elem $0 (table $0) (i32.const 0) func "$kitchen()sinker")

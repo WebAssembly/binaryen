@@ -2803,12 +2803,11 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         printName(segment.name, o);
         o << ' ';
       }
-      if (segment.isPassive) {
-        printMedium(o, "passive");
-      } else {
+      if (!segment.isPassive) {
         visit(segment.offset);
+        o << ' ';
       }
-      o << " \"";
+      o << "\"";
       for (size_t i = 0; i < segment.data.size(); i++) {
         unsigned char c = segment.data[i];
         switch (c) {
