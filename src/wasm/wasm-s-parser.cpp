@@ -3178,9 +3178,6 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
 void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   std::unique_ptr<Table> table = make_unique<Table>();
   Index i = 1;
-  if (i == s.size()) {
-    return; // empty table in old notation
-  }
   if (s[i]->dollared()) {
     table->setExplicitName(s[i++]->str());
   } else {
@@ -3188,10 +3185,6 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   }
   tableNames.push_back(table->name);
 
-  if (i == s.size()) {
-    wasm.addTable(std::move(table));
-    return;
-  }
   Name importModule, importBase;
   if (s[i]->isList()) {
     auto& inner = *s[i];
@@ -3216,13 +3209,37 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
       throw ParseException("invalid table", inner.line, inner.col);
     }
   }
-  if (i == s.size()) {
-    wasm.addTable(std::move(table));
-    return;
+
+  bool hasExplicitLimit = false;
+
+  if (s[i]->isStr()) {
+    char c = s[i]->c_str()[0];
+    if ('0' <= c && c <= '9') {
+      table->initial = atoi(s[i++]->c_str());
+      hasExplicitLimit = true;
+    }
   }
 
-  auto parseTableElem = [&](Table* table, Element& s) {
-    parseElem(s, table);
+  if (s[i]->isStr()) {
+    char c = s[i]->c_str()[0];
+    if ('0' <= c && c <= '9') {
+      table->max = atoi(s[i++]->c_str());
+    }
+  }
+
+  if (!s[i]->isStr() || s[i]->str() != FUNCREF) {
+    throw ParseException("Expected funcref");
+  } else {
+    i += 1;
+  }
+
+  if (i < s.size() && s[i]->isList()) {
+    if (hasExplicitLimit) {
+      throw ParseException(
+        "Table cannot have both explicit limits and an inline (elem ...)");
+    }
+    // (table type (elem ..))
+    parseElem(*s[i], table.get());
     auto it = std::find_if(wasm.elementSegments.begin(),
                            wasm.elementSegments.end(),
                            [&](std::unique_ptr<ElementSegment>& segment) {
@@ -3233,32 +3250,8 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
     } else {
       table->initial = table->max = 0;
     }
-  };
-
-  if (!s[i]->dollared()) {
-    if (s[i]->str() == FUNCREF) {
-      // (table type (elem ..))
-      parseTableElem(table.get(), *s[i + 1]);
-      wasm.addTable(std::move(table));
-      return;
-    }
-    // first element isn't dollared, and isn't funcref. this could be old syntax
-    // for (table 0 1) which means function 0 and 1, or it could be (table
-    // initial max? type), look for type
-    if (s[s.size() - 1]->str() == FUNCREF) {
-      // (table initial max? type)
-      if (i < s.size() - 1) {
-        table->initial = atoi(s[i++]->c_str());
-      }
-      if (i < s.size() - 1) {
-        table->max = atoi(s[i++]->c_str());
-      }
-      wasm.addTable(std::move(table));
-      return;
-    }
   }
-  // old notation (table func1 func2 ..)
-  parseTableElem(table.get(), s);
+
   wasm.addTable(std::move(table));
 }
 
@@ -3278,14 +3271,14 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
   Index i = 1;
   Name name = Name::fromInt(elemCounter++);
   bool hasExplicitName = false;
-  bool isPassive = false;
+  bool isPassive = true;
   bool usesExpressions = false;
 
   if (table) {
     Expression* offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     auto segment = std::make_unique<ElementSegment>(table->name, offset);
     segment->setName(name, hasExplicitName);
-    parseElemFinish(s, segment, i, false);
+    parseElemFinish(s, segment, i, s[i]->isList());
     return;
   }
 
@@ -3298,70 +3291,48 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     return;
   }
 
-  if (s[i]->isStr()) {
-    if (s[i]->str() == FUNC) {
-      isPassive = true;
-      usesExpressions = false;
-    } else if (s[i]->str() == FUNCREF) {
-      isPassive = true;
-      usesExpressions = true;
-    }
-  }
+  auto segment = std::make_unique<ElementSegment>();
+  segment->setName(name, hasExplicitName);
 
-  if (isPassive) {
-    auto segment = std::make_unique<ElementSegment>();
-    segment->setName(name, hasExplicitName);
-    parseElemFinish(s, segment, i + 1, usesExpressions);
-    return;
-  }
-
-  // old style refers to the pre-reftypes form of (elem 0? (expr) vec(funcidx))
-  bool oldStyle = true;
-
-  // At this point, we know that we're parsing an active element segment. A
-  // table will be mandatory now.
-  if (wasm.tables.empty()) {
-    throw ParseException("elem without table", s.line, s.col);
-  }
-
-  // Old style table index (elem 0 (i32.const 0) ...)
-  if (s[i]->isStr()) {
-    i += 1;
-  }
-
-  if (s[i]->isList() && elementStartsWith(s[i], TABLE)) {
-    oldStyle = false;
-    auto& inner = *s[i++];
-    Name tableName = getTableName(*inner[1]);
-    table = wasm.getTable(tableName);
-  }
-
-  Expression* offset = nullptr;
   if (s[i]->isList()) {
+    // Optional (table <tableidx>)
+    if (elementStartsWith(s[i], TABLE)) {
+      auto& inner = *s[i++];
+      segment->table = getTableName(*inner[1]);
+    }
+
+    // Offset expression (offset (<expr>)) | (<expr>)
     auto& inner = *s[i++];
     if (elementStartsWith(inner, OFFSET)) {
-      offset = parseExpression(inner[1]);
-      oldStyle = false;
+      segment->offset = parseExpression(inner[1]);
     } else {
-      offset = parseExpression(inner);
+      segment->offset = parseExpression(inner);
     }
+    isPassive = false;
   }
 
-  if (!oldStyle) {
-    if (s[i]->str() == FUNCREF) {
+  if (i < s.size()) {
+    if (s[i]->isStr() && s[i]->dollared()) {
+      usesExpressions = false;
+    } else if (s[i]->isStr() && s[i]->str() == FUNC) {
+      usesExpressions = false;
+      i += 1;
+    } else if (s[i]->isStr() && s[i]->str() == FUNCREF) {
       usesExpressions = true;
-    } else if (s[i]->str() != FUNC) {
+      i += 1;
+    } else {
       throw ParseException("expected func or funcref.");
     }
-    i += 1;
   }
 
-  if (!table) {
+  if (!isPassive && segment->table.isNull()) {
+    if (wasm.tables.empty()) {
+      throw ParseException("active element without table", s.line, s.col);
+    }
     table = wasm.tables.front().get();
+    segment->table = table->name;
   }
 
-  auto segment = std::make_unique<ElementSegment>(table->name, offset);
-  segment->setName(name, hasExplicitName);
   parseElemFinish(s, segment, i, usesExpressions);
 }
 
