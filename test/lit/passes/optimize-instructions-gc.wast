@@ -266,6 +266,7 @@
     (drop
       (ref.is_i31 (local.get $func))
     )
+    ;; also check non-nullable types as inputs
     (drop
       (ref.is_func (ref.as_non_null (local.get $data)))
     )
@@ -354,6 +355,7 @@
       (ref.as_i31 (local.get $i31))
     )
   )
+
   ;; similar to $unneeded_as, but the values are of mixed kind (as_func of
   ;; data, etc.), so we know we will trap
   ;; CHECK:      (func $unneeded_as_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
@@ -381,6 +383,36 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $data)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $i31)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $func)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unneeded_as_bad_kinds
     (param $func (ref null func))
@@ -394,6 +426,16 @@
     )
     (drop
       (ref.as_i31 (local.get $func))
+    )
+    ;; also check non-nullable types as inputs
+    (drop
+      (ref.as_func (ref.as_non_null (local.get $data)))
+    )
+    (drop
+      (ref.as_data (ref.as_non_null (local.get $i31)))
+    )
+    (drop
+      (ref.as_i31 (ref.as_non_null (local.get $func)))
     )
   )
 
