@@ -63,4 +63,68 @@
       (ref.func $i32)
     )
   )
+
+  ;; CHECK:      (func $locals-with-multiple-assignments
+  ;; CHECK-NEXT:  (local $x funcref)
+  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local $z (ref null $none_=>_i64))
+  ;; CHECK-NEXT:  (local $w funcref)
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (ref.func $i64)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $y
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (ref.func $i64)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $z
+  ;; CHECK-NEXT:   (ref.func $i64)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $w
+  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $w
+  ;; CHECK-NEXT:   (ref.func $i64)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $locals-with-multiple-assignments
+    (local $x anyref)
+    (local $y anyref)
+    (local $z anyref)
+    (local $w funcref)
+    ;; x is assigned two different types with a new LUB possible
+    (local.set $x
+      (ref.func $i32)
+    )
+    (local.set $x
+      (ref.func $i64)
+    )
+    ;; y and z are assigned the same type
+    (local.set $y
+      (ref.func $i32)
+    )
+    (local.set $y
+      (ref.func $i32)
+    )
+    (local.set $z
+      (ref.func $i64)
+    )
+    (local.set $z
+      (ref.func $i64)
+    )
+    ;; w is assigned two different types *without* a new LUB possible
+    (local.set $w
+      (ref.func $i32)
+    )
+    (local.set $w
+      (ref.func $i64)
+    )
+  )
 )
