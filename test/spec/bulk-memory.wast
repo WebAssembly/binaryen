@@ -1,7 +1,7 @@
 ;; Passive segment syntax
 (module
   (memory 1)
-  (data passive "foo"))
+  (data "foo"))
 
 ;; memory.fill
 (module
@@ -112,7 +112,7 @@
 ;; memory.init
 (module
   (memory 1)
-  (data passive "\aa\bb\cc\dd")
+  (data "\aa\bb\cc\dd")
 
   (func (export "init") (param i32 i32 i32)
     (memory.init 0
@@ -152,7 +152,7 @@
 ;; data.drop
 (module
   (memory 1)
-  (data passive "")
+  (data "")
   (data (i32.const 0) "")
 
   (func (export "drop_passive") (data.drop 0))

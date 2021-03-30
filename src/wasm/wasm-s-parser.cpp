@@ -2854,31 +2854,26 @@ void SExpressionWasmBuilder::parseMemory(Element& s, bool preParseImport) {
   }
 }
 
+// data ::= (data name+ offset+ content)
+// name ::= string prefixed with a $
+// offset := constant expression
 void SExpressionWasmBuilder::parseData(Element& s) {
   if (!wasm.memory.exists) {
     throw ParseException("data but no memory", s.line, s.col);
   }
-  bool isPassive = false;
+  if (s.size() < 2 && s.size() > 4) {
+    throw ParseException("Invalid data segment", s.line, s.col);
+  }
   Expression* offset = nullptr;
   Index i = 1;
   Name name;
   if (s[i]->dollared()) {
     name = s[i++]->str();
   }
-  if (s[i]->isStr()) {
-    // data is passive or named
-    if (s[i]->str() == PASSIVE) {
-      isPassive = true;
-    }
-    i++;
+  if (i == s.size() - 2) {
+    offset = parseExpression(s[i++]);
   }
-  if (!isPassive) {
-    offset = parseExpression(s[i]);
-  }
-  if (s.size() != 3 && s.size() != 4) {
-    throw ParseException("Unexpected data items", s.line, s.col);
-  }
-  parseInnerData(s, s.size() - 1, name, offset, isPassive);
+  parseInnerData(s, s.size() - 1, name, offset, !offset);
 }
 
 void SExpressionWasmBuilder::parseInnerData(
