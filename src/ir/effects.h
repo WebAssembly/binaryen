@@ -124,7 +124,7 @@ public:
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
     return globalsWritten.size() || writesMemory || writesHeap || isAtomic ||
-     calls;
+           calls;
   }
   bool readsGlobalState() const {
     return globalsRead.size() || readsMemory || readsHeap || isAtomic || calls;
