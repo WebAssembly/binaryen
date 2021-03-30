@@ -24,6 +24,8 @@ namespace wasm {
 struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>> {
   bool isFunctionParallel() override { return true; }
 
+  Pass* create() { return new LocalSubtyping(); }
+
   void doWalkFunction(Function* func) {
     auto varBase = func->getVarIndexBase();
     auto numLocals = func->getNumLocals();
