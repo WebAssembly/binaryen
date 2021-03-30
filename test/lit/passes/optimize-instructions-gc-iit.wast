@@ -78,14 +78,14 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $otherhild (ref $otherhild)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $otherhild-rtt (rtt $otherhild)) (param $other-rtt (rtt $other))
+  ;; CHECK:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
-  ;; CHECK-NEXT:    (block $otherhildlock (result (ref $parent))
+  ;; CHECK-NEXT:    (block $block (result (ref $parent))
   ;; CHECK-NEXT:     (call $foo)
   ;; CHECK-NEXT:     (local.get $parent)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $otherhildlock0 (result (rtt $parent))
+  ;; CHECK-NEXT:    (block $block0 (result (rtt $parent))
   ;; CHECK-NEXT:     (call $foo)
   ;; CHECK-NEXT:     (local.get $parent-rtt)
   ;; CHECK-NEXT:    )
