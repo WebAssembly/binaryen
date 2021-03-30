@@ -57,6 +57,7 @@ Pass* createLegalizeJSInterfacePass();
 Pass* createLegalizeJSInterfaceMinimallyPass();
 Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
+Pass* createLocalSubtypingPass();
 Pass* createLogExecutionPass();
 Pass* createInstrumentLocalsPass();
 Pass* createInstrumentMemoryPass();

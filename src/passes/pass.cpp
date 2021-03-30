@@ -166,6 +166,9 @@ void PassRegistry::registerPasses() {
   registerPass("local-cse",
                "common subexpression elimination inside basic blocks",
                createLocalCSEPass);
+  registerPass("local-subtyping",
+               "apply more specific subtypes to locals where possible",
+               createLocalSubtypingPass);
   registerPass("log-execution",
                "instrument the build with logging of where execution goes",
                createLogExecutionPass);
@@ -456,6 +459,11 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("precompute-propagate");
   } else {
     addIfNoDWARFIssues("precompute");
+  }
+  if (wasm->features.hasGC()) {
+    // Run local-subtyping before the final optimize-instructions, as more
+    // specific types can help there.
+    addIfNoDWARFIssues("local-subtyping");
   }
   addIfNoDWARFIssues("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
