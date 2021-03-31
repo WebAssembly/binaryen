@@ -1998,6 +1998,13 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
+  // TODO: verify it also has a typed function references type, and the right
+  // one,
+  //   curr->type.getHeapType().getSignature()
+  // That is blocked on having the ability to create signature types in the C
+  // API (for now those users create the type with funcref). This also needs to
+  // be fixed in LegalizeJSInterface and FuncCastEmulation and other places that
+  // update function types.
   // TODO: check for non-nullability
 }
 
@@ -2843,6 +2850,9 @@ static void validateTables(Module& module, ValidationInfo& info) {
       auto table = module.getTableOrNull(segment->table);
       info.shouldBeTrue(
         table != nullptr, "elem", "elem segment must have a valid table name");
+      info.shouldBeTrue(!!segment->offset,
+                        "elem",
+                        "table segment offset should have an offset");
       info.shouldBeEqual(segment->offset->type,
                          Type(Type::i32),
                          segment->offset,
@@ -2853,6 +2863,10 @@ static void validateTables(Module& module, ValidationInfo& info) {
                         segment->offset,
                         "table segment offset should be reasonable");
       validator.validate(segment->offset);
+    } else {
+      info.shouldBeTrue(!segment->offset,
+                        "elem",
+                        "non-table segment offset should have no offset");
     }
     // Avoid double checking items
     if (module.features.hasReferenceTypes()) {

@@ -297,9 +297,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
             BranchUtils::BranchSeeker seeker(block->name);
             Expression* temp = block;
             seeker.walk(temp);
-            Type supertype;
-            if (seeker.found && Type::getSuperType(seeker.types, supertype) &&
-                supertype != Type::none) {
+            if (seeker.found && Type::hasLeastUpperBound(seeker.types)) {
               canPop = false;
             }
           }

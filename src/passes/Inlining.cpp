@@ -344,21 +344,13 @@ struct Inlining : public Pass {
       infos[func->name];
     }
     PassRunner runner(module);
-    FunctionInfoScanner(&infos).run(&runner, module);
+    FunctionInfoScanner scanner(&infos);
+    scanner.run(&runner, module);
     // fill in global uses
+    scanner.walkModuleCode(module);
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         infos[ex->value].usedGlobally = true;
-      }
-    }
-    ElementUtils::iterAllElementFunctionNames(
-      module, [&](Name name) { infos[name].usedGlobally = true; });
-
-    for (auto& global : module->globals) {
-      if (!global->imported()) {
-        for (auto* ref : FindAll<RefFunc>(global->init).list) {
-          infos[ref->func].usedGlobally = true;
-        }
       }
     }
     if (module->start.is()) {

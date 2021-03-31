@@ -90,4 +90,374 @@
       (i32.const 0x123) ;; data over 0xff is unnecessary
     )
   )
+
+  ;; ref.is_null is not needed on a non-nullable value, and if something is
+  ;; a func we don't need that either etc. if we know the result
+  ;; CHECK:      (func $unneeded_is (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $data)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unneeded_is
+    (param $struct (ref $struct))
+    (param $func (ref func))
+    (param $data (ref data))
+    (param $i31 (ref i31))
+    (drop
+      (ref.is_null (local.get $struct))
+    )
+    (drop
+       (ref.is_func (local.get $func))
+     )
+    (drop
+      (ref.is_data (local.get $data))
+    )
+    (drop
+      (ref.is_i31 (local.get $i31))
+    )
+  )
+
+  ;; similar to $unneeded_is, but the values are nullable. we can at least
+  ;; leave just the null check.
+  ;; CHECK:      (func $unneeded_is_null (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $data)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unneeded_is_null
+   (param $struct (ref null $struct))
+    (param $func (ref null func))
+    (param $data (ref null data))
+    (param $i31 (ref null i31))
+    (drop
+      (ref.is_null (local.get $struct))
+    )
+    (drop
+      (ref.is_func (local.get $func))
+    )
+    (drop
+      (ref.is_data (local.get $data))
+    )
+    (drop
+      (ref.is_i31 (local.get $i31))
+    )
+  )
+
+  ;; similar to $unneeded_is, but the values are of mixed kind (is_func of
+  ;; data, etc.). regardless of nullability the result here is always 0.
+  ;; CHECK:      (func $unneeded_is_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $data)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $data)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $i31)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $func)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unneeded_is_bad_kinds
+    (param $func (ref null func))
+    (param $data (ref null data))
+    (param $i31 (ref null i31))
+    (drop
+      (ref.is_func (local.get $data))
+    )
+    (drop
+      (ref.is_data (local.get $i31))
+    )
+    (drop
+      (ref.is_i31 (local.get $func))
+    )
+    ;; also check non-nullable types as inputs
+    (drop
+      (ref.is_func (ref.as_non_null (local.get $data)))
+    )
+    (drop
+      (ref.is_data (ref.as_non_null (local.get $i31)))
+    )
+    (drop
+      (ref.is_i31 (ref.as_non_null (local.get $func)))
+    )
+  )
+
+  ;; ref.as_non_null is not needed on a non-nullable value, and if something is
+  ;; a func we don't need that either etc., and can just return the value.
+  ;; CHECK:      (func $unneeded_as (param $struct (ref $struct)) (param $func (ref func)) (param $data dataref) (param $i31 i31ref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $data)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $i31)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unneeded_as
+    (param $struct (ref $struct))
+    (param $func (ref func))
+    (param $data (ref data))
+    (param $i31 (ref i31))
+    (drop
+      (ref.as_non_null (local.get $struct))
+    )
+    (drop
+      (ref.as_func (local.get $func))
+    )
+    (drop
+      (ref.as_data (local.get $data))
+    )
+    (drop
+      (ref.as_i31 (local.get $i31))
+    )
+  )
+
+  ;; similar to $unneeded_as, but the values are nullable. we can turn the
+  ;; more specific things into ref.as_non_null.
+  ;; CHECK:      (func $unneeded_as_null (param $struct (ref null $struct)) (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $data)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $i31)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unneeded_as_null
+    (param $struct (ref null $struct))
+    (param $func (ref null func))
+    (param $data (ref null data))
+    (param $i31 (ref null i31))
+    (drop
+      (ref.as_non_null (local.get $struct))
+    )
+    (drop
+      (ref.as_func (local.get $func))
+    )
+    (drop
+      (ref.as_data (local.get $data))
+    )
+    (drop
+      (ref.as_i31 (local.get $i31))
+    )
+  )
+
+  ;; similar to $unneeded_as, but the values are of mixed kind (as_func of
+  ;; data, etc.), so we know we will trap
+  ;; CHECK:      (func $unneeded_as_bad_kinds (param $func funcref) (param $data (ref null data)) (param $i31 (ref null i31))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $data)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $i31)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $data)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $i31)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $func)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unneeded_as_bad_kinds
+    (param $func (ref null func))
+    (param $data (ref null data))
+    (param $i31 (ref null i31))
+    (drop
+      (ref.as_func (local.get $data))
+    )
+    (drop
+      (ref.as_data (local.get $i31))
+    )
+    (drop
+      (ref.as_i31 (local.get $func))
+    )
+    ;; also check non-nullable types as inputs
+    (drop
+      (ref.as_func (ref.as_non_null (local.get $data)))
+    )
+    (drop
+      (ref.as_data (ref.as_non_null (local.get $i31)))
+    )
+    (drop
+      (ref.as_i31 (ref.as_non_null (local.get $func)))
+    )
+  )
+
+  ;; CHECK:      (func $unneeded_unreachability
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_func
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $unneeded_unreachability
+    ;; unreachable instructions can simply be ignored
+    (drop
+      (ref.is_func (unreachable))
+    )
+    (drop
+      (ref.as_func (unreachable))
+    )
+  )
 )

@@ -64,13 +64,13 @@ void test_compound() {
            Type(otherSignature, NonNullable).getID());
   }
   {
-    Struct struct_({});
+    Struct struct_{};
     assert(Type(struct_, NonNullable).getID() ==
            Type(struct_, NonNullable).getID());
     assert(Type(struct_, NonNullable).getID() !=
            Type(struct_, Nullable).getID());
 
-    Struct sameStruct({});
+    Struct sameStruct{};
     assert(Type(struct_, NonNullable).getID() ==
            Type(sameStruct, NonNullable).getID());
 
@@ -121,10 +121,10 @@ void test_compound() {
     assert(rtt != otherHeapTypeRtt);
     assert(Type(rtt).getID() != Type(otherHeapTypeRtt).getID());
 
-    Rtt structRtt(0, Struct({}));
+    Rtt structRtt(0, Struct{});
     assert(Type(structRtt).getID() == Type(structRtt).getID());
 
-    Rtt sameStructRtt(0, Struct({}));
+    Rtt sameStructRtt(0, Struct{});
     assert(structRtt == sameStructRtt);
     assert(Type(structRtt).getID() == Type(sameStructRtt).getID());
 
@@ -153,7 +153,7 @@ void test_printing() {
     std::cout << Type(HeapType::i31, Nullable) << "\n";
     std::cout << Type(HeapType::i31, NonNullable) << "\n";
     std::cout << HeapType(Signature(Type::none, Type::none)) << "\n";
-    std::cout << HeapType(Struct({})) << "\n";
+    std::cout << HeapType(Struct{}) << "\n";
     std::cout << HeapType(Array({Type::i32, Immutable})) << "\n";
   }
   {
@@ -169,7 +169,7 @@ void test_printing() {
   }
   {
     std::cout << "\n;; Struct\n";
-    Struct emptyStruct({});
+    Struct emptyStruct{};
     std::cout << emptyStruct << "\n";
     std::cout << Type(emptyStruct, NonNullable) << "\n";
     std::cout << Type(emptyStruct, Nullable) << "\n";
@@ -197,7 +197,7 @@ void test_printing() {
   }
   {
     std::cout << "\n;; Tuple\n";
-    Tuple emptyTuple({});
+    Tuple emptyTuple{};
     std::cout << emptyTuple << "\n";
     std::cout << Type(emptyTuple) << "\n";
     Tuple tuple({
@@ -223,7 +223,7 @@ void test_printing() {
     Rtt signatureRtt(6, Signature(Type::none, Type::none));
     std::cout << signatureRtt << "\n";
     std::cout << Type(signatureRtt) << "\n";
-    Rtt structRtt(7, Struct({}));
+    Rtt structRtt(7, Struct{});
     std::cout << structRtt << "\n";
     std::cout << Type(structRtt) << "\n";
     Rtt arrayRtt(8, Array({Type::i32, Immutable}));
@@ -232,18 +232,18 @@ void test_printing() {
   }
   {
     std::cout << "\n;; Signature of references (param/result)\n";
-    Signature signature(Type(Struct({}), Nullable),
+    Signature signature(Type(Struct{}, Nullable),
                         Type(Array({Type::i32, Mutable}), NonNullable));
     std::cout << signature << "\n";
   }
   {
     std::cout << "\n;; Signature of references (params/results)\n";
     Signature signature(Type({
-                          Type(Struct({}), Nullable),
+                          Type(Struct{}, Nullable),
                           Type(Array({Type::i32, Mutable}), NonNullable),
                         }),
                         Type({
-                          Type(Struct({}), NonNullable),
+                          Type(Struct{}, NonNullable),
                           Type(Array({Type::i32, Immutable}), Nullable),
                         }));
     std::cout << signature << "\n";
@@ -260,10 +260,10 @@ void test_printing() {
     std::cout << Type(structOfSignature, NonNullable) << "\n";
     std::cout << Type(structOfSignature, Nullable) << "\n";
     Struct structOfStruct({
-      {Type(Struct({}), NonNullable), Immutable},
-      {Type(Struct({}), NonNullable), Mutable},
-      {Type(Struct({}), Nullable), Immutable},
-      {Type(Struct({}), Nullable), Mutable},
+      {Type(Struct{}, NonNullable), Immutable},
+      {Type(Struct{}, NonNullable), Mutable},
+      {Type(Struct{}, Nullable), Immutable},
+      {Type(Struct{}, Nullable), Mutable},
     });
     std::cout << structOfStruct << "\n";
     std::cout << Type(structOfStruct, NonNullable) << "\n";
@@ -280,7 +280,7 @@ void test_printing() {
     Struct structOfEverything({
       {Type::i32, Mutable},
       {Type(Signature(Type::none, Type::none), Nullable), Mutable},
-      {Type(Struct({}), Nullable), Mutable},
+      {Type(Struct{}, Nullable), Mutable},
       {Type(Array({Type::i32, Mutable}), Nullable), Mutable},
     });
     std::cout << structOfEverything << "\n";
@@ -294,7 +294,7 @@ void test_printing() {
     std::cout << arrayOfSignature << "\n";
     std::cout << Type(arrayOfSignature, NonNullable) << "\n";
     std::cout << Type(arrayOfSignature, Nullable) << "\n";
-    Array arrayOfStruct({Type(Struct({}), Nullable), Mutable});
+    Array arrayOfStruct({Type(Struct{}, Nullable), Mutable});
     std::cout << arrayOfStruct << "\n";
     std::cout << Type(arrayOfStruct, NonNullable) << "\n";
     std::cout << Type(arrayOfStruct, Nullable) << "\n";
@@ -309,8 +309,8 @@ void test_printing() {
     Tuple tuple({
       Type(Signature(Type::none, Type::none), NonNullable),
       Type(Signature(Type::none, Type::none), Nullable),
-      Type(Struct({}), NonNullable),
-      Type(Struct({}), Nullable),
+      Type(Struct{}, NonNullable),
+      Type(Struct{}, Nullable),
       Type(Array({Type::i32, Immutable}), NonNullable),
       Type(Array({Type::i32, Immutable}), Nullable),
     });

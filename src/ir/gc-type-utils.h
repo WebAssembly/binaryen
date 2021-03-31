@@ -42,7 +42,7 @@ enum EvaluationResult {
 // (like br_on_func checks if it is a function), see if type info lets us
 // determine that at compile time.
 // This ignores nullability - it just checks the kind.
-EvaluationResult evaluateKindCheck(Expression* curr) {
+inline EvaluationResult evaluateKindCheck(Expression* curr) {
   Kind expected;
   Expression* child;
 
@@ -66,6 +66,42 @@ EvaluationResult evaluateKindCheck(Expression* curr) {
         WASM_UNREACHABLE("unhandled BrOn");
     }
     child = br->ref;
+  } else if (auto* is = curr->dynCast<RefIs>()) {
+    switch (is->op) {
+      // We don't check nullability here.
+      case RefIsNull:
+        return Unknown;
+      case RefIsFunc:
+        expected = Func;
+        break;
+      case RefIsData:
+        expected = Data;
+        break;
+      case RefIsI31:
+        expected = I31;
+        break;
+      default:
+        WASM_UNREACHABLE("unhandled BrOn");
+    }
+    child = is->value;
+  } else if (auto* as = curr->dynCast<RefAs>()) {
+    switch (as->op) {
+      // We don't check nullability here.
+      case RefAsNonNull:
+        return Unknown;
+      case RefAsFunc:
+        expected = Func;
+        break;
+      case RefAsData:
+        expected = Data;
+        break;
+      case RefAsI31:
+        expected = I31;
+        break;
+      default:
+        WASM_UNREACHABLE("unhandled BrOn");
+    }
+    child = as->value;
   } else {
     WASM_UNREACHABLE("invalid input to evaluateKindCheck");
   }

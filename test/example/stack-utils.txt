@@ -14,4 +14,5 @@
 ;; Test stack signatures
 ;; Test stack signature composition
 ;; Test stack signature subtyping
+;; Test stack signature lub
 ;; Test stack flow
