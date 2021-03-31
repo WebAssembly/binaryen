@@ -71,6 +71,10 @@ struct TypeInfo {
 
   bool isNullable() const { return kind == RefKind && ref.nullable; }
 
+  // If this TypeInfo represents a Type that can be represented more simply, set
+  // `out` to be that simpler Type and return true. For example, this handles
+  // canonicalizing the TypeInfo representing (ref null any) into the BasicType
+  // anyref. It also handles eliminating singleton tuple types.
   bool getCanonical(Type& out) const;
 
   bool operator==(const TypeInfo& other) const;
@@ -114,6 +118,9 @@ struct HeapTypeInfo {
   constexpr bool isArray() const { return kind == ArrayKind; }
   constexpr bool isData() const { return isStruct() || isArray(); }
 
+  // If this HeapTypeInfo represents a HeapType that can be represented more
+  // simply, set `out` to be that simpler HeapType and return true. This handles
+  // turning BasicKind HeapTypes into their corresponding BasicHeapTypes.
   bool getCanonical(HeapType& out) const;
 
   HeapTypeInfo& operator=(const HeapTypeInfo& other);
@@ -318,6 +325,9 @@ bool isTemp(HeapType type) {
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;
 }
 
+// Given a Type that may or may not be backed by the simplest possible
+// representation, return the equivalent type that is definitely backed by the
+// simplest possible representation.
 Type asCanonical(Type type) {
   if (!type.isBasic()) {
     getTypeInfo(type)->getCanonical(type);
@@ -325,6 +335,9 @@ Type asCanonical(Type type) {
   return type;
 }
 
+// Given a HeapType that may or may not be backed by the simplest possible
+// representation, return the equivalent type that is definitely backed by the
+// simplest possible representation.
 HeapType asCanonical(HeapType type) {
   if (!type.isBasic()) {
     getHeapTypeInfo(type)->getCanonical(type);
