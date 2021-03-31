@@ -193,3 +193,14 @@
   )
  )
 )
+(module
+ ;; a removable non-nullable parameter
+ (func $0 (param $x i31ref)
+  (nop)
+ )
+ (func $1
+  (call $0
+   (i31.new (i32.const 0))
+  )
+ )
+)

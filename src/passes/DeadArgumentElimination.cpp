@@ -41,6 +41,7 @@
 #include "ir/effects.h"
 #include "ir/element-utils.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -382,6 +383,7 @@ struct DAE : public Pass {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
             removeParameter(func, i, calls);
+            TypeUpdating::handleNonNullableLocals(func, *module);
             changed.insert(func);
           }
         }

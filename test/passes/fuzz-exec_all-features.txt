@@ -208,7 +208,7 @@
 [fuzz-exec] calling rmw-reads-modifies-and-writes-asymmetrical
 [LoggingExternalInterface logging 214]
 [fuzz-exec] calling func
-[fuzz-exec] note result: func => funcref(func)
+[fuzz-exec] note result: func => funcref
 (module
  (type $none_=>_funcref (func (result funcref)))
  (elem declare func $func)
@@ -218,5 +218,5 @@
  )
 )
 [fuzz-exec] calling func
-[fuzz-exec] note result: func => funcref(func)
+[fuzz-exec] note result: func => funcref
 [fuzz-exec] comparing func

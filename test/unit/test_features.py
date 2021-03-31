@@ -136,7 +136,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         module = '''
         (module
          (memory 256 256)
-         (data passive "42")
+         (data "42")
         )
         '''
         self.check_bulk_mem(module, 'nonzero segment flags (bulk memory is disabled)')
