@@ -1006,6 +1006,42 @@ struct OptimizeInstructions
     }
   }
 
+  void visitRefCast(RefCast* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    if (getPassOptions().ignoreImplicitTraps) {
+      // A ref.cast traps when the RTTs do not line up, which can be of one of
+      // two sorts of issues:
+      //  1. The value being cast is not even a subtype of the cast type. In
+      //     that case the RTTs trivially cannot indicate subtyping, because
+      //     RTT subtyping is a subset of static subtyping. For example, maybe
+      //     we are trying to cast a {i32} struct to an [f64] array.
+      //  2. The value is a subtype of the cast type, but the RTTs still do not
+      //     fit. That indicates a difference between RTT subtyping and static
+      //     subtyping. That is, the type may be right but the chain of rtt.subs
+      //     is not.
+      // If we ignore implicit traps then we would like to assume that neither
+      // of those two situations can happen. However, we still cannot do
+      // anything if point 1 is a problem, that is, if the value is not a
+      // subtype of the cast type, as we can't remove the cast in that case -
+      // the wasm would not validate. But if the type *is* a subtype, then we
+      // can ignore a possible trap on 2 and remove it.
+      //
+      // We also do not do this if the arguments cannot be reordered. If we
+      // can't do that then we need to add a drop, at minimum (which may still
+      // be worthwhile, but depends on other optimizations kicking in, so it's
+      // not clearly worthwhile).
+      if (HeapType::isSubType(curr->ref->type.getHeapType(),
+                              curr->rtt->type.getHeapType()) &&
+          canReorder(curr->ref, curr->rtt)) {
+        Builder builder(*getModule());
+        replaceCurrent(
+          builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
+      }
+    }
+  }
+
   void visitRefIs(RefIs* curr) {
     if (curr->type == Type::unreachable) {
       return;
