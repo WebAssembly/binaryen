@@ -872,6 +872,7 @@ void TupleExtract::finalize() {
   if (tuple->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    assert(index < tuple->type.size());
     type = tuple->type[index];
   }
 }

@@ -2527,6 +2527,10 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   auto ret = allocator.alloc<TupleExtract>();
   ret->index = atoi(s[1]->str().c_str());
   ret->tuple = parseExpression(s[2]);
+  if (ret->tuple->type != Type::unreachable &&
+      ret->index >= ret->tuple->type.size()) {
+    throw ParseException("Bad index on tuple.extract", s[1]->line, s[1]->col);
+  }
   ret->finalize();
   return ret;
 }
