@@ -936,7 +936,7 @@ private:
     auto chance = upTo(RESOLUTION + 1);
     // Do not iterate on wasm.functions itself, as we may add to it as we go
     // through the functions - make() can add new functions to implement a
-    // RefFunc. Looping in the index avoids an iterator invalidation, and also
+    // RefFunc. Looping on an index avoids an iterator invalidation, and also
     // we will process those new functions at the end (currently that is not
     // needed, but it might in the future).
     for (Index i = 0; i < wasm.functions.size(); i++) {
