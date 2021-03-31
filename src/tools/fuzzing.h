@@ -935,13 +935,12 @@ private:
     const int RESOLUTION = 10;
     auto chance = upTo(RESOLUTION + 1);
     // Do not iterate on wasm.functions itself, as we may add to it as we go
-    // through the functions (make() can add new functions to implement a
-    // RefFunc).
-    std::vector<Function*> functions;
-    for (auto& ref : wasm.functions) {
-      functions.push_back(ref.get());
-    }
-    for (auto* func : functions) {
+    // through the functions - make() can add new functions to implement a
+    // RefFunc. Looping in the index avoids an iterator invalidation, and also
+    // we will process those new functions at the end (currently that is not
+    // needed, but it might in the future).
+    for (Index i = 0; i < wasm.functions.size(); i++) {
+      auto* func = wasm.functions[i].get();
       FunctionCreationContext context(*this, func);
       if (func->imported()) {
         // We can't allow extra imports, as the fuzzing infrastructure wouldn't
