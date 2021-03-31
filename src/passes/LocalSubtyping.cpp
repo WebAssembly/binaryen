@@ -55,6 +55,8 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
     // where we could still be O(N^2), so we'd need something more complex here
     // involving topological sorting. Leave that for if the need arises.
 
+    // TODO: handle cycles of X -> Y -> X etc.
+
     bool more;
 
     do {
