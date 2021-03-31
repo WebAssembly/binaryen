@@ -3212,19 +3212,13 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
 
   bool hasExplicitLimit = false;
 
-  if (s[i]->isStr()) {
-    char c = s[i]->c_str()[0];
-    if ('0' <= c && c <= '9') {
-      table->initial = atoi(s[i++]->c_str());
-      hasExplicitLimit = true;
-    }
+  if (s[i]->isStr() && String::isNumber(s[i]->c_str())) {
+    table->initial = atoi(s[i++]->c_str());
+    hasExplicitLimit = true;
   }
 
-  if (s[i]->isStr()) {
-    char c = s[i]->c_str()[0];
-    if ('0' <= c && c <= '9') {
-      table->max = atoi(s[i++]->c_str());
-    }
+  if (s[i]->isStr() && String::isNumber(s[i]->c_str())) {
+    table->max = atoi(s[i++]->c_str());
   }
 
   if (!s[i]->isStr() || s[i]->str() != FUNCREF) {
