@@ -26,7 +26,9 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
 
   Pass* create() { return new LocalSubtyping(); }
 
-  // Shared code to find all sets or gets for each local index.
+  // Shared code to find all sets or gets for each local index. Returns a vector
+  // that maps
+  //   local index => vector of LocalGet*|LocalSet* expressions
   template<typename T>
   std::vector<std::vector<T*>> getLocalOperations(Function* func) {
     std::vector<std::vector<T*>> ret;
@@ -41,7 +43,6 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
   void doWalkFunction(Function* func) {
     auto varBase = func->getVarIndexBase();
     auto numLocals = func->getNumLocals();
-    bool more;
 
     auto setsForLocal = getLocalOperations<LocalSet>(func);
     auto getsForLocal = getLocalOperations<LocalGet>(func);
@@ -52,14 +53,16 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
     // (SimplifyLocals and CoalesceLocals) break up such things; also, even if
     // we tracked changes more carefully we'd have the case of nested tees
     // where we could still be O(N^2), so we'd need something more complex here
-    // involving topological sorting. Leave that for it the need arises.
+    // involving topological sorting. Leave that for if the need arises.
+
+    bool more;
 
     do {
       more = false;
 
       // First, refinalize which will recompute least upper bounds on ifs and
       // blocks, etc., potentially finding a more specific type. Note that
-      // the utility does not tell us if it changed anything, so we depend on
+      // that utility does not tell us if it changed anything, so we depend on
       // the next step for knowing if there is more work to do.
       ReFinalize().walkFunctionInModule(func, getModule());
 
@@ -79,18 +82,19 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
         if (types.empty()) {
           continue;
         }
-        auto newType = Type::getLeastUpperBound(types);
+
         auto oldType = func->getLocalType(i);
+        auto newType = Type::getLeastUpperBound(types);
         assert(newType != Type::none); // in valid wasm there must be a LUB
 
-        // Remove non-nullability, which cant be stored in a local.
+        // Remove non-nullability, which can't be stored in a local.
         if (newType.isRef() && !newType.isNullable()) {
           newType = Type(newType.getHeapType(), Nullable);
           // Note that the old type must have been nullable as well, as non-
           // nullable types cannot be locals, which means that we will not have
           // to do any extra work to handle non-nullability if we update the
           // type: we are just updating the heap type, and leaving the type
-          // nullable.
+          // nullable as it was.
           assert(oldType.isRef() && oldType.isNullable());
         }
 

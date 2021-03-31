@@ -463,11 +463,6 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   } else {
     addIfNoDWARFIssues("precompute");
   }
-  if (wasm->features.hasGC()) {
-    // Run local-subtyping before the final optimize-instructions, as more
-    // specific types can help there.
-    addIfNoDWARFIssues("local-subtyping");
-  }
   addIfNoDWARFIssues("optimize-instructions");
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues(
