@@ -4,7 +4,7 @@
   (import "env" "import" (func $import))
   (import "env" "import2" (func $import2 (result i32)))
   (import "env" "import3" (func $import3 (param i32)))
-  (table 1 1)
+  (table funcref (elem $calls-import2-drop $calls-import2-drop))
   (func $calls-import
     (call $import)
   )

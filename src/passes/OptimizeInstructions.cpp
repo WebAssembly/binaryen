@@ -26,6 +26,7 @@
 #include <ir/bits.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
@@ -1005,6 +1006,134 @@ struct OptimizeInstructions
     }
   }
 
+  void visitRefCast(RefCast* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+    if (getPassOptions().ignoreImplicitTraps) {
+      // A ref.cast traps when the RTTs do not line up, which can be of one of
+      // two sorts of issues:
+      //  1. The value being cast is not even a subtype of the cast type. In
+      //     that case the RTTs trivially cannot indicate subtyping, because
+      //     RTT subtyping is a subset of static subtyping. For example, maybe
+      //     we are trying to cast a {i32} struct to an [f64] array.
+      //  2. The value is a subtype of the cast type, but the RTTs still do not
+      //     fit. That indicates a difference between RTT subtyping and static
+      //     subtyping. That is, the type may be right but the chain of rtt.subs
+      //     is not.
+      // If we ignore implicit traps then we would like to assume that neither
+      // of those two situations can happen. However, we still cannot do
+      // anything if point 1 is a problem, that is, if the value is not a
+      // subtype of the cast type, as we can't remove the cast in that case -
+      // the wasm would not validate. But if the type *is* a subtype, then we
+      // can ignore a possible trap on 2 and remove it.
+      //
+      // We also do not do this if the arguments cannot be reordered. If we
+      // can't do that then we need to add a drop, at minimum (which may still
+      // be worthwhile, but depends on other optimizations kicking in, so it's
+      // not clearly worthwhile).
+      if (HeapType::isSubType(curr->ref->type.getHeapType(),
+                              curr->rtt->type.getHeapType()) &&
+          canReorder(curr->ref, curr->rtt)) {
+        Builder builder(*getModule());
+        replaceCurrent(
+          builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
+      }
+    }
+  }
+
+  void visitRefIs(RefIs* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // Optimizating RefIs is not that obvious, since even if we know the result
+    // evaluates to 0 or 1 then the replacement may not actually save code size,
+    // since RefIsNull is a single byte (the others are 2), while adding a Const
+    // of 0 would be two bytes. Other factors are that we can remove the input
+    // and the added drop on it if it has no side effects, and that replacing
+    // with a constant may allow further optimizations later. For now, replace
+    // with a constant, but this warrants more investigation. TODO
+
+    Builder builder(*getModule());
+
+    auto nonNull = !curr->value->type.isNullable();
+
+    if (curr->op == RefIsNull) {
+      if (nonNull) {
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->value),
+          builder.makeConst(Literal::makeZero(Type::i32))));
+      }
+      return;
+    }
+
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+    if (result != GCTypeUtils::Unknown) {
+      // We know the kind. Now we must also take into account nullability.
+      if (nonNull) {
+        // We know the entire result.
+        replaceCurrent(
+          builder.makeSequence(builder.makeDrop(curr->value),
+                               builder.makeConst(Literal::makeFromInt32(
+                                 result == GCTypeUtils::Success, Type::i32))));
+      } else {
+        // The value may be null. Leave only a check for that.
+        curr->op = RefIsNull;
+        if (result == GCTypeUtils::Success) {
+          // The input is of the right kind. If it is not null then the result
+          // is 1, and otherwise it is 0, so we need to flip the result of
+          // RefIsNull.
+          // Note that even after adding an eqz here we do not regress code size
+          // as RefIsNull is a single byte while the others are two. So we keep
+          // code size identical. However, in theory this may be more work, if
+          // a VM considers ref.is_X to be as fast as ref.is_null, and if eqz is
+          // not free, so this is worth more investigation. TODO
+          replaceCurrent(builder.makeUnary(EqZInt32, curr));
+        } else {
+          // The input is of the wrong kind. In this case if it is null we
+          // return zero because of that, and if it is not then we return zero
+          // because of the kind, so the result is always the same.
+          assert(result == GCTypeUtils::Failure);
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(curr->value),
+            builder.makeConst(Literal::makeZero(Type::i32))));
+        }
+      }
+    }
+  }
+
+  void visitRefAs(RefAs* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+    if (result == GCTypeUtils::Success) {
+      // We know the kind is correct, so all that is left is a check for
+      // non-nullability, which we do lower down.
+      curr->op = RefAsNonNull;
+    } else if (result == GCTypeUtils::Failure) {
+      // This is the wrong kind, so it will trap. The binaryen optimizer does
+      // not differentiate traps, so we can perform a replacement here. We
+      // replace 2 bytes of ref.as_* with one byte of unreachable and one of a
+      // drop, which is no worse, and the value and the drop can be optimized
+      // out later if the value has no side effects.
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->value),
+                                          builder.makeUnreachable()));
+      return;
+    }
+
+    if (curr->op == RefAsNonNull && !curr->value->type.isNullable()) {
+      replaceCurrent(curr->value);
+    }
+  }
+
   Index getMaxBitsForLocal(LocalGet* get) {
     // check what we know about the local
     return localInfo[get->index].maxBits;
@@ -1697,6 +1826,20 @@ private:
     if (matches(curr, binary(Ne, any(&left), ival(1))) &&
         Bits::getMaxBits(left, this) == 1) {
       return builder.makeUnary(Abstract::getUnary(type, EqZ), left);
+    }
+    // bool(x)  ^ 1  ==>  !bool(x)
+    if (matches(curr, binary(Xor, any(&left), ival(1))) &&
+        Bits::getMaxBits(left, this) == 1) {
+      auto* result = builder.makeUnary(Abstract::getUnary(type, EqZ), left);
+      if (left->type == Type::i64) {
+        // Xor's result is also an i64 in this case, but EqZ returns i32, so we
+        // must expand it so that we keep returning the same value as before.
+        // This means we replace a xor and a const with a xor and an extend,
+        // which is still smaller (the const is 2 bytes, the extend just 1), and
+        // also the extend may be removed by further work.
+        result = builder.makeUnary(ExtendUInt32, result);
+      }
+      return result;
     }
     // bool(x) | 1  ==>  1
     if (matches(curr, binary(Or, pure(&left), ival(1))) &&

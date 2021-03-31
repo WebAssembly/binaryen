@@ -1548,7 +1548,7 @@
 )
 (module
  (memory 256 256)
- (data passive "hello, there!")
+ (data "hello, there!")
  (func $memory-init-load
   (local $x i32)
   (local.set $x

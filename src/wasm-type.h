@@ -19,7 +19,6 @@
 
 #include "support/name.h"
 #include "wasm-features.h"
-#include <algorithm>
 #include <ostream>
 #include <vector>
 
@@ -205,42 +204,36 @@ public:
   // Returns true if left is a subtype of right. Subtype includes itself.
   static bool isSubType(Type left, Type right);
 
-  // Returns true and sets `super` to the type in range [begin,end) that is a
-  // supertype of all types in the range iff such a type exists. This is similar
-  // to but more limited than calculating a proper least upper bound on the
-  // types.
-  template<typename T> static bool getSuperType(const T& types, Type& super) {
-    // Sort the types so that the supertype will be at the back.
-    std::vector<Type> sorted(types.begin(), types.end());
-    std::stable_sort(
-      sorted.begin(), sorted.end(), [&](const Type& a, const Type& b) {
-        return Type::isSubType(a, b);
-      });
-    // Check that the "highest" type found by the sort is actually a supertype
-    // of all the other sorted.
-    for (auto t : sorted) {
-      if (!Type::isSubType(t, sorted.back())) {
+  // Computes the least upper bound from the type lattice.
+  // If one of the type is unreachable, the other type becomes the result. If
+  // the common supertype does not exist, returns none, a poison value.
+  static bool hasLeastUpperBound(Type a, Type b);
+  static Type getLeastUpperBound(Type a, Type b);
+  template<typename T> static bool hasLeastUpperBound(const T& types) {
+    auto first = types.begin(), end = types.end();
+    if (first == end) {
+      return false;
+    }
+    for (auto second = std::next(first); second != end;) {
+      if (!hasLeastUpperBound(*first++, *second++)) {
         return false;
       }
     }
-    super = sorted.back();
     return true;
   }
-
-  // Ensure that `type` is a supertype of `types`. If it is not already a
-  // supertype, then use `getSuperType` on `types` to set `type` to a supertype.
-  // Assumes `getSuperType` will be able to find an appropriate type in that
-  // case.
-  template<typename T>
-  static void ensureSuperType(const T& types, Type& super) {
-    if (std::all_of(types.begin(), types.end(), [&](const Type& type) {
-          return isSubType(type, super);
-        })) {
-      return;
+  template<typename T> static Type getLeastUpperBound(const T& types) {
+    auto it = types.begin(), end = types.end();
+    if (it == end) {
+      return Type::none;
     }
-    if (!getSuperType(types, super)) {
-      WASM_UNREACHABLE("Could not ensure supertype");
+    Type lub = *it++;
+    for (; it != end; ++it) {
+      lub = getLeastUpperBound(lub, *it);
+      if (lub == Type::none) {
+        return Type::none;
+      }
     }
+    return lub;
   }
 
   std::string toString() const;
@@ -423,6 +416,8 @@ struct Field {
   } packedType; // applicable iff type=i32
   Mutability mutable_;
 
+  // Arbitrary defaults for convenience.
+  Field() : type(Type::i32), packedType(not_packed), mutable_(Mutable) {}
   Field(Type type, Mutability mutable_)
     : type(type), packedType(not_packed), mutable_(mutable_) {}
   Field(PackedType packedType, Mutability mutable_)
@@ -452,6 +447,7 @@ typedef std::vector<Field> FieldList;
 // amount of data.
 struct Struct {
   FieldList fields;
+  Struct() = default;
   Struct(const Struct& other) : fields(other.fields) {}
   Struct(const FieldList& fields) : fields(fields) {}
   Struct(FieldList&& fields) : fields(std::move(fields)) {}
@@ -465,6 +461,7 @@ struct Struct {
 
 struct Array {
   Field element;
+  Array() = default;
   Array(const Array& other) : element(other.element) {}
   Array(Field element) : element(element) {}
   bool operator==(const Array& other) const { return element == other.element; }
@@ -525,7 +522,7 @@ struct TypeBuilder {
 
   // Gets a temporary type or heap type for use in initializing the
   // TypeBuilder's HeapTypes. For Ref and Rtt types, the HeapType may be a
-  // temporary HeapType owned by this builder or a canonical HeapType. HeapType
+  // temporary HeapType owned by this builder or a canonical HeapType.
   Type getTempTupleType(const Tuple&);
   Type getTempRefType(HeapType heapType, Nullability nullable);
   Type getTempRttType(Rtt rtt);

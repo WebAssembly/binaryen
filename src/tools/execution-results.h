@@ -44,8 +44,20 @@ struct LoggingExternalInterface : public ShellExternalInterface {
       std::cout << "[LoggingExternalInterface logging";
       loggings.push_back(Literal()); // buffer with a None between calls
       for (auto argument : arguments) {
-        std::cout << ' ' << argument;
-        loggings.push_back(argument);
+        if (argument.type == Type::i64) {
+          // To avoid JS legalization changing logging results, treat a logging
+          // of an i64 as two i32s (which is what legalization would turn us
+          // into).
+          auto low = Literal(int32_t(argument.getInteger()));
+          auto high = Literal(int32_t(argument.getInteger() >> int32_t(32)));
+          std::cout << ' ' << low;
+          loggings.push_back(low);
+          std::cout << ' ' << high;
+          loggings.push_back(high);
+        } else {
+          std::cout << ' ' << argument;
+          loggings.push_back(argument);
+        }
       }
       std::cout << "]\n";
       return {};
@@ -97,8 +109,16 @@ struct ExecutionResults {
           results[exp->name] = ret;
           // ignore the result if we hit an unreachable and returned no value
           if (ret.size() > 0) {
-            std::cout << "[fuzz-exec] note result: " << exp->name << " => "
-                      << ret << '\n';
+            std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
+            auto resultType = func->sig.results;
+            if (resultType.isRef()) {
+              // Don't print reference values, as funcref(N) contains an index
+              // for example, which is not guaranteed to remain identical after
+              // optimizations.
+              std::cout << resultType << '\n';
+            } else {
+              std::cout << ret << '\n';
+            }
           }
         } else {
           // no result, run it anyhow (it might modify memory etc.)
@@ -202,6 +222,10 @@ struct ExecutionResults {
       // call the method
       for (const auto& param : func->sig.params) {
         // zeros in arguments TODO: more?
+        if (!param.isDefaultable()) {
+          std::cout << "[trap fuzzer can only send defaultable parameters to "
+                       "exports]\n";
+        }
         arguments.push_back(Literal::makeZero(param));
       }
       return instance.callFunction(func->name, arguments);
