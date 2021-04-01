@@ -8,6 +8,5 @@
  (func $0 (param $0 (ref null $NamedStruct))
   (nop)
  )
- ;; features section: reference-types, gc
 )
 
