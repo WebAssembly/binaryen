@@ -934,8 +934,14 @@ private:
     // Pick a chance to fuzz the contents of a function.
     const int RESOLUTION = 10;
     auto chance = upTo(RESOLUTION + 1);
-    for (auto& ref : wasm.functions) {
-      auto* func = ref.get();
+    // Do not iterate directly on wasm.functions itself (that is, avoid
+    //   for (x : wasm.functions)
+    // ) as we may add to it as we go through the functions - make() can add new
+    // functions to implement a RefFunc. Instead, use an index. This avoids an
+    // iterator invalidation, and also we will process those new functions at
+    // the end (currently that is not needed atm, but it might in the future).
+    for (Index i = 0; i < wasm.functions.size(); i++) {
+      auto* func = wasm.functions[i].get();
       FunctionCreationContext context(*this, func);
       if (func->imported()) {
         // We can't allow extra imports, as the fuzzing infrastructure wouldn't
