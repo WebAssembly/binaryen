@@ -936,7 +936,7 @@ private:
     auto chance = upTo(RESOLUTION + 1);
     // Do not iterate directly on wasm.functions itself (that is, avoid
     //   for (x : wasm.functions)
-    // as we may add to it as we go through the functions - make() can add new
+    // ) as we may add to it as we go through the functions - make() can add new
     // functions to implement a RefFunc. Instead, use an index. This avoids an
     // iterator invalidation, and also we will process those new functions at
     // the end (currently that is not needed atm, but it might in the future).
