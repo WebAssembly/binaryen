@@ -2834,8 +2834,8 @@ void WasmBinaryBuilder::readElementSegments() {
     if (isPassive || hasTableIdx) {
       if (usesExpressions) {
         segment->type = getType();
-        if (segment->type == Type::externref) {
-          throwError("externref is not a valid type for element segments");
+        if (!segment->type.isFunction()) {
+          throwError("Invalid type for an element segment");
         }
       } else {
         auto elemKind = getU32LEB();

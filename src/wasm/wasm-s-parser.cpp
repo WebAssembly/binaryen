@@ -3320,9 +3320,9 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
       usesExpressions = true;
       i += 1;
 
-      if (segment->type == Type::externref) {
+      if (!segment->type.isFunction()) {
         throw ParseException(
-          "Invalid externref type for an element segment.", s.line, s.col);
+          "Invalid type for an element segment.", s.line, s.col);
       }
     }
   }
