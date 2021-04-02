@@ -630,6 +630,10 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   // emit assignments separately for each index.
   Ref theArray = ValueBuilder::makeArray();
   for (auto& table : wasm->tables) {
+    if (!table->type.isFunction()) {
+      Fatal() << "wasm2js doesn't support non-function tables\n";
+    }
+
     if (!table->imported()) {
       TableUtils::FlatTable flat(*wasm, *table);
       if (flat.valid) {
