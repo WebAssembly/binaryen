@@ -36,7 +36,7 @@ struct FlatTable {
     ModuleUtils::iterTableSegments(
       wasm, table.name, [&](ElementSegment* segment) {
         auto offset = segment->offset;
-        if (!offset->is<Const>()) {
+        if (!offset->is<Const>() || !segment->type.isFunction()) {
           // TODO: handle some non-constant segments
           valid = false;
           return;

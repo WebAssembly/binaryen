@@ -2727,7 +2727,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
 
     if (curr->table.is()) {
-      // TODO(reference-types): check for old-style based on the complete spec
       if (!allElementsRefFunc || currModule->tables.size() > 1) {
         // tableuse
         o << " (table ";
