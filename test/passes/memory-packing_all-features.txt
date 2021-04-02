@@ -67,6 +67,9 @@
 )
 (module
  (type $none_=>_none (func))
+ (global $__mem_segment_drop_state (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
  (memory $0 2048 2048)
  (data "zeroes at start")
  (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes at start")
@@ -85,9 +88,6 @@
  (data "more")
  (data "zeroes")
  (data "no zeroes")
- (global $__mem_segment_drop_state (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
  (func $zeroes-at-start
   (block
    (if
@@ -367,6 +367,14 @@
 (module
  (type $none_=>_none (func))
  (import "env" "param" (global $param i32))
+ (global $__mem_segment_drop_state (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_3 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_4 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_5 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_6 (mut i32) (i32.const 0))
  (memory $0 2048 2048)
  (data "even")
  (data "more")
@@ -400,14 +408,6 @@
  (data "even")
  (data "more")
  (data "zeroes")
- (global $__mem_segment_drop_state (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_3 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_4 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_5 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_6 (mut i32) (i32.const 0))
  (func $nonconst-dest
   (local $0 i32)
   (block
@@ -826,6 +826,10 @@
 )
 (module
  (type $none_=>_none (func))
+ (global $__mem_segment_drop_state (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
+ (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
  (memory $0 2048 2048)
  (data "hi")
  (data "even")
@@ -837,10 +841,6 @@
  (data "hi")
  (data "even")
  (data "hi")
- (global $__mem_segment_drop_state (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_0 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_1 (mut i32) (i32.const 0))
- (global $__mem_segment_drop_state_2 (mut i32) (i32.const 0))
  (func $zero-length-init-zeroes
   (if
    (i32.or
@@ -1541,10 +1541,10 @@
 )
 (module
  (type $none_=>_none (func))
+ (global $__mem_segment_drop_state (mut i32) (i32.const 0))
  (memory $0 1 1)
  (data "skipped")
  (data "included")
- (global $__mem_segment_drop_state (mut i32) (i32.const 0))
  (export "func_54" (func $0))
  (func $0
   (if

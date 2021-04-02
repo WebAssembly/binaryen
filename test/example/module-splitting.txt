@@ -13,18 +13,18 @@ Secondary:
 Before:
 (module
  (type $i32_=>_none (func (param i32)))
+ (global $glob (mut i32) (i32.const 7))
  (memory $mem (shared 3 42))
  (table $tab 3 42 funcref)
- (global $glob (mut i32) (i32.const 7))
  (event $e (attr 0) (param i32))
 )
 Keeping: <none>
 After:
 (module
  (type $i32_=>_none (func (param i32)))
+ (global $glob (mut i32) (i32.const 7))
  (memory $mem (shared 3 42))
  (table $tab 3 42 funcref)
- (global $glob (mut i32) (i32.const 7))
  (event $e (attr 0) (param i32))
  (export "%memory" (memory $mem))
  (export "%table" (table $tab))
@@ -75,9 +75,9 @@ Secondary:
 Before:
 (module
  (type $i32_=>_none (func (param i32)))
+ (global $glob (mut i32) (i32.const 7))
  (memory $mem (shared 3 42))
  (table $tab 3 42 funcref)
- (global $glob (mut i32) (i32.const 7))
  (event $e (attr 0) (param i32))
  (export "mem" (memory $mem))
  (export "tab" (table $tab))
@@ -88,9 +88,9 @@ Keeping: <none>
 After:
 (module
  (type $i32_=>_none (func (param i32)))
+ (global $glob (mut i32) (i32.const 7))
  (memory $mem (shared 3 42))
  (table $tab 3 42 funcref)
- (global $glob (mut i32) (i32.const 7))
  (event $e (attr 0) (param i32))
  (export "mem" (memory $mem))
  (export "tab" (table $tab))

@@ -166,8 +166,8 @@
 (module
  (type $none_=>_none (func))
  (type $f32_i32_=>_i32 (func (param f32 i32) (result i32)))
- (memory $0 1 1)
  (global $hangLimit (mut i32) (i32.const 25))
+ (memory $0 1 1)
  (export "hangLimitInitializer" (func $hangLimitInitializer))
  (func $func_4 (param $0 f32) (param $1 i32) (result i32)
   (local $2 i64)
@@ -380,8 +380,8 @@
 )
 (module
  (type $6 (func))
- (memory $0 1 1)
  (global $global$0 (mut i32) (i32.const 10))
+ (memory $0 1 1)
  (export "func_102_invoker" (func $19))
  (func $19
   (block

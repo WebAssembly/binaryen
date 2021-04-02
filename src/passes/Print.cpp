@@ -2892,6 +2892,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       *curr, [&](Function* func) { visitFunction(func); });
     ModuleUtils::iterImportedEvents(*curr,
                                     [&](Event* event) { visitEvent(event); });
+    ModuleUtils::iterDefinedGlobals(
+      *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterDefinedMemories(
       *curr, [&](Memory* memory) { visitMemory(memory); });
     ModuleUtils::iterDefinedTables(*curr,
@@ -2909,8 +2911,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')' << maybeNewLine;
     }
-    ModuleUtils::iterDefinedGlobals(
-      *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterDefinedEvents(*curr,
                                    [&](Event* event) { visitEvent(event); });
     for (auto& child : curr->exports) {
