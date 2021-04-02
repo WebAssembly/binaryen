@@ -110,9 +110,9 @@
 )
 (module
  (type $ii (func (param i32 i32)))
+ (global $g (mut i32) (i32.const 1))
  (table $0 5 5 funcref)
  (elem (global.get $g) $foo)
- (global $g (mut i32) (i32.const 1))
  (func $foo (param $0 i32) (param $1 i32)
   (unreachable)
  )
@@ -126,10 +126,10 @@
 )
 (module
  (type $ii (func (param i32 i32)))
+ (global $g (mut i32) (i32.const 1))
  (table $0 5 5 funcref)
  (table $1 5 5 funcref)
  (elem (table $1) (global.get $g) func $foo)
- (global $g (mut i32) (i32.const 1))
  (func $foo (param $0 i32) (param $1 i32)
   (unreachable)
  )

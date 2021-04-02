@@ -6,10 +6,10 @@
  (type $none_=>_f32 (func (result f32)))
  (type $4 (func (param i64 i64) (result i64)))
  (type $none_=>_anyref (func (result anyref)))
+ (global $x (mut i32) (i32.const 0))
  (memory $0 10)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
- (global $x (mut i32) (i32.const 0))
  (func $a1
   (local $0 i32)
   (local.set $0
