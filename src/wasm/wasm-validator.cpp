@@ -1524,6 +1524,11 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case GeSVecI32x4:
     case GeUVecI32x4:
     case EqVecI64x2:
+    case NeVecI64x2:
+    case LtSVecI64x2:
+    case LeSVecI64x2:
+    case GtSVecI64x2:
+    case GeSVecI64x2:
     case EqVecF32x4:
     case NeVecF32x4:
     case LtVecF32x4:
@@ -1546,7 +1551,6 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case SubVecI8x16:
     case SubSatSVecI8x16:
     case SubSatUVecI8x16:
-    case MulVecI8x16:
     case MinSVecI8x16:
     case MinUVecI8x16:
     case MaxSVecI8x16:
@@ -1836,6 +1840,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:
+    case AbsVecI64x2:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -1860,24 +1865,20 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case ExtAddPairwiseUVecI16x8ToI32x4:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
-    case TruncSatSVecF64x2ToVecI64x2:
-    case TruncSatUVecF64x2ToVecI64x2:
     case ConvertSVecI32x4ToVecF32x4:
     case ConvertUVecI32x4ToVecF32x4:
-    case ConvertSVecI64x2ToVecF64x2:
-    case ConvertUVecI64x2ToVecF64x2:
-    case WidenLowSVecI8x16ToVecI16x8:
-    case WidenHighSVecI8x16ToVecI16x8:
-    case WidenLowUVecI8x16ToVecI16x8:
-    case WidenHighUVecI8x16ToVecI16x8:
-    case WidenLowSVecI16x8ToVecI32x4:
-    case WidenHighSVecI16x8ToVecI32x4:
-    case WidenLowUVecI16x8ToVecI32x4:
-    case WidenHighUVecI16x8ToVecI32x4:
-    case WidenLowSVecI32x4ToVecI64x2:
-    case WidenHighSVecI32x4ToVecI64x2:
-    case WidenLowUVecI32x4ToVecI64x2:
-    case WidenHighUVecI32x4ToVecI64x2:
+    case ExtendLowSVecI8x16ToVecI16x8:
+    case ExtendHighSVecI8x16ToVecI16x8:
+    case ExtendLowUVecI8x16ToVecI16x8:
+    case ExtendHighUVecI8x16ToVecI16x8:
+    case ExtendLowSVecI16x8ToVecI32x4:
+    case ExtendHighSVecI16x8ToVecI32x4:
+    case ExtendLowUVecI16x8ToVecI32x4:
+    case ExtendHighUVecI16x8ToVecI32x4:
+    case ExtendLowSVecI32x4ToVecI64x2:
+    case ExtendHighSVecI32x4ToVecI64x2:
+    case ExtendLowUVecI32x4ToVecI64x2:
+    case ExtendHighUVecI32x4ToVecI64x2:
     case ConvertLowSVecI32x4ToVecF64x2:
     case ConvertLowUVecI32x4ToVecF64x2:
     case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -1888,12 +1889,11 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
       break;
-    case AnyTrueVecI8x16:
-    case AnyTrueVecI16x8:
-    case AnyTrueVecI32x4:
+    case AnyTrueVec128:
     case AllTrueVecI8x16:
     case AllTrueVecI16x8:
     case AllTrueVecI32x4:
+    case AllTrueVecI64x2:
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:

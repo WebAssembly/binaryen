@@ -157,23 +157,23 @@ enum UnaryOp {
 
   // SIMD arithmetic
   NotVec128,
+  AnyTrueVec128,
   AbsVecI8x16,
   NegVecI8x16,
-  AnyTrueVecI8x16,
   AllTrueVecI8x16,
   BitmaskVecI8x16,
   PopcntVecI8x16,
   AbsVecI16x8,
   NegVecI16x8,
-  AnyTrueVecI16x8,
   AllTrueVecI16x8,
   BitmaskVecI16x8,
   AbsVecI32x4,
   NegVecI32x4,
-  AnyTrueVecI32x4,
   AllTrueVecI32x4,
   BitmaskVecI32x4,
+  AbsVecI64x2,
   NegVecI64x2,
+  AllTrueVecI64x2,
   BitmaskVecI64x2,
   AbsVecF32x4,
   NegVecF32x4,
@@ -197,24 +197,20 @@ enum UnaryOp {
   // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,
   TruncSatUVecF32x4ToVecI32x4,
-  TruncSatSVecF64x2ToVecI64x2,
-  TruncSatUVecF64x2ToVecI64x2,
   ConvertSVecI32x4ToVecF32x4,
   ConvertUVecI32x4ToVecF32x4,
-  ConvertSVecI64x2ToVecF64x2,
-  ConvertUVecI64x2ToVecF64x2,
-  WidenLowSVecI8x16ToVecI16x8,
-  WidenHighSVecI8x16ToVecI16x8,
-  WidenLowUVecI8x16ToVecI16x8,
-  WidenHighUVecI8x16ToVecI16x8,
-  WidenLowSVecI16x8ToVecI32x4,
-  WidenHighSVecI16x8ToVecI32x4,
-  WidenLowUVecI16x8ToVecI32x4,
-  WidenHighUVecI16x8ToVecI32x4,
-  WidenLowSVecI32x4ToVecI64x2,
-  WidenHighSVecI32x4ToVecI64x2,
-  WidenLowUVecI32x4ToVecI64x2,
-  WidenHighUVecI32x4ToVecI64x2,
+  ExtendLowSVecI8x16ToVecI16x8,
+  ExtendHighSVecI8x16ToVecI16x8,
+  ExtendLowUVecI8x16ToVecI16x8,
+  ExtendHighUVecI8x16ToVecI16x8,
+  ExtendLowSVecI16x8ToVecI32x4,
+  ExtendHighSVecI16x8ToVecI32x4,
+  ExtendLowUVecI16x8ToVecI32x4,
+  ExtendHighUVecI16x8ToVecI32x4,
+  ExtendLowSVecI32x4ToVecI64x2,
+  ExtendHighSVecI32x4ToVecI64x2,
+  ExtendLowUVecI32x4ToVecI64x2,
+  ExtendHighUVecI32x4ToVecI64x2,
 
   ConvertLowSVecI32x4ToVecF64x2,
   ConvertLowUVecI32x4ToVecF64x2,
@@ -367,6 +363,11 @@ enum BinaryOp {
   GeSVecI32x4,
   GeUVecI32x4,
   EqVecI64x2,
+  NeVecI64x2,
+  LtSVecI64x2,
+  GtSVecI64x2,
+  LeSVecI64x2,
+  GeSVecI64x2,
   EqVecF32x4,
   NeVecF32x4,
   LtVecF32x4,
@@ -391,7 +392,6 @@ enum BinaryOp {
   SubVecI8x16,
   SubSatSVecI8x16,
   SubSatUVecI8x16,
-  MulVecI8x16,
   MinSVecI8x16,
   MinUVecI8x16,
   MaxSVecI8x16,
@@ -527,24 +527,6 @@ enum SIMDLoadStoreLaneOp {
 
 enum SIMDTernaryOp {
   Bitselect,
-  QFMAF32x4,
-  QFMSF32x4,
-  QFMAF64x2,
-  QFMSF64x2,
-  SignSelectVec8x16,
-  SignSelectVec16x8,
-  SignSelectVec32x4,
-  SignSelectVec64x2
-};
-
-enum SIMDWidenOp {
-  WidenSVecI8x16ToVecI32x4,
-  WidenUVecI8x16ToVecI32x4,
-};
-
-enum PrefetchOp {
-  PrefetchTemporal,
-  PrefetchNontemporal,
 };
 
 enum RefIsOp {
@@ -616,7 +598,6 @@ public:
     MemorySizeId,
     MemoryGrowId,
     NopId,
-    PrefetchId,
     UnreachableId,
     AtomicRMWId,
     AtomicCmpxchgId,
@@ -630,7 +611,6 @@ public:
     SIMDShiftId,
     SIMDLoadId,
     SIMDLoadStoreLaneId,
-    SIMDWidenId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -1076,30 +1056,6 @@ public:
   bool isStore();
   bool isLoad() { return !isStore(); }
   Index getMemBytes();
-  void finalize();
-};
-
-class SIMDWiden : public SpecificExpression<Expression::SIMDWidenId> {
-public:
-  SIMDWiden() = default;
-  SIMDWiden(MixedArena& allocator) {}
-
-  SIMDWidenOp op;
-  uint8_t index;
-  Expression* vec;
-
-  void finalize();
-};
-
-class Prefetch : public SpecificExpression<Expression::PrefetchId> {
-public:
-  Prefetch() = default;
-  Prefetch(MixedArena& allocator) : Prefetch() {}
-
-  PrefetchOp op;
-  Address offset;
-  Address align;
-  Expression* ptr;
   void finalize();
 };
 

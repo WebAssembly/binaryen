@@ -234,8 +234,6 @@ private:
   Expression* makeSIMDShift(Element& s, SIMDShiftOp op);
   Expression* makeSIMDLoad(Element& s, SIMDLoadOp op);
   Expression* makeSIMDLoadStoreLane(Element& s, SIMDLoadStoreLaneOp op);
-  Expression* makeSIMDWiden(Element& s, SIMDWidenOp op);
-  Expression* makePrefetch(Element& s, PrefetchOp op);
   Expression* makeMemoryInit(Element& s);
   Expression* makeDataDrop(Element& s);
   Expression* makeMemoryCopy(Element& s);

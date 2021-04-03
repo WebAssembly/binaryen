@@ -49,6 +49,8 @@ Current Trunk
 - `BinaryenGetFunctionTableSegmentData` is replaced with
   `BinaryenElementSegmentGetData`.
 - Boolean values in the C API now should use `bool` instead of `int`.
+- Experimental SIMD instructions have been removed and the names and opcodes of
+  the standard instructions have been updated to match the final spec.
 
 v100
 ----
