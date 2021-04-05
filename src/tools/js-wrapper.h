@@ -103,7 +103,7 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
-    for (const auto param : func->sig.params) {
+    for (auto param : func->sig.params) {
       // zeros in arguments TODO more?
       if (first) {
         first = false;
