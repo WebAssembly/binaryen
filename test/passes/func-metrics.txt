@@ -7,8 +7,9 @@ global
  [memory-data]  : 9       
  [table-data]   : 3       
  [tables]       : 1       
- [total]        : 3       
+ [total]        : 6       
  Const          : 3       
+ RefFunc        : 3       
 func: empty
  [binary-bytes] : 3       
  [total]        : 1       
@@ -127,7 +128,7 @@ func: func_c
  Block          : 1       
  Call           : 15      
 export: a (func_a)
- [removable-bytes-without-it]: 72      
+ [removable-bytes-without-it]: 58      
  [total]        : 0       
 export: b (func_b)
  [removable-bytes-without-it]: 18      
@@ -253,7 +254,7 @@ func: 0
  [vars]         : 0       
  GlobalGet      : 1       
 export: stackSave (0)
- [removable-bytes-without-it]: 56      
+ [removable-bytes-without-it]: 62      
  [total]        : 0       
 (module
  (type $0 (func (result i32)))

@@ -66,7 +66,6 @@
 )
 ;; for now, do not inline a try-delegate
 (module
- (type $none_=>_none (func))
  (func $0
   (try $label$3
    (do)
@@ -79,7 +78,6 @@
 )
 ;; properly support inlining into a function with a try-delegate
 (module
- (type $none_=>_none (func))
  (func $0 (result i32)
   (i32.const 42)
  )
@@ -89,5 +87,17 @@
    (delegate 0)
   )
   (call $0)
+ )
+)
+;; handle non-nullable parameter types (which turn into local types after
+;; inlining)
+(module
+ (func $0 (param $non-null (ref func)) (result (ref func))
+  (local.get $non-null)
+ )
+ (func $1 (result (ref func))
+  (call $0
+   (ref.func $1)
+  )
  )
 )

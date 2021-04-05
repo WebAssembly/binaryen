@@ -1,22 +1,22 @@
 (module
  (type ${i32_f32_f64} (struct (field i32) (field f32) (field f64)))
- (type ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref null ${i32_f32_f64})) (field (mut (ref null ${i32_f32_f64})))))
+ (type ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref ${i32_f32_f64})) (field (mut (ref ${i32_f32_f64})))))
  (type ${i32_i64} (struct (field i32) (field i64)))
- (type $[ref?|[mut:f64]|] (array (ref null $[mut:f64])))
  (type $[mut:f64] (array (mut f64)))
+ (type $[mut:ref?|[mut:f64]|] (array (mut (ref null $[mut:f64]))))
  (type $anyref_=>_none (func (param anyref)))
  (type ${} (struct ))
  (type ${i32} (struct (field i32)))
  (type ${mut:f32} (struct (field (mut f32))))
  (type $none_=>_none (func))
- (type ${mut:ref?|{i32}|} (struct (field (mut (ref null ${i32})))))
+ (type ${mut:ref|{i32}|} (struct (field (mut (ref ${i32})))))
  (type $rtt_1_{}_=>_none (func (param (rtt 1 ${}))))
  (type $rtt_{}_=>_none (func (param (rtt ${}))))
- (type $ref?|{i32_f32_f64}|_=>_ref?|{i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}| (func (param (ref null ${i32_f32_f64})) (result (ref null ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))))
- (type $ref?|[mut:f64]|_=>_ref?|[ref?|[mut:f64]|]| (func (param (ref null $[mut:f64])) (result (ref null $[ref?|[mut:f64]|]))))
+ (type $ref|{i32_f32_f64}|_=>_ref|{i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}| (func (param (ref ${i32_f32_f64})) (result (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))))
+ (type $ref|[mut:f64]|_=>_ref|[mut:ref?|[mut:f64]|]| (func (param (ref $[mut:f64])) (result (ref $[mut:ref?|[mut:f64]|]))))
  (type $[mut:i32] (array (mut i32)))
  (type $[mut:i8] (array (mut i8)))
- (type $[mut:ref?|{i32}|] (array (mut (ref null ${i32}))))
+ (type $[mut:ref|{i32}|] (array (mut (ref ${i32}))))
  (global $global$0 (rtt 0 ${}) (rtt.canon ${}))
  (global $global$1 (rtt 1 ${i32}) (rtt.sub ${i32}
   (global.get $global$0)
@@ -24,12 +24,12 @@
  (global $global$2 (rtt 2 ${i32_i64}) (rtt.sub ${i32_i64}
   (global.get $global$1)
  ))
- (func $0 (param $0 (ref null ${i32_f32_f64})) (result (ref null ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))
+ (func $0 (param $0 (ref ${i32_f32_f64})) (result (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
   (local $1 (ref null ${i32_f32_f64}))
-  (local $2 (ref null ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))
+  (local $2 (ref null ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
   (local $3 (ref null ${mut:f32}))
   (local $4 (ref null $[mut:f64]))
-  (local $5 (ref null $[ref?|[mut:f64]|]))
+  (local $5 (ref null $[mut:ref?|[mut:f64]|]))
   (drop
    (local.get $0)
   )
@@ -59,12 +59,12 @@
    )
   )
   (drop
-   (struct.get_u ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} 0
+   (struct.get_u ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|} 0
     (local.get $2)
    )
   )
   (drop
-   (struct.get_s ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|} 0
+   (struct.get_s ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|} 0
     (local.get $2)
    )
   )
@@ -104,9 +104,11 @@
    (ref.null ${mut:f32})
    (f32.const 100)
   )
-  (struct.set ${mut:ref?|{i32}|} 0
-   (ref.null ${mut:ref?|{i32}|})
-   (ref.null ${i32_i64})
+  (struct.set ${mut:ref|{i32}|} 0
+   (ref.null ${mut:ref|{i32}|})
+   (ref.as_non_null
+    (ref.null ${i32_i64})
+   )
   )
   (drop
    (struct.new_default_with_rtt ${i32_f32_f64}
@@ -123,9 +125,9 @@
   )
   (unreachable)
  )
- (func $1 (param $0 (ref null $[mut:f64])) (result (ref null $[ref?|[mut:f64]|]))
+ (func $1 (param $0 (ref $[mut:f64])) (result (ref $[mut:ref?|[mut:f64]|]))
   (local $1 (ref null $[mut:f64]))
-  (local $2 (ref null $[ref?|[mut:f64]|]))
+  (local $2 (ref null $[mut:ref?|[mut:f64]|]))
   (local $3 (ref null $[mut:i8]))
   (local $4 (ref null $[mut:i32]))
   (drop
@@ -136,9 +138,9 @@
    )
   )
   (drop
-   (array.new_default_with_rtt $[ref?|[mut:f64]|]
+   (array.new_default_with_rtt $[mut:ref?|[mut:f64]|]
     (i32.const 10)
-    (rtt.canon $[ref?|[mut:f64]|])
+    (rtt.canon $[mut:ref?|[mut:f64]|])
    )
   )
   (drop
@@ -152,10 +154,12 @@
    (i32.const 2)
    (f64.const 2.18281828)
   )
-  (array.set $[mut:ref?|{i32}|]
-   (ref.null $[mut:ref?|{i32}|])
+  (array.set $[mut:ref|{i32}|]
+   (ref.null $[mut:ref|{i32}|])
    (i32.const 3)
-   (ref.null ${i32_i64})
+   (ref.as_non_null
+    (ref.null ${i32_i64})
+   )
   )
   (drop
    (array.len $[mut:f64]
@@ -193,21 +197,21 @@
   (drop
    (ref.test
     (ref.null ${i32_f32_f64})
-    (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
+    (rtt.canon ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|})
    )
   )
   (drop
    (ref.cast
     (ref.null ${i32_f32_f64})
-    (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
+    (rtt.canon ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|})
    )
   )
   (drop
-   (block $label$1 (result (ref null ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|}))
+   (block $label$1 (result (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
     (local.set $0
      (br_on_cast $label$1
       (ref.null ${i32_f32_f64})
-      (rtt.canon ${i8_mut:i16_ref?|{i32_f32_f64}|_mut:ref?|{i32_f32_f64}|})
+      (rtt.canon ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|})
      )
     )
     (block $label$2

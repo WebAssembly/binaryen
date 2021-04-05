@@ -6,6 +6,7 @@ set(ir_SOURCES
   ReFinalize.cpp
   stack-utils.cpp
   table-utils.cpp
+  type-updating.cpp
   module-splitting.cpp
   ${ir_HEADERS}
 )

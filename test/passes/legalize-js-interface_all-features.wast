@@ -17,8 +17,7 @@
     (unreachable)
   )
 
-  ;; If an import is used in ref.func, even if it is legalized to another
-  ;; import, the original import should not be removed.
+  ;; ref.func must also be updated.
   (func $ref-func-test
     (drop
       (call $ref-func-arg)

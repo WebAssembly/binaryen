@@ -1397,8 +1397,6 @@ public:
   Expression* rtt;
 
   void finalize();
-
-  Type getCastType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1409,8 +1407,6 @@ public:
   Expression* rtt;
 
   void finalize();
-
-  Type getCastType();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1726,12 +1722,12 @@ class ElementSegment : public Named {
 public:
   Name table;
   Expression* offset;
-  std::vector<Name> data;
+  std::vector<Expression*> data;
 
   ElementSegment() = default;
   ElementSegment(Name table, Expression* offset)
     : table(table), offset(offset) {}
-  ElementSegment(Name table, Expression* offset, std::vector<Name>& init)
+  ElementSegment(Name table, Expression* offset, std::vector<Expression*>& init)
     : table(table), offset(offset) {
     data.swap(init);
   }
@@ -1949,6 +1945,8 @@ public:
   void clearDebugInfo();
 };
 
+using ModuleExpression = std::pair<Module&, Expression*>;
+
 } // namespace wasm
 
 namespace std {
@@ -1960,6 +1958,7 @@ template<> struct hash<wasm::Address> {
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
 std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
 

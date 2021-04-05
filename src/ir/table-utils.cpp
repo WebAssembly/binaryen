@@ -15,6 +15,7 @@
  */
 
 #include "table-utils.h"
+#include "element-utils.h"
 #include "find_all.h"
 #include "module-utils.h"
 
@@ -31,11 +32,8 @@ std::set<Name> getFunctionsNeedingElemDeclare(Module& wasm) {
   // Find all the names in the tables.
 
   std::unordered_set<Name> tableNames;
-  for (auto& segment : wasm.elementSegments) {
-    for (auto name : segment->data) {
-      tableNames.insert(name);
-    }
-  }
+  ElementUtils::iterAllElementFunctionNames(
+    &wasm, [&](Name name) { tableNames.insert(name); });
 
   // Find all the names in ref.funcs.
   using Names = std::unordered_set<Name>;

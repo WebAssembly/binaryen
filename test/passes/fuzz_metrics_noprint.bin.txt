@@ -7,7 +7,7 @@ total
  [memory-data]  : 4       
  [table-data]   : 17      
  [tables]       : 1       
- [total]        : 5797    
+ [total]        : 5814    
  [vars]         : 160     
  Binary         : 467     
  Block          : 810     
@@ -24,6 +24,7 @@ total
  LocalSet       : 292     
  Loop           : 127     
  Nop            : 69      
+ RefFunc        : 17      
  Return         : 259     
  Select         : 53      
  Store          : 53      

@@ -673,8 +673,9 @@ private:
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
-      if (type.isRef() && !type.isNullable()) {
-        // We can't use a nullable type as a var, which is null-initialized.
+      if (!type.isDefaultable()) {
+        // We can't use a nondefaultable type as a var, as those must be
+        // initialized to some default value.
         continue;
       }
       funcContext->typeLocals[type].push_back(params.size() +
@@ -723,7 +724,9 @@ private:
     while (oneIn(3) && !finishedInput) {
       auto& randomElem =
         wasm.elementSegments[upTo(wasm.elementSegments.size())];
-      randomElem->data.push_back(func->name);
+      // FIXME: make the type NonNullable when we support it!
+      auto type = Type(HeapType(func->sig), Nullable);
+      randomElem->data.push_back(builder.makeRefFunc(func->name, type));
     }
     numAddedFunctions++;
     return func;
@@ -1436,11 +1439,13 @@ private:
     bool isReturn;
     while (1) {
       // TODO: handle unreachable
-      targetFn = wasm.getFunction(data[i]);
-      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 funcContext->func->sig.results == targetFn->sig.results;
-      if (targetFn->sig.results == type || isReturn) {
-        break;
+      if (auto* get = data[i]->dynCast<RefFunc>()) {
+        targetFn = wasm.getFunction(get->func);
+        isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
+                   funcContext->func->sig.results == targetFn->sig.results;
+        if (targetFn->sig.results == type || isReturn) {
+          break;
+        }
       }
       i++;
       if (i == data.size()) {
@@ -1490,7 +1495,7 @@ private:
     for (const auto& type : target->sig.params) {
       args.push_back(make(type));
     }
-    auto targetType = Type(HeapType(target->sig), Nullable);
+    auto targetType = Type(HeapType(target->sig), NonNullable);
     // TODO: half the time make a completely random item with that type.
     return builder.makeCallRef(
       builder.makeRefFunc(target->name, targetType), args, type, isReturn);
@@ -2072,9 +2077,9 @@ private:
     if (type.isRef()) {
       assert(wasm.features.hasReferenceTypes());
       // Check if we can use ref.func.
-      // 'func' is the pointer to the last created function and can be null when
-      // we set up globals (before we create any functions), in which case we
-      // can't use ref.func.
+      // 'funcContext->func' is the pointer to the last created function and can
+      // be null when we set up globals (before we create any functions), in
+      // which case we can't use ref.func.
       if (type == Type::funcref && funcContext && oneIn(2)) {
         // First set to target to the last created function, and try to select
         // among other existing function if possible
@@ -2091,14 +2096,20 @@ private:
       if (oneIn(2) && type.isNullable()) {
         return builder.makeRefNull(type);
       }
-      if (type == Type::dataref) {
-        WASM_UNREACHABLE("TODO: dataref");
+      if (!type.isFunction()) {
+        // We don't know how to create an externref or GC data yet TODO
+        // For now, create a null, and if it must be non-null, cast it to such
+        // even though that traps at runtime.
+        auto nullable = Type(type.getHeapType(), Nullable);
+        Expression* ret = builder.makeRefNull(nullable);
+        if (!type.isNullable()) {
+          ret = builder.makeRefAs(RefAsNonNull, ret);
+        }
+        return ret;
       }
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
-        // FIXME: RefFunc type should be non-nullable, but we emit nullable
-        //        types for now.
-        if (type == Type(HeapType(func->sig), Nullable)) {
+        if (type == Type(HeapType(func->sig), NonNullable)) {
           return builder.makeRefFunc(func->name, type);
         }
       }
@@ -2107,9 +2118,18 @@ private:
         return builder.makeRefNull(type);
       }
       // Last resort: create a function.
+      auto heapType = type.getHeapType();
+      Signature sig;
+      if (heapType.isSignature()) {
+        sig = heapType.getSignature();
+      } else {
+        assert(heapType == HeapType::func);
+        // The specific signature does not matter.
+        sig = Signature(Type::none, Type::none);
+      }
       auto* func = wasm.addFunction(builder.makeFunction(
         Names::getValidFunctionName(wasm, "ref_func_target"),
-        type.getHeapType().getSignature(),
+        sig,
         {},
         builder.makeUnreachable()));
       return builder.makeRefFunc(func->name, type);

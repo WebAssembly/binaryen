@@ -180,9 +180,9 @@ void Block::finalize() {
     type = Type::none;
     return;
   }
-  type = list.back()->type;
   // The default type is what is at the end. Next we need to see if breaks and/
   // or unreachabitily change that.
+  type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
     handleUnreachable(this, NoBreak);
@@ -199,7 +199,7 @@ void Block::finalize() {
     // is already correct. TODO: calculate proper LUBs to compute a new correct
     // type in this situation.
     seeker.types.insert(type);
-    Type::ensureSuperType(seeker.types, type);
+    type = Type::getLeastUpperBound(seeker.types);
   } else {
     // There are no branches, so this block may be unreachable.
     handleUnreachable(this, NoBreak);
@@ -230,13 +230,8 @@ void If::finalize(Type type_) {
 }
 
 void If::finalize() {
-  if (ifFalse) {
-    // TODO: Calculate a proper LUB.
-    Type::ensureSuperType(std::array<Type, 2>{{ifTrue->type, ifFalse->type}},
-                          type);
-  } else {
-    type = Type::none;
-  }
+  type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
+                 : Type::none;
   // if the arms return a value, leave it even if the condition
   // is unreachable, we still mark ourselves as having that type, e.g.
   // (if (result i32)
@@ -245,9 +240,7 @@ void If::finalize() {
   //  (i32.const 20)
   // )
   // otherwise, if the condition is unreachable, so is the if
-  if ((type == Type::none && condition->type == Type::unreachable) ||
-      (ifTrue->type == Type::unreachable && ifFalse &&
-       ifFalse->type == Type::unreachable)) {
+  if (type == Type::none && condition->type == Type::unreachable) {
     type = Type::unreachable;
   }
 }
@@ -785,9 +778,7 @@ void Select::finalize() {
       condition->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    // TODO: Calculate a proper LUB.
-    Type::ensureSuperType(std::array<Type, 2>{{ifTrue->type, ifFalse->type}},
-                          type);
+    type = Type::getLeastUpperBound(ifTrue->type, ifFalse->type);
   }
 }
 
@@ -847,11 +838,7 @@ void Try::finalize() {
   for (auto catchBody : catchBodies) {
     types.insert(catchBody->type);
   }
-  if (types.size() == 1 && *types.begin() == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    Type::ensureSuperType(types, type);
-  }
+  type = Type::getLeastUpperBound(types);
 }
 
 void Try::finalize(Type type_) {
@@ -928,29 +915,15 @@ void RefTest::finalize() {
   }
 }
 
-// Helper to get the cast type for a cast instruction. They all look at the rtt
-// operand's type.
-template<typename T> static Type doGetCastType(T* curr) {
-  if (curr->rtt->type == Type::unreachable) {
-    // We don't have the RTT type, so just return unreachable. The type in this
-    // case should not matter in practice, but it may be seen while debugging.
-    return Type::unreachable;
-  }
-  // TODO: make non-nullable when we support that
-  return Type(curr->rtt->type.getHeapType(), Nullable);
-}
-
-Type RefTest::getCastType() { return doGetCastType(this); }
-
 void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = getCastType();
+    // The output of ref.cast may be null if the input is null (in that case the
+    // null is passed through).
+    type = Type(rtt->type.getHeapType(), ref->type.getNullability());
   }
 }
-
-Type RefCast::getCastType() { return doGetCastType(this); }
 
 void BrOn::finalize() {
   if (ref->type == Type::unreachable ||
@@ -960,8 +933,7 @@ void BrOn::finalize() {
     if (op == BrOnNull) {
       // If BrOnNull does not branch, it flows out the existing value as
       // non-null.
-      // FIXME: When we support non-nullable types, this should be non-nullable.
-      type = Type(ref->type.getHeapType(), Nullable);
+      type = Type(ref->type.getHeapType(), NonNullable);
     } else {
       type = ref->type;
     }
@@ -974,8 +946,7 @@ Type BrOn::getCastType() {
       // BrOnNull does not send a value on the branch.
       return Type::none;
     case BrOnCast:
-      // FIXME: When we support non-nullable types, this should be non-nullable.
-      return Type(rtt->type.getHeapType(), Nullable);
+      return Type(rtt->type.getHeapType(), NonNullable);
     case BrOnFunc:
       return Type::funcref;
     case BrOnData:
@@ -1007,8 +978,7 @@ void StructNew::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  // TODO: make non-nullable when we support that
-  type = Type(rtt->type.getHeapType(), Nullable);
+  type = Type(rtt->type.getHeapType(), NonNullable);
 }
 
 void StructGet::finalize() {
@@ -1033,8 +1003,7 @@ void ArrayNew::finalize() {
     type = Type::unreachable;
     return;
   }
-  // TODO: make non-nullable when we support that
-  type = Type(rtt->type.getHeapType(), Nullable);
+  type = Type(rtt->type.getHeapType(), NonNullable);
 }
 
 void ArrayGet::finalize() {
@@ -1069,8 +1038,7 @@ void RefAs::finalize() {
   }
   switch (op) {
     case RefAsNonNull:
-      // FIXME: when we support non-nullable types, switch to NonNullable
-      type = Type(value->type.getHeapType(), Nullable);
+      type = Type(value->type.getHeapType(), NonNullable);
       break;
     case RefAsFunc:
       type = Type::funcref;

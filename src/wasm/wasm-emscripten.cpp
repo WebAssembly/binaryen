@@ -450,9 +450,9 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
     for (const auto& ex : wasm.exports) {
       if (ex->kind == ExternalKind::Global) {
         const Global* g = wasm.getGlobal(ex->value);
-        assert(g->type == Type::i32);
+        assert(g->type == Type::i32 || g->type == Type::i64);
         Const* init = g->init->cast<Const>();
-        uint32_t addr = init->value.geti32();
+        uint64_t addr = init->value.getInteger();
         meta << nextElement() << '"' << ex->name.str << "\" : \"" << addr
              << '"';
       }

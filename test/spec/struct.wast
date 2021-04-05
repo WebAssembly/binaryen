@@ -96,3 +96,38 @@
   )
   "type mismatch"
 )
+
+(assert_invalid
+  (module
+    (type $A (struct (field i32)))
+    (type $B (struct (field i64)))
+    (global $glob (rtt $A) (rtt.sub $A (rtt.canon $B)))
+  )
+  "invalid rtt"
+)
+
+(assert_invalid
+  (module
+    (type $vec (struct (field i32)))
+    (func $test
+      (drop
+        ;; too many arguments
+        (struct.new_with_rtt $vec (i32.const 1) (i32.const 2) (rtt.canon $vec))
+      )
+    )
+  )
+  "invalid number of arguments to struct.new"
+)
+
+(assert_invalid
+  (module
+    (type $vec (struct (field i32) (field i32)))
+    (func $test
+      (drop
+        ;; too few arguments
+        (struct.new_with_rtt $vec (i32.const 1) (rtt.canon $vec))
+      )
+    )
+  )
+  "invalid number of arguments to struct.new"
+)

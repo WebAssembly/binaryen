@@ -5,7 +5,7 @@
  (type $3 (func (param i32 i32) (result i32)))
  (import "env" "puts" (func $puts (param i32) (result i32)))
  (memory $0 2)
- (data passive "Hello, world\00")
+ (data "Hello, world\00")
  (table $0 1 1 funcref)
  (global $global$0 (mut i32) (i32.const 66128))
  (global $global$1 i32 (i32.const 66128))

@@ -7,13 +7,14 @@ total
  [memory-data]  : 9       
  [table-data]   : 3       
  [tables]       : 1       
- [total]        : 27      
+ [total]        : 30      
  [vars]         : 1       
  Binary         : 1       
  Block          : 1       
  Const          : 15      
  Drop           : 6       
  If             : 4       
+ RefFunc        : 3       
 (module
  (type $0 (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))

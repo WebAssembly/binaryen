@@ -1306,7 +1306,9 @@ class WasmBinaryBuilder {
   const std::vector<char>& input;
   std::istream* sourceMap;
   std::pair<uint32_t, Function::DebugLocation> nextDebugLocation;
+  bool debugInfo = true;
   bool DWARF = false;
+  bool skipFunctionBodies = false;
 
   size_t pos = 0;
   Index startIndex = -1;
@@ -1323,7 +1325,11 @@ public:
     : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
       nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
 
+  void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
+  void setSkipFunctionBodies(bool skipFunctionBodies_) {
+    skipFunctionBodies = skipFunctionBodies_;
+  }
   void read();
   void readUserSection(size_t payloadLen);
 
@@ -1524,9 +1530,6 @@ public:
 
   void readDataSegments();
   void readDataCount();
-
-  // A map from elem segment indexes to their entries
-  std::map<Index, std::vector<Index>> functionTable;
 
   void readTableDeclarations();
   void readElementSegments();

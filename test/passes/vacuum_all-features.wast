@@ -869,3 +869,47 @@
     )
   )
 )
+(module
+ (type $A (struct (field (mut i32))))
+ (func $foo
+  (drop
+   (block (result dataref)
+    ;; this dropped item can be vacuumed out in principle, but it is a non-
+    ;; nullable reference type and we don't have a type to put in its place, so
+    ;; don't try to replace it. (later operations will remove all the body of
+    ;; this function; this test verifies we don't crash along the way)
+    (struct.new_default_with_rtt $A
+     (rtt.canon $A)
+    )
+   )
+  )
+ )
+)
+(module
+ (global $global$0 (mut i32) (i32.const 10))
+ (func $1
+  (drop
+   (block $block (result funcref i32)
+    ;; we can vaccum out all parts of this block: the br_if is not taken, there
+    ;; is a nop, and the tuple at the end goes to a dropped block anyhow. this
+    ;; test specifically verifies handling of tuples containing non-nullable
+    ;; types, for which we try to create a zero in an intermediate step along
+    ;; the way.
+    (drop
+     (br_if $block
+      (tuple.make
+       (ref.func $1)
+       (i32.const 0)
+      )
+      (i32.const 0)
+     )
+    )
+    (nop)
+    (tuple.make
+     (ref.func $1)
+     (i32.const 1)
+    )
+   )
+  )
+ )
+)

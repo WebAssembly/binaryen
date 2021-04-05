@@ -1,10 +1,11 @@
 (module
  (type $none_=>_i64 (func (result i64)))
- (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
+ (type $i32_=>_none (func (param i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
  (import "env" "imported" (func $imported (result i64)))
+ (import "env" "invoke_vj" (func $invoke_vj (param i64)))
  (import "env" "setTempRet0" (func $setTempRet0 (param i32)))
  (import "env" "invoke_vj" (func $legalimport$invoke_vj (param i32 i32)))
  (export "func" (func $func))

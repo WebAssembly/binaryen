@@ -1022,33 +1022,6 @@ public:
     return block;
   }
 
-  // Grab a slice out of a block, replacing it with nops, and returning
-  // either another block with the contents (if more than 1) or a single
-  // expression
-  Expression* stealSlice(Block* input, Index from, Index to) {
-    Expression* ret;
-    if (to == from + 1) {
-      // just one
-      ret = input->list[from];
-    } else {
-      auto* block = wasm.allocator.alloc<Block>();
-      for (Index i = from; i < to; i++) {
-        block->list.push_back(input->list[i]);
-      }
-      block->finalize();
-      ret = block;
-    }
-    if (to == input->list.size()) {
-      input->list.resize(from);
-    } else {
-      for (Index i = from; i < to; i++) {
-        input->list[i] = wasm.allocator.alloc<Nop>();
-      }
-    }
-    input->finalize();
-    return ret;
-  }
-
   // Drop an expression if it has a concrete type
   Expression* dropIfConcretelyTyped(Expression* curr) {
     if (!curr->type.isConcrete()) {
