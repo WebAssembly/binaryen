@@ -3494,12 +3494,6 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitSIMDLoadStoreLane(curr, opcode)) {
         break;
       }
-      if (maybeVisitSIMDWiden(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitPrefetch(curr, opcode)) {
-        break;
-      }
       throwError("invalid code after SIMD prefix: " + std::to_string(opcode));
       break;
     }
@@ -4970,6 +4964,26 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = EqVecI64x2;
       break;
+    case BinaryConsts::I64x2Ne:
+      curr = allocator.alloc<Binary>();
+      curr->op = NeVecI64x2;
+      break;
+    case BinaryConsts::I64x2LtS:
+      curr = allocator.alloc<Binary>();
+      curr->op = LtSVecI64x2;
+      break;
+    case BinaryConsts::I64x2GtS:
+      curr = allocator.alloc<Binary>();
+      curr->op = GtSVecI64x2;
+      break;
+    case BinaryConsts::I64x2LeS:
+      curr = allocator.alloc<Binary>();
+      curr->op = LeSVecI64x2;
+      break;
+    case BinaryConsts::I64x2GeS:
+      curr = allocator.alloc<Binary>();
+      curr->op = GeSVecI64x2;
+      break;
     case BinaryConsts::F32x4Eq:
       curr = allocator.alloc<Binary>();
       curr->op = EqVecF32x4;
@@ -5057,10 +5071,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I8x16SubSatU:
       curr = allocator.alloc<Binary>();
       curr->op = SubSatUVecI8x16;
-      break;
-    case BinaryConsts::I8x16Mul:
-      curr = allocator.alloc<Binary>();
-      curr->op = MulVecI8x16;
       break;
     case BinaryConsts::I8x16MinS:
       curr = allocator.alloc<Binary>();
@@ -5351,6 +5361,10 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = NotVec128;
       break;
+    case BinaryConsts::V128AnyTrue:
+      curr = allocator.alloc<Unary>();
+      curr->op = AnyTrueVec128;
+      break;
     case BinaryConsts::I8x16Popcnt:
       curr = allocator.alloc<Unary>();
       curr->op = PopcntVecI8x16;
@@ -5362,10 +5376,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
     case BinaryConsts::I8x16Neg:
       curr = allocator.alloc<Unary>();
       curr->op = NegVecI8x16;
-      break;
-    case BinaryConsts::I8x16AnyTrue:
-      curr = allocator.alloc<Unary>();
-      curr->op = AnyTrueVecI8x16;
       break;
     case BinaryConsts::I8x16AllTrue:
       curr = allocator.alloc<Unary>();
@@ -5383,10 +5393,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = NegVecI16x8;
       break;
-    case BinaryConsts::I16x8AnyTrue:
-      curr = allocator.alloc<Unary>();
-      curr->op = AnyTrueVecI16x8;
-      break;
     case BinaryConsts::I16x8AllTrue:
       curr = allocator.alloc<Unary>();
       curr->op = AllTrueVecI16x8;
@@ -5403,10 +5409,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = NegVecI32x4;
       break;
-    case BinaryConsts::I32x4AnyTrue:
-      curr = allocator.alloc<Unary>();
-      curr->op = AnyTrueVecI32x4;
-      break;
     case BinaryConsts::I32x4AllTrue:
       curr = allocator.alloc<Unary>();
       curr->op = AllTrueVecI32x4;
@@ -5415,9 +5417,17 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = BitmaskVecI32x4;
       break;
+    case BinaryConsts::I64x2Abs:
+      curr = allocator.alloc<Unary>();
+      curr->op = AbsVecI64x2;
+      break;
     case BinaryConsts::I64x2Neg:
       curr = allocator.alloc<Unary>();
       curr->op = NegVecI64x2;
+      break;
+    case BinaryConsts::I64x2AllTrue:
+      curr = allocator.alloc<Unary>();
+      curr->op = AllTrueVecI64x2;
       break;
     case BinaryConsts::I64x2Bitmask:
       curr = allocator.alloc<Unary>();
@@ -5503,14 +5513,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = TruncSatUVecF32x4ToVecI32x4;
       break;
-    case BinaryConsts::I64x2TruncSatSF64x2:
-      curr = allocator.alloc<Unary>();
-      curr->op = TruncSatSVecF64x2ToVecI64x2;
-      break;
-    case BinaryConsts::I64x2TruncSatUF64x2:
-      curr = allocator.alloc<Unary>();
-      curr->op = TruncSatUVecF64x2ToVecI64x2;
-      break;
     case BinaryConsts::F32x4ConvertSI32x4:
       curr = allocator.alloc<Unary>();
       curr->op = ConvertSVecI32x4ToVecF32x4;
@@ -5519,61 +5521,53 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = ConvertUVecI32x4ToVecF32x4;
       break;
-    case BinaryConsts::F64x2ConvertSI64x2:
+    case BinaryConsts::I16x8ExtendLowSI8x16:
       curr = allocator.alloc<Unary>();
-      curr->op = ConvertSVecI64x2ToVecF64x2;
+      curr->op = ExtendLowSVecI8x16ToVecI16x8;
       break;
-    case BinaryConsts::F64x2ConvertUI64x2:
+    case BinaryConsts::I16x8ExtendHighSI8x16:
       curr = allocator.alloc<Unary>();
-      curr->op = ConvertUVecI64x2ToVecF64x2;
+      curr->op = ExtendHighSVecI8x16ToVecI16x8;
       break;
-    case BinaryConsts::I16x8WidenLowSI8x16:
+    case BinaryConsts::I16x8ExtendLowUI8x16:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenLowSVecI8x16ToVecI16x8;
+      curr->op = ExtendLowUVecI8x16ToVecI16x8;
       break;
-    case BinaryConsts::I16x8WidenHighSI8x16:
+    case BinaryConsts::I16x8ExtendHighUI8x16:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenHighSVecI8x16ToVecI16x8;
+      curr->op = ExtendHighUVecI8x16ToVecI16x8;
       break;
-    case BinaryConsts::I16x8WidenLowUI8x16:
+    case BinaryConsts::I32x4ExtendLowSI16x8:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenLowUVecI8x16ToVecI16x8;
+      curr->op = ExtendLowSVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I16x8WidenHighUI8x16:
+    case BinaryConsts::I32x4ExtendHighSI16x8:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenHighUVecI8x16ToVecI16x8;
+      curr->op = ExtendHighSVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I32x4WidenLowSI16x8:
+    case BinaryConsts::I32x4ExtendLowUI16x8:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenLowSVecI16x8ToVecI32x4;
+      curr->op = ExtendLowUVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I32x4WidenHighSI16x8:
+    case BinaryConsts::I32x4ExtendHighUI16x8:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenHighSVecI16x8ToVecI32x4;
+      curr->op = ExtendHighUVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I32x4WidenLowUI16x8:
+    case BinaryConsts::I64x2ExtendLowSI32x4:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenLowUVecI16x8ToVecI32x4;
+      curr->op = ExtendLowSVecI32x4ToVecI64x2;
       break;
-    case BinaryConsts::I32x4WidenHighUI16x8:
+    case BinaryConsts::I64x2ExtendHighSI32x4:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenHighUVecI16x8ToVecI32x4;
+      curr->op = ExtendHighSVecI32x4ToVecI64x2;
       break;
-    case BinaryConsts::I64x2WidenLowSI32x4:
+    case BinaryConsts::I64x2ExtendLowUI32x4:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenLowSVecI32x4ToVecI64x2;
+      curr->op = ExtendLowUVecI32x4ToVecI64x2;
       break;
-    case BinaryConsts::I64x2WidenHighSI32x4:
+    case BinaryConsts::I64x2ExtendHighUI32x4:
       curr = allocator.alloc<Unary>();
-      curr->op = WidenHighSVecI32x4ToVecI64x2;
-      break;
-    case BinaryConsts::I64x2WidenLowUI32x4:
-      curr = allocator.alloc<Unary>();
-      curr->op = WidenLowUVecI32x4ToVecI64x2;
-      break;
-    case BinaryConsts::I64x2WidenHighUI32x4:
-      curr = allocator.alloc<Unary>();
-      curr->op = WidenHighUVecI32x4ToVecI64x2;
+      curr->op = ExtendHighUVecI32x4ToVecI64x2;
       break;
     case BinaryConsts::F64x2ConvertLowSI32x4:
       curr = allocator.alloc<Unary>();
@@ -5751,38 +5745,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
     case BinaryConsts::V128Bitselect:
       curr = allocator.alloc<SIMDTernary>();
       curr->op = Bitselect;
-      break;
-    case BinaryConsts::V8x16SignSelect:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = SignSelectVec8x16;
-      break;
-    case BinaryConsts::V16x8SignSelect:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = SignSelectVec16x8;
-      break;
-    case BinaryConsts::V32x4SignSelect:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = SignSelectVec32x4;
-      break;
-    case BinaryConsts::V64x2SignSelect:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = SignSelectVec64x2;
-      break;
-    case BinaryConsts::F32x4QFMA:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = QFMAF32x4;
-      break;
-    case BinaryConsts::F32x4QFMS:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = QFMSF32x4;
-      break;
-    case BinaryConsts::F64x2QFMA:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = QFMAF64x2;
-      break;
-    case BinaryConsts::F64x2QFMS:
-      curr = allocator.alloc<SIMDTernary>();
-      curr->op = QFMSF64x2;
       break;
     default:
       return false;
@@ -5976,45 +5938,6 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitSIMDWiden(Expression*& out, uint32_t code) {
-  SIMDWidenOp op;
-  switch (code) {
-    case BinaryConsts::I32x4WidenSI8x16:
-      op = WidenSVecI8x16ToVecI32x4;
-      break;
-    case BinaryConsts::I32x4WidenUI8x16:
-      op = WidenUVecI8x16ToVecI32x4;
-      break;
-    default:
-      return false;
-  }
-  auto* curr = allocator.alloc<SIMDWiden>();
-  curr->op = op;
-  curr->index = getLaneIndex(4);
-  curr->vec = popNonVoidExpression();
-  curr->finalize();
-  out = curr;
-  return true;
-}
-
-bool WasmBinaryBuilder::maybeVisitPrefetch(Expression*& out, uint32_t code) {
-  PrefetchOp op;
-  switch (code) {
-    case BinaryConsts::PrefetchT:
-      op = PrefetchTemporal;
-      break;
-    case BinaryConsts::PrefetchNT:
-      op = PrefetchNontemporal;
-      break;
-    default:
-      return false;
-  }
-  Address align, offset;
-  readMemoryAccess(align, offset);
-  out = Builder(wasm).makePrefetch(op, offset, align, popNonVoidExpression());
   return true;
 }
 

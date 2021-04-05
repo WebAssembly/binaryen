@@ -1988,8 +1988,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
-    Ref visitPrefetch(Prefetch* curr) { return ValueBuilder::makeToplevel(); }
-
     Ref visitUnreachable(Unreachable* curr) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
@@ -2121,10 +2119,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitSIMDWiden(SIMDWiden* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

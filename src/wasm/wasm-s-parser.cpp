@@ -2095,21 +2095,6 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   return ret;
 }
 
-Expression* SExpressionWasmBuilder::makeSIMDWiden(Element& s, SIMDWidenOp op) {
-  auto* ret = allocator.alloc<SIMDWiden>();
-  ret->op = op;
-  ret->index = parseLaneIndex(s[1], 4);
-  ret->vec = parseExpression(s[2]);
-  ret->finalize();
-  return ret;
-}
-
-Expression* SExpressionWasmBuilder::makePrefetch(Element& s, PrefetchOp op) {
-  Address offset, align;
-  size_t i = parseMemAttributes(s, offset, align, /*defaultAlign*/ 1);
-  return Builder(wasm).makePrefetch(op, offset, align, parseExpression(s[i]));
-}
-
 Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
   auto ret = allocator.alloc<MemoryInit>();
   ret->segment = atoi(s[1]->str().c_str());
