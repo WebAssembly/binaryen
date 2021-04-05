@@ -1558,13 +1558,7 @@ public:
       return rtt;
     }
     const auto& fields = curr->rtt->type.getHeapType().getStruct().fields;
-    Literals data;
-    try {
-      Literals allocation(fields.size());
-      data = std::move(allocation);
-    } catch (std::bad_alloc&) {
-      trap("allocation failure");
-    }
+    Literals data(fields.size());
     for (Index i = 0; i < fields.size(); i++) {
       if (curr->isWithDefault()) {
         data[i] = Literal::makeZero(fields[i].type);
