@@ -26,6 +26,7 @@
 
 #include <memory>
 
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "support/colors.h"
@@ -213,20 +214,19 @@ struct MetaDCEGraph {
     // we can't remove segments, so root what they need
     InitScanner rooter(this, Name());
     rooter.setModule(&wasm);
-    for (auto& table : wasm.tables) {
-      for (auto& segment : table->segments) {
-        // TODO: currently, all functions in the table are roots, but we
-        //       should add an option to refine that
-        for (auto& name : segment.data) {
+    ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
+      // TODO: currently, all functions in the table are roots, but we
+      //       should add an option to refine that
+      ElementUtils::iterElementSegmentFunctionNames(
+        segment, [&](Name name, Index) {
           if (!wasm.getFunction(name)->imported()) {
             roots.insert(functionToDCENode[name]);
           } else {
             roots.insert(importIdToDCENode[getFunctionImportId(name)]);
           }
-        }
-        rooter.walk(segment.offset);
-      }
-    }
+        });
+      rooter.walk(segment->offset);
+    });
     for (auto& segment : wasm.memory.segments) {
       if (!segment.isPassive) {
         rooter.walk(segment.offset);

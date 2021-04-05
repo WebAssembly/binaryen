@@ -1,7 +1,7 @@
 # Version set according the the cmake versions available in Ubuntu/Bionic:
 # https://packages.ubuntu.com/bionic/cmake
 cmake_minimum_required(VERSION 3.10.2)
-project(binaryen LANGUAGES C CXX VERSION 99)
+project(binaryen LANGUAGES C CXX VERSION 100)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -152,6 +152,7 @@ if(MSVC)
   if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS "19.0") # VS2013 and older explicitly need /arch:sse2 set, VS2015 no longer has that option, but always enabled.
     add_compile_flag("/arch:sse2")
   endif()
+  add_compile_flag("/std:c++17") # VS2017 generates "error C2429: attribute 'fallthrough' requires compiler flag '/std:c++17'"
   add_compile_flag("/wd4146") # Ignore warning "warning C4146: unary minus operator applied to unsigned type, result still unsigned", this pattern is used somewhat commonly in the code.
   # 4267 and 4244 are conversion/truncation warnings. We might want to fix these but they are currently pervasive.
   add_compile_flag("/wd4267")
@@ -233,6 +234,9 @@ else()
   add_compile_flag("-Wno-implicit-int-float-conversion")
   add_compile_flag("-Wno-unknown-warning-option")
   add_compile_flag("-Wswitch") # we explicitly expect this in the code
+  add_compile_flag("-Wimplicit-fallthrough")
+  add_compile_flag("-Wnon-virtual-dtor")
+
   if(WIN32)
     add_compile_flag("-D_GNU_SOURCE")
     add_compile_flag("-D__STDC_FORMAT_MACROS")
@@ -323,12 +327,15 @@ else()
   message(STATUS "Building libbinaryen as shared library.")
   add_library(binaryen SHARED ${binaryen_SOURCES} ${binaryen_objs})
 endif()
-install(TARGETS binaryen
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
-
-install(FILES src/binaryen-c.h src/wasm-delegations.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+if(NOT (BUILD_STATIC_LIB AND BYN_INSTALL_TOOLS_ONLY))
+  install(TARGETS binaryen
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
+endif()
+if(NOT BYN_INSTALL_TOOLS_ONLY)
+  install(FILES src/binaryen-c.h src/wasm-delegations.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+endif()
 
 function(binaryen_add_executable name sources)
   add_executable(${name} ${sources})

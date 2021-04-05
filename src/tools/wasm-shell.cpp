@@ -23,6 +23,7 @@
 #include <memory>
 
 #include "execution-results.h"
+#include "ir/element-utils.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/command-line.h"
@@ -42,13 +43,6 @@ Name ASSERT_UNLINKABLE("assert_unlinkable");
 Name INVOKE("invoke");
 Name GET("get");
 
-// Modules named in the file
-
-std::map<Name, std::unique_ptr<Module>> modules;
-std::map<Name, std::unique_ptr<SExpressionWasmBuilder>> builders;
-std::map<Name, std::unique_ptr<ShellExternalInterface>> interfaces;
-std::map<Name, std::unique_ptr<ModuleInstance>> instances;
-
 //
 // An operation on a module
 //
@@ -61,7 +55,8 @@ struct Operation {
 
   Operation(Element& element,
             ModuleInstance* instanceInit,
-            SExpressionWasmBuilder& builder)
+            SExpressionWasmBuilder& builder,
+            std::map<Name, std::unique_ptr<ModuleInstance>>& instances)
     : instance(instanceInit) {
     operation = element[0]->str();
     Index i = 1;
@@ -88,13 +83,16 @@ struct Operation {
   }
 };
 
-static void run_asserts(Name moduleName,
-                        size_t* i,
-                        bool* checked,
-                        Module* wasm,
-                        Element* root,
-                        SExpressionWasmBuilder* builder,
-                        Name entry) {
+static void
+run_asserts(Name moduleName,
+            size_t* i,
+            bool* checked,
+            Module* wasm,
+            Element* root,
+            SExpressionWasmBuilder* builder,
+            Name entry,
+            std::map<Name, std::unique_ptr<ShellExternalInterface>>& interfaces,
+            std::map<Name, std::unique_ptr<ModuleInstance>>& instances) {
   ModuleInstance* instance = nullptr;
   if (wasm) {
     // prefix make_unique to work around visual studio bugs
@@ -169,17 +167,13 @@ static void run_asserts(Name moduleName,
             reportUnknownImport(import);
           }
         });
-        ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
-          for (auto& segment : table->segments) {
-            for (auto name : segment.data) {
-              // spec tests consider it illegal to use spectest.print in a table
-              if (auto* import = wasm.getFunction(name)) {
-                if (import->imported() && import->module == SPECTEST &&
-                    import->base.startsWith(PRINT)) {
-                  std::cerr << "cannot put spectest.print in table\n";
-                  invalid = true;
-                }
-              }
+        ElementUtils::iterAllElementFunctionNames(&wasm, [&](Name name) {
+          // spec tests consider it illegal to use spectest.print in a table
+          if (auto* import = wasm.getFunction(name)) {
+            if (import->imported() && import->module == SPECTEST &&
+                import->base.startsWith(PRINT)) {
+              std::cerr << "cannot put spectest.print in table\n";
+              invalid = true;
             }
           }
         });
@@ -195,7 +189,7 @@ static void run_asserts(Name moduleName,
       }
     } else if (id == INVOKE) {
       assert(wasm);
-      Operation operation(curr, instance, *builder);
+      Operation operation(curr, instance, *builder, instances);
       operation.operate();
     } else if (wasm) { // if no wasm, we skipped the module
       // an invoke test
@@ -203,7 +197,7 @@ static void run_asserts(Name moduleName,
       WASM_UNUSED(trapped);
       Literals result;
       try {
-        Operation operation(*curr[1], instance, *builder);
+        Operation operation(*curr[1], instance, *builder, instances);
         result = operation.operate();
       } catch (const TrapException&) {
         trapped = true;
@@ -274,6 +268,13 @@ int main(int argc, const char* argv[]) {
 
   bool checked = false;
 
+  // Modules named in the file
+
+  std::map<Name, std::unique_ptr<Module>> modules;
+  std::map<Name, std::unique_ptr<SExpressionWasmBuilder>> builders;
+  std::map<Name, std::unique_ptr<ShellExternalInterface>> interfaces;
+  std::map<Name, std::unique_ptr<ModuleInstance>> instances;
+
   try {
     if (options.debug) {
       std::cerr << "parsing text to s-expressions...\n";
@@ -319,9 +320,19 @@ int main(int argc, const char* argv[]) {
                     modules[moduleName].get(),
                     &root,
                     builders[moduleName].get(),
-                    entry);
+                    entry,
+                    interfaces,
+                    instances);
       } else {
-        run_asserts(Name(), &i, &checked, nullptr, &root, nullptr, entry);
+        run_asserts(Name(),
+                    &i,
+                    &checked,
+                    nullptr,
+                    &root,
+                    nullptr,
+                    entry,
+                    interfaces,
+                    instances);
       }
     }
   } catch (ParseException& p) {

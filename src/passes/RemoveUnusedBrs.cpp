@@ -21,6 +21,7 @@
 #include <ir/branch-utils.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
 #include <ir/utils.h>
 #include <parsing.h>
@@ -29,6 +30,34 @@
 #include <wasm.h>
 
 namespace wasm {
+
+// Grab a slice out of a block, replacing it with nops, and returning
+// either another block with the contents (if more than 1) or a single
+// expression.
+// This does not finalize the input block; it leaves that for the caller.
+static Expression*
+stealSlice(Builder& builder, Block* input, Index from, Index to) {
+  Expression* ret;
+  if (to == from + 1) {
+    // just one
+    ret = input->list[from];
+  } else {
+    auto* block = builder.makeBlock();
+    for (Index i = from; i < to; i++) {
+      block->list.push_back(input->list[i]);
+    }
+    block->finalize();
+    ret = block;
+  }
+  if (to == input->list.size()) {
+    input->list.resize(from);
+  } else {
+    for (Index i = from; i < to; i++) {
+      input->list[i] = builder.makeNop();
+    }
+  }
+  return ret;
+}
 
 // to turn an if into a br-if, we must be able to reorder the
 // condition and possible value, and the possible value must
@@ -352,6 +381,47 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     //       later down, see visitLocalSet.
   }
 
+  void visitBrOn(BrOn* curr) {
+    // Ignore unreachable BrOns which we cannot improve anyhow.
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    // First, check for a possible null which would prevent all other
+    // optimizations.
+    // (Note: if the spec had BrOnNonNull, instead of BrOnNull, then we could
+    // replace a br_on_func whose input is (ref null func) with br_on_non_null,
+    // as only the null check would be needed. But as things are, we cannot do
+    // such a thing.)
+    auto refType = curr->ref->type;
+    if (refType.isNullable()) {
+      return;
+    }
+
+    if (curr->op == BrOnNull) {
+      // This cannot be null, so the br is never taken, and the non-null value
+      // flows through.
+      replaceCurrent(curr->ref);
+      anotherCycle = true;
+      return;
+    }
+
+    // Check if the type is the kind we are checking for.
+    auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+    if (result == GCTypeUtils::Success) {
+      // The type is what we are looking for, so we can switch from BrOn to a
+      // simple br which is always taken.
+      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
+      anotherCycle = true;
+    } else if (result == GCTypeUtils::Failure) {
+      // The type is not what we are looking for, so the branch is never taken,
+      // and the value just flows through.
+      replaceCurrent(curr->ref);
+      anotherCycle = true;
+    }
+  }
+
   // override scan to add a pre and a post check task to all nodes
   static void scan(RemoveUnusedBrs* self, Expression** currp) {
     self->pushTask(visitAny, currp);
@@ -431,7 +501,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // we need the ifTrue to break, so it cannot reach the code we want to
           // move
           if (iff->ifTrue->type == Type::unreachable) {
-            iff->ifFalse = builder.stealSlice(block, i + 1, list.size());
+            iff->ifFalse = stealSlice(builder, block, i + 1, list.size());
             iff->finalize();
             block->finalize();
             return true;
@@ -476,13 +546,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
           if (iff->ifTrue->type == Type::unreachable) {
             iff->ifFalse = blockifyMerge(
-              iff->ifFalse, builder.stealSlice(block, i + 1, list.size()));
+              iff->ifFalse, stealSlice(builder, block, i + 1, list.size()));
             iff->finalize();
             block->finalize();
             return true;
           } else if (iff->ifFalse->type == Type::unreachable) {
             iff->ifTrue = blockifyMerge(
-              iff->ifTrue, builder.stealSlice(block, i + 1, list.size()));
+              iff->ifTrue, stealSlice(builder, block, i + 1, list.size()));
             iff->finalize();
             block->finalize();
             return true;
@@ -517,7 +587,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
               list[i] =
                 builder.makeIf(brIf->condition,
                                builder.makeBreak(brIf->name),
-                               builder.stealSlice(block, i + 1, list.size()));
+                               stealSlice(builder, block, i + 1, list.size()));
+              block->finalize();
               return true;
             }
           }
@@ -628,12 +699,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (!flow->value) {
           // return => nop
           ExpressionManipulator::nop(flow);
-          anotherCycle = true;
         } else {
           // return with value => value
           *flows[i] = flow->value;
-          anotherCycle = true;
         }
+        anotherCycle = true;
       }
       flows.clear();
       // optimize loops (we don't do it while tracking flows, as they can
@@ -964,7 +1034,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           return nullptr;
         }
         return Builder(*getModule())
-          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse);
+          .makeSelect(iff->condition, iff->ifTrue, iff->ifFalse, iff->type);
       }
 
       void visitLocalSet(LocalSet* curr) {

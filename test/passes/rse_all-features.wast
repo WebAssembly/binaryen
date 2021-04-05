@@ -357,12 +357,12 @@
     (local $x i32)
     (try
       (do
-        (try
+        (try $l0
           (do
             (throw $e (i32.const 0))
           )
           (catch_all
-            (rethrow 0)
+            (rethrow $l0)
           )
         )
       )
@@ -379,13 +379,13 @@
     (local $x i32)
     (try
       (do
-        (try
+        (try $l0
           (do
             (throw $e (i32.const 0))
           )
           (catch_all
             (local.set $x (i32.const 1))
-            (rethrow 0)
+            (rethrow $l0)
           )
         )
       )
@@ -399,14 +399,14 @@
     (local $x i32)
     (try
       (do
-        (try
+        (try $l0
           (do
             (throw $e (i32.const 0))
           )
           (catch $e
             (drop (pop i32))
             (local.set $x (i32.const 1))
-            (rethrow 0)
+            (rethrow $l0)
           )
         )
       )

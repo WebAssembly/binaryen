@@ -25,6 +25,7 @@
 #include "ir/module-utils.h"
 #include "shared-constants.h"
 #include "support/name.h"
+#include "support/utilities.h"
 #include "wasm-interpreter.h"
 #include "wasm.h"
 
@@ -85,7 +86,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   } memory;
 
-  std::unordered_map<Name, std::vector<Name>> tables;
+  std::unordered_map<Name, std::vector<Literal>> tables;
 
   ShellExternalInterface() : memory() {}
   virtual ~ShellExternalInterface() = default;
@@ -119,7 +120,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             globals[import->name] = {Literal(double(666.6))};
             break;
           case Type::v128:
-            assert(false && "v128 not implemented yet");
+            WASM_UNREACHABLE("v128 not implemented yet");
           case Type::funcref:
           case Type::externref:
           case Type::anyref:
@@ -176,7 +177,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (index >= table.size()) {
       trap("callTable overflow");
     }
-    auto* func = instance.wasm.getFunctionOrNull(table[index]);
+    Function* func = nullptr;
+    if (table[index].isFunction() && !table[index].isNull()) {
+      func = instance.wasm.getFunctionOrNull(table[index].getFunc());
+    }
     if (!func) {
       trap("uninitialized table element");
     }
@@ -230,7 +234,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
 
-  void tableStore(Name tableName, Address addr, Name entry) override {
+  void tableStore(Name tableName, Address addr, Literal entry) override {
     tables[tableName][addr] = entry;
   }
 

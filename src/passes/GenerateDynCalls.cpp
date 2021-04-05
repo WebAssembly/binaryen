@@ -24,6 +24,7 @@
 
 #include "abi/js.h"
 #include "asm_v_wasm.h"
+#include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "pass.h"
 #include "support/debug.h"
@@ -45,11 +46,22 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
 
   void visitTable(Table* table) {
     // Generate dynCalls for functions in the table
-    if (table->segments.size() > 0) {
+    Module* wasm = getModule();
+    auto& segments = wasm->elementSegments;
+
+    // Find a single elem segment for the table. We only care about one, since
+    // wasm-ld emits only one table with a single segment.
+    auto it = std::find_if(segments.begin(),
+                           segments.end(),
+                           [&](std::unique_ptr<ElementSegment>& segment) {
+                             return segment->table == table->name;
+                           });
+    if (it != segments.end()) {
       std::vector<Name> tableSegmentData;
-      for (const auto& indirectFunc : table->segments[0].data) {
-        generateDynCallThunk(getModule()->getFunction(indirectFunc)->sig);
-      }
+      ElementUtils::iterElementSegmentFunctionNames(
+        it->get(), [&](Name name, Index) {
+          generateDynCallThunk(wasm->getFunction(name)->sig);
+        });
     }
   }
 
@@ -127,9 +139,13 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
   for (const auto& param : sig.params) {
     args.push_back(builder.makeLocalGet(++i, param));
   }
-  // FIXME: Should the existence of a table be ensured here? i.e. create one if
-  // there is none?
-  assert(wasm->tables.size() > 0);
+  if (wasm->tables.empty()) {
+    // Add an imported table in exactly the same manner as the LLVM wasm backend
+    // would add one.
+    auto* table = wasm->addTable(Builder::makeTable(Name::fromInt(0)));
+    table->module = ENV;
+    table->base = "__indirect_function_table";
+  }
   f->body = builder.makeCallIndirect(wasm->tables[0]->name, fptr, args, sig);
 
   wasm->addFunction(std::move(f));

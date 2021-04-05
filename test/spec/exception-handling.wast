@@ -92,29 +92,29 @@
   )
 
   (func (export "try_throw_rethrow")
-    (try
+    (try $l0
       (do
         (throw $e-i32 (i32.const 5))
       )
       (catch $e-i32
         (drop (pop i32))
-        (rethrow 0)
+        (rethrow $l0)
       )
     )
   )
 
   (func (export "try_call_rethrow")
-    (try
+    (try $l0
       (do
         (call $throw_single_value)
       )
       (catch_all
-        (rethrow 0)
+        (rethrow $l0)
       )
     )
   )
 
-  (func (export "rethrow_depth_test1") (result i32)
+  (func (export "rethrow_target_test1") (result i32)
     (try (result i32)
       (do
         (try
@@ -122,13 +122,13 @@
             (throw $e-i32 (i32.const 1))
           )
           (catch_all
-            (try
+            (try $l0
               (do
                 (throw $e-i32 (i32.const 2))
               )
               (catch $e-i32
                 (drop (pop i32))
-                (rethrow 0) ;; rethrow (i32.const 2)
+                (rethrow $l0) ;; rethrow (i32.const 2)
               )
             )
           )
@@ -141,10 +141,10 @@
   )
 
   ;; Can we handle rethrows with the depth > 0?
-  (func (export "rethrow_depth_test2") (result i32)
+  (func (export "rethrow_target_test2") (result i32)
     (try (result i32)
       (do
-        (try
+        (try $l0
           (do
             (throw $e-i32 (i32.const 1))
           )
@@ -168,12 +168,12 @@
   )
 
   ;; Tests whether the exception stack is managed correctly after rethrows
-  (func (export "rethrow_depth_test3") (result i32)
+  (func (export "rethrow_target_test3") (result i32)
     (try (result i32)
       (do
-        (try
+        (try $l0
           (do
-            (try
+            (try $l1
               (do
                 (throw $e-i32 (i32.const 1))
               )
@@ -184,14 +184,14 @@
                   )
                   (catch $e-i32
                     (drop (pop i32))
-                    (rethrow 1) ;; rethrow (i32.const 1)
+                    (rethrow $l1) ;; rethrow (i32.const 1)
                   )
                 )
               )
             )
           )
           (catch $e-i32
-            (rethrow 0) ;; rethrow (i32.const 1) again
+            (rethrow $l0) ;; rethrow (i32.const 1) again
           )
         )
       )
@@ -212,9 +212,9 @@
 (assert_return (invoke "try_throw_multivalue_catch") (i32.const 5))
 (assert_trap (invoke "try_throw_rethrow"))
 (assert_trap (invoke "try_call_rethrow"))
-(assert_return (invoke "rethrow_depth_test1") (i32.const 2))
-(assert_return (invoke "rethrow_depth_test2") (i32.const 1))
-(assert_return (invoke "rethrow_depth_test3") (i32.const 1))
+(assert_return (invoke "rethrow_target_test1") (i32.const 2))
+(assert_return (invoke "rethrow_target_test2") (i32.const 1))
+(assert_return (invoke "rethrow_target_test3") (i32.const 1))
 
 (assert_invalid
   (module
@@ -298,4 +298,34 @@
     )
   )
   "all delegate targets must be valid"
+)
+
+(assert_invalid
+  (module
+    (func $f0
+      (block $l0
+        (try
+          (do)
+          (catch_all
+            (rethrow $l0) ;; target is a block
+          )
+        )
+      )
+    )
+  )
+  "all rethrow targets must be valid"
+)
+
+(assert_invalid
+  (module
+    (func $f0
+      (try $l0
+        (do
+          (rethrow $l0) ;; Not within the target try's catch
+        )
+        (catch_all)
+      )
+    )
+  )
+  "all rethrow targets must be valid"
 )

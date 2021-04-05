@@ -113,6 +113,9 @@ jobs:
         ./alpine.sh apk update
         ./alpine.sh apk add build-base cmake git python3 clang ninja
 
+    - name: install python dev dependencies
+      run: ./alpine.sh pip3 install -r requirements-dev.txt
+
     - name: cmake
       run: |
         ./alpine.sh cmake . -G Ninja -DCMAKE_CXX_FLAGS="-static" -DCMAKE_C_FLAGS="-static" -DCMAKE_BUILD_TYPE=Release -DBUILD_STATIC_LIB=ON -DCMAKE_INSTALL_PREFIX=install

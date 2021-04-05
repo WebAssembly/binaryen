@@ -22,6 +22,7 @@
 
 #include <memory>
 
+#include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -29,7 +30,7 @@
 
 namespace wasm {
 
-enum class ModuleElementKind { Function, Global, Event, Table };
+enum class ModuleElementKind { Function, Global, Event, Table, ElementSegment };
 
 typedef std::pair<ModuleElementKind, Name> ModuleElement;
 
@@ -51,9 +52,9 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
         walk(segment.offset);
       }
     }
-    for (auto& table : module->tables) {
-      for (auto& segment : table->segments) {
-        walk(segment.offset);
+    for (auto& segment : module->elementSegments) {
+      if (segment->table.is()) {
+        walk(segment->offset);
       }
     }
 
@@ -76,41 +77,39 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
             walk(global->init);
           }
         } else if (curr.first == ModuleElementKind::Table) {
-          auto* table = module->getTable(curr.second);
-          for (auto& segment : table->segments) {
-            walk(segment.offset);
-          }
+          ModuleUtils::iterTableSegments(
+            *module, curr.second, [&](ElementSegment* segment) {
+              walk(segment->offset);
+            });
         }
       }
     }
   }
 
-  void visitCall(Call* curr) {
-    if (reachable.count(
-          ModuleElement(ModuleElementKind::Function, curr->target)) == 0) {
-      queue.emplace_back(ModuleElementKind::Function, curr->target);
+  void maybeAdd(ModuleElement element) {
+    if (reachable.count(element) == 0) {
+      queue.emplace_back(element);
     }
+  }
+
+  void visitCall(Call* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Function, curr->target));
   }
   void visitCallIndirect(CallIndirect* curr) {
     assert(!module->tables.empty() && "call-indirect to undefined table.");
-
-    if (reachable.count(ModuleElement(ModuleElementKind::Table, curr->table)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Table, curr->table);
-    }
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
+    ModuleUtils::iterTableSegments(
+      *module, curr->table, [&](ElementSegment* segment) {
+        maybeAdd(
+          ModuleElement(ModuleElementKind::ElementSegment, segment->name));
+      });
   }
 
   void visitGlobalGet(GlobalGet* curr) {
-    if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Global, curr->name);
-    }
+    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
   }
   void visitGlobalSet(GlobalSet* curr) {
-    if (reachable.count(ModuleElement(ModuleElementKind::Global, curr->name)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Global, curr->name);
-    }
+    maybeAdd(ModuleElement(ModuleElementKind::Global, curr->name));
   }
 
   void visitLoad(Load* curr) { usesMemory = true; }
@@ -127,15 +126,14 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
   void visitRefFunc(RefFunc* curr) {
-    if (reachable.count(
-          ModuleElement(ModuleElementKind::Function, curr->func)) == 0) {
-      queue.emplace_back(ModuleElementKind::Function, curr->func);
-    }
+    maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
   }
   void visitThrow(Throw* curr) {
-    if (reachable.count(ModuleElement(ModuleElementKind::Event, curr->event)) ==
-        0) {
-      queue.emplace_back(ModuleElementKind::Event, curr->event);
+    maybeAdd(ModuleElement(ModuleElementKind::Event, curr->event));
+  }
+  void visitTry(Try* curr) {
+    for (auto event : curr->catchEvents) {
+      maybeAdd(ModuleElement(ModuleElementKind::Event, event));
     }
   }
 };
@@ -164,6 +162,13 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Function, func->name);
       });
     }
+    ModuleUtils::iterActiveElementSegments(
+      *module, [&](ElementSegment* segment) {
+        auto table = module->getTable(segment->table);
+        if (table->imported() && !segment->data.empty()) {
+          roots.emplace_back(ModuleElementKind::ElementSegment, segment->name);
+        }
+      });
     // Exports are roots.
     bool exportsMemory = false;
     for (auto& curr : module->exports) {
@@ -175,6 +180,11 @@ struct RemoveUnusedModuleElements : public Pass {
         roots.emplace_back(ModuleElementKind::Event, curr->value);
       } else if (curr->kind == ExternalKind::Table) {
         roots.emplace_back(ModuleElementKind::Table, curr->value);
+        ModuleUtils::iterTableSegments(
+          *module, curr->value, [&](ElementSegment* segment) {
+            roots.emplace_back(ModuleElementKind::ElementSegment,
+                               segment->name);
+          });
       } else if (curr->kind == ExternalKind::Memory) {
         exportsMemory = true;
       }
@@ -185,14 +195,9 @@ struct RemoveUnusedModuleElements : public Pass {
       importsMemory = true;
     }
     // For now, all functions that can be called indirectly are marked as roots.
-    for (auto& table : module->tables) {
-      // TODO(reference-types): Check whether table's datatype is funcref.
-      for (auto& segment : table->segments) {
-        for (auto& curr : segment.data) {
-          roots.emplace_back(ModuleElementKind::Function, curr);
-        }
-      }
-    }
+    ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+      roots.emplace_back(ModuleElementKind::Function, name);
+    });
     // Compute reachability starting from the root set.
     ReachabilityAnalyzer analyzer(module, roots);
     // Remove unreachable elements.
@@ -208,20 +213,24 @@ struct RemoveUnusedModuleElements : public Pass {
       return analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Event, curr->name)) == 0;
     });
-
-    for (auto& table : module->tables) {
-      table->segments.erase(
-        std::remove_if(table->segments.begin(),
-                       table->segments.end(),
-                       [&](auto& seg) { return seg.data.empty(); }),
-        table->segments.end());
-    }
+    module->removeElementSegments([&](ElementSegment* curr) {
+      return curr->data.empty() ||
+             analyzer.reachable.count(ModuleElement(
+               ModuleElementKind::ElementSegment, curr->name)) == 0;
+    });
+    // Since we've removed all empty element segments, here we mark all tables
+    // that have a segment left.
+    std::unordered_set<Name> nonemptyTables;
+    ModuleUtils::iterActiveElementSegments(
+      *module,
+      [&](ElementSegment* segment) { nonemptyTables.insert(segment->table); });
     module->removeTables([&](Table* curr) {
-      return (curr->segments.empty() || !curr->imported()) &&
+      return (nonemptyTables.count(curr->name) == 0 || !curr->imported()) &&
              analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Table, curr->name)) == 0;
     });
-    // Handle the memory and table
+
+    // Handle the memory
     if (!exportsMemory && !analyzer.usesMemory) {
       if (!importsMemory) {
         // The memory is unobservable to the outside, we can remove the

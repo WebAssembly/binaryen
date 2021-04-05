@@ -17,13 +17,33 @@
 //
 // Flattens code into "Flat IR" form. See ir/flat.h.
 //
-// TODO: handle non-nullability
+// TODO: handle non-nullability. for example:
 //
+//      (module
+//       (type $none (func))
+//       (func $foo
+//        (drop
+//         (block (result funcref (ref $none))
+//          (tuple.make
+//           (ref.null func)
+//           (ref.func $foo)
+//          )
+//         )
+//        )
+//       )
+//      )
+//
+// The tuple has a non-nullable type, and so it cannot be set to a local. We
+// would need to split up the tuple and reconstruct it later, but that would
+// require allowing tuple operations in more nested places than Flat IR allows
+// today. For now, error on this; eventually changes in the spec regarding
+// null-nullability may make this easier.
 
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/flat.h>
 #include <ir/properties.h>
+#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -316,6 +336,17 @@ struct Flatten
     }
     // the body may have preludes
     curr->body = getPreludesWithExpression(originalBody, curr->body);
+    // New locals we added may be non-nullable.
+    TypeUpdating::handleNonNullableLocals(curr, *getModule());
+    // We cannot handle non-nullable tuples currently, see the comment at the
+    // top of the file.
+    for (auto type : curr->vars) {
+      if (!type.isDefaultable()) {
+        Fatal() << "Flatten was forced to add a local of a type it cannot "
+                   "handle yet: "
+                << type;
+      }
+    }
   }
 
 private:

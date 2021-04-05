@@ -50,7 +50,9 @@ void ModuleReader::readBinaryData(std::vector<char>& input,
                                   std::string sourceMapFilename) {
   std::unique_ptr<std::ifstream> sourceMapStream;
   WasmBinaryBuilder parser(wasm, input);
+  parser.setDebugInfo(debugInfo);
   parser.setDWARF(DWARF);
+  parser.setSkipFunctionBodies(skipFunctionBodies);
   if (sourceMapFilename.size()) {
     sourceMapStream = make_unique<std::ifstream>();
     sourceMapStream->open(sourceMapFilename);

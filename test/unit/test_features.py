@@ -31,9 +31,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_feature(module, error, '--enable-bulk-memory')
 
     def check_exception_handling(self, module, error):
-        # Exception handling implies reference types
-        self.check_feature(module, error, '--enable-exception-handling',
-                           ['--enable-reference-types'])
+        self.check_feature(module, error, '--enable-exception-handling')
 
     def check_tail_call(self, module, error):
         self.check_feature(module, error, '--enable-tail-call')
@@ -46,8 +44,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
 
     def check_multivalue_exception_handling(self, module, error):
         self.check_feature(module, error, '--enable-multivalue',
-                           ['--enable-exception-handling',
-                            '--enable-reference-types'])
+                           ['--enable-exception-handling'])
 
     def check_gc(self, module, error):
         # GC implies reference types
@@ -139,7 +136,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         module = '''
         (module
          (memory 256 256)
-         (data passive "42")
+         (data "42")
         )
         '''
         self.check_bulk_mem(module, 'nonzero segment flags (bulk memory is disabled)')
@@ -338,7 +335,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
     def test_exception_handling(self):
         filename = 'exception_handling_target_feature.wasm'
         self.roundtrip(filename)
-        self.check_features(filename, ['exception-handling', 'reference-types'])
+        self.check_features(filename, ['exception-handling'])
         self.assertIn('throw', self.disassemble(filename))
 
     def test_gc(self):
@@ -349,6 +346,13 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
         self.assertIn('anyref', disassembly)
         self.assertIn('eqref', disassembly)
 
+    def test_superset(self):
+        # It is ok to enable additional features past what is in the section.
+        shared.run_process(
+            shared.WASM_OPT + ['--print', '--detect-features', '-mvp',
+                               '--enable-simd', '--enable-sign-ext',
+                               self.input_path('signext_target_feature.wasm')])
+
     def test_incompatible_features(self):
         path = self.input_path('signext_target_feature.wasm')
         p = shared.run_process(
@@ -357,7 +361,7 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             check=False, capture_output=True
         )
         self.assertNotEqual(p.returncode, 0)
-        self.assertIn('Fatal: module features do not match specified features. ' +
+        self.assertIn('Fatal: features section is not a subset of specified features. ' +
                       'Use --detect-features to resolve.',
                       p.stderr)
 

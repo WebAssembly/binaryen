@@ -6,6 +6,7 @@
  (event $event$0 (attr 0) (param i32))
  (event $event$1 (attr 0) (param i64))
  (event $event$2 (attr 0) (param i32 i64))
+ (event $event$3 (attr 0) (param))
  (func $0
   (nop)
  )
@@ -194,19 +195,6 @@
     )
    )
   )
-  (try $label$37
-   (do
-    (throw $event$0
-     (i32.const 0)
-    )
-   )
-   (catch $event$0
-    (drop
-     (pop i32)
-    )
-    (rethrow 0)
-   )
-  )
  )
  (func $3
   (try $label$9
@@ -259,14 +247,130 @@
   )
   (try $label$25
    (do
-    (try $label$23
-     (do
-      (call $0)
+    (block $label$20
+     (try $label$23
+      (do
+       (call $0)
+      )
+      (delegate $label$25)
      )
-     (delegate $label$25)
     )
    )
    (delegate 0)
+  )
+  (try $label$28
+   (do
+    (nop)
+   )
+   (catch $event$3
+    (nop)
+   )
+  )
+ )
+ (func $4
+  (try $label$3
+   (do
+    (call $0)
+   )
+   (catch $event$0
+    (drop
+     (pop i32)
+    )
+    (rethrow $label$3)
+   )
+   (catch_all
+    (rethrow $label$3)
+   )
+  )
+  (block $label$4
+   (try $label$7
+    (do
+     (call $0)
+    )
+    (catch $event$0
+     (drop
+      (pop i32)
+     )
+     (rethrow $label$7)
+    )
+    (catch_all
+     (br $label$4)
+    )
+   )
+  )
+  (try $label$13
+   (do
+    (call $0)
+   )
+   (catch_all
+    (try $label$12
+     (do
+      (call $0)
+     )
+     (catch $event$0
+      (drop
+       (pop i32)
+      )
+      (rethrow $label$13)
+     )
+     (catch_all
+      (rethrow $label$13)
+     )
+    )
+   )
+  )
+  (try $label$20
+   (do
+    (call $0)
+   )
+   (catch_all
+    (try $label$19
+     (do
+      (call $0)
+     )
+     (catch $event$0
+      (drop
+       (pop i32)
+      )
+      (block $label$18
+       (rethrow $label$20)
+      )
+     )
+     (catch_all
+      (rethrow $label$20)
+     )
+    )
+   )
+  )
+  (try $label$26
+   (do
+    (call $0)
+   )
+   (catch_all
+    (try $label$25
+     (do
+      (rethrow $label$26)
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
+  )
+  (try $label$32
+   (do
+    (call $0)
+   )
+   (catch_all
+    (try $label$31
+     (do
+      (rethrow $label$32)
+     )
+     (catch_all
+      (nop)
+     )
+    )
+   )
   )
  )
 )

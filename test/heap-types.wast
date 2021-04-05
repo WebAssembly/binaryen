@@ -6,6 +6,13 @@
     (field f32)
     (field $named f64)
   ))
+  ;; identical to $struct.A, so will be canonicalized with it, but field names
+  ;; are different
+  (type $struct.A.prime (struct
+    i32
+    (field f32)
+    (field $othername f64)
+  ))
   (type $struct.B (struct
     (field i8)
     (field (mut i16))
@@ -18,7 +25,7 @@
 
   ;; Arrays
   (type $vector (array (mut f64)))
-  (type $matrix (array (ref $vector)))
+  (type $matrix (array (mut (ref null $vector))))
   (type $bytes (array (mut i8)))
   (type $words (array (mut i32)))
 
@@ -29,6 +36,9 @@
   (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
   (global $rttchild (rtt 1 $child) (rtt.sub $child (global.get $rttparent)))
   (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild (global.get $rttchild)))
+
+  (type $nested-child-struct (struct (field (mut (ref $child)))))
+  (type $nested-child-array (array (mut (ref $child))))
 
   (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
     (local $tA (ref null $struct.A))
@@ -52,10 +62,17 @@
       (struct.get $struct.A $named (local.get $x))
     )
     (drop
+      (struct.get $struct.A.prime $othername (ref.null $struct.A.prime))
+    )
+    (drop
       (struct.get_u $struct.B 0 (local.get $tB))
     )
     (drop
       (struct.get_s $struct.B 0 (local.get $tB))
+    )
+    ;; immutable fields allow subtyping.
+    (drop
+      (struct.get $child 0 (ref.null $grandchild))
     )
     (drop
       (ref.null $struct.A)
@@ -88,6 +105,13 @@
       (ref.null $struct.C)
       (f32.const 100)
     )
+    ;; values may be subtypes
+    (struct.set $nested-child-struct 0
+      (ref.null $nested-child-struct)
+      (ref.as_non_null
+       (ref.null $grandchild)
+      )
+    )
     (drop
       (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
@@ -95,10 +119,10 @@
     )
     (drop
       (struct.new_with_rtt $struct.A
-        (rtt.canon $struct.A)
         (i32.const 1)
         (f32.const 2.345)
         (f64.const 3.14159)
+        (rtt.canon $struct.A)
       )
     )
     (unreachable)
@@ -110,15 +134,15 @@
     (local $tw (ref null $words))
     (drop
       (array.new_with_rtt $vector
-        (rtt.canon $vector)
-        (i32.const 3)
         (f64.const 3.14159)
+        (i32.const 3)
+        (rtt.canon $vector)
       )
     )
     (drop
       (array.new_default_with_rtt $matrix
-        (rtt.canon $matrix)
         (i32.const 10)
+        (rtt.canon $matrix)
       )
     )
     (drop
@@ -131,6 +155,14 @@
       (local.get $x)
       (i32.const 2)
       (f64.const 2.18281828)
+    )
+    ;; values may be subtypes
+    (array.set $nested-child-array
+      (ref.null $nested-child-array)
+      (i32.const 3)
+      (ref.as_non_null
+       (ref.null $grandchild)
+      )
     )
     (drop
       (array.len $vector
@@ -163,10 +195,10 @@
   (func $rtt-operations
     (local $temp.A (ref null $struct.A))
     (drop
-      (ref.test $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+      (ref.test (ref.null $struct.A) (rtt.canon $struct.B))
     )
     (drop
-      (ref.cast $struct.B (ref.null $struct.A) (rtt.canon $struct.B))
+      (ref.cast (ref.null $struct.A) (rtt.canon $struct.B))
     )
     (drop
       (block $out (result (ref $struct.B))
@@ -195,7 +227,7 @@
   )
   (func $br_on_X (param $x anyref)
     (local $y anyref)
-    (local $z (ref any))
+    (local $z (ref null any))
     (block $null
       (local.set $z
         (br_on_null $null (local.get $x))
@@ -210,7 +242,7 @@
       )
     )
     (drop
-      (block $data (result dataref)
+      (block $data (result (ref null data))
         (local.set $y
           (br_on_data $data (local.get $x))
         )
@@ -218,7 +250,7 @@
       )
     )
     (drop
-      (block $i31 (result i31ref)
+      (block $i31 (result (ref null i31))
         (local.set $y
           (br_on_i31 $i31 (local.get $x))
         )

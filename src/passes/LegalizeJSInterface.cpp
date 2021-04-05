@@ -31,6 +31,7 @@
 //
 
 #include "asmjs/shared-constants.h"
+#include "ir/element-utils.h"
 #include "ir/import-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/utils.h"
@@ -97,64 +98,25 @@ struct LegalizeJSInterface : public Pass {
         // we need to use the legalized version in the tables, as the import
         // from JS is legal for JS. Our stub makes it look like a native wasm
         // function.
-        for (auto& table : module->tables) {
-          for (auto& segment : table->segments) {
-            for (auto& name : segment.data) {
-              if (name == im->name) {
-                name = funcName;
-              }
-            }
+        ElementUtils::iterAllElementFunctionNames(module, [&](Name& name) {
+          if (name == im->name) {
+            name = funcName;
           }
-        }
+        });
       }
     }
 
     if (!illegalImportsToLegal.empty()) {
-      // Gather functions used in 'ref.func'. They should not be removed.
-      std::unordered_map<Name, std::atomic<bool>> usedInRefFunc;
-
-      // Fill in unordered_map, as we operate on it in parallel.
-      for (auto& func : module->functions) {
-        usedInRefFunc[func->name];
-      }
-
-      struct RefFuncScanner : public WalkerPass<PostWalker<RefFuncScanner>> {
-        Module& wasm;
-        std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc;
-
-        bool isFunctionParallel() override { return true; }
-
-        Pass* create() override {
-          return new RefFuncScanner(wasm, usedInRefFunc);
-        }
-
-        RefFuncScanner(
-          Module& wasm,
-          std::unordered_map<Name, std::atomic<bool>>& usedInRefFunc)
-          : wasm(wasm), usedInRefFunc(usedInRefFunc) {}
-
-        void visitRefFunc(RefFunc* curr) { usedInRefFunc[curr->func] = true; }
-      };
-
-      RefFuncScanner(*module, usedInRefFunc).run(runner, module);
-      for (auto& pair : illegalImportsToLegal) {
-        if (!usedInRefFunc[pair.first]) {
-          module->removeFunction(pair.first);
-        }
-      }
-
       // fix up imports: call_import of an illegal must be turned to a call of a
-      // legal
-      struct FixImports : public WalkerPass<PostWalker<FixImports>> {
+      // legal. the same must be done with ref.funcs.
+      struct Fixer : public WalkerPass<PostWalker<Fixer>> {
         bool isFunctionParallel() override { return true; }
 
-        Pass* create() override {
-          return new FixImports(illegalImportsToLegal);
-        }
+        Pass* create() override { return new Fixer(illegalImportsToLegal); }
 
         std::map<Name, Name>* illegalImportsToLegal;
 
-        FixImports(std::map<Name, Name>* illegalImportsToLegal)
+        Fixer(std::map<Name, Name>* illegalImportsToLegal)
           : illegalImportsToLegal(illegalImportsToLegal) {}
 
         void visitCall(Call* curr) {
@@ -163,19 +125,25 @@ struct LegalizeJSInterface : public Pass {
             return;
           }
 
-          if (iter->second == getFunction()->name) {
-            // inside the stub function itself, is the one safe place to do the
-            // call
-            return;
-          }
           replaceCurrent(
             Builder(*getModule())
               .makeCall(
                 iter->second, curr->operands, curr->type, curr->isReturn));
         }
+
+        void visitRefFunc(RefFunc* curr) {
+          auto iter = illegalImportsToLegal->find(curr->func);
+          if (iter == illegalImportsToLegal->end()) {
+            return;
+          }
+
+          curr->func = iter->second;
+        }
       };
 
-      FixImports(&illegalImportsToLegal).run(runner, module);
+      Fixer fixer(&illegalImportsToLegal);
+      fixer.run(runner, module);
+      fixer.walkModuleCode(module);
     }
   }
 

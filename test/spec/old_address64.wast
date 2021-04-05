@@ -2,7 +2,7 @@
   (import "spectest" "print" (func $print (param i32)))
 
   (memory i64 1)
-  (data (i32.const 0) "abcdefghijklmnopqrstuvwxyz")
+  (data (i64.const 0) "abcdefghijklmnopqrstuvwxyz")
 
   (func (export "good") (param $i i64)
     (call $print (i32.load8_u offset=0 (local.get $i)))  ;; 97 'a'

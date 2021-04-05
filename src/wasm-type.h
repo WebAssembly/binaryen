@@ -143,6 +143,8 @@ public:
   bool isArray() const;
   bool isDefaultable() const;
 
+  Nullability getNullability() const;
+
 private:
   template<bool (Type::*pred)() const> bool hasPredicate() {
     for (const auto& type : *this) {
@@ -171,7 +173,7 @@ public:
   bool operator!=(const Type& other) const { return id != other.id; }
   bool operator!=(const BasicType& other) const { return id != other; }
 
-  // Order types by some notion of simplicity
+  // Order types by some notion of simplicity.
   bool operator<(const Type& other) const;
 
   // Returns the type size in bytes. Only single types are supported.
@@ -183,6 +185,10 @@ public:
 
   // Returns the feature set required to use this type.
   FeatureSet getFeatures() const;
+
+  // Returns the tuple, assuming that this is a tuple type. Note that it is
+  // normally simpler to use operator[] and size() on the Type directly.
+  const Tuple& getTuple() const;
 
   // Gets the heap type corresponding to this type, assuming that it is a
   // reference or Rtt type.
@@ -201,15 +207,33 @@ public:
   // Computes the least upper bound from the type lattice.
   // If one of the type is unreachable, the other type becomes the result. If
   // the common supertype does not exist, returns none, a poison value.
+  static bool hasLeastUpperBound(Type a, Type b);
   static Type getLeastUpperBound(Type a, Type b);
-
-  // Computes the least upper bound for all types in the given list.
-  template<typename T> static Type mergeTypes(const T& types) {
-    Type type = Type::unreachable;
-    for (auto other : types) {
-      type = Type::getLeastUpperBound(type, other);
+  template<typename T> static bool hasLeastUpperBound(const T& types) {
+    auto first = types.begin(), end = types.end();
+    if (first == end) {
+      return false;
     }
-    return type;
+    for (auto second = std::next(first); second != end;) {
+      if (!hasLeastUpperBound(*first++, *second++)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  template<typename T> static Type getLeastUpperBound(const T& types) {
+    auto it = types.begin(), end = types.end();
+    if (it == end) {
+      return Type::none;
+    }
+    Type lub = *it++;
+    for (; it != end; ++it) {
+      lub = getLeastUpperBound(lub, *it);
+      if (lub == Type::none) {
+        return Type::none;
+      }
+    }
+    return lub;
   }
 
   std::string toString() const;
@@ -277,20 +301,6 @@ public:
   const Type& operator[](size_t i) const;
 };
 
-// Wrapper type for formatting types as "(param i32 i64 f32)"
-struct ParamType {
-  Type type;
-  ParamType(Type type) : type(type) {}
-  std::string toString() const;
-};
-
-// Wrapper type for formatting types as "(result i32 i64 f32)"
-struct ResultType {
-  Type type;
-  ResultType(Type type) : type(type) {}
-  std::string toString() const;
-};
-
 class HeapType {
   // Unlike `Type`, which represents the types of values on the WebAssembly
   // stack, `HeapType` is used to describe the structures that reference types
@@ -314,6 +324,9 @@ public:
 
   // But converting raw TypeID is more dangerous, so make it explicit
   explicit HeapType(TypeID id) : id(id) {}
+
+  // Choose an arbitrary heap type as the default.
+  constexpr HeapType() : HeapType(func) {}
 
   HeapType(Signature signature);
   HeapType(const Struct& struct_);
@@ -346,8 +359,12 @@ public:
   bool operator!=(const HeapType& other) const { return id != other.id; }
   bool operator!=(const BasicHeapType& other) const { return id != other; }
 
+  // Order heap types by some notion of simplicity.
   bool operator<(const HeapType& other) const;
   std::string toString() const;
+
+  // Returns true if left is a subtype of right. Subtype includes itself.
+  static bool isSubType(HeapType left, HeapType right);
 };
 
 typedef std::vector<Type> TypeList;
@@ -362,7 +379,6 @@ struct Tuple {
   Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
   bool operator==(const Tuple& other) const { return types == other.types; }
   bool operator!=(const Tuple& other) const { return !(*this == other); }
-  bool operator<(const Tuple& other) const { return types < other.types; }
   std::string toString() const;
 
   // Prevent accidental copies
@@ -399,12 +415,13 @@ struct Field {
     i16,
   } packedType; // applicable iff type=i32
   Mutability mutable_;
-  Name name;
 
-  Field(Type type, Mutability mutable_, Name name = Name())
-    : type(type), packedType(not_packed), mutable_(mutable_), name(name) {}
-  Field(PackedType packedType, Mutability mutable_, Name name = Name())
-    : type(Type::i32), packedType(packedType), mutable_(mutable_), name(name) {}
+  // Arbitrary defaults for convenience.
+  Field() : type(Type::i32), packedType(not_packed), mutable_(Mutable) {}
+  Field(Type type, Mutability mutable_)
+    : type(type), packedType(not_packed), mutable_(mutable_) {}
+  Field(PackedType packedType, Mutability mutable_)
+    : type(Type::i32), packedType(packedType), mutable_(mutable_) {}
 
   constexpr bool isPacked() const {
     if (packedType != not_packed) {
@@ -415,14 +432,13 @@ struct Field {
   }
 
   bool operator==(const Field& other) const {
-    // Note that the name is not checked here - it is pure metadata for printing
-    // purposes only.
     return type == other.type && packedType == other.packedType &&
            mutable_ == other.mutable_;
   }
   bool operator!=(const Field& other) const { return !(*this == other); }
-  bool operator<(const Field& other) const;
   std::string toString() const;
+
+  unsigned getByteSize() const;
 };
 
 typedef std::vector<Field> FieldList;
@@ -431,12 +447,12 @@ typedef std::vector<Field> FieldList;
 // amount of data.
 struct Struct {
   FieldList fields;
+  Struct() = default;
   Struct(const Struct& other) : fields(other.fields) {}
   Struct(const FieldList& fields) : fields(fields) {}
   Struct(FieldList&& fields) : fields(std::move(fields)) {}
   bool operator==(const Struct& other) const { return fields == other.fields; }
   bool operator!=(const Struct& other) const { return !(*this == other); }
-  bool operator<(const Struct& other) const { return fields < other.fields; }
   std::string toString() const;
 
   // Prevent accidental copies
@@ -445,11 +461,11 @@ struct Struct {
 
 struct Array {
   Field element;
+  Array() = default;
   Array(const Array& other) : element(other.element) {}
   Array(Field element) : element(element) {}
   bool operator==(const Array& other) const { return element == other.element; }
   bool operator!=(const Array& other) const { return !(*this == other); }
-  bool operator<(const Array& other) const { return element < other.element; }
   std::string toString() const;
 };
 
@@ -464,8 +480,7 @@ struct Rtt {
     return depth == other.depth && heapType == other.heapType;
   }
   bool operator!=(const Rtt& other) const { return !(*this == other); }
-  bool operator<(const Rtt& other) const;
-  bool hasDepth() { return depth != uint32_t(NoDepth); }
+  bool hasDepth() const { return depth != uint32_t(NoDepth); }
   std::string toString() const;
 };
 
@@ -481,39 +496,79 @@ struct TypeBuilder {
   std::unique_ptr<Impl> impl;
 
   TypeBuilder(size_t n);
+  TypeBuilder() : TypeBuilder(0) {}
   ~TypeBuilder();
 
   TypeBuilder(TypeBuilder& other) = delete;
   TypeBuilder(TypeBuilder&& other) = delete;
   TypeBuilder& operator=(TypeBuilder&) = delete;
 
+  // Append `n` new uninitialized HeapType slots to the end of the TypeBuilder.
+  void grow(size_t n);
+
+  // The number of HeapType slots in the TypeBuilder.
+  size_t size();
+
   // Sets the heap type at index `i`. May only be called before `build`.
+  void setHeapType(size_t i, HeapType::BasicHeapType basic);
   void setHeapType(size_t i, Signature signature);
   void setHeapType(size_t i, const Struct& struct_);
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
 
+  // Gets the temporary HeapType at index `i`. This HeapType should only be used
+  // to construct temporary Types using the methods below.
+  HeapType getTempHeapType(size_t i);
+
   // Gets a temporary type or heap type for use in initializing the
-  // TypeBuilder's HeapTypes. Temporary Ref and Rtt types are backed by the
-  // HeapType at index `i`.
+  // TypeBuilder's HeapTypes. For Ref and Rtt types, the HeapType may be a
+  // temporary HeapType owned by this builder or a canonical HeapType.
   Type getTempTupleType(const Tuple&);
-  Type getTempRefType(size_t i, Nullability nullable);
-  Type getTempRttType(size_t i, uint32_t depth);
+  Type getTempRefType(HeapType heapType, Nullability nullable);
+  Type getTempRttType(Rtt rtt);
 
   // Canonicalizes and returns all of the heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`.
   std::vector<HeapType> build();
+
+  // Utility for ergonomically using operator[] instead of explicit setHeapType
+  // and getTempHeapType methods.
+  struct Entry {
+    TypeBuilder& builder;
+    size_t index;
+    operator HeapType() const { return builder.getTempHeapType(index); }
+    Entry& operator=(HeapType::BasicHeapType basic) {
+      builder.setHeapType(index, basic);
+      return *this;
+    }
+    Entry& operator=(Signature signature) {
+      builder.setHeapType(index, signature);
+      return *this;
+    }
+    Entry& operator=(const Struct& struct_) {
+      builder.setHeapType(index, struct_);
+      return *this;
+    }
+    Entry& operator=(Struct&& struct_) {
+      builder.setHeapType(index, std::move(struct_));
+      return *this;
+    }
+    Entry& operator=(Array array) {
+      builder.setHeapType(index, array);
+      return *this;
+    }
+  };
+
+  Entry operator[](size_t i) { return Entry{*this, i}; }
 };
 
 std::ostream& operator<<(std::ostream&, Type);
-std::ostream& operator<<(std::ostream&, ParamType);
-std::ostream& operator<<(std::ostream&, ResultType);
+std::ostream& operator<<(std::ostream&, HeapType);
 std::ostream& operator<<(std::ostream&, Tuple);
 std::ostream& operator<<(std::ostream&, Signature);
 std::ostream& operator<<(std::ostream&, Field);
 std::ostream& operator<<(std::ostream&, Struct);
 std::ostream& operator<<(std::ostream&, Array);
-std::ostream& operator<<(std::ostream&, HeapType);
 std::ostream& operator<<(std::ostream&, Rtt);
 
 } // namespace wasm

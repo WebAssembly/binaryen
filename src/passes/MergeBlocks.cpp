@@ -84,7 +84,9 @@ namespace wasm {
 // Looks for reasons we can't remove the values from breaks to an origin
 // For example, if there is a switch targeting us, we can't do it - we can't
 // remove the value from other targets
-struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
+struct ProblemFinder
+  : public ControlFlowWalker<ProblemFinder,
+                             UnifiedExpressionVisitor<ProblemFinder>> {
   Name origin;
   bool foundProblem = false;
   // count br_ifs, and dropped br_ifs. if they don't match, then a br_if flow
@@ -95,38 +97,36 @@ struct ProblemFinder : public ControlFlowWalker<ProblemFinder> {
 
   ProblemFinder(PassOptions& passOptions) : passOptions(passOptions) {}
 
-  void visitBreak(Break* curr) {
-    if (curr->name == origin) {
-      if (curr->condition) {
-        brIfs++;
+  void visitExpression(Expression* curr) {
+    if (auto* drop = curr->dynCast<Drop>()) {
+      if (auto* br = drop->value->dynCast<Break>()) {
+        if (br->name == origin && br->condition) {
+          droppedBrIfs++;
+        }
       }
-      // if the value has side effects, we can't remove it
-      if (EffectAnalyzer(passOptions, getModule()->features, curr->value)
-            .hasSideEffects()) {
-        foundProblem = true;
-      }
-    }
-  }
-
-  void visitDrop(Drop* curr) {
-    if (auto* br = curr->value->dynCast<Break>()) {
-      if (br->name == origin && br->condition) {
-        droppedBrIfs++;
-      }
-    }
-  }
-
-  void visitSwitch(Switch* curr) {
-    if (curr->default_ == origin) {
-      foundProblem = true;
       return;
     }
-    for (auto& target : curr->targets) {
-      if (target == origin) {
-        foundProblem = true;
-        return;
+
+    if (auto* br = curr->dynCast<Break>()) {
+      if (br->name == origin) {
+        if (br->condition) {
+          brIfs++;
+        }
+        // if the value has side effects, we can't remove it
+        if (EffectAnalyzer(passOptions, getModule()->features, br->value)
+              .hasSideEffects()) {
+          foundProblem = true;
+        }
       }
+      return;
     }
+
+    // Any other branch type - switch, br_on, etc. - is not handled yet.
+    BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+      if (name == origin) {
+        foundProblem = true;
+      }
+    });
   }
 
   bool found() {

@@ -70,6 +70,9 @@ Name EXPORT("export");
 Name IMPORT("import");
 Name TABLE("table");
 Name ELEM("elem");
+Name DECLARE("declare");
+Name OFFSET("offset");
+Name ITEM("item");
 Name LOCAL("local");
 Name TYPE("type");
 Name REF("ref");
@@ -191,13 +194,12 @@ void Block::finalize() {
   Expression* temp = this;
   seeker.walk(temp);
   if (seeker.found) {
-    // Take the branch values into account.
-    if (seeker.valueType != Type::none) {
-      type = Type::getLeastUpperBound(type, seeker.valueType);
-    } else {
-      // No value is sent, but as we have a branch we are not unreachable.
-      type = Type::none;
-    }
+    // Calculate the supertype of the branch types and the flowed-out type. If
+    // there is no supertype among the available types, assume the current type
+    // is already correct. TODO: calculate proper LUBs to compute a new correct
+    // type in this situation.
+    seeker.types.insert(type);
+    type = Type::getLeastUpperBound(seeker.types);
   } else {
     // There are no branches, so this block may be unreachable.
     handleUnreachable(this, NoBreak);
@@ -235,7 +237,7 @@ void If::finalize() {
   // (if (result i32)
   //  (unreachable)
   //  (i32.const 10)
-  //  (i32.const 20
+  //  (i32.const 20)
   // )
   // otherwise, if the condition is unreachable, so is the if
   if (type == Type::none && condition->type == Type::unreachable) {
@@ -497,11 +499,6 @@ void SIMDLoadStoreLane::finalize() {
   }
 }
 
-void SIMDWiden::finalize() {
-  assert(vec);
-  type = vec->type == Type::unreachable ? Type::unreachable : Type::v128;
-}
-
 Index SIMDLoadStoreLane::getMemBytes() {
   switch (op) {
     case LoadLaneVec8x16:
@@ -534,10 +531,6 @@ bool SIMDLoadStoreLane::isStore() {
       return false;
   }
   WASM_UNREACHABLE("unexpected op");
-}
-
-void Prefetch::finalize() {
-  type = ptr->type == Type::unreachable ? Type::unreachable : Type::none;
 }
 
 Const* Const::set(Literal value_) {
@@ -648,6 +641,7 @@ void Unary::finalize() {
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:
+    case AbsVecI64x2:
     case PopcntVecI8x16:
     case NegVecI8x16:
     case NegVecI16x8:
@@ -673,24 +667,20 @@ void Unary::finalize() {
     case ExtAddPairwiseUVecI16x8ToI32x4:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
-    case TruncSatSVecF64x2ToVecI64x2:
-    case TruncSatUVecF64x2ToVecI64x2:
     case ConvertSVecI32x4ToVecF32x4:
     case ConvertUVecI32x4ToVecF32x4:
-    case ConvertSVecI64x2ToVecF64x2:
-    case ConvertUVecI64x2ToVecF64x2:
-    case WidenLowSVecI8x16ToVecI16x8:
-    case WidenHighSVecI8x16ToVecI16x8:
-    case WidenLowUVecI8x16ToVecI16x8:
-    case WidenHighUVecI8x16ToVecI16x8:
-    case WidenLowSVecI16x8ToVecI32x4:
-    case WidenHighSVecI16x8ToVecI32x4:
-    case WidenLowUVecI16x8ToVecI32x4:
-    case WidenHighUVecI16x8ToVecI32x4:
-    case WidenLowSVecI32x4ToVecI64x2:
-    case WidenHighSVecI32x4ToVecI64x2:
-    case WidenLowUVecI32x4ToVecI64x2:
-    case WidenHighUVecI32x4ToVecI64x2:
+    case ExtendLowSVecI8x16ToVecI16x8:
+    case ExtendHighSVecI8x16ToVecI16x8:
+    case ExtendLowUVecI8x16ToVecI16x8:
+    case ExtendHighUVecI8x16ToVecI16x8:
+    case ExtendLowSVecI16x8ToVecI32x4:
+    case ExtendHighSVecI16x8ToVecI32x4:
+    case ExtendLowUVecI16x8ToVecI32x4:
+    case ExtendHighUVecI16x8ToVecI32x4:
+    case ExtendLowSVecI32x4ToVecI64x2:
+    case ExtendHighSVecI32x4ToVecI64x2:
+    case ExtendLowUVecI32x4ToVecI64x2:
+    case ExtendHighUVecI32x4ToVecI64x2:
     case ConvertLowSVecI32x4ToVecF64x2:
     case ConvertLowUVecI32x4ToVecF64x2:
     case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -699,12 +689,11 @@ void Unary::finalize() {
     case PromoteLowVecF32x4ToVecF64x2:
       type = Type::v128;
       break;
-    case AnyTrueVecI8x16:
-    case AnyTrueVecI16x8:
-    case AnyTrueVecI32x4:
+    case AnyTrueVec128:
     case AllTrueVecI8x16:
     case AllTrueVecI16x8:
     case AllTrueVecI32x4:
+    case AllTrueVecI64x2:
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
@@ -802,12 +791,9 @@ void MemoryGrow::finalize() {
 
 void RefNull::finalize(HeapType heapType) { type = Type(heapType, Nullable); }
 
-void RefNull::finalize(Type type_) {
-  type = type_;
-}
+void RefNull::finalize(Type type_) { type = type_; }
 
-void RefNull::finalize() {
-}
+void RefNull::finalize() {}
 
 void RefIs::finalize() {
   if (value->type == Type::unreachable) {
@@ -833,10 +819,13 @@ void RefEq::finalize() {
 }
 
 void Try::finalize() {
-  type = body->type;
+  // If none of the component bodies' type is a supertype of the others, assume
+  // the current type is already correct. TODO: Calculate a proper LUB.
+  std::unordered_set<Type> types{body->type};
   for (auto catchBody : catchBodies) {
-    type = Type::getLeastUpperBound(type, catchBody->type);
+    types.insert(catchBody->type);
   }
+  type = Type::getLeastUpperBound(types);
 }
 
 void Try::finalize(Type type_) {
@@ -870,6 +859,7 @@ void TupleExtract::finalize() {
   if (tuple->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    assert(index < tuple->type.size());
     type = tuple->type[index];
   }
 }
@@ -913,29 +903,15 @@ void RefTest::finalize() {
   }
 }
 
-// Helper to get the cast type for a cast instruction. They all look at the rtt
-// operand's type.
-template<typename T> static Type doGetCastType(T* curr) {
-  if (curr->rtt->type == Type::unreachable) {
-    // We don't have the RTT type, so just return unreachable. The type in this
-    // case should not matter in practice, but it may be seen while debugging.
-    return Type::unreachable;
-  }
-  // TODO: make non-nullable when we support that
-  return Type(curr->rtt->type.getHeapType(), Nullable);
-}
-
-Type RefTest::getCastType() { return doGetCastType(this); }
-
 void RefCast::finalize() {
   if (ref->type == Type::unreachable || rtt->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = getCastType();
+    // The output of ref.cast may be null if the input is null (in that case the
+    // null is passed through).
+    type = Type(rtt->type.getHeapType(), ref->type.getNullability());
   }
 }
-
-Type RefCast::getCastType() { return doGetCastType(this); }
 
 void BrOn::finalize() {
   if (ref->type == Type::unreachable ||
@@ -945,8 +921,7 @@ void BrOn::finalize() {
     if (op == BrOnNull) {
       // If BrOnNull does not branch, it flows out the existing value as
       // non-null.
-      // FIXME: When we support non-nullable types, this should be non-nullable.
-      type = Type(ref->type.getHeapType(), Nullable);
+      type = Type(ref->type.getHeapType(), NonNullable);
     } else {
       type = ref->type;
     }
@@ -959,8 +934,7 @@ Type BrOn::getCastType() {
       // BrOnNull does not send a value on the branch.
       return Type::none;
     case BrOnCast:
-      // FIXME: When we support non-nullable types, this should be non-nullable.
-      return Type(rtt->type.getHeapType(), Nullable);
+      return Type(rtt->type.getHeapType(), NonNullable);
     case BrOnFunc:
       return Type::funcref;
     case BrOnData:
@@ -992,8 +966,7 @@ void StructNew::finalize() {
   if (handleUnreachableOperands(this)) {
     return;
   }
-  // TODO: make non-nullable when we support that
-  type = Type(rtt->type.getHeapType(), Nullable);
+  type = Type(rtt->type.getHeapType(), NonNullable);
 }
 
 void StructGet::finalize() {
@@ -1018,8 +991,7 @@ void ArrayNew::finalize() {
     type = Type::unreachable;
     return;
   }
-  // TODO: make non-nullable when we support that
-  type = Type(rtt->type.getHeapType(), Nullable);
+  type = Type(rtt->type.getHeapType(), NonNullable);
 }
 
 void ArrayGet::finalize() {
@@ -1054,8 +1026,7 @@ void RefAs::finalize() {
   }
   switch (op) {
     case RefAsNonNull:
-      // FIXME: when we support non-nullable types, switch to NonNullable
-      type = Type(value->type.getHeapType(), Nullable);
+      type = Type(value->type.getHeapType(), NonNullable);
       break;
     case RefAsFunc:
       type = Type::funcref;
@@ -1169,6 +1140,10 @@ Table* Module::getTable(Name name) {
   return getModuleElement(tablesMap, name, "getTable");
 }
 
+ElementSegment* Module::getElementSegment(Name name) {
+  return getModuleElement(elementSegmentsMap, name, "getElementSegment");
+}
+
 Global* Module::getGlobal(Name name) {
   return getModuleElement(globalsMap, name, "getGlobal");
 }
@@ -1196,6 +1171,10 @@ Function* Module::getFunctionOrNull(Name name) {
 
 Table* Module::getTableOrNull(Name name) {
   return getModuleElementOrNull(tablesMap, name);
+}
+
+ElementSegment* Module::getElementSegmentOrNull(Name name) {
+  return getModuleElementOrNull(elementSegmentsMap, name);
 }
 
 Global* Module::getGlobalOrNull(Name name) {
@@ -1267,6 +1246,12 @@ Table* Module::addTable(std::unique_ptr<Table>&& curr) {
   return addModuleElement(tables, tablesMap, std::move(curr), "addTable");
 }
 
+ElementSegment*
+Module::addElementSegment(std::unique_ptr<ElementSegment>&& curr) {
+  return addModuleElement(
+    elementSegments, elementSegmentsMap, std::move(curr), "addElementSegment");
+}
+
 Global* Module::addGlobal(std::unique_ptr<Global>&& curr) {
   return addModuleElement(globals, globalsMap, std::move(curr), "addGlobal");
 }
@@ -1296,6 +1281,9 @@ void Module::removeFunction(Name name) {
 }
 void Module::removeTable(Name name) {
   removeModuleElement(tables, tablesMap, name);
+}
+void Module::removeElementSegment(Name name) {
+  removeModuleElement(elementSegments, elementSegmentsMap, name);
 }
 void Module::removeGlobal(Name name) {
   removeModuleElement(globals, globalsMap, name);
@@ -1329,6 +1317,9 @@ void Module::removeFunctions(std::function<bool(Function*)> pred) {
 void Module::removeTables(std::function<bool(Table*)> pred) {
   removeModuleElements(tables, tablesMap, pred);
 }
+void Module::removeElementSegments(std::function<bool(ElementSegment*)> pred) {
+  removeModuleElements(elementSegments, elementSegmentsMap, pred);
+}
 void Module::removeGlobals(std::function<bool(Global*)> pred) {
   removeModuleElements(globals, globalsMap, pred);
 }
@@ -1348,6 +1339,10 @@ void Module::updateMaps() {
   tablesMap.clear();
   for (auto& curr : tables) {
     tablesMap[curr->name] = curr.get();
+  }
+  elementSegmentsMap.clear();
+  for (auto& curr : elementSegments) {
+    elementSegmentsMap[curr->name] = curr.get();
   }
   globalsMap.clear();
   for (auto& curr : globals) {

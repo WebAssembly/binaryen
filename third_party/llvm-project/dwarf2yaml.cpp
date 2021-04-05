@@ -116,7 +116,10 @@ void dumpDebugRanges(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
 }
 
 void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
-  uint8_t savedAddressByteSize = 4;
+  // This blindly grabs the first CU, which should be ok since they all have
+  // the same address size?
+  auto CU = DCtx.normal_units().begin()->get();
+  uint8_t savedAddressByteSize = CU->getFormParams().AddrSize;  // XXX BINARYEN
   DWARFDataExtractor locsData(DCtx.getDWARFObj(), DCtx.getDWARFObj().getLocSection(),
                               DCtx.isLittleEndian(), savedAddressByteSize);
   uint64_t offset = 0;
@@ -126,7 +129,7 @@ void dumpDebugLoc(DWARFContext &DCtx, DWARFYAML::Data &Y) { // XXX BINARYEN
     auto list = locList.parseOneLocationList(locsData, &offset);
     if (!list) {
       errs() << "debug_loc error\n";
-      break;
+      exit(1);
     }
     for (auto& entry : list.get().Entries) {
       DWARFYAML::Loc loc;
@@ -322,6 +325,8 @@ void dumpDebugLines(DWARFContext &DCtx, DWARFYAML::Data &Y) {
       DataExtractor LineData(DCtx.getDWARFObj().getLineSection().Data,
                              DCtx.isLittleEndian(), CU->getAddressByteSize());
       uint64_t Offset = *StmtOffset;
+      DebugLines.Position = Offset;
+
       dumpInitialLength(LineData, Offset, DebugLines.Length);
       uint64_t LineTableLength = DebugLines.Length.getLength();
       uint64_t SizeOfPrologueLength = DebugLines.Length.isDWARF64() ? 8 : 4;
@@ -426,9 +431,10 @@ std::error_code dwarf2yaml(DWARFContext &DCtx, DWARFYAML::Data &Y) {
   dumpDebugStrings(DCtx, Y);
   dumpDebugARanges(DCtx, Y);
   dumpDebugRanges(DCtx, Y); // XXX BINARYEN
-  dumpDebugLoc(DCtx, Y); // XXX BINARYEN
   dumpDebugPubSections(DCtx, Y);
   dumpDebugInfo(DCtx, Y);
+  // dumpDebugLoc relies on the address size being known from dumpDebugInfo.
+  dumpDebugLoc(DCtx, Y); // XXX BINARYEN
   dumpDebugLines(DCtx, Y);
   return obj2yaml_error::success;
 }

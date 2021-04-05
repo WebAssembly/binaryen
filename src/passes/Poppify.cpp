@@ -244,6 +244,7 @@ void Poppifier::emit(Expression* curr) {
 
 void Poppifier::emitIfElse(If* curr) {
   auto& scope = scopeStack.back();
+  WASM_UNUSED(scope);
   assert(scope.kind == Scope::If);
   patchScope(curr->ifTrue);
   scopeStack.emplace_back(Scope::Else);
@@ -251,6 +252,7 @@ void Poppifier::emitIfElse(If* curr) {
 
 void Poppifier::emitCatch(Try* curr, Index i) {
   auto& scope = scopeStack.back();
+  WASM_UNUSED(scope);
   if (i == 0) {
     assert(scope.kind == Scope::Try);
     patchScope(curr->body);
@@ -263,6 +265,7 @@ void Poppifier::emitCatch(Try* curr, Index i) {
 
 void Poppifier::emitCatchAll(Try* curr) {
   auto& scope = scopeStack.back();
+  WASM_UNUSED(scope);
   if (curr->catchBodies.size() == 1) {
     assert(scope.kind == Scope::Try);
     patchScope(curr->body);
@@ -275,6 +278,7 @@ void Poppifier::emitCatchAll(Try* curr) {
 
 void Poppifier::emitDelegate(Try* curr) {
   auto& scope = scopeStack.back();
+  WASM_UNUSED(scope);
   assert(scope.kind == Scope::Try);
   patchScope(curr->body);
   scopeStack.back().instrs.push_back(curr);
@@ -307,6 +311,7 @@ void Poppifier::emitScopeEnd(Expression* curr) {
 
 void Poppifier::emitFunctionEnd() {
   auto& scope = scopeStack.back();
+  WASM_UNUSED(scope);
   assert(scope.kind == Scope::Func);
   patchScope(func->body);
 }

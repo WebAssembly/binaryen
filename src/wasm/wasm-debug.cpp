@@ -629,6 +629,11 @@ struct LocationUpdater {
 
   // Given an offset in .debug_loc, get the old and new compile unit bases.
   OldToNew getCompileUnitBasesForLoc(size_t offset) const {
+    if (locToUnitMap.count(offset) == 0) {
+      // There is no compile unit for this loc. It doesn't matter what we set
+      // here.
+      return OldToNew{0, 0};
+    }
     auto index = locToUnitMap.at(offset);
     auto iter = compileUnitBases.find(index);
     if (iter != compileUnitBases.end()) {
@@ -754,11 +759,12 @@ static void updateDebugLines(llvm::DWARFYAML::Data& data,
   // debug_line section.
   std::vector<size_t> computedLengths;
   llvm::DWARFYAML::ComputeDebugLine(data, computedLengths);
-  BinaryLocation oldLocation = 0, newLocation = 0;
+  BinaryLocation newLocation = 0;
   for (size_t i = 0; i < data.DebugLines.size(); i++) {
     auto& table = data.DebugLines[i];
+    auto oldLocation = table.Position;
     locationUpdater.debugLineMap[oldLocation] = newLocation;
-    oldLocation += table.Length.getLength() + AddressSize;
+    table.Position = newLocation;
     newLocation += computedLengths[i] + AddressSize;
     table.Length.setLength(computedLengths[i]);
   }

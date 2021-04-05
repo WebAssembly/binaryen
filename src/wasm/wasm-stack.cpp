@@ -546,30 +546,6 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
     case Bitselect:
       o << U32LEB(BinaryConsts::V128Bitselect);
       break;
-    case QFMAF32x4:
-      o << U32LEB(BinaryConsts::F32x4QFMA);
-      break;
-    case QFMSF32x4:
-      o << U32LEB(BinaryConsts::F32x4QFMS);
-      break;
-    case QFMAF64x2:
-      o << U32LEB(BinaryConsts::F64x2QFMA);
-      break;
-    case QFMSF64x2:
-      o << U32LEB(BinaryConsts::F64x2QFMS);
-      break;
-    case SignSelectVec8x16:
-      o << U32LEB(BinaryConsts::V8x16SignSelect);
-      break;
-    case SignSelectVec16x8:
-      o << U32LEB(BinaryConsts::V16x8SignSelect);
-      break;
-    case SignSelectVec32x4:
-      o << U32LEB(BinaryConsts::V32x4SignSelect);
-      break;
-    case SignSelectVec64x2:
-      o << U32LEB(BinaryConsts::V64x2SignSelect);
-      break;
   }
 }
 
@@ -690,33 +666,6 @@ void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   assert(curr->align);
   emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
   o << curr->index;
-}
-
-void BinaryInstWriter::visitSIMDWiden(SIMDWiden* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix);
-  switch (curr->op) {
-    case WidenSVecI8x16ToVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4WidenSI8x16);
-      break;
-    case WidenUVecI8x16ToVecI32x4:
-      o << U32LEB(BinaryConsts::I32x4WidenUI8x16);
-      break;
-  }
-  o << uint8_t(curr->index);
-}
-
-void BinaryInstWriter::visitPrefetch(Prefetch* curr) {
-  o << int8_t(BinaryConsts::SIMDPrefix);
-  switch (curr->op) {
-    case PrefetchTemporal:
-      o << U32LEB(BinaryConsts::PrefetchT);
-      break;
-    case PrefetchNontemporal:
-      o << U32LEB(BinaryConsts::PrefetchNT);
-      break;
-  }
-  assert(curr->align);
-  emitMemoryAccess(curr->align, /*(unused) bytes=*/0, curr->offset);
 }
 
 void BinaryInstWriter::visitMemoryInit(MemoryInit* curr) {
@@ -992,15 +941,15 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case NotVec128:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::V128Not);
       break;
+    case AnyTrueVec128:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::V128AnyTrue);
+      break;
     case AbsVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Abs);
       break;
     case NegVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Neg);
-      break;
-    case AnyTrueVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I8x16AnyTrue);
       break;
     case AllTrueVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix)
@@ -1020,10 +969,6 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case NegVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I16x8Neg);
       break;
-    case AnyTrueVecI16x8:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8AnyTrue);
-      break;
     case AllTrueVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I16x8AllTrue);
@@ -1038,10 +983,6 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case NegVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I32x4Neg);
       break;
-    case AnyTrueVecI32x4:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4AnyTrue);
-      break;
     case AllTrueVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I32x4AllTrue);
@@ -1050,8 +991,15 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I32x4Bitmask);
       break;
+    case AbsVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Abs);
+      break;
     case NegVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Neg);
+      break;
+    case AllTrueVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I64x2AllTrue);
       break;
     case BitmaskVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
@@ -1125,14 +1073,6 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I32x4TruncSatUF32x4);
       break;
-    case TruncSatSVecF64x2ToVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2TruncSatSF64x2);
-      break;
-    case TruncSatUVecF64x2ToVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2TruncSatUF64x2);
-      break;
     case ConvertSVecI32x4ToVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F32x4ConvertSI32x4);
@@ -1141,61 +1081,53 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::F32x4ConvertUI32x4);
       break;
-    case ConvertSVecI64x2ToVecF64x2:
+    case ExtendLowSVecI8x16ToVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F64x2ConvertSI64x2);
+        << U32LEB(BinaryConsts::I16x8ExtendLowSI8x16);
       break;
-    case ConvertUVecI64x2ToVecF64x2:
+    case ExtendHighSVecI8x16ToVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::F64x2ConvertUI64x2);
+        << U32LEB(BinaryConsts::I16x8ExtendHighSI8x16);
       break;
-    case WidenLowSVecI8x16ToVecI16x8:
+    case ExtendLowUVecI8x16ToVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8WidenLowSI8x16);
+        << U32LEB(BinaryConsts::I16x8ExtendLowUI8x16);
       break;
-    case WidenHighSVecI8x16ToVecI16x8:
+    case ExtendHighUVecI8x16ToVecI16x8:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8WidenHighSI8x16);
+        << U32LEB(BinaryConsts::I16x8ExtendHighUI8x16);
       break;
-    case WidenLowUVecI8x16ToVecI16x8:
+    case ExtendLowSVecI16x8ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8WidenLowUI8x16);
+        << U32LEB(BinaryConsts::I32x4ExtendLowSI16x8);
       break;
-    case WidenHighUVecI8x16ToVecI16x8:
+    case ExtendHighSVecI16x8ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I16x8WidenHighUI8x16);
+        << U32LEB(BinaryConsts::I32x4ExtendHighSI16x8);
       break;
-    case WidenLowSVecI16x8ToVecI32x4:
+    case ExtendLowUVecI16x8ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4WidenLowSI16x8);
+        << U32LEB(BinaryConsts::I32x4ExtendLowUI16x8);
       break;
-    case WidenHighSVecI16x8ToVecI32x4:
+    case ExtendHighUVecI16x8ToVecI32x4:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4WidenHighSI16x8);
+        << U32LEB(BinaryConsts::I32x4ExtendHighUI16x8);
       break;
-    case WidenLowUVecI16x8ToVecI32x4:
+    case ExtendLowSVecI32x4ToVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4WidenLowUI16x8);
+        << U32LEB(BinaryConsts::I64x2ExtendLowSI32x4);
       break;
-    case WidenHighUVecI16x8ToVecI32x4:
+    case ExtendHighSVecI32x4ToVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I32x4WidenHighUI16x8);
+        << U32LEB(BinaryConsts::I64x2ExtendHighSI32x4);
       break;
-    case WidenLowSVecI32x4ToVecI64x2:
+    case ExtendLowUVecI32x4ToVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2WidenLowSI32x4);
+        << U32LEB(BinaryConsts::I64x2ExtendLowUI32x4);
       break;
-    case WidenHighSVecI32x4ToVecI64x2:
+    case ExtendHighUVecI32x4ToVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2WidenHighSI32x4);
-      break;
-    case WidenLowUVecI32x4ToVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2WidenLowUI32x4);
-      break;
-    case WidenHighUVecI32x4ToVecI64x2:
-      o << int8_t(BinaryConsts::SIMDPrefix)
-        << U32LEB(BinaryConsts::I64x2WidenHighUI32x4);
+        << U32LEB(BinaryConsts::I64x2ExtendHighUI32x4);
       break;
     case ConvertLowSVecI32x4ToVecF64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
@@ -1553,6 +1485,21 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case EqVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Eq);
       break;
+    case NeVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Ne);
+      break;
+    case LtSVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2LtS);
+      break;
+    case GtSVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2GtS);
+      break;
+    case LeSVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2LeS);
+      break;
+    case GeSVecI64x2:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2GeS);
+      break;
     case EqVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Eq);
       break;
@@ -1622,9 +1569,6 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
     case SubSatUVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I8x16SubSatU);
-      break;
-    case MulVecI8x16:
-      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16Mul);
       break;
     case MinSVecI8x16:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I8x16MinS);
@@ -1925,6 +1869,9 @@ void BinaryInstWriter::emitCatchAll(Try* curr) {
 }
 
 void BinaryInstWriter::emitDelegate(Try* curr) {
+  // The delegate ends the scope in effect, and pops the try's name. Note that
+  // the getBreakIndex is intentionally after that pop, as the delegate cannot
+  // target its own try.
   assert(!breakStack.empty());
   breakStack.pop_back();
   o << int8_t(BinaryConsts::Delegate)
@@ -1936,7 +1883,7 @@ void BinaryInstWriter::visitThrow(Throw* curr) {
 }
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
-  o << int8_t(BinaryConsts::Rethrow) << U32LEB(curr->depth);
+  o << int8_t(BinaryConsts::Rethrow) << U32LEB(getBreakIndex(curr->target));
 }
 
 void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }
@@ -2027,12 +1974,12 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
 
 void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttCanon);
-  parent.writeHeapType(curr->type.getRtt().heapType);
+  parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
-  parent.writeHeapType(curr->type.getRtt().heapType);
+  parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 
 void BinaryInstWriter::visitStructNew(StructNew* curr) {
@@ -2042,7 +1989,7 @@ void BinaryInstWriter::visitStructNew(StructNew* curr) {
   } else {
     o << U32LEB(BinaryConsts::StructNewWithRtt);
   }
-  parent.writeHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitStructGet(StructGet* curr) {
@@ -2057,13 +2004,13 @@ void BinaryInstWriter::visitStructGet(StructGet* curr) {
     op = BinaryConsts::StructGetU;
   }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
-  parent.writeHeapType(heapType);
+  parent.writeIndexedHeapType(heapType);
   o << U32LEB(curr->index);
 }
 
 void BinaryInstWriter::visitStructSet(StructSet* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StructSet);
-  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
   o << U32LEB(curr->index);
 }
 
@@ -2074,7 +2021,7 @@ void BinaryInstWriter::visitArrayNew(ArrayNew* curr) {
   } else {
     o << U32LEB(BinaryConsts::ArrayNewWithRtt);
   }
-  parent.writeHeapType(curr->rtt->type.getHeapType());
+  parent.writeIndexedHeapType(curr->rtt->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
@@ -2089,17 +2036,17 @@ void BinaryInstWriter::visitArrayGet(ArrayGet* curr) {
     op = BinaryConsts::ArrayGetU;
   }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(op);
-  parent.writeHeapType(heapType);
+  parent.writeIndexedHeapType(heapType);
 }
 
 void BinaryInstWriter::visitArraySet(ArraySet* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArraySet);
-  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
-  parent.writeHeapType(curr->ref->type.getHeapType());
+  parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
@@ -2163,32 +2110,39 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   }
   for (auto type : func->vars) {
     for (const auto& t : type) {
-      numLocalsByType[t]++;
+      noteLocalType(t);
     }
   }
   countScratchLocals();
-  std::map<Type, size_t> currLocalsByType;
+  std::unordered_map<Type, size_t> currLocalsByType;
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     Index j = 0;
     for (const auto& type : func->getLocalType(i)) {
       auto fullIndex = std::make_pair(i, j++);
       Index index = func->getVarIndexBase();
-      for (auto& typeCount : numLocalsByType) {
-        if (type == typeCount.first) {
-          mappedLocals[fullIndex] = index + currLocalsByType[typeCount.first];
+      for (auto& localType : localTypes) {
+        if (type == localType) {
+          mappedLocals[fullIndex] = index + currLocalsByType[localType];
           currLocalsByType[type]++;
           break;
         }
-        index += typeCount.second;
+        index += numLocalsByType.at(localType);
       }
     }
   }
   setScratchLocals();
   o << U32LEB(numLocalsByType.size());
-  for (auto& typeCount : numLocalsByType) {
-    o << U32LEB(typeCount.second);
-    parent.writeType(typeCount.first);
+  for (auto& localType : localTypes) {
+    o << U32LEB(numLocalsByType.at(localType));
+    parent.writeType(localType);
   }
+}
+
+void BinaryInstWriter::noteLocalType(Type type) {
+  if (!numLocalsByType.count(type)) {
+    localTypes.push_back(type);
+  }
+  numLocalsByType[type]++;
 }
 
 void BinaryInstWriter::countScratchLocals() {
@@ -2201,16 +2155,16 @@ void BinaryInstWriter::countScratchLocals() {
     }
   }
   for (auto t : scratchLocals) {
-    numLocalsByType[t.first]++;
+    noteLocalType(t.first);
   }
 }
 
 void BinaryInstWriter::setScratchLocals() {
   Index index = func->getVarIndexBase();
-  for (auto& typeCount : numLocalsByType) {
-    index += typeCount.second;
-    if (scratchLocals.find(typeCount.first) != scratchLocals.end()) {
-      scratchLocals[typeCount.first] = index - 1;
+  for (auto& localType : localTypes) {
+    index += numLocalsByType[localType];
+    if (scratchLocals.find(localType) != scratchLocals.end()) {
+      scratchLocals[localType] = index - 1;
     }
   }
 }
@@ -2302,7 +2256,7 @@ void StackIRToBinaryWriter::write() {
     switch (inst->op) {
       case StackInst::TryBegin:
         catchIndexStack.push_back(0);
-        // fallthrough
+        [[fallthrough]];
       case StackInst::Basic:
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
@@ -2312,7 +2266,7 @@ void StackIRToBinaryWriter::write() {
       }
       case StackInst::TryEnd:
         catchIndexStack.pop_back();
-        // fallthrough
+        [[fallthrough]];
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
       case StackInst::LoopEnd: {
@@ -2333,6 +2287,8 @@ void StackIRToBinaryWriter::write() {
       }
       case StackInst::Delegate: {
         writer.emitDelegate(inst->origin->cast<Try>());
+        // Delegates end the try, like a TryEnd.
+        catchIndexStack.pop_back();
         break;
       }
       default:

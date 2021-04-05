@@ -192,6 +192,7 @@ public:
                    Index maxLoopIterations = NO_LIMIT)
     : module(module), maxDepth(maxDepth), maxLoopIterations(maxLoopIterations) {
   }
+  virtual ~ExpressionRunner() = default;
 
   Flow visit(Expression* curr) {
     depth++;
@@ -206,7 +207,7 @@ public:
         if (!Type::isSubType(type, curr->type)) {
           std::cerr << "expected " << curr->type << ", seeing " << type
                     << " from\n"
-                    << curr << '\n';
+                    << *curr << '\n';
         }
 #endif
         assert(Type::isSubType(type, curr->type));
@@ -464,12 +465,12 @@ public:
         return value.splatF64x2();
       case NotVec128:
         return value.notV128();
+      case AnyTrueVec128:
+        return value.anyTrueV128();
       case AbsVecI8x16:
         return value.absI8x16();
       case NegVecI8x16:
         return value.negI8x16();
-      case AnyTrueVecI8x16:
-        return value.anyTrueI8x16();
       case AllTrueVecI8x16:
         return value.allTrueI8x16();
       case BitmaskVecI8x16:
@@ -480,8 +481,6 @@ public:
         return value.absI16x8();
       case NegVecI16x8:
         return value.negI16x8();
-      case AnyTrueVecI16x8:
-        return value.anyTrueI16x8();
       case AllTrueVecI16x8:
         return value.allTrueI16x8();
       case BitmaskVecI16x8:
@@ -490,14 +489,16 @@ public:
         return value.absI32x4();
       case NegVecI32x4:
         return value.negI32x4();
-      case AnyTrueVecI32x4:
-        return value.anyTrueI32x4();
       case AllTrueVecI32x4:
         return value.allTrueI32x4();
       case BitmaskVecI32x4:
         return value.bitmaskI32x4();
+      case AbsVecI64x2:
+        return value.absI64x2();
       case NegVecI64x2:
         return value.negI64x2();
+      case AllTrueVecI64x2:
+        return value.allTrueI64x2();
       case BitmaskVecI64x2:
         WASM_UNREACHABLE("unimp");
       case AbsVecF32x4:
@@ -540,38 +541,30 @@ public:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
         return value.truncSatToUI32x4();
-      case TruncSatSVecF64x2ToVecI64x2:
-        return value.truncSatToSI64x2();
-      case TruncSatUVecF64x2ToVecI64x2:
-        return value.truncSatToUI64x2();
       case ConvertSVecI32x4ToVecF32x4:
         return value.convertSToF32x4();
       case ConvertUVecI32x4ToVecF32x4:
         return value.convertUToF32x4();
-      case ConvertSVecI64x2ToVecF64x2:
-        return value.convertSToF64x2();
-      case ConvertUVecI64x2ToVecF64x2:
-        return value.convertUToF64x2();
-      case WidenLowSVecI8x16ToVecI16x8:
-        return value.widenLowSToVecI16x8();
-      case WidenHighSVecI8x16ToVecI16x8:
-        return value.widenHighSToVecI16x8();
-      case WidenLowUVecI8x16ToVecI16x8:
-        return value.widenLowUToVecI16x8();
-      case WidenHighUVecI8x16ToVecI16x8:
-        return value.widenHighUToVecI16x8();
-      case WidenLowSVecI16x8ToVecI32x4:
-        return value.widenLowSToVecI32x4();
-      case WidenHighSVecI16x8ToVecI32x4:
-        return value.widenHighSToVecI32x4();
-      case WidenLowUVecI16x8ToVecI32x4:
-        return value.widenLowUToVecI32x4();
-      case WidenHighUVecI16x8ToVecI32x4:
-        return value.widenHighUToVecI32x4();
-      case WidenLowSVecI32x4ToVecI64x2:
-      case WidenHighSVecI32x4ToVecI64x2:
-      case WidenLowUVecI32x4ToVecI64x2:
-      case WidenHighUVecI32x4ToVecI64x2:
+      case ExtendLowSVecI8x16ToVecI16x8:
+        return value.extendLowSToVecI16x8();
+      case ExtendHighSVecI8x16ToVecI16x8:
+        return value.extendHighSToVecI16x8();
+      case ExtendLowUVecI8x16ToVecI16x8:
+        return value.extendLowUToVecI16x8();
+      case ExtendHighUVecI8x16ToVecI16x8:
+        return value.extendHighUToVecI16x8();
+      case ExtendLowSVecI16x8ToVecI32x4:
+        return value.extendLowSToVecI32x4();
+      case ExtendHighSVecI16x8ToVecI32x4:
+        return value.extendHighSToVecI32x4();
+      case ExtendLowUVecI16x8ToVecI32x4:
+        return value.extendLowUToVecI32x4();
+      case ExtendHighUVecI16x8ToVecI32x4:
+        return value.extendHighUToVecI32x4();
+      case ExtendLowSVecI32x4ToVecI64x2:
+      case ExtendHighSVecI32x4ToVecI64x2:
+      case ExtendLowUVecI32x4ToVecI64x2:
+      case ExtendHighUVecI32x4ToVecI64x2:
       case ConvertLowSVecI32x4ToVecF64x2:
       case ConvertLowUVecI32x4ToVecF64x2:
       case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -826,6 +819,16 @@ public:
         return left.geUI32x4(right);
       case EqVecI64x2:
         return left.eqI64x2(right);
+      case NeVecI64x2:
+        return left.neI64x2(right);
+      case LtSVecI64x2:
+        return left.ltSI64x2(right);
+      case GtSVecI64x2:
+        return left.gtSI64x2(right);
+      case LeSVecI64x2:
+        return left.leSI64x2(right);
+      case GeSVecI64x2:
+        return left.geSI64x2(right);
       case EqVecF32x4:
         return left.eqF32x4(right);
       case NeVecF32x4:
@@ -872,8 +875,6 @@ public:
         return left.subSaturateSI8x16(right);
       case SubSatUVecI8x16:
         return left.subSaturateUI8x16(right);
-      case MulVecI8x16:
-        return left.mulI8x16(right);
       case MinSVecI8x16:
         return left.minSI8x16(right);
       case MinUVecI8x16:
@@ -1141,7 +1142,6 @@ public:
     }
     WASM_UNREACHABLE("invalid op");
   }
-  Flow visitSIMDWiden(SIMDWiden* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
     Flow ifTrue = visit(curr->ifTrue);
@@ -1182,14 +1182,6 @@ public:
   }
   Flow visitNop(Nop* curr) {
     NOTE_ENTER("Nop");
-    return Flow();
-  }
-  Flow visitPrefetch(Prefetch* curr) {
-    NOTE_ENTER("Prefetch");
-    Flow flow = visit(curr->ptr);
-    if (flow.breaking()) {
-      return flow;
-    }
     return Flow();
   }
   Flow visitUnreachable(Unreachable* curr) {
@@ -1453,14 +1445,14 @@ public:
       auto* func = module->getFunction(cast.originalRef.getFunc());
       seenRtt = Literal(Type(Rtt(0, func->sig)));
       cast.castRef =
-        Literal(func->name, Type(intendedRtt.type.getHeapType(), Nullable));
+        Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
     } else {
       // GC data store an RTT in each instance.
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
       seenRtt = gcData->rtt;
       cast.castRef =
-        Literal(gcData, Type(intendedRtt.type.getHeapType(), Nullable));
+        Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
     }
     if (!seenRtt.isSubRtt(intendedRtt)) {
       cast.outcome = cast.Failure;
@@ -1485,7 +1477,7 @@ public:
       return cast.breaking;
     }
     if (cast.outcome == cast.Null) {
-      return Literal::makeNull(curr->type);
+      return Literal::makeNull(Type(curr->type.getHeapType(), Nullable));
     }
     if (cast.outcome == cast.Failure) {
       trap("cast error");
@@ -1907,8 +1899,7 @@ public:
         this->module != nullptr) {
       // If we are evaluating and not replacing the expression, remember the
       // constant value set, if any, for subsequent gets.
-      auto* global = this->module->getGlobal(curr->name);
-      assert(global->mutable_);
+      assert(this->module->getGlobal(curr->name)->mutable_);
       auto setFlow = ExpressionRunner<SubType>::visit(curr->value);
       if (!setFlow.breaking()) {
         setGlobalValue(curr->name, setFlow.values);
@@ -2078,6 +2069,7 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
+    virtual ~ExternalInterface() = default;
     virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
@@ -2233,7 +2225,7 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void tableStore(Name tableName, Address addr, Name entry) {
+    virtual void tableStore(Name tableName, Address addr, Literal entry) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2320,22 +2312,22 @@ private:
   std::unordered_set<size_t> droppedSegments;
 
   void initializeTableContents() {
-    for (auto& table : wasm.tables) {
-      for (auto& segment : table->segments) {
-        Address offset = (uint32_t)InitializerExpressionRunner<GlobalManager>(
-                           globals, maxDepth)
-                           .visit(segment.offset)
-                           .getSingleValue()
-                           .geti32();
-        if (offset + segment.data.size() > table->initial) {
-          externalInterface->trap("invalid offset when initializing table");
-        }
-        for (size_t i = 0; i != segment.data.size(); ++i) {
-          externalInterface->tableStore(
-            table->name, offset + i, segment.data[i]);
-        }
+    ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
+      Address offset =
+        (uint32_t)InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
+          .visit(segment->offset)
+          .getSingleValue()
+          .geti32();
+
+      Function dummyFunc;
+      FunctionScope dummyScope(&dummyFunc, {});
+      RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
+      for (Index i = 0; i < segment->data.size(); ++i) {
+        Flow ret = runner.visit(segment->data[i]);
+        externalInterface->tableStore(
+          segment->table, offset + i, ret.getSingleValue());
       }
-    }
+    });
   }
 
   void initializeMemoryContents() {
@@ -2412,7 +2404,8 @@ private:
     : public ExpressionRunner<RuntimeExpressionRunner> {
     ModuleInstanceBase& instance;
     FunctionScope& scope;
-    SmallVector<WasmException, 4> exceptionStack;
+    // Stack of <caught exception, caught catch's try label>
+    SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
 
   public:
     RuntimeExpressionRunner(ModuleInstanceBase& instance,
@@ -3058,13 +3051,13 @@ private:
         auto processCatchBody = [&](Expression* catchBody) {
           // Push the current exception onto the exceptionStack in case
           // 'rethrow's use it
-          exceptionStack.push_back(e);
+          exceptionStack.push_back(std::make_pair(e, curr->name));
           // We need to pop exceptionStack in either case: when the catch body
           // exits normally or when a new exception is thrown
           Flow ret;
           try {
             ret = this->visit(catchBody);
-          } catch (const WasmException& e) {
+          } catch (const WasmException&) {
             exceptionStack.pop_back();
             throw;
           }
@@ -3086,8 +3079,11 @@ private:
       }
     }
     Flow visitRethrow(Rethrow* curr) {
-      assert(exceptionStack.size() > curr->depth);
-      throwException(exceptionStack[exceptionStack.size() - 1 - curr->depth]);
+      for (int i = exceptionStack.size() - 1; i >= 0; i--) {
+        if (exceptionStack[i].second == curr->target) {
+          throwException(exceptionStack[i].first);
+        }
+      }
       WASM_UNREACHABLE("rethrow");
     }
     Flow visitPop(Pop* curr) {

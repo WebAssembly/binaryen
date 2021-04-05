@@ -3,7 +3,7 @@
   (memory 1 2)
   (import "env" "import" (func $import))
   (import "env" "import2" (func $import2 (param i32)))
-  (table 1 1)
+  (table funcref (elem $liveness2 $liveness2))
   (func $liveness1 (param $live0 i32) (param $dead0 i32)
     (local $live1 i32)
     (local $dead1 i32)

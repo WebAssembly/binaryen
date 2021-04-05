@@ -45,12 +45,12 @@ set(passes_SOURCES
   Metrics.cpp
   MinifyImportsAndExports.cpp
   NameList.cpp
+  NameTypes.cpp
   NoExitRuntime.cpp
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   PickLoadSigns.cpp
   Poppify.cpp
-  PostAssemblyScript.cpp
   PostEmscripten.cpp
   Precompute.cpp
   Print.cpp
@@ -58,6 +58,7 @@ set(passes_SOURCES
   PrintFeatures.cpp
   PrintFunctionMap.cpp
   RoundTrip.cpp
+  SetGlobals.cpp
   StackIR.cpp
   Strip.cpp
   StripTargetFeatures.cpp

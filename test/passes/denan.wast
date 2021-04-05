@@ -35,3 +35,15 @@
       (local.get $x)
       (i32.const 1)))
 )
+;; existing names should not be a problem
+(module
+  (func $deNan32)
+  (func $deNan64)
+  (func $foo32 (param $x f32) (result f32)
+    (call $foo32 (local.get $x))
+  )
+  (func $foo64 (param $x f64) (result f64)
+    (call $foo64 (local.get $x))
+  )
+
+)

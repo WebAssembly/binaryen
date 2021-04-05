@@ -157,23 +157,23 @@ enum UnaryOp {
 
   // SIMD arithmetic
   NotVec128,
+  AnyTrueVec128,
   AbsVecI8x16,
   NegVecI8x16,
-  AnyTrueVecI8x16,
   AllTrueVecI8x16,
   BitmaskVecI8x16,
   PopcntVecI8x16,
   AbsVecI16x8,
   NegVecI16x8,
-  AnyTrueVecI16x8,
   AllTrueVecI16x8,
   BitmaskVecI16x8,
   AbsVecI32x4,
   NegVecI32x4,
-  AnyTrueVecI32x4,
   AllTrueVecI32x4,
   BitmaskVecI32x4,
+  AbsVecI64x2,
   NegVecI64x2,
+  AllTrueVecI64x2,
   BitmaskVecI64x2,
   AbsVecF32x4,
   NegVecF32x4,
@@ -197,24 +197,20 @@ enum UnaryOp {
   // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,
   TruncSatUVecF32x4ToVecI32x4,
-  TruncSatSVecF64x2ToVecI64x2,
-  TruncSatUVecF64x2ToVecI64x2,
   ConvertSVecI32x4ToVecF32x4,
   ConvertUVecI32x4ToVecF32x4,
-  ConvertSVecI64x2ToVecF64x2,
-  ConvertUVecI64x2ToVecF64x2,
-  WidenLowSVecI8x16ToVecI16x8,
-  WidenHighSVecI8x16ToVecI16x8,
-  WidenLowUVecI8x16ToVecI16x8,
-  WidenHighUVecI8x16ToVecI16x8,
-  WidenLowSVecI16x8ToVecI32x4,
-  WidenHighSVecI16x8ToVecI32x4,
-  WidenLowUVecI16x8ToVecI32x4,
-  WidenHighUVecI16x8ToVecI32x4,
-  WidenLowSVecI32x4ToVecI64x2,
-  WidenHighSVecI32x4ToVecI64x2,
-  WidenLowUVecI32x4ToVecI64x2,
-  WidenHighUVecI32x4ToVecI64x2,
+  ExtendLowSVecI8x16ToVecI16x8,
+  ExtendHighSVecI8x16ToVecI16x8,
+  ExtendLowUVecI8x16ToVecI16x8,
+  ExtendHighUVecI8x16ToVecI16x8,
+  ExtendLowSVecI16x8ToVecI32x4,
+  ExtendHighSVecI16x8ToVecI32x4,
+  ExtendLowUVecI16x8ToVecI32x4,
+  ExtendHighUVecI16x8ToVecI32x4,
+  ExtendLowSVecI32x4ToVecI64x2,
+  ExtendHighSVecI32x4ToVecI64x2,
+  ExtendLowUVecI32x4ToVecI64x2,
+  ExtendHighUVecI32x4ToVecI64x2,
 
   ConvertLowSVecI32x4ToVecF64x2,
   ConvertLowUVecI32x4ToVecF64x2,
@@ -367,6 +363,11 @@ enum BinaryOp {
   GeSVecI32x4,
   GeUVecI32x4,
   EqVecI64x2,
+  NeVecI64x2,
+  LtSVecI64x2,
+  GtSVecI64x2,
+  LeSVecI64x2,
+  GeSVecI64x2,
   EqVecF32x4,
   NeVecF32x4,
   LtVecF32x4,
@@ -391,7 +392,6 @@ enum BinaryOp {
   SubVecI8x16,
   SubSatSVecI8x16,
   SubSatUVecI8x16,
-  MulVecI8x16,
   MinSVecI8x16,
   MinUVecI8x16,
   MaxSVecI8x16,
@@ -527,24 +527,6 @@ enum SIMDLoadStoreLaneOp {
 
 enum SIMDTernaryOp {
   Bitselect,
-  QFMAF32x4,
-  QFMSF32x4,
-  QFMAF64x2,
-  QFMSF64x2,
-  SignSelectVec8x16,
-  SignSelectVec16x8,
-  SignSelectVec32x4,
-  SignSelectVec64x2
-};
-
-enum SIMDWidenOp {
-  WidenSVecI8x16ToVecI32x4,
-  WidenUVecI8x16ToVecI32x4,
-};
-
-enum PrefetchOp {
-  PrefetchTemporal,
-  PrefetchNontemporal,
 };
 
 enum RefIsOp {
@@ -616,7 +598,6 @@ public:
     MemorySizeId,
     MemoryGrowId,
     NopId,
-    PrefetchId,
     UnreachableId,
     AtomicRMWId,
     AtomicCmpxchgId,
@@ -630,7 +611,6 @@ public:
     SIMDShiftId,
     SIMDLoadId,
     SIMDLoadStoreLaneId,
-    SIMDWidenId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -1079,30 +1059,6 @@ public:
   void finalize();
 };
 
-class SIMDWiden : public SpecificExpression<Expression::SIMDWidenId> {
-public:
-  SIMDWiden() = default;
-  SIMDWiden(MixedArena& allocator) {}
-
-  SIMDWidenOp op;
-  uint8_t index;
-  Expression* vec;
-
-  void finalize();
-};
-
-class Prefetch : public SpecificExpression<Expression::PrefetchId> {
-public:
-  Prefetch() = default;
-  Prefetch(MixedArena& allocator) : Prefetch() {}
-
-  PrefetchOp op;
-  Address offset;
-  Address align;
-  Expression* ptr;
-  void finalize();
-};
-
 class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
 public:
   MemoryInit() = default;
@@ -1335,7 +1291,7 @@ class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
   Rethrow(MixedArena& allocator) {}
 
-  Index depth;
+  Name target;
 
   void finalize();
 };
@@ -1397,8 +1353,6 @@ public:
   Expression* rtt;
 
   void finalize();
-
-  Type getCastType();
 };
 
 class RefCast : public SpecificExpression<Expression::RefCastId> {
@@ -1409,8 +1363,6 @@ public:
   Expression* rtt;
 
   void finalize();
-
-  Type getCastType();
 };
 
 class BrOn : public SpecificExpression<Expression::BrOnId> {
@@ -1550,7 +1502,7 @@ public:
 
 // Globals
 
-struct Importable {
+struct Named {
   Name name;
 
   // Explicit names are ones that we read from the input file and
@@ -1559,17 +1511,19 @@ struct Importable {
   // use only and will not be written the name section.
   bool hasExplicitName = false;
 
-  // If these are set, then this is an import, as module.base
-  Name module, base;
-
-  bool imported() const { return module.is(); }
-
   void setName(Name name_, bool hasExplicitName_) {
     name = name_;
     hasExplicitName = hasExplicitName_;
   }
 
   void setExplicitName(Name name_) { setName(name_, true); }
+};
+
+struct Importable : Named {
+  // If these are set, then this is an import, as module.base
+  Name module, base;
+
+  bool imported() const { return module.is(); }
 };
 
 class Function;
@@ -1720,6 +1674,21 @@ public:
   ExternalKind kind;
 };
 
+class ElementSegment : public Named {
+public:
+  Name table;
+  Expression* offset;
+  std::vector<Expression*> data;
+
+  ElementSegment() = default;
+  ElementSegment(Name table, Expression* offset)
+    : table(table), offset(offset) {}
+  ElementSegment(Name table, Expression* offset, std::vector<Expression*>& init)
+    : table(table), offset(offset) {
+    data.swap(init);
+  }
+};
+
 class Table : public Importable {
 public:
   static const Address::address32_t kPageSize = 1;
@@ -1727,26 +1696,14 @@ public:
   // In wasm32/64, the maximum table size is limited by a 32-bit pointer: 4GB
   static const Index kMaxSize = Index(-1);
 
-  struct Segment {
-    Expression* offset;
-    std::vector<Name> data;
-    Segment() = default;
-    Segment(Expression* offset) : offset(offset) {}
-    Segment(Expression* offset, std::vector<Name>& init) : offset(offset) {
-      data.swap(init);
-    }
-  };
-
   Address initial = 0;
   Address max = kMaxSize;
-  std::vector<Segment> segments;
 
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {
     name = "";
     initial = 0;
     max = kMaxSize;
-    segments.clear();
   }
 };
 
@@ -1790,7 +1747,6 @@ public:
   Address max = kMaxSize32;
   std::vector<Segment> segments;
 
-  // See comment in Table.
   bool shared = false;
   Type indexType = Type::i32;
 
@@ -1848,7 +1804,7 @@ public:
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
   std::vector<std::unique_ptr<Event>> events;
-
+  std::vector<std::unique_ptr<ElementSegment>> elementSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
   Memory memory;
@@ -1872,6 +1828,16 @@ public:
   // Module name, if specified. Serves a documentary role only.
   Name name;
 
+  // Optional type name information, used in printing only. Note that Types are
+  // globally interned, but type names are specific to a module.
+  struct TypeNames {
+    // The name of the type.
+    Name name;
+    // For a Struct, names of fields.
+    std::unordered_map<Index, Name> fieldNames;
+  };
+  std::unordered_map<HeapType, TypeNames> typeNames;
+
   MixedArena allocator;
 
 private:
@@ -1881,6 +1847,7 @@ private:
   std::unordered_map<Name, Export*> exportsMap;
   std::unordered_map<Name, Function*> functionsMap;
   std::unordered_map<Name, Table*> tablesMap;
+  std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
   std::unordered_map<Name, Event*> eventsMap;
 
@@ -1890,11 +1857,13 @@ public:
   Export* getExport(Name name);
   Function* getFunction(Name name);
   Table* getTable(Name name);
+  ElementSegment* getElementSegment(Name name);
   Global* getGlobal(Name name);
   Event* getEvent(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
+  ElementSegment* getElementSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
   Event* getEventOrNull(Name name);
@@ -1907,6 +1876,7 @@ public:
   Export* addExport(std::unique_ptr<Export>&& curr);
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
+  ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
   Event* addEvent(std::unique_ptr<Event>&& curr);
 
@@ -1915,12 +1885,14 @@ public:
   void removeExport(Name name);
   void removeFunction(Name name);
   void removeTable(Name name);
+  void removeElementSegment(Name name);
   void removeGlobal(Name name);
   void removeEvent(Name name);
 
   void removeExports(std::function<bool(Export*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
+  void removeElementSegments(std::function<bool(ElementSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
   void removeEvents(std::function<bool(Event*)> pred);
 
@@ -1928,6 +1900,8 @@ public:
 
   void clearDebugInfo();
 };
+
+using ModuleExpression = std::pair<Module&, Expression*>;
 
 } // namespace wasm
 
@@ -1940,6 +1914,7 @@ template<> struct hash<wasm::Address> {
 
 std::ostream& operator<<(std::ostream& o, wasm::Module& module);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
+std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
 std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
 

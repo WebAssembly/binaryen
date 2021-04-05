@@ -31,8 +31,10 @@
 #include <atomic>
 
 #include "ir/debug.h"
+#include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "parsing.h"
 #include "pass.h"
@@ -48,6 +50,7 @@ struct FunctionInfo {
   Index size;
   bool hasCalls;
   bool hasLoops;
+  bool hasTryDelegate;
   bool usedGlobally; // in a table or export
 
   FunctionInfo() {
@@ -55,11 +58,17 @@ struct FunctionInfo {
     size = 0;
     hasCalls = false;
     hasLoops = false;
+    hasTryDelegate = false;
     usedGlobally = false;
   }
 
   // See pass.h for how defaults for these options were chosen.
   bool worthInlining(PassOptions& options) {
+    // Until we have proper support for try-delegate, ignore such functions.
+    // FIXME https://github.com/WebAssembly/binaryen/issues/3634
+    if (hasTryDelegate) {
+      return false;
+    }
     // If it's small enough that we always want to inline such things, do so.
     if (size <= options.inlining.alwaysInlineMaxSize) {
       return true;
@@ -111,6 +120,12 @@ struct FunctionInfoScanner
     (*infos)[curr->target].refs++;
     // having a call
     (*infos)[getFunction()->name].hasCalls = true;
+  }
+
+  void visitTry(Try* curr) {
+    if (curr->isDelegate()) {
+      (*infos)[getFunction()->name].hasTryDelegate = true;
+    }
   }
 
   void visitRefFunc(RefFunc* curr) {
@@ -283,6 +298,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }
+  TypeUpdating::handleNonNullableLocals(into, *module);
   return block;
 }
 
@@ -328,26 +344,13 @@ struct Inlining : public Pass {
       infos[func->name];
     }
     PassRunner runner(module);
-    FunctionInfoScanner(&infos).run(&runner, module);
+    FunctionInfoScanner scanner(&infos);
+    scanner.run(&runner, module);
     // fill in global uses
+    scanner.walkModuleCode(module);
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         infos[ex->value].usedGlobally = true;
-      }
-    }
-    for (auto& table : module->tables) {
-      for (auto& segment : table->segments) {
-        for (auto name : segment.data) {
-          infos[name].usedGlobally = true;
-        }
-      }
-    }
-
-    for (auto& global : module->globals) {
-      if (!global->imported()) {
-        for (auto* ref : FindAll<RefFunc>(global->init).list) {
-          infos[ref->func].usedGlobally = true;
-        }
       }
     }
     if (module->start.is()) {

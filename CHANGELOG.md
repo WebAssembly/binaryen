@@ -15,6 +15,46 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+- `BinaryenSetFunctionTable` and `module.setFunctionTable` have been removed
+  in favor of `BinaryenAddTable` and `module.addTable` respectively.
+- `BinaryenIsFunctionTableImported` is removed.
+- A new type `BinaryenElementSegmentRef` has been added to the C API with
+  new apis in both C & JS:
+  - `BinaryenAddActiveElementSegment`
+  - `BinaryenAddPassiveElementSegment`
+  - `BinaryenRemoveElementSegment`
+  - `BinaryenGetElementSegment`
+  - `BinaryenGetElementSegmentByIndex`
+  - `BinaryenElementSegmentGetName`
+  - `BinaryenElementSegmentSetName`
+  - `BinaryenElementSegmentGetTable`
+  - `BinaryenElementSegmentSetTable`
+  - `BinayenElementSegmentIsPassive`
+  - `module.addActiveElementSegment`
+  - `module.addPassiveElementSegment`
+  - `module.removeElementSegment`
+  - `module.getElementSegment`
+  - `module.getElementSegmentByIndex`
+  - `module.getTableSegments`
+  - `module.getNumElementSegments`
+  - `binaryen.getElementSegmentInfo`
+- `BinaryenAddTable` and `module.addTable` no longer take offset and function
+    names.
+- `BinaryenGetNumFunctionTableSegments` is replaced with
+  `BinaryenGetNumElementSegments`.
+- `BinaryenGetFunctionTableSegmentOffset` is replaced with
+  `BinaryenElementSegmentGetOffset`.
+- `BinaryenGetFunctionTableSegmentLength` is replaced with
+  `BinaryenElementSegmentGetLength`.
+- `BinaryenGetFunctionTableSegmentData` is replaced with
+  `BinaryenElementSegmentGetData`.
+- Boolean values in the C API now should use `bool` instead of `int`.
+- Experimental SIMD instructions have been removed and the names and opcodes of
+  the standard instructions have been updated to match the final spec.
+
+v100
+----
+
 - `wasm-dis` now supports options to enable or disable Wasm features.
 - Reference types support has been improved by allowing multiple tables in a
   module.

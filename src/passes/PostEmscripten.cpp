@@ -67,7 +67,7 @@ struct PostEmscripten : public Pass {
     // Next, see if the Table is flat, which we need in order to see where
     // invokes go statically. (In dynamic linking, the table is not flat,
     // and we can't do this.)
-    TableUtils::FlatTable flatTable(*module->tables[0]);
+    TableUtils::FlatTable flatTable(*module, *module->tables[0]);
     if (!flatTable.valid) {
       return;
     }

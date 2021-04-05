@@ -2,7 +2,7 @@
   (event $e0 (attr 0) (param i32))
 
   (func $eh
-    (try
+    (try $l0
       (do
         (throw $e0 (i32.const 0))
       )
@@ -10,7 +10,7 @@
         (drop (pop i32))
       )
       (catch_all
-        (rethrow 0)
+        (rethrow $l0)
       )
     )
 

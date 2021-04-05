@@ -857,7 +857,7 @@ def test_one(random_input, given_wasm):
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
-        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm', '--emit-target-features'] + FUZZ_OPTS + FEATURE_OPTS
+        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', 'a.wasm'] + FUZZ_OPTS + FEATURE_OPTS
         if INITIAL_CONTENTS:
             generate_command += ['--initial-fuzz=' + INITIAL_CONTENTS]
         if PRINT_WATS:
@@ -987,6 +987,12 @@ def randomize_opt_flags():
                 continue
             if '--disable-exception-handling' not in FEATURE_OPTS:
                 print('avoiding --flatten due to exception catching which does not support it yet')
+                continue
+            if '--disable-multivalue' not in FEATURE_OPTS and '--disable-reference-types' not in FEATURE_OPTS:
+                print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
+                continue
+            if '--gc' not in FEATURE_OPTS:
+                print('avoiding --flatten due to GC not supporting it (spilling of RTTs)')
                 continue
             if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
                 print('avoiding --flatten due using a large amount of initial contents, which may blow up')
@@ -1133,12 +1139,16 @@ on valid wasm files.)
                 with open('reduce.sh', 'w') as reduce_sh:
                     reduce_sh.write('''\
 # check the input is even a valid wasm file
+echo "At least one of the next two values should be 0:"
 %(wasm_opt)s --detect-features %(temp_wasm)s
-echo "should be 0:" $?
+echo "  " $?
+%(wasm_opt)s --all-features %(temp_wasm)s
+echo "  " $?
 
 # run the command
+echo "The following value should be 1:"
 ./scripts/fuzz_opt.py --binaryen-bin %(bin)s %(seed)d %(temp_wasm)s > o 2> e
-echo "should be 1:" $?
+echo "  " $?
 
 #
 # You may want to print out part of "o" or "e", if the output matters and not
@@ -1195,10 +1205,18 @@ vvvv
 ^^^^
 ||||
 
-Make sure to verify by eye that the output says
+Make sure to verify by eye that the output says something like this:
 
-should be 0: 0
-should be 1: 1
+At least one of the next two values should be 0:
+  0
+  1
+The following value should be 1:
+  1
+
+(If it does not, then one possible issue is that the fuzzer fails to write a
+valid binary. If so, you can print the output of the fuzzer's first command
+(using -ttf / --translate-to-fuzz) in text form and run the reduction from that,
+passing --text to the reducer.)
 
 You can also read "%(reduce_sh)s" which has been filled out for you and includes
 docs and suggestions.

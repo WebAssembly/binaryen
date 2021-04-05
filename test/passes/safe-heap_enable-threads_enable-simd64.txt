@@ -5620,7 +5620,7 @@
  (type $i64_i64_=>_v128 (func (param i64 i64) (result v128)))
  (type $i64_i64_f64_=>_none (func (param i64 i64 f64)))
  (type $i64_i64_=>_f64 (func (param i64 i64) (result f64)))
- (type $none_=>_none (func))
+ (type $FUNCSIG$v (func))
  (type $i64_i64_f32_=>_none (func (param i64 i64 f32)))
  (type $i64_i64_=>_f32 (func (param i64 i64) (result f32)))
  (type $none_=>_i64 (func (result i64)))

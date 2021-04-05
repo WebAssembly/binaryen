@@ -1,15 +1,15 @@
 (module
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
- (type $i32_i32_=>_none (func (param i32 i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $2 (func (result i32)))
+ (type $1 (func))
+ (type $ii (func (param i32 i32)))
+ (type $3 (func (param i32) (result i32)))
  (type $none_=>_f32 (func (result f32)))
- (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
+ (type $4 (func (param i64 i64) (result i64)))
  (type $none_=>_anyref (func (result anyref)))
+ (global $x (mut i32) (i32.const 0))
  (memory $0 10)
  (table $0 1 1 funcref)
  (elem (i32.const 0) $call-me)
- (global $x (mut i32) (i32.const 0))
  (func $a1
   (local $0 i32)
   (local.set $0
@@ -1050,7 +1050,7 @@
    (i32.const -1)
    (block
     (unreachable)
-    (call_indirect $0 (type $i32_i32_=>_none)
+    (call_indirect $0 (type $ii)
      (i32.const 123)
      (i32.const 456)
      (unreachable)
@@ -1062,7 +1062,7 @@
    (i32.const -2)
    (block
     (unreachable)
-    (call_indirect $0 (type $i32_i32_=>_none)
+    (call_indirect $0 (type $ii)
      (i32.const 139)
      (unreachable)
      (i32.const 0)
@@ -1075,7 +1075,7 @@
    (block
     (unreachable)
     (unreachable)
-    (call_indirect $0 (type $i32_i32_=>_none)
+    (call_indirect $0 (type $ii)
      (i32.const 246)
      (unreachable)
      (unreachable)
@@ -1089,7 +1089,7 @@
     (unreachable)
     (unreachable)
     (unreachable)
-    (call_indirect $0 (type $i32_i32_=>_none)
+    (call_indirect $0 (type $ii)
      (unreachable)
      (unreachable)
      (unreachable)
@@ -2441,5 +2441,22 @@
    (unreachable)
   )
   (unreachable)
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (type $none_=>_funcref (func (result funcref)))
+ (func $0 (result funcref)
+  (local $0 (ref null $none_=>_none))
+  (local.set $0
+   (ref.as_non_null
+    (ref.null $none_=>_none)
+   )
+  )
+  (return
+   (ref.as_non_null
+    (local.get $0)
+   )
+  )
  )
 )

@@ -25,6 +25,7 @@
 #ifndef wasm_dataflow_utils_h
 #define wasm_dataflow_utils_h
 
+#include "dataflow/graph.h"
 #include "dataflow/node.h"
 #include "wasm.h"
 

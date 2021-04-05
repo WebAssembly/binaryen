@@ -138,5 +138,15 @@ int main() {
     y.index = 11;
     assertNotEqual(x, y);
   }
+  {
+    // It is ok to hash something that refers to an unknown name, like a break
+    // without the outside context that it branches to. And different names
+    // should have different hashes.
+    Break x;
+    x.name = "foo";
+    Break y;
+    y.name = "bar";
+    assertNotEqual(x, y);
+  }
   std::cout << "success.\n";
 }

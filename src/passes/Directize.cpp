@@ -124,7 +124,7 @@ struct Directize : public Pass {
         }
 
         if (canOptimizeCallIndirect) {
-          TableUtils::FlatTable flatTable(*table);
+          TableUtils::FlatTable flatTable(*module, *table);
           if (flatTable.valid) {
             validTables.emplace(table->name, flatTable);
           }

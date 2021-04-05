@@ -15,6 +15,7 @@
  */
 
 #include "asm_v_wasm.h"
+#include "support/utilities.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -31,14 +32,14 @@ AsmType wasmToAsmType(Type type) {
     case Type::i64:
       return ASM_INT64;
     case Type::v128:
-      assert(false && "v128 not implemented yet");
+      WASM_UNREACHABLE("v128 not implemented yet");
     case Type::funcref:
     case Type::externref:
     case Type::anyref:
     case Type::eqref:
     case Type::i31ref:
     case Type::dataref:
-      assert(false && "reference types are not supported by asm2wasm");
+      WASM_UNREACHABLE("reference types are not supported by asm2wasm");
     case Type::none:
       return ASM_NONE;
     case Type::unreachable:

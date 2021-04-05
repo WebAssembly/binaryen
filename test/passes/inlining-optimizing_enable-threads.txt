@@ -71,7 +71,7 @@
  )
 )
 (module
- (type $none_=>_none (func))
+ (type $0 (func))
  (memory $0 17)
  (table $0 89 89 funcref)
  (start $1)

@@ -303,8 +303,7 @@ struct Reducer
             // see if it is still has the property we are preserving
             if (ProgramResult(command) == expected) {
               std::cerr << "|    command \"" << currCommand
-                        << "\" succeeded, reduced size to " << newSize
-                        << ", and preserved the property\n";
+                        << "\" succeeded, reduced size to " << newSize << '\n';
               copy_file(test, working);
               more = true;
               oldSize = newSize;
@@ -347,7 +346,13 @@ struct Reducer
   void loadWorking() {
     module = make_unique<Module>();
     ModuleReader reader;
-    reader.read(working, *module);
+    try {
+      reader.read(working, *module);
+    } catch (ParseException& p) {
+      p.dump(std::cerr);
+      std::cerr << '\n';
+      Fatal() << "error in parsing working wasm binary";
+    }
     // If there is no features section, assume we may need them all (without
     // this, a module with no features section but that uses e.g. atomics and
     // bulk memory would not work).
@@ -470,6 +475,25 @@ struct Reducer
   // since we don't need to duplicate work that they do
 
   void visitExpression(Expression* curr) {
+    if (getFunction() && curr == getFunction()->body) {
+      // At the top level, we can try to reduce anything to an unreachable, and
+      // it is useful to do so when possible.
+      if (!curr->is<Unreachable>() && !curr->is<Nop>() &&
+          shouldTryToReduce(1000)) {
+        auto* save = curr;
+        Unreachable un;
+        replaceCurrent(&un);
+        if (writeAndTestReduction()) {
+          replaceCurrent(builder->makeUnreachable());
+          std::cerr << "|        body unreachified (" << getFunction()->name
+                    << ")\n";
+          noteReduction();
+          return;
+        } else {
+          replaceCurrent(save);
+        }
+      }
+    }
     // type-based reductions
     if (curr->type == Type::none) {
       if (tryToReduceCurrentToNop()) {
@@ -724,11 +748,6 @@ struct Reducer
   }
 
   void visitFunction(Function* curr) {
-    if (!curr->imported()) {
-      // extra chance to work on the function toplevel element, as if it can
-      // be reduced it's great
-      visitExpression(curr->body);
-    }
     // finish function
     funcsSeen++;
     static int last = 0;
@@ -741,47 +760,63 @@ struct Reducer
 
   // TODO: bisection on segment shrinking?
 
-  void visitTable(Table* curr) {
-    std::cerr << "|    try to simplify table\n";
-    Name first;
+  void visitMemory(Memory* curr) {
+    std::cerr << "|    try to simplify memory\n";
+
+    // try to reduce to first function. first, shrink segment elements.
+    // while we are shrinking successfully, keep going exponentially.
+    bool shrank = false;
     for (auto& segment : curr->segments) {
-      for (auto item : segment.data) {
-        first = item;
-        break;
+      shrank = shrinkByReduction(&segment, 2);
+    }
+    // the "opposite" of shrinking: copy a 'zero' element
+    for (auto& segment : curr->segments) {
+      reduceByZeroing(
+        &segment, 0, [](char item) { return item == 0; }, 2, shrank);
+    }
+  }
+
+  template<typename T, typename U, typename C>
+  void
+  reduceByZeroing(T* segment, U zero, C isZero, size_t bonus, bool shrank) {
+    for (auto& item : segment->data) {
+      if (!shouldTryToReduce(bonus) || isZero(item)) {
+        continue;
       }
-      if (!first.isNull()) {
+      auto save = item;
+      item = zero;
+      if (writeAndTestReduction()) {
+        std::cerr << "|      zeroed elem segment\n";
+        noteReduction();
+      } else {
+        item = save;
+      }
+      if (shrank) {
+        // zeroing is fairly inefficient. if we are managing to shrink
+        // (which we do exponentially), just zero one per segment at most
         break;
       }
     }
-    visitSegmented(curr, first, 100);
   }
 
-  void visitMemory(Memory* curr) {
-    std::cerr << "|    try to simplify memory\n";
-    visitSegmented(curr, 0, 2);
-  }
-
-  template<typename T, typename U>
-  void visitSegmented(T* curr, U zero, size_t bonus) {
+  template<typename T> bool shrinkByReduction(T* segment, size_t bonus) {
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool justShrank = false;
     bool shrank = false;
-    for (auto& segment : curr->segments) {
-      auto& data = segment.data;
-      // when we succeed, try to shrink by more and more, similar to bisection
-      size_t skip = 1;
-      for (size_t i = 0; i < data.size() && !data.empty(); i++) {
-        if (!justShrank && !shouldTryToReduce(bonus)) {
-          continue;
-        }
+
+    auto& data = segment->data;
+    // when we succeed, try to shrink by more and more, similar to bisection
+    size_t skip = 1;
+    for (size_t i = 0; i < data.size() && !data.empty(); i++) {
+      if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
           if (!data.empty()) {
             data.pop_back();
           }
         }
-        auto justShrank = writeAndTestReduction();
+        justShrank = writeAndTestReduction();
         if (justShrank) {
           std::cerr << "|      shrank segment (skip: " << skip << ")\n";
           shrank = true;
@@ -793,37 +828,60 @@ struct Reducer
         }
       }
     }
+
+    return shrank;
+  }
+
+  void shrinkElementSegments(Module* module) {
+    std::cerr << "|    try to simplify elem segments\n";
+    Expression* first = nullptr;
+    auto it =
+      std::find_if_not(module->elementSegments.begin(),
+                       module->elementSegments.end(),
+                       [&](auto& segment) { return segment->data.empty(); });
+
+    if (it != module->elementSegments.end()) {
+      first = it->get()->data[0];
+    }
+    if (first == nullptr) {
+      // The elements are all empty, nothing to shrink
+      return;
+    }
+
+    // try to reduce to first function. first, shrink segment elements.
+    // while we are shrinking successfully, keep going exponentially.
+    bool shrank = false;
+    for (auto& segment : module->elementSegments) {
+      shrank = shrinkByReduction(segment.get(), 100);
+    }
     // the "opposite" of shrinking: copy a 'zero' element
-    for (auto& segment : curr->segments) {
-      if (segment.data.empty()) {
-        continue;
-      }
-      for (auto& item : segment.data) {
-        if (!shouldTryToReduce(bonus)) {
-          continue;
-        }
-        if (item == zero) {
-          continue;
-        }
-        auto save = item;
-        item = zero;
-        if (writeAndTestReduction()) {
-          std::cerr << "|      zeroed segment\n";
-          noteReduction();
-        } else {
-          item = save;
-        }
-        if (shrank) {
-          // zeroing is fairly inefficient. if we are managing to shrink
-          // (which we do exponentially), just zero one per segment at most
-          break;
-        }
-      }
+    for (auto& segment : module->elementSegments) {
+      reduceByZeroing(
+        segment.get(),
+        first,
+        [&](Expression* entry) {
+          if (entry->is<RefNull>()) {
+            // we don't need to replace a ref.null
+            return true;
+          } else if (first->is<RefNull>()) {
+            return false;
+          } else {
+            // Both are ref.func
+            auto* f = first->cast<RefFunc>();
+            auto* e = entry->cast<RefFunc>();
+            return f->func == e->func;
+          }
+        },
+        100,
+        shrank);
     }
   }
 
   void visitModule(Module* curr) {
     assert(curr == module.get());
+
+    shrinkElementSegments(curr);
+
     // try to remove functions
     std::cerr << "|    try to remove functions\n";
     std::vector<Name> functionNames;
@@ -861,6 +919,7 @@ struct Reducer
         skip = std::min(size_t(factor), 2 * skip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
+        i += factor / 100;
       }
     }
     // try to remove exports
@@ -898,12 +957,11 @@ struct Reducer
     }
     // If we are left with a single function that is not exported or used in
     // a table, that is useful as then we can change the return type.
-    bool allTablesEmpty = std::all_of(
-      module->tables.begin(), module->tables.end(), [&](auto& table) {
-        return std::all_of(table->segments.begin(),
-                           table->segments.end(),
-                           [&](auto& segment) { return segment.data.empty(); });
-      });
+    bool allTablesEmpty =
+      std::all_of(module->elementSegments.begin(),
+                  module->elementSegments.end(),
+                  [&](auto& segment) { return segment->data.empty(); });
+
     if (module->functions.size() == 1 && module->exports.empty() &&
         allTablesEmpty) {
       auto* func = module->functions[0].get();
@@ -962,30 +1020,6 @@ struct Reducer
       void visitExport(Export* curr) {
         if (names.count(curr->value)) {
           exportsToRemove.push_back(curr->name);
-        }
-      }
-      void visitTable(Table* curr) {
-        Name other;
-        for (auto& segment : curr->segments) {
-          for (auto name : segment.data) {
-            if (!names.count(name)) {
-              other = name;
-              break;
-            }
-          }
-          if (!other.isNull()) {
-            break;
-          }
-        }
-        if (other.isNull()) {
-          return; // we failed to find a replacement
-        }
-        for (auto& segment : curr->segments) {
-          for (auto& name : segment.data) {
-            if (names.count(name)) {
-              name = other;
-            }
-          }
         }
       }
       void doWalkModule(Module* module) {
@@ -1051,7 +1085,7 @@ struct Reducer
       RefNull* n = builder->makeRefNull(curr->type);
       return tryToReplaceCurrent(n);
     }
-    if (curr->type.isTuple()) {
+    if (curr->type.isTuple() && curr->type.isDefaultable()) {
       Expression* n =
         builder->makeConstantExpression(Literal::makeZeros(curr->type));
       return tryToReplaceCurrent(n);
@@ -1275,7 +1309,8 @@ int main(int argc, const char* argv[]) {
 
   std::cerr << "|starting reduction!\n";
 
-  int factor = workingSize * 2;
+  int factor = binary ? workingSize * 2 : workingSize / 10;
+
   size_t lastDestructiveReductions = 0;
   size_t lastPostPassesSize = 0;
 

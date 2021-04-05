@@ -203,9 +203,30 @@ int main(int argc, const char* argv[]) {
     Fatal() << "Need to specify an infile\n";
   }
 
+  // We will write the modified wasm if the user asked us to, either by
+  // specifying an output file or requesting text output (which goes to stdout
+  // by default).
+  auto writeOutput = outfile.size() > 0 || !emitBinary;
+
   Module wasm;
   ModuleReader reader;
-  reader.setDWARF(DWARF);
+  // If we are not writing output then we definitely don't need to read debug
+  // info, as it does not affect the metadata we will emit. (However, if we
+  // emit output then definitely load the names section so that we roundtrip
+  // names properly.)
+  reader.setDebugInfo(writeOutput);
+  reader.setDWARF(DWARF && writeOutput);
+  if (!writeOutput) {
+    // If we are not writing the output then all we are doing is simple parsing
+    // of metadata from global parts of the wasm such as imports and exports. In
+    // that case, it is unnecessary to parse function contents which are the
+    // great bulk of the work, and we can skip all that.
+    // Note that the one case we do need function bodies for, pthreads + EM_ASM
+    // parsing, requires special handling. The start function has code that we
+    // parse in order to find the EM_ASMs, and for that reason the binary reader
+    // will still parse the start function even in this mode.
+    reader.setSkipFunctionBodies(true);
+  }
   try {
     reader.read(infile, wasm, inputSourceMapFilename);
   } catch (ParseException& p) {
@@ -303,9 +324,7 @@ int main(int argc, const char* argv[]) {
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module after:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << wasm << '\n');
 
-  // Write the modified wasm if the user asked us to, either by specifying an
-  // output file, or requesting text output (which goes to stdout by default).
-  if (outfile.size() > 0 || !emitBinary) {
+  if (writeOutput) {
     Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
     ModuleWriter writer;
     writer.setDebugInfo(debugInfo);

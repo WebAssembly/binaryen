@@ -27,6 +27,7 @@ high chance for set at start of loop
 
 // TODO Generate exception handling instructions
 
+#include "ir/branch-utils.h"
 #include "ir/memory-utils.h"
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
@@ -195,7 +196,7 @@ public:
     if (allowMemory) {
       setupMemory();
     }
-    setupTable();
+    setupTables();
     setupGlobals();
     if (wasm.features.hasExceptionHandling()) {
       setupEvents();
@@ -424,17 +425,21 @@ private:
   }
 
   // TODO(reference-types): allow the fuzzer to create multiple tables
-  void setupTable() {
-    if (wasm.tables.size() > 0) {
-      auto& table = wasm.tables[0];
-      table->initial = table->max = 0;
-      table->segments.emplace_back(builder.makeConst(int32_t(0)));
-    } else {
+  void setupTables() {
+    // Ensure an element segment, adding one or even adding a whole table as
+    // needed.
+    if (wasm.tables.empty()) {
       auto table = builder.makeTable(
         Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
       table->hasExplicitName = true;
-      table->segments.emplace_back(builder.makeConst(int32_t(0)));
       wasm.addTable(std::move(table));
+    }
+    if (wasm.elementSegments.empty()) {
+      // TODO: use a random table
+      auto segment = std::make_unique<ElementSegment>(
+        wasm.tables[0]->name, builder.makeConst(int32_t(0)));
+      segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
+      wasm.addElementSegment(std::move(segment));
     }
   }
 
@@ -532,22 +537,23 @@ private:
 
   void finalizeTable() {
     for (auto& table : wasm.tables) {
-      for (auto& segment : table->segments) {
-        // If the offset is a global that was imported (which is ok) but no
-        // longer is (not ok) we need to change that.
-        if (auto* offset = segment.offset->dynCast<GlobalGet>()) {
-          if (!wasm.getGlobal(offset->name)->imported()) {
-            // TODO: the segments must not overlap...
-            segment.offset =
-              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+      ModuleUtils::iterTableSegments(
+        wasm, table->name, [&](ElementSegment* segment) {
+          // If the offset is a global that was imported (which is ok) but no
+          // longer is (not ok) we need to change that.
+          if (auto* offset = segment->offset->dynCast<GlobalGet>()) {
+            if (!wasm.getGlobal(offset->name)->imported()) {
+              // TODO: the segments must not overlap...
+              segment->offset =
+                builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+            }
           }
-        }
-        Address maxOffset = segment.data.size();
-        if (auto* offset = segment.offset->dynCast<Const>()) {
-          maxOffset = maxOffset + offset->value.getInteger();
-        }
-        table->initial = std::max(table->initial, maxOffset);
-      }
+          Address maxOffset = segment->data.size();
+          if (auto* offset = segment->offset->dynCast<Const>()) {
+            maxOffset = maxOffset + offset->value.getInteger();
+          }
+          table->initial = std::max(table->initial, maxOffset);
+        });
       table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
       // Avoid an imported table (which the fuzz harness would need to handle).
       table->module = table->base = Name();
@@ -667,8 +673,9 @@ private:
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
-      if (type.isRef() && !type.isNullable()) {
-        // We can't use a nullable type as a var, which is null-initialized.
+      if (!type.isDefaultable()) {
+        // We can't use a nondefaultable type as a var, as those must be
+        // initialized to some default value.
         continue;
       }
       funcContext->typeLocals[type].push_back(params.size() +
@@ -713,9 +720,13 @@ private:
       export_->kind = ExternalKind::Function;
       wasm.addExport(export_);
     }
-    // add some to the table
+    // add some to an elem segment
     while (oneIn(3) && !finishedInput) {
-      wasm.tables[0]->segments[0].data.push_back(func->name);
+      auto& randomElem =
+        wasm.elementSegments[upTo(wasm.elementSegments.size())];
+      // FIXME: make the type NonNullable when we support it!
+      auto type = Type(HeapType(func->sig), Nullable);
+      randomElem->data.push_back(builder.makeRefFunc(func->name, type));
     }
     numAddedFunctions++;
     return func;
@@ -858,39 +869,20 @@ private:
 
       void visitExpression(Expression* curr) {
         // Note all scope names, and fix up all uses.
-
-#define DELEGATE_ID curr->_id
-
-#define DELEGATE_START(id)                                                     \
-  auto* cast = curr->cast<id>();                                               \
-  WASM_UNUSED(cast);
-
-#define DELEGATE_GET_FIELD(id, name) cast->name
-
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)                                \
-  if (cast->name.is()) {                                                       \
-    if (seen.count(cast->name)) {                                              \
-      replace();                                                               \
-    } else {                                                                   \
-      seen.insert(cast->name);                                                 \
-    }                                                                          \
-  }
-
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) replaceIfInvalid(cast->name);
-
-#define DELEGATE_FIELD_CHILD(id, name)
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)
-#define DELEGATE_FIELD_INT(id, name)
-#define DELEGATE_FIELD_INT_ARRAY(id, name)
-#define DELEGATE_FIELD_LITERAL(id, name)
-#define DELEGATE_FIELD_NAME(id, name)
-#define DELEGATE_FIELD_NAME_VECTOR(id, name)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
-#define DELEGATE_FIELD_SIGNATURE(id, name)
-#define DELEGATE_FIELD_TYPE(id, name)
-#define DELEGATE_FIELD_ADDRESS(id, name)
-
-#include "wasm-delegations-fields.h"
+        BranchUtils::operateOnScopeNameDefs(curr, [&](Name& name) {
+          if (name.is()) {
+            if (seen.count(name)) {
+              replace();
+            } else {
+              seen.insert(name);
+            }
+          }
+        });
+        BranchUtils::operateOnScopeNameUses(curr, [&](Name& name) {
+          if (name.is()) {
+            replaceIfInvalid(name);
+          }
+        });
       }
 
       bool replaceIfInvalid(Name target) {
@@ -942,8 +934,14 @@ private:
     // Pick a chance to fuzz the contents of a function.
     const int RESOLUTION = 10;
     auto chance = upTo(RESOLUTION + 1);
-    for (auto& ref : wasm.functions) {
-      auto* func = ref.get();
+    // Do not iterate directly on wasm.functions itself (that is, avoid
+    //   for (x : wasm.functions)
+    // ) as we may add to it as we go through the functions - make() can add new
+    // functions to implement a RefFunc. Instead, use an index. This avoids an
+    // iterator invalidation, and also we will process those new functions at
+    // the end (currently that is not needed atm, but it might in the future).
+    for (Index i = 0; i < wasm.functions.size(); i++) {
+      auto* func = wasm.functions[i].get();
       FunctionCreationContext context(*this, func);
       if (func->imported()) {
         // We can't allow extra imports, as the fuzzing infrastructure wouldn't
@@ -1435,7 +1433,8 @@ private:
   }
 
   Expression* makeCallIndirect(Type type) {
-    auto& data = wasm.tables[0]->segments[0].data;
+    auto& randomElem = wasm.elementSegments[upTo(wasm.elementSegments.size())];
+    auto& data = randomElem->data;
     if (data.empty()) {
       return make(type);
     }
@@ -1446,11 +1445,13 @@ private:
     bool isReturn;
     while (1) {
       // TODO: handle unreachable
-      targetFn = wasm.getFunction(data[i]);
-      isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 funcContext->func->sig.results == targetFn->sig.results;
-      if (targetFn->sig.results == type || isReturn) {
-        break;
+      if (auto* get = data[i]->dynCast<RefFunc>()) {
+        targetFn = wasm.getFunction(get->func);
+        isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
+                   funcContext->func->sig.results == targetFn->sig.results;
+        if (targetFn->sig.results == type || isReturn) {
+          break;
+        }
       }
       i++;
       if (i == data.size()) {
@@ -1472,6 +1473,7 @@ private:
     for (const auto& type : targetFn->sig.params) {
       args.push_back(make(type));
     }
+    // TODO: use a random table
     return builder.makeCallIndirect(
       wasm.tables[0]->name, target, args, targetFn->sig, isReturn);
   }
@@ -1499,7 +1501,7 @@ private:
     for (const auto& type : target->sig.params) {
       args.push_back(make(type));
     }
-    auto targetType = Type(HeapType(target->sig), Nullable);
+    auto targetType = Type(HeapType(target->sig), NonNullable);
     // TODO: half the time make a completely random item with that type.
     return builder.makeCallRef(
       builder.makeRefFunc(target->name, targetType), args, type, isReturn);
@@ -1576,6 +1578,10 @@ private:
   }
 
   Expression* makeTupleExtract(Type type) {
+    // Tuples can require locals in binary format conversions.
+    if (!type.isDefaultable()) {
+      return makeTrivial(type);
+    }
     assert(wasm.features.hasMultivalue());
     assert(type.isSingle() && type.isConcrete());
     Type tupleType = getTupleType();
@@ -2077,9 +2083,9 @@ private:
     if (type.isRef()) {
       assert(wasm.features.hasReferenceTypes());
       // Check if we can use ref.func.
-      // 'func' is the pointer to the last created function and can be null when
-      // we set up globals (before we create any functions), in which case we
-      // can't use ref.func.
+      // 'funcContext->func' is the pointer to the last created function and can
+      // be null when we set up globals (before we create any functions), in
+      // which case we can't use ref.func.
       if (type == Type::funcref && funcContext && oneIn(2)) {
         // First set to target to the last created function, and try to select
         // among other existing function if possible
@@ -2096,14 +2102,20 @@ private:
       if (oneIn(2) && type.isNullable()) {
         return builder.makeRefNull(type);
       }
-      if (type == Type::dataref) {
-        WASM_UNREACHABLE("TODO: dataref");
+      if (!type.isFunction()) {
+        // We don't know how to create an externref or GC data yet TODO
+        // For now, create a null, and if it must be non-null, cast it to such
+        // even though that traps at runtime.
+        auto nullable = Type(type.getHeapType(), Nullable);
+        Expression* ret = builder.makeRefNull(nullable);
+        if (!type.isNullable()) {
+          ret = builder.makeRefAs(RefAsNonNull, ret);
+        }
+        return ret;
       }
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
-        // FIXME: RefFunc type should be non-nullable, but we emit nullable
-        //        types for now.
-        if (type == Type(HeapType(func->sig), Nullable)) {
+        if (type == Type(HeapType(func->sig), NonNullable)) {
           return builder.makeRefFunc(func->name, type);
         }
       }
@@ -2112,9 +2124,18 @@ private:
         return builder.makeRefNull(type);
       }
       // Last resort: create a function.
+      auto heapType = type.getHeapType();
+      Signature sig;
+      if (heapType.isSignature()) {
+        sig = heapType.getSignature();
+      } else {
+        assert(heapType == HeapType::func);
+        // The specific signature does not matter.
+        sig = Signature(Type::none, Type::none);
+      }
       auto* func = wasm.addFunction(builder.makeFunction(
         Names::getValidFunctionName(wasm, "ref_func_target"),
-        type.getHeapType().getSignature(),
+        sig,
         {},
         builder.makeUnreachable()));
       return builder.makeRefFunc(func->name, type);
@@ -2189,11 +2210,10 @@ private:
           }
           case Type::v128: {
             assert(wasm.features.hasSIMD());
-            return buildUnary({pick(AnyTrueVecI8x16,
+            // TODO: Add the other SIMD unary ops
+            return buildUnary({pick(AnyTrueVec128,
                                     AllTrueVecI8x16,
-                                    AnyTrueVecI16x8,
                                     AllTrueVecI16x8,
-                                    AnyTrueVecI32x4,
                                     AllTrueVecI32x4),
                                make(Type::v128)});
           }
@@ -2314,7 +2334,7 @@ private:
             return buildUnary({SplatVecF64x2, make(Type::f64)});
           case 4:
             return buildUnary({pick(NotVec128,
-                                    // TODO: i8x16.popcnt once merged
+                                    // TODO: add additional SIMD instructions
                                     NegVecI8x16,
                                     NegVecI16x8,
                                     NegVecI32x4,
@@ -2327,20 +2347,16 @@ private:
                                     SqrtVecF64x2,
                                     TruncSatSVecF32x4ToVecI32x4,
                                     TruncSatUVecF32x4ToVecI32x4,
-                                    TruncSatSVecF64x2ToVecI64x2,
-                                    TruncSatUVecF64x2ToVecI64x2,
                                     ConvertSVecI32x4ToVecF32x4,
                                     ConvertUVecI32x4ToVecF32x4,
-                                    ConvertSVecI64x2ToVecF64x2,
-                                    ConvertUVecI64x2ToVecF64x2,
-                                    WidenLowSVecI8x16ToVecI16x8,
-                                    WidenHighSVecI8x16ToVecI16x8,
-                                    WidenLowUVecI8x16ToVecI16x8,
-                                    WidenHighUVecI8x16ToVecI16x8,
-                                    WidenLowSVecI16x8ToVecI32x4,
-                                    WidenHighSVecI16x8ToVecI32x4,
-                                    WidenLowUVecI16x8ToVecI32x4,
-                                    WidenHighUVecI16x8ToVecI32x4),
+                                    ExtendLowSVecI8x16ToVecI16x8,
+                                    ExtendHighSVecI8x16ToVecI16x8,
+                                    ExtendLowUVecI8x16ToVecI16x8,
+                                    ExtendHighUVecI8x16ToVecI16x8,
+                                    ExtendLowSVecI16x8ToVecI32x4,
+                                    ExtendHighSVecI16x8ToVecI32x4,
+                                    ExtendLowUVecI16x8ToVecI32x4,
+                                    ExtendHighUVecI16x8ToVecI32x4),
                                make(Type::v128)});
         }
         WASM_UNREACHABLE("invalid value");
@@ -2537,7 +2553,6 @@ private:
                                  SubVecI8x16,
                                  SubSatSVecI8x16,
                                  SubSatUVecI8x16,
-                                 MulVecI8x16,
                                  MinSVecI8x16,
                                  MinUVecI8x16,
                                  MaxSVecI8x16,
@@ -3099,9 +3114,9 @@ private:
     size_t maxElements = 2 + upTo(MAX_TUPLE_SIZE - 1);
     for (size_t i = 0; i < maxElements; ++i) {
       auto type = getSingleConcreteType();
-      // Don't add a non-nullable type into a tuple, as currently we can't spill
-      // them into locals (that would require a "let").
-      if (!type.isNullable()) {
+      // Don't add a non-defaultable type into a tuple, as currently we can't
+      // spill them into locals (that would require a "let").
+      if (type.isDefaultable()) {
         elements.push_back(type);
       }
     }

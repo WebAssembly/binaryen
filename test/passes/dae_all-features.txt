@@ -259,7 +259,7 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
+ (type $T (func (result i32)))
  (type $none_=>_none (func))
  (table $0 1 1 funcref)
  (func $foo (result i32)
@@ -268,7 +268,7 @@
    (i32.const 42)
   )
   (drop
-   (return_call_indirect $0 (type $none_=>_i32)
+   (return_call_indirect $0 (type $T)
     (i32.const 0)
    )
   )
@@ -282,6 +282,7 @@
 (module
  (type $funcref_i32_f64_=>_i64 (func (param funcref i32 f64) (result i64)))
  (type $f32_=>_funcref (func (param f32) (result funcref)))
+ (elem declare func $0)
  (export "export" (func $1))
  (func $0 (param $0 funcref) (param $1 i32) (param $2 f64) (result i64)
   (nop)
@@ -289,5 +290,35 @@
  )
  (func $1 (param $0 f32) (result funcref)
   (ref.func $0)
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (type $i64 (func (param i64)))
+ (global $global$0 (ref $i64) (ref.func $0))
+ (export "even" (func $1))
+ (func $0 (param $0 i64)
+  (unreachable)
+ )
+ (func $1
+  (call_ref
+   (i64.const 0)
+   (global.get $global$0)
+  )
+ )
+ (func $2
+  (call $0
+   (i64.const 0)
+  )
+ )
+)
+(module
+ (type $none_=>_none (func))
+ (func $0
+  (local $0 (ref null i31))
+  (nop)
+ )
+ (func $1
+  (call $0)
  )
 )

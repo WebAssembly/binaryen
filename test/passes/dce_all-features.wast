@@ -774,6 +774,7 @@
   )
 
   (func $throw
+    ;; All these wrapping expressions before 'throw' will be dce'd
     (drop
       (block $label$0 (result externref)
         (if
@@ -790,17 +791,16 @@
   )
 
   (func $rethrow
-    (drop
-      (block $label$0 (result externref)
-        (if
-          (i32.clz
-            (block $label$1 (result i32)
-              (rethrow 0)
-            )
+    (try $l0
+      (do)
+      (catch $e
+        (drop
+          ;; This i32.add will be dce'd
+          (i32.add
+            (i32.const 0)
+            (rethrow $l0)
           )
-          (nop)
         )
-        (ref.null extern)
       )
     )
   )

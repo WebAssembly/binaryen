@@ -1,6 +1,6 @@
 (module
  (type $struct (struct (mut i32)))
- (type $extendedstruct (struct i32 f64))
+ (type $extendedstruct (struct (mut i32) f64))
  (type $bytes (array (mut i8)))
 
  (type $void_func (func))
@@ -46,9 +46,9 @@
   (local $x (ref null $bytes))
   (local.set $x
    (array.new_with_rtt $bytes
-    (rtt.canon $bytes)
-    (i32.const 50) ;; size
     (i32.const 42) ;; value to splat into the array
+    (i32.const 50) ;; size
+    (rtt.canon $bytes)
    )
   )
   ;; The length should be 50
@@ -77,26 +77,26 @@
   (local $any anyref)
   ;; Casting null returns null.
   (call $log (ref.is_null
-   (ref.cast $struct (ref.null $struct) (rtt.canon $struct))
+   (ref.cast (ref.null $struct) (rtt.canon $struct))
   ))
   ;; Testing null returns 0.
   (call $log
-   (ref.test $struct (ref.null $struct) (rtt.canon $struct))
+   (ref.test (ref.null $struct) (rtt.canon $struct))
   )
   ;; Testing something completely wrong (struct vs array) returns 0.
   (call $log
-   (ref.test $struct
+   (ref.test
     (array.new_with_rtt $bytes
-     (rtt.canon $bytes)
-     (i32.const 10)
      (i32.const 20)
+     (i32.const 10)
+     (rtt.canon $bytes)
     )
     (rtt.canon $struct)
    )
   )
   ;; Testing a thing with the same RTT returns 1.
   (call $log
-   (ref.test $struct
+   (ref.test
     (struct.new_default_with_rtt $struct
      (rtt.canon $struct)
     )
@@ -105,7 +105,7 @@
   )
   ;; A bad downcast returns 0: we create a struct, which is not a extendedstruct.
   (call $log
-   (ref.test $extendedstruct
+   (ref.test
     (struct.new_default_with_rtt $struct
      (rtt.canon $struct)
     )
@@ -120,21 +120,21 @@
   )
   ;; Casting to y, the exact same RTT, works.
   (call $log
-   (ref.test $extendedstruct
+   (ref.test
     (local.get $any)
     (rtt.sub $extendedstruct (rtt.canon $struct))
    )
   )
   ;; Casting to z, another RTT of the same data type, fails.
   (call $log
-   (ref.test $extendedstruct
+   (ref.test
     (local.get $any)
     (rtt.canon $extendedstruct)
    )
   )
   ;; Casting to x, the parent of y, works.
   (call $log
-   (ref.test $struct
+   (ref.test
     (local.get $any)
     (rtt.canon $struct)
    )
@@ -183,10 +183,15 @@
   ;; array or a struct, so our casting code should not assume it is. it is ok
   ;; to try to cast it, and the result should be 0.
   (call $log
-   (ref.test $struct
+   (ref.test
     (ref.null any)
     (rtt.canon $struct)
    )
+  )
+ )
+ (func $get_data (result dataref)
+  (struct.new_default_with_rtt $struct
+   (rtt.canon $struct)
   )
  )
  (func "br_on_data" (param $x anyref)
@@ -197,7 +202,7 @@
      (br_on_data $data (local.get $x))
     )
     (call $log (i32.const 1))
-    (ref.null data)
+    (call $get_data)
    )
   )
  )
@@ -216,12 +221,12 @@
   (call $log (i32.const 2))
   ;; a valid cast
   (call_ref
-   (ref.cast $void_func (ref.func $a-void-func) (rtt.canon $void_func))
+   (ref.cast (ref.func $a-void-func) (rtt.canon $void_func))
   )
   (call $log (i32.const 3))
   ;; an invalid cast
   (drop (call_ref
-   (ref.cast $int_func (ref.func $a-void-func) (rtt.canon $int_func))
+   (ref.cast (ref.func $a-void-func) (rtt.canon $int_func))
   ))
   ;; will never be reached
   (call $log (i32.const 4))

@@ -331,15 +331,26 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
       }
     }
     void visitScopeName(Name curr) {
-      if (curr.is()) { // try's delegate target can be null
-        // Names are relative, we give the same hash for
-        // (block $x (br $x))
-        // (block $y (br $y))
-        static_assert(sizeof(Index) == sizeof(int32_t),
-                      "wasm64 will need changes here");
-        assert(internalNames.find(curr) != internalNames.end());
-        rehash(digest, internalNames[curr]);
+      // We consider 3 cases here, and prefix a hash value of 0, 1, or 2 to
+      // maximally differentiate them.
+
+      // Try's delegate target can be null.
+      if (!curr.is()) {
+        rehash(digest, 0);
+        return;
       }
+      // Names are relative, we give the same hash for
+      //   (block $x (br $x))
+      //   (block $y (br $y))
+      // But if the name is not known to us, hash the absolute one.
+      if (!internalNames.count(curr)) {
+        rehash(digest, 1);
+        // Perform the same hashing as a generic name.
+        visitNonScopeName(curr);
+        return;
+      }
+      rehash(digest, 2);
+      rehash(digest, internalNames[curr]);
     }
     void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
     void visitType(Type curr) { rehash(digest, curr.getID()); }

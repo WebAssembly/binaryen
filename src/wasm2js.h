@@ -32,6 +32,7 @@
 #include "emscripten-optimizer/optimizer.h"
 #include "ir/branch-utils.h"
 #include "ir/effects.h"
+#include "ir/element-utils.h"
 #include "ir/find_all.h"
 #include "ir/import-utils.h"
 #include "ir/load-utils.h"
@@ -293,7 +294,7 @@ private:
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
-  std::unordered_map<const char*, IString>
+  std::unordered_map<const void*, IString>
     wasmNameToMangledName[(int)NameScope::Max];
   // Set of all mangled names in each scope.
   std::unordered_set<IString> mangledNames[(int)NameScope::Max];
@@ -325,13 +326,8 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       functionsCallableFromOutside.insert(exp->value);
     }
   }
-  for (auto& table : wasm->tables) {
-    for (auto& segment : table->segments) {
-      for (auto name : segment.data) {
-        functionsCallableFromOutside.insert(name);
-      }
-    }
-  }
+  ElementUtils::iterAllElementFunctionNames(
+    wasm, [&](Name name) { functionsCallableFromOutside.insert(name); });
 
   // Ensure the scratch memory helpers.
   // If later on they aren't needed, we'll clean them up.
@@ -635,7 +631,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   Ref theArray = ValueBuilder::makeArray();
   for (auto& table : wasm->tables) {
     if (!table->imported()) {
-      TableUtils::FlatTable flat(*table);
+      TableUtils::FlatTable flat(*wasm, *table);
       if (flat.valid) {
         Name null("null");
         for (auto& name : flat.names) {
@@ -679,28 +675,31 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
 
     if (perElementInit) {
       // TODO: optimize for size
-      for (auto& segment : table->segments) {
-        auto offset = segment.offset;
-        for (Index i = 0; i < segment.data.size(); i++) {
-          Ref index;
-          if (auto* c = offset->dynCast<Const>()) {
-            index = ValueBuilder::makeInt(c->value.geti32() + i);
-          } else if (auto* get = offset->dynCast<GlobalGet>()) {
-            index = ValueBuilder::makeBinary(
-              ValueBuilder::makeName(stringToIString(asmangle(get->name.str))),
-              PLUS,
-              ValueBuilder::makeNum(i));
-          } else {
-            WASM_UNREACHABLE("unexpected expr type");
-          }
-          ast->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-            ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
-                                  index),
-            SET,
-            ValueBuilder::makeName(
-              fromName(segment.data[i], NameScope::Top)))));
-        }
-      }
+      ModuleUtils::iterTableSegments(
+        *wasm, table->name, [&](ElementSegment* segment) {
+          auto offset = segment->offset;
+          ElementUtils::iterElementSegmentFunctionNames(
+            segment, [&](Name entry, Index i) {
+              Ref index;
+              if (auto* c = offset->dynCast<Const>()) {
+                index = ValueBuilder::makeInt(c->value.geti32() + i);
+              } else if (auto* get = offset->dynCast<GlobalGet>()) {
+                index = ValueBuilder::makeBinary(
+                  ValueBuilder::makeName(
+                    stringToIString(asmangle(get->name.str))),
+                  PLUS,
+                  ValueBuilder::makeNum(i));
+              } else {
+                WASM_UNREACHABLE("unexpected expr type");
+              }
+              ast->push_back(
+                ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+                  ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                        index),
+                  SET,
+                  ValueBuilder::makeName(fromName(entry, NameScope::Top)))));
+            });
+        });
     }
   }
 }
@@ -1989,8 +1988,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
-    Ref visitPrefetch(Prefetch* curr) { return ValueBuilder::makeToplevel(); }
-
     Ref visitUnreachable(Unreachable* curr) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
@@ -2122,10 +2119,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitSIMDWiden(SIMDWiden* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

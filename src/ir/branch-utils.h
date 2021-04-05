@@ -83,7 +83,7 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->getCastType());
     } else {
-      assert(expr->is<Try>()); // delegate
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
   });
 }
@@ -135,14 +135,14 @@ inline bool replacePossibleTarget(Expression* branch, Name from, Name to) {
   return worked;
 }
 
-// Replace all delegate targets within the given AST.
-inline void replaceDelegateTargets(Expression* ast, Name from, Name to) {
+// Replace all delegate/rethrow targets within the given AST.
+inline void replaceExceptionTargets(Expression* ast, Name from, Name to) {
   struct Replacer
     : public PostWalker<Replacer, UnifiedExpressionVisitor<Replacer>> {
     Name from, to;
     Replacer(Name from, Name to) : from(from), to(to) {}
     void visitExpression(Expression* curr) {
-      if (curr->is<Try>()) {
+      if (curr->is<Try>() || curr->is<Rethrow>()) {
         operateOnScopeNameUses(curr, [&](Name& name) {
           if (name == from) {
             name = to;
@@ -225,20 +225,14 @@ struct BranchSeeker
   Name target;
 
   Index found = 0;
-  // None indicates no value is sent.
-  Type valueType = Type::none;
+
+  std::unordered_set<Type> types;
 
   BranchSeeker(Name target) : target(target) {}
 
   void noteFound(Type newType) {
     found++;
-    if (newType != Type::none) {
-      if (found == 1) {
-        valueType = newType;
-      } else {
-        valueType = Type::getLeastUpperBound(valueType, newType);
-      }
-    }
+    types.insert(newType);
   }
 
   void visitExpression(Expression* curr) {

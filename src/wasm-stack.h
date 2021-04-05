@@ -118,6 +118,8 @@ public:
   void emitUnreachable();
   void mapLocalsAndEmitHeader();
 
+  MappedLocals mappedLocals;
+
 private:
   void emitMemoryAccess(size_t alignment, size_t bytes, uint32_t offset);
   int32_t getBreakIndex(Name name);
@@ -130,10 +132,12 @@ private:
 
   std::vector<Name> breakStack;
 
+  // The types of locals in the compact form, in order.
+  std::vector<Type> localTypes;
   // type => number of locals of that type in the compact form
-  std::map<Type, size_t> numLocalsByType;
-  // (local index, tuple index) => binary local index
-  std::map<std::pair<Index, Index>, size_t> mappedLocals;
+  std::unordered_map<Type, size_t> numLocalsByType;
+
+  void noteLocalType(Type type);
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract.
@@ -350,6 +354,8 @@ template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   }
   if (curr->isDelegate()) {
     emitDelegate(curr);
+    // Note that when we emit a delegate we do not need to also emit a scope
+    // ending, as the delegate ends the scope.
   } else {
     emitScopeEnd(curr);
   }
@@ -398,6 +404,8 @@ public:
       parent.writeDebugLocation(curr, func);
     }
   }
+
+  MappedLocals& getMappedLocals() { return writer.mappedLocals; }
 
 private:
   WasmBinaryWriter& parent;
@@ -455,6 +463,8 @@ public:
       func(func) {}
 
   void write();
+
+  MappedLocals& getMappedLocals() { return writer.mappedLocals; }
 
 private:
   BinaryInstWriter writer;

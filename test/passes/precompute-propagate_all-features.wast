@@ -172,7 +172,7 @@
   )
   (func $simd-load (result v128)
    (local $x v128)
-   (local.set $x (v8x16.load_splat (i32.const 0)))
+   (local.set $x (v128.load8_splat (i32.const 0)))
    (local.get $x)
   )
   (func $tuple-local (result i32 i64)

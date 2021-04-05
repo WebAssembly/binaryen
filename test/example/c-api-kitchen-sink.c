@@ -261,6 +261,8 @@ void test_features() {
   printf("BinaryenFeatureMultivalue: %d\n", BinaryenFeatureMultivalue());
   printf("BinaryenFeatureGC: %d\n", BinaryenFeatureGC());
   printf("BinaryenFeatureMemory64: %d\n", BinaryenFeatureMemory64());
+  printf("BinaryenFeatureTypedFunctionReferences: %d\n",
+         BinaryenFeatureTypedFunctionReferences());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
@@ -318,7 +320,7 @@ void test_core() {
   BinaryenAddEvent(
     module, "a-event", 0, BinaryenTypeInt32(), BinaryenTypeNone());
 
-  BinaryenAddTable(module, "tab", 0, 100, NULL, 0, makeInt32(module, 0));
+  BinaryenAddTable(module, "tab", 0, 100);
 
   // Exception handling
 
@@ -336,8 +338,11 @@ void test_core() {
   BinaryenExpressionRef catchBody =
     BinaryenDrop(module, BinaryenPop(module, BinaryenTypeInt32()));
   BinaryenExpressionRef catchAllBody = BinaryenNop(module);
-  BinaryenExpressionRef catchBodies[] = {catchBody, catchAllBody};
   const char* catchEvents[] = {"a-event"};
+  BinaryenExpressionRef catchBodies[] = {catchBody, catchAllBody};
+  const char* emptyCatchEvents[] = {};
+  BinaryenExpressionRef emptyCatchBodies[] = {};
+  BinaryenExpressionRef nopCatchBody[] = {BinaryenNop(module)};
 
   BinaryenType i32 = BinaryenTypeInt32();
   BinaryenType i64 = BinaryenTypeInt64();
@@ -398,19 +403,17 @@ void test_core() {
     makeUnary(module, BinaryenSplatVecF32x4(), f32),
     makeUnary(module, BinaryenSplatVecF64x2(), f64),
     makeUnary(module, BinaryenNotVec128(), v128),
+    makeUnary(module, BinaryenAnyTrueVec128(), v128),
     makeUnary(module, BinaryenAbsVecI8x16(), v128),
     makeUnary(module, BinaryenNegVecI8x16(), v128),
-    makeUnary(module, BinaryenAnyTrueVecI8x16(), v128),
     makeUnary(module, BinaryenAllTrueVecI8x16(), v128),
     makeUnary(module, BinaryenBitmaskVecI8x16(), v128),
     makeUnary(module, BinaryenAbsVecI16x8(), v128),
     makeUnary(module, BinaryenNegVecI16x8(), v128),
-    makeUnary(module, BinaryenAnyTrueVecI16x8(), v128),
     makeUnary(module, BinaryenAllTrueVecI16x8(), v128),
     makeUnary(module, BinaryenBitmaskVecI16x8(), v128),
     makeUnary(module, BinaryenAbsVecI32x4(), v128),
     makeUnary(module, BinaryenNegVecI32x4(), v128),
-    makeUnary(module, BinaryenAnyTrueVecI32x4(), v128),
     makeUnary(module, BinaryenAllTrueVecI32x4(), v128),
     makeUnary(module, BinaryenBitmaskVecI32x4(), v128),
     makeUnary(module, BinaryenNegVecI64x2(), v128),
@@ -422,20 +425,16 @@ void test_core() {
     makeUnary(module, BinaryenSqrtVecF64x2(), v128),
     makeUnary(module, BinaryenTruncSatSVecF32x4ToVecI32x4(), v128),
     makeUnary(module, BinaryenTruncSatUVecF32x4ToVecI32x4(), v128),
-    makeUnary(module, BinaryenTruncSatSVecF64x2ToVecI64x2(), v128),
-    makeUnary(module, BinaryenTruncSatUVecF64x2ToVecI64x2(), v128),
     makeUnary(module, BinaryenConvertSVecI32x4ToVecF32x4(), v128),
     makeUnary(module, BinaryenConvertUVecI32x4ToVecF32x4(), v128),
-    makeUnary(module, BinaryenConvertSVecI64x2ToVecF64x2(), v128),
-    makeUnary(module, BinaryenConvertUVecI64x2ToVecF64x2(), v128),
-    makeUnary(module, BinaryenWidenLowSVecI8x16ToVecI16x8(), v128),
-    makeUnary(module, BinaryenWidenHighSVecI8x16ToVecI16x8(), v128),
-    makeUnary(module, BinaryenWidenLowUVecI8x16ToVecI16x8(), v128),
-    makeUnary(module, BinaryenWidenHighUVecI8x16ToVecI16x8(), v128),
-    makeUnary(module, BinaryenWidenLowSVecI16x8ToVecI32x4(), v128),
-    makeUnary(module, BinaryenWidenHighSVecI16x8ToVecI32x4(), v128),
-    makeUnary(module, BinaryenWidenLowUVecI16x8ToVecI32x4(), v128),
-    makeUnary(module, BinaryenWidenHighUVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendLowSVecI8x16ToVecI16x8(), v128),
+    makeUnary(module, BinaryenExtendHighSVecI8x16ToVecI16x8(), v128),
+    makeUnary(module, BinaryenExtendLowUVecI8x16ToVecI16x8(), v128),
+    makeUnary(module, BinaryenExtendHighUVecI8x16ToVecI16x8(), v128),
+    makeUnary(module, BinaryenExtendLowSVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendHighSVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendLowUVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendHighUVecI16x8ToVecI32x4(), v128),
     // Binary
     makeBinary(module, BinaryenAddInt32(), i32),
     makeBinary(module, BinaryenSubFloat64(), f64),
@@ -521,7 +520,6 @@ void test_core() {
     makeBinary(module, BinaryenSubVecI8x16(), v128),
     makeBinary(module, BinaryenSubSatSVecI8x16(), v128),
     makeBinary(module, BinaryenSubSatUVecI8x16(), v128),
-    makeBinary(module, BinaryenMulVecI8x16(), v128),
     makeBinary(module, BinaryenMinSVecI8x16(), v128),
     makeBinary(module, BinaryenMinUVecI8x16(), v128),
     makeBinary(module, BinaryenMaxSVecI8x16(), v128),
@@ -643,10 +641,6 @@ void test_core() {
     // Other SIMD
     makeSIMDShuffle(module),
     makeSIMDTernary(module, BinaryenBitselectVec128()),
-    makeSIMDTernary(module, BinaryenQFMAVecF32x4()),
-    makeSIMDTernary(module, BinaryenQFMSVecF32x4()),
-    makeSIMDTernary(module, BinaryenQFMAVecF64x2()),
-    makeSIMDTernary(module, BinaryenQFMSVecF64x2()),
     // Bulk memory
     makeMemoryInit(module),
     makeDataDrop(module),
@@ -726,8 +720,55 @@ void test_core() {
     BinaryenRefEq(module,
                   BinaryenRefNull(module, BinaryenTypeEqref()),
                   BinaryenRefNull(module, BinaryenTypeEqref())),
+    BinaryenRefIs(module,
+                  BinaryenRefIsFunc(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefIs(module,
+                  BinaryenRefIsData(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefIs(module,
+                  BinaryenRefIsI31(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module,
+                  BinaryenRefAsNonNull(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module,
+                  BinaryenRefAsFunc(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module,
+                  BinaryenRefAsData(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
+    BinaryenRefAs(module,
+                  BinaryenRefAsI31(),
+                  BinaryenRefNull(module, BinaryenTypeAnyref())),
     // Exception handling
-    BinaryenTry(module, tryBody, catchEvents, 1, catchBodies, 2),
+    BinaryenTry(module, NULL, tryBody, catchEvents, 1, catchBodies, 2, NULL),
+    // (try $try_outer
+    //   (do
+    //     (try
+    //       (do
+    //         (throw $a-event (i32.const 0))
+    //       )
+    //       (delegate $try_outer)
+    //     )
+    //   )
+    //   (catch_all)
+    // )
+    BinaryenTry(module,
+                "try_outer",
+                BinaryenTry(module,
+                            NULL,
+                            tryBody,
+                            emptyCatchEvents,
+                            0,
+                            emptyCatchBodies,
+                            0,
+                            "try_outer"),
+                emptyCatchEvents,
+                0,
+                nopCatchBody,
+                1,
+                NULL),
     // Atomics
     BinaryenAtomicStore(
       module,
@@ -803,12 +844,22 @@ void test_core() {
 
   // Function table. One per module
   const char* funcNames[] = { BinaryenFunctionGetName(sinker) };
-  BinaryenSetFunctionTable(module, 1, 1, funcNames, 1, BinaryenConst(module, BinaryenLiteralInt32(0)));
+  BinaryenAddTable(module, "0", 1, 1);
+  BinaryenAddActiveElementSegment(
+    module,
+    "0",
+    "0",
+    funcNames,
+    1,
+    BinaryenConst(module, BinaryenLiteralInt32(0)));
+  BinaryenAddPassiveElementSegment(module, "passive", funcNames, 1);
+  BinaryenAddPassiveElementSegment(module, "p2", funcNames, 1);
+  BinaryenRemoveElementSegment(module, "p2");
 
   // Memory. One per module
 
   const char* segments[] = { "hello, world", "I am passive" };
-  int8_t segmentPassive[] = { 0, 1 };
+  bool segmentPassive[] = {false, true};
   BinaryenExpressionRef segmentOffsets[] = { BinaryenConst(module, BinaryenLiteralInt32(10)), NULL };
   BinaryenIndex segmentSizes[] = { 12, 12 };
   BinaryenSetMemory(module, 1, 256, "mem", segments, segmentPassive, segmentOffsets, segmentSizes, 2, 1);
@@ -831,11 +882,11 @@ void test_core() {
   BinaryenModuleSetFeatures(module, features);
   assert(BinaryenModuleGetFeatures(module) == features);
 
-  // Verify it validates
-  assert(BinaryenModuleValidate(module));
-
   // Print it out
   BinaryenModulePrint(module);
+
+  // Verify it validates
+  assert(BinaryenModuleValidate(module));
 
   // Clean up the module, which owns all the objects we created above
   BinaryenModuleDispose(module);
@@ -1305,7 +1356,7 @@ void test_for_each() {
 
     const char* segments[] = { "hello, world", "segment data 2" };
     const uint32_t expected_offsets[] = { 10, 125 };
-    int8_t segmentPassive[] = { 0, 0 };
+    bool segmentPassive[] = {false, false};
     BinaryenIndex segmentSizes[] = { 12, 14 };
 
     BinaryenExpressionRef segmentOffsets[] = {
@@ -1330,14 +1381,15 @@ void test_for_each() {
       BinaryenFunctionGetName(fns[2])
     };
     BinaryenExpressionRef constExprRef = BinaryenConst(module, BinaryenLiteralInt32(0));
-    BinaryenSetFunctionTable(module, 1, 1, funcNames, 3, constExprRef);
-    assert(0 == BinaryenIsFunctionTableImported(module));
-    assert(1 == BinaryenGetNumFunctionTableSegments(module));
-    assert(constExprRef == BinaryenGetFunctionTableSegmentOffset(module, 0));
-    assert(3 == BinaryenGetFunctionTableSegmentLength(module, 0));
-    for (i = 0; i != BinaryenGetFunctionTableSegmentLength(module, 0); ++i)
-    {
-      const char * str = BinaryenGetFunctionTableSegmentData(module, 0, i);
+    BinaryenAddTable(module, "0", 1, 1);
+    BinaryenAddActiveElementSegment(
+      module, "0", "0", funcNames, 3, constExprRef);
+    assert(1 == BinaryenGetNumElementSegments(module));
+    BinaryenElementSegmentRef segment =
+      BinaryenGetElementSegmentByIndex(module, 0);
+    assert(constExprRef == BinaryenElementSegmentGetOffset(segment));
+    for (i = 0; i != BinaryenElementSegmentGetLength(segment); ++i) {
+      const char* str = BinaryenElementSegmentGetData(segment, i);
       assert(0 == strcmp(funcNames[i], str));
     }
   }

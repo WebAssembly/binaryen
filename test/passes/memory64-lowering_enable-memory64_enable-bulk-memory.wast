@@ -1,6 +1,6 @@
 (module
  (memory $0 i64 1 1)
- (data (i32.const 0) "\00\00\00\00\00\00\00\00\00\00")
+ (data (i64.const 0) "\00\00\00\00\00\00\00\00\00\00")
  (func $func_1
   (local i64)
   (drop (i32.load (i64.const 4)))

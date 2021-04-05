@@ -1079,7 +1079,7 @@ console.log("# SIMDShuffle");
   var left = module.v128.const([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
   var right = module.v128.const([2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]);
   var mask = [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-  const theSIMDShuffle = binaryen.SIMDShuffle(module.v8x16.shuffle(left, right, mask));
+  const theSIMDShuffle = binaryen.SIMDShuffle(module.i8x16.shuffle(left, right, mask));
   assert(theSIMDShuffle instanceof binaryen.SIMDShuffle);
   assert(theSIMDShuffle instanceof binaryen.Expression);
   assert(theSIMDShuffle.left === left);
@@ -1101,7 +1101,7 @@ console.log("# SIMDShuffle");
   assert(
     theSIMDShuffle.toText()
     ==
-    "(v8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n)\n"
+    "(i8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n)\n"
   );
 
   module.dispose();
@@ -1124,23 +1124,11 @@ console.log("# SIMDTernary");
   assert(theSIMDTernary.c === c);
   assert(theSIMDTernary.type === binaryen.v128);
 
-  theSIMDTernary.op = op = binaryen.Operations.QFMAVecF64x2;
-  assert(theSIMDTernary.op === op);
-  theSIMDTernary.a = a = module.v128.const([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]);
-  assert(theSIMDTernary.a === a);
-  theSIMDTernary.b = b = module.v128.const([2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]);
-  assert(theSIMDTernary.b === b);
-  theSIMDTernary.c = c = module.v128.const([3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]);
-  assert(theSIMDTernary.c === c);
-  theSIMDTernary.type = binaryen.f64;
-  theSIMDTernary.finalize();
-  assert(theSIMDTernary.type === binaryen.v128);
-
-  console.log(theSIMDTernary.toText());
+  console.log(theSIMDTernary.toText() + "\n");
   assert(
     theSIMDTernary.toText()
     ==
-    "(f64x2.qfma\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n (v128.const i32x4 0x03030303 0x03030303 0x03030303 0x03030303)\n)\n"
+    "(v128.bitselect\n (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)\n (v128.const i32x4 0x05040302 0x09080706 0x0d0c0b0a 0x11100f0e)\n (v128.const i32x4 0x06050403 0x0a090807 0x0e0d0c0b 0x1211100f)\n)\n"
   );
 
   module.dispose();
@@ -1189,7 +1177,7 @@ console.log("# SIMDLoad");
   var offset = 16;
   var align = 2;
   var ptr = module.i32.const(1);
-  const theSIMDLoad = binaryen.SIMDLoad(module.i16x8.load8x8_s(offset, align, ptr));
+  const theSIMDLoad = binaryen.SIMDLoad(module.v128.load8x8_s(offset, align, ptr));
   assert(theSIMDLoad instanceof binaryen.SIMDLoad);
   assert(theSIMDLoad instanceof binaryen.Expression);
   assert(theSIMDLoad.offset === offset);
@@ -1213,7 +1201,7 @@ console.log("# SIMDLoad");
   assert(
     theSIMDLoad.toText()
     ==
-    "(v8x16.load_splat offset=32 align=4\n (i32.const 2)\n)\n"
+    "(v128.load8_splat offset=32 align=4\n (i32.const 2)\n)\n"
   );
 
   module.dispose();
@@ -1359,13 +1347,18 @@ console.log("# RefIs");
 (function testRefIs() {
   const module = new binaryen.Module();
 
+  var op = binaryen.Operations.RefIsNull;
   var value = module.local.get(1, binaryen.externref);
   const theRefIs = binaryen.RefIs(module.ref.is_null(value));
   assert(theRefIs instanceof binaryen.RefIs);
   assert(theRefIs instanceof binaryen.Expression);
+  assert(theRefIs.op === op);
   assert(theRefIs.value === value);
   assert(theRefIs.type === binaryen.i32);
 
+  theRefIs.op = op = binaryen.Operations.RefIsFunc;
+  assert(theRefIs.op === op);
+  theRefIs.op = op = binaryen.Operations.RefIsNull;
   theRefIs.value = value = module.local.get(2, binaryen.externref);
   assert(theRefIs.value === value);
   theRefIs.type = binaryen.f64;
@@ -1393,6 +1386,54 @@ console.log("# RefIs");
     binaryen.RefIs(module.ref.is_i31(value)).toText()
     ==
     "(ref.is_i31\n (local.get $2)\n)\n"
+  );
+
+  module.dispose();
+})();
+
+console.log("# RefAs");
+(function testRefAs() {
+  const module = new binaryen.Module();
+
+  var op = binaryen.Operations.RefAsNonNull;
+  var value = module.local.get(1, binaryen.anyref);
+  const theRefAs = binaryen.RefAs(module.ref.as_non_null(value));
+  assert(theRefAs instanceof binaryen.RefAs);
+  assert(theRefAs instanceof binaryen.Expression);
+  assert(theRefAs.op === op);
+  assert(theRefAs.value === value);
+  assert(theRefAs.type !== binaryen.i32); // TODO: === (ref any)
+
+  theRefAs.op = op = binaryen.Operations.RefAsFunc;
+  assert(theRefAs.op === op);
+  theRefAs.op = op = binaryen.Operations.RefAsNull;
+  theRefAs.value = value = module.local.get(2, binaryen.anyref);
+  assert(theRefAs.value === value);
+  theRefAs.type = binaryen.f64;
+  theRefAs.finalize();
+  assert(theRefAs.type !== binaryen.f64); // TODO: === (ref any)
+
+  console.log(theRefAs.toText());
+  assert(
+    theRefAs.toText()
+    ==
+    "(ref.as_non_null\n (local.get $2)\n)\n"
+  );
+
+  assert(
+    binaryen.RefAs(module.ref.as_func(value)).toText()
+    ==
+    "(ref.as_func\n (local.get $2)\n)\n"
+  );
+  assert(
+    binaryen.RefAs(module.ref.as_data(value)).toText()
+    ==
+    "(ref.as_data\n (local.get $2)\n)\n"
+  );
+  assert(
+    binaryen.RefAs(module.ref.as_i31(value)).toText()
+    ==
+    "(ref.as_i31\n (local.get $2)\n)\n"
   );
 
   module.dispose();
@@ -1469,7 +1510,7 @@ console.log("# Try");
     module.i32.const(2),
     module.i32.const(3)
   ];
-  const theTry = binaryen.Try(module.try(body, ["event1"], catchBodies));
+  const theTry = binaryen.Try(module.try('', body, ["event1"], catchBodies, ''));
   assert(theTry instanceof binaryen.Try);
   assert(theTry instanceof binaryen.Expression);
   assert(theTry.body === body);
@@ -1523,6 +1564,14 @@ console.log("# Try");
   assert(theTry.type === binaryen.i32);
 
   console.log(theTry.toText());
+
+  const tryDelegate = binaryen.Try(module.try('', body, [], [], "try_blah"));
+  assert(tryDelegate.isDelegate() == 1);
+  assert(tryDelegate.getDelegateTarget() == "try_blah");
+  tryDelegate.setDelegateTarget("try_outer");
+  assert(tryDelegate.getDelegateTarget() == "try_outer");
+  console.log(tryDelegate.toText());
+
   module.dispose();
 })();
 
@@ -1577,14 +1626,14 @@ console.log("# Rethrow");
 (function testRethrow() {
   const module = new binaryen.Module();
 
-  const theRethrow = binaryen.Rethrow(module.rethrow(0));
+  const theRethrow = binaryen.Rethrow(module.rethrow("l0"));
   assert(theRethrow instanceof binaryen.Rethrow);
   assert(theRethrow instanceof binaryen.Expression);
-  assert(theRethrow.depth === 0);
+  assert(theRethrow.target === "l0");
   assert(theRethrow.type === binaryen.unreachable);
 
-  theRethrow.depth = 1
-  assert(theRethrow.depth === 1);
+  theRethrow.target = "l1";
+  assert(theRethrow.target === "l1");
   theRethrow.type = binaryen.f64;
   theRethrow.finalize();
   assert(theRethrow.type === binaryen.unreachable);
@@ -1593,7 +1642,7 @@ console.log("# Rethrow");
   assert(
     theRethrow.toText()
     ==
-    "(rethrow 1)\n"
+    "(rethrow $l1)\n"
   );
 
   module.dispose();

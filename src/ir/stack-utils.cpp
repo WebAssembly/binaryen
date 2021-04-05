@@ -65,10 +65,10 @@ StackSignature::StackSignature(Expression* expr) {
   }
   params = Type(inputs);
   if (expr->type == Type::unreachable) {
-    unreachable = true;
+    kind = Polymorphic;
     results = Type::none;
   } else {
-    unreachable = false;
+    kind = Fixed;
     results = expr->type;
   }
 }
@@ -91,7 +91,7 @@ StackSignature& StackSignature::operator+=(const StackSignature& next) {
   if (stack.size() >= required) {
     stack.resize(stack.size() - required);
   } else {
-    if (!unreachable) {
+    if (kind == Fixed) {
       // Prepend the unsatisfied params of `next` to the current params
       size_t unsatisfied = required - stack.size();
       std::vector<Type> newParams(next.params.begin(),
@@ -102,9 +102,9 @@ StackSignature& StackSignature::operator+=(const StackSignature& next) {
     stack.clear();
   }
   // Add stack values according to next's results
-  if (next.unreachable) {
+  if (next.kind == Polymorphic) {
     results = next.results;
-    unreachable = true;
+    kind = Polymorphic;
   } else {
     stack.insert(stack.end(), next.results.begin(), next.results.end());
     results = Type(stack);
@@ -124,7 +124,7 @@ bool StackSignature::isSubType(StackSignature a, StackSignature b) {
     // `a` consumes or produces more values than `b` can provides or expects.
     return false;
   }
-  if (b.unreachable && !a.unreachable) {
+  if (a.kind == Fixed && b.kind == Polymorphic) {
     // Non-polymorphic sequences cannot be typed as being polymorphic.
     return false;
   }
@@ -148,8 +148,8 @@ bool StackSignature::isSubType(StackSignature a, StackSignature b) {
   if (!resultSuffixMatches) {
     return false;
   }
-  if (a.unreachable) {
-    // The unreachable can consume any additional provided params and produce
+  if (a.kind == Polymorphic) {
+    // The polymorphism can consume any additional provided params and produce
     // any additional expected results, so we are done.
     return true;
   }
@@ -165,12 +165,12 @@ bool StackSignature::isSubType(StackSignature a, StackSignature b) {
 }
 
 bool StackSignature::haveLeastUpperBound(StackSignature a, StackSignature b) {
-  // If a signature is unreachable, the LUB could extend its params and results
+  // If a signature is polymorphic, the LUB could extend its params and results
   // arbitrarily. Otherwise, the LUB must extend its params and results
   // uniformly so that each additional param is a subtype of the corresponding
   // additional result.
   auto extensionCompatible = [](auto self, auto other) -> bool {
-    if (self.unreachable) {
+    if (self.kind == Polymorphic) {
       return true;
     }
     // If no extension, then no problem.
@@ -248,8 +248,9 @@ StackSignature StackSignature::getLeastUpperBound(StackSignature a,
     return Type::getLeastUpperBound(a, b);
   });
 
-  return StackSignature{
-    Type(params), Type(results), a.unreachable && b.unreachable};
+  Kind kind =
+    a.kind == Polymorphic && b.kind == Polymorphic ? Polymorphic : Fixed;
+  return StackSignature{Type(params), Type(results), kind};
 }
 
 StackFlow::StackFlow(Block* block) {
@@ -264,9 +265,10 @@ StackFlow::StackFlow(Block* block) {
     for (auto* expr : block->list) {
       process(expr, StackSignature(expr));
     }
-    bool unreachable = block->type == Type::unreachable;
-    Type params = unreachable ? Type::none : block->type;
-    process(block, StackSignature(params, Type::none, unreachable));
+    auto kind = block->type == Type::unreachable ? StackSignature::Polymorphic
+                                                 : StackSignature::Fixed;
+    Type params = block->type == Type::unreachable ? Type::none : block->type;
+    process(block, StackSignature(params, Type::none, kind));
   };
 
   // We need to make an initial pass through the block to figure out how many
@@ -289,7 +291,7 @@ StackFlow::StackFlow(Block* block) {
       }
 
       // Handle unreachable or produce results
-      if (sig.unreachable) {
+      if (sig.kind == StackSignature::Polymorphic) {
         if (lastUnreachable) {
           producedByUnreachable[lastUnreachable] = produced;
           produced = 0;
@@ -316,13 +318,14 @@ StackFlow::StackFlow(Block* block) {
            "Block inputs not yet supported");
 
     // Unreachable instructions consume all available values
-    size_t consumed = sig.unreachable
+    size_t consumed = sig.kind == StackSignature::Polymorphic
                         ? std::max(values.size(), sig.params.size())
                         : sig.params.size();
 
     // We previously calculated how many values unreachable instructions produce
-    size_t produced =
-      sig.unreachable ? producedByUnreachable[expr] : sig.results.size();
+    size_t produced = sig.kind == StackSignature::Polymorphic
+                        ? producedByUnreachable[expr]
+                        : sig.results.size();
 
     srcs[expr] = std::vector<Location>(consumed);
     dests[expr] = std::vector<Location>(produced);
@@ -376,7 +379,7 @@ StackFlow::StackFlow(Block* block) {
     }
 
     // Update the last unreachable instruction
-    if (sig.unreachable) {
+    if (sig.kind == StackSignature::Polymorphic) {
       assert(producedByUnreachable[lastUnreachable] == 0);
       lastUnreachable = expr;
     }
@@ -394,8 +397,9 @@ StackSignature StackFlow::getSignature(Expression* expr) {
   for (auto& dest : exprDests->second) {
     results.push_back(dest.type);
   }
-  bool unreachable = expr->type == Type::unreachable;
-  return StackSignature(Type(params), Type(results), unreachable);
+  auto kind = expr->type == Type::unreachable ? StackSignature::Polymorphic
+                                              : StackSignature::Fixed;
+  return StackSignature(Type(params), Type(results), kind);
 }
 
 } // namespace wasm

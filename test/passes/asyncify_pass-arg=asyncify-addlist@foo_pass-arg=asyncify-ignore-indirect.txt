@@ -1,12 +1,12 @@
 (module
- (type $none_=>_none (func))
+ (type $t (func))
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
  (import "env" "import" (func $import))
- (memory $0 1 2)
- (table $0 1 funcref)
  (global $__asyncify_state (mut i32) (i32.const 0))
  (global $__asyncify_data (mut i32) (i32.const 0))
+ (memory $0 1 2)
+ (table $0 1 funcref)
  (export "asyncify_start_unwind" (func $asyncify_start_unwind))
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))
@@ -71,7 +71,7 @@
          )
         )
         (block
-         (call_indirect (type $none_=>_none)
+         (call_indirect (type $t)
           (i32.const 0)
          )
          (if
@@ -112,7 +112,7 @@
  )
  (func $bar
   (call $nothing)
-  (call_indirect (type $none_=>_none)
+  (call_indirect (type $t)
    (i32.const 0)
   )
  )

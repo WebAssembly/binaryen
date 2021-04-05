@@ -44,16 +44,19 @@ void ReFinalize::visitBlock(Block* curr) {
     curr->type = Type::none;
     return;
   }
-  // Get the least upper bound type of the last element and all branch return
-  // values
-  curr->type = curr->list.back()->type;
   if (curr->name.is()) {
-    auto iter = breakValues.find(curr->name);
-    if (iter != breakValues.end()) {
-      curr->type = Type::getLeastUpperBound(curr->type, iter->second);
+    auto iter = breakTypes.find(curr->name);
+    if (iter != breakTypes.end()) {
+      // Set the type to be a supertype of the branch types and the flowed-out
+      // type. TODO: calculate proper LUBs to compute a new correct type in this
+      // situation.
+      auto& types = iter->second;
+      types.insert(curr->list.back()->type);
+      curr->type = Type::getLeastUpperBound(types);
       return;
     }
   }
+  curr->type = curr->list.back()->type;
   if (curr->type == Type::unreachable) {
     return;
   }
@@ -112,8 +115,6 @@ void ReFinalize::visitSIMDLoad(SIMDLoad* curr) { curr->finalize(); }
 void ReFinalize::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   curr->finalize();
 }
-void ReFinalize::visitSIMDWiden(SIMDWiden* curr) { curr->finalize(); }
-void ReFinalize::visitPrefetch(Prefetch* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryInit(MemoryInit* curr) { curr->finalize(); }
 void ReFinalize::visitDataDrop(DataDrop* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryCopy(MemoryCopy* curr) { curr->finalize(); }
@@ -178,17 +179,16 @@ void ReFinalize::visitFunction(Function* curr) {
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitElementSegment(ElementSegment* curr) {
+  WASM_UNREACHABLE("unimp");
+}
 void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {
   if (type != Type::unreachable) {
-    if (breakValues.count(name) == 0) {
-      breakValues[name] = type;
-    } else {
-      breakValues[name] = Type::getLeastUpperBound(breakValues[name], type);
-    }
+    breakTypes[name].insert(type);
   }
 }
 
