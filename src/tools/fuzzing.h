@@ -426,18 +426,31 @@ private:
 
   // TODO(reference-types): allow the fuzzer to create multiple tables
   void setupTables() {
-    // Ensure an element segment, adding one or even adding a whole table as
-    // needed.
-    if (wasm.tables.empty()) {
-      auto table = builder.makeTable(
+    // Ensure a funcref element segment and table exist. Segments with more
+    // specific function types may have a smaller chance of getting functions.
+    Table* table = nullptr;
+    auto iter =
+      std::find_if(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
+        return table->type == Type::funcref;
+      });
+    if (iter != wasm.tables.end()) {
+      table = iter->get();
+    } else {
+      auto tablePtr = builder.makeTable(
         Names::getValidTableName(wasm, "fuzzing_table"), Type::funcref, 0, 0);
-      table->hasExplicitName = true;
-      wasm.addTable(std::move(table));
+      tablePtr->hasExplicitName = true;
+      table = wasm.addTable(std::move(tablePtr));
     }
-    if (wasm.elementSegments.empty()) {
+    bool hasFuncrefElemSegment = std::any_of(
+      wasm.elementSegments.begin(),
+      wasm.elementSegments.end(),
+      [&](auto& segment) {
+        return segment->table.is() && segment->type == Type::funcref;
+      });
+    if (!hasFuncrefElemSegment) {
       // TODO: use a random table
       auto segment = std::make_unique<ElementSegment>(
-        wasm.tables[0]->name, builder.makeConst(int32_t(0)));
+        table->name, builder.makeConst(int32_t(0)));
       segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
       wasm.addElementSegment(std::move(segment));
     }
@@ -722,10 +735,16 @@ private:
     }
     // add some to an elem segment
     while (oneIn(3) && !finishedInput) {
-      auto& randomElem =
-        wasm.elementSegments[upTo(wasm.elementSegments.size())];
-      // FIXME: make the type NonNullable when we support it!
       auto type = Type(HeapType(func->sig), Nullable);
+      std::vector<ElementSegment*> compatibleSegments;
+      ModuleUtils::iterActiveElementSegments(
+        wasm, [&](ElementSegment* segment) {
+          if (Type::isSubType(type, segment->type)) {
+            compatibleSegments.push_back(segment);
+          }
+        });
+      auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
+      // FIXME: make the type NonNullable when we support it!
       randomElem->data.push_back(builder.makeRefFunc(func->name, type));
     }
     numAddedFunctions++;
