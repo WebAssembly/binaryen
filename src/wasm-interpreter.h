@@ -1617,13 +1617,14 @@ public:
     }
     const auto& element = curr->rtt->type.getHeapType().getArray().element;
     Index num = size.getSingleValue().geti32();
-    Literals data;
-    try {
-      Literals allocation(num);
-      data = std::move(allocation);
-    } catch (std::bad_alloc&) {
+    // Arbitrary deterministic limit on size. If we need to allocate a Literals
+    // vector that takes around 1-2GB of memory then we are likely to hit memory
+    // limits on 32-bit machines, and in particular on wasm32 VMs that do not
+    // have 4GB support, so give up there.
+    if (num >= (1 << 30) / sizeof(Literal)) {
       trap("allocation failure");
     }
+    Literals data(num);
     if (curr->isWithDefault()) {
       for (Index i = 0; i < num; i++) {
         data[i] = Literal::makeZero(element.type);
