@@ -49,14 +49,9 @@
  (export "rtts" (func $2))
  (export "br_on_cast" (func $3))
  (export "cast-null-anyref-to-gc" (func $4))
-<<<<<<< HEAD
- (export "br_on_data" (func $5))
- (export "rtt-and-cast-on-func" (func $7))
- (export "array-alloc-failure" (func $8))
-=======
  (export "br_on_data" (func $6))
- (export "$rtt-and-cast-on-func" (func $8))
->>>>>>> origin/main
+ (export "rtt-and-cast-on-func" (func $8))
+ (export "array-alloc-failure" (func $9))
  (func $0 (; has Stack IR ;)
   (local $0 (ref null $struct))
   (call $log
@@ -243,7 +238,7 @@
    (i32.const 4)
   )
  )
- (func $8 (; has Stack IR ;)
+ (func $9 (; has Stack IR ;)
   (nop)
  )
 )

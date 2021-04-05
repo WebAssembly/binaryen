@@ -234,8 +234,8 @@
  (func "array-alloc-failure"
   (drop
    (array.new_default_with_rtt $bytes
-    (rtt.canon $bytes)
     (i32.const -1) ;; un-allocatable size (4GB * sizeof(Literal))
+    (rtt.canon $bytes)
    )
   )
  )
