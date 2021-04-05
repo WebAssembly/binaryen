@@ -14,11 +14,11 @@
  (func (export "v128.const.i64x2") (result v128) (v128.const i64x2 1 2))
  (func (export "v128.const.f32x4") (result v128) (v128.const f32x4 1.0 2 3 4))
  (func (export "v128.const.f64x2") (result v128) (v128.const f64x2 1.0 2))
- (func (export "v128.shuffle_interleave_bytes") (param $0 v128) (param $1 v128) (result v128)
-   (v128.shuffle 0 17 2 19 4 21 6 23 8 25 10 27 12 29 14 31 (local.get $0) (local.get $1))
+ (func (export "i8x16.shuffle_interleave_bytes") (param $0 v128) (param $1 v128) (result v128)
+   (i8x16.shuffle 0 17 2 19 4 21 6 23 8 25 10 27 12 29 14 31 (local.get $0) (local.get $1))
  )
- (func (export "v128.shuffle_reverse_i32s") (param $0 v128) (result v128)
-   (v128.shuffle 12 13 14 15 8 9 10 11 4 5 6 7 0 1 2 3 (local.get $0) (local.get $0))
+ (func (export "i8x16.shuffle_reverse_i32s") (param $0 v128) (result v128)
+   (i8x16.shuffle 12 13 14 15 8 9 10 11 4 5 6 7 0 1 2 3 (local.get $0) (local.get $0))
  )
  (func (export "i8x16.splat") (param $0 i32) (result v128) (i8x16.splat (local.get $0)))
  (func (export "i8x16.extract_lane_s_first") (param $0 v128) (result i32) (i8x16.extract_lane_s 0 (local.get $0)))
@@ -239,7 +239,7 @@
  (func (export "v128.load32x2_s") (param $0 i32) (result v128) (v128.load32x2_s (local.get $0)))
  (func (export "v128.load32_zero") (param $0 i32) (result v128) (v128.load32_zero (local.get $0)))
  (func (export "v128.load64_zero") (param $0 i32) (result v128) (v128.load64_zero (local.get $0)))
- (func (export "v128.swizzle") (param $0 v128) (param $1 v128) (result v128) (v128.swizzle (local.get $0) (local.get $1)))
+ (func (export "i8x16.swizzle") (param $0 v128) (param $1 v128) (result v128) (i8x16.swizzle (local.get $0) (local.get $1)))
 )
 ;; TODO: Additional f64x2 conversions if specified
 
@@ -257,13 +257,13 @@
 (assert_return (invoke "v128.const.f32x4") (v128.const f32x4 1 2 3 4))
 (assert_return (invoke "v128.const.f64x2") (v128.const f64x2 1 2))
 (assert_return
-  (invoke "v128.shuffle_interleave_bytes"
+  (invoke "i8x16.shuffle_interleave_bytes"
     (v128.const i8x16 1 0 3 0 5 0 7 0 9 0 11 0 13 0 15 0)
     (v128.const i8x16 0 2 0 4 0 6 0 8 0 10 0 12 0 14 0 16)
   )
   (v128.const i8x16 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16)
 )
-(assert_return (invoke "v128.shuffle_reverse_i32s" (v128.const i32x4 1 2 3 4)) (v128.const i32x4 4 3 2 1))
+(assert_return (invoke "i8x16.shuffle_reverse_i32s" (v128.const i32x4 1 2 3 4)) (v128.const i32x4 4 3 2 1))
 
 ;; i8x16 lane accesses
 (assert_return (invoke "i8x16.splat" (i32.const 5)) (v128.const i8x16 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5 5))
@@ -978,7 +978,7 @@
 (assert_return (invoke "v128.load32_zero" (i32.const 256)) (v128.const i32x4 0xb0a09080 0 0 0))
 (assert_return (invoke "v128.load64_zero" (i32.const 256)) (v128.const i64x2 0xf0e0d0c0b0a09080 0))
 (assert_return
-  (invoke "v128.swizzle"
+  (invoke "i8x16.swizzle"
     (v128.const i8x16 0xf0 0xf1 0xf2 0xf3 0xf4 0xf5 0xf6 0xf7 0xf8 0xf9 0xfa 0xfb 0xfc 0xfd 0xfe 0xff)
     (v128.const i8x16 0 4 8 12 16 255 129 128 127 17 15 13 12 8 4 0)
   )

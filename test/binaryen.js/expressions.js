@@ -1079,7 +1079,7 @@ console.log("# SIMDShuffle");
   var left = module.v128.const([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
   var right = module.v128.const([2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]);
   var mask = [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-  const theSIMDShuffle = binaryen.SIMDShuffle(module.v128.shuffle(left, right, mask));
+  const theSIMDShuffle = binaryen.SIMDShuffle(module.i8x16.shuffle(left, right, mask));
   assert(theSIMDShuffle instanceof binaryen.SIMDShuffle);
   assert(theSIMDShuffle instanceof binaryen.Expression);
   assert(theSIMDShuffle.left === left);
@@ -1101,7 +1101,7 @@ console.log("# SIMDShuffle");
   assert(
     theSIMDShuffle.toText()
     ==
-    "(v128.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n)\n"
+    "(i8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n)\n"
   );
 
   module.dispose();

@@ -1420,12 +1420,6 @@ function wrapModule(module, self = {}) {
   };
 
   self['v128'] = {
-    'shuffle'(left, right, mask) {
-      return preserveStack(() => Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask)));
-    },
-    'swizzle'(left, right) {
-      return Module['_BinaryenBinary'](module, Module['SwizzleVec8x16'], left, right);
-    },
     'load'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 16, false, offset, align, Module['v128'], ptr);
     },
@@ -1496,6 +1490,12 @@ function wrapModule(module, self = {}) {
   };
 
   self['i8x16'] = {
+    'shuffle'(left, right, mask) {
+      return preserveStack(() => Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask)));
+    },
+    'swizzle'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['SwizzleVec8x16'], left, right);
+    },
     'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI8x16'], value);
     },

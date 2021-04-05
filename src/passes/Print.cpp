@@ -639,7 +639,7 @@ struct PrintExpressionContents
   }
   void visitSIMDShuffle(SIMDShuffle* curr) {
     prepareColor(o);
-    o << "v128.shuffle";
+    o << "i8x16.shuffle";
     restoreNormalColor(o);
     for (uint8_t mask_index : curr->mask) {
       o << " " << std::to_string(mask_index);
@@ -1789,7 +1789,7 @@ struct PrintExpressionContents
         break;
 
       case SwizzleVec8x16:
-        o << "v128.swizzle";
+        o << "i8x16.swizzle";
         break;
 
       case InvalidBinary:

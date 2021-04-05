@@ -1137,7 +1137,7 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->type, Type(Type::v128), curr, "v128.shuffle must have type v128");
+    curr->type, Type(Type::v128), curr, "i8x16.shuffle must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
     curr->left->type, Type(Type::v128), curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(

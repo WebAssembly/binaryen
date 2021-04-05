@@ -438,7 +438,7 @@ function test_core() {
     module.i8x16.narrow_i16x8_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.narrow_i32x4_s(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     module.i16x8.narrow_i32x4_u(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
-    module.v128.swizzle(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
+    module.i8x16.swizzle(module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // SIMD lane manipulation
     module.i8x16.extract_lane_s(module.v128.const(v128_bytes), 1),
     module.i8x16.extract_lane_u(module.v128.const(v128_bytes), 1),
@@ -479,7 +479,7 @@ function test_core() {
     module.v128.load32x2_s(0, 8, module.i32.const(128)),
     module.v128.load32x2_u(0, 8, module.i32.const(128)),
     // Other SIMD
-    module.v128.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
+    module.i8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // Bulk memory
     module.memory.init(0, makeInt32(1024), makeInt32(0), makeInt32(12)),

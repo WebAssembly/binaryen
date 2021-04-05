@@ -1394,7 +1394,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (v128.swizzle
+       (i8x16.swizzle
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1598,7 +1598,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (v128.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+       (i8x16.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -3192,7 +3192,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (v128.swizzle
+       (i8x16.swizzle
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -3396,7 +3396,7 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
-       (v128.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+       (i8x16.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
