@@ -509,6 +509,12 @@ uint32_t WasmBinaryWriter::getTableIndex(Name name) const {
   return it->second;
 }
 
+uint32_t WasmBinaryWriter::getElementSegmentIndex(Name name) const {
+  auto it = indexes.elemIndexes.find(name);
+  assert(it != indexes.elemIndexes.end());
+  return it->second;
+}
+
 uint32_t WasmBinaryWriter::getGlobalIndex(Name name) const {
   auto it = indexes.globalIndexes.find(name);
   assert(it != indexes.globalIndexes.end());
@@ -1917,10 +1923,20 @@ Name WasmBinaryBuilder::getFunctionName(Index index) {
 }
 
 Name WasmBinaryBuilder::getTableName(Index index) {
-  if (index >= wasm.tables.size()) {
+  auto* table = getTable(index);
+  if (!table) {
     throwError("invalid table index");
   }
-  return wasm.tables[index]->name;
+  return table->name;
+}
+
+Name WasmBinaryBuilder::getElementSegmentName(Index index) {
+  auto* segment = getElementSegment(index);
+  if (!segment) {
+    std::cerr << "invalid elementSegments index: " << index << '\n';
+    throwError("invalid elementSegments index");
+  }
+  return segment->name;
 }
 
 Name WasmBinaryBuilder::getGlobalName(Index index) {
@@ -1935,6 +1951,28 @@ Name WasmBinaryBuilder::getEventName(Index index) {
     throwError("invalid event index");
   }
   return wasm.events[index]->name;
+}
+
+Table* WasmBinaryBuilder::getTable(Index index) {
+  if (index < wasm.tables.size()) {
+    return wasm.tables[index].get();
+  }
+  auto numTableImports = tableImports.size();
+  if (index < numTableImports) {
+    return tableImports[index];
+  } else if (index - numTableImports < tables.size()) {
+    return tables[index - numTableImports].get();
+  }
+  return nullptr;
+}
+ElementSegment* WasmBinaryBuilder::getElementSegment(Index index) {
+  if (index < wasm.elementSegments.size()) {
+    return wasm.elementSegments[index].get();
+  }
+  if (index >= elementSegments.size()) {
+    return nullptr;
+  }
+  return elementSegments.at(index).get();
 }
 
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
@@ -2695,9 +2733,41 @@ void WasmBinaryBuilder::processNames() {
   for (auto& iter : tableRefs) {
     size_t index = iter.first;
     auto& refs = iter.second;
-    for (auto* ref : refs) {
-      if (auto* callIndirect = ref->dynCast<CallIndirect>()) {
+    for (auto& ref : refs) {
+      if (auto* callIndirect = ref.second->dynCast<CallIndirect>()) {
         callIndirect->table = getTableName(index);
+      } else if (auto* tableGet = ref.second->dynCast<TableGet>()) {
+        tableGet->table = getTableName(index);
+      } else if (auto* tableSet = ref.second->dynCast<TableSet>()) {
+        tableSet->table = getTableName(index);
+      } else if (auto* tableSize = ref.second->dynCast<TableSize>()) {
+        tableSize->table = getTableName(index);
+      } else if (auto* tableGrow = ref.second->dynCast<TableGrow>()) {
+        tableGrow->table = getTableName(index);
+      } else if (auto* tableFill = ref.second->dynCast<TableFill>()) {
+        tableFill->table = getTableName(index);
+      } else if (auto* tableInit = ref.second->dynCast<TableInit>()) {
+        tableInit->table = getTableName(index);
+      } else if (auto* tableInit = ref.second->dynCast<TableCopy>()) {
+        if (ref.first == "srcTable") {
+          tableInit->srcTable = getTableName(index);
+        } else if (ref.first == "dstTable") {
+          tableInit->destTable = getTableName(index);
+        }
+      } else {
+        WASM_UNREACHABLE("Invalid type in table references");
+      }
+    }
+  }
+
+  for (auto& iter : elemRefs) {
+    size_t index = iter.first;
+    auto& refs = iter.second;
+    for (auto* ref : refs) {
+      if (auto* tableInit = ref->dynCast<TableInit>()) {
+        tableInit->segment = getElementSegmentName(index);
+      } else if (auto* elemDrop = ref->dynCast<ElemDrop>()) {
+        elemDrop->segment = getElementSegmentName(index);
       } else {
         WASM_UNREACHABLE("Invalid type in table references");
       }
@@ -3375,6 +3445,12 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::Rethrow:
       visitRethrow((curr = allocator.alloc<Rethrow>())->cast<Rethrow>());
       break;
+    case BinaryConsts::TableGet:
+      visitTableGet((curr = allocator.alloc<TableGet>())->cast<TableGet>());
+      break;
+    case BinaryConsts::TableSet:
+      visitTableSet((curr = allocator.alloc<TableSet>())->cast<TableSet>());
+      break;
     case BinaryConsts::MemorySize: {
       auto size = allocator.alloc<MemorySize>();
       if (wasm.memory.is64()) {
@@ -3450,6 +3526,25 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
       if (maybeVisitMemoryFill(curr, opcode)) {
         break;
       }
+      if (maybeVisitTableSize(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitTableGrow(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitTableFill(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitTableCopy(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitTableInit(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitElemDrop(curr, opcode)) {
+        break;
+      }
+
       throwError("invalid code after nontrapping float-to-int prefix: " +
                  std::to_string(opcode));
       break;
@@ -3885,7 +3980,7 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  tableRefs[tableIdx].push_back(curr);
+  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
   curr->finalize();
 }
 
@@ -4689,6 +4784,102 @@ bool WasmBinaryBuilder::maybeVisitTruncSat(Expression*& out, uint32_t code) {
   }
   BYN_TRACE("zz node: Unary (nontrapping float-to-int)\n");
   curr->value = popNonVoidExpression();
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitTableSize(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableSize) {
+    return false;
+  }
+
+  auto* curr = allocator.alloc<TableSize>();
+  Index tableIdx = getU32LEB();
+  curr->table = getTableName(tableIdx);
+  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  curr->finalize();
+  out = curr;
+  return true;
+}
+bool WasmBinaryBuilder::maybeVisitTableGrow(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableGrow) {
+    return false;
+  }
+
+  auto* curr = allocator.alloc<TableGrow>();
+  Index tableIdx = getU32LEB();
+  curr->table = getTableName(tableIdx);
+  curr->delta = popNonVoidExpression();
+  curr->initialValue = popNonVoidExpression();
+  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  curr->finalize();
+  out = curr;
+  return true;
+}
+bool WasmBinaryBuilder::maybeVisitTableFill(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableFill) {
+    return false;
+  }
+
+  auto* curr = allocator.alloc<TableFill>();
+  Index tableIdx = getU32LEB();
+  curr->table = getTableName(tableIdx);
+  curr->size = popNonVoidExpression();
+  curr->value = popNonVoidExpression();
+  curr->dest = popNonVoidExpression();
+  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  curr->finalize();
+  out = curr;
+  return true;
+}
+bool WasmBinaryBuilder::maybeVisitTableCopy(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableCopy) {
+    return false;
+  }
+
+  auto* curr = allocator.alloc<TableCopy>();
+  Index srcTableIdx = getU32LEB();
+  Index destTableIdx = getU32LEB();
+  curr->srcTable = getTableName(srcTableIdx);
+  curr->destTable = getTableName(destTableIdx);
+  curr->size = popNonVoidExpression();
+  curr->srcOffset = popNonVoidExpression();
+  curr->destOffset = popNonVoidExpression();
+  tableRefs[srcTableIdx].push_back(std::make_pair("srcTable", curr));
+  tableRefs[destTableIdx].push_back(std::make_pair("destTable", curr));
+  curr->finalize();
+  out = curr;
+  return true;
+}
+bool WasmBinaryBuilder::maybeVisitTableInit(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableInit) {
+    return false;
+  }
+
+  auto* curr = allocator.alloc<TableInit>();
+  Index tableIdx = getU32LEB();
+  curr->segment = getElementSegmentName(tableIdx);
+  Index elemIdx = getU32LEB();
+  curr->table = getTableName(elemIdx);
+  curr->size = popNonVoidExpression();
+  curr->srcOffset = popNonVoidExpression();
+  curr->destOffset = popNonVoidExpression();
+  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  elemRefs[elemIdx].push_back(curr);
+  curr->finalize();
+  out = curr;
+  return true;
+}
+bool WasmBinaryBuilder::maybeVisitElemDrop(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::ElemDrop) {
+    return false;
+  }
+
+  auto* curr = allocator.alloc<ElemDrop>();
+  Index elemIdx = getU32LEB();
+  curr->segment = getElementSegmentName(elemIdx);
+  elemRefs[elemIdx].push_back(curr);
   curr->finalize();
   out = curr;
   return true;
@@ -5962,6 +6153,26 @@ void WasmBinaryBuilder::visitReturn(Return* curr) {
   if (currFunction->sig.results.isConcrete()) {
     curr->value = popTypedExpression(currFunction->sig.results);
   }
+  curr->finalize();
+}
+
+void WasmBinaryBuilder::visitTableGet(TableGet* curr) {
+  BYN_TRACE("zz node: TableGet\n");
+  Index tableIdx = getU32LEB();
+  auto* table = getTable(tableIdx);
+  curr->table = table->name;
+  curr->offset = popNonVoidExpression();
+  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  curr->finalize(table->type);
+}
+
+void WasmBinaryBuilder::visitTableSet(TableSet* curr) {
+  BYN_TRACE("zz node: TableSet\n");
+  Index tableIdx = getU32LEB();
+  curr->table = getTableName(tableIdx);
+  curr->value = popNonVoidExpression();
+  curr->offset = popNonVoidExpression();
+  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
   curr->finalize();
 }
 

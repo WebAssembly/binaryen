@@ -1291,6 +1291,14 @@ public:
   Flow visitDataDrop(DataDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitMemoryCopy(MemoryCopy* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitMemoryFill(MemoryFill* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableGet(TableGet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSet(TableSet* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableSize(TableSize* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitElemDrop(ElemDrop* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitAtomicRMW(AtomicRMW* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitAtomicCmpxchg(AtomicCmpxchg* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitAtomicWait(AtomicWait* curr) { WASM_UNREACHABLE("unimp"); }
@@ -1970,6 +1978,38 @@ public:
     NOTE_ENTER("MemoryFill");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableGet(TableGet* curr) {
+    NOTE_ENTER("TableGet");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableSet(TableSet* curr) {
+    NOTE_ENTER("TableSet");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableSize(TableSize* curr) {
+    NOTE_ENTER("TableSize");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableGrow(TableGrow* curr) {
+    NOTE_ENTER("TableGrow");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableFill(TableFill* curr) {
+    NOTE_ENTER("TableFill");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableCopy(TableCopy* curr) {
+    NOTE_ENTER("TableCopy");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitElemDrop(ElemDrop* curr) {
+    NOTE_ENTER("ElemDrop");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitAtomicRMW(AtomicRMW* curr) {
     NOTE_ENTER("AtomicRMW");
     return Flow(NONCONSTANT_FLOW);
@@ -2213,8 +2253,14 @@ public:
       WASM_UNREACHABLE("unimp");
     }
 
-    virtual void
-    tableStore(Name tableName, Address addr, const Literal& entry) {
+    virtual void tableStore(Name tableName, Index addr, const Literal& entry) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual const Literal& tableLoad(Name tableName, Index addr) {
+      WASM_UNREACHABLE("unimp");
+    }
+    virtual Index tableSize(Name tableName) { WASM_UNREACHABLE("unimp"); }
+    virtual Index growTable(Name tableName, Index delta, Literal initialValue) {
       WASM_UNREACHABLE("unimp");
     }
   };
@@ -2298,24 +2344,36 @@ private:
   // stack traces.
   std::vector<Name> functionStack;
 
-  std::unordered_set<size_t> droppedSegments;
+  std::unordered_set<size_t> droppedDataSegments;
+  std::unordered_set<Name> droppedElementSegments;
 
   void initializeTableContents() {
+    Const offset;
+    offset.value = Literal(uint32_t(0));
+    offset.finalize();
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
-      Address offset =
-        (uint32_t)InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
-          .visit(segment->offset)
-          .getSingleValue()
-          .geti32();
+      Const size;
+      size.value = Literal(uint32_t(segment->data.size()));
+      size.finalize();
+
+      TableInit init;
+      init.segment = segment->name;
+      init.table = segment->table;
+      init.destOffset = segment->offset;
+      init.srcOffset = &offset;
+      init.size = &size;
+      init.finalize();
+
+      ElemDrop drop;
+      drop.segment = segment->name;
+      drop.finalize();
 
       Function dummyFunc;
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
-      for (Index i = 0; i < segment->data.size(); ++i) {
-        Flow ret = runner.visit(segment->data[i]);
-        externalInterface->tableStore(
-          segment->table, offset + i, ret.getSingleValue());
-      }
+      runner.visit(&init);
+      runner.visit(&drop);
     });
   }
 
@@ -2931,7 +2989,7 @@ private:
       Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
       if (offsetVal + sizeVal > 0 &&
-          instance.droppedSegments.count(curr->segment)) {
+          instance.droppedDataSegments.count(curr->segment)) {
         trap("out of bounds segment access in memory.init");
       }
       if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
@@ -2950,7 +3008,7 @@ private:
     }
     Flow visitDataDrop(DataDrop* curr) {
       NOTE_ENTER("DataDrop");
-      instance.droppedSegments.insert(curr->segment);
+      instance.droppedDataSegments.insert(curr->segment);
       return {};
     }
     Flow visitMemoryCopy(MemoryCopy* curr) {
@@ -3030,6 +3088,173 @@ private:
         instance.externalInterface->store8(
           instance.getFinalAddressWithoutOffset(Literal(destVal + i), 1), val);
       }
+      return {};
+    }
+    Flow visitTableGet(TableGet* curr) {
+      NOTE_ENTER("TableGet");
+      Flow offset = this->visit(curr->offset);
+      if (offset.breaking()) {
+        return offset;
+      }
+      return instance.externalInterface->tableLoad(
+        curr->table, offset.getSingleValue().geti32());
+    }
+    Flow visitTableSet(TableSet* curr) {
+      NOTE_ENTER("TableSet");
+      Flow offset = this->visit(curr->offset);
+      if (offset.breaking()) {
+        return offset;
+      }
+      Flow value = this->visit(curr->value);
+      if (value.breaking()) {
+        return value;
+      }
+      instance.externalInterface->tableStore(
+        curr->table, offset.getSingleValue().geti32(), value.getSingleValue());
+      return {};
+    }
+    Flow visitTableSize(TableSize* curr) {
+      NOTE_ENTER("TableSize");
+      auto tableSize = instance.externalInterface->tableSize(curr->table);
+      return Literal::makeFromInt32(tableSize, Type::i32);
+    }
+    Flow visitTableGrow(TableGrow* curr) {
+      NOTE_ENTER("TableGrow");
+      Flow delta = this->visit(curr->delta);
+      if (delta.breaking()) {
+        return delta;
+      }
+      Flow initialValue = this->visit(curr->initialValue);
+      if (initialValue.breaking()) {
+        return initialValue;
+      }
+      auto deltaVal = delta.getSingleValue().geti32();
+      auto* table = instance.wasm.getTable(curr->table);
+      auto tableSize = instance.externalInterface->tableSize(curr->table);
+      if (tableSize + deltaVal > table->max) {
+        return Flow(Literal::makeFromInt32(-1, Type::i32));
+      }
+      auto ret = instance.externalInterface->growTable(
+        curr->table, deltaVal, initialValue.getSingleValue());
+      return Flow(Literal::makeFromInt32(ret, Type::i32));
+    }
+    Flow visitTableFill(TableFill* curr) {
+      NOTE_ENTER("TableFill");
+      Flow dest = this->visit(curr->dest);
+      if (dest.breaking()) {
+        return dest;
+      }
+      Flow value = this->visit(curr->value);
+      if (value.breaking()) {
+        return value;
+      }
+      Flow size = this->visit(curr->size);
+      if (size.breaking()) {
+        return size;
+      }
+      NOTE_EVAL1(dest);
+      NOTE_EVAL1(value);
+      NOTE_EVAL1(size);
+      Index destVal(dest.getSingleValue().getUnsigned());
+      Index sizeVal(size.getSingleValue().getUnsigned());
+
+      auto tableSize = instance.externalInterface->tableSize(curr->table);
+      if (destVal > tableSize * Table::kPageSize ||
+          sizeVal > tableSize * Table::kPageSize ||
+          destVal + sizeVal > tableSize * Table::kPageSize) {
+        trap("out of bounds table access in table.fill");
+      }
+      for (size_t i = 0; i < sizeVal; ++i) {
+        instance.externalInterface->tableStore(
+          curr->table, destVal + i, value.getSingleValue());
+      }
+      return {};
+    }
+    Flow visitTableCopy(TableCopy* curr) {
+      NOTE_ENTER("TableCopy");
+      Flow destOffset = this->visit(curr->destOffset);
+      if (destOffset.breaking()) {
+        return destOffset;
+      }
+      Flow srcOffset = this->visit(curr->srcOffset);
+      if (srcOffset.breaking()) {
+        return srcOffset;
+      }
+      Flow size = this->visit(curr->size);
+      if (size.breaking()) {
+        return size;
+      }
+      NOTE_EVAL1(destOffset);
+      NOTE_EVAL1(srcOffset);
+      NOTE_EVAL1(size);
+
+      Index destOffsetVal(destOffset.getSingleValue().geti32());
+      Index srcOffsetVal(uint32_t(srcOffset.getSingleValue().geti32()));
+      Index sizeVal(uint32_t(size.getSingleValue().geti32()));
+
+      auto srcTableSize = instance.externalInterface->tableSize(curr->srcTable);
+      if ((uint64_t)srcOffsetVal + sizeVal > srcTableSize * Table::kPageSize) {
+        trap("out of bounds source table access in table.copy");
+      }
+      auto destTableSize =
+        instance.externalInterface->tableSize(curr->destTable);
+      if ((uint64_t)destOffsetVal + sizeVal >
+          destTableSize * Table::kPageSize) {
+        trap("out of bounds destination table access in table.copy");
+      }
+      for (size_t i = 0; i < sizeVal; ++i) {
+        const Literal& item = instance.externalInterface->tableLoad(
+          curr->srcTable, srcOffsetVal + i);
+        instance.externalInterface->tableStore(
+          curr->destTable, destOffsetVal + i, item);
+      }
+      return {};
+    }
+    Flow visitTableInit(TableInit* curr) {
+      NOTE_ENTER("TableInit");
+      Flow destOffset = this->visit(curr->destOffset);
+      if (destOffset.breaking()) {
+        return destOffset;
+      }
+      Flow srcOffset = this->visit(curr->srcOffset);
+      if (srcOffset.breaking()) {
+        return srcOffset;
+      }
+      Flow size = this->visit(curr->size);
+      if (size.breaking()) {
+        return size;
+      }
+      NOTE_EVAL1(destOffset);
+      NOTE_EVAL1(srcOffset);
+      NOTE_EVAL1(size);
+
+      auto segment = instance.wasm.getElementSegment(curr->segment);
+
+      Index destOffsetVal(destOffset.getSingleValue().geti32());
+      Index srcOffsetVal(uint32_t(srcOffset.getSingleValue().geti32()));
+      Index sizeVal(uint32_t(size.getSingleValue().geti32()));
+
+      if (srcOffsetVal + sizeVal > 0 &&
+          instance.droppedElementSegments.count(curr->segment)) {
+        trap("out of bounds segment access in table.init");
+      }
+      if ((uint64_t)srcOffsetVal + sizeVal > segment->data.size()) {
+        trap("out of bounds segment access in table.init");
+      }
+      auto tableSize = instance.externalInterface->tableSize(curr->table);
+      if ((uint64_t)destOffsetVal + sizeVal > tableSize * Table::kPageSize) {
+        trap("out of bounds table access in table.init");
+      }
+      for (size_t i = 0; i < sizeVal; ++i) {
+        Flow item = this->visit(segment->data[srcOffsetVal + i]);
+        instance.externalInterface->tableStore(
+          segment->table, destOffsetVal + i, item.getSingleValue());
+      }
+      return {};
+    }
+    Flow visitElemDrop(ElemDrop* curr) {
+      NOTE_ENTER("ElemDrop");
+      instance.droppedElementSegments.insert(curr->segment);
       return {};
     }
     Flow visitTry(Try* curr) {

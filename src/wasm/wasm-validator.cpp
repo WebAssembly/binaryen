@@ -199,6 +199,22 @@ struct ValidationInfo {
     fail(text, curr, func);
     return false;
   }
+
+  // Type 'left' should be 'unreachable' or a subtype of 'right'.
+  bool shouldBeSubTypeOrFirstIsUnreachable(Type left,
+                                           Type right,
+                                           Expression* curr,
+                                           const char* text,
+                                           Function* func = nullptr) {
+    if (left == Type::unreachable) {
+      return true;
+    }
+    if (Type::isSubType(left, right)) {
+      return true;
+    }
+    fail(text, curr, func);
+    return false;
+  }
 };
 
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
@@ -348,6 +364,14 @@ public:
   void visitSIMDShift(SIMDShift* curr);
   void visitSIMDLoad(SIMDLoad* curr);
   void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr);
+  void visitTableGet(TableGet* curr);
+  void visitTableSet(TableSet* curr);
+  void visitTableSize(TableSize* curr);
+  void visitTableGrow(TableGrow* curr);
+  void visitTableFill(TableFill* curr);
+  void visitTableCopy(TableCopy* curr);
+  void visitTableInit(TableInit* curr);
+  void visitElemDrop(ElemDrop* curr);
   void visitMemoryInit(MemoryInit* curr);
   void visitDataDrop(DataDrop* curr);
   void visitMemoryCopy(MemoryCopy* curr);
@@ -424,6 +448,13 @@ private:
   bool
   shouldBeSubType(Type left, Type right, Expression* curr, const char* text) {
     return info.shouldBeSubType(left, right, curr, text, getFunction());
+  }
+
+  bool shouldBeSubTypeOrFirstIsUnreachable(Type left,
+                                           Type right,
+                                           Expression* curr,
+                                           const char* text) {
+    return info.shouldBeSubTypeOrFirstIsUnreachable(left, right, curr, text);
   }
 
   void validateAlignment(
@@ -1262,6 +1293,130 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   Index bytes = curr->getMemBytes();
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
   shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
+}
+
+void FunctionValidator::visitTableGet(TableGet* curr) {
+  auto* module = getModule();
+  shouldBeTrue(module->features.hasReferenceTypes(),
+               curr,
+               "Table instructions require --enable-reference-types");
+  auto* table = module->getTableOrNull(curr->table);
+  shouldBeTrue(!!table, curr, "Table not found");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->type,
+    table->type,
+    curr,
+    "table.get type should be compatible with the table");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->offset->type, Type(Type::i32), curr, "offset must be an i32");
+}
+void FunctionValidator::visitTableSet(TableSet* curr) {
+  auto* module = getModule();
+  shouldBeTrue(module->features.hasReferenceTypes(),
+               curr,
+               "Table instructions require --enable-reference-types");
+  auto* table = module->getTableOrNull(curr->table);
+  shouldBeTrue(!!table, curr, "Table not found");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, Type(Type::none), curr, "table.set must have type none");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->offset->type, Type(Type::i32), curr, "offset must be an i32");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->value->type, table->type, curr, "type mismatch");
+}
+void FunctionValidator::visitTableSize(TableSize* curr) {
+  auto* module = getModule();
+  shouldBeTrue(module->features.hasReferenceTypes(),
+               curr,
+               "Table instructions require --enable-reference-types");
+  auto* table = module->getTableOrNull(curr->table);
+  shouldBeTrue(!!table, curr, "Table not found");
+  shouldBeEqual(
+    curr->type, Type(Type::i32), curr, "table.size must have type i32");
+}
+void FunctionValidator::visitTableGrow(TableGrow* curr) {
+  auto* module = getModule();
+  shouldBeTrue(module->features.hasReferenceTypes(),
+               curr,
+               "Table instructions require --enable-reference-types");
+  auto* table = module->getTableOrNull(curr->table);
+  shouldBeTrue(!!table, curr, "Table not found");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, Type(Type::i32), curr, "table.grow must have type i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->delta->type, Type(Type::i32), curr, "delta must be an i32");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->initialValue->type, table->type, curr, "initial value type mismatch");
+}
+void FunctionValidator::visitTableFill(TableFill* curr) {
+  auto* module = getModule();
+  shouldBeTrue(module->features.hasReferenceTypes(),
+               curr,
+               "Table instructions require --enable-reference-types");
+  auto* table = module->getTableOrNull(curr->table);
+  shouldBeTrue(!!table, curr, "Table not found");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, Type(Type::none), curr, "table.fill must have type none");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, Type(Type::i32), curr, "destination must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "size must be an i32");
+  shouldBeSubTypeOrFirstIsUnreachable(
+    curr->value->type, table->type, curr, "initial value type mismatch");
+}
+void FunctionValidator::visitTableCopy(TableCopy* curr) {
+  auto* module = getModule();
+  shouldBeTrue(module->features.hasReferenceTypes(),
+               curr,
+               "Table instructions require --enable-reference-types");
+  auto* srcTable = module->getTableOrNull(curr->srcTable);
+  auto* destTable = module->getTableOrNull(curr->destTable);
+  shouldBeTrue(!!srcTable && !!destTable,
+               curr,
+               "tably.copy source or destination table not found");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, Type(Type::none), curr, "table.copy must have type none");
+  shouldBeEqualOrFirstIsUnreachable(curr->destOffset->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "destination offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->srcOffset->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "source offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "size must be an i32");
+}
+void FunctionValidator::visitTableInit(TableInit* curr) {
+  auto* module = getModule();
+  shouldBeTrue(module->features.hasReferenceTypes(),
+               curr,
+               "Table instructions require --enable-reference-types");
+  auto* table = module->getTableOrNull(curr->table);
+  shouldBeTrue(!!table, curr, "Table not found");
+  auto* segment = module->getElementSegmentOrNull(curr->segment);
+  shouldBeTrue(!!segment, curr, "Element segment not found");
+
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->type, Type(Type::none), curr, "table.init must have type none");
+  shouldBeEqualOrFirstIsUnreachable(curr->destOffset->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "destination offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->srcOffset->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "source offset must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "size must be an i32");
+}
+void FunctionValidator::visitElemDrop(ElemDrop* curr) {
+  auto* module = getModule();
+  shouldBeTrue(module->features.hasReferenceTypes(),
+               curr,
+               "Table instructions require --enable-reference-types");
+  auto* segment = module->getElementSegmentOrNull(curr->segment);
+  shouldBeTrue(!!segment, curr, "Element segment not found");
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {

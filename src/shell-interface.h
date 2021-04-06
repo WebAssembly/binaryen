@@ -96,7 +96,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
     if (wasm.tables.size() > 0) {
       for (auto& table : wasm.tables) {
-        tables[table->name].resize(table->initial);
+        tables[table->name].resize(table->initial, Literal(table->type));
       }
     }
   }
@@ -241,13 +241,30 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
 
-  void tableStore(Name tableName, Address addr, const Literal& entry) override {
-    auto& table = tables[tableName];
+  void tableStore(Name tableName, Index addr, const Literal& entry) override {
+    auto& table = tables.at(tableName);
     if (addr >= table.size()) {
       trap("out of bounds table access");
-    } else {
-      table.emplace(table.begin() + addr, entry);
     }
+
+    table[addr] = entry;
+  }
+  const Literal& tableLoad(Name tableName, Index addr) override {
+    auto& table = tables.at(tableName);
+    if (addr >= table.size()) {
+      trap("out of bounds table access");
+    }
+
+    return table.at(addr);
+  }
+  Index tableSize(Name tableName) override {
+    return tables.at(tableName).size();
+  }
+  Index growTable(Name tableName, Index delta, Literal initialValue) override {
+    auto& table = tables.at(tableName);
+    auto prevSize = table.size();
+    table.resize(prevSize + delta, initialValue);
+    return prevSize;
   }
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {

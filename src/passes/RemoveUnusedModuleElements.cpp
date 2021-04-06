@@ -125,6 +125,32 @@ struct ReachabilityAnalyzer : public PostWalker<ReachabilityAnalyzer> {
   void visitMemoryFill(MemoryFill* curr) { usesMemory = true; }
   void visitMemorySize(MemorySize* curr) { usesMemory = true; }
   void visitMemoryGrow(MemoryGrow* curr) { usesMemory = true; }
+  void visitTableGet(TableGet* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
+  void visitTableSet(TableSet* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
+  void visitTableSize(TableSize* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
+  void visitTableGrow(TableGrow* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
+  void visitTableFill(TableFill* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
+  }
+  void visitTableCopy(TableCopy* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->srcTable));
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->destTable));
+  }
+  void visitTableInit(TableInit* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::Table, curr->table));
+    maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, curr->segment));
+  }
+  void visitElemDrop(ElemDrop* curr) {
+    maybeAdd(ModuleElement(ModuleElementKind::ElementSegment, curr->segment));
+  }
   void visitRefFunc(RefFunc* curr) {
     maybeAdd(ModuleElement(ModuleElementKind::Function, curr->func));
   }
