@@ -499,11 +499,6 @@ void SIMDLoadStoreLane::finalize() {
   }
 }
 
-void SIMDWiden::finalize() {
-  assert(vec);
-  type = vec->type == Type::unreachable ? Type::unreachable : Type::v128;
-}
-
 Index SIMDLoadStoreLane::getMemBytes() {
   switch (op) {
     case LoadLaneVec8x16:
@@ -536,10 +531,6 @@ bool SIMDLoadStoreLane::isStore() {
       return false;
   }
   WASM_UNREACHABLE("unexpected op");
-}
-
-void Prefetch::finalize() {
-  type = ptr->type == Type::unreachable ? Type::unreachable : Type::none;
 }
 
 Const* Const::set(Literal value_) {
@@ -650,6 +641,7 @@ void Unary::finalize() {
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:
+    case AbsVecI64x2:
     case PopcntVecI8x16:
     case NegVecI8x16:
     case NegVecI16x8:
@@ -675,24 +667,20 @@ void Unary::finalize() {
     case ExtAddPairwiseUVecI16x8ToI32x4:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
-    case TruncSatSVecF64x2ToVecI64x2:
-    case TruncSatUVecF64x2ToVecI64x2:
     case ConvertSVecI32x4ToVecF32x4:
     case ConvertUVecI32x4ToVecF32x4:
-    case ConvertSVecI64x2ToVecF64x2:
-    case ConvertUVecI64x2ToVecF64x2:
-    case WidenLowSVecI8x16ToVecI16x8:
-    case WidenHighSVecI8x16ToVecI16x8:
-    case WidenLowUVecI8x16ToVecI16x8:
-    case WidenHighUVecI8x16ToVecI16x8:
-    case WidenLowSVecI16x8ToVecI32x4:
-    case WidenHighSVecI16x8ToVecI32x4:
-    case WidenLowUVecI16x8ToVecI32x4:
-    case WidenHighUVecI16x8ToVecI32x4:
-    case WidenLowSVecI32x4ToVecI64x2:
-    case WidenHighSVecI32x4ToVecI64x2:
-    case WidenLowUVecI32x4ToVecI64x2:
-    case WidenHighUVecI32x4ToVecI64x2:
+    case ExtendLowSVecI8x16ToVecI16x8:
+    case ExtendHighSVecI8x16ToVecI16x8:
+    case ExtendLowUVecI8x16ToVecI16x8:
+    case ExtendHighUVecI8x16ToVecI16x8:
+    case ExtendLowSVecI16x8ToVecI32x4:
+    case ExtendHighSVecI16x8ToVecI32x4:
+    case ExtendLowUVecI16x8ToVecI32x4:
+    case ExtendHighUVecI16x8ToVecI32x4:
+    case ExtendLowSVecI32x4ToVecI64x2:
+    case ExtendHighSVecI32x4ToVecI64x2:
+    case ExtendLowUVecI32x4ToVecI64x2:
+    case ExtendHighUVecI32x4ToVecI64x2:
     case ConvertLowSVecI32x4ToVecF64x2:
     case ConvertLowUVecI32x4ToVecF64x2:
     case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -701,12 +689,11 @@ void Unary::finalize() {
     case PromoteLowVecF32x4ToVecF64x2:
       type = Type::v128;
       break;
-    case AnyTrueVecI8x16:
-    case AnyTrueVecI16x8:
-    case AnyTrueVecI32x4:
+    case AnyTrueVec128:
     case AllTrueVecI8x16:
     case AllTrueVecI16x8:
     case AllTrueVecI32x4:
+    case AllTrueVecI64x2:
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:

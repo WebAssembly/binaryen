@@ -2229,11 +2229,10 @@ private:
           }
           case Type::v128: {
             assert(wasm.features.hasSIMD());
-            return buildUnary({pick(AnyTrueVecI8x16,
+            // TODO: Add the other SIMD unary ops
+            return buildUnary({pick(AnyTrueVec128,
                                     AllTrueVecI8x16,
-                                    AnyTrueVecI16x8,
                                     AllTrueVecI16x8,
-                                    AnyTrueVecI32x4,
                                     AllTrueVecI32x4),
                                make(Type::v128)});
           }
@@ -2354,7 +2353,7 @@ private:
             return buildUnary({SplatVecF64x2, make(Type::f64)});
           case 4:
             return buildUnary({pick(NotVec128,
-                                    // TODO: i8x16.popcnt once merged
+                                    // TODO: add additional SIMD instructions
                                     NegVecI8x16,
                                     NegVecI16x8,
                                     NegVecI32x4,
@@ -2367,20 +2366,16 @@ private:
                                     SqrtVecF64x2,
                                     TruncSatSVecF32x4ToVecI32x4,
                                     TruncSatUVecF32x4ToVecI32x4,
-                                    TruncSatSVecF64x2ToVecI64x2,
-                                    TruncSatUVecF64x2ToVecI64x2,
                                     ConvertSVecI32x4ToVecF32x4,
                                     ConvertUVecI32x4ToVecF32x4,
-                                    ConvertSVecI64x2ToVecF64x2,
-                                    ConvertUVecI64x2ToVecF64x2,
-                                    WidenLowSVecI8x16ToVecI16x8,
-                                    WidenHighSVecI8x16ToVecI16x8,
-                                    WidenLowUVecI8x16ToVecI16x8,
-                                    WidenHighUVecI8x16ToVecI16x8,
-                                    WidenLowSVecI16x8ToVecI32x4,
-                                    WidenHighSVecI16x8ToVecI32x4,
-                                    WidenLowUVecI16x8ToVecI32x4,
-                                    WidenHighUVecI16x8ToVecI32x4),
+                                    ExtendLowSVecI8x16ToVecI16x8,
+                                    ExtendHighSVecI8x16ToVecI16x8,
+                                    ExtendLowUVecI8x16ToVecI16x8,
+                                    ExtendHighUVecI8x16ToVecI16x8,
+                                    ExtendLowSVecI16x8ToVecI32x4,
+                                    ExtendHighSVecI16x8ToVecI32x4,
+                                    ExtendLowUVecI16x8ToVecI32x4,
+                                    ExtendHighUVecI16x8ToVecI32x4),
                                make(Type::v128)});
         }
         WASM_UNREACHABLE("invalid value");
@@ -2577,7 +2572,6 @@ private:
                                  SubVecI8x16,
                                  SubSatSVecI8x16,
                                  SubSatUVecI8x16,
-                                 MulVecI8x16,
                                  MinSVecI8x16,
                                  MinUVecI8x16,
                                  MaxSVecI8x16,

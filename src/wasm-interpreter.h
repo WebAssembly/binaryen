@@ -465,12 +465,12 @@ public:
         return value.splatF64x2();
       case NotVec128:
         return value.notV128();
+      case AnyTrueVec128:
+        return value.anyTrueV128();
       case AbsVecI8x16:
         return value.absI8x16();
       case NegVecI8x16:
         return value.negI8x16();
-      case AnyTrueVecI8x16:
-        return value.anyTrueI8x16();
       case AllTrueVecI8x16:
         return value.allTrueI8x16();
       case BitmaskVecI8x16:
@@ -481,8 +481,6 @@ public:
         return value.absI16x8();
       case NegVecI16x8:
         return value.negI16x8();
-      case AnyTrueVecI16x8:
-        return value.anyTrueI16x8();
       case AllTrueVecI16x8:
         return value.allTrueI16x8();
       case BitmaskVecI16x8:
@@ -491,14 +489,16 @@ public:
         return value.absI32x4();
       case NegVecI32x4:
         return value.negI32x4();
-      case AnyTrueVecI32x4:
-        return value.anyTrueI32x4();
       case AllTrueVecI32x4:
         return value.allTrueI32x4();
       case BitmaskVecI32x4:
         return value.bitmaskI32x4();
+      case AbsVecI64x2:
+        return value.absI64x2();
       case NegVecI64x2:
         return value.negI64x2();
+      case AllTrueVecI64x2:
+        return value.allTrueI64x2();
       case BitmaskVecI64x2:
         WASM_UNREACHABLE("unimp");
       case AbsVecF32x4:
@@ -541,38 +541,30 @@ public:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
         return value.truncSatToUI32x4();
-      case TruncSatSVecF64x2ToVecI64x2:
-        return value.truncSatToSI64x2();
-      case TruncSatUVecF64x2ToVecI64x2:
-        return value.truncSatToUI64x2();
       case ConvertSVecI32x4ToVecF32x4:
         return value.convertSToF32x4();
       case ConvertUVecI32x4ToVecF32x4:
         return value.convertUToF32x4();
-      case ConvertSVecI64x2ToVecF64x2:
-        return value.convertSToF64x2();
-      case ConvertUVecI64x2ToVecF64x2:
-        return value.convertUToF64x2();
-      case WidenLowSVecI8x16ToVecI16x8:
-        return value.widenLowSToVecI16x8();
-      case WidenHighSVecI8x16ToVecI16x8:
-        return value.widenHighSToVecI16x8();
-      case WidenLowUVecI8x16ToVecI16x8:
-        return value.widenLowUToVecI16x8();
-      case WidenHighUVecI8x16ToVecI16x8:
-        return value.widenHighUToVecI16x8();
-      case WidenLowSVecI16x8ToVecI32x4:
-        return value.widenLowSToVecI32x4();
-      case WidenHighSVecI16x8ToVecI32x4:
-        return value.widenHighSToVecI32x4();
-      case WidenLowUVecI16x8ToVecI32x4:
-        return value.widenLowUToVecI32x4();
-      case WidenHighUVecI16x8ToVecI32x4:
-        return value.widenHighUToVecI32x4();
-      case WidenLowSVecI32x4ToVecI64x2:
-      case WidenHighSVecI32x4ToVecI64x2:
-      case WidenLowUVecI32x4ToVecI64x2:
-      case WidenHighUVecI32x4ToVecI64x2:
+      case ExtendLowSVecI8x16ToVecI16x8:
+        return value.extendLowSToVecI16x8();
+      case ExtendHighSVecI8x16ToVecI16x8:
+        return value.extendHighSToVecI16x8();
+      case ExtendLowUVecI8x16ToVecI16x8:
+        return value.extendLowUToVecI16x8();
+      case ExtendHighUVecI8x16ToVecI16x8:
+        return value.extendHighUToVecI16x8();
+      case ExtendLowSVecI16x8ToVecI32x4:
+        return value.extendLowSToVecI32x4();
+      case ExtendHighSVecI16x8ToVecI32x4:
+        return value.extendHighSToVecI32x4();
+      case ExtendLowUVecI16x8ToVecI32x4:
+        return value.extendLowUToVecI32x4();
+      case ExtendHighUVecI16x8ToVecI32x4:
+        return value.extendHighUToVecI32x4();
+      case ExtendLowSVecI32x4ToVecI64x2:
+      case ExtendHighSVecI32x4ToVecI64x2:
+      case ExtendLowUVecI32x4ToVecI64x2:
+      case ExtendHighUVecI32x4ToVecI64x2:
       case ConvertLowSVecI32x4ToVecF64x2:
       case ConvertLowUVecI32x4ToVecF64x2:
       case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -827,6 +819,16 @@ public:
         return left.geUI32x4(right);
       case EqVecI64x2:
         return left.eqI64x2(right);
+      case NeVecI64x2:
+        return left.neI64x2(right);
+      case LtSVecI64x2:
+        return left.ltSI64x2(right);
+      case GtSVecI64x2:
+        return left.gtSI64x2(right);
+      case LeSVecI64x2:
+        return left.leSI64x2(right);
+      case GeSVecI64x2:
+        return left.geSI64x2(right);
       case EqVecF32x4:
         return left.eqF32x4(right);
       case NeVecF32x4:
@@ -873,8 +875,6 @@ public:
         return left.subSaturateSI8x16(right);
       case SubSatUVecI8x16:
         return left.subSaturateUI8x16(right);
-      case MulVecI8x16:
-        return left.mulI8x16(right);
       case MinSVecI8x16:
         return left.minSI8x16(right);
       case MinUVecI8x16:
@@ -1142,7 +1142,6 @@ public:
     }
     WASM_UNREACHABLE("invalid op");
   }
-  Flow visitSIMDWiden(SIMDWiden* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitSelect(Select* curr) {
     NOTE_ENTER("Select");
     Flow ifTrue = visit(curr->ifTrue);
@@ -1183,14 +1182,6 @@ public:
   }
   Flow visitNop(Nop* curr) {
     NOTE_ENTER("Nop");
-    return Flow();
-  }
-  Flow visitPrefetch(Prefetch* curr) {
-    NOTE_ENTER("Prefetch");
-    Flow flow = visit(curr->ptr);
-    if (flow.breaking()) {
-      return flow;
-    }
     return Flow();
   }
   Flow visitUnreachable(Unreachable* curr) {

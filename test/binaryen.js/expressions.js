@@ -1079,7 +1079,7 @@ console.log("# SIMDShuffle");
   var left = module.v128.const([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
   var right = module.v128.const([2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]);
   var mask = [3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18];
-  const theSIMDShuffle = binaryen.SIMDShuffle(module.v8x16.shuffle(left, right, mask));
+  const theSIMDShuffle = binaryen.SIMDShuffle(module.i8x16.shuffle(left, right, mask));
   assert(theSIMDShuffle instanceof binaryen.SIMDShuffle);
   assert(theSIMDShuffle instanceof binaryen.Expression);
   assert(theSIMDShuffle.left === left);
@@ -1101,7 +1101,7 @@ console.log("# SIMDShuffle");
   assert(
     theSIMDShuffle.toText()
     ==
-    "(v8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n)\n"
+    "(i8x16.shuffle 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n)\n"
   );
 
   module.dispose();
@@ -1124,23 +1124,11 @@ console.log("# SIMDTernary");
   assert(theSIMDTernary.c === c);
   assert(theSIMDTernary.type === binaryen.v128);
 
-  theSIMDTernary.op = op = binaryen.Operations.QFMAVecF64x2;
-  assert(theSIMDTernary.op === op);
-  theSIMDTernary.a = a = module.v128.const([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]);
-  assert(theSIMDTernary.a === a);
-  theSIMDTernary.b = b = module.v128.const([2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]);
-  assert(theSIMDTernary.b === b);
-  theSIMDTernary.c = c = module.v128.const([3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]);
-  assert(theSIMDTernary.c === c);
-  theSIMDTernary.type = binaryen.f64;
-  theSIMDTernary.finalize();
-  assert(theSIMDTernary.type === binaryen.v128);
-
-  console.log(theSIMDTernary.toText());
+  console.log(theSIMDTernary.toText() + "\n");
   assert(
     theSIMDTernary.toText()
     ==
-    "(f64x2.qfma\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n (v128.const i32x4 0x02020202 0x02020202 0x02020202 0x02020202)\n (v128.const i32x4 0x03030303 0x03030303 0x03030303 0x03030303)\n)\n"
+    "(v128.bitselect\n (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)\n (v128.const i32x4 0x05040302 0x09080706 0x0d0c0b0a 0x11100f0e)\n (v128.const i32x4 0x06050403 0x0a090807 0x0e0d0c0b 0x1211100f)\n)\n"
   );
 
   module.dispose();
@@ -1189,7 +1177,7 @@ console.log("# SIMDLoad");
   var offset = 16;
   var align = 2;
   var ptr = module.i32.const(1);
-  const theSIMDLoad = binaryen.SIMDLoad(module.i16x8.load8x8_s(offset, align, ptr));
+  const theSIMDLoad = binaryen.SIMDLoad(module.v128.load8x8_s(offset, align, ptr));
   assert(theSIMDLoad instanceof binaryen.SIMDLoad);
   assert(theSIMDLoad instanceof binaryen.Expression);
   assert(theSIMDLoad.offset === offset);
@@ -1213,7 +1201,7 @@ console.log("# SIMDLoad");
   assert(
     theSIMDLoad.toText()
     ==
-    "(v8x16.load_splat offset=32 align=4\n (i32.const 2)\n)\n"
+    "(v128.load8_splat offset=32 align=4\n (i32.const 2)\n)\n"
   );
 
   module.dispose();

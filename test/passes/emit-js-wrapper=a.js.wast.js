@@ -30,7 +30,8 @@ function literal(x, type) {
       ret += Number(x).toString();
       break;
     }
-    default: throw 'what?';
+    // For anything else, just print the type.
+    default: ret += type; break;
   }
   return ret;
 }

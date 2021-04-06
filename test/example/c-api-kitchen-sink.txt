@@ -312,17 +312,17 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
+       (v128.any_true
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i8x16.abs
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
        (i8x16.neg
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.any_true
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -347,11 +347,6 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (i16x8.any_true
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
        (i16x8.all_true
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -368,11 +363,6 @@ BinaryenFeatureAll: 8191
       )
       (drop
        (i32x4.neg
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i32x4.any_true
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -432,16 +422,6 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (i64x2.trunc_sat_f64x2_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i64x2.trunc_sat_f64x2_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
        (f32x4.convert_i32x4_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -452,52 +432,42 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (f64x2.convert_i64x2_s
+       (i16x8.extend_low_i8x16_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f64x2.convert_i64x2_u
+       (i16x8.extend_high_i8x16_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.widen_low_i8x16_s
+       (i16x8.extend_low_i8x16_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.widen_high_i8x16_s
+       (i16x8.extend_high_i8x16_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.widen_low_i8x16_u
+       (i32x4.extend_low_i16x8_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.widen_high_i8x16_u
+       (i32x4.extend_high_i16x8_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.widen_low_i16x8_s
+       (i32x4.extend_low_i16x8_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i32x4.widen_high_i16x8_s
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i32x4.widen_low_i16x8_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i32x4.widen_high_i16x8_u
+       (i32x4.extend_high_i16x8_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -976,13 +946,13 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (i8x16.add_saturate_s
+       (i8x16.add_sat_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i8x16.add_saturate_u
+       (i8x16.add_sat_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -994,19 +964,13 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (i8x16.sub_saturate_s
+       (i8x16.sub_sat_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i8x16.sub_saturate_u
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (i8x16.mul
+       (i8x16.sub_sat_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1048,13 +1012,13 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (i16x8.add_saturate_s
+       (i16x8.add_sat_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.add_saturate_u
+       (i16x8.add_sat_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1066,13 +1030,13 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (i16x8.sub_saturate_s
+       (i16x8.sub_sat_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (i16x8.sub_saturate_u
+       (i16x8.sub_sat_u
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1340,7 +1304,7 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (v8x16.swizzle
+       (i8x16.swizzle
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1494,91 +1458,63 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
-       (v8x16.load_splat
+       (v128.load8_splat
         (i32.const 128)
        )
       )
       (drop
-       (v16x8.load_splat offset=16 align=1
+       (v128.load16_splat offset=16 align=1
         (i32.const 128)
        )
       )
       (drop
-       (v32x4.load_splat offset=16
+       (v128.load32_splat offset=16
         (i32.const 128)
        )
       )
       (drop
-       (v64x2.load_splat align=4
+       (v128.load64_splat align=4
         (i32.const 128)
        )
       )
       (drop
-       (i16x8.load8x8_s
+       (v128.load8x8_s
         (i32.const 128)
        )
       )
       (drop
-       (i16x8.load8x8_u
+       (v128.load8x8_u
         (i32.const 128)
        )
       )
       (drop
-       (i32x4.load16x4_s
+       (v128.load16x4_s
         (i32.const 128)
        )
       )
       (drop
-       (i32x4.load16x4_u
+       (v128.load16x4_u
         (i32.const 128)
        )
       )
       (drop
-       (i64x2.load32x2_s
+       (v128.load32x2_s
         (i32.const 128)
        )
       )
       (drop
-       (i64x2.load32x2_u
+       (v128.load32x2_u
         (i32.const 128)
        )
       )
       (drop
-       (v8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
+       (i8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
        (v128.bitselect
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (f32x4.qfma
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (f32x4.qfms
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (f64x2.qfma
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
-       )
-      )
-      (drop
-       (f64x2.qfms
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)

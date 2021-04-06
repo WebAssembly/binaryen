@@ -502,16 +502,6 @@ public:
     ret->finalize();
     return ret;
   }
-  Prefetch*
-  makePrefetch(PrefetchOp op, Address offset, Address align, Expression* ptr) {
-    auto* ret = wasm.allocator.alloc<Prefetch>();
-    ret->op = op;
-    ret->offset = offset;
-    ret->align = align;
-    ret->ptr = ptr;
-    ret->finalize();
-    return ret;
-  }
   MemoryInit* makeMemoryInit(uint32_t segment,
                              Expression* dest,
                              Expression* offset,

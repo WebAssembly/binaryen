@@ -125,6 +125,9 @@ std::ostream& operator<<(std::ostream& o, Element& e) {
     }
     o << " )";
   } else {
+    if (e.dollared()) {
+      o << '$';
+    }
     o << e.str_.str;
   }
   return o;
@@ -2093,21 +2096,6 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   ret->vec = parseExpression(s[i]);
   ret->finalize();
   return ret;
-}
-
-Expression* SExpressionWasmBuilder::makeSIMDWiden(Element& s, SIMDWidenOp op) {
-  auto* ret = allocator.alloc<SIMDWiden>();
-  ret->op = op;
-  ret->index = parseLaneIndex(s[1], 4);
-  ret->vec = parseExpression(s[2]);
-  ret->finalize();
-  return ret;
-}
-
-Expression* SExpressionWasmBuilder::makePrefetch(Element& s, PrefetchOp op) {
-  Address offset, align;
-  size_t i = parseMemAttributes(s, offset, align, /*defaultAlign*/ 1);
-  return Builder(wasm).makePrefetch(op, offset, align, parseExpression(s[i]));
 }
 
 Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {

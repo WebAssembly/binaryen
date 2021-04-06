@@ -60,7 +60,8 @@ static std::string generateJSWrapper(Module& wasm) {
          "      ret += Number(x).toString();\n"
          "      break;\n"
          "    }\n"
-         "    default: throw 'what?';\n"
+         "    // For anything else, just print the type.\n"
+         "    default: ret += type; break;\n"
          "  }\n"
          "  return ret;\n"
          "}\n"
@@ -103,16 +104,20 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
-    for (const auto& param : func->sig.params) {
+    for (auto param : func->sig.params) {
       // zeros in arguments TODO more?
       if (first) {
         first = false;
       } else {
         ret += ", ";
       }
-      ret += "0";
-      if (param == Type::i64) {
-        ret += ", 0";
+      if (param.isRef()) {
+        ret += "null";
+      } else {
+        ret += "0";
+        if (param == Type::i64) {
+          ret += ", 0";
+        }
       }
     }
     ret += ")";
