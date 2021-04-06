@@ -351,7 +351,12 @@ def fix_spec_output(out):
 def run_vm(cmd):
     # ignore some vm assertions, if bugs have already been filed
     known_issues = [
-        'local count too large',    # ignore this; can be caused by flatten, ssa, etc. passes
+        # can be caused by flatten, ssa, etc. passes
+        'local count too large',
+        # https://github.com/WebAssembly/binaryen/issues/3767
+        # note that this text is a little too broad, but the problem is rare
+        # enough that it's unlikely to hide an unrelated issue
+        'found br_if of type',
     ]
     try:
         return run(cmd)
