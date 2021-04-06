@@ -2619,7 +2619,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (curr->hasMax()) {
       o << ' ' << curr->max;
     }
-    o << " funcref)";
+    o << ' ';
+    printType(o, curr->type, currModule) << ')';
   }
   void visitTable(Table* curr) {
     if (curr->imported()) {
@@ -2656,9 +2657,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       });
     auto printElemType = [&]() {
       if (allElementsRefFunc) {
-        TypeNamePrinter(o, currModule).print(HeapType::func);
+        o << "func";
       } else {
-        TypeNamePrinter(o, currModule).print(Type::funcref);
+        printType(o, curr->type, currModule);
       }
     };
 
@@ -2671,7 +2672,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
 
     if (curr->table.is()) {
-      // TODO(reference-types): check for old-style based on the complete spec
       if (!allElementsRefFunc || currModule->tables.size() > 1) {
         // tableuse
         o << " (table ";

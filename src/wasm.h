@@ -1678,13 +1678,17 @@ class ElementSegment : public Named {
 public:
   Name table;
   Expression* offset;
+  Type type = Type::funcref;
   std::vector<Expression*> data;
 
   ElementSegment() = default;
-  ElementSegment(Name table, Expression* offset)
-    : table(table), offset(offset) {}
-  ElementSegment(Name table, Expression* offset, std::vector<Expression*>& init)
-    : table(table), offset(offset) {
+  ElementSegment(Name table, Expression* offset, Type type = Type::funcref)
+    : table(table), offset(offset), type(type) {}
+  ElementSegment(Name table,
+                 Expression* offset,
+                 Type type,
+                 std::vector<Expression*>& init)
+    : table(table), offset(offset), type(type) {
     data.swap(init);
   }
 };
@@ -1698,6 +1702,7 @@ public:
 
   Address initial = 0;
   Address max = kMaxSize;
+  Type type = Type::funcref;
 
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {

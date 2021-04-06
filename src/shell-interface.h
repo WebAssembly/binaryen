@@ -143,6 +143,13 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       wasm.memory.initial = 1;
       wasm.memory.max = 2;
     }
+
+    ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
+      if (table->module == SPECTEST && table->base == TABLE) {
+        table->initial = 10;
+        table->max = 20;
+      }
+    });
   }
 
   Literals callImport(Function* import, LiteralList& arguments) override {
@@ -234,8 +241,13 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     memory.set<std::array<uint8_t, 16>>(addr, value);
   }
 
-  void tableStore(Name tableName, Address addr, Literal entry) override {
-    tables[tableName][addr] = entry;
+  void tableStore(Name tableName, Address addr, const Literal& entry) override {
+    auto& table = tables[tableName];
+    if (addr >= table.size()) {
+      trap("out of bounds table access");
+    } else {
+      table.emplace(table.begin() + addr, entry);
+    }
   }
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {

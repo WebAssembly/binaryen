@@ -79,10 +79,13 @@ public:
     return func;
   }
 
-  static std::unique_ptr<Table>
-  makeTable(Name name, Address initial = 0, Address max = Table::kMaxSize) {
+  static std::unique_ptr<Table> makeTable(Name name,
+                                          Type type = Type::funcref,
+                                          Address initial = 0,
+                                          Address max = Table::kMaxSize) {
     auto table = std::make_unique<Table>();
     table->name = name;
+    table->type = type;
     table->initial = initial;
     table->max = max;
 

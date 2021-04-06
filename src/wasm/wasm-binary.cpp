@@ -291,7 +291,7 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one table\n");
     writeImportHeader(table);
     o << U32LEB(int32_t(ExternalKind::Table));
-    o << S32LEB(BinaryConsts::EncodedType::funcref);
+    writeType(table->type);
     writeResizableLimits(table->initial,
                          table->max,
                          table->hasMax(),
@@ -543,7 +543,7 @@ void WasmBinaryWriter::writeTableDeclarations() {
   auto num = importInfo->getNumDefinedTables();
   o << U32LEB(num);
   ModuleUtils::iterDefinedTables(*wasm, [&](Table* table) {
-    o << S32LEB(BinaryConsts::EncodedType::funcref);
+    writeType(table->type);
     writeResizableLimits(table->initial,
                          table->max,
                          table->hasMax(),
@@ -604,8 +604,8 @@ void WasmBinaryWriter::writeElementSegments() {
 
     if (isPassive || hasTableIndex) {
       if (usesExpressions) {
-        // elemType funcref
-        writeType(Type::funcref);
+        // elemType
+        writeType(segment->type);
       } else {
         // elemKind funcref
         o << U32LEB(0);
@@ -1994,11 +1994,7 @@ void WasmBinaryBuilder::readImports() {
         auto table = builder.makeTable(name);
         table->module = module;
         table->base = base;
-        auto elementType = getS32LEB();
-        WASM_UNUSED(elementType);
-        if (elementType != BinaryConsts::EncodedType::funcref) {
-          throwError("Imported table type is not funcref");
-        }
+        table->type = getType();
 
         bool is_shared;
         Type indexType;
@@ -2765,11 +2761,11 @@ void WasmBinaryBuilder::readTableDeclarations() {
   auto numTables = getU32LEB();
 
   for (size_t i = 0; i < numTables; i++) {
-    auto elemType = getS32LEB();
-    if (elemType != BinaryConsts::EncodedType::funcref) {
-      throwError("Non-funcref tables not yet supported");
+    auto elemType = getType();
+    if (!elemType.isRef()) {
+      throwError("Table type must be a reference type");
     }
-    auto table = Builder::makeTable(Name::fromInt(i));
+    auto table = Builder::makeTable(Name::fromInt(i), elemType);
     bool is_shared;
     Type indexType;
     getResizableLimits(
@@ -2811,38 +2807,35 @@ void WasmBinaryBuilder::readElementSegments() {
       continue;
     }
 
+    auto segment = std::make_unique<ElementSegment>();
+    segment->setName(Name::fromInt(i), false);
+
     if (!isPassive) {
       Index tableIdx = 0;
       if (hasTableIdx) {
         tableIdx = getU32LEB();
       }
 
-      auto makeActiveElem = [&](Table* table) {
-        auto segment =
-          std::make_unique<ElementSegment>(table->name, readExpression());
-        segment->setName(Name::fromInt(i), false);
-        elementSegments.push_back(std::move(segment));
-      };
-
+      Table* table = nullptr;
       auto numTableImports = tableImports.size();
       if (tableIdx < numTableImports) {
-        makeActiveElem(tableImports[tableIdx]);
+        table = tableImports[tableIdx];
       } else if (tableIdx - numTableImports < tables.size()) {
-        makeActiveElem(tables[tableIdx - numTableImports].get());
-      } else {
+        table = tables[tableIdx - numTableImports].get();
+      }
+      if (!table) {
         throwError("Table index out of range.");
       }
-    } else {
-      auto segment = std::make_unique<ElementSegment>();
-      segment->setName(Name::fromInt(i), false);
-      elementSegments.push_back(std::move(segment));
+
+      segment->table = table->name;
+      segment->offset = readExpression();
     }
 
     if (isPassive || hasTableIdx) {
       if (usesExpressions) {
-        auto type = getType();
-        if (type != Type::funcref) {
-          throwError("Only funcref elem kinds are valid.");
+        segment->type = getType();
+        if (!segment->type.isFunction()) {
+          throwError("Invalid type for an element segment");
         }
       } else {
         auto elemKind = getU32LEB();
@@ -2852,7 +2845,7 @@ void WasmBinaryBuilder::readElementSegments() {
       }
     }
 
-    auto& segmentData = elementSegments.back()->data;
+    auto& segmentData = segment->data;
     auto size = getU32LEB();
     if (usesExpressions) {
       for (Index j = 0; j < size; j++) {
@@ -2869,6 +2862,8 @@ void WasmBinaryBuilder::readElementSegments() {
         segmentData.push_back(refFunc);
       }
     }
+
+    elementSegments.push_back(std::move(segment));
   }
 }
 

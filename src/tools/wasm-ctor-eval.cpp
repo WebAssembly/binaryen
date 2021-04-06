@@ -301,7 +301,8 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   }
 
   // called during initialization, but we don't keep track of a table
-  void tableStore(Name tableName, Address addr, Literal value) override {}
+  void tableStore(Name tableName, Address addr, const Literal& value) override {
+  }
 
   bool growMemory(Address /*oldSize*/, Address newSize) override {
     throw FailToEvalException("grow memory");
