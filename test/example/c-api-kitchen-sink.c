@@ -435,6 +435,10 @@ void test_core() {
     makeUnary(module, BinaryenExtendHighSVecI16x8ToVecI32x4(), v128),
     makeUnary(module, BinaryenExtendLowUVecI16x8ToVecI32x4(), v128),
     makeUnary(module, BinaryenExtendHighUVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendLowSVecI32x4ToVecI64x2(), v128),
+    makeUnary(module, BinaryenExtendHighSVecI32x4ToVecI64x2(), v128),
+    makeUnary(module, BinaryenExtendLowUVecI32x4ToVecI64x2(), v128),
+    makeUnary(module, BinaryenExtendHighUVecI32x4ToVecI64x2(), v128),
     // Binary
     makeBinary(module, BinaryenAddInt32(), i32),
     makeBinary(module, BinaryenSubFloat64(), f64),

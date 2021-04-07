@@ -475,6 +475,10 @@ function initializeConstants() {
     'ExtendHighSVecI16x8ToVecI32x4',
     'ExtendLowUVecI16x8ToVecI32x4',
     'ExtendHighUVecI16x8ToVecI32x4',
+    'ExtendLowSVecI32x4ToVecI64x2',
+    'ExtendHighSVecI32x4ToVecI64x2',
+    'ExtendLowUVecI32x4ToVecI64x2',
+    'ExtendHighUVecI32x4ToVecI64x2',
     'SwizzleVec8x16',
     'RefIsNull',
     'RefIsFunc',
@@ -1855,6 +1859,18 @@ function wrapModule(module, self = {}) {
     },
     'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI64x2'], left, right);
+    },
+    'extend_low_i32x4_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendLowSVecI32x4ToVecI64x2'], value);
+    },
+    'extend_high_i32x4_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendHighSVecI32x4ToVecI64x2'], value);
+    },
+    'extend_low_i32x4_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendLowUVecI32x4ToVecI64x2'], value);
+    },
+    'extend_high_i32x4_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendHighUVecI32x4ToVecI64x2'], value);
     },
   };
 
