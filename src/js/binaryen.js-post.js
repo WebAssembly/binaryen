@@ -341,6 +341,12 @@ function initializeConstants() {
     'LeUVecI32x4',
     'GeSVecI32x4',
     'GeUVecI32x4',
+    'EqVecI64x2',
+    'NeVecI64x2',
+    'LtSVecI64x2',
+    'GtSVecI64x2',
+    'LeSVecI64x2',
+    'GeSVecI64x2',
     'EqVecF32x4',
     'NeVecF32x4',
     'LtVecF32x4',
@@ -360,6 +366,7 @@ function initializeConstants() {
     'AndNotVec128',
     'BitselectVec128',
     'AnyTrueVec128',
+    'PopcntVecI8x16',
     'AbsVecI8x16',
     'NegVecI8x16',
     'AllTrueVecI8x16',
@@ -412,7 +419,10 @@ function initializeConstants() {
     'MinUVecI32x4',
     'MaxSVecI32x4',
     'MaxUVecI32x4',
+    'AbsVecI64x2',
     'NegVecI64x2',
+    'AllTrueVecI64x2',
+    'BitmaskVecI64x2',
     'ShlVecI64x2',
     'ShrSVecI64x2',
     'ShrUVecI64x2',
@@ -1550,6 +1560,9 @@ function wrapModule(module, self = {}) {
     'bitmask'(value) {
       return Module['_BinaryenUnary'](module, Module['BitmaskVecI8x16'], value);
     },
+    'popcnt'(value) {
+      return Module['_BinaryenUnary'](module, Module['PopcntVecI8x16'], value);
+    },
     'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI8x16'], vec, shift);
     },
@@ -1835,8 +1848,35 @@ function wrapModule(module, self = {}) {
     'replace_lane'(vec, index, value) {
       return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI64x2'], vec, index, value);
     },
+    'eq'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['EqVecI64x2'], left, right);
+    },
+    'ne'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NeVecI64x2'], left, right);
+    },
+    'lt_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['LtSVecI64x2'], left, right);
+    },
+    'gt_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['GtSVecI64x2'], left, right);
+    },
+    'le_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['LeSVecI64x2'], left, right);
+    },
+    'ge_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['GeSVecI64x2'], left, right);
+    },
+    'abs'(value) {
+      return Module['_BinaryenUnary'](module, Module['AbsVecI64x2'], value);
+    },
     'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI64x2'], value);
+    },
+    'all_true'(value) {
+      return Module['_BinaryenUnary'](module, Module['AllTrueVecI64x2'], value);
+    },
+    'bitmask'(value) {
+      return Module['_BinaryenUnary'](module, Module['BitmaskVecI64x2'], value);
     },
     'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI64x2'], vec, shift);
