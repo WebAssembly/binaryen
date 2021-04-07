@@ -710,6 +710,24 @@ BinaryenOp BinaryenExtendLowUVecI32x4ToVecI64x2(void) {
 BinaryenOp BinaryenExtendHighUVecI32x4ToVecI64x2(void) {
   return ExtendHighUVecI32x4ToVecI64x2;
 }
+BinaryenOp BinaryenConvertLowSVecI32x4ToVecF64x2(void) {
+  return ConvertLowSVecI32x4ToVecF64x2;
+}
+BinaryenOp BinaryenConvertLowUVecI32x4ToVecF64x2(void) {
+  return ConvertLowUVecI32x4ToVecF64x2;
+}
+BinaryenOp BinaryenTruncSatZeroSVecF64x2ToVecI32x4(void) {
+  return TruncSatZeroSVecF64x2ToVecI32x4;
+}
+BinaryenOp BinaryenTruncSatZeroUVecF64x2ToVecI32x4(void) {
+  return TruncSatZeroUVecF64x2ToVecI32x4;
+}
+BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void) {
+  return DemoteZeroVecF64x2ToVecF32x4;
+}
+BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void) {
+  return PromoteLowVecF32x4ToVecF64x2;
+}
 BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
 BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
 BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }
