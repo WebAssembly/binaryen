@@ -618,6 +618,18 @@ BinaryenOp BinaryenCeilVecF64x2(void) { return CeilVecF64x2; }
 BinaryenOp BinaryenFloorVecF64x2(void) { return FloorVecF64x2; }
 BinaryenOp BinaryenTruncVecF64x2(void) { return TruncVecF64x2; }
 BinaryenOp BinaryenNearestVecF64x2(void) { return NearestVecF64x2; }
+BinaryenOp BinaryenExtAddPairwiseSVecI8x16ToI16x8(void) {
+  return ExtAddPairwiseSVecI8x16ToI16x8;
+}
+BinaryenOp BinaryenExtAddPairwiseUVecI8x16ToI16x8(void) {
+  return ExtAddPairwiseUVecI8x16ToI16x8;
+}
+BinaryenOp BinaryenExtAddPairwiseSVecI16x8ToI32x4(void) {
+  return ExtAddPairwiseSVecI16x8ToI32x4;
+}
+BinaryenOp BinaryenExtAddPairwiseUVecI16x8ToI32x4(void) {
+  return ExtAddPairwiseUVecI16x8ToI32x4;
+}
 BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void) {
   return TruncSatSVecF32x4ToVecI32x4;
 }

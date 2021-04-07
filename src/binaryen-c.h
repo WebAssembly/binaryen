@@ -520,7 +520,10 @@ BINARYEN_API BinaryenOp BinaryenCeilVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenFloorVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenTruncVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenNearestVecF64x2(void);
-// TODO: Add extending pairwise adds to C and JS APIs once merged
+BINARYEN_API BinaryenOp BinaryenExtAddPairwiseSVecI8x16ToI16x8(void);
+BINARYEN_API BinaryenOp BinaryenExtAddPairwiseUVecI8x16ToI16x8(void);
+BINARYEN_API BinaryenOp BinaryenExtAddPairwiseSVecI16x8ToI32x4(void);
+BINARYEN_API BinaryenOp BinaryenExtAddPairwiseUVecI16x8ToI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void);
