@@ -789,32 +789,6 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
-  // elem names
-  {
-    std::vector<std::pair<Index, ElementSegment*>> elemsWithNames;
-    Index checked = 0;
-    for (auto& curr : wasm->elementSegments) {
-      if (curr->hasExplicitName) {
-        elemsWithNames.push_back({checked, curr.get()});
-      }
-      checked++;
-    }
-    assert(checked == indexes.elemIndexes.size());
-
-    if (elemsWithNames.size() > 0) {
-      auto substart =
-        startSubsection(BinaryConsts::UserSections::Subsection::NameElem);
-      o << U32LEB(elemsWithNames.size());
-
-      for (auto& indexedElem : elemsWithNames) {
-        o << U32LEB(indexedElem.first);
-        writeEscapedName(indexedElem.second->name.str);
-      }
-
-      finishSubsection(substart);
-    }
-  }
-
   // memory names
   if (wasm->memory.exists && wasm->memory.hasExplicitName) {
     auto substart =
@@ -849,7 +823,33 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
-  // memory names
+  // elem segment names
+  {
+    std::vector<std::pair<Index, ElementSegment*>> elemsWithNames;
+    Index checked = 0;
+    for (auto& curr : wasm->elementSegments) {
+      if (curr->hasExplicitName) {
+        elemsWithNames.push_back({checked, curr.get()});
+      }
+      checked++;
+    }
+    assert(checked == indexes.elemIndexes.size());
+
+    if (elemsWithNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameElem);
+      o << U32LEB(elemsWithNames.size());
+
+      for (auto& indexedElem : elemsWithNames) {
+        o << U32LEB(indexedElem.first);
+        writeEscapedName(indexedElem.second->name.str);
+      }
+
+      finishSubsection(substart);
+    }
+  }
+
+  // data segment names
   if (wasm->memory.exists) {
     Index count = 0;
     for (auto& seg : wasm->memory.segments) {
@@ -2942,8 +2942,14 @@ private:
 void WasmBinaryBuilder::readNames(size_t payloadLen) {
   BYN_TRACE("== readNames\n");
   auto sectionPos = pos;
+  uint32_t lastType = 0;
   while (pos < sectionPos + payloadLen) {
     auto nameType = getU32LEB();
+    if (lastType && nameType <= lastType) {
+      std::cerr << "warning: out-of-order name subsection: " << nameType
+                << std::endl;
+    }
+    lastType = nameType;
     auto subsectionSize = getU32LEB();
     auto subsectionPos = pos;
     if (nameType == BinaryConsts::UserSections::Subsection::NameModule) {
