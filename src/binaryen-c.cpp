@@ -698,6 +698,18 @@ BinaryenOp BinaryenExtendLowUVecI16x8ToVecI32x4(void) {
 BinaryenOp BinaryenExtendHighUVecI16x8ToVecI32x4(void) {
   return ExtendHighUVecI16x8ToVecI32x4;
 }
+BinaryenOp BinaryenExtendLowSVecI32x4ToVecI64x2(void) {
+  return ExtendLowSVecI32x4ToVecI64x2;
+}
+BinaryenOp BinaryenExtendHighSVecI32x4ToVecI64x2(void) {
+  return ExtendHighSVecI32x4ToVecI64x2;
+}
+BinaryenOp BinaryenExtendLowUVecI32x4ToVecI64x2(void) {
+  return ExtendLowUVecI32x4ToVecI64x2;
+}
+BinaryenOp BinaryenExtendHighUVecI32x4ToVecI64x2(void) {
+  return ExtendHighUVecI32x4ToVecI64x2;
+}
 BinaryenOp BinaryenSwizzleVec8x16(void) { return SwizzleVec8x16; }
 BinaryenOp BinaryenRefIsNull(void) { return RefIsNull; }
 BinaryenOp BinaryenRefIsFunc(void) { return RefIsFunc; }

@@ -301,6 +301,10 @@ function test_core() {
     module.i32x4.extend_high_i16x8_s(module.v128.const(v128_bytes)),
     module.i32x4.extend_low_i16x8_u(module.v128.const(v128_bytes)),
     module.i32x4.extend_high_i16x8_u(module.v128.const(v128_bytes)),
+    module.i64x2.extend_low_i32x4_s(module.v128.const(v128_bytes)),
+    module.i64x2.extend_high_i32x4_s(module.v128.const(v128_bytes)),
+    module.i64x2.extend_low_i32x4_u(module.v128.const(v128_bytes)),
+    module.i64x2.extend_high_i32x4_u(module.v128.const(v128_bytes)),
     // Binary
     module.i32.add(module.i32.const(-10), module.i32.const(-11)),
     module.f64.sub(module.f64.const(-9005.841), module.f64.const(-9007.333)),
