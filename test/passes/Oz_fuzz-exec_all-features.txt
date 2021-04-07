@@ -25,13 +25,15 @@
 [LoggingExternalInterface logging 0]
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
-[fuzz-exec] calling $rtt-and-cast-on-func
+[fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 1337]
 [LoggingExternalInterface logging 3]
 [trap cast error]
+[fuzz-exec] calling array-alloc-failure
+[trap allocation failure]
 (module
  (type $struct (struct (field (mut i32))))
  (type $void_func (func))
@@ -48,7 +50,8 @@
  (export "br_on_cast" (func $3))
  (export "cast-null-anyref-to-gc" (func $4))
  (export "br_on_data" (func $6))
- (export "$rtt-and-cast-on-func" (func $8))
+ (export "rtt-and-cast-on-func" (func $8))
+ (export "array-alloc-failure" (func $9))
  (func $0 (; has Stack IR ;)
   (local $0 (ref null $struct))
   (call $log
@@ -235,6 +238,9 @@
    (i32.const 4)
   )
  )
+ (func $9 (; has Stack IR ;)
+  (nop)
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -263,10 +269,11 @@
 [LoggingExternalInterface logging 0]
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
-[fuzz-exec] calling $rtt-and-cast-on-func
+[fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 2]
 [LoggingExternalInterface logging 1337]
 [LoggingExternalInterface logging 3]
 [trap cast error]
+[fuzz-exec] calling array-alloc-failure
