@@ -2821,8 +2821,8 @@ private:
       }
       Literal vec = flow.getSingleValue();
       switch (curr->op) {
-        case LoadLaneVec8x16:
-        case StoreLaneVec8x16: {
+        case Load8LaneVec128:
+        case Store8LaneVec128: {
           std::array<Literal, 16> lanes = vec.getLanesUI8x16();
           if (curr->isLoad()) {
             lanes[curr->index] =
@@ -2834,8 +2834,8 @@ private:
             return {};
           }
         }
-        case LoadLaneVec16x8:
-        case StoreLaneVec16x8: {
+        case Load16LaneVec128:
+        case Store16LaneVec128: {
           std::array<Literal, 8> lanes = vec.getLanesUI16x8();
           if (curr->isLoad()) {
             lanes[curr->index] =
@@ -2847,8 +2847,8 @@ private:
             return {};
           }
         }
-        case LoadLaneVec32x4:
-        case StoreLaneVec32x4: {
+        case Load32LaneVec128:
+        case Store32LaneVec128: {
           std::array<Literal, 4> lanes = vec.getLanesI32x4();
           if (curr->isLoad()) {
             lanes[curr->index] =
@@ -2860,8 +2860,8 @@ private:
             return {};
           }
         }
-        case StoreLaneVec64x2:
-        case LoadLaneVec64x2: {
+        case Store64LaneVec128:
+        case Load64LaneVec128: {
           std::array<Literal, 2> lanes = vec.getLanesI64x2();
           if (curr->isLoad()) {
             lanes[curr->index] =

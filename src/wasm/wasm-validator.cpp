@@ -1236,23 +1236,23 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   size_t lanes;
   Type memAlignType = Type::none;
   switch (curr->op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       lanes = 16;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       lanes = 8;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       lanes = 4;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       lanes = 2;
       memAlignType = Type::i64;
       break;

@@ -689,6 +689,14 @@ BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void) {
 }
 BinaryenOp BinaryenLoad32Zero(void) { return Load32Zero; }
 BinaryenOp BinaryenLoad64Zero(void) { return Load64Zero; }
+BinaryenOp BinaryenLoad8LaneVec128(void) { return Load8LaneVec128; }
+BinaryenOp BinaryenLoad16LaneVec128(void) { return Load16LaneVec128; }
+BinaryenOp BinaryenLoad32LaneVec128(void) { return Load32LaneVec128; }
+BinaryenOp BinaryenLoad64LaneVec128(void) { return Load64LaneVec128; }
+BinaryenOp BinaryenStore8LaneVec128(void) { return Store8LaneVec128; }
+BinaryenOp BinaryenStore16LaneVec128(void) { return Store16LaneVec128; }
+BinaryenOp BinaryenStore32LaneVec128(void) { return Store32LaneVec128; }
+BinaryenOp BinaryenStore64LaneVec128(void) { return Store64LaneVec128; }
 BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
   return NarrowSVecI16x8ToVecI8x16;
 }
@@ -1175,6 +1183,22 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
     Builder(*(Module*)module)
       .makeSIMDLoad(
         SIMDLoadOp(op), Address(offset), Address(align), (Expression*)ptr));
+}
+BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
+                                                BinaryenOp op,
+                                                uint32_t offset,
+                                                uint32_t align,
+                                                uint8_t index,
+                                                BinaryenExpressionRef ptr,
+                                                BinaryenExpressionRef vec) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp(op),
+                             Address(offset),
+                             Address(align),
+                             index,
+                             (Expression*)ptr,
+                             (Expression*)vec));
 }
 BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          uint32_t segment,

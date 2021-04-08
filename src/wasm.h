@@ -515,14 +515,14 @@ enum SIMDLoadOp {
 };
 
 enum SIMDLoadStoreLaneOp {
-  LoadLaneVec8x16,
-  LoadLaneVec16x8,
-  LoadLaneVec32x4,
-  LoadLaneVec64x2,
-  StoreLaneVec8x16,
-  StoreLaneVec16x8,
-  StoreLaneVec32x4,
-  StoreLaneVec64x2,
+  Load8LaneVec128,
+  Load16LaneVec128,
+  Load32LaneVec128,
+  Load64LaneVec128,
+  Store8LaneVec128,
+  Store16LaneVec128,
+  Store32LaneVec128,
+  Store64LaneVec128,
 };
 
 enum SIMDTernaryOp {
