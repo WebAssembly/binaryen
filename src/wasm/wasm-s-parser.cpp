@@ -3355,7 +3355,7 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
     for (; i < s.size(); i++) {
       auto func = getFunctionName(*s[i]);
       segment->data.push_back(Builder(wasm).makeRefFunc(
-        func, Type(HeapType(functionSignatures[func]), Nullable)));
+        func, functionSignatures[func]);
     }
   }
   return wasm.addElementSegment(std::move(segment));
