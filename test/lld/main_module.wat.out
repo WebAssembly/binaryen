@@ -61,12 +61,12 @@
     "puts"
   ],
   "externs": [
-    "___stack_pointer",
-    "___memory_base",
-    "___table_base",
-    "_external_var",
-    "_puts",
-    "__Z13print_messagev"
+    "__stack_pointer",
+    "__memory_base",
+    "__table_base",
+    "external_var",
+    "puts",
+    "_Z13print_messagev"
   ],
   "exports": [
     "__wasm_call_ctors",

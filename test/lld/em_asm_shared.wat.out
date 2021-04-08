@@ -106,12 +106,12 @@
     "emscripten_asm_const_int"
   ],
   "externs": [
-    "___stack_pointer",
-    "___memory_base",
-    "___table_base",
-    "__ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE",
-    "__ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE",
-    "__ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE"
+    "__stack_pointer",
+    "__memory_base",
+    "__table_base",
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE",
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE",
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE"
   ],
   "exports": [
     "__post_instantiate",

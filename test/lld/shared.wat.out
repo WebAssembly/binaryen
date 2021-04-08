@@ -58,11 +58,11 @@
     "puts"
   ],
   "externs": [
-    "___memory_base",
-    "___table_base",
-    "_external_var",
-    "_puts",
-    "__Z13print_messagev"
+    "__memory_base",
+    "__table_base",
+    "external_var",
+    "puts",
+    "_Z13print_messagev"
   ],
   "exports": [
     "__post_instantiate",
