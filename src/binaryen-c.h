@@ -548,6 +548,14 @@ BINARYEN_API BinaryenOp BinaryenLoadExtUVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void);
 // TODO: Add Load{32,64}Zero to C and JS APIs once merged to proposal
+BINARYEN_API BinaryenOp BinaryenLoadLaneVec8x16(void);
+BINARYEN_API BinaryenOp BinaryenLoadLaneVec16x8(void);
+BINARYEN_API BinaryenOp BinaryenLoadLaneVec32x4(void);
+BINARYEN_API BinaryenOp BinaryenLoadLaneVec64x2(void);
+BINARYEN_API BinaryenOp BinaryenStoreLaneVec8x16(void);
+BINARYEN_API BinaryenOp BinaryenStoreLaneVec16x8(void);
+BINARYEN_API BinaryenOp BinaryenStoreLaneVec32x4(void);
+BINARYEN_API BinaryenOp BinaryenStoreLaneVec64x2(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void);
@@ -790,6 +798,14 @@ BINARYEN_API BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
                                                     uint32_t offset,
                                                     uint32_t align,
                                                     BinaryenExpressionRef ptr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
+                          BinaryenOp op,
+                          uint32_t offset,
+                          uint32_t align,
+                          uint8_t index,
+                          BinaryenExpressionRef ptr,
+                          BinaryenExpressionRef vec);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInit(BinaryenModuleRef module,
                    uint32_t segment,

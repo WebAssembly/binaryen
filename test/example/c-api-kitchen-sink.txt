@@ -1634,6 +1634,46 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
+       (v128.load8_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load16_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load32_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load64_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (v128.store8_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store16_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store32_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store64_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (drop
        (i8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)

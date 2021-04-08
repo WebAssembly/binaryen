@@ -674,6 +674,14 @@ BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void) {
 BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void) {
   return LoadExtUVec32x2ToVecI64x2;
 }
+BinaryenOp BinaryenLoadLaneVec8x16(void) { return LoadLaneVec8x16; }
+BinaryenOp BinaryenLoadLaneVec16x8(void) { return LoadLaneVec16x8; }
+BinaryenOp BinaryenLoadLaneVec32x4(void) { return LoadLaneVec32x4; }
+BinaryenOp BinaryenLoadLaneVec64x2(void) { return LoadLaneVec64x2; }
+BinaryenOp BinaryenStoreLaneVec8x16(void) { return StoreLaneVec8x16; }
+BinaryenOp BinaryenStoreLaneVec16x8(void) { return StoreLaneVec16x8; }
+BinaryenOp BinaryenStoreLaneVec32x4(void) { return StoreLaneVec32x4; }
+BinaryenOp BinaryenStoreLaneVec64x2(void) { return StoreLaneVec64x2; }
 BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
   return NarrowSVecI16x8ToVecI8x16;
 }
@@ -1160,6 +1168,22 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
     Builder(*(Module*)module)
       .makeSIMDLoad(
         SIMDLoadOp(op), Address(offset), Address(align), (Expression*)ptr));
+}
+BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
+                                                BinaryenOp op,
+                                                uint32_t offset,
+                                                uint32_t align,
+                                                uint8_t index,
+                                                BinaryenExpressionRef ptr,
+                                                BinaryenExpressionRef vec) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp(op),
+                             Address(offset),
+                             Address(align),
+                             index,
+                             (Expression*)ptr,
+                             (Expression*)vec));
 }
 BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          uint32_t segment,

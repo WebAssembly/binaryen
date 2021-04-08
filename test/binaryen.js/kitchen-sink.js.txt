@@ -1724,6 +1724,46 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
+       (v128.load8_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load16_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load32_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load64_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (v128.store8_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store16_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store32_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store64_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (drop
        (i8x16.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -3646,6 +3686,46 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (v128.load32x2_u
         (i32.const 128)
        )
+      )
+      (drop
+       (v128.load8_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load16_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load32_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load64_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (v128.store8_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store16_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store32_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store64_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
       (drop
        (i8x16.shuffle 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16

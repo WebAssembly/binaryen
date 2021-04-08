@@ -502,6 +502,15 @@ function test_core() {
     module.v128.load16x4_u(0, 8, module.i32.const(128)),
     module.v128.load32x2_s(0, 8, module.i32.const(128)),
     module.v128.load32x2_u(0, 8, module.i32.const(128)),
+    // SIMD load/store lane
+    module.v128.load8_lane(0, 1, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load16_lane(0, 2, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load32_lane(0, 4, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.load64_lane(0, 8, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store8_lane(0, 1, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store16_lane(0, 2, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store32_lane(0, 4, 0, module.i32.const(128), module.v128.const(v128_bytes)),
+    module.v128.store64_lane(0, 8, 0, module.i32.const(128), module.v128.const(v128_bytes)),
     // Other SIMD
     module.i8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),

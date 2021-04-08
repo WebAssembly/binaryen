@@ -477,6 +477,14 @@ function initializeConstants() {
     'LoadExtUVec16x4ToVecI32x4',
     'LoadExtSVec32x2ToVecI64x2',
     'LoadExtUVec32x2ToVecI64x2',
+    'LoadLaneVec8x16',
+    'LoadLaneVec16x8',
+    'LoadLaneVec32x4',
+    'LoadLaneVec64x2',
+    'StoreLaneVec8x16',
+    'StoreLaneVec16x8',
+    'StoreLaneVec32x4',
+    'StoreLaneVec64x2',
     'NarrowSVecI16x8ToVecI8x16',
     'NarrowUVecI16x8ToVecI8x16',
     'NarrowSVecI32x4ToVecI16x8',
@@ -1476,6 +1484,30 @@ function wrapModule(module, self = {}) {
     },
     'load32x2_u'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec32x2ToVecI64x2'], offset, align, ptr);
+    },
+    'load8_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['LoadLaneVec8x16'], offset, align, index, ptr, vec);
+    },
+    'load16_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['LoadLaneVec16x8'], offset, align, index, ptr, vec);
+    },
+    'load32_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['LoadLaneVec32x4'], offset, align, index, ptr, vec);
+    },
+    'load64_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['LoadLaneVec64x2'], offset, align, index, ptr, vec);
+    },
+    'store8_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['StoreLaneVec8x16'], offset, align, index, ptr, vec);
+    },
+    'store16_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['StoreLaneVec16x8'], offset, align, index, ptr, vec);
+    },
+    'store32_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['StoreLaneVec32x4'], offset, align, index, ptr, vec);
+    },
+    'store64_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['StoreLaneVec64x2'], offset, align, index, ptr, vec);
     },
     'store'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 16, offset, align, ptr, value, Module['v128']);
