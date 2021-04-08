@@ -501,17 +501,17 @@ void SIMDLoadStoreLane::finalize() {
 
 Index SIMDLoadStoreLane::getMemBytes() {
   switch (op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       return 1;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       return 2;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       return 4;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -519,15 +519,15 @@ Index SIMDLoadStoreLane::getMemBytes() {
 
 bool SIMDLoadStoreLane::isStore() {
   switch (op) {
-    case StoreLaneVec8x16:
-    case StoreLaneVec16x8:
-    case StoreLaneVec32x4:
-    case StoreLaneVec64x2:
+    case Store8LaneVec128:
+    case Store16LaneVec128:
+    case Store32LaneVec128:
+    case Store64LaneVec128:
       return true;
-    case LoadLaneVec16x8:
-    case LoadLaneVec32x4:
-    case LoadLaneVec64x2:
-    case LoadLaneVec8x16:
+    case Load16LaneVec128:
+    case Load32LaneVec128:
+    case Load64LaneVec128:
+    case Load8LaneVec128:
       return false;
   }
   WASM_UNREACHABLE("unexpected op");

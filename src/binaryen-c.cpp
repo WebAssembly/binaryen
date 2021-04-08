@@ -689,14 +689,14 @@ BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void) {
 }
 BinaryenOp BinaryenLoad32Zero(void) { return Load32Zero; }
 BinaryenOp BinaryenLoad64Zero(void) { return Load64Zero; }
-BinaryenOp BinaryenLoadLaneVec8x16(void) { return LoadLaneVec8x16; }
-BinaryenOp BinaryenLoadLaneVec16x8(void) { return LoadLaneVec16x8; }
-BinaryenOp BinaryenLoadLaneVec32x4(void) { return LoadLaneVec32x4; }
-BinaryenOp BinaryenLoadLaneVec64x2(void) { return LoadLaneVec64x2; }
-BinaryenOp BinaryenStoreLaneVec8x16(void) { return StoreLaneVec8x16; }
-BinaryenOp BinaryenStoreLaneVec16x8(void) { return StoreLaneVec16x8; }
-BinaryenOp BinaryenStoreLaneVec32x4(void) { return StoreLaneVec32x4; }
-BinaryenOp BinaryenStoreLaneVec64x2(void) { return StoreLaneVec64x2; }
+BinaryenOp BinaryenLoad8LaneVec128(void) { return Load8LaneVec128; }
+BinaryenOp BinaryenLoad16LaneVec128(void) { return Load16LaneVec128; }
+BinaryenOp BinaryenLoad32LaneVec128(void) { return Load32LaneVec128; }
+BinaryenOp BinaryenLoad64LaneVec128(void) { return Load64LaneVec128; }
+BinaryenOp BinaryenStore8LaneVec128(void) { return Store8LaneVec128; }
+BinaryenOp BinaryenStore16LaneVec128(void) { return Store16LaneVec128; }
+BinaryenOp BinaryenStore32LaneVec128(void) { return Store32LaneVec128; }
+BinaryenOp BinaryenStore64LaneVec128(void) { return Store64LaneVec128; }
 BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
   return NarrowSVecI16x8ToVecI8x16;
 }
