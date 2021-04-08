@@ -515,6 +515,8 @@ function test_core() {
     module.v128.load16x4_u(0, 8, module.i32.const(128)),
     module.v128.load32x2_s(0, 8, module.i32.const(128)),
     module.v128.load32x2_u(0, 8, module.i32.const(128)),
+    module.v128.load32_zero(0, 4, module.i32.const(128)),
+    module.v128.load64_zero(0, 8, module.i32.const(128)),
     // Other SIMD
     module.i8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),

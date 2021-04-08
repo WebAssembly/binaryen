@@ -687,6 +687,8 @@ BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void) {
 BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void) {
   return LoadExtUVec32x2ToVecI64x2;
 }
+BinaryenOp BinaryenLoad32Zero(void) { return Load32Zero; }
+BinaryenOp BinaryenLoad64Zero(void) { return Load64Zero; }
 BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
   return NarrowSVecI16x8ToVecI8x16;
 }

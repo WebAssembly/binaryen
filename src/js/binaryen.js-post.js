@@ -490,6 +490,8 @@ function initializeConstants() {
     'LoadExtUVec16x4ToVecI32x4',
     'LoadExtSVec32x2ToVecI64x2',
     'LoadExtUVec32x2ToVecI64x2',
+    'Load32Zero',
+    'Load64Zero',
     'NarrowSVecI16x8ToVecI8x16',
     'NarrowUVecI16x8ToVecI8x16',
     'NarrowSVecI32x4ToVecI16x8',
@@ -1489,6 +1491,12 @@ function wrapModule(module, self = {}) {
     },
     'load32x2_u'(offset, align, ptr) {
       return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec32x2ToVecI64x2'], offset, align, ptr);
+    },
+    'load32_zero'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32Zero'], offset, align, ptr);
+    },
+    'load64_zero'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load64Zero'], offset, align, ptr);
     },
     'store'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 16, offset, align, ptr, value, Module['v128']);
