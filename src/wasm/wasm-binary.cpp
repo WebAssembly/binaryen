@@ -5897,35 +5897,35 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
   size_t lanes;
   switch (code) {
     case BinaryConsts::V128Load8Lane:
-      op = LoadLaneVec8x16;
+      op = Load8LaneVec128;
       lanes = 16;
       break;
     case BinaryConsts::V128Load16Lane:
-      op = LoadLaneVec16x8;
+      op = Load16LaneVec128;
       lanes = 8;
       break;
     case BinaryConsts::V128Load32Lane:
-      op = LoadLaneVec32x4;
+      op = Load32LaneVec128;
       lanes = 4;
       break;
     case BinaryConsts::V128Load64Lane:
-      op = LoadLaneVec64x2;
+      op = Load64LaneVec128;
       lanes = 2;
       break;
     case BinaryConsts::V128Store8Lane:
-      op = StoreLaneVec8x16;
+      op = Store8LaneVec128;
       lanes = 16;
       break;
     case BinaryConsts::V128Store16Lane:
-      op = StoreLaneVec16x8;
+      op = Store16LaneVec128;
       lanes = 8;
       break;
     case BinaryConsts::V128Store32Lane:
-      op = StoreLaneVec32x4;
+      op = Store32LaneVec128;
       lanes = 4;
       break;
     case BinaryConsts::V128Store64Lane:
-      op = StoreLaneVec64x2;
+      op = Store64LaneVec128;
       lanes = 2;
       break;
     default:
