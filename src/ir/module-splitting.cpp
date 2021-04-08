@@ -105,8 +105,7 @@ template<class F> void forEachElement(Module& module, F f) {
 
 static RefFunc* makeRefFunc(Module& wasm, Function* func) {
   // FIXME: make the type NonNullable when we support it!
-  return Builder(wasm).makeRefFunc(func->name,
-                                   Type(HeapType(func->sig), Nullable));
+  return Builder(wasm).makeRefFunc(func->name, func->sig);
 }
 
 struct TableSlotManager {

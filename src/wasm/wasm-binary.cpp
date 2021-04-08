@@ -2857,7 +2857,7 @@ void WasmBinaryBuilder::readElementSegments() {
         auto sig = getSignatureByFunctionIndex(index);
         // Use a placeholder name for now
         auto* refFunc = Builder(wasm).makeRefFunc(
-          Name::fromInt(index), Type(HeapType(sig), Nullable));
+          Name::fromInt(index), sig);
         functionRefs[index].push_back(refFunc);
         segmentData.push_back(refFunc);
       }

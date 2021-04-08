@@ -1259,9 +1259,10 @@ BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
 
 BinaryenExpressionRef
 BinaryenRefFunc(BinaryenModuleRef module, const char* func, BinaryenType type) {
+  // TODO: consider changing the C API to receive a heap type
   Type type_(type);
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefFunc(func, type_));
+    Builder(*(Module*)module).makeRefFunc(func, type_.getHeapType()));
 }
 
 BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
