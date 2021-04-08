@@ -1616,10 +1616,11 @@ public:
       return !(*this == other);
     }
     bool operator<(const DebugLocation& other) const {
-      return fileIndex != other.fileIndex ? fileIndex < other.fileIndex
-             : lineNumber != other.lineNumber
-               ? lineNumber < other.lineNumber
-               : columnNumber < other.columnNumber;
+      return fileIndex != other.fileIndex
+               ? fileIndex < other.fileIndex
+               : lineNumber != other.lineNumber
+                   ? lineNumber < other.lineNumber
+                   : columnNumber < other.columnNumber;
     }
   };
   std::unordered_map<Expression*, DebugLocation> debugLocations;
