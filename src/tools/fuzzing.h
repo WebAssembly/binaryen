@@ -424,6 +424,8 @@ private:
     }
   }
 
+  Name funcrefTableName;
+
   // TODO(reference-types): allow the fuzzer to create multiple tables
   void setupTables() {
     // Ensure a funcref element segment and table exist. Segments with more
@@ -441,6 +443,7 @@ private:
       tablePtr->hasExplicitName = true;
       table = wasm.addTable(std::move(tablePtr));
     }
+    funcrefTableName = table->name;
     bool hasFuncrefElemSegment = std::any_of(
       wasm.elementSegments.begin(),
       wasm.elementSegments.end(),
@@ -1494,7 +1497,7 @@ private:
     }
     // TODO: use a random table
     return builder.makeCallIndirect(
-      wasm.tables[0]->name, target, args, targetFn->sig, isReturn);
+      funcrefTableName, target, args, targetFn->sig, isReturn);
   }
 
   Expression* makeCallRef(Type type) {

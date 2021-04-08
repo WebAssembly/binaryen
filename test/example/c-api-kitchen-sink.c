@@ -675,16 +675,10 @@ void test_core() {
                      0,
                      8,
                      makeInt32(module, 128)),
-    BinaryenSIMDLoad(module,
-                     BinaryenLoad32Zero(),
-                     0,
-                     4,
-                     makeInt32(module, 128)),
-    BinaryenSIMDLoad(module,
-                     BinaryenLoad64Zero(),
-                     0,
-                     8,
-                     makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoad32Zero(), 0, 4, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoad64Zero(), 0, 8, makeInt32(module, 128)),
     // Other SIMD
     makeSIMDShuffle(module),
     makeSIMDTernary(module, BinaryenBitselectVec128()),
