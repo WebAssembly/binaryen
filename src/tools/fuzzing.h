@@ -2132,7 +2132,7 @@ private:
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
         if (type == Type(HeapType(func->sig), NonNullable)) {
-          return builder.makeRefFunc(func->name, type);
+          return builder.makeRefFunc(func->name, func->sig);
         }
       }
       // We failed to find a function, so create a null reference if we can.

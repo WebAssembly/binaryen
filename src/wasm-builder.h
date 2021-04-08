@@ -870,7 +870,7 @@ public:
       return makeRefNull(type);
     }
     if (type.isFunction()) {
-      return makeRefFunc(value.getFunc(), type);
+      return makeRefFunc(value.getFunc(), type.getHeapType());
     }
     if (type.isRtt()) {
       return makeRtt(value.type);
