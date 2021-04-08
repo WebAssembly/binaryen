@@ -1018,6 +1018,9 @@ def randomize_opt_flags():
             ret += ['--optimize-level=' + str(random.randint(0, 3))]
         if random.random() < 0.5:
             ret += ['--shrink-level=' + str(random.randint(0, 3))]
+    # possibly converge. don't do this very often as it can be slow.
+    if random.random() < 0.05:
+        ret += ['--converge']
     assert ret.count('--flatten') <= 1
     return ret
 
