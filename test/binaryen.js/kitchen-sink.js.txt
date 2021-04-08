@@ -1818,7 +1818,19 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
+       (v128.load8_lane offset=1 15
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (v128.load16_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load16_lane offset=2 align=1 7
         (i32.const 128)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1830,7 +1842,19 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
+       (v128.load32_lane offset=4 align=2 3
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (v128.load64_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load64_lane offset=8 align=4 1
         (i32.const 128)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -1839,7 +1863,15 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
+      (v128.store8_lane offset=1 15
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
       (v128.store16_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store16_lane offset=2 align=1 7
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
@@ -1847,7 +1879,15 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
+      (v128.store32_lane offset=4 align=2 3
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
       (v128.store64_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store64_lane offset=8 align=4 1
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
@@ -3870,7 +3910,19 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
+       (v128.load8_lane offset=1 15
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (v128.load16_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load16_lane offset=2 align=1 7
         (i32.const 128)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -3882,7 +3934,19 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
+       (v128.load32_lane offset=4 align=2 3
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (v128.load64_lane 0
+        (i32.const 128)
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (v128.load64_lane offset=8 align=4 1
         (i32.const 128)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -3891,7 +3955,15 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
+      (v128.store8_lane offset=1 15
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
       (v128.store16_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store16_lane offset=2 align=1 7
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
@@ -3899,7 +3971,15 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
+      (v128.store32_lane offset=4 align=2 3
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
       (v128.store64_lane 0
+       (i32.const 128)
+       (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+      )
+      (v128.store64_lane offset=8 align=4 1
        (i32.const 128)
        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
       )
