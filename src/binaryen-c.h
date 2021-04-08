@@ -547,7 +547,8 @@ BINARYEN_API BinaryenOp BinaryenLoadExtSVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void);
-// TODO: Add Load{32,64}Zero to C and JS APIs once merged to proposal
+BINARYEN_API BinaryenOp BinaryenLoad32Zero(void);
+BINARYEN_API BinaryenOp BinaryenLoad64Zero(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void);

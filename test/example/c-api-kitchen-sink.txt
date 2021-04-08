@@ -1604,6 +1604,16 @@ BinaryenFeatureAll: 8191
        )
       )
       (drop
+       (v128.load32_zero
+        (i32.const 128)
+       )
+      )
+      (drop
+       (v128.load64_zero
+        (i32.const 128)
+       )
+      )
+      (drop
        (i8x16.shuffle 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
