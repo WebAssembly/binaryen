@@ -2001,6 +2001,9 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
+  shouldBeTrue(!curr->type.isNullable(),
+               curr,
+               "ref.func must have non-nullable type");
   // TODO: verify it also has a typed function references type, and the right
   // one,
   //   curr->type.getHeapType().getSignature()

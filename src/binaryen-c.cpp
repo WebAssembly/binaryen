@@ -3480,9 +3480,8 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
     if (func == nullptr) {
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
-    Type type(HeapType(func->sig), Nullable);
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], type));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
