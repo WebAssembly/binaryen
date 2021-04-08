@@ -542,6 +542,21 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
+       (f64x2.convert_low_i32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.convert_low_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.promote_low_f32x4
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i32x4.trunc_sat_f32x4_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -558,6 +573,11 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (f32x4.convert_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.demote_f64x2_zero
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -598,6 +618,16 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i32x4.extend_high_i16x8_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f64x2_s_zero
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f64x2_u_zero
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -2436,6 +2466,21 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
        )
       )
       (drop
+       (f64x2.convert_low_i32x4_s
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.convert_low_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f64x2.promote_low_f32x4
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
        (i32x4.trunc_sat_f32x4_s
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
@@ -2452,6 +2497,11 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (f32x4.convert_i32x4_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (f32x4.demote_f64x2_zero
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
@@ -2492,6 +2542,16 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (i32x4.extend_high_i16x8_u
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f64x2_s_zero
+        (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
+       )
+      )
+      (drop
+       (i32x4.trunc_sat_f64x2_u_zero
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )

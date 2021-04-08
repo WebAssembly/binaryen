@@ -443,6 +443,12 @@ void test_core() {
     makeUnary(module, BinaryenExtendHighSVecI32x4ToVecI64x2(), v128),
     makeUnary(module, BinaryenExtendLowUVecI32x4ToVecI64x2(), v128),
     makeUnary(module, BinaryenExtendHighUVecI32x4ToVecI64x2(), v128),
+    makeUnary(module, BinaryenConvertLowSVecI32x4ToVecF64x2(), v128),
+    makeUnary(module, BinaryenConvertLowUVecI32x4ToVecF64x2(), v128),
+    makeUnary(module, BinaryenTruncSatZeroSVecF64x2ToVecI32x4(), v128),
+    makeUnary(module, BinaryenTruncSatZeroUVecF64x2ToVecI32x4(), v128),
+    makeUnary(module, BinaryenDemoteZeroVecF64x2ToVecF32x4(), v128),
+    makeUnary(module, BinaryenPromoteLowVecF32x4ToVecF64x2(), v128),
     // Binary
     makeBinary(module, BinaryenAddInt32(), i32),
     makeBinary(module, BinaryenSubFloat64(), f64),
