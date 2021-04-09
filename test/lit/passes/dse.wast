@@ -83,6 +83,73 @@
   )
  )
 
+ ;; CHECK:      (func $get-ref (result (ref $A))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $get-ref (result (ref $A))
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $ref-changes (param $x (ref $A))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (call $get-ref)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-changes (param $x (ref $A))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  (local.set $x
+   (call $get-ref)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 20)
+  )
+ )
+
+ ;; CHECK:      (func $ref-may-change (param $x (ref $A)) (param $i i32)
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $i)
+ ;; CHECK-NEXT:   (local.set $x
+ ;; CHECK-NEXT:    (call $get-ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-may-change (param $x (ref $A)) (param $i i32)
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  (if
+   (local.get $i)
+   (local.set $x
+    (call $get-ref)
+   )
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 20)
+  )
+ )
+
  ;; CHECK:      (func $simple-use (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
