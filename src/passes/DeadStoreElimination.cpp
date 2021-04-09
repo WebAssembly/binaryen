@@ -267,6 +267,51 @@ struct DeadStoreFinder
   }
 };
 
+struct GlobalDeadStoreFinder : public DeadStoreFinder {
+  GlobalDeadStoreFinder(Module* wasm,
+                        Function* func,
+                        PassOptions& passOptions)
+    : DeadStoreFinder(wasm, func, passOptions) {}
+
+  bool isStore(Expression* curr) override { return curr->is<GlobalSet>(); }
+
+  bool isRelevant(Expression* curr,
+                  const EffectAnalyzer& currEffects) override {
+    return curr->is<GlobalGet>();
+  }
+
+  bool isLoadFrom(Expression* curr,
+                  const EffectAnalyzer& currEffects,
+                  Expression* store_) override {
+    if (auto* load = curr->dynCast<GlobalGet>()) {
+      auto* store = store_->cast<GlobalSet>();
+      return load->name == store->name;
+    }
+    return false;
+  }
+
+  bool tramples(Expression* curr,
+                const EffectAnalyzer& currEffects,
+                Expression* store_) override {
+    if (auto* otherStore = curr->dynCast<GlobalSet>()) {
+      auto* store = store_->cast<GlobalSet>();
+      return otherStore->name == store->name;
+    }
+    return false;
+  }
+
+  bool mayInteract(Expression* curr,
+                   const EffectAnalyzer& currEffects,
+                   Expression* store) override {
+    // We have already handled everything in isLoadFrom() and tramples().
+    return false;
+  }
+
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
+    return builder.makeDrop(store->cast<GlobalSet>()->value);
+  }
+};
+
 struct GCDeadStoreFinder : public DeadStoreFinder {
   GCDeadStoreFinder(Module* wasm,
                     Function* func,
@@ -318,51 +363,6 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     auto* castStore = store->cast<StructSet>();
     return builder.makeSequence(
               builder.makeDrop(castStore->ref), builder.makeDrop(castStore->value));
-  }
-};
-
-struct GlobalDeadStoreFinder : public DeadStoreFinder {
-  GlobalDeadStoreFinder(Module* wasm,
-                        Function* func,
-                        PassOptions& passOptions)
-    : DeadStoreFinder(wasm, func, passOptions) {}
-
-  bool isStore(Expression* curr) override { return curr->is<GlobalSet>(); }
-
-  bool isRelevant(Expression* curr,
-                  const EffectAnalyzer& currEffects) override {
-    return curr->is<GlobalGet>();
-  }
-
-  bool isLoadFrom(Expression* curr,
-                  const EffectAnalyzer& currEffects,
-                  Expression* store_) override {
-    if (auto* load = curr->dynCast<GlobalGet>()) {
-      auto* store = store_->cast<GlobalSet>();
-      return load->name == store->name;
-    }
-    return false;
-  }
-
-  bool tramples(Expression* curr,
-                const EffectAnalyzer& currEffects,
-                Expression* store_) override {
-    if (auto* otherStore = curr->dynCast<GlobalSet>()) {
-      auto* store = store_->cast<GlobalSet>();
-      return otherStore->name == store->name;
-    }
-    return false;
-  }
-
-  bool mayInteract(Expression* curr,
-                   const EffectAnalyzer& currEffects,
-                   Expression* store) override {
-    // We have already handled everything in isLoadFrom() and tramples().
-    return false;
-  }
-
-  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
-    return builder.makeDrop(store->cast<GlobalSet>()->value);
   }
 };
 
