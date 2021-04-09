@@ -2732,31 +2732,9 @@ void WasmBinaryBuilder::processNames() {
 
   for (auto& iter : tableRefs) {
     size_t index = iter.first;
-    auto& refs = iter.second;
-    for (auto& ref : refs) {
-      if (auto* callIndirect = ref.second->dynCast<CallIndirect>()) {
-        callIndirect->table = getTableName(index);
-      } else if (auto* tableGet = ref.second->dynCast<TableGet>()) {
-        tableGet->table = getTableName(index);
-      } else if (auto* tableSet = ref.second->dynCast<TableSet>()) {
-        tableSet->table = getTableName(index);
-      } else if (auto* tableSize = ref.second->dynCast<TableSize>()) {
-        tableSize->table = getTableName(index);
-      } else if (auto* tableGrow = ref.second->dynCast<TableGrow>()) {
-        tableGrow->table = getTableName(index);
-      } else if (auto* tableFill = ref.second->dynCast<TableFill>()) {
-        tableFill->table = getTableName(index);
-      } else if (auto* tableInit = ref.second->dynCast<TableInit>()) {
-        tableInit->table = getTableName(index);
-      } else if (auto* tableInit = ref.second->dynCast<TableCopy>()) {
-        if (ref.first == "srcTable") {
-          tableInit->srcTable = getTableName(index);
-        } else if (ref.first == "dstTable") {
-          tableInit->destTable = getTableName(index);
-        }
-      } else {
-        WASM_UNREACHABLE("Invalid type in table references");
-      }
+    auto refs = iter.second;
+    for (auto* ref : refs) {
+      *ref = getTableName(index);
     }
   }
 
@@ -3980,7 +3958,7 @@ void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  tableRefs[tableIdx].push_back(&curr->table);
   curr->finalize();
 }
 
@@ -4797,7 +4775,7 @@ bool WasmBinaryBuilder::maybeVisitTableSize(Expression*& out, uint32_t code) {
   auto* curr = allocator.alloc<TableSize>();
   Index tableIdx = getU32LEB();
   curr->table = getTableName(tableIdx);
-  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  tableRefs[tableIdx].push_back(&curr->table);
   curr->finalize();
   out = curr;
   return true;
@@ -4812,7 +4790,7 @@ bool WasmBinaryBuilder::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   curr->table = getTableName(tableIdx);
   curr->delta = popNonVoidExpression();
   curr->initialValue = popNonVoidExpression();
-  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  tableRefs[tableIdx].push_back(&curr->table);
   curr->finalize();
   out = curr;
   return true;
@@ -4828,7 +4806,7 @@ bool WasmBinaryBuilder::maybeVisitTableFill(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->value = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
-  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  tableRefs[tableIdx].push_back(&curr->table);
   curr->finalize();
   out = curr;
   return true;
@@ -4846,8 +4824,8 @@ bool WasmBinaryBuilder::maybeVisitTableCopy(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->srcOffset = popNonVoidExpression();
   curr->destOffset = popNonVoidExpression();
-  tableRefs[srcTableIdx].push_back(std::make_pair("srcTable", curr));
-  tableRefs[destTableIdx].push_back(std::make_pair("destTable", curr));
+  tableRefs[srcTableIdx].push_back(&curr->srcTable);
+  tableRefs[destTableIdx].push_back(&curr->destTable);
   curr->finalize();
   out = curr;
   return true;
@@ -4865,7 +4843,7 @@ bool WasmBinaryBuilder::maybeVisitTableInit(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->srcOffset = popNonVoidExpression();
   curr->destOffset = popNonVoidExpression();
-  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  tableRefs[tableIdx].push_back(&curr->table);
   elemRefs[elemIdx].push_back(curr);
   curr->finalize();
   out = curr;
@@ -6162,7 +6140,7 @@ void WasmBinaryBuilder::visitTableGet(TableGet* curr) {
   auto* table = getTable(tableIdx);
   curr->table = table->name;
   curr->offset = popNonVoidExpression();
-  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  tableRefs[tableIdx].push_back(&curr->table);
   curr->finalize(table->type);
 }
 
@@ -6172,7 +6150,7 @@ void WasmBinaryBuilder::visitTableSet(TableSet* curr) {
   curr->table = getTableName(tableIdx);
   curr->value = popNonVoidExpression();
   curr->offset = popNonVoidExpression();
-  tableRefs[tableIdx].push_back(std::make_pair(Name(), curr));
+  tableRefs[tableIdx].push_back(&curr->table);
   curr->finalize();
 }
 

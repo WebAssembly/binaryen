@@ -1427,14 +1427,14 @@ public:
   // their names
   std::vector<Table*> tableImports;
   // at index i we have all references to the table i
-  std::map<Index, std::vector<std::pair<Name, Expression*>>> tableRefs;
+  std::map<Index, std::vector<Name*>> tableRefs;
 
   std::map<Index, Name> elemTables;
 
   // we store elems here after being read from binary, until when we know their
   // names
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
-  // at index i we have all references to the table i
+  // at index i we have all references to the element segment i
   std::map<Index, std::vector<Expression*>> elemRefs;
 
   // we store globals here before wasm.addGlobal after we know their names
