@@ -228,8 +228,8 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
 
   virtual bool mayInteract(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) {
     // We already checked isLoadFrom and tramples; if this is a StructSet that
-    // is not a trample then we cannot be sure what is being set, and it may
-    // interact.
+    // is not a trample then we cannot be sure what is being set (due to not
+    // recognizing the ref, etc.), and it may interact.
     return curr->is<StructSet>();
   }
 };
