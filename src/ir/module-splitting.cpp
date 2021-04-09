@@ -247,6 +247,9 @@ TableSlotManager::Slot TableSlotManager::getSlot(RefFunc* entry) {
   addSlot(entry->func, newSlot);
   if (activeTable->initial <= newSlot.index) {
     activeTable->initial = newSlot.index + 1;
+    if (module.dylinkSection) {
+      module.dylinkSection->tableSize = activeTable->initial;
+    }
   }
   if (activeTable->max <= newSlot.index) {
     activeTable->max = newSlot.index + 1;
