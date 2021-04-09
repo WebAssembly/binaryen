@@ -392,5 +392,12 @@
   )
  )
 
+ ;; CHECK:      (func $no-basic-blocks
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $no-basic-blocks
+  (unreachable)
+ )
+
  ;; TODO: test try throwing
 )

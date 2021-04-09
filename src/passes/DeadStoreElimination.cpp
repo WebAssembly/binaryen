@@ -131,6 +131,11 @@ struct DeadStoreFinder
     // create the CFG by walking the IR
     doWalkFunction(func);
 
+    if (!currBasicBlock) {
+      // No contents to analyze.
+      return;
+    }
+
     // Ensure a final return on the last block, to represent us leaving the
     // function (which just like a return in the middle, means we reach code
     // that can access global state).
