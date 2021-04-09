@@ -2065,8 +2065,9 @@ public:
   //
   struct ExternalInterface {
     virtual ~ExternalInterface() = default;
-    virtual void
-    init(Module& wasm, SubType& instance, std::map<Name, SubType*> registry) {}
+    virtual void init(Module& wasm,
+                      SubType& instance,
+                      std::map<Name, SubType*> linkedInstances) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
     virtual Literals callTable(Name tableName,
@@ -2239,8 +2240,9 @@ public:
 
   ModuleInstanceBase(Module& wasm,
                      ExternalInterface* externalInterface,
-                     std::map<Name, SubType*> registry_)
-    : wasm(wasm), externalInterface(externalInterface), registry(registry_) {
+                     std::map<Name, SubType*> linkedInstances_)
+    : wasm(wasm), externalInterface(externalInterface),
+      linkedInstances(linkedInstances_) {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // prepare memory
@@ -2254,7 +2256,7 @@ public:
     });
 
     // initialize the rest of the external interface
-    externalInterface->init(wasm, *self(), registry_);
+    externalInterface->init(wasm, *self(), linkedInstances_);
 
     initializeTableContents();
     initializeMemoryContents();
@@ -2324,7 +2326,7 @@ private:
 
       Table* table = wasm.getTable(segment->table);
       if (table->imported()) {
-        auto* inst = registry.at(table->module);
+        auto* inst = linkedInstances.at(table->module);
         Export* tableExport = inst->wasm.getExport(table->base);
         for (Index i = 0; i < segment->data.size(); ++i) {
           Flow ret = runner.visit(segment->data[i]);
@@ -2332,11 +2334,11 @@ private:
             tableExport->value, offset + i, ret.getSingleValue());
         }
       } else {
-      for (Index i = 0; i < segment->data.size(); ++i) {
-        Flow ret = runner.visit(segment->data[i]);
-        externalInterface->tableStore(
-          segment->table, offset + i, ret.getSingleValue());
-      }
+        for (Index i = 0; i < segment->data.size(); ++i) {
+          Flow ret = runner.visit(segment->data[i]);
+          externalInterface->tableStore(
+            segment->table, offset + i, ret.getSingleValue());
+        }
       }
     });
   }
@@ -2469,15 +2471,15 @@ private:
                               Table* t) {
         Flow ret = inst->externalInterface->callTable(
           t->name, index, curr->sig, arguments, type, *instance.self());
-      // TODO: make this a proper tail call (return first)
-      if (curr->isReturn) {
-        ret.breakTo = RETURN_FLOW;
-      }
-      return ret;
+        // TODO: make this a proper tail call (return first)
+        if (curr->isReturn) {
+          ret.breakTo = RETURN_FLOW;
+        }
+        return ret;
       };
 
       if (table->imported()) {
-        auto* inst = instance.registry.at(table->module);
+        auto* inst = instance.linkedInstances.at(table->module);
         Export* tableExport = inst->wasm.getExport(table->base);
         return indirectCall(inst, inst->wasm.getTable(tableExport->value));
       } else {
@@ -3309,7 +3311,7 @@ protected:
   }
 
   ExternalInterface* externalInterface;
-  std::map<Name, SubType*> registry;
+  std::map<Name, SubType*> linkedInstances;
 };
 
 // The default ModuleInstance uses a trivial global manager
@@ -3319,8 +3321,8 @@ class ModuleInstance
 public:
   ModuleInstance(Module& wasm,
                  ExternalInterface* externalInterface,
-                 std::map<Name, ModuleInstance*> registry)
-    : ModuleInstanceBase(wasm, externalInterface, registry) {}
+                 std::map<Name, ModuleInstance*> linkedInstances)
+    : ModuleInstanceBase(wasm, externalInterface, linkedInstances) {}
 };
 
 } // namespace wasm

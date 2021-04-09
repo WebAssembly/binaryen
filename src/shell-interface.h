@@ -87,18 +87,16 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   } memory;
 
   std::unordered_map<Name, std::vector<Literal>> tables;
-  std::map<Name, ModuleInstance*> registry;
+  std::map<Name, ModuleInstance*> linkedInstances;
 
   ShellExternalInterface() : memory() {}
   virtual ~ShellExternalInterface() = default;
 
   void init(Module& wasm,
             ModuleInstance& instance,
-            std::map<Name, ModuleInstance*> registry) override {
-    registry.swap(registry);
-    // if (!wasm.memory.imported()) {
+            std::map<Name, ModuleInstance*> linkedInstances) override {
+    linkedInstances.swap(linkedInstances);
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
-    // }
     if (wasm.tables.size() > 0) {
       ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
         tables[table->name].resize(table->initial);
@@ -160,8 +158,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       // XXX hack for torture tests
       std::cout << "exit()\n";
       throw ExitException();
-    } else if (registry.count(import->module)) {
-      return registry.at(import->module)->callExport(import->base, arguments);
+    } else if (linkedInstances.count(import->module)) {
+      return linkedInstances.at(import->module)
+        ->callExport(import->base, arguments);
     }
     Fatal() << "callImport: unknown import: " << import->module.str << "."
             << import->name.str;
