@@ -43,7 +43,10 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
                                 UnifiedExpressionVisitor<DeadStoreFinder>,
                                 Info> {
 
-  DeadStoreFinder(Function* func) {
+  PassOptions& passOptions;
+  FeatureSet features;
+
+  DeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : passOptions(passOptions), features(features) {
     // create the CFG by walking the IR
     doWalkFunction(func);
 
@@ -80,6 +83,9 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
   // Returns whether an expression may interact with store in a way that we
   // cannot fully analyze as a load or a store, and so we must give up. This may
   // be a possible load or a possible store or something else.
+  // This does not need to handle reaching of code outside of the current function: a
+  // call, return, etc. will be noted as a possible interaction automatically (as if we
+  // reach code outside the function then any interaction is possible).
   virtual bool mayInteract(Expression* curr, Expression* store) = 0;
 
   // Walking
@@ -111,19 +117,18 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
 
         // Flow this store forward, looking for what it affects and interacts
         // with.
-        UniqueDeferredQueue<BasicBlock*> work;
-        std::unordered_set<BasicBlock*> visited;
+        UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
 
         auto scanBlock = [&](BasicBlock* block, size_t from) {
-          if (visited.count(block)) {
-            return;
-          }
-          visited.insert(block);
-
           for (size_t i = from; i < block->contents.exprs.size(); i++) {
             auto* curr = block->contents.exprs[i];
 
-            if (mayInteract(curr, store)) {
+            EffectAnalyzer effects(passOptions, features, curr);
+
+            // Check if we can reach code outside of this function, in which
+            // case the store may have interactions we cannot see. Also call the
+            // subclass hook to check for such interactions.
+            if (effects.calls || effects.throws || effects.trap || curr->is<Return>() || mayInteract(curr, store)) {
               // Stop: we cannot fully analyze the uses of this store.
               // TODO: it may be valuable to still optimize some of the loads
               //       from a store, even if others cannot be analyzed. We can
