@@ -1283,9 +1283,10 @@ BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
 
 BinaryenExpressionRef
 BinaryenRefFunc(BinaryenModuleRef module, const char* func, BinaryenType type) {
+  // TODO: consider changing the C API to receive a heap type
   Type type_(type);
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefFunc(func, type_));
+    Builder(*(Module*)module).makeRefFunc(func, type_.getHeapType()));
 }
 
 BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
@@ -3485,9 +3486,8 @@ BinaryenAddActiveElementSegment(BinaryenModuleRef module,
     if (func == nullptr) {
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
-    Type type(HeapType(func->sig), Nullable);
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], type));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -3503,9 +3503,8 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
     if (func == nullptr) {
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
-    Type type(HeapType(func->sig), Nullable);
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], type));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }

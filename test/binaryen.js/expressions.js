@@ -1448,7 +1448,9 @@ console.log("# RefFunc");
   assert(theRefFunc instanceof binaryen.RefFunc);
   assert(theRefFunc instanceof binaryen.Expression);
   assert(theRefFunc.func === func);
-  assert(theRefFunc.type === binaryen.funcref);
+  // TODO: check the type. the type is (ref func), that is, a non-nullable func,
+  //       which differs from funcref. we don't have the ability to create such
+  //       a type in the C/JS APIs yet.
 
   theRefFunc.func = func = "b";
   assert(theRefFunc.func === func);
