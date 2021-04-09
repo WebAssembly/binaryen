@@ -55,7 +55,7 @@ struct Address {
     return *this;
   }
   operator address64_t() const { return addr; }
-  Address& operator++() {
+  Address& operator++(int) {
     ++addr;
     return *this;
   }
