@@ -5,6 +5,8 @@
  (type $A (struct (field (mut i32))))
  (type $B (struct (field (mut f64))))
 
+ (global $global$0 (mut i32) (i32.const 0))
+
  ;; CHECK:      (func $simple-param (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
@@ -397,6 +399,33 @@
  ;; CHECK-NEXT: )
  (func $no-basic-blocks
   (unreachable)
+ )
+
+ ;; CHECK:      (func $global
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.set $global$0
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $global
+  (global.set $global$0
+   (i32.const 10)
+  )
+  ;; a trap does not prevent our optimizations, as we assume it means the
+  ;; program halts completely, and global state cannot be observed.
+  (if
+   (i32.const 1)
+   (unreachable)
+  )
+  (global.set $global$0
+   (i32.const 20)
+  )
  )
 
  ;; TODO: test try throwing

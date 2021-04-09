@@ -168,6 +168,7 @@ struct DeadStoreFinder
         UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
 
         auto scanBlock = [&](BasicBlock* block, size_t from) {
+          std::cerr << "scan block " << block << "\n";
           for (size_t i = from; i < block->contents.exprs.size(); i++) {
             auto* curr = block->contents.exprs[i];
 
@@ -211,17 +212,21 @@ struct DeadStoreFinder
 
         // Next, continue flowing through other blocks.
         while (!work.empty()) {
+          std::cerr << "work iter\n";
           auto* curr = work.pop();
           scanBlock(curr, 0);
         }
+        std::cerr << "work done\n";
       }
     }
+    std::cerr << "all work done\n";
   }
 
   bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
-    // TODO: should trap appear here as well? in that case the entire
+    // TODO: Should trap appear here as well? In that case the entire
     // application halts, so global effects should not be visible, unless global
-    // state is inspected from the outside somehow.
+    // state is inspected from the outside somehow. Perhaps we should add a
+    // pass option for "keep global effects noticeable after a trap".
     return currEffects.calls || currEffects.throws ||
            curr->is<Return>();
   }
@@ -297,7 +302,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
 
     // Optimize the stores that have no unknown interactions.
     for (auto& kv : storeLoads) {
-      auto* store = kv.first->dynCast<StructSet>();
+      auto* store = kv.first->cast<StructSet>();
       const auto& loads = kv.second;
       if (loads.empty()) {
         // This store has no loads, and can just be dropped.
@@ -356,7 +361,7 @@ struct GlobalDeadStoreFinder : public DeadStoreFinder {
 
     // Optimize the stores that have no unknown interactions.
     for (auto& kv : storeLoads) {
-      auto* store = kv.first->dynCast<StructSet>();
+      auto* store = kv.first->cast<GlobalSet>();
       const auto& loads = kv.second;
       if (loads.empty()) {
         // This store has no loads, and can just be dropped.
