@@ -177,7 +177,7 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
     }
   }
 
-  bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& effects) {
+  bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
     return currEffects.calls || currEffects.throws || currEffects.trap || curr->is<Return>();
   }
 };
@@ -201,9 +201,9 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     return false;
   }
 
-  virtual bool tramples(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) {
+  virtual bool tramples(Expression* curr, const EffectAnalyzer& currEffects, Expression* store_) {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
-      auto* store = store_->cast<StructSet>();
+      auto* store = curr->cast<StructSet>();
       // TODO: consider subtyping as well.
       // TODO: ref identity
       return otherStore->ref->type == store->ref->type && otherStore->index == store->index;
