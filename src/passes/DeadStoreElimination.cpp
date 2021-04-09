@@ -379,8 +379,10 @@ struct DeadStoreElimination
   Pass* create() override { return new DeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
     GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    if (getModule()->features.hasGC()) {
+      GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    }
   }
 };
 
