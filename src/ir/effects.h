@@ -71,8 +71,9 @@ public:
   std::set<Name> globalsWritten;
   std::set<Name> tablesRead;
   std::set<Name> tablesWritten;
-  std::set<Name> elemsRead;
-  std::set<Name> elemsDropped;
+  std::set<Name> elementSegmentsRead;
+  std::set<Name> elementSegmentsDropped;
+  // TODO: add dataSegmentsRead & dataSegmentsDropped for bulk memory operations
   bool readsMemory = false;
   bool writesMemory = false;
   // TODO: Type-based alias analysis. For example, writes to Arrays never
@@ -131,11 +132,11 @@ public:
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
     return globalsWritten.size() || tablesWritten.size() ||
-           elemsDropped.size() || writesMemory || writesHeap || isAtomic ||
+           elementSegmentsDropped.size() || writesMemory || writesHeap || isAtomic ||
            calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || tablesRead.size() || elemsRead.size() ||
+    return globalsRead.size() || tablesRead.size() || elementSegmentsRead.size() ||
            readsMemory || readsHeap || isAtomic || calls;
   }
 
@@ -145,7 +146,7 @@ public:
   }
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || accessesTable() ||
-           elemsDropped.size() || readsMemory || accessesGlobal();
+           elementSegmentsDropped.size() || readsMemory || accessesGlobal();
   }
 
   // check if we break to anything external from ourselves
@@ -194,8 +195,8 @@ public:
         return true;
       }
     }
-    for (auto elem : elemsDropped) {
-      if (other.elemsRead.count(elem)) {
+    for (auto elem : elementSegmentsDropped) {
+      if (other.elementSegmentsRead.count(elem)) {
         return true;
       }
     }
@@ -209,8 +210,8 @@ public:
         return true;
       }
     }
-    for (auto elem : elemsRead) {
-      if (other.elemsDropped.count(elem)) {
+    for (auto elem : elementSegmentsRead) {
+      if (other.elementSegmentsDropped.count(elem)) {
         return true;
       }
     }
@@ -263,6 +264,12 @@ public:
     }
     for (auto i : other.tablesWritten) {
       tablesWritten.insert(i);
+    }
+    for (auto i : other.elementSegmentsRead) {
+      elementSegmentsRead.insert(i);
+    }
+    for (auto i : other.elementSegmentsDropped) {
+      elementSegmentsDropped.insert(i);
     }
     for (auto i : other.breakTargets) {
       breakTargets.insert(i);
@@ -569,7 +576,6 @@ private:
       parent.implicitTrap = true;
     }
     void visitTableSet(TableSet* curr) {
-      // TODO: does table.set read a table's state?
       parent.tablesWritten.insert(curr->table);
       parent.implicitTrap = true;
     }
@@ -591,11 +597,11 @@ private:
     }
     void visitTableInit(TableInit* curr) {
       parent.tablesWritten.insert(curr->table);
-      parent.elemsRead.insert(curr->segment);
+      parent.elementSegmentsRead.insert(curr->segment);
       parent.implicitTrap = true;
     }
     void visitElemDrop(ElemDrop* curr) {
-      parent.elemsDropped.insert(curr->segment);
+      parent.elementSegmentsDropped.insert(curr->segment);
       parent.implicitTrap = true;
     }
     void visitRefNull(RefNull* curr) {}
