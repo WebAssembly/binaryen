@@ -104,7 +104,8 @@ struct DeadStoreFinder
 
   // Given a store that is not needed, get drops of its children to replace it
   // with.
-  virtual Expression* replaceStoreWithDrops(Expression* store, Builder& builder) = 0;
+  virtual Expression* replaceStoreWithDrops(Expression* store,
+                                            Builder& builder) = 0;
 
   // Walking
 
@@ -271,9 +272,7 @@ struct DeadStoreFinder
 };
 
 struct GlobalDeadStoreFinder : public DeadStoreFinder {
-  GlobalDeadStoreFinder(Module* wasm,
-                        Function* func,
-                        PassOptions& passOptions)
+  GlobalDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : DeadStoreFinder(wasm, func, passOptions) {}
 
   bool isStore(Expression* curr) override { return curr->is<GlobalSet>(); }
@@ -310,15 +309,14 @@ struct GlobalDeadStoreFinder : public DeadStoreFinder {
     return false;
   }
 
-  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
+  Expression* replaceStoreWithDrops(Expression* store,
+                                    Builder& builder) override {
     return builder.makeDrop(store->cast<GlobalSet>()->value);
   }
 };
 
 struct MemoryDeadStoreFinder : public DeadStoreFinder {
-  MemoryDeadStoreFinder(Module* wasm,
-                    Function* func,
-                    PassOptions& passOptions)
+  MemoryDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : DeadStoreFinder(wasm, func, passOptions) {}
 
   bool isStore(Expression* curr) override { return curr->is<Store>(); }
@@ -338,8 +336,7 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
       // TODO: handle cases where the sign may matter.
       return load->bytes == store->bytes &&
              load->bytes == load->type.getByteSize() &&
-             load->offset == store->offset &&
-             equivalent(load->ptr, store->ptr);
+             load->offset == store->offset && equivalent(load->ptr, store->ptr);
     }
     return false;
   }
@@ -366,17 +363,16 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
-  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
+  Expression* replaceStoreWithDrops(Expression* store,
+                                    Builder& builder) override {
     auto* castStore = store->cast<Store>();
-    return builder.makeSequence(
-              builder.makeDrop(castStore->ptr), builder.makeDrop(castStore->value));
+    return builder.makeSequence(builder.makeDrop(castStore->ptr),
+                                builder.makeDrop(castStore->value));
   }
 };
 
 struct GCDeadStoreFinder : public DeadStoreFinder {
-  GCDeadStoreFinder(Module* wasm,
-                    Function* func,
-                    PassOptions& passOptions)
+  GCDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : DeadStoreFinder(wasm, func, passOptions) {}
 
   bool isStore(Expression* curr) override { return curr->is<StructSet>(); }
@@ -420,10 +416,11 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     return currEffects.readsHeap || currEffects.writesHeap;
   }
 
-  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
+  Expression* replaceStoreWithDrops(Expression* store,
+                                    Builder& builder) override {
     auto* castStore = store->cast<StructSet>();
-    return builder.makeSequence(
-              builder.makeDrop(castStore->ref), builder.makeDrop(castStore->value));
+    return builder.makeSequence(builder.makeDrop(castStore->ref),
+                                builder.makeDrop(castStore->value));
   }
 };
 
