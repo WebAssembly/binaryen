@@ -151,6 +151,38 @@
   )
  )
 
+ ;; CHECK:      (func $two-types-get (param $x (ref $A)) (param $y (ref $B))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.get $B 0
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $two-types-get (param $x (ref $A)) (param $y (ref $B))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; the simple analysis currently gives up on a set we cannot easily classify
+  (drop
+   (struct.get $B 0
+    (local.get $y)
+   )
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
  (func $foo)
 
  ;; CHECK:      (func $call (param $x (ref $A))

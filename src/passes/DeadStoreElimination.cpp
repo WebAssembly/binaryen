@@ -277,11 +277,10 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
   bool mayInteract(Expression* curr,
                    const EffectAnalyzer& currEffects,
                    Expression* store) override {
-    // We already checked isLoadFrom and tramples; if this is a StructSet that
-    // is not a trample then we cannot be sure what is being set (due to not
-    // recognizing the ref, etc.), and it may interact.
+    // We already checked isLoadFrom and tramples; if this is a struct
+    // operation that we did not recognize, then give up.
     // TODO if we can identify the ref, use the type system here
-    return curr->is<StructSet>();
+    return currEffects.readsHeap || currEffects.writesHeap;
   }
 };
 
