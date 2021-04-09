@@ -309,25 +309,29 @@
 
 ;; Implicitly dropped elements
 
-(module
-  (table 10 funcref)
-  (elem $e (i32.const 0) func $f)
-  (func $f)
-  (func (export "init")
-    (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
-  )
-)
-(assert_trap (invoke "init") "out of bounds table access")
+;;; No table.init instruction yet
+;; (module
+;;   (table 10 funcref)
+;;   (elem $e (i32.const 0) func $f)
+;;   (func $f)
+;;   (func (export "init")
+;;     (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
+;;   )
+;; )
+;; (assert_trap (invoke "init") "out of bounds table access")
 
-(module
-  (table 10 funcref)
-  (elem $e declare func $f)
-  (func $f)
-  (func (export "init")
-    (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
-  )
-)
-(assert_trap (invoke "init") "out of bounds table access")
+;;; We don't add declarative segments to Binaryen IR at all, which is different
+;;;  from the reference interpreter's behavior. Binaryen considers this a
+;;;  validation error.
+;; (module
+;;   (table 10 funcref)
+;;   (elem $e declare func $f)
+;;   (func $f)
+;;   (func (export "init")
+;;     (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
+;;   )
+;; )
+;; (assert_trap (invoke "init") "out of bounds table access")
 
 ;; Element without table
 
@@ -502,28 +506,29 @@
 (assert_return (invoke $module1 "call-8") (i32.const 65))
 (assert_return (invoke $module1 "call-9") (i32.const 66))
 
-(module $module2
-  (type $out-i32 (func (result i32)))
-  (import "module1" "shared-table" (table 10 funcref))
-  (elem (i32.const 7) $const-i32-c)
-  (elem (i32.const 8) $const-i32-d)
-  (func $const-i32-c (type $out-i32) (i32.const 67))
-  (func $const-i32-d (type $out-i32) (i32.const 68))
-)
+;;; wasm-shell doesn't handle function reference calls across modules
+;; (module $module2
+;;   (type $out-i32 (func (result i32)))
+;;   (import "module1" "shared-table" (table 10 funcref))
+;;   (elem (i32.const 7) $const-i32-c)
+;;   (elem (i32.const 8) $const-i32-d)
+;;   (func $const-i32-c (type $out-i32) (i32.const 67))
+;;   (func $const-i32-d (type $out-i32) (i32.const 68))
+;; )
 
-(assert_return (invoke $module1 "call-7") (i32.const 67))
-(assert_return (invoke $module1 "call-8") (i32.const 68))
-(assert_return (invoke $module1 "call-9") (i32.const 66))
+;; (assert_return (invoke $module1 "call-7") (i32.const 67))
+;; (assert_return (invoke $module1 "call-8") (i32.const 68))
+;; (assert_return (invoke $module1 "call-9") (i32.const 66))
 
-(module $module3
-  (type $out-i32 (func (result i32)))
-  (import "module1" "shared-table" (table 10 funcref))
-  (elem (i32.const 8) $const-i32-e)
-  (elem (i32.const 9) $const-i32-f)
-  (func $const-i32-e (type $out-i32) (i32.const 69))
-  (func $const-i32-f (type $out-i32) (i32.const 70))
-)
+;; (module $module3
+;;   (type $out-i32 (func (result i32)))
+;;   (import "module1" "shared-table" (table 10 funcref))
+;;   (elem (i32.const 8) $const-i32-e)
+;;   (elem (i32.const 9) $const-i32-f)
+;;   (func $const-i32-e (type $out-i32) (i32.const 69))
+;;   (func $const-i32-f (type $out-i32) (i32.const 70))
+;; )
 
-(assert_return (invoke $module1 "call-7") (i32.const 67))
-(assert_return (invoke $module1 "call-8") (i32.const 69))
-(assert_return (invoke $module1 "call-9") (i32.const 70))
+;; (assert_return (invoke $module1 "call-7") (i32.const 67))
+;; (assert_return (invoke $module1 "call-8") (i32.const 69))
+;; (assert_return (invoke $module1 "call-9") (i32.const 70))
