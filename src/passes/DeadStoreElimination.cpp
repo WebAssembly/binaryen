@@ -131,6 +131,11 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
           continue;
         }
 
+        // Note the store in storeLoads. It's presence there indicates it has no
+        // unseen interactions, and we will remove it if we find any.
+        storeLoads[store];
+
+std::cout << "store:\n" << *store << '\n';
         // Flow this store forward, looking for what it affects and interacts
         // with.
         UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
@@ -141,15 +146,19 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
 
             EffectAnalyzer currEffects(passOptions, features);
             currEffects.visit(curr);
+std::cout << "at curr:\n" << *curr << '\n';
 
             if (isLoadFrom(curr, currEffects, store)) {
               // We found a definite load, note it.
               storeLoads[store].push_back(curr);
+std::cout << "  found load\n";
             } else if (tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
               // anything it can reach.
+std::cout << "  found trample\n";
               return;
             } else if (reachesGlobalCode(curr, currEffects) || mayInteract(curr, currEffects, store)) {
+std::cout << "  found mayInteract\n";
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
               // TODO: it may be valuable to still optimize some of the loads
@@ -200,11 +209,7 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
 };
 
 struct GCDeadStoreFinder : public DeadStoreFinder {
-  GCDeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : DeadStoreFinder(func, passOptions, features) {
-    for (auto& kv : storeLoads) {
-      std::cout << "dead:\n" << *kv.first << '\n';
-    }
-  }
+  GCDeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : DeadStoreFinder(func, passOptions, features) {}
 
   bool isStore(Expression* curr) override {
     return curr->is<StructSet>();
@@ -247,7 +252,11 @@ struct DeadStoreElimination
   Pass* create() override { return new DeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    GCDeadStoreFinder(func, getPassOptions(), getModule()->features).analyze();
+    GCDeadStoreFinder gcFinder(func, getPassOptions(), getModule()->features);
+    gcFinder.analyze();
+    for (auto& kv : gcFinder.storeLoads) {
+      std::cout << "dead:\n" << *kv.first << '\n';
+    }
   }
 };
 
