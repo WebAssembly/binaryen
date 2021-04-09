@@ -244,7 +244,11 @@ struct DeadStoreFinder
         }
       }
     }
-    // TODO: Const, etc.
+    if (auto* aConst = a->dynCast<Const>()) {
+      if (auto* bConst = b->dynCast<Const>()) {
+        return aConst->value == bConst->value;
+      }
+    }
     return false;
   }
 
@@ -363,9 +367,9 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
   }
 
   Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
-    auto* castStore = store->cast<StructSet>();
+    auto* castStore = store->cast<Store>();
     return builder.makeSequence(
-              builder.makeDrop(castStore->ref), builder.makeDrop(castStore->value));
+              builder.makeDrop(castStore->ptr), builder.makeDrop(castStore->value));
   }
 };
 
