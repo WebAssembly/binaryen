@@ -96,6 +96,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             ModuleInstance& instance,
             std::map<Name, ModuleInstance*> linkedInstances) override {
     linkedInstances.swap(linkedInstances);
+    // TODO: only initialize memory if not imported
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     if (wasm.tables.size() > 0) {
       ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
@@ -159,8 +160,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       std::cout << "exit()\n";
       throw ExitException();
     } else if (linkedInstances.count(import->module)) {
-      return linkedInstances.at(import->module)
-        ->callExport(import->base, arguments);
+      return linkedInstances[import->module]->callExport(import->base,
+                                                         arguments);
     }
     Fatal() << "callImport: unknown import: " << import->module.str << "."
             << import->name.str;
