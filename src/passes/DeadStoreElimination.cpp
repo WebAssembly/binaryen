@@ -23,7 +23,6 @@
 #include <ir/effects.h>
 #include <ir/local-graph.h>
 #include <ir/properties.h>
-#include <ir/utils.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
@@ -312,6 +311,64 @@ struct GlobalDeadStoreFinder : public DeadStoreFinder {
   }
 };
 
+struct MemoryDeadStoreFinder : public DeadStoreFinder {
+  MemoryDeadStoreFinder(Module* wasm,
+                    Function* func,
+                    PassOptions& passOptions)
+    : DeadStoreFinder(wasm, func, passOptions) {}
+
+  bool isStore(Expression* curr) override { return curr->is<Store>(); }
+
+  bool isRelevant(Expression* curr,
+                  const EffectAnalyzer& currEffects) override {
+    return currEffects.readsMemory || currEffects.writesMemory;
+  }
+
+  bool isLoadFrom(Expression* curr,
+                  const EffectAnalyzer& currEffects,
+                  Expression* store_) override {
+    if (auto* load = curr->dynCast<Load>()) {
+      auto* store = store_->cast<Store>();
+      // TODO: compare more things. For now, handle the obvious case where the
+      // operations are identical in size and offset.
+      // TODO: handle cases where the sign may matter.
+      return load->bytes == store->bytes &&
+             load->bytes == load->type.getByteSize() &&
+             load->offset == store->offset &&
+             equivalent(load->ptr, store->ptr);
+    }
+    return false;
+  }
+
+  bool tramples(Expression* curr,
+                const EffectAnalyzer& currEffects,
+                Expression* store_) override {
+    if (auto* otherStore = curr->dynCast<Store>()) {
+      auto* store = store_->cast<Store>();
+      // TODO: compare in detail. For now, handle the obvious case where the
+      // stores are identical in size, offset, etc., so that identical repeat
+      // stores are handled.
+      return otherStore->bytes == store->bytes &&
+             otherStore->offset == store->offset &&
+             equivalent(otherStore->ptr, store->ptr);
+    }
+    return false;
+  }
+
+  bool mayInteract(Expression* curr,
+                   const EffectAnalyzer& currEffects,
+                   Expression* store) override {
+    // Anything we did not identify so far is dangerous.
+    return currEffects.readsMemory || currEffects.writesMemory;
+  }
+
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
+    auto* castStore = store->cast<StructSet>();
+    return builder.makeSequence(
+              builder.makeDrop(castStore->ref), builder.makeDrop(castStore->value));
+  }
+};
+
 struct GCDeadStoreFinder : public DeadStoreFinder {
   GCDeadStoreFinder(Module* wasm,
                     Function* func,
@@ -374,6 +431,7 @@ struct DeadStoreElimination
 
   void doWalkFunction(Function* func) {
     GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    MemoryDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
     if (getModule()->features.hasGC()) {
       GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
     }
