@@ -127,9 +127,7 @@ void ReFinalize::visitDrop(Drop* curr) { curr->finalize(); }
 void ReFinalize::visitReturn(Return* curr) { curr->finalize(); }
 void ReFinalize::visitMemorySize(MemorySize* curr) { curr->finalize(); }
 void ReFinalize::visitMemoryGrow(MemoryGrow* curr) { curr->finalize(); }
-void ReFinalize::visitTableGet(TableGet* curr) {
-  // TODO: call finalize with the corresponding table's type?
-}
+void ReFinalize::visitTableGet(TableGet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSet(TableSet* curr) { curr->finalize(); }
 void ReFinalize::visitTableSize(TableSize* curr) { curr->finalize(); }
 void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
