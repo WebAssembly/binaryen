@@ -25,8 +25,8 @@
   (elem (table $t) (offset (i32.const 0)) funcref)
   (elem (table $t) (offset (i32.const 0)) func $f $g)
   (elem (table 0) (i32.const 0) func)
-  ;; (elem (table 0x0) (i32.const 0) func $f $f)
-  ;; (elem (table 0x000) (offset (i32.const 0)) func)
+  (elem (table 0x0) (i32.const 0) func $f $f)
+  (elem (table 0x000) (offset (i32.const 0)) func)
   (elem (table 0) (offset (i32.const 0)) func $f $f)
   (elem (table $t) (i32.const 0) func)
   (elem (table $t) (i32.const 0) func $f $f)
@@ -48,8 +48,8 @@
   (elem $a9 (table $t) (offset (i32.const 0)) funcref)
   (elem $a10 (table $t) (offset (i32.const 0)) func $f $g)
   (elem $a11 (table 0) (i32.const 0) func)
-  ;; (elem $a12 (table 0x0) (i32.const 0) func $f $f)
-  ;; (elem $a13 (table 0x000) (offset (i32.const 0)) func)
+  (elem $a12 (table 0x0) (i32.const 0) func $f $f)
+  (elem $a13 (table 0x000) (offset (i32.const 0)) func)
   (elem $a14 (table 0) (offset (i32.const 0)) func $f $f)
   (elem $a15 (table $t) (i32.const 0) func)
   (elem $a16 (table $t) (i32.const 0) func $f $f)
@@ -80,8 +80,7 @@
   (func $f)
   (func $g)
 
-  (table $t1 funcref (elem (ref.func $f) (ref.null func) (ref.func $g)))
-  (table $t2 (ref null func) (elem (ref.func $f) (ref.null func) (ref.func $g)))
+  (table $t funcref (elem (ref.func $f) (ref.null func) (ref.func $g)))
 )
 
 
@@ -180,31 +179,278 @@
   (elem (i32.const 20))
 )
 
-;;; We cannot enable these yet since we check table bounds at validation stage,
-;;; which is incorrect for imported tables.
+(module
+  (import "spectest" "table" (table 0 funcref))
+  (func $f)
+  (elem (i32.const 0) $f)
+)
+
+(module
+  (import "spectest" "table" (table 0 100 funcref))
+  (func $f)
+  (elem (i32.const 0) $f)
+)
+
+(module
+  (import "spectest" "table" (table 0 funcref))
+  (func $f)
+  (elem (i32.const 1) $f)
+)
+
+(module
+  (import "spectest" "table" (table 0 30 funcref))
+  (func $f)
+  (elem (i32.const 1) $f)
+)
+
+;; Invalid bounds for elements
+
+(assert_trap
+  (module
+    (table 0 funcref)
+    (func $f)
+    (elem (i32.const 0) $f)
+  )
+  "out of bounds table access"
+)
+
+(assert_trap
+  (module
+    (table 0 0 funcref)
+    (func $f)
+    (elem (i32.const 0) $f)
+  )
+  "out of bounds table access"
+)
+
+(assert_trap
+  (module
+    (table 0 1 funcref)
+    (func $f)
+    (elem (i32.const 0) $f)
+  )
+  "out of bounds table access"
+)
+
+(assert_trap
+  (module
+    (table 0 funcref)
+    (elem (i32.const 1))
+  )
+  "out of bounds table access"
+)
+(assert_trap
+  (module
+    (table 10 funcref)
+    (func $f)
+    (elem (i32.const 10) $f)
+  )
+  "out of bounds table access"
+)
+(assert_trap
+  (module
+    (import "spectest" "table" (table 10 funcref))
+    (func $f)
+    (elem (i32.const 10) $f)
+  )
+  "out of bounds table access"
+)
+
+(assert_trap
+  (module
+    (table 10 20 funcref)
+    (func $f)
+    (elem (i32.const 10) $f)
+  )
+  "out of bounds table access"
+)
+(assert_trap
+  (module
+    (import "spectest" "table" (table 10 funcref))
+    (func $f)
+    (elem (i32.const 10) $f)
+  )
+  "out of bounds table access"
+)
+
+(assert_trap
+  (module
+    (table 10 funcref)
+    (func $f)
+    (elem (i32.const -1) $f)
+  )
+  "out of bounds table access"
+)
+(assert_trap
+  (module
+    (import "spectest" "table" (table 10 funcref))
+    (func $f)
+    (elem (i32.const -1) $f)
+  )
+  "out of bounds table access"
+)
+
+(assert_trap
+  (module
+    (table 10 funcref)
+    (func $f)
+    (elem (i32.const -10) $f)
+  )
+  "out of bounds table access"
+)
+(assert_trap
+  (module
+    (import "spectest" "table" (table 10 funcref))
+    (func $f)
+    (elem (i32.const -10) $f)
+  )
+  "out of bounds table access"
+)
+
+;; Implicitly dropped elements
+
+;;; No table.init instruction yet
 ;; (module
-;;   (import "spectest" "table" (table 0 funcref))
+;;   (table 10 funcref)
+;;   (elem $e (i32.const 0) func $f)
 ;;   (func $f)
-;;   (elem (i32.const 0) $f)
+;;   (func (export "init")
+;;     (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
+;;   )
+;; )
+;; (assert_trap (invoke "init") "out of bounds table access")
+
+;;; We don't add declarative segments to Binaryen IR at all, which is different
+;;;  from the reference interpreter's behavior. Binaryen considers this a
+;;;  validation error.
+;; (module
+;;   (table 10 funcref)
+;;   (elem $e declare func $f)
+;;   (func $f)
+;;   (func (export "init")
+;;     (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
+;;   )
+;; )
+;; (assert_trap (invoke "init") "out of bounds table access")
+
+;; Element without table
+
+(assert_invalid
+  (module
+    (func $f)
+    (elem (i32.const 0) $f)
+  )
+  "unknown table"
+)
+
+;; Invalid offsets
+
+(assert_invalid
+  (module
+    (table 1 funcref)
+    (elem (i64.const 0))
+  )
+  "type mismatch"
+)
+
+(assert_invalid
+  (module 
+    (table 1 funcref)
+    (elem (offset (;empty instruction sequence;)))
+  )
+  "type mismatch"
+)
+
+(assert_invalid
+  (module
+    (table 1 funcref)
+    (elem (offset (i32.const 0) (i32.const 0)))
+  )
+  "type mismatch"
+)
+
+(assert_invalid
+  (module
+    (global (import "test" "global-i32") i32)
+    (table 1 funcref)
+    (elem (offset (global.get 0) (global.get 0)))
+  )
+  "type mismatch"
+)
+
+(assert_invalid
+  (module
+    (global (import "test" "global-i32") i32)
+    (table 1 funcref)
+    (elem (offset (global.get 0) (i32.const 0)))
+  )
+  "type mismatch"
+)
+
+
+(assert_invalid
+  (module
+    (table 1 funcref)
+    (elem (i32.ctz (i32.const 0)))
+  )
+  "constant expression required"
+)
+
+(assert_invalid
+  (module
+    (table 1 funcref)
+    (elem (nop))
+  )
+  "constant expression required"
+)
+
+(assert_invalid
+  (module
+    (table 1 funcref)
+    (elem (offset (nop) (i32.const 0)))
+  )
+  "constant expression required"
+)
+
+(assert_invalid
+  (module
+    (table 1 funcref)
+    (elem (offset (i32.const 0) (nop)))
+  )
+  "constant expression required"
+)
+
+;; Use of internal globals in constant expressions is not allowed in MVP.
+;; (assert_invalid
+;;   (module (memory 1) (data (global.get $g)) (global $g (mut i32) (i32.const 0)))
+;;   "constant expression required"
 ;; )
 
-;; (module
-;;   (import "spectest" "table" (table 0 100 funcref))
-;;   (func $f)
-;;   (elem (i32.const 0) $f)
-;; )
+(assert_invalid
+   (module 
+     (table 1 funcref)
+     (elem (global.get 0))
+   )
+   "unknown global 0"
+)
 
-;; (module
-;;   (import "spectest" "table" (table 0 funcref))
-;;   (func $f)
-;;   (elem (i32.const 1) $f)
-;; )
+(assert_invalid
+   (module
+     (global (import "test" "global-i32") i32)
+     (table 1 funcref)
+     (elem (global.get 1))
+   )
+   "unknown global 1"
+)
 
-;; (module
-;;   (import "spectest" "table" (table 0 30 funcref))
-;;   (func $f)
-;;   (elem (i32.const 1) $f)
-;; )
+(assert_invalid
+   (module 
+     (global (import "test" "global-mut-i32") (mut i32))
+     (table 1 funcref)
+     (elem (global.get 0))
+   )
+   "constant expression required"
+)
 
 ;; Two elements target the same slot
 
@@ -254,10 +500,35 @@
   )
 )
 
-(assert_invalid
-  (module
-    (type $none_=>_none (func))
-    (table 0 (ref null $none_=>_none))
-    (elem (i32.const 0) funcref)
-  )
-)
+(register "module1" $module1)
+
+(assert_trap (invoke $module1 "call-7") "uninitialized element")
+(assert_return (invoke $module1 "call-8") (i32.const 65))
+(assert_return (invoke $module1 "call-9") (i32.const 66))
+
+;;; wasm-shell doesn't handle function reference calls across modules
+;; (module $module2
+;;   (type $out-i32 (func (result i32)))
+;;   (import "module1" "shared-table" (table 10 funcref))
+;;   (elem (i32.const 7) $const-i32-c)
+;;   (elem (i32.const 8) $const-i32-d)
+;;   (func $const-i32-c (type $out-i32) (i32.const 67))
+;;   (func $const-i32-d (type $out-i32) (i32.const 68))
+;; )
+
+;; (assert_return (invoke $module1 "call-7") (i32.const 67))
+;; (assert_return (invoke $module1 "call-8") (i32.const 68))
+;; (assert_return (invoke $module1 "call-9") (i32.const 66))
+
+;; (module $module3
+;;   (type $out-i32 (func (result i32)))
+;;   (import "module1" "shared-table" (table 10 funcref))
+;;   (elem (i32.const 8) $const-i32-e)
+;;   (elem (i32.const 9) $const-i32-f)
+;;   (func $const-i32-e (type $out-i32) (i32.const 69))
+;;   (func $const-i32-f (type $out-i32) (i32.const 70))
+;; )
+
+;; (assert_return (invoke $module1 "call-7") (i32.const 67))
+;; (assert_return (invoke $module1 "call-8") (i32.const 69))
+;; (assert_return (invoke $module1 "call-9") (i32.const 70))

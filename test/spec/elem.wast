@@ -309,28 +309,25 @@
 
 ;; Implicitly dropped elements
 
-;; (module
-;;   (table 10 funcref)
-;;   (elem $e (i32.const 0) func $f)
-;;   (func $f)
-;;   (func (export "init")
-;;     (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
-;;   )
-;; )
-;; (assert_trap (invoke "init") "out of bounds table access")
+(module
+  (table 10 funcref)
+  (elem $e (i32.const 0) func $f)
+  (func $f)
+  (func (export "init")
+    (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
+  )
+)
+(assert_trap (invoke "init") "out of bounds table access")
 
-;;; We don't add declarative segments to Binaryen IR at all, which is different
-;;;  from the reference interpreter's behavior. Binaryen considers this a
-;;;  validation error.
-;; (module
-;;   (table 10 funcref)
-;;   (elem $e declare func $f)
-;;   (func $f)
-;;   (func (export "init")
-;;     (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
-;;   )
-;; )
-;; (assert_trap (invoke "init") "out of bounds table access")
+(module
+  (table 10 funcref)
+  (elem $e declare func $f)
+  (func $f)
+  (func (export "init")
+    (table.init $e (i32.const 0) (i32.const 0) (i32.const 1))
+  )
+)
+(assert_trap (invoke "init") "out of bounds table access")
 
 ;; Element without table
 

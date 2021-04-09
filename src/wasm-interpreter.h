@@ -2324,10 +2324,11 @@ private:
 
       Table* table = wasm.getTable(segment->table);
       if (table->imported()) {
-        Export* tableExport = registry.at(table->module)->wasm.getExport(table->base);
+        auto* inst = registry.at(table->module);
+        Export* tableExport = inst->wasm.getExport(table->base);
         for (Index i = 0; i < segment->data.size(); ++i) {
           Flow ret = runner.visit(segment->data[i]);
-          registry.at(table->module)->externalInterface->tableStore(
+          inst->externalInterface->tableStore(
             tableExport->value, offset + i, ret.getSingleValue());
         }
       } else {
