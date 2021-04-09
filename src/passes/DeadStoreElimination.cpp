@@ -280,6 +280,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     // We already checked isLoadFrom and tramples; if this is a StructSet that
     // is not a trample then we cannot be sure what is being set (due to not
     // recognizing the ref, etc.), and it may interact.
+    // TODO if we can identify the ref, use the type system here
     return curr->is<StructSet>();
   }
 };
