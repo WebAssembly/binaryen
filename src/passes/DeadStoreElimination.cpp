@@ -103,8 +103,14 @@ struct DeadStoreFinder
                            const EffectAnalyzer& currEffects,
                            Expression* store) = 0;
 
+  // Given a store that is not needed, get drops of its children to replace it
+  // with.
+  virtual Expression* replaceStoreWithDrops(Expression* store, Builder& builder) = 0;
+
   // Walking
 
+  // XXX this is not enough, as we may change a location we store to. Need a
+  // whole post-pass to write out changes x->y
   std::unordered_map<Expression*, Expression**> storeLocations;
 
   void visitExpression(Expression* curr) {
@@ -242,6 +248,23 @@ struct DeadStoreFinder
     // TODO: Const, etc.
     return false;
   }
+
+  void optimize() {
+    analyze();
+
+    Builder builder(*getModule());
+
+    // Optimize the stores that have no unknown interactions.
+    for (auto& kv : storeLoads) {
+      auto* store = kv.first;
+      const auto& loads = kv.second;
+      if (loads.empty()) {
+        // This store has no loads, and can just be dropped.
+        *storeLocations[store] = replaceStoreWithDrops(store, builder);
+      }
+      // TODO: when not empty, use a local and replace loads too
+    }
+  }
 };
 
 struct GCDeadStoreFinder : public DeadStoreFinder {
@@ -291,22 +314,10 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     return currEffects.readsHeap || currEffects.writesHeap;
   }
 
-  void optimize() {
-    analyze();
-
-    Builder builder(*getModule());
-
-    // Optimize the stores that have no unknown interactions.
-    for (auto& kv : storeLoads) {
-      auto* store = kv.first->cast<StructSet>();
-      const auto& loads = kv.second;
-      if (loads.empty()) {
-        // This store has no loads, and can just be dropped.
-        *storeLocations[store] = builder.makeSequence(
-          builder.makeDrop(store->ref), builder.makeDrop(store->value));
-      }
-      // TODO: when not empty, we can use a tee, but unclear if beneficial
-    }
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
+    auto* castStore = store->cast<StructSet>();
+    return builder.makeSequence(
+              builder.makeDrop(castStore->ref), builder.makeDrop(castStore->value));
   }
 };
 
@@ -350,21 +361,8 @@ struct GlobalDeadStoreFinder : public DeadStoreFinder {
     return false;
   }
 
-  void optimize() {
-    analyze();
-
-    Builder builder(*getModule());
-
-    // Optimize the stores that have no unknown interactions.
-    for (auto& kv : storeLoads) {
-      auto* store = kv.first->cast<GlobalSet>();
-      const auto& loads = kv.second;
-      if (loads.empty()) {
-        // This store has no loads, and can just be dropped.
-        *storeLocations[store] = builder.makeDrop(store->value);
-      }
-      // TODO: when not empty, we can use a tee, but unclear if beneficial
-    }
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) override {
+    return builder.makeDrop(store->cast<GlobalSet>()->value);
   }
 };
 
