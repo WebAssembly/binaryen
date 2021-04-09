@@ -21,6 +21,7 @@
 
 #include <cfg/cfg-traversal.h>
 #include <ir/effects.h>
+#include <ir/local-graph.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
@@ -46,7 +47,10 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
   PassOptions& passOptions;
   FeatureSet features;
 
-  DeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : passOptions(passOptions), features(features) {
+  // TODO: make this heavy computation optional?
+  LocalGraph localGraph;
+
+  DeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : passOptions(passOptions), features(features), localGraph(func) {
     // create the CFG by walking the IR
     doWalkFunction(func);
 
@@ -56,8 +60,8 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
     Return ret;
     currBasicBlock->contents.exprs.push_back(&ret);
 
-    // Flow stores to perform the analysis.
-    flow();
+    // Perform the analysis.
+    analyze();
   }
 
   virtual ~DeadStoreFinder();
@@ -115,7 +119,7 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
   // loads could be analyzed, and are all present in the vector for that store.
   std::unordered_map<Expression*, std::vector<Expression*>> storeLoads;
 
-  void flow() {
+  void analyze() {
     // TODO: Optimize. This is a pretty naive way to flow the values, but it
     //       should be reasonable assuming most stores are quickly seen as
     //       having possible interactions (e.g., the first time we see a call)
@@ -180,6 +184,19 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
   bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
     return currEffects.calls || currEffects.throws || currEffects.trap || curr->is<Return>();
   }
+
+  // Check whether the values of two expressions are definitely identical.
+  bool equivalent(Expression* a, Expression* b) {
+    if (auto* aGet = a->dynCast<LocalGet>()) {
+      if (auto* bGet = b->dynCast<LocalGet>()) {
+        if (localGraph.equivalent(aGet, bGet)) {
+          return true;
+        }
+      }
+    }
+    // TODO: Const, etc.
+    return false;
+  }
 };
 
 struct GCDeadStoreFinder : public DeadStoreFinder {
@@ -195,8 +212,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
-      // TODO: ref identity
-      return load->ref->type == store->ref->type && load->index == store->index;
+      return equivalent(load->ref, store->ref) && load->ref->type == store->ref->type && load->index == store->index;
     }
     return false;
   }
@@ -205,8 +221,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = curr->cast<StructSet>();
       // TODO: consider subtyping as well.
-      // TODO: ref identity
-      return otherStore->ref->type == store->ref->type && otherStore->index == store->index;
+      return equivalent(otherStore->ref, store->ref) && otherStore->ref->type == store->ref->type && otherStore->index == store->index;
     }
     return false;
   }

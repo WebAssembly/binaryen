@@ -244,6 +244,21 @@ LocalGraph::LocalGraph(Function* func) {
 #endif
 }
 
+bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
+  auto& aSets = getSetses[a];
+  auto& bSets = getSetses[b];
+  // The simple case of one set dominating two gets easily proves that they must
+  // have the same value. (Note that we can infer dominance from the fact that
+  // there is a single set: if the set did not dominate one of the gets then
+  // there would definitely be another set for that get, the zero initialization
+  // at the function entry, if nothing else.)
+  if (aSets.size() == 1 && bSets.size() == 1 && *aSets.begin() == *bSets.begin()) {
+    return true;
+  }
+  return false;
+  // TODO: handle merges and other situations
+}
+
 void LocalGraph::computeInfluences() {
   for (auto& pair : locations) {
     auto* curr = pair.first;

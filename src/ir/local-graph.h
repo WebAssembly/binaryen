@@ -48,6 +48,10 @@ struct LocalGraph {
                        // param)
   Locations locations; // where each get and set is (for easy replacing)
 
+  // Checks if two gets are equivalent, that is, will definitely have the same
+  // value.
+  bool equivalent(LocalGet* a, LocalGet* b);
+
   // Optional: compute the influence graphs between sets and gets
   // (useful for algorithms that propagate changes).
 
