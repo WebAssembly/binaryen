@@ -212,7 +212,7 @@
   )
  )
 
- ;; CHECK:      (func $just-one-branches (param $x (ref $A))
+ ;; CHECK:      (func $just-one-branch-trample (param $x (ref $A))
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
@@ -226,7 +226,7 @@
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $just-one-branches (param $x (ref $A))
+ (func $just-one-branch-trample (param $x (ref $A))
   (struct.set $A 0
    (local.get $x)
    (i32.const 10)
@@ -238,6 +238,37 @@
     (i32.const 20)
    )
    (nop)
+  )
+ )
+
+ ;; CHECK:      (func $just-one-branch-bad (param $x (ref $A))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (call $foo)
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $just-one-branch-bad (param $x (ref $A))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; an unknown interaction on one branch is enough to make us give up
+  (if (i32.const 1)
+   (call $foo)
+   (nop)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
   )
  )
 )
