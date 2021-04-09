@@ -26,7 +26,22 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $bar (param $x (ref $A))
+ (func $simple-param (param $x (ref $A))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 20)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
+ (func $simple-local (param $x (ref $A))
   (struct.set $A 0
    (local.get $x)
    (i32.const 10)

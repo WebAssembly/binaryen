@@ -223,6 +223,8 @@ inline Index getZeroExtBits(Expression* curr) {
 // and other operations that receive a value and let it flow through them. If
 // there is no value falling through, returns the node itself (as that is the
 // value that trivially falls through, with 0 steps in the middle).
+// Note that the falling through value may not fall through if the instruction
+// breaks or traps, for example.
 inline Expression* getFallthrough(Expression* curr,
                                   const PassOptions& passOptions,
                                   FeatureSet features) {
@@ -259,6 +261,8 @@ inline Expression* getFallthrough(Expression* curr,
     if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
       return getFallthrough(tryy->body, passOptions, features);
     }
+  } else if (auto* as = curr->dynCast<RefAs>()) {
+    return getFallthrough(as->value, passOptions, features);
   }
   return curr;
 }
