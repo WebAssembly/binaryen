@@ -6,6 +6,7 @@
  (type $B (struct (field (mut f64))))
 
  (global $global$0 (mut i32) (i32.const 0))
+ (global $global$1 (mut i32) (i32.const 0))
 
  ;; CHECK:      (func $simple-param (param $x (ref $A))
  ;; CHECK-NEXT:  (block
@@ -45,35 +46,31 @@
   )
  )
 
- ;; CHECK:      (func $simple-local
- ;; CHECK-NEXT:  (local $x (ref null $A))
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (ref.as_non_null
- ;; CHECK-NEXT:     (local.get $x)
- ;; CHECK-NEXT:    )
+ ;; TODO: test with locals when non-nullable locals are possible
+
+ ;; CHECK:      (func $simple-fallthrough (param $x (ref $A))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (block $block (result (ref $A))
+ ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 10)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:   (block $block0 (result (ref $A))
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 20)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $simple-local
-  (local $x (ref null $A))
+ (func $simple-fallthrough (param $x (ref $A))
   (struct.set $A 0
-   (ref.as_non_null ;; these would trap, but that doesn't matter
+   (block (result (ref $A))
     (local.get $x)
    )
    (i32.const 10)
   )
   (struct.set $A 0
-   (ref.as_non_null
+   (block (result (ref $A))
     (local.get $x)
    )
    (i32.const 20)
@@ -323,7 +320,7 @@
  ;; CHECK-NEXT:     (i32.const 20)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block $block0
+ ;; CHECK-NEXT:   (block $block1
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (local.get $x)
@@ -405,6 +402,31 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.set $global$1
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.set $global$0
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $global
+  ;; globals are optimized as well, and we have more precise data there than on
+  ;; GC references - aliasing is impossible.
+  (global.set $global$0
+   (i32.const 10)
+  )
+  (global.set $global$1
+   (i32.const 20)
+  )
+  (global.set $global$0
+   (i32.const 30)
+  )
+ )
+
+ ;; CHECK:      (func $global-trap
+ ;; CHECK-NEXT:  (global.set $global$0
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (unreachable)
@@ -413,12 +435,12 @@
  ;; CHECK-NEXT:   (i32.const 20)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $global
+ (func $global-trap
   (global.set $global$0
    (i32.const 10)
   )
-  ;; a trap does not prevent our optimizations, as we assume it means the
-  ;; program halts completely, and global state cannot be observed.
+  ;; a trap (even conditional) prevents our optimizations, global state may be
+  ;; observed if another export is called later after the trap.
   (if
    (i32.const 1)
    (unreachable)

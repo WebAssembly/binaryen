@@ -942,6 +942,11 @@ opt_choices = [
     ["--dae-optimizing"],
     ["--dce"],
     ["--directize"],
+    ["--dse"],
+    ["--dse"],
+    ["--dse"],
+    ["--dse"],
+    ["--dse"],
     ["--flatten", "--dfo"],
     ["--duplicate-function-elimination"],
     ["--flatten"],
@@ -1080,6 +1085,7 @@ if __name__ == '__main__':
               'speed:', counter / elapsed,
               'iters/sec, ', total_wasm_size / elapsed,
               'wasm_bytes/sec\n')
+        time.sleep(0.5)
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size

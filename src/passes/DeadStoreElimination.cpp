@@ -223,11 +223,7 @@ struct DeadStoreFinder
   }
 
   bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
-    // TODO: Should trap appear here as well? In that case the entire
-    // application halts, so global effects should not be visible, unless global
-    // state is inspected from the outside somehow. Perhaps we should add a
-    // pass option for "keep global effects noticeable after a trap".
-    return currEffects.calls || currEffects.throws ||
+    return currEffects.calls || currEffects.throws || currEffects.trap ||
            curr->is<Return>();
   }
 
