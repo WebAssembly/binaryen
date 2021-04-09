@@ -62,31 +62,39 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
 
   virtual ~DeadStoreFinder();
 
-  // Hooks for subclasses
-
-  // Returns whether the expression is relevant for us: either a store, or a
-  // thing that may interact with a store.
-  virtual bool isRelevant(Expression* curr) = 0;
-
+  // Hooks for subclasses.
+  //
+  // Some of these methods receive computed effects, which do not include their
+  // children (as in each basic block we process expressions in a linear order,
+  // and have already seen the children).
+  //
+  // These do not need to handle reaching of code outside of the current function: a
+  // call, return, etc. will be noted as a possible interaction automatically (as if we
+  // reach code outside the function then any interaction is possible).
+  
   // Returns whether an expression is a relevant store for us to consider.
   virtual bool isStore(Expression* curr) = 0;
+
+  // Returns whether the expression is relevant for us to notice in the
+  // analysis. (This does not need to include anything isStore() returns true
+  // on, as those are definitely relevant.)
+  virtual bool isRelevant(Expression* curr, const EffectAnalyzer& currEffects) = 0;
 
   // Returns whether an expression is a load that corresponds to a store. The
   // load may not load all the data written by the store (that is up to a
   // subclass to decide about), but it loads at least some of that data.
-  virtual bool isLoadFrom(Expression* curr, Expression* store) = 0;
+  virtual bool isLoadFrom(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) = 0;
 
   // Returns whether an expression tramples a store completely, overwriting all
   // the store's written data.
-  virtual bool tramples(Expression* curr, Expression* store) = 0;
+  // This is only called if isLoadFrom returns false.
+  virtual bool tramples(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) = 0;
 
   // Returns whether an expression may interact with store in a way that we
   // cannot fully analyze as a load or a store, and so we must give up. This may
   // be a possible load or a possible store or something else.
-  // This does not need to handle reaching of code outside of the current function: a
-  // call, return, etc. will be noted as a possible interaction automatically (as if we
-  // reach code outside the function then any interaction is possible).
-  virtual bool mayInteract(Expression* curr, Expression* store) = 0;
+  // This is only called if isLoadFrom and tramples return false.
+  virtual bool mayInteract(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) = 0;
 
   // Walking
 
@@ -94,7 +102,11 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
     if (!currBasicBlock) {
       return;
     }
-    if (isRelevant(curr)) {
+
+    EffectAnalyzer currEffects(passOptions, features);
+    currEffects.visit(curr);
+
+    if (reachesGlobalCode(curr, currEffects) || isRelevant(curr, currEffects) || isStore(curr)) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
@@ -123,13 +135,19 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
           for (size_t i = from; i < block->contents.exprs.size(); i++) {
             auto* curr = block->contents.exprs[i];
 
-            EffectAnalyzer effects(passOptions, features, curr);
+            EffectAnalyzer currEffects(passOptions, features);
+            currEffects.visit(curr);
 
-            // Check if we can reach code outside of this function, in which
-            // case the store may have interactions we cannot see. Also call the
-            // subclass hook to check for such interactions.
-            if (effects.calls || effects.throws || effects.trap || curr->is<Return>() || mayInteract(curr, store)) {
-              // Stop: we cannot fully analyze the uses of this store.
+            if (isLoadFrom(curr, currEffects, store)) {
+              // We found a definite load, note it.
+              storeLoads[store].push_back(curr);
+            } else if (tramples(curr, currEffects, store)) {
+              // We do not need to look any further along this block, or in
+              // anything it can reach.
+              return;
+            } else if (reachesGlobalCode(curr, currEffects) || mayInteract(curr, currEffects, store)) {
+              // Stop: we cannot fully analyze the uses of this store as
+              // there are interactions we cannot see.
               // TODO: it may be valuable to still optimize some of the loads
               //       from a store, even if others cannot be analyzed. We can
               //       do the store and also a tee, and load from the local in
@@ -137,17 +155,6 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
               //       unclear, however.
               work.clear();
               storeLoads.erase(store);
-              return;
-            }
-
-            if (isLoadFrom(curr, store)) {
-              // We found a definite load, note it.
-              storeLoads[store].push_back(curr);
-            }
-
-            if (tramples(curr, store)) {
-              // We do not need to look any further along this block, or in
-              // anything it can reach.
               return;
             }
           }
@@ -168,6 +175,47 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
         }
       }
     }
+  }
+
+  bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& effects) {
+    return currEffects.calls || currEffects.throws || currEffects.trap || curr->is<Return>();
+  }
+};
+
+struct GCDeadStoreFinder : public DeadStoreFinder {
+  virtual bool isStore(Expression* curr){
+    return curr->is<StructSet>();
+  }
+
+  virtual bool isRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
+    return curr->is<StructGet>();
+  }
+
+  virtual bool isLoadFrom(Expression* curr, const EffectAnalyzer& currEffects, Expression* store_) {
+    if (auto* load = curr->dynCast<StructGet>()) {
+      auto* store = store_->cast<StructSet>();
+      // TODO: consider subtyping as well.
+      // TODO: ref identity
+      return load->ref->type == store->ref->type && load->index == store->index;
+    }
+    return false;
+  }
+
+  virtual bool tramples(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) {
+    if (auto* otherStore = curr->dynCast<StructSet>()) {
+      auto* store = store_->cast<StructSet>();
+      // TODO: consider subtyping as well.
+      // TODO: ref identity
+      return otherStore->ref->type == store->ref->type && otherStore->index == store->index;
+    }
+    return false;
+  }
+
+  virtual bool mayInteract(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) {
+    // We already checked isLoadFrom and tramples; if this is a StructSet that
+    // is not a trample then we cannot be sure what is being set, and it may
+    // interact.
+    return curr->is<StructSet>();
   }
 };
 
