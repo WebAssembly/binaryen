@@ -122,21 +122,13 @@
  )
 
  ;; CHECK:      (func $two-types (param $x (ref $A)) (param $y (ref $B))
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 10)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (f64.const 20)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (struct.set $B 0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (f64.const 20)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $A 0
  ;; CHECK-NEXT:   (local.get $x)
@@ -151,13 +143,7 @@
   ;; the simple analysis currently gives up on a set we cannot easily classify
   (struct.set $B 0
    (local.get $y)
-
-
-
-   (f64.const 20) ;; FIXME this one fails
-
-
-
+   (f64.const 20)
   )
   (struct.set $A 0
    (local.get $x)

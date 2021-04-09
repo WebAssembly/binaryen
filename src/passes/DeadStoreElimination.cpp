@@ -265,7 +265,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
                 const EffectAnalyzer& currEffects,
                 Expression* store_) override {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
-      auto* store = curr->cast<StructSet>();
+      auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
       return equivalent(otherStore->ref, store->ref) &&
              otherStore->ref->type == store->ref->type &&
