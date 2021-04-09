@@ -36,6 +36,7 @@
    (local.get $x)
    (i32.const 20)
   )
+  ;; the last store escapes to the outside, and cannot be modified
   (struct.set $A 0
    (local.get $x)
    (i32.const 30)
@@ -150,7 +151,13 @@
   ;; the simple analysis currently gives up on a set we cannot easily classify
   (struct.set $B 0
    (local.get $y)
-   (f64.const 20)
+
+
+
+   (f64.const 20) ;; FIXME this one fails
+
+
+
   )
   (struct.set $A 0
    (local.get $x)
