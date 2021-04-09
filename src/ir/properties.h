@@ -263,6 +263,8 @@ inline Expression* getFallthrough(Expression* curr,
     }
   } else if (auto* as = curr->dynCast<RefAs>()) {
     return getFallthrough(as->value, passOptions, features);
+  } else if (auto* br = curr->dynCast<BrOn>()) {
+    return getFallthrough(br->value, passOptions, features);
   }
   return curr;
 }
