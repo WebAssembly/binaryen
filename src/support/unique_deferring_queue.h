@@ -57,6 +57,11 @@ template<typename T> struct UniqueDeferredQueue {
       // skip this one, keep going
     }
   }
+
+  void clear() {
+    data.clear();
+    count.clear();
+  }
 };
 
 } // namespace wasm
