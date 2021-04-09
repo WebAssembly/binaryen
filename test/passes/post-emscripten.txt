@@ -61,8 +61,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
+ (type $none_=>_none (func))
  (type $i32_f32_=>_none (func (param i32 f32)))
  (import "env" "glob" (global $glob i32))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))

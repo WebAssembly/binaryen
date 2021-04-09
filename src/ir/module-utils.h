@@ -22,6 +22,7 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/insertion_order.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -467,7 +468,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
 inline void collectHeapTypes(Module& wasm,
                              std::vector<HeapType>& types,
                              std::unordered_map<HeapType, Index>& typeIndices) {
-  struct Counts : public std::unordered_map<HeapType, size_t> {
+  struct Counts : public ordered_map<HeapType, size_t> {
     bool isRelevant(Type type) {
       return (type.isRef() || type.isRtt()) && !type.getHeapType().isBasic();
     }
@@ -588,13 +589,10 @@ inline void collectHeapTypes(Module& wasm,
     });
   }
 
-  // Sort by frequency and then simplicity.
+  // Sort by frequency and then original insertion order.
   std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
   std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    if (a.second != b.second) {
-      return a.second > b.second;
-    }
-    return a.first < b.first;
+    return a.second != b.second && a.second > b.second;
   });
   for (Index i = 0; i < sorted.size(); ++i) {
     typeIndices[sorted[i].first] = i;

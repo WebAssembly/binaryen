@@ -224,7 +224,7 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
 
-  std::set<Type> returnTypes; // types used in returns
+  std::unordered_set<Type> returnTypes; // types used in returns
 
   // Binaryen IR requires that label names must be unique - IR generators must
   // ensure that

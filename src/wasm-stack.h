@@ -141,7 +141,7 @@ private:
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract.
-  std::map<Type, Index> scratchLocals;
+  std::unordered_map<Type, Index> scratchLocals;
   void countScratchLocals();
   void setScratchLocals();
 };

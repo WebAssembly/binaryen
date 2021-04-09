@@ -173,9 +173,6 @@ public:
   bool operator!=(const Type& other) const { return id != other.id; }
   bool operator!=(const BasicType& other) const { return id != other; }
 
-  // Order types by some notion of simplicity.
-  bool operator<(const Type& other) const;
-
   // Returns the type size in bytes. Only single types are supported.
   unsigned getByteSize() const;
 
@@ -359,8 +356,6 @@ public:
   bool operator!=(const HeapType& other) const { return id != other.id; }
   bool operator!=(const BasicHeapType& other) const { return id != other; }
 
-  // Order heap types by some notion of simplicity.
-  bool operator<(const HeapType& other) const;
   std::string toString() const;
 
   // Returns true if left is a subtype of right. Subtype includes itself.
@@ -403,7 +398,6 @@ struct Signature {
     return params == other.params && results == other.results;
   }
   bool operator!=(const Signature& other) const { return !(*this == other); }
-  bool operator<(const Signature& other) const;
   std::string toString() const;
 };
 

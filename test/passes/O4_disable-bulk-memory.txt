@@ -7,8 +7,8 @@
 )
 (module
  (type $0 (func))
- (type $11 (func (param i32)))
  (type $3 (func (param i32) (result i32)))
+ (type $11 (func (param i32)))
  (type $f64_f64_f64_f64_f64_f64_f64_=>_i32 (func (param f64 f64 f64 f64 f64 f64 f64) (result i32)))
  (type $8 (func (result f64)))
  (import "env" "memory" (memory $1 1))

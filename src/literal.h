@@ -759,39 +759,7 @@ template<> struct hash<wasm::Literals> {
     return digest;
   }
 };
-template<> struct less<wasm::Literal> {
-  bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
-    if (a.type < b.type) {
-      return true;
-    }
-    if (b.type < a.type) {
-      return false;
-    }
-    TODO_SINGLE_COMPOUND(a.type);
-    switch (a.type.getBasic()) {
-      case wasm::Type::i32:
-        return a.geti32() < b.geti32();
-      case wasm::Type::f32:
-        return a.reinterpreti32() < b.reinterpreti32();
-      case wasm::Type::i64:
-        return a.geti64() < b.geti64();
-      case wasm::Type::f64:
-        return a.reinterpreti64() < b.reinterpreti64();
-      case wasm::Type::v128:
-        return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
-      case wasm::Type::funcref:
-      case wasm::Type::externref:
-      case wasm::Type::anyref:
-      case wasm::Type::eqref:
-      case wasm::Type::i31ref:
-      case wasm::Type::dataref:
-      case wasm::Type::none:
-      case wasm::Type::unreachable:
-        return false;
-    }
-    WASM_UNREACHABLE("unexpected type");
-  }
-};
+
 } // namespace std
 
 #endif // wasm_literal_h

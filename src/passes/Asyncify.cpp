@@ -380,8 +380,8 @@ public:
   }
 
 private:
-  std::map<Type, Name> map;
-  std::map<Name, Type> rev;
+  std::unordered_map<Type, Name> map;
+  std::unordered_map<Name, Type> rev;
 
   // Collect the types returned from all calls for which call support globals
   // may need to be generated.
@@ -1237,7 +1237,7 @@ private:
   std::unique_ptr<AsyncifyBuilder> builder;
 
   Index rewindIndex;
-  std::map<Type, Index> fakeCallLocals;
+  std::unordered_map<Type, Index> fakeCallLocals;
   std::set<Index> relevantLiveLocals;
 
   void findRelevantLiveLocals(Function* func) {
