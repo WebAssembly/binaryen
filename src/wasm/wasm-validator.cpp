@@ -199,22 +199,6 @@ struct ValidationInfo {
     fail(text, curr, func);
     return false;
   }
-
-  // Type 'left' should be 'unreachable' or a subtype of 'right'.
-  bool shouldBeSubTypeOrFirstIsUnreachable(Type left,
-                                           Type right,
-                                           Expression* curr,
-                                           const char* text,
-                                           Function* func = nullptr) {
-    if (left == Type::unreachable) {
-      return true;
-    }
-    if (Type::isSubType(left, right)) {
-      return true;
-    }
-    fail(text, curr, func);
-    return false;
-  }
 };
 
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
@@ -448,13 +432,6 @@ private:
   bool
   shouldBeSubType(Type left, Type right, Expression* curr, const char* text) {
     return info.shouldBeSubType(left, right, curr, text, getFunction());
-  }
-
-  bool shouldBeSubTypeOrFirstIsUnreachable(Type left,
-                                           Type right,
-                                           Expression* curr,
-                                           const char* text) {
-    return info.shouldBeSubTypeOrFirstIsUnreachable(left, right, curr, text);
   }
 
   void validateAlignment(
@@ -1302,11 +1279,10 @@ void FunctionValidator::visitTableGet(TableGet* curr) {
                "Table instructions require --enable-reference-types");
   auto* table = module->getTableOrNull(curr->table);
   shouldBeTrue(!!table, curr, "Table not found");
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->type,
-    table->type,
-    curr,
-    "table.get type should be compatible with the table");
+  shouldBeSubType(curr->type,
+                  table->type,
+                  curr,
+                  "table.get type should be compatible with the table");
   shouldBeEqualOrFirstIsUnreachable(
     curr->offset->type, Type(Type::i32), curr, "offset must be an i32");
 }
@@ -1321,8 +1297,7 @@ void FunctionValidator::visitTableSet(TableSet* curr) {
     curr->type, Type(Type::none), curr, "table.set must have type none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->offset->type, Type(Type::i32), curr, "offset must be an i32");
-  shouldBeSubTypeOrFirstIsUnreachable(
-    curr->value->type, table->type, curr, "type mismatch");
+  shouldBeSubType(curr->value->type, table->type, curr, "type mismatch");
 }
 void FunctionValidator::visitTableSize(TableSize* curr) {
   auto* module = getModule();
@@ -1345,7 +1320,7 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
     curr->type, Type(Type::i32), curr, "table.grow must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->delta->type, Type(Type::i32), curr, "delta must be an i32");
-  shouldBeSubTypeOrFirstIsUnreachable(
+  shouldBeSubType(
     curr->initialValue->type, table->type, curr, "initial value type mismatch");
 }
 void FunctionValidator::visitTableFill(TableFill* curr) {
@@ -1361,7 +1336,7 @@ void FunctionValidator::visitTableFill(TableFill* curr) {
     curr->dest->type, Type(Type::i32), curr, "destination must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "size must be an i32");
-  shouldBeSubTypeOrFirstIsUnreachable(
+  shouldBeSubType(
     curr->value->type, table->type, curr, "initial value type mismatch");
 }
 void FunctionValidator::visitTableCopy(TableCopy* curr) {
@@ -3057,11 +3032,13 @@ static void validateTables(Module& module, ValidationInfo& info) {
                          Type(Type::i32),
                          segment->offset,
                          "element segment offset should be i32");
-      info.shouldBeTrue(checkSegmentOffset(segment->offset,
-                                           segment->data.size(),
-                                           table->initial * Table::kPageSize),
-                        segment->offset,
-                        "table segment offset should be reasonable");
+      if (!table->imported()) {
+        info.shouldBeTrue(checkSegmentOffset(segment->offset,
+                                             segment->data.size(),
+                                             table->initial * Table::kPageSize),
+                          segment->offset,
+                          "table segment offset should be reasonable");
+      }
       if (module.features.hasTypedFunctionReferences()) {
         info.shouldBeTrue(
           Type::isSubType(segment->type, table->type),
