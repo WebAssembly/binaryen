@@ -617,5 +617,26 @@
   )
  )
 
+ ;; CHECK:      (func $memory-wrong-size
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store16
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-wrong-size
+  (i32.store
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (i32.store16
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
  ;; TODO: test try throwing
 )
