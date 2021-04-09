@@ -88,6 +88,7 @@ struct LocalGraph {
   bool isSSA(Index x);
 
 private:
+  Function* func;
   std::set<Index> SSAIndexes;
 };
 
