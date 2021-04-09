@@ -22,6 +22,7 @@
 #include <cfg/cfg-traversal.h>
 #include <ir/effects.h>
 #include <ir/local-graph.h>
+#include <ir/properties.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
@@ -211,12 +212,18 @@ struct DeadStoreFinder
   }
 
   bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
-    return currEffects.calls || currEffects.throws || currEffects.trap ||
+    // TODO: should trap appear here as well? in that case the entire
+    // application halts, so global effects should not be visible, unless global
+    // state is inspected from the outside somehow.
+    return currEffects.calls || currEffects.throws ||
            curr->is<Return>();
   }
 
   // Check whether the values of two expressions are definitely identical.
+  // TODO: move to localgraph?
   bool equivalent(Expression* a, Expression* b) {
+    a = Properties::getFallthrough(a, passOptions, features);
+    b = Properties::getFallthrough(b, passOptions, features);
     if (auto* aGet = a->dynCast<LocalGet>()) {
       if (auto* bGet = b->dynCast<LocalGet>()) {
         if (localGraph.equivalent(aGet, bGet)) {

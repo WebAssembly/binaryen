@@ -4,7 +4,7 @@
 (module
  (type $A (struct (field (mut i32))))
 
- ;; CHECK:      (func $bar (param $x (ref $A))
+ ;; CHECK:      (func $simple-param (param $x (ref $A))
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $x)
@@ -41,18 +41,38 @@
   )
  )
 
- (func $simple-local (param $x (ref $A))
+ ;; CHECK:      (func $simple-local
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $simple-local
+  (local $x (ref null $A))
   (struct.set $A 0
-   (local.get $x)
+   (ref.as_non_null ;; these would trap, but that doesn't matter
+    (local.get $x)
+   )
    (i32.const 10)
   )
   (struct.set $A 0
-   (local.get $x)
+   (ref.as_non_null
+    (local.get $x)
+   )
    (i32.const 20)
-  )
-  (struct.set $A 0
-   (local.get $x)
-   (i32.const 30)
   )
  )
 )
