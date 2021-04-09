@@ -550,5 +550,30 @@
   )
  )
 
+ ;; CHECK:      (func $memory-param (param $x i32)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-param (param $x i32)
+  (i32.store
+   (local.get $x)
+   (i32.const 20)
+  )
+  (i32.store
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
  ;; TODO: test try throwing
 )
