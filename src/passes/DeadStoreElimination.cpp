@@ -53,9 +53,11 @@ struct DeadStoreFinder
   // TODO: make this heavy computation optional?
   LocalGraph localGraph;
 
-  DeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features)
-    : func(func), passOptions(passOptions), features(features),
-      localGraph(func) {}
+  DeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
+    : func(func), passOptions(passOptions), features(wasm->features),
+      localGraph(func) {
+    setModule(wasm);
+  }
 
   virtual ~DeadStoreFinder() {}
 
@@ -242,10 +244,10 @@ struct DeadStoreFinder
 };
 
 struct GCDeadStoreFinder : public DeadStoreFinder {
-  GCDeadStoreFinder(Function* func,
-                    PassOptions& passOptions,
-                    FeatureSet features)
-    : DeadStoreFinder(func, passOptions, features) {}
+  GCDeadStoreFinder(Module* wasm,
+                    Function* func,
+                    PassOptions& passOptions)
+    : DeadStoreFinder(wasm, func, passOptions) {}
 
   bool isStore(Expression* curr) override { return curr->is<StructSet>(); }
 
@@ -287,6 +289,24 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     // TODO if we can identify the ref, use the type system here
     return currEffects.readsHeap || currEffects.writesHeap;
   }
+
+  void optimize() {
+    analyze();
+
+    Builder builder(*getModule());
+
+    // Optimize the stores that have no unknown interactions.
+    for (auto& kv : storeLoads) {
+      auto* store = kv.first->dynCast<StructSet>();
+      const auto& loads = kv.second;
+      if (loads.empty()) {
+        // This store has no loads, and can just be dropped.
+        *storeLocations[store] = builder.makeSequence(
+          builder.makeDrop(store->ref), builder.makeDrop(store->value));
+      }
+      // TODO: when not empty, we can use a tee, but unclear if beneficial
+    }
+  }
 };
 
 struct DeadStoreElimination
@@ -296,20 +316,7 @@ struct DeadStoreElimination
   Pass* create() override { return new DeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    Builder builder(*getModule());
-    GCDeadStoreFinder gcFinder(func, getPassOptions(), getModule()->features);
-    gcFinder.analyze();
-    // Optimize the stores that have no unknown interactions.
-    for (auto& kv : gcFinder.storeLoads) {
-      auto* store = kv.first->dynCast<StructSet>();
-      const auto& loads = kv.second;
-      if (loads.empty()) {
-        // This store has no loads, and can just be dropped.
-        *gcFinder.storeLocations[store] = builder.makeSequence(
-          builder.makeDrop(store->ref), builder.makeDrop(store->value));
-      }
-      // TODO: when not empty, we can use a tee
-    }
+    GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
   }
 };
 
