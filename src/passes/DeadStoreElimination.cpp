@@ -43,28 +43,16 @@ struct Info {
 struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
                                 UnifiedExpressionVisitor<DeadStoreFinder>,
                                 Info> {
-
+  Function* func;
   PassOptions& passOptions;
   FeatureSet features;
 
   // TODO: make this heavy computation optional?
   LocalGraph localGraph;
 
-  DeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : passOptions(passOptions), features(features), localGraph(func) {
-    // create the CFG by walking the IR
-    doWalkFunction(func);
+  DeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : func(func), passOptions(passOptions), features(features), localGraph(func) {}
 
-    // Ensure a final return on the last block, to represent us leaving the
-    // function (which just like a return in the middle, means we reach code
-    // that can access global state).
-    Return ret;
-    currBasicBlock->contents.exprs.push_back(&ret);
-
-    // Perform the analysis.
-    analyze();
-  }
-
-  virtual ~DeadStoreFinder();
+  virtual ~DeadStoreFinder() {}
 
   // Hooks for subclasses.
   //
@@ -120,10 +108,22 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
   std::unordered_map<Expression*, std::vector<Expression*>> storeLoads;
 
   void analyze() {
+    // create the CFG by walking the IR
+    doWalkFunction(func);
+
+    // Ensure a final return on the last block, to represent us leaving the
+    // function (which just like a return in the middle, means we reach code
+    // that can access global state).
+    Return ret;
+    currBasicBlock->contents.exprs.push_back(&ret);
+
+    // Flow the values and conduct the analysis.
+    //
     // TODO: Optimize. This is a pretty naive way to flow the values, but it
     //       should be reasonable assuming most stores are quickly seen as
     //       having possible interactions (e.g., the first time we see a call)
     //       and so most flows are halted very quickly.
+
     for (auto& block : basicBlocks) {
       for (size_t i = 0; i < block->contents.exprs.size(); i++) {
         auto* store = block->contents.exprs[i];
@@ -200,15 +200,21 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
 };
 
 struct GCDeadStoreFinder : public DeadStoreFinder {
-  virtual bool isStore(Expression* curr){
+  GCDeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : DeadStoreFinder(func, passOptions, features) {
+    for (auto& kv : storeLoads) {
+      std::cout << "dead:\n" << *kv.first << '\n';
+    }
+  }
+
+  bool isStore(Expression* curr) override {
     return curr->is<StructSet>();
   }
 
-  virtual bool isRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
+  bool isRelevant(Expression* curr, const EffectAnalyzer& currEffects) override {
     return curr->is<StructGet>();
   }
 
-  virtual bool isLoadFrom(Expression* curr, const EffectAnalyzer& currEffects, Expression* store_) {
+  bool isLoadFrom(Expression* curr, const EffectAnalyzer& currEffects, Expression* store_) override {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
@@ -217,7 +223,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     return false;
   }
 
-  virtual bool tramples(Expression* curr, const EffectAnalyzer& currEffects, Expression* store_) {
+  bool tramples(Expression* curr, const EffectAnalyzer& currEffects, Expression* store_) override {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = curr->cast<StructSet>();
       // TODO: consider subtyping as well.
@@ -226,7 +232,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
     return false;
   }
 
-  virtual bool mayInteract(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) {
+  bool mayInteract(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) override {
     // We already checked isLoadFrom and tramples; if this is a StructSet that
     // is not a trample then we cannot be sure what is being set (due to not
     // recognizing the ref, etc.), and it may interact.
@@ -240,7 +246,8 @@ struct DeadStoreElimination
 
   Pass* create() override { return new DeadStoreElimination; }
 
-  void doWalkFunction(Function* curr) {
+  void doWalkFunction(Function* func) {
+    GCDeadStoreFinder(func, getPassOptions(), getModule()->features).analyze();
   }
 };
 

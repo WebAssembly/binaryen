@@ -2,16 +2,19 @@
 ;; RUN: wasm-opt %s -all --dse -S -o - | filecheck %s
 
 (module
- (type $A (struct (field i32)))
+ (type $A (struct (field (mut i32))))
 
  (func $bar (param $x (ref $A))
   (struct.set $A 0
+   (local.get $x)
    (i32.const 10)
   )
   (struct.set $A 0
+   (local.get $x)
    (i32.const 20)
   )
   (struct.set $A 0
+   (local.get $x)
    (i32.const 30)
   )
  )
