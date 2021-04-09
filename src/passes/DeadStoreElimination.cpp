@@ -309,6 +309,64 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
   }
 };
 
+struct GlobalDeadStoreFinder : public DeadStoreFinder {
+  GlobalDeadStoreFinder(Module* wasm,
+                        Function* func,
+                        PassOptions& passOptions)
+    : DeadStoreFinder(wasm, func, passOptions) {}
+
+  bool isStore(Expression* curr) override { return curr->is<GlobalSet>(); }
+
+  bool isRelevant(Expression* curr,
+                  const EffectAnalyzer& currEffects) override {
+    return curr->is<GlobalGet>();
+  }
+
+  bool isLoadFrom(Expression* curr,
+                  const EffectAnalyzer& currEffects,
+                  Expression* store_) override {
+    if (auto* load = curr->dynCast<GlobalGet>()) {
+      auto* store = store_->cast<GlobalSet>();
+      return load->name == store->name;
+    }
+    return false;
+  }
+
+  bool tramples(Expression* curr,
+                const EffectAnalyzer& currEffects,
+                Expression* store_) override {
+    if (auto* otherStore = curr->dynCast<GlobalSet>()) {
+      auto* store = store_->cast<GlobalSet>();
+      return otherStore->name == store->name;
+    }
+    return false;
+  }
+
+  bool mayInteract(Expression* curr,
+                   const EffectAnalyzer& currEffects,
+                   Expression* store) override {
+    // We have already handled everything in isLoadFrom() and tramples().
+    return false;
+  }
+
+  void optimize() {
+    analyze();
+
+    Builder builder(*getModule());
+
+    // Optimize the stores that have no unknown interactions.
+    for (auto& kv : storeLoads) {
+      auto* store = kv.first->dynCast<StructSet>();
+      const auto& loads = kv.second;
+      if (loads.empty()) {
+        // This store has no loads, and can just be dropped.
+        *storeLocations[store] = builder.makeDrop(store->value);
+      }
+      // TODO: when not empty, we can use a tee, but unclear if beneficial
+    }
+  }
+};
+
 struct DeadStoreElimination
   : public WalkerPass<PostWalker<DeadStoreElimination>> {
   bool isFunctionParallel() override { return true; }
@@ -317,6 +375,7 @@ struct DeadStoreElimination
 
   void doWalkFunction(Function* func) {
     GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
   }
 };
 
