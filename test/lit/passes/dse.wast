@@ -731,6 +731,37 @@
   )
  )
 
+ ;; CHECK:      (func $memory-load-wrong-ptr
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load offset=1
+ ;; CHECK-NEXT:    (i32.const 50)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-load-wrong-ptr
+  (i32.store
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (drop
+   (i32.load offset=1
+    (i32.const 50)
+   )
+  )
+  (i32.store
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
  ;; CHECK:      (func $memory-load-wrong-bytes
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
