@@ -252,7 +252,8 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
   // there is a single set: if the set did not dominate one of the gets then
   // there would definitely be another set for that get, the zero initialization
   // at the function entry, if nothing else.)
-  if (aSets.size() == 1 && bSets.size() == 1 && *aSets.begin() == *bSets.begin()) {
+  if (aSets.size() == 1 && bSets.size() == 1 &&
+      *aSets.begin() == *bSets.begin()) {
     return true;
   }
   return false;

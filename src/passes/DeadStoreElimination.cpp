@@ -25,8 +25,8 @@
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
-#include <wasm.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -41,9 +41,10 @@ struct Info {
 
 } // anonymous namespace
 
-struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
-                                UnifiedExpressionVisitor<DeadStoreFinder>,
-                                Info> {
+struct DeadStoreFinder
+  : public CFGWalker<DeadStoreFinder,
+                     UnifiedExpressionVisitor<DeadStoreFinder>,
+                     Info> {
   Function* func;
   PassOptions& passOptions;
   FeatureSet features;
@@ -51,7 +52,9 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
   // TODO: make this heavy computation optional?
   LocalGraph localGraph;
 
-  DeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : func(func), passOptions(passOptions), features(features), localGraph(func) {}
+  DeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features)
+    : func(func), passOptions(passOptions), features(features),
+      localGraph(func) {}
 
   virtual ~DeadStoreFinder() {}
 
@@ -61,33 +64,41 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
   // children (as in each basic block we process expressions in a linear order,
   // and have already seen the children).
   //
-  // These do not need to handle reaching of code outside of the current function: a
-  // call, return, etc. will be noted as a possible interaction automatically (as if we
-  // reach code outside the function then any interaction is possible).
-  
+  // These do not need to handle reaching of code outside of the current
+  // function: a call, return, etc. will be noted as a possible interaction
+  // automatically (as if we reach code outside the function then any
+  // interaction is possible).
+
   // Returns whether an expression is a relevant store for us to consider.
   virtual bool isStore(Expression* curr) = 0;
 
   // Returns whether the expression is relevant for us to notice in the
   // analysis. (This does not need to include anything isStore() returns true
   // on, as those are definitely relevant.)
-  virtual bool isRelevant(Expression* curr, const EffectAnalyzer& currEffects) = 0;
+  virtual bool isRelevant(Expression* curr,
+                          const EffectAnalyzer& currEffects) = 0;
 
   // Returns whether an expression is a load that corresponds to a store. The
   // load may not load all the data written by the store (that is up to a
   // subclass to decide about), but it loads at least some of that data.
-  virtual bool isLoadFrom(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) = 0;
+  virtual bool isLoadFrom(Expression* curr,
+                          const EffectAnalyzer& currEffects,
+                          Expression* store) = 0;
 
   // Returns whether an expression tramples a store completely, overwriting all
   // the store's written data.
   // This is only called if isLoadFrom returns false.
-  virtual bool tramples(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) = 0;
+  virtual bool tramples(Expression* curr,
+                        const EffectAnalyzer& currEffects,
+                        Expression* store) = 0;
 
   // Returns whether an expression may interact with store in a way that we
   // cannot fully analyze as a load or a store, and so we must give up. This may
   // be a possible load or a possible store or something else.
   // This is only called if isLoadFrom and tramples return false.
-  virtual bool mayInteract(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) = 0;
+  virtual bool mayInteract(Expression* curr,
+                           const EffectAnalyzer& currEffects,
+                           Expression* store) = 0;
 
   // Walking
 
@@ -102,7 +113,8 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
     currEffects.visit(curr);
 
     bool store = isStore(curr);
-    if (reachesGlobalCode(curr, currEffects) || isRelevant(curr, currEffects) || store) {
+    if (reachesGlobalCode(curr, currEffects) || isRelevant(curr, currEffects) ||
+        store) {
       currBasicBlock->contents.exprs.push_back(curr);
       if (store) {
         storeLocations[curr] = getCurrentPointer();
@@ -142,7 +154,7 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
         // unseen interactions, and we will remove it if we find any.
         storeLoads[store];
 
-//std::cerr << "store:\n" << *store << '\n';
+        // std::cerr << "store:\n" << *store << '\n';
         // Flow this store forward, looking for what it affects and interacts
         // with.
         UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
@@ -153,25 +165,26 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
 
             EffectAnalyzer currEffects(passOptions, features);
             currEffects.visit(curr);
-//std::cerr << "at curr:\n" << *curr << '\n';
+            // std::cerr << "at curr:\n" << *curr << '\n';
 
             if (isLoadFrom(curr, currEffects, store)) {
               // We found a definite load, note it.
               storeLoads[store].push_back(curr);
-//std::cerr << "  found load\n";
+              // std::cerr << "  found load\n";
             } else if (tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
               // anything it can reach.
-//std::cerr << "  found trample\n";
+              // std::cerr << "  found trample\n";
               return;
-            } else if (reachesGlobalCode(curr, currEffects) || mayInteract(curr, currEffects, store)) {
-//std::cerr << "  found mayInteract\n";
+            } else if (reachesGlobalCode(curr, currEffects) ||
+                       mayInteract(curr, currEffects, store)) {
+              // std::cerr << "  found mayInteract\n";
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
               // TODO: it may be valuable to still optimize some of the loads
               //       from a store, even if others cannot be analyzed. We can
               //       do the store and also a tee, and load from the local in
-              //       the loads we are sure of. Code size tradeoffs are 
+              //       the loads we are sure of. Code size tradeoffs are
               //       unclear, however.
               work.clear();
               storeLoads.erase(store);
@@ -198,7 +211,8 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
   }
 
   bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
-    return currEffects.calls || currEffects.throws || currEffects.trap || curr->is<Return>();
+    return currEffects.calls || currEffects.throws || currEffects.trap ||
+           curr->is<Return>();
   }
 
   // Check whether the values of two expressions are definitely identical.
@@ -216,35 +230,46 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
 };
 
 struct GCDeadStoreFinder : public DeadStoreFinder {
-  GCDeadStoreFinder(Function* func, PassOptions& passOptions, FeatureSet features) : DeadStoreFinder(func, passOptions, features) {}
+  GCDeadStoreFinder(Function* func,
+                    PassOptions& passOptions,
+                    FeatureSet features)
+    : DeadStoreFinder(func, passOptions, features) {}
 
-  bool isStore(Expression* curr) override {
-    return curr->is<StructSet>();
-  }
+  bool isStore(Expression* curr) override { return curr->is<StructSet>(); }
 
-  bool isRelevant(Expression* curr, const EffectAnalyzer& currEffects) override {
+  bool isRelevant(Expression* curr,
+                  const EffectAnalyzer& currEffects) override {
     return curr->is<StructGet>();
   }
 
-  bool isLoadFrom(Expression* curr, const EffectAnalyzer& currEffects, Expression* store_) override {
+  bool isLoadFrom(Expression* curr,
+                  const EffectAnalyzer& currEffects,
+                  Expression* store_) override {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
-      return equivalent(load->ref, store->ref) && load->ref->type == store->ref->type && load->index == store->index;
+      return equivalent(load->ref, store->ref) &&
+             load->ref->type == store->ref->type && load->index == store->index;
     }
     return false;
   }
 
-  bool tramples(Expression* curr, const EffectAnalyzer& currEffects, Expression* store_) override {
+  bool tramples(Expression* curr,
+                const EffectAnalyzer& currEffects,
+                Expression* store_) override {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = curr->cast<StructSet>();
       // TODO: consider subtyping as well.
-      return equivalent(otherStore->ref, store->ref) && otherStore->ref->type == store->ref->type && otherStore->index == store->index;
+      return equivalent(otherStore->ref, store->ref) &&
+             otherStore->ref->type == store->ref->type &&
+             otherStore->index == store->index;
     }
     return false;
   }
 
-  bool mayInteract(Expression* curr, const EffectAnalyzer& currEffects, Expression* store) override {
+  bool mayInteract(Expression* curr,
+                   const EffectAnalyzer& currEffects,
+                   Expression* store) override {
     // We already checked isLoadFrom and tramples; if this is a StructSet that
     // is not a trample then we cannot be sure what is being set (due to not
     // recognizing the ref, etc.), and it may interact.
@@ -269,9 +294,7 @@ struct DeadStoreElimination
       if (loads.empty()) {
         // This store has no loads, and can just be dropped.
         *gcFinder.storeLocations[store] = builder.makeSequence(
-          builder.makeDrop(store->ref),
-          builder.makeDrop(store->value)
-        );
+          builder.makeDrop(store->ref), builder.makeDrop(store->value));
       }
       // TODO: when not empty, we can use a tee
     }

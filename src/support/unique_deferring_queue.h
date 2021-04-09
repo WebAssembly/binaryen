@@ -68,7 +68,8 @@ template<typename T> struct UniqueDeferredQueue {
 
 // As UniqueDeferredQueue, but once an item has been processed through the queue
 // (that is, popped) it will be ignored from then on in later pushes.
-template<typename T> struct UniqueNonrepeatingDeferredQueue : UniqueDeferredQueue<T> {
+template<typename T>
+struct UniqueNonrepeatingDeferredQueue : UniqueDeferredQueue<T> {
   std::unordered_set<T> processed;
 
   void push(T item) {
