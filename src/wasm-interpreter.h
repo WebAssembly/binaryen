@@ -3202,12 +3202,24 @@ private:
           destTableSize * Table::kPageSize) {
         trap("out of bounds destination table access in table.copy");
       }
-      for (size_t i = 0; i < sizeVal; ++i) {
-        const Literal& item = instance.externalInterface->tableLoad(
-          curr->srcTable, srcOffsetVal + i);
-        instance.externalInterface->tableStore(
-          curr->destTable, destOffsetVal + i, item);
+
+      size_t start = 0;
+      size_t end = sizeVal;
+      int step = 1;
+      // Reverse direction if source is below dest
+      if (srcOffsetVal < destOffsetVal) {
+        start = size_t(sizeVal) - 1;
+        end = -1;
+        step = -1;
       }
+      for (size_t i = start; i != end; i += step) {
+        instance.externalInterface->tableStore(
+          curr->destTable,
+          destOffsetVal + i,
+          instance.externalInterface->tableLoad(curr->srcTable,
+                                                srcOffsetVal + i));
+      }
+
       return {};
     }
     Flow visitTableInit(TableInit* curr) {
