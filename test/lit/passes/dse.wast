@@ -762,5 +762,30 @@
   )
  )
 
+ ;; CHECK:      (func $memory-store-small
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store8
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-store-small
+  (i32.store8
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (i32.store8
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
  ;; TODO: test try throwing
 )
