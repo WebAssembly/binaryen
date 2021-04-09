@@ -361,4 +361,36 @@
    )
   )
  )
+
+ ;; CHECK:      (func $different-refs-same-type (param $x (ref $A)) (param $y (ref $A))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $different-refs-same-type (param $x (ref $A)) (param $y (ref $A))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  (struct.set $A 0
+   (local.get $y)
+   (i32.const 20)
+  )
+  ;; the last store escapes to the outside, and cannot be modified
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
+ ;; TODO: test try throwing
 )
