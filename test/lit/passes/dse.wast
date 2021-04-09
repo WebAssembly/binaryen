@@ -638,5 +638,36 @@
   )
  )
 
+ ;; CHECK:      (func $memory-other-interference
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (memory.fill
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-other-interference
+  (i32.store
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (memory.fill
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 30)
+  )
+  (i32.store
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
  ;; TODO: test try throwing
 )
