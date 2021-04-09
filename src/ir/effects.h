@@ -132,12 +132,13 @@ public:
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
     return globalsWritten.size() || tablesWritten.size() ||
-           elementSegmentsDropped.size() || writesMemory || writesHeap || isAtomic ||
-           calls;
+           elementSegmentsDropped.size() || writesMemory || writesHeap ||
+           isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || tablesRead.size() || elementSegmentsRead.size() ||
-           readsMemory || readsHeap || isAtomic || calls;
+    return globalsRead.size() || tablesRead.size() ||
+           elementSegmentsRead.size() || readsMemory || readsHeap || isAtomic ||
+           calls;
   }
 
   bool hasSideEffects() const {
