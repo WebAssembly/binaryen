@@ -2065,7 +2065,8 @@ public:
   //
   struct ExternalInterface {
     virtual ~ExternalInterface() = default;
-    virtual void init(Module& wasm, SubType& instance) {}
+    virtual void
+    init(Module& wasm, SubType& instance, std::map<Name, SubType*> registry) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
     virtual Literals callTable(Name tableName,
@@ -2236,8 +2237,10 @@ public:
   // Multivalue ABI support (see push/pop).
   std::vector<Literals> multiValues;
 
-  ModuleInstanceBase(Module& wasm, ExternalInterface* externalInterface)
-    : wasm(wasm), externalInterface(externalInterface) {
+  ModuleInstanceBase(Module& wasm,
+                     ExternalInterface* externalInterface,
+                     std::map<Name, SubType*> registry_)
+    : wasm(wasm), externalInterface(externalInterface), registry(registry_) {
     // import globals from the outside
     externalInterface->importGlobals(globals, wasm);
     // prepare memory
@@ -2251,7 +2254,7 @@ public:
     });
 
     // initialize the rest of the external interface
-    externalInterface->init(wasm, *self());
+    externalInterface->init(wasm, *self(), registry_);
 
     initializeTableContents();
     initializeMemoryContents();
@@ -2318,10 +2321,21 @@ private:
       Function dummyFunc;
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
+
+      Table* table = wasm.getTable(segment->table);
+      if (table->imported()) {
+        Export* tableExport = registry.at(table->module)->wasm.getExport(table->base);
+        for (Index i = 0; i < segment->data.size(); ++i) {
+          Flow ret = runner.visit(segment->data[i]);
+          registry.at(table->module)->externalInterface->tableStore(
+            tableExport->value, offset + i, ret.getSingleValue());
+        }
+      } else {
       for (Index i = 0; i < segment->data.size(); ++i) {
         Flow ret = runner.visit(segment->data[i]);
         externalInterface->tableStore(
           segment->table, offset + i, ret.getSingleValue());
+      }
       }
     });
   }
@@ -2445,15 +2459,29 @@ private:
       if (target.breaking()) {
         return target;
       }
+
       Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->sig.results : curr->type;
-      Flow ret = instance.externalInterface->callTable(
-        curr->table, index, curr->sig, arguments, type, *instance.self());
+
+      auto* table = instance.wasm.getTable(curr->table);
+      auto indirectCall = [&](ModuleInstanceBase<GlobalManager, SubType>* inst,
+                              Table* t) {
+        Flow ret = inst->externalInterface->callTable(
+          t->name, index, curr->sig, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
         ret.breakTo = RETURN_FLOW;
       }
       return ret;
+      };
+
+      if (table->imported()) {
+        auto* inst = instance.registry.at(table->module);
+        Export* tableExport = inst->wasm.getExport(table->base);
+        return indirectCall(inst, inst->wasm.getTable(tableExport->value));
+      } else {
+        return indirectCall(&instance, table);
+      }
     }
     Flow visitCallRef(CallRef* curr) {
       NOTE_ENTER("CallRef");
@@ -3280,6 +3308,7 @@ protected:
   }
 
   ExternalInterface* externalInterface;
+  std::map<Name, SubType*> registry;
 };
 
 // The default ModuleInstance uses a trivial global manager
@@ -3287,8 +3316,10 @@ using TrivialGlobalManager = std::map<Name, Literals>;
 class ModuleInstance
   : public ModuleInstanceBase<TrivialGlobalManager, ModuleInstance> {
 public:
-  ModuleInstance(Module& wasm, ExternalInterface* externalInterface)
-    : ModuleInstanceBase(wasm, externalInterface) {}
+  ModuleInstance(Module& wasm,
+                 ExternalInterface* externalInterface,
+                 std::map<Name, ModuleInstance*> registry)
+    : ModuleInstanceBase(wasm, externalInterface, registry) {}
 };
 
 } // namespace wasm

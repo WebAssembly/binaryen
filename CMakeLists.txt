@@ -349,6 +349,7 @@ endfunction()
 
 binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)
 binaryen_add_executable(wasm-shell src/tools/wasm-shell.cpp)
+binaryen_add_executable(wasm-shell2 src/tools/wasm-shell2.cpp)
 binaryen_add_executable(wasm-metadce src/tools/wasm-metadce.cpp)
 binaryen_add_executable(wasm2js src/tools/wasm2js.cpp)
 binaryen_add_executable(wasm-emscripten-finalize src/tools/wasm-emscripten-finalize.cpp)

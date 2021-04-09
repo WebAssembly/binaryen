@@ -128,7 +128,7 @@ class EvallingModuleInstance
   : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
 public:
   EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface)
-    : ModuleInstanceBase(wasm, externalInterface) {
+    : ModuleInstanceBase(wasm, externalInterface, {}) {
     // if any global in the module has a non-const constructor, it is using a
     // global import, which we don't have, and is illegal to use
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
@@ -169,7 +169,9 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Module* wasm;
   EvallingModuleInstance* instance;
 
-  void init(Module& wasm_, EvallingModuleInstance& instance_) override {
+  void init(Module& wasm_,
+            EvallingModuleInstance& instance_,
+            std::map<Name, EvallingModuleInstance*> registry) override {
     wasm = &wasm_;
     instance = &instance_;
   }

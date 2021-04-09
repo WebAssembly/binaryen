@@ -87,17 +87,22 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   } memory;
 
   std::unordered_map<Name, std::vector<Literal>> tables;
+  std::map<Name, ModuleInstance*> registry;
 
   ShellExternalInterface() : memory() {}
   virtual ~ShellExternalInterface() = default;
 
-  void init(Module& wasm, ModuleInstance& instance) override {
+  void init(Module& wasm,
+            ModuleInstance& instance,
+            std::map<Name, ModuleInstance*> registry) override {
+    registry.swap(registry);
+    // if (!wasm.memory.imported()) {
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
-
+    // }
     if (wasm.tables.size() > 0) {
-      for (auto& table : wasm.tables) {
+      ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
         tables[table->name].resize(table->initial);
-      }
+      });
     }
   }
 
@@ -143,13 +148,6 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       wasm.memory.initial = 1;
       wasm.memory.max = 2;
     }
-
-    ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-      if (table->module == SPECTEST && table->base == TABLE) {
-        table->initial = 10;
-        table->max = 20;
-      }
-    });
   }
 
   Literals callImport(Function* import, LiteralList& arguments) override {
@@ -162,6 +160,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       // XXX hack for torture tests
       std::cout << "exit()\n";
       throw ExitException();
+    } else if (registry.count(import->module)) {
+      return registry.at(import->module)->callExport(import->base, arguments);
     }
     Fatal() << "callImport: unknown import: " << import->module.str << "."
             << import->name.str;
@@ -246,7 +246,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (addr >= table.size()) {
       trap("out of bounds table access");
     } else {
-      table.emplace(table.begin() + addr, entry);
+      table[addr] = entry;
     }
   }
 

@@ -3290,6 +3290,10 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     // Offset expression (offset (<expr>)) | (<expr>)
     auto& inner = *s[i++];
     if (elementStartsWith(inner, OFFSET)) {
+      if (inner.size() > 2) {
+          throw ParseException(
+            "Invalid offset for an element segment.", s.line, s.col);
+      }
       segment->offset = parseExpression(inner[1]);
     } else {
       segment->offset = parseExpression(inner);

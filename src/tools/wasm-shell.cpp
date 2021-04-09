@@ -97,8 +97,9 @@ run_asserts(Name moduleName,
   if (wasm) {
     // prefix make_unique to work around visual studio bugs
     auto tempInterface = wasm::make_unique<ShellExternalInterface>();
+    std::map<Name, ModuleInstance*> registry;
     auto tempInstance =
-      wasm::make_unique<ModuleInstance>(*wasm, tempInterface.get());
+      wasm::make_unique<ModuleInstance>(*wasm, tempInterface.get(), registry);
     interfaces[moduleName].swap(tempInterface);
     instances[moduleName].swap(tempInstance);
     instance = instances[moduleName].get();

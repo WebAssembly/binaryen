@@ -848,9 +848,14 @@ void FunctionValidator::visitGlobalGet(GlobalGet* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  shouldBeTrue(getModule()->getGlobalOrNull(curr->name),
-               curr,
-               "global.get name must be valid");
+  auto* global = getModule()->getGlobalOrNull(curr->name);
+  shouldBeTrue(global, curr, "global.get name must be valid");
+  if (!getFunction()) {
+    info.shouldBeFalse(global->mutable_,
+                       curr,
+                       "global.get must refer to an immutable global outside "
+                       "of a function body");
+  }
 }
 
 void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
@@ -2902,11 +2907,13 @@ static void validateTables(Module& module, ValidationInfo& info) {
                          Type(Type::i32),
                          segment->offset,
                          "element segment offset should be i32");
-      info.shouldBeTrue(checkSegmentOffset(segment->offset,
-                                           segment->data.size(),
-                                           table->initial * Table::kPageSize),
-                        segment->offset,
-                        "table segment offset should be reasonable");
+      if (!table->imported()) {
+        info.shouldBeTrue(checkSegmentOffset(segment->offset,
+                                             segment->data.size(),
+                                             table->initial * Table::kPageSize),
+                          segment->offset,
+                          "table segment offset should be reasonable");
+      }
       if (module.features.hasTypedFunctionReferences()) {
         info.shouldBeTrue(
           Type::isSubType(segment->type, table->type),
