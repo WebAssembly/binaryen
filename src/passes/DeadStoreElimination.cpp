@@ -265,8 +265,11 @@ struct DeadStoreFinder
       if (loads.empty()) {
         // This store has no loads, and can just be dropped.
         *storeLocations[store] = replaceStoreWithDrops(store, builder);
+      } else {
+        // TODO: when not empty, use a local and replace loads too
+        // FIXME: must prove no other store reaches those places
+        std::cout << "waka " << loads.size() << "\n";
       }
-      // TODO: when not empty, use a local and replace loads too
     }
   }
 };
