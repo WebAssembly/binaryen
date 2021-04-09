@@ -7,6 +7,8 @@
  (type $A (struct (field (mut i32))))
  (type $B (struct (field (mut f64))))
 
+ (memory 10)
+
  (global $global$0 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
 
@@ -520,6 +522,31 @@
   )
   (global.set $global$0
    (i32.const 20)
+  )
+ )
+
+ ;; CHECK:      (func $memory-const
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-const
+  (i32.store
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (i32.store
+   (i32.const 10)
+   (i32.const 30)
   )
  )
 
