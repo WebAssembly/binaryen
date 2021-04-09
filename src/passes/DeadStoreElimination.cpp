@@ -26,6 +26,7 @@
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
 #include <wasm.h>
+#include <wasm-builder.h>
 
 namespace wasm {
 
@@ -90,6 +91,8 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
 
   // Walking
 
+  std::unordered_map<Expression*, Expression**> storeLocations;
+
   void visitExpression(Expression* curr) {
     if (!currBasicBlock) {
       return;
@@ -98,8 +101,12 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
     EffectAnalyzer currEffects(passOptions, features);
     currEffects.visit(curr);
 
-    if (reachesGlobalCode(curr, currEffects) || isRelevant(curr, currEffects) || isStore(curr)) {
+    bool store = isStore(curr);
+    if (reachesGlobalCode(curr, currEffects) || isRelevant(curr, currEffects) || store) {
       currBasicBlock->contents.exprs.push_back(curr);
+      if (store) {
+        storeLocations[curr] = getCurrentPointer();
+      }
     }
   }
 
@@ -135,7 +142,7 @@ struct DeadStoreFinder : public CFGWalker<DeadStoreFinder,
         // unseen interactions, and we will remove it if we find any.
         storeLoads[store];
 
-std::cout << "store:\n" << *store << '\n';
+//std::cerr << "store:\n" << *store << '\n';
         // Flow this store forward, looking for what it affects and interacts
         // with.
         UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
@@ -146,19 +153,19 @@ std::cout << "store:\n" << *store << '\n';
 
             EffectAnalyzer currEffects(passOptions, features);
             currEffects.visit(curr);
-std::cout << "at curr:\n" << *curr << '\n';
+//std::cerr << "at curr:\n" << *curr << '\n';
 
             if (isLoadFrom(curr, currEffects, store)) {
               // We found a definite load, note it.
               storeLoads[store].push_back(curr);
-std::cout << "  found load\n";
+//std::cerr << "  found load\n";
             } else if (tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
               // anything it can reach.
-std::cout << "  found trample\n";
+//std::cerr << "  found trample\n";
               return;
             } else if (reachesGlobalCode(curr, currEffects) || mayInteract(curr, currEffects, store)) {
-std::cout << "  found mayInteract\n";
+//std::cerr << "  found mayInteract\n";
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
               // TODO: it may be valuable to still optimize some of the loads
@@ -252,10 +259,21 @@ struct DeadStoreElimination
   Pass* create() override { return new DeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
+    Builder builder(*getModule());
     GCDeadStoreFinder gcFinder(func, getPassOptions(), getModule()->features);
     gcFinder.analyze();
+    // Optimize the stores that have no unknown interactions.
     for (auto& kv : gcFinder.storeLoads) {
-      std::cout << "dead:\n" << *kv.first << '\n';
+      auto* store = kv.first->dynCast<StructSet>();
+      const auto& loads = kv.second;
+      if (loads.empty()) {
+        // This store has no loads, and can just be dropped.
+        *gcFinder.storeLocations[store] = builder.makeSequence(
+          builder.makeDrop(store->ref),
+          builder.makeDrop(store->value)
+        );
+      }
+      // TODO: when not empty, we can use a tee
     }
   }
 };
