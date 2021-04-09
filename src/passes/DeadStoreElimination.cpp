@@ -162,32 +162,32 @@ struct DeadStoreFinder
         // unseen interactions, and we will remove it if we find any.
         storeLoads[store];
 
-        std::cerr << "store:\n" << *store << '\n';
+        // std::cerr << "store:\n" << *store << '\n';
         // Flow this store forward, looking for what it affects and interacts
         // with.
         UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
 
         auto scanBlock = [&](BasicBlock* block, size_t from) {
-          std::cerr << "scan block " << block << "\n";
+          // std::cerr << "scan block " << block << "\n";
           for (size_t i = from; i < block->contents.exprs.size(); i++) {
             auto* curr = block->contents.exprs[i];
 
             EffectAnalyzer currEffects(passOptions, features);
             currEffects.visit(curr);
-            std::cerr << "at curr:\n" << *curr << '\n';
+            // std::cerr << "at curr:\n" << *curr << '\n';
 
             if (isLoadFrom(curr, currEffects, store)) {
               // We found a definite load, note it.
               storeLoads[store].push_back(curr);
-              std::cerr << "  found load\n";
+              // std::cerr << "  found load\n";
             } else if (tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
               // anything it can reach.
-              std::cerr << "  found trample\n";
+              // std::cerr << "  found trample\n";
               return;
             } else if (reachesGlobalCode(curr, currEffects) ||
                        mayInteract(curr, currEffects, store)) {
-              std::cerr << "  found mayInteract\n";
+              // std::cerr << "  found mayInteract\n";
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
               // TODO: it may be valuable to still optimize some of the loads
@@ -212,14 +212,14 @@ struct DeadStoreFinder
 
         // Next, continue flowing through other blocks.
         while (!work.empty()) {
-          std::cerr << "work iter\n";
+          // std::cerr << "work iter\n";
           auto* curr = work.pop();
           scanBlock(curr, 0);
         }
-        std::cerr << "work done\n";
+        // std::cerr << "work done\n";
       }
     }
-    std::cerr << "all work done\n";
+    // std::cerr << "all work done\n";
   }
 
   bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
