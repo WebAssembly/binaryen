@@ -669,5 +669,98 @@
   )
  )
 
+ ;; CHECK:      (func $memory-load
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-load
+  (i32.store
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (drop
+   (i32.load
+    (i32.const 10)
+   )
+  )
+  (i32.store
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
+ ;; CHECK:      (func $memory-load-wrong-offset
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load offset=1
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-load-wrong-offset
+  (i32.store
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (drop
+   (i32.load offset=1
+    (i32.const 10)
+   )
+  )
+  (i32.store
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
+ ;; CHECK:      (func $memory-load-wrong-bytes
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load8_s
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-load-wrong-bytes
+  (i32.store
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (drop
+   (i32.load8_s
+    (i32.const 10)
+   )
+  )
+  (i32.store
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
  ;; TODO: test try throwing
 )
