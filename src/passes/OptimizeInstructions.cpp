@@ -1007,9 +1007,7 @@ struct OptimizeInstructions
     }
   }
 
-  void visitStructGet(StructGet* curr) {
-    skipNonNullCast(curr->ref);
-  }
+  void visitStructGet(StructGet* curr) { skipNonNullCast(curr->ref); }
 
   void visitStructSet(StructSet* curr) {
     skipNonNullCast(curr->ref);
@@ -1020,9 +1018,7 @@ struct OptimizeInstructions
     }
   }
 
-  void visitArrayGet(ArrayGet* curr) {
-    skipNonNullCast(curr->ref);
-  }
+  void visitArrayGet(ArrayGet* curr) { skipNonNullCast(curr->ref); }
 
   void visitArraySet(ArraySet* curr) {
     skipNonNullCast(curr->ref);
@@ -1033,10 +1029,7 @@ struct OptimizeInstructions
     }
   }
 
-  void visitArrayLen(ArrayLen* curr) {
-    skipNonNullCast(curr->ref);
-  }
-
+  void visitArrayLen(ArrayLen* curr) { skipNonNullCast(curr->ref); }
 
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
