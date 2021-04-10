@@ -2599,7 +2599,7 @@ private:
         return flow;
       }
       NOTE_EVAL1(flow);
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       auto addr = inst->getFinalAddress(curr, flow.getSingleValue());
       if (curr->isAtomic) {
         inst->checkAtomicAddress(addr, curr->bytes);
@@ -2619,7 +2619,7 @@ private:
       if (value.breaking()) {
         return value;
       }
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       auto addr = inst->getFinalAddress(curr, ptr.getSingleValue());
       if (curr->isAtomic) {
         inst->checkAtomicAddress(addr, curr->bytes);
@@ -2641,7 +2641,7 @@ private:
         return value;
       }
       NOTE_EVAL1(ptr);
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       auto addr = inst->getFinalAddress(curr, ptr.getSingleValue());
       NOTE_EVAL1(addr);
       NOTE_EVAL1(value);
@@ -2685,7 +2685,7 @@ private:
       if (replacement.breaking()) {
         return replacement;
       }
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       auto addr = inst->getFinalAddress(curr, ptr.getSingleValue());
       expected =
         Flow(wrapToSmallerSize(expected.getSingleValue(), curr->bytes));
@@ -2716,7 +2716,7 @@ private:
       if (timeout.breaking()) {
         return timeout;
       }
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       auto bytes = curr->expectedType.getByteSize();
       auto addr = inst->getFinalAddress(curr, ptr.getSingleValue(), bytes);
       auto loaded = inst->doAtomicLoad(addr, bytes, curr->expectedType);
@@ -2740,7 +2740,7 @@ private:
       if (count.breaking()) {
         return count;
       }
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       auto addr = inst->getFinalAddress(curr, ptr.getSingleValue(), 4);
       // Just check TODO actual threads support
       inst->checkAtomicAddress(addr, 4);
@@ -2808,7 +2808,7 @@ private:
       }
       NOTE_EVAL1(flow);
       Address src(uint32_t(flow.getSingleValue().geti32()));
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       auto loadLane = [&](Address addr) {
         switch (curr->op) {
           case LoadExtSVec8x8ToVecI16x8:
@@ -2863,7 +2863,7 @@ private:
         return flow;
       }
       NOTE_EVAL1(flow);
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       Address src =
         inst->getFinalAddress(curr, flow.getSingleValue(), curr->getMemBytes());
       auto zero =
@@ -2883,7 +2883,7 @@ private:
         return flow;
       }
       NOTE_EVAL1(flow);
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       Address addr =
         inst->getFinalAddress(curr, flow.getSingleValue(), curr->getMemBytes());
       flow = this->visit(curr->vec);
@@ -2944,13 +2944,13 @@ private:
     }
     Flow visitMemorySize(MemorySize* curr) {
       NOTE_ENTER("MemorySize");
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       return Literal::makeFromInt64(inst->memorySize,
                                     inst->wasm.memory.indexType);
     }
     Flow visitMemoryGrow(MemoryGrow* curr) {
       NOTE_ENTER("MemoryGrow");
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       auto indexType = inst->wasm.memory.indexType;
       auto fail = Literal::makeFromInt64(-1, indexType);
       Flow flow = this->visit(curr->delta);
@@ -3011,7 +3011,7 @@ private:
       if ((uint64_t)offsetVal + sizeVal > segment.data.size()) {
         trap("out of bounds segment access in memory.init");
       }
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       if (destVal + sizeVal > inst->memorySize * Memory::kPageSize) {
         trap("out of bounds memory access in memory.init");
       }
@@ -3049,7 +3049,7 @@ private:
       Address sourceVal(source.getSingleValue().getUnsigned());
       Address sizeVal(size.getSingleValue().getUnsigned());
 
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       if (sourceVal + sizeVal > inst->memorySize * Memory::kPageSize ||
           destVal + sizeVal > inst->memorySize * Memory::kPageSize ||
           // FIXME: better/cheaper way to detect wrapping?
@@ -3095,7 +3095,7 @@ private:
       Address destVal(dest.getSingleValue().getUnsigned());
       Address sizeVal(size.getSingleValue().getUnsigned());
 
-      auto inst = getMemoryInstance();
+      auto* inst = getMemoryInstance();
       // FIXME: cheaper wrapping detection?
       if (destVal > inst->memorySize * Memory::kPageSize ||
           sizeVal > inst->memorySize * Memory::kPageSize ||
