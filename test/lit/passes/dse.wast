@@ -1015,5 +1015,76 @@
   )
  )
 
+ ;; CHECK:      (func $memory-atomic1
+ ;; CHECK-NEXT:  (i32.atomic.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-atomic1
+  (i32.atomic.store
+   (i32.const 10)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 10)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $memory-atomic2
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.atomic.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-atomic2
+  (i32.store
+   (i32.const 10)
+   (i32.const 0)
+  )
+  (i32.atomic.store
+   (i32.const 10)
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $memory-atomic3
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.atomic.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-atomic3
+  (i32.atomic.store
+   (i32.const 10)
+   (i32.const 0)
+  )
+  (i32.atomic.store
+   (i32.const 10)
+   (i32.const 0)
+  )
+ )
+
  ;; TODO: test try throwing
 )
