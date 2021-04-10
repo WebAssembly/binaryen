@@ -992,19 +992,51 @@ struct OptimizeInstructions
     }
   }
 
+  // If an instruction traps on a null input, there is no need for a
+  // ref.as_non_null on that input: we will trap either way (and the binaryen
+  // optimizer does not differentiate traps).
+  void skipNonNullCast(Expression*& input) {
+    while (1) {
+      if (auto* as = input->dynCast<RefAs>()) {
+        if (as->op == RefAsNonNull) {
+          input = as->value;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  void visitStructGet(StructGet* curr) {
+    skipNonNullCast(curr->ref);
+  }
+
   void visitStructSet(StructSet* curr) {
+    skipNonNullCast(curr->ref);
+
     if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
       const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
       optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
     }
   }
 
+  void visitArrayGet(ArrayGet* curr) {
+    skipNonNullCast(curr->ref);
+  }
+
   void visitArraySet(ArraySet* curr) {
+    skipNonNullCast(curr->ref);
+
     if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
       auto element = curr->ref->type.getHeapType().getArray().element;
       optimizeStoredValue(curr->value, element.getByteSize());
     }
   }
+
+  void visitArrayLen(ArrayLen* curr) {
+    skipNonNullCast(curr->ref);
+  }
+
 
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
@@ -1109,6 +1141,8 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
+
+    skipNonNullCast(curr->value);
 
     // Check if the type is the kind we are checking for.
     auto result = GCTypeUtils::evaluateKindCheck(curr);
