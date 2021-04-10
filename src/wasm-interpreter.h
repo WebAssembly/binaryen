@@ -2434,7 +2434,9 @@ private:
       }
     }
     SubType* getMemoryInstance() {
-      if (instance.wasm.memory.imported()) {
+      // ctor-eval needs the imported memory from env
+      if (instance.wasm.memory.imported() &&
+          instance.wasm.memory.module != "env") {
         return instance.linkedInstances.at(instance.wasm.memory.module).get();
       } else {
         return static_cast<SubType*>(&instance);
