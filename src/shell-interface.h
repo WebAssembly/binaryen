@@ -92,9 +92,10 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   ShellExternalInterface() : memory() {}
   virtual ~ShellExternalInterface() = default;
 
-  void init(Module& wasm,
-            ModuleInstance& instance,
-            std::map<Name, ModuleInstance*> linkedInstances) override {
+  void init(
+    Module& wasm,
+    ModuleInstance& instance,
+    std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances = {}) override {
     linkedInstances.swap(linkedInstances);
     // TODO: only initialize memory if not imported
     memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);

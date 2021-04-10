@@ -94,7 +94,7 @@ struct ExecutionResults {
   void get(Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
-      ModuleInstance instance(wasm, &interface, {});
+      ModuleInstance instance(wasm, &interface);
       // execute all exported methods (that are therefore preserved through
       // opts)
       for (auto& exp : wasm.exports) {
@@ -204,7 +204,7 @@ struct ExecutionResults {
   Literals run(Function* func, Module& wasm) {
     LoggingExternalInterface interface(loggings);
     try {
-      ModuleInstance instance(wasm, &interface, {});
+      ModuleInstance instance(wasm, &interface);
       return run(func, wasm, instance);
     } catch (const TrapException&) {
       // may throw in instance creation (init of offsets)

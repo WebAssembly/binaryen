@@ -339,8 +339,19 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   Index i = 1;
   if (module[i]->dollared()) {
     wasm.name = module[i]->str();
+    if (module.size() == 2) {
+      return;
+    }
     i++;
   }
+
+  // spec tests have a `binary` keyword after the optional module name. Skip it
+  Name BINARY("binary");
+  if (module[i]->isStr() && module[i]->str() == BINARY &&
+      !module[i]->quoted()) {
+    i++;
+  }
+
   if (i < module.size() && module[i]->isStr()) {
     // these s-expressions contain a binary module, actually
     std::vector<char> data;

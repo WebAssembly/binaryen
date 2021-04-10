@@ -119,7 +119,7 @@
 
 (module
   (memory 1)
-  (data (i32.const 0x1_0000) "")
+  (data (i32.const 65536) "")
 )
 
 (module
@@ -136,37 +136,37 @@
   (data (i32.const 0) "" "")
 )
 
-;; (module
-;;   (import "spectest" "memory" (memory 0))
-;;   (data (i32.const 0) "a")
-;; )
+(module
+  (import "spectest" "memory" (memory 0))
+  (data (i32.const 0) "a")
+)
 
-;; (module
-;;   (import "spectest" "memory" (memory 0 3))
-;;   (data (i32.const 0) "a")
-;; )
+(module
+  (import "spectest" "memory" (memory 0 3))
+  (data (i32.const 0) "a")
+)
 
-;; (module
-;;   (global (import "spectest" "global_i32") i32)
-;;   (import "spectest" "memory" (memory 0))
-;;   (data (global.get 0) "a")
-;; )
+(module
+  (global (import "spectest" "global_i32") i32)
+  (import "spectest" "memory" (memory 0))
+  (data (global.get 0) "a")
+)
 
-;; (module
-;;   (global (import "spectest" "global_i32") i32)
-;;   (import "spectest" "memory" (memory 0 3))
-;;   (data (global.get 0) "a")
-;; )
+(module
+  (global (import "spectest" "global_i32") i32)
+  (import "spectest" "memory" (memory 0 3))
+  (data (global.get 0) "a")
+)
 
-;; (module
-;;   (import "spectest" "memory" (memory 0))
-;;   (data (i32.const 1) "a")
-;; )
+(module
+  (import "spectest" "memory" (memory 0))
+  (data (i32.const 1) "a")
+)
 
-;; (module
-;;   (import "spectest" "memory" (memory 0 3))
-;;   (data (i32.const 1) "a")
-;; )
+(module
+  (import "spectest" "memory" (memory 0 3))
+  (data (i32.const 1) "a")
+)
 
 ;; Invalid bounds for data
 
@@ -229,14 +229,14 @@
 (assert_trap
   (module
     (memory 1 2)
-    (data (i32.const 0x1_0000) "a")
+    (data (i32.const 65536) "a")
   )
   "out of bounds memory access"
 )
 (assert_trap
   (module
     (import "spectest" "memory" (memory 1))
-    (data (i32.const 0x1_0000) "a")
+    (data (i32.const 65536) "a")
   )
   "out of bounds memory access"
 )
@@ -244,7 +244,7 @@
 (assert_trap
   (module
     (memory 2)
-    (data (i32.const 0x2_0000) "a")
+    (data (i32.const 131072) "a")
   )
   "out of bounds memory access"
 )
@@ -252,7 +252,7 @@
 (assert_trap
   (module
     (memory 2 3)
-    (data (i32.const 0x2_0000) "a")
+    (data (i32.const 131072) "a")
   )
   "out of bounds memory access"
 )

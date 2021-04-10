@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 WebAssembly Community Group participants
+ * Copyright 2015 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,19 +84,18 @@ protected:
   std::map<Name, std::unique_ptr<Module>> modules;
   std::map<Name, std::unique_ptr<SExpressionWasmBuilder>> builders;
   std::map<Name, std::unique_ptr<ShellExternalInterface>> interfaces;
-  std::map<Name, std::unique_ptr<ModuleInstance>> instances;
+  std::map<Name, std::shared_ptr<ModuleInstance>> instances;
   // used for imports
-  std::map<Name, ModuleInstance*> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
 
   Name lastModule;
 
-  ModuleInstance* instantiate(Module* wasm) {
+  void instantiate(Module* wasm) {
     auto tempInterface = wasm::make_unique<ShellExternalInterface>();
-    auto tempInstance = wasm::make_unique<ModuleInstance>(
+    auto tempInstance = std::make_shared<ModuleInstance>(
       *wasm, tempInterface.get(), linkedInstances);
     interfaces[wasm->name].swap(tempInterface);
     instances[wasm->name].swap(tempInstance);
-    return instances[wasm->name].get();
   }
 
   void parse(Element& s) {
@@ -143,7 +142,7 @@ protected:
   }
 
   void parseRegister(Element& s) {
-    auto* instance = instances[lastModule].get();
+    auto instance = instances[lastModule];
     if (!instance) {
       Fatal() << "register called without a module";
     }
@@ -238,8 +237,7 @@ protected:
 
     bool invalid = false;
     try {
-      builder = std::unique_ptr<SExpressionWasmBuilder>(
-        new SExpressionWasmBuilder(wasm, *s[1], IRProfile::Normal));
+      SExpressionWasmBuilder(wasm, *s[1], IRProfile::Normal);
     } catch (const ParseException&) {
       invalid = true;
     }
@@ -356,7 +354,7 @@ protected:
     modules["spectest"].swap(spectest);
     modules["spectest"]->features = FeatureSet::All;
     instantiate(modules["spectest"].get());
-    linkedInstances["spectest"] = instances["spectest"].get();
+    linkedInstances["spectest"] = instances["spectest"];
     // print_* functions are handled separately, no need to define here.
   }
 
@@ -376,8 +374,6 @@ public:
         continue;
       }
 
-      parse(curr);
-
       if (curr[0]->str() != MODULE) {
         Colors::red(std::cerr);
         std::cerr << i << '/' << (root.size() - 1);
@@ -389,6 +385,8 @@ public:
         std::cerr << " [line: " << curr.line << "]\n";
         Colors::normal(std::cerr);
       }
+
+      parse(curr);
 
       i += 1;
     }
