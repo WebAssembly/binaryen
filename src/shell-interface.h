@@ -97,7 +97,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances =
               {}) override {
     linkedInstances.swap(linkedInstances);
-    if (wasm.memory.exists && !wasm.memory.imported()) {
+    if (wasm.memory.exists && (!wasm.memory.imported() || wasm.memory.module == "env")) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     }
     if (wasm.tables.size() > 0) {
