@@ -50,7 +50,45 @@
   )
  )
 
- ;; TODO: test with locals when non-nullable locals are possible
+ ;; CHECK:      (func $simple-local
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $simple-local
+  (local $x (ref null $A))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 20)
+  )
+  ;; the last store escapes to the outside, and cannot be modified
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
 
  ;; CHECK:      (func $simple-fallthrough (param $x (ref $A))
  ;; CHECK-NEXT:  (block
