@@ -108,6 +108,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     }
   }
 
+  void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
+  }
+
   Literals callImport(Function* import, LiteralList& arguments) override {
     if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
       for (auto argument : arguments) {
