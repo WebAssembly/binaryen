@@ -848,14 +848,9 @@ void FunctionValidator::visitGlobalGet(GlobalGet* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  auto* global = getModule()->getGlobalOrNull(curr->name);
-  shouldBeTrue(global, curr, "global.get name must be valid");
-  if (!getFunction()) {
-    info.shouldBeFalse(global->mutable_,
-                       curr,
-                       "global.get must refer to an immutable global outside "
-                       "of a function body");
-  }
+  shouldBeTrue(getModule()->getGlobalOrNull(curr->name),
+               curr,
+               "global.get name must be valid");
 }
 
 void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
@@ -2802,17 +2797,19 @@ static void validateMemory(Module& module, ValidationInfo& info) {
           continue;
         }
       }
-      info.shouldBeTrue(checkSegmentOffset(segment.offset,
-                                           segment.data.size(),
-                                           curr.initial * Memory::kPageSize),
-                        segment.offset,
-                        "memory segment offset should be reasonable");
-      if (segment.offset->is<Const>()) {
-        auto start = segment.offset->cast<Const>()->value.getUnsigned();
-        auto end = start + size;
-        info.shouldBeTrue(end <= curr.initial * Memory::kPageSize,
-                          segment.data.size(),
-                          "segment size should fit in memory (end)");
+      if (!module.memory.imported()) {
+        info.shouldBeTrue(checkSegmentOffset(segment.offset,
+                                             segment.data.size(),
+                                             curr.initial * Memory::kPageSize),
+                          segment.offset,
+                          "memory segment offset should be reasonable");
+        if (segment.offset->is<Const>()) {
+          auto start = segment.offset->cast<Const>()->value.getUnsigned();
+          auto end = start + size;
+          info.shouldBeTrue(end <= curr.initial * Memory::kPageSize,
+                            segment.data.size(),
+                            "segment size should fit in memory (end)");
+        }
       }
       FunctionValidator(module, &info).validate(segment.offset);
     }
