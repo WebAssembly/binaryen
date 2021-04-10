@@ -5834,19 +5834,19 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
   switch (code) {
     case BinaryConsts::V8x16LoadSplat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec8x16;
+      curr->op = Load8SplatVec128;
       break;
     case BinaryConsts::V16x8LoadSplat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec16x8;
+      curr->op = Load16SplatVec128;
       break;
     case BinaryConsts::V32x4LoadSplat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec32x4;
+      curr->op = Load32SplatVec128;
       break;
     case BinaryConsts::V64x2LoadSplat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec64x2;
+      curr->op = Load64SplatVec128;
       break;
     case BinaryConsts::I16x8LoadExtSVec8x8:
       curr = allocator.alloc<SIMDLoad>();
@@ -5874,11 +5874,11 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       break;
     case BinaryConsts::V128Load32Zero:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = Load32Zero;
+      curr->op = Load32ZeroVec128;
       break;
     case BinaryConsts::V128Load64Zero:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = Load64Zero;
+      curr->op = Load64ZeroVec128;
       break;
     default:
       return false;

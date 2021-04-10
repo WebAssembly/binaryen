@@ -644,13 +644,13 @@ void test_core() {
     makeSIMDShift(module, BinaryenShrUVecI64x2()),
     // SIMD load
     BinaryenSIMDLoad(
-      module, BinaryenLoadSplatVec8x16(), 0, 1, makeInt32(module, 128)),
+      module, BinaryenLoad8SplatVec128(), 0, 1, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoadSplatVec16x8(), 16, 1, makeInt32(module, 128)),
+      module, BinaryenLoad16SplatVec128(), 16, 1, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoadSplatVec32x4(), 16, 4, makeInt32(module, 128)),
+      module, BinaryenLoad32SplatVec128(), 16, 4, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoadSplatVec64x2(), 0, 4, makeInt32(module, 128)),
+      module, BinaryenLoad64SplatVec128(), 0, 4, makeInt32(module, 128)),
     BinaryenSIMDLoad(
       module, BinaryenLoadExtSVec8x8ToVecI16x8(), 0, 8, makeInt32(module, 128)),
     BinaryenSIMDLoad(
@@ -676,12 +676,12 @@ void test_core() {
                      8,
                      makeInt32(module, 128)),
     BinaryenSIMDLoad(module,
-                     BinaryenLoad32Zero(),
+                     BinaryenLoad32ZeroVec128(),
                      0,
                      4,
                      makeInt32(module, 128)),
     BinaryenSIMDLoad(module,
-                     BinaryenLoad64Zero(),
+                     BinaryenLoad64ZeroVec128(),
                      0,
                      8,
                      makeInt32(module, 128)),
