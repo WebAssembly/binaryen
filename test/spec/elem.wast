@@ -443,14 +443,15 @@
    "unknown global 1"
 )
 
-(assert_invalid
-   (module 
-     (global (import "test" "global-mut-i32") (mut i32))
-     (table 1 funcref)
-     (elem (global.get 0))
-   )
-   "constant expression required"
-)
+;;; TODO: Enable this test once other tests are updated not to allow this
+;; (assert_invalid
+;;    (module 
+;;      (global (import "test" "global-mut-i32") (mut i32))
+;;      (table 1 funcref)
+;;      (elem (global.get 0))
+;;    )
+;;    "constant expression required"
+;; )
 
 ;; Two elements target the same slot
 
