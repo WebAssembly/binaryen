@@ -277,7 +277,8 @@ struct DeadStoreFinder
         // TODO: when not empty, use a local and replace loads too, one local
         //       per "lane"
         // TODO: must prove no dangerous store reaches those places
-        // TODO: this is technically only possible when ignoring implicit traps
+        // TODO: this is technically only possible when ignoring implicit traps.
+        //       one thing we could do is a dropped load of the address.
         // std::cerr << "waka " << loads.size() << "\n";
       }
     }
@@ -342,6 +343,9 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
                   Expression* store_) override {
+    if (curr->type == Type::unreachable) {
+      return false;
+    }
     if (auto* load = curr->dynCast<Load>()) {
       auto* store = store_->cast<Store>();
       // Atomic stores are dangerous, since they have additional trapping

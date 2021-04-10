@@ -1086,5 +1086,34 @@
   )
  )
 
+ ;; CHECK:      (func $memory-unreachable
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-unreachable
+  (i32.store
+   (i32.const 10)
+   (i32.const 10)
+  )
+  (i32.store
+   (unreachable)
+   (i32.const 20)
+  )
+  (i32.store
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
  ;; TODO: test try throwing
 )

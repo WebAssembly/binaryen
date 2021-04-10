@@ -933,6 +933,7 @@ def write_commands(commands, filename):
 opt_choices = [
     [],
     ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
+    ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
     ["--coalesce-locals"],
     # XXX slow, non-default ["--coalesce-locals-learning"],
     ["--code-pushing"],
@@ -942,8 +943,6 @@ opt_choices = [
     ["--dae-optimizing"],
     ["--dce"],
     ["--directize"],
-    ["--dse"],
-    ["--dse"],
     ["--dse"],
     ["--dse"],
     ["--dse"],
