@@ -265,6 +265,13 @@
 //      some indirect calls that *do* need to be instrumented, or if you will
 //      do some later transform of the code that adds more call paths, etc.
 //
+//   --pass-arg=asyncify-propagate-addlist
+//
+//      The default behaviour of the addlist does not propagate instrumentation
+//      status. If this option is set then functions which call a function in
+//      the addlist will also be instrumented, and those that call them and so
+//      on.
+//
 //   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
 //      If the "only-list" is provided, then *only* the functions in the list
@@ -488,6 +495,7 @@ public:
 class ModuleAnalyzer {
   Module& module;
   bool canIndirectChangeState;
+  bool propagateAddList;
 
   struct Info
     : public ModuleUtils::CallGraphPropertyAnalysis<Info>::FunctionInfo {
@@ -519,6 +527,7 @@ public:
                  bool canIndirectChangeState,
                  const String::Split& removeListInput,
                  const String::Split& addListInput,
+                 bool propagateAddList,
                  const String::Split& onlyListInput,
                  bool asserts,
                  bool verbose)
@@ -664,6 +673,22 @@ public:
       module.removeFunction(name);
     }
 
+    if (propagateAddList) {
+      if (!addListInput.empty()) {
+        for (auto& func : module.functions) {
+          if (!func->imported() && addList.match(func->name)) {
+            auto& info = map[func.get()];
+            if (verbose && !info.canChangeState) {
+              std::cout << "[asyncify] " << func->name
+                        << " is in the add-list, add\n";
+            }
+            info.canChangeState = true;
+            info.addedFromList = true;
+          }
+        }
+      }
+    }
+
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
@@ -700,16 +725,18 @@ public:
       }
     }
 
-    if (!addListInput.empty()) {
-      for (auto& func : module.functions) {
-        if (!func->imported() && addList.match(func->name)) {
-          auto& info = map[func.get()];
-          if (verbose && !info.canChangeState) {
-            std::cout << "[asyncify] " << func->name
-                      << " is in the add-list, add\n";
+    if (!propagateAddList) {
+      if (!addListInput.empty()) {
+        for (auto& func : module.functions) {
+          if (!func->imported() && addList.match(func->name)) {
+            auto& info = map[func.get()];
+            if (verbose && !info.canChangeState) {
+              std::cout << "[asyncify] " << func->name
+                        << " is in the add-list, add\n";
+            }
+            info.canChangeState = true;
+            info.addedFromList = true;
           }
-          info.canChangeState = true;
-          info.addedFromList = true;
         }
       }
     }
@@ -1425,6 +1452,8 @@ struct Asyncify : public Pass {
       String::trim(read_possible_response_file(
         runner->options.getArgumentOrDefault("asyncify-addlist", ""))),
       ",");
+    auto propagateAddList =
+      runner->options.getArgumentOrDefault("asyncify-propagate-addlist", "");
     std::string onlyListInput =
       runner->options.getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
@@ -1467,6 +1496,7 @@ struct Asyncify : public Pass {
                             ignoreNonDirect,
                             removeList,
                             addList,
+                            propagateAddList,
                             onlyList,
                             asserts,
                             verbose);
