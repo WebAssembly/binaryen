@@ -2440,8 +2440,7 @@ private:
         return static_cast<SubType*>(&instance);
       }
     }
-    std::pair<SubType*, Name>
-    getGlobalInstance(Name globalName) {
+    std::pair<SubType*, Name> getGlobalInstance(Name globalName) {
       auto* global = instance.wasm.getGlobal(globalName);
       if (global->imported()) {
         auto inst = instance.linkedInstances.at(global->module);

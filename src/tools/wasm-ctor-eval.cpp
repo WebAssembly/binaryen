@@ -171,7 +171,8 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
   void init(Module& wasm_,
             EvallingModuleInstance& instance_,
-            std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances) override {
+            std::map<Name, std::shared_ptr<EvallingModuleInstance>>
+              linkedInstances) override {
     wasm = &wasm_;
     instance = &instance_;
   }
