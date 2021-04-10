@@ -97,57 +97,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
             std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances =
               {}) override {
     linkedInstances.swap(linkedInstances);
-    if (wasm.memory.exists && (!wasm.memory.imported() || wasm.memory.module == "env")) {
+    if (wasm.memory.exists &&
+        (!wasm.memory.imported() || wasm.memory.module == "env")) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     }
     if (wasm.tables.size() > 0) {
       ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
         tables[table->name].resize(table->initial);
       });
-    }
-  }
-
-  void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
-    // add spectest globals
-    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (import->module == SPECTEST && import->base.startsWith("global_")) {
-        TODO_SINGLE_COMPOUND(import->type);
-        switch (import->type.getBasic()) {
-          case Type::i32:
-            globals[import->name] = {Literal(int32_t(666))};
-            break;
-          case Type::i64:
-            globals[import->name] = {Literal(int64_t(666))};
-            break;
-          case Type::f32:
-            globals[import->name] = {Literal(float(666.6))};
-            break;
-          case Type::f64:
-            globals[import->name] = {Literal(double(666.6))};
-            break;
-          case Type::v128:
-            WASM_UNREACHABLE("v128 not implemented yet");
-          case Type::funcref:
-          case Type::externref:
-          case Type::anyref:
-          case Type::eqref:
-            globals[import->name] = {Literal::makeNull(import->type)};
-            break;
-          case Type::i31ref:
-            WASM_UNREACHABLE("TODO: i31ref");
-          case Type::dataref:
-            WASM_UNREACHABLE("TODO: dataref");
-          case Type::none:
-          case Type::unreachable:
-            WASM_UNREACHABLE("unexpected type");
-        }
-      }
-    });
-    if (wasm.memory.imported() && wasm.memory.module == SPECTEST &&
-        wasm.memory.base == MEMORY) {
-      // imported memory has initial 1 and max 2
-      wasm.memory.initial = 1;
-      wasm.memory.max = 2;
     }
   }
 
