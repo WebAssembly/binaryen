@@ -265,10 +265,19 @@ struct DeadStoreFinder
       const auto& loads = kv.second;
       if (loads.empty()) {
         // This store has no loads, and can just be dropped.
+        // Note that this is valid even if we care about implicit traps, such as
+        // a trap from a store that is out of bounds. We are removing one store,
+        // but it was trampled later, which means that a trap will still occur
+        // at that time; furthermore, we do not delay the trap in a noticeable
+        // way since if the path between the stores crosses anything that
+        // affects global state then we would not have considered the store to
+        // be trampled (it could have been read there).
         *storeLocations[store] = replaceStoreWithDrops(store, builder);
       } else {
-        // TODO: when not empty, use a local and replace loads too
-        // FIXME: must prove no other store reaches those places
+        // TODO: when not empty, use a local and replace loads too, one local
+        //       per "lane"
+        // TODO: must prove no dangerous store reaches those places
+        // TODO: this is technically only possible when ignoring implicit traps
         // std::cerr << "waka " << loads.size() << "\n";
       }
     }
@@ -335,7 +344,14 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
                   Expression* store_) override {
     if (auto* load = curr->dynCast<Load>()) {
       auto* store = store_->cast<Store>();
-      // TODO: compare more things. For now, handle the obvious case where the
+      // Atomic stores are dangerous, since they have additional trapping
+      // behavior - they trap on unaligned addresses. For that reason we can't
+      // consider an atomic store to be loaded by a non-atomic one, though the
+      // reverse is valid.
+      if (store->isAtomic && !load->isAtomic) {
+        return false;
+      }
+      // TODO: For now, only handle the obvious case where the
       // operations are identical in size and offset.
       // TODO: handle cases where the sign may matter.
       return load->bytes == store->bytes &&
@@ -350,6 +366,10 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
                 Expression* store_) override {
     if (auto* otherStore = curr->dynCast<Store>()) {
       auto* store = store_->cast<Store>();
+      // As in isLoadFrom, atomic stores are dangerous.
+      if (store->isAtomic && !otherStore->isAtomic) {
+        return false;
+      }
       // TODO: compare in detail. For now, handle the obvious case where the
       // stores are identical in size, offset, etc., so that identical repeat
       // stores are handled.

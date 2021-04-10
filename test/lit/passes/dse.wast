@@ -7,7 +7,7 @@
  (type $A (struct (field (mut i32))))
  (type $B (struct (field (mut f64))))
 
- (memory 10)
+ (memory shared 10)
 
  (global $global$0 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
