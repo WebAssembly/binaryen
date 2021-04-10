@@ -90,6 +90,35 @@
   )
  )
 
+ ;; CHECK:      (func $simple-reaching-trap
+ ;; CHECK-NEXT:  (local $x (ref null $A))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $simple-reaching-trap
+  (local $x (ref null $A))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 20)
+  )
+  (unreachable)
+ )
+
  ;; CHECK:      (func $fallthrough (result (ref $A))
  ;; CHECK-NEXT:  (local $x (ref null $A))
  ;; CHECK-NEXT:  (block $func (result (ref $A))
