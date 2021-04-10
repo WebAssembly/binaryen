@@ -937,5 +937,83 @@
   )
  )
 
+ ;; CHECK:      (func $memory-store-align
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store align=1
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-store-align
+  ;; alignment is just a perf hint, and does not prevent our optimizations
+  (i32.store align=2
+   (i32.const 10)
+   (i32.const 20)
+  )
+  (i32.store align=1
+   (i32.const 10)
+   (i32.const 30)
+  )
+ )
+
+ ;; CHECK:      (func $memory-same-size-different-types
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (f32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-same-size-different-types
+  ;; it doesn't matter if we are trampled by a different type; we are still
+  ;; trampled.
+  (i32.store
+   (i32.const 10)
+   (i32.const 0)
+  )
+  (f32.store
+   (i32.const 10)
+   (f32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $memory-same-size-different-types-b
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i64.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (f32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $memory-same-size-different-types-b
+  (i64.store32
+   (i32.const 10)
+   (i64.const 0)
+  )
+  (f32.store
+   (i32.const 10)
+   (f32.const 0)
+  )
+ )
+
  ;; TODO: test try throwing
 )

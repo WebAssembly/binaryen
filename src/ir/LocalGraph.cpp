@@ -276,7 +276,7 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
     return false;
   }
   return false;
-  // TODO: handle merges and other situations
+  // TODO: handle chains, merges and other situations
 }
 
 void LocalGraph::computeInfluences() {
