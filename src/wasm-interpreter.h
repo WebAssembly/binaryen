@@ -2422,7 +2422,7 @@ private:
   protected:
     std::pair<SubType*, Name> getTableInstance(Name tableName) {
       auto* table = instance.wasm.getTable(tableName);
-      if (table->imported()) {
+      if (table->imported() && table->module != "env") {
         auto inst = instance.linkedInstances.at(table->module);
         Export* tableExport = inst->wasm.getExport(table->base);
         return std::make_pair(inst.get(), tableExport->value);
@@ -2441,7 +2441,7 @@ private:
     }
     std::pair<SubType*, Name> getGlobalInstance(Name globalName) {
       auto* global = instance.wasm.getGlobal(globalName);
-      if (global->imported()) {
+      if (global->imported() && global->module != "env") {
         auto inst = instance.linkedInstances.at(global->module);
         Export* globalExport = inst->wasm.getExport(global->base);
         return std::make_pair(inst.get(), globalExport->value);
