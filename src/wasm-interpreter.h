@@ -2316,15 +2316,15 @@ private:
 
   void initializeTableContents() {
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
-      Address offset =
-        (uint32_t)InitializerExpressionRunner<GlobalManager>(globals, maxDepth)
-          .visit(segment->offset)
-          .getSingleValue()
-          .geti32();
-
       Function dummyFunc;
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
+
+      Address offset =
+        (uint32_t)runner
+          .visit(segment->offset)
+          .getSingleValue()
+          .geti32();
 
       Table* table = wasm.getTable(segment->table);
       if (table->imported()) {

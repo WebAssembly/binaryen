@@ -87,7 +87,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   } memory;
 
   std::unordered_map<Name, std::vector<Literal>> tables;
-  std::map<Name, ModuleInstance*> linkedInstances;
+  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
 
   ShellExternalInterface() : memory() {}
   virtual ~ShellExternalInterface() = default;
@@ -109,6 +109,13 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
 
   void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
+    ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
+      if (linkedInstances.count(import->module)) {
+        auto inst = linkedInstances[import->module];
+        auto* exportedGlobal = inst->wasm.getExport(import->base);
+        globals[import->name] = inst->globals[exportedGlobal->value];
+      }
+    });
   }
 
   Literals callImport(Function* import, LiteralList& arguments) override {
