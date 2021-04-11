@@ -45,7 +45,7 @@ public:
   iterator begin() { return vec.cbegin(); }
   iterator end() { return vec.cend(); }
 
-  bool empty() const { return vec.size() == 0; }
+  bool empty() const { return vec.empty(); }
 
   size_t size() const { return vec.size(); }
 
@@ -89,7 +89,7 @@ public:
   iterator begin() { return vec.begin(); }
   iterator end() { return vec.end(); }
 
-  bool empty() const { return vec.size() == 0; }
+  bool empty() const { return vec.empty(); }
 
   size_t size() const { return vec.size(); }
 
