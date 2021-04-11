@@ -162,6 +162,13 @@ struct DeadStoreFinder
         // with.
         UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
 
+        // When we find something we cannot optimize, stop flowing and mark the
+        // store as unoptimizable.
+        auto halt = [&]() {
+          work.clear();
+          storeLoads.erase(store);
+        };
+
         auto scanBlock = [&](BasicBlock* block, size_t from) {
           // std::cerr << "scan block " << block << "\n";
           for (size_t i = from; i < block->contents.exprs.size(); i++) {
@@ -190,8 +197,7 @@ struct DeadStoreFinder
               //       do the store and also a tee, and load from the local in
               //       the loads we are sure of. Code size tradeoffs are
               //       unclear, however.
-              work.clear();
-              storeLoads.erase(store);
+              halt();
               return;
             }
           }
@@ -199,6 +205,12 @@ struct DeadStoreFinder
           // We reached the end of the block, prepare to flow onward.
           for (auto* out : block->out) {
             work.push(out);
+          }
+
+          if (block == exit) {
+            // Any value flowing out can be reached by global code outside the
+            // function after we leave.
+            halt();
           }
         };
 
