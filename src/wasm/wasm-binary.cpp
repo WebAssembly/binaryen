@@ -5850,27 +5850,27 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       break;
     case BinaryConsts::I16x8LoadExtSVec8x8:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtSVec8x8ToVecI16x8;
+      curr->op = Load8x8SVec128;
       break;
     case BinaryConsts::I16x8LoadExtUVec8x8:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtUVec8x8ToVecI16x8;
+      curr->op = Load8x8UVec128;
       break;
     case BinaryConsts::I32x4LoadExtSVec16x4:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtSVec16x4ToVecI32x4;
+      curr->op = Load16x4SVec128;
       break;
     case BinaryConsts::I32x4LoadExtUVec16x4:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtUVec16x4ToVecI32x4;
+      curr->op = Load16x4UVec128;
       break;
     case BinaryConsts::I64x2LoadExtSVec32x2:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtSVec32x2ToVecI64x2;
+      curr->op = Load32x2SVec128;
       break;
     case BinaryConsts::I64x2LoadExtUVec32x2:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtUVec32x2ToVecI64x2;
+      curr->op = Load32x2UVec128;
       break;
     case BinaryConsts::V128Load32Zero:
       curr = allocator.alloc<SIMDLoad>();
