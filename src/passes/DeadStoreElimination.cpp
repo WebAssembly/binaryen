@@ -139,14 +139,6 @@ struct DeadStoreFinder
     // create the CFG by walking the IR
     doWalkFunction(func);
 
-    Return ret;
-    if (currBasicBlock) {
-      // Ensure a final return on the last block, to represent us leaving the
-      // function (which just like a return in the middle, means we reach code
-      // that can access global state).
-      currBasicBlock->contents.exprs.push_back(&ret);
-    }
-
     // Flow the values and conduct the analysis.
     //
     // TODO: Optimize. This is a pretty naive way to flow the values, but it
