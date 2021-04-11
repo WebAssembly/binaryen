@@ -424,6 +424,8 @@ private:
     }
   }
 
+  Name funcrefTableName;
+
   // TODO(reference-types): allow the fuzzer to create multiple tables
   void setupTables() {
     // Ensure a funcref element segment and table exist. Segments with more
@@ -441,6 +443,7 @@ private:
       tablePtr->hasExplicitName = true;
       table = wasm.addTable(std::move(tablePtr));
     }
+    funcrefTableName = table->name;
     bool hasFuncrefElemSegment = std::any_of(
       wasm.elementSegments.begin(),
       wasm.elementSegments.end(),
@@ -735,7 +738,7 @@ private:
     }
     // add some to an elem segment
     while (oneIn(3) && !finishedInput) {
-      auto type = Type(HeapType(func->sig), Nullable);
+      auto type = Type(HeapType(func->sig), NonNullable);
       std::vector<ElementSegment*> compatibleSegments;
       ModuleUtils::iterActiveElementSegments(
         wasm, [&](ElementSegment* segment) {
@@ -744,8 +747,7 @@ private:
           }
         });
       auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
-      // FIXME: make the type NonNullable when we support it!
-      randomElem->data.push_back(builder.makeRefFunc(func->name, type));
+      randomElem->data.push_back(builder.makeRefFunc(func->name, func->sig));
     }
     numAddedFunctions++;
     return func;
@@ -1494,7 +1496,7 @@ private:
     }
     // TODO: use a random table
     return builder.makeCallIndirect(
-      wasm.tables[0]->name, target, args, targetFn->sig, isReturn);
+      funcrefTableName, target, args, targetFn->sig, isReturn);
   }
 
   Expression* makeCallRef(Type type) {
@@ -1520,10 +1522,9 @@ private:
     for (const auto& type : target->sig.params) {
       args.push_back(make(type));
     }
-    auto targetType = Type(HeapType(target->sig), NonNullable);
     // TODO: half the time make a completely random item with that type.
     return builder.makeCallRef(
-      builder.makeRefFunc(target->name, targetType), args, type, isReturn);
+      builder.makeRefFunc(target->name, target->sig), args, type, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
@@ -2112,8 +2113,7 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        auto type = Type(HeapType(target->sig), Nullable);
-        return builder.makeRefFunc(target->name, type);
+        return builder.makeRefFunc(target->name, target->sig);
       }
       if (type == Type::i31ref) {
         return builder.makeI31New(makeConst(Type::i32));
@@ -2135,7 +2135,7 @@ private:
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
         if (type == Type(HeapType(func->sig), NonNullable)) {
-          return builder.makeRefFunc(func->name, type);
+          return builder.makeRefFunc(func->name, func->sig);
         }
       }
       // We failed to find a function, so create a null reference if we can.
@@ -2157,7 +2157,7 @@ private:
         sig,
         {},
         builder.makeUnreachable()));
-      return builder.makeRefFunc(func->name, type);
+      return builder.makeRefFunc(func->name, heapType);
     }
     if (type.isRtt()) {
       return builder.makeRtt(type);

@@ -638,28 +638,28 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
 void BinaryInstWriter::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   o << int8_t(BinaryConsts::SIMDPrefix);
   switch (curr->op) {
-    case LoadLaneVec8x16:
+    case Load8LaneVec128:
       o << U32LEB(BinaryConsts::V128Load8Lane);
       break;
-    case LoadLaneVec16x8:
+    case Load16LaneVec128:
       o << U32LEB(BinaryConsts::V128Load16Lane);
       break;
-    case LoadLaneVec32x4:
+    case Load32LaneVec128:
       o << U32LEB(BinaryConsts::V128Load32Lane);
       break;
-    case LoadLaneVec64x2:
+    case Load64LaneVec128:
       o << U32LEB(BinaryConsts::V128Load64Lane);
       break;
-    case StoreLaneVec8x16:
+    case Store8LaneVec128:
       o << U32LEB(BinaryConsts::V128Store8Lane);
       break;
-    case StoreLaneVec16x8:
+    case Store16LaneVec128:
       o << U32LEB(BinaryConsts::V128Store16Lane);
       break;
-    case StoreLaneVec32x4:
+    case Store32LaneVec128:
       o << U32LEB(BinaryConsts::V128Store32Lane);
       break;
-    case StoreLaneVec64x2:
+    case Store64LaneVec128:
       o << U32LEB(BinaryConsts::V128Store64Lane);
       break;
   }

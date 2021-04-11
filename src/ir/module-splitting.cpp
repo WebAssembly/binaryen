@@ -105,8 +105,7 @@ template<class F> void forEachElement(Module& module, F f) {
 
 static RefFunc* makeRefFunc(Module& wasm, Function* func) {
   // FIXME: make the type NonNullable when we support it!
-  return Builder(wasm).makeRefFunc(func->name,
-                                   Type(HeapType(func->sig), Nullable));
+  return Builder(wasm).makeRefFunc(func->name, func->sig);
 }
 
 struct TableSlotManager {
@@ -248,6 +247,9 @@ TableSlotManager::Slot TableSlotManager::getSlot(RefFunc* entry) {
   addSlot(entry->func, newSlot);
   if (activeTable->initial <= newSlot.index) {
     activeTable->initial = newSlot.index + 1;
+    if (module.dylinkSection) {
+      module.dylinkSection->tableSize = activeTable->initial;
+    }
   }
   if (activeTable->max <= newSlot.index) {
     activeTable->max = newSlot.index + 1;

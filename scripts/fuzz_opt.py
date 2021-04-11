@@ -36,7 +36,6 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # parameters
 
 # feature options that are always passed to the tools.
-# * multivalue: https://github.com/WebAssembly/binaryen/issues/2770
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
@@ -213,8 +212,6 @@ def pick_initial_contents():
         '--disable-exception-handling',
         # has not been fuzzed in general yet
         '--disable-memory64',
-        # has not been fuzzed in general yet
-        '--disable-gc',
         # DWARF is incompatible with multivalue atm; it's more important to
         # fuzz multivalue since we aren't actually fuzzing DWARF here
         '--strip-dwarf',
@@ -581,8 +578,12 @@ class CompareVMs(TestCaseHandler):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
-        self.vms = [BinaryenInterpreter(), D8(), D8Liftoff(), D8TurboFan(),
-                    Wasm2C(), Wasm2C2Wasm()]
+        self.vms = [BinaryenInterpreter(),
+                    D8(),
+                    D8Liftoff(),
+                    D8TurboFan(),
+                    Wasm2C(),
+                    Wasm2C2Wasm()]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
@@ -616,7 +617,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue', '--disable-gc']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-exception-handling', '--disable-multivalue']])
 
 
 # Check for determinism - the same command must have the same output.
@@ -1022,6 +1023,9 @@ def randomize_opt_flags():
             ret += ['--optimize-level=' + str(random.randint(0, 3))]
         if random.random() < 0.5:
             ret += ['--shrink-level=' + str(random.randint(0, 3))]
+    # possibly converge. don't do this very often as it can be slow.
+    if random.random() < 0.05:
+        ret += ['--converge']
     assert ret.count('--flatten') <= 1
     return ret
 

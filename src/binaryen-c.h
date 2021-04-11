@@ -409,6 +409,12 @@ BINARYEN_API BinaryenOp BinaryenLeSVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLeUVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenGeSVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenGeUVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenEqVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenNeVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenLtSVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenGtSVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenLeSVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenGeSVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenEqVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenNeVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenLtVecF32x4(void);
@@ -428,7 +434,7 @@ BINARYEN_API BinaryenOp BinaryenXorVec128(void);
 BINARYEN_API BinaryenOp BinaryenAndNotVec128(void);
 BINARYEN_API BinaryenOp BinaryenBitselectVec128(void);
 BINARYEN_API BinaryenOp BinaryenAnyTrueVec128(void);
-// TODO: Add i8x16.popcnt to C and JS APIs once merged to the proposal
+BINARYEN_API BinaryenOp BinaryenPopcntVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAbsVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI8x16(void);
@@ -466,8 +472,11 @@ BINARYEN_API BinaryenOp BinaryenMinUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMaxSVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAvgrUVecI16x8(void);
-// TODO: Add i16x8.q15mulr_sat_s to C and JS APIs once merged to the proposal
-// TODO: Add extending multiplications to APIs once they are merged as well
+BINARYEN_API BinaryenOp BinaryenQ15MulrSatSVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenExtMulLowSVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenExtMulHighSVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenExtMulLowUVecI16x8(void);
+BINARYEN_API BinaryenOp BinaryenExtMulHighUVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenAbsVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenAllTrueVecI32x4(void);
@@ -483,13 +492,24 @@ BINARYEN_API BinaryenOp BinaryenMinUVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenMaxSVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenMaxUVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenDotSVecI16x8ToVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenExtMulLowSVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenExtMulHighSVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenExtMulLowUVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenExtMulHighUVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenAbsVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenNegVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenAllTrueVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenBitmaskVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenShlVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenShrSVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenShrUVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAddVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenSubVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenMulVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenExtMulLowSVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenExtMulHighSVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenExtMulLowUVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenExtMulHighUVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenAbsVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenNegVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenSqrtVecF32x4(void);
@@ -520,7 +540,10 @@ BINARYEN_API BinaryenOp BinaryenCeilVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenFloorVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenTruncVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenNearestVecF64x2(void);
-// TODO: Add extending pairwise adds to C and JS APIs once merged
+BINARYEN_API BinaryenOp BinaryenExtAddPairwiseSVecI8x16ToI16x8(void);
+BINARYEN_API BinaryenOp BinaryenExtAddPairwiseUVecI8x16ToI16x8(void);
+BINARYEN_API BinaryenOp BinaryenExtAddPairwiseSVecI16x8ToI32x4(void);
+BINARYEN_API BinaryenOp BinaryenExtAddPairwiseUVecI16x8ToI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void);
@@ -535,7 +558,16 @@ BINARYEN_API BinaryenOp BinaryenLoadExtSVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void);
-// TODO: Add Load{32,64}Zero to C and JS APIs once merged to proposal
+BINARYEN_API BinaryenOp BinaryenLoad32Zero(void);
+BINARYEN_API BinaryenOp BinaryenLoad64Zero(void);
+BINARYEN_API BinaryenOp BinaryenLoad8LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad16LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad32LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad64LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenStore8LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenStore16LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenStore32LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenStore64LaneVec128(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void);
@@ -548,6 +580,16 @@ BINARYEN_API BinaryenOp BinaryenExtendLowSVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenExtendHighSVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenExtendLowUVecI16x8ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenExtendHighUVecI16x8ToVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenExtendLowSVecI32x4ToVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenExtendHighSVecI32x4ToVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenExtendLowUVecI32x4ToVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenExtendHighUVecI32x4ToVecI64x2(void);
+BINARYEN_API BinaryenOp BinaryenConvertLowSVecI32x4ToVecF64x2(void);
+BINARYEN_API BinaryenOp BinaryenConvertLowUVecI32x4ToVecF64x2(void);
+BINARYEN_API BinaryenOp BinaryenTruncSatZeroSVecF64x2ToVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenTruncSatZeroUVecF64x2ToVecI32x4(void);
+BINARYEN_API BinaryenOp BinaryenDemoteZeroVecF64x2ToVecF32x4(void);
+BINARYEN_API BinaryenOp BinaryenPromoteLowVecF32x4ToVecF64x2(void);
 BINARYEN_API BinaryenOp BinaryenSwizzleVec8x16(void);
 BINARYEN_API BinaryenOp BinaryenRefIsNull(void);
 BINARYEN_API BinaryenOp BinaryenRefIsFunc(void);
@@ -768,6 +810,14 @@ BINARYEN_API BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
                                                     uint32_t offset,
                                                     uint32_t align,
                                                     BinaryenExpressionRef ptr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
+                          BinaryenOp op,
+                          uint32_t offset,
+                          uint32_t align,
+                          uint8_t index,
+                          BinaryenExpressionRef ptr,
+                          BinaryenExpressionRef vec);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInit(BinaryenModuleRef module,
                    uint32_t segment,

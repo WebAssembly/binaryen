@@ -789,32 +789,6 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
-  // elem names
-  {
-    std::vector<std::pair<Index, ElementSegment*>> elemsWithNames;
-    Index checked = 0;
-    for (auto& curr : wasm->elementSegments) {
-      if (curr->hasExplicitName) {
-        elemsWithNames.push_back({checked, curr.get()});
-      }
-      checked++;
-    }
-    assert(checked == indexes.elemIndexes.size());
-
-    if (elemsWithNames.size() > 0) {
-      auto substart =
-        startSubsection(BinaryConsts::UserSections::Subsection::NameElem);
-      o << U32LEB(elemsWithNames.size());
-
-      for (auto& indexedElem : elemsWithNames) {
-        o << U32LEB(indexedElem.first);
-        writeEscapedName(indexedElem.second->name.str);
-      }
-
-      finishSubsection(substart);
-    }
-  }
-
   // memory names
   if (wasm->memory.exists && wasm->memory.hasExplicitName) {
     auto substart =
@@ -849,7 +823,33 @@ void WasmBinaryWriter::writeNames() {
     }
   }
 
-  // memory names
+  // elem segment names
+  {
+    std::vector<std::pair<Index, ElementSegment*>> elemsWithNames;
+    Index checked = 0;
+    for (auto& curr : wasm->elementSegments) {
+      if (curr->hasExplicitName) {
+        elemsWithNames.push_back({checked, curr.get()});
+      }
+      checked++;
+    }
+    assert(checked == indexes.elemIndexes.size());
+
+    if (elemsWithNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::UserSections::Subsection::NameElem);
+      o << U32LEB(elemsWithNames.size());
+
+      for (auto& indexedElem : elemsWithNames) {
+        o << U32LEB(indexedElem.first);
+        writeEscapedName(indexedElem.second->name.str);
+      }
+
+      finishSubsection(substart);
+    }
+  }
+
+  // data segment names
   if (wasm->memory.exists) {
     Index count = 0;
     for (auto& seg : wasm->memory.segments) {
@@ -2856,8 +2856,7 @@ void WasmBinaryBuilder::readElementSegments() {
         Index index = getU32LEB();
         auto sig = getSignatureByFunctionIndex(index);
         // Use a placeholder name for now
-        auto* refFunc = Builder(wasm).makeRefFunc(
-          Name::fromInt(index), Type(HeapType(sig), Nullable));
+        auto* refFunc = Builder(wasm).makeRefFunc(Name::fromInt(index), sig);
         functionRefs[index].push_back(refFunc);
         segmentData.push_back(refFunc);
       }
@@ -2942,8 +2941,14 @@ private:
 void WasmBinaryBuilder::readNames(size_t payloadLen) {
   BYN_TRACE("== readNames\n");
   auto sectionPos = pos;
+  uint32_t lastType = 0;
   while (pos < sectionPos + payloadLen) {
     auto nameType = getU32LEB();
+    if (lastType && nameType <= lastType) {
+      std::cerr << "warning: out-of-order name subsection: " << nameType
+                << std::endl;
+    }
+    lastType = nameType;
     auto subsectionSize = getU32LEB();
     auto subsectionPos = pos;
     if (nameType == BinaryConsts::UserSections::Subsection::NameModule) {
@@ -5891,35 +5896,35 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
   size_t lanes;
   switch (code) {
     case BinaryConsts::V128Load8Lane:
-      op = LoadLaneVec8x16;
+      op = Load8LaneVec128;
       lanes = 16;
       break;
     case BinaryConsts::V128Load16Lane:
-      op = LoadLaneVec16x8;
+      op = Load16LaneVec128;
       lanes = 8;
       break;
     case BinaryConsts::V128Load32Lane:
-      op = LoadLaneVec32x4;
+      op = Load32LaneVec128;
       lanes = 4;
       break;
     case BinaryConsts::V128Load64Lane:
-      op = LoadLaneVec64x2;
+      op = Load64LaneVec128;
       lanes = 2;
       break;
     case BinaryConsts::V128Store8Lane:
-      op = StoreLaneVec8x16;
+      op = Store8LaneVec128;
       lanes = 16;
       break;
     case BinaryConsts::V128Store16Lane:
-      op = StoreLaneVec16x8;
+      op = Store16LaneVec128;
       lanes = 8;
       break;
     case BinaryConsts::V128Store32Lane:
-      op = StoreLaneVec32x4;
+      op = Store32LaneVec128;
       lanes = 4;
       break;
     case BinaryConsts::V128Store64Lane:
-      op = StoreLaneVec64x2;
+      op = Store64LaneVec128;
       lanes = 2;
       break;
     default:
