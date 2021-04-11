@@ -2321,10 +2321,7 @@ private:
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
 
       Address offset =
-        (uint32_t)runner
-          .visit(segment->offset)
-          .getSingleValue()
-          .geti32();
+        (uint32_t)runner.visit(segment->offset).getSingleValue().geti32();
 
       Table* table = wasm.getTable(segment->table);
       if (table->imported()) {
