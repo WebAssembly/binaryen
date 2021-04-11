@@ -131,9 +131,11 @@ struct DeadStoreFinder
     }
   }
 
-  // Maps a store to the loads from it. If a store is in this map then all the
-  // loads could be analyzed, and are all present in the vector for that store.
-  std::unordered_map<Expression*, std::vector<Expression*>> storeLoads;
+  // All the stores we can optimize, that is, stores whose values we can fully
+  // understand - they are trampled before being affected by external code.
+  // This maps such stores to the list of loads from it (which may be empty if
+  // the store is trampled before being read from, i.e., is completely dead).
+  std::unordered_map<Expression*, std::vector<Expression*>> optimizeableStores;
 
   void analyze() {
     // create the CFG by walking the IR
@@ -153,9 +155,8 @@ struct DeadStoreFinder
           continue;
         }
 
-        // Note the store in storeLoads. It's presence there indicates it has no
-        // unseen interactions, and we will remove it if we find any.
-        storeLoads[store];
+        // The store is optimizable until we see a problem.
+        optimizeableStores[store];
 
         // std::cerr << "store:\n" << *store << '\n';
         // Flow this store forward, looking for what it affects and interacts
@@ -166,7 +167,7 @@ struct DeadStoreFinder
         // store as unoptimizable.
         auto halt = [&]() {
           work.clear();
-          storeLoads.erase(store);
+          optimizeableStores.erase(store);
         };
 
         auto scanBlock = [&](BasicBlock* block, size_t from) {
@@ -180,7 +181,7 @@ struct DeadStoreFinder
 
             if (isLoadFrom(curr, currEffects, store)) {
               // We found a definite load, note it.
-              storeLoads[store].push_back(curr);
+              optimizeableStores[store].push_back(curr);
               // std::cerr << "  found load\n";
             } else if (tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
@@ -264,7 +265,7 @@ struct DeadStoreFinder
     Builder builder(*getModule());
 
     // Optimize the stores that have no unknown interactions.
-    for (auto& kv : storeLoads) {
+    for (auto& kv : optimizeableStores) {
       auto* store = kv.first;
       const auto& loads = kv.second;
       if (loads.empty()) {
