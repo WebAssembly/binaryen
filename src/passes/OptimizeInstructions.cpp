@@ -1385,6 +1385,8 @@ private:
   Expression* optimizeAddedConstants(Binary* binary) {
     assert(binary->type.isInteger());
 
+    // We accumulate a 64-bit integer value. For the 32-bit case the value is
+    // wrapped at the end automatically anyhow.
     uint64_t constant = 0;
     std::vector<Const*> constants;
 
@@ -1522,13 +1524,28 @@ private:
       return walked; // nothing more to do
     }
     if (auto* c = walked->dynCast<Const>()) {
-      assert(c->value.isZero());
-      // Accumulated 64-bit constant value in 32-bit context will be wrapped
-      // during downcasting. So it's valid unification for 32-bit and 64-bit
-      // values.
-      c->value = Literal::makeFromInt64(constant, c->type);
+      c->value = Literal::makeFromInt64(c->value.getInteger() + constant,
+                                        c->type);
       return c;
     }
+/*
+(module
+ (func "foo" (result i32)
+  (i32.add
+   (i32.add
+    (i32.shl
+     (i32.const 1)
+     (i32.add
+      (i32.const 0)
+      (i32.const -32)
+     )
+    )
+    (i32.const -1)
+   )
+   (i32.const -1)
+  )
+ )
+)*/
     Builder builder(*getModule());
     return builder.makeBinary(
       Abstract::getBinary(walked->type, Abstract::Add),
