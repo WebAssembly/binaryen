@@ -480,8 +480,8 @@ switch (DELEGATE_ID) {
   case Expression::Id::TableSetId: {
     DELEGATE_START(TableSet);
     DELEGATE_FIELD_NAME(TableSet, table);
-    DELEGATE_FIELD_CHILD(TableSet, offset);
     DELEGATE_FIELD_CHILD(TableSet, value);
+    DELEGATE_FIELD_CHILD(TableSet, offset);
     DELEGATE_END(TableSet);
     break;
   }
