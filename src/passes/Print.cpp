@@ -699,16 +699,16 @@ struct PrintExpressionContents
   void visitSIMDLoad(SIMDLoad* curr) {
     prepareColor(o);
     switch (curr->op) {
-      case LoadSplatVec8x16:
+      case Load8SplatVec128:
         o << "v128.load8_splat";
         break;
-      case LoadSplatVec16x8:
+      case Load16SplatVec128:
         o << "v128.load16_splat";
         break;
-      case LoadSplatVec32x4:
+      case Load32SplatVec128:
         o << "v128.load32_splat";
         break;
-      case LoadSplatVec64x2:
+      case Load64SplatVec128:
         o << "v128.load64_splat";
         break;
       case LoadExtSVec8x8ToVecI16x8:
@@ -729,10 +729,10 @@ struct PrintExpressionContents
       case LoadExtUVec32x2ToVecI64x2:
         o << "v128.load32x2_u";
         break;
-      case Load32Zero:
+      case Load32ZeroVec128:
         o << "v128.load32_zero";
         break;
-      case Load64Zero:
+      case Load64ZeroVec128:
         o << "v128.load64_zero";
         break;
     }

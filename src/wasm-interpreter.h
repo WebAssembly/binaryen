@@ -2681,10 +2681,10 @@ private:
     Flow visitSIMDLoad(SIMDLoad* curr) {
       NOTE_ENTER("SIMDLoad");
       switch (curr->op) {
-        case LoadSplatVec8x16:
-        case LoadSplatVec16x8:
-        case LoadSplatVec32x4:
-        case LoadSplatVec64x2:
+        case Load8SplatVec128:
+        case Load16SplatVec128:
+        case Load32SplatVec128:
+        case Load64SplatVec128:
           return visitSIMDLoadSplat(curr);
         case LoadExtSVec8x8ToVecI16x8:
         case LoadExtUVec8x8ToVecI16x8:
@@ -2693,8 +2693,8 @@ private:
         case LoadExtSVec32x2ToVecI64x2:
         case LoadExtUVec32x2ToVecI64x2:
           return visitSIMDLoadExtend(curr);
-        case Load32Zero:
-        case Load64Zero:
+        case Load32ZeroVec128:
+        case Load64ZeroVec128:
           return visitSIMDLoadZero(curr);
       }
       WASM_UNREACHABLE("invalid op");
@@ -2710,16 +2710,16 @@ private:
       load.ptr = curr->ptr;
       Literal (Literal::*splat)() const = nullptr;
       switch (curr->op) {
-        case LoadSplatVec8x16:
+        case Load8SplatVec128:
           splat = &Literal::splatI8x16;
           break;
-        case LoadSplatVec16x8:
+        case Load16SplatVec128:
           splat = &Literal::splatI16x8;
           break;
-        case LoadSplatVec32x4:
+        case Load32SplatVec128:
           splat = &Literal::splatI32x4;
           break;
-        case LoadSplatVec64x2:
+        case Load64SplatVec128:
           load.type = Type::i64;
           splat = &Literal::splatI64x2;
           break;
@@ -2797,8 +2797,8 @@ private:
       Address src = instance.getFinalAddress(
         curr, flow.getSingleValue(), curr->getMemBytes());
       auto zero =
-        Literal::makeZero(curr->op == Load32Zero ? Type::i32 : Type::i64);
-      if (curr->op == Load32Zero) {
+        Literal::makeZero(curr->op == Load32ZeroVec128 ? Type::i32 : Type::i64);
+      if (curr->op == Load32ZeroVec128) {
         auto val = Literal(instance.externalInterface->load32u(src));
         return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
       } else {

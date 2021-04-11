@@ -3001,7 +3001,7 @@ switch (op[0]) {
                     if (strcmp(op, "v128.load16_lane") == 0) { return makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load16LaneVec128); }
                     goto parse_error;
                   case 's':
-                    if (strcmp(op, "v128.load16_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadSplatVec16x8); }
+                    if (strcmp(op, "v128.load16_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load16SplatVec128); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -3028,10 +3028,10 @@ switch (op[0]) {
                     if (strcmp(op, "v128.load32_lane") == 0) { return makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load32LaneVec128); }
                     goto parse_error;
                   case 's':
-                    if (strcmp(op, "v128.load32_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadSplatVec32x4); }
+                    if (strcmp(op, "v128.load32_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load32SplatVec128); }
                     goto parse_error;
                   case 'z':
-                    if (strcmp(op, "v128.load32_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load32Zero); }
+                    if (strcmp(op, "v128.load32_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load32ZeroVec128); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -3056,10 +3056,10 @@ switch (op[0]) {
                 if (strcmp(op, "v128.load64_lane") == 0) { return makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load64LaneVec128); }
                 goto parse_error;
               case 's':
-                if (strcmp(op, "v128.load64_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadSplatVec64x2); }
+                if (strcmp(op, "v128.load64_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load64SplatVec128); }
                 goto parse_error;
               case 'z':
-                if (strcmp(op, "v128.load64_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load64Zero); }
+                if (strcmp(op, "v128.load64_zero") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load64ZeroVec128); }
                 goto parse_error;
               default: goto parse_error;
             }
@@ -3072,7 +3072,7 @@ switch (op[0]) {
                     if (strcmp(op, "v128.load8_lane") == 0) { return makeSIMDLoadStoreLane(s, SIMDLoadStoreLaneOp::Load8LaneVec128); }
                     goto parse_error;
                   case 's':
-                    if (strcmp(op, "v128.load8_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadSplatVec8x16); }
+                    if (strcmp(op, "v128.load8_splat") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load8SplatVec128); }
                     goto parse_error;
                   default: goto parse_error;
                 }
