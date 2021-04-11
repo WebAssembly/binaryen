@@ -2856,8 +2856,7 @@ void WasmBinaryBuilder::readElementSegments() {
         Index index = getU32LEB();
         auto sig = getSignatureByFunctionIndex(index);
         // Use a placeholder name for now
-        auto* refFunc = Builder(wasm).makeRefFunc(
-          Name::fromInt(index), Type(HeapType(sig), Nullable));
+        auto* refFunc = Builder(wasm).makeRefFunc(Name::fromInt(index), sig);
         functionRefs[index].push_back(refFunc);
         segmentData.push_back(refFunc);
       }
@@ -5835,19 +5834,19 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
   switch (code) {
     case BinaryConsts::V8x16LoadSplat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec8x16;
+      curr->op = Load8SplatVec128;
       break;
     case BinaryConsts::V16x8LoadSplat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec16x8;
+      curr->op = Load16SplatVec128;
       break;
     case BinaryConsts::V32x4LoadSplat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec32x4;
+      curr->op = Load32SplatVec128;
       break;
     case BinaryConsts::V64x2LoadSplat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec64x2;
+      curr->op = Load64SplatVec128;
       break;
     case BinaryConsts::I16x8LoadExtSVec8x8:
       curr = allocator.alloc<SIMDLoad>();
@@ -5875,11 +5874,11 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       break;
     case BinaryConsts::V128Load32Zero:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = Load32Zero;
+      curr->op = Load32ZeroVec128;
       break;
     case BinaryConsts::V128Load64Zero:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = Load64Zero;
+      curr->op = Load64ZeroVec128;
       break;
     default:
       return false;
@@ -5897,35 +5896,35 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoadStoreLane(Expression*& out,
   size_t lanes;
   switch (code) {
     case BinaryConsts::V128Load8Lane:
-      op = LoadLaneVec8x16;
+      op = Load8LaneVec128;
       lanes = 16;
       break;
     case BinaryConsts::V128Load16Lane:
-      op = LoadLaneVec16x8;
+      op = Load16LaneVec128;
       lanes = 8;
       break;
     case BinaryConsts::V128Load32Lane:
-      op = LoadLaneVec32x4;
+      op = Load32LaneVec128;
       lanes = 4;
       break;
     case BinaryConsts::V128Load64Lane:
-      op = LoadLaneVec64x2;
+      op = Load64LaneVec128;
       lanes = 2;
       break;
     case BinaryConsts::V128Store8Lane:
-      op = StoreLaneVec8x16;
+      op = Store8LaneVec128;
       lanes = 16;
       break;
     case BinaryConsts::V128Store16Lane:
-      op = StoreLaneVec16x8;
+      op = Store16LaneVec128;
       lanes = 8;
       break;
     case BinaryConsts::V128Store32Lane:
-      op = StoreLaneVec32x4;
+      op = Store32LaneVec128;
       lanes = 4;
       break;
     case BinaryConsts::V128Store64Lane:
-      op = StoreLaneVec64x2;
+      op = Store64LaneVec128;
       lanes = 2;
       break;
     default:

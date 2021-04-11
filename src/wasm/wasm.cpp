@@ -471,21 +471,21 @@ void SIMDLoad::finalize() {
 
 Index SIMDLoad::getMemBytes() {
   switch (op) {
-    case LoadSplatVec8x16:
+    case Load8SplatVec128:
       return 1;
-    case LoadSplatVec16x8:
+    case Load16SplatVec128:
       return 2;
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       return 4;
-    case LoadSplatVec64x2:
+    case Load64SplatVec128:
     case LoadExtSVec8x8ToVecI16x8:
     case LoadExtUVec8x8ToVecI16x8:
     case LoadExtSVec16x4ToVecI32x4:
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64ZeroVec128:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -501,17 +501,17 @@ void SIMDLoadStoreLane::finalize() {
 
 Index SIMDLoadStoreLane::getMemBytes() {
   switch (op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       return 1;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       return 2;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       return 4;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -519,15 +519,15 @@ Index SIMDLoadStoreLane::getMemBytes() {
 
 bool SIMDLoadStoreLane::isStore() {
   switch (op) {
-    case StoreLaneVec8x16:
-    case StoreLaneVec16x8:
-    case StoreLaneVec32x4:
-    case StoreLaneVec64x2:
+    case Store8LaneVec128:
+    case Store16LaneVec128:
+    case Store32LaneVec128:
+    case Store64LaneVec128:
       return true;
-    case LoadLaneVec16x8:
-    case LoadLaneVec32x4:
-    case LoadLaneVec64x2:
-    case LoadLaneVec8x16:
+    case Load16LaneVec128:
+    case Load32LaneVec128:
+    case Load64LaneVec128:
+    case Load8LaneVec128:
       return false;
   }
   WASM_UNREACHABLE("unexpected op");

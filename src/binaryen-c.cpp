@@ -665,10 +665,10 @@ BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void) {
 BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void) {
   return ConvertUVecI32x4ToVecF32x4;
 }
-BinaryenOp BinaryenLoadSplatVec8x16(void) { return LoadSplatVec8x16; }
-BinaryenOp BinaryenLoadSplatVec16x8(void) { return LoadSplatVec16x8; }
-BinaryenOp BinaryenLoadSplatVec32x4(void) { return LoadSplatVec32x4; }
-BinaryenOp BinaryenLoadSplatVec64x2(void) { return LoadSplatVec64x2; }
+BinaryenOp BinaryenLoad8SplatVec128(void) { return Load8SplatVec128; }
+BinaryenOp BinaryenLoad16SplatVec128(void) { return Load16SplatVec128; }
+BinaryenOp BinaryenLoad32SplatVec128(void) { return Load32SplatVec128; }
+BinaryenOp BinaryenLoad64SplatVec128(void) { return Load64SplatVec128; }
 BinaryenOp BinaryenLoadExtSVec8x8ToVecI16x8(void) {
   return LoadExtSVec8x8ToVecI16x8;
 }
@@ -687,8 +687,16 @@ BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void) {
 BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void) {
   return LoadExtUVec32x2ToVecI64x2;
 }
-BinaryenOp BinaryenLoad32Zero(void) { return Load32Zero; }
-BinaryenOp BinaryenLoad64Zero(void) { return Load64Zero; }
+BinaryenOp BinaryenLoad32ZeroVec128(void) { return Load32ZeroVec128; }
+BinaryenOp BinaryenLoad64ZeroVec128(void) { return Load64ZeroVec128; }
+BinaryenOp BinaryenLoad8LaneVec128(void) { return Load8LaneVec128; }
+BinaryenOp BinaryenLoad16LaneVec128(void) { return Load16LaneVec128; }
+BinaryenOp BinaryenLoad32LaneVec128(void) { return Load32LaneVec128; }
+BinaryenOp BinaryenLoad64LaneVec128(void) { return Load64LaneVec128; }
+BinaryenOp BinaryenStore8LaneVec128(void) { return Store8LaneVec128; }
+BinaryenOp BinaryenStore16LaneVec128(void) { return Store16LaneVec128; }
+BinaryenOp BinaryenStore32LaneVec128(void) { return Store32LaneVec128; }
+BinaryenOp BinaryenStore64LaneVec128(void) { return Store64LaneVec128; }
 BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void) {
   return NarrowSVecI16x8ToVecI8x16;
 }
@@ -1176,6 +1184,22 @@ BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
       .makeSIMDLoad(
         SIMDLoadOp(op), Address(offset), Address(align), (Expression*)ptr));
 }
+BinaryenExpressionRef BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
+                                                BinaryenOp op,
+                                                uint32_t offset,
+                                                uint32_t align,
+                                                uint8_t index,
+                                                BinaryenExpressionRef ptr,
+                                                BinaryenExpressionRef vec) {
+  return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeSIMDLoadStoreLane(SIMDLoadStoreLaneOp(op),
+                             Address(offset),
+                             Address(align),
+                             index,
+                             (Expression*)ptr,
+                             (Expression*)vec));
+}
 BinaryenExpressionRef BinaryenMemoryInit(BinaryenModuleRef module,
                                          uint32_t segment,
                                          BinaryenExpressionRef dest,
@@ -1259,9 +1283,10 @@ BinaryenExpressionRef BinaryenRefAs(BinaryenModuleRef module,
 
 BinaryenExpressionRef
 BinaryenRefFunc(BinaryenModuleRef module, const char* func, BinaryenType type) {
+  // TODO: consider changing the C API to receive a heap type
   Type type_(type);
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeRefFunc(func, type_));
+    Builder(*(Module*)module).makeRefFunc(func, type_.getHeapType()));
 }
 
 BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
@@ -3461,9 +3486,8 @@ BinaryenAddActiveElementSegment(BinaryenModuleRef module,
     if (func == nullptr) {
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
-    Type type(HeapType(func->sig), Nullable);
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], type));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -3479,9 +3503,8 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
     if (func == nullptr) {
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
-    Type type(HeapType(func->sig), Nullable);
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], type));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }

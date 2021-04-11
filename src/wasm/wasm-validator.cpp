@@ -1190,20 +1190,20 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     "load_splat address must match memory index type");
   Type memAlignType = Type::none;
   switch (curr->op) {
-    case LoadSplatVec8x16:
-    case LoadSplatVec16x8:
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load8SplatVec128:
+    case Load16SplatVec128:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       memAlignType = Type::i32;
       break;
-    case LoadSplatVec64x2:
+    case Load64SplatVec128:
     case LoadExtSVec8x8ToVecI16x8:
     case LoadExtUVec8x8ToVecI16x8:
     case LoadExtSVec16x4ToVecI32x4:
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64ZeroVec128:
       memAlignType = Type::i64;
       break;
   }
@@ -1236,23 +1236,23 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   size_t lanes;
   Type memAlignType = Type::none;
   switch (curr->op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       lanes = 16;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       lanes = 8;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       lanes = 4;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       lanes = 2;
       memAlignType = Type::i64;
       break;
@@ -2001,6 +2001,8 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
+  shouldBeTrue(
+    !curr->type.isNullable(), curr, "ref.func must have non-nullable type");
   // TODO: verify it also has a typed function references type, and the right
   // one,
   //   curr->type.getHeapType().getSignature()

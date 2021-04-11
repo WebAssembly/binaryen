@@ -548,18 +548,26 @@ BINARYEN_API BinaryenOp BinaryenTruncSatSVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenTruncSatUVecF32x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void);
 BINARYEN_API BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void);
-BINARYEN_API BinaryenOp BinaryenLoadSplatVec8x16(void);
-BINARYEN_API BinaryenOp BinaryenLoadSplatVec16x8(void);
-BINARYEN_API BinaryenOp BinaryenLoadSplatVec32x4(void);
-BINARYEN_API BinaryenOp BinaryenLoadSplatVec64x2(void);
+BINARYEN_API BinaryenOp BinaryenLoad8SplatVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad16SplatVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad32SplatVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad64SplatVec128(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtSVec8x8ToVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec8x8ToVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtSVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec16x4ToVecI32x4(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void);
 BINARYEN_API BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void);
-BINARYEN_API BinaryenOp BinaryenLoad32Zero(void);
-BINARYEN_API BinaryenOp BinaryenLoad64Zero(void);
+BINARYEN_API BinaryenOp BinaryenLoad32ZeroVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad64ZeroVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad8LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad16LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad32LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenLoad64LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenStore8LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenStore16LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenStore32LaneVec128(void);
+BINARYEN_API BinaryenOp BinaryenStore64LaneVec128(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowUVecI16x8ToVecI8x16(void);
 BINARYEN_API BinaryenOp BinaryenNarrowSVecI32x4ToVecI16x8(void);
@@ -802,6 +810,14 @@ BINARYEN_API BinaryenExpressionRef BinaryenSIMDLoad(BinaryenModuleRef module,
                                                     uint32_t offset,
                                                     uint32_t align,
                                                     BinaryenExpressionRef ptr);
+BINARYEN_API BinaryenExpressionRef
+BinaryenSIMDLoadStoreLane(BinaryenModuleRef module,
+                          BinaryenOp op,
+                          uint32_t offset,
+                          uint32_t align,
+                          uint8_t index,
+                          BinaryenExpressionRef ptr,
+                          BinaryenExpressionRef vec);
 BINARYEN_API BinaryenExpressionRef
 BinaryenMemoryInit(BinaryenModuleRef module,
                    uint32_t segment,

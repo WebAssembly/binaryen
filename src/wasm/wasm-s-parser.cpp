@@ -2043,24 +2043,24 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
   ret->op = op;
   Address defaultAlign;
   switch (op) {
-    case LoadSplatVec8x16:
+    case Load8SplatVec128:
       defaultAlign = 1;
       break;
-    case LoadSplatVec16x8:
+    case Load16SplatVec128:
       defaultAlign = 2;
       break;
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       defaultAlign = 4;
       break;
-    case LoadSplatVec64x2:
+    case Load64SplatVec128:
     case LoadExtSVec8x8ToVecI16x8:
     case LoadExtUVec8x8ToVecI16x8:
     case LoadExtSVec16x4ToVecI32x4:
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64ZeroVec128:
       defaultAlign = 8;
       break;
   }
@@ -2078,23 +2078,23 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   Address defaultAlign;
   size_t lanes;
   switch (op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       defaultAlign = 1;
       lanes = 16;
       break;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       defaultAlign = 2;
       lanes = 8;
       break;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       defaultAlign = 4;
       lanes = 4;
       break;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       defaultAlign = 8;
       lanes = 2;
       break;
@@ -3369,8 +3369,8 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
   } else {
     for (; i < s.size(); i++) {
       auto func = getFunctionName(*s[i]);
-      segment->data.push_back(Builder(wasm).makeRefFunc(
-        func, Type(HeapType(functionSignatures[func]), Nullable)));
+      segment->data.push_back(
+        Builder(wasm).makeRefFunc(func, functionSignatures[func]));
     }
   }
   return wasm.addElementSegment(std::move(segment));
