@@ -502,9 +502,9 @@ switch (DELEGATE_ID) {
   case Expression::Id::TableFillId: {
     DELEGATE_START(TableFill);
     DELEGATE_FIELD_NAME(TableFill, table);
-    DELEGATE_FIELD_CHILD(TableFill, dest);
-    DELEGATE_FIELD_CHILD(TableFill, value);
     DELEGATE_FIELD_CHILD(TableFill, size);
+    DELEGATE_FIELD_CHILD(TableFill, value);
+    DELEGATE_FIELD_CHILD(TableFill, dest);
     DELEGATE_END(TableFill);
     break;
   }
@@ -512,9 +512,9 @@ switch (DELEGATE_ID) {
     DELEGATE_START(TableCopy);
     DELEGATE_FIELD_NAME(TableCopy, srcTable);
     DELEGATE_FIELD_NAME(TableCopy, destTable);
+    DELEGATE_FIELD_CHILD(TableCopy, size);
     DELEGATE_FIELD_CHILD(TableCopy, srcOffset);
     DELEGATE_FIELD_CHILD(TableCopy, destOffset);
-    DELEGATE_FIELD_CHILD(TableCopy, size);
     DELEGATE_END(TableCopy);
     break;
   }
@@ -522,9 +522,9 @@ switch (DELEGATE_ID) {
     DELEGATE_START(TableInit);
     DELEGATE_FIELD_NAME(TableInit, table);
     DELEGATE_FIELD_NAME(TableInit, segment);
+    DELEGATE_FIELD_CHILD(TableInit, size);
     DELEGATE_FIELD_CHILD(TableInit, srcOffset);
     DELEGATE_FIELD_CHILD(TableInit, destOffset);
-    DELEGATE_FIELD_CHILD(TableInit, size);
     DELEGATE_END(TableInit);
     break;
   }
