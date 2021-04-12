@@ -197,7 +197,7 @@ public:
   Flow visit(Expression* curr) {
     depth++;
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
-      trap("interpreter recursion limit");
+      hostLimit("interpreter recursion limit");
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking()) {
@@ -1622,7 +1622,7 @@ public:
     // limits on 32-bit machines, and in particular on wasm32 VMs that do not
     // have 4GB support, so give up there.
     if (num >= (1 << 30) / sizeof(Literal)) {
-      trap("allocation failure");
+      hostLimit("allocation failure");
     }
     Literals data(num);
     if (curr->isWithDefault()) {

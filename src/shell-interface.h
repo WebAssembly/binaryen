@@ -31,8 +31,16 @@
 
 namespace wasm {
 
+// An exception emitted when exit() is called.
 struct ExitException {};
+
+// An exception emitted when a wasm trap occurs.
 struct TrapException {};
+
+// An exception emitted when a host limitation is hit. (These are not wasm traps
+// as they are not in the spec; for example, the spec has no limit on how much
+// GC memory may be allocated, but hosts have limits.)
+struct HostLimitException {};
 
 struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   // The underlying memory can be accessed through unaligned pointers which
@@ -263,6 +271,11 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   void trap(const char* why) override {
     std::cout << "[trap " << why << "]\n";
     throw TrapException();
+  }
+
+  void hostLimit(const char* why) override {
+    std::cout << "[host limit " << why << "]\n";
+    throw HostLimitException();
   }
 
   void throwException(const WasmException& exn) override { throw exn; }
