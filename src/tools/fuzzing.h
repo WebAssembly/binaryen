@@ -2946,39 +2946,39 @@ private:
 
   Expression* makeSIMDLoad() {
     // TODO: add Load{32,64}Zero if merged to proposal
-    SIMDLoadOp op = pick(LoadSplatVec8x16,
-                         LoadSplatVec16x8,
-                         LoadSplatVec32x4,
-                         LoadSplatVec64x2,
-                         LoadExtSVec8x8ToVecI16x8,
-                         LoadExtUVec8x8ToVecI16x8,
-                         LoadExtSVec16x4ToVecI32x4,
-                         LoadExtUVec16x4ToVecI32x4,
-                         LoadExtSVec32x2ToVecI64x2,
-                         LoadExtUVec32x2ToVecI64x2);
+    SIMDLoadOp op = pick(Load8SplatVec128,
+                         Load16SplatVec128,
+                         Load32SplatVec128,
+                         Load64SplatVec128,
+                         Load8x8SVec128,
+                         Load8x8UVec128,
+                         Load16x4SVec128,
+                         Load16x4UVec128,
+                         Load32x2SVec128,
+                         Load32x2UVec128);
     Address offset = logify(get());
     Address align;
     switch (op) {
-      case LoadSplatVec8x16:
+      case Load8SplatVec128:
         align = 1;
         break;
-      case LoadSplatVec16x8:
+      case Load16SplatVec128:
         align = pick(1, 2);
         break;
-      case LoadSplatVec32x4:
+      case Load32SplatVec128:
         align = pick(1, 2, 4);
         break;
-      case LoadSplatVec64x2:
-      case LoadExtSVec8x8ToVecI16x8:
-      case LoadExtUVec8x8ToVecI16x8:
-      case LoadExtSVec16x4ToVecI32x4:
-      case LoadExtUVec16x4ToVecI32x4:
-      case LoadExtSVec32x2ToVecI64x2:
-      case LoadExtUVec32x2ToVecI64x2:
+      case Load64SplatVec128:
+      case Load8x8SVec128:
+      case Load8x8UVec128:
+      case Load16x4SVec128:
+      case Load16x4UVec128:
+      case Load32x2SVec128:
+      case Load32x2UVec128:
         align = pick(1, 2, 4, 8);
         break;
-      case Load32Zero:
-      case Load64Zero:
+      case Load32ZeroVec128:
+      case Load64ZeroVec128:
         WASM_UNREACHABLE("Unexpected SIMD loads");
     }
     Expression* ptr = makePointer();

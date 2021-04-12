@@ -480,18 +480,18 @@ function initializeConstants() {
     'TruncSatUVecF32x4ToVecI32x4',
     'ConvertSVecI32x4ToVecF32x4',
     'ConvertUVecI32x4ToVecF32x4',
-    'LoadSplatVec8x16',
-    'LoadSplatVec16x8',
-    'LoadSplatVec32x4',
-    'LoadSplatVec64x2',
-    'LoadExtSVec8x8ToVecI16x8',
-    'LoadExtUVec8x8ToVecI16x8',
-    'LoadExtSVec16x4ToVecI32x4',
-    'LoadExtUVec16x4ToVecI32x4',
-    'LoadExtSVec32x2ToVecI64x2',
-    'LoadExtUVec32x2ToVecI64x2',
-    'Load32Zero',
-    'Load64Zero',
+    'Load8SplatVec128',
+    'Load16SplatVec128',
+    'Load32SplatVec128',
+    'Load64SplatVec128',
+    'Load8x8SVec128',
+    'Load8x8UVec128',
+    'Load16x4SVec128',
+    'Load16x4UVec128',
+    'Load32x2SVec128',
+    'Load32x2UVec128',
+    'Load32ZeroVec128',
+    'Load64ZeroVec128',
     'Load8LaneVec128',
     'Load16LaneVec128',
     'Load32LaneVec128',
@@ -1471,40 +1471,40 @@ function wrapModule(module, self = {}) {
       return Module['_BinaryenLoad'](module, 16, false, offset, align, Module['v128'], ptr);
     },
     'load8_splat'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec8x16'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load8SplatVec128'], offset, align, ptr);
     },
     'load16_splat'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec16x8'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load16SplatVec128'], offset, align, ptr);
     },
     'load32_splat'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec32x4'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32SplatVec128'], offset, align, ptr);
     },
     'load64_splat'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec64x2'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load64SplatVec128'], offset, align, ptr);
     },
     'load8x8_s'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec8x8ToVecI16x8'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load8x8SVec128'], offset, align, ptr);
     },
     'load8x8_u'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec8x8ToVecI16x8'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load8x8UVec128'], offset, align, ptr);
     },
     'load16x4_s'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec16x4ToVecI32x4'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load16x4SVec128'], offset, align, ptr);
     },
     'load16x4_u'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec16x4ToVecI32x4'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load16x4UVec128'], offset, align, ptr);
     },
     'load32x2_s'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec32x2ToVecI64x2'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32x2SVec128'], offset, align, ptr);
     },
     'load32x2_u'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec32x2ToVecI64x2'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32x2UVec128'], offset, align, ptr);
     },
     'load32_zero'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load32Zero'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32ZeroVec128'], offset, align, ptr);
     },
     'load64_zero'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['Load64Zero'], offset, align, ptr);
+      return Module['_BinaryenSIMDLoad'](module, Module['Load64ZeroVec128'], offset, align, ptr);
     },
     'load8_lane'(offset, align, index, ptr, vec) {
       return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load8LaneVec128'], offset, align, index, ptr, vec);
