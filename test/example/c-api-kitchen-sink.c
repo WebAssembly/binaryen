@@ -654,15 +654,27 @@ void test_core() {
     BinaryenSIMDLoad(
       module, BinaryenLoad8x8SVec128(), 0, 8, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoad8x8UVec128(), 0, 8, makeInt32(module, 128)),
-    BinaryenSIMDLoad(
-      module, BinaryenLoad16x4SVec128(), 0, 8, makeInt32(module, 128)),
-    BinaryenSIMDLoad(
-      module, BinaryenLoad16x4UVec128(), 0, 8, makeInt32(module, 128)),
-    BinaryenSIMDLoad(
-      module, BinaryenLoad32x2SVec128(), 0, 8, makeInt32(module, 128)),
-    BinaryenSIMDLoad(
-      module, BinaryenLoad32x2UVec128(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoadExtUVec8x8ToVecI16x8(), 0, 8, makeInt32(module, 128)),
+    BinaryenSIMDLoad(module,
+                     BinaryenLoadExtSVec16x4ToVecI32x4(),
+                     0,
+                     8,
+                     makeInt32(module, 128)),
+    BinaryenSIMDLoad(module,
+                     BinaryenLoadExtUVec16x4ToVecI32x4(),
+                     0,
+                     8,
+                     makeInt32(module, 128)),
+    BinaryenSIMDLoad(module,
+                     BinaryenLoadExtSVec32x2ToVecI64x2(),
+                     0,
+                     8,
+                     makeInt32(module, 128)),
+    BinaryenSIMDLoad(module,
+                     BinaryenLoadExtUVec32x2ToVecI64x2(),
+                     0,
+                     8,
+                     makeInt32(module, 128)),
     BinaryenSIMDLoad(
       module, BinaryenLoad32ZeroVec128(), 0, 4, makeInt32(module, 128)),
     BinaryenSIMDLoad(
