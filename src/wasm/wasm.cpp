@@ -471,21 +471,21 @@ void SIMDLoad::finalize() {
 
 Index SIMDLoad::getMemBytes() {
   switch (op) {
-    case LoadSplatVec8x16:
+    case Load8SplatVec128:
       return 1;
-    case LoadSplatVec16x8:
+    case Load16SplatVec128:
       return 2;
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       return 4;
-    case LoadSplatVec64x2:
+    case Load64SplatVec128:
     case LoadExtSVec8x8ToVecI16x8:
     case LoadExtUVec8x8ToVecI16x8:
     case LoadExtSVec16x4ToVecI32x4:
     case LoadExtUVec16x4ToVecI32x4:
     case LoadExtSVec32x2ToVecI64x2:
     case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64ZeroVec128:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");

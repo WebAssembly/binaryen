@@ -500,18 +500,18 @@ enum SIMDShiftOp {
 };
 
 enum SIMDLoadOp {
-  LoadSplatVec8x16,
-  LoadSplatVec16x8,
-  LoadSplatVec32x4,
-  LoadSplatVec64x2,
+  Load8SplatVec128,
+  Load16SplatVec128,
+  Load32SplatVec128,
+  Load64SplatVec128,
   LoadExtSVec8x8ToVecI16x8,
   LoadExtUVec8x8ToVecI16x8,
   LoadExtSVec16x4ToVecI32x4,
   LoadExtUVec16x4ToVecI32x4,
   LoadExtSVec32x2ToVecI64x2,
   LoadExtUVec32x2ToVecI64x2,
-  Load32Zero,
-  Load64Zero,
+  Load32ZeroVec128,
+  Load64ZeroVec128,
 };
 
 enum SIMDLoadStoreLaneOp {
