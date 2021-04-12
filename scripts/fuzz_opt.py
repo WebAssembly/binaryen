@@ -237,6 +237,9 @@ IGNORE = '[binaryen-fuzzer-ignore]'
 # Traps are reported as [trap REASON]
 TRAP_PREFIX = '[trap '
 
+# Host limits are reported as [host limit REASON]
+HOST_LIMIT_PREFIX = '[host limit '
+
 # --fuzz-exec reports calls as [fuzz-exec] calling foo
 FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
@@ -346,7 +349,7 @@ def fix_spec_output(out):
 
 
 def run_vm(cmd):
-    # ignore some vm assertions, if bugs have already been filed
+    # ignore some types of errors
     known_issues = [
         # can be caused by flatten, ssa, etc. passes
         'local count too large',
@@ -354,6 +357,9 @@ def run_vm(cmd):
         # note that this text is a little too broad, but the problem is rare
         # enough that it's unlikely to hide an unrelated issue
         'found br_if of type',
+        # all host limitations are not arbitrary and may differ between VMs and
+        # also be affected by optimizations, so ignore them.
+        HOST_LIMIT_PREFIX,
     ]
     try:
         return run(cmd)

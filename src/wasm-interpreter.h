@@ -1739,6 +1739,8 @@ public:
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
 
+  virtual void hostLimit(const char* why) { WASM_UNREACHABLE("unimp"); }
+
   virtual void throwException(const WasmException& exn) {
     WASM_UNREACHABLE("unimp");
   }
@@ -2024,6 +2026,8 @@ public:
 
   void trap(const char* why) override { throw NonconstantException(); }
 
+  void hostLimit(const char* why) override { throw NonconstantException(); }
+
   virtual void throwException(const WasmException& exn) override {
     throw NonconstantException();
   }
@@ -2076,6 +2080,7 @@ public:
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
+    virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
 
     // the default impls for load and store switch on the sizes. you can either
@@ -3093,6 +3098,10 @@ private:
 
     void trap(const char* why) override {
       instance.externalInterface->trap(why);
+    }
+
+    void hostLimit(const char* why) override {
+      instance.externalInterface->hostLimit(why);
     }
 
     void throwException(const WasmException& exn) override {
