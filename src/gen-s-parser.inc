@@ -3009,10 +3009,10 @@ switch (op[0]) {
               case 'x': {
                 switch (op[14]) {
                   case 's':
-                    if (strcmp(op, "v128.load16x4_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtSVec16x4ToVecI32x4); }
+                    if (strcmp(op, "v128.load16x4_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load16x4SVec128); }
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "v128.load16x4_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtUVec16x4ToVecI32x4); }
+                    if (strcmp(op, "v128.load16x4_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load16x4UVec128); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -3039,10 +3039,10 @@ switch (op[0]) {
               case 'x': {
                 switch (op[14]) {
                   case 's':
-                    if (strcmp(op, "v128.load32x2_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtSVec32x2ToVecI64x2); }
+                    if (strcmp(op, "v128.load32x2_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load32x2SVec128); }
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "v128.load32x2_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtUVec32x2ToVecI64x2); }
+                    if (strcmp(op, "v128.load32x2_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load32x2UVec128); }
                     goto parse_error;
                   default: goto parse_error;
                 }
@@ -3080,10 +3080,10 @@ switch (op[0]) {
               case 'x': {
                 switch (op[13]) {
                   case 's':
-                    if (strcmp(op, "v128.load8x8_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtSVec8x8ToVecI16x8); }
+                    if (strcmp(op, "v128.load8x8_s") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load8x8SVec128); }
                     goto parse_error;
                   case 'u':
-                    if (strcmp(op, "v128.load8x8_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::LoadExtUVec8x8ToVecI16x8); }
+                    if (strcmp(op, "v128.load8x8_u") == 0) { return makeSIMDLoad(s, SIMDLoadOp::Load8x8UVec128); }
                     goto parse_error;
                   default: goto parse_error;
                 }

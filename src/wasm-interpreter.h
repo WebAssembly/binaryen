@@ -2686,12 +2686,12 @@ private:
         case Load32SplatVec128:
         case Load64SplatVec128:
           return visitSIMDLoadSplat(curr);
-        case LoadExtSVec8x8ToVecI16x8:
-        case LoadExtUVec8x8ToVecI16x8:
-        case LoadExtSVec16x4ToVecI32x4:
-        case LoadExtUVec16x4ToVecI32x4:
-        case LoadExtSVec32x2ToVecI64x2:
-        case LoadExtUVec32x2ToVecI64x2:
+        case Load8x8SVec128:
+        case Load8x8UVec128:
+        case Load16x4SVec128:
+        case Load16x4UVec128:
+        case Load32x2SVec128:
+        case Load32x2UVec128:
           return visitSIMDLoadExtend(curr);
         case Load32ZeroVec128:
         case Load64ZeroVec128:
@@ -2742,17 +2742,17 @@ private:
       Address src(uint32_t(flow.getSingleValue().geti32()));
       auto loadLane = [&](Address addr) {
         switch (curr->op) {
-          case LoadExtSVec8x8ToVecI16x8:
+          case Load8x8SVec128:
             return Literal(int32_t(instance.externalInterface->load8s(addr)));
-          case LoadExtUVec8x8ToVecI16x8:
+          case Load8x8UVec128:
             return Literal(int32_t(instance.externalInterface->load8u(addr)));
-          case LoadExtSVec16x4ToVecI32x4:
+          case Load16x4SVec128:
             return Literal(int32_t(instance.externalInterface->load16s(addr)));
-          case LoadExtUVec16x4ToVecI32x4:
+          case Load16x4UVec128:
             return Literal(int32_t(instance.externalInterface->load16u(addr)));
-          case LoadExtSVec32x2ToVecI64x2:
+          case Load32x2SVec128:
             return Literal(int64_t(instance.externalInterface->load32s(addr)));
-          case LoadExtUVec32x2ToVecI64x2:
+          case Load32x2UVec128:
             return Literal(int64_t(instance.externalInterface->load32u(addr)));
           default:
             WASM_UNREACHABLE("unexpected op");
@@ -2768,18 +2768,18 @@ private:
         return Literal(lanes);
       };
       switch (curr->op) {
-        case LoadExtSVec8x8ToVecI16x8:
-        case LoadExtUVec8x8ToVecI16x8: {
+        case Load8x8SVec128:
+        case Load8x8UVec128: {
           std::array<Literal, 8> lanes;
           return fillLanes(lanes, 1);
         }
-        case LoadExtSVec16x4ToVecI32x4:
-        case LoadExtUVec16x4ToVecI32x4: {
+        case Load16x4SVec128:
+        case Load16x4UVec128: {
           std::array<Literal, 4> lanes;
           return fillLanes(lanes, 2);
         }
-        case LoadExtSVec32x2ToVecI64x2:
-        case LoadExtUVec32x2ToVecI64x2: {
+        case Load32x2SVec128:
+        case Load32x2UVec128: {
           std::array<Literal, 2> lanes;
           return fillLanes(lanes, 4);
         }

@@ -606,22 +606,22 @@ void BinaryInstWriter::visitSIMDLoad(SIMDLoad* curr) {
     case Load64SplatVec128:
       o << U32LEB(BinaryConsts::V128Load64Splat);
       break;
-    case LoadExtSVec8x8ToVecI16x8:
+    case Load8x8SVec128:
       o << U32LEB(BinaryConsts::V128Load8x8S);
       break;
-    case LoadExtUVec8x8ToVecI16x8:
+    case Load8x8UVec128:
       o << U32LEB(BinaryConsts::V128Load8x8U);
       break;
-    case LoadExtSVec16x4ToVecI32x4:
+    case Load16x4SVec128:
       o << U32LEB(BinaryConsts::V128Load16x4S);
       break;
-    case LoadExtUVec16x4ToVecI32x4:
+    case Load16x4UVec128:
       o << U32LEB(BinaryConsts::V128Load16x4U);
       break;
-    case LoadExtSVec32x2ToVecI64x2:
+    case Load32x2SVec128:
       o << U32LEB(BinaryConsts::V128Load32x2S);
       break;
-    case LoadExtUVec32x2ToVecI64x2:
+    case Load32x2UVec128:
       o << U32LEB(BinaryConsts::V128Load32x2U);
       break;
     case Load32ZeroVec128:
