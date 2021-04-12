@@ -310,7 +310,7 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 template<typename T> struct ParallelFunctionAnalysis {
   Module& wasm;
 
-  typedef std::map<Function*, T> Map;
+  typedef ordered_map<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;
@@ -378,7 +378,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     bool hasNonDirectCall = false;
   };
 
-  typedef std::map<Function*, T> Map;
+  typedef ordered_map<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;

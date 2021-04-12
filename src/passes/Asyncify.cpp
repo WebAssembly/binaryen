@@ -305,6 +305,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/file.h"
+#include "support/insertion_order.h"
 #include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -510,7 +511,7 @@ class ModuleAnalyzer {
     bool addedFromList = false;
   };
 
-  typedef std::map<Function*, Info> Map;
+  typedef ordered_map<Function*, Info> Map;
   Map map;
 
 public:

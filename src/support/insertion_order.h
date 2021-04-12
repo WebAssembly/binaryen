@@ -107,6 +107,11 @@ public:
     return {begin() + result.first->second, false};
   }
 
+  void swap(ordered_map<Key, T, Hash, KeyEqual>& other) {
+    indices.swap(other.indices);
+    vec.swap(other.vec);
+  }
+
   size_t count(const Key& key) const { return indices.count(key); }
 
   iterator find(const Key& key) {
