@@ -33,7 +33,7 @@
 [LoggingExternalInterface logging 3]
 [trap cast error]
 [fuzz-exec] calling array-alloc-failure
-[trap allocation failure]
+[host limit allocation failure]
 (module
  (type $struct (struct (field (mut i32))))
  (type $void_func (func))
@@ -277,3 +277,16 @@
 [LoggingExternalInterface logging 3]
 [trap cast error]
 [fuzz-exec] calling array-alloc-failure
+ignoring comparison of ExecutionResults!
+[fuzz-exec] calling foo
+[host limit allocation failure]
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (export "foo" (func $0))
+ (func $0 (; has Stack IR ;) (result i32)
+  (i32.const 0)
+ )
+)
+[fuzz-exec] calling foo
+[fuzz-exec] note result: foo => 0
+ignoring comparison of ExecutionResults!
