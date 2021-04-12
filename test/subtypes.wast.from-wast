@@ -1,7 +1,7 @@
 (module
  (type $struct-rec-two (struct (field (ref $struct-rec-two)) (field (ref $struct-rec-two))))
- (type $struct-i31 (struct (field i31ref)))
  (type $struct-rec-one (struct (field (ref $struct-rec-one))))
+ (type $struct-i31 (struct (field i31ref)))
  (type $vector-i32 (array i32))
  (type $ref|$vector-i32|_ref?|$vector-i32|_=>_none (func (param (ref $vector-i32) (ref null $vector-i32))))
  (type $ref|$vector-i31|_ref|$vector-any|_=>_none (func (param (ref $vector-i31) (ref $vector-any))))

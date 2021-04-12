@@ -573,12 +573,12 @@ inline void collectHeapTypes(Module& wasm,
   // As we do this we may find more and more types, as nested children of
   // previous ones. Each such type will appear in the type section once, so
   // we just need to visit it once.
-  std::unordered_set<HeapType> newTypes;
+  ordered_set<HeapType> newTypes;
   for (auto& pair : counts) {
     newTypes.insert(pair.first);
   }
   while (!newTypes.empty()) {
-    auto iter = newTypes.begin();
+    auto iter = newTypes.end() - 1;
     auto type = *iter;
     newTypes.erase(iter);
     walkRelevantChildren(type, [&](HeapType type) {

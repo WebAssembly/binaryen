@@ -63,6 +63,14 @@ public:
     return {begin() + result.first->second, false};
   }
 
+  iterator erase(iterator pos) {
+    for (auto it = pos; it != end(); ++it) {
+      --indices[*it];
+    }
+    indices.erase(*pos);
+    return vec.erase(pos);
+  }
+
   size_t count(const Key& key) const { return indices.count(key); }
 
   iterator find(const Key& key) {
@@ -105,6 +113,14 @@ public:
       return {end() - 1, true};
     }
     return {begin() + result.first->second, false};
+  }
+
+  iterator erase(iterator pos) {
+    for (auto it = pos + 1; it != end(); ++it) {
+      --indices[*it];
+    }
+    indices.erase(pos->first);
+    return vec.erase(pos);
   }
 
   void swap(ordered_map<Key, T, Hash, KeyEqual>& other) {
