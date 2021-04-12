@@ -357,8 +357,8 @@ def run_vm(cmd):
         # note that this text is a little too broad, but the problem is rare
         # enough that it's unlikely to hide an unrelated issue
         'found br_if of type',
-        # all host limitations are not arbitrary and may differ between VMs and
-        # also be affected by optimizations, so ignore them.
+        # all host limitations are arbitrary and may differ between VMs and also
+        # be affected by optimizations, so ignore them.
         HOST_LIMIT_PREFIX,
     ]
     try:
