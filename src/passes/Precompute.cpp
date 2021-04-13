@@ -173,11 +173,11 @@ struct Precompute
     if (flow.getType().hasVector()) {
       return;
     }
+    if (!canEmitConstantFor(flow.values)) {
+      return;
+    }
     if (flow.breaking()) {
       if (flow.breakTo == NONCONSTANT_FLOW) {
-        return;
-      }
-      if (!canEmitConstantFor(flow.values)) {
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
@@ -365,15 +365,17 @@ private:
     if (value.type.isFunction()) {
       return true;
     }
+    // All other reference types cannot be precomputed.
+    if (value.type.isRef()) {
+      return false;
+    }
     return canEmitConstantFor(value.type);
   }
 
   bool canEmitConstantFor(Type type) {
-    // Don't try to precompute a reference. We can't replace it with a constant
-    // expression, as that would make a copy of it by value.
     // For now, don't try to precompute an Rtt. TODO figure out when that would
     // be safe and useful.
-    return !type.isRef() && !type.isRtt();
+    return !type.isRtt();
   }
 };
 
