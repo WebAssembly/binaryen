@@ -315,6 +315,10 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
     throw FailToEvalException(std::string("trap: ") + why);
   }
 
+  void hostLimit(const char* why) override {
+    throw FailToEvalException(std::string("trap: ") + why);
+  }
+
   void throwException(const WasmException& exn) override {
     std::stringstream ss;
     ss << "exception thrown: " << exn;

@@ -1173,7 +1173,7 @@ console.log("# SIMDLoad");
 (function testSIMDLoad() {
   const module = new binaryen.Module();
 
-  var op = binaryen.Operations.LoadExtSVec8x8ToVecI16x8;
+  var op = binaryen.Operations.Load8x8SVec128;
   var offset = 16;
   var align = 2;
   var ptr = module.i32.const(1);

@@ -711,22 +711,22 @@ struct PrintExpressionContents
       case Load64SplatVec128:
         o << "v128.load64_splat";
         break;
-      case LoadExtSVec8x8ToVecI16x8:
+      case Load8x8SVec128:
         o << "v128.load8x8_s";
         break;
-      case LoadExtUVec8x8ToVecI16x8:
+      case Load8x8UVec128:
         o << "v128.load8x8_u";
         break;
-      case LoadExtSVec16x4ToVecI32x4:
+      case Load16x4SVec128:
         o << "v128.load16x4_s";
         break;
-      case LoadExtUVec16x4ToVecI32x4:
+      case Load16x4UVec128:
         o << "v128.load16x4_u";
         break;
-      case LoadExtSVec32x2ToVecI64x2:
+      case Load32x2SVec128:
         o << "v128.load32x2_s";
         break;
-      case LoadExtUVec32x2ToVecI64x2:
+      case Load32x2UVec128:
         o << "v128.load32x2_u";
         break;
       case Load32ZeroVec128:

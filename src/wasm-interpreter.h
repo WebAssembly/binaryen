@@ -197,7 +197,7 @@ public:
   Flow visit(Expression* curr) {
     depth++;
     if (maxDepth != NO_LIMIT && depth > maxDepth) {
-      trap("interpreter recursion limit");
+      hostLimit("interpreter recursion limit");
     }
     auto ret = OverriddenVisitor<SubType, Flow>::visit(curr);
     if (!ret.breaking()) {
@@ -1622,7 +1622,7 @@ public:
     // limits on 32-bit machines, and in particular on wasm32 VMs that do not
     // have 4GB support, so give up there.
     if (num >= (1 << 30) / sizeof(Literal)) {
-      trap("allocation failure");
+      hostLimit("allocation failure");
     }
     Literals data(num);
     if (curr->isWithDefault()) {
@@ -1738,6 +1738,8 @@ public:
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
+
+  virtual void hostLimit(const char* why) { WASM_UNREACHABLE("unimp"); }
 
   virtual void throwException(const WasmException& exn) {
     WASM_UNREACHABLE("unimp");
@@ -2024,6 +2026,8 @@ public:
 
   void trap(const char* why) override { throw NonconstantException(); }
 
+  void hostLimit(const char* why) override { throw NonconstantException(); }
+
   virtual void throwException(const WasmException& exn) override {
     throw NonconstantException();
   }
@@ -2079,6 +2083,7 @@ public:
                                SubType& instance) = 0;
     virtual bool growMemory(Address oldSize, Address newSize) = 0;
     virtual void trap(const char* why) = 0;
+    virtual void hostLimit(const char* why) = 0;
     virtual void throwException(const WasmException& exn) = 0;
 
     // the default impls for load and store switch on the sizes. you can either
@@ -2751,12 +2756,12 @@ private:
         case Load32SplatVec128:
         case Load64SplatVec128:
           return visitSIMDLoadSplat(curr);
-        case LoadExtSVec8x8ToVecI16x8:
-        case LoadExtUVec8x8ToVecI16x8:
-        case LoadExtSVec16x4ToVecI32x4:
-        case LoadExtUVec16x4ToVecI32x4:
-        case LoadExtSVec32x2ToVecI64x2:
-        case LoadExtUVec32x2ToVecI64x2:
+        case Load8x8SVec128:
+        case Load8x8UVec128:
+        case Load16x4SVec128:
+        case Load16x4UVec128:
+        case Load32x2SVec128:
+        case Load32x2UVec128:
           return visitSIMDLoadExtend(curr);
         case Load32ZeroVec128:
         case Load64ZeroVec128:
@@ -2808,17 +2813,17 @@ private:
       auto* inst = getMemoryInstance();
       auto loadLane = [&](Address addr) {
         switch (curr->op) {
-          case LoadExtSVec8x8ToVecI16x8:
+          case Load8x8SVec128:
             return Literal(int32_t(inst->externalInterface->load8s(addr)));
-          case LoadExtUVec8x8ToVecI16x8:
+          case Load8x8UVec128:
             return Literal(int32_t(inst->externalInterface->load8u(addr)));
-          case LoadExtSVec16x4ToVecI32x4:
+          case Load16x4SVec128:
             return Literal(int32_t(inst->externalInterface->load16s(addr)));
-          case LoadExtUVec16x4ToVecI32x4:
+          case Load16x4UVec128:
             return Literal(int32_t(inst->externalInterface->load16u(addr)));
-          case LoadExtSVec32x2ToVecI64x2:
+          case Load32x2SVec128:
             return Literal(int64_t(inst->externalInterface->load32s(addr)));
-          case LoadExtUVec32x2ToVecI64x2:
+          case Load32x2UVec128:
             return Literal(int64_t(inst->externalInterface->load32u(addr)));
           default:
             WASM_UNREACHABLE("unexpected op");
@@ -2834,18 +2839,18 @@ private:
         return Literal(lanes);
       };
       switch (curr->op) {
-        case LoadExtSVec8x8ToVecI16x8:
-        case LoadExtUVec8x8ToVecI16x8: {
+        case Load8x8SVec128:
+        case Load8x8UVec128: {
           std::array<Literal, 8> lanes;
           return fillLanes(lanes, 1);
         }
-        case LoadExtSVec16x4ToVecI32x4:
-        case LoadExtUVec16x4ToVecI32x4: {
+        case Load16x4SVec128:
+        case Load16x4UVec128: {
           std::array<Literal, 4> lanes;
           return fillLanes(lanes, 2);
         }
-        case LoadExtSVec32x2ToVecI64x2:
-        case LoadExtUVec32x2ToVecI64x2: {
+        case Load32x2SVec128:
+        case Load32x2UVec128: {
           std::array<Literal, 2> lanes;
           return fillLanes(lanes, 4);
         }
@@ -3160,6 +3165,10 @@ private:
 
     void trap(const char* why) override {
       instance.externalInterface->trap(why);
+    }
+
+    void hostLimit(const char* why) override {
+      instance.externalInterface->hostLimit(why);
     }
 
     void throwException(const WasmException& exn) override {
