@@ -35,13 +35,11 @@
 [fuzz-exec] calling array-alloc-failure
 [host limit allocation failure]
 (module
- (type $struct (struct (field (mut i32))))
  (type $void_func (func))
- (type $extendedstruct (struct (field (mut i32)) (field f64)))
- (type $bytes (array (mut i8)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
  (type $int_func (func (result i32)))
+ (type $struct (struct (field (mut i32))))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (elem declare func $a-void-func)
  (export "structs" (func $0))
@@ -53,85 +51,37 @@
  (export "rtt-and-cast-on-func" (func $8))
  (export "array-alloc-failure" (func $9))
  (func $0 (; has Stack IR ;)
-  (local $0 (ref null $struct))
   (call $log
-   (struct.get $struct 0
-    (local.tee $0
-     (struct.new_default_with_rtt $struct
-      (rtt.canon $struct)
-     )
-    )
-   )
+   (i32.const 0)
   )
-  (struct.set $struct 0
-   (local.get $0)
+  (call $log
    (i32.const 42)
   )
   (call $log
-   (struct.get $struct 0
-    (local.get $0)
-   )
-  )
-  (struct.set $struct 0
-   (local.get $0)
    (i32.const 100)
   )
   (call $log
-   (struct.get $struct 0
-    (local.get $0)
-   )
-  )
-  (call $log
-   (struct.get $struct 0
-    (local.get $0)
-   )
+   (i32.const 100)
   )
  )
  (func $1 (; has Stack IR ;)
-  (local $0 (ref null $bytes))
   (call $log
-   (array.len $bytes
-    (local.tee $0
-     (array.new_with_rtt $bytes
-      (i32.const 42)
-      (i32.const 50)
-      (rtt.canon $bytes)
-     )
-    )
-   )
+   (i32.const 50)
   )
   (call $log
-   (array.get_u $bytes
-    (local.get $0)
-    (i32.const 10)
-   )
+   (i32.const 42)
   )
-  (array.set $bytes
-   (local.get $0)
-   (i32.const 10)
+  (call $log
    (i32.const 128)
   )
   (call $log
-   (array.get_u $bytes
-    (local.get $0)
-    (i32.const 10)
-   )
+   (i32.const -128)
   )
   (call $log
-   (array.get_s $bytes
-    (local.get $0)
-    (i32.const 10)
-   )
-  )
-  (call $log
-   (array.get_s $bytes
-    (local.get $0)
-    (i32.const 20)
-   )
+   (i32.const 42)
   )
  )
  (func $2 (; has Stack IR ;)
-  (local $0 anyref)
   (call $log
    (i32.const 1)
   )
@@ -148,30 +98,13 @@
    (i32.const 0)
   )
   (call $log
-   (ref.test
-    (local.tee $0
-     (struct.new_default_with_rtt $extendedstruct
-      (rtt.sub $extendedstruct
-       (rtt.canon $struct)
-      )
-     )
-    )
-    (rtt.sub $extendedstruct
-     (rtt.canon $struct)
-    )
-   )
+   (i32.const 1)
   )
   (call $log
-   (ref.test
-    (local.get $0)
-    (rtt.canon $extendedstruct)
-   )
+   (i32.const 0)
   )
   (call $log
-   (ref.test
-    (local.get $0)
-    (rtt.canon $struct)
-   )
+   (i32.const 1)
   )
  )
  (func $3 (; has Stack IR ;)
@@ -217,12 +150,7 @@
   (call $log
    (i32.const 2)
   )
-  (call_ref
-   (ref.cast
-    (ref.func $a-void-func)
-    (rtt.canon $void_func)
-   )
-  )
+  (call $a-void-func)
   (call $log
    (i32.const 3)
   )
