@@ -105,8 +105,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   virtual ~ShellExternalInterface() = default;
 
   void init(Module& wasm, ModuleInstance& instance) override {
-    if (wasm.memory.exists &&
-        (!wasm.memory.imported() || wasm.memory.module == "env")) {
+    if (wasm.memory.exists && !wasm.memory.imported()) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     }
     if (wasm.tables.size() > 0) {
