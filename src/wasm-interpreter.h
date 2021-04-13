@@ -2424,32 +2424,12 @@ private:
     SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
 
   protected:
-    std::pair<SubType*, Name> getTableInstance(Name tableName) {
-      auto* table = instance.wasm.getTable(tableName);
-      if (table->imported()) {
-        auto inst = instance.linkedInstances.at(table->module);
-        Export* tableExport = inst->wasm.getExport(table->base);
-        return std::make_pair(inst.get(), tableExport->value);
-      } else {
-        return std::make_pair(static_cast<SubType*>(&instance), tableName);
-      }
-    }
     SubType* getMemoryInstance() {
       // ctor-eval needs the imported memory from env
       if (instance.wasm.memory.imported()) {
         return instance.linkedInstances.at(instance.wasm.memory.module).get();
       } else {
         return static_cast<SubType*>(&instance);
-      }
-    }
-    std::pair<SubType*, Name> getGlobalInstance(Name globalName) {
-      auto* global = instance.wasm.getGlobal(globalName);
-      if (global->imported()) {
-        auto inst = instance.linkedInstances.at(global->module);
-        Export* globalExport = inst->wasm.getExport(global->base);
-        return std::make_pair(inst.get(), globalExport->value);
-      } else {
-        return std::make_pair(static_cast<SubType*>(&instance), globalName);
       }
     }
 
@@ -2499,12 +2479,22 @@ private:
       Index index = target.getSingleValue().geti32();
       Type type = curr->isReturn ? scope.function->sig.results : curr->type;
 
-      SubType* inst;
-      Name tableName;
-      std::tie(inst, tableName) = getTableInstance(curr->table);
+      Flow ret;
+      auto* table = instance.wasm.getTable(curr->table);
+      if (table->imported()) {
+        auto inst = instance.linkedInstances.at(table->module);
+        Export* tableExport = inst->wasm.getExport(table->base);
+        ret = inst->externalInterface->callTable(tableExport->value,
+                                                 index,
+                                                 curr->sig,
+                                                 arguments,
+                                                 type,
+                                                 *instance.self());
+      } else {
+        ret = instance.externalInterface->callTable(
+          curr->table, index, curr->sig, arguments, type, *instance.self());
+      }
 
-      Flow ret = inst->externalInterface->callTable(
-        tableName, index, curr->sig, arguments, type, *instance.self());
       // TODO: make this a proper tail call (return first)
       if (curr->isReturn) {
         ret.breakTo = RETURN_FLOW;
@@ -2569,12 +2559,15 @@ private:
       NOTE_ENTER("GlobalGet");
       auto name = curr->name;
       NOTE_EVAL1(name);
-      SubType* inst;
-      Name globalName;
-      std::tie(inst, globalName) = getGlobalInstance(name);
-      assert(inst->globals.find(globalName) != inst->globals.end());
-      NOTE_EVAL1(inst->globals[globalName]);
-      return inst->globals[globalName];
+
+      auto* global = instance.wasm.getGlobal(name);
+      if (global->imported()) {
+        auto inst = instance.linkedInstances.at(global->module);
+        Export* globalExport = inst->wasm.getExport(global->base);
+        return inst->globals[globalExport->value];
+      } else {
+        return instance.globals[name];
+      }
     }
     Flow visitGlobalSet(GlobalSet* curr) {
       NOTE_ENTER("GlobalSet");
@@ -2585,10 +2578,15 @@ private:
       }
       NOTE_EVAL1(name);
       NOTE_EVAL1(flow.getSingleValue());
-      SubType* inst;
-      Name globalName;
-      std::tie(inst, globalName) = getGlobalInstance(name);
-      inst->globals[name] = flow.values;
+
+      auto* global = instance.wasm.getGlobal(name);
+      if (global->imported()) {
+        auto inst = instance.linkedInstances.at(global->module);
+        Export* globalExport = inst->wasm.getExport(global->base);
+        inst->globals[globalExport->value] = flow.values;
+      } else {
+        instance.globals[name] = flow.values;
+      }
       return Flow();
     }
 
