@@ -198,7 +198,7 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
       if (global->base == STACKTOP || global->base == STACK_MAX) {
         copied->init = builder.makeConst(STACK_START);
       } else {
-        copied->init = builder.makeConst(Literal::makeZeros(global->type)[0]);
+        copied->init = builder.makeConst(Literal::makeZero(global->type));
       }
     }
 
