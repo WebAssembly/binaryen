@@ -18,7 +18,9 @@
  (func $test-fallthrough (result i32)
   (local $x funcref)
   (local.set $x
-   ;; the fallthrough value should be used (which is possible as with names
+   ;; the fallthrough value should be used. for that to be possible with a block
+   ;; we need for it not to have a name, which is why --remove-unused-names is
+   ;; run
    (block (result (funcref))
     ;; make a call so the block is not trivially removable
     (drop
