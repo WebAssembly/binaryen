@@ -2799,19 +2799,17 @@ static void validateMemory(Module& module, ValidationInfo& info) {
           continue;
         }
       }
-      if (!module.memory.imported()) {
-        info.shouldBeTrue(checkSegmentOffset(segment.offset,
-                                             segment.data.size(),
-                                             curr.initial * Memory::kPageSize),
-                          segment.offset,
-                          "memory segment offset should be reasonable");
-        if (segment.offset->is<Const>()) {
-          auto start = segment.offset->cast<Const>()->value.getUnsigned();
-          auto end = start + size;
-          info.shouldBeTrue(end <= curr.initial * Memory::kPageSize,
-                            segment.data.size(),
-                            "segment size should fit in memory (end)");
-        }
+      info.shouldBeTrue(checkSegmentOffset(segment.offset,
+                                           segment.data.size(),
+                                           curr.initial * Memory::kPageSize),
+                        segment.offset,
+                        "memory segment offset should be reasonable");
+      if (segment.offset->is<Const>()) {
+        auto start = segment.offset->cast<Const>()->value.getUnsigned();
+        auto end = start + size;
+        info.shouldBeTrue(end <= curr.initial * Memory::kPageSize,
+                          segment.data.size(),
+                          "segment size should fit in memory (end)");
       }
       FunctionValidator(module, &info).validate(segment.offset);
     }
@@ -2906,13 +2904,11 @@ static void validateTables(Module& module, ValidationInfo& info) {
                          Type(Type::i32),
                          segment->offset,
                          "element segment offset should be i32");
-      if (!table->imported()) {
-        info.shouldBeTrue(checkSegmentOffset(segment->offset,
-                                             segment->data.size(),
-                                             table->initial * Table::kPageSize),
-                          segment->offset,
-                          "table segment offset should be reasonable");
-      }
+      info.shouldBeTrue(checkSegmentOffset(segment->offset,
+                                           segment->data.size(),
+                                           table->initial * Table::kPageSize),
+                        segment->offset,
+                        "table segment offset should be reasonable");
       if (module.features.hasTypedFunctionReferences()) {
         info.shouldBeTrue(
           Type::isSubType(segment->type, table->type),
