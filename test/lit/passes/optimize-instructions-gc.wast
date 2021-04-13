@@ -386,9 +386,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $data)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $data)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -396,9 +394,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $i31)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $i31)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -406,9 +402,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $func)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $func)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -458,6 +452,85 @@
     )
     (drop
       (ref.as_func (unreachable))
+    )
+  )
+
+  ;; CHECK:      (func $redundant-non-null-casts (param $x (ref null $struct)) (param $y (ref null $array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct $i8
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $struct $i8
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get_u $array
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.len $array
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $redundant-non-null-casts (param $x (ref null $struct)) (param $y (ref null $array))
+    (drop
+      (ref.as_non_null
+        (ref.as_non_null
+          (ref.as_non_null
+            (local.get $x)
+          )
+        )
+      )
+    )
+    (struct.set $struct 0
+      (ref.as_non_null
+        (local.get $x)
+      )
+      (i32.const 1)
+    )
+    (drop
+      (struct.get_u $struct 0
+        (ref.as_non_null
+          (local.get $x)
+        )
+      )
+    )
+    (array.set $array
+      (ref.as_non_null
+        (local.get $y)
+      )
+      (i32.const 2)
+      (i32.const 3)
+    )
+    (drop
+      (array.get $array
+        (ref.as_non_null
+          (local.get $y)
+        )
+        (i32.const 4)
+      )
+    )
+    (drop
+      (array.len $array
+        (ref.as_non_null
+          (local.get $y)
+        )
+      )
     )
   )
 )
