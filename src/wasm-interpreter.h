@@ -2328,20 +2328,16 @@ private:
         (uint32_t)runner.visit(segment->offset).getSingleValue().geti32();
 
       Table* table = wasm.getTable(segment->table);
+      ExternalInterface* extInterface = externalInterface;
+      Name tableName = segment->table;
       if (table->imported()) {
         auto inst = linkedInstances.at(table->module);
-        Export* tableExport = inst->wasm.getExport(table->base);
-        for (Index i = 0; i < segment->data.size(); ++i) {
-          Flow ret = runner.visit(segment->data[i]);
-          inst->externalInterface->tableStore(
-            tableExport->value, offset + i, ret.getSingleValue());
-        }
-      } else {
-        for (Index i = 0; i < segment->data.size(); ++i) {
-          Flow ret = runner.visit(segment->data[i]);
-          externalInterface->tableStore(
-            segment->table, offset + i, ret.getSingleValue());
-        }
+        extInterface = inst->externalInterface;
+        tableName = inst->wasm.getExport(table->base)->value;
+      }
+      for (Index i = 0; i < segment->data.size(); ++i) {
+        Flow ret = runner.visit(segment->data[i]);
+        extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
       }
     });
   }
