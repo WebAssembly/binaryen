@@ -97,14 +97,14 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   std::unordered_map<Name, std::vector<Literal>> tables;
   std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
 
-  ShellExternalInterface() : memory() {}
+  ShellExternalInterface(
+    std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances_ = {})
+    : memory() {
+    linkedInstances.swap(linkedInstances_);
+  }
   virtual ~ShellExternalInterface() = default;
 
-  void init(Module& wasm,
-            ModuleInstance& instance,
-            std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances =
-              {}) override {
-    linkedInstances.swap(linkedInstances);
+  void init(Module& wasm, ModuleInstance& instance) override {
     if (wasm.memory.exists &&
         (!wasm.memory.imported() || wasm.memory.module == "env")) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);

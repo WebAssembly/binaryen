@@ -91,7 +91,8 @@ protected:
   Name lastModule;
 
   void instantiate(Module* wasm) {
-    auto tempInterface = wasm::make_unique<ShellExternalInterface>();
+    auto tempInterface =
+      wasm::make_unique<ShellExternalInterface>(linkedInstances);
     auto tempInstance = std::make_shared<ModuleInstance>(
       *wasm, tempInterface.get(), linkedInstances);
     interfaces[wasm->name].swap(tempInterface);

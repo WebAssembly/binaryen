@@ -127,8 +127,11 @@ static Index STACK_UPPER_LIMIT = STACK_START + STACK_SIZE;
 class EvallingModuleInstance
   : public ModuleInstanceBase<EvallingGlobalManager, EvallingModuleInstance> {
 public:
-  EvallingModuleInstance(Module& wasm, ExternalInterface* externalInterface)
-    : ModuleInstanceBase(wasm, externalInterface, {}) {
+  EvallingModuleInstance(Module& wasm,
+                         ExternalInterface* externalInterface,
+                         std::map<Name, std::shared_ptr<EvallingModuleInstance>>
+                           linkedInstances_ = {})
+    : ModuleInstanceBase(wasm, externalInterface, linkedInstances_) {
     // if any global in the module has a non-const constructor, it is using a
     // global import, which we don't have, and is illegal to use
     ModuleUtils::iterDefinedGlobals(wasm, [&](Global* global) {
@@ -165,44 +168,79 @@ public:
   }
 };
 
+std::unique_ptr<Module> buildEnvModule(Module& wasm) {
+  auto env = std::make_unique<Module>();
+  env->name = "env";
+
+  ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
+    auto* copied = ModuleUtils::copyFunction(func, *env);
+    copied->module = Name();
+    copied->base = Name();
+    env->addExport(Builder(*env).makeExport(
+      func->base, copied->name, ExternalKind::Function));
+  });
+
+  ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
+    auto* copied = ModuleUtils::copyTable(table, *env);
+    copied->module = Name();
+    copied->base = Name();
+    env->addExport(
+      Builder(*env).makeExport(table->base, copied->name, ExternalKind::Table));
+  });
+
+  ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
+    auto* copied = ModuleUtils::copyGlobal(global, *env);
+    copied->module = Name();
+    copied->base = Name();
+
+    Builder builder(*env);
+    if (global->module == "env") {
+      if (global->base == STACKTOP || global->base == STACK_MAX) {
+        copied->init = builder.makeConst(STACK_START);
+      } else {
+        copied->init = builder.makeConst(Literal::makeZeros(global->type)[0]);
+      }
+    }
+
+    env->addExport(
+      builder.makeExport(global->base, copied->name, ExternalKind::Global));
+  });
+
+  ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
+    env->memory.exists = true;
+    env->memory.initial = memory->initial;
+    env->memory.max = memory->max;
+    env->memory.shared = memory->shared;
+    env->memory.indexType = memory->indexType;
+    env->addExport(Builder(*env).makeExport(
+      wasm.memory.base, env->memory.name, ExternalKind::Memory));
+  });
+
+  return env;
+}
+
 struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
   Module* wasm;
   EvallingModuleInstance* instance;
+  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
 
-  void init(Module& wasm_,
-            EvallingModuleInstance& instance_,
-            std::map<Name, std::shared_ptr<EvallingModuleInstance>>
-              linkedInstances) override {
+  CtorEvalExternalInterface(
+    std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances_ =
+      {}) {
+    linkedInstances.swap(linkedInstances_);
+  }
+
+  void init(Module& wasm_, EvallingModuleInstance& instance_) override {
     wasm = &wasm_;
     instance = &instance_;
   }
 
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
-    // fill usable values for stack imports, and globals initialized to them
-    ImportInfo imports(wasm_);
-    if (auto* stackTop = imports.getImportedGlobal(ENV, STACKTOP)) {
-      globals[stackTop->name] = {Literal(int32_t(STACK_START))};
-      if (auto* stackTop =
-            GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACKTOP)) {
-        globals[stackTop->name] = {Literal(int32_t(STACK_START))};
-      }
-    }
-    if (auto* stackMax = imports.getImportedGlobal(ENV, STACK_MAX)) {
-      globals[stackMax->name] = {Literal(int32_t(STACK_START))};
-      if (auto* stackMax =
-            GlobalUtils::getGlobalInitializedToImport(wasm_, ENV, STACK_MAX)) {
-        globals[stackMax->name] = {Literal(int32_t(STACK_START))};
-      }
-    }
-    // fill in fake values for everything else, which is dangerous to use
-    ModuleUtils::iterDefinedGlobals(wasm_, [&](Global* defined) {
-      if (globals.find(defined->name) == globals.end()) {
-        globals[defined->name] = Literal::makeZeros(defined->type);
-      }
-    });
-    ModuleUtils::iterImportedGlobals(wasm_, [&](Global* import) {
-      if (globals.find(import->name) == globals.end()) {
-        globals[import->name] = Literal::makeZeros(import->type);
+    ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
+      if (linkedInstances.count(global->module)) {
+        auto* inst = linkedInstances[global->module].get();
+        auto* globalExport = inst->wasm.getExport(global->base);
+        globals[global->name] = inst->globals[globalExport->value];
       }
     });
   }
@@ -371,14 +409,25 @@ private:
 };
 
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
-  CtorEvalExternalInterface interface;
+  // env module setup
+  auto envModule = buildEnvModule(wasm);
+  CtorEvalExternalInterface envInterface;
+  auto envInstance =
+    std::make_shared<EvallingModuleInstance>(*envModule, &envInterface);
+  envInstance->setupEnvironment();
+
+  std::map<Name, std::shared_ptr<EvallingModuleInstance>> linkedInstances;
+  linkedInstances["env"] = envInstance;
+
+  CtorEvalExternalInterface interface(linkedInstances);
   try {
     // flatten memory, so we do not depend on the layout of data segments
     if (!MemoryUtils::flatten(wasm.memory)) {
       Fatal() << "  ...stopping since could not flatten memory\n";
     }
+
     // create an instance for evalling
-    EvallingModuleInstance instance(wasm, &interface);
+    EvallingModuleInstance instance(wasm, &interface, linkedInstances);
     // set up the stack area and other environment details
     instance.setupEnvironment();
     // we should not add new globals from here on; as a result, using

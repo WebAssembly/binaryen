@@ -2068,11 +2068,10 @@ public:
   // an imported function or accessing memory.
   //
   struct ExternalInterface {
+    ExternalInterface(
+      std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
     virtual ~ExternalInterface() = default;
-    virtual void
-    init(Module& wasm,
-         SubType& instance,
-         std::map<Name, std::shared_ptr<SubType>> linkedInstances = {}) {}
+    virtual void init(Module& wasm, SubType& instance) {}
     virtual void importGlobals(GlobalManager& globals, Module& wasm) = 0;
     virtual Literals callImport(Function* import, LiteralList& arguments) = 0;
     virtual Literals callTable(Name tableName,
@@ -2263,7 +2262,7 @@ public:
     });
 
     // initialize the rest of the external interface
-    externalInterface->init(wasm, *self(), linkedInstances_);
+    externalInterface->init(wasm, *self());
 
     initializeTableContents();
     initializeMemoryContents();
@@ -2427,7 +2426,7 @@ private:
   protected:
     std::pair<SubType*, Name> getTableInstance(Name tableName) {
       auto* table = instance.wasm.getTable(tableName);
-      if (table->imported() && table->module != "env") {
+      if (table->imported()) {
         auto inst = instance.linkedInstances.at(table->module);
         Export* tableExport = inst->wasm.getExport(table->base);
         return std::make_pair(inst.get(), tableExport->value);
@@ -2437,8 +2436,7 @@ private:
     }
     SubType* getMemoryInstance() {
       // ctor-eval needs the imported memory from env
-      if (instance.wasm.memory.imported() &&
-          instance.wasm.memory.module != "env") {
+      if (instance.wasm.memory.imported()) {
         return instance.linkedInstances.at(instance.wasm.memory.module).get();
       } else {
         return static_cast<SubType*>(&instance);
@@ -2446,7 +2444,7 @@ private:
     }
     std::pair<SubType*, Name> getGlobalInstance(Name globalName) {
       auto* global = instance.wasm.getGlobal(globalName);
-      if (global->imported() && global->module != "env") {
+      if (global->imported()) {
         auto inst = instance.linkedInstances.at(global->module);
         Export* globalExport = inst->wasm.getExport(global->base);
         return std::make_pair(inst.get(), globalExport->value);
