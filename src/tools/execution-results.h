@@ -90,6 +90,9 @@ struct ExecutionResults {
   std::map<Name, Literals> results;
   Loggings loggings;
 
+  // If set, we should ignore this and not compare it to anything.
+  bool ignore = false;
+
   // get results of execution
   void get(Module& wasm) {
     LoggingExternalInterface interface(loggings);
@@ -176,6 +179,10 @@ struct ExecutionResults {
   }
 
   bool operator==(ExecutionResults& other) {
+    if (ignore || other.ignore) {
+      std::cout << "ignoring comparison of ExecutionResults!\n";
+      return true;
+    }
     for (auto& iter : other.results) {
       auto name = iter.first;
       if (results.find(name) == results.end()) {
@@ -230,6 +237,11 @@ struct ExecutionResults {
       }
       return instance.callFunction(func->name, arguments);
     } catch (const TrapException&) {
+      return {};
+    } catch (const HostLimitException&) {
+      // This should be ignored and not compared with, as optimizations can
+      // change whether a host limit is reached.
+      ignore = true;
       return {};
     }
   }

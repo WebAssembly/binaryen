@@ -476,16 +476,26 @@ struct Reducer
 
   void visitExpression(Expression* curr) {
     if (getFunction() && curr == getFunction()->body) {
-      // At the top level, we can try to reduce anything to an unreachable, and
-      // it is useful to do so when possible.
+      // At the top level, we can try to reduce anything to an unreachable or a
+      // nop, and it is useful to do so when possible.
       if (!curr->is<Unreachable>() && !curr->is<Nop>() &&
           shouldTryToReduce(1000)) {
         auto* save = curr;
         Unreachable un;
-        replaceCurrent(&un);
+        Nop nop;
+        bool useUnreachable = getFunction()->sig.results != Type::none;
+        if (useUnreachable) {
+          replaceCurrent(&un);
+        } else {
+          replaceCurrent(&nop);
+        }
         if (writeAndTestReduction()) {
-          replaceCurrent(builder->makeUnreachable());
-          std::cerr << "|        body unreachified (" << getFunction()->name
+          if (useUnreachable) {
+            replaceCurrent(builder->makeUnreachable());
+          } else {
+            replaceCurrent(builder->makeNop());
+          }
+          std::cerr << "|        body emptied (" << getFunction()->name
                     << ")\n";
           noteReduction();
           return;
