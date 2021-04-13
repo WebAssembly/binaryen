@@ -613,9 +613,10 @@ public:
     ret->finalize(type);
     return ret;
   }
-  TableSet* makeTableSet(Name table, Expression* offset, Expression* value) {
+  TableSet* makeTableSet(Name table, Expression* value, Expression* offset) {
     auto* ret = wasm.allocator.alloc<TableSet>();
     ret->table = table;
+    ret->value = value;
     ret->offset = offset;
     ret->finalize();
     return ret;
@@ -634,36 +635,36 @@ public:
     return ret;
   }
   TableFill* makeTableFill(Name table,
-                           Expression* dest,
+                           Expression* size,
                            Expression* value,
-                           Expression* size) {
+                           Expression* dest) {
     auto* ret = wasm.allocator.alloc<TableFill>();
     ret->table = table;
-    ret->dest = dest;
-    ret->value = value;
     ret->size = size;
+    ret->value = value;
+    ret->dest = dest;
     ret->finalize();
     return ret;
   }
   TableCopy* makeTableCopy(Name srcTable,
                            Name destTable,
+                           Expression* size,
                            Expression* srcOffset,
-                           Expression* destOffset,
-                           Expression* size) {
+                           Expression* destOffset) {
     auto* ret = wasm.allocator.alloc<TableCopy>();
     ret->srcTable = srcTable;
     ret->destTable = destTable;
+    ret->size = size;
     ret->srcOffset = srcOffset;
     ret->destOffset = destOffset;
-    ret->size = size;
     ret->finalize();
     return ret;
   }
   TableInit* makeTableInit(Name table,
                            Name segment,
+                           Expression* size,
                            Expression* srcOffset,
-                           Expression* destOffset,
-                           Expression* size) {
+                           Expression* destOffset) {
     auto* ret = wasm.allocator.alloc<TableInit>();
     ret->table = table;
     ret->segment = segment;

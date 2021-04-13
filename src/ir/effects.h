@@ -720,7 +720,12 @@ public:
     IsAtomic = 1 << 9,
     Throws = 1 << 10,
     DanglingPop = 1 << 11,
-    Any = (1 << 12) - 1
+    ReadsTable = 1 << 12,
+    WritesTable = 1 << 13,
+    ReadsElementSegment = 1 << 14,
+    DropsElementSegment = 1 << 15,
+    // TODO: Add ReadsDataSegment and DropsDataSegment
+    Any = (1 << 16) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -741,6 +746,18 @@ public:
     }
     if (globalsWritten.size() > 0) {
       effects |= SideEffects::WritesGlobal;
+    }
+    if (tablesRead.size() > 0) {
+      effects |= SideEffects::ReadsTable;
+    }
+    if (tablesWritten.size() > 0) {
+      effects |= SideEffects::WritesTable;
+    }
+    if (elementSegmentsRead.size() > 0) {
+      effects |= SideEffects::ReadsElementSegment;
+    }
+    if (elementSegmentsDropped.size() > 0) {
+      effects |= SideEffects::DropsElementSegment;
     }
     if (readsMemory) {
       effects |= SideEffects::ReadsMemory;
