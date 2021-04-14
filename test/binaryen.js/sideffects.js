@@ -74,7 +74,7 @@ assert(
     module.table.get("test", module.i32.const(0), binaryen.funcref)
   )
   ==
-  binaryen.SideEffects.ReadsTable
+  binaryen.SideEffects.ReadsTable | binaryen.SideEffects.ImplicitTrap
 );
 assert(
   binaryen.getSideEffects(
