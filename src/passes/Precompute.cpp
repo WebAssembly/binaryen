@@ -375,12 +375,13 @@ private:
   }
 
   bool canEmitConstantFor(Type type) {
+    // A function is fine to emit a constant for - we'll emit a RefFunc, which
+    // is compact and immutable, so there can't be a problem.
+    if (type.isFunction()) {
+      return true;
+    }
+    // All other reference types cannot be precomputed.
     if (type.isRef()) {
-      // A function is fine to emit a constant for - we'll emit a RefFunc, which
-      // is compact and immutable, so there can't be a problem.
-      if (type.isFunction()) {
-        return true;
-      }
       return false;
     }
     // For now, don't try to precompute an Rtt. TODO figure out when that would
