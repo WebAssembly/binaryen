@@ -52,6 +52,10 @@ using namespace cashew;
 
 extern Name WASM, RETURN_FLOW, NONCONSTANT_FLOW;
 
+// TODO: use a flow with a special name, as this is likely very slow
+struct NonconstantException {
+};
+
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
 class Flow {
@@ -1821,9 +1825,6 @@ protected:
   std::unordered_map<Name, Literals> globalValues;
 
 public:
-  struct NonconstantException {
-  }; // TODO: use a flow with a special name, as this is likely very slow
-
   ConstantExpressionRunner(Module* module,
                            Flags flags,
                            Index maxDepth,

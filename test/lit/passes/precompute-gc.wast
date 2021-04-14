@@ -3,6 +3,10 @@
 ;; RUN:   | filecheck %s
 
 (module
+ (type $struct (struct (mut i32)))
+
+ (import "fuzzing-support" "log-i32" (func $log (param i32)))
+
  ;; CHECK:      (func $test-fallthrough (result i32)
  ;; CHECK-NEXT:  (local $x funcref)
  ;; CHECK-NEXT:  (local.set $x
@@ -32,6 +36,154 @@
   ;; the null in the local should be propagated to here
   (ref.is_null
    (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $load-from-struct
+ ;; CHECK-NEXT:  (local $x (ref null $struct))
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (rtt.canon $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (rtt.canon $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $load-from-struct
+  (local $x (ref null $struct))
+  (local.set $x
+   (struct.new_with_rtt $struct
+    (i32.const 1)
+    (rtt.canon $struct)
+   )
+  )
+  (call $log
+   (struct.get $struct 0 (local.get $x))
+  )
+  ;; Assign a new struct
+  (local.set $x
+   (struct.new_with_rtt $struct
+    (i32.const 2)
+    (rtt.canon $struct)
+   )
+  )
+  (call $log
+   (struct.get $struct 0 (local.get $x))
+  )
+  ;; Assign a new value
+  (struct.set $struct 0
+   (local.get $x)
+   (i32.const 3)
+  )
+  (call $log
+   (struct.get $struct 0 (local.get $x))
+  )
+ )
+ ;; CHECK:      (func $load-from-struct-bad-merge (param $i i32)
+ ;; CHECK-NEXT:  (local $x (ref null $struct))
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (local.get $i)
+ ;; CHECK-NEXT:   (local.set $x
+ ;; CHECK-NEXT:    (struct.new_with_rtt $struct
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:     (rtt.canon $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $x
+ ;; CHECK-NEXT:    (struct.new_with_rtt $struct
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:     (rtt.canon $struct)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (struct.get $struct 0
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $load-from-struct-bad-merge (param $i i32)
+  (local $x (ref null $struct))
+  ;; a merge of two different $x values cannot be precomputed
+  (if
+   (local.get $i)
+   (local.set $x
+    (struct.new_with_rtt $struct
+     (i32.const 1)
+     (rtt.canon $struct)
+    )
+   )
+   (local.set $x
+    (struct.new_with_rtt $struct
+     (i32.const 2)
+     (rtt.canon $struct)
+    )
+   )
+  )
+  (call $log
+   (struct.get $struct 0 (local.get $x))
+  )
+ )
+ ;; CHECK:      (func $modify-gc-heap (param $x (ref null $struct))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $modify-gc-heap (param $x (ref null $struct))
+ )
+ ;; CHECK:      (func $load-from-struct-bad-escape
+ ;; CHECK-NEXT:  (local $x (ref null $struct))
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (rtt.canon $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $modify-gc-heap
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $load-from-struct-bad-escape
+  (local $x (ref null $struct))
+  (local.set $x
+   (struct.new_with_rtt $struct
+    (i32.const 1)
+    (rtt.canon $struct)
+   )
+  )
+  (call $modify-gc-heap
+   (local.get $x)
+  )
+  (call $log
+   (struct.get $struct 0 (local.get $x))
+  )
+ )
+ ;; CHECK:      (func $load-from-struct-bad-arrive (param $x (ref null $struct))
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (struct.get $struct 0
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $load-from-struct-bad-arrive (param $x (ref null $struct))
+  (call $log
+   (struct.get $struct 0 (local.get $x))
   )
  )
 )
