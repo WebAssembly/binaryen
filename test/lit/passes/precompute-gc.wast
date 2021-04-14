@@ -276,9 +276,10 @@
    )
   )
  )
- ;; CHECK:      (func $new-ref-comparisons
+ ;; CHECK:      (func $new-ref-comparisons (result i32)
  ;; CHECK-NEXT:  (local $x (ref null $struct))
  ;; CHECK-NEXT:  (local $y (ref null $struct))
+ ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
  ;; CHECK-NEXT:    (i32.const 1)
@@ -288,16 +289,18 @@
  ;; CHECK-NEXT:  (local.set $y
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:  (local.set $tempresult
  ;; CHECK-NEXT:   (ref.eq
  ;; CHECK-NEXT:    (local.get $x)
  ;; CHECK-NEXT:    (local.get $y)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $tempresult)
  ;; CHECK-NEXT: )
- (func $new-ref-comparisons
+ (func $new-ref-comparisons (result i32)
   (local $x (ref null $struct))
   (local $y (ref null $struct))
+  (local $tempresult i32)
   (local.set $x
    (struct.new_with_rtt $struct
     (i32.const 1)
@@ -307,17 +310,14 @@
   (local.set $y
    (local.get $x)
   )
-  ;; in principle precompute-propagate could see that the propagated reference
-  ;; is the same here. however, we leave that to other optimization passes
-  ;; (simplify-locals, coalesce-locals) because handling it in precompute
-  ;; would require being careful to allow precomputing of references but not of
-  ;; the values referred to; instead, the pass ignores both.
-  (call $log
+  ;; assign the result, so that propagate calculates the ref.eq
+  (local.set $tempresult
    (ref.eq
     (local.get $x)
     (local.get $y)
    )
   )
+  (local.get $tempresult)
  )
  ;; CHECK:      (func $propagate-equal (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
