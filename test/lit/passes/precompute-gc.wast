@@ -227,6 +227,7 @@
   (param $y (ref null $struct))
   (local $z (ref null $struct))
   (local $w (ref null $struct))
+  ;; incoming parameters are unknown
   (call $log
    (ref.eq
     (local.get $x)
@@ -245,10 +246,49 @@
     (local.get $w)
    )
   )
+  ;; null-initialized locals are known and can be compared
   (call $log
    (ref.eq
     (local.get $z)
     (local.get $w)
+   )
+  )
+ )
+ ;; CHECK:      (func $new-ref-comparisons
+ ;; CHECK-NEXT:  (local $x (ref null $struct))
+ ;; CHECK-NEXT:  (local $y (ref null $struct))
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (rtt.canon $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $y
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $new-ref-comparisons
+  (local $x (ref null $struct))
+  (local $y (ref null $struct))
+  (local.set $x
+   (struct.new_with_rtt $struct
+    (i32.const 1)
+    (rtt.canon $struct)
+   )
+  )
+  (local.set $y
+   (local.get $x)
+  )
+  (call $log
+   (ref.eq
+    (local.get $x)
+    (local.get $y)
    )
   )
  )
