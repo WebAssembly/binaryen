@@ -139,13 +139,30 @@
    (i32.const 0)
   )
   (call $log
-   (i32.const 0)
+   (ref.test
+    (array.new_with_rtt $bytes
+     (i32.const 20)
+     (i32.const 10)
+     (rtt.canon $bytes)
+    )
+    (rtt.canon $struct)
+   )
   )
   (call $log
-   (i32.const 1)
+   (ref.test
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+    (rtt.canon $struct)
+   )
   )
   (call $log
-   (i32.const 0)
+   (ref.test
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+    (rtt.canon $extendedstruct)
+   )
   )
   (call $log
    (ref.test
@@ -175,6 +192,33 @@
   )
  )
  (func $3 (; has Stack IR ;)
+  (drop
+   (block $block (result (ref $struct))
+    (drop
+     (block $extendedblock (result (ref $extendedstruct))
+      (drop
+       (br_on_cast $block
+        (br_on_cast $extendedblock
+         (struct.new_default_with_rtt $struct
+          (rtt.canon $struct)
+         )
+         (rtt.canon $extendedstruct)
+        )
+        (rtt.canon $struct)
+       )
+      )
+      (call $log
+       (i32.const -1)
+      )
+      (return)
+     )
+    )
+    (call $log
+     (i32.const -2)
+    )
+    (return)
+   )
+  )
   (call $log
    (i32.const 3)
   )
