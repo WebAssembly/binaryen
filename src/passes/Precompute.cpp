@@ -327,8 +327,8 @@ private:
           } else {
             curr = setValues[set];
           }
-          if (curr.isNone() || !canEmitConstantFor(curr)) {
-            // not a constant, or not something we can precompute, give up
+          if (curr.isNone()) {
+            // not a constant, give up
             values = {};
             break;
           }
