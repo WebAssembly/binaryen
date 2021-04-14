@@ -175,7 +175,24 @@
  )
  ;; --fuzz-exec verifies the output of this function, checking that the change
  ;; makde in modify-gc-heap is not ignored
- (func "load-from-struct-bad-escape"
+ ;; CHECK:      (func $load-from-struct-bad-escape
+ ;; CHECK-NEXT:  (local $x (ref null $struct))
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (rtt.canon $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $modify-gc-heap
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (struct.get $struct 0
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $load-from-struct-bad-escape (export "test")
   (local $x (ref null $struct))
   (local.set $x
    (struct.new_with_rtt $struct
