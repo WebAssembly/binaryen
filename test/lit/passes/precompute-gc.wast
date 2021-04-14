@@ -4,6 +4,7 @@
 
 (module
  (type $struct (struct (mut i32)))
+ (type $empty (struct))
 
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
@@ -300,5 +301,62 @@
     (local.get $y)
    )
   )
+ )
+ ;; CHECK:      (func $propagate-equal (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.tee $tempref
+ ;; CHECK-NEXT:     (struct.new_default_with_rtt $empty
+ ;; CHECK-NEXT:      (rtt.canon $empty)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $tempref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 1)
+ ;; CHECK-NEXT: )
+ (func $propagate-equal (result i32)
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  ;; assign the result, so that propagate calculates the ref.eq
+  (local.set $tempresult
+   (ref.eq
+    ;; allocate one struct
+    (local.tee $tempref
+     (struct.new_with_rtt $empty
+      (rtt.canon $empty)
+     )
+    )
+    (local.get $tempref)
+   )
+  )
+  (local.get $tempresult)
+ )
+ ;; CHECK:      (func $propagate-unequal (result i32)
+ ;; CHECK-NEXT:  (local $tempresult i32)
+ ;; CHECK-NEXT:  (local $tempref (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $tempresult
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
+ (func $propagate-unequal (result i32)
+  (local $tempresult i32)
+  (local $tempref (ref null $empty))
+  ;; assign the result, so that propagate calculates the ref.eq
+  (local.set $tempresult
+   ;; allocate two different structs
+   (ref.eq
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+    (struct.new_with_rtt $empty
+     (rtt.canon $empty)
+    )
+   )
+  )
+  (local.get $tempresult)
  )
 )
