@@ -365,7 +365,9 @@ private:
     if (value.type.isFunction()) {
       return true;
     }
-    // All other reference types cannot be precomputed.
+    // All other reference types cannot be precomputed as references can refer
+    // to global heap data which can be modified.
+    // TODO: handle fully immutable types
     if (value.type.isRef()) {
       return false;
     }
