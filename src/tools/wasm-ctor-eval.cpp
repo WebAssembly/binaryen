@@ -168,9 +168,10 @@ public:
   }
 };
 
-// Build an artificial `env` module, so that imports work in the interpreter. It
-// initializes usable global imports, and fills the rest with fake values since
-// those are dangerous to use. we will fail if dangerous globals are used.
+// Build an artificial `env` module based on a module's imports, so that the
+// interpreter can use correct object instances. It initializes usable global
+// imports, and fills the rest with fake values since those are dangerous to
+// use. we will fail if dangerous globals are used.
 std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   auto env = std::make_unique<Module>();
   env->name = "env";
