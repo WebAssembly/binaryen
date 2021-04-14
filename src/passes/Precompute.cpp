@@ -89,13 +89,21 @@ public:
   }
 
   // Heap data may be modified in ways we do not see. We would need escape
-  // analysis to avoid that risk.
-  // TODO: immutability would also be good enough
-  // Note that ArrayLen is ok: array lengths are immutable.
+  // analysis to avoid that risk. For now, disallow all heap operations.
+  // TODO: immutability might also be good enough
+  Flow visitStructNew(StructNew* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitStructGet(StructGet* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitArrayNew(ArrayNew* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitArrayGet(ArrayGet* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayLen(ArrayLen* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
 };
@@ -237,16 +245,25 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
-    if (!canEmitConstantFor(curr->type)) {
+    // If we are replacing the expression, then it must be of a type we can emit
+    // a constant for.
+    if (replaceExpression && !canEmitConstantFor(curr->type)) {
       return Flow(NONCONSTANT_FLOW);
     }
+    Flow flow;
     try {
-      return PrecomputingExpressionRunner(
+      flow = PrecomputingExpressionRunner(
                getModule(), getValues, replaceExpression)
         .visit(curr);
     } catch (PrecomputingExpressionRunner::NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
     }
+    // If we are replacing the expression, then the resulting value must be of
+    // a type we can emit a constant for.
+    if (replaceExpression && !canEmitConstantFor(flow.values)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+    return flow;
   }
 
   // Precomputes the value of an expression, as opposed to the expression
