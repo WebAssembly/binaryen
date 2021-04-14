@@ -285,6 +285,11 @@
   (local.set $y
    (local.get $x)
   )
+  ;; in principle precompute-propagate could see that the propagated reference
+  ;; is the same here. however, we leave that to other optimization passes
+  ;; (simplify-locals, coalesce-locals) because handling it in precompute
+  ;; would require being careful to allow precomputing of references but not of
+  ;; the values referred to; instead, the pass ignores both.
   (call $log
    (ref.eq
     (local.get $x)

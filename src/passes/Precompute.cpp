@@ -365,9 +365,14 @@ private:
     if (value.type.isFunction()) {
       return true;
     }
-    // All other reference types cannot be precomputed as references can refer
-    // to global heap data which can be modified.
-    // TODO: handle fully immutable types
+    // All other reference types are ignored in this pass. In principle we could
+    // allow precomputing of the references (the pointers) but not the values,
+    // but references stored in locals will be optimized by other passes anyhow
+    // (simplify-locals, coalesce-locals), and if we wanted to handle this here
+    // we'd need to add more code above to handle StructGet, ArrayLen, etc.
+    // operations to make them return "nonprecomputable", which would add
+    // complexity.
+    // TODO: Fully immutable types might be simple to support here.
     if (value.type.isRef()) {
       return false;
     }
