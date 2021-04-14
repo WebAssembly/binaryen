@@ -87,6 +87,17 @@ public:
     return ConstantExpressionRunner<
       PrecomputingExpressionRunner>::visitLocalGet(curr);
   }
+
+  // Heap data may be modified in ways we do not see. We would need escape
+  // analysis to avoid that risk.
+  // TODO: immutability would also be good enough
+  // Note that ArrayLen is ok: array lengths are immutable.
+  Flow visitStructGet(StructGet* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitArrayGet(ArrayGet* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
 };
 
 struct Precompute
@@ -360,26 +371,18 @@ private:
     if (value.isNull()) {
       return true;
     }
-    // A function is fine to emit a constant for - we'll emit a RefFunc, which
-    // is compact and immutable, so there can't be a problem.
-    if (value.type.isFunction()) {
-      return true;
-    }
-    // All other reference types are ignored in this pass. In principle we could
-    // allow precomputing of the references (the pointers) but not the values,
-    // but references stored in locals will be optimized by other passes anyhow
-    // (simplify-locals, coalesce-locals), and if we wanted to handle this here
-    // we'd need to add more code above to handle StructGet, ArrayLen, etc.
-    // operations to make them return "nonprecomputable", which would add
-    // complexity.
-    // TODO: Fully immutable types might be simple to support here.
-    if (value.type.isRef()) {
-      return false;
-    }
     return canEmitConstantFor(value.type);
   }
 
   bool canEmitConstantFor(Type type) {
+    if (type.isRef()) {
+      // A function is fine to emit a constant for - we'll emit a RefFunc, which
+      // is compact and immutable, so there can't be a problem.
+      if (type.isFunction()) {
+        return true;
+      }
+      return false;
+    }
     // For now, don't try to precompute an Rtt. TODO figure out when that would
     // be safe and useful.
     return !type.isRtt();

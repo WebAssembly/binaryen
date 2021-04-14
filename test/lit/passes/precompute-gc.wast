@@ -214,13 +214,13 @@
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (ref.eq
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.null $struct)
+ ;; CHECK-NEXT:    (local.get $z)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (ref.eq
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.null $struct)
+ ;; CHECK-NEXT:    (local.get $w)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
