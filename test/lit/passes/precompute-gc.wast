@@ -81,6 +81,8 @@
     (rtt.canon $struct)
    )
   )
+  ;; we don't precompute these, as we don't know if the GC data was modified
+  ;; elsewhere (we'd need immutability or escape analysis)
   (call $log
    (struct.get $struct 0 (local.get $x))
   )
