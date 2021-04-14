@@ -168,52 +168,64 @@ public:
   }
 };
 
+// Build an artificial `env` module, so that imports work in the interpreter. It
+// initializes usable global imports, and fills the rest with fake values since
+// those are dangerous to use. we will fail if dangerous globals are used.
 std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   auto env = std::make_unique<Module>();
   env->name = "env";
 
+  // create empty functions with similar signature
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
-    auto* copied = ModuleUtils::copyFunction(func, *env);
-    copied->module = Name();
-    copied->base = Name();
-    env->addExport(Builder(*env).makeExport(
-      func->base, copied->name, ExternalKind::Function));
+    if (func->module == "env") {
+      auto* copied = ModuleUtils::copyFunction(func, *env);
+      copied->module = Name();
+      copied->base = Name();
+      env->addExport(Builder(*env).makeExport(
+        func->base, copied->name, ExternalKind::Function));
+    }
   });
 
+  // create tables with similar initial and max values
   ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    auto* copied = ModuleUtils::copyTable(table, *env);
-    copied->module = Name();
-    copied->base = Name();
-    env->addExport(
-      Builder(*env).makeExport(table->base, copied->name, ExternalKind::Table));
+    if (table->module == "env") {
+      auto* copied = ModuleUtils::copyTable(table, *env);
+      copied->module = Name();
+      copied->base = Name();
+      env->addExport(Builder(*env).makeExport(
+        table->base, copied->name, ExternalKind::Table));
+    }
   });
 
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
-    auto* copied = ModuleUtils::copyGlobal(global, *env);
-    copied->module = Name();
-    copied->base = Name();
-
-    Builder builder(*env);
     if (global->module == "env") {
+      auto* copied = ModuleUtils::copyGlobal(global, *env);
+      copied->module = Name();
+      copied->base = Name();
+
+      Builder builder(*env);
       if (global->base == STACKTOP || global->base == STACK_MAX) {
         copied->init = builder.makeConst(STACK_START);
       } else {
         copied->init = builder.makeConst(Literal::makeZero(global->type));
       }
+      env->addExport(
+        builder.makeExport(global->base, copied->name, ExternalKind::Global));
     }
-
-    env->addExport(
-      builder.makeExport(global->base, copied->name, ExternalKind::Global));
   });
 
+  // create an exported memory with the same initial and max size
   ModuleUtils::iterImportedMemories(wasm, [&](Memory* memory) {
-    env->memory.exists = true;
-    env->memory.initial = memory->initial;
-    env->memory.max = memory->max;
-    env->memory.shared = memory->shared;
-    env->memory.indexType = memory->indexType;
-    env->addExport(Builder(*env).makeExport(
-      wasm.memory.base, env->memory.name, ExternalKind::Memory));
+    if (memory->module == "env") {
+      env->memory.name = wasm.memory.name;
+      env->memory.exists = true;
+      env->memory.initial = memory->initial;
+      env->memory.max = memory->max;
+      env->memory.shared = memory->shared;
+      env->memory.indexType = memory->indexType;
+      env->addExport(Builder(*env).makeExport(
+        wasm.memory.base, wasm.memory.name, ExternalKind::Memory));
+    }
   });
 
   return env;
@@ -409,7 +421,7 @@ private:
 };
 
 void evalCtors(Module& wasm, std::vector<std::string> ctors) {
-  // env module setup
+  // build and link the env module
   auto envModule = buildEnvModule(wasm);
   CtorEvalExternalInterface envInterface;
   auto envInstance =
