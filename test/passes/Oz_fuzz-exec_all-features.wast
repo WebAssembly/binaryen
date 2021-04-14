@@ -17,7 +17,9 @@
    )
   )
   ;; The value is initialized to 0
-  ;; Note: -Oz will optimize all these to constants thanks to Precompute
+  ;; Note: We cannot optimize these to constants until we have an escape
+  ;; analysis that verifies the heap has not been modified between the write
+  ;; and the read.
   (call $log
    (struct.get $struct 0 (local.get $x))
   )
