@@ -21,7 +21,13 @@ namespace wasm {
 
 namespace TypeUpdating {
 
-void handleNonNullableLocals(Function* func, Module& wasm) {
+bool canHandleAsLocal(Type type) {
+  // Defaultable types are always ok. For non-nullable types, we can handle them
+  // using defaultable ones + ref.as_non_nulls.
+  return type.isDefaultable() || type.isRef();
+}
+
+void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Check if this is an issue.
   bool hasNonNullable = false;
   for (auto type : func->vars) {

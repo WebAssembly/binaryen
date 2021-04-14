@@ -2186,7 +2186,7 @@ void WasmBinaryBuilder::readFunctions() {
       }
     }
 
-    TypeUpdating::handleNonNullableLocals(func, wasm);
+    TypeUpdating::handleNonDefaultableLocals(func, wasm);
 
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
