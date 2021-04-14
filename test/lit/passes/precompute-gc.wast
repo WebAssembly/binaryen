@@ -48,7 +48,9 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
- ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (struct.get $struct 0
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
@@ -57,11 +59,18 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
- ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (struct.get $struct 0
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:  (struct.set $struct 0
+ ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (struct.get $struct 0
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $load-from-struct
@@ -156,7 +165,9 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
- ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (struct.get $struct 0
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $load-from-struct-bad-escape

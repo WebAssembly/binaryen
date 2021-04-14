@@ -4375,7 +4375,7 @@ ExpressionRunnerRunAndDispose(ExpressionRunnerRef runner,
     if (!flow.breaking() && !flow.values.empty()) {
       ret = flow.getConstExpression(*R->getModule());
     }
-  } catch (NonconstantException&) {
+  } catch (CExpressionRunner::NonconstantException&) {
   }
   delete R;
   return ret;

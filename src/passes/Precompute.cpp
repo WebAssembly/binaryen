@@ -233,7 +233,7 @@ private:
       return PrecomputingExpressionRunner(
                getModule(), getValues, replaceExpression)
         .visit(curr);
-    } catch (NonconstantException&) {
+    } catch (PrecomputingExpressionRunner::NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
     }
   }
@@ -316,8 +316,8 @@ private:
           } else {
             curr = setValues[set];
           }
-          if (curr.isNone()) {
-            // not a constant, give up
+          if (curr.isNone() || !canEmitConstantFor(curr)) {
+            // not a constant, or not something we can precompute, give up
             values = {};
             break;
           }
@@ -326,15 +326,10 @@ private:
             values = curr; // this is the first
             first = false;
           } else {
-            try {
-              if (values != curr) {
-                // not the same, give up
-                values = {};
-                break;
-              }
-            } catch (NonconstantException&) {
-              // cannot be computed, give up
+            if (values != curr) {
+              // not the same, give up
               values = {};
+              break;
             }
           }
         }

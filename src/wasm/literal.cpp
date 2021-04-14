@@ -24,7 +24,6 @@
 #include "pretty_printing.h"
 #include "support/bits.h"
 #include "support/utilities.h"
-#include "wasm-interpreter.h"
 
 namespace wasm {
 
@@ -353,7 +352,7 @@ bool Literal::operator==(const Literal& other) const {
     }
     // other non-null reference type literals cannot represent concrete values,
     // i.e. there is no concrete externref, anyref or eqref other than null.
-    throw NonconstantException();
+    WASM_UNREACHABLE("unexpected type");
   };
   if (type.isBasic()) {
     switch (type.getBasic()) {
