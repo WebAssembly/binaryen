@@ -17,9 +17,9 @@
    )
   )
   ;; The value is initialized to 0
-  ;; Note: We cannot optimize these to constants until we have an escape
-  ;; analysis that verifies the heap has not been modified between the write
-  ;; and the read.
+  ;; Note: We cannot optimize these to constants without either immutability or
+  ;; some kind of escape analysis (to verify that the GC data referred to is not
+  ;; written to elsewhere).
   (call $log
    (struct.get $struct 0 (local.get $x))
   )
