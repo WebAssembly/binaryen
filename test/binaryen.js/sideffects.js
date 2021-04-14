@@ -71,7 +71,7 @@ assert(
 );
 assert(
   binaryen.getSideEffects(
-    module.table.get("test", module.i32.const(0), binaryen.i32)
+    module.table.get("test", module.i32.const(0), binaryen.funcref)
   )
   ==
   binaryen.SideEffects.ReadsTable
