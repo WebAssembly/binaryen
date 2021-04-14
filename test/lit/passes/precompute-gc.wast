@@ -197,4 +197,59 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
+ ;; CHECK:      (func $ref-comparisons (param $x (ref null $struct)) (param $y (ref null $struct))
+ ;; CHECK-NEXT:  (local $z (ref null $struct))
+ ;; CHECK-NEXT:  (local $w (ref null $struct))
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (ref.null $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (ref.null $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $log
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-comparisons
+  (param $x (ref null $struct))
+  (param $y (ref null $struct))
+  (local $z (ref null $struct))
+  (local $w (ref null $struct))
+  (call $log
+   (ref.eq
+    (local.get $x)
+    (local.get $y)
+   )
+  )
+  (call $log
+   (ref.eq
+    (local.get $x)
+    (local.get $z)
+   )
+  )
+  (call $log
+   (ref.eq
+    (local.get $x)
+    (local.get $w)
+   )
+  )
+  (call $log
+   (ref.eq
+    (local.get $z)
+    (local.get $w)
+   )
+  )
+ )
 )
