@@ -81,21 +81,21 @@ assert(
     module.table.set("test", module.ref.func("f", binaryen.funcref), module.i32.const(1))
   )
   ==
-  binaryen.SideEffects.WritesTable
+  binaryen.SideEffects.WritesTable | binaryen.SideEffects.ImplicitTrap
 );
 assert(
   binaryen.getSideEffects(
     module.table.init("t1", "e1", module.i32.const(10), module.i32.const(0), module.i32.const(0))
   )
   ==
-  binaryen.SideEffects.ReadsElementSegment | binaryen.SideEffects.WritesTable
+  binaryen.SideEffects.ReadsElementSegment | binaryen.SideEffects.WritesTable | binaryen.SideEffects.ImplicitTrap
 );
 assert(
   binaryen.getSideEffects(
     module.elem.drop("test")
   )
   ==
-  binaryen.SideEffects.DropsElementSegment
+  binaryen.SideEffects.DropsElementSegment | binaryen.SideEffects.ImplicitTrap
 );
 assert(
   binaryen.getSideEffects(
