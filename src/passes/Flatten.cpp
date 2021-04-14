@@ -337,7 +337,7 @@ struct Flatten
     // the body may have preludes
     curr->body = getPreludesWithExpression(originalBody, curr->body);
     // New locals we added may be non-nullable.
-    TypeUpdating::handleNonNullableLocals(curr, *getModule());
+    TypeUpdating::handleNonDefaultableLocals(curr, *getModule());
     // We cannot handle non-nullable tuples currently, see the comment at the
     // top of the file.
     for (auto type : curr->vars) {
