@@ -172,6 +172,8 @@
    )
   )
  )
+ ;; --fuzz-exec verifies the output of this function, checking that the change
+ ;; makde in modify-gc-heap is not ignored
  (func "load-from-struct-bad-escape"
   (local $x (ref null $struct))
   (local.set $x
