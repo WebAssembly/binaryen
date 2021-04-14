@@ -4215,6 +4215,22 @@ BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::WritesMemory);
 }
+BinaryenSideEffects BinaryenSideEffectReadsTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsTable);
+}
+BinaryenSideEffects BinaryenSideEffectWritesTable(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::WritesTable);
+}
+BinaryenSideEffects BinaryenSideEffectReadsElementSegment(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::ReadsElementSegment);
+}
+BinaryenSideEffects BinaryenSideEffectDropsElementSegment(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::DropsElementSegment);
+}
 BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::ImplicitTrap);
