@@ -383,7 +383,7 @@ struct DAE : public Pass {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
             removeParameter(func, i, calls);
-            TypeUpdating::handleNonNullableLocals(func, *module);
+            TypeUpdating::handleNonDefaultableLocals(func, *module);
             changed.insert(func);
           }
         }
