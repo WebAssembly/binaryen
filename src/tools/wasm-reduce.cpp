@@ -1366,7 +1366,6 @@ int main(int argc, const char* argv[]) {
     if (passProgress >= 4 * lastDestructiveReductions) {
       // don't change
       std::cerr << "|  progress is good, do not quickly decrease factor\n";
-      factor = (factor * 9) / 10 + 1;
     } else {
       if (factor > 10) {
         factor = (factor / 3) + 1;
