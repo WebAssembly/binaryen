@@ -152,9 +152,13 @@ protected:
 
     // swap to the new name in all maps
     modules[name].swap(modules[lastModule]);
+    modules.erase(lastModule);
     builders[name].swap(builders[lastModule]);
+    builders.erase(lastModule);
     interfaces[name].swap(interfaces[lastModule]);
+    interfaces.erase(lastModule);
     instances[name].swap(instances[lastModule]);
+    instances.erase(lastModule);
 
     Colors::green(std::cerr);
     std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.c_str()

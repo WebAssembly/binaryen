@@ -179,11 +179,13 @@ std::unique_ptr<Module> buildEnvModule(Module& wasm) {
   // create empty functions with similar signature
   ModuleUtils::iterImportedFunctions(wasm, [&](Function* func) {
     if (func->module == "env") {
+      Builder builder(*env);
       auto* copied = ModuleUtils::copyFunction(func, *env);
       copied->module = Name();
       copied->base = Name();
-      env->addExport(Builder(*env).makeExport(
-        func->base, copied->name, ExternalKind::Function));
+      copied->body = builder.makeUnreachable();
+      env->addExport(
+        builder.makeExport(func->base, copied->name, ExternalKind::Function));
     }
   });
 

@@ -108,20 +108,24 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (wasm.memory.exists && !wasm.memory.imported()) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     }
-    if (wasm.tables.size() > 0) {
-      ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
-        tables[table->name].resize(table->initial);
-      });
-    }
+    ModuleUtils::iterDefinedTables(
+      wasm, [&](Table* table) { tables[table->name].resize(table->initial); });
   }
 
   void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (linkedInstances.count(import->module)) {
-        auto inst = linkedInstances[import->module];
-        auto* exportedGlobal = inst->wasm.getExport(import->base);
-        globals[import->name] = inst->globals[exportedGlobal->value];
+      auto it = linkedInstances.find(import->module);
+      if (it == linkedInstances.end()) {
+        Fatal() << "importGlobals: unknown import: " << import->module.str
+                << "." << import->name.str;
       }
+      auto inst = it->second;
+      auto* exportedGlobal = inst->wasm.getExportOrNull(import->base);
+      if (!exportedGlobal) {
+        Fatal() << "importGlobals: unknown import: " << import->module.str
+                << "." << import->name.str;
+      }
+      globals[import->name] = inst->globals[exportedGlobal->value];
     });
   }
 

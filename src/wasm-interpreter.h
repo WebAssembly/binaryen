@@ -2420,12 +2420,23 @@ private:
     SmallVector<std::pair<WasmException, Name>, 4> exceptionStack;
 
   protected:
+    // Returns the instance that defines the memory used by this one.
     SubType* getMemoryInstance() {
-      // ctor-eval needs the imported memory from env
       if (instance.wasm.memory.imported()) {
         return instance.linkedInstances.at(instance.wasm.memory.module).get();
       } else {
         return static_cast<SubType*>(&instance);
+      }
+    }
+
+    Literals& getGlobal(Name name) {
+      auto* global = instance.wasm.getGlobal(name);
+      if (global->imported()) {
+        auto inst = instance.linkedInstances.at(global->module);
+        Export* globalExport = inst->wasm.getExport(global->base);
+        return inst->globals[globalExport->value];
+      } else {
+        return instance.globals[name];
       }
     }
 
@@ -2555,15 +2566,7 @@ private:
       NOTE_ENTER("GlobalGet");
       auto name = curr->name;
       NOTE_EVAL1(name);
-
-      auto* global = instance.wasm.getGlobal(name);
-      if (global->imported()) {
-        auto inst = instance.linkedInstances.at(global->module);
-        Export* globalExport = inst->wasm.getExport(global->base);
-        return inst->globals[globalExport->value];
-      } else {
-        return instance.globals[name];
-      }
+      return getGlobal(name);
     }
     Flow visitGlobalSet(GlobalSet* curr) {
       NOTE_ENTER("GlobalSet");
@@ -2575,14 +2578,7 @@ private:
       NOTE_EVAL1(name);
       NOTE_EVAL1(flow.getSingleValue());
 
-      auto* global = instance.wasm.getGlobal(name);
-      if (global->imported()) {
-        auto inst = instance.linkedInstances.at(global->module);
-        Export* globalExport = inst->wasm.getExport(global->base);
-        inst->globals[globalExport->value] = flow.values;
-      } else {
-        instance.globals[name] = flow.values;
-      }
+      getGlobal(name) = flow.values;
       return Flow();
     }
 
