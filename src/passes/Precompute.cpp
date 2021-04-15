@@ -245,7 +245,8 @@ private:
     }
     // If we are replacing the expression, then the resulting value must be of
     // a type we can emit a constant for.
-    if (replaceExpression && !canEmitConstantFor(flow.values)) {
+    if (!flow.breaking() && replaceExpression &&
+        !canEmitConstantFor(flow.values)) {
       return Flow(NONCONSTANT_FLOW);
     }
     return flow;
@@ -303,8 +304,9 @@ private:
         // each time we reach this point, and so we need to be careful about
         // repeating side effects if those side effects are expressed *in the
         // value*. A case where that can happen is GC data (each struct.new
-        // creates a new, unique struct, even if the data is equal), and so GC
-        // refs are disallowed in canEmitConstantFor().
+        // creates a new, unique struct, even if the data is equal), and so
+        // PrecomputingExpressionRunner will return a nonconstant flow for all
+        // GC heap operations.
         // (Other side effects are fine; if an expression does a call and we
         // somehow know the entire expression precomputes to a 42, then we can
         // propagate that 42 along to the users, regardless of whatever the call
