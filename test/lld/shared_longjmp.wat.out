@@ -25,7 +25,7 @@
  (import "env" "free" (func $fimport$7 (param i32)))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 4))
- (export "__post_instantiate" (func $0))
+ (export "__wasm_call_ctors" (func $0))
  (export "_start" (func $2))
  (export "__THREW__" (global $global$0))
  (export "__threwValue" (global $global$1))
@@ -168,7 +168,7 @@
     "___threwValue"
   ],
   "exports": [
-    "__post_instantiate",
+    "__wasm_call_ctors",
     "_start",
     "dynCall_vii"
   ],
