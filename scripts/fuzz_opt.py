@@ -214,7 +214,7 @@ def pick_initial_contents():
         '--disable-memory64',
         # avoid multivalue for now due to bad interactions with gc rtts in
         # stacky code. for example, this fails to roundtrip as the tuple code
-        # ends up creating stack binary code that needs to spill rtts to locals,
+        # ends up creating stacky binary code that needs to spill rtts to locals,
         # which is not allowed:
         #
         # (module
