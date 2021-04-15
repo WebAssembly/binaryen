@@ -215,6 +215,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $load-from-struct-bad-arrive (param $x (ref null $struct))
+  ;; a parameter cannot be precomputed
   (call $log
    (struct.get $struct 0 (local.get $x))
   )
@@ -259,6 +260,7 @@
   (call $log
    (ref.eq
     (local.get $x)
+    ;; locals are ref.null which are known, and will be propagated
     (local.get $z)
    )
   )
@@ -317,6 +319,8 @@
     (local.get $y)
    )
   )
+  ;; this value could be precomputed in principle, however, we currently do not
+  ;; precompute GC references, and so nothing will be done.
   (local.get $tempresult)
  )
  ;; CHECK:      (func $propagate-equal (result i32)
@@ -349,6 +353,8 @@
     (local.get $tempref)
    )
   )
+  ;; this value could be precomputed in principle, however, we currently do not
+  ;; precompute GC references, and so nothing will be done.
   (local.get $tempresult)
  )
  ;; CHECK:      (func $propagate-unequal (result i32)
@@ -381,20 +387,8 @@
     )
    )
   )
+  ;; this value could be precomputed in principle, however, we currently do not
+  ;; precompute GC references, and so nothing will be done.
   (local.get $tempresult)
- )
- ;; CHECK:      (func $precompute-null-gc (result anyref)
- ;; CHECK-NEXT:  (local $x (ref null $empty))
- ;; CHECK-NEXT:  (local.set $x
- ;; CHECK-NEXT:   (ref.null $empty)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (ref.null $empty)
- ;; CHECK-NEXT: )
- (func $precompute-null-gc (result anyref)
-  (local $x (ref null $empty))
-  (local.set $x
-   (ref.null $empty)
-  )
-  (local.get $x)
  )
 )

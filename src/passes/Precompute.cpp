@@ -309,6 +309,16 @@ private:
         if (setValues[set].isConcrete()) {
           continue; // already known constant
         }
+        // Precompute the value. Note that this executes the code from scratch
+        // each time we reach this point, and so we need to be careful about
+        // repeating side effects if those side effects are expressed *in the
+        // value*. A case where that can happen is GC data (each struct.new
+        // creates a new, unique struct, even if the data is equal), and so GC
+        // refs are disallowed in canEmitConstantFor().
+        // (Other side effects are fine; if an expression does a call and we
+        // somehow know the entire expression precomputes to a 42, then we can
+        // propagate that 42 along to the users, regardless of whatever the call
+        // did globally.)
         auto values = setValues[set] =
           precomputeValue(Properties::getFallthrough(
             set->value, getPassOptions(), getModule()->features));
@@ -392,7 +402,10 @@ private:
     if (type.isFunction()) {
       return true;
     }
-    // All other reference types cannot be precomputed.
+    // All other reference types cannot be precomputed. Even an immutable GC
+    // reference is not currently something this pass can handle, as it will
+    // evaluate and reevaluate code multiple times in e.g. optimizeLocals, see
+    // the comment above.
     if (type.isRef()) {
       return false;
     }
