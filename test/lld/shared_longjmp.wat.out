@@ -161,11 +161,11 @@
     "free"
   ],
   "externs": [
-    "___memory_base",
-    "___table_base",
-    "___THREW__",
-    "_emscripten_longjmp",
-    "___threwValue"
+    "__memory_base",
+    "__table_base",
+    "__THREW__",
+    "emscripten_longjmp",
+    "__threwValue"
   ],
   "exports": [
     "__post_instantiate",

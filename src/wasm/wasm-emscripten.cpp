@@ -426,7 +426,7 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   meta << "  \"externs\": [";
   commaFirst = true;
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    meta << nextElement() << "\"_" << import->base.str << '"';
+    meta << nextElement() << '"' << import->base.str << '"';
   });
   meta << "\n  ],\n";
 

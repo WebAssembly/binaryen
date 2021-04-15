@@ -76,13 +76,13 @@
     "_Z16waka_func_theirsi"
   ],
   "externs": [
-    "___stack_pointer",
-    "___memory_base",
-    "___table_base",
-    "__Z16waka_func_theirsi",
-    "__Z14waka_func_minei",
-    "_waka_mine",
-    "_waka_others"
+    "__stack_pointer",
+    "__memory_base",
+    "__table_base",
+    "_Z16waka_func_theirsi",
+    "_Z14waka_func_minei",
+    "waka_mine",
+    "waka_others"
   ],
   "exports": [
     "__post_instantiate",
