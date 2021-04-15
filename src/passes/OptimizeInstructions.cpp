@@ -995,7 +995,7 @@ struct OptimizeInstructions
     // Identical references compare equal.
     if (equalAndRemovable(curr->left, curr->right)) {
       replaceCurrent(
-          Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
+        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
     }
   }
 
@@ -1185,17 +1185,16 @@ private:
   // could not fold them together or otherwise remove any part of them).
   bool equalAndRemovable(Expression* left, Expression* right) {
     PassOptions passOptions = getPassOptions();
-    if (EffectAnalyzer(
-           passOptions, getModule()->features, left)
-           .hasSideEffects() ||
-        EffectAnalyzer(
-           passOptions, getModule()->features, right)
-           .hasSideEffects()) {
+    if (EffectAnalyzer(passOptions, getModule()->features, left)
+          .hasSideEffects() ||
+        EffectAnalyzer(passOptions, getModule()->features, right)
+          .hasSideEffects()) {
       return false;
     }
     // Ignore extraneous things and compare.
     left = Properties::getFallthrough(left, passOptions, getModule()->features);
-    right = Properties::getFallthrough(right, passOptions, getModule()->features);
+    right =
+      Properties::getFallthrough(right, passOptions, getModule()->features);
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
