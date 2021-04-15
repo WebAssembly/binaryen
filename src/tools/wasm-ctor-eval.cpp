@@ -252,10 +252,19 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
 
   void importGlobals(EvallingGlobalManager& globals, Module& wasm_) override {
     ModuleUtils::iterImportedGlobals(wasm_, [&](Global* global) {
-      if (linkedInstances.count(global->module)) {
-        auto* inst = linkedInstances[global->module].get();
-        auto* globalExport = inst->wasm.getExport(global->base);
+      auto it = linkedInstances.find(global->module);
+      if (it != linkedInstances.end()) {
+        auto* inst = it->second.get();
+        auto* globalExport = inst->wasm.getExportOrNull(global->base);
+        if (!globalExport) {
+          throw FailToEvalException(std::string("importGlobals: ") +
+                                    global->module.str + "." +
+                                    global->base.str);
+        }
         globals[global->name] = inst->globals[globalExport->value];
+      } else {
+        throw FailToEvalException(std::string("importGlobals: ") +
+                                  global->module.str + "." + global->base.str);
       }
     });
   }

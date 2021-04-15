@@ -2429,6 +2429,7 @@ private:
       }
     }
 
+    // Returns a reference to the current value of a potentially imported global
     Literals& getGlobal(Name name) {
       auto* global = instance.wasm.getGlobal(name);
       if (global->imported()) {

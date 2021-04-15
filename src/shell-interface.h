@@ -104,6 +104,15 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   }
   virtual ~ShellExternalInterface() = default;
 
+  ModuleInstance* getImportInstance(Importable* import) {
+    auto it = linkedInstances.find(import->module);
+    if (it == linkedInstances.end()) {
+      Fatal() << "importGlobals: unknown import: " << import->module.str << "."
+              << import->base.str;
+    }
+    return it->second.get();
+  }
+
   void init(Module& wasm, ModuleInstance& instance) override {
     if (wasm.memory.exists && !wasm.memory.imported()) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
@@ -114,12 +123,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
 
   void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      auto it = linkedInstances.find(import->module);
-      if (it == linkedInstances.end()) {
-        Fatal() << "importGlobals: unknown import: " << import->module.str
-                << "." << import->name.str;
-      }
-      auto inst = it->second;
+      auto inst = getImportInstance(import);
       auto* exportedGlobal = inst->wasm.getExportOrNull(import->base);
       if (!exportedGlobal) {
         Fatal() << "importGlobals: unknown import: " << import->module.str
@@ -139,9 +143,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       // XXX hack for torture tests
       std::cout << "exit()\n";
       throw ExitException();
-    } else if (linkedInstances.count(import->module)) {
-      return linkedInstances[import->module]->callExport(import->base,
-                                                         arguments);
+    } else if (auto* inst = getImportInstance(import)) {
+      return inst->callExport(import->base, arguments);
     }
     Fatal() << "callImport: unknown import: " << import->module.str << "."
             << import->name.str;

@@ -255,9 +255,9 @@ protected:
     if (!invalid && id == ASSERT_UNLINKABLE) {
       // validate "instantiating" the mdoule
       auto reportUnknownImport = [&](Importable* import) {
-        if (linkedInstances.count(import->module) == 0 ||
-            linkedInstances.at(import->module)
-                ->wasm.getExportOrNull(import->base) == nullptr) {
+        auto it = linkedInstances.find(import->module);
+        if (it == linkedInstances.end() ||
+            it->second->wasm.getExportOrNull(import->base) == nullptr) {
           std::cerr << "unknown import: " << import->module << '.'
                     << import->base << '\n';
           invalid = true;
