@@ -91,7 +91,7 @@
   "declares": [
     "__handle_stack_overflow"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",

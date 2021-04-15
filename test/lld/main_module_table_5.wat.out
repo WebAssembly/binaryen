@@ -31,7 +31,7 @@
   "tableSize": 1,
   "declares": [
   ],
-  "externs": [
+  "globalImports": [
     "__stack_pointer",
     "__stdio_write",
     "__table_base"

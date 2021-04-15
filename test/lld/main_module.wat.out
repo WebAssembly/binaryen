@@ -60,7 +60,7 @@
   "declares": [
     "puts"
   ],
-  "externs": [
+  "globalImports": [
     "__stack_pointer",
     "__memory_base",
     "__table_base",

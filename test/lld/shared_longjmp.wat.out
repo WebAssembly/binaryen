@@ -160,7 +160,7 @@
     "setTempRet0",
     "free"
   ],
-  "externs": [
+  "globalImports": [
     "__memory_base",
     "__table_base",
     "__THREW__",
