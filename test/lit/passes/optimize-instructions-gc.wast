@@ -662,4 +662,29 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ref-eq-ref-cast (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-ref-cast (param $x eqref)
+    ;; it is almost valid to look through a cast, except that it might trap so
+    ;; there is a side effect
+    (drop
+      (ref.eq
+        (local.get $x)
+        (ref.cast
+          (local.get $x)
+          (rtt.canon $struct)
+        )
+      )
+    )
+  )
 )
