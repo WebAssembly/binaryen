@@ -259,6 +259,8 @@ inline Expression* getFallthrough(Expression* curr,
     if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
       return getFallthrough(tryy->body, passOptions, features);
     }
+  } else if (auto* as = curr->dynCast<RefCast>()) {
+    return getFallthrough(as->ref, passOptions, features);
   } else if (auto* as = curr->dynCast<RefAs>()) {
     return getFallthrough(as->value, passOptions, features);
   } else if (auto* br = curr->dynCast<BrOn>()) {

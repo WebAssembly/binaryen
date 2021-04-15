@@ -26,6 +26,7 @@
 #include <ir/bits.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/find_all.h>
 #include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
@@ -731,11 +732,9 @@ struct OptimizeInstructions
     }
     // finally, try more expensive operations on the curr in
     // the case that they have no side effects
-    if (!effects(curr->left).hasSideEffects()) {
-      if (ExpressionAnalyzer::equal(curr->left, curr->right)) {
-        if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
-          return replaceCurrent(ret);
-        }
+    if (equalAndRemovable(curr->left, curr->right)) {
+      if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
+        return replaceCurrent(ret);
       }
     }
 
@@ -992,6 +991,14 @@ struct OptimizeInstructions
     }
   }
 
+  void visitRefEq(RefEq* curr) {
+    // Identical references compare equal.
+    if (equalAndRemovable(curr->left, curr->right)) {
+      replaceCurrent(
+          Builder(*getModule()).makeConst(Literal::makeZero(Type::i32)));
+    }
+  }
+
   // If an instruction traps on a null input, there is no need for a
   // ref.as_non_null on that input: we will trap either way (and the binaryen
   // optimizer does not differentiate traps).
@@ -1169,6 +1176,40 @@ struct OptimizeInstructions
 private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
+
+  // Check if two inputs to an instruction are equal, and can be removed. This
+  // is simpler than the general question of equality because we know they are
+  // inputs to the same instruction, and so they execute one after the other,
+  // with nothing else in the middle. So all we need to check is that they are
+  // structurally equal, and that they have no side effects (as if they did, we
+  // could not fold them together or otherwise remove any part of them).
+  bool equalAndRemovable(Expression* left, Expression* right) {
+    PassOptions passOptions = getPassOptions();
+    if (EffectAnalyzer(
+           passOptions, getModule()->features, left)
+           .hasSideEffects() ||
+        EffectAnalyzer(
+           passOptions, getModule()->features, right)
+           .hasSideEffects()) {
+      return false;
+    }
+    // Ignore extraneous things and compare.
+    left = Properties::getFallthrough(left, passOptions, getModule()->features);
+    right = Properties::getFallthrough(right, passOptions, getModule()->features);
+    if (!ExpressionAnalyzer::equal(left, right)) {
+      return false;
+    }
+    // Reference equality also needs to check for allocation, which is *not* a
+    // side effect, but which results in different references:
+    // repeatedly calling (struct.new $foo)'s output will return different
+    // results (while i32.const etc. of course does not).
+    if (left->type.isRef()) {
+      if (FindAll<StructNew>(left).has() || FindAll<ArrayNew>(left).has()) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
@@ -1634,10 +1675,8 @@ private:
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (auto* right = binary->right->dynCast<Binary>()) {
         if (left->op != right->op &&
-            ExpressionAnalyzer::equal(left->left, right->left) &&
-            ExpressionAnalyzer::equal(left->right, right->right) &&
-            !effects(left->left).hasSideEffects() &&
-            !effects(left->right).hasSideEffects()) {
+            equalAndRemovable(left->left, right->left) &&
+            equalAndRemovable(left->right, right->right)) {
           switch (left->op) {
             //   (x > y) | (x == y)    ==>    x >= y
             case EqInt32: {
