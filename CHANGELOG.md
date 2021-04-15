@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v101
+----
+
 - `BinaryenSetFunctionTable` and `module.setFunctionTable` have been removed
   in favor of `BinaryenAddTable` and `module.addTable` respectively.
 - `BinaryenIsFunctionTableImported` is removed.
