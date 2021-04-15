@@ -231,13 +231,13 @@
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (ref.eq
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:    (ref.null $struct)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (ref.eq
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (local.get $w)
+ ;; CHECK-NEXT:    (ref.null $struct)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $log
@@ -382,5 +382,19 @@
    )
   )
   (local.get $tempresult)
+ )
+ ;; CHECK:      (func $precompute-null-gc (result anyref)
+ ;; CHECK-NEXT:  (local $x (ref null $empty))
+ ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:   (ref.null $empty)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null $empty)
+ ;; CHECK-NEXT: )
+ (func $precompute-null-gc (result anyref)
+  (local $x (ref null $empty))
+  (local.set $x
+   (ref.null $empty)
+  )
+  (local.get $x)
  )
 )

@@ -245,11 +245,6 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
-    // If we are replacing the expression, then it must be of a type we can emit
-    // a constant for.
-    if (replaceExpression && !canEmitConstantFor(curr->type)) {
-      return Flow(NONCONSTANT_FLOW);
-    }
     Flow flow;
     try {
       flow = PrecomputingExpressionRunner(
