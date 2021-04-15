@@ -75,7 +75,7 @@
   "declares": [
     "_Z16waka_func_theirsi"
   ],
-  "externs": [
+  "globalImports": [
     "__stack_pointer",
     "__memory_base",
     "__table_base",

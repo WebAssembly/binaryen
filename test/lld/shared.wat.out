@@ -57,7 +57,7 @@
   "declares": [
     "puts"
   ],
-  "externs": [
+  "globalImports": [
     "__memory_base",
     "__table_base",
     "external_var",

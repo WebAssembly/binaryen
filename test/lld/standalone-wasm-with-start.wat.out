@@ -23,7 +23,7 @@
   "tableSize": 1,
   "declares": [
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "_start"

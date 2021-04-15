@@ -151,7 +151,7 @@
     "setTempRet0",
     "free"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",
