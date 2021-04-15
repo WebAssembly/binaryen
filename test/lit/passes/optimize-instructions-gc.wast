@@ -533,4 +533,59 @@
       )
     )
   )
+
+  ;; CHECK:      (func $get-eqref (result eqref)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $get-eqref (result eqref)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $ref-eq (param $x eqref) (param $y eqref)
+  ;; CHECK-NEXT:  (local $lx eqref)
+  ;; CHECK-NEXT:  (local $ly eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $lx
+  ;; CHECK-NEXT:   (call $get-eqref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq (param $x eqref) (param $y eqref)
+    (local $lx eqref)
+    (local $ly eqref)
+    ;; identical parameters are equal
+    (drop
+      (ref.eq
+        (local.get $x)
+        (local.get $x)
+      )
+    )
+    ;; different ones might not be
+    (drop
+      (ref.eq
+        (local.get $x)
+        (local.get $y)
+      )
+    )
+    ;; identical locals are
+    (local.set $lx
+      (call $get-eqref)
+    )
+    (drop
+      (ref.eq
+        (local.get $lx)
+        (local.get $lx)
+      )
+    )
+  )
 )

@@ -995,7 +995,7 @@ struct OptimizeInstructions
     // Identical references compare equal.
     if (equalAndRemovable(curr->left, curr->right)) {
       replaceCurrent(
-          Builder(*getModule()).makeConst(Literal::makeZero(Type::i32)));
+          Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
     }
   }
 
