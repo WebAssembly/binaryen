@@ -7811,6 +7811,44 @@
       )
     )
   )
+  ;; CHECK:      (func $xor-of-identical-after-fallthrough (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.xor
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $xor-of-identical-after-fallthrough (param $x i32)
+    (drop
+      (i32.xor
+        ;; we can ignore the loop here, and look at the falling-through value,
+        ;; since there are no side effects
+        (loop (result i32)
+          (local.get $x)
+        )
+        (local.get $x)
+      )
+    )
+    (drop
+      (i32.xor
+        ;; there are side effects here (a return) which prevents that
+        (if (result i32)
+          (local.get $x)
+          (local.get $x)
+          (return)
+        )
+        (local.get $x)
+      )
+    )
+  )
   ;; CHECK:      (func $all_ones (param $x i32) (param $y i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
