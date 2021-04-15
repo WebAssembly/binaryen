@@ -91,21 +91,11 @@ public:
   // Heap data may be modified in ways we do not see. We would need escape
   // analysis to avoid that risk. For now, disallow all heap operations.
   // TODO: immutability might also be good enough
-  Flow visitStructNew(StructNew* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStructGet(StructGet* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitArrayNew(ArrayNew* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitArrayGet(ArrayGet* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitArrayLen(ArrayLen* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitStructNew(StructNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayNew(ArrayNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
 };
 
 struct Precompute
@@ -247,9 +237,9 @@ private:
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
     Flow flow;
     try {
-      flow = PrecomputingExpressionRunner(
-               getModule(), getValues, replaceExpression)
-        .visit(curr);
+      flow =
+        PrecomputingExpressionRunner(getModule(), getValues, replaceExpression)
+          .visit(curr);
     } catch (PrecomputingExpressionRunner::NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
     }
