@@ -144,6 +144,11 @@ struct LegalizeJSInterface : public Pass {
       Fixer fixer(&illegalImportsToLegal);
       fixer.run(runner, module);
       fixer.walkModuleCode(module);
+
+      // Finally we can remove all the now-unused illegal imports
+      for (const auto& pair : illegalImportsToLegal) {
+        module->removeFunction(pair.first);
+      }
     }
   }
 
