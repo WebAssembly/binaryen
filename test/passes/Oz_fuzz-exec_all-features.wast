@@ -17,7 +17,9 @@
    )
   )
   ;; The value is initialized to 0
-  ;; Note: -Oz will optimize all these to constants thanks to Precompute
+  ;; Note: We cannot optimize these to constants without either immutability or
+  ;; some kind of escape analysis (to verify that the GC data referred to is not
+  ;; written to elsewhere).
   (call $log
    (struct.get $struct 0 (local.get $x))
   )
@@ -209,7 +211,7 @@
  (func $a-void-func
   (call $log (i32.const 1337))
  )
- (func "$rtt-and-cast-on-func"
+ (func "rtt-and-cast-on-func"
   (call $log (i32.const 0))
   (drop
    (rtt.canon $void_func)
@@ -230,5 +232,28 @@
   ))
   ;; will never be reached
   (call $log (i32.const 4))
+ )
+ (func "array-alloc-failure"
+  (drop
+   (array.new_default_with_rtt $bytes
+    (i32.const -1) ;; un-allocatable size (4GB * sizeof(Literal))
+    (rtt.canon $bytes)
+   )
+  )
+ )
+)
+(module
+ (type $[mut:i8] (array (mut i8)))
+ (func "foo" (result i32)
+  ;; before opts this will trap on failing to allocate -1 >>> 0 bytes. after
+  ;; opts the unused value is removed so there is no trap, and a value is
+  ;; returned, which should not confuse the fuzzer.
+  (drop
+   (array.new_default_with_rtt $[mut:i8]
+    (i32.const -1)
+    (rtt.canon $[mut:i8])
+   )
+  )
+  (i32.const 0)
  )
 )

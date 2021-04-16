@@ -699,40 +699,40 @@ struct PrintExpressionContents
   void visitSIMDLoad(SIMDLoad* curr) {
     prepareColor(o);
     switch (curr->op) {
-      case LoadSplatVec8x16:
+      case Load8SplatVec128:
         o << "v128.load8_splat";
         break;
-      case LoadSplatVec16x8:
+      case Load16SplatVec128:
         o << "v128.load16_splat";
         break;
-      case LoadSplatVec32x4:
+      case Load32SplatVec128:
         o << "v128.load32_splat";
         break;
-      case LoadSplatVec64x2:
+      case Load64SplatVec128:
         o << "v128.load64_splat";
         break;
-      case LoadExtSVec8x8ToVecI16x8:
+      case Load8x8SVec128:
         o << "v128.load8x8_s";
         break;
-      case LoadExtUVec8x8ToVecI16x8:
+      case Load8x8UVec128:
         o << "v128.load8x8_u";
         break;
-      case LoadExtSVec16x4ToVecI32x4:
+      case Load16x4SVec128:
         o << "v128.load16x4_s";
         break;
-      case LoadExtUVec16x4ToVecI32x4:
+      case Load16x4UVec128:
         o << "v128.load16x4_u";
         break;
-      case LoadExtSVec32x2ToVecI64x2:
+      case Load32x2SVec128:
         o << "v128.load32x2_s";
         break;
-      case LoadExtUVec32x2ToVecI64x2:
+      case Load32x2UVec128:
         o << "v128.load32x2_u";
         break;
-      case Load32Zero:
+      case Load32ZeroVec128:
         o << "v128.load32_zero";
         break;
-      case Load64Zero:
+      case Load64ZeroVec128:
         o << "v128.load64_zero";
         break;
     }
@@ -747,28 +747,28 @@ struct PrintExpressionContents
   void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
     prepareColor(o);
     switch (curr->op) {
-      case LoadLaneVec8x16:
+      case Load8LaneVec128:
         o << "v128.load8_lane";
         break;
-      case LoadLaneVec16x8:
+      case Load16LaneVec128:
         o << "v128.load16_lane";
         break;
-      case LoadLaneVec32x4:
+      case Load32LaneVec128:
         o << "v128.load32_lane";
         break;
-      case LoadLaneVec64x2:
+      case Load64LaneVec128:
         o << "v128.load64_lane";
         break;
-      case StoreLaneVec8x16:
+      case Store8LaneVec128:
         o << "v128.store8_lane";
         break;
-      case StoreLaneVec16x8:
+      case Store16LaneVec128:
         o << "v128.store16_lane";
         break;
-      case StoreLaneVec32x4:
+      case Store32LaneVec128:
         o << "v128.store32_lane";
         break;
-      case StoreLaneVec64x2:
+      case Store64LaneVec128:
         o << "v128.store64_lane";
         break;
     }

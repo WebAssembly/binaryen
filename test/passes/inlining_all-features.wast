@@ -101,3 +101,14 @@
   )
  )
 )
+;; never inline an rtt parameter, as those cannot be handled as locals
+(module
+ (type $struct (struct))
+ (func $0 (param $rtt (rtt $struct))
+ )
+ (func $1
+  (call $0
+   (rtt.canon $struct)
+  )
+ )
+)

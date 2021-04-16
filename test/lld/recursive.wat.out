@@ -90,7 +90,7 @@
   "declares": [
     "iprintf"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",

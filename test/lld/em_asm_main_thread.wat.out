@@ -204,7 +204,7 @@
   "declares": [
     "emscripten_asm_const_int_sync_on_main_thread"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",
