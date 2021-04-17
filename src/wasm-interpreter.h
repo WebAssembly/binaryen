@@ -3364,7 +3364,7 @@ private:
       for (size_t i = 0; i < sizeVal; ++i) {
         Flow item = this->visit(segment->data[srcOffsetVal + i]);
         importInstanceInfo.instance->externalInterface->tableStore(
-          segment->table, destOffsetVal + i, item.getSingleValue());
+          importInstanceInfo.name, destOffsetVal + i, item.getSingleValue());
       }
       return {};
     }
