@@ -494,11 +494,11 @@ Name SExpressionWasmBuilder::getElementSegmentName(Element& s) {
   } else {
     // index
     size_t offset = atoi(s.str().c_str());
-    if (offset >= elemNames.size()) {
+    if (offset >= wasm.elementSegments.size()) {
       throw ParseException(
         "unknown segment in getElementSegmentName", s.line, s.col);
     }
-    return elemNames[offset];
+    return wasm.elementSegments[offset]->name;
   }
 }
 
@@ -2250,8 +2250,8 @@ Expression* SExpressionWasmBuilder::makeTableCopy(Element& s) {
   Index i = 1;
   auto* ret = allocator.alloc<TableCopy>();
   if (s[1]->isStr() && s[2]->isStr()) {
-    ret->srcTable = getTableName(*s[i++]);
     ret->destTable = getTableName(*s[i++]);
+    ret->srcTable = getTableName(*s[i++]);
   } else {
     ret->srcTable = ret->destTable = wasm.tables.front()->name;
   }

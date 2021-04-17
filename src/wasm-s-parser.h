@@ -125,7 +125,6 @@ class SExpressionWasmBuilder {
   std::unordered_map<std::string, size_t> typeIndices;
 
   std::vector<Name> functionNames;
-  std::vector<Name> elemNames;
   std::vector<Name> tableNames;
   std::vector<Name> globalNames;
   std::vector<Name> eventNames;

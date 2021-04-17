@@ -445,8 +445,6 @@ SPEC_TESTS_TO_SKIP = [
     'memory_grow.wast',  # 'assert_return' failure
     'start.wast',  # Assertion failure
     'type.wast',  # 'assertion_invalid' failure
-    'table_init.wast',  # 'register' is not defined in shell
-    'table_copy.wast',  # 'register' is not defined in shell
     'table_get.wast',  # 'ref.extern' is not defined in shell
     'table_grow.wast',  # 'ref.extern' is not defined in shell
     'unreachable.wast',  # Validation failure
