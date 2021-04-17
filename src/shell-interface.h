@@ -117,8 +117,9 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (wasm.memory.exists && !wasm.memory.imported()) {
       memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
     }
-    ModuleUtils::iterDefinedTables(
-      wasm, [&](Table* table) { tables[table->name].resize(table->initial); });
+    ModuleUtils::iterDefinedTables(wasm, [&](Table* table) {
+      tables[table->name].resize(table->initial, Literal(table->type));
+    });
   }
 
   void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
