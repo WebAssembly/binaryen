@@ -2634,8 +2634,19 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printTableHeader(curr);
       o << maybeNewLine;
     }
+
+    ModuleUtils::iterTableSegments(
+      *currModule, curr->name, [&](ElementSegment* segment) {
+        printElementSegment(segment);
+      });
   }
   void visitElementSegment(ElementSegment* curr) {
+    if (curr->table.is() && curr) {
+      return;
+    }
+    printElementSegment(curr);
+  }
+  void printElementSegment(ElementSegment* curr) {
     // Don't print empty segments
     if (curr->data.empty()) {
       return;
@@ -2655,7 +2666,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     doIndent(o, indent);
     o << '(';
     printMedium(o, "elem");
-    if (currModule->elementSegments.size() > 1) {
+    if (curr->hasExplicitName) {
       o << ' ';
       printName(curr->name, o);
     }
