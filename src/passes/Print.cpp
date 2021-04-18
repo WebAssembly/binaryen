@@ -2636,9 +2636,6 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void visitElementSegment(ElementSegment* curr) {
-    printElementSegment(curr);
-  }
-  void printElementSegment(ElementSegment* curr) {
     bool allElementsRefFunc =
       std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
         return entry->is<RefFunc>();
