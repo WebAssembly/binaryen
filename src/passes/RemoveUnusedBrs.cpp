@@ -974,10 +974,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                 if (!EffectAnalyzer(passOptions, features, br->value)
                        .hasSideEffects()) {
                   // We also need to reorder the condition and the value.
-                  if (EffectAnalyzer::canReorder(passOptions,
-                                                 features,
-                                                 br->condition,
-                                                 br->value)) {
+                  if (EffectAnalyzer::canReorder(
+                        passOptions, features, br->condition, br->value)) {
                     ExpressionManipulator::nop(list[0]);
                     replaceCurrent(
                       builder.makeIf(br->condition, br->value, curr));
@@ -1008,11 +1006,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   Expression* old = list[0];
                   Nop nop;
                   list[0] = &nop;
-                  auto canReorder = 
-                      EffectAnalyzer::canReorder(passOptions,
-                                                 features,
-                                                 br->condition,
-                                                 curr);
+                  auto canReorder = EffectAnalyzer::canReorder(
+                    passOptions, features, br->condition, curr);
                   list[0] = old;
                   if (canReorder) {
                     ExpressionManipulator::nop(list[0]);
