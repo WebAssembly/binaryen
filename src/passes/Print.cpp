@@ -2634,23 +2634,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printTableHeader(curr);
       o << maybeNewLine;
     }
-
-    ModuleUtils::iterTableSegments(
-      *currModule, curr->name, [&](ElementSegment* segment) {
-        printElementSegment(segment);
-      });
   }
   void visitElementSegment(ElementSegment* curr) {
-    if (curr->table.is()) {
-      return;
-    }
-    printElementSegment(curr);
-  }
-  void printElementSegment(ElementSegment* curr) {
-    // Don't print empty segments
-    if (curr->data.empty()) {
-      return;
-    }
     bool allElementsRefFunc =
       std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
         return entry->is<RefFunc>();
@@ -2666,7 +2651,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     doIndent(o, indent);
     o << '(';
     printMedium(o, "elem");
-    if (curr->hasExplicitName) {
+    if (currModule->elementSegments.size() > 1) {
       o << ' ';
       printName(curr->name, o);
     }

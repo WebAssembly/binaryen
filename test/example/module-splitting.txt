@@ -427,8 +427,8 @@ Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "primary" "%table" (table $table 1000 funcref))
- (elem (global.get $base) $foo)
  (import "primary" "%global" (global $base i32))
+ (elem (global.get $base) $foo)
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -481,9 +481,9 @@ Secondary:
  (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "primary" "%table" (table $table 1000 funcref))
- (elem (global.get $base) $null $foo)
  (import "primary" "%global" (global $base i32))
  (import "primary" "%null" (func $null))
+ (elem (global.get $base) $null $foo)
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -640,8 +640,8 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $0 1 funcref))
- (elem (i32.const 0) $bar)
  (import "primary" "%foo_0" (func $foo))
+ (elem (i32.const 0) $bar)
  (func $bar
   (call $foo)
  )
@@ -686,8 +686,8 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 4 funcref))
- (elem (i32.const 0) $foo)
- (elem (i32.const 2) $baz)
+ (elem $0 (i32.const 0) $foo)
+ (elem $1 (i32.const 2) $baz)
  (func $baz
   (nop)
  )
@@ -739,9 +739,9 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 4 funcref))
- (elem (global.get $base) $foo $bar $baz)
  (import "primary" "%global" (global $base i32))
  (import "primary" "%bar" (func $bar))
+ (elem (global.get $base) $foo $bar $baz)
  (func $baz
   (nop)
  )
@@ -787,8 +787,8 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 4 funcref))
- (elem (i32.const 0) $foo $bar)
- (elem (i32.const 3) $quux)
+ (elem $0 (i32.const 0) $foo $bar)
+ (elem $1 (i32.const 3) $quux)
  (func $bar
   (nop)
  )
@@ -841,9 +841,9 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 4 funcref))
- (elem (global.get $base) $foo $bar $baz $quux)
  (import "primary" "%global" (global $base i32))
  (import "primary" "%baz" (func $baz))
+ (elem (global.get $base) $foo $bar $baz $quux)
  (func $bar
   (nop)
  )
@@ -888,9 +888,9 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 2 funcref))
- (elem (global.get $base) $foo $bar)
  (import "primary" "%global" (global $base i32))
  (import "primary" "%foo" (func $foo))
+ (elem (global.get $base) $foo $bar)
  (func $bar
   (call $foo)
  )
@@ -933,8 +933,8 @@ Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "primary" "%table" (table $table 2 2 funcref))
- (elem (i32.const 1) $bar)
  (import "primary" "%foo" (func $foo (param i32) (result i32)))
+ (elem (i32.const 1) $bar)
  (func $bar (param $0 i32) (result i32)
   (call $foo
    (i32.const 1)

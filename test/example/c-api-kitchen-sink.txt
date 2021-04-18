@@ -2654,7 +2654,7 @@ validation: 0
  (data (i32.const 10) "hello, world")
  (data (global.get $a-global) "segment data 2")
  (table $0 1 1 funcref)
- (elem $0 (i32.const 0) $fn0 $fn1 $fn2)
+ (elem (i32.const 0) $fn0 $fn1 $fn2)
  (export "export0" (func $fn0))
  (export "export1" (func $fn1))
  (export "export2" (func $fn2))
