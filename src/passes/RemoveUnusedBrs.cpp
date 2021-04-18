@@ -999,17 +999,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   //     (cond)
                   //   )
                   // To do this we must be able to reorder the condition with
-                  // the rest of the block (but not the value).
+                  // the rest of the block (but not the value), and we must be
+                  // able to make the rest of the block always execute, so it
+                  // must not have side effects.
                   // TODO: we can do this when there *are* other refs to $x,
                   //       with a larger refactoring here.
-                  // Test for reordering with a temporary nop.
+
+                  // Test for the conditions with a temporary nop.
                   Expression* old = list[0];
                   Nop nop;
                   list[0] = &nop;
                   auto canReorder = EffectAnalyzer::canReorder(
                     passOptions, features, br->condition, curr);
+                  auto hasSideEffects = EffectAnalyzer(passOptions, features, curr).hasSideEffects();
                   list[0] = old;
-                  if (canReorder) {
+                  if (canReorder && !hasSideEffects) {
                     ExpressionManipulator::nop(list[0]);
                     replaceCurrent(
                       builder.makeSelect(br->condition, br->value, curr));

@@ -215,4 +215,72 @@
       (call $get-i32)
     )
   )
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-3 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $x
+  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-effectful-corner-case-3 (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          ;; we can't do an if because of effects here
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          (local.get $x)
+        )
+      )
+      ;; and we can't do a select because of effects here
+      (call $nothing)
+      ;; the condition cannot be reordered with this
+      (i32.const 100)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-4 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $x
+  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 300)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $get-i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-effectful-corner-case-4 (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          ;; we can't do an if because of effects here
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          (local.get $x)
+        )
+      )
+      (drop (i32.const 300))
+      ;; and we can't do a select because of effects here
+      (call $get-i32)
+    )
+  )
 )
