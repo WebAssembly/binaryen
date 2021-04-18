@@ -554,7 +554,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (rtt.canon $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (ref.cast
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (rtt.canon $struct)
@@ -562,19 +573,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_data
-  ;; CHECK-NEXT:    (ref.cast
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.cast
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (rtt.canon $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_i31
-  ;; CHECK-NEXT:    (ref.cast
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

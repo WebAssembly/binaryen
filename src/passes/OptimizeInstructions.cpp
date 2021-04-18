@@ -1089,9 +1089,11 @@ struct OptimizeInstructions
     // first, as whether it traps or not is not affected by the ref.as. And
     // having the ref.cast first gives us a more specific type for the ref.as.
     if (auto* as = curr->ref->dynCast<RefAs>()) {
-      replaceCurrent(as);
       curr->ref = as->value;
+      curr->finalize();
       as->value = curr;
+      as->finalize();
+      replaceCurrent(as);
       return;
     }
   }
