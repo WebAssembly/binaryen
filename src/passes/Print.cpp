@@ -2654,7 +2654,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     doIndent(o, indent);
     o << '(';
     printMedium(o, "elem");
-    if (currModule->elementSegments.size() > 1) {
+    if (curr->hasExplicitName || currModule->elementSegments.size() > 1) {
       o << ' ';
       printName(curr->name, o);
     }
