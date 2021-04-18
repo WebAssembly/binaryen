@@ -1063,7 +1063,36 @@ struct OptimizeInstructions
         Builder builder(*getModule());
         replaceCurrent(
           builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
+        return;
       }
+    }
+
+    // RefCast passes through the value (even keeping a null a null), without
+    // changing it at all (if the value cannot be cast, it traps, and nothing
+    // flows out) - the only change is the type, which may be more specific. It
+    // can therefore be flipped with RefAs* operations, since they do the same
+    // thing, just more strictly (they trap on null).
+    //
+    // For example, a null cast:
+    //   (ref.cast (ref.as_non_null ..))
+    // to
+    //   (ref.as_non_null (ref.cast ..))
+    // By itself this does nothing, but the ref.as_non_null may then be in a
+    // position in which it can be optimized out.
+    //
+    // Likewise, for another RefAs::
+    //   (ref.cast (ref.as_data ..))
+    // to
+    //   (ref.as_data (ref.cast ..))
+    // If the input is not even data then we get a trap, which this reorders
+    // (and which we allow in general). Otherwise, we may as well do the cast
+    // first, as whether it traps or not is not affected by the ref.as. And
+    // having the ref.cast first gives us a more specific type for the ref.as.
+    if (auto* as = curr->ref->dynCast<RefAs>()) {
+      replaceCurrent(as);
+      curr->ref = as->value;
+      as->value = curr;
+      return;
     }
   }
 

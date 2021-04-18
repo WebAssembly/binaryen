@@ -5,6 +5,8 @@
 (module
   (import "env" "get-i32" (func $get-i32 (result i32)))
 
+  (type $empty (struct))
+
   (type $struct (struct
     (field $i8  (mut i8))
     (field $i16 (mut i16))
@@ -531,6 +533,105 @@
           (local.get $y)
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $flip-cast-of-as-non-null (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $struct $i8
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_func
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_data
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_i31
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $flip-cast-of-as-non-null (param $x anyref)
+    (drop
+      (ref.cast
+        ;; this can be moved through the ref.cast outward.
+        (ref.as_non_null
+          (local.get $x)
+        )
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+      ;; an example of how this helps: the struct.get will trap on null anyhow
+      (struct.get_u $struct 0
+        (ref.cast
+          ;; this can be moved through the ref.cast outward.
+          (ref.as_non_null
+            (local.get $x)
+          )
+          (rtt.canon $struct)
+        )
+      )
+    )
+    ;; other ref.as* operations work as well
+    (drop
+      (ref.cast
+        (ref.as_func
+          (local.get $x)
+        )
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+      (ref.cast
+        (ref.as_data
+          (local.get $x)
+        )
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+      (ref.cast
+        (ref.as_i31
+          (local.get $x)
+        )
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+     (ref.as_func
+      (ref.cast
+       (local.get $x)
+       (rtt.canon $struct)
+      )
+     )
     )
   )
 )
