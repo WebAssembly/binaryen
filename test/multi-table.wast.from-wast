@@ -1,11 +1,11 @@
 (module
  (type $none_=>_none (func))
  (import "a" "b" (table $t1 1 10 funcref))
- (elem (table $t1) (i32.const 0) func $f)
+ (elem $0 (table $t1) (i32.const 0) func $f)
  (global $g1 (ref null $none_=>_none) (ref.func $f))
  (global $g2 i32 (i32.const 0))
  (table $t2 3 3 funcref)
- (elem (table $t2) (i32.const 0) func $f)
+ (elem $1 (table $t2) (i32.const 0) func $f)
  (elem $activeNonZeroOffset (table $t2) (i32.const 1) func $f $g)
  (table $t3 4 4 funcref)
  (elem $e3-1 (table $t3) (global.get $g2) funcref (ref.func $f) (ref.null func))

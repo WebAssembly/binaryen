@@ -2662,7 +2662,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     doIndent(o, indent);
     o << '(';
     printMedium(o, "elem");
-    if (curr->hasExplicitName) {
+    if (currModule->elementSegments.size() > 1) {
       o << ' ';
       printName(curr->name, o);
     }

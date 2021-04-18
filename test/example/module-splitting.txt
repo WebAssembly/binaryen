@@ -686,8 +686,8 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 4 funcref))
- (elem (i32.const 0) $foo)
- (elem (i32.const 2) $baz)
+ (elem $0 (i32.const 0) $foo)
+ (elem $1 (i32.const 2) $baz)
  (func $baz
   (nop)
  )
@@ -787,8 +787,8 @@ Secondary:
 (module
  (type $none_=>_none (func))
  (import "primary" "%table" (table $table 4 funcref))
- (elem (i32.const 0) $foo $bar)
- (elem (i32.const 3) $quux)
+ (elem $0 (i32.const 0) $foo $bar)
+ (elem $1 (i32.const 3) $quux)
  (func $bar
   (nop)
  )
