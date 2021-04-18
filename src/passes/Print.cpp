@@ -2634,16 +2634,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printTableHeader(curr);
       o << maybeNewLine;
     }
-
-    ModuleUtils::iterTableSegments(
-      *currModule, curr->name, [&](ElementSegment* segment) {
-        printElementSegment(segment);
-      });
   }
   void visitElementSegment(ElementSegment* curr) {
-    if (curr->table.is() && curr) {
-      return;
-    }
     printElementSegment(curr);
   }
   void printElementSegment(ElementSegment* curr) {
