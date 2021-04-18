@@ -7,7 +7,6 @@
  (global $__asyncify_data (mut i32) (i32.const 0))
  (memory $0 1 2)
  (table $0 1 funcref)
- (elem (i32.const 0))
  (export "asyncify_start_unwind" (func $asyncify_start_unwind))
  (export "asyncify_stop_unwind" (func $asyncify_stop_unwind))
  (export "asyncify_start_rewind" (func $asyncify_start_rewind))

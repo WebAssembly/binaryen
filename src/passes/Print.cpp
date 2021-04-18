@@ -2636,6 +2636,10 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
   }
   void visitElementSegment(ElementSegment* curr) {
+    // Don't print empty segments
+    if (curr->data.empty()) {
+      return;
+    }
     bool allElementsRefFunc =
       std::all_of(curr->data.begin(), curr->data.end(), [](Expression* entry) {
         return entry->is<RefFunc>();
