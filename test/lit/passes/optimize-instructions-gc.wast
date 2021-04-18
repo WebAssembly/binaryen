@@ -625,13 +625,5 @@
         (rtt.canon $struct)
       )
     )
-    (drop
-     (ref.as_func
-      (ref.cast
-       (local.get $x)
-       (rtt.canon $struct)
-      )
-     )
-    )
   )
 )
