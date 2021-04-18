@@ -1011,7 +1011,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   list[0] = &nop;
                   auto canReorder = EffectAnalyzer::canReorder(
                     passOptions, features, br->condition, curr);
-                  auto hasSideEffects = EffectAnalyzer(passOptions, features, curr).hasSideEffects();
+                  auto hasSideEffects =
+                    EffectAnalyzer(passOptions, features, curr)
+                      .hasSideEffects();
                   list[0] = old;
                   if (canReorder && !hasSideEffects) {
                     ExpressionManipulator::nop(list[0]);
