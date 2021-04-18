@@ -26,4 +26,104 @@
       )
     )
   )
+
+  (func $restructure-br_if (param $x i32) (result i32)
+    ;; this block+br_if can be turned into an if.
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (i32.const 100)
+          (local.get $x)
+        )
+      )
+      (drop (i32.const 200))
+      (i32.const 300)
+    )
+  )
+
+  (func $nothing)
+
+  (func $restructure-br_if-condition-reorderable (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (i32.const 100)
+          ;; the condition has side effects, but can be reordered with the value
+          (block (result i32)
+            (call $nothing)
+            (local.get $x)
+          )
+        )
+      )
+      (drop (i32.const 200))
+      (i32.const 300)
+    )
+  )
+
+  (func $restructure-br_if-value-effectful (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          ;; the value has side effects, but we can use a select instead
+          ;; of an if, which keeps the value first
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          ;; the condition has side effects too, but can be be reordered
+          ;; to the end of the block
+          (block (result i32)
+            (call $nothing)
+            (local.get $x)
+          )
+        )
+      )
+      (drop (i32.const 200))
+      (i32.const 300)
+    )
+  )
+
+  (func $restructure-br_if-value-effectful-corner-case-1 (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          (block (result i32)
+            (call $nothing)
+            (local.get $x)
+          )
+        )
+      )
+      ;; the condition cannot be reordered with this
+      (call $nothing)
+      (i32.const 300)
+    )
+  )
+
+  (func $get-i32 (result i32)
+    (i32.const 400)
+  )
+
+  (func $restructure-br_if-value-effectful-corner-case-2 (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          (block (result i32)
+            (call $nothing)
+            (local.get $x)
+          )
+        )
+      )
+      (drop (i32.const 300))
+      ;; the condition cannot be reordered with this
+      (call $get-i32)
+    )
+  )
 )
