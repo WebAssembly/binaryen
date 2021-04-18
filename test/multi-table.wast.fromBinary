@@ -14,6 +14,7 @@
  (elem $passive-1 func $f $g)
  (elem $passive-2 funcref (ref.func $f) (ref.func $g) (ref.null func))
  (elem $passive-3 (ref null $none_=>_none) (ref.func $f) (ref.func $g) (ref.null $none_=>_none) (global.get $g1))
+ (elem $empty func)
  (elem declare func $h)
  (func $f
   (drop
