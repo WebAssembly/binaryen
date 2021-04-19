@@ -223,6 +223,9 @@ inline Index getZeroExtBits(Expression* curr) {
 // and other operations that receive a value and let it flow through them. If
 // there is no value falling through, returns the node itself (as that is the
 // value that trivially falls through, with 0 steps in the middle).
+// Note that this returns the value that would fall through if one does in fact
+// do so. For example, the final element in a block may not fall through if we
+// hit a return or a trap or an exception is thrown before we get there.
 inline Expression* getFallthrough(Expression* curr,
                                   const PassOptions& passOptions,
                                   FeatureSet features) {
