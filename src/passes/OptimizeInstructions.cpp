@@ -732,9 +732,11 @@ struct OptimizeInstructions
     }
     // finally, try more expensive operations on the curr in
     // the case that they have no side effects
-    if (equalAndRemovable(curr->left, curr->right)) {
-      if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
-        return replaceCurrent(ret);
+    if (!effects(curr->left).hasSideEffects()) {
+      if (ExpressionAnalyzer::equal(curr->left, curr->right)) {
+        if (auto* ret = optimizeBinaryWithEqualEffectlessChildren(curr)) {
+          return replaceCurrent(ret);
+        }
       }
     }
 
@@ -1674,8 +1676,10 @@ private:
     if (auto* left = binary->left->dynCast<Binary>()) {
       if (auto* right = binary->right->dynCast<Binary>()) {
         if (left->op != right->op &&
-            equalAndRemovable(left->left, right->left) &&
-            equalAndRemovable(left->right, right->right)) {
+            ExpressionAnalyzer::equal(left->left, right->left) &&
+            ExpressionAnalyzer::equal(left->right, right->right) &&
+            !effects(left->left).hasSideEffects() &&
+            !effects(left->right).hasSideEffects()) {
           switch (left->op) {
             //   (x > y) | (x == y)    ==>    x >= y
             case EqInt32: {
