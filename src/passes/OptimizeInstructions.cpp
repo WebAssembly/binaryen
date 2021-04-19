@@ -917,6 +917,27 @@ struct OptimizeInstructions
     }
   }
 
+  void visitLocalSet(LocalSet* curr) {
+    //   (local.tee (ref.as_non_null ..))
+    // can be reordered to
+    //   (ref.as_non_null (local.tee ..))
+    // if the local is nullable (which it must be until some form of let is
+    // added). The reordering allows the ref.as to be potentially optimized
+    // further based on where the value flows to.
+    if (curr->isTee()) {
+      if (auto* as = curr->value->dynCast<RefAs>()) {
+        if (as->op == RefAsNonNull &&
+            getFunction()->getLocalType(curr->index).isNullable()) {
+          curr->value = as->value;
+          curr->finalize();
+          as->value = curr;
+          as->finalize();
+          replaceCurrent(as);
+        }
+      }
+    }
+  }
+
   void visitBreak(Break* curr) {
     if (curr->condition) {
       curr->condition = optimizeBoolean(curr->condition);
@@ -1072,6 +1093,36 @@ struct OptimizeInstructions
         Builder builder(*getModule());
         replaceCurrent(
           builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
+        return;
+      }
+    }
+
+    // ref.cast can be reordered with ref.as_non_null,
+    //
+    //   (ref.cast (ref.as_non_null ..))
+    // =>
+    //   (ref.as_non_null (ref.cast ..))
+    //
+    // This is valid because both pass through the value if they do not trap,
+    // and so reordering does not change whether a trap happens (and reordering
+    // traps is allowed), and does not change the value flowing out at the end.
+    // It is better to have the ref.as_non_null on the outside since it allows
+    // outer instructions to potentially optimize it away (should we find
+    // optimizations that can fold away a ref.cast on an outer instruction, that
+    // might motivate changing this).
+    //
+    // Note that other ref.as* methods, like ref.as_func, are not obviously
+    // worth reordering with ref.cast. For example, the type of ref.as_data is
+    // (ref data), which is less specific than what ref.cast would have.
+    // TODO optimize ref.cast of ref.as_[func|data|i31] in other ways.
+    if (auto* as = curr->ref->dynCast<RefAs>()) {
+      if (as->op == RefAsNonNull) {
+        curr->ref = as->value;
+        curr->finalize();
+        as->value = curr;
+        as->finalize();
+        replaceCurrent(as);
+        return;
       }
     }
   }
