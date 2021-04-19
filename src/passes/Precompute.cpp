@@ -87,6 +87,15 @@ public:
     return ConstantExpressionRunner<
       PrecomputingExpressionRunner>::visitLocalGet(curr);
   }
+
+  // Heap data may be modified in ways we do not see. We would need escape
+  // analysis to avoid that risk. For now, disallow all heap operations.
+  // TODO: immutability might also be good enough
+  Flow visitStructNew(StructNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStructGet(StructGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayNew(ArrayNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
 };
 
 struct Precompute
@@ -226,16 +235,21 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
-    if (!canEmitConstantFor(curr->type)) {
-      return Flow(NONCONSTANT_FLOW);
-    }
+    Flow flow;
     try {
-      return PrecomputingExpressionRunner(
-               getModule(), getValues, replaceExpression)
-        .visit(curr);
+      flow =
+        PrecomputingExpressionRunner(getModule(), getValues, replaceExpression)
+          .visit(curr);
     } catch (PrecomputingExpressionRunner::NonconstantException&) {
       return Flow(NONCONSTANT_FLOW);
     }
+    // If we are replacing the expression, then the resulting value must be of
+    // a type we can emit a constant for.
+    if (!flow.breaking() && replaceExpression &&
+        !canEmitConstantFor(flow.values)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+    return flow;
   }
 
   // Precomputes the value of an expression, as opposed to the expression
@@ -286,6 +300,17 @@ private:
         if (setValues[set].isConcrete()) {
           continue; // already known constant
         }
+        // Precompute the value. Note that this executes the code from scratch
+        // each time we reach this point, and so we need to be careful about
+        // repeating side effects if those side effects are expressed *in the
+        // value*. A case where that can happen is GC data (each struct.new
+        // creates a new, unique struct, even if the data is equal), and so
+        // PrecomputingExpressionRunner will return a nonconstant flow for all
+        // GC heap operations.
+        // (Other side effects are fine; if an expression does a call and we
+        // somehow know the entire expression precomputes to a 42, then we can
+        // propagate that 42 along to the users, regardless of whatever the call
+        // did globally.)
         auto values = setValues[set] =
           precomputeValue(Properties::getFallthrough(
             set->value, getPassOptions(), getModule()->features));
@@ -360,19 +385,22 @@ private:
     if (value.isNull()) {
       return true;
     }
-    // A function is fine to emit a constant for - we'll emit a RefFunc, which
-    // is compact and immutable, so there can't be a problem.
-    if (value.type.isFunction()) {
-      return true;
-    }
-    // All other reference types cannot be precomputed.
-    if (value.type.isRef()) {
-      return false;
-    }
     return canEmitConstantFor(value.type);
   }
 
   bool canEmitConstantFor(Type type) {
+    // A function is fine to emit a constant for - we'll emit a RefFunc, which
+    // is compact and immutable, so there can't be a problem.
+    if (type.isFunction()) {
+      return true;
+    }
+    // All other reference types cannot be precomputed. Even an immutable GC
+    // reference is not currently something this pass can handle, as it will
+    // evaluate and reevaluate code multiple times in e.g. optimizeLocals, see
+    // the comment above.
+    if (type.isRef()) {
+      return false;
+    }
     // For now, don't try to precompute an Rtt. TODO figure out when that would
     // be safe and useful.
     return !type.isRtt();

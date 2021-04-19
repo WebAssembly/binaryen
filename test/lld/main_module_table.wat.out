@@ -15,7 +15,7 @@
   "tableSize": 0,
   "declares": [
   ],
-  "externs": [
+  "globalImports": [
     "__stack_pointer",
     "__stdio_write"
   ],

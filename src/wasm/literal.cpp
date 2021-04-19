@@ -350,6 +350,9 @@ bool Literal::operator==(const Literal& other) const {
       assert(func.is() && other.func.is());
       return func == other.func;
     }
+    if (type.isData()) {
+      return gcData == other.gcData;
+    }
     // other non-null reference type literals cannot represent concrete values,
     // i.e. there is no concrete externref, anyref or eqref other than null.
     WASM_UNREACHABLE("unexpected type");

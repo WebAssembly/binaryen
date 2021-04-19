@@ -105,7 +105,7 @@
   "declares": [
     "emscripten_asm_const_int"
   ],
-  "externs": [
+  "globalImports": [
     "__stack_pointer",
     "__memory_base",
     "__table_base",
