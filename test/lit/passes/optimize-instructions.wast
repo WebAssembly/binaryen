@@ -11701,4 +11701,121 @@
       (f64.abs (f64.add (local.get $x0) (local.get $x0)))
     ))
   )
+  ;; CHECK:      (func $ternary (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary (param $x i32) (param $y i32)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+        (local.get $x)
+      )
+    )
+    ;; if works too
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-no (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no (param $x i32) (param $y i32)
+    (drop
+      (select
+        (i32.const 2) ;; only 0 and 1 work
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+  )
 )
