@@ -1028,7 +1028,7 @@ void RefAs::finalize() {
       type = Type(value->type.getHeapType(), NonNullable);
       break;
     case RefAsFunc:
-      type = Type::funcref; // TODO not null!
+      type = Type::funcref;
       break;
     case RefAsData:
       type = Type::dataref;
