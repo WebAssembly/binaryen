@@ -1186,7 +1186,7 @@ private:
   // at a time, and its inputs).
   bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
     // First, check for side effects. If there are any, then we can't even
-    // assume things like a local.gets of the same index being identical.
+    // assume things like local.get's of the same index being identical.
     PassOptions passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, getModule()->features, left)
           .hasSideEffects() ||
@@ -1205,6 +1205,9 @@ private:
     // side effect, but which results in different references:
     // repeatedly calling (struct.new $foo)'s output will return different
     // results (while i32.const etc. of course does not).
+    // Note that allocations may have appeared in the original inputs to this
+    // function, and skipped when we focused on what falls through; since there
+    // are no side effects, any allocations there cannot reach the fallthrough.
     if (left->type.isRef()) {
       if (FindAll<StructNew>(left).has() || FindAll<ArrayNew>(left).has()) {
         return false;
