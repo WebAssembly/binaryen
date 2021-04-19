@@ -916,6 +916,27 @@ struct OptimizeInstructions
     }
   }
 
+  void visitLocalSet(LocalSet* curr) {
+    //   (local.tee (ref.as_non_null ..))
+    // can be reordered to
+    //   (ref.as_non_null (local.tee ..))
+    // if the local is nullable (which it must be until some form of let is
+    // added). The reordering allows the ref.as to be potentially optimized
+    // further based on where the value flows to.
+    if (curr->isTee()) {
+      if (auto* as = curr->value->dynCast<RefAs>()) {
+        if (as->op == RefAsNonNull &&
+            getFunction()->getLocalType(curr->index).isNullable()) {
+          curr->value = as->value;
+          curr->finalize();
+          as->value = curr;
+          as->finalize();
+          replaceCurrent(as);
+        }
+      }
+    }
+  }
+
   void visitBreak(Break* curr) {
     if (curr->condition) {
       curr->condition = optimizeBoolean(curr->condition);

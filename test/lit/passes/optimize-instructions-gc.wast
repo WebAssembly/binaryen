@@ -632,4 +632,24 @@
       )
     )
   )
+  ;; CHECK:      (func $flip-tee-of-as-non-null (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $flip-tee-of-as-non-null (param $x anyref)
+    (drop
+      (local.tee $x
+        ;; this can be moved through the tee outward.
+        (ref.as_non_null
+          (local.get $x)
+        )
+        (rtt.canon $struct)
+      )
+    )
+  )
 )
