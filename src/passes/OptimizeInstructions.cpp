@@ -2726,14 +2726,14 @@ private:
         return false;
       };
       if (check(ifTrue, ifFalse) || check(ifFalse, ifTrue)) {
-        auto updateArm = [&](Expression* arm) {
+        auto updateArm = [&](Expression* arm) -> Expression* {
           if (arm == un) {
             // This is the arm that had the eqz, which we need to remove.
             return un->value;
           } else {
             // This is the arm with the constant, which we need to flip.
             c->value = Literal(int32_t(1 - c->value.geti32()));
-            return arm;
+            return c;
           }
         };
         ifTrue = updateArm(ifTrue);
