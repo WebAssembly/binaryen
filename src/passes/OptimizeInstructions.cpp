@@ -2687,7 +2687,10 @@ private:
 
   // Optimize an if-else or a select, something with a condition and two
   // arms with outputs.
-  void optimizeTernary(Expression* curr, Expression* condition, Expression*& ifTrue, Expression*& ifFalse) {
+  void optimizeTernary(Expression* curr,
+                       Expression* condition,
+                       Expression*& ifTrue,
+                       Expression*& ifFalse) {
     if (curr->type == Type::unreachable) {
       return;
     }
@@ -2713,13 +2716,10 @@ private:
     //  )
     {
       Unary* un;
-      Expression *x;
+      Expression* x;
       Const* c;
       auto check = [&](Expression* a, Expression* b) {
-        if (matches(a,
-                   unary(&un, EqZInt32,
-                         any(&x))) &&
-                matches(b, ival(&c))) {
+        if (matches(a, unary(&un, EqZInt32, any(&x))) && matches(b, ival(&c))) {
           auto value = c->value.geti32();
           return value == 0 || value == 1;
         }
