@@ -554,33 +554,27 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (rtt.canon $struct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (ref.as_func
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (rtt.canon $struct)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.cast
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:      (rtt.canon $struct)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (ref.as_data
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (ref.as_i31
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -606,7 +600,7 @@
         )
       )
     )
-    ;; other ref.as* operations work as well
+    ;; other ref.as* operations are ignored for now
     (drop
       (ref.cast
         (ref.as_func
