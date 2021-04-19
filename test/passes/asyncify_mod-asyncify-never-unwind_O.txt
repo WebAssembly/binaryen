@@ -17,8 +17,8 @@
  (export "asyncify_get_state" (func $asyncify_get_state))
  (func $calls-import (; has Stack IR ;)
   (if
-   (select
-    (i32.eqz
+   (i32.eqz
+    (select
      (if (result i32)
       (i32.eq
        (global.get $__asyncify_state)
@@ -42,9 +42,9 @@
       )
       (i32.const 0)
      )
+     (i32.const 0)
+     (global.get $__asyncify_state)
     )
-    (i32.const 1)
-    (global.get $__asyncify_state)
    )
    (call $import)
   )

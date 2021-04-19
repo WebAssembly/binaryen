@@ -863,6 +863,7 @@ struct OptimizeInstructions
     if (auto* ret = optimizeSelect(curr)) {
       return replaceCurrent(ret);
     }
+    optimizeTernary(curr, curr->condition, curr->ifTrue, curr->ifFalse);
   }
 
   void visitGlobalSet(GlobalSet* curr) {
@@ -913,6 +914,7 @@ struct OptimizeInstructions
           return replaceCurrent(ret);
         }
       }
+      optimizeTernary(curr, curr->condition, curr->ifTrue, curr->ifFalse);
     }
   }
 
@@ -2680,6 +2682,65 @@ private:
       }
       default:
         return false;
+    }
+  }
+
+  // Optimize an if-else or a select, something with a condition and two
+  // arms with outputs.
+  void optimizeTernary(Expression* curr, Expression* condition, Expression*& ifTrue, Expression*& ifFalse) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    using namespace Match;
+    Builder builder(*getModule());
+
+    // If one arm is an operation and the other is an appropriate constant, we
+    // can move the operation outside (where it may be further optimized), e.g.
+    //
+    //  (select
+    //    (i32.eqz (X))
+    //    (i32.const 0|1)
+    //    (Y)
+    //  )
+    // =>
+    //  (i32.eqz
+    //    (select
+    //      (X)
+    //      (i32.const 1|0)
+    //      (Y)
+    //    )
+    //  )
+    {
+      Unary* un;
+      Expression *x;
+      Const* c;
+      auto check = [&](Expression* a, Expression* b) {
+        if (matches(a,
+                   unary(&un, EqZInt32,
+                         any(&x))) &&
+                matches(b, ival(&c))) {
+          auto value = c->value.geti32();
+          return value == 0 || value == 1;
+        }
+        return false;
+      };
+      if (check(ifTrue, ifFalse) || check(ifFalse, ifTrue)) {
+        auto updateArm = [&](Expression* arm) {
+          if (arm == un) {
+            // This is the arm that had the eqz, which we need to remove.
+            return un->value;
+          } else {
+            // This is the arm with the constant, which we need to flip.
+            c->value = Literal(int32_t(1 - c->value.geti32()));
+            return arm;
+          }
+        };
+        ifTrue = updateArm(ifTrue);
+        ifFalse = updateArm(ifFalse);
+        un->value = curr;
+        return replaceCurrent(un);
+      }
     }
   }
 };
