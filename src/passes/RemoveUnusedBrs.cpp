@@ -986,14 +986,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   // select:
                   //   (block $x
                   //     (br_if $x (value) (cond))
-                  //     .., no other references to $x
+                  //     ..., no other references to $x
                   //     ..final element..
                   //   )
                   // =>
                   //   (select
                   //     (value)
                   //     (block $x
-                  //       .., no other references to $x
+                  //       ..., no other references to $x
                   //       ..final element..
                   //     )
                   //     (cond)
@@ -1005,9 +1005,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   // TODO: we can do this when there *are* other refs to $x,
                   //       with a larger refactoring here.
 
-                  // Test for the conditions with a temporary nop.
+                  // Test for the conditions with a temporary nop instead of the
+                  // br_if.
                   Expression* old = list[0];
                   Nop nop;
+                  // After this assignment, curr is what is left in the block
+                  // after ignoring the br_if.
                   list[0] = &nop;
                   auto canReorder = EffectAnalyzer::canReorder(
                     passOptions, features, br->condition, curr);
