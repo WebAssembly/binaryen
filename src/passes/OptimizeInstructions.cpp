@@ -1088,34 +1088,33 @@ struct OptimizeInstructions
       }
     }
 
-    // RefCast passes through the value (even keeping a null a null), without
-    // changing it at all (if the value cannot be cast, it traps, and nothing
-    // flows out) - the only change is the type, which may be more specific. It
-    // can therefore be flipped with RefAs* operations, since they do the same
-    // thing, just more strictly (they trap on null).
+    // ref.cast can be reordered with ref.as_non_null,
     //
-    // For example, a null cast:
     //   (ref.cast (ref.as_non_null ..))
-    // to
+    // =>
     //   (ref.as_non_null (ref.cast ..))
-    // By itself this does nothing, but the ref.as_non_null may then be in a
-    // position in which it can be optimized out.
     //
-    // Likewise, for another RefAs::
-    //   (ref.cast (ref.as_data ..))
-    // to
-    //   (ref.as_data (ref.cast ..))
-    // If the input is not even data then we get a trap, which this reorders
-    // (and which we allow in general). Otherwise, we may as well do the cast
-    // first, as whether it traps or not is not affected by the ref.as. And
-    // having the ref.cast first gives us a more specific type for the ref.as.
+    // This is valid because both pass through the value if they do not trap,
+    // and so reordering does not change whether a trap happens (and reordering
+    // traps is allowed), and does not change the value flowing out at the end.
+    // It is better to have the ref.as_non_null on the outside since it allows
+    // outer instructions to potentially optimize it away (should we find
+    // optimizations that can fold away a ref.cast on an outer instruction, that
+    // might motivate changing this).
+    //
+    // Note that other ref.as* methods, like ref.as_func, are not obviously
+    // worth reordering with ref.cast. For example, the type of ref.as_data is
+    // (ref data), which is less specific than what ref.cast would have.
+    // TODO optimize ref.cast of ref.as_[func|data|i31] in other ways.
     if (auto* as = curr->ref->dynCast<RefAs>()) {
-      curr->ref = as->value;
-      curr->finalize();
-      as->value = curr;
-      as->finalize();
-      replaceCurrent(as);
-      return;
+      if (as->op == RefAsNonNull) {
+        curr->ref = as->value;
+        curr->finalize();
+        as->value = curr;
+        as->finalize();
+        replaceCurrent(as);
+        return;
+      }
     }
   }
 
