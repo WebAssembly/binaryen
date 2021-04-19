@@ -995,7 +995,7 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
-    if (equalAndRemovable(curr->left, curr->right)) {
+    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
       replaceCurrent(
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
     }
@@ -1179,14 +1179,14 @@ private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
 
-  // Check if two inputs to an instruction are equal, and can be removed,
-  // under the assumption that they are inputs to the same instruction, and so
-  // they execute one after the other, with nothing else in the middle. (That is
-  // the only case this pass cares about as it performs peephole optimizations.)
-  // Under that assumption, all we need to check is that they are structurally
-  // equal, and that they have no side effects (as if they did, we could not
-  // fold them together or otherwise remove any part of them).
-  bool equalAndRemovable(Expression* left, Expression* right) {
+  // Check if two consecutive inputs to an instruction are equal. As they are
+  // consecutive, no code can execeute in between them, which simplies the
+  // problem here (and which is the case we care about in this pass, which does
+  // simple peephole optimizations - all we care about is a single instruction
+  // at a time, and its inputs).
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+    // First, check for side effects. If there are any, then we can't even
+    // assume things like a local.gets of the same index being identical.
     PassOptions passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, getModule()->features, left)
           .hasSideEffects() ||
@@ -1194,7 +1194,7 @@ private:
           .hasSideEffects()) {
       return false;
     }
-    // Ignore extraneous things and compare.
+    // Ignore extraneous things and compare them structurally.
     left = Properties::getFallthrough(left, passOptions, getModule()->features);
     right =
       Properties::getFallthrough(right, passOptions, getModule()->features);

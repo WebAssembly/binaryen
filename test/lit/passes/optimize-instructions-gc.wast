@@ -661,6 +661,32 @@
         )
       )
     )
+    ;; but irrelevant allocations do not prevent optimization
+    (drop
+      (ref.eq
+        (block (result eqref)
+          ;; an allocation that does not trouble us
+          (drop
+            (struct.new_default_with_rtt $struct
+              (rtt.canon $struct)
+            )
+          )
+          (local.get $x)
+        )
+        (block (result eqref)
+          (drop
+            (struct.new_default_with_rtt $struct
+              (rtt.canon $struct)
+            )
+          )
+          ;; add a nop to make the two inputs to ref.eq not structurally equal,
+          ;; but in a way that does not matter (since only the value falling
+          ;; out does)
+          (nop)
+          (local.get $x)
+        )
+      )
+    )
   )
 
   ;; CHECK:      (func $ref-eq-ref-cast (param $x eqref)
