@@ -1179,12 +1179,13 @@ private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
 
-  // Check if two inputs to an instruction are equal, and can be removed. This
-  // is simpler than the general question of equality because we know they are
-  // inputs to the same instruction, and so they execute one after the other,
-  // with nothing else in the middle. So all we need to check is that they are
-  // structurally equal, and that they have no side effects (as if they did, we
-  // could not fold them together or otherwise remove any part of them).
+  // Check if two inputs to an instruction are equal, and can be removed,
+  // under the assumption that they are inputs to the same instruction, and so
+  // they execute one after the other, with nothing else in the middle. (That is
+  // the only case this pass cares about as it performs peephole optimizations.)
+  // Under that assumption, all we need to check is that they are structurally
+  // equal, and that they have no side effects (as if they did, we could not
+  // fold them together or otherwise remove any part of them).
   bool equalAndRemovable(Expression* left, Expression* right) {
     PassOptions passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, getModule()->features, left)
