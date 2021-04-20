@@ -178,6 +178,32 @@ Secondary:
 Before:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (table $table 2 funcref)
+ (elem (i32.const 0) $foo $foo)
+ (func $foo (param $0 i32) (result i32)
+  (local.get $0)
+ )
+)
+Keeping: foo
+After:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (table $table 2 funcref)
+ (elem (i32.const 0) $foo $foo)
+ (export "%table" (table $table))
+ (func $foo (param $0 i32) (result i32)
+  (local.get $0)
+ )
+)
+Secondary:
+(module
+ (import "primary" "%table" (table $table 2 funcref))
+)
+
+
+Before:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
  (table $table 1 funcref)
  (elem (global.get $base) $foo)
@@ -201,6 +227,36 @@ After:
 Secondary:
 (module
  (import "primary" "%table" (table $table 1 funcref))
+ (import "primary" "%global" (global $base i32))
+)
+
+
+Before:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "env" "base" (global $base i32))
+ (table $table 2 funcref)
+ (elem (global.get $base) $foo $foo)
+ (func $foo (param $0 i32) (result i32)
+  (local.get $0)
+ )
+)
+Keeping: foo
+After:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "env" "base" (global $base i32))
+ (table $table 2 funcref)
+ (elem (global.get $base) $foo $foo)
+ (export "%table" (table $table))
+ (export "%global" (global $base))
+ (func $foo (param $0 i32) (result i32)
+  (local.get $0)
+ )
+)
+Secondary:
+(module
+ (import "primary" "%table" (table $table 2 funcref))
  (import "primary" "%global" (global $base i32))
 )
 
@@ -360,6 +416,36 @@ Secondary:
 Before:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (table $table 2 funcref)
+ (elem (i32.const 0) $foo $foo)
+ (func $foo (param $0 i32) (result i32)
+  (local.get $0)
+ )
+)
+Keeping: <none>
+After:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+ (table $table 2 funcref)
+ (elem (i32.const 0) $placeholder_0 $placeholder_1)
+ (export "%table" (table $table))
+)
+Secondary:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "primary" "%table" (table $table 2 funcref))
+ (elem (i32.const 0) $foo $foo)
+ (func $foo (param $0 i32) (result i32)
+  (local.get $0)
+ )
+)
+
+
+Before:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (table $table 1000 funcref)
  (elem (i32.const 42) $foo)
  (export "foo" (func $foo))
@@ -428,6 +514,48 @@ Secondary:
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "primary" "%table" (table $table 1000 funcref))
  (elem (global.get $base) $foo)
+ (import "primary" "%global" (global $base i32))
+ (func $foo (param $0 i32) (result i32)
+  (local.get $0)
+ )
+)
+
+
+Before:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "env" "base" (global $base i32))
+ (table $table 1000 funcref)
+ (elem (global.get $base) $foo $foo)
+ (export "foo" (func $foo))
+ (func $foo (param $0 i32) (result i32)
+  (local.get $0)
+ )
+)
+Keeping: <none>
+After:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "env" "base" (global $base i32))
+ (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ (import "placeholder" "1" (func $placeholder_1 (param i32) (result i32)))
+ (table $table 1000 funcref)
+ (elem (global.get $base) $placeholder_0 $placeholder_1)
+ (export "foo" (func $foo))
+ (export "%table" (table $table))
+ (export "%global" (global $base))
+ (func $foo (param $0 i32) (result i32)
+  (call_indirect $table (type $i32_=>_i32)
+   (local.get $0)
+   (global.get $base)
+  )
+ )
+)
+Secondary:
+(module
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (import "primary" "%table" (table $table 1000 funcref))
+ (elem (global.get $base) $foo $foo)
  (import "primary" "%global" (global $base i32))
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
