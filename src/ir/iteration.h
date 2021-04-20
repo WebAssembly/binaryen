@@ -108,6 +108,53 @@ struct ValueChildScanner : PostWalker<SubType, Visitor> {
 using ChildIterator = AbstractChildIterator<PostWalker>;
 using ValueChildIterator = AbstractChildIterator<ValueChildScanner>;
 
+class ChildPointerIterator {
+  struct Iterator {
+    const ChildPointerIterator& parent;
+    Index index;
+
+    Iterator(const ChildPointerIterator& parent, Index index) : parent(parent), index(index) {}
+
+    bool operator!=(const Iterator& other) const {
+      return index != other.index || &parent != &(other.parent);
+    }
+
+    void operator++() { index++; }
+
+    Expression** operator*() { return parent.children[index]; }
+  };
+
+public:
+  SmallVector<Expression**, 4> children;
+
+  ChildPointerIterator(Expression* parent) {
+    struct Traverser : public PostWalker<Traverser> {
+      Expression* parent;
+      SmallVector<Expression**, 4>* children;
+
+      // We need to scan subchildren exactly once - just the parent.
+      bool scanned = false;
+
+      static void scan(Traverser* self, Expression** currp) {
+        if (!self->scanned) {
+          self->scanned = true;
+          Scanner<Traverser, UnifiedExpressionVisitor<Traverser>>::scan(self,
+                                                                        currp);
+        } else {
+          // This is one of the children. Do not scan further, just note it.
+          self->children->push_back(currp);
+        }
+      }
+    } traverser;
+    traverser.parent = parent;
+    traverser.children = &children;
+    traverser.walk(parent);
+  }
+
+  Iterator begin() const { return Iterator(*this, 0); }
+  Iterator end() const { return Iterator(*this, children.size()); }
+};
+
 // Returns true if the current expression contains a certain kind of expression,
 // within the given depth of BFS. If depth is -1, this searches all children.
 template<typename T> bool containsChild(Expression* parent, int depth = -1) {

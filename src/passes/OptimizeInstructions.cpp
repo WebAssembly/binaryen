@@ -27,6 +27,7 @@
 #include <ir/cost.h>
 #include <ir/effects.h>
 #include <ir/gc-type-utils.h>
+#include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
@@ -2740,6 +2741,48 @@ private:
         ifFalse = updateArm(ifFalse);
         un->value = curr;
         return replaceCurrent(un);
+      }
+    }
+  }
+
+  {
+    // Identical code on both arms can be folded out, e.g.
+    //  (select
+    //    (i32.eqz (X))
+    //    (i32.eqz (Y))
+    //    (Z)
+    //  )
+    // =>
+    //  (i32.eqz
+    //    (select
+    //      (X)
+    //      (Y)
+    //      (Z)
+    //    )
+    //  )
+    //
+    if (ExpressionAnalyzer::shallowEqual(ifTrue, ifFalse)) {
+      // TODO: consider the case with more children than 1. 1 is easy to handle
+      //       as we have no other effects to consider, but 2+ are possible too.
+      ChildIterator ifTrueChildren(ifTrue);
+      if (ifTrueChildren.children.size() == 1) {
+        // If the expression we are about to move outside has side effects, we
+        // cannot replace two instances with one (and there might be ordering
+        // issues as well, for a select's condition).
+        EffectAnalyzer shallowEffects(getPassOptions(),
+                                      getModule()->features);
+        shallowEffects.visit(ifTrue);
+        if (!shallowEffects.hasSideEffects()) {
+          // Replace ifTrue with its child.
+          ifTrue = *ifTrueChildren.begin();
+          // Relace ifFalse with its child, and reuse the node outside the if/select.
+          ChildPointerIterator ifFalseChildPointers(ifFalse);
+          ifFalse = **ifFalseChildren.begin();
+          // After altering curr, re-optimize it before adding ifFalse on the outside.
+          replaeCurrent(curr);
+          *ifFalseChildren.begin() = curr;
+          return replaceCurrent(ifFalse);
+        }
       }
     }
   }
