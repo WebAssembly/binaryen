@@ -74,17 +74,16 @@ public:
 #define DELEGATE_ID parent->_id
 
 #define DELEGATE_START(id)                                                     \
-  auto* cast = parent->cast<id>();                                               \
+  auto* cast = parent->cast<id>();                                             \
   WASM_UNUSED(cast);
 
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
-#define DELEGATE_FIELD_CHILD(id, name)                                         \
-  self->addChild(parent, &cast->name);
+#define DELEGATE_FIELD_CHILD(id, name) self->addChild(parent, &cast->name);
 
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)                                \
-  if (cast->name) { \
-    self->addChild(parent, &cast->name); \
+  if (cast->name) {                                                            \
+    self->addChild(parent, &cast->name);                                       \
   }
 
 #define DELEGATE_FIELD_INT(id, name)
@@ -100,7 +99,6 @@ public:
 #define DELEGATE_FIELD_ADDRESS(id, name)
 
 #include "wasm-delegations-fields.h"
-
   }
 
   Iterator begin() const { return Iterator(*this, 0); }
@@ -113,12 +111,14 @@ public:
 
 class ChildIterator : public AbstractChildIterator<ChildIterator> {
 public:
-  ChildIterator(Expression* parent) : AbstractChildIterator<ChildIterator>(parent) {}
+  ChildIterator(Expression* parent)
+    : AbstractChildIterator<ChildIterator>(parent) {}
 };
 
 class ValueChildIterator : public AbstractChildIterator<ValueChildIterator> {
 public:
-  ValueChildIterator(Expression* parent) : AbstractChildIterator<ValueChildIterator>(parent) {}
+  ValueChildIterator(Expression* parent)
+    : AbstractChildIterator<ValueChildIterator>(parent) {}
 
   void addChild(Expression* parent, Expression** child) {
     if (Properties::isControlFlowStructure(parent)) {
