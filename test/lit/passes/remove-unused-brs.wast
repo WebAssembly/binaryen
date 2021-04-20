@@ -244,7 +244,6 @@
       )
       ;; and we can't do a select because of effects here
       (call $nothing)
-      ;; the condition cannot be reordered with this
       (i32.const 100)
     )
   )
