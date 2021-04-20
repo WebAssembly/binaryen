@@ -59,13 +59,16 @@ template<class Specific> class AbstractChildIterator {
     Expression*& operator*() {
       assert(index < parent.children.size());
 
-      // The children are in the order of appearance in the IR, which needs to
-      // be reversed for the order of execution.
+      // The vector of children is in reverse order, as that is how
+      // wasm-delegations-fields works. To get the order of execution, reverse
+      // things.
       return *parent.children[parent.children.size() - 1 - index];
     }
   };
 
 public:
+  // The vector of children in the order emitted by wasm-delegations-fields
+  // (which is in reverse execution order).
   SmallVector<Expression**, 4> children;
 
   AbstractChildIterator(Expression* parent) {
