@@ -2859,30 +2859,46 @@ private:
       // cannot be optimized here (but CodeFolding can help there), and it
       // cannot be a structure like a block - we only care about instructions
       // here.
-      if (curr->ifTrue->type.isConcrete() &&
-          !Properties::isControlFlowStructure(curr->ifTrue) &&
-          ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
-        // TODO: consider the case with more children than 1. 1 is easy to handle
-        //       as we have no other effects to consider, but 2+ are possible too.
-        ChildIterator ifTrueChildren(curr->ifTrue);
-        if (ifTrueChildren.children.size() == 1) {
-          // If the expression we are about to move outside has side effects, we
-          // cannot replace two instances with one (and there might be ordering
-          // issues as well, for a select's condition).
-          EffectAnalyzer shallowEffects(getPassOptions(),
-                                        getModule()->features);
-          shallowEffects.visit(curr->ifTrue);
-          if (!shallowEffects.hasSideEffects()) {
-            // Replace ifTrue with its child.
-            curr->ifTrue = *ifTrueChildren.begin();
-            // Relace ifFalse with its child, and reuse the node outside the if/select.
-            Expression* replacement = curr->ifFalse;
-            ChildIterator ifFalseChildren(curr->ifFalse);
-            curr->ifFalse = *ifFalseChildren.begin();
-            *ChildIterator(replacement).begin() = curr;
-            return replaceCurrent(replacement);
+
+      // Continue doing this while we can, noting the chain of moved expressions
+      // as we go, then do a single replacement at the end.
+      SmallVector<Expression*, 1> chain;
+      do {
+        if (curr->ifTrue->type.isConcrete() &&
+            !Properties::isControlFlowStructure(curr->ifTrue) &&
+            ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
+          // TODO: consider the case with more children than 1. 1 is easy to handle
+          //       as we have no other effects to consider, but 2+ are possible too.
+          ChildIterator ifTrueChildren(curr->ifTrue);
+          if (ifTrueChildren.children.size() == 1) {
+            // If the expression we are about to move outside has side effects, we
+            // cannot replace two instances with one (and there might be ordering
+            // issues as well, for a select's condition).
+            EffectAnalyzer shallowEffects(getPassOptions(),
+                                          getModule()->features);
+            shallowEffects.visit(curr->ifTrue);
+            if (!shallowEffects.hasSideEffects()) {
+              // Replace ifTrue with its child.
+              curr->ifTrue = *ifTrueChildren.begin();
+              // Relace ifFalse with its child, and reuse that node outside.
+              auto* reuse = curr->ifFalse;
+              curr->ifFalse = *ChildIterator(curr->ifFalse).begin();
+              *ChildIterator(reuse).begin() = curr;
+              if (!chain.empty()) {
+                // We've already moved things out, so chain them to there. That
+                // is, the end of the chain should now point to reuse (which
+                // in turn already points to curr).
+                *ChildIterator(chain.back()).begin() = reuse;
+              }
+              chain.push_back(reuse);
+              continue;
+            }
           }
         }
+      } while (0);
+      if (!chain.empty()) {
+        // The beginning of the chain is the new parent of everything else.
+        return replaceCurrent(chain[0]);
       }
     }
   }
