@@ -915,7 +915,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Restructuring of ifs: if we have
       //   (block $x
-      //     (br_if $x (cond))
+      //     (drop (br_if $x (cond)))
       //     .., no other references to $x
       //   )
       // then we can turn that into (if (!cond) ..).
@@ -925,7 +925,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // If the block has a return value, we can do something similar, removing
       // the drop from the br_if and putting the if on the outside,
       //   (block $x
-      //     (br_if $x (value) (cond))
+      //     (drop (br_if $x (value) (cond)))
       //     .., no other references to $x
       //     ..final element..
       //   )
@@ -985,7 +985,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                   // may still be able to optimize this, however, by using a
                   // select:
                   //   (block $x
-                  //     (br_if $x (value) (cond))
+                  //     (drop (br_if $x (value) (cond)))
                   //     ..., no other references to $x
                   //     ..final element..
                   //   )
