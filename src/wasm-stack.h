@@ -226,16 +226,13 @@ void BinaryenIRWriter<SubType>::visit(Expression* curr) {
   // to emit an extra `unreachable` before the end of the block to prevent type
   // errors.
   bool hasUnreachableChild = false;
-std::cout << "valuechilditerator\n" << *curr << '\n';
   for (auto* child : ValueChildIterator(curr)) {
-std::cout << "child\n" << *child << '\n';
     visit(child);
     if (child->type == Type::unreachable) {
       hasUnreachableChild = true;
       break;
     }
   }
-std::cout << "out\n";
   if (hasUnreachableChild) {
     // `curr` is not reachable, so don't emit it.
     return;
