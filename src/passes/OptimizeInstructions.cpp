@@ -865,7 +865,7 @@ struct OptimizeInstructions
     if (auto* ret = optimizeSelect(curr)) {
       return replaceCurrent(ret);
     }
-    optimizeTernary(curr, curr->condition, curr->ifTrue, curr->ifFalse);
+    optimizeTernary(curr);
   }
 
   void visitGlobalSet(GlobalSet* curr) {
@@ -916,7 +916,7 @@ struct OptimizeInstructions
           return replaceCurrent(ret);
         }
       }
-      optimizeTernary(curr, curr->condition, curr->ifTrue, curr->ifFalse);
+      optimizeTernary(curr);
     }
   }
 
@@ -2785,10 +2785,8 @@ private:
 
   // Optimize an if-else or a select, something with a condition and two
   // arms with outputs.
-  void optimizeTernary(Expression* curr,
-                       Expression* condition,
-                       Expression*& ifTrue,
-                       Expression*& ifFalse) {
+  template<typename T>
+  void optimizeTernary(T* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
@@ -2823,7 +2821,7 @@ private:
         }
         return false;
       };
-      if (check(ifTrue, ifFalse) || check(ifFalse, ifTrue)) {
+      if (check(curr->ifTrue, curr->ifFalse) || check(curr->ifFalse, curr->ifTrue)) {
         auto updateArm = [&](Expression* arm) -> Expression* {
           if (arm == un) {
             // This is the arm that had the eqz, which we need to remove.
@@ -2834,8 +2832,8 @@ private:
             return c;
           }
         };
-        ifTrue = updateArm(ifTrue);
-        ifFalse = updateArm(ifFalse);
+        curr->ifTrue = updateArm(curr->ifTrue);
+        curr->ifFalse = updateArm(curr->ifFalse);
         un->value = curr;
         return replaceCurrent(un);
       }
@@ -2857,27 +2855,32 @@ private:
       //    )
       //  )
       //
-      if (ExpressionAnalyzer::shallowEqual(ifTrue, ifFalse)) {
+      // To do so, the type must be concrete, as e.g. two if arms of type none
+      // cannot be optimized here (but CodeFolding can help there), and it
+      // cannot be a structure like a block - we only care about instructions
+      // here.
+      if (curr->ifTrue->type.isConcrete() &&
+          !Properties::isControlFlowStructure(curr->ifTrue) &&
+          ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
         // TODO: consider the case with more children than 1. 1 is easy to handle
         //       as we have no other effects to consider, but 2+ are possible too.
-        ChildIterator ifTrueChildren(ifTrue);
+        ChildIterator ifTrueChildren(curr->ifTrue);
         if (ifTrueChildren.children.size() == 1) {
           // If the expression we are about to move outside has side effects, we
           // cannot replace two instances with one (and there might be ordering
           // issues as well, for a select's condition).
           EffectAnalyzer shallowEffects(getPassOptions(),
                                         getModule()->features);
-          shallowEffects.visit(ifTrue);
+          shallowEffects.visit(curr->ifTrue);
           if (!shallowEffects.hasSideEffects()) {
             // Replace ifTrue with its child.
-            ifTrue = *ifTrueChildren.begin();
+            curr->ifTrue = *ifTrueChildren.begin();
             // Relace ifFalse with its child, and reuse the node outside the if/select.
-            ChildIterator ifFalseChildren(ifFalse);
-            ifFalse = *ifFalseChildren.begin();
-            // After altering curr, re-optimize it before adding ifFalse on the outside.
-            replaceCurrent(curr);
-            *ifFalseChildren.begin() = curr;
-            return replaceCurrent(ifFalse);
+            Expression* replacement = curr->ifFalse;
+            ChildIterator ifFalseChildren(curr->ifFalse);
+            curr->ifFalse = *ifFalseChildren.begin();
+            *ChildIterator(replacement).begin() = curr;
+            return replaceCurrent(replacement);
           }
         }
       }
