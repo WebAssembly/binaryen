@@ -2863,7 +2863,7 @@ private:
       // Continue doing this while we can, noting the chain of moved expressions
       // as we go, then do a single replacement at the end.
       SmallVector<Expression*, 1> chain;
-      do {
+      while (1) {
         if (curr->ifTrue->type.isConcrete() &&
             !Properties::isControlFlowStructure(curr->ifTrue) &&
             ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
@@ -2895,7 +2895,8 @@ private:
             }
           }
         }
-      } while (0);
+        break;
+      }
       if (!chain.empty()) {
         // The beginning of the chain is the new parent of everything else.
         return replaceCurrent(chain[0]);

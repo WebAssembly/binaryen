@@ -11818,4 +11818,70 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        (i32.eqz (local.get $x))
+        (i32.eqz (local.get $y))
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-more (param $x f32) (param $y f32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.floor
+  ;; CHECK-NEXT:    (f32.neg
+  ;; CHECK-NEXT:     (select
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-more (param $x f32) (param $y f32) (param $z i32)
+    (drop
+      (select
+        (f32.floor (f32.neg (local.get $x)))
+        (f32.floor (f32.neg (local.get $y)))
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-morer (param $x f32) (param $y f32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.floor
+  ;; CHECK-NEXT:     (f32.neg
+  ;; CHECK-NEXT:      (select
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:       (local.get $y)
+  ;; CHECK-NEXT:       (local.get $z)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-morer (param $x f32) (param $y f32) (param $z i32)
+    (drop
+      (select
+        (f32.abs (f32.floor (f32.neg (local.get $x))))
+        (f32.abs (f32.floor (f32.neg (local.get $y))))
+        (local.get $z)
+      )
+    )
+  )
 )
