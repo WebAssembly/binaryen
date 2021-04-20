@@ -2785,8 +2785,7 @@ private:
 
   // Optimize an if-else or a select, something with a condition and two
   // arms with outputs.
-  template<typename T>
-  void optimizeTernary(T* curr) {
+  template<typename T> void optimizeTernary(T* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
@@ -2821,7 +2820,8 @@ private:
         }
         return false;
       };
-      if (check(curr->ifTrue, curr->ifFalse) || check(curr->ifFalse, curr->ifTrue)) {
+      if (check(curr->ifTrue, curr->ifFalse) ||
+          check(curr->ifFalse, curr->ifTrue)) {
         auto updateArm = [&](Expression* arm) -> Expression* {
           if (arm == un) {
             // This is the arm that had the eqz, which we need to remove.
@@ -2867,13 +2867,15 @@ private:
         if (curr->ifTrue->type.isConcrete() &&
             !Properties::isControlFlowStructure(curr->ifTrue) &&
             ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
-          // TODO: consider the case with more children than 1. 1 is easy to handle
-          //       as we have no other effects to consider, but 2+ are possible too.
+          // TODO: consider the case with more children than 1. 1 is easy to
+          // handle
+          //       as we have no other effects to consider, but 2+ are possible
+          //       too.
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
-            // If the expression we are about to move outside has side effects, we
-            // cannot replace two instances with one (and there might be ordering
-            // issues as well, for a select's condition).
+            // If the expression we are about to move outside has side effects,
+            // we cannot replace two instances with one (and there might be
+            // ordering issues as well, for a select's condition).
             EffectAnalyzer shallowEffects(getPassOptions(),
                                           getModule()->features);
             shallowEffects.visit(curr->ifTrue);
