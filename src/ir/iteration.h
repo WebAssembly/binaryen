@@ -24,8 +24,8 @@
 namespace wasm {
 
 //
-// Allows iteration over the children of the expression, in order of execution
-// where relevant.
+// Allows iteration over the children of the expression, in reverse order of
+// execution.
 //
 //  * This skips missing children, e.g. if an if has no else, it is represented
 //    as having 2 children (and not 3 with the last a nullptr).
@@ -60,7 +60,7 @@ template<class Specific> class AbstractChildIterator {
       assert(index < parent.children.size());
 
       // The children are in the order of appearance in the IR, which needs to
-      // be reversed for the order of execution.
+      // be reversed for the order intended here.
       return *parent.children[parent.children.size() - 1 - index];
     }
   };
