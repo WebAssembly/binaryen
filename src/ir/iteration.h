@@ -56,7 +56,13 @@ template<class Specific> class AbstractChildIterator {
 
     void operator++() { index++; }
 
-    Expression*& operator*() { return *parent.children[index]; }
+    Expression*& operator*() {
+      assert(index < parent.children.size());
+
+      // The children are in the order of appearance in the IR, which needs to
+      // be reversed for the order of execution.
+      return *parent.children[parent.children.size() - 1 - index];
+    }
   };
 
 public:
