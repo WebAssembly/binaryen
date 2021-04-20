@@ -11838,6 +11838,26 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms-if (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-if (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (if (result i32)
+        (local.get $z)
+        (i32.eqz (local.get $x))
+        (i32.eqz (local.get $y))
+      )
+    )
+  )
   ;; CHECK:      (func $ternary-identical-arms-more (param $x f32) (param $y f32) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.floor

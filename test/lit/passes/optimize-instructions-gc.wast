@@ -829,4 +829,26 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result (ref $struct))
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
+    (drop
+      (if (result (ref $struct))
+        (local.get $x)
+        (ref.as_non_null (local.get $y))
+        (ref.as_non_null (local.get $z))
+      )
+    )
+  )
 )

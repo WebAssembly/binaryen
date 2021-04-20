@@ -2885,6 +2885,10 @@ private:
               // Relace ifFalse with its child, and reuse that node outside.
               auto* reuse = curr->ifFalse;
               curr->ifFalse = *ChildIterator(curr->ifFalse).begin();
+              // curr's type may have changed, if the instructions we moved out
+              // had different input types than output types.
+              curr->finalize();
+              // Point to curr from the code that is now outside of it.
               *ChildIterator(reuse).begin() = curr;
               if (!chain.empty()) {
                 // We've already moved things out, so chain them to there. That
