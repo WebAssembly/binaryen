@@ -41,8 +41,9 @@ namespace wasm {
 //                        this instruction. For example, includes If::condition
 //                        but not If::ifTrue.
 //
-template<template<class, class> class Scanner> class AbstractChildIterator {
-  using Self = AbstractChildIterator<Scanner>;
+template<class Specific> class AbstractChildIterator {
+  using Self = AbstractChildIterator<Specific>;
+
   struct Iterator {
     const Self& parent;
     Index index;
@@ -55,104 +56,86 @@ template<template<class, class> class Scanner> class AbstractChildIterator {
 
     void operator++() { index++; }
 
-    Expression* operator*() { return parent.children[index]; }
+    Expression*& operator*() {
+      assert(index < parent.children.size());
+
+      // The vector of children is in reverse order, as that is how
+      // wasm-delegations-fields works. To get the order of execution, reverse
+      // things.
+      return *parent.children[parent.children.size() - 1 - index];
+    }
   };
 
 public:
-  SmallVector<Expression*, 4> children;
+  // The vector of children in the order emitted by wasm-delegations-fields
+  // (which is in reverse execution order).
+  SmallVector<Expression**, 4> children;
 
   AbstractChildIterator(Expression* parent) {
-    struct Traverser : public PostWalker<Traverser> {
-      Expression* parent;
-      SmallVector<Expression*, 4>* children;
+    auto* self = (Specific*)this;
 
-      // We need to scan subchildren exactly once - just the parent.
-      bool scanned = false;
+#define DELEGATE_ID parent->_id
 
-      static void scan(Traverser* self, Expression** currp) {
-        if (!self->scanned) {
-          self->scanned = true;
-          Scanner<Traverser, UnifiedExpressionVisitor<Traverser>>::scan(self,
-                                                                        currp);
-        } else {
-          // This is one of the children. Do not scan further, just note it.
-          self->children->push_back(*currp);
-        }
-      }
-    } traverser;
-    traverser.parent = parent;
-    traverser.children = &children;
-    traverser.walk(parent);
+#define DELEGATE_START(id)                                                     \
+  auto* cast = parent->cast<id>();                                             \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, name) cast->name
+
+#define DELEGATE_FIELD_CHILD(id, name) self->addChild(parent, &cast->name);
+
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)                                \
+  if (cast->name) {                                                            \
+    self->addChild(parent, &cast->name);                                       \
+  }
+
+#define DELEGATE_FIELD_INT(id, name)
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#define DELEGATE_FIELD_LITERAL(id, name)
+#define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_NAME_VECTOR(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+#define DELEGATE_FIELD_SIGNATURE(id, name)
+#define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_ADDRESS(id, name)
+
+#include "wasm-delegations-fields.h"
   }
 
   Iterator begin() const { return Iterator(*this, 0); }
   Iterator end() const { return Iterator(*this, children.size()); }
+
+  void addChild(Expression* parent, Expression** child) {
+    children.push_back(child);
+  }
 };
 
-template<class SubType, class Visitor>
-struct ValueChildScanner : PostWalker<SubType, Visitor> {
-  static void scan(SubType* self, Expression** currp) {
-    auto* curr = *currp;
-    if (Properties::isControlFlowStructure(curr)) {
+class ChildIterator : public AbstractChildIterator<ChildIterator> {
+public:
+  ChildIterator(Expression* parent)
+    : AbstractChildIterator<ChildIterator>(parent) {}
+};
+
+class ValueChildIterator : public AbstractChildIterator<ValueChildIterator> {
+public:
+  ValueChildIterator(Expression* parent)
+    : AbstractChildIterator<ValueChildIterator>(parent) {}
+
+  void addChild(Expression* parent, Expression** child) {
+    if (Properties::isControlFlowStructure(parent)) {
       // If conditions are the only value children of control flow structures
-      if (auto* iff = curr->dynCast<If>()) {
-        self->pushTask(SubType::scan, &iff->condition);
+      if (auto* iff = parent->dynCast<If>()) {
+        if (child == &iff->condition) {
+          children.push_back(child);
+        }
       }
     } else {
       // All children on non-control flow expressions are value children
-      PostWalker<SubType, Visitor>::scan(self, currp);
+      children.push_back(child);
     }
   }
-};
-
-using ChildIterator = AbstractChildIterator<PostWalker>;
-using ValueChildIterator = AbstractChildIterator<ValueChildScanner>;
-
-class ChildPointerIterator {
-  struct Iterator {
-    const ChildPointerIterator& parent;
-    Index index;
-
-    Iterator(const ChildPointerIterator& parent, Index index) : parent(parent), index(index) {}
-
-    bool operator!=(const Iterator& other) const {
-      return index != other.index || &parent != &(other.parent);
-    }
-
-    void operator++() { index++; }
-
-    Expression** operator*() { return parent.children[index]; }
-  };
-
-public:
-  SmallVector<Expression**, 4> children;
-
-  ChildPointerIterator(Expression* parent) {
-    struct Traverser : public PostWalker<Traverser> {
-      Expression* parent;
-      SmallVector<Expression**, 4>* children;
-
-      // We need to scan subchildren exactly once - just the parent.
-      bool scanned = false;
-
-      static void scan(Traverser* self, Expression** currp) {
-        if (!self->scanned) {
-          self->scanned = true;
-          Scanner<Traverser, UnifiedExpressionVisitor<Traverser>>::scan(self,
-                                                                        currp);
-        } else {
-          // This is one of the children. Do not scan further, just note it.
-          self->children->push_back(currp);
-        }
-      }
-    } traverser;
-    traverser.parent = parent;
-    traverser.children = &children;
-    traverser.walk(parent);
-  }
-
-  Iterator begin() const { return Iterator(*this, 0); }
-  Iterator end() const { return Iterator(*this, children.size()); }
 };
 
 // Returns true if the current expression contains a certain kind of expression,
