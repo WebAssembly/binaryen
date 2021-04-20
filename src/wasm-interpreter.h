@@ -2422,7 +2422,7 @@ private:
   protected:
     // Returns the instance that defines the memory used by this one.
     SubType* getMemoryInstance() {
-      SubType* inst = static_cast<SubType*>(&instance);
+      auto* inst = instance.self();
       while (inst->wasm.memory.imported()) {
         inst = inst->linkedInstances.at(inst->wasm.memory.module).get();
       }
@@ -2431,7 +2431,7 @@ private:
 
     // Returns a reference to the current value of a potentially imported global
     Literals& getGlobal(Name name) {
-      SubType* inst = static_cast<SubType*>(&instance);
+      auto* inst = instance.self();
       auto* global = inst->wasm.getGlobal(name);
       while (global->imported()) {
         inst = inst->linkedInstances.at(global->module).get();
