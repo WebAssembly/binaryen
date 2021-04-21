@@ -11928,4 +11928,42 @@
       )
     )
   )
+  (func $ternary-identical-arms-but-type-is-none (param $x i32) (param $y i32) (param $z i32)
+    (if
+      (local.get $z)
+      ;; identical arms, but type is none
+      (drop (i32.eqz (local.get $x)))
+      (drop (i32.eqz (local.get $y)))
+    )
+  )
+  (func $ternary-identical-arms-but-block (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        ;; identical arms, but they are control flow structures
+        (block (result i32)
+          (i32.eqz (local.get $x))
+        )
+        (block (result i32)
+          (i32.eqz (local.get $y))
+        )
+        (local.get $z)
+      )
+    )
+  )
+  (func $ternary-identical-arms-but-binary (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        ;; identical arms, but they are binaries, not unaries
+        (i32.add
+          (local.get $x)
+          (local.get $x)
+        )
+        (i32.add
+          (local.get $y)
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
 )

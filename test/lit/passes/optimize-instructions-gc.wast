@@ -849,4 +849,32 @@
       )
     )
   )
+  (func $ternary-identical-arms-but-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+    (drop
+      (select
+        ;; the arms are equal but have side effects
+        (struct.get_u $struct 0
+          (local.get $x)
+        )
+        (struct.get_u $struct 0
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
+  (func $ternary-identical-arms-no-side-effect (param $x (ref $struct)) (param $y (ref $struct)) (param $z i32)
+    (drop
+      (select
+        ;; the arms are equal and as the params are non-null, there are no possible side effects
+        (struct.get_u $struct 0
+          (local.get $x)
+        )
+        (struct.get_u $struct 0
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
 )
