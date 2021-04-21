@@ -2841,6 +2841,7 @@ private:
 
     {
       // Identical code on both arms can be folded out, e.g.
+      //
       //  (select
       //    (i32.eqz (X))
       //    (i32.eqz (Y))
@@ -2855,27 +2856,22 @@ private:
       //    )
       //  )
       //
-      // To do so, the type must be concrete, as e.g. two if arms of type none
-      // cannot be optimized here (but CodeFolding can help there), and it
-      // cannot be a structure like a block - we only care about instructions
-      // here.
-
       // Continue doing this while we can, noting the chain of moved expressions
-      // as we go, then do a single replacement at the end.
+      // as we go, then do a single replaceCurrent() at the end.
       SmallVector<Expression*, 1> chain;
       while (1) {
+        // TODO: handle none as well as concrete types (can pull a drop out, for
+        //       example)
+        // TODO: consider the case with more children than 1
         if (curr->ifTrue->type.isConcrete() &&
             !Properties::isControlFlowStructure(curr->ifTrue) &&
             ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
-          // TODO: consider the case with more children than 1. 1 is easy to
-          // handle
-          //       as we have no other effects to consider, but 2+ are possible
-          //       too.
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
             // If the expression we are about to move outside has side effects,
             // we cannot replace two instances with one (and there might be
             // ordering issues as well, for a select's condition).
+            // TODO: handle certain side effects when possible
             EffectAnalyzer shallowEffects(getPassOptions(),
                                           getModule()->features);
             shallowEffects.visit(curr->ifTrue);
@@ -2904,7 +2900,7 @@ private:
         break;
       }
       if (!chain.empty()) {
-        // The beginning of the chain is the new parent of everything else.
+        // The beginning of the chain is the new top parent.
         return replaceCurrent(chain[0]);
       }
     }
