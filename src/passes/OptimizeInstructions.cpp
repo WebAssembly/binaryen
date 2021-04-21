@@ -2874,18 +2874,18 @@ private:
             //  )
             auto* ifTrueChild = *ifTrueChildren.begin();
             auto* ifFalseChild = *ifFalseChildren.begin();
-            bool validTypes = Type::hasLeastUpperBound(ifTrueChild->type,
-                                                       ifFalseChild->type);
+            bool validTypes =
+              Type::hasLeastUpperBound(ifTrueChild->type, ifFalseChild->type);
             // If the expression we are about to move outside has side effects,
             // then we cannot do so in general with a select: we'd be reducing
             // the amount of the effects as well as moving them. For an if,
             // the side effects execute once, so there is no problem.
             // TODO: handle certain side effects when possible in select
-            bool validEffects =
-                std::is_same<T, If>::value ||
-                !ShallowEffectAnalyzer(getPassOptions(),
-                                       getModule()->features,
-                                       curr->ifTrue).hasSideEffects();
+            bool validEffects = std::is_same<T, If>::value ||
+                                !ShallowEffectAnalyzer(getPassOptions(),
+                                                       getModule()->features,
+                                                       curr->ifTrue)
+                                   .hasSideEffects();
             if (validTypes && validEffects) {
               // Replace ifTrue with its child.
               curr->ifTrue = ifTrueChild;
