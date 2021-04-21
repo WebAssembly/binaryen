@@ -12024,4 +12024,60 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms-br_if-same (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-br_if-same (param $x i32) (param $y i32) (param $z i32)
+    (block $block
+      (if
+        (local.get $z)
+        ;; two br_ifs with different targets are not shallowly identical
+        (br_if $block
+          (local.get $x)
+        )
+        (br_if $block
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-br_if-different (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (block $block1
+  ;; CHECK-NEXT:   (block $block2
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (br_if $block1
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br_if $block2
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-br_if-different (param $x i32) (param $y i32) (param $z i32)
+    (block $block1
+      (block $block2
+        (if
+          (local.get $z)
+          ;; two br_ifs with different targets are not shallowly identical
+          (br_if $block1
+            (local.get $x)
+          )
+          (br_if $block2
+            (local.get $y)
+          )
+        )
+      )
+    )
+  )
 )
