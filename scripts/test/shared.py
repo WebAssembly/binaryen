@@ -430,7 +430,6 @@ SPEC_TESTS_TO_SKIP = [
     'call_indirect.wast',  # Empty (param) and (result)
     'const.wast',  # Unparenthesized expression
     'data.wast',  # Various unsupported (data) notations
-    'elem.wast',  # Unsupported 'offset' syntax in (elem)
     'exports.wast',  # Multiple inlined exports for a function
     'func.wast',  # Forward named type reference
     'skip-stack-guard-page.wast',  # Hexadecimal style (0x..) in memory offset
