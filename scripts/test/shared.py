@@ -424,7 +424,6 @@ SPEC_TESTS_TO_SKIP = [
     'utf8-invalid-encoding.wast',
 
     # 'register' command
-    'imports.wast',
     'linking.wast',
 
     # Misc. unsupported constructs

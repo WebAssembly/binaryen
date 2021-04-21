@@ -145,7 +145,7 @@ def split_wast(wastFile):
             ret += [(chunk, [])]
         elif chunk.startswith('(assert_invalid'):
             continue
-        elif chunk.startswith(('(assert', '(invoke')):
+        elif chunk.startswith(('(assert', '(invoke', '(register')):
             # ret may be empty if there are some asserts before the first
             # module. in that case these are asserts *without* a module, which
             # are valid (they may check something that doesn't refer to a module

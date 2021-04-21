@@ -76,8 +76,8 @@
 ;; KEEP-FOO-SECONDARY:      (module
 ;; KEEP-FOO-SECONDARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-FOO-SECONDARY-NEXT:  (import "primary" "%table" (table $timport$0 2 2 funcref))
-;; KEEP-FOO-SECONDARY-NEXT:  (elem (i32.const 1) $0)
 ;; KEEP-FOO-SECONDARY-NEXT:  (import "primary" "%foo" (func $fimport$0 (param i32) (result i32)))
+;; KEEP-FOO-SECONDARY-NEXT:  (elem (i32.const 1) $0)
 ;; KEEP-FOO-SECONDARY-NEXT:  (func $0 (param $0 i32) (result i32)
 ;; KEEP-FOO-SECONDARY-NEXT:   (call $fimport$0
 ;; KEEP-FOO-SECONDARY-NEXT:    (i32.const 1)
@@ -106,8 +106,8 @@
 ;; KEEP-BAR-SECONDARY:      (module
 ;; KEEP-BAR-SECONDARY-NEXT:  (type $i32_=>_i32 (func (param i32) (result i32)))
 ;; KEEP-BAR-SECONDARY-NEXT:  (import "primary" "%table" (table $timport$0 1 1 funcref))
-;; KEEP-BAR-SECONDARY-NEXT:  (elem (i32.const 0) $0)
 ;; KEEP-BAR-SECONDARY-NEXT:  (import "primary" "%bar" (func $fimport$0 (param i32) (result i32)))
+;; KEEP-BAR-SECONDARY-NEXT:  (elem (i32.const 0) $0)
 ;; KEEP-BAR-SECONDARY-NEXT:  (func $0 (param $0 i32) (result i32)
 ;; KEEP-BAR-SECONDARY-NEXT:   (call $fimport$0
 ;; KEEP-BAR-SECONDARY-NEXT:    (i32.const 0)
