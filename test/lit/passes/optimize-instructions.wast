@@ -11860,12 +11860,12 @@
   )
   ;; CHECK:      (func $ternary-identical-arms-type-change (param $x f64) (param $y f64) (param $z i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.trunc
+  ;; CHECK-NEXT:   (f32.demote_f64
   ;; CHECK-NEXT:    (f64.floor
-  ;; CHECK-NEXT:     (select
+  ;; CHECK-NEXT:     (if (result f64)
+  ;; CHECK-NEXT:      (local.get $z)
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:      (local.get $y)
-  ;; CHECK-NEXT:      (local.get $z)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -11873,12 +11873,12 @@
   ;; CHECK-NEXT: )
   (func $ternary-identical-arms-type-change (param $x f64) (param $y f64) (param $z i32)
     (drop
-      (select
-        ;; the select's type begins as f32, but after moving code out it will be
-        ;; f64
-        (f64.trunc (f64.floor (local.get $x)))
-        (f64.trunc (f64.floor (local.get $y)))
+      ;; the if's type begins as f32, but after moving code out it will be
+      ;; f64
+      (if (result f32)
         (local.get $z)
+        (f32.demote_f64 (f64.floor (local.get $x)))
+        (f32.demote_f64 (f64.floor (local.get $y)))
       )
     )
   )
