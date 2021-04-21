@@ -1831,8 +1831,8 @@ struct PrintExpressionContents
   }
   void visitTableCopy(TableCopy* curr) {
     printMedium(o, "table.copy ");
-    printName(curr->srcTable, o) << ' ';
     printName(curr->destTable, o) << ' ';
+    printName(curr->srcTable, o) << ' ';
   }
   void visitTableInit(TableInit* curr) {
     printMedium(o, "table.init") << ' ';

@@ -4822,8 +4822,8 @@ bool WasmBinaryBuilder::maybeVisitTableCopy(Expression*& out, uint32_t code) {
   }
 
   auto* curr = allocator.alloc<TableCopy>();
-  Index srcTableIdx = getU32LEB();
   Index destTableIdx = getU32LEB();
+  Index srcTableIdx = getU32LEB();
   curr->srcTable = getTableName(srcTableIdx);
   curr->destTable = getTableName(destTableIdx);
   curr->size = popNonVoidExpression();
@@ -4841,10 +4841,10 @@ bool WasmBinaryBuilder::maybeVisitTableInit(Expression*& out, uint32_t code) {
   }
 
   auto* curr = allocator.alloc<TableInit>();
-  Index tableIdx = getU32LEB();
-  curr->segment = getElementSegmentName(tableIdx);
   Index elemIdx = getU32LEB();
-  curr->table = getTableName(elemIdx);
+  Index tableIdx = getU32LEB();
+  curr->segment = getElementSegmentName(elemIdx);
+  curr->table = getTableName(tableIdx);
   curr->size = popNonVoidExpression();
   curr->srcOffset = popNonVoidExpression();
   curr->destOffset = popNonVoidExpression();

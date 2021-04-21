@@ -1836,8 +1836,8 @@ void BinaryInstWriter::visitTableFill(TableFill* curr) {
 }
 void BinaryInstWriter::visitTableCopy(TableCopy* curr) {
   o << int8_t(BinaryConsts::MiscPrefix) << int8_t(BinaryConsts::TableCopy)
-    << U32LEB(parent.getTableIndex(curr->srcTable))
-    << U32LEB(parent.getTableIndex(curr->destTable));
+    << U32LEB(parent.getTableIndex(curr->destTable))
+    << U32LEB(parent.getTableIndex(curr->srcTable));
 }
 void BinaryInstWriter::visitTableInit(TableInit* curr) {
   o << int8_t(BinaryConsts::MiscPrefix) << int8_t(BinaryConsts::TableInit)

@@ -510,8 +510,8 @@ switch (DELEGATE_ID) {
   }
   case Expression::Id::TableCopyId: {
     DELEGATE_START(TableCopy);
-    DELEGATE_FIELD_NAME(TableCopy, srcTable);
     DELEGATE_FIELD_NAME(TableCopy, destTable);
+    DELEGATE_FIELD_NAME(TableCopy, srcTable);
     DELEGATE_FIELD_CHILD(TableCopy, size);
     DELEGATE_FIELD_CHILD(TableCopy, srcOffset);
     DELEGATE_FIELD_CHILD(TableCopy, destOffset);
