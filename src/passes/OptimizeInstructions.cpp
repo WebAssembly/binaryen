@@ -2869,13 +2869,13 @@ private:
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
             // If the expression we are about to move outside has side effects,
-            // we cannot replace two instances with one (and there might be
-            // ordering issues as well, for a select's condition).
+            // then we cannot do so in general with a select: we'd be reducing
+            // the amount of the effects as well as moving them.
             // TODO: handle certain side effects when possible
-            EffectAnalyzer shallowEffects(getPassOptions(),
-                                          getModule()->features);
-            shallowEffects.visit(curr->ifTrue);
-            if (!shallowEffects.hasSideEffects()) {
+            if (std::is_same<T, If>::value ||
+                !ShallowEffectAnalyzer(getPassOptions(),
+                                       getModule()->features,
+                                       curr->ifTrue).hasSideEffects()) {
               // Replace ifTrue with its child.
               curr->ifTrue = *ifTrueChildren.begin();
               // Relace ifFalse with its child, and reuse that node outside.
