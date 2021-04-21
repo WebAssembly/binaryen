@@ -716,6 +716,16 @@ private:
   }
 };
 
+class ShallowEffectAnalyzer : public EffectAnalyzer {
+public:
+  ShallowEffectAnalyzer(const PassOptions& passOptions,
+                 FeatureSet features,
+                 Expression* ast = nullptr) : EffectAnalyzer(passOptions, features) {
+    if (ast) {
+      visit(ast);
+    }
+  }
+
 } // namespace wasm
 
 #endif // wasm_ir_effects_h
