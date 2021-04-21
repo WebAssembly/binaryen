@@ -21,6 +21,9 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.tee $0
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $bar (param $0 i31ref)
   (drop
@@ -32,6 +35,12 @@
      (i32.const 2)
     )
    )
+  )
+  ;; test for an unreachable tee, whose type must be unreachable even after
+  ;; the change (the tee would need to be dropped if it were not unreachable,
+  ;; so the correctness in this case is visible in the output)
+  (local.tee $0
+   (unreachable)
   )
  )
 )
