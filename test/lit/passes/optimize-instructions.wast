@@ -12039,7 +12039,7 @@
     (block $block
       (if
         (local.get $z)
-        ;; two br_ifs with different targets are shallowly identical
+        ;; two br_ifs with the same target are shallowly identical
         (br_if $block
           (local.get $x)
         )

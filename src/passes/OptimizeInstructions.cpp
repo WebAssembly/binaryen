@@ -2859,7 +2859,7 @@ private:
         // Ignore control flow structures (which are handled in MergeBlocks).
         if (!Properties::isControlFlowStructure(curr->ifTrue) &&
             ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
-          // TODO: consider the case with more children than 1
+          // TODO: consider the case with more than one child.
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
             ChildIterator ifFalseChildren(curr->ifFalse);
