@@ -555,8 +555,8 @@ Secondary:
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "primary" "%table" (table $table 1000 funcref))
- (elem (global.get $base) $foo $foo)
  (import "primary" "%global" (global $base i32))
+ (elem (global.get $base) $foo $foo)
  (func $foo (param $0 i32) (result i32)
   (local.get $0)
  )
