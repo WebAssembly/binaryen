@@ -28,6 +28,7 @@
 #include <ir/effects.h>
 #include <ir/find_all.h>
 #include <ir/gc-type-utils.h>
+#include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
@@ -864,7 +865,7 @@ struct OptimizeInstructions
     if (auto* ret = optimizeSelect(curr)) {
       return replaceCurrent(ret);
     }
-    optimizeTernary(curr, curr->condition, curr->ifTrue, curr->ifFalse);
+    optimizeTernary(curr);
   }
 
   void visitGlobalSet(GlobalSet* curr) {
@@ -915,7 +916,7 @@ struct OptimizeInstructions
           return replaceCurrent(ret);
         }
       }
-      optimizeTernary(curr, curr->condition, curr->ifTrue, curr->ifFalse);
+      optimizeTernary(curr);
     }
   }
 
@@ -2784,10 +2785,7 @@ private:
 
   // Optimize an if-else or a select, something with a condition and two
   // arms with outputs.
-  void optimizeTernary(Expression* curr,
-                       Expression* condition,
-                       Expression*& ifTrue,
-                       Expression*& ifFalse) {
+  template<typename T> void optimizeTernary(T* curr) {
     if (curr->type == Type::unreachable) {
       return;
     }
@@ -2822,7 +2820,8 @@ private:
         }
         return false;
       };
-      if (check(ifTrue, ifFalse) || check(ifFalse, ifTrue)) {
+      if (check(curr->ifTrue, curr->ifFalse) ||
+          check(curr->ifFalse, curr->ifTrue)) {
         auto updateArm = [&](Expression* arm) -> Expression* {
           if (arm == un) {
             // This is the arm that had the eqz, which we need to remove.
@@ -2833,10 +2832,76 @@ private:
             return c;
           }
         };
-        ifTrue = updateArm(ifTrue);
-        ifFalse = updateArm(ifFalse);
+        curr->ifTrue = updateArm(curr->ifTrue);
+        curr->ifFalse = updateArm(curr->ifFalse);
         un->value = curr;
         return replaceCurrent(un);
+      }
+    }
+
+    {
+      // Identical code on both arms can be folded out, e.g.
+      //
+      //  (select
+      //    (i32.eqz (X))
+      //    (i32.eqz (Y))
+      //    (Z)
+      //  )
+      // =>
+      //  (i32.eqz
+      //    (select
+      //      (X)
+      //      (Y)
+      //      (Z)
+      //    )
+      //  )
+      //
+      // Continue doing this while we can, noting the chain of moved expressions
+      // as we go, then do a single replaceCurrent() at the end.
+      SmallVector<Expression*, 1> chain;
+      while (1) {
+        // TODO: handle none as well as concrete types (can pull a drop out, for
+        //       example)
+        // TODO: consider the case with more children than 1
+        if (curr->ifTrue->type.isConcrete() &&
+            !Properties::isControlFlowStructure(curr->ifTrue) &&
+            ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
+          ChildIterator ifTrueChildren(curr->ifTrue);
+          if (ifTrueChildren.children.size() == 1) {
+            // If the expression we are about to move outside has side effects,
+            // we cannot replace two instances with one (and there might be
+            // ordering issues as well, for a select's condition).
+            // TODO: handle certain side effects when possible
+            EffectAnalyzer shallowEffects(getPassOptions(),
+                                          getModule()->features);
+            shallowEffects.visit(curr->ifTrue);
+            if (!shallowEffects.hasSideEffects()) {
+              // Replace ifTrue with its child.
+              curr->ifTrue = *ifTrueChildren.begin();
+              // Relace ifFalse with its child, and reuse that node outside.
+              auto* reuse = curr->ifFalse;
+              curr->ifFalse = *ChildIterator(curr->ifFalse).begin();
+              // curr's type may have changed, if the instructions we moved out
+              // had different input types than output types.
+              curr->finalize();
+              // Point to curr from the code that is now outside of it.
+              *ChildIterator(reuse).begin() = curr;
+              if (!chain.empty()) {
+                // We've already moved things out, so chain them to there. That
+                // is, the end of the chain should now point to reuse (which
+                // in turn already points to curr).
+                *ChildIterator(chain.back()).begin() = reuse;
+              }
+              chain.push_back(reuse);
+              continue;
+            }
+          }
+        }
+        break;
+      }
+      if (!chain.empty()) {
+        // The beginning of the chain is the new top parent.
+        return replaceCurrent(chain[0]);
       }
     }
   }

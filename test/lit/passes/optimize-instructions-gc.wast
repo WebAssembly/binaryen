@@ -829,4 +829,76 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (if (result (ref null $struct))
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms (param $x i32) (param $y (ref null $struct)) (param $z (ref null $struct))
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (ref.is_null (local.get $y))
+        (ref.is_null (local.get $z))
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-but-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (struct.get_u $struct $i8
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.get_u $struct $i8
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-but-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+    (drop
+      (select
+        ;; the arms are equal but have side effects
+        (struct.get_u $struct 0
+          (local.get $x)
+        )
+        (struct.get_u $struct 0
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-no-side-effect (param $x (ref $struct)) (param $y (ref $struct)) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $struct $i8
+  ;; CHECK-NEXT:    (select (result (ref $struct))
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-no-side-effect (param $x (ref $struct)) (param $y (ref $struct)) (param $z i32)
+    (drop
+      (select
+        ;; the arms are equal and as the params are non-null, there are no possible side effects
+        (struct.get_u $struct 0
+          (local.get $x)
+        )
+        (struct.get_u $struct 0
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
 )
