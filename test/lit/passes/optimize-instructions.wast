@@ -12104,4 +12104,28 @@
       )
     )
   )
+  ;; CHECK:      (func $send-i32 (param $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $send-i32 (param i32))
+  ;; CHECK:      (func $ternary-identical-arms-call (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (call $send-i32
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-call (param $x i32) (param $y i32) (param $z i32)
+    (if
+      (local.get $z)
+      (call $send-i32
+        (local.get $x)
+      )
+      (call $send-i32
+        (local.get $y)
+      )
+    )
+  )
 )
