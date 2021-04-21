@@ -383,8 +383,8 @@ struct DAE : public Pass {
           // replace the parameter with a local).
           // TODO: if there are no references at all, we can avoid creating a
           //       local
-          bool typeIsValid = TypeUpdating::canHandleAsLocal(
-            func->getLocalType(i));
+          bool typeIsValid =
+            TypeUpdating::canHandleAsLocal(func->getLocalType(i));
           if (callParamAreValid && typeIsValid) {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
