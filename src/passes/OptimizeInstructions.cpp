@@ -2786,10 +2786,6 @@ private:
   // Optimize an if-else or a select, something with a condition and two
   // arms with outputs.
   template<typename T> void optimizeTernary(T* curr) {
-    if (curr->type == Type::unreachable) {
-      return;
-    }
-
     using namespace Match;
     Builder builder(*getModule());
 
@@ -2809,7 +2805,7 @@ private:
     //      (Y)
     //    )
     //  )
-    {
+    if (curr->type != Type::unreachable) {
       Unary* un;
       Expression* x;
       Const* c;
@@ -2860,13 +2856,8 @@ private:
       // as we go, then do a single replaceCurrent() at the end.
       SmallVector<Expression*, 1> chain;
       while (1) {
-        // We can handle the case of code (not control flow structures) where
-        // the arms are shallowly equal and have a non-unreachable type.
-        // (Control flow strucutes are handled in MergeBlocks, and unreachable
-        // code in DCE/RemoveUnusedBrs.)
-        if (curr->ifTrue->type != Type::unreachable &&
-            curr->ifFalse->type != Type::unreachable &&
-            !Properties::isControlFlowStructure(curr->ifTrue) &&
+        // Ignore control flow structures (which are handled in MergeBlocks).
+        if (!Properties::isControlFlowStructure(curr->ifTrue) &&
             ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
           // TODO: consider the case with more children than 1
           ChildIterator ifTrueChildren(curr->ifTrue);

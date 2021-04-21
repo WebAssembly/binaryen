@@ -12039,7 +12039,7 @@
     (block $block
       (if
         (local.get $z)
-        ;; two br_ifs with different targets are not shallowly identical
+        ;; two br_ifs with different targets are shallowly identical
         (br_if $block
           (local.get $x)
         )
@@ -12076,6 +12076,30 @@
           (br_if $block2
             (local.get $y)
           )
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-return (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-return (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (block $block
+      (if
+        (local.get $z)
+        (return
+          (local.get $x)
+        )
+        (return
+          (local.get $y)
         )
       )
     )
