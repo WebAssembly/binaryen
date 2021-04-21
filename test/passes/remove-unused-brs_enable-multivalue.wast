@@ -1615,7 +1615,7 @@
     (i32.const 0)
    )
   )
-  (func $drop-restructure-if-bad (param $x i32) (param $y i32) (result i32)
+  (func $drop-restructure-select (param $x i32) (param $y i32) (result i32)
    (block $label$2 (result i32)
     (drop
      (br_if $label$2

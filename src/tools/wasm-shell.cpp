@@ -81,9 +81,9 @@ struct ShellOptions : public Options {
 
 class Shell {
 protected:
-  std::map<Name, std::unique_ptr<Module>> modules;
-  std::map<Name, std::unique_ptr<SExpressionWasmBuilder>> builders;
-  std::map<Name, std::unique_ptr<ShellExternalInterface>> interfaces;
+  std::map<Name, std::shared_ptr<Module>> modules;
+  std::map<Name, std::shared_ptr<SExpressionWasmBuilder>> builders;
+  std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
   std::map<Name, std::shared_ptr<ModuleInstance>> instances;
   // used for imports
   std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
@@ -92,7 +92,7 @@ protected:
 
   void instantiate(Module* wasm) {
     auto tempInterface =
-      wasm::make_unique<ShellExternalInterface>(linkedInstances);
+      std::make_shared<ShellExternalInterface>(linkedInstances);
     auto tempInstance = std::make_shared<ModuleInstance>(
       *wasm, tempInterface.get(), linkedInstances);
     interfaces[wasm->name].swap(tempInterface);
@@ -123,12 +123,12 @@ protected:
     Colors::green(std::cerr);
     std::cerr << "BUILDING MODULE [line: " << s.line << "]\n";
     Colors::normal(std::cerr);
-    auto module = wasm::make_unique<Module>();
+    auto module = std::make_shared<Module>();
     auto builder =
-      wasm::make_unique<SExpressionWasmBuilder>(*module, s, IRProfile::Normal);
+      std::make_shared<SExpressionWasmBuilder>(*module, s, IRProfile::Normal);
     auto moduleName = module->name;
     lastModule = module->name;
-    builders[moduleName].swap(builder);
+    builders[moduleName] = builder;
     modules[moduleName].swap(module);
     modules[moduleName]->features = FeatureSet::All;
     bool valid = WasmValidator().validate(*modules[moduleName]);
@@ -150,15 +150,12 @@ protected:
     auto name = s[1]->str();
     linkedInstances[name] = instance;
 
-    // swap to the new name in all maps
-    modules[name].swap(modules[lastModule]);
-    modules.erase(lastModule);
-    builders[name].swap(builders[lastModule]);
-    builders.erase(lastModule);
-    interfaces[name].swap(interfaces[lastModule]);
-    interfaces.erase(lastModule);
-    instances[name].swap(instances[lastModule]);
-    instances.erase(lastModule);
+    // we copy pointers as a registered module's name might still be used
+    // in an assertion or invoke command.
+    modules[name] = modules[lastModule];
+    builders[name] = builders[lastModule];
+    interfaces[name] = interfaces[lastModule];
+    instances[name] = instances[lastModule];
 
     Colors::green(std::cerr);
     std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.c_str()
@@ -316,7 +313,7 @@ protected:
   // TODO: spectest module is considered deprecated by the spec. Remove when
   // is actually removed from the spec test.
   void buildSpectestModule() {
-    auto spectest = std::make_unique<Module>();
+    auto spectest = std::make_shared<Module>();
     spectest->name = "spectest";
     Builder builder(*spectest);
 

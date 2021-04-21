@@ -19,8 +19,8 @@
   (local.set $0
    (block $__asyncify_unwind (result i32)
     (if
-     (select
-      (i32.eqz
+     (i32.eqz
+      (select
        (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
@@ -44,9 +44,9 @@
         )
         (local.get $0)
        )
+       (i32.const 0)
+       (global.get $__asyncify_state)
       )
-      (i32.const 1)
-      (global.get $__asyncify_state)
      )
      (block
       (call $import)
@@ -110,8 +110,8 @@
   (local.set $1
    (block $__asyncify_unwind (result i32)
     (if
-     (select
-      (i32.eqz
+     (i32.eqz
+      (select
        (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
@@ -135,9 +135,9 @@
         )
         (local.get $1)
        )
+       (i32.const 0)
+       (global.get $__asyncify_state)
       )
-      (i32.const 1)
-      (global.get $__asyncify_state)
      )
      (block
       (local.set $1
@@ -205,8 +205,8 @@
   (local.set $0
    (block $__asyncify_unwind (result i32)
     (if
-     (select
-      (i32.eqz
+     (i32.eqz
+      (select
        (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
@@ -230,9 +230,9 @@
         )
         (local.get $0)
        )
+       (i32.const 0)
+       (global.get $__asyncify_state)
       )
-      (i32.const 1)
-      (global.get $__asyncify_state)
      )
      (block
       (drop
@@ -343,12 +343,12 @@
      )
     )
     (if
-     (select
-      (i32.eqz
+     (i32.eqz
+      (select
        (local.get $2)
+       (i32.const 0)
+       (global.get $__asyncify_state)
       )
-      (i32.const 1)
-      (global.get $__asyncify_state)
      )
      (block
       (call $import)
@@ -443,12 +443,12 @@
       )
      )
      (if
-      (select
-       (i32.eqz
+      (i32.eqz
+       (select
         (local.get $1)
+        (i32.const 0)
+        (global.get $__asyncify_state)
        )
-       (i32.const 1)
-       (global.get $__asyncify_state)
       )
       (block
        (call $import)
@@ -551,12 +551,12 @@
       )
      )
      (if
-      (select
-       (i32.eqz
+      (i32.eqz
+       (select
         (local.get $2)
+        (i32.const 0)
+        (global.get $__asyncify_state)
        )
-       (i32.const 1)
-       (global.get $__asyncify_state)
       )
       (block
        (call $import3
@@ -706,12 +706,12 @@
       )
      )
      (if
-      (select
-       (i32.eqz
+      (i32.eqz
+       (select
         (local.get $1)
+        (i32.const 0)
+        (global.get $__asyncify_state)
        )
-       (i32.const 1)
-       (global.get $__asyncify_state)
       )
       (block
        (call $import3
@@ -825,12 +825,12 @@
       )
      )
      (if
-      (select
-       (i32.eqz
+      (i32.eqz
+       (select
         (local.get $2)
+        (i32.const 0)
+        (global.get $__asyncify_state)
        )
-       (i32.const 1)
-       (global.get $__asyncify_state)
       )
       (block
        (call $import3
@@ -964,12 +964,12 @@
     )
     (loop $l
      (if
-      (select
-       (i32.eqz
+      (i32.eqz
+       (select
         (local.get $1)
+        (i32.const 0)
+        (global.get $__asyncify_state)
        )
-       (i32.const 1)
-       (global.get $__asyncify_state)
       )
       (block
        (call $import3
@@ -1090,12 +1090,12 @@
     )
     (loop $l
      (if
-      (select
-       (i32.eqz
+      (i32.eqz
+       (select
         (local.get $2)
+        (i32.const 0)
+        (global.get $__asyncify_state)
        )
-       (i32.const 1)
-       (global.get $__asyncify_state)
       )
       (block
        (local.set $1
@@ -1116,12 +1116,12 @@
       )
      )
      (br_if $l
-      (select
-       (i32.eqz
+      (i32.eqz
+       (select
         (global.get $__asyncify_state)
+        (i32.const 1)
+        (local.get $0)
        )
-       (i32.const 0)
-       (local.get $0)
       )
      )
     )
@@ -1194,12 +1194,12 @@
      (call $boring)
     )
     (if
-     (select
-      (i32.eqz
+     (i32.eqz
+      (select
        (local.get $0)
+       (i32.const 0)
+       (global.get $__asyncify_state)
       )
-      (i32.const 1)
-      (global.get $__asyncify_state)
      )
      (block
       (call $import)
@@ -1299,12 +1299,12 @@
      (call $boring-deep)
     )
     (if
-     (select
-      (i32.eqz
+     (i32.eqz
+      (select
        (local.get $0)
+       (i32.const 0)
+       (global.get $__asyncify_state)
       )
-      (i32.const 1)
-      (global.get $__asyncify_state)
      )
      (block
       (call $import-deep)
@@ -1374,8 +1374,8 @@
   (local.set $0
    (block $__asyncify_unwind (result i32)
     (if
-     (select
-      (i32.eqz
+     (i32.eqz
+      (select
        (if (result i32)
         (i32.eq
          (global.get $__asyncify_state)
@@ -1399,9 +1399,9 @@
         )
         (local.get $0)
        )
+       (i32.const 0)
+       (global.get $__asyncify_state)
       )
-      (i32.const 1)
-      (global.get $__asyncify_state)
      )
      (block
       (call $import)

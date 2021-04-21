@@ -2482,11 +2482,11 @@ private:
 
     // Returns the instance that defines the memory used by this one.
     SubType* getMemoryInstance() {
-      if (instance.wasm.memory.imported()) {
-        return instance.linkedInstances.at(instance.wasm.memory.module).get();
-      } else {
-        return static_cast<SubType*>(&instance);
+      auto* inst = instance.self();
+      while (inst->wasm.memory.imported()) {
+        inst = inst->linkedInstances.at(inst->wasm.memory.module).get();
       }
+      return inst;
     }
 
     ImportInstanceInfo getTableInstance(Name name) {
@@ -2502,14 +2502,15 @@ private:
 
     // Returns a reference to the current value of a potentially imported global
     Literals& getGlobal(Name name) {
-      auto* global = instance.wasm.getGlobal(name);
-      if (global->imported()) {
-        auto inst = instance.linkedInstances.at(global->module);
+      auto* inst = instance.self();
+      auto* global = inst->wasm.getGlobal(name);
+      while (global->imported()) {
+        inst = inst->linkedInstances.at(global->module).get();
         Export* globalExport = inst->wasm.getExport(global->base);
-        return inst->globals[globalExport->value];
-      } else {
-        return instance.globals[name];
+        global = inst->wasm.getGlobal(globalExport->value);
       }
+
+      return inst->globals[global->name];
     }
 
   public:
