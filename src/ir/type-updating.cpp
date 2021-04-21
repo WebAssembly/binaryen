@@ -39,6 +39,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   if (!hasNonNullable) {
     return;
   }
+
   // Rewrite the local.gets.
   Builder builder(wasm);
   for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
@@ -62,6 +63,16 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
     if (type.isRef() && !type.isNullable()) {
       type = Type(type.getHeapType(), Nullable);
     }
+  }
+
+  // Update tees, whose type must match the local (if the wasm spec changes for
+  // the type to be that of the value, then this can be removed).
+  for (auto* set : FindAll<LocalSet>(func->body).list) {
+    if (!set->isTee()) {
+      continue;
+    }
+    set->type = func->getLocalType(set->index);
+    set->finalize();
   }
 }
 
