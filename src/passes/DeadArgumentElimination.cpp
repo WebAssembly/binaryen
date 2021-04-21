@@ -373,7 +373,7 @@ struct DAE : public Pass {
           // Great, it's not used. Check if none of the calls has a param with
           // side effects, as that would prevent us removing them (flattening
           // should have been done earlier).
-          bool callParamAreValid =
+          bool callParamsAreValid =
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
               return EffectAnalyzer(runner->options, module->features, operand)
@@ -385,7 +385,7 @@ struct DAE : public Pass {
           //       local
           bool typeIsValid =
             TypeUpdating::canHandleAsLocal(func->getLocalType(i));
-          if (callParamAreValid && typeIsValid) {
+          if (callParamsAreValid && typeIsValid) {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
             removeParameter(func, i, calls);
