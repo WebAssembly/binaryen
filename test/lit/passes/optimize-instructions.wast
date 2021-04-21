@@ -11777,4 +11777,316 @@
       (f64.abs (f64.add (local.get $x0) (local.get $x0)))
     ))
   )
+  ;; CHECK:      (func $ternary (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary (param $x i32) (param $y i32)
+    (drop
+      (select
+        (i32.const 0)
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.const 1)
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+    (drop
+      (select
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+        (local.get $x)
+      )
+    )
+    ;; if works too
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i32.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-no (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no (param $x i32) (param $y i32)
+    (drop
+      (select
+        (i32.const 2) ;; only 0 and 1 work
+        (i32.eqz
+          (local.get $y)
+        )
+        (local.get $x)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        (i32.eqz (local.get $x))
+        (i32.eqz (local.get $y))
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-if (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-if (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (if (result i32)
+        (local.get $z)
+        (i32.eqz (local.get $x))
+        (i32.eqz (local.get $y))
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-type-change (param $x f64) (param $y f64) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.demote_f64
+  ;; CHECK-NEXT:    (f64.floor
+  ;; CHECK-NEXT:     (if (result f64)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-type-change (param $x f64) (param $y f64) (param $z i32)
+    (drop
+      ;; the if's type begins as f32, but after moving code out it will be
+      ;; f64
+      (if (result f32)
+        (local.get $z)
+        (f32.demote_f64 (f64.floor (local.get $x)))
+        (f32.demote_f64 (f64.floor (local.get $y)))
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-more (param $x f32) (param $y f32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.floor
+  ;; CHECK-NEXT:    (f32.neg
+  ;; CHECK-NEXT:     (select
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-more (param $x f32) (param $y f32) (param $z i32)
+    (drop
+      (select
+        (f32.floor (f32.neg (local.get $x)))
+        (f32.floor (f32.neg (local.get $y)))
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-morer (param $x f32) (param $y f32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.abs
+  ;; CHECK-NEXT:    (f32.floor
+  ;; CHECK-NEXT:     (f32.neg
+  ;; CHECK-NEXT:      (select
+  ;; CHECK-NEXT:       (local.get $x)
+  ;; CHECK-NEXT:       (local.get $y)
+  ;; CHECK-NEXT:       (local.get $z)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-morer (param $x f32) (param $y f32) (param $z i32)
+    (drop
+      (select
+        (f32.abs (f32.floor (f32.neg (local.get $x))))
+        (f32.abs (f32.floor (f32.neg (local.get $y))))
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-but-type-is-none (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-but-type-is-none (param $x i32) (param $y i32) (param $z i32)
+    (if
+      (local.get $z)
+      ;; identical arms, but type is none
+      (drop (i32.eqz (local.get $x)))
+      (drop (i32.eqz (local.get $y)))
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-but-block (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (block $block (result i32)
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $block24 (result i32)
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-but-block (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        ;; identical arms, but they are control flow structures
+        (block (result i32)
+          (i32.eqz (local.get $x))
+        )
+        (block (result i32)
+          (i32.eqz (local.get $y))
+        )
+        (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-but-binary (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-but-binary (param $x i32) (param $y i32) (param $z i32)
+    (drop
+      (select
+        ;; identical arms, but they are binaries, not unaries
+        (i32.add
+          (local.get $x)
+          (local.get $x)
+        )
+        (i32.add
+          (local.get $y)
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
 )

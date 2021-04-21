@@ -100,7 +100,7 @@ struct SSAify : public Pass {
     // add prepends to function
     addPrepends();
     // Handle non-nullability in new locals we added.
-    TypeUpdating::handleNonNullableLocals(func, *module);
+    TypeUpdating::handleNonDefaultableLocals(func, *module);
   }
 
   void createNewIndexes(LocalGraph& graph) {

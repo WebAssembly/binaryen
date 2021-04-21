@@ -36,7 +36,6 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # parameters
 
 # feature options that are always passed to the tools.
-# * multivalue: https://github.com/WebAssembly/binaryen/issues/2770
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
@@ -213,8 +212,27 @@ def pick_initial_contents():
         '--disable-exception-handling',
         # has not been fuzzed in general yet
         '--disable-memory64',
-        # has not been fuzzed in general yet
-        '--disable-gc',
+        # avoid multivalue for now due to bad interactions with gc rtts in
+        # stacky code. for example, this fails to roundtrip as the tuple code
+        # ends up creating stacky binary code that needs to spill rtts to locals,
+        # which is not allowed:
+        #
+        # (module
+        #  (type $other (struct))
+        #  (func $foo (result (rtt $other))
+        #   (select
+        #    (rtt.canon $other)
+        #    (rtt.canon $other)
+        #    (tuple.extract 1
+        #     (tuple.make
+        #      (i32.const 0)
+        #      (i32.const 0)
+        #     )
+        #    )
+        #   )
+        #  )
+        # )
+        '--disable-multivalue',
         # DWARF is incompatible with multivalue atm; it's more important to
         # fuzz multivalue since we aren't actually fuzzing DWARF here
         '--strip-dwarf',
@@ -239,6 +257,9 @@ IGNORE = '[binaryen-fuzzer-ignore]'
 
 # Traps are reported as [trap REASON]
 TRAP_PREFIX = '[trap '
+
+# Host limits are reported as [host limit REASON]
+HOST_LIMIT_PREFIX = '[host limit '
 
 # --fuzz-exec reports calls as [fuzz-exec] calling foo
 FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
@@ -349,9 +370,17 @@ def fix_spec_output(out):
 
 
 def run_vm(cmd):
-    # ignore some vm assertions, if bugs have already been filed
+    # ignore some types of errors
     known_issues = [
-        'local count too large',    # ignore this; can be caused by flatten, ssa, etc. passes
+        # can be caused by flatten, ssa, etc. passes
+        'local count too large',
+        # https://github.com/WebAssembly/binaryen/issues/3767
+        # note that this text is a little too broad, but the problem is rare
+        # enough that it's unlikely to hide an unrelated issue
+        'found br_if of type',
+        # all host limitations are arbitrary and may differ between VMs and also
+        # be affected by optimizations, so ignore them.
+        HOST_LIMIT_PREFIX,
     ]
     try:
         return run(cmd)
@@ -576,8 +605,12 @@ class CompareVMs(TestCaseHandler):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
-        self.vms = [BinaryenInterpreter(), D8(), D8Liftoff(), D8TurboFan(),
-                    Wasm2C(), Wasm2C2Wasm()]
+        self.vms = [BinaryenInterpreter(),
+                    D8(),
+                    D8Liftoff(),
+                    D8TurboFan(),
+                    Wasm2C(),
+                    Wasm2C2Wasm()]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
@@ -611,7 +644,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue', '--disable-gc']])
+        return all([x in feature_opts for x in ['--disable-simd', '--disable-exception-handling', '--disable-multivalue']])
 
 
 # Check for determinism - the same command must have the same output.
@@ -991,6 +1024,9 @@ def randomize_opt_flags():
             if '--disable-multivalue' not in FEATURE_OPTS and '--disable-reference-types' not in FEATURE_OPTS:
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
                 continue
+            if '--gc' not in FEATURE_OPTS:
+                print('avoiding --flatten due to GC not supporting it (spilling of RTTs)')
+                continue
             if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
                 print('avoiding --flatten due using a large amount of initial contents, which may blow up')
                 continue
@@ -1010,6 +1046,9 @@ def randomize_opt_flags():
             ret += ['--optimize-level=' + str(random.randint(0, 3))]
         if random.random() < 0.5:
             ret += ['--shrink-level=' + str(random.randint(0, 3))]
+    # possibly converge. don't do this very often as it can be slow.
+    if random.random() < 0.05:
+        ret += ['--converge']
     assert ret.count('--flatten') <= 1
     return ret
 

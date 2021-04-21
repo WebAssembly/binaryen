@@ -3,9 +3,9 @@
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_i32 (func (result i32)))
  (import "env" "import" (func $import))
- (memory $0 1 2)
  (global $__asyncify_state (mut i32) (i32.const 0))
  (global $__asyncify_data (mut i32) (i32.const 0))
+ (memory $0 1 2)
  (export "calls-import" (func $calls-import))
  (export "calls-import2" (func $calls-import))
  (export "calls-import2-drop" (func $calls-import))
@@ -17,8 +17,8 @@
  (export "asyncify_get_state" (func $asyncify_get_state))
  (func $calls-import (; has Stack IR ;)
   (if
-   (select
-    (i32.eqz
+   (i32.eqz
+    (select
      (if (result i32)
       (i32.eq
        (global.get $__asyncify_state)
@@ -42,9 +42,9 @@
       )
       (i32.const 0)
      )
+     (i32.const 0)
+     (global.get $__asyncify_state)
     )
-    (i32.const 1)
-    (global.get $__asyncify_state)
    )
    (call $import)
   )

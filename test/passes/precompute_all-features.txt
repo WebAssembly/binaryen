@@ -6,11 +6,11 @@
  (type $0 (func (param i32)))
  (type $none_=>_externref (func (result externref)))
  (type $none_=>_i32_i64 (func (result i32 i64)))
+ (global $global i32 (i32.const 1))
+ (global $global-mut (mut i32) (i32.const 2))
  (memory $0 512 512)
  (data (i32.const 0) "hello!")
  (elem declare func $dummy)
- (global $global i32 (i32.const 1))
- (global $global-mut (mut i32) (i32.const 2))
  (func $x (param $x i32)
   (call $x
    (i32.const 2300)

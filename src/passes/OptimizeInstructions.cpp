@@ -26,7 +26,9 @@
 #include <ir/bits.h>
 #include <ir/cost.h>
 #include <ir/effects.h>
+#include <ir/find_all.h>
 #include <ir/gc-type-utils.h>
+#include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
@@ -863,6 +865,7 @@ struct OptimizeInstructions
     if (auto* ret = optimizeSelect(curr)) {
       return replaceCurrent(ret);
     }
+    optimizeTernary(curr);
   }
 
   void visitGlobalSet(GlobalSet* curr) {
@@ -911,6 +914,28 @@ struct OptimizeInstructions
           ret->list.push_back(curr->ifTrue);
           ret->finalize(curr->type);
           return replaceCurrent(ret);
+        }
+      }
+      optimizeTernary(curr);
+    }
+  }
+
+  void visitLocalSet(LocalSet* curr) {
+    //   (local.tee (ref.as_non_null ..))
+    // can be reordered to
+    //   (ref.as_non_null (local.tee ..))
+    // if the local is nullable (which it must be until some form of let is
+    // added). The reordering allows the ref.as to be potentially optimized
+    // further based on where the value flows to.
+    if (curr->isTee()) {
+      if (auto* as = curr->value->dynCast<RefAs>()) {
+        if (as->op == RefAsNonNull &&
+            getFunction()->getLocalType(curr->index).isNullable()) {
+          curr->value = as->value;
+          curr->finalize();
+          as->value = curr;
+          as->finalize();
+          replaceCurrent(as);
         }
       }
     }
@@ -992,19 +1017,52 @@ struct OptimizeInstructions
     }
   }
 
+  void visitRefEq(RefEq* curr) {
+    // Identical references compare equal.
+    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
+      replaceCurrent(
+        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
+    }
+  }
+
+  // If an instruction traps on a null input, there is no need for a
+  // ref.as_non_null on that input: we will trap either way (and the binaryen
+  // optimizer does not differentiate traps).
+  void skipNonNullCast(Expression*& input) {
+    while (1) {
+      if (auto* as = input->dynCast<RefAs>()) {
+        if (as->op == RefAsNonNull) {
+          input = as->value;
+          continue;
+        }
+      }
+      break;
+    }
+  }
+
+  void visitStructGet(StructGet* curr) { skipNonNullCast(curr->ref); }
+
   void visitStructSet(StructSet* curr) {
+    skipNonNullCast(curr->ref);
+
     if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
       const auto& fields = curr->ref->type.getHeapType().getStruct().fields;
       optimizeStoredValue(curr->value, fields[curr->index].getByteSize());
     }
   }
 
+  void visitArrayGet(ArrayGet* curr) { skipNonNullCast(curr->ref); }
+
   void visitArraySet(ArraySet* curr) {
+    skipNonNullCast(curr->ref);
+
     if (curr->ref->type != Type::unreachable && curr->value->type.isInteger()) {
       auto element = curr->ref->type.getHeapType().getArray().element;
       optimizeStoredValue(curr->value, element.getByteSize());
     }
   }
+
+  void visitArrayLen(ArrayLen* curr) { skipNonNullCast(curr->ref); }
 
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
@@ -1038,6 +1096,36 @@ struct OptimizeInstructions
         Builder builder(*getModule());
         replaceCurrent(
           builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
+        return;
+      }
+    }
+
+    // ref.cast can be reordered with ref.as_non_null,
+    //
+    //   (ref.cast (ref.as_non_null ..))
+    // =>
+    //   (ref.as_non_null (ref.cast ..))
+    //
+    // This is valid because both pass through the value if they do not trap,
+    // and so reordering does not change whether a trap happens (and reordering
+    // traps is allowed), and does not change the value flowing out at the end.
+    // It is better to have the ref.as_non_null on the outside since it allows
+    // outer instructions to potentially optimize it away (should we find
+    // optimizations that can fold away a ref.cast on an outer instruction, that
+    // might motivate changing this).
+    //
+    // Note that other ref.as* methods, like ref.as_func, are not obviously
+    // worth reordering with ref.cast. For example, the type of ref.as_data is
+    // (ref data), which is less specific than what ref.cast would have.
+    // TODO optimize ref.cast of ref.as_[func|data|i31] in other ways.
+    if (auto* as = curr->ref->dynCast<RefAs>()) {
+      if (as->op == RefAsNonNull) {
+        curr->ref = as->value;
+        curr->finalize();
+        as->value = curr;
+        as->finalize();
+        replaceCurrent(as);
+        return;
       }
     }
   }
@@ -1110,6 +1198,8 @@ struct OptimizeInstructions
       return;
     }
 
+    skipNonNullCast(curr->value);
+
     // Check if the type is the kind we are checking for.
     auto result = GCTypeUtils::evaluateKindCheck(curr);
 
@@ -1142,6 +1232,43 @@ struct OptimizeInstructions
 private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
+
+  // Check if two consecutive inputs to an instruction are equal. As they are
+  // consecutive, no code can execeute in between them, which simplies the
+  // problem here (and which is the case we care about in this pass, which does
+  // simple peephole optimizations - all we care about is a single instruction
+  // at a time, and its inputs).
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+    // First, check for side effects. If there are any, then we can't even
+    // assume things like local.get's of the same index being identical.
+    PassOptions passOptions = getPassOptions();
+    if (EffectAnalyzer(passOptions, getModule()->features, left)
+          .hasSideEffects() ||
+        EffectAnalyzer(passOptions, getModule()->features, right)
+          .hasSideEffects()) {
+      return false;
+    }
+    // Ignore extraneous things and compare them structurally.
+    left = Properties::getFallthrough(left, passOptions, getModule()->features);
+    right =
+      Properties::getFallthrough(right, passOptions, getModule()->features);
+    if (!ExpressionAnalyzer::equal(left, right)) {
+      return false;
+    }
+    // Reference equality also needs to check for allocation, which is *not* a
+    // side effect, but which results in different references:
+    // repeatedly calling (struct.new $foo)'s output will return different
+    // results (while i32.const etc. of course does not).
+    // Note that allocations may have appeared in the original inputs to this
+    // function, and skipped when we focused on what falls through; since there
+    // are no side effects, any allocations there cannot reach the fallthrough.
+    if (left->type.isRef()) {
+      if (FindAll<StructNew>(left).has() || FindAll<ArrayNew>(left).has()) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   // Canonicalizing the order of a symmetric binary helps us
   // write more concise pattern matching code elsewhere.
@@ -2677,6 +2804,129 @@ private:
       }
       default:
         return false;
+    }
+  }
+
+  // Optimize an if-else or a select, something with a condition and two
+  // arms with outputs.
+  template<typename T> void optimizeTernary(T* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    using namespace Match;
+    Builder builder(*getModule());
+
+    // If one arm is an operation and the other is an appropriate constant, we
+    // can move the operation outside (where it may be further optimized), e.g.
+    //
+    //  (select
+    //    (i32.eqz (X))
+    //    (i32.const 0|1)
+    //    (Y)
+    //  )
+    // =>
+    //  (i32.eqz
+    //    (select
+    //      (X)
+    //      (i32.const 1|0)
+    //      (Y)
+    //    )
+    //  )
+    {
+      Unary* un;
+      Expression* x;
+      Const* c;
+      auto check = [&](Expression* a, Expression* b) {
+        if (matches(a, unary(&un, EqZInt32, any(&x))) && matches(b, ival(&c))) {
+          auto value = c->value.geti32();
+          return value == 0 || value == 1;
+        }
+        return false;
+      };
+      if (check(curr->ifTrue, curr->ifFalse) ||
+          check(curr->ifFalse, curr->ifTrue)) {
+        auto updateArm = [&](Expression* arm) -> Expression* {
+          if (arm == un) {
+            // This is the arm that had the eqz, which we need to remove.
+            return un->value;
+          } else {
+            // This is the arm with the constant, which we need to flip.
+            c->value = Literal(int32_t(1 - c->value.geti32()));
+            return c;
+          }
+        };
+        curr->ifTrue = updateArm(curr->ifTrue);
+        curr->ifFalse = updateArm(curr->ifFalse);
+        un->value = curr;
+        return replaceCurrent(un);
+      }
+    }
+
+    {
+      // Identical code on both arms can be folded out, e.g.
+      //
+      //  (select
+      //    (i32.eqz (X))
+      //    (i32.eqz (Y))
+      //    (Z)
+      //  )
+      // =>
+      //  (i32.eqz
+      //    (select
+      //      (X)
+      //      (Y)
+      //      (Z)
+      //    )
+      //  )
+      //
+      // Continue doing this while we can, noting the chain of moved expressions
+      // as we go, then do a single replaceCurrent() at the end.
+      SmallVector<Expression*, 1> chain;
+      while (1) {
+        // TODO: handle none as well as concrete types (can pull a drop out, for
+        //       example)
+        // TODO: consider the case with more children than 1
+        if (curr->ifTrue->type.isConcrete() &&
+            !Properties::isControlFlowStructure(curr->ifTrue) &&
+            ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
+          ChildIterator ifTrueChildren(curr->ifTrue);
+          if (ifTrueChildren.children.size() == 1) {
+            // If the expression we are about to move outside has side effects,
+            // we cannot replace two instances with one (and there might be
+            // ordering issues as well, for a select's condition).
+            // TODO: handle certain side effects when possible
+            EffectAnalyzer shallowEffects(getPassOptions(),
+                                          getModule()->features);
+            shallowEffects.visit(curr->ifTrue);
+            if (!shallowEffects.hasSideEffects()) {
+              // Replace ifTrue with its child.
+              curr->ifTrue = *ifTrueChildren.begin();
+              // Relace ifFalse with its child, and reuse that node outside.
+              auto* reuse = curr->ifFalse;
+              curr->ifFalse = *ChildIterator(curr->ifFalse).begin();
+              // curr's type may have changed, if the instructions we moved out
+              // had different input types than output types.
+              curr->finalize();
+              // Point to curr from the code that is now outside of it.
+              *ChildIterator(reuse).begin() = curr;
+              if (!chain.empty()) {
+                // We've already moved things out, so chain them to there. That
+                // is, the end of the chain should now point to reuse (which
+                // in turn already points to curr).
+                *ChildIterator(chain.back()).begin() = reuse;
+              }
+              chain.push_back(reuse);
+              continue;
+            }
+          }
+        }
+        break;
+      }
+      if (!chain.empty()) {
+        // The beginning of the chain is the new top parent.
+        return replaceCurrent(chain[0]);
+      }
     }
   }
 };

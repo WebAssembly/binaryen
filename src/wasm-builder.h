@@ -79,14 +79,29 @@ public:
     return func;
   }
 
-  static std::unique_ptr<Table>
-  makeTable(Name name, Address initial = 0, Address max = Table::kMaxSize) {
+  static std::unique_ptr<Table> makeTable(Name name,
+                                          Type type = Type::funcref,
+                                          Address initial = 0,
+                                          Address max = Table::kMaxSize) {
     auto table = std::make_unique<Table>();
     table->name = name;
+    table->type = type;
     table->initial = initial;
     table->max = max;
-
     return table;
+  }
+
+  static std::unique_ptr<ElementSegment>
+  makeElementSegment(Name name,
+                     Name table,
+                     Expression* offset = nullptr,
+                     Type type = Type::funcref) {
+    auto seg = std::make_unique<ElementSegment>();
+    seg->name = name;
+    seg->table = table;
+    seg->offset = offset;
+    seg->type = type;
+    return seg;
   }
 
   static std::unique_ptr<Export>
@@ -499,16 +514,6 @@ public:
     ret->finalize();
     return ret;
   }
-  Prefetch*
-  makePrefetch(PrefetchOp op, Address offset, Address align, Expression* ptr) {
-    auto* ret = wasm.allocator.alloc<Prefetch>();
-    ret->op = op;
-    ret->offset = offset;
-    ret->align = align;
-    ret->ptr = ptr;
-    ret->finalize();
-    return ret;
-  }
   MemoryInit* makeMemoryInit(uint32_t segment,
                              Expression* dest,
                              Expression* offset,
@@ -625,10 +630,10 @@ public:
     ret->finalize();
     return ret;
   }
-  RefFunc* makeRefFunc(Name func, Type type) {
+  RefFunc* makeRefFunc(Name func, HeapType heapType) {
     auto* ret = wasm.allocator.alloc<RefFunc>();
     ret->func = func;
-    ret->finalize(type);
+    ret->finalize(Type(heapType, NonNullable));
     return ret;
   }
   RefEq* makeRefEq(Expression* left, Expression* right) {
@@ -877,7 +882,7 @@ public:
       return makeRefNull(type);
     }
     if (type.isFunction()) {
-      return makeRefFunc(value.getFunc(), type);
+      return makeRefFunc(value.getFunc(), type.getHeapType());
     }
     if (type.isRtt()) {
       return makeRtt(value.type);

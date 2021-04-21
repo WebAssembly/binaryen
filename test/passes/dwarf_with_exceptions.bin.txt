@@ -6,8 +6,8 @@
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
- (memory $0 2)
  (global $__stack_pointer (mut i32) (i32.const 66560))
+ (memory $0 2)
  (event $event$0 (attr 0) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors
@@ -427,8 +427,8 @@ file_names[  1]:
  (import "env" "__cxa_begin_catch" (func $__cxa_begin_catch (param i32) (result i32)))
  (import "env" "__cxa_end_catch" (func $__cxa_end_catch))
  (import "env" "_ZSt9terminatev" (func $std::terminate\28\29))
- (memory $0 2)
  (global $__stack_pointer (mut i32) (i32.const 66560))
+ (memory $0 2)
  (event $event$0 (attr 0) (param i32))
  (export "memory" (memory $0))
  (func $__wasm_call_ctors

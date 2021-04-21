@@ -11,9 +11,9 @@
 === parsed wast ===
 (module $hel
  (type $i32_=>_none (func (param i32)))
+ (global $ld i32 (i32.const 0))
  (memory $lo 0 0)
  (table $wor 0 0 funcref)
- (global $ld i32 (i32.const 0))
  (func $of (param $wasm i32)
   (local $!#$%&'*+-./:<=>?@\^_`|~ f64)
   (nop)
@@ -23,9 +23,9 @@
 === roundtripped ===
 (module $hel
  (type $i32_=>_none (func (param i32)))
+ (global $ld i32 (i32.const 0))
  (memory $lo 0 0)
  (table $wor 0 0 funcref)
- (global $ld i32 (i32.const 0))
  (func $of (param $js i32)
   (local $!#$%&'*+-./:<=>?@\5c^_`|~ f64)
   (nop)
@@ -35,9 +35,9 @@
 === roundtripped again ===
 (module $hel
  (type $i32_=>_none (func (param i32)))
+ (global $ld i32 (i32.const 0))
  (memory $lo 0 0)
  (table $wor 0 0 funcref)
- (global $ld i32 (i32.const 0))
  (func $of (param $js i32)
   (local $!#$%&'*+-./:<=>?@\5c^_`|~ f64)
   (nop)

@@ -125,6 +125,9 @@ std::ostream& operator<<(std::ostream& o, Element& e) {
     }
     o << " )";
   } else {
+    if (e.dollared()) {
+      o << '$';
+    }
     o << e.str_.str;
   }
   return o;
@@ -336,8 +339,19 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   Index i = 1;
   if (module[i]->dollared()) {
     wasm.name = module[i]->str();
+    if (module.size() == 2) {
+      return;
+    }
     i++;
   }
+
+  // spec tests have a `binary` keyword after the optional module name. Skip it
+  Name BINARY("binary");
+  if (module[i]->isStr() && module[i]->str() == BINARY &&
+      !module[i]->quoted()) {
+    i++;
+  }
+
   if (i < module.size() && module[i]->isStr()) {
     // these s-expressions contain a binary module, actually
     std::vector<char> data;
@@ -2029,24 +2043,24 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
   ret->op = op;
   Address defaultAlign;
   switch (op) {
-    case LoadSplatVec8x16:
+    case Load8SplatVec128:
       defaultAlign = 1;
       break;
-    case LoadSplatVec16x8:
+    case Load16SplatVec128:
       defaultAlign = 2;
       break;
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       defaultAlign = 4;
       break;
-    case LoadSplatVec64x2:
-    case LoadExtSVec8x8ToVecI16x8:
-    case LoadExtUVec8x8ToVecI16x8:
-    case LoadExtSVec16x4ToVecI32x4:
-    case LoadExtUVec16x4ToVecI32x4:
-    case LoadExtSVec32x2ToVecI64x2:
-    case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64SplatVec128:
+    case Load8x8SVec128:
+    case Load8x8UVec128:
+    case Load16x4SVec128:
+    case Load16x4UVec128:
+    case Load32x2SVec128:
+    case Load32x2UVec128:
+    case Load64ZeroVec128:
       defaultAlign = 8;
       break;
   }
@@ -2064,23 +2078,23 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   Address defaultAlign;
   size_t lanes;
   switch (op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       defaultAlign = 1;
       lanes = 16;
       break;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       defaultAlign = 2;
       lanes = 8;
       break;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       defaultAlign = 4;
       lanes = 4;
       break;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       defaultAlign = 8;
       lanes = 2;
       break;
@@ -2093,21 +2107,6 @@ SExpressionWasmBuilder::makeSIMDLoadStoreLane(Element& s,
   ret->vec = parseExpression(s[i]);
   ret->finalize();
   return ret;
-}
-
-Expression* SExpressionWasmBuilder::makeSIMDWiden(Element& s, SIMDWidenOp op) {
-  auto* ret = allocator.alloc<SIMDWiden>();
-  ret->op = op;
-  ret->index = parseLaneIndex(s[1], 4);
-  ret->vec = parseExpression(s[2]);
-  ret->finalize();
-  return ret;
-}
-
-Expression* SExpressionWasmBuilder::makePrefetch(Element& s, PrefetchOp op) {
-  Address offset, align;
-  size_t i = parseMemAttributes(s, offset, align, /*defaultAlign*/ 1);
-  return Builder(wasm).makePrefetch(op, offset, align, parseExpression(s[i]));
 }
 
 Expression* SExpressionWasmBuilder::makeMemoryInit(Element& s) {
@@ -2527,6 +2526,10 @@ Expression* SExpressionWasmBuilder::makeTupleExtract(Element& s) {
   auto ret = allocator.alloc<TupleExtract>();
   ret->index = atoi(s[1]->str().c_str());
   ret->tuple = parseExpression(s[2]);
+  if (ret->tuple->type != Type::unreachable &&
+      ret->index >= ret->tuple->type.size()) {
+    throw ParseException("Bad index on tuple.extract", s[1]->line, s[1]->col);
+  }
   ret->finalize();
   return ret;
 }
@@ -3178,9 +3181,6 @@ void SExpressionWasmBuilder::parseGlobal(Element& s, bool preParseImport) {
 void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   std::unique_ptr<Table> table = make_unique<Table>();
   Index i = 1;
-  if (i == s.size()) {
-    return; // empty table in old notation
-  }
   if (s[i]->dollared()) {
     table->setExplicitName(s[i++]->str());
   } else {
@@ -3188,10 +3188,6 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
   }
   tableNames.push_back(table->name);
 
-  if (i == s.size()) {
-    wasm.addTable(std::move(table));
-    return;
-  }
   Name importModule, importBase;
   if (s[i]->isList()) {
     auto& inner = *s[i];
@@ -3212,17 +3208,33 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
       table->module = inner[1]->str();
       table->base = inner[2]->str();
       i++;
-    } else {
+    } else if (!elementStartsWith(inner, REF)) {
       throw ParseException("invalid table", inner.line, inner.col);
     }
   }
-  if (i == s.size()) {
-    wasm.addTable(std::move(table));
-    return;
+
+  bool hasExplicitLimit = false;
+
+  if (s[i]->isStr() && String::isNumber(s[i]->c_str())) {
+    table->initial = atoi(s[i++]->c_str());
+    hasExplicitLimit = true;
+  }
+  if (s[i]->isStr() && String::isNumber(s[i]->c_str())) {
+    table->max = atoi(s[i++]->c_str());
   }
 
-  auto parseTableElem = [&](Table* table, Element& s) {
-    parseElem(s, table);
+  table->type = elementToType(*s[i++]);
+  if (!table->type.isRef()) {
+    throw ParseException("Only reference types are valid for tables");
+  }
+
+  if (i < s.size() && s[i]->isList()) {
+    if (hasExplicitLimit) {
+      throw ParseException(
+        "Table cannot have both explicit limits and an inline (elem ...)");
+    }
+    // (table type (elem ..))
+    parseElem(*s[i], table.get());
     auto it = std::find_if(wasm.elementSegments.begin(),
                            wasm.elementSegments.end(),
                            [&](std::unique_ptr<ElementSegment>& segment) {
@@ -3233,44 +3245,22 @@ void SExpressionWasmBuilder::parseTable(Element& s, bool preParseImport) {
     } else {
       table->initial = table->max = 0;
     }
-  };
-
-  if (!s[i]->dollared()) {
-    if (s[i]->str() == FUNCREF) {
-      // (table type (elem ..))
-      parseTableElem(table.get(), *s[i + 1]);
-      wasm.addTable(std::move(table));
-      return;
-    }
-    // first element isn't dollared, and isn't funcref. this could be old syntax
-    // for (table 0 1) which means function 0 and 1, or it could be (table
-    // initial max? type), look for type
-    if (s[s.size() - 1]->str() == FUNCREF) {
-      // (table initial max? type)
-      if (i < s.size() - 1) {
-        table->initial = atoi(s[i++]->c_str());
-      }
-      if (i < s.size() - 1) {
-        table->max = atoi(s[i++]->c_str());
-      }
-      wasm.addTable(std::move(table));
-      return;
-    }
   }
-  // old notation (table func1 func2 ..)
-  parseTableElem(table.get(), s);
+
   wasm.addTable(std::move(table));
 }
 
 // parses an elem segment
-// elem  ::= (elem (expr) vec(funcidx))
-//         | (elem (offset (expr)) func vec(funcidx))
-//         | (elem (table tableidx) (offset (expr)) func vec(funcidx))
-//         | (elem func vec(funcidx))
-//         | (elem declare func vec(funcidx))
+// elem  ::= (elem (table tableidx)? (offset (expr)) reftype vec(item (expr)))
+//         | (elem reftype vec(item (expr)))
+//         | (elem declare reftype vec(item (expr)))
 //
 // abbreviation:
 //   (offset (expr)) ≡ (expr)
+//     (item (expr)) ≡ (expr)
+//                 ϵ ≡ (table 0)
+//
+//        funcref vec(ref.func) ≡ func vec(funcidx)
 //   (elem (expr) vec(funcidx)) ≡ (elem (table 0) (offset (expr)) func
 //                                vec(funcidx))
 //
@@ -3278,14 +3268,14 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
   Index i = 1;
   Name name = Name::fromInt(elemCounter++);
   bool hasExplicitName = false;
-  bool isPassive = false;
+  bool isPassive = true;
   bool usesExpressions = false;
 
   if (table) {
     Expression* offset = allocator.alloc<Const>()->set(Literal(int32_t(0)));
     auto segment = std::make_unique<ElementSegment>(table->name, offset);
     segment->setName(name, hasExplicitName);
-    parseElemFinish(s, segment, i, false);
+    parseElemFinish(s, segment, i, s[i]->isList());
     return;
   }
 
@@ -3298,70 +3288,56 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     return;
   }
 
-  if (s[i]->isStr()) {
-    if (s[i]->str() == FUNC) {
-      isPassive = true;
-      usesExpressions = false;
-    } else if (s[i]->str() == FUNCREF) {
-      isPassive = true;
-      usesExpressions = true;
+  auto segment = std::make_unique<ElementSegment>();
+  segment->setName(name, hasExplicitName);
+
+  if (s[i]->isList() && !elementStartsWith(s[i], REF)) {
+    // Optional (table <tableidx>)
+    if (elementStartsWith(s[i], TABLE)) {
+      auto& inner = *s[i++];
+      segment->table = getTableName(*inner[1]);
     }
-  }
 
-  if (isPassive) {
-    auto segment = std::make_unique<ElementSegment>();
-    segment->setName(name, hasExplicitName);
-    parseElemFinish(s, segment, i + 1, usesExpressions);
-    return;
-  }
-
-  // old style refers to the pre-reftypes form of (elem 0? (expr) vec(funcidx))
-  bool oldStyle = true;
-
-  // At this point, we know that we're parsing an active element segment. A
-  // table will be mandatory now.
-  if (wasm.tables.empty()) {
-    throw ParseException("elem without table", s.line, s.col);
-  }
-
-  // Old style table index (elem 0 (i32.const 0) ...)
-  if (s[i]->isStr()) {
-    i += 1;
-  }
-
-  if (s[i]->isList() && elementStartsWith(s[i], TABLE)) {
-    oldStyle = false;
-    auto& inner = *s[i++];
-    Name tableName = getTableName(*inner[1]);
-    table = wasm.getTable(tableName);
-  }
-
-  Expression* offset = nullptr;
-  if (s[i]->isList()) {
+    // Offset expression (offset (<expr>)) | (<expr>)
     auto& inner = *s[i++];
     if (elementStartsWith(inner, OFFSET)) {
-      offset = parseExpression(inner[1]);
-      oldStyle = false;
+      if (inner.size() > 2) {
+        throw ParseException(
+          "Invalid offset for an element segment.", s.line, s.col);
+      }
+      segment->offset = parseExpression(inner[1]);
     } else {
-      offset = parseExpression(inner);
+      segment->offset = parseExpression(inner);
     }
+    isPassive = false;
   }
 
-  if (!oldStyle) {
-    if (s[i]->str() == FUNCREF) {
+  if (i < s.size()) {
+    if (s[i]->isStr() && s[i]->dollared()) {
+      usesExpressions = false;
+    } else if (s[i]->isStr() && s[i]->str() == FUNC) {
+      usesExpressions = false;
+      i += 1;
+    } else {
+      segment->type = elementToType(*s[i]);
       usesExpressions = true;
-    } else if (s[i]->str() != FUNC) {
-      throw ParseException("expected func or funcref.");
+      i += 1;
+
+      if (!segment->type.isFunction()) {
+        throw ParseException(
+          "Invalid type for an element segment.", s.line, s.col);
+      }
     }
-    i += 1;
   }
 
-  if (!table) {
+  if (!isPassive && segment->table.isNull()) {
+    if (wasm.tables.empty()) {
+      throw ParseException("active element without table", s.line, s.col);
+    }
     table = wasm.tables.front().get();
+    segment->table = table->name;
   }
 
-  auto segment = std::make_unique<ElementSegment>(table->name, offset);
-  segment->setName(name, hasExplicitName);
   parseElemFinish(s, segment, i, usesExpressions);
 }
 
@@ -3393,8 +3369,8 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
   } else {
     for (; i < s.size(); i++) {
       auto func = getFunctionName(*s[i]);
-      segment->data.push_back(Builder(wasm).makeRefFunc(
-        func, Type(HeapType(functionSignatures[func]), Nullable)));
+      segment->data.push_back(
+        Builder(wasm).makeRefFunc(func, functionSignatures[func]));
     }
   }
   return wasm.addElementSegment(std::move(segment));

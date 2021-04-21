@@ -303,8 +303,7 @@ struct Reducer
             // see if it is still has the property we are preserving
             if (ProgramResult(command) == expected) {
               std::cerr << "|    command \"" << currCommand
-                        << "\" succeeded, reduced size to " << newSize
-                        << ", and preserved the property\n";
+                        << "\" succeeded, reduced size to " << newSize << '\n';
               copy_file(test, working);
               more = true;
               oldSize = newSize;
@@ -477,16 +476,26 @@ struct Reducer
 
   void visitExpression(Expression* curr) {
     if (getFunction() && curr == getFunction()->body) {
-      // At the top level, we can try to reduce anything to an unreachable, and
-      // it is useful to do so when possible.
+      // At the top level, we can try to reduce anything to an unreachable or a
+      // nop, and it is useful to do so when possible.
       if (!curr->is<Unreachable>() && !curr->is<Nop>() &&
           shouldTryToReduce(1000)) {
         auto* save = curr;
         Unreachable un;
-        replaceCurrent(&un);
+        Nop nop;
+        bool useUnreachable = getFunction()->sig.results != Type::none;
+        if (useUnreachable) {
+          replaceCurrent(&un);
+        } else {
+          replaceCurrent(&nop);
+        }
         if (writeAndTestReduction()) {
-          replaceCurrent(builder->makeUnreachable());
-          std::cerr << "|        body unreachified (" << getFunction()->name
+          if (useUnreachable) {
+            replaceCurrent(builder->makeUnreachable());
+          } else {
+            replaceCurrent(builder->makeNop());
+          }
+          std::cerr << "|        body emptied (" << getFunction()->name
                     << ")\n";
           noteReduction();
           return;
@@ -920,6 +929,7 @@ struct Reducer
         skip = std::min(size_t(factor), 2 * skip);
       } else {
         skip = std::max(skip / 2, size_t(1)); // or 1?
+        i += factor / 100;
       }
     }
     // try to remove exports

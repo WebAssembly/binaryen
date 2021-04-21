@@ -22,8 +22,7 @@
 
 namespace wasm {
 
-// Look for side effects, including control flow
-// TODO: optimize
+// Analyze various possible effects.
 
 class EffectAnalyzer {
 public:
@@ -77,9 +76,23 @@ public:
   bool writesHeap = false;
   // A trap, either from an unreachable instruction, or from an implicit trap
   // that we do not ignore (see below).
+  //
   // Note that we ignore trap differences, so it is ok to reorder traps with
   // each other, but it is not ok to remove them or reorder them with other
   // effects in a noticeable way.
+  //
+  // Note also that we ignore runtime-dependent traps, such as hitting a
+  // recursion limit or running out of memory. Such traps are not part of wasm's
+  // official semantics, and they can occur anywhere: *any* instruction could in
+  // theory be implemented by a VM call (as will be the case when running in an
+  // interpreter), and such a call could run out of stack or memory in
+  // principle. To put it another way, an i32 division by zero is the program
+  // doing something bad that causes a trap, but the VM running out of memory is
+  // the VM doing something bad - and therefore the VM behaving in a way that is
+  // not according to the wasm semantics - and we do not model such things. Note
+  // that as a result we do *not* mark things like GC allocation instructions as
+  // having side effects, which has the nice benefit of making it possible to
+  // eliminate an allocation whose result is not captured.
   bool trap = false;
   // A trap from an instruction like a load or div/rem, which may trap on corner
   // cases. If we do not ignore implicit traps then these are counted as a trap.
@@ -439,12 +452,6 @@ private:
         parent.writesMemory = true;
       }
       parent.implicitTrap = true;
-    }
-    void visitSIMDWiden(SIMDWiden* curr) {}
-    void visitPrefetch(Prefetch* curr) {
-      // Do not reorder with respect to other memory ops
-      parent.writesMemory = true;
-      parent.readsMemory = true;
     }
     void visitMemoryInit(MemoryInit* curr) {
       parent.writesMemory = true;

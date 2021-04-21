@@ -424,20 +424,36 @@ private:
     }
   }
 
+  Name funcrefTableName;
+
   // TODO(reference-types): allow the fuzzer to create multiple tables
   void setupTables() {
-    // Ensure an element segment, adding one or even adding a whole table as
-    // needed.
-    if (wasm.tables.empty()) {
-      auto table = builder.makeTable(
-        Names::getValidTableName(wasm, "fuzzing_table"), 0, 0);
-      table->hasExplicitName = true;
-      wasm.addTable(std::move(table));
+    // Ensure a funcref element segment and table exist. Segments with more
+    // specific function types may have a smaller chance of getting functions.
+    Table* table = nullptr;
+    auto iter =
+      std::find_if(wasm.tables.begin(), wasm.tables.end(), [&](auto& table) {
+        return table->type == Type::funcref;
+      });
+    if (iter != wasm.tables.end()) {
+      table = iter->get();
+    } else {
+      auto tablePtr = builder.makeTable(
+        Names::getValidTableName(wasm, "fuzzing_table"), Type::funcref, 0, 0);
+      tablePtr->hasExplicitName = true;
+      table = wasm.addTable(std::move(tablePtr));
     }
-    if (wasm.elementSegments.empty()) {
+    funcrefTableName = table->name;
+    bool hasFuncrefElemSegment = std::any_of(
+      wasm.elementSegments.begin(),
+      wasm.elementSegments.end(),
+      [&](auto& segment) {
+        return segment->table.is() && segment->type == Type::funcref;
+      });
+    if (!hasFuncrefElemSegment) {
       // TODO: use a random table
       auto segment = std::make_unique<ElementSegment>(
-        wasm.tables[0]->name, builder.makeConst(int32_t(0)));
+        table->name, builder.makeConst(int32_t(0)));
       segment->setName(Names::getValidElementSegmentName(wasm, "elem$"), false);
       wasm.addElementSegment(std::move(segment));
     }
@@ -722,11 +738,16 @@ private:
     }
     // add some to an elem segment
     while (oneIn(3) && !finishedInput) {
-      auto& randomElem =
-        wasm.elementSegments[upTo(wasm.elementSegments.size())];
-      // FIXME: make the type NonNullable when we support it!
-      auto type = Type(HeapType(func->sig), Nullable);
-      randomElem->data.push_back(builder.makeRefFunc(func->name, type));
+      auto type = Type(HeapType(func->sig), NonNullable);
+      std::vector<ElementSegment*> compatibleSegments;
+      ModuleUtils::iterActiveElementSegments(
+        wasm, [&](ElementSegment* segment) {
+          if (Type::isSubType(type, segment->type)) {
+            compatibleSegments.push_back(segment);
+          }
+        });
+      auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
+      randomElem->data.push_back(builder.makeRefFunc(func->name, func->sig));
     }
     numAddedFunctions++;
     return func;
@@ -934,8 +955,14 @@ private:
     // Pick a chance to fuzz the contents of a function.
     const int RESOLUTION = 10;
     auto chance = upTo(RESOLUTION + 1);
-    for (auto& ref : wasm.functions) {
-      auto* func = ref.get();
+    // Do not iterate directly on wasm.functions itself (that is, avoid
+    //   for (x : wasm.functions)
+    // ) as we may add to it as we go through the functions - make() can add new
+    // functions to implement a RefFunc. Instead, use an index. This avoids an
+    // iterator invalidation, and also we will process those new functions at
+    // the end (currently that is not needed atm, but it might in the future).
+    for (Index i = 0; i < wasm.functions.size(); i++) {
+      auto* func = wasm.functions[i].get();
       FunctionCreationContext context(*this, func);
       if (func->imported()) {
         // We can't allow extra imports, as the fuzzing infrastructure wouldn't
@@ -1469,7 +1496,7 @@ private:
     }
     // TODO: use a random table
     return builder.makeCallIndirect(
-      wasm.tables[0]->name, target, args, targetFn->sig, isReturn);
+      funcrefTableName, target, args, targetFn->sig, isReturn);
   }
 
   Expression* makeCallRef(Type type) {
@@ -1495,10 +1522,9 @@ private:
     for (const auto& type : target->sig.params) {
       args.push_back(make(type));
     }
-    auto targetType = Type(HeapType(target->sig), NonNullable);
     // TODO: half the time make a completely random item with that type.
     return builder.makeCallRef(
-      builder.makeRefFunc(target->name, targetType), args, type, isReturn);
+      builder.makeRefFunc(target->name, target->sig), args, type, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
@@ -2087,8 +2113,7 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        auto type = Type(HeapType(target->sig), Nullable);
-        return builder.makeRefFunc(target->name, type);
+        return builder.makeRefFunc(target->name, target->sig);
       }
       if (type == Type::i31ref) {
         return builder.makeI31New(makeConst(Type::i32));
@@ -2110,7 +2135,7 @@ private:
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
         if (type == Type(HeapType(func->sig), NonNullable)) {
-          return builder.makeRefFunc(func->name, type);
+          return builder.makeRefFunc(func->name, func->sig);
         }
       }
       // We failed to find a function, so create a null reference if we can.
@@ -2132,7 +2157,7 @@ private:
         sig,
         {},
         builder.makeUnreachable()));
-      return builder.makeRefFunc(func->name, type);
+      return builder.makeRefFunc(func->name, heapType);
     }
     if (type.isRtt()) {
       return builder.makeRtt(type);
@@ -2204,11 +2229,10 @@ private:
           }
           case Type::v128: {
             assert(wasm.features.hasSIMD());
-            return buildUnary({pick(AnyTrueVecI8x16,
+            // TODO: Add the other SIMD unary ops
+            return buildUnary({pick(AnyTrueVec128,
                                     AllTrueVecI8x16,
-                                    AnyTrueVecI16x8,
                                     AllTrueVecI16x8,
-                                    AnyTrueVecI32x4,
                                     AllTrueVecI32x4),
                                make(Type::v128)});
           }
@@ -2329,7 +2353,7 @@ private:
             return buildUnary({SplatVecF64x2, make(Type::f64)});
           case 4:
             return buildUnary({pick(NotVec128,
-                                    // TODO: i8x16.popcnt once merged
+                                    // TODO: add additional SIMD instructions
                                     NegVecI8x16,
                                     NegVecI16x8,
                                     NegVecI32x4,
@@ -2342,20 +2366,16 @@ private:
                                     SqrtVecF64x2,
                                     TruncSatSVecF32x4ToVecI32x4,
                                     TruncSatUVecF32x4ToVecI32x4,
-                                    TruncSatSVecF64x2ToVecI64x2,
-                                    TruncSatUVecF64x2ToVecI64x2,
                                     ConvertSVecI32x4ToVecF32x4,
                                     ConvertUVecI32x4ToVecF32x4,
-                                    ConvertSVecI64x2ToVecF64x2,
-                                    ConvertUVecI64x2ToVecF64x2,
-                                    WidenLowSVecI8x16ToVecI16x8,
-                                    WidenHighSVecI8x16ToVecI16x8,
-                                    WidenLowUVecI8x16ToVecI16x8,
-                                    WidenHighUVecI8x16ToVecI16x8,
-                                    WidenLowSVecI16x8ToVecI32x4,
-                                    WidenHighSVecI16x8ToVecI32x4,
-                                    WidenLowUVecI16x8ToVecI32x4,
-                                    WidenHighUVecI16x8ToVecI32x4),
+                                    ExtendLowSVecI8x16ToVecI16x8,
+                                    ExtendHighSVecI8x16ToVecI16x8,
+                                    ExtendLowUVecI8x16ToVecI16x8,
+                                    ExtendHighUVecI8x16ToVecI16x8,
+                                    ExtendLowSVecI16x8ToVecI32x4,
+                                    ExtendHighSVecI16x8ToVecI32x4,
+                                    ExtendLowUVecI16x8ToVecI32x4,
+                                    ExtendHighUVecI16x8ToVecI32x4),
                                make(Type::v128)});
         }
         WASM_UNREACHABLE("invalid value");
@@ -2552,7 +2572,6 @@ private:
                                  SubVecI8x16,
                                  SubSatSVecI8x16,
                                  SubSatUVecI8x16,
-                                 MulVecI8x16,
                                  MinSVecI8x16,
                                  MinUVecI8x16,
                                  MaxSVecI8x16,
@@ -2927,39 +2946,39 @@ private:
 
   Expression* makeSIMDLoad() {
     // TODO: add Load{32,64}Zero if merged to proposal
-    SIMDLoadOp op = pick(LoadSplatVec8x16,
-                         LoadSplatVec16x8,
-                         LoadSplatVec32x4,
-                         LoadSplatVec64x2,
-                         LoadExtSVec8x8ToVecI16x8,
-                         LoadExtUVec8x8ToVecI16x8,
-                         LoadExtSVec16x4ToVecI32x4,
-                         LoadExtUVec16x4ToVecI32x4,
-                         LoadExtSVec32x2ToVecI64x2,
-                         LoadExtUVec32x2ToVecI64x2);
+    SIMDLoadOp op = pick(Load8SplatVec128,
+                         Load16SplatVec128,
+                         Load32SplatVec128,
+                         Load64SplatVec128,
+                         Load8x8SVec128,
+                         Load8x8UVec128,
+                         Load16x4SVec128,
+                         Load16x4UVec128,
+                         Load32x2SVec128,
+                         Load32x2UVec128);
     Address offset = logify(get());
     Address align;
     switch (op) {
-      case LoadSplatVec8x16:
+      case Load8SplatVec128:
         align = 1;
         break;
-      case LoadSplatVec16x8:
+      case Load16SplatVec128:
         align = pick(1, 2);
         break;
-      case LoadSplatVec32x4:
+      case Load32SplatVec128:
         align = pick(1, 2, 4);
         break;
-      case LoadSplatVec64x2:
-      case LoadExtSVec8x8ToVecI16x8:
-      case LoadExtUVec8x8ToVecI16x8:
-      case LoadExtSVec16x4ToVecI32x4:
-      case LoadExtUVec16x4ToVecI32x4:
-      case LoadExtSVec32x2ToVecI64x2:
-      case LoadExtUVec32x2ToVecI64x2:
+      case Load64SplatVec128:
+      case Load8x8SVec128:
+      case Load8x8UVec128:
+      case Load16x4SVec128:
+      case Load16x4UVec128:
+      case Load32x2SVec128:
+      case Load32x2UVec128:
         align = pick(1, 2, 4, 8);
         break;
-      case Load32Zero:
-      case Load64Zero:
+      case Load32ZeroVec128:
+      case Load64ZeroVec128:
         WASM_UNREACHABLE("Unexpected SIMD loads");
     }
     Expression* ptr = makePointer();

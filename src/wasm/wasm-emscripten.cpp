@@ -33,10 +33,7 @@
 
 namespace wasm {
 
-cashew::IString EM_ASM_PREFIX("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
-
-static Name STACK_INIT("stack$init");
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
@@ -426,12 +423,10 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   });
   meta << "\n  ],\n";
 
-  meta << "  \"externs\": [";
+  meta << "  \"globalImports\": [";
   commaFirst = true;
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    if (!(import->module == ENV && import->name == STACK_INIT)) {
-      meta << nextElement() << "\"_" << import->base.str << '"';
-    }
+    meta << nextElement() << '"' << import->base.str << '"';
   });
   meta << "\n  ],\n";
 

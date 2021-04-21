@@ -50,7 +50,6 @@ const char* TypedFunctionReferencesFeature = "typed-function-references";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name WASM_CALL_CTORS("__wasm_call_ctors");
 Name MEMORY_BASE("__memory_base");
 Name TABLE_BASE("__table_base");
 Name STACK_POINTER("__stack_pointer");
@@ -471,21 +470,21 @@ void SIMDLoad::finalize() {
 
 Index SIMDLoad::getMemBytes() {
   switch (op) {
-    case LoadSplatVec8x16:
+    case Load8SplatVec128:
       return 1;
-    case LoadSplatVec16x8:
+    case Load16SplatVec128:
       return 2;
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       return 4;
-    case LoadSplatVec64x2:
-    case LoadExtSVec8x8ToVecI16x8:
-    case LoadExtUVec8x8ToVecI16x8:
-    case LoadExtSVec16x4ToVecI32x4:
-    case LoadExtUVec16x4ToVecI32x4:
-    case LoadExtSVec32x2ToVecI64x2:
-    case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64SplatVec128:
+    case Load8x8SVec128:
+    case Load8x8UVec128:
+    case Load16x4SVec128:
+    case Load16x4UVec128:
+    case Load32x2SVec128:
+    case Load32x2UVec128:
+    case Load64ZeroVec128:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -499,24 +498,19 @@ void SIMDLoadStoreLane::finalize() {
   }
 }
 
-void SIMDWiden::finalize() {
-  assert(vec);
-  type = vec->type == Type::unreachable ? Type::unreachable : Type::v128;
-}
-
 Index SIMDLoadStoreLane::getMemBytes() {
   switch (op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       return 1;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       return 2;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       return 4;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       return 8;
   }
   WASM_UNREACHABLE("unexpected op");
@@ -524,22 +518,18 @@ Index SIMDLoadStoreLane::getMemBytes() {
 
 bool SIMDLoadStoreLane::isStore() {
   switch (op) {
-    case StoreLaneVec8x16:
-    case StoreLaneVec16x8:
-    case StoreLaneVec32x4:
-    case StoreLaneVec64x2:
+    case Store8LaneVec128:
+    case Store16LaneVec128:
+    case Store32LaneVec128:
+    case Store64LaneVec128:
       return true;
-    case LoadLaneVec16x8:
-    case LoadLaneVec32x4:
-    case LoadLaneVec64x2:
-    case LoadLaneVec8x16:
+    case Load16LaneVec128:
+    case Load32LaneVec128:
+    case Load64LaneVec128:
+    case Load8LaneVec128:
       return false;
   }
   WASM_UNREACHABLE("unexpected op");
-}
-
-void Prefetch::finalize() {
-  type = ptr->type == Type::unreachable ? Type::unreachable : Type::none;
 }
 
 Const* Const::set(Literal value_) {
@@ -650,6 +640,7 @@ void Unary::finalize() {
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:
+    case AbsVecI64x2:
     case PopcntVecI8x16:
     case NegVecI8x16:
     case NegVecI16x8:
@@ -675,24 +666,20 @@ void Unary::finalize() {
     case ExtAddPairwiseUVecI16x8ToI32x4:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
-    case TruncSatSVecF64x2ToVecI64x2:
-    case TruncSatUVecF64x2ToVecI64x2:
     case ConvertSVecI32x4ToVecF32x4:
     case ConvertUVecI32x4ToVecF32x4:
-    case ConvertSVecI64x2ToVecF64x2:
-    case ConvertUVecI64x2ToVecF64x2:
-    case WidenLowSVecI8x16ToVecI16x8:
-    case WidenHighSVecI8x16ToVecI16x8:
-    case WidenLowUVecI8x16ToVecI16x8:
-    case WidenHighUVecI8x16ToVecI16x8:
-    case WidenLowSVecI16x8ToVecI32x4:
-    case WidenHighSVecI16x8ToVecI32x4:
-    case WidenLowUVecI16x8ToVecI32x4:
-    case WidenHighUVecI16x8ToVecI32x4:
-    case WidenLowSVecI32x4ToVecI64x2:
-    case WidenHighSVecI32x4ToVecI64x2:
-    case WidenLowUVecI32x4ToVecI64x2:
-    case WidenHighUVecI32x4ToVecI64x2:
+    case ExtendLowSVecI8x16ToVecI16x8:
+    case ExtendHighSVecI8x16ToVecI16x8:
+    case ExtendLowUVecI8x16ToVecI16x8:
+    case ExtendHighUVecI8x16ToVecI16x8:
+    case ExtendLowSVecI16x8ToVecI32x4:
+    case ExtendHighSVecI16x8ToVecI32x4:
+    case ExtendLowUVecI16x8ToVecI32x4:
+    case ExtendHighUVecI16x8ToVecI32x4:
+    case ExtendLowSVecI32x4ToVecI64x2:
+    case ExtendHighSVecI32x4ToVecI64x2:
+    case ExtendLowUVecI32x4ToVecI64x2:
+    case ExtendHighUVecI32x4ToVecI64x2:
     case ConvertLowSVecI32x4ToVecF64x2:
     case ConvertLowUVecI32x4ToVecF64x2:
     case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -701,12 +688,11 @@ void Unary::finalize() {
     case PromoteLowVecF32x4ToVecF64x2:
       type = Type::v128;
       break;
-    case AnyTrueVecI8x16:
-    case AnyTrueVecI16x8:
-    case AnyTrueVecI32x4:
+    case AnyTrueVec128:
     case AllTrueVecI8x16:
     case AllTrueVecI16x8:
     case AllTrueVecI32x4:
+    case AllTrueVecI64x2:
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
@@ -872,6 +858,7 @@ void TupleExtract::finalize() {
   if (tuple->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
+    assert(index < tuple->type.size());
     type = tuple->type[index];
   }
 }
@@ -1041,7 +1028,7 @@ void RefAs::finalize() {
       type = Type(value->type.getHeapType(), NonNullable);
       break;
     case RefAsFunc:
-      type = Type::funcref;
+      type = Type(HeapType::func, NonNullable);
       break;
     case RefAsData:
       type = Type::dataref;

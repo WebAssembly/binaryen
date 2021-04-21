@@ -125,3 +125,16 @@
   )
  )
 )
+(module
+ (type $struct (struct ))
+ (type $none_=>_none (func))
+ (type $rtt_$struct_=>_none (func (param (rtt $struct))))
+ (func $0 (param $rtt (rtt $struct))
+  (nop)
+ )
+ (func $1
+  (call $0
+   (rtt.canon $struct)
+  )
+ )
+)

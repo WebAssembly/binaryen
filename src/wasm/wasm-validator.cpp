@@ -797,6 +797,9 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   if (curr->target->type != Type::unreachable) {
     auto* table = getModule()->getTableOrNull(curr->table);
     shouldBeTrue(!!table, curr, "call-indirect table must exist");
+    shouldBeTrue(table->type.isFunction(),
+                 curr,
+                 "call-indirect table must be of function type.");
   }
 
   validateCallParamsAndResult(curr, curr->sig);
@@ -1137,7 +1140,7 @@ void FunctionValidator::visitSIMDShuffle(SIMDShuffle* curr) {
   shouldBeTrue(
     getModule()->features.hasSIMD(), curr, "SIMD operation (SIMD is disabled)");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->type, Type(Type::v128), curr, "v128.shuffle must have type v128");
+    curr->type, Type(Type::v128), curr, "i8x16.shuffle must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
     curr->left->type, Type(Type::v128), curr, "expected operand of type v128");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1187,20 +1190,20 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     "load_splat address must match memory index type");
   Type memAlignType = Type::none;
   switch (curr->op) {
-    case LoadSplatVec8x16:
-    case LoadSplatVec16x8:
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load8SplatVec128:
+    case Load16SplatVec128:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       memAlignType = Type::i32;
       break;
-    case LoadSplatVec64x2:
-    case LoadExtSVec8x8ToVecI16x8:
-    case LoadExtUVec8x8ToVecI16x8:
-    case LoadExtSVec16x4ToVecI32x4:
-    case LoadExtUVec16x4ToVecI32x4:
-    case LoadExtSVec32x2ToVecI64x2:
-    case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64SplatVec128:
+    case Load8x8SVec128:
+    case Load8x8UVec128:
+    case Load16x4SVec128:
+    case Load16x4UVec128:
+    case Load32x2SVec128:
+    case Load32x2UVec128:
+    case Load64ZeroVec128:
       memAlignType = Type::i64;
       break;
   }
@@ -1233,23 +1236,23 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   size_t lanes;
   Type memAlignType = Type::none;
   switch (curr->op) {
-    case LoadLaneVec8x16:
-    case StoreLaneVec8x16:
+    case Load8LaneVec128:
+    case Store8LaneVec128:
       lanes = 16;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec16x8:
-    case StoreLaneVec16x8:
+    case Load16LaneVec128:
+    case Store16LaneVec128:
       lanes = 8;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec32x4:
-    case StoreLaneVec32x4:
+    case Load32LaneVec128:
+    case Store32LaneVec128:
       lanes = 4;
       memAlignType = Type::i32;
       break;
-    case LoadLaneVec64x2:
-    case StoreLaneVec64x2:
+    case Load64LaneVec128:
+    case Store64LaneVec128:
       lanes = 2;
       memAlignType = Type::i64;
       break;
@@ -1524,6 +1527,11 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case GeSVecI32x4:
     case GeUVecI32x4:
     case EqVecI64x2:
+    case NeVecI64x2:
+    case LtSVecI64x2:
+    case LeSVecI64x2:
+    case GtSVecI64x2:
+    case GeSVecI64x2:
     case EqVecF32x4:
     case NeVecF32x4:
     case LtVecF32x4:
@@ -1546,7 +1554,6 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case SubVecI8x16:
     case SubSatSVecI8x16:
     case SubSatUVecI8x16:
-    case MulVecI8x16:
     case MinSVecI8x16:
     case MinUVecI8x16:
     case MaxSVecI8x16:
@@ -1836,6 +1843,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case AbsVecI8x16:
     case AbsVecI16x8:
     case AbsVecI32x4:
+    case AbsVecI64x2:
     case NegVecI8x16:
     case NegVecI16x8:
     case NegVecI32x4:
@@ -1860,24 +1868,20 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case ExtAddPairwiseUVecI16x8ToI32x4:
     case TruncSatSVecF32x4ToVecI32x4:
     case TruncSatUVecF32x4ToVecI32x4:
-    case TruncSatSVecF64x2ToVecI64x2:
-    case TruncSatUVecF64x2ToVecI64x2:
     case ConvertSVecI32x4ToVecF32x4:
     case ConvertUVecI32x4ToVecF32x4:
-    case ConvertSVecI64x2ToVecF64x2:
-    case ConvertUVecI64x2ToVecF64x2:
-    case WidenLowSVecI8x16ToVecI16x8:
-    case WidenHighSVecI8x16ToVecI16x8:
-    case WidenLowUVecI8x16ToVecI16x8:
-    case WidenHighUVecI8x16ToVecI16x8:
-    case WidenLowSVecI16x8ToVecI32x4:
-    case WidenHighSVecI16x8ToVecI32x4:
-    case WidenLowUVecI16x8ToVecI32x4:
-    case WidenHighUVecI16x8ToVecI32x4:
-    case WidenLowSVecI32x4ToVecI64x2:
-    case WidenHighSVecI32x4ToVecI64x2:
-    case WidenLowUVecI32x4ToVecI64x2:
-    case WidenHighUVecI32x4ToVecI64x2:
+    case ExtendLowSVecI8x16ToVecI16x8:
+    case ExtendHighSVecI8x16ToVecI16x8:
+    case ExtendLowUVecI8x16ToVecI16x8:
+    case ExtendHighUVecI8x16ToVecI16x8:
+    case ExtendLowSVecI16x8ToVecI32x4:
+    case ExtendHighSVecI16x8ToVecI32x4:
+    case ExtendLowUVecI16x8ToVecI32x4:
+    case ExtendHighUVecI16x8ToVecI32x4:
+    case ExtendLowSVecI32x4ToVecI64x2:
+    case ExtendHighSVecI32x4ToVecI64x2:
+    case ExtendLowUVecI32x4ToVecI64x2:
+    case ExtendHighUVecI32x4ToVecI64x2:
     case ConvertLowSVecI32x4ToVecF64x2:
     case ConvertLowUVecI32x4ToVecF64x2:
     case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -1888,12 +1892,11 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
       break;
-    case AnyTrueVecI8x16:
-    case AnyTrueVecI16x8:
-    case AnyTrueVecI32x4:
+    case AnyTrueVec128:
     case AllTrueVecI8x16:
     case AllTrueVecI16x8:
     case AllTrueVecI32x4:
+    case AllTrueVecI64x2:
     case BitmaskVecI8x16:
     case BitmaskVecI16x8:
     case BitmaskVecI32x4:
@@ -1998,6 +2001,8 @@ void FunctionValidator::visitRefFunc(RefFunc* curr) {
   shouldBeTrue(curr->type.isFunction(),
                curr,
                "ref.func must have a function reference type");
+  shouldBeTrue(
+    !curr->type.isNullable(), curr, "ref.func must have non-nullable type");
   // TODO: verify it also has a typed function references type, and the right
   // one,
   //   curr->type.getHeapType().getSignature()
@@ -2829,6 +2834,10 @@ static void validateTables(Module& module, ValidationInfo& info) {
                       "--enable-reference-types)");
     if (!module.tables.empty()) {
       auto& table = module.tables.front();
+      info.shouldBeTrue(table->type == Type::funcref,
+                        "table",
+                        "Only funcref is valid for table type (when reference "
+                        "types are disabled)");
       for (auto& segment : module.elementSegments) {
         info.shouldBeTrue(segment->table == table->name,
                           "elem",
@@ -2845,23 +2854,73 @@ static void validateTables(Module& module, ValidationInfo& info) {
     }
   }
 
+  for (auto& table : module.tables) {
+    info.shouldBeTrue(table->initial <= table->max,
+                      "table",
+                      "size minimum must not be greater than maximum");
+    info.shouldBeTrue(
+      table->type.isNullable(),
+      "table",
+      "Non-nullable reference types are not yet supported for tables");
+    if (!module.features.hasGC()) {
+      info.shouldBeTrue(table->type.isFunction() ||
+                          table->type == Type::externref,
+                        "table",
+                        "Only function reference types or externref are valid "
+                        "for table type (when GC is disabled)");
+    }
+    if (!module.features.hasTypedFunctionReferences()) {
+      info.shouldBeTrue(table->type == Type::funcref ||
+                          table->type == Type::externref,
+                        "table",
+                        "Only funcref and externref are valid for table type "
+                        "(when typed-function references are disabled)");
+    }
+  }
+
   for (auto& segment : module.elementSegments) {
+    // Since element segment items need to be constant expressions, that leaves
+    // us with ref.null, ref.func and global.get. The GC proposal adds rtt.canon
+    // and rtt.sub to the list, but Binaryen doesn't consider RTTs as reference-
+    // types yet. As a result, the only possible type for element segments will
+    // be function references.
+    info.shouldBeTrue(segment->type.isFunction(),
+                      "elem",
+                      "element segment type must be of function type.");
+    info.shouldBeTrue(
+      segment->type.isNullable(),
+      "elem",
+      "Non-nullable reference types are not yet supported for tables");
+
     if (segment->table.is()) {
       auto table = module.getTableOrNull(segment->table);
-      info.shouldBeTrue(
-        table != nullptr, "elem", "elem segment must have a valid table name");
+      info.shouldBeTrue(table != nullptr,
+                        "elem",
+                        "element segment must have a valid table name");
       info.shouldBeTrue(!!segment->offset,
                         "elem",
                         "table segment offset should have an offset");
       info.shouldBeEqual(segment->offset->type,
                          Type(Type::i32),
                          segment->offset,
-                         "elem segment offset should be i32");
+                         "element segment offset should be i32");
       info.shouldBeTrue(checkSegmentOffset(segment->offset,
                                            segment->data.size(),
                                            table->initial * Table::kPageSize),
                         segment->offset,
                         "table segment offset should be reasonable");
+      if (module.features.hasTypedFunctionReferences()) {
+        info.shouldBeTrue(
+          Type::isSubType(segment->type, table->type),
+          "elem",
+          "element segment type must be a subtype of the table type");
+      } else {
+        info.shouldBeEqual(
+          segment->type,
+          table->type,
+          "elem",
+          "element segment type must be the same as the table type");
+      }
       validator.validate(segment->offset);
     } else {
       info.shouldBeTrue(!segment->offset,
@@ -2871,10 +2930,22 @@ static void validateTables(Module& module, ValidationInfo& info) {
     // Avoid double checking items
     if (module.features.hasReferenceTypes()) {
       for (auto* expr : segment->data) {
-        info.shouldBeTrue(
-          expr->is<RefFunc>() || expr->is<RefNull>(),
-          expr,
-          "element segment items must be either ref.func or ref.null func.");
+        if (auto* globalExpr = expr->dynCast<GlobalGet>()) {
+          auto* global = module.getGlobal(globalExpr->name);
+          info.shouldBeFalse(
+            global->mutable_, expr, "expected a constant expression");
+        } else {
+          info.shouldBeTrue(expr->is<RefFunc>() || expr->is<RefNull>() ||
+                              expr->is<GlobalGet>(),
+                            expr,
+                            "element segment items must be one of global.get, "
+                            "ref.func, ref.null func");
+        }
+        info.shouldBeSubType(expr->type,
+                             segment->type,
+                             expr,
+                             "element segment item expressions must return a "
+                             "subtype of the segment type");
         validator.validate(expr);
       }
     }
