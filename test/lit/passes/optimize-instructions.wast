@@ -101,12 +101,10 @@
     )
   )
   ;; CHECK:      (func $if-eqz-two-arms (param $i1 i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $i1)
-  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $i1)
   ;; CHECK-NEXT:    (i32.const 12)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 11)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -125,14 +123,12 @@
     )
   )
   ;; CHECK:      (func $if-eqz-two-arms-i64 (param $i2 i64)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i64.eqz
-  ;; CHECK-NEXT:    (local.get $i2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (i64.eqz
+  ;; CHECK-NEXT:     (local.get $i2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 11)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 12)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -11928,27 +11924,42 @@
       )
     )
   )
-  ;; CHECK:      (func $ternary-identical-arms-but-type-is-none (param $x i32) (param $y i32) (param $z i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $z)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK:      (func $ternary-identical-arms-and-type-is-none (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.eqz
   ;; CHECK-NEXT:     (local.get $y)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ternary-identical-arms-but-type-is-none (param $x i32) (param $y i32) (param $z i32)
+  (func $ternary-identical-arms-and-type-is-none (param $x i32) (param $y i32) (param $z i32)
     (if
       (local.get $z)
-      ;; identical arms, but type is none
       (drop (i32.eqz (local.get $x)))
       (drop (i32.eqz (local.get $y)))
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-and-type-is-none-child-types-mismatch (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (f64.const 2.34)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-and-type-is-none-child-types-mismatch (param $x i32) (param $y i32) (param $z i32)
+    (if
+      (local.get $z)
+      ;; the drop cannot be hoisted out, since the children's type mismatch
+      ;; would not allow us to give a proper type to the if.
+      (drop (i32.const 1))
+      (drop (f64.const 2.34))
     )
   )
   ;; CHECK:      (func $ternary-identical-arms-but-block (param $x i32) (param $y i32) (param $z i32)
@@ -12010,6 +12021,110 @@
           (local.get $y)
         )
         (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-br_if-same (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (br_if $block
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-br_if-same (param $x i32) (param $y i32) (param $z i32)
+    (block $block
+      (if
+        (local.get $z)
+        ;; two br_ifs with the same target are shallowly identical
+        (br_if $block
+          (local.get $x)
+        )
+        (br_if $block
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-br_if-different (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (block $block1
+  ;; CHECK-NEXT:   (block $block2
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (br_if $block1
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br_if $block2
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-br_if-different (param $x i32) (param $y i32) (param $z i32)
+    (block $block1
+      (block $block2
+        (if
+          (local.get $z)
+          ;; two br_ifs with different targets are not shallowly identical
+          (br_if $block1
+            (local.get $x)
+          )
+          (br_if $block2
+            (local.get $y)
+          )
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-return (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-return (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (block $block
+      (if
+        (local.get $z)
+        (return
+          (local.get $x)
+        )
+        (return
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $send-i32 (param $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $send-i32 (param i32))
+  ;; CHECK:      (func $ternary-identical-arms-call (param $x i32) (param $y i32) (param $z i32)
+  ;; CHECK-NEXT:  (call $send-i32
+  ;; CHECK-NEXT:   (if (result i32)
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-call (param $x i32) (param $y i32) (param $z i32)
+    (if
+      (local.get $z)
+      (call $send-i32
+        (local.get $x)
+      )
+      (call $send-i32
+        (local.get $y)
       )
     )
   )

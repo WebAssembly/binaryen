@@ -2786,10 +2786,6 @@ private:
   // Optimize an if-else or a select, something with a condition and two
   // arms with outputs.
   template<typename T> void optimizeTernary(T* curr) {
-    if (curr->type == Type::unreachable) {
-      return;
-    }
-
     using namespace Match;
     Builder builder(*getModule());
 
@@ -2809,7 +2805,7 @@ private:
     //      (Y)
     //    )
     //  )
-    {
+    if (curr->type != Type::unreachable) {
       Unary* un;
       Expression* x;
       Const* c;
@@ -2860,27 +2856,42 @@ private:
       // as we go, then do a single replaceCurrent() at the end.
       SmallVector<Expression*, 1> chain;
       while (1) {
-        // TODO: handle none as well as concrete types (can pull a drop out, for
-        //       example)
-        // TODO: consider the case with more children than 1
-        if (curr->ifTrue->type.isConcrete() &&
-            !Properties::isControlFlowStructure(curr->ifTrue) &&
+        // Ignore control flow structures (which are handled in MergeBlocks).
+        if (!Properties::isControlFlowStructure(curr->ifTrue) &&
             ExpressionAnalyzer::shallowEqual(curr->ifTrue, curr->ifFalse)) {
+          // TODO: consider the case with more than one child.
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
+            ChildIterator ifFalseChildren(curr->ifFalse);
+            // ifTrue and ifFalse's children will become the direct children of
+            // curr, and so there must be an LUB for curr to have a proper type.
+            // An example where that does not happen is this:
+            //
+            //  (if
+            //    (condition)
+            //    (drop (i32.const 1))
+            //    (drop (f64.const 2.0))
+            //  )
+            auto* ifTrueChild = *ifTrueChildren.begin();
+            auto* ifFalseChild = *ifFalseChildren.begin();
+            bool validTypes =
+              Type::hasLeastUpperBound(ifTrueChild->type, ifFalseChild->type);
             // If the expression we are about to move outside has side effects,
-            // we cannot replace two instances with one (and there might be
-            // ordering issues as well, for a select's condition).
-            // TODO: handle certain side effects when possible
-            EffectAnalyzer shallowEffects(getPassOptions(),
-                                          getModule()->features);
-            shallowEffects.visit(curr->ifTrue);
-            if (!shallowEffects.hasSideEffects()) {
+            // then we cannot do so in general with a select: we'd be reducing
+            // the amount of the effects as well as moving them. For an if,
+            // the side effects execute once, so there is no problem.
+            // TODO: handle certain side effects when possible in select
+            bool validEffects = std::is_same<T, If>::value ||
+                                !ShallowEffectAnalyzer(getPassOptions(),
+                                                       getModule()->features,
+                                                       curr->ifTrue)
+                                   .hasSideEffects();
+            if (validTypes && validEffects) {
               // Replace ifTrue with its child.
-              curr->ifTrue = *ifTrueChildren.begin();
+              curr->ifTrue = ifTrueChild;
               // Relace ifFalse with its child, and reuse that node outside.
               auto* reuse = curr->ifFalse;
-              curr->ifFalse = *ChildIterator(curr->ifFalse).begin();
+              curr->ifFalse = ifFalseChild;
               // curr's type may have changed, if the instructions we moved out
               // had different input types than output types.
               curr->finalize();
