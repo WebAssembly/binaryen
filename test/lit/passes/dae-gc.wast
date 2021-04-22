@@ -2,6 +2,8 @@
 ;; RUN: wasm-opt %s -all --dae -S -o - | filecheck %s
 
 (module
+ (type ${} (struct))
+
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (call $bar)
  ;; CHECK-NEXT: )
@@ -44,6 +46,24 @@
   ;; so the correctness in this case is visible in the output)
   (local.tee $0
    (unreachable)
+  )
+ )
+ ;; a function that gets an rtt that is never used. we cannot create a local for
+ ;; that parameter, as it is not defaultable, so do not remove the parameter.
+ ;; CHECK:      (func $get-rtt (param $0 (rtt ${}))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $get-rtt (param $0 (rtt ${}))
+  (nop)
+ )
+ ;; CHECK:      (func $send-rtt
+ ;; CHECK-NEXT:  (call $get-rtt
+ ;; CHECK-NEXT:   (rtt.canon ${})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $send-rtt
+  (call $get-rtt
+   (rtt.canon ${})
   )
  )
 )
