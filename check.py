@@ -342,9 +342,6 @@ def run_lit():
         if shared.options.abort_on_first_failure and shared.num_failures:
             raise Exception("lit test failed")
 
-    run()
-
-    # also run with pass-debug mode
     shared.with_pass_debug(run)
 
 
