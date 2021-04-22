@@ -2786,6 +2786,7 @@ private:
   // Optimize an if-else or a select, something with a condition and two
   // arms with outputs.
   template<typename T> void optimizeTernary(T* curr) {
+    using namespace Abstract;
     using namespace Match;
     Builder builder(*getModule());
 
@@ -2814,27 +2815,34 @@ private:
       Expression* x;
       Const* c;
       auto check = [&](Expression* a, Expression* b) {
-        if (matches(a, unary(&un, EqZInt32, any(&x))) && matches(b, ival(&c))) {
-          auto value = c->value.geti32();
+        if (matches(a, unary(&un, EqZ, any(&x))) && matches(b, ival(&c))) {
+          auto value = c->value.getInteger();
           return value == 0 || value == 1;
         }
         return false;
       };
       if (check(curr->ifTrue, curr->ifFalse) ||
           check(curr->ifFalse, curr->ifTrue)) {
+        // The new type of curr will be that of the value of the unary, as after
+        // we move the unary out, its value is curr's direct child.
+        auto newType = un->value->type;
         auto updateArm = [&](Expression* arm) -> Expression* {
           if (arm == un) {
             // This is the arm that had the eqz, which we need to remove.
             return un->value;
           } else {
             // This is the arm with the constant, which we need to flip.
-            c->value = Literal(int32_t(1 - c->value.geti32()));
+            // Note that we also need to set the type to match the other arm.
+            c->value =
+              Literal::makeFromInt32(1 - c->value.getInteger(), newType);
+            c->type = newType;
             return c;
           }
         };
         curr->ifTrue = updateArm(curr->ifTrue);
         curr->ifFalse = updateArm(curr->ifFalse);
         un->value = curr;
+        curr->finalize(newType);
         return replaceCurrent(un);
       }
     }

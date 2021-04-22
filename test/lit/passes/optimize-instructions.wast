@@ -11792,6 +11792,50 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-i64-0 (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (if (result i64)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 1)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-i64-0 (param $x i32) (param $y i64)
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i32.const 0)
+        (i64.eqz
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-i64-1 (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (if (result i64)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-i64-1 (param $x i32) (param $y i64)
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i64.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+      )
+    )
+  )
   ;; CHECK:      (func $ternary-no (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
