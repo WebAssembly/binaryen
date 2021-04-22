@@ -11814,6 +11814,46 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-no-unreachable-1 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no-unreachable-1 (param $x i32) (result i32)
+    (if (result i32)
+      (local.get $x)
+      ;; one arm is an eqz, the other is 0 or 1, so we can put an eqz on the
+      ;; outside in theory, but we'd need to be careful with the unreachable
+      ;; type here. ignore this case, as DCE is the proper optimization anyhow.
+      (i32.eqz
+        (unreachable)
+      )
+      (i32.const 0)
+    )
+  )
+  ;; CHECK:      (func $ternary-no-unreachable-2 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no-unreachable-2 (param $x i32) (result i32)
+    (if (result i32)
+      (local.get $x)
+      ;; as before, but flipped
+      (i32.const 0)
+      (i32.eqz
+        (unreachable)
+      )
+    )
+  )
   ;; CHECK:      (func $ternary-identical-arms (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
