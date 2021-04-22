@@ -331,15 +331,21 @@ def run_unittest():
 
 
 def run_lit():
-    lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
-    lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
-    # lit expects to be run as its own executable
-    cmd = [sys.executable, lit_script, lit_tests, '-vv']
-    result = subprocess.run(cmd)
-    if result.returncode != 0:
-        shared.num_failures += 1
-    if shared.options.abort_on_first_failure and shared.num_failures:
-        raise Exception("lit test failed")
+    def run():
+        lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
+        lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
+        # lit expects to be run as its own executable
+        cmd = [sys.executable, lit_script, lit_tests, '-vv']
+        result = subprocess.run(cmd)
+        if result.returncode != 0:
+            shared.num_failures += 1
+        if shared.options.abort_on_first_failure and shared.num_failures:
+            raise Exception("lit test failed")
+
+    run()
+
+    # also run with pass-debug mode
+    shared.with_pass_debug(run)
 
 
 TEST_SUITES = OrderedDict([
