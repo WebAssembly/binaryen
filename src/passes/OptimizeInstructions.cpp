@@ -2805,7 +2805,11 @@ private:
     //      (Y)
     //    )
     //  )
-    if (curr->type != Type::unreachable) {
+    //
+    // Ignore unreachable code here; leave that for DCE.
+    if (curr->type != Type::unreachable &&
+        curr->ifTrue->type != Type::unreachable &&
+        curr->ifFalse->type != Type::unreachable) {
       Unary* un;
       Expression* x;
       Const* c;
