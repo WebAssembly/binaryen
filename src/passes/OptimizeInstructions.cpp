@@ -2833,8 +2833,8 @@ private:
           } else {
             // This is the arm with the constant, which we need to flip.
             // Note that we also need to set the type to match the other arm.
-            c->value = Literal::makeFromInt32(1 - c->value.getInteger(),
-                                              newType);
+            c->value =
+              Literal::makeFromInt32(1 - c->value.getInteger(), newType);
             c->type = newType;
             return c;
           }
@@ -2843,7 +2843,7 @@ private:
         curr->ifFalse = updateArm(curr->ifFalse);
         un->value = curr;
         curr->finalize(newType);
-         return replaceCurrent(un);
+        return replaceCurrent(un);
       }
     }
 
