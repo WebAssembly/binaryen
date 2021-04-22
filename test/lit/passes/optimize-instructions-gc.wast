@@ -849,7 +849,7 @@
       )
     )
   )
-  ;; CHECK:      (func $ternary-identical-arms-but-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+  ;; CHECK:      (func $select-identical-arms-but-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (struct.get_u $struct $i8
@@ -862,7 +862,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ternary-identical-arms-but-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+  (func $select-identical-arms-but-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
     (drop
       (select
         ;; the arms are equal but have side effects
@@ -898,6 +898,32 @@
           (local.get $y)
         )
         (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $if-identical-arms-with-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $struct $i8
+  ;; CHECK-NEXT:    (if (result (ref null $struct))
+  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-identical-arms-with-side-effect (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+    (drop
+      (if (result i32)
+        (local.get $z)
+        ;; the arms are equal and have side effects, but that is ok with an if
+        ;; which only executes one side anyhow
+        (struct.get_u $struct 0
+          (local.get $x)
+        )
+        (struct.get_u $struct 0
+          (local.get $y)
+        )
       )
     )
   )
