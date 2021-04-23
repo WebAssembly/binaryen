@@ -423,10 +423,10 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   });
   meta << "\n  ],\n";
 
-  meta << "  \"externs\": [";
+  meta << "  \"globalImports\": [";
   commaFirst = true;
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    meta << nextElement() << "\"_" << import->base.str << '"';
+    meta << nextElement() << '"' << import->base.str << '"';
   });
   meta << "\n  ],\n";
 

@@ -95,68 +95,41 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
   } memory;
 
   std::unordered_map<Name, std::vector<Literal>> tables;
+  std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances;
 
-  ShellExternalInterface() : memory() {}
+  ShellExternalInterface(
+    std::map<Name, std::shared_ptr<ModuleInstance>> linkedInstances_ = {})
+    : memory() {
+    linkedInstances.swap(linkedInstances_);
+  }
   virtual ~ShellExternalInterface() = default;
 
-  void init(Module& wasm, ModuleInstance& instance) override {
-    memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
-
-    if (wasm.tables.size() > 0) {
-      for (auto& table : wasm.tables) {
-        tables[table->name].resize(table->initial);
-      }
+  ModuleInstance* getImportInstance(Importable* import) {
+    auto it = linkedInstances.find(import->module);
+    if (it == linkedInstances.end()) {
+      Fatal() << "importGlobals: unknown import: " << import->module.str << "."
+              << import->base.str;
     }
+    return it->second.get();
+  }
+
+  void init(Module& wasm, ModuleInstance& instance) override {
+    if (wasm.memory.exists && !wasm.memory.imported()) {
+      memory.resize(wasm.memory.initial * wasm::Memory::kPageSize);
+    }
+    ModuleUtils::iterDefinedTables(
+      wasm, [&](Table* table) { tables[table->name].resize(table->initial); });
   }
 
   void importGlobals(std::map<Name, Literals>& globals, Module& wasm) override {
-    // add spectest globals
     ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-      if (import->module == SPECTEST && import->base.startsWith("global_")) {
-        TODO_SINGLE_COMPOUND(import->type);
-        switch (import->type.getBasic()) {
-          case Type::i32:
-            globals[import->name] = {Literal(int32_t(666))};
-            break;
-          case Type::i64:
-            globals[import->name] = {Literal(int64_t(666))};
-            break;
-          case Type::f32:
-            globals[import->name] = {Literal(float(666.6))};
-            break;
-          case Type::f64:
-            globals[import->name] = {Literal(double(666.6))};
-            break;
-          case Type::v128:
-            WASM_UNREACHABLE("v128 not implemented yet");
-          case Type::funcref:
-          case Type::externref:
-          case Type::anyref:
-          case Type::eqref:
-            globals[import->name] = {Literal::makeNull(import->type)};
-            break;
-          case Type::i31ref:
-            WASM_UNREACHABLE("TODO: i31ref");
-          case Type::dataref:
-            WASM_UNREACHABLE("TODO: dataref");
-          case Type::none:
-          case Type::unreachable:
-            WASM_UNREACHABLE("unexpected type");
-        }
+      auto inst = getImportInstance(import);
+      auto* exportedGlobal = inst->wasm.getExportOrNull(import->base);
+      if (!exportedGlobal) {
+        Fatal() << "importGlobals: unknown import: " << import->module.str
+                << "." << import->name.str;
       }
-    });
-    if (wasm.memory.imported() && wasm.memory.module == SPECTEST &&
-        wasm.memory.base == MEMORY) {
-      // imported memory has initial 1 and max 2
-      wasm.memory.initial = 1;
-      wasm.memory.max = 2;
-    }
-
-    ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-      if (table->module == SPECTEST && table->base == TABLE) {
-        table->initial = 10;
-        table->max = 20;
-      }
+      globals[import->name] = inst->globals[exportedGlobal->value];
     });
   }
 
@@ -170,6 +143,8 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
       // XXX hack for torture tests
       std::cout << "exit()\n";
       throw ExitException();
+    } else if (auto* inst = getImportInstance(import)) {
+      return inst->callExport(import->base, arguments);
     }
     Fatal() << "callImport: unknown import: " << import->module.str << "."
             << import->name.str;
@@ -254,7 +229,7 @@ struct ShellExternalInterface : ModuleInstance::ExternalInterface {
     if (addr >= table.size()) {
       trap("out of bounds table access");
     } else {
-      table.emplace(table.begin() + addr, entry);
+      table[addr] = entry;
     }
   }
 

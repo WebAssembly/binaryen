@@ -50,7 +50,6 @@ const char* TypedFunctionReferencesFeature = "typed-function-references";
 } // namespace UserSections
 } // namespace BinaryConsts
 
-Name WASM_CALL_CTORS("__wasm_call_ctors");
 Name MEMORY_BASE("__memory_base");
 Name TABLE_BASE("__table_base");
 Name STACK_POINTER("__stack_pointer");
@@ -1029,7 +1028,7 @@ void RefAs::finalize() {
       type = Type(value->type.getHeapType(), NonNullable);
       break;
     case RefAsFunc:
-      type = Type::funcref;
+      type = Type(HeapType::func, NonNullable);
       break;
     case RefAsData:
       type = Type::dataref;

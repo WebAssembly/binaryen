@@ -52,6 +52,7 @@ struct FunctionInfo {
   bool hasLoops;
   bool hasTryDelegate;
   bool usedGlobally; // in a table or export
+  bool uninlineable;
 
   FunctionInfo() {
     refs = 0;
@@ -60,10 +61,14 @@ struct FunctionInfo {
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
+    uninlineable = false;
   }
 
   // See pass.h for how defaults for these options were chosen.
   bool worthInlining(PassOptions& options) {
+    if (uninlineable) {
+      return false;
+    }
     // Until we have proper support for try-delegate, ignore such functions.
     // FIXME https://github.com/WebAssembly/binaryen/issues/3634
     if (hasTryDelegate) {
@@ -134,7 +139,17 @@ struct FunctionInfoScanner
   }
 
   void visitFunction(Function* curr) {
-    (*infos)[curr->name].size = Measurer::measure(curr->body);
+    auto& info = (*infos)[curr->name];
+
+    // We cannot inline a function if we cannot handle placing it in a local, as
+    // all params become locals.
+    for (auto param : curr->sig.params) {
+      if (!TypeUpdating::canHandleAsLocal(param)) {
+        info.uninlineable = true;
+      }
+    }
+
+    info.size = Measurer::measure(curr->body);
   }
 
 private:
@@ -298,7 +313,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     // Make the block reachable by adding a break to it
     block->list.push_back(builder.makeBreak(block->name));
   }
-  TypeUpdating::handleNonNullableLocals(into, *module);
+  TypeUpdating::handleNonDefaultableLocals(into, *module);
   return block;
 }
 

@@ -37,7 +37,7 @@
     "emscripten_log",
     "emscripten_asm_const_int"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "dynCall_vii",

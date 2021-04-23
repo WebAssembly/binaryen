@@ -136,4 +136,22 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ref-eq-ref-cast (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-ref-cast (param $x eqref)
+    ;; we can look through a ref.cast if we ignore traps
+    (drop
+      (ref.eq
+        (local.get $x)
+        (ref.cast
+          (local.get $x)
+          (rtt.canon $parent)
+        )
+      )
+    )
+  )
 )

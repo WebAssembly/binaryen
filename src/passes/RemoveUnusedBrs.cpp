@@ -915,7 +915,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Restructuring of ifs: if we have
       //   (block $x
-      //     (br_if $x (cond))
+      //     (drop (br_if $x (cond)))
       //     .., no other references to $x
       //   )
       // then we can turn that into (if (!cond) ..).
@@ -925,7 +925,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // If the block has a return value, we can do something similar, removing
       // the drop from the br_if and putting the if on the outside,
       //   (block $x
-      //     (br_if $x (value) (cond))
+      //     (drop (br_if $x (value) (cond)))
       //     .., no other references to $x
       //     ..final element..
       //   )
@@ -956,30 +956,73 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           // not have a value, depending on if it was dropped or not. If the
           // type is unreachable that means it is not actually reached, which we
           // can ignore.
+          Builder builder(*getModule());
           if (br && br->condition && br->name == curr->name &&
               br->type != Type::unreachable) {
             if (BranchUtils::BranchSeeker::count(curr, curr->name) == 1) {
               // no other breaks to that name, so we can do this
               if (!drop) {
                 assert(!br->value);
-                Builder builder(*getModule());
                 replaceCurrent(builder.makeIf(
                   builder.makeUnary(EqZInt32, br->condition), curr));
                 ExpressionManipulator::nop(br);
                 curr->finalize(curr->type);
               } else {
-                // If the items we move around have side effects, we can't do
-                // this.
-                // TODO: we could use a select, in some cases..?
+                // To use an if, the value must have no side effects, as in the
+                // if it may not execute.
                 FeatureSet features = getModule()->features;
                 if (!EffectAnalyzer(passOptions, features, br->value)
-                       .hasSideEffects() &&
-                    !EffectAnalyzer(passOptions, features, br->condition)
                        .hasSideEffects()) {
-                  ExpressionManipulator::nop(list[0]);
-                  Builder builder(*getModule());
-                  replaceCurrent(
-                    builder.makeIf(br->condition, br->value, curr));
+                  // We also need to reorder the condition and the value.
+                  if (EffectAnalyzer::canReorder(
+                        passOptions, features, br->condition, br->value)) {
+                    ExpressionManipulator::nop(list[0]);
+                    replaceCurrent(
+                      builder.makeIf(br->condition, br->value, curr));
+                  }
+                } else {
+                  // The value has side effects, so it must always execute. We
+                  // may still be able to optimize this, however, by using a
+                  // select:
+                  //   (block $x
+                  //     (drop (br_if $x (value) (cond)))
+                  //     ..., no other references to $x
+                  //     ..final element..
+                  //   )
+                  // =>
+                  //   (select
+                  //     (value)
+                  //     (block $x
+                  //       ..., no other references to $x
+                  //       ..final element..
+                  //     )
+                  //     (cond)
+                  //   )
+                  // To do this we must be able to reorder the condition with
+                  // the rest of the block (but not the value), and we must be
+                  // able to make the rest of the block always execute, so it
+                  // must not have side effects.
+                  // TODO: we can do this when there *are* other refs to $x,
+                  //       with a larger refactoring here.
+
+                  // Test for the conditions with a temporary nop instead of the
+                  // br_if.
+                  Expression* old = list[0];
+                  Nop nop;
+                  // After this assignment, curr is what is left in the block
+                  // after ignoring the br_if.
+                  list[0] = &nop;
+                  auto canReorder = EffectAnalyzer::canReorder(
+                    passOptions, features, br->condition, curr);
+                  auto hasSideEffects =
+                    EffectAnalyzer(passOptions, features, curr)
+                      .hasSideEffects();
+                  list[0] = old;
+                  if (canReorder && !hasSideEffects) {
+                    ExpressionManipulator::nop(list[0]);
+                    replaceCurrent(
+                      builder.makeSelect(br->condition, br->value, curr));
+                  }
                 }
               }
             }

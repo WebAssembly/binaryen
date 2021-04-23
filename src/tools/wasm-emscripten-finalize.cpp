@@ -298,15 +298,6 @@ int main(int argc, const char* argv[]) {
 
   passRunner.run();
 
-  if (sideModule) {
-    BYN_TRACE("finalizing as side module\n");
-    // The emscripten PIC ABI still expects a function named
-    // __post_instantiate to be exported by side module.
-    if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-      e->name = "__post_instantiate";
-    }
-  }
-
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.
   std::string metadata = generator.generateEmscriptenMetadata();

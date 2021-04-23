@@ -125,7 +125,7 @@
   "declares": [
     "_Z4atoiPKc"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",

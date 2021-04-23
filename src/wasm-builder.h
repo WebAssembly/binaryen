@@ -88,8 +88,20 @@ public:
     table->type = type;
     table->initial = initial;
     table->max = max;
-
     return table;
+  }
+
+  static std::unique_ptr<ElementSegment>
+  makeElementSegment(Name name,
+                     Name table,
+                     Expression* offset = nullptr,
+                     Type type = Type::funcref) {
+    auto seg = std::make_unique<ElementSegment>();
+    seg->name = name;
+    seg->table = table;
+    seg->offset = offset;
+    seg->type = type;
+    return seg;
   }
 
   static std::unique_ptr<Export>

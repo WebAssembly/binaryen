@@ -12867,7 +12867,7 @@
     "fd_write",
     "setTempRet0"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",
