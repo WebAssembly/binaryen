@@ -12188,6 +12188,19 @@
       )
     )
   )
+  (func $ternary-identical-arms-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (block $block
+      (select
+        (return
+          (local.get $x)
+        )
+        (return
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
   ;; CHECK:      (func $send-i32 (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )

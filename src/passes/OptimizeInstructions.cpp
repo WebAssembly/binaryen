@@ -2888,9 +2888,8 @@ private:
             ChildIterator ifFalseChildren(curr->ifFalse);
             auto* ifTrueChild = *ifTrueChildren.begin();
             auto* ifFalseChild = *ifFalseChildren.begin();
-            auto newCurrType =
-              Type::getLeastUpperBound(ifTrueChild->type, ifFalseChild->type);
-            bool validTypes = newCurrType != Type::none;
+            bool validTypes =
+              Type::hasLeastUpperBound(ifTrueChild->type, ifFalseChild->type);
 
             // In addition, after we move code outside of curr then we need to
             // not change unreachability - if we did, we'd need to propagate
