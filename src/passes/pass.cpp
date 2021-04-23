@@ -494,9 +494,6 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   } else {
     addIfNoDWARFIssues("simplify-globals");
   }
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    addIfNoDWARFIssues("dse-optimizing");
-  }
   addIfNoDWARFIssues("remove-unused-module-elements");
   // may allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
