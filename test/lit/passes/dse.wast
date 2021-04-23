@@ -6,6 +6,7 @@
 (module
  (type $A (struct (field (mut i32))))
  (type $B (struct (field (mut f64))))
+ (type $C (struct (field (mut i32)) (field (mut i32))))
 
  (memory shared 10)
 
@@ -35,10 +36,12 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $simple-param (param $x (ref $A))
+  ;; a dead store using a parameter
   (struct.set $A 0
    (local.get $x)
    (i32.const 10)
   )
+  ;; another dead store
   (struct.set $A 0
    (local.get $x)
    (i32.const 20)
@@ -75,6 +78,7 @@
  ;; CHECK-NEXT: )
  (func $simple-local
   (local $x (ref null $A))
+  ;; dead stores using a local
   (struct.set $A 0
    (local.get $x)
    (i32.const 10)
@@ -112,6 +116,7 @@
    (local.get $x)
    (i32.const 10)
   )
+  ;; a store reaching a trap may be observable from the outside later
   (struct.set $A 0
    (local.get $x)
    (i32.const 20)
@@ -156,6 +161,8 @@
     (i32.const 10)
    )
    (struct.set $A 0
+    ;; the reference can be seen to fall through this, proving the store is
+    ;; dead (due to the one after it) and kills the former one.
     (br_on_cast $func
      (local.get $x)
      (rtt.canon $A)
@@ -190,6 +197,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $simple-fallthrough (param $x (ref $A))
+  ;; simple fallthrough through a block does not confuse us, this store is dead.
   (struct.set $A 0
    (block (result (ref $A))
     (local.get $x)
@@ -229,6 +237,7 @@
    (local.get $x)
    (i32.const 10)
   )
+  ;; the reference changes here, so the first store is *not* dead
   (local.set $x
    (call $get-ref)
   )
@@ -259,6 +268,7 @@
    (local.get $x)
    (i32.const 10)
   )
+  ;; the reference may change here
   (if
    (local.get $i)
    (local.set $x
@@ -303,6 +313,7 @@
    (local.get $x)
    (i32.const 20)
   )
+  ;; the second store is used by this load, and so it is not dead
   (drop
    (struct.get $A 0
     (local.get $x)
@@ -333,7 +344,8 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the simple analysis currently gives up on a set we cannot easily classify
+  ;; the simple analysis currently gives up on a set we cannot easily classify,
+  ;; but eventually this could be handled: these types are not related
   (struct.set $B 0
    (local.get $y)
    (f64.const 20)
@@ -364,7 +376,7 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the simple analysis currently gives up on a set we cannot easily classify
+  ;; the simple analysis currently gives up on a get we cannot easily classify
   (drop
    (struct.get $B 0
     (local.get $y)
@@ -394,7 +406,7 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the analysis gives up on a call
+  ;; the analysis gives up on a call, where heap memory may be modified
   (call $foo)
   (struct.set $A 0
    (local.get $x)
@@ -426,7 +438,8 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the analysis is not confused by branching
+  ;; the analysis is not confused by branching and merging; the first store is
+  ;; dead
   (if (i32.const 1)
    (nop)
    (nop)
@@ -537,6 +550,7 @@
      (local.get $x)
      (i32.const 10)
     )
+    ;; a dead store in one if arm
     (struct.set $A 0
      (local.get $x)
      (i32.const 20)
@@ -547,6 +561,7 @@
      (local.get $x)
      (i32.const 30)
     )
+    ;; another dead store in another arm
     (struct.set $A 0
      (local.get $x)
      (i32.const 40)
@@ -574,12 +589,29 @@
    (local.get $x)
    (i32.const 10)
   )
+  ;; we do not know if x == y or not, and so must assume none of these are dead.
   (struct.set $A 0
    (local.get $y)
    (i32.const 20)
   )
-  ;; the last store escapes to the outside, and cannot be modified
   (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
+ (func $different-indexes (param $x (ref $A))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; stores to different indexes do not interact with each other. this store is
+  ;; dead because of the one after it, but the former is not dead.
+  (struct.set $A 1
+   (local.get $x)
+   (i32.const 20)
+  )
+  (struct.set $A 1
    (local.get $x)
    (i32.const 30)
   )
