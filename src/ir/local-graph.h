@@ -48,7 +48,7 @@ struct LocalGraph {
                        // param)
   Locations locations; // where each get and set is (for easy replacing)
 
-  // Checks if two gets are equivalent, that is, will definitely have the same
+  // Checks if two gets are equivalent, that is, definitely have the same
   // value.
   bool equivalent(LocalGet* a, LocalGet* b);
 

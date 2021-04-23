@@ -18,6 +18,13 @@
 // Finds stores that are trampled over by other stores anyhow, before they can
 // be read, and related patterns.
 //
+// "Store" is used generically here to mean a write to a global location, which
+// includes:
+//
+//  * Stores to linear memory (Store).
+//  * Stores to globals (GlobalSet).
+//  * Stores to GC data (StructSet, ArraySet)
+//
 
 #include <cfg/cfg-traversal.h>
 #include <ir/effects.h>
