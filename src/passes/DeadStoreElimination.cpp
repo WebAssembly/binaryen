@@ -23,6 +23,7 @@
 #include <ir/effects.h>
 #include <ir/local-graph.h>
 #include <ir/properties.h>
+#include <passes/opt-utils.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
@@ -260,10 +261,13 @@ struct DeadStoreFinder
     return false;
   }
 
-  void optimize() {
+  // Optimizes the function, and returns whether we made any changes.
+  bool optimize() {
     analyze();
 
     Builder builder(*getModule());
+
+    bool optimized = false;
 
     // Optimize the stores that have no unknown interactions.
     for (auto& kv : optimizeableStores) {
@@ -279,6 +283,7 @@ struct DeadStoreFinder
         // affects global state then we would not have considered the store to
         // be trampled (it could have been read there).
         *storeLocations[store] = replaceStoreWithDrops(store, builder);
+        optimized = true;
       }
       // TODO: When there are loads, we can replace the loads as well (by saving
       //       the value to a local for that global, etc.).
@@ -286,6 +291,8 @@ struct DeadStoreFinder
       //       effects, like a possible trap on memory loads, but they can be
       //       left as dropped.
     }
+
+    return optimized;
   }
 };
 
@@ -460,25 +467,31 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
   }
 };
 
-struct DeadStoreElimination
-  : public WalkerPass<PostWalker<DeadStoreElimination>> {
+struct LocalDeadStoreElimination
+  : public WalkerPass<PostWalker<LocalDeadStoreElimination>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new DeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    bool optimized = false;
 
-    MemoryDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    optimized ||= GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+
+    optimized ||= MemoryDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
 
     if (getModule()->features.hasGC()) {
-      GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+      optimized ||= GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    }
+
+    if (optimized) {
+      OptUtils::optimizeAfterInlining(func, getModule(), getPassRunner());
     }
   }
 };
 
 // TODO: make global/local/optimizing variants
 
-Pass* createDeadStoreEliminationPass() { return new DeadStoreElimination(); }
+Pass* createLocalDeadStoreEliminationPass() { return new LocalDeadStoreElimination(); }
 
 } // namespace wasm
