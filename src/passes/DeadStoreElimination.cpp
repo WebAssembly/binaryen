@@ -477,6 +477,8 @@ struct DeadStoreElimination
   }
 };
 
+// TODO: make global/local/optimizing variants
+
 Pass* createDeadStoreEliminationPass() { return new DeadStoreElimination(); }
 
 } // namespace wasm

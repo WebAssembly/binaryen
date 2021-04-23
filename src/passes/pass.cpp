@@ -439,9 +439,6 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite
   }
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    addIfNoDWARFIssues("dse");
-  }
   addIfNoDWARFIssues("coalesce-locals");
   addIfNoDWARFIssues("simplify-locals");
   addIfNoDWARFIssues("vacuum");
@@ -491,6 +488,9 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals-optimizing");
   } else {
     addIfNoDWARFIssues("simplify-globals");
+  }
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("dse-optimizing");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
   // may allow more inlining/dae/etc., need --converge for that
