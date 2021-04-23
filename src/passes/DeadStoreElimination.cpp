@@ -23,8 +23,8 @@
 #include <ir/effects.h>
 #include <ir/local-graph.h>
 #include <ir/properties.h>
-#include <passes/opt-utils.h>
 #include <pass.h>
+#include <passes/opt-utils.h>
 #include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
 #include <wasm.h>
@@ -476,12 +476,15 @@ struct LocalDeadStoreElimination
   void doWalkFunction(Function* func) {
     bool optimized = false;
 
-    optimized ||= GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    optimized |=
+      GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
 
-    optimized ||= MemoryDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    optimized |=
+      MemoryDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
 
     if (getModule()->features.hasGC()) {
-      optimized ||= GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+      optimized |=
+        GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
     }
 
     if (optimized) {
@@ -492,6 +495,8 @@ struct LocalDeadStoreElimination
 
 // TODO: make global/local/optimizing variants
 
-Pass* createLocalDeadStoreEliminationPass() { return new LocalDeadStoreElimination(); }
+Pass* createLocalDeadStoreEliminationPass() {
+  return new LocalDeadStoreElimination();
+}
 
 } // namespace wasm
