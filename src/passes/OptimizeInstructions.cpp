@@ -1512,8 +1512,6 @@ private:
   Expression* optimizeAddedConstants(Binary* binary) {
     assert(binary->type.isInteger());
 
-    // We accumulate a 64-bit integer value. For the 32-bit case the value is
-    // wrapped at the end automatically anyhow.
     uint64_t constant = 0;
     std::vector<Const*> constants;
 
@@ -1651,28 +1649,13 @@ private:
       return walked; // nothing more to do
     }
     if (auto* c = walked->dynCast<Const>()) {
-      c->value =
-        Literal::makeFromInt64(c->value.getInteger() + constant, c->type);
+      assert(c->value.isZero());
+      // Accumulated 64-bit constant value in 32-bit context will be wrapped
+      // during downcasting. So it's valid unification for 32-bit and 64-bit
+      // values.
+      c->value = Literal::makeFromInt64(constant, c->type);
       return c;
     }
-    /*
-    (module
-     (func "foo" (result i32)
-      (i32.add
-       (i32.add
-        (i32.shl
-         (i32.const 1)
-         (i32.add
-          (i32.const 0)
-          (i32.const -32)
-         )
-        )
-        (i32.const -1)
-       )
-       (i32.const -1)
-      )
-     )
-    )*/
     Builder builder(*getModule());
     return builder.makeBinary(
       Abstract::getBinary(walked->type, Abstract::Add),
@@ -2891,9 +2874,10 @@ private:
           // TODO: consider the case with more than one child.
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
-            ChildIterator ifFalseChildren(curr->ifFalse);
             // ifTrue and ifFalse's children will become the direct children of
-            // curr, and so there must be an LUB for curr to have a proper type.
+            // curr, and so there must be an LUB for curr to have a proper new
+            // type after the transformation.
+            //
             // An example where that does not happen is this:
             //
             //  (if
@@ -2901,10 +2885,35 @@ private:
             //    (drop (i32.const 1))
             //    (drop (f64.const 2.0))
             //  )
+            ChildIterator ifFalseChildren(curr->ifFalse);
             auto* ifTrueChild = *ifTrueChildren.begin();
             auto* ifFalseChild = *ifFalseChildren.begin();
             bool validTypes =
               Type::hasLeastUpperBound(ifTrueChild->type, ifFalseChild->type);
+
+            // In addition, after we move code outside of curr then we need to
+            // not change unreachability - if we did, we'd need to propagate
+            // that further, and we leave such work to DCE and Vacuum anyhow.
+            // This can happen in something like this for example, where the
+            // outer type changes from i32 to unreachable if we move the
+            // returns outside:
+            //
+            //  (if (result i32)
+            //    (local.get $x)
+            //    (return
+            //      (local.get $y)
+            //    )
+            //    (return
+            //      (local.get $z)
+            //    )
+            //  )
+            assert(curr->ifTrue->type == curr->ifFalse->type);
+            auto newOuterType = curr->ifTrue->type;
+            if ((newOuterType == Type::unreachable) !=
+                (curr->type == Type::unreachable)) {
+              validTypes = false;
+            }
+
             // If the expression we are about to move outside has side effects,
             // then we cannot do so in general with a select: we'd be reducing
             // the amount of the effects as well as moving them. For an if,
@@ -2915,6 +2924,7 @@ private:
                                                        getModule()->features,
                                                        curr->ifTrue)
                                    .hasSideEffects();
+
             if (validTypes && validEffects) {
               // Replace ifTrue with its child.
               curr->ifTrue = ifTrueChild;
