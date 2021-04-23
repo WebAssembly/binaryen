@@ -12212,4 +12212,26 @@
       )
     )
   )
+  ;; CHECK:      (func $foobar (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foobar (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (if (result i32)
+      (local.get $x)
+      (return
+        (local.get $y)
+      )
+      (return
+        (local.get $z)
+      )
+    )
+  )
 )
