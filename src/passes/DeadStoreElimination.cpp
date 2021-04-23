@@ -361,10 +361,9 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
     if (auto* load = curr->dynCast<Load>()) {
       auto* store = store_->cast<Store>();
       // Atomic stores are dangerous, since they have additional trapping
-      // behavior - they trap on unaligned addresses. For that reason we can't
-      // consider an atomic store to be loaded by a non-atomic one, though the
-      // reverse is valid.
-      if (store->isAtomic && !load->isAtomic) {
+      // behavior - they trap on unaligned addresses. For simplicity, only
+      // consider the case where atomicity is identical.
+      if (store->isAtomic != load->isAtomic) {
         return false;
       }
       // TODO: For now, only handle the obvious case where the
@@ -383,7 +382,7 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
     if (auto* otherStore = curr->dynCast<Store>()) {
       auto* store = store_->cast<Store>();
       // As in isLoadFrom, atomic stores are dangerous.
-      if (store->isAtomic && !otherStore->isAtomic) {
+      if (store->isAtomic != otherStore->isAtomic) {
         return false;
       }
       // TODO: compare in detail. For now, handle the obvious case where the
