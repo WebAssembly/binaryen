@@ -600,18 +600,36 @@
   )
  )
 
- (func $different-indexes (param $x (ref $A))
-  (struct.set $A 0
+ ;; CHECK:      (func $different-indexes (param $x (ref $C))
+ ;; CHECK-NEXT:  (struct.set $C 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $C 1
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $different-indexes (param $x (ref $C))
+  (struct.set $C 0
    (local.get $x)
    (i32.const 10)
   )
   ;; stores to different indexes do not interact with each other. this store is
   ;; dead because of the one after it, but the former is not dead.
-  (struct.set $A 1
+  (struct.set $C 1
    (local.get $x)
    (i32.const 20)
   )
-  (struct.set $A 1
+  (struct.set $C 1
    (local.get $x)
    (i32.const 30)
   )
@@ -637,7 +655,8 @@
  ;; CHECK-NEXT: )
  (func $global
   ;; globals are optimized as well, and we have more precise data there than on
-  ;; GC references - aliasing is impossible.
+  ;; GC references - aliasing is impossible, and so we can tell this first one
+  ;; is dead due to the last, ignoring the unaliasing one in the middle
   (global.set $global$0
    (i32.const 10)
   )
@@ -691,6 +710,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $memory-const
+  ;; test dead store elimination of writes to memory at constant offsets
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -716,6 +736,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $memory-param (param $x i32)
+  ;; test dead store elimination of writes to memory using a local
   (i32.store
    (local.get $x)
    (i32.const 20)
@@ -888,8 +909,8 @@
  ;; CHECK-NEXT:   (i32.const 20)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (i32.load offset=1
- ;; CHECK-NEXT:    (i32.const 50)
+ ;; CHECK-NEXT:   (i32.load
+ ;; CHECK-NEXT:    (i32.const 11)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.store
@@ -902,9 +923,11 @@
    (i32.const 10)
    (i32.const 20)
   )
+  ;; this load's ptr does not match the last store's, and so the analysis
+  ;; assumes they might interact
   (drop
-   (i32.load offset=1
-    (i32.const 50)
+   (i32.load
+    (i32.const 11)
    )
   )
   (i32.store
@@ -933,6 +956,8 @@
    (i32.const 10)
    (i32.const 20)
   )
+  ;; the load's number of bytes does not match the store, so assume they
+  ;; interact somehow
   (drop
    (i32.load8_s
     (i32.const 10)
@@ -959,6 +984,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $memory-store-small
+  ;; we can optimize dead stores of fewer bytes than the default
   (i32.store8
    (i32.const 10)
    (i32.const 20)
@@ -1011,7 +1037,7 @@
  ;; CHECK-NEXT: )
  (func $memory-same-size-different-types
   ;; it doesn't matter if we are trampled by a different type; we are still
-  ;; trampled.
+  ;; trampled, and so this store is dead.
   (i32.store
    (i32.const 10)
    (i32.const 0)
@@ -1058,6 +1084,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $memory-atomic1
+  ;; an atomic store is not killed by a normal one (the atomic one would trap
+  ;; on misalignment, for example)
   (i32.atomic.store
    (i32.const 10)
    (i32.const 0)
@@ -1069,13 +1097,9 @@
  )
 
  ;; CHECK:      (func $memory-atomic2
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 10)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.atomic.store
  ;; CHECK-NEXT:   (i32.const 10)
@@ -1083,6 +1107,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $memory-atomic2
+  ;; a normal store cannot be killed by an atomic one: if the atomic store traps
+  ;; then the first store's value will remain untrampled
   (i32.store
    (i32.const 10)
    (i32.const 0)
@@ -1108,6 +1134,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $memory-atomic3
+  ;; atomic stores *can* trample each other.
   (i32.atomic.store
    (i32.const 10)
    (i32.const 0)
@@ -1137,6 +1164,7 @@
    (i32.const 10)
    (i32.const 10)
   )
+  ;; an unreachable store does not trample
   (i32.store
    (unreachable)
    (i32.const 20)
