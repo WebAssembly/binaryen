@@ -297,7 +297,7 @@ struct GlobalDeadStoreFinder : public DeadStoreFinder {
   bool isStore(Expression* curr) override { return curr->is<GlobalSet>(); }
 
   bool isAlsoRelevant(Expression* curr,
-                  const EffectAnalyzer& currEffects) override {
+                      const EffectAnalyzer& currEffects) override {
     return curr->is<GlobalGet>();
   }
 
@@ -342,7 +342,7 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
   bool isStore(Expression* curr) override { return curr->is<Store>(); }
 
   bool isAlsoRelevant(Expression* curr,
-                  const EffectAnalyzer& currEffects) override {
+                      const EffectAnalyzer& currEffects) override {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
@@ -414,7 +414,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
   bool isStore(Expression* curr) override { return curr->is<StructSet>(); }
 
   bool isAlsoRelevant(Expression* curr,
-                  const EffectAnalyzer& currEffects) override {
+                      const EffectAnalyzer& currEffects) override {
     return curr->is<StructGet>();
   }
 
