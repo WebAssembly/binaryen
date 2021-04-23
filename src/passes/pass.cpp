@@ -441,9 +441,6 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite
   }
-  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
-    addIfNoDWARFIssues("ldse");
-  }
   addIfNoDWARFIssues("coalesce-locals");
   addIfNoDWARFIssues("simplify-locals");
   addIfNoDWARFIssues("vacuum");
