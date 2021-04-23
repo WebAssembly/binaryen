@@ -12188,8 +12188,22 @@
       )
     )
   )
-  (func $ternary-identical-arms-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK:      (func $ternary-identical-arms-return-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-return-select (param $x i32) (param $y i32) (param $z i32) (result i32)
     (block $block
+      ;; we cannot optimize a select currently as the return has side effects
       (select
         (return
           (local.get $x)

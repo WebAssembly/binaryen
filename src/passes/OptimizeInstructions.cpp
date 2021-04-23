@@ -2909,7 +2909,7 @@ private:
             //  )
             assert(curr->ifTrue->type == curr->ifFalse->type);
             auto newOuterType = curr->ifTrue->type;
-            if ((newOuterType == Type::unreachable) ^
+            if ((newOuterType == Type::unreachable) !=
                 (curr->type == Type::unreachable)) {
               validTypes = false;
             }
