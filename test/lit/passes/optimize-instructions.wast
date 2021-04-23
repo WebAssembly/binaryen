@@ -12212,7 +12212,7 @@
       )
     )
   )
-  ;; CHECK:      (func $foobar (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK:      (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (return
@@ -12223,7 +12223,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foobar (param $x i32) (param $y i32) (param $z i32) (result i32)
+  (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
+    ;; if we move the returns outside, we'd become unreachable; avoid that.
     (if (result i32)
       (local.get $x)
       (return
