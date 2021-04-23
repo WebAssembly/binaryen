@@ -471,7 +471,7 @@ struct LocalDeadStoreElimination
   : public WalkerPass<PostWalker<LocalDeadStoreElimination>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new DeadStoreElimination; }
+  Pass* create() override { return new LocalDeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
     bool optimized = false;
@@ -488,7 +488,7 @@ struct LocalDeadStoreElimination
     }
 
     if (optimized) {
-      OptUtils::optimizeAfterInlining(func, getModule(), getPassRunner());
+      OptUtils::optimizeAfterInlining({func}, getModule(), getPassRunner());
     }
   }
 };

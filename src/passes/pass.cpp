@@ -104,7 +104,9 @@ void PassRegistry::registerPasses() {
                createConstHoistingPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
-  registerPass("dse", "removes dead stores", createDeadStoreEliminationPass);
+  registerPass("ldse",
+               "removes dead stores (only looking at local info)",
+               createLocalDeadStoreEliminationPass);
   registerPass("dealign",
                "forces all loads and stores to have alignment 1",
                createDeAlignPass);
@@ -438,6 +440,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // if we are willing to work hard, also optimize copies before coalescing
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite
+  }
+  if (options.optimizeLevel >= 3 || options.shrinkLevel >= 1) {
+    addIfNoDWARFIssues("ldse");
   }
   addIfNoDWARFIssues("coalesce-locals");
   addIfNoDWARFIssues("simplify-locals");
