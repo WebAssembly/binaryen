@@ -379,7 +379,7 @@ struct Tuple {
   Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
 
   // Allow copies when constructing.
-  Tuple(const Tuple& other) : types(other.types) { validate(); }
+  Tuple(const Tuple& other) : types(other.types) {}
 
   // Prevent accidental copies.
   Tuple& operator=(const Tuple&) = delete;
