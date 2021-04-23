@@ -16,7 +16,7 @@
 
 //
 // Finds stores that are trampled over by other stores anyhow, before they can
-// be read.
+// be read, and related patterns.
 //
 
 #include <cfg/cfg-traversal.h>
@@ -41,6 +41,10 @@ struct Info {
 
 } // anonymous namespace
 
+// Core logic to generate the relevant CFG and find which things can be
+// optimized. This is subclassed to implement different notions of "store" and
+// the things stored, for example, on globals (where a store is global.set) and
+// on structs (where a store is struct.set).
 struct DeadStoreFinder
   : public CFGWalker<DeadStoreFinder,
                      UnifiedExpressionVisitor<DeadStoreFinder>,
@@ -75,10 +79,10 @@ struct DeadStoreFinder
   virtual bool isStore(Expression* curr) = 0;
 
   // Returns whether the expression is relevant for us to notice in the
-  // analysis. (This does not need to include anything isStore() returns true
-  // on, as those are definitely relevant.)
-  virtual bool isRelevant(Expression* curr,
-                          const EffectAnalyzer& currEffects) = 0;
+  // analysis. This does not need to include anything isStore() returns true
+  // on, as those are definitely relevant; hence the name.
+  virtual bool isAlsoRelevant(Expression* curr,
+                              const EffectAnalyzer& currEffects) = 0;
 
   // Returns whether an expression is a load that corresponds to a store. The
   // load may not load all the data written by the store (that is up to a
@@ -89,7 +93,7 @@ struct DeadStoreFinder
 
   // Returns whether an expression tramples a store completely, overwriting all
   // the store's written data.
-  // This is only called if isLoadFrom returns false.
+  // This is only called if isLoadFrom() returns false.
   virtual bool tramples(Expression* curr,
                         const EffectAnalyzer& currEffects,
                         Expression* store) = 0;
@@ -97,7 +101,7 @@ struct DeadStoreFinder
   // Returns whether an expression may interact with store in a way that we
   // cannot fully analyze as a load or a store, and so we must give up. This may
   // be a possible load or a possible store or something else.
-  // This is only called if isLoadFrom and tramples return false.
+  // This is only called if isLoadFrom() and tramples() return false.
   virtual bool mayInteract(Expression* curr,
                            const EffectAnalyzer& currEffects,
                            Expression* store) = 0;
@@ -109,8 +113,13 @@ struct DeadStoreFinder
 
   // Walking
 
-  // XXX this is not enough, as we may change a location we store to. Need a
-  // whole post-pass to write out changes x->y
+  // Map stores to the pointers to them, so that we can replace them. Note that
+  // this assumes a pointer to a store is not on another store, as then we would
+  // get invalidated; that can happen with locals,
+  //  (local.tee $x
+  //   (local.tee $y ..))
+  // but it cannot happen with the stores we handle in this pass, as there is
+  // no store that is a direct child of another store.
   std::unordered_map<Expression*, Expression**> storeLocations;
 
   void visitExpression(Expression* curr) {
@@ -118,12 +127,12 @@ struct DeadStoreFinder
       return;
     }
 
-    EffectAnalyzer currEffects(passOptions, features);
-    currEffects.visit(curr);
+    ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
+    // Add all relevant things to the list of exprs for the current basic block.
     bool store = isStore(curr);
-    if (reachesGlobalCode(curr, currEffects) || isRelevant(curr, currEffects) ||
-        store) {
+    if (reachesGlobalCode(curr, currEffects) ||
+        isAlsoRelevant(curr, currEffects) || store) {
       currBasicBlock->contents.exprs.push_back(curr);
       if (store) {
         storeLocations[curr] = getCurrentPointer();
@@ -155,12 +164,11 @@ struct DeadStoreFinder
           continue;
         }
 
-        // The store is optimizable until we see a problem.
+        // The store is optimizable (present on the map) until we see a problem.
         optimizeableStores[store];
 
-        // std::cerr << "store:\n" << *store << '\n';
-        // Flow this store forward, looking for what it affects and interacts
-        // with.
+        // Flow this store forward through basic blocks, looking for what it
+        // affects and interacts with.
         UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
 
         // When we find something we cannot optimize, stop flowing and mark the
@@ -170,27 +178,23 @@ struct DeadStoreFinder
           optimizeableStores.erase(store);
         };
 
+        // Scan through a block, starting from a certain position, looking for
+        // loads, tramples, and other interactions with our store.
         auto scanBlock = [&](BasicBlock* block, size_t from) {
-          // std::cerr << "scan block " << block << "\n";
           for (size_t i = from; i < block->contents.exprs.size(); i++) {
             auto* curr = block->contents.exprs[i];
 
-            EffectAnalyzer currEffects(passOptions, features);
-            currEffects.visit(curr);
-            // std::cerr << "at curr:\n" << *curr << '\n';
+            ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
             if (isLoadFrom(curr, currEffects, store)) {
-              // We found a definite load, note it.
+              // We found a definite load of this store, note it.
               optimizeableStores[store].push_back(curr);
-              // std::cerr << "  found load\n";
             } else if (tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
-              // anything it can reach.
-              // std::cerr << "  found trample\n";
+              // anything it can reach, as this store has been trampled.
               return;
             } else if (reachesGlobalCode(curr, currEffects) ||
                        mayInteract(curr, currEffects, store)) {
-              // std::cerr << "  found mayInteract\n";
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
               // TODO: it may be valuable to still optimize some of the loads
@@ -215,35 +219,32 @@ struct DeadStoreFinder
           }
         };
 
-        // First, start in the current location in the block.
+        // First, start in the current location in the block, right after the
+        // store itself.
         scanBlock(block.get(), i + 1);
 
         // Next, continue flowing through other blocks.
         while (!work.empty()) {
-          // std::cerr << "work iter\n";
           auto* curr = work.pop();
           scanBlock(curr, 0);
         }
-        // std::cerr << "work done\n";
       }
     }
-    // std::cerr << "all work done\n";
   }
 
   bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
+    // TODO: an option to ignore traps here may be useful
     return currEffects.calls || currEffects.throws || currEffects.trap ||
            curr->is<Return>();
   }
 
-  // Check whether the values of two expressions are definitely identical.
+  // Check whether the values of two expressions are definitely identical. This
+  // is important for stores and loads that receive an input (like GC data), but
+  // not necessary for others (like globals).
   // TODO: move to localgraph?
   bool equivalent(Expression* a, Expression* b) {
-    // std::cerr << "eqiv\n" << *a << '\n';
-    // std::cerr << "eqiv\n" << *b << '\n';
     a = Properties::getFallthrough(a, passOptions, features);
     b = Properties::getFallthrough(b, passOptions, features);
-    // std::cerr << "Zeqiv\n" << *a << '\n';
-    // std::cerr << "Zeqiv\n" << *b << '\n';
     if (auto* aGet = a->dynCast<LocalGet>()) {
       if (auto* bGet = b->dynCast<LocalGet>()) {
         if (localGraph.equivalent(aGet, bGet)) {
@@ -278,25 +279,24 @@ struct DeadStoreFinder
         // affects global state then we would not have considered the store to
         // be trampled (it could have been read there).
         *storeLocations[store] = replaceStoreWithDrops(store, builder);
-      } else {
-        // TODO: when not empty, use a local and replace loads too, one local
-        //       per "lane"
-        // TODO: must prove no dangerous store reaches those places
-        // TODO: this is technically only possible when ignoring implicit traps.
-        //       one thing we could do is a dropped load of the address.
-        // std::cerr << "waka " << loads.size() << "\n";
       }
+      // TODO: When there are loads, we can replace the loads as well (by saving
+      //       the value to a local for that global, etc.).
+      //       Note that we may need to leave the loads if they have side
+      //       effects, like a possible trap on memory loads, but they can be
+      //       left as dropped.
     }
   }
 };
 
+// Optimize module globals: GlobalSet/GlobalGet.
 struct GlobalDeadStoreFinder : public DeadStoreFinder {
   GlobalDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : DeadStoreFinder(wasm, func, passOptions) {}
 
   bool isStore(Expression* curr) override { return curr->is<GlobalSet>(); }
 
-  bool isRelevant(Expression* curr,
+  bool isAlsoRelevant(Expression* curr,
                   const EffectAnalyzer& currEffects) override {
     return curr->is<GlobalGet>();
   }
@@ -334,13 +334,14 @@ struct GlobalDeadStoreFinder : public DeadStoreFinder {
   }
 };
 
+// Optimize memory stores/loads.
 struct MemoryDeadStoreFinder : public DeadStoreFinder {
   MemoryDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : DeadStoreFinder(wasm, func, passOptions) {}
 
   bool isStore(Expression* curr) override { return curr->is<Store>(); }
 
-  bool isRelevant(Expression* curr,
+  bool isAlsoRelevant(Expression* curr,
                   const EffectAnalyzer& currEffects) override {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
@@ -404,13 +405,15 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
   }
 };
 
+// Optimize GC data: StructGet/StructSet.
+// TODO: Arrays.
 struct GCDeadStoreFinder : public DeadStoreFinder {
   GCDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : DeadStoreFinder(wasm, func, passOptions) {}
 
   bool isStore(Expression* curr) override { return curr->is<StructSet>(); }
 
-  bool isRelevant(Expression* curr,
+  bool isAlsoRelevant(Expression* curr,
                   const EffectAnalyzer& currEffects) override {
     return curr->is<StructGet>();
   }
@@ -465,7 +468,9 @@ struct DeadStoreElimination
 
   void doWalkFunction(Function* func) {
     GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+
     MemoryDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+
     if (getModule()->features.hasGC()) {
       GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
     }
