@@ -12188,6 +12188,33 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms-return-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-return-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (block $block
+      ;; we cannot optimize a select currently as the return has side effects
+      (select
+        (return
+          (local.get $x)
+        )
+        (return
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
   ;; CHECK:      (func $send-i32 (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -12209,6 +12236,29 @@
       )
       (call $send-i32
         (local.get $y)
+      )
+    )
+  )
+  ;; CHECK:      (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
+    ;; if we move the returns outside, we'd become unreachable; avoid that.
+    (if (result i32)
+      (local.get $x)
+      (return
+        (local.get $y)
+      )
+      (return
+        (local.get $z)
       )
     )
   )
