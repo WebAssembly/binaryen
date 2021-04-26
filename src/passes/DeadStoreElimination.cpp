@@ -50,8 +50,10 @@ struct ComparingLocalGraph : public LocalGraph {
   PassOptions& passOptions;
   FeatureSet features;
 
-  ComparingLocalGraph(Function* func, PassOptions& passOptions, FeatureSet features) :
-    LocalGraph(func), passOptions(passOptions), features(features) {}
+  ComparingLocalGraph(Function* func,
+                      PassOptions& passOptions,
+                      FeatureSet features)
+    : LocalGraph(func), passOptions(passOptions), features(features) {}
 
   // Check whether the values of two expressions are definitely identical. This
   // is important for stores and loads that receive an input (like GC data), but
@@ -138,9 +140,10 @@ struct DeadStoreFinder
   // the store is trampled before being read from, i.e., is completely dead).
   std::unordered_map<Expression*, std::vector<Expression*>> optimizeableStores;
 
-  using BasicBlock = typename CFGWalker<DeadStoreFinder<T>,
-                               UnifiedExpressionVisitor<DeadStoreFinder<T>>,
-                               Info>::BasicBlock;
+  using BasicBlock =
+    typename CFGWalker<DeadStoreFinder<T>,
+                       UnifiedExpressionVisitor<DeadStoreFinder<T>>,
+                       Info>::BasicBlock;
 
   void analyze() {
     // create the CFG by walking the IR
@@ -287,45 +290,52 @@ struct DeadStoreImpl {
   // Returns whether the expression is relevant for us to notice in the
   // analysis. This does not need to include anything isStore() returns true
   // on, as those are definitely relevant; hence the name.
-  bool isAlsoRelevant(Expression* curr,
-                              const EffectAnalyzer& currEffects){ WASM_UNREACHABLE("unimp"); };
+  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
+    WASM_UNREACHABLE("unimp");
+  };
 
   // Returns whether an expression is a load that corresponds to a store. The
   // load may not load all the data written by the store (that is up to a
   // subclass to decide about), but it loads at least some of that data.
   bool isLoadFrom(Expression* curr,
-                          const EffectAnalyzer& currEffects,
-                          Expression* store,
-                          ComparingLocalGraph& localGraph){ WASM_UNREACHABLE("unimp"); };
+                  const EffectAnalyzer& currEffects,
+                  Expression* store,
+                  ComparingLocalGraph& localGraph) {
+    WASM_UNREACHABLE("unimp");
+  };
 
   // Returns whether an expression tramples a store completely, overwriting all
   // the store's written data.
   // This is only called if isLoadFrom() returns false.
   bool tramples(Expression* curr,
-                        const EffectAnalyzer& currEffects,
-                        Expression* store,
-                        ComparingLocalGraph& localGraph){ WASM_UNREACHABLE("unimp"); };
+                const EffectAnalyzer& currEffects,
+                Expression* store,
+                ComparingLocalGraph& localGraph) {
+    WASM_UNREACHABLE("unimp");
+  };
 
   // Returns whether an expression may interact with store in a way that we
   // cannot fully analyze as a load or a store, and so we must give up. This may
   // be a possible load or a possible store or something else.
   // This is only called if isLoadFrom() and tramples() return false.
   bool mayInteract(Expression* curr,
-                           const EffectAnalyzer& currEffects,
-                           Expression* store){ WASM_UNREACHABLE("unimp"); };
+                   const EffectAnalyzer& currEffects,
+                   Expression* store) {
+    WASM_UNREACHABLE("unimp");
+  };
 
   // Given a store that is not needed, get drops of its children to replace it
   // with.
-  Expression* replaceStoreWithDrops(Expression* store,
-                                            Builder& builder){ WASM_UNREACHABLE("unimp"); };
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
+    WASM_UNREACHABLE("unimp");
+  };
 };
 
 // Optimize module globals: GlobalSet/GlobalGet.
 struct GlobalDeadStoreImpl : public DeadStoreImpl {
   bool isStore(Expression* curr) { return curr->is<GlobalSet>(); }
 
-  bool isAlsoRelevant(Expression* curr,
-                      const EffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
     return curr->is<GlobalGet>();
   }
 
@@ -358,8 +368,7 @@ struct GlobalDeadStoreImpl : public DeadStoreImpl {
     return false;
   }
 
-  Expression* replaceStoreWithDrops(Expression* store,
-                                    Builder& builder) {
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
     return builder.makeDrop(store->cast<GlobalSet>()->value);
   }
 };
@@ -368,8 +377,7 @@ struct GlobalDeadStoreImpl : public DeadStoreImpl {
 struct MemoryDeadStoreImpl : public DeadStoreImpl {
   bool isStore(Expression* curr) { return curr->is<Store>(); }
 
-  bool isAlsoRelevant(Expression* curr,
-                      const EffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
@@ -393,7 +401,8 @@ struct MemoryDeadStoreImpl : public DeadStoreImpl {
       // TODO: handle cases where the sign may matter.
       return load->bytes == store->bytes &&
              load->bytes == load->type.getByteSize() &&
-             load->offset == store->offset && localGraph.equivalent(load->ptr, store->ptr);
+             load->offset == store->offset &&
+             localGraph.equivalent(load->ptr, store->ptr);
     }
     return false;
   }
@@ -425,8 +434,7 @@ struct MemoryDeadStoreImpl : public DeadStoreImpl {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
-  Expression* replaceStoreWithDrops(Expression* store,
-                                    Builder& builder) {
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
     auto* castStore = store->cast<Store>();
     return builder.makeSequence(builder.makeDrop(castStore->ptr),
                                 builder.makeDrop(castStore->value));
@@ -438,8 +446,7 @@ struct MemoryDeadStoreImpl : public DeadStoreImpl {
 struct GCDeadStoreImpl : public DeadStoreImpl {
   bool isStore(Expression* curr) { return curr->is<StructSet>(); }
 
-  bool isAlsoRelevant(Expression* curr,
-                      const EffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
     return curr->is<StructGet>();
   }
 
@@ -479,8 +486,7 @@ struct GCDeadStoreImpl : public DeadStoreImpl {
     return currEffects.readsHeap || currEffects.writesHeap;
   }
 
-  Expression* replaceStoreWithDrops(Expression* store,
-                                    Builder& builder) {
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
     auto* castStore = store->cast<StructSet>();
     return builder.makeSequence(builder.makeDrop(castStore->ref),
                                 builder.makeDrop(castStore->value));
@@ -494,12 +500,15 @@ struct LocalDeadStoreElimination
   Pass* create() { return new LocalDeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    DeadStoreFinder<GlobalDeadStoreImpl>(getModule(), func, getPassOptions()).optimize();
+    DeadStoreFinder<GlobalDeadStoreImpl>(getModule(), func, getPassOptions())
+      .optimize();
 
-    DeadStoreFinder<MemoryDeadStoreImpl>(getModule(), func, getPassOptions()).optimize();
+    DeadStoreFinder<MemoryDeadStoreImpl>(getModule(), func, getPassOptions())
+      .optimize();
 
     if (getModule()->features.hasGC()) {
-      DeadStoreFinder<GCDeadStoreImpl>(getModule(), func, getPassOptions()).optimize();
+      DeadStoreFinder<GCDeadStoreImpl>(getModule(), func, getPassOptions())
+        .optimize();
     }
   }
 };
