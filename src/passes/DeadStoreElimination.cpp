@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 WebAssembly Community Group participants
+ * Copyright 2021 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,10 +52,12 @@ struct Info {
 // optimized. This is subclassed to implement different notions of "store" and
 // the things stored, for example, on globals (where a store is global.set) and
 // on structs (where a store is struct.set).
+template<typename T>
 struct DeadStoreFinder
-  : public CFGWalker<DeadStoreFinder,
-                     UnifiedExpressionVisitor<DeadStoreFinder>,
+  : public CFGWalker<DeadStoreFinder<T>,
+                     UnifiedExpressionVisitor<DeadStoreFinder<T>>,
                      Info> {
+  T impl;
   Function* func;
   PassOptions& passOptions;
   FeatureSet features;
@@ -66,57 +68,10 @@ struct DeadStoreFinder
   DeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : func(func), passOptions(passOptions), features(wasm->features),
       localGraph(func) {
-    setModule(wasm);
+    this->setModule(wasm);
   }
 
-  virtual ~DeadStoreFinder() {}
-
-  // Hooks for subclasses.
-  //
-  // Some of these methods receive computed effects, which do not include their
-  // children (as in each basic block we process expressions in a linear order,
-  // and have already seen the children).
-  //
-  // These do not need to handle reaching of code outside of the current
-  // function: a call, return, etc. will be noted as a possible interaction
-  // automatically (as if we reach code outside the function then any
-  // interaction is possible).
-
-  // Returns whether an expression is a relevant store for us to consider.
-  virtual bool isStore(Expression* curr) = 0;
-
-  // Returns whether the expression is relevant for us to notice in the
-  // analysis. This does not need to include anything isStore() returns true
-  // on, as those are definitely relevant; hence the name.
-  virtual bool isAlsoRelevant(Expression* curr,
-                              const EffectAnalyzer& currEffects) = 0;
-
-  // Returns whether an expression is a load that corresponds to a store. The
-  // load may not load all the data written by the store (that is up to a
-  // subclass to decide about), but it loads at least some of that data.
-  virtual bool isLoadFrom(Expression* curr,
-                          const EffectAnalyzer& currEffects,
-                          Expression* store) = 0;
-
-  // Returns whether an expression tramples a store completely, overwriting all
-  // the store's written data.
-  // This is only called if isLoadFrom() returns false.
-  virtual bool tramples(Expression* curr,
-                        const EffectAnalyzer& currEffects,
-                        Expression* store) = 0;
-
-  // Returns whether an expression may interact with store in a way that we
-  // cannot fully analyze as a load or a store, and so we must give up. This may
-  // be a possible load or a possible store or something else.
-  // This is only called if isLoadFrom() and tramples() return false.
-  virtual bool mayInteract(Expression* curr,
-                           const EffectAnalyzer& currEffects,
-                           Expression* store) = 0;
-
-  // Given a store that is not needed, get drops of its children to replace it
-  // with.
-  virtual Expression* replaceStoreWithDrops(Expression* store,
-                                            Builder& builder) = 0;
+  ~DeadStoreFinder() {}
 
   // Walking
 
@@ -130,19 +85,19 @@ struct DeadStoreFinder
   std::unordered_map<Expression*, Expression**> storeLocations;
 
   void visitExpression(Expression* curr) {
-    if (!currBasicBlock) {
+    if (!this->currBasicBlock) {
       return;
     }
 
     ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
     // Add all relevant things to the list of exprs for the current basic block.
-    bool store = isStore(curr);
+    bool store = impl.isStore(curr);
     if (reachesGlobalCode(curr, currEffects) ||
-        isAlsoRelevant(curr, currEffects) || store) {
-      currBasicBlock->contents.exprs.push_back(curr);
+        impl.isAlsoRelevant(curr, currEffects) || store) {
+      this->currBasicBlock->contents.exprs.push_back(curr);
       if (store) {
-        storeLocations[curr] = getCurrentPointer();
+        storeLocations[curr] = this->getCurrentPointer();
       }
     }
   }
@@ -153,9 +108,13 @@ struct DeadStoreFinder
   // the store is trampled before being read from, i.e., is completely dead).
   std::unordered_map<Expression*, std::vector<Expression*>> optimizeableStores;
 
+  using BasicBlock = typename CFGWalker<DeadStoreFinder<T>,
+                               UnifiedExpressionVisitor<DeadStoreFinder<T>>,
+                               Info>::BasicBlock;
+
   void analyze() {
     // create the CFG by walking the IR
-    doWalkFunction(func);
+    this->doWalkFunction(func);
 
     // Flow the values and conduct the analysis.
     //
@@ -164,10 +123,10 @@ struct DeadStoreFinder
     //       having possible interactions (e.g., the first time we see a call)
     //       and so most flows are halted very quickly.
 
-    for (auto& block : basicBlocks) {
+    for (auto& block : this->basicBlocks) {
       for (size_t i = 0; i < block->contents.exprs.size(); i++) {
         auto* store = block->contents.exprs[i];
-        if (!isStore(store)) {
+        if (!impl.isStore(store)) {
           continue;
         }
 
@@ -193,15 +152,15 @@ struct DeadStoreFinder
 
             ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
-            if (isLoadFrom(curr, currEffects, store)) {
+            if (impl.isLoadFrom(curr, currEffects, store)) {
               // We found a definite load of this store, note it.
               optimizeableStores[store].push_back(curr);
-            } else if (tramples(curr, currEffects, store)) {
+            } else if (impl.tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
               return;
             } else if (reachesGlobalCode(curr, currEffects) ||
-                       mayInteract(curr, currEffects, store)) {
+                       impl.mayInteract(curr, currEffects, store)) {
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
               // TODO: it may be valuable to still optimize some of the loads
@@ -271,7 +230,7 @@ struct DeadStoreFinder
   bool optimize() {
     analyze();
 
-    Builder builder(*getModule());
+    Builder builder(*this->getModule());
 
     bool optimized = false;
 
@@ -288,7 +247,7 @@ struct DeadStoreFinder
         // way since if the path between the stores crosses anything that
         // affects global state then we would not have considered the store to
         // be trampled (it could have been read there).
-        *storeLocations[store] = replaceStoreWithDrops(store, builder);
+        *storeLocations[store] = impl.replaceStoreWithDrops(store, builder);
         optimized = true;
       }
       // TODO: When there are loads, we can replace the loads as well (by saving
@@ -302,21 +261,67 @@ struct DeadStoreFinder
   }
 };
 
-// Optimize module globals: GlobalSet/GlobalGet.
-struct GlobalDeadStoreFinder : public DeadStoreFinder {
-  GlobalDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
-    : DeadStoreFinder(wasm, func, passOptions) {}
+struct DeadStoreImpl {
+  // Hooks for subclasses to override.
+  //
+  // Some of these methods receive computed effects, which do not include their
+  // children (as in each basic block we process expressions in a linear order,
+  // and have already seen the children).
+  //
+  // These do not need to handle reaching of code outside of the current
+  // function: a call, return, etc. will be noted as a possible interaction
+  // automatically (as if we reach code outside the function then any
+  // interaction is possible).
 
-  bool isStore(Expression* curr) override { return curr->is<GlobalSet>(); }
+  // Returns whether an expression is a relevant store for us to consider.
+  bool isStore(Expression* curr) { WASM_UNREACHABLE("unimp"); };
+
+  // Returns whether the expression is relevant for us to notice in the
+  // analysis. This does not need to include anything isStore() returns true
+  // on, as those are definitely relevant; hence the name.
+  bool isAlsoRelevant(Expression* curr,
+                              const EffectAnalyzer& currEffects){ WASM_UNREACHABLE("unimp"); };
+
+  // Returns whether an expression is a load that corresponds to a store. The
+  // load may not load all the data written by the store (that is up to a
+  // subclass to decide about), but it loads at least some of that data.
+  bool isLoadFrom(Expression* curr,
+                          const EffectAnalyzer& currEffects,
+                          Expression* store){ WASM_UNREACHABLE("unimp"); };
+
+  // Returns whether an expression tramples a store completely, overwriting all
+  // the store's written data.
+  // This is only called if isLoadFrom() returns false.
+  bool tramples(Expression* curr,
+                        const EffectAnalyzer& currEffects,
+                        Expression* store){ WASM_UNREACHABLE("unimp"); };
+
+  // Returns whether an expression may interact with store in a way that we
+  // cannot fully analyze as a load or a store, and so we must give up. This may
+  // be a possible load or a possible store or something else.
+  // This is only called if isLoadFrom() and tramples() return false.
+  bool mayInteract(Expression* curr,
+                           const EffectAnalyzer& currEffects,
+                           Expression* store){ WASM_UNREACHABLE("unimp"); };
+
+  // Given a store that is not needed, get drops of its children to replace it
+  // with.
+  Expression* replaceStoreWithDrops(Expression* store,
+                                            Builder& builder){ WASM_UNREACHABLE("unimp"); };
+};
+
+// Optimize module globals: GlobalSet/GlobalGet.
+struct GlobalDeadStoreImpl : public DeadStoreImpl {
+  bool isStore(Expression* curr) { return curr->is<GlobalSet>(); }
 
   bool isAlsoRelevant(Expression* curr,
-                      const EffectAnalyzer& currEffects) override {
+                      const EffectAnalyzer& currEffects) {
     return curr->is<GlobalGet>();
   }
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_) override {
+                  Expression* store_) {
     if (auto* load = curr->dynCast<GlobalGet>()) {
       auto* store = store_->cast<GlobalSet>();
       return load->name == store->name;
@@ -326,7 +331,7 @@ struct GlobalDeadStoreFinder : public DeadStoreFinder {
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_) override {
+                Expression* store_) {
     if (auto* otherStore = curr->dynCast<GlobalSet>()) {
       auto* store = store_->cast<GlobalSet>();
       return otherStore->name == store->name;
@@ -336,32 +341,29 @@ struct GlobalDeadStoreFinder : public DeadStoreFinder {
 
   bool mayInteract(Expression* curr,
                    const EffectAnalyzer& currEffects,
-                   Expression* store) override {
+                   Expression* store) {
     // We have already handled everything in isLoadFrom() and tramples().
     return false;
   }
 
   Expression* replaceStoreWithDrops(Expression* store,
-                                    Builder& builder) override {
+                                    Builder& builder) {
     return builder.makeDrop(store->cast<GlobalSet>()->value);
   }
 };
 
 // Optimize memory stores/loads.
-struct MemoryDeadStoreFinder : public DeadStoreFinder {
-  MemoryDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
-    : DeadStoreFinder(wasm, func, passOptions) {}
-
-  bool isStore(Expression* curr) override { return curr->is<Store>(); }
+struct MemoryDeadStoreImpl : public DeadStoreImpl {
+  bool isStore(Expression* curr) { return curr->is<Store>(); }
 
   bool isAlsoRelevant(Expression* curr,
-                      const EffectAnalyzer& currEffects) override {
+                      const EffectAnalyzer& currEffects) {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_) override {
+                  Expression* store_) {
     if (curr->type == Type::unreachable) {
       return false;
     }
@@ -385,7 +387,7 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_) override {
+                Expression* store_) {
     if (auto* otherStore = curr->dynCast<Store>()) {
       auto* store = store_->cast<Store>();
       // As in isLoadFrom, atomic stores are dangerous.
@@ -404,13 +406,13 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
 
   bool mayInteract(Expression* curr,
                    const EffectAnalyzer& currEffects,
-                   Expression* store) override {
+                   Expression* store) {
     // Anything we did not identify so far is dangerous.
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
   Expression* replaceStoreWithDrops(Expression* store,
-                                    Builder& builder) override {
+                                    Builder& builder) {
     auto* castStore = store->cast<Store>();
     return builder.makeSequence(builder.makeDrop(castStore->ptr),
                                 builder.makeDrop(castStore->value));
@@ -419,20 +421,17 @@ struct MemoryDeadStoreFinder : public DeadStoreFinder {
 
 // Optimize GC data: StructGet/StructSet.
 // TODO: Arrays.
-struct GCDeadStoreFinder : public DeadStoreFinder {
-  GCDeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
-    : DeadStoreFinder(wasm, func, passOptions) {}
-
-  bool isStore(Expression* curr) override { return curr->is<StructSet>(); }
+struct GCDeadStoreImpl : public DeadStoreImpl {
+  bool isStore(Expression* curr) { return curr->is<StructSet>(); }
 
   bool isAlsoRelevant(Expression* curr,
-                      const EffectAnalyzer& currEffects) override {
+                      const EffectAnalyzer& currEffects) {
     return curr->is<StructGet>();
   }
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_) override {
+                  Expression* store_) {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
@@ -444,7 +443,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_) override {
+                Expression* store_) {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
@@ -457,7 +456,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
 
   bool mayInteract(Expression* curr,
                    const EffectAnalyzer& currEffects,
-                   Expression* store) override {
+                   Expression* store) {
     // We already checked isLoadFrom and tramples; if this is a struct
     // operation that we did not recognize, then give up.
     // TODO if we can identify the ref, use the type system here
@@ -465,7 +464,7 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
   }
 
   Expression* replaceStoreWithDrops(Expression* store,
-                                    Builder& builder) override {
+                                    Builder& builder) {
     auto* castStore = store->cast<StructSet>();
     return builder.makeSequence(builder.makeDrop(castStore->ref),
                                 builder.makeDrop(castStore->value));
@@ -474,17 +473,17 @@ struct GCDeadStoreFinder : public DeadStoreFinder {
 
 struct LocalDeadStoreElimination
   : public WalkerPass<PostWalker<LocalDeadStoreElimination>> {
-  bool isFunctionParallel() override { return true; }
+  bool isFunctionParallel() { return true; }
 
-  Pass* create() override { return new LocalDeadStoreElimination; }
+  Pass* create() { return new LocalDeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    GlobalDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    DeadStoreFinder<GlobalDeadStoreImpl>(getModule(), func, getPassOptions()).optimize();
 
-    MemoryDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+    DeadStoreFinder<MemoryDeadStoreImpl>(getModule(), func, getPassOptions()).optimize();
 
     if (getModule()->features.hasGC()) {
-      GCDeadStoreFinder(getModule(), func, getPassOptions()).optimize();
+      DeadStoreFinder<GCDeadStoreImpl>(getModule(), func, getPassOptions()).optimize();
     }
   }
 };
