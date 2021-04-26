@@ -276,6 +276,8 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
     return false;
   }
   return false;
+  // TODO: use a LinearExecutionWalker to find trivially equal gets in basic
+  //       blocks. that plus the above should handle 80% of cases.
   // TODO: handle chains, merges and other situations
 }
 
