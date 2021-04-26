@@ -46,6 +46,36 @@ struct Info {
   std::vector<Expression*> exprs;
 };
 
+struct ComparingLocalGraph : public LocalGraph {
+  PassOptions& passOptions;
+  FeatureSet features;
+
+  ComparingLocalGraph(Function* func, PassOptions& passOptions, FeatureSet features) :
+    LocalGraph(func), passOptions(passOptions), features(features) {}
+
+  // Check whether the values of two expressions are definitely identical. This
+  // is important for stores and loads that receive an input (like GC data), but
+  // not necessary for others (like globals).
+  // TODO: move to localgraph?
+  bool equivalent(Expression* a, Expression* b) {
+    a = Properties::getFallthrough(a, passOptions, features);
+    b = Properties::getFallthrough(b, passOptions, features);
+    if (auto* aGet = a->dynCast<LocalGet>()) {
+      if (auto* bGet = b->dynCast<LocalGet>()) {
+        if (equivalent(aGet, bGet)) {
+          return true;
+        }
+      }
+    }
+    if (auto* aConst = a->dynCast<Const>()) {
+      if (auto* bConst = b->dynCast<Const>()) {
+        return aConst->value == bConst->value;
+      }
+    }
+    return false;
+  }
+};
+
 } // anonymous namespace
 
 // Core logic to generate the relevant CFG and find which things can be
@@ -63,11 +93,11 @@ struct DeadStoreFinder
   FeatureSet features;
 
   // TODO: make this heavy computation optional?
-  LocalGraph localGraph;
+  ComparingLocalGraph localGraph;
 
   DeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : func(func), passOptions(passOptions), features(wasm->features),
-      localGraph(func) {
+      localGraph(func, passOptions, wasm->features) {
     this->setModule(wasm);
   }
 
@@ -152,10 +182,10 @@ struct DeadStoreFinder
 
             ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
-            if (impl.isLoadFrom(curr, currEffects, store)) {
+            if (impl.isLoadFrom(curr, currEffects, store, localGraph)) {
               // We found a definite load of this store, note it.
               optimizeableStores[store].push_back(curr);
-            } else if (impl.tramples(curr, currEffects, store)) {
+            } else if (impl.tramples(curr, currEffects, store, localGraph)) {
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
               return;
@@ -178,7 +208,7 @@ struct DeadStoreFinder
             work.push(out);
           }
 
-          if (block == exit) {
+          if (block == this->exit) {
             // Any value flowing out can be reached by global code outside the
             // function after we leave.
             halt();
@@ -202,28 +232,6 @@ struct DeadStoreFinder
     // TODO: an option to ignore traps here may be useful
     return currEffects.calls || currEffects.throws || currEffects.trap ||
            curr->is<Return>();
-  }
-
-  // Check whether the values of two expressions are definitely identical. This
-  // is important for stores and loads that receive an input (like GC data), but
-  // not necessary for others (like globals).
-  // TODO: move to localgraph?
-  bool equivalent(Expression* a, Expression* b) {
-    a = Properties::getFallthrough(a, passOptions, features);
-    b = Properties::getFallthrough(b, passOptions, features);
-    if (auto* aGet = a->dynCast<LocalGet>()) {
-      if (auto* bGet = b->dynCast<LocalGet>()) {
-        if (localGraph.equivalent(aGet, bGet)) {
-          return true;
-        }
-      }
-    }
-    if (auto* aConst = a->dynCast<Const>()) {
-      if (auto* bConst = b->dynCast<Const>()) {
-        return aConst->value == bConst->value;
-      }
-    }
-    return false;
   }
 
   // Optimizes the function, and returns whether we made any changes.
@@ -287,14 +295,16 @@ struct DeadStoreImpl {
   // subclass to decide about), but it loads at least some of that data.
   bool isLoadFrom(Expression* curr,
                           const EffectAnalyzer& currEffects,
-                          Expression* store){ WASM_UNREACHABLE("unimp"); };
+                          Expression* store,
+                          ComparingLocalGraph& localGraph){ WASM_UNREACHABLE("unimp"); };
 
   // Returns whether an expression tramples a store completely, overwriting all
   // the store's written data.
   // This is only called if isLoadFrom() returns false.
   bool tramples(Expression* curr,
                         const EffectAnalyzer& currEffects,
-                        Expression* store){ WASM_UNREACHABLE("unimp"); };
+                        Expression* store,
+                        ComparingLocalGraph& localGraph){ WASM_UNREACHABLE("unimp"); };
 
   // Returns whether an expression may interact with store in a way that we
   // cannot fully analyze as a load or a store, and so we must give up. This may
@@ -321,7 +331,8 @@ struct GlobalDeadStoreImpl : public DeadStoreImpl {
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_) {
+                  Expression* store_,
+                  ComparingLocalGraph& localGraph) {
     if (auto* load = curr->dynCast<GlobalGet>()) {
       auto* store = store_->cast<GlobalSet>();
       return load->name == store->name;
@@ -331,7 +342,8 @@ struct GlobalDeadStoreImpl : public DeadStoreImpl {
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_) {
+                Expression* store_,
+                ComparingLocalGraph& localGraph) {
     if (auto* otherStore = curr->dynCast<GlobalSet>()) {
       auto* store = store_->cast<GlobalSet>();
       return otherStore->name == store->name;
@@ -363,7 +375,8 @@ struct MemoryDeadStoreImpl : public DeadStoreImpl {
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_) {
+                  Expression* store_,
+                  ComparingLocalGraph& localGraph) {
     if (curr->type == Type::unreachable) {
       return false;
     }
@@ -380,14 +393,15 @@ struct MemoryDeadStoreImpl : public DeadStoreImpl {
       // TODO: handle cases where the sign may matter.
       return load->bytes == store->bytes &&
              load->bytes == load->type.getByteSize() &&
-             load->offset == store->offset && equivalent(load->ptr, store->ptr);
+             load->offset == store->offset && localGraph.equivalent(load->ptr, store->ptr);
     }
     return false;
   }
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_) {
+                Expression* store_,
+                ComparingLocalGraph& localGraph) {
     if (auto* otherStore = curr->dynCast<Store>()) {
       auto* store = store_->cast<Store>();
       // As in isLoadFrom, atomic stores are dangerous.
@@ -399,7 +413,7 @@ struct MemoryDeadStoreImpl : public DeadStoreImpl {
       // stores are handled.
       return otherStore->bytes == store->bytes &&
              otherStore->offset == store->offset &&
-             equivalent(otherStore->ptr, store->ptr);
+             localGraph.equivalent(otherStore->ptr, store->ptr);
     }
     return false;
   }
@@ -431,11 +445,12 @@ struct GCDeadStoreImpl : public DeadStoreImpl {
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_) {
+                  Expression* store_,
+                  ComparingLocalGraph& localGraph) {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
-      return equivalent(load->ref, store->ref) &&
+      return localGraph.equivalent(load->ref, store->ref) &&
              load->ref->type == store->ref->type && load->index == store->index;
     }
     return false;
@@ -443,11 +458,12 @@ struct GCDeadStoreImpl : public DeadStoreImpl {
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_) {
+                Expression* store_,
+                ComparingLocalGraph& localGraph) {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
-      return equivalent(otherStore->ref, store->ref) &&
+      return localGraph.equivalent(otherStore->ref, store->ref) &&
              otherStore->ref->type == store->ref->type &&
              otherStore->index == store->index;
     }
