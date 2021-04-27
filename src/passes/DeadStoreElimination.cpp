@@ -64,7 +64,7 @@ struct ComparingLocalGraph : public LocalGraph {
     b = Properties::getFallthrough(b, passOptions, features);
     if (auto* aGet = a->dynCast<LocalGet>()) {
       if (auto* bGet = b->dynCast<LocalGet>()) {
-        if (equivalent(aGet, bGet)) {
+        if (LocalGraph::equivalent(aGet, bGet)) {
           return true;
         }
       }
