@@ -40,12 +40,17 @@ namespace wasm {
 namespace {
 
 // Information in a basic block.
-struct Info {
+struct BasicBlockInfo {
   // The list of relevant expressions, that are either stores or things that
   // interact with stores.
   std::vector<Expression*> exprs;
 };
 
+// A variation of LocalGraph that can also compare expressions to check for
+// their equivalence. Basic LocalGraph just looks at locals, which this class
+// goes further and looks at the structure of the expression, taking into
+// account fallthrough values and other factors, in order to handle common
+// cases of obviously-equivalent things.
 struct ComparingLocalGraph : public LocalGraph {
   PassOptions& passOptions;
   FeatureSet features;
@@ -81,15 +86,14 @@ struct ComparingLocalGraph : public LocalGraph {
 } // anonymous namespace
 
 // Core logic to generate the relevant CFG and find which things can be
-// optimized. This is subclassed to implement different notions of "store" and
-// the things stored, for example, on globals (where a store is global.set) and
-// on structs (where a store is struct.set).
-template<typename T>
+// optimized. This is as generic as possible over what a "store" actually is;
+// the "logic" of handling that is provided by a class this is templated over.
+template<typename LogicType>
 struct DeadStoreFinder
-  : public CFGWalker<DeadStoreFinder<T>,
-                     UnifiedExpressionVisitor<DeadStoreFinder<T>>,
-                     Info> {
-  T impl;
+  : public CFGWalker<DeadStoreFinder<LogicType>,
+                     UnifiedExpressionVisitor<DeadStoreFinder<LogicType>>,
+                     BasicBlockInfo> {
+  LogicType logic;
   Function* func;
   PassOptions& passOptions;
   FeatureSet features;
@@ -124,9 +128,9 @@ struct DeadStoreFinder
     ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
     // Add all relevant things to the list of exprs for the current basic block.
-    bool store = impl.isStore(curr);
+    bool store = logic.isStore(curr);
     if (reachesGlobalCode(curr, currEffects) ||
-        impl.isAlsoRelevant(curr, currEffects) || store) {
+        logic.isAlsoRelevant(curr, currEffects) || store) {
       this->currBasicBlock->contents.exprs.push_back(curr);
       if (store) {
         storeLocations[curr] = this->getCurrentPointer();
@@ -141,9 +145,9 @@ struct DeadStoreFinder
   std::unordered_map<Expression*, std::vector<Expression*>> optimizeableStores;
 
   using BasicBlock =
-    typename CFGWalker<DeadStoreFinder<T>,
-                       UnifiedExpressionVisitor<DeadStoreFinder<T>>,
-                       Info>::BasicBlock;
+    typename CFGWalker<DeadStoreFinder<LogicType>,
+                       UnifiedExpressionVisitor<DeadStoreFinder<LogicType>>,
+                       BasicBlockInfo>::BasicBlock;
 
   void analyze() {
     // create the CFG by walking the IR
@@ -159,7 +163,7 @@ struct DeadStoreFinder
     for (auto& block : this->basicBlocks) {
       for (size_t i = 0; i < block->contents.exprs.size(); i++) {
         auto* store = block->contents.exprs[i];
-        if (!impl.isStore(store)) {
+        if (!logic.isStore(store)) {
           continue;
         }
 
@@ -185,15 +189,15 @@ struct DeadStoreFinder
 
             ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
-            if (impl.isLoadFrom(curr, currEffects, store, localGraph)) {
+            if (logic.isLoadFrom(curr, currEffects, store, localGraph)) {
               // We found a definite load of this store, note it.
               optimizeableStores[store].push_back(curr);
-            } else if (impl.tramples(curr, currEffects, store, localGraph)) {
+            } else if (logic.tramples(curr, currEffects, store, localGraph)) {
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
               return;
             } else if (reachesGlobalCode(curr, currEffects) ||
-                       impl.mayInteract(curr, currEffects, store)) {
+                       logic.mayInteract(curr, currEffects, store)) {
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
               // TODO: it may be valuable to still optimize some of the loads
@@ -258,7 +262,7 @@ struct DeadStoreFinder
         // way since if the path between the stores crosses anything that
         // affects global state then we would not have considered the store to
         // be trampled (it could have been read there).
-        *storeLocations[store] = impl.replaceStoreWithDrops(store, builder);
+        *storeLocations[store] = logic.replaceStoreWithDrops(store, builder);
         optimized = true;
       }
       // TODO: When there are loads, we can replace the loads as well (by saving
@@ -272,8 +276,10 @@ struct DeadStoreFinder
   }
 };
 
-struct DeadStoreImpl {
-  // Hooks for subclasses to override.
+// Parent class of all implementations of the logic of identifying stores etc.
+struct DeadStoreLogic {
+  // Hooks for subclasses to override. (If one forgets to implement one then the
+  // unreachables here will be hit.)
   //
   // Some of these methods receive computed effects, which do not include their
   // children (as in each basic block we process expressions in a linear order,
@@ -332,7 +338,7 @@ struct DeadStoreImpl {
 };
 
 // Optimize module globals: GlobalSet/GlobalGet.
-struct GlobalDeadStoreImpl : public DeadStoreImpl {
+struct GlobalDeadStoreLogic : public DeadStoreLogic {
   bool isStore(Expression* curr) { return curr->is<GlobalSet>(); }
 
   bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
@@ -374,7 +380,7 @@ struct GlobalDeadStoreImpl : public DeadStoreImpl {
 };
 
 // Optimize memory stores/loads.
-struct MemoryDeadStoreImpl : public DeadStoreImpl {
+struct MemoryDeadStoreLogic : public DeadStoreLogic {
   bool isStore(Expression* curr) { return curr->is<Store>(); }
 
   bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
@@ -443,7 +449,7 @@ struct MemoryDeadStoreImpl : public DeadStoreImpl {
 
 // Optimize GC data: StructGet/StructSet.
 // TODO: Arrays.
-struct GCDeadStoreImpl : public DeadStoreImpl {
+struct GCDeadStoreLogic : public DeadStoreLogic {
   bool isStore(Expression* curr) { return curr->is<StructSet>(); }
 
   bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
@@ -500,14 +506,14 @@ struct LocalDeadStoreElimination
   Pass* create() { return new LocalDeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    DeadStoreFinder<GlobalDeadStoreImpl>(getModule(), func, getPassOptions())
+    DeadStoreFinder<GlobalDeadStoreLogic>(getModule(), func, getPassOptions())
       .optimize();
 
-    DeadStoreFinder<MemoryDeadStoreImpl>(getModule(), func, getPassOptions())
+    DeadStoreFinder<MemoryDeadStoreLogic>(getModule(), func, getPassOptions())
       .optimize();
 
     if (getModule()->features.hasGC()) {
-      DeadStoreFinder<GCDeadStoreImpl>(getModule(), func, getPassOptions())
+      DeadStoreFinder<GCDeadStoreLogic>(getModule(), func, getPassOptions())
         .optimize();
     }
   }
