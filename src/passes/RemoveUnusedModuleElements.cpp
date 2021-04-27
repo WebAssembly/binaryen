@@ -247,13 +247,25 @@ struct RemoveUnusedModuleElements : public Pass {
     // Since we've removed all empty element segments, here we mark all tables
     // that have a segment left.
     std::unordered_set<Name> nonemptyTables;
+    std::unordered_set<Name> tablesWithNonremovableSegments;
     ModuleUtils::iterActiveElementSegments(
-      *module,
-      [&](ElementSegment* segment) { nonemptyTables.insert(segment->table); });
+      *module, [&](ElementSegment* segment) {
+        if (segment->data.size() > 0) {
+          nonemptyTables.insert(segment->table);
+        }
+        if (analyzer.reachable.count(ModuleElement(
+              ModuleElementKind::ElementSegment, segment->name))) {
+          tablesWithNonremovableSegments.insert(segment->table);
+        }
+      });
     module->removeTables([&](Table* curr) {
-      return (nonemptyTables.count(curr->name) == 0 || !curr->imported()) &&
-             analyzer.reachable.count(
-               ModuleElement(ModuleElementKind::Table, curr->name)) == 0;
+      if (tablesWithNonremovableSegments.count(curr->name) ||
+          analyzer.reachable.count(
+            ModuleElement(ModuleElementKind::Table, curr->name)) ||
+            (curr->imported() && nonemptyTables.count(curr->name))) {
+        return false;
+      }
+      return true;
     });
 
     // Handle the memory

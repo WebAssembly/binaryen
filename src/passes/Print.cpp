@@ -2685,13 +2685,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
     doIndent(o, indent);
     o << '(';
-    printMedium(o, "elem");
-    // If there is no explicit name, and there are multiple segments, use our
-    // internal names to differentiate them.
-    if (curr->hasExplicitName || currModule->elementSegments.size() > 1) {
-      o << ' ';
-      printName(curr->name, o);
-    }
+    printMedium(o, "elem") << ' ';
+    printName(curr->name, o);
 
     if (curr->table.is()) {
       if (!allElementsRefFunc || currModule->tables.size() > 1) {
