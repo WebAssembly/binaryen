@@ -118,6 +118,7 @@ struct DeadStoreFinder
   //   (local.tee $y ..))
   // but it cannot happen with the stores we handle in this pass, as there is
   // no store that is a direct child of another store.
+  // FIXME: when we replace loads as well, this will need to change.
   std::unordered_map<Expression*, Expression**> storeLocations;
 
   void visitExpression(Expression* curr) {
@@ -151,7 +152,7 @@ struct DeadStoreFinder
 
   void analyze() {
     // create the CFG by walking the IR
-    this->doWalkFunction(func);
+    this->walkFunction(func);
 
     // Flow the values and conduct the analysis.
     //
