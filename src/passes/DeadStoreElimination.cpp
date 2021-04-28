@@ -520,10 +520,19 @@ struct GCLogic : public ComparingLogic {
 
   bool mayInteract(Expression* curr,
                    const EffectAnalyzer& currEffects,
-                   Expression* store) {
-    // We already checked isLoadFrom and tramples; if this is a struct
-    // operation that we did not recognize, then give up.
-    // TODO use the ref and type system here
+                   Expression* store_) {
+    auto* store = store_->cast<StructSet>();
+    // We already checked isLoadFrom and tramples and it was neither of those,
+    // so just check if the memory can possibly alias, which is whether this has
+    // the same index.
+    if (auto* otherStore = curr->dynCast<StructSet>()) {
+      return otherStore->index == store->index;
+    }
+    if (auto* load = curr->dynCast<StructSet>()) {
+      return load->index == store->index;
+    }
+    // This is not a load or a store that we recognize; check for generic heap
+    // interactions.
     return currEffects.readsHeap || currEffects.writesHeap;
   }
 
