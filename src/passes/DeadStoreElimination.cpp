@@ -89,7 +89,8 @@ struct ComparingLocalGraph : public LocalGraph {
 // Whether this instruction can reach code we cannot reason about, that is,
 // outside of the current function. Until we use whole-program information,
 // we must assume such code can read and write to all global state.
-static bool reachesUnknownCode(Expression* curr, const EffectAnalyzer& currEffects) {
+static bool reachesUnknownCode(Expression* curr,
+                               const EffectAnalyzer& currEffects) {
   // TODO: ignore throws of an exception that is definitely caught in this
   //       function
   return currEffects.calls || currEffects.throws || currEffects.trap ||
@@ -554,12 +555,10 @@ struct LocalDeadStoreElimination
 
   void doWalkFunction(Function* func) {
     // Optimize globals.
-    DeadStoreCFG<GlobalLogic>(getModule(), func, getPassOptions())
-      .optimize();
+    DeadStoreCFG<GlobalLogic>(getModule(), func, getPassOptions()).optimize();
 
     // Optimize memory.
-    DeadStoreCFG<MemoryLogic>(getModule(), func, getPassOptions())
-      .optimize();
+    DeadStoreCFG<MemoryLogic>(getModule(), func, getPassOptions()).optimize();
 
     // Optimize GC heap.
     if (getModule()->features.hasGC()) {
