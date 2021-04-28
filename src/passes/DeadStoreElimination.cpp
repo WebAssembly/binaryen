@@ -219,15 +219,23 @@ struct DeadStoreCFG
               return;
             } else if (reachesUnknownCode(curr, currEffects) ||
                        logic.mayInteract(curr, currEffects, store)) {
-              // Stop: we cannot fully analyze the uses of this store as
-              // there are interactions we cannot see.
-              // TODO: it may be valuable to still optimize some of the loads
-              //       from a store, even if others cannot be analyzed. We can
-              //       do the store and also a tee, and load from the local in
-              //       the loads we are sure of. Code size tradeoffs are
-              //       unclear, however.
-              halt();
-              return;
+              // To facilitate whole-program analysis, allow the logic to
+              // consider if a direct call can be ignored.
+              auto* call = curr->template dynCast<Call>();
+              // Note that a call_return *cannot* be ignored, as the return part
+              // means it reaches unknown code.
+              if (!call || call->isReturn ||
+                  logic.callMayInteract(call, store)) {
+                // Stop: we cannot fully analyze the uses of this store as
+                // there are interactions we cannot see.
+                // TODO: it may be valuable to still optimize some of the loads
+                //       from a store, even if others cannot be analyzed. We can
+                //       do the store and also a tee, and load from the local in
+                //       the loads we are sure of. Code size tradeoffs are
+                //       unclear, however.
+                halt();
+                return;
+              }
             }
           }
 
@@ -300,8 +308,7 @@ struct Logic {
   Logic(Function* func, PassOptions& passOptions, FeatureSet features)
     : func(func) {}
 
-  // Hooks for subclasses to override. (If one forgets to implement one then the
-  // unreachables here will be hit.)
+  // Hooks for subclasses to override.
   //
   // Some of these methods receive computed effects, which do not include their
   // children (as in each basic block we process expressions in a linear order,
@@ -352,6 +359,16 @@ struct Logic {
                    Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
+
+  // Checks whether a call may interact with a store. This allows whole-program
+  // information to be used, if available. If not, the default behavior here is
+  // to assume it may interact.
+  // Note that this does not need to check for a call_return: it only needs to
+  // reason about the call part, not a possible return (which the calling code
+  // does).
+  bool callMayInteract(Call* call, Expression* store) {
+    return true;
+  }
 
   // Given a store that is not needed, get drops of its children to replace it
   // with. This effectively removes the store without removes its children.
