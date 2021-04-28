@@ -525,10 +525,11 @@ struct GCLogic : public ComparingLogic {
     // We already checked isLoadFrom and tramples and it was neither of those,
     // so just check if the memory can possibly alias, which is whether this has
     // the same index.
+    // TODO: use the type system more here
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       return otherStore->index == store->index;
     }
-    if (auto* load = curr->dynCast<StructSet>()) {
+    if (auto* load = curr->dynCast<StructGet>()) {
       return load->index == store->index;
     }
     // This is not a load or a store that we recognize; check for generic heap

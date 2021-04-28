@@ -672,6 +672,44 @@
   )
  )
 
+ ;; CHECK:      (func $different-pointers-get (param $x (ref $C)) (param $y (ref $C))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.get $C 1
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $C 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $different-pointers-get (param $x (ref $C)) (param $y (ref $C))
+  (struct.set $C 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; a load of a different index cannot interact with the first store, allowing
+  ;; us to see the store is trampled (by the last store) before it has any
+  ;; uses, and so it can be dropped
+  (drop
+   (struct.get $C 1
+    (local.get $y)
+   )
+  )
+  (struct.set $C 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
  ;; CHECK:      (func $no-basic-blocks
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
