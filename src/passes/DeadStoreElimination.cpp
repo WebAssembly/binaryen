@@ -94,17 +94,14 @@ struct DeadStoreFinder
   : public CFGWalker<DeadStoreFinder<LogicType>,
                      UnifiedExpressionVisitor<DeadStoreFinder<LogicType>>,
                      BasicBlockInfo> {
-  LogicType logic;
   Function* func;
-  PassOptions& passOptions;
-  FeatureSet features;
-
-  // TODO: make this heavy computation optional?
-  ComparingLocalGraph localGraph;
+  PassOptions& passOptions; // waka
+  FeatureSet features; // waka
+  LogicType logic;
 
   DeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
     : func(func), passOptions(passOptions), features(wasm->features),
-      localGraph(func, passOptions, wasm->features) {
+      logic(func, passOptions, wasm->features) {
     this->setModule(wasm);
   }
 
@@ -191,10 +188,10 @@ struct DeadStoreFinder
 
             ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
-            if (logic.isLoadFrom(curr, currEffects, store, localGraph)) {
+            if (logic.isLoadFrom(curr, currEffects, store)) {
               // We found a definite load of this store, note it.
               optimizeableStores[store].push_back(curr);
-            } else if (logic.tramples(curr, currEffects, store, localGraph)) {
+            } else if (logic.tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
               return;
@@ -279,7 +276,12 @@ struct DeadStoreFinder
 };
 
 // Parent class of all implementations of the logic of identifying stores etc.
-struct DeadStoreLogic {
+struct Logic {
+  Function* func;
+
+  Logic(Function* func, PassOptions& passOptions, FeatureSet features) :
+    func(func) {}
+
   // Hooks for subclasses to override. (If one forgets to implement one then the
   // unreachables here will be hit.)
   //
@@ -307,8 +309,7 @@ struct DeadStoreLogic {
   // subclass to decide about), but it loads at least some of that data.
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store,
-                  ComparingLocalGraph& localGraph) {
+                  Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
 
@@ -317,8 +318,7 @@ struct DeadStoreLogic {
   // This is only called if isLoadFrom() returns false.
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store,
-                ComparingLocalGraph& localGraph) {
+                Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
 
@@ -339,8 +339,21 @@ struct DeadStoreLogic {
   };
 };
 
+// A logic that uses a local graph, as it needs to compare pointers.
+struct ComparingLogic : public Logic {
+  ComparingLocalGraph localGraph;
+
+  ComparingLogic(Function* func, PassOptions& passOptions, FeatureSet features) :
+    Logic(func, passOptions, features), localGraph(func, passOptions, features)
+    {}
+};
+
 // Optimize module globals: GlobalSet/GlobalGet.
-struct GlobalDeadStoreLogic : public DeadStoreLogic {
+struct GlobalLogic : public Logic {
+  GlobalLogic(Function* func, PassOptions& passOptions, FeatureSet features) :
+    Logic(func, passOptions, features)
+    {}
+
   bool isStore(Expression* curr) { return curr->is<GlobalSet>(); }
 
   bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
@@ -349,8 +362,7 @@ struct GlobalDeadStoreLogic : public DeadStoreLogic {
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_,
-                  ComparingLocalGraph& localGraph) {
+                  Expression* store_) {
     if (auto* load = curr->dynCast<GlobalGet>()) {
       auto* store = store_->cast<GlobalSet>();
       return load->name == store->name;
@@ -360,8 +372,7 @@ struct GlobalDeadStoreLogic : public DeadStoreLogic {
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_,
-                ComparingLocalGraph& localGraph) {
+                Expression* store_) {
     if (auto* otherStore = curr->dynCast<GlobalSet>()) {
       auto* store = store_->cast<GlobalSet>();
       return otherStore->name == store->name;
@@ -382,7 +393,11 @@ struct GlobalDeadStoreLogic : public DeadStoreLogic {
 };
 
 // Optimize memory stores/loads.
-struct MemoryDeadStoreLogic : public DeadStoreLogic {
+struct MemoryLogic : public ComparingLogic {
+  MemoryLogic(Function* func, PassOptions& passOptions, FeatureSet features) :
+    ComparingLogic(func, passOptions, features)
+    {}
+
   bool isStore(Expression* curr) { return curr->is<Store>(); }
 
   bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
@@ -391,8 +406,7 @@ struct MemoryDeadStoreLogic : public DeadStoreLogic {
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_,
-                  ComparingLocalGraph& localGraph) {
+                  Expression* store_) {
     if (curr->type == Type::unreachable) {
       return false;
     }
@@ -417,8 +431,7 @@ struct MemoryDeadStoreLogic : public DeadStoreLogic {
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_,
-                ComparingLocalGraph& localGraph) {
+                Expression* store_) {
     if (auto* otherStore = curr->dynCast<Store>()) {
       auto* store = store_->cast<Store>();
       // As in isLoadFrom, atomic stores are dangerous.
@@ -451,7 +464,11 @@ struct MemoryDeadStoreLogic : public DeadStoreLogic {
 
 // Optimize GC data: StructGet/StructSet.
 // TODO: Arrays.
-struct GCDeadStoreLogic : public DeadStoreLogic {
+struct GCLogic : public ComparingLogic {
+  GCLogic(Function* func, PassOptions& passOptions, FeatureSet features) :
+    ComparingLogic(func, passOptions, features)
+    {}
+
   bool isStore(Expression* curr) { return curr->is<StructSet>(); }
 
   bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
@@ -460,8 +477,7 @@ struct GCDeadStoreLogic : public DeadStoreLogic {
 
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
-                  Expression* store_,
-                  ComparingLocalGraph& localGraph) {
+                  Expression* store_) {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
@@ -473,8 +489,7 @@ struct GCDeadStoreLogic : public DeadStoreLogic {
 
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
-                Expression* store_,
-                ComparingLocalGraph& localGraph) {
+                Expression* store_) {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = store_->cast<StructSet>();
       // TODO: consider subtyping as well.
@@ -508,14 +523,14 @@ struct LocalDeadStoreElimination
   Pass* create() { return new LocalDeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    DeadStoreFinder<GlobalDeadStoreLogic>(getModule(), func, getPassOptions())
+    DeadStoreFinder<GlobalLogic>(getModule(), func, getPassOptions())
       .optimize();
 
-    DeadStoreFinder<MemoryDeadStoreLogic>(getModule(), func, getPassOptions())
+    DeadStoreFinder<MemoryLogic>(getModule(), func, getPassOptions())
       .optimize();
 
     if (getModule()->features.hasGC()) {
-      DeadStoreFinder<GCDeadStoreLogic>(getModule(), func, getPassOptions())
+      DeadStoreFinder<GCLogic>(getModule(), func, getPassOptions())
         .optimize();
     }
   }
