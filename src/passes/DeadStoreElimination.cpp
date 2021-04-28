@@ -366,9 +366,7 @@ struct Logic {
   // Note that this does not need to check for a call_return: it only needs to
   // reason about the call part, not a possible return (which the calling code
   // does).
-  bool callMayInteract(Call* call, Expression* store) {
-    return true;
-  }
+  bool callMayInteract(Call* call, Expression* store) { return true; }
 
   // Given a store that is not needed, get drops of its children to replace it
   // with. This effectively removes the store without removes its children.
@@ -537,8 +535,7 @@ struct GCLogic : public ComparingLogic {
   }
 
   // Check whether two GC operations may alias memory.
-  template<typename U, typename V>
-  bool mayAlias(U* u, V* v) {
+  template<typename U, typename V> bool mayAlias(U* u, V* v) {
     // If the index does not match, no aliasing is possible.
     if (u->index != v->index) {
       return false;
