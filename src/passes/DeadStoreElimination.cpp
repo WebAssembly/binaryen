@@ -15,15 +15,17 @@
  */
 
 //
-// Finds stores that are trampled over by other stores anyhow, before they can
-// be read, and related patterns.
+// Analyzes stores and loads of non-local state, and optimizes them in various
+// ways. For example, a store that is never read can be removed as dead.
 //
-// "Store" is used generically here to mean a write to a global location, which
-// includes:
+// "Store" is used generically here to mean a write to a non-local location,
+// which includes:
 //
 //  * Stores to linear memory (Store).
 //  * Stores to globals (GlobalSet).
 //  * Stores to GC data (StructSet, ArraySet)
+//
+// This pass optimizes all of the above.
 //
 
 #include <cfg/cfg-traversal.h>
@@ -47,7 +49,7 @@ struct BasicBlockInfo {
 };
 
 // A variation of LocalGraph that can also compare expressions to check for
-// their equivalence. Basic LocalGraph just looks at locals, which this class
+// their equivalence. Basic LocalGraph just looks at locals, while this class
 // goes further and looks at the structure of the expression, taking into
 // account fallthrough values and other factors, in order to handle common
 // cases of obviously-equivalent things.
@@ -61,9 +63,10 @@ struct ComparingLocalGraph : public LocalGraph {
     : LocalGraph(func), passOptions(passOptions), features(features) {}
 
   // Check whether the values of two expressions are definitely identical. This
-  // is important for stores and loads that receive an input (like GC data), but
-  // not necessary for others (like globals).
-  // TODO: move to localgraph?
+  // is important for stores and loads that receive an input (like GC data),
+  // since we need to see that the pointer input is equivalent before we can
+  // tell if two stores overlap.
+  // TODO: move to LocalGraph if we find more users?
   bool equivalent(Expression* a, Expression* b) {
     a = Properties::getFallthrough(a, passOptions, features);
     b = Properties::getFallthrough(b, passOptions, features);
@@ -83,11 +86,9 @@ struct ComparingLocalGraph : public LocalGraph {
   }
 };
 
-} // anonymous namespace
-
-// Core logic to generate the relevant CFG and find which things can be
+// Core code to generate the relevant CFG and find which things can be
 // optimized. This is as generic as possible over what a "store" actually is;
-// the "logic" of handling that is provided by a class this is templated over.
+// the "logic" of handling that is provided by a class this is templated on.
 template<typename LogicType>
 struct DeadStoreFinder
   : public CFGWalker<DeadStoreFinder<LogicType>,
@@ -519,6 +520,8 @@ struct LocalDeadStoreElimination
     }
   }
 };
+
+} // anonymous namespace
 
 // TODO: make global/local/optimizing variants
 
