@@ -6,6 +6,7 @@
 #include <ir/cost.h>
 #include <ir/effects.h>
 #include <pass.h>
+#include <support/unique_deferring_queue.h>
 #include <wasm.h>
 
 using namespace wasm;
@@ -581,12 +582,46 @@ void test_field() {
                4);
 }
 
+void test_queue() {
+  {
+    UniqueDeferredQueue<int> queue;
+    queue.push(1);
+    queue.push(2);
+    queue.push(3);
+    queue.push(2);
+    // first in was 1
+    assert_equal(queue.pop(), 1);
+    // next in was 2, but it was added later, so we defer to then, and get the 3
+    assert_equal(queue.pop(), 3);
+    assert_equal(queue.pop(), 2);
+    assert_equal(queue.empty(), true);
+  }
+  {
+    UniqueDeferredQueue<int> queue;
+    queue.push(1);
+    queue.push(2);
+    assert_equal(queue.pop(), 1);
+    // clearing clears the queue
+    queue.clear();
+    assert_equal(queue.empty(), true);
+  }
+  {
+    UniqueNonrepeatingDeferredQueue<int> queue;
+    queue.push(1);
+    assert_equal(queue.pop(), 1);
+    queue.push(1);
+    // We never repeat values in this queue, so the last push of 1 is ignored.
+    assert_equal(queue.empty(), true);
+  }
+}
+
 int main() {
   test_bits();
   test_cost();
   test_effects();
   test_literals();
   test_field();
+  test_queue();
 
   if (failsCount > 0) {
     abort();
