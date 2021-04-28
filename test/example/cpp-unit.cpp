@@ -612,6 +612,9 @@ void test_queue() {
     queue.push(1);
     // We never repeat values in this queue, so the last push of 1 is ignored.
     assert_equal(queue.empty(), true);
+    // But new values work.
+    queue.push(2);
+    assert_equal(queue.pop(), 2);
   }
 }
 
