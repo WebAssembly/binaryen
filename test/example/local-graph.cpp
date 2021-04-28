@@ -91,7 +91,6 @@ int main() {
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::i32);
     foo.body = builder.makeBlock({
-      builder.makeLocalSet(0, builder.makeConst(Literal(int32_t(0)))),
       // two equivalent gets, even though they have a different index, as both
       // use the zero initialized value
       builder.makeDrop(get1),
@@ -103,11 +102,10 @@ int main() {
 
   {
     Function foo;
-    foo.vars = { Type::i32, Type::i32 };
+    foo.vars = { Type::i32, Type::f64 };
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::f64);
     foo.body = builder.makeBlock({
-      builder.makeLocalSet(0, builder.makeConst(Literal(int32_t(0)))),
       // two non-equivalent gets as their zero-init value is different
       builder.makeDrop(get1),
       builder.makeDrop(get2),
