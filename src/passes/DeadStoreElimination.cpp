@@ -332,7 +332,8 @@ struct Logic {
 
   // Returns whether an expression tramples a store completely, overwriting all
   // the store's written data.
-  // This is only called if isLoadFrom() returns false.
+  // This is only called if isLoadFrom() returns false, as we assume there is no
+  // single instruction that can do both.
   bool tramples(Expression* curr,
                 const EffectAnalyzer& currEffects,
                 Expression* store) {
@@ -342,7 +343,9 @@ struct Logic {
   // Returns whether an expression may interact with store in a way that we
   // cannot fully analyze as a load or a store, and so we must give up. This may
   // be a possible load or a possible store or something else.
-  // This is only called if isLoadFrom() and tramples() return false.
+  // This is only called if isLoadFrom() and tramples() both return false, as
+  // this method indicates an interaction we cannot analyze as either a load or
+  // a trample.
   bool mayInteract(Expression* curr,
                    const EffectAnalyzer& currEffects,
                    Expression* store) {
@@ -350,7 +353,7 @@ struct Logic {
   };
 
   // Given a store that is not needed, get drops of its children to replace it
-  // with.
+  // with. This effectively removes the store without removes its children.
   Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
     WASM_UNREACHABLE("unimp");
   };
