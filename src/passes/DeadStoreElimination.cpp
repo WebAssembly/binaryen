@@ -95,8 +95,8 @@ struct DeadStoreFinder
                      UnifiedExpressionVisitor<DeadStoreFinder<LogicType>>,
                      BasicBlockInfo> {
   Function* func;
-  PassOptions& passOptions; // waka
-  FeatureSet features; // waka
+  PassOptions& passOptions;
+  FeatureSet features;
   LogicType logic;
 
   DeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
@@ -279,8 +279,8 @@ struct DeadStoreFinder
 struct Logic {
   Function* func;
 
-  Logic(Function* func, PassOptions& passOptions, FeatureSet features) :
-    func(func) {}
+  Logic(Function* func, PassOptions& passOptions, FeatureSet features)
+    : func(func) {}
 
   // Hooks for subclasses to override. (If one forgets to implement one then the
   // unreachables here will be hit.)
@@ -343,16 +343,15 @@ struct Logic {
 struct ComparingLogic : public Logic {
   ComparingLocalGraph localGraph;
 
-  ComparingLogic(Function* func, PassOptions& passOptions, FeatureSet features) :
-    Logic(func, passOptions, features), localGraph(func, passOptions, features)
-    {}
+  ComparingLogic(Function* func, PassOptions& passOptions, FeatureSet features)
+    : Logic(func, passOptions, features),
+      localGraph(func, passOptions, features) {}
 };
 
 // Optimize module globals: GlobalSet/GlobalGet.
 struct GlobalLogic : public Logic {
-  GlobalLogic(Function* func, PassOptions& passOptions, FeatureSet features) :
-    Logic(func, passOptions, features)
-    {}
+  GlobalLogic(Function* func, PassOptions& passOptions, FeatureSet features)
+    : Logic(func, passOptions, features) {}
 
   bool isStore(Expression* curr) { return curr->is<GlobalSet>(); }
 
@@ -394,9 +393,8 @@ struct GlobalLogic : public Logic {
 
 // Optimize memory stores/loads.
 struct MemoryLogic : public ComparingLogic {
-  MemoryLogic(Function* func, PassOptions& passOptions, FeatureSet features) :
-    ComparingLogic(func, passOptions, features)
-    {}
+  MemoryLogic(Function* func, PassOptions& passOptions, FeatureSet features)
+    : ComparingLogic(func, passOptions, features) {}
 
   bool isStore(Expression* curr) { return curr->is<Store>(); }
 
@@ -465,9 +463,8 @@ struct MemoryLogic : public ComparingLogic {
 // Optimize GC data: StructGet/StructSet.
 // TODO: Arrays.
 struct GCLogic : public ComparingLogic {
-  GCLogic(Function* func, PassOptions& passOptions, FeatureSet features) :
-    ComparingLogic(func, passOptions, features)
-    {}
+  GCLogic(Function* func, PassOptions& passOptions, FeatureSet features)
+    : ComparingLogic(func, passOptions, features) {}
 
   bool isStore(Expression* curr) { return curr->is<StructSet>(); }
 
@@ -530,8 +527,7 @@ struct LocalDeadStoreElimination
       .optimize();
 
     if (getModule()->features.hasGC()) {
-      DeadStoreFinder<GCLogic>(getModule(), func, getPassOptions())
-        .optimize();
+      DeadStoreFinder<GCLogic>(getModule(), func, getPassOptions()).optimize();
     }
   }
 };
