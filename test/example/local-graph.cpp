@@ -39,7 +39,7 @@ int main() {
       builder.makeDrop(get2),
     });
     LocalGraph graph(&foo);
-    assert(graph.equivalent(get1, get2));
+    assert(!graph.equivalent(get1, get2));
   }
 
   {
@@ -68,7 +68,7 @@ int main() {
       builder.makeDrop(get2),
     });
     LocalGraph graph(&foo);
-    assert(graph.equivalent(get1, get2));
+    assert(!graph.equivalent(get1, get2));
   }
 
   {
@@ -82,7 +82,7 @@ int main() {
       builder.makeDrop(get2),
     });
     LocalGraph graph(&foo);
-    assert(graph.equivalent(get1, get2));
+    assert(!graph.equivalent(get1, get2));
   }
 
   {
@@ -113,7 +113,7 @@ int main() {
       builder.makeDrop(get2),
     });
     LocalGraph graph(&foo);
-    assert(graph.equivalent(get1, get2));
+    assert(!graph.equivalent(get1, get2));
   }
 
   std::cout << "Success." << std::endl;
