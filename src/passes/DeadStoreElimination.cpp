@@ -120,8 +120,6 @@ struct DeadStoreCFG
 
   ~DeadStoreCFG() {}
 
-  // Walking
-
   // Map stores to the pointers to them, so that we can replace them. Note that
   // this assumes a pointer to a store is not on another store, as then we would
   // get invalidated; that can happen with locals,
@@ -329,9 +327,8 @@ struct Logic {
     WASM_UNREACHABLE("unimp");
   };
 
-  // Returns whether an expression is a load that corresponds to a store. The
-  // load may not load all the data written by the store (that is up to a
-  // subclass to decide about), but it loads at least some of that data.
+  // Returns whether an expression is a load that corresponds to a store, that
+  // is, that loads the exact data that the store writes.
   bool isLoadFrom(Expression* curr,
                   const EffectAnalyzer& currEffects,
                   Expression* store) {
@@ -349,11 +346,8 @@ struct Logic {
   };
 
   // Returns whether an expression may interact with store in a way that we
-  // cannot fully analyze as a load or a store, and so we must give up. This may
-  // be a possible load or a possible store or something else.
-  // This is only called if isLoadFrom() and tramples() both return false, as
-  // this method indicates an interaction we cannot analyze as either a load or
-  // a trample.
+  // cannot fully analyze, and so we must give up and assume the very worst.
+  // This is only called if isLoadFrom() and tramples() both return false.
   bool mayInteract(Expression* curr,
                    const EffectAnalyzer& currEffects,
                    Expression* store) {
@@ -449,12 +443,12 @@ struct MemoryLogic : public ComparingLogic {
       // Atomic stores are dangerous, since they have additional trapping
       // behavior - they trap on unaligned addresses. For simplicity, only
       // consider the case where atomicity is identical.
+      // TODO: support ignoreImplicitTraps
       if (store->isAtomic != load->isAtomic) {
         return false;
       }
       // TODO: For now, only handle the obvious case where the
       // operations are identical in size and offset.
-      // TODO: handle cases where the sign may matter.
       return load->bytes == store->bytes &&
              load->bytes == load->type.getByteSize() &&
              load->offset == store->offset &&
@@ -600,8 +594,6 @@ struct LocalDeadStoreElimination
 };
 
 } // anonymous namespace
-
-// TODO: make global/local/optimizing variants
 
 Pass* createLocalDeadStoreEliminationPass() {
   return new LocalDeadStoreElimination();
