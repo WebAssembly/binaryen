@@ -86,6 +86,16 @@ struct ComparingLocalGraph : public LocalGraph {
   }
 };
 
+// Whether this instruction can reach code we cannot reason about, that is,
+// outside of the current function. Until we use whole-program information,
+// we must assume such code can read and write to all global state.
+static bool reachesUnknownCode(Expression* curr, const EffectAnalyzer& currEffects) {
+  // TODO: ignore throws of an exception that is definitely caught in this
+  //       function
+  return currEffects.calls || currEffects.throws || currEffects.trap ||
+         currEffects.branchesOut;
+}
+
 // Core code to generate the relevant CFG, analyze it, and optimize it.
 //
 // This is as generic as possible over what a "store" actually is; all the
@@ -130,7 +140,7 @@ struct DeadStoreCFG
 
     // Add all relevant things to the list of exprs for the current basic block.
     bool store = logic.isStore(curr);
-    if (store || reachesNonLocalCode(curr, currEffects) ||
+    if (store || reachesUnknownCode(curr, currEffects) ||
         logic.isAlsoRelevant(curr, currEffects)) {
       this->currBasicBlock->contents.exprs.push_back(curr);
       if (store) {
@@ -206,7 +216,7 @@ struct DeadStoreCFG
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
               return;
-            } else if (reachesNonLocalCode(curr, currEffects) ||
+            } else if (reachesUnknownCode(curr, currEffects) ||
                        logic.mayInteract(curr, currEffects, store)) {
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
@@ -243,15 +253,6 @@ struct DeadStoreCFG
         }
       }
     }
-  }
-
-  // Whether this instruction can read code that is not in the current function.
-  // We must assume such code can read and write to all global state.
-  bool reachesNonLocalCode(Expression* curr, const EffectAnalyzer& currEffects) {
-    // TODO: ignore throws of an exception that is definitely caught in this
-    //       function
-    return currEffects.calls || currEffects.throws || currEffects.trap ||
-           currEffects.branchesOut;
   }
 
   // Optimizes the function, and returns whether we made any changes.
