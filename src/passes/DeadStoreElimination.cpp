@@ -86,26 +86,28 @@ struct ComparingLocalGraph : public LocalGraph {
   }
 };
 
-// Core code to generate the relevant CFG and find which things can be
-// optimized. This is as generic as possible over what a "store" actually is;
-// the "logic" of handling that is provided by a class this is templated on.
+// Core code to generate the relevant CFG, analyze it, and optimize it.
+//
+// This is as generic as possible over what a "store" actually is; all the
+// specific logic of handling globals vs memory vs the GC heap is all left to a
+// to a LogicClass that this is templated on.
 template<typename LogicType>
-struct DeadStoreFinder
-  : public CFGWalker<DeadStoreFinder<LogicType>,
-                     UnifiedExpressionVisitor<DeadStoreFinder<LogicType>>,
+struct DeadStoreCFG
+  : public CFGWalker<DeadStoreCFG<LogicType>,
+                     UnifiedExpressionVisitor<DeadStoreCFG<LogicType>>,
                      BasicBlockInfo> {
   Function* func;
   PassOptions& passOptions;
   FeatureSet features;
   LogicType logic;
 
-  DeadStoreFinder(Module* wasm, Function* func, PassOptions& passOptions)
+  DeadStoreCFG(Module* wasm, Function* func, PassOptions& passOptions)
     : func(func), passOptions(passOptions), features(wasm->features),
       logic(func, passOptions, wasm->features) {
     this->setModule(wasm);
   }
 
-  ~DeadStoreFinder() {}
+  ~DeadStoreCFG() {}
 
   // Walking
 
@@ -116,7 +118,7 @@ struct DeadStoreFinder
   //   (local.tee $y ..))
   // but it cannot happen with the stores we handle in this pass, as there is
   // no store that is a direct child of another store.
-  // FIXME: when we replace loads as well, this will need to change.
+  // FIXME: when we replace loads as well, this will need to be generalized.
   std::unordered_map<Expression*, Expression**> storeLocations;
 
   void visitExpression(Expression* curr) {
@@ -128,8 +130,8 @@ struct DeadStoreFinder
 
     // Add all relevant things to the list of exprs for the current basic block.
     bool store = logic.isStore(curr);
-    if (reachesGlobalCode(curr, currEffects) ||
-        logic.isAlsoRelevant(curr, currEffects) || store) {
+    if (store || reachesGlobalCode(curr, currEffects) ||
+        logic.isAlsoRelevant(curr, currEffects)) {
       this->currBasicBlock->contents.exprs.push_back(curr);
       if (store) {
         storeLocations[curr] = this->getCurrentPointer();
@@ -137,15 +139,18 @@ struct DeadStoreFinder
     }
   }
 
-  // All the stores we can optimize, that is, stores whose values we can fully
-  // understand - they are trampled before being affected by external code.
-  // This maps such stores to the list of loads from it (which may be empty if
-  // the store is trampled before being read from, i.e., is completely dead).
-  std::unordered_map<Expression*, std::vector<Expression*>> optimizeableStores;
+  // All the stores we can optimize, that is, stores that write to a non-local
+  // place from which we have a full understanding of all the loads. This data
+  // structure maps such an understood store to the list of loads for it. In
+  // particular, if that list is empty then the store is dead (since we have
+  // a full understanding of all the loads, and there are none), and if the list
+  // is non-empty then only those loads read that store's value, and nothing
+  // else.
+  std::unordered_map<Expression*, std::vector<Expression*>> understoodStores;
 
   using BasicBlock =
-    typename CFGWalker<DeadStoreFinder<LogicType>,
-                       UnifiedExpressionVisitor<DeadStoreFinder<LogicType>>,
+    typename CFGWalker<DeadStoreCFG<LogicType>,
+                       UnifiedExpressionVisitor<DeadStoreCFG<LogicType>>,
                        BasicBlockInfo>::BasicBlock;
 
   void analyze() {
@@ -157,7 +162,11 @@ struct DeadStoreFinder
     // TODO: Optimize. This is a pretty naive way to flow the values, but it
     //       should be reasonable assuming most stores are quickly seen as
     //       having possible interactions (e.g., the first time we see a call)
-    //       and so most flows are halted very quickly.
+    //       and so most flows are halted very quickly. A much faster lane-based
+    //       flow is possible for some things like globals, but that would not
+    //       work for things like memory and GC which do not have simple "lanes"
+    //       as they have a pointer input as well and not just an absolute
+    //       location.
 
     for (auto& block : this->basicBlocks) {
       for (size_t i = 0; i < block->contents.exprs.size(); i++) {
@@ -167,7 +176,7 @@ struct DeadStoreFinder
         }
 
         // The store is optimizable (present on the map) until we see a problem.
-        optimizeableStores[store];
+        understoodStores[store];
 
         // Flow this store forward through basic blocks, looking for what it
         // affects and interacts with.
@@ -177,7 +186,7 @@ struct DeadStoreFinder
         // store as unoptimizable.
         auto halt = [&]() {
           work.clear();
-          optimizeableStores.erase(store);
+          understoodStores.erase(store);
         };
 
         // Scan through a block, starting from a certain position, looking for
@@ -190,7 +199,7 @@ struct DeadStoreFinder
 
             if (logic.isLoadFrom(curr, currEffects, store)) {
               // We found a definite load of this store, note it.
-              optimizeableStores[store].push_back(curr);
+              understoodStores[store].push_back(curr);
             } else if (logic.tramples(curr, currEffects, store)) {
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
@@ -249,7 +258,7 @@ struct DeadStoreFinder
     bool optimized = false;
 
     // Optimize the stores that have no unknown interactions.
-    for (auto& kv : optimizeableStores) {
+    for (auto& kv : understoodStores) {
       auto* store = kv.first;
       const auto& loads = kv.second;
       if (loads.empty()) {
@@ -520,14 +529,14 @@ struct LocalDeadStoreElimination
   Pass* create() { return new LocalDeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
-    DeadStoreFinder<GlobalLogic>(getModule(), func, getPassOptions())
+    DeadStoreCFG<GlobalLogic>(getModule(), func, getPassOptions())
       .optimize();
 
-    DeadStoreFinder<MemoryLogic>(getModule(), func, getPassOptions())
+    DeadStoreCFG<MemoryLogic>(getModule(), func, getPassOptions())
       .optimize();
 
     if (getModule()->features.hasGC()) {
-      DeadStoreFinder<GCLogic>(getModule(), func, getPassOptions()).optimize();
+      DeadStoreCFG<GCLogic>(getModule(), func, getPassOptions()).optimize();
     }
   }
 };
