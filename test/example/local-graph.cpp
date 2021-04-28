@@ -3,8 +3,8 @@
 #include <iostream>
 
 #include <ir/local-graph.h>
-#include <wasm.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 using namespace wasm;
 
@@ -14,7 +14,7 @@ int main() {
 
   {
     Function foo;
-    foo.vars = { Type::i32 };
+    foo.vars = {Type::i32};
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(0, Type::i32);
     foo.body = builder.makeBlock({
@@ -29,7 +29,7 @@ int main() {
 
   {
     Function foo;
-    foo.vars = { Type::i32 };
+    foo.vars = {Type::i32};
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(0, Type::i32);
     foo.body = builder.makeBlock({
@@ -44,7 +44,7 @@ int main() {
 
   {
     Function foo;
-    foo.sig = Signature({ Type::i32 }, Type::none);
+    foo.sig = Signature({Type::i32}, Type::none);
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(0, Type::i32);
     foo.body = builder.makeBlock({
@@ -58,7 +58,7 @@ int main() {
 
   {
     Function foo;
-    foo.sig = Signature({ Type::i32 }, Type::none);
+    foo.sig = Signature({Type::i32}, Type::none);
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(0, Type::i32);
     foo.body = builder.makeBlock({
@@ -73,7 +73,7 @@ int main() {
 
   {
     Function foo;
-    foo.sig = Signature({ Type::i32, Type::i32 }, Type::none);
+    foo.sig = Signature({Type::i32, Type::i32}, Type::none);
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::i32);
     foo.body = builder.makeBlock({
@@ -87,7 +87,7 @@ int main() {
 
   {
     Function foo;
-    foo.vars = { Type::i32, Type::i32 };
+    foo.vars = {Type::i32, Type::i32};
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::i32);
     foo.body = builder.makeBlock({
@@ -102,7 +102,7 @@ int main() {
 
   {
     Function foo;
-    foo.vars = { Type::i32, Type::f64 };
+    foo.vars = {Type::i32, Type::f64};
     auto* get1 = builder.makeLocalGet(0, Type::i32);
     auto* get2 = builder.makeLocalGet(1, Type::f64);
     foo.body = builder.makeBlock({
