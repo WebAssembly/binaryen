@@ -635,6 +635,43 @@
   )
  )
 
+ ;; CHECK:      (func $different-pointers (param $x (ref $C)) (param $y (ref $C))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $C 1
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $C 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $different-pointers (param $x (ref $C)) (param $y (ref $C))
+  (struct.set $C 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; stores to different indexes do not interact with each other, even if the
+  ;; pointers are not known to be equivalent or not. this allows us to see that
+  ;; the first store is trampled by the last store (both using index 0), as we
+  ;; can ignore this store (to index 1)
+  (struct.set $C 1
+   (local.get $y)
+   (i32.const 20)
+  )
+  (struct.set $C 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
  ;; CHECK:      (func $no-basic-blocks
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
