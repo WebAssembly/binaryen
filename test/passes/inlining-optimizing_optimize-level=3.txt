@@ -149,6 +149,7 @@
   (local $10 i32)
   (local $11 i32)
   (local $12 i32)
+  (local $13 i32)
   (local.set $8
    (global.get $STACKTOP)
   )
@@ -165,7 +166,7 @@
    )
    (call $abort)
   )
-  (local.set $4
+  (local.set $6
    (global.get $STACKTOP)
   )
   (global.set $STACKTOP
@@ -182,7 +183,7 @@
    (call $abort)
   )
   (i32.store
-   (local.get $4)
+   (local.get $6)
    (local.get $8)
   )
   (local.set $0
@@ -206,22 +207,22 @@
    )
    (call $abort)
   )
-  (local.set $5
+  (local.set $2
    (i32.add
     (local.get $1)
     (i32.const 120)
    )
   )
-  (local.set $6
+  (local.set $4
    (i32.add
     (local.get $1)
     (i32.const 136)
    )
   )
-  (local.set $7
+  (local.set $5
    (i32.add
-    (local.tee $2
-     (local.tee $3
+    (local.tee $3
+     (local.tee $7
       (i32.add
        (local.get $1)
        (i32.const 80)
@@ -233,25 +234,25 @@
   )
   (loop $do-in
    (i32.store
-    (local.get $2)
+    (local.get $3)
     (i32.const 0)
    )
    (br_if $do-in
     (i32.lt_s
-     (local.tee $2
+     (local.tee $3
       (i32.add
-       (local.get $2)
+       (local.get $3)
        (i32.const 4)
       )
      )
-     (local.get $7)
+     (local.get $5)
     )
    )
   )
   (i32.store
-   (local.get $5)
+   (local.get $2)
    (i32.load
-    (local.get $4)
+    (local.get $6)
    )
   )
   (drop
@@ -260,9 +261,9 @@
      (call $_printf_core
       (i32.const 0)
       (i32.const 672)
-      (local.get $5)
+      (local.get $2)
       (local.get $1)
-      (local.get $3)
+      (local.get $7)
      )
      (i32.const 0)
     )
@@ -273,7 +274,7 @@
        (local.get $0)
       )
      )
-     (local.set $9
+     (local.set $3
       (i32.load
        (local.get $0)
       )
@@ -288,14 +289,14 @@
       (i32.store
        (local.get $0)
        (i32.and
-        (local.get $9)
+        (local.get $3)
         (i32.const -33)
        )
       )
      )
      (if
       (i32.load
-       (local.tee $10
+       (local.tee $5
         (i32.add
          (local.get $0)
          (i32.const 48)
@@ -306,15 +307,15 @@
        (call $_printf_core
         (local.get $0)
         (i32.const 672)
-        (local.get $5)
+        (local.get $2)
         (local.get $1)
-        (local.get $3)
+        (local.get $7)
        )
       )
       (block
-       (local.set $12
+       (local.set $10
         (i32.load
-         (local.tee $11
+         (local.tee $9
           (i32.add
            (local.get $0)
            (i32.const 44)
@@ -323,54 +324,54 @@
         )
        )
        (i32.store
-        (local.get $11)
-        (local.get $6)
+        (local.get $9)
+        (local.get $4)
        )
        (i32.store
-        (local.tee $7
+        (local.tee $12
          (i32.add
           (local.get $0)
           (i32.const 28)
          )
         )
-        (local.get $6)
+        (local.get $4)
        )
        (i32.store
-        (local.tee $2
+        (local.tee $11
          (i32.add
           (local.get $0)
           (i32.const 20)
          )
         )
-        (local.get $6)
+        (local.get $4)
        )
        (i32.store
-        (local.get $10)
+        (local.get $5)
         (i32.const 80)
        )
        (i32.store
-        (local.tee $4
+        (local.tee $13
          (i32.add
           (local.get $0)
           (i32.const 16)
          )
         )
         (i32.add
-         (local.get $6)
+         (local.get $4)
          (i32.const 80)
         )
        )
-       (local.set $3
+       (local.set $2
         (call $_printf_core
          (local.get $0)
          (i32.const 672)
-         (local.get $5)
+         (local.get $2)
          (local.get $1)
-         (local.get $3)
+         (local.get $7)
         )
        )
        (if
-        (local.get $12)
+        (local.get $10)
         (block
          (drop
           (call_indirect (type $FUNCSIG$iiii)
@@ -390,27 +391,27 @@
          )
          (drop
           (i32.load
-           (local.get $2)
+           (local.get $11)
           )
          )
          (i32.store
-          (local.get $11)
-          (local.get $12)
-         )
-         (i32.store
+          (local.get $9)
           (local.get $10)
+         )
+         (i32.store
+          (local.get $5)
           (i32.const 0)
          )
          (i32.store
-          (local.get $4)
+          (local.get $13)
           (i32.const 0)
          )
          (i32.store
-          (local.get $7)
+          (local.get $12)
           (i32.const 0)
          )
          (i32.store
-          (local.get $2)
+          (local.get $11)
           (i32.const 0)
          )
         )
@@ -424,7 +425,7 @@
         (local.get $0)
        )
        (i32.and
-        (local.get $9)
+        (local.get $3)
         (i32.const 32)
        )
       )
@@ -432,6 +433,12 @@
      (i32.const 0)
     )
    )
+  )
+  (global.set $STACKTOP
+   (local.get $1)
+  )
+  (global.set $STACKTOP
+   (local.get $6)
   )
   (global.set $STACKTOP
    (local.get $8)
