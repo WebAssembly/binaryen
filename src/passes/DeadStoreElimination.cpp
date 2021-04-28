@@ -130,7 +130,7 @@ struct DeadStoreCFG
 
     // Add all relevant things to the list of exprs for the current basic block.
     bool store = logic.isStore(curr);
-    if (store || reachesGlobalCode(curr, currEffects) ||
+    if (store || reachesNonLocalCode(curr, currEffects) ||
         logic.isAlsoRelevant(curr, currEffects)) {
       this->currBasicBlock->contents.exprs.push_back(curr);
       if (store) {
@@ -157,7 +157,8 @@ struct DeadStoreCFG
     // create the CFG by walking the IR
     this->walkFunction(func);
 
-    // Flow the values and conduct the analysis.
+    // Flow the values and conduct the analysis. This finds each relevant store
+    // and then flows from it to all possible uses through the CFG.
     //
     // TODO: Optimize. This is a pretty naive way to flow the values, but it
     //       should be reasonable assuming most stores are quickly seen as
@@ -166,7 +167,7 @@ struct DeadStoreCFG
     //       flow is possible for some things like globals, but that would not
     //       work for things like memory and GC which do not have simple "lanes"
     //       as they have a pointer input as well and not just an absolute
-    //       location.
+    //       location that we can interprete as a "lane".
 
     for (auto& block : this->basicBlocks) {
       for (size_t i = 0; i < block->contents.exprs.size(); i++) {
@@ -175,7 +176,8 @@ struct DeadStoreCFG
           continue;
         }
 
-        // The store is optimizable (present on the map) until we see a problem.
+        // The store is assumed to be understood (and hence present on the map)
+        // until we see a problem.
         understoodStores[store];
 
         // Flow this store forward through basic blocks, looking for what it
@@ -204,7 +206,7 @@ struct DeadStoreCFG
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
               return;
-            } else if (reachesGlobalCode(curr, currEffects) ||
+            } else if (reachesNonLocalCode(curr, currEffects) ||
                        logic.mayInteract(curr, currEffects, store)) {
               // Stop: we cannot fully analyze the uses of this store as
               // there are interactions we cannot see.
@@ -243,10 +245,13 @@ struct DeadStoreCFG
     }
   }
 
-  bool reachesGlobalCode(Expression* curr, const EffectAnalyzer& currEffects) {
-    // TODO: an option to ignore traps here may be useful
+  // Whether this instruction can read code that is not in the current function.
+  // We must assume such code can read and write to all global state.
+  bool reachesNonLocalCode(Expression* curr, const EffectAnalyzer& currEffects) {
+    // TODO: ignore throws of an exception that is definitely caught in this
+    //       function
     return currEffects.calls || currEffects.throws || currEffects.trap ||
-           curr->is<Return>();
+           currEffects.branchesOut;
   }
 
   // Optimizes the function, and returns whether we made any changes.
@@ -262,7 +267,9 @@ struct DeadStoreCFG
       auto* store = kv.first;
       const auto& loads = kv.second;
       if (loads.empty()) {
-        // This store has no loads, and can just be dropped.
+        // This store has no loads, which means it is trampled by other stores
+        // before it is read, and so it can just be dropped.
+        //
         // Note that this is valid even if we care about implicit traps, such as
         // a trap from a store that is out of bounds. We are removing one store,
         // but it was trampled later, which means that a trap will still occur
@@ -277,7 +284,7 @@ struct DeadStoreCFG
       //       the value to a local for that global, etc.).
       //       Note that we may need to leave the loads if they have side
       //       effects, like a possible trap on memory loads, but they can be
-      //       left as dropped.
+      //       left as dropped, the same as with store inputs.
     }
 
     return optimized;
