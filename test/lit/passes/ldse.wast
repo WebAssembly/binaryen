@@ -458,6 +458,97 @@
   )
  )
 
+ ;; CHECK:      (func $compatible-types-nullability-1 (param $x (ref $A)) (param $y (ref null $C))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $C 0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $compatible-types-nullability-1 (param $x (ref $A)) (param $y (ref null $C))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; the types are compatible, so these may alias. also the second ref is
+  ;; nullable, but we should not be affected by that.
+  (struct.set $C 0
+   (local.get $y)
+   (i32.const 20)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+ ;; CHECK:      (func $compatible-types-nullability-2 (param $x (ref null $A)) (param $y (ref $C))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $C 0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $compatible-types-nullability-2 (param $x (ref null $A)) (param $y (ref $C))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; the types are compatible, so these may alias. also the first ref is
+  ;; nullable, but we should not be affected by that.
+  (struct.set $C 0
+   (local.get $y)
+   (i32.const 20)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+ ;; CHECK:      (func $compatible-types-nullability-3 (param $x (ref null $A)) (param $y (ref null $C))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $C 0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $compatible-types-nullability-3 (param $x (ref null $A)) (param $y (ref null $C))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; the types are compatible, so these may alias. also both refs are
+  ;; nullable, but we should not be affected by that.
+  (struct.set $C 0
+   (local.get $y)
+   (i32.const 20)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
  (func $foo)
 
  ;; CHECK:      (func $call (param $x (ref $A))
