@@ -961,7 +961,6 @@ def write_commands(commands, filename):
 opt_choices = [
     [],
     ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
-    ['-O1'], ['-O2'], ['-O3'], ['-O4'], ['-Os'], ['-Oz'],
     ["--coalesce-locals"],
     # XXX slow, non-default ["--coalesce-locals-learning"],
     ["--code-pushing"],
@@ -971,9 +970,9 @@ opt_choices = [
     ["--dae-optimizing"],
     ["--dce"],
     ["--directize"],
-    ["--dse"],
-    ["--dse"],
-    ["--dse"],
+    ["--ldse"],
+    ["--ldse"],
+    ["--ldse"],
     ["--flatten", "--dfo"],
     ["--duplicate-function-elimination"],
     ["--flatten"],
@@ -1053,6 +1052,11 @@ def randomize_opt_flags():
     # possibly converge. don't do this very often as it can be slow.
     if random.random() < 0.05:
         ret += ['--converge']
+    if random.random() < 0.5 and "--ldse" not in ret:
+      if random.random() < 0.5:
+        ret = ["--ldse"] + ret
+      else:
+        ret += ["--ldse"]
     assert ret.count('--flatten') <= 1
     return ret
 
