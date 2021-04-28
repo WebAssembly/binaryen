@@ -325,10 +325,14 @@
   )
  )
 
- ;; CHECK:      (func $two-types (param $x (ref $A)) (param $y (ref $B))
- ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK:      (func $incompatible-types (param $x (ref $A)) (param $y (ref $B))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (struct.set $B 0
  ;; CHECK-NEXT:   (local.get $y)
@@ -339,13 +343,14 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $two-types (param $x (ref $A)) (param $y (ref $B))
+ (func $incompatible-types (param $x (ref $A)) (param $y (ref $B))
   (struct.set $A 0
    (local.get $x)
    (i32.const 10)
   )
-  ;; the simple analysis currently gives up on a set we cannot easily classify,
-  ;; but eventually this could be handled: these types are not related
+  ;; the second store cannot alias the first because their types differ, and
+  ;; so the second store does not interfer in seeing that the first is trampled
+  ;; (even though the index is identical, 0)
   (struct.set $B 0
    (local.get $y)
    (f64.const 20)
@@ -356,10 +361,14 @@
   )
  )
 
- ;; CHECK:      (func $two-types-get (param $x (ref $A)) (param $y (ref $B))
- ;; CHECK-NEXT:  (struct.set $A 0
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK:      (func $incompatible-types-get (param $x (ref $A)) (param $y (ref $B))
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.get $B 0
@@ -371,12 +380,12 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $two-types-get (param $x (ref $A)) (param $y (ref $B))
+ (func $incompatible-types-get (param $x (ref $A)) (param $y (ref $B))
   (struct.set $A 0
    (local.get $x)
    (i32.const 10)
   )
-  ;; the simple analysis currently gives up on a get we cannot easily classify
+  ;; the types do not allow this to alias the set before it.
   (drop
    (struct.get $B 0
     (local.get $y)

@@ -541,8 +541,12 @@ struct GCLogic : public ComparingLogic {
       return false;
     }
     // Even if the index is identical, aliasing still may be impossible if the
-    // types are not compatible.
-    if (!Type::hasLeastUpperBound(u->ref->type, v->ref->type)) {
+    // types are not compatible. To check that, find the least upper bound
+    // (which always exists - the empty struct if nothing else), and then see if
+    // the index is included in that upper bound. If it is, then the types are
+    // compatible enough to alias memory.
+    auto lub = Type::getLeastUpperBound(u->ref->type, v->ref->type);
+    if (u->index >= lub.getHeapType().getStruct().fields.size()) {
       return false;
     }
     // We don't know, so assume they can alias.
