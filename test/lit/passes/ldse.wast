@@ -397,6 +397,67 @@
   )
  )
 
+ ;; CHECK:      (func $compatible-types (param $x (ref $A)) (param $y (ref $C))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $C 0
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $compatible-types (param $x (ref $A)) (param $y (ref $C))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  ;; the types are compatible, so these may alias
+  (struct.set $C 0
+   (local.get $y)
+   (i32.const 20)
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
+ ;; CHECK:      (func $compatible-types-get (param $x (ref $A)) (param $y (ref $C))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.get $C 0
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 30)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $compatible-types-get (param $x (ref $A)) (param $y (ref $C))
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 10)
+  )
+  (drop
+   (struct.get $C 0
+    (local.get $y)
+   )
+  )
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 30)
+  )
+ )
+
  (func $foo)
 
  ;; CHECK:      (func $call (param $x (ref $A))
