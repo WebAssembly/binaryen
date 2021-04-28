@@ -497,9 +497,11 @@ struct GCLogic : public ComparingLogic {
                   Expression* store_) {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
-      // TODO: consider subtyping as well.
+      // Note that we do not need to check the type: we check that the
+      // reference is equivalent, and if it is then the types must be compatible
+      // in addition to them pointing to the same memory.
       return localGraph.equivalent(load->ref, store->ref) &&
-             load->ref->type == store->ref->type && load->index == store->index;
+             load->index == store->index;
     }
     return false;
   }
@@ -509,9 +511,8 @@ struct GCLogic : public ComparingLogic {
                 Expression* store_) {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = store_->cast<StructSet>();
-      // TODO: consider subtyping as well.
+      // See note in isLoadFrom about typing.
       return localGraph.equivalent(otherStore->ref, store->ref) &&
-             otherStore->ref->type == store->ref->type &&
              otherStore->index == store->index;
     }
     return false;
@@ -522,7 +523,7 @@ struct GCLogic : public ComparingLogic {
                    Expression* store) {
     // We already checked isLoadFrom and tramples; if this is a struct
     // operation that we did not recognize, then give up.
-    // TODO if we can identify the ref, use the type system here
+    // TODO use the ref and type system here
     return currEffects.readsHeap || currEffects.writesHeap;
   }
 
@@ -533,6 +534,8 @@ struct GCLogic : public ComparingLogic {
   }
 };
 
+// Perform dead store elimination 100% locally, that is, without any whole-
+// program analysis. This is not very powerful, but is useful for testing.
 struct LocalDeadStoreElimination
   : public WalkerPass<PostWalker<LocalDeadStoreElimination>> {
   bool isFunctionParallel() { return true; }
@@ -540,12 +543,15 @@ struct LocalDeadStoreElimination
   Pass* create() { return new LocalDeadStoreElimination; }
 
   void doWalkFunction(Function* func) {
+    // Optimize globals.
     DeadStoreCFG<GlobalLogic>(getModule(), func, getPassOptions())
       .optimize();
 
+    // Optimize memory.
     DeadStoreCFG<MemoryLogic>(getModule(), func, getPassOptions())
       .optimize();
 
+    // Optimize GC heap.
     if (getModule()->features.hasGC()) {
       DeadStoreCFG<GCLogic>(getModule(), func, getPassOptions()).optimize();
     }
