@@ -536,19 +536,33 @@ struct GCLogic : public ComparingLogic {
     return false;
   }
 
+  // Check whether two GC operations may alias memory.
+  template<typename U, typename V>
+  bool mayAlias(U* u, V* v) {
+    // If the index does not match, no aliasing is possible.
+    if (u->index != v->index) {
+      return false;
+    }
+    // Even if the index is identical, aliasing still may be impossible if the
+    // types are not compatible.
+    if (!Type::hasLeastUpperBound(u->ref->type, v->ref->type)) {
+      return false;
+    }
+    // We don't know, so assume they can alias.
+    return true;
+  }
+
   bool mayInteract(Expression* curr,
                    const EffectAnalyzer& currEffects,
                    Expression* store_) {
     auto* store = store_->cast<StructSet>();
     // We already checked isLoadFrom and tramples and it was neither of those,
-    // so just check if the memory can possibly alias, which is whether this has
-    // the same index.
-    // TODO: use the type system more here
+    // so just check if the memory can possibly alias.
     if (auto* otherStore = curr->dynCast<StructSet>()) {
-      return otherStore->index == store->index;
+      return mayAlias(otherStore, store);
     }
     if (auto* load = curr->dynCast<StructGet>()) {
-      return load->index == store->index;
+      return mayAlias(load, store);
     }
     // This is not a load or a store that we recognize; check for generic heap
     // interactions.
