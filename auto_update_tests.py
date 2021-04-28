@@ -56,14 +56,17 @@ def update_example_tests():
             for f in os.environ.get('COMPILER_FLAGS').split(' '):
                 cmd.append(f)
         cmd = [os.environ.get('CXX') or 'g++', '-std=c++' + str(shared.cxx_standard)] + cmd
-        print('link: ', ' '.join(cmd))
-        subprocess.check_call(cmd)
-        print('run...', output_file)
-        proc = subprocess.Popen([output_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        actual, err = proc.communicate()
-        assert proc.returncode == 0, [proc.returncode, actual, err]
-        with open(expected, 'wb') as o:
-            o.write(actual)
+        try:
+            print('link: ', ' '.join(cmd))
+            subprocess.check_call(cmd)
+            print('run...', output_file)
+            proc = subprocess.Popen([output_file], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            actual, err = proc.communicate()
+            assert proc.returncode == 0, [proc.returncode, actual, err]
+            with open(expected, 'wb') as o:
+                o.write(actual)
+        finally:
+            os.remove(output_file)
 
 
 def update_wasm_dis_tests():
