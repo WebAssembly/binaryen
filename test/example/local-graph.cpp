@@ -1,5 +1,3 @@
-// test multiple uses of the threadPool
-
 #include <iostream>
 
 #include <ir/local-graph.h>
