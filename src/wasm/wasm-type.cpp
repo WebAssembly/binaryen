@@ -2417,7 +2417,11 @@ void ShapeCanonicalizer::initializePredecessors(std::vector<HeapType>& roots) {
     ShapeCanonicalizer& canonicalizer;
     Walker(ShapeCanonicalizer& canonicalizer) : canonicalizer(canonicalizer) {}
     void noteHeapType(HeapType ht) {
-      // Ensure each HeapType gets an entry even if it has no predecessors.
+      if (ht.isBasic()) {
+        return;
+      }
+      // Ensure each compound HeapType gets an entry even if it has no
+      // predecessors.
       canonicalizer.preds.insert({ht, {}});
       size_t index = 0;
       for (HeapType* child : canonicalizer.getChildren(ht)) {
