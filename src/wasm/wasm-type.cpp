@@ -209,6 +209,22 @@ struct TypePrinter {
 
 private:
   template<typename T, typename F> std::ostream& printChild(T curr, F printer);
+
+  // FIXME: This hard limit on how many times we call print() avoids extremely
+  //        large outputs, which can be inconveniently large in some cases, but
+  //        we should have a better mechanism for this.
+  static const size_t MaxPrints = 100;
+
+  size_t prints = 0;
+
+  bool exceededLimit() {
+    if (prints >= MaxPrints) {
+      os << "?";
+      return true;
+    }
+    prints++;
+    return false;
+  }
 };
 
 // Helper for hashing the shapes of TypeInfos and HeapTypeInfos. Keeps track of
@@ -1502,6 +1518,9 @@ bool TypeBounder::lub(const Rtt& a, const Rtt& b, Rtt& out) {
 
 template<typename T, typename F>
 std::ostream& TypePrinter::printChild(T curr, F printer) {
+  if (exceededLimit()) {
+    return os << "..!";
+  }
   auto it = depths.find(curr.getID());
   if (it != depths.end()) {
     assert(it->second <= currDepth);
