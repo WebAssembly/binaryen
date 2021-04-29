@@ -468,13 +468,14 @@ inline void collectHeapTypes(Module& wasm,
                              std::vector<HeapType>& types,
                              std::unordered_map<HeapType, Index>& typeIndices) {
   struct Counts : public std::unordered_map<HeapType, size_t> {
-    bool isRelevant(Type type) {
-      return (type.isRef() || type.isRtt()) && !type.getHeapType().isBasic();
+    void note(HeapType type) {
+      if (!type.isBasic()) {
+        (*this)[type]++;
+      }
     }
-    void note(HeapType type) { (*this)[type]++; }
-    void maybeNote(Type type) {
-      if (isRelevant(type)) {
-        note(type.getHeapType());
+    void note(Type type) {
+      for (HeapType ht : type.getHeapTypeChildren()) {
+        note(ht);
       }
     }
   };
@@ -489,19 +490,19 @@ inline void collectHeapTypes(Module& wasm,
       if (auto* call = curr->dynCast<CallIndirect>()) {
         counts.note(call->sig);
       } else if (curr->is<RefNull>()) {
-        counts.maybeNote(curr->type);
+        counts.note(curr->type);
       } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
         counts.note(curr->type.getRtt().heapType);
       } else if (auto* get = curr->dynCast<StructGet>()) {
-        counts.maybeNote(get->ref->type);
+        counts.note(get->ref->type);
       } else if (auto* set = curr->dynCast<StructSet>()) {
-        counts.maybeNote(set->ref->type);
+        counts.note(set->ref->type);
       } else if (Properties::isControlFlowStructure(curr)) {
         if (curr->type.isTuple()) {
           // TODO: Allow control flow to have input types as well
           counts.note(Signature(Type::none, curr->type));
         } else {
-          counts.maybeNote(curr->type);
+          counts.note(curr->type);
         }
       }
     }
@@ -514,10 +515,10 @@ inline void collectHeapTypes(Module& wasm,
     counts.note(curr->sig);
   }
   for (auto& curr : wasm.tables) {
-    counts.maybeNote(curr->type);
+    counts.note(curr->type);
   }
   for (auto& curr : wasm.elementSegments) {
-    counts.maybeNote(curr->type);
+    counts.note(curr->type);
   }
 
   // Collect info from functions in parallel.
@@ -525,9 +526,7 @@ inline void collectHeapTypes(Module& wasm,
     wasm, [&](Function* func, Counts& counts) {
       counts.note(func->sig);
       for (auto type : func->vars) {
-        for (auto t : type) {
-          counts.maybeNote(t);
-        }
+        counts.note(type);
       }
       if (!func->imported()) {
         CodeScanner(counts).walk(func->body);
@@ -542,30 +541,6 @@ inline void collectHeapTypes(Module& wasm,
     }
   }
 
-  // A generic utility to traverse the child types of a type.
-  // TODO: work with tlively to refactor this to a shared place
-  auto walkRelevantChildren = [&](HeapType type, auto callback) {
-    auto callIfRelevant = [&](Type type) {
-      if (counts.isRelevant(type)) {
-        callback(type.getHeapType());
-      }
-    };
-    if (type.isSignature()) {
-      auto sig = type.getSignature();
-      for (Type type : {sig.params, sig.results}) {
-        for (auto element : type) {
-          callIfRelevant(element);
-        }
-      }
-    } else if (type.isArray()) {
-      callIfRelevant(type.getArray().element.type);
-    } else if (type.isStruct()) {
-      auto fields = type.getStruct().fields;
-      for (auto field : fields) {
-        callIfRelevant(field.type);
-      }
-    }
-  };
   // Recursively traverse each reference type, which may have a child type that
   // is itself a reference type. This reflects an appearance in the binary
   // format that is in the type section itself.
@@ -578,14 +553,16 @@ inline void collectHeapTypes(Module& wasm,
   }
   while (!newTypes.empty()) {
     auto iter = newTypes.begin();
-    auto type = *iter;
+    auto ht = *iter;
     newTypes.erase(iter);
-    walkRelevantChildren(type, [&](HeapType type) {
-      if (!counts.count(type)) {
-        newTypes.insert(type);
+    for (HeapType child : ht.getHeapTypeChildren()) {
+      if (!child.isBasic()) {
+        if (!counts.count(child)) {
+          newTypes.insert(child);
+        }
+        counts.note(child);
       }
-      counts.note(type);
-    });
+    }
   }
 
   // Sort by frequency and then simplicity.
