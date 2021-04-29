@@ -209,6 +209,21 @@ struct TypePrinter {
 
 private:
   template<typename T, typename F> std::ostream& printChild(T curr, F printer);
+
+  // FIXME: This hard limit on how many times we call print() avoids extremely
+  //        large outputs, which can be inconveniently large in some cases, but
+  //        we should have a better mechanism for this.
+  static const size_t MaxPrints = 100;
+
+  size_t prints = 0;
+
+  bool exceededLimit() {
+    if (prints >= MaxPrints) {
+      return true;
+    }
+    prints++;
+    return false;
+  }
 };
 
 // Helper for hashing the shapes of TypeInfos and HeapTypeInfos. Keeps track of
@@ -571,10 +586,10 @@ typename Info::type_t Store<Info>::canonicalize(std::unique_ptr<Info>&& info) {
   std::lock_guard<std::mutex> lock(mutex);
   auto indexIt = typeIDs.find(std::cref(*info));
   if (indexIt != typeIDs.end()) {
-    return HeapType(indexIt->second);
+    return typename Info::type_t(indexIt->second);
   }
   info->isTemp = false;
-  return HeapType(recordCanonical(std::move(info)));
+  return typename Info::type_t(recordCanonical(std::move(info)));
 }
 
 template<typename Info>
@@ -1502,6 +1517,9 @@ bool TypeBounder::lub(const Rtt& a, const Rtt& b, Rtt& out) {
 
 template<typename T, typename F>
 std::ostream& TypePrinter::printChild(T curr, F printer) {
+  if (exceededLimit()) {
+    return os << "..!";
+  }
   auto it = depths.find(curr.getID());
   if (it != depths.end()) {
     assert(it->second <= currDepth);
@@ -1551,6 +1569,9 @@ std::ostream& TypePrinter::print(Type type) {
     if (isTemp(type)) {
       os << "[T]";
     }
+#if TRACE_CANONICALIZATION
+    os << "[" << ((type.getID() >> 4) % 1000) << "]";
+#endif
     if (type.isTuple()) {
       print(type.getTuple());
     } else if (type.isRef()) {
@@ -1590,6 +1611,9 @@ std::ostream& TypePrinter::print(HeapType heapType) {
     if (isTemp(heapType)) {
       os << "[T]";
     }
+#if TRACE_CANONICALIZATION
+    os << "[" << ((heapType.getID() >> 4) % 1000) << "]";
+#endif
     if (getHeapTypeInfo(heapType)->kind == HeapTypeInfo::BasicKind) {
       os << '*';
       print(getHeapTypeInfo(heapType)->basic);
@@ -2007,6 +2031,217 @@ Type TypeBuilder::getTempRttType(Rtt rtt) {
 
 namespace {
 
+// Generic utility for traversing type graphs. The inserted roots must live as
+// long as the Walker because they are referenced by address. This base class
+// only has logic for traversing type graphs; figuring out when to stop
+// traversing the graph and doing useful work during the traversal is left to
+// subclasses.
+template<typename Self> struct TypeGraphWalkerBase {
+  void walkRoot(Type* type);
+  void walkRoot(HeapType* ht);
+
+  // Override these in subclasses to do useful work.
+  void preVisitType(Type* type) {}
+  void preVisitHeapType(HeapType* ht) {}
+  void postVisitType(Type* type) {}
+  void postVisitHeapType(HeapType* ht) {}
+
+  // This base walker does not know when to stop scanning, so at least one of
+  // these needs to be overridden with a method that calls the base scanning
+  // method only if some end condition isn't met.
+  void scanHeapType(HeapType* ht);
+  void scanType(Type* type);
+
+private:
+  struct Task {
+    enum Kind {
+      PreType,
+      PreHeapType,
+      ScanType,
+      ScanHeapType,
+      PostType,
+      PostHeapType,
+    } kind;
+    union {
+      Type* type;
+      HeapType* heapType;
+    };
+    static Task preVisit(Type* type) { return Task(type, PreType); }
+    static Task preVisit(HeapType* ht) { return Task(ht, PreHeapType); }
+    static Task scan(Type* type) { return Task(type, ScanType); }
+    static Task scan(HeapType* ht) { return Task(ht, ScanHeapType); }
+    static Task postVisit(Type* type) { return Task(type, PostType); }
+    static Task postVisit(HeapType* ht) { return Task(ht, PostHeapType); }
+
+  private:
+    Task(Type* type, Kind kind) : kind(kind), type(type) {}
+    Task(HeapType* ht, Kind kind) : kind(kind), heapType(ht) {}
+  };
+
+  void doWalk();
+
+  std::vector<Task> taskList;
+  void push(Type* type);
+  void push(HeapType* type);
+
+  Self& self() { return *static_cast<Self*>(this); }
+};
+
+template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(Type* type) {
+  assert(taskList.empty());
+  taskList.push_back(Task::scan(type));
+  doWalk();
+}
+
+template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(HeapType* ht) {
+  assert(taskList.empty());
+  taskList.push_back(Task::scan(ht));
+  doWalk();
+}
+
+template<typename Self> void TypeGraphWalkerBase<Self>::doWalk() {
+  while (!taskList.empty()) {
+    auto curr = taskList.back();
+    taskList.pop_back();
+    switch (curr.kind) {
+      case Task::PreType:
+        self().preVisitType(curr.type);
+        break;
+      case Task::PreHeapType:
+        self().preVisitHeapType(curr.heapType);
+        break;
+      case Task::ScanType:
+        taskList.push_back(Task::postVisit(curr.type));
+        self().scanType(curr.type);
+        taskList.push_back(Task::preVisit(curr.type));
+        break;
+      case Task::ScanHeapType:
+        taskList.push_back(Task::postVisit(curr.heapType));
+        self().scanHeapType(curr.heapType);
+        taskList.push_back(Task::preVisit(curr.heapType));
+        break;
+      case Task::PostType:
+        self().postVisitType(curr.type);
+        break;
+      case Task::PostHeapType:
+        self().postVisitHeapType(curr.heapType);
+        break;
+    }
+  }
+}
+
+template<typename Self>
+void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
+  if (ht->isBasic()) {
+    return;
+  }
+  auto* info = getHeapTypeInfo(*ht);
+  switch (info->kind) {
+    case HeapTypeInfo::BasicKind:
+      break;
+    case HeapTypeInfo::SignatureKind:
+      taskList.push_back(Task::scan(&info->signature.results));
+      taskList.push_back(Task::scan(&info->signature.params));
+      break;
+    case HeapTypeInfo::StructKind: {
+      auto& fields = info->struct_.fields;
+      for (auto field = fields.rbegin(); field != fields.rend(); ++field) {
+        taskList.push_back(Task::scan(&field->type));
+      }
+      break;
+    }
+    case HeapTypeInfo::ArrayKind:
+      taskList.push_back(Task::scan(&info->array.element.type));
+      break;
+  }
+}
+
+template<typename Self> void TypeGraphWalkerBase<Self>::scanType(Type* type) {
+  if (type->isBasic()) {
+    return;
+  }
+  auto* info = getTypeInfo(*type);
+  switch (info->kind) {
+    case TypeInfo::TupleKind: {
+      auto& types = info->tuple.types;
+      for (auto it = types.rbegin(); it != types.rend(); ++it) {
+        taskList.push_back(Task::scan(&*it));
+      }
+      break;
+    }
+    case TypeInfo::RefKind: {
+      taskList.push_back(Task::scan(&info->ref.heapType));
+      break;
+    }
+    case TypeInfo::RttKind:
+      taskList.push_back(Task::scan(&info->rtt.heapType));
+      break;
+  }
+}
+
+// A type graph walker base class that still does no useful work, but at least
+// knows to scan each HeapType only once.
+template<typename Self> struct HeapTypeGraphWalker : TypeGraphWalkerBase<Self> {
+  // Override this.
+  void noteHeapType(HeapType ht) {}
+
+  void scanHeapType(HeapType* ht) {
+    if (scanned.insert(*ht).second) {
+      static_cast<Self*>(this)->noteHeapType(*ht);
+      TypeGraphWalkerBase<Self>::scanHeapType(ht);
+    }
+  }
+
+private:
+  std::unordered_set<HeapType> scanned;
+};
+
+// A type graph walker base class that still does no useful work, but at least
+// knows to scan each HeapType and Type only once.
+template<typename Self> struct TypeGraphWalker : TypeGraphWalkerBase<Self> {
+  // Override these.
+  void noteType(Type type) {}
+  void noteHeapType(HeapType ht) {}
+
+  void scanType(Type* type) {
+    if (scannedTypes.insert(*type).second) {
+      static_cast<Self*>(this)->noteType(*type);
+      TypeGraphWalkerBase<Self>::scanType(type);
+    }
+  }
+  void scanHeapType(HeapType* ht) {
+    if (scannedHeapTypes.insert(*ht).second) {
+      static_cast<Self*>(this)->noteHeapType(*ht);
+      TypeGraphWalkerBase<Self>::scanHeapType(ht);
+    }
+  }
+
+private:
+  std::unordered_set<HeapType> scannedHeapTypes;
+  std::unordered_set<Type> scannedTypes;
+};
+
+// A type graph walker that notes parent-child relationships between HeapTypes.
+// What to do with each noted relationship is left to subclasses.
+template<typename Self> struct HeapTypePathWalker : HeapTypeGraphWalker<Self> {
+  // Override this.
+  void noteChild(HeapType parent, HeapType* child) {}
+
+  void preVisitHeapType(HeapType* ht) {
+    if (!path.empty()) {
+      static_cast<Self*>(this)->noteChild(path.back(), ht);
+    }
+    path.push_back(*ht);
+  }
+  void postVisitHeapType(HeapType* ht) {
+    assert(!path.empty() && path.back() == *ht);
+    path.pop_back();
+  }
+
+private:
+  std::vector<HeapType> path;
+};
+
 // A wrapper around a HeapType that provides equality and hashing based only on
 // its top-level shape, up to but not including its closest HeapType
 // descendants. This is the shape that determines the most fine-grained
@@ -2046,20 +2281,25 @@ namespace {
 // definition graph from an input graph. See
 // https://en.wikipedia.org/wiki/DFA_minimization#Hopcroft's_algorithm.
 struct ShapeCanonicalizer {
-  // The new, minimal type definition graph.
+  // The minimized HeapTypes, possibly including both new temporary HeapTypes as
+  // well as globally canonical HeapTypes that were reachable from the input
+  // roots.
+  std::vector<HeapType> results;
+
+  // The new, temporary, minimal HeapTypeInfos. Contains empty unique_ptrs at
+  // indices corresponding to globally canonical HeapTypes.
   std::vector<std::unique_ptr<HeapTypeInfo>> infos;
 
-  // Maps each input HeapType to the index of its partition in `partitions`,
-  // which is also the index of its canonicalized HeapTypeInfo in infos.
+  // Maps each input root HeapType to the index of its partition in
+  // `partitions`, which is also the index of its minimized version in
+  // `minimized`, and if that minimized version is not globally canonical, also
+  // the index of the minimized HeapTypeInfo in `infos`.
   std::unordered_map<HeapType, size_t> partitionIndices;
 
-  ShapeCanonicalizer(const std::vector<HeapType>& input);
+  ShapeCanonicalizer(std::vector<HeapType>& roots);
 
 private:
   using TypeSet = std::unordered_set<HeapType>;
-
-  // The HeapTypes in the type definition graph to canonicalize.
-  const std::vector<HeapType>& input;
 
   // The partitioning of the input HeapTypes used by Hopcroft's algorithm.
   std::vector<TypeSet> partitions;
@@ -2070,18 +2310,13 @@ private:
   size_t alphabetSize = 0;
   std::unordered_map<HeapType, std::unordered_map<size_t, TypeSet>> preds;
 
-  void initializePredecessors();
+  void initializePredecessors(std::vector<HeapType>& roots);
   void initializePartitions();
   void translatePartitionsToTypes();
 
-  // Returns pointers to the HeapType's immediate descendant compound HeapTypes.
-  // For determining partitions and state transitions, BasicKind HeapTypes are
-  // treated identically to basic HeapTypes and are not included in the results
-  // of `getChildren`. For translating the partitions back into types, though,
-  // it is important that BasicKind children are included so they can be updated
-  // to refer to their corresponding shape-canonicalized HeapTypeInfo in the
-  // results. TODO: Consolidate all type scanning in one utility.
-  std::vector<HeapType*> getChildren(HeapType type, bool includeBasic = false);
+  // Return the non-basic HeapType children of `ht` (including BasicKind
+  // children).
+  std::vector<HeapType*> getChildren(HeapType ht);
   const TypeSet& getPredsOf(HeapType type, size_t symbol);
   TypeSet getIntersection(const TypeSet& a, const TypeSet& b);
   TypeSet getDifference(const TypeSet& a, const TypeSet& b);
@@ -2098,9 +2333,16 @@ private:
 #endif
 };
 
-ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
-  : input(input) {
-  initializePredecessors();
+ShapeCanonicalizer::ShapeCanonicalizer(std::vector<HeapType>& roots) {
+#if TRACE_CANONICALIZATION
+  std::cerr << "Root HeapTypes:\n";
+  for (auto root : roots) {
+    std::cerr << root << '\n';
+  }
+  std::cerr << '\n';
+#endif
+
+  initializePredecessors(roots);
   initializePartitions();
 
 #if TRACE_CANONICALIZATION
@@ -2120,7 +2362,8 @@ ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
     // Choose a partition that might be able to distinguish between the members
     // of some other partition.
     auto distinguishingIndexIt = distinguishers.begin();
-    TypeSet distinguishing = partitions[*distinguishingIndexIt];
+    size_t distinguishingIndex = *distinguishingIndexIt;
+    TypeSet distinguishing = partitions[distinguishingIndex];
     distinguishers.erase(distinguishingIndexIt);
     // For each possibly distinguishing transition symbol...
     for (size_t symbol = 0; symbol < alphabetSize; ++symbol) {
@@ -2146,6 +2389,13 @@ ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
         if (difference.empty()) {
           continue;
         }
+
+#if TRACE_CANONICALIZATION
+        std::cerr << "Partition " << distinguishingIndex
+                  << " distinguishes partition " << distinguishedIndex
+                  << " via child " << symbol << "\n";
+#endif
+
         // We can split the partition! Replace it with the intersection and add
         // the difference as a new partition.
         partitions[distinguishedIndex] = std::move(intersection);
@@ -2164,11 +2414,15 @@ ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
         } else {
           distinguishers.insert(distinguishedIndex);
         }
+
+#if TRACE_CANONICALIZATION
+        dumpPartitions();
+#endif
       }
     }
   }
 
-#if TRACE_PARTITIONS
+#if TRACE_CANONICALIZATION
   std::cerr << "Final partitions:\n";
   dumpPartitions();
 #endif
@@ -2176,27 +2430,46 @@ ShapeCanonicalizer::ShapeCanonicalizer(const std::vector<HeapType>& input)
   translatePartitionsToTypes();
 }
 
-void ShapeCanonicalizer::initializePredecessors() {
-  for (auto heapType : input) {
-    size_t childIndex = 0;
-    for (auto* child : getChildren(heapType)) {
-      alphabetSize = std::max(alphabetSize, childIndex + 1);
-      preds[*child][childIndex++].insert(heapType);
+void ShapeCanonicalizer::initializePredecessors(std::vector<HeapType>& roots) {
+  struct Walker : HeapTypeGraphWalker<Walker> {
+    ShapeCanonicalizer& canonicalizer;
+    Walker(ShapeCanonicalizer& canonicalizer) : canonicalizer(canonicalizer) {}
+    void noteHeapType(HeapType ht) {
+      if (ht.isBasic()) {
+        return;
+      }
+      // Ensure each compound HeapType gets an entry even if it has no
+      // predecessors.
+      canonicalizer.preds.insert({ht, {}});
+      size_t index = 0;
+      for (HeapType* child : canonicalizer.getChildren(ht)) {
+        // Skip children that represent basic HeapTypes.
+        if (getHeapTypeInfo(*child)->kind == HeapTypeInfo::BasicKind) {
+          continue;
+        }
+        canonicalizer.preds[*child][index++].insert(ht);
+      }
+      canonicalizer.alphabetSize = std::max(canonicalizer.alphabetSize, index);
     }
+  };
+  Walker walker(*this);
+  for (HeapType& root : roots) {
+    walker.walkRoot(&root);
   }
 }
 
 void ShapeCanonicalizer::initializePartitions() {
-  // Create the initial partitions based on the top-level shape of the input
-  // heap types. If two heap types are differentiable without recursing into
-  // their child heap types, then they are obviously not equivalent and can be
-  // placed in different partitions. Starting with this fine-grained partition
-  // lets us use simple child indices as our transition alphabet since we will
-  // never mix up equivalent indices from different kinds of types, for example
+  // Create the initial partitions based on the top-level shape of the heap
+  // types. If two heap types are differentiable without recursing into their
+  // child heap types, then they are obviously not equivalent and can be placed
+  // in different partitions. Starting with this fine-grained partition lets us
+  // use simple child indices as our transition alphabet since we will never mix
+  // up equivalent indices from different kinds of types, for example
   // considering a struct and a signature with the same children to be the same
   // type.
   std::unordered_map<ShallowHeapType, size_t> initialIndices;
-  for (auto type : input) {
+  for (auto& pair : preds) {
+    HeapType type = pair.first;
     ShallowHeapType shallow(type);
     auto inserted = initialIndices.insert({shallow, partitions.size()});
     if (inserted.second) {
@@ -2220,85 +2493,80 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
   // HeapTypeInfos rather than the original HeapTypeInfos. This newly formed
   // graph will have a shape coinductively equivalent to the original graph's
   // shape, but each type definition will be minimal and distinct.
+  //
+  // However, for partitions that already contain globally canonical types, find
+  // and use the corresponding HeapTypeInfo directly without copying. Since the
+  // partitions reachable from a globally canonical type will also contain a
+  // globally canonical type, no temporary types will end up being patched into
+  // the globally canonical types and we can skip patching the children of those
+  // types.
   for (auto& partition : partitions) {
-    const auto& representative = *getHeapTypeInfo(*partition.begin());
-    infos.push_back(std::make_unique<HeapTypeInfo>(representative));
-    infos.back()->isTemp = true;
+    auto it = std::find_if(partition.begin(), partition.end(), [](HeapType ht) {
+      return !isTemp(ht);
+    });
+    if (it == partition.end()) {
+      // We do not already know about a globally canonical type for this
+      // partition. Create a copy.
+      const auto& representative = *getHeapTypeInfo(*partition.begin());
+      infos.push_back(std::make_unique<HeapTypeInfo>(representative));
+      infos.back()->isTemp = true;
+      results.push_back(asHeapType(infos.back()));
+    } else {
+      // We already have a globally canonical type for this partition.
+      results.push_back(*it);
+      infos.push_back({});
+    }
   }
   for (auto& info : infos) {
-    for (auto* child : getChildren(asHeapType(info), true)) {
+    if (!info) {
+      // No need to replace the children of globally canonical HeapTypes.
+      continue;
+    }
+    for (auto* child : getChildren(asHeapType(info))) {
       auto partitionIt = partitionIndices.find(*child);
       if (partitionIt == partitionIndices.end()) {
         // This child has already been replaced.
         continue;
       }
-      *child = asHeapType(infos.at(partitionIt->second));
+      *child = results.at(partitionIt->second);
     }
   }
+
+#if TRACE_CANONICALIZATION
+  std::cerr << "Minimization results:\n";
+  for (HeapType ht : results) {
+    std::cerr << ht << '\n';
+  }
+  std::cerr << '\n';
+#endif
 }
 
-std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType heapType,
-                                                       bool includeBasic) {
-  std::vector<HeapType*> children;
-
-  auto noteChild = [&](HeapType* child) {
-    HeapType type = *child;
-    if (!includeBasic) {
-      type = asCanonical(type);
-    }
-    if (!type.isBasic()) {
-      children.push_back(child);
-    }
-  };
-
-  // Scan through Types to find the next HeapType.
-  std::function<void(Type)> scanType = [&](Type type) {
-    if (type.isBasic()) {
-      return;
-    }
-    auto* info = getTypeInfo(type);
-    switch (info->kind) {
-      case TypeInfo::TupleKind:
-        for (Type t : info->tuple.types) {
-          scanType(t);
-        }
-        return;
-      case TypeInfo::RefKind:
-        return noteChild(&info->ref.heapType);
-      case TypeInfo::RttKind:
-        return noteChild(&info->rtt.heapType);
-    }
-    WASM_UNREACHABLE("unexpected kind");
-  };
-
-  assert(!heapType.isBasic() && "Cannot have basic defined HeapType");
-  auto* info = getHeapTypeInfo(heapType);
-  switch (info->kind) {
-    case HeapTypeInfo::BasicKind:
-      return children;
-    case HeapTypeInfo::SignatureKind:
-      scanType(info->signature.params);
-      scanType(info->signature.results);
-      return children;
-    case HeapTypeInfo::StructKind:
-      for (auto& field : info->struct_.fields) {
-        scanType(field.type);
+std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType ht) {
+  struct Walker : HeapTypePathWalker<Walker> {
+    std::vector<HeapType*> children;
+    bool topLevel = true;
+    void noteChild(HeapType, HeapType* child) {
+      if (!child->isBasic()) {
+        children.push_back(child);
       }
-      return children;
-    case HeapTypeInfo::ArrayKind:
-      scanType(info->array.element.type);
-      return children;
-  }
-  WASM_UNREACHABLE("unexpected kind");
+    }
+    void scanHeapType(HeapType* ht) {
+      if (topLevel) {
+        HeapTypePathWalker<Walker>::scanHeapType(ht);
+        topLevel = false;
+      }
+    }
+  };
+  Walker walker;
+  walker.walkRoot(&ht);
+  return walker.children;
 }
 
 const std::unordered_set<HeapType>&
 ShapeCanonicalizer::getPredsOf(HeapType type, size_t symbol) {
   static TypeSet empty;
   auto predsIt = preds.find(type);
-  if (predsIt == preds.end()) {
-    return empty;
-  }
+  assert(predsIt != preds.end());
   auto& predsOfType = predsIt->second;
   auto specificPredsIt = predsOfType.find(symbol);
   if (specificPredsIt == predsOfType.end()) {
@@ -2334,51 +2602,43 @@ ShapeCanonicalizer::getDifference(const TypeSet& a, const TypeSet& b) {
 // Replaces temporary types and heap types in a type definition graph with their
 // globally canonical versions to prevent temporary types or heap type from
 // leaking into the global stores.
-struct GlobalCanonicalizer {
+std::vector<HeapType>
+globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
+
+  // Map each temporary Type and HeapType to the locations where they will
+  // have to be replaced with canonical Types and HeapTypes.
+  struct Locations : TypeGraphWalker<Locations> {
+    std::unordered_map<Type, std::unordered_set<Type*>> types;
+    std::unordered_map<HeapType, std::unordered_set<HeapType*>> heapTypes;
+
+    void preVisitType(Type* type) {
+      if (!type->isBasic()) {
+        types[*type].insert(type);
+      }
+    }
+    void preVisitHeapType(HeapType* ht) {
+      if (!ht->isBasic()) {
+        heapTypes[*ht].insert(ht);
+      }
+    }
+  } locations;
 
   std::vector<HeapType> results;
-  GlobalCanonicalizer(std::vector<std::unique_ptr<HeapTypeInfo>>& infos);
-
-private:
-  struct Item {
-    enum Kind {
-      TypeKind,
-      HeapTypeKind,
-    } kind;
-    union {
-      Type* type;
-      HeapType* heapType;
-    };
-    Item(Type* type) : kind(TypeKind), type(type) {}
-    Item(HeapType* heapType) : kind(HeapTypeKind), heapType(heapType) {}
-  };
-
-  // IDs of scanned Types and HeapTypes, used to prevent repeated scanning.
-  std::unordered_set<TypeID> scanned;
-
-  // The work list of Types and HeapTypes remaining to be scanned.
-  std::vector<Item> scanList;
-
-  // Maps each temporary Type and HeapType to the locations where they will have
-  // to be replaced with canonical Types and HeapTypes.
-  std::unordered_map<Type, std::vector<Type*>> typeLocations;
-  std::unordered_map<HeapType, std::vector<HeapType*>> heapTypeLocations;
-
-  template<typename T1, typename T2> void noteChild(T1 parent, T2* child);
-  void scanHeapType(HeapType* ht);
-  void scanType(Type* child);
-};
-
-// Traverse the type graph rooted at the initialized HeapTypeInfos, replacing in
-// place all Types and HeapTypes backed by the TypeBuilder's Stores with
-// equivalent globally canonicalized Types and HeapTypes.
-GlobalCanonicalizer::GlobalCanonicalizer(
-  std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
-  // Seed the scan list with the HeapTypes to canonicalize.
   results.reserve(infos.size());
   for (auto& info : infos) {
+    if (!info) {
+      // TODO: That we have to deal with null info pointers here is a sign of a
+      // very leaky abstraction. Hack around it by for now to keep the diff for
+      // this change easier to reason about, but fix this in a followup to make
+      // the code itself easier to reason about.
+
+      // Produce an arbitrary HeapType that will not be used.
+      results.push_back(HeapType(0));
+      continue;
+    }
+
     results.push_back(asHeapType(info));
-    scanList.push_back(&results.back());
+    locations.walkRoot(&results.back());
   }
 
 #if TRACE_CANONICALIZATION
@@ -2388,21 +2648,6 @@ GlobalCanonicalizer::GlobalCanonicalizer(
   }
   std::cerr << '\n';
 #endif
-
-  // Traverse the type graph reachable from the heap types, collecting a list of
-  // type and heap type use sites that need to be patched with canonical types.
-  while (scanList.size() != 0) {
-    auto item = scanList.back();
-    scanList.pop_back();
-    switch (item.kind) {
-      case Item::TypeKind:
-        scanType(item.type);
-        break;
-      case Item::HeapTypeKind:
-        scanHeapType(item.heapType);
-        break;
-    }
-  }
 
   // Canonicalize HeapTypes at all their use sites. HeapTypes for which there
   // was not already a globally canonical version are moved to the global store
@@ -2414,6 +2659,9 @@ GlobalCanonicalizer::GlobalCanonicalizer(
   // non-canonical Types.
   std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
   for (auto& info : infos) {
+    if (!info) {
+      continue;
+    }
     HeapType original = asHeapType(info);
     HeapType canonical = globalHeapTypeStore.canonicalize(std::move(info));
     if (original != canonical) {
@@ -2423,14 +2671,15 @@ GlobalCanonicalizer::GlobalCanonicalizer(
   for (auto& pair : canonicalHeapTypes) {
     HeapType original = pair.first;
     HeapType canonical = pair.second;
-    for (HeapType* use : heapTypeLocations.at(original)) {
+    for (HeapType* use : locations.heapTypes.at(original)) {
       *use = canonical;
     }
   }
+
   auto canonicalizeTypes = [&](bool tuples) {
-    for (auto& pair : typeLocations) {
+    for (auto& pair : locations.types) {
       Type original = pair.first;
-      std::vector<Type*>& uses = pair.second;
+      auto& uses = pair.second;
       if (original.isTuple() == tuples) {
         Type canonical = globalTypeStore.canonicalize(*getTypeInfo(original));
         for (Type* use : uses) {
@@ -2449,64 +2698,8 @@ GlobalCanonicalizer::GlobalCanonicalizer(
   }
   std::cerr << '\n';
 #endif
-}
 
-template<typename T1, typename T2>
-void GlobalCanonicalizer::noteChild(T1 parent, T2* child) {
-  if (child->isCompound()) {
-    scanList.push_back(child);
-  }
-}
-
-void GlobalCanonicalizer::scanHeapType(HeapType* ht) {
-  assert(ht->isCompound());
-  heapTypeLocations[*ht].push_back(ht);
-  if (scanned.count(ht->getID())) {
-    return;
-  }
-  scanned.insert(ht->getID());
-
-  auto* info = getHeapTypeInfo(*ht);
-  switch (info->kind) {
-    case HeapTypeInfo::BasicKind:
-      break;
-    case HeapTypeInfo::SignatureKind:
-      noteChild(*ht, &info->signature.params);
-      noteChild(*ht, &info->signature.results);
-      break;
-    case HeapTypeInfo::StructKind:
-      for (auto& field : info->struct_.fields) {
-        noteChild(*ht, &field.type);
-      }
-      break;
-    case HeapTypeInfo::ArrayKind:
-      noteChild(*ht, &info->array.element.type);
-      break;
-  }
-};
-
-void GlobalCanonicalizer::scanType(Type* type) {
-  assert(type->isCompound());
-  typeLocations[*type].push_back(type);
-  if (scanned.count(type->getID())) {
-    return;
-  }
-  scanned.insert(type->getID());
-
-  auto* info = getTypeInfo(*type);
-  switch (info->kind) {
-    case TypeInfo::TupleKind:
-      for (auto& child : info->tuple.types) {
-        noteChild(*type, &child);
-      }
-      break;
-    case TypeInfo::RefKind:
-      noteChild(*type, &info->ref.heapType);
-      break;
-    case TypeInfo::RttKind:
-      noteChild(*type, &info->rtt.heapType);
-      break;
-  }
+  return results;
 }
 
 } // anonymous namespace
@@ -2525,12 +2718,18 @@ std::vector<HeapType> TypeBuilder::build() {
   // The shape of the definition graph is now canonicalized, but it is still
   // comprised of temporary types and heap types. Get or create their globally
   // canonical versions.
-  GlobalCanonicalizer globallyCanonical(minimized.infos);
+  std::vector<HeapType> canonical = globallyCanonicalize(minimized.infos);
 
   // Map the original heap types to their minimized and globally canonical
   // versions.
   for (auto& type : heapTypes) {
-    type = globallyCanonical.results[minimized.partitionIndices[type]];
+    size_t index = minimized.partitionIndices.at(type);
+    // TODO: This is messy. Clean it up.
+    if (minimized.infos.at(index)) {
+      type = canonical.at(index);
+    } else {
+      type = minimized.results.at(index);
+    }
   }
 
   return heapTypes;

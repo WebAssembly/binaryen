@@ -25,6 +25,7 @@
 
 #include <queue>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace wasm {
 
@@ -59,9 +60,8 @@ template<typename T> struct UniqueDeferredQueue {
   }
 
   void clear() {
-    while (!data.empty()) {
-      data.pop();
-    }
+    std::queue<T> empty;
+    std::swap(data, empty);
     count.clear();
   }
 };
