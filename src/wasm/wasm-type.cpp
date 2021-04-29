@@ -2205,7 +2205,7 @@ private:
 
 // A type graph walker that notes parent-child relationships between HeapTypes.
 // What to do with each noted relationship is left to subclasses.
-template<typename Self> struct HeapTypeChildWalker : HeapTypeGraphWalker<Self> {
+template<typename Self> struct HeapTypePathWalker : HeapTypeGraphWalker<Self> {
   // Override this.
   void noteChild(HeapType parent, HeapType* child) {}
 
@@ -2264,7 +2264,7 @@ namespace {
 // https://en.wikipedia.org/wiki/DFA_minimization#Hopcroft's_algorithm.
 struct ShapeCanonicalizer {
   // The minimized HeapTypes, possibly including both new temporary HeapTypes as
-  // well as globally canonical HeapTypes that were reahcable from the input
+  // well as globally canonical HeapTypes that were reachable from the input
   // roots.
   std::vector<HeapType> results;
 
@@ -2520,7 +2520,7 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
 }
 
 std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType ht) {
-  struct Walker : HeapTypeChildWalker<Walker> {
+  struct Walker : HeapTypePathWalker<Walker> {
     std::vector<HeapType*> children;
     bool topLevel = true;
     void noteChild(HeapType, HeapType* child) {
@@ -2530,7 +2530,7 @@ std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType ht) {
     }
     void scanHeapType(HeapType* ht) {
       if (topLevel) {
-        HeapTypeChildWalker<Walker>::scanHeapType(ht);
+        HeapTypePathWalker<Walker>::scanHeapType(ht);
         topLevel = false;
       }
     }
