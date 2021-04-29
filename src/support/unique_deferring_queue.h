@@ -60,9 +60,8 @@ template<typename T> struct UniqueDeferredQueue {
   }
 
   void clear() {
-    while (!data.empty()) {
-      data.pop();
-    }
+    std::queue<T> empty;
+    std::swap(data, empty);
     count.clear();
   }
 };
