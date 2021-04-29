@@ -2480,7 +2480,7 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
   // types.
   for (auto& partition : partitions) {
     auto it = std::find_if(partition.begin(), partition.end(), [](HeapType ht) {
-      return !getHeapTypeInfo(ht)->isTemp;
+      return !isTemp(ht);
     });
     if (it == partition.end()) {
       // We do not already know about a globally canonical type for this
