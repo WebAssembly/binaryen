@@ -219,7 +219,6 @@ private:
 
   bool exceededLimit() {
     if (prints >= MaxPrints) {
-      os << "!";
       return true;
     }
     prints++;
@@ -1519,7 +1518,7 @@ bool TypeBounder::lub(const Rtt& a, const Rtt& b, Rtt& out) {
 template<typename T, typename F>
 std::ostream& TypePrinter::printChild(T curr, F printer) {
   if (exceededLimit()) {
-    return os;
+    return os << "..!";
   }
   auto it = depths.find(curr.getID());
   if (it != depths.end()) {
