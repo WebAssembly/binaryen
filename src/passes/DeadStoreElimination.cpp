@@ -14,6 +14,16 @@
  * limitations under the License.
  */
 
+/*
+TODO
+
+LocalGraph only on certain types. For dead store elimination on memory, just i32 (pointers). for GC, just isRef()
+"Barrier", and avoid pushing a Barrier if there already is one. Turn calls into Barriers during CFG scan for faster work later
+isLoad, isStore, isLoadStorePair, isOther (non-load/store that may interfere, and not a standard thing like indirect call that the outside turns into a Barrier anyhow).
+skip dead store elimination if we care about implict traps?
+ignore after trap mode, to assume nothing happens if we trap (hence a trap does not lead to a possible read later)
+*/
+
 //
 // Analyzes stores and loads of non-local state, and optimizes them in various
 // ways. For example, a store that is never read can be removed as dead.
