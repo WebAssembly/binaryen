@@ -1298,7 +1298,7 @@ Type TypeBounder::getLeastUpperBound(Type a, Type b) {
   }
   if (!isTemp(tempLUB)) {
     // The LUB is already canonical, so we're done.
-    return temp;
+    return tempLUB;
   }
   // `tempLUB` is a temporary type owned by `builder`. Since
   // TypeBuilder::build returns HeapTypes rather than Types, create a new
