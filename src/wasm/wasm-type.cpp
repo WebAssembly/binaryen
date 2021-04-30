@@ -641,7 +641,7 @@ bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
 }
 
 template<typename Info> struct Store {
-  std::mutex mutex;
+  std::recursive_mutex mutex;
 
   // Track unique_ptrs for constructed types to avoid leaks.
   std::vector<std::unique_ptr<Info>> constructedTypes;
@@ -695,7 +695,7 @@ typename Info::type_t Store<Info>::canonicalize(const Info& info) {
   if (info.getCanonical(canonical)) {
     return canonical;
   }
-  std::lock_guard<std::mutex> lock(mutex);
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   auto indexIt = typeIDs.find(std::cref(info));
   if (indexIt != typeIDs.end()) {
     return typename Info::type_t(indexIt->second);
@@ -709,7 +709,7 @@ typename Info::type_t Store<Info>::canonicalize(std::unique_ptr<Info>&& info) {
   if (info->getCanonical(canonical)) {
     return canonical;
   }
-  std::lock_guard<std::mutex> lock(mutex);
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   auto indexIt = typeIDs.find(std::cref(*info));
   if (indexIt != typeIDs.end()) {
     return typename Info::type_t(indexIt->second);
@@ -1449,10 +1449,15 @@ Type TypeBounder::getLeastUpperBound(Type a, Type b) {
   if (!lub(a, b, tempLUB)) {
     return Type::none;
   }
-  // `tempLUB` is a temporary type owned by `builder`. Since TypeBuilder::build
-  // returns HeapTypes rather than Types, create a new HeapType definition meant
-  // only to get `tempLUB` canonicalized in a known location. The use of an
-  // Array is arbitrary; it might as well have been a Struct.
+  if (!isTemp(tempLUB)) {
+    // The LUB is already canonical, so we're done.
+    return tempLUB;
+  }
+  // `tempLUB` is a temporary type owned by `builder`. Since
+  // TypeBuilder::build returns HeapTypes rather than Types, create a new
+  // HeapType definition meant only to get `tempLUB` canonicalized in a known
+  // location. The use of an Array is arbitrary; it might as well have been a
+  // Struct.
   builder.grow(1);
   builder[builder.size() - 1] = Array(Field(tempLUB, Mutable));
   std::vector<HeapType> built = builder.build();
@@ -2543,8 +2548,8 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
     }
     for (auto* child : getChildren(asHeapType(info))) {
       auto partitionIt = partitionIndices.find(*child);
-      if (partitionIt == partitionIndices.end()) {
-        // This child has already been replaced.
+      if (partitionIt == partitionIndices.end() || !isTemp(*child)) {
+        // This child has already been replaced or is already canonical.
         continue;
       }
       *child = results.at(partitionIt->second);
@@ -2668,6 +2673,14 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
   // Canonicalize non-tuple Types (which never directly refer to other Types)
   // before tuple Types to avoid canonicalizing a tuple that still contains
   // non-canonical Types.
+  //
+  // Keep a lock on the global HeapType store as long as it can reach temporary
+  // types to ensure that no other threads observe the temporary types, for
+  // example if another thread concurrently constructs a new HeapType with the
+  // same shape as one being canonicalized here. This cannot happen with Types
+  // because they are hashed in the global store by pointer identity, which has
+  // not yet escaped the builder, rather than shape.
+  std::lock_guard<std::recursive_mutex> lock(globalHeapTypeStore.mutex);
   std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
   for (auto& info : infos) {
     if (!info) {
