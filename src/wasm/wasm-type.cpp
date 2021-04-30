@@ -2506,8 +2506,7 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
     }
     for (auto* child : getChildren(asHeapType(info))) {
       auto partitionIt = partitionIndices.find(*child);
-      if (partitionIt == partitionIndices.end() ||
-          !infos.at(partitionIt->second)) {
+      if (partitionIt == partitionIndices.end() || !isTemp(*child)) {
         // This child has already been replaced or is already canonical.
         continue;
       }
