@@ -1296,10 +1296,15 @@ Type TypeBounder::getLeastUpperBound(Type a, Type b) {
   if (!lub(a, b, tempLUB)) {
     return Type::none;
   }
-  // `tempLUB` is a temporary type owned by `builder`. Since TypeBuilder::build
-  // returns HeapTypes rather than Types, create a new HeapType definition meant
-  // only to get `tempLUB` canonicalized in a known location. The use of an
-  // Array is arbitrary; it might as well have been a Struct.
+  if (!isTemp(tempLUB)) {
+    // The LUB is already canonical, so we're done.
+    return temp;
+  }
+  // `tempLUB` is a temporary type owned by `builder`. Since
+  // TypeBuilder::build returns HeapTypes rather than Types, create a new
+  // HeapType definition meant only to get `tempLUB` canonicalized in a known
+  // location. The use of an Array is arbitrary; it might as well have been a
+  // Struct.
   builder.grow(1);
   builder[builder.size() - 1] = Array(Field(tempLUB, Mutable));
   std::vector<HeapType> built = builder.build();
