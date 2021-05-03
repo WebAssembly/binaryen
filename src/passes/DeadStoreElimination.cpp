@@ -17,8 +17,10 @@
 /*
 TODO
 
-"Barrier", and avoid pushing a Barrier if there already is one. Turn calls into Barriers during CFG scan for faster work later
-isLoad, isStore, isLoadStorePair, isOther (non-load/store that may interfere, and not a standard thing like indirect call that the outside turns into a Barrier anyhow).
+"Barrier", and avoid pushing a Barrier if there already is one. Turn calls into
+Barriers during CFG scan for faster work later isLoad, isStore, isLoadStorePair,
+isOther (non-load/store that may interfere, and not a standard thing like
+indirect call that the outside turns into a Barrier anyhow).
 */
 
 //
@@ -162,10 +164,9 @@ struct DeadStoreCFG
 
   using Self = DeadStoreCFG<LogicType>;
 
-  using BasicBlock =
-    typename CFGWalker<Self,
-                       UnifiedExpressionVisitor<Self>,
-                       BasicBlockInfo>::BasicBlock;
+  using BasicBlock = typename CFGWalker<Self,
+                                        UnifiedExpressionVisitor<Self>,
+                                        BasicBlockInfo>::BasicBlock;
 
   void analyze() {
     // create the CFG by walking the IR
@@ -291,7 +292,7 @@ struct DeadStoreCFG
         // affects global state then we would not have considered the store to
         // be trampled (it could have been read there).
         replacer.replacements[store] =
-            logic.replaceStoreWithDrops(store, builder);
+          logic.replaceStoreWithDrops(store, builder);
       }
       // TODO: When there are loads, we can replace the loads as well (by saving
       //       the value to a local for that global, etc.).

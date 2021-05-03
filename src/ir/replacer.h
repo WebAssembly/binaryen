@@ -23,7 +23,9 @@
 namespace wasm {
 
 // A map of all replacements to perform, and a walk to perform them.
-struct ExpressionReplacer : PostWalker<ExpressionReplacer, UnifiedExpressionVisitor<ExpressionReplacer>> {
+struct ExpressionReplacer
+  : PostWalker<ExpressionReplacer,
+               UnifiedExpressionVisitor<ExpressionReplacer>> {
   std::unordered_map<Expression*, Expression*> replacements;
 
   void visitExpression(Expression* curr) {
