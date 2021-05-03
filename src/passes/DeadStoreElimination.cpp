@@ -17,11 +17,8 @@
 /*
 TODO
 
-LocalGraph only on certain types. For dead store elimination on memory, just i32 (pointers). for GC, just isRef()
 "Barrier", and avoid pushing a Barrier if there already is one. Turn calls into Barriers during CFG scan for faster work later
 isLoad, isStore, isLoadStorePair, isOther (non-load/store that may interfere, and not a standard thing like indirect call that the outside turns into a Barrier anyhow).
-skip dead store elimination if we care about implict traps?
-ignore after trap mode, to assume nothing happens if we trap (hence a trap does not lead to a possible read later)
 */
 
 //
@@ -35,7 +32,12 @@ ignore after trap mode, to assume nothing happens if we trap (hence a trap does 
 //  * Stores to globals (GlobalSet).
 //  * Stores to GC data (StructSet, ArraySet)
 //
-// This pass optimizes all of the above.
+// This pass optimizes all of the above. It does so using a generic framework in
+// order to share as much code as possible between them. This has downsides for
+// globals, in particular, as they could be optimized with an IR that is tailor-
+// made for scanning of global indexes (much as we do in our analyses of locals
+// in other places). However, global operations are also less common than memory
+// and GC operations, so hopefully the tradeoff is reasonable.
 //
 
 #include <cfg/cfg-traversal.h>
@@ -103,6 +105,9 @@ static bool reachesUnknownCode(Expression* curr,
                                const EffectAnalyzer& currEffects) {
   // TODO: ignore throws of an exception that is definitely caught in this
   //       function
+  // TODO: if we add an "ignore after trap mode" (to assume nothing happens
+  //       after a trap) then we could stop assuming any trap can lead to
+  //       access of global data.
   return currEffects.calls || currEffects.throws || currEffects.trap ||
          currEffects.branchesOut;
 }
@@ -582,7 +587,12 @@ struct GCLogic : public ComparingLogic {
 };
 
 // Perform dead store elimination 100% locally, that is, without any whole-
-// program analysis. This is not very powerful, but is useful for testing.
+// program analysis. This is not very powerful, but can catch simple patterns of
+// obviously dead stores, and is useful for testing.
+//
+// This does all the optimizations (globals, memory, GC) in sequence, which is
+// good for cache locality. That is the reason there are not separate passes for
+// each one. TODO: the optimizations can share more things between them
 struct LocalDeadStoreElimination
   : public WalkerPass<PostWalker<LocalDeadStoreElimination>> {
   bool isFunctionParallel() { return true; }
@@ -594,6 +604,8 @@ struct LocalDeadStoreElimination
     DeadStoreCFG<GlobalLogic>(getModule(), func, getPassOptions()).optimize();
 
     // Optimize memory.
+    // TODO: should this run when not ignoring implicit traps? in that case the
+    //       benefits are fairly limited, as any trap is an impassable barrier.
     DeadStoreCFG<MemoryLogic>(getModule(), func, getPassOptions()).optimize();
 
     // Optimize GC heap.
