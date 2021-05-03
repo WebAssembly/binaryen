@@ -304,7 +304,7 @@ struct DeadStoreCFG
       return false;
     }
 
-    replacer.walk(func);
+    replacer.walk(this->func->body);
 
     return true;
   }
