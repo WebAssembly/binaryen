@@ -19,9 +19,6 @@ TODO
 
 "Barrier", and avoid pushing a Barrier if there already is one. Turn calls into
 Barriers during CFG scan for faster work later
-isLoad, isStore, isLoadStorePair,
-isOther (non-load/store that may interfere, and not a standard thing like
-indirect call that the outside turns into a Barrier anyhow).
 */
 
 //
@@ -116,11 +113,87 @@ static bool reachesUnknownCode(Expression* curr,
          currEffects.branchesOut;
 }
 
+// Parent class of all implementations of the logic of identifying stores etc.
+struct Logic {
+  Function* func;
+
+  Logic(Function* func, PassOptions& passOptions, FeatureSet features)
+    : func(func) {}
+
+  // Hooks for subclasses to override.
+  //
+  // Some of these methods receive computed effects, which do not include their
+  // children (as in each basic block we process expressions in a linear order,
+  // and have already seen the children).
+  //
+  // These do not need to handle reaching of code outside of the current
+  // function: a call, return, etc. will be noted as a possible interaction
+  // automatically (as if we reach code outside the function then any
+  // interaction is possible).
+
+  // Returns whether an expression is a relevant store for us to consider.
+  bool isStore(Expression* curr) { WASM_UNREACHABLE("unimp"); };
+
+  // Returns whether an expression is a relevant load for us to consider.
+  bool isLoad(Expression* curr) { WASM_UNREACHABLE("unimp"); };
+
+  // Returns whether the expression is relevant for us to notice in the
+  // analysis. This is something that is not a load or a store (note that we
+  // check if it one of those first, so this does not need rule them out), but
+  // that we need to be aware of. For example, a memory operation like a copy or
+  // a fill is relevant when looking for dead stores to memory, as it can
+  // interfere with them.
+  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
+    WASM_UNREACHABLE("unimp");
+  };
+
+  // Returns whether an expression is a load that corresponds to a store, that
+  // is, that loads the exact data that the store writes.
+  bool isLoadFrom(Expression* curr,
+                  const EffectAnalyzer& currEffects,
+                  Expression* store) {
+    WASM_UNREACHABLE("unimp");
+  };
+
+  // Returns whether an expression isTrample a store completely, overwriting all
+  // the store's written data.
+  // This is only called if isLoadFrom() returns false, as we assume there is no
+  // single instruction that can do both.
+  bool isTrample(Expression* curr,
+                const EffectAnalyzer& currEffects,
+                Expression* store) {
+    WASM_UNREACHABLE("unimp");
+  };
+
+  // Returns whether an expression may interact with store in a way that we
+  // cannot fully analyze, and so we must give up and assume the very worst.
+  // This is only called if isLoadFrom() and isTrample() both return false.
+  bool mayInteract(Expression* curr,
+                   const EffectAnalyzer& currEffects,
+                   Expression* store) {
+    WASM_UNREACHABLE("unimp");
+  };
+
+  // Checks whether a call may interact with a store. This allows whole-program
+  // information to be used, if available. If not, the default behavior here is
+  // to assume it may interact.
+  // Note that this does not need to check for a call_return: it only needs to
+  // reason about the call part, not a possible return (which the calling code
+  // does).
+  bool callMayInteract(Call* call, Expression* store) { return true; }
+
+  // Given a store that is not needed, get drops of its children to replace it
+  // with. This effectively removes the store without removes its children.
+  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
+    WASM_UNREACHABLE("unimp");
+  };
+};
+
 // Core code to generate the relevant CFG, analyze it, and optimize it.
 //
 // This is as generic as possible over what a "store" actually is; all the
 // specific logic of handling globals vs memory vs the GC heap is all left to a
-// to a LogicClass that this is templated on.
+// to a LogicType that this is templated on, which subclasses from Logic.
 template<typename LogicType>
 struct DeadStoreCFG
   : public CFGWalker<DeadStoreCFG<LogicType>,
@@ -309,82 +382,6 @@ struct DeadStoreCFG
 
     return true;
   }
-};
-
-// Parent class of all implementations of the logic of identifying stores etc.
-struct Logic {
-  Function* func;
-
-  Logic(Function* func, PassOptions& passOptions, FeatureSet features)
-    : func(func) {}
-
-  // Hooks for subclasses to override.
-  //
-  // Some of these methods receive computed effects, which do not include their
-  // children (as in each basic block we process expressions in a linear order,
-  // and have already seen the children).
-  //
-  // These do not need to handle reaching of code outside of the current
-  // function: a call, return, etc. will be noted as a possible interaction
-  // automatically (as if we reach code outside the function then any
-  // interaction is possible).
-
-  // Returns whether an expression is a relevant store for us to consider.
-  bool isStore(Expression* curr) { WASM_UNREACHABLE("unimp"); };
-
-  // Returns whether an expression is a relevant load for us to consider.
-  bool isLoad(Expression* curr) { WASM_UNREACHABLE("unimp"); };
-
-  // Returns whether the expression is relevant for us to notice in the
-  // analysis. This is something that is not a load or a store (note that we
-  // check if it one of those first, so this does not need rule them out), but
-  // that we need to be aware of. For example, a memory operation like a copy or
-  // a fill is relevant when looking for dead stores to memory, as it can
-  // interfere with them.
-  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
-    WASM_UNREACHABLE("unimp");
-  };
-
-  // Returns whether an expression is a load that corresponds to a store, that
-  // is, that loads the exact data that the store writes.
-  bool isLoadFrom(Expression* curr,
-                  const EffectAnalyzer& currEffects,
-                  Expression* store) {
-    WASM_UNREACHABLE("unimp");
-  };
-
-  // Returns whether an expression isTrample a store completely, overwriting all
-  // the store's written data.
-  // This is only called if isLoadFrom() returns false, as we assume there is no
-  // single instruction that can do both.
-  bool isTrample(Expression* curr,
-                const EffectAnalyzer& currEffects,
-                Expression* store) {
-    WASM_UNREACHABLE("unimp");
-  };
-
-  // Returns whether an expression may interact with store in a way that we
-  // cannot fully analyze, and so we must give up and assume the very worst.
-  // This is only called if isLoadFrom() and isTrample() both return false.
-  bool mayInteract(Expression* curr,
-                   const EffectAnalyzer& currEffects,
-                   Expression* store) {
-    WASM_UNREACHABLE("unimp");
-  };
-
-  // Checks whether a call may interact with a store. This allows whole-program
-  // information to be used, if available. If not, the default behavior here is
-  // to assume it may interact.
-  // Note that this does not need to check for a call_return: it only needs to
-  // reason about the call part, not a possible return (which the calling code
-  // does).
-  bool callMayInteract(Call* call, Expression* store) { return true; }
-
-  // Given a store that is not needed, get drops of its children to replace it
-  // with. This effectively removes the store without removes its children.
-  Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
-    WASM_UNREACHABLE("unimp");
-  };
 };
 
 // A logic that uses a local graph, as it needs to compare pointers.
