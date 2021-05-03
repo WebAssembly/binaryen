@@ -44,6 +44,7 @@ isLoad, isStore, isLoadStorePair, isOther (non-load/store that may interfere, an
 #include <ir/effects.h>
 #include <ir/local-graph.h>
 #include <ir/properties.h>
+#include <ir/replacer.h>
 #include <pass.h>
 #include <support/unique_deferring_queue.h>
 #include <wasm-builder.h>
@@ -135,16 +136,6 @@ struct DeadStoreCFG
 
   ~DeadStoreCFG() {}
 
-  // Map stores to the pointers to them, so that we can replace them. Note that
-  // this assumes a pointer to a store is not on another store, as then we would
-  // get invalidated; that can happen with locals,
-  //  (local.tee $x
-  //   (local.tee $y ..))
-  // but it cannot happen with the stores we handle in this pass, as there is
-  // no store that is a direct child of another store.
-  // FIXME: when we replace loads as well, this will need to be generalized.
-  std::unordered_map<Expression*, Expression**> storeLocations;
-
   void visitExpression(Expression* curr) {
     if (!this->currBasicBlock) {
       return;
@@ -157,9 +148,6 @@ struct DeadStoreCFG
     if (store || reachesUnknownCode(curr, currEffects) ||
         logic.isAlsoRelevant(curr, currEffects)) {
       this->currBasicBlock->contents.exprs.push_back(curr);
-      if (store) {
-        storeLocations[curr] = this->getCurrentPointer();
-      }
     }
   }
 
@@ -172,9 +160,11 @@ struct DeadStoreCFG
   // else.
   std::unordered_map<Expression*, std::vector<Expression*>> understoodStores;
 
+  using Self = DeadStoreCFG<LogicType>;
+
   using BasicBlock =
-    typename CFGWalker<DeadStoreCFG<LogicType>,
-                       UnifiedExpressionVisitor<DeadStoreCFG<LogicType>>,
+    typename CFGWalker<Self,
+                       UnifiedExpressionVisitor<Self>,
                        BasicBlockInfo>::BasicBlock;
 
   void analyze() {
@@ -283,7 +273,7 @@ struct DeadStoreCFG
 
     Builder builder(*this->getModule());
 
-    bool optimized = false;
+    ExpressionReplacer replacer;
 
     // Optimize the stores that have no unknown interactions.
     for (auto& kv : understoodStores) {
@@ -300,8 +290,8 @@ struct DeadStoreCFG
         // way since if the path between the stores crosses anything that
         // affects global state then we would not have considered the store to
         // be trampled (it could have been read there).
-        *storeLocations[store] = logic.replaceStoreWithDrops(store, builder);
-        optimized = true;
+        replacer.replacements[store] =
+            logic.replaceStoreWithDrops(store, builder);
       }
       // TODO: When there are loads, we can replace the loads as well (by saving
       //       the value to a local for that global, etc.).
@@ -310,7 +300,13 @@ struct DeadStoreCFG
       //       left as dropped, the same as with store inputs.
     }
 
-    return optimized;
+    if (replacer.replacements.empty()) {
+      return false;
+    }
+
+    replacer.walk(func);
+
+    return true;
   }
 };
 
