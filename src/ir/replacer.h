@@ -22,7 +22,19 @@
 
 namespace wasm {
 
-// A map of all replacements to perform, and a walk to perform them.
+// A map of replacements to perform on expressions. After filling the map,
+// simply do a walk(..) and they will be replaced.
+//
+// This is useful for a general replacement of expressions. Some passes can
+// store pointers to expressions and update only those, but then there is the
+// nesting problem,
+//
+//  (foo
+//   (bar
+//    (baz
+//
+// If we replace bar with something then the pointer to baz may change. Doing
+// the replacements in the order of a walk, as is done here, is always safe.
 struct ExpressionReplacer
   : PostWalker<ExpressionReplacer,
                UnifiedExpressionVisitor<ExpressionReplacer>> {
