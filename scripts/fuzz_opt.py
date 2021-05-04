@@ -970,9 +970,6 @@ opt_choices = [
     ["--dae-optimizing"],
     ["--dce"],
     ["--directize"],
-    ["--ldse"],
-    ["--ldse"],
-    ["--ldse"],
     ["--flatten", "--dfo"],
     ["--duplicate-function-elimination"],
     ["--flatten"],
@@ -981,6 +978,7 @@ opt_choices = [
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
     ["--generate-stack-ir"],
+    ["--ldse"],
     ["--licm"],
     ["--memory-packing"],
     ["--merge-blocks"],
@@ -1052,11 +1050,6 @@ def randomize_opt_flags():
     # possibly converge. don't do this very often as it can be slow.
     if random.random() < 0.05:
         ret += ['--converge']
-    if random.random() < 0.5 and "--ldse" not in ret:
-      if random.random() < 0.5:
-        ret = ["--ldse"] + ret
-      else:
-        ret += ["--ldse"]
     assert ret.count('--flatten') <= 1
     return ret
 
