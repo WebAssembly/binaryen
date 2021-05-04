@@ -99,7 +99,13 @@ struct Logic {
   Logic(Function* func, PassOptions& passOptions, FeatureSet features)
     : func(func) {}
 
+  //============================================================================
   // Hooks for subclasses to override.
+  //============================================================================
+
+  //
+  // Hooks to identify relevant things to include in the analysis.
+  //
 
   // Returns whether an expression is a relevant store for us to consider.
   bool isStore(Expression* curr) { WASM_UNREACHABLE("unimp"); };
@@ -135,6 +141,10 @@ struct Logic {
     WASM_UNREACHABLE("unimp");
   }
 
+  //
+  // Hooks that run during the analysis
+  //
+
   // Returns whether an expression is a load that corresponds to a store, that
   // is, that loads the exact data that the store writes.
   bool isLoadFrom(Expression* curr,
@@ -164,6 +174,10 @@ struct Logic {
                         Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
+
+  //
+  // Hooks used when applying optimizations after the analysis.
+  //
 
   // Given a store that is not needed, get drops of its children to replace it
   // with. This effectively removes the store without removes its children.
