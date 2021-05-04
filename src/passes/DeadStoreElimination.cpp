@@ -16,7 +16,8 @@
 
 //
 // Analyzes stores and loads of non-local state, and optimizes them in various
-// ways. For example, a store that is never read can be removed as dead.
+// ways. For example, a store that is never read, because the global state will
+// be trampled anyhow, can be removed as dead.
 //
 // "Store" is used generically here to mean a write to a non-local location,
 // which includes:
@@ -31,6 +32,28 @@
 // made for scanning of global indexes (much as we do in our analyses of locals
 // in other places). However, global operations are also less common than memory
 // and GC operations, so hopefully the tradeoff is reasonable.
+//
+// The generic framework here can handle both "statically" connected loads and
+// stores - for example, a load of a global of index N, after a store to that
+// index - and "dynamically" connected loads and stores - for example, a load of
+// a GC struct field N from a pointer P, after a store to that same pointer and
+// field. "Dynamic" here is used in the sense that we don't have a simple static
+// indexing of all the things we care about, sometimes called "lanes" in other
+// implementations. Instead we need to care about pointer identity, aliasing,
+// etc., which means we need to "dynamically" compare loads and stores and not
+// just a "lane" index computed for them. Note that in theory an index could
+// still be computed for such things, but probably at the cost of greater
+// complexity; if speed becomes an issue, then a refactoring in that direction
+// may be necessary. Such a refactoring might have downsides, however: While
+// having a single index for each operation is efficient, we would also need a
+// a way to represent "wildcards" - things that affect multiple indexes. For
+// example, an indirect call must be assumed to affect anything. But more
+// complex cases include a GC store of a certain type, which we can infer may
+// affect anything with a relevant subtype (but others cannot alias). To handle
+// that, we would need to store a set of indexes, already losing much of the
+// benefit of the indexed approach. Instead, the current code keeps things very
+// simple by just asking "may these two things interact", in which we can just
+// check the subtyping, etc.
 //
 
 #include <cfg/cfg-traversal.h>
@@ -47,18 +70,13 @@ namespace wasm {
 
 namespace {
 
-// Information in a basic block.
-struct BasicBlockInfo {
-  // The list of relevant expressions, that are either stores or things that
-  // interact with stores.
-  std::vector<Expression*> exprs;
-};
-
 // A variation of LocalGraph that can also compare expressions to check for
 // their equivalence. Basic LocalGraph just looks at locals, while this class
 // goes further and looks at the structure of the expression, taking into
 // account fallthrough values and other factors, in order to handle common
-// cases of obviously-equivalent things.
+// cases of obviously-equivalent things. To achieve that, it needs to know the
+// pass options and features used, which we avoid adding to the basic
+// LocalGraph.
 struct ComparingLocalGraph : public LocalGraph {
   PassOptions& passOptions;
   FeatureSet features;
@@ -93,6 +111,8 @@ struct ComparingLocalGraph : public LocalGraph {
 };
 
 // Parent class of all implementations of the logic of identifying stores etc.
+// One implementation of Logic can handle globals, another memory, and another
+// GC, etc., implementing the various hooks appropriately.
 struct Logic {
   Function* func;
 
@@ -100,17 +120,13 @@ struct Logic {
     : func(func) {}
 
   //============================================================================
-  // Hooks for subclasses to override.
+  // Hooks to identify relevant things to include in the analysis.
   //============================================================================
 
-  //
-  // Hooks to identify relevant things to include in the analysis.
-  //
-
-  // Returns whether an expression is a relevant store for us to consider.
+  // Returns whether an expression is a store.
   bool isStore(Expression* curr) { WASM_UNREACHABLE("unimp"); };
 
-  // Returns whether an expression is a relevant load for us to consider.
+  // Returns whether an expression is a load.
   bool isLoad(Expression* curr) { WASM_UNREACHABLE("unimp"); };
 
   // Returns whether the expression is a barrier to our analysis: something that
@@ -126,7 +142,8 @@ struct Logic {
     //       function
     // TODO: if we add an "ignore after trap mode" (to assume nothing happens
     //       after a trap) then we could stop assuming any trap can lead to
-    //       access of global data.
+    //       access of global data, likely greatly reducing the numer of
+    //       barriers.
     return currEffects.calls || currEffects.throws || currEffects.trap ||
            currEffects.branchesOut;
   };
@@ -134,16 +151,16 @@ struct Logic {
   // Returns whether an expression may interact with loads and stores in
   // interesting ways. This is only called if isStore(), isLoad(), and
   // isBarrier() all return false; that is, if we cannot identify the expression
-  // as one of those simple categories, this allows us to still care about in
+  // as one of those simple categories, this allows us to still care about it in
   // our analysis.
   bool mayInteract(Expression* curr,
                       const ShallowEffectAnalyzer& currEffects) {
     WASM_UNREACHABLE("unimp");
   }
 
-  //
+  //============================================================================
   // Hooks that run during the analysis
-  //
+  //============================================================================
 
   // Returns whether an expression is a load that corresponds to a store, that
   // is, that loads the exact data that the store writes.
@@ -153,8 +170,9 @@ struct Logic {
     WASM_UNREACHABLE("unimp");
   };
 
-  // Returns whether an expression isTrample a store completely, overwriting all
+  // Returns whether an expression tramples a store completely, overwriting all
   // the store's written data.
+  //
   // This is only called if isLoadFrom() returns false, as we assume there is no
   // single instruction that can do both.
   bool isTrample(Expression* curr,
@@ -168,16 +186,17 @@ struct Logic {
   // This is only called if isLoadFrom() and isTrample() both return false.
   //
   // This is similar to mayInteract(), but considers a specific interaction with
-  // another particular expression.
+  // another particular expression. mayInteract() leads to it being included in
+  // the analysis, during which mayInteractWith() will be called.
   bool mayInteractWith(Expression* curr,
                        const ShallowEffectAnalyzer& currEffects,
                         Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
 
-  //
+  //============================================================================
   // Hooks used when applying optimizations after the analysis.
-  //
+  //============================================================================
 
   // Given a store that is not needed, get drops of its children to replace it
   // with. This effectively removes the store without removes its children.
@@ -187,7 +206,15 @@ struct Logic {
 };
 
 // Represent all barriers in a simple way.
-static Expression* const barrier = nullptr;
+static Nop nop;
+static Expression* const barrier = &nop;
+
+// Information in a basic block in the main analysis. All we use is a simple
+// list of relevant expressions (stores, loads, and things that interact with
+// them).
+struct BasicBlockInfo {
+  std::vector<Expression*> exprs;
+};
 
 // Core code to generate the relevant CFG, analyze it, and optimize it.
 //
@@ -259,18 +286,14 @@ struct DeadStoreCFG
     //
     // TODO: Optimize. This is a pretty naive way to flow the values, but it
     //       should be reasonable assuming most stores are quickly seen as
-    //       having possible interactions (e.g., the first time we see a call)
-    //       and so most flows are halted very quickly. A much faster lane-based
-    //       flow is possible for some things like globals, but that would not
-    //       work for things like memory and GC which do not have simple "lanes"
-    //       as they have a pointer input as well and not just an absolute
-    //       location that we can interprete as a "lane".
+    //       having possible interactions (e.g., when we encounte a barrier),
+    //       and so most flows are halted very quickly.
 
     for (auto& block : this->basicBlocks) {
       for (size_t i = 0; i < block->contents.exprs.size(); i++) {
         auto* store = block->contents.exprs[i];
 
-        if (store == barrier || !logic.isStore(store)) {
+        if (!logic.isStore(store)) {
           continue;
         }
 
