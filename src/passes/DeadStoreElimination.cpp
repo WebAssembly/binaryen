@@ -408,6 +408,8 @@ struct DeadStoreCFG
 };
 
 // A logic that uses a local graph, as it needs to compare pointers.
+// TODO: run the LocalGraph only on relevant locals (only i32s can be pointers
+//       for loads and stores; only references can be pointers for GC)
 struct ComparingLogic : public Logic {
   ComparingLocalGraph localGraph;
 
