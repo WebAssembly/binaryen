@@ -153,8 +153,7 @@ struct Logic {
   // isBarrier() all return false; that is, if we cannot identify the expression
   // as one of those simple categories, this allows us to still care about it in
   // our analysis.
-  bool mayInteract(Expression* curr,
-                      const ShallowEffectAnalyzer& currEffects) {
+  bool mayInteract(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
     WASM_UNREACHABLE("unimp");
   }
 
@@ -190,7 +189,7 @@ struct Logic {
   // the analysis, during which mayInteractWith() will be called.
   bool mayInteractWith(Expression* curr,
                        const ShallowEffectAnalyzer& currEffects,
-                        Expression* store) {
+                       Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
 
@@ -426,8 +425,7 @@ struct GlobalLogic : public Logic {
 
   bool isLoad(Expression* curr) { return curr->is<GlobalGet>(); }
 
-  bool mayInteract(Expression* curr,
-                      const ShallowEffectAnalyzer& currEffects) {
+  bool mayInteract(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
     // Globals are easy to statically analyze: there are no interactions we
     // cannot be sure about.
     return false;
@@ -454,8 +452,8 @@ struct GlobalLogic : public Logic {
   }
 
   bool mayInteractWith(Expression* curr,
-                   const ShallowEffectAnalyzer& currEffects,
-                   Expression* store) {
+                       const ShallowEffectAnalyzer& currEffects,
+                       Expression* store) {
     return false;
   }
 
@@ -473,8 +471,7 @@ struct MemoryLogic : public ComparingLogic {
 
   bool isLoad(Expression* curr) { return curr->is<Load>(); }
 
-  bool mayInteract(Expression* curr,
-                      const ShallowEffectAnalyzer& currEffects) {
+  bool mayInteract(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
@@ -527,8 +524,8 @@ struct MemoryLogic : public ComparingLogic {
   }
 
   bool mayInteractWith(Expression* curr,
-                   const ShallowEffectAnalyzer& currEffects,
-                   Expression* store) {
+                       const ShallowEffectAnalyzer& currEffects,
+                       Expression* store) {
     // Anything we did not identify so far is dangerous.
     return currEffects.readsMemory || currEffects.writesMemory;
   }
@@ -550,8 +547,7 @@ struct GCLogic : public ComparingLogic {
 
   bool isLoad(Expression* curr) { return curr->is<StructGet>(); }
 
-  bool mayInteract(Expression* curr,
-                      const ShallowEffectAnalyzer& currEffects) {
+  bool mayInteract(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
     return currEffects.readsHeap || currEffects.writesHeap;
   }
 
@@ -605,8 +601,8 @@ struct GCLogic : public ComparingLogic {
   }
 
   bool mayInteractWith(Expression* curr,
-                   const ShallowEffectAnalyzer& currEffects,
-                   Expression* store_) {
+                       const ShallowEffectAnalyzer& currEffects,
+                       Expression* store_) {
     auto* store = store_->cast<StructSet>();
 
     // We already checked isLoadFrom and isTrample and it was neither of those,
