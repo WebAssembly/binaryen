@@ -107,13 +107,6 @@ struct Logic {
   // Returns whether an expression is a relevant load for us to consider.
   bool isLoad(Expression* curr) { WASM_UNREACHABLE("unimp"); };
 
-  // Returns whether an expression may interact with loads and stores in
-  // interesting ways
-  bool mayInteract(Expression* curr,
-                      const ShallowEffectAnalyzer& currEffects) {
-    WASM_UNREACHABLE("unimp");
-  }
-
   // Returns whether the expression is a barrier to our analysis: something that
   // we should stop when we see it, because it could do things that we cannot
   // analyze. A barrier will definitely pose a problem for us, as opposed to
@@ -131,6 +124,16 @@ struct Logic {
     return currEffects.calls || currEffects.throws || currEffects.trap ||
            currEffects.branchesOut;
   };
+
+  // Returns whether an expression may interact with loads and stores in
+  // interesting ways. This is only called if isStore(), isLoad(), and
+  // isBarrier() all return false; that is, if we cannot identify the expression
+  // as one of those simple categories, this allows us to still care about in
+  // our analysis.
+  bool mayInteract(Expression* curr,
+                      const ShallowEffectAnalyzer& currEffects) {
+    WASM_UNREACHABLE("unimp");
+  }
 
   // Returns whether an expression is a load that corresponds to a store, that
   // is, that loads the exact data that the store writes.
@@ -205,8 +208,7 @@ struct DeadStoreCFG
     auto& exprs = this->currBasicBlock->contents.exprs;
 
     // Add all relevant things to the list of exprs for the current basic block.
-    if (logic.isStore(curr) || logic.isLoad(curr) ||
-        logic.mayInteract(curr, currEffects)) {
+    if (logic.isStore(curr) || logic.isLoad(curr)) {
       exprs.push_back(curr);
     } else if (logic.isBarrier(curr, currEffects)) {
       // Barriers can be very common, so as a minor optimization avoid having
@@ -214,6 +216,8 @@ struct DeadStoreCFG
       if (exprs.empty() || exprs.back() != barrier) {
         exprs.push_back(barrier);
       }
+    } else if (logic.mayInteract(curr, currEffects)) {
+      exprs.push_back(curr);
     }
   }
 
