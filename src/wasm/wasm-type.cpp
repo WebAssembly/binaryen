@@ -276,6 +276,132 @@ struct FiniteShapeEquator {
   bool eq(const Rtt& a, const Rtt& b);
 };
 
+// Generic utility for traversing type graphs. The inserted roots must live as
+// long as the Walker because they are referenced by address. This base class
+// only has logic for traversing type graphs; figuring out when to stop
+// traversing the graph and doing useful work during the traversal is left to
+// subclasses.
+template<typename Self> struct TypeGraphWalkerBase {
+  void walkRoot(Type* type);
+  void walkRoot(HeapType* ht);
+
+  // Override these in subclasses to do useful work.
+  void preVisitType(Type* type) {}
+  void preVisitHeapType(HeapType* ht) {}
+  void postVisitType(Type* type) {}
+  void postVisitHeapType(HeapType* ht) {}
+
+  // This base walker does not know when to stop scanning, so at least one of
+  // these needs to be overridden with a method that calls the base scanning
+  // method only if some end condition isn't met.
+  void scanType(Type* type);
+  void scanHeapType(HeapType* ht);
+
+private:
+  struct Task {
+    enum Kind {
+      PreType,
+      PreHeapType,
+      ScanType,
+      ScanHeapType,
+      PostType,
+      PostHeapType,
+    } kind;
+    union {
+      Type* type;
+      HeapType* heapType;
+    };
+    static Task preVisit(Type* type) { return Task(type, PreType); }
+    static Task preVisit(HeapType* ht) { return Task(ht, PreHeapType); }
+    static Task scan(Type* type) { return Task(type, ScanType); }
+    static Task scan(HeapType* ht) { return Task(ht, ScanHeapType); }
+    static Task postVisit(Type* type) { return Task(type, PostType); }
+    static Task postVisit(HeapType* ht) { return Task(ht, PostHeapType); }
+
+  private:
+    Task(Type* type, Kind kind) : kind(kind), type(type) {}
+    Task(HeapType* ht, Kind kind) : kind(kind), heapType(ht) {}
+  };
+
+  void doWalk();
+
+  std::vector<Task> taskList;
+  void push(Type* type);
+  void push(HeapType* type);
+
+  Self& self() { return *static_cast<Self*>(this); }
+};
+
+// A type graph walker base class that still does no useful work, but at least
+// knows to scan each HeapType only once.
+template<typename Self> struct HeapTypeGraphWalker : TypeGraphWalkerBase<Self> {
+  // Override this.
+  void noteHeapType(HeapType ht) {}
+
+  void scanHeapType(HeapType* ht) {
+    if (scanned.insert(*ht).second) {
+      static_cast<Self*>(this)->noteHeapType(*ht);
+      TypeGraphWalkerBase<Self>::scanHeapType(ht);
+    }
+  }
+
+private:
+  std::unordered_set<HeapType> scanned;
+};
+
+// A type graph walker base class that still does no useful work, but at least
+// knows to scan each HeapType and Type only once.
+template<typename Self> struct TypeGraphWalker : TypeGraphWalkerBase<Self> {
+  // Override these.
+  void noteType(Type type) {}
+  void noteHeapType(HeapType ht) {}
+
+  void scanType(Type* type) {
+    if (scannedTypes.insert(*type).second) {
+      static_cast<Self*>(this)->noteType(*type);
+      TypeGraphWalkerBase<Self>::scanType(type);
+    }
+  }
+  void scanHeapType(HeapType* ht) {
+    if (scannedHeapTypes.insert(*ht).second) {
+      static_cast<Self*>(this)->noteHeapType(*ht);
+      TypeGraphWalkerBase<Self>::scanHeapType(ht);
+    }
+  }
+
+private:
+  std::unordered_set<HeapType> scannedHeapTypes;
+  std::unordered_set<Type> scannedTypes;
+};
+
+// A type graph walker that only traverses the direct HeapType children of the
+// root, looking through child Types. What to do with each child is left to
+// subclasses.
+template<typename Self> struct HeapTypeChildWalker : HeapTypeGraphWalker<Self> {
+  // Override this.
+  void noteChild(HeapType* child) {}
+
+  void scanType(Type* type) {
+    isTopLevel = false;
+    HeapTypeGraphWalker<Self>::scanType(type);
+  }
+  void scanHeapType(HeapType* ht) {
+    if (isTopLevel) {
+      HeapTypeGraphWalker<Self>::scanHeapType(ht);
+    } else {
+      static_cast<Self*>(this)->noteChild(ht);
+    }
+  }
+
+private:
+  bool isTopLevel = true;
+};
+
+struct HeapTypeChildCollector : HeapTypeChildWalker<HeapTypeChildCollector> {
+  std::vector<HeapType> children;
+  void noteChild(HeapType* child) { children.push_back(*child); }
+};
+
 } // anonymous namespace
 } // namespace wasm
 
@@ -515,7 +641,7 @@ bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
 }
 
 template<typename Info> struct Store {
-  std::mutex mutex;
+  std::recursive_mutex mutex;
 
   // Track unique_ptrs for constructed types to avoid leaks.
   std::vector<std::unique_ptr<Info>> constructedTypes;
@@ -569,7 +695,7 @@ typename Info::type_t Store<Info>::canonicalize(const Info& info) {
   if (info.getCanonical(canonical)) {
     return canonical;
   }
-  std::lock_guard<std::mutex> lock(mutex);
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   auto indexIt = typeIDs.find(std::cref(info));
   if (indexIt != typeIDs.end()) {
     return typename Info::type_t(indexIt->second);
@@ -583,7 +709,7 @@ typename Info::type_t Store<Info>::canonicalize(std::unique_ptr<Info>&& info) {
   if (info->getCanonical(canonical)) {
     return canonical;
   }
-  std::lock_guard<std::mutex> lock(mutex);
+  std::lock_guard<std::recursive_mutex> lock(mutex);
   auto indexIt = typeIDs.find(std::cref(*info));
   if (indexIt != typeIDs.end()) {
     return typename Info::type_t(indexIt->second);
@@ -878,6 +1004,12 @@ bool Type::isSubType(Type left, Type right) {
   return SubTyper().isSubType(left, right);
 }
 
+std::vector<HeapType> Type::getHeapTypeChildren() {
+  HeapTypeChildCollector collector;
+  collector.walkRoot(this);
+  return collector.children;
+}
+
 bool Type::hasLeastUpperBound(Type a, Type b) {
   return TypeBounder().hasLeastUpperBound(a, b);
 }
@@ -1005,6 +1137,12 @@ Array HeapType::getArray() const {
 
 bool HeapType::isSubType(HeapType left, HeapType right) {
   return SubTyper().isSubType(left, right);
+}
+
+std::vector<HeapType> HeapType::getHeapTypeChildren() {
+  HeapTypeChildCollector collector;
+  collector.walkRoot(this);
+  return collector.children;
 }
 
 bool Signature::operator<(const Signature& other) const {
@@ -1311,10 +1449,15 @@ Type TypeBounder::getLeastUpperBound(Type a, Type b) {
   if (!lub(a, b, tempLUB)) {
     return Type::none;
   }
-  // `tempLUB` is a temporary type owned by `builder`. Since TypeBuilder::build
-  // returns HeapTypes rather than Types, create a new HeapType definition meant
-  // only to get `tempLUB` canonicalized in a known location. The use of an
-  // Array is arbitrary; it might as well have been a Struct.
+  if (!isTemp(tempLUB)) {
+    // The LUB is already canonical, so we're done.
+    return tempLUB;
+  }
+  // `tempLUB` is a temporary type owned by `builder`. Since
+  // TypeBuilder::build returns HeapTypes rather than Types, create a new
+  // HeapType definition meant only to get `tempLUB` canonicalized in a known
+  // location. The use of an Array is arbitrary; it might as well have been a
+  // Struct.
   builder.grow(1);
   builder[builder.size() - 1] = Array(Field(tempLUB, Mutable));
   std::vector<HeapType> built = builder.build();
@@ -1939,6 +2082,98 @@ bool FiniteShapeEquator::eq(const Rtt& a, const Rtt& b) {
   return a.depth == b.depth && eq(a.heapType, b.heapType);
 }
 
+template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(Type* type) {
+  assert(taskList.empty());
+  taskList.push_back(Task::scan(type));
+  doWalk();
+}
+
+template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(HeapType* ht) {
+  assert(taskList.empty());
+  taskList.push_back(Task::scan(ht));
+  doWalk();
+}
+
+template<typename Self> void TypeGraphWalkerBase<Self>::doWalk() {
+  while (!taskList.empty()) {
+    auto curr = taskList.back();
+    taskList.pop_back();
+    switch (curr.kind) {
+      case Task::PreType:
+        self().preVisitType(curr.type);
+        break;
+      case Task::PreHeapType:
+        self().preVisitHeapType(curr.heapType);
+        break;
+      case Task::ScanType:
+        taskList.push_back(Task::postVisit(curr.type));
+        self().scanType(curr.type);
+        taskList.push_back(Task::preVisit(curr.type));
+        break;
+      case Task::ScanHeapType:
+        taskList.push_back(Task::postVisit(curr.heapType));
+        self().scanHeapType(curr.heapType);
+        taskList.push_back(Task::preVisit(curr.heapType));
+        break;
+      case Task::PostType:
+        self().postVisitType(curr.type);
+        break;
+      case Task::PostHeapType:
+        self().postVisitHeapType(curr.heapType);
+        break;
+    }
+  }
+}
+
+template<typename Self> void TypeGraphWalkerBase<Self>::scanType(Type* type) {
+  if (type->isBasic()) {
+    return;
+  }
+  auto* info = getTypeInfo(*type);
+  switch (info->kind) {
+    case TypeInfo::TupleKind: {
+      auto& types = info->tuple.types;
+      for (auto it = types.rbegin(); it != types.rend(); ++it) {
+        taskList.push_back(Task::scan(&*it));
+      }
+      break;
+    }
+    case TypeInfo::RefKind: {
+      taskList.push_back(Task::scan(&info->ref.heapType));
+      break;
+    }
+    case TypeInfo::RttKind:
+      taskList.push_back(Task::scan(&info->rtt.heapType));
+      break;
+  }
+}
+
+template<typename Self>
+void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
+  if (ht->isBasic()) {
+    return;
+  }
+  auto* info = getHeapTypeInfo(*ht);
+  switch (info->kind) {
+    case HeapTypeInfo::BasicKind:
+      break;
+    case HeapTypeInfo::SignatureKind:
+      taskList.push_back(Task::scan(&info->signature.results));
+      taskList.push_back(Task::scan(&info->signature.params));
+      break;
+    case HeapTypeInfo::StructKind: {
+      auto& fields = info->struct_.fields;
+      for (auto field = fields.rbegin(); field != fields.rend(); ++field) {
+        taskList.push_back(Task::scan(&field->type));
+      }
+      break;
+    }
+    case HeapTypeInfo::ArrayKind:
+      taskList.push_back(Task::scan(&info->array.element.type));
+      break;
+  }
+}
+
 } // anonymous namespace
 
 struct TypeBuilder::Impl {
@@ -2031,217 +2266,6 @@ Type TypeBuilder::getTempRttType(Rtt rtt) {
 
 namespace {
 
-// Generic utility for traversing type graphs. The inserted roots must live as
-// long as the Walker because they are referenced by address. This base class
-// only has logic for traversing type graphs; figuring out when to stop
-// traversing the graph and doing useful work during the traversal is left to
-// subclasses.
-template<typename Self> struct TypeGraphWalkerBase {
-  void walkRoot(Type* type);
-  void walkRoot(HeapType* ht);
-
-  // Override these in subclasses to do useful work.
-  void preVisitType(Type* type) {}
-  void preVisitHeapType(HeapType* ht) {}
-  void postVisitType(Type* type) {}
-  void postVisitHeapType(HeapType* ht) {}
-
-  // This base walker does not know when to stop scanning, so at least one of
-  // these needs to be overridden with a method that calls the base scanning
-  // method only if some end condition isn't met.
-  void scanHeapType(HeapType* ht);
-  void scanType(Type* type);
-
-private:
-  struct Task {
-    enum Kind {
-      PreType,
-      PreHeapType,
-      ScanType,
-      ScanHeapType,
-      PostType,
-      PostHeapType,
-    } kind;
-    union {
-      Type* type;
-      HeapType* heapType;
-    };
-    static Task preVisit(Type* type) { return Task(type, PreType); }
-    static Task preVisit(HeapType* ht) { return Task(ht, PreHeapType); }
-    static Task scan(Type* type) { return Task(type, ScanType); }
-    static Task scan(HeapType* ht) { return Task(ht, ScanHeapType); }
-    static Task postVisit(Type* type) { return Task(type, PostType); }
-    static Task postVisit(HeapType* ht) { return Task(ht, PostHeapType); }
-
-  private:
-    Task(Type* type, Kind kind) : kind(kind), type(type) {}
-    Task(HeapType* ht, Kind kind) : kind(kind), heapType(ht) {}
-  };
-
-  void doWalk();
-
-  std::vector<Task> taskList;
-  void push(Type* type);
-  void push(HeapType* type);
-
-  Self& self() { return *static_cast<Self*>(this); }
-};
-
-template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(Type* type) {
-  assert(taskList.empty());
-  taskList.push_back(Task::scan(type));
-  doWalk();
-}
-
-template<typename Self> void TypeGraphWalkerBase<Self>::walkRoot(HeapType* ht) {
-  assert(taskList.empty());
-  taskList.push_back(Task::scan(ht));
-  doWalk();
-}
-
-template<typename Self> void TypeGraphWalkerBase<Self>::doWalk() {
-  while (!taskList.empty()) {
-    auto curr = taskList.back();
-    taskList.pop_back();
-    switch (curr.kind) {
-      case Task::PreType:
-        self().preVisitType(curr.type);
-        break;
-      case Task::PreHeapType:
-        self().preVisitHeapType(curr.heapType);
-        break;
-      case Task::ScanType:
-        taskList.push_back(Task::postVisit(curr.type));
-        self().scanType(curr.type);
-        taskList.push_back(Task::preVisit(curr.type));
-        break;
-      case Task::ScanHeapType:
-        taskList.push_back(Task::postVisit(curr.heapType));
-        self().scanHeapType(curr.heapType);
-        taskList.push_back(Task::preVisit(curr.heapType));
-        break;
-      case Task::PostType:
-        self().postVisitType(curr.type);
-        break;
-      case Task::PostHeapType:
-        self().postVisitHeapType(curr.heapType);
-        break;
-    }
-  }
-}
-
-template<typename Self>
-void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
-  if (ht->isBasic()) {
-    return;
-  }
-  auto* info = getHeapTypeInfo(*ht);
-  switch (info->kind) {
-    case HeapTypeInfo::BasicKind:
-      break;
-    case HeapTypeInfo::SignatureKind:
-      taskList.push_back(Task::scan(&info->signature.results));
-      taskList.push_back(Task::scan(&info->signature.params));
-      break;
-    case HeapTypeInfo::StructKind: {
-      auto& fields = info->struct_.fields;
-      for (auto field = fields.rbegin(); field != fields.rend(); ++field) {
-        taskList.push_back(Task::scan(&field->type));
-      }
-      break;
-    }
-    case HeapTypeInfo::ArrayKind:
-      taskList.push_back(Task::scan(&info->array.element.type));
-      break;
-  }
-}
-
-template<typename Self> void TypeGraphWalkerBase<Self>::scanType(Type* type) {
-  if (type->isBasic()) {
-    return;
-  }
-  auto* info = getTypeInfo(*type);
-  switch (info->kind) {
-    case TypeInfo::TupleKind: {
-      auto& types = info->tuple.types;
-      for (auto it = types.rbegin(); it != types.rend(); ++it) {
-        taskList.push_back(Task::scan(&*it));
-      }
-      break;
-    }
-    case TypeInfo::RefKind: {
-      taskList.push_back(Task::scan(&info->ref.heapType));
-      break;
-    }
-    case TypeInfo::RttKind:
-      taskList.push_back(Task::scan(&info->rtt.heapType));
-      break;
-  }
-}
-
-// A type graph walker base class that still does no useful work, but at least
-// knows to scan each HeapType only once.
-template<typename Self> struct HeapTypeGraphWalker : TypeGraphWalkerBase<Self> {
-  // Override this.
-  void noteHeapType(HeapType ht) {}
-
-  void scanHeapType(HeapType* ht) {
-    if (scanned.insert(*ht).second) {
-      static_cast<Self*>(this)->noteHeapType(*ht);
-      TypeGraphWalkerBase<Self>::scanHeapType(ht);
-    }
-  }
-
-private:
-  std::unordered_set<HeapType> scanned;
-};
-
-// A type graph walker base class that still does no useful work, but at least
-// knows to scan each HeapType and Type only once.
-template<typename Self> struct TypeGraphWalker : TypeGraphWalkerBase<Self> {
-  // Override these.
-  void noteType(Type type) {}
-  void noteHeapType(HeapType ht) {}
-
-  void scanType(Type* type) {
-    if (scannedTypes.insert(*type).second) {
-      static_cast<Self*>(this)->noteType(*type);
-      TypeGraphWalkerBase<Self>::scanType(type);
-    }
-  }
-  void scanHeapType(HeapType* ht) {
-    if (scannedHeapTypes.insert(*ht).second) {
-      static_cast<Self*>(this)->noteHeapType(*ht);
-      TypeGraphWalkerBase<Self>::scanHeapType(ht);
-    }
-  }
-
-private:
-  std::unordered_set<HeapType> scannedHeapTypes;
-  std::unordered_set<Type> scannedTypes;
-};
-
-// A type graph walker that notes parent-child relationships between HeapTypes.
-// What to do with each noted relationship is left to subclasses.
-template<typename Self> struct HeapTypePathWalker : HeapTypeGraphWalker<Self> {
-  // Override this.
-  void noteChild(HeapType parent, HeapType* child) {}
-
-  void preVisitHeapType(HeapType* ht) {
-    if (!path.empty()) {
-      static_cast<Self*>(this)->noteChild(path.back(), ht);
-    }
-    path.push_back(*ht);
-  }
-  void postVisitHeapType(HeapType* ht) {
-    assert(!path.empty() && path.back() == *ht);
-    path.pop_back();
-  }
-
-private:
-  std::vector<HeapType> path;
-};
-
 // A wrapper around a HeapType that provides equality and hashing based only on
 // its top-level shape, up to but not including its closest HeapType
 // descendants. This is the shape that determines the most fine-grained
@@ -2314,8 +2338,8 @@ private:
   void initializePartitions();
   void translatePartitionsToTypes();
 
-  // Return the non-basic HeapType children of `ht` (including BasicKind
-  // children).
+  // Return pointers to the non-basic HeapType children of `ht`, including
+  // BasicKind children.
   std::vector<HeapType*> getChildren(HeapType ht);
   const TypeSet& getPredsOf(HeapType type, size_t symbol);
   TypeSet getIntersection(const TypeSet& a, const TypeSet& b);
@@ -2524,8 +2548,8 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
     }
     for (auto* child : getChildren(asHeapType(info))) {
       auto partitionIt = partitionIndices.find(*child);
-      if (partitionIt == partitionIndices.end()) {
-        // This child has already been replaced.
+      if (partitionIt == partitionIndices.end() || !isTemp(*child)) {
+        // This child has already been replaced or is already canonical.
         continue;
       }
       *child = results.at(partitionIt->second);
@@ -2542,24 +2566,16 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
 }
 
 std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType ht) {
-  struct Walker : HeapTypePathWalker<Walker> {
+  struct Collector : HeapTypeChildWalker<Collector> {
     std::vector<HeapType*> children;
-    bool topLevel = true;
-    void noteChild(HeapType, HeapType* child) {
+    void noteChild(HeapType* child) {
       if (!child->isBasic()) {
         children.push_back(child);
       }
     }
-    void scanHeapType(HeapType* ht) {
-      if (topLevel) {
-        HeapTypePathWalker<Walker>::scanHeapType(ht);
-        topLevel = false;
-      }
-    }
-  };
-  Walker walker;
-  walker.walkRoot(&ht);
-  return walker.children;
+  } collector;
+  collector.walkRoot(&ht);
+  return collector.children;
 }
 
 const std::unordered_set<HeapType>&
@@ -2657,6 +2673,14 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
   // Canonicalize non-tuple Types (which never directly refer to other Types)
   // before tuple Types to avoid canonicalizing a tuple that still contains
   // non-canonical Types.
+  //
+  // Keep a lock on the global HeapType store as long as it can reach temporary
+  // types to ensure that no other threads observe the temporary types, for
+  // example if another thread concurrently constructs a new HeapType with the
+  // same shape as one being canonicalized here. This cannot happen with Types
+  // because they are hashed in the global store by pointer identity, which has
+  // not yet escaped the builder, rather than shape.
+  std::lock_guard<std::recursive_mutex> lock(globalHeapTypeStore.mutex);
   std::unordered_map<HeapType, HeapType> canonicalHeapTypes;
   for (auto& info : infos) {
     if (!info) {
