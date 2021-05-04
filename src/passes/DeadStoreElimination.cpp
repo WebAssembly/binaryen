@@ -301,8 +301,8 @@ struct DeadStoreCFG
         // until we see a problem.
         understoodStores[store];
 
-        // Flow this store forward through basic blocks, looking for what it
-        // affects and interacts with.
+        // Flow this store forward through basic blocks, looking for
+        // interactions.
         UniqueNonrepeatingDeferredQueue<BasicBlock*> work;
 
         // When we find something we cannot optimize, stop flowing and mark the
@@ -313,7 +313,7 @@ struct DeadStoreCFG
         };
 
         // Scan through a block, starting from a certain position, looking for
-        // loads, isTrample, and other interactions with our store.
+        // interactions.
         auto scanBlock = [&](BasicBlock* block, size_t from) {
           for (size_t i = from; i < block->contents.exprs.size(); i++) {
             auto* curr = block->contents.exprs[i];
@@ -333,8 +333,7 @@ struct DeadStoreCFG
               // anything it can reach, as this store has been trampled.
               return;
             } else if (logic.mayInteractWith(curr, currEffects, store)) {
-              // Stop: we cannot fully analyze the uses of this store as there
-              // are interactions we cannot see.
+              // Stop: we cannot fully analyze the uses of this store.
               halt();
               return;
             }
@@ -352,7 +351,7 @@ struct DeadStoreCFG
           }
         };
 
-        // First, start in the current location in the block, right after the
+        // Start the flow in the current location in the block, right after the
         // store itself.
         scanBlock(block.get(), i + 1);
 
@@ -384,10 +383,11 @@ struct DeadStoreCFG
         // Note that this is valid even if we care about implicit traps, such as
         // a trap from a store that is out of bounds. We are removing one store,
         // but it was trampled later, which means that a trap will still occur
-        // at that time; furthermore, we do not delay the trap in a noticeable
-        // way since if the path between the stores crosses anything that
-        // affects global state then we would not have considered the store to
-        // be trampled (it could have been read there).
+        // at that time, if the store is out of bounds; furthermore, we do not
+        // delay the trap in a noticeable way since if the path between the
+        // stores crosses anything that affects global state then we would not
+        // have considered the store to be trampled (it could have been
+        // interacted with, which would have stopped the analysis).
         replacer.replacements[store] =
           logic.replaceStoreWithDrops(store, builder);
       }
@@ -428,6 +428,8 @@ struct GlobalLogic : public Logic {
 
   bool mayInteract(Expression* curr,
                       const ShallowEffectAnalyzer& currEffects) {
+    // Globals are easy to statically analyze: there are no interactions we
+    // cannot be sure about.
     return false;
   }
 
@@ -454,7 +456,6 @@ struct GlobalLogic : public Logic {
   bool mayInteractWith(Expression* curr,
                    const ShallowEffectAnalyzer& currEffects,
                    Expression* store) {
-    // We have already handled everything in isLoadFrom() and isTrample().
     return false;
   }
 
@@ -485,15 +486,17 @@ struct MemoryLogic : public ComparingLogic {
     }
     if (auto* load = curr->dynCast<Load>()) {
       auto* store = store_->cast<Store>();
+
       // Atomic stores are dangerous, since they have additional trapping
       // behavior - they trap on unaligned addresses. For simplicity, only
       // consider the case where atomicity is identical.
-      // TODO: support ignoreImplicitTraps
+      // TODO: use ignoreImplicitTraps
       if (store->isAtomic != load->isAtomic) {
         return false;
       }
-      // TODO: For now, only handle the obvious case where the
-      // operations are identical in size and offset.
+
+      // TODO: For now, only handle the obvious case where the operations are
+      //       identical in size and offset.
       return load->bytes == store->bytes &&
              load->bytes == load->type.getByteSize() &&
              load->offset == store->offset &&
@@ -511,9 +514,11 @@ struct MemoryLogic : public ComparingLogic {
       if (store->isAtomic != otherStore->isAtomic) {
         return false;
       }
-      // TODO: compare in detail. For now, handle the obvious case where the
-      // stores are identical in size, offset, etc., so that identical repeat
-      // stores are handled.
+
+      // TODO: Compare in detail. For now, handle the obvious case where the
+      //       stores are identical in size, offset, etc., so that identical
+      //       repeat stores are handled. (An example of a case we do not handle
+      //       yet is a store of 1 byte that is trampled by a store of 2 bytes.)
       return otherStore->bytes == store->bytes &&
              otherStore->offset == store->offset &&
              localGraph.equivalent(otherStore->ptr, store->ptr);
@@ -555,6 +560,7 @@ struct GCLogic : public ComparingLogic {
                   Expression* store_) {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
+
       // Note that we do not need to check the type: we check that the
       // reference is equivalent, and if it is then the types must be compatible
       // in addition to them pointing to the same memory.
@@ -569,6 +575,7 @@ struct GCLogic : public ComparingLogic {
                  Expression* store_) {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = store_->cast<StructSet>();
+
       // See note in isLoadFrom about typing.
       return localGraph.equivalent(otherStore->ref, store->ref) &&
              otherStore->index == store->index;
@@ -582,6 +589,7 @@ struct GCLogic : public ComparingLogic {
     if (u->index != v->index) {
       return false;
     }
+
     // Even if the index is identical, aliasing still may be impossible if the
     // types are not compatible. To check that, find the least upper bound
     // (which always exists - the empty struct if nothing else), and then see if
@@ -591,6 +599,7 @@ struct GCLogic : public ComparingLogic {
     if (u->index >= lub.getHeapType().getStruct().fields.size()) {
       return false;
     }
+
     // We don't know, so assume they can alias.
     return true;
   }
@@ -599,6 +608,7 @@ struct GCLogic : public ComparingLogic {
                    const ShallowEffectAnalyzer& currEffects,
                    Expression* store_) {
     auto* store = store_->cast<StructSet>();
+
     // We already checked isLoadFrom and isTrample and it was neither of those,
     // so just check if the memory can possibly alias.
     if (auto* otherStore = curr->dynCast<StructSet>()) {
@@ -607,6 +617,7 @@ struct GCLogic : public ComparingLogic {
     if (auto* load = curr->dynCast<StructGet>()) {
       return mayAlias(load, store);
     }
+
     // This is not a load or a store that we recognize; check for generic heap
     // interactions.
     return currEffects.readsHeap || currEffects.writesHeap;
@@ -623,9 +634,10 @@ struct GCLogic : public ComparingLogic {
 // program analysis. This is not very powerful, but can catch simple patterns of
 // obviously dead stores, and is useful for testing.
 //
-// This does all the optimizations (globals, memory, GC) in sequence, which is
-// good for cache locality. That is the reason there are not separate passes for
-// each one. TODO: the optimizations can share more things between them
+// This does all the optimizations (globals, memory, GC) in sequence on each
+// function, which is good for cache locality. That is the reason there are not
+// separate passes for each one.
+// TODO: the optimizations can perhaps share more things between them
 struct LocalDeadStoreElimination
   : public WalkerPass<PostWalker<LocalDeadStoreElimination>> {
   bool isFunctionParallel() { return true; }
@@ -637,8 +649,6 @@ struct LocalDeadStoreElimination
     DeadStoreCFG<GlobalLogic>(getModule(), func, getPassOptions()).optimize();
 
     // Optimize memory.
-    // TODO: should this run when not ignoring implicit traps? in that case the
-    //       benefits are fairly limited, as any trap is an impassable barrier.
     DeadStoreCFG<MemoryLogic>(getModule(), func, getPassOptions()).optimize();
 
     // Optimize GC heap.
