@@ -509,6 +509,7 @@ struct MemoryLogic : public ComparingLogic {
                  Expression* store_) {
     if (auto* otherStore = curr->dynCast<Store>()) {
       auto* store = store_->cast<Store>();
+
       // As in isLoadFrom, atomic stores are dangerous.
       if (store->isAtomic != otherStore->isAtomic) {
         return false;
