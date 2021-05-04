@@ -107,9 +107,18 @@ struct Logic {
   // Returns whether an expression is a relevant load for us to consider.
   bool isLoad(Expression* curr) { WASM_UNREACHABLE("unimp"); };
 
+  // Returns whether an expression may interact with loads and stores in
+  // interesting ways
+  bool mayInteract(Expression* curr,
+                      const ShallowEffectAnalyzer& currEffects) {
+    WASM_UNREACHABLE("unimp");
+  }
+
   // Returns whether the expression is a barrier to our analysis: something that
   // we should stop when we see it, because it could do things that we cannot
-  // analyze.
+  // analyze. A barrier will definitely pose a problem for us, as opposed to
+  // something mayInteract() returns true for - we will check for interactions
+  // later for mayInteract()s, but with barriers we don't need to.
   //
   // The default behavior here considers all calls to be barriers. Subclasses
   // can use whole-program information to do better.
@@ -141,12 +150,15 @@ struct Logic {
     WASM_UNREACHABLE("unimp");
   };
 
-  // Returns whether an expression may interact with store in a way that we
+  // Returns whether an expression may interact with another in a way that we
   // cannot fully analyze, and so we must give up and assume the very worst.
   // This is only called if isLoadFrom() and isTrample() both return false.
-  bool mayInteract(Expression* curr,
-                   const ShallowEffectAnalyzer& currEffects,
-                   Expression* store) {
+  //
+  // This is similar to mayInteract(), but considers a specific interaction with
+  // another particular expression.
+  bool mayInteractWith(Expression* curr,
+                       const ShallowEffectAnalyzer& currEffects,
+                        Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
 
@@ -194,7 +206,7 @@ struct DeadStoreCFG
 
     // Add all relevant things to the list of exprs for the current basic block.
     if (logic.isStore(curr) || logic.isLoad(curr) ||
-        logic.isAlsoRelevant(curr, currEffects)) {
+        logic.mayInteract(curr, currEffects)) {
       exprs.push_back(curr);
     } else if (logic.isBarrier(curr, currEffects)) {
       // Barriers can be very common, so as a minor optimization avoid having
@@ -279,7 +291,7 @@ struct DeadStoreCFG
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
               return;
-            } else if (logic.mayInteract(curr, currEffects, store)) {
+            } else if (logic.mayInteractWith(curr, currEffects, store)) {
               // Stop: we cannot fully analyze the uses of this store as there
               // are interactions we cannot see.
               halt();
@@ -373,7 +385,7 @@ struct GlobalLogic : public Logic {
 
   bool isLoad(Expression* curr) { return curr->is<GlobalGet>(); }
 
-  bool isAlsoRelevant(Expression* curr,
+  bool mayInteract(Expression* curr,
                       const ShallowEffectAnalyzer& currEffects) {
     return false;
   }
@@ -398,7 +410,7 @@ struct GlobalLogic : public Logic {
     return false;
   }
 
-  bool mayInteract(Expression* curr,
+  bool mayInteractWith(Expression* curr,
                    const ShallowEffectAnalyzer& currEffects,
                    Expression* store) {
     // We have already handled everything in isLoadFrom() and isTrample().
@@ -419,7 +431,7 @@ struct MemoryLogic : public ComparingLogic {
 
   bool isLoad(Expression* curr) { return curr->is<Load>(); }
 
-  bool isAlsoRelevant(Expression* curr,
+  bool mayInteract(Expression* curr,
                       const ShallowEffectAnalyzer& currEffects) {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
@@ -468,7 +480,7 @@ struct MemoryLogic : public ComparingLogic {
     return false;
   }
 
-  bool mayInteract(Expression* curr,
+  bool mayInteractWith(Expression* curr,
                    const ShallowEffectAnalyzer& currEffects,
                    Expression* store) {
     // Anything we did not identify so far is dangerous.
@@ -492,7 +504,7 @@ struct GCLogic : public ComparingLogic {
 
   bool isLoad(Expression* curr) { return curr->is<StructGet>(); }
 
-  bool isAlsoRelevant(Expression* curr,
+  bool mayInteract(Expression* curr,
                       const ShallowEffectAnalyzer& currEffects) {
     return currEffects.readsHeap || currEffects.writesHeap;
   }
@@ -542,7 +554,7 @@ struct GCLogic : public ComparingLogic {
     return true;
   }
 
-  bool mayInteract(Expression* curr,
+  bool mayInteractWith(Expression* curr,
                    const ShallowEffectAnalyzer& currEffects,
                    Expression* store_) {
     auto* store = store_->cast<StructSet>();
