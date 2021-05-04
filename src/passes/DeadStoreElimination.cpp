@@ -14,13 +14,6 @@
  * limitations under the License.
  */
 
-/*
-TODO
-
-"Barrier", and avoid pushing a Barrier if there already is one. Turn calls into
-Barriers during CFG scan for faster work later
-*/
-
 //
 // Analyzes stores and loads of non-local state, and optimizes them in various
 // ways. For example, a store that is never read can be removed as dead.
@@ -99,20 +92,6 @@ struct ComparingLocalGraph : public LocalGraph {
   }
 };
 
-// Whether this instruction can reach code we cannot reason about, that is,
-// outside of the current function. Until we use whole-program information,
-// we must assume such code can read and write to all global state.
-static bool reachesUnknownCode(Expression* curr,
-                               const EffectAnalyzer& currEffects) {
-  // TODO: ignore throws of an exception that is definitely caught in this
-  //       function
-  // TODO: if we add an "ignore after trap mode" (to assume nothing happens
-  //       after a trap) then we could stop assuming any trap can lead to
-  //       access of global data.
-  return currEffects.calls || currEffects.throws || currEffects.trap ||
-         currEffects.branchesOut;
-}
-
 // Parent class of all implementations of the logic of identifying stores etc.
 struct Logic {
   Function* func;
@@ -121,15 +100,6 @@ struct Logic {
     : func(func) {}
 
   // Hooks for subclasses to override.
-  //
-  // Some of these methods receive computed effects, which do not include their
-  // children (as in each basic block we process expressions in a linear order,
-  // and have already seen the children).
-  //
-  // These do not need to handle reaching of code outside of the current
-  // function: a call, return, etc. will be noted as a possible interaction
-  // automatically (as if we reach code outside the function then any
-  // interaction is possible).
 
   // Returns whether an expression is a relevant store for us to consider.
   bool isStore(Expression* curr) { WASM_UNREACHABLE("unimp"); };
@@ -137,20 +107,26 @@ struct Logic {
   // Returns whether an expression is a relevant load for us to consider.
   bool isLoad(Expression* curr) { WASM_UNREACHABLE("unimp"); };
 
-  // Returns whether the expression is relevant for us to notice in the
-  // analysis. This is something that is not a load or a store (note that we
-  // check if it one of those first, so this does not need rule them out), but
-  // that we need to be aware of. For example, a memory operation like a copy or
-  // a fill is relevant when looking for dead stores to memory, as it can
-  // interfere with them.
-  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
-    WASM_UNREACHABLE("unimp");
+  // Returns whether the expression is a barrier to our analysis: something that
+  // we should stop when we see it, because it could do things that we cannot
+  // analyze.
+  //
+  // The default behavior here considers all calls to be barriers. Subclasses
+  // can use whole-program information to do better.
+  bool isBarrier(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
+    // TODO: ignore throws of an exception that is definitely caught in this
+    //       function
+    // TODO: if we add an "ignore after trap mode" (to assume nothing happens
+    //       after a trap) then we could stop assuming any trap can lead to
+    //       access of global data.
+    return currEffects.calls || currEffects.throws || currEffects.trap ||
+           currEffects.branchesOut;
   };
 
   // Returns whether an expression is a load that corresponds to a store, that
   // is, that loads the exact data that the store writes.
   bool isLoadFrom(Expression* curr,
-                  const EffectAnalyzer& currEffects,
+                  const ShallowEffectAnalyzer& currEffects,
                   Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
@@ -160,7 +136,7 @@ struct Logic {
   // This is only called if isLoadFrom() returns false, as we assume there is no
   // single instruction that can do both.
   bool isTrample(Expression* curr,
-                const EffectAnalyzer& currEffects,
+                const ShallowEffectAnalyzer& currEffects,
                 Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
@@ -169,18 +145,10 @@ struct Logic {
   // cannot fully analyze, and so we must give up and assume the very worst.
   // This is only called if isLoadFrom() and isTrample() both return false.
   bool mayInteract(Expression* curr,
-                   const EffectAnalyzer& currEffects,
+                   const ShallowEffectAnalyzer& currEffects,
                    Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
-
-  // Checks whether a call may interact with a store. This allows whole-program
-  // information to be used, if available. If not, the default behavior here is
-  // to assume it may interact.
-  // Note that this does not need to check for a call_return: it only needs to
-  // reason about the call part, not a possible return (which the calling code
-  // does).
-  bool callMayInteract(Call* call, Expression* store) { return true; }
 
   // Given a store that is not needed, get drops of its children to replace it
   // with. This effectively removes the store without removes its children.
@@ -188,6 +156,9 @@ struct Logic {
     WASM_UNREACHABLE("unimp");
   };
 };
+
+// Represent all barriers in a simple way.
+static Expression* const barrier = nullptr;
 
 // Core code to generate the relevant CFG, analyze it, and optimize it.
 //
@@ -219,10 +190,18 @@ struct DeadStoreCFG
 
     ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
+    auto& exprs = this->currBasicBlock->contents.exprs;
+
     // Add all relevant things to the list of exprs for the current basic block.
-    if (logic.isStore(curr) || logic.isLoad(curr) || reachesUnknownCode(curr, currEffects) ||
+    if (logic.isStore(curr) || logic.isLoad(curr) ||
         logic.isAlsoRelevant(curr, currEffects)) {
-      this->currBasicBlock->contents.exprs.push_back(curr);
+      exprs.push_back(curr);
+    } else if (logic.isBarrier(curr, currEffects)) {
+      // Barriers can be very common, so as a minor optimization avoid having
+      // consecutive ones; a single barrier will stop us.
+      if (exprs.empty() || exprs.back() != barrier) {
+        exprs.push_back(barrier);
+      }
     }
   }
 
@@ -260,7 +239,8 @@ struct DeadStoreCFG
     for (auto& block : this->basicBlocks) {
       for (size_t i = 0; i < block->contents.exprs.size(); i++) {
         auto* store = block->contents.exprs[i];
-        if (!logic.isStore(store)) {
+
+        if (store == barrier || !logic.isStore(store)) {
           continue;
         }
 
@@ -285,6 +265,11 @@ struct DeadStoreCFG
           for (size_t i = from; i < block->contents.exprs.size(); i++) {
             auto* curr = block->contents.exprs[i];
 
+            if (curr == barrier) {
+              halt();
+              return;
+            }
+
             ShallowEffectAnalyzer currEffects(passOptions, features, curr);
 
             if (logic.isLoadFrom(curr, currEffects, store)) {
@@ -294,25 +279,11 @@ struct DeadStoreCFG
               // We do not need to look any further along this block, or in
               // anything it can reach, as this store has been trampled.
               return;
-            } else if (reachesUnknownCode(curr, currEffects) ||
-                       logic.mayInteract(curr, currEffects, store)) {
-              // To facilitate whole-program analysis, allow the logic to
-              // consider if a direct call can be ignored.
-              auto* call = curr->template dynCast<Call>();
-              // Note that a call_return *cannot* be ignored, as the return part
-              // means it reaches unknown code.
-              if (!call || call->isReturn ||
-                  logic.callMayInteract(call, store)) {
-                // Stop: we cannot fully analyze the uses of this store as
-                // there are interactions we cannot see.
-                // TODO: it may be valuable to still optimize some of the loads
-                //       from a store, even if others cannot be analyzed. We can
-                //       do the store and also a tee, and load from the local in
-                //       the loads we are sure of. Code size tradeoffs are
-                //       unclear, however.
-                halt();
-                return;
-              }
+            } else if (logic.mayInteract(curr, currEffects, store)) {
+              // Stop: we cannot fully analyze the uses of this store as there
+              // are interactions we cannot see.
+              halt();
+              return;
             }
           }
 
@@ -402,12 +373,12 @@ struct GlobalLogic : public Logic {
 
   bool isLoad(Expression* curr) { return curr->is<GlobalGet>(); }
 
-  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
     return false;
   }
 
   bool isLoadFrom(Expression* curr,
-                  const EffectAnalyzer& currEffects,
+                  const ShallowEffectAnalyzer& currEffects,
                   Expression* store_) {
     if (auto* load = curr->dynCast<GlobalGet>()) {
       auto* store = store_->cast<GlobalSet>();
@@ -417,7 +388,7 @@ struct GlobalLogic : public Logic {
   }
 
   bool isTrample(Expression* curr,
-                const EffectAnalyzer& currEffects,
+                const ShallowEffectAnalyzer& currEffects,
                 Expression* store_) {
     if (auto* otherStore = curr->dynCast<GlobalSet>()) {
       auto* store = store_->cast<GlobalSet>();
@@ -427,7 +398,7 @@ struct GlobalLogic : public Logic {
   }
 
   bool mayInteract(Expression* curr,
-                   const EffectAnalyzer& currEffects,
+                   const ShallowEffectAnalyzer& currEffects,
                    Expression* store) {
     // We have already handled everything in isLoadFrom() and isTrample().
     return false;
@@ -447,12 +418,12 @@ struct MemoryLogic : public ComparingLogic {
 
   bool isLoad(Expression* curr) { return curr->is<Load>(); }
 
-  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
   bool isLoadFrom(Expression* curr,
-                  const EffectAnalyzer& currEffects,
+                  const ShallowEffectAnalyzer& currEffects,
                   Expression* store_) {
     if (curr->type == Type::unreachable) {
       return false;
@@ -477,7 +448,7 @@ struct MemoryLogic : public ComparingLogic {
   }
 
   bool isTrample(Expression* curr,
-                const EffectAnalyzer& currEffects,
+                const ShallowEffectAnalyzer& currEffects,
                 Expression* store_) {
     if (auto* otherStore = curr->dynCast<Store>()) {
       auto* store = store_->cast<Store>();
@@ -496,7 +467,7 @@ struct MemoryLogic : public ComparingLogic {
   }
 
   bool mayInteract(Expression* curr,
-                   const EffectAnalyzer& currEffects,
+                   const ShallowEffectAnalyzer& currEffects,
                    Expression* store) {
     // Anything we did not identify so far is dangerous.
     return currEffects.readsMemory || currEffects.writesMemory;
@@ -519,12 +490,12 @@ struct GCLogic : public ComparingLogic {
 
   bool isLoad(Expression* curr) { return curr->is<StructGet>(); }
 
-  bool isAlsoRelevant(Expression* curr, const EffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
     return currEffects.readsHeap || currEffects.writesHeap;
   }
 
   bool isLoadFrom(Expression* curr,
-                  const EffectAnalyzer& currEffects,
+                  const ShallowEffectAnalyzer& currEffects,
                   Expression* store_) {
     if (auto* load = curr->dynCast<StructGet>()) {
       auto* store = store_->cast<StructSet>();
@@ -538,7 +509,7 @@ struct GCLogic : public ComparingLogic {
   }
 
   bool isTrample(Expression* curr,
-                const EffectAnalyzer& currEffects,
+                const ShallowEffectAnalyzer& currEffects,
                 Expression* store_) {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = store_->cast<StructSet>();
@@ -569,7 +540,7 @@ struct GCLogic : public ComparingLogic {
   }
 
   bool mayInteract(Expression* curr,
-                   const EffectAnalyzer& currEffects,
+                   const ShallowEffectAnalyzer& currEffects,
                    Expression* store_) {
     auto* store = store_->cast<StructSet>();
     // We already checked isLoadFrom and isTrample and it was neither of those,
