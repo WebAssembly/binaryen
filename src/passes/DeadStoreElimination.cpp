@@ -136,8 +136,8 @@ struct Logic {
   // This is only called if isLoadFrom() returns false, as we assume there is no
   // single instruction that can do both.
   bool isTrample(Expression* curr,
-                const ShallowEffectAnalyzer& currEffects,
-                Expression* store) {
+                 const ShallowEffectAnalyzer& currEffects,
+                 Expression* store) {
     WASM_UNREACHABLE("unimp");
   };
 
@@ -373,7 +373,8 @@ struct GlobalLogic : public Logic {
 
   bool isLoad(Expression* curr) { return curr->is<GlobalGet>(); }
 
-  bool isAlsoRelevant(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr,
+                      const ShallowEffectAnalyzer& currEffects) {
     return false;
   }
 
@@ -388,8 +389,8 @@ struct GlobalLogic : public Logic {
   }
 
   bool isTrample(Expression* curr,
-                const ShallowEffectAnalyzer& currEffects,
-                Expression* store_) {
+                 const ShallowEffectAnalyzer& currEffects,
+                 Expression* store_) {
     if (auto* otherStore = curr->dynCast<GlobalSet>()) {
       auto* store = store_->cast<GlobalSet>();
       return otherStore->name == store->name;
@@ -418,7 +419,8 @@ struct MemoryLogic : public ComparingLogic {
 
   bool isLoad(Expression* curr) { return curr->is<Load>(); }
 
-  bool isAlsoRelevant(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr,
+                      const ShallowEffectAnalyzer& currEffects) {
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
@@ -448,8 +450,8 @@ struct MemoryLogic : public ComparingLogic {
   }
 
   bool isTrample(Expression* curr,
-                const ShallowEffectAnalyzer& currEffects,
-                Expression* store_) {
+                 const ShallowEffectAnalyzer& currEffects,
+                 Expression* store_) {
     if (auto* otherStore = curr->dynCast<Store>()) {
       auto* store = store_->cast<Store>();
       // As in isLoadFrom, atomic stores are dangerous.
@@ -490,7 +492,8 @@ struct GCLogic : public ComparingLogic {
 
   bool isLoad(Expression* curr) { return curr->is<StructGet>(); }
 
-  bool isAlsoRelevant(Expression* curr, const ShallowEffectAnalyzer& currEffects) {
+  bool isAlsoRelevant(Expression* curr,
+                      const ShallowEffectAnalyzer& currEffects) {
     return currEffects.readsHeap || currEffects.writesHeap;
   }
 
@@ -509,8 +512,8 @@ struct GCLogic : public ComparingLogic {
   }
 
   bool isTrample(Expression* curr,
-                const ShallowEffectAnalyzer& currEffects,
-                Expression* store_) {
+                 const ShallowEffectAnalyzer& currEffects,
+                 Expression* store_) {
     if (auto* otherStore = curr->dynCast<StructSet>()) {
       auto* store = store_->cast<StructSet>();
       // See note in isLoadFrom about typing.
