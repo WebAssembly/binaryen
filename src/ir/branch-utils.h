@@ -88,12 +88,22 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
   });
 }
 
-// Similar to operateOnScopeNameUses, but also passes in the type that is sent
-// if the branch is taken. The type is none if there is no value.
+// Similar to operateOnScopeNameUses, but also passes in the expression that is
+// sent if the branch is taken. nullptr is given if there is no value.
 template<typename T>
-void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
-  operateOnScopeNameUsesAndSentValues(expr, [&](Name& name, Expression* value) {
-    func(name, value ? value->type : Type::none);
+void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value ? br->value : nullptr);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value ? sw->value : nullptr);
+    } else if (auto* br = expr->dynCast<BrOn>()) {
+      func(name, br->ref);
+    } else {
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
+    }
   });
 }
 
