@@ -88,7 +88,7 @@ struct Heap2LocalOptimizer {
   bool canHandleAsLocals(Type type) {
     auto& fields = type.getHeapType().getStruct().fields;
     for (auto field : fields) {
-      if (!TypeUpdating::canHandleAsLocal(field)) {
+      if (!TypeUpdating::canHandleAsLocal(field.type)) {
         return false;
       }
       if (field.isPacked()) {
@@ -114,16 +114,9 @@ struct Heap2LocalOptimizer {
   // If we can do the optimization, then this returns true, and it set up the
   // necessary replacements on the replacer object.
   bool convertToLocals(StructNew* allocation) {
-    auto fail =
-      [&]() {
-        escapes.insert(child);
-        return false;
-      }
-
     // We must track all the sets we are written to so that we can verify
     // exclusivity.
-    std::unordered_set<LocalSet*>
-      sets;
+    std::unordered_set<LocalSet*> sets;
 
     // We must track all the reads and writes from the allocation so that we can
     // fix them up at the end, if the optimization ends up possible.
@@ -154,7 +147,7 @@ struct Heap2LocalOptimizer {
       // this code is that often things like such a redundant select will be
       // removed by other optimizations anyhow.
       if (seen.count(child)) {
-        return fail();
+        return false;
       }
       seen.insert(child);
 
@@ -162,7 +155,7 @@ struct Heap2LocalOptimizer {
 
       // If the parent may let us escape, then we are done.
       if (escapesViaParent(child, parent)) {
-        return fail();
+        return false;
       }
 
       // If the value flows through the parent, we need to look further at
@@ -177,7 +170,7 @@ struct Heap2LocalOptimizer {
         // see that only we are written by the set, and no other value (so the
         // value is exclusive for our use).
         if (!flowsSingleValue(child)) {
-          return fail();
+          return false;
         }
 
         // The second part of exclusivity is to see that any gets reading this
@@ -208,7 +201,7 @@ struct Heap2LocalOptimizer {
     }
 
     if (!getsAreExclusiveToSets(sets)) {
-      return fail();
+      return false;
     }
 
     // We can do it, hurray! All we have left to do is to set up the proper
