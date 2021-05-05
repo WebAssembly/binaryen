@@ -32,9 +32,10 @@
   ;; CHECK:      (func $to-local
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $struct.A))
-  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A

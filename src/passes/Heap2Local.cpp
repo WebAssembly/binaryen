@@ -118,7 +118,8 @@ struct Heap2LocalOptimizer {
   // necessary replacements on the replacer object.
   bool convertToLocals(StructNew* allocation) {
     // We must track all the sets we are written to so that we can verify
-    // exclusivity.
+    // exclusivity. We also want to update them later, if we can do the
+    // optimization.
     std::unordered_set<LocalSet*> sets;
 
     // We must track all the reads and writes from the allocation so that we can
@@ -257,6 +258,13 @@ struct Heap2LocalOptimizer {
         builder.makeSequence(builder.makeDrop(read->ref),
                              builder.makeLocalGet(localIndexes[read->index],
                                                   fields[read->index].type));
+    }
+
+    // We don't need any sets of the reference to any of the locals it
+    // originally was written to.
+    for (auto* set : sets) {
+      replacer.replacements[set] =
+        builder.makeDrop(set->value);
     }
 
     return true;
