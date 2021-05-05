@@ -55,13 +55,13 @@ struct Heap2LocalOptimizer {
 
   bool optimized = false;
 
+  Replacer replacer;
+
   Heap2LocalOptimizer(Function* func, Module* module) : localGraph(func),
       parents(func->body), branchTargets(func->body), allocations(func->body) {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
-
-    Replacer replacer;
 
     for (auto* allocation : allocations.list) {
       // The point of this optimization is to replace heap allocations with
@@ -70,9 +70,7 @@ struct Heap2LocalOptimizer {
         continue;
       }
 
-      if (canConvertToLocals(allocation)) {
-        replacer.replacements[..] = ..
-
+      if (convertToLocals(allocation)) {
         optimized = true;
       }
     }
@@ -106,7 +104,10 @@ struct Heap2LocalOptimizer {
   //    handle the case where a local.get might return our allocation, but might
   //    also get some other value. We also cannot handle a select where one arm
   //    is our allocation and another is something else.
-  bool canConvertToLocals(StructNew* allocation) {
+  //
+  // If we can do the optimization, then this returns true, and it set up the
+  // necessary replacements on the replacer object.
+  bool convertToLocals(StructNew* allocation) {
     auto fail = [&]() {
       escapes.insert(child);
       return false;
@@ -189,6 +190,20 @@ struct Heap2LocalOptimizer {
       return fail();
     }
 
+    // We can do it, hurray! All we have left to do is to set up the proper
+    // replacements.
+    Builder builder(*module);
+    
+    // Replace the allocation itself with assignments to locals.
+
+    // The allocated value itself must still be replaced, and with something of
+    // the exact same non-nullable type. Create a fake value, and depend on
+    // other optimizations to remove it.
+    auto* fakeValue = builder.makeRefAs(RefAsNonNull, builder.makeRefNull(allocation->type)); // TRAPPY
+
+    replacer.replacements[allocation] = builder.makeBlock({
+      fakeValue
+    });
     return true;
   }
 
