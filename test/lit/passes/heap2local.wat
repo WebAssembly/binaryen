@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s -all --heap2local -S -o - | filecheck %s
 
 (module
-  (type $struct.A (struct (field i32)))
+  (type $struct.A (struct (field (mut i32)) (field (mut f64))))
 
   ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (drop
@@ -12,12 +12,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simple
-    ;; Other passes can remove such a simple case of an unneeded allocation, but
-    ;; out analysis should definitely handle something so simple. (We do end up
-    ;; emitting a bunch of extra code here, increasing code size, but other
-    ;; optimizations can remove it.)
+    ;; Other passes can remove such a simple case of an unneeded allocation, and
+    ;; we do not bother with it, as there are struct get/set operations that we
+    ;; can optimize out.
     (drop
-      (struct.new_with_rtt $struct.A
+      (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
       )
     )
@@ -33,11 +32,36 @@
   ;; CHECK-NEXT: )
   (func $to-local
     (local $ref (ref null $struct.A))
-    ;; Other passes cannot remove an allocation that is written to a local, but
-    ;; we can, since it does not escape.
+    ;; While set to a local, this allocation has no get/set operations, so we
+    ;; ignore it.
     (local.set $ref
-      (struct.new_with_rtt $struct.A
+      (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $one-get
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $one-get
+    ;; an allocation followed by an immediate get of a field
+    (drop
+      (struct.get $struct.A 0
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
       )
     )
   )
