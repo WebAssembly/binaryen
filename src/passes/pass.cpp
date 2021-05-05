@@ -148,6 +148,9 @@ void PassRegistry::registerPasses() {
     createGenerateI64DynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
+  // TODO use it
+  registerPass(
+    "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",

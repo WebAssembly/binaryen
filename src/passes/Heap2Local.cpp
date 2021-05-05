@@ -57,8 +57,9 @@ struct Heap2LocalOptimizer {
 
   Replacer replacer;
 
-  Heap2LocalOptimizer(Function* func, Module* module) : localGraph(func),
-      parents(func->body), branchTargets(func->body), allocations(func->body) {
+  Heap2LocalOptimizer(Function* func, Module* module)
+    : localGraph(func), parents(func->body), branchTargets(func->body),
+      allocations(func->body) {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
@@ -112,14 +113,16 @@ struct Heap2LocalOptimizer {
   // If we can do the optimization, then this returns true, and it set up the
   // necessary replacements on the replacer object.
   bool convertToLocals(StructNew* allocation) {
-    auto fail = [&]() {
-      escapes.insert(child);
-      return false;
-    }
+    auto fail =
+      [&]() {
+        escapes.insert(child);
+        return false;
+      }
 
     // We must track all the sets we are written to so that we can verify
     // exclusivity.
-    std::unordered_set<LocalSet*> sets;
+    std::unordered_set<LocalSet*>
+      sets;
 
     // We must track all the reads and writes from the allocation so that we can
     // fix them up at the end, if the optimization ends up possible.
@@ -137,8 +140,8 @@ struct Heap2LocalOptimizer {
     while (!flows.empty()) {
       auto* child = flows.pop();
 
-      // If we've already seen an expression, stop since we cannot optimize things that
-      // overlap in any way (see the notes on exclusivity, above).
+      // If we've already seen an expression, stop since we cannot optimize
+      // things that overlap in any way (see the notes on exclusivity, above).
       //
       // Note that our simple check whether something has already been seen is
       // slightly stricter than we need, for example:
@@ -147,8 +150,8 @@ struct Heap2LocalOptimizer {
       //
       // Both arms are identical. We will reach the select twice, and assume the
       // worst at that point, even though we could allow this. The assumption in
-      // this code is that often things like such a redundant select will be removed
-      // by other optimizations anyhow.
+      // this code is that often things like such a redundant select will be
+      // removed by other optimizations anyhow.
       if (seen.count(child)) {
         return fail();
       }
@@ -227,7 +230,8 @@ struct Heap2LocalOptimizer {
     if (!allocation->isWithDefault()) {
       // Add a tee to save the initial values in the proper locals.
       for (Index i = 0; i < localIndexes.size(); i++) {
-        allocation->operands[i] = builder.makeTee(localIndexes[i], allocation->operands[i], fields[i].type);
+        allocation->operands[i] = builder.makeTee(
+          localIndexes[i], allocation->operands[i], fields[i].type);
       }
     } else {
       // Set the default values, and replace the allocation with a block that
@@ -247,14 +251,12 @@ struct Heap2LocalOptimizer {
     for (auto* write : writes) {
       replacer.replacements[write] = builder.makeSequence(
         builder.makeDrop(write->ref),
-        builder.makeLocalSet(localIndexes[write->index], write->value)
-      );
+        builder.makeLocalSet(localIndexes[write->index], write->value));
     }
     for (auto* read : reads) {
       replacer.replacements[read] = builder.makeSequence(
         builder.makeDrop(read->ref),
-        builder.makeLocalGet(localIndexes[read->index], fields[i].type)
-      );
+        builder.makeLocalGet(localIndexes[read->index], fields[i].type));
     }
 
     return true;
@@ -327,7 +329,8 @@ struct Heap2LocalOptimizer {
   // context we use it, which is to follow the uses of an allocation via flowing
   // out and via locals.
   bool flowsSingleValue(Expression* value) {
-    auto* fallthrough = Properties::getFallthrough(value, getPassOptions(), getModule()->features);
+    auto* fallthrough = Properties::getFallthrough(
+      value, getPassOptions(), getModule()->features);
     if (fallthrough->is<StructNew>()) {
       // This is our allocation (one allocation cannot fall through another, so
       // it must be ours).
@@ -340,7 +343,6 @@ struct Heap2LocalOptimizer {
     // TODO: branches
     return false;
   }
-
 
   std::unordered_set<LocalGet*>* getGetsReached(LocalSet* parent) {
     auto iter = localGraph.setInfluences.find(set);
