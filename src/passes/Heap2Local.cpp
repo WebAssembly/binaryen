@@ -47,18 +47,22 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     }
   }
 
-  bool optimize(Expression* ast) {
+  bool optimize(Function* func) {
+    // To find allocations that do not escape, we must track locals so that we
+    // can see which gets refer to the same allocation.
+    LocalGraph localGraph(func);
+
     // All the allocations in the function.
     // TODO: Arrays (of constant size) as well.
-    FindAll<StructNew> structNews(ast);
+    FindAll<StructNew> allocations(func->body);
 
     // To find what escapes, we need to follow where values flow, both up to
     // parents, and via branches.
-    Parents parents(ast);
-    BranchUtils::BranchTargets targets(ast);
+    Parents parents(func->body);
+    BranchUtils::BranchTargets targets(func->body);
 
     // First, find all the things that do not escape.
-    for (auto* allocation : structNews.list) {
+    for (auto* allocation : allocations.list) {
       analyzeAllocation(allocation);
     }
 
