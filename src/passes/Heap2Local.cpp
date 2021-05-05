@@ -43,7 +43,8 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // Multiple rounds of optimization may work, as once we turn one allocation
     // into locals, references written to its fields become references written
     // to locals, which we may see do not escape;
-    while (optimize(func->body)) {}
+    while (optimize(func->body)) {
+    }
   }
 
   bool optimize(Expression* ast) {
@@ -72,7 +73,9 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
 
   // Analyze and allocation, finding out if it escapes. This populates the
   // "escapes" data structure.
-  void analyzeAllocation(StructNew* allocation, const Parents& parents, const BranchUtils::BranchTargets& targets) {
+  void analyzeAllocation(StructNew* allocation,
+                         const Parents& parents,
+                         const BranchUtils::BranchTargets& targets) {
     // A queue of expressions that have already been checked themselves, and we
     // need to check if by flowing to their parents they may escape.
     UniqueNonrepeatingDeferredQueue<Expression*> flows;
@@ -119,27 +122,13 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
       // Assume escaping unless we are certain otherwise.
       bool escapes = true;
 
-      void visitRefIs(RefIs* curr) {
-        escapes = false;
-      }
-      void visitRefEq(RefEq* curr) {
-        escapes = false;
-      }
-      void visitI31Get(I31Get* curr) {
-        escapes = false;
-      }
-      void visitRefTest(RefTest* curr) {
-        escapes = false;
-      }
-      void visitRefCast(RefCast* curr) {
-        escapes = false;
-      }
-      void visitBrOn(BrOn* curr) {
-        escapes = false;
-      }
-      void visitRefAs(RefAs* curr) {
-        escapes = false;
-      }
+      void visitRefIs(RefIs* curr) { escapes = false; }
+      void visitRefEq(RefEq* curr) { escapes = false; }
+      void visitI31Get(I31Get* curr) { escapes = false; }
+      void visitRefTest(RefTest* curr) { escapes = false; }
+      void visitRefCast(RefCast* curr) { escapes = false; }
+      void visitBrOn(BrOn* curr) { escapes = false; }
+      void visitRefAs(RefAs* curr) { escapes = false; }
       void visitStructSet(StructSet* curr) {
         // The reference does not escape (but the value is stored to memory and
         // therefore might).
@@ -147,9 +136,7 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
           escapes = false;
         }
       }
-      void visitStructGet(StructGet* curr) {
-        escapes = false;
-      }
+      void visitStructGet(StructGet* curr) { escapes = false; }
       // TODO: Array operations
     } checker;
 
@@ -159,16 +146,19 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
   }
 
   bool flowsThroughParent(Expression* child, Expression* parent) {
-    return child == Properties::getImmediateFallthrough(parent, getPassOptions(), getModule()->features);
+    return child == Properties::getImmediateFallthrough(
+                      parent, getPassOptions(), getModule()->features);
   }
 
-  BranchUtils::NameSet branchesSentByParent(Expression* child, Expression* parent) {
+  BranchUtils::NameSet branchesSentByParent(Expression* child,
+                                            Expression* parent) {
     BranchUtils::NameSet names;
-    BranchUtils::operateOnScopeNameUsesAndSentValues(Expression* parent, [&](Name name, Expression* value) {
-      if (value == child) {
-        names.insert(name);
-      }
-    });
+    BranchUtils::operateOnScopeNameUsesAndSentValues(
+      Expression * parent, [&](Name name, Expression* value) {
+        if (value == child) {
+          names.insert(name);
+        }
+      });
     return names;
   }
 };

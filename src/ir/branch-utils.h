@@ -350,8 +350,7 @@ struct BranchTargets {
   Expression* getTarget(Name name) { return inner.map[name]; }
 
 private:
-  struct Inner
-    : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
+  struct Inner : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
     void visitExpression(Expression* curr) {
       operateOnScopeNameDefs(curr, [&](Name name) {
         if (name.is()) {
