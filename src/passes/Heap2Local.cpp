@@ -99,8 +99,17 @@ struct Heap2LocalOptimizer {
   // what escapes as we go, and memoize it here, so that we do not repeat work.
   std::unordered_map<Expression*> escapes;
 
-  // Analyze and allocation, finding out if it escapes. This populates the
-  // "escapes" data structure.
+  // Analyze an allocation to see if we can convert it from a heap allocation to
+  // locals. Doing so requires two properties:
+  //
+  //  * It must not escape from the function. If it escapes, we must pass out a
+  //    reference anyhow. (In theory we could do a whole-program transformation
+  //    to replace the reference with parameters in some cases, but inlining can
+  //    hopefully let us optimize common cases.)
+  //  * It must be used in "exclusive" locals. That is, any local that it is
+  //    assigned to must not be used by anything else. (In theory we could look
+  //    carefully at live ranges, but SSA can be used to break up such
+  //    overlaps).
   void canConvertToLocals(StructNew* allocation) {
     // A queue of expressions that have already been checked themselves, and we
     // need to check if by flowing to their parents they may escape.
