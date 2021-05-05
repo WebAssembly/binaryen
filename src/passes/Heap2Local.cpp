@@ -143,7 +143,7 @@ struct Heap2LocalOptimizer {
     }
 
     void visitLocalSet(LocalSet* curr) {
-      if (sets.count(curr)) {
+      if (!sets.count(curr)) {
         return;
       }
 
@@ -185,7 +185,7 @@ struct Heap2LocalOptimizer {
     }
 
     void visitStructSet(StructSet* curr) {
-      if (writes.count(curr)) {
+      if (!writes.count(curr)) {
         return;
       }
 
@@ -197,7 +197,7 @@ struct Heap2LocalOptimizer {
     }
 
     void visitStructGet(StructGet* curr) {
-      if (reads.count(curr)) {
+      if (!reads.count(curr)) {
         return;
       }
 
