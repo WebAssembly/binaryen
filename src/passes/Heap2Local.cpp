@@ -62,8 +62,8 @@ struct Heap2LocalOptimizer {
   Heap2LocalOptimizer(Function* func,
                       Module* module,
                       const PassOptions& passOptions)
-    : passOptions(passOptions), localGraph(func), parents(func->body),
-      branchTargets(func->body), allocations(func->body) {
+    : func(func), module(module), passOptions(passOptions), localGraph(func),
+      parents(func->body), branchTargets(func->body), allocations(func->body) {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
@@ -238,7 +238,8 @@ struct Heap2LocalOptimizer {
       std::vector<Expression*> contents;
       for (Index i = 0; i < localIndexes.size(); i++) {
         contents.push_back(
-          builder.makeConstantExpression(Literal::makeZero(fields[i].type)));
+          builder.makeLocalSet(localIndexes[i],
+            builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
       }
       contents.push_back(allocation);
       replacer.replacements[allocation] = builder.makeBlock(contents);

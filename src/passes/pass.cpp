@@ -148,7 +148,6 @@ void PassRegistry::registerPasses() {
     createGenerateI64DynCallsPass);
   registerPass(
     "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
-  // TODO use it
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
@@ -437,6 +436,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("reorder-locals");
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
+  // heap2local
   // if we are willing to work hard, also optimize copies before coalescing
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite

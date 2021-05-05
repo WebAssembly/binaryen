@@ -5,13 +5,21 @@
   (type $struct.A (struct (field i32)))
 
   ;; CHECK:      (func $simple
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
-  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simple
+    ;; Other passes can remove such a simple case of an unneeded allocation, but
+    ;; out analysis should definitely handle something so simple.
     (drop
       (struct.new_with_rtt $struct.A
         (rtt.canon $struct.A)
