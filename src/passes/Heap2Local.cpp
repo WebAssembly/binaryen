@@ -106,11 +106,20 @@ struct Heap2LocalOptimizer {
   //    reference anyhow. (In theory we could do a whole-program transformation
   //    to replace the reference with parameters in some cases, but inlining can
   //    hopefully let us optimize common cases.)
-  //  * It must be used in "exclusive" locals. That is, any local that it is
-  //    assigned to must not be used by anything else. (In theory we could look
-  //    carefully at live ranges, but SSA can be used to break up such
-  //    overlaps).
-  void canConvertToLocals(StructNew* allocation) {
+  //  * It must be used "exclusively" in locals, without overlap. That is, we
+  //    cannot handle the case where a local.get might return our allocation,
+  //    but might also get some other value.
+  bool canConvertToLocals(StructNew* allocation) {
+    auto fail = [&]() {
+      escapes.insert(child);
+      return false;
+    }
+
+    // All the gets we are written to, that we have confirmed are used
+    // exclusively by us. Adding them to this set lets us avoid duplicate work,
+    // as a get may read from more than one set.
+    std::unordered_set<LocalSet*> exclusiveGets;
+
     // A queue of expressions that have already been checked themselves, and we
     // need to check if by flowing to their parents they may escape.
     UniqueNonrepeatingDeferredQueue<Expression*> flows;
@@ -125,8 +134,7 @@ struct Heap2LocalOptimizer {
 
       // If the parent may let us escape, then we are done.
       if (escapesViaParent(child, parent)) {
-        escapes.insert(child);
-        return;
+        return fail();
       }
 
       // If the value flows through the parent, we need to look further at
@@ -135,11 +143,28 @@ struct Heap2LocalOptimizer {
         flows.push(parent);
       }
 
-      // If the parent writes the value to a local, then we must look at all the
-      // places that read that local.
-      if (auto* getsReached = getGetsReached(parent)) {
-        for (auto* get : *getsReached) {
-          flows.push(get);
+      if (auto* set = parent->dynCast<LocalSet>()) {
+        // This is one of the sets we are written to, and so we must check for
+        // exclusive use of our allocation there. The first part of that is to
+        // see that only we are written by the set and no other value.
+        if (!flowsSingleValue(child)) {
+          return fail();
+        }
+
+        // The second part of exclusivity is to see that any gets reading this
+        // set are exclusive to our allocation.
+        if (auto* getsReached = getGetsReached(set)) {
+          for (auto* get : *getsReached) {
+            if (!exclusiveGets.count(get)) {
+              // We do not know if this get is exclusive yet, so check it.
+              // no we need the sets tath ten enddd
+              exclusiveGets.insert(get);
+            }
+
+            // We must also look at all the places that read the reference that the set
+            // writes.
+            flows.push(get);
+          }
         }
       }
 
@@ -149,6 +174,8 @@ struct Heap2LocalOptimizer {
         flows.push(targets.getTarget(name));
       }
     }
+
+    return true;
   }
 
   // Checks if a parent's use of a child may cause it to escape.
@@ -199,14 +226,41 @@ struct Heap2LocalOptimizer {
                       parent, getPassOptions(), getModule()->features);
   }
 
-  // If the parent is a set to a local, return the gets that read from that set.
-  // If not, or if there are no such gets, return nullptr.
-  std::unordered_set<LocalGet*>* getGetsReached(Expression* parent) {
-    if (auto* set = parent->dynCast<LocalSet>()) {
-      auto iter = localGraph.setInfluences.find(set);
-      if (iter != localGraph.setInfluences.end()) {
-        return &iter->second;
-      }
+  // Checks whether a single value flows here. That is, we need to avoid things
+  // like
+  //
+  //  (if ..
+  //    (value1)
+  //    (value2)
+  //  )
+  //
+  // (It is ok if zero values flow out, or if some paths end in a trap or
+  // exception; we just cannot tolerate multiple values, if a value does in fact
+  // flow out.)
+  //
+  // This is not a general-purpose analysis, rather it is only valid in the
+  // context we use it, which is to follow the uses of an allocation via flowing
+  // out and via locals.
+  bool flowsSingleValue(Expression* value) {
+    auto* fallthrough = Properties::getFallthrough(value, getPassOptions(), getModule()->features);
+    if (fallthrough->is<StructNew>()) {
+      // This is our allocation (one allocation cannot fall through another, so
+      // it must be ours).
+      return true;
+    }
+    if (fallthrough->is<LocalGet>()) {
+      // This is a local.get of our allocation.
+      return true;
+    }
+    // TODO: branches
+    return false;
+  }
+
+
+  std::unordered_set<LocalGet*>* getGetsReached(LocalSet* parent) {
+    auto iter = localGraph.setInfluences.find(set);
+    if (iter != localGraph.setInfluences.end()) {
+      return &iter->second;
     }
     return nullptr;
   }
