@@ -196,7 +196,7 @@ struct Heap2LocalOptimizer {
       // If the parent may send us on a branch, we will need to look at the
       // branch target(s).
       for (auto name : branchesSentByParent(child, parent)) {
-        flows.push(targets.getTarget(name));
+        flows.push(branchTargets.getTarget(name));
       }
     }
 
@@ -208,12 +208,12 @@ struct Heap2LocalOptimizer {
     // replacements.
     Builder builder(*module);
 
-    auto& fields = type.getHeapType().getStruct().fields;
+    auto& fields = allocation->type.getHeapType().getStruct().fields;
 
     // Map indexes in the struct to local index that will replace them.
     std::vector<Index> localIndexes;
     for (auto field : fields) {
-      localIndexes.push_back(builder::addVar(func, field.type);
+      localIndexes.push_back(builder.addVar(func, field.type));
     }
 
     // We do not remove the allocation itself here, rather we make it
