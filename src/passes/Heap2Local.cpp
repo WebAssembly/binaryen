@@ -224,7 +224,7 @@ struct Heap2LocalOptimizer {
     if (!allocation->isWithDefault()) {
       // Add a tee to save the initial values in the proper locals.
       for (Index i = 0; i < localIndexes.size(); i++) {
-        allocation->operands[i] = builder.makeTee(
+        allocation->operands[i] = builder.makeLocalTee(
           localIndexes[i], allocation->operands[i], fields[i].type);
       }
     } else {
@@ -234,7 +234,7 @@ struct Heap2LocalOptimizer {
       // that is, there might be a previous value.
       std::vector<Expression*> contents;
       for (Index i = 0; i < localIndexes.size(); i++) {
-        contents.push_back(builder.makeConstantExpression(Literal::makeZero(fields[i].type));
+        contents.push_back(builder.makeConstantExpression(Literal::makeZero(fields[i].type)));
       }
       contents.push_back(allocation);
       replacer.replacements[allocation] = builder.makeBlock(contents);
