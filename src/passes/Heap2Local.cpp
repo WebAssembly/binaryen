@@ -25,6 +25,7 @@
 #include "ir/parents.h"
 #include "ir/properties.h"
 #include "ir/replacer.h"
+#include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -55,7 +56,7 @@ struct Heap2LocalOptimizer {
 
   bool optimized = false;
 
-  Replacer replacer;
+  ExpressionReplacer replacer;
 
   Heap2LocalOptimizer(Function* func, Module* module)
     : localGraph(func), parents(func->body), branchTargets(func->body),
@@ -67,7 +68,7 @@ struct Heap2LocalOptimizer {
     for (auto* allocation : allocations.list) {
       // The point of this optimization is to replace heap allocations with
       // locals, so we must be able to place the data in locals.
-      if (!canHandleAsLocal(type)) {
+      if (!canHandleAsLocals(allocation->type)) {
         continue;
       }
 
@@ -84,7 +85,7 @@ struct Heap2LocalOptimizer {
     }
   }
 
-  bool canHandleAsLocal(Type type) {
+  bool canHandleAsLocals(Type type) {
     auto& fields = type.getHeapType().getStruct().fields;
     for (auto field : fields) {
       if (!TypeUpdating::canHandleAsLocal(field)) {
