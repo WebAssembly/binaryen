@@ -23,6 +23,7 @@
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
 #include "ir/parents.h"
+#include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -48,15 +49,72 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     Parents parents(func->body);
     BranchUtils::BranchTargets targets(func->body);
 
-    for (auto* structNew : structNews.list) {
-      UniqueNonrepeatingDeferredQueue<Expression*> flowToParent;
-      UniqueNonrepeatingDeferredQueue<Name> flowOnBranch;
+    for (auto* allocation : structNews.list) {
+      analyzeAllocation(allocation);
+    }
+  }
 
-      flowToParent.push(
-      // Keep flowing
-      while (1) {
+  // All the expressions that may escape from the function. We lazily compute
+  // what escapes as we go, and memoize it here, so that we do not repeat work.
+  std::unordered_map<Expression*> escapes;
+
+  // Analyze and allocation, finding out if it escapes.
+  void analyzeAllocation(StructNew* allocation, const Parents& parents, const BranchUtils::BranchTargets& targets) {
+    // A queue of expressions that have already been checked themselves, and we
+    // need to check if by flowing to their parents they may escape.
+    UniqueNonrepeatingDeferredQueue<Expression*> flows;
+
+    // Start the flow from the expression itself.
+    flows.push(allocation);
+
+    // Keep flowing while we can.
+    while (!flows.empty()) {
+      auto* child = flows.pop();
+      auto* parent = parents.getParent(child);
+
+      // If the parent may let us escape, then we are done.
+      if (escapesViaParent(child, parent)) {
+        escapes.insert(child);
+        return;
+      }
+
+      // If the value flows through the parent, we need to look further at
+      // the grandparent.
+      if (flowsThroughParent(child, parent)) {
+        flows.push(parent);
+      }
+
+      // If the parent may send us on a branch, we will need to look at the
+      // target of the branch.
+      for (auto name : branchesSentByParent(child, parent)) {
+        flows.push(targets.getTarget(name));
       }
     }
+  }
+
+  // Checks if a parent's use of a child may cause it to escape.
+  bool escapesViaParent(Expression* child, Expression* parent) {
+    // If there is no parent then we are the body of the function, and that
+    // means we escape by flowing to the caller.
+    if (!parent) {
+      return true;
+    }
+
+    
+  }
+
+  bool flowsThroughParent(Expression* child, Expression* parent) {
+    return child == Properties::getImmediateFallthrough(parent, getPassOptions(), getModule()->features);
+  }
+
+  BranchUtils::NameSet branchesSentByParent(Expression* child, Expression* parent) {
+    BranchUtils::NameSet names;
+    BranchUtils::operateOnScopeNameUsesAndSentValues(Expression* parent, [&](Name name, Expression* value) {
+      if (value == child) {
+        names.insert(name);
+      }
+    });
+    return names;
   }
 };
 
