@@ -3,7 +3,10 @@
 
 (module
   (type $struct.A (struct (field (mut i32)) (field (mut f64))))
+
   (type $struct.packed (struct (field (mut i8))))
+
+  (type $struct.nondefaultable (struct (field (rtt $struct.A))))
 
   ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (drop
@@ -102,7 +105,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $one-get-b
-    ;; similar to the above, but using a different field index.
+    ;; Similar to the above, but using a different field index.
     (drop
       (struct.get $struct.A 1
         (struct.new_default_with_rtt $struct.A
@@ -133,7 +136,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $one-set
-    ;; a simple optimizable allocation only used in one set.
+    ;; A simple optimizable allocation only used in one set.
     (struct.set $struct.A 0
       (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
@@ -143,20 +146,79 @@
   )
 
   ;; CHECK:      (func $packed
-  ;; CHECK-NEXT:  (struct.set $struct.packed 0
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.packed
-  ;; CHECK-NEXT:    (rtt.canon $struct.packed)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $struct.packed 0
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.packed
+  ;; CHECK-NEXT:     (rtt.canon $struct.packed)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $packed
-    ;; we do not optimize packed structs yet
-    (struct.set $struct.packed 0
-      (struct.new_default_with_rtt $struct.packed
-        (rtt.canon $struct.packed)
+    ;; We do not optimize packed structs yet.
+    (drop
+      (struct.get $struct.packed 0
+        (struct.new_default_with_rtt $struct.packed
+          (rtt.canon $struct.packed)
+        )
       )
-      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $with-init-values
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:      (local.tee $0
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.tee $1
+  ;; CHECK-NEXT:       (f64.const 3.14159)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $with-init-values
+    ;; When we get values to initialize the struct with, assign them to the
+    ;; proper locals.
+    (drop
+      (struct.get $struct.A 0
+        (struct.new_with_rtt $struct.A
+          (i32.const 2)
+          (f64.const 3.14159)
+          (rtt.canon $struct.A)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nondefaultable
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct.nondefaultable 0
+  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.nondefaultable
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     (rtt.canon $struct.nondefaultable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nondefaultable
+    ;; We do not optimize structs with nondefaultable types that we cannot
+    ;; handle, like rtts.
+    (drop
+      (struct.get $struct.nondefaultable 0
+        (struct.new_with_rtt $struct.nondefaultable
+          (rtt.canon $struct.A)
+          (rtt.canon $struct.nondefaultable)
+        )
+      )
     )
   )
 )
