@@ -18,13 +18,23 @@
 // Find heap allocations that never escape the current function, and lower the
 // object into locals.
 //
+// For us to replace an allocation with locals, need to prove two things:
+//
+//  * It must not escape from the function. If it escapes, we must pass out a
+//    reference anyhow. (In theory we could do a whole-program transformation
+//    to replace the reference with parameters in some cases, but inlining can
+//    hopefully let us optimize common cases.)
+//  * It must be used "exclusively", without overlap. That is, we cannot
+//    handle the case where a local.get might return our allocation, but might
+//    also get some other value. We also cannot handle a select where one arm
+//    is our allocation and another is something else.
+//
 
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
-#include "ir/replacer.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -57,8 +67,6 @@ struct Heap2LocalOptimizer {
 
   bool optimized = false;
 
-  ExpressionReplacer replacer;
-
   Heap2LocalOptimizer(Function* func,
                       Module* module,
                       const PassOptions& passOptions)
@@ -79,13 +87,6 @@ struct Heap2LocalOptimizer {
         optimized = true;
       }
     }
-
-    // Perform the replacements all at the end in a safe way, avoiding possible
-    // issues with the ordering.
-    if (!replacer.replacements.empty()) {
-      replacer.walk(func->body);
-      TypeUpdating::handleNonDefaultableLocals(func, *module);
-    }
   }
 
   bool canHandleAsLocals(Type type) {
@@ -102,21 +103,22 @@ struct Heap2LocalOptimizer {
     return true;
   }
 
-  // Analyze an allocation to see if we can convert it from a heap allocation to
-  // locals. For that we need to prove two things:
+  // Handles the rewriting that we do to perform the optimization. We store the
+  // data that rewriting will need later here while we analyze, and then if we
+  // can do the optimization, we tell it to run.
   //
-  //  * It must not escape from the function. If it escapes, we must pass out a
-  //    reference anyhow. (In theory we could do a whole-program transformation
-  //    to replace the reference with parameters in some cases, but inlining can
-  //    hopefully let us optimize common cases.)
-  //  * It must be used "exclusively", without overlap. That is, we cannot
-  //    handle the case where a local.get might return our allocation, but might
-  //    also get some other value. We also cannot handle a select where one arm
-  //    is our allocation and another is something else.
-  //
-  // If we can do the optimization, then this returns true, and it set up the
-  // necessary replacements on the replacer object.
-  bool convertToLocals(StructNew* allocation) {
+  // TODO: Doing a single rewrite walk at the end would be more efficient, but
+  //       it would need to be more complex.
+  struct Rewriter : PostWalker<Rewriter> {
+    StructNew* allocation;
+    Function* func;
+    Builder builder;
+    const FieldList& fields;
+
+    Rewriter(StructNew* allocation, Function* func, Module* module)
+      : allocation(allocation), func(func), builder(*module),
+        fields(allocation->type.getHeapType().getStruct().fields) {}
+
     // We must track all the local.sets that write the allocation, to verify
     // exclusivity. We also want to update them later, if we can do the
     // optimization.
@@ -124,8 +126,92 @@ struct Heap2LocalOptimizer {
 
     // We must track all the reads and writes from the allocation so that we can
     // fix them up at the end, if the optimization ends up possible.
-    std::vector<StructSet*> writes;
-    std::vector<StructGet*> reads;
+    std::unordered_set<StructSet*> writes;
+    std::unordered_set<StructGet*> reads;
+
+    // Maps indexes in the struct to the local index that will replace them.
+    std::vector<Index> localIndexes;
+
+    void applyOptimization() {
+      // Allocate locals to store the allocation's data in.
+      for (auto field : fields) {
+        localIndexes.push_back(builder.addVar(func, field.type));
+      }
+
+      // Replace the things we need to using the visit* methods.
+      walk(func->body);
+    }
+
+    void visitLocalSet(LocalSet* curr) {
+      if (sets.count(curr)) {
+        return;
+      }
+
+      // We don't need any sets of the reference to any of the locals it
+      // originally was written to.
+      replaceCurrent(builder.makeDrop(curr->value));
+    }
+
+    void visitStructNew(StructNew* curr) {
+      if (curr != allocation) {
+        return;
+      }
+
+      // We do not remove the allocation itself here, rather we make it
+      // unnecessary, and then depend on other optimizations to clean up. (We
+      // cannot simply remove it because we need to replace it with something of
+      // the same non-nullable type.) First, assign the initial values to the
+      // new locals.
+      if (!allocation->isWithDefault()) {
+        // Add a tee to save the initial values in the proper locals.
+        for (Index i = 0; i < localIndexes.size(); i++) {
+          allocation->operands[i] = builder.makeLocalTee(
+            localIndexes[i], allocation->operands[i], fields[i].type);
+        }
+      } else {
+        // Set the default values, and replace the allocation with a block that
+        // first does that, then contains the allocation.
+        // Note that we must assign the defaults because we might be in a loop,
+        // that is, there might be a previous value.
+        std::vector<Expression*> contents;
+        for (Index i = 0; i < localIndexes.size(); i++) {
+          contents.push_back(builder.makeLocalSet(
+            localIndexes[i],
+            builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
+        }
+        contents.push_back(allocation);
+        replaceCurrent(builder.makeBlock(contents));
+      }
+    }
+
+    void visitStructSet(StructSet* curr) {
+      if (writes.count(curr)) {
+        return;
+      }
+
+      // Drop the ref (leaving it to other opts to remove, when possible), and
+      // write the data to the local instead of the heap allocation.
+      replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->ref),
+          builder.makeLocalSet(localIndexes[curr->index], curr->value)));
+    }
+
+    void visitStructGet(StructGet* curr) {
+      if (reads.count(curr)) {
+        return;
+      }
+
+      replaceCurrent(
+        builder.makeSequence(builder.makeDrop(curr->ref),
+                             builder.makeLocalGet(localIndexes[curr->index],
+                                                  fields[curr->index].type)));
+    }
+  };
+
+  // Analyze an allocation to see if we can convert it from a heap allocation to
+  // locals.
+  bool convertToLocals(StructNew* allocation) {
+    Rewriter rewriter(allocation, func, module);
 
     // A queue of expressions that have already been checked themselves, and we
     // need to check if by flowing to their parents they may escape.
@@ -180,7 +266,7 @@ struct Heap2LocalOptimizer {
         // The second part of exclusivity is to see that any gets reading this
         // set are exclusive to our allocation. We do that at the end, once we
         // know all of our sets.
-        sets.insert(set);
+        rewriter.sets.insert(set);
 
         // We must also look at all the places that read what the set writes.
         if (auto* getsReached = getGetsReached(set)) {
@@ -191,10 +277,10 @@ struct Heap2LocalOptimizer {
       }
 
       if (auto* write = parent->dynCast<StructSet>()) {
-        writes.push_back(write);
+        rewriter.writes.insert(write);
       }
       if (auto* read = parent->dynCast<StructGet>()) {
-        reads.push_back(read);
+        rewriter.reads.insert(read);
       }
 
       // If the parent may send us on a branch, we will need to look at the
@@ -204,73 +290,18 @@ struct Heap2LocalOptimizer {
       }
     }
 
-    if (writes.empty() && reads.empty()) {
+    if (rewriter.writes.empty() && rewriter.reads.empty()) {
       // The allocation is never used in any significant way in this function,
       // so there is nothing worth optimizing here.
       return false;
     }
 
-    if (!getsAreExclusiveToSets(sets)) {
+    if (!getsAreExclusiveToSets(rewriter.sets)) {
       return false;
     }
 
-    // We can do it, hurray! All we have left to do is to set up the proper
-    // replacements.
-    Builder builder(*module);
-
-    auto& fields = allocation->type.getHeapType().getStruct().fields;
-
-    // Map indexes in the struct to local index that will replace them.
-    std::vector<Index> localIndexes;
-    for (auto field : fields) {
-      localIndexes.push_back(builder.addVar(func, field.type));
-    }
-
-    // We do not remove the allocation itself here, rather we make it
-    // unnecessary, and then depend on other optimizations to clean up. (We
-    // cannot simply remove it because we need to replace it with something of
-    // the same non-nullable type.) First, assign the initial values to the
-    // new locals.
-    if (!allocation->isWithDefault()) {
-      // Add a tee to save the initial values in the proper locals.
-      for (Index i = 0; i < localIndexes.size(); i++) {
-        allocation->operands[i] = builder.makeLocalTee(
-          localIndexes[i], allocation->operands[i], fields[i].type);
-      }
-    } else {
-      // Set the default values, and replace the allocation with a block that
-      // first does that, then contains the allocation.
-      // Note that we must assign the defaults because we might be in a loop,
-      // that is, there might be a previous value.
-      std::vector<Expression*> contents;
-      for (Index i = 0; i < localIndexes.size(); i++) {
-        contents.push_back(builder.makeLocalSet(
-          localIndexes[i],
-          builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
-      }
-      contents.push_back(allocation);
-      replacer.replacements[allocation] = builder.makeBlock(contents);
-    }
-
-    // Next, replace StructGet and StructSets of the allocation with uses of the
-    // locals.
-    for (auto* write : writes) {
-      replacer.replacements[write] = builder.makeSequence(
-        builder.makeDrop(write->ref),
-        builder.makeLocalSet(localIndexes[write->index], write->value));
-    }
-    for (auto* read : reads) {
-      replacer.replacements[read] =
-        builder.makeSequence(builder.makeDrop(read->ref),
-                             builder.makeLocalGet(localIndexes[read->index],
-                                                  fields[read->index].type));
-    }
-
-    // We don't need any sets of the reference to any of the locals it
-    // originally was written to.
-    for (auto* set : sets) {
-      replacer.replacements[set] = builder.makeDrop(set->value);
-    }
+    // We can do it, hurray!
+    rewriter.applyOptimization();
 
     return true;
   }
@@ -419,7 +450,12 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // Multiple rounds of optimization may work, as once we turn one allocation
     // into locals, references written to its fields become references written
     // to locals, which we may see do not escape;
+    bool optimized = false;
     while (Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized) {
+      optimized = true;
+    }
+    if (optimized) {
+      TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     }
   }
 };
