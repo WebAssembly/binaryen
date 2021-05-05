@@ -205,8 +205,8 @@ struct Heap2LocalOptimizer {
     }
 
     if (writes.empty() && reads.empty()) {
-      // The allocation is never used in any way, so there is nothing worth
-      // optimizing here.
+      // The allocation is never used in any significant way in this function,
+      // so there is nothing worth optimizing here.
       return false;
     }
 
@@ -300,14 +300,15 @@ struct Heap2LocalOptimizer {
       void visitLocalGet(LocalGet* curr) { escapes = false; }
       void visitLocalSet(LocalSet* curr) { escapes = false; }
 
-      // Reference operations
-      void visitRefIs(RefIs* curr) { escapes = false; }
-      void visitRefEq(RefEq* curr) { escapes = false; }
-      void visitI31Get(I31Get* curr) { escapes = false; }
-      void visitRefTest(RefTest* curr) { escapes = false; }
-      void visitRefCast(RefCast* curr) { escapes = false; }
-      void visitBrOn(BrOn* curr) { escapes = false; }
-      void visitRefAs(RefAs* curr) { escapes = false; }
+      // Reference operations XXX FIXME ref.is etc. do not escape, but they do
+      // return a value, they may trap, etc..? Do we keep the allocation alive
+      // just for them? then cannot drop the local.sets.
+      //void visitRefIs(RefIs* curr) { escapes = false; }
+      //void visitRefEq(RefEq* curr) { escapes = false; }
+      //void visitRefTest(RefTest* curr) { escapes = false; }
+      //void visitRefCast(RefCast* curr) { escapes = false; }
+      //void visitBrOn(BrOn* curr) { escapes = false; }
+      //void visitRefAs(RefAs* curr) { escapes = false; }
       void visitStructSet(StructSet* curr) {
         // The reference does not escape (but the value is stored to memory and
         // therefore might).
@@ -316,7 +317,7 @@ struct Heap2LocalOptimizer {
         }
       }
       void visitStructGet(StructGet* curr) { escapes = false; }
-      // TODO: Array operations
+      // TODO: Array and I31 operations
     } checker;
 
     checker.child = child;
