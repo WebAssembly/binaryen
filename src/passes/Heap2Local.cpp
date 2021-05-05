@@ -40,25 +40,38 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
   Pass* create() override { return new Heap2Local(); }
 
   void doWalkFunction(Function* func) {
+    // Multiple rounds of optimization may work, as once we turn one allocation
+    // into locals, references written to its fields become references written
+    // to locals, which we may see do not escape;
+    while (optimize(func->body)) {}
+  }
+
+  bool optimize(Expression* ast) {
     // All the allocations in the function.
     // TODO: Arrays (of constant size) as well.
-    FindAll<StructNew> structNews(func->body);
+    FindAll<StructNew> structNews(ast);
 
     // To find what escapes, we need to follow where values flow, both up to
     // parents, and via branches.
-    Parents parents(func->body);
-    BranchUtils::BranchTargets targets(func->body);
+    Parents parents(ast);
+    BranchUtils::BranchTargets targets(ast);
 
+    // First, find all the things that do not escape.
     for (auto* allocation : structNews.list) {
       analyzeAllocation(allocation);
     }
+
+    bool optimized = false;
+
+    return optimized;
   }
 
   // All the expressions that may escape from the function. We lazily compute
   // what escapes as we go, and memoize it here, so that we do not repeat work.
   std::unordered_map<Expression*> escapes;
 
-  // Analyze and allocation, finding out if it escapes.
+  // Analyze and allocation, finding out if it escapes. This populates the
+  // "escapes" data structure.
   void analyzeAllocation(StructNew* allocation, const Parents& parents, const BranchUtils::BranchTargets& targets) {
     // A queue of expressions that have already been checked themselves, and we
     // need to check if by flowing to their parents they may escape.
@@ -100,7 +113,49 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
       return true;
     }
 
-    
+    struct EscapeChecker : public Visitor<EscapeChecker> {
+      Expression* child;
+
+      // Assume escaping unless we are certain otherwise.
+      bool escapes = true;
+
+      void visitRefIs(RefIs* curr) {
+        escapes = false;
+      }
+      void visitRefEq(RefEq* curr) {
+        escapes = false;
+      }
+      void visitI31Get(I31Get* curr) {
+        escapes = false;
+      }
+      void visitRefTest(RefTest* curr) {
+        escapes = false;
+      }
+      void visitRefCast(RefCast* curr) {
+        escapes = false;
+      }
+      void visitBrOn(BrOn* curr) {
+        escapes = false;
+      }
+      void visitRefAs(RefAs* curr) {
+        escapes = false;
+      }
+      void visitStructSet(StructSet* curr) {
+        // The reference does not escape (but the value is stored to memory and
+        // therefore might).
+        if (curr->ref == child) {
+          escapes = false;
+        }
+      }
+      void visitStructGet(StructGet* curr) {
+        escapes = false;
+      }
+      // TODO: Array operations
+    } checker;
+
+    checker.child = child;
+    checker.visit(parent);
+    return checker.escapes;
   }
 
   bool flowsThroughParent(Expression* child, Expression* parent) {
