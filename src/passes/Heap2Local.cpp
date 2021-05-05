@@ -117,7 +117,7 @@ struct Heap2LocalOptimizer {
   // If we can do the optimization, then this returns true, and it set up the
   // necessary replacements on the replacer object.
   bool convertToLocals(StructNew* allocation) {
-    // We must track all the sets we are written to so that we can verify
+    // We must track all the local.sets that write the allocation, to verify
     // exclusivity. We also want to update them later, if we can do the
     // optimization.
     std::unordered_set<LocalSet*> sets;
@@ -204,6 +204,12 @@ struct Heap2LocalOptimizer {
       }
     }
 
+    if (writes.empty() && reads.empty()) {
+      // The allocation is never used in any way, so there is nothing worth
+      // optimizing here.
+      return false;
+    }
+
     if (!getsAreExclusiveToSets(sets)) {
       return false;
     }
@@ -238,9 +244,9 @@ struct Heap2LocalOptimizer {
       // that is, there might be a previous value.
       std::vector<Expression*> contents;
       for (Index i = 0; i < localIndexes.size(); i++) {
-        contents.push_back(
-          builder.makeLocalSet(localIndexes[i],
-            builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
+        contents.push_back(builder.makeLocalSet(
+          localIndexes[i],
+          builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
       }
       contents.push_back(allocation);
       replacer.replacements[allocation] = builder.makeBlock(contents);
@@ -263,8 +269,7 @@ struct Heap2LocalOptimizer {
     // We don't need any sets of the reference to any of the locals it
     // originally was written to.
     for (auto* set : sets) {
-      replacer.replacements[set] =
-        builder.makeDrop(set->value);
+      replacer.replacements[set] = builder.makeDrop(set->value);
     }
 
     return true;
