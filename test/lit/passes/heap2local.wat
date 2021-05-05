@@ -45,18 +45,27 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:   (struct.get $struct.A 0
+  ;; CHECK-NEXT:    (block (result (ref $struct.A))
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (f64.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (struct.new_default_with_rtt $struct.A
   ;; CHECK-NEXT:      (rtt.canon $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $one-get
-    ;; an allocation followed by an immediate get of a field
+    ;; An allocation followed by an immediate get of a field. This is a non-
+    ;; escaping allocation, with a use, so we can optimize it out. The
+    ;; allocation is dropped (letting later opts remove it), and the allocation's
+    ;; data is moved to locals: we write the initial value to the locals, and
+    ;; we read from the locals instead of the struct.get.
     (drop
       (struct.get $struct.A 0
         (struct.new_default_with_rtt $struct.A
