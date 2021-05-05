@@ -59,7 +59,7 @@ struct Heap2LocalOptimizer {
 
   ExpressionReplacer replacer;
 
-  Heap2LocalOptimizer(Function* func, Module* module, const& PassOptions passOptions)
+  Heap2LocalOptimizer(Function* func, Module* module, const PassOptions& passOptions)
     : passOptions(passOptions), localGraph(func), parents(func->body), branchTargets(func->body),
       allocations(func->body) {
     // We need to track what each set influences, to see where its value can
@@ -276,8 +276,8 @@ struct Heap2LocalOptimizer {
 
       // Local operations. Locals by themselves do not escape; the analysis
       // tracks where locals are used.
-      void visitLocalGet(RefIs* curr) { escapes = false; }
-      void visitLocalSet(RefIs* curr) { escapes = false; }
+      void visitLocalGet(LocalGet* curr) { escapes = false; }
+      void visitLocalSet(LocalSet* curr) { escapes = false; }
 
       // Reference operations
       void visitRefIs(RefIs* curr) { escapes = false; }
@@ -339,7 +339,7 @@ struct Heap2LocalOptimizer {
     return false;
   }
 
-  std::unordered_set<LocalGet*>* getGetsReached(LocalSet* parent) {
+  std::unordered_set<LocalGet*>* getGetsReached(LocalSet* set) {
     auto iter = localGraph.setInfluences.find(set);
     if (iter != localGraph.setInfluences.end()) {
       return &iter->second;
@@ -351,7 +351,7 @@ struct Heap2LocalOptimizer {
                                             Expression* parent) {
     BranchUtils::NameSet names;
     BranchUtils::operateOnScopeNameUsesAndSentValues(
-      Expression * parent, [&](Name name, Expression* value) {
+      parent, [&](Name name, Expression* value) {
         if (value == child) {
           names.insert(name);
         }
@@ -366,7 +366,7 @@ struct Heap2LocalOptimizer {
   // local, in the right live range).
   bool getsAreExclusiveToSets(const std::unordered_set<LocalSet*>& sets) {
     // Find all the relevant gets (which may overlap between the sets).
-    std::unordered_set<LocalSet*> gets;
+    std::unordered_set<LocalGet*> gets;
     for (auto* set : sets) {
       if (auto* getsReached = getGetsReached(set)) {
         for (auto* get : *getsReached) {
