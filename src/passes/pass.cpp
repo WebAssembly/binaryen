@@ -436,7 +436,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("reorder-locals");
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
-  // heap2local
+  // heap2local (after a vacuum, before merge-locals/coalesce-locals
   // if we are willing to work hard, also optimize copies before coalescing
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("merge-locals"); // very slow on e.g. sqlite

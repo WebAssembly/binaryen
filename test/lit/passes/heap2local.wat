@@ -19,8 +19,35 @@
   ;; CHECK-NEXT: )
   (func $simple
     ;; Other passes can remove such a simple case of an unneeded allocation, but
-    ;; out analysis should definitely handle something so simple.
+    ;; out analysis should definitely handle something so simple. (We do end up
+    ;; emitting a bunch of extra code here, increasing code size, but other
+    ;; optimizations can remove it.)
     (drop
+      (struct.new_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $to-local
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $to-local
+    (local $ref (ref null $struct.A))
+    ;; Other passes cannot remove an allocation that is written to a local, but
+    ;; we can, since it does not escape.
+    (local.set $ref
       (struct.new_with_rtt $struct.A
         (rtt.canon $struct.A)
       )
