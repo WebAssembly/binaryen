@@ -24,6 +24,7 @@
 #include "ir/local-graph.h"
 #include "ir/parents.h"
 #include "ir/properties.h"
+#include "ir/replacer.h"
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
@@ -60,15 +61,38 @@ struct Heap2LocalOptimizer {
     // flow to.
     localGraph.computeSetInfluences();
 
+    Replacer replacer;
+
     for (auto* allocation : allocations.list) {
-      if (canConvertToLocals(allocation, parents, branchTargets, localGraph)) {
-        ..
+      // The point of this optimization is to replace heap allocations with
+      // locals, so we must be able to place the data in locals.
+      if (!canHandleAsLocal(type)) {
+        continue;
+      }
+
+      if (canConvertToLocals(allocation)) {
+        replacer.replacements[..] = ..
+
+        optimized = true;
       }
     }
 
-    bool optimized = false;
+    // Perform the replacements all at the end in a safe way, avoiding possible
+    // issues with the ordering.
+    if (!replacer.replacements.empty()) {
+      replacer.walk(func->body);
+      TypeUpdating::handleNonDefaultableLocals(func, *module);
+    }
+  }
 
-    return optimized;
+  bool canHandleAsLocal(Type type) {
+    auto& fields = type.getHeapType().getStruct().fields;
+    for (auto field : fields) {
+      if (!TypeUpdating::canHandleAsLocal(field)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   // All the expressions that may escape from the function. We lazily compute
@@ -200,7 +224,7 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // Multiple rounds of optimization may work, as once we turn one allocation
     // into locals, references written to its fields become references written
     // to locals, which we may see do not escape;
-    while (Heap2LocalOptimizer(func->body).optimized) {
+    while (Heap2LocalOptimizer(func->body, getModule()).optimized) {
     }
   }
 };
