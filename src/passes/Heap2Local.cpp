@@ -159,24 +159,20 @@ struct Heap2LocalOptimizer {
       if (auto* set = parent->dynCast<LocalSet>()) {
         // This is one of the sets we are written to, and so we must check for
         // exclusive use of our allocation there. The first part of that is to
-        // see that only we are written by the set and no other value.
+        // see that only we are written by the set, and no other value (so the
+        // value is exclusive for our use).
         if (!flowsSingleValue(child)) {
           return fail();
         }
 
         // The second part of exclusivity is to see that any gets reading this
-        // set are exclusive to our allocation.
+        // set are exclusive to our allocation. We do that at the end, once we
+        // know all of our sets.
+        sets.insert(set);
+
+        // We must also look at all the places that read what the set writes.
         if (auto* getsReached = getGetsReached(set)) {
           for (auto* get : *getsReached) {
-            if (!exclusiveGets.count(get)) {
-              // We do not know if this get is exclusive yet, so check it.
-              // no we need the sets tath ten enddd
-  waka
-              exclusiveGets.insert(get);
-            }
-
-            // We must also look at all the places that read the reference that the set
-            // writes.
             flows.push(get);
           }
         }
@@ -187,6 +183,10 @@ struct Heap2LocalOptimizer {
       for (auto name : branchesSentByParent(child, parent)) {
         flows.push(targets.getTarget(name));
       }
+    }
+
+    if (!getsAreExclusiveToSets(sets)) {
+      return fail();
     }
 
     return true;
@@ -292,6 +292,34 @@ struct Heap2LocalOptimizer {
         }
       });
     return names;
+  }
+
+  // Verify exclusivity of all the gets for a bunch of sets. That is, assuming
+  // the sets are exclusive (they all write exactly our allocation, and nothing
+  // else), we need to check whether all the gets that read that value cannot
+  // read anything else (which would be the case if another set writes to that
+  // local, in the right live range).
+  bool getsAreExclusiveToSets(const std::unordered_set<LocalSet*>& sets) {
+    // Find all the relevant gets (which may overlap between the sets).
+    std::unordered_set<LocalSet*> gets;
+    for (auto* set : sets) {
+      if (auto* getsReached = getGetsReached(set)) {
+        for (auto* get : *getsReached) {
+          gets.insert(get);
+        }
+      }
+    }
+
+    // Check that the gets can only read from the specific known sets.
+    for (auto* get : gets) {
+      for (auto* set : localGraph.getSetses[get]) {
+        if (sets.count(set) == 0) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 };
 
