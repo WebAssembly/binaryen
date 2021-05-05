@@ -284,7 +284,7 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
 void LocalGraph::computeSetInfluences() {
   for (auto& pair : locations) {
     auto* curr = pair.first;
-    if (auto* get = curr->cast<LocalGet>()) {
+    if (auto* get = curr->dynCast<LocalGet>()) {
       for (auto* set : getSetses[get]) {
         setInfluences[set].insert(get);
       }
