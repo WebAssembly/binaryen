@@ -56,6 +56,9 @@ struct Heap2LocalOptimizer {
 
   Heap2LocalOptimizer(Function* func, Module* module) : localGraph(func),
       parents(func->body), branchTargets(func->body), allocations(func->body) {
+    // We need to track what each set influences, to see where its value can
+    // flow to.
+    localGraph.computeSetInfluences();
 
     for (auto* allocation : allocations.list) {
       if (canConvertToLocals(allocation, parents, branchTargets, localGraph)) {
@@ -97,6 +100,14 @@ struct Heap2LocalOptimizer {
       // the grandparent.
       if (flowsThroughParent(child, parent)) {
         flows.push(parent);
+      }
+
+      // If the parent writes the value to a local, then we must look at all the
+      // places that read that local.
+      if (auto* getsReached = getGetsReached(parent)) {
+        for (auto* get : *getsReached) {
+          flows.push(get);
+        }
       }
 
       // If the parent may send us on a branch, we will need to look at the
@@ -153,6 +164,18 @@ struct Heap2LocalOptimizer {
   bool flowsThroughParent(Expression* child, Expression* parent) {
     return child == Properties::getImmediateFallthrough(
                       parent, getPassOptions(), getModule()->features);
+  }
+
+  // If the parent is a set to a local, return the gets that read from that set.
+  // If not, or if there are no such gets, return nullptr.
+  std::unordered_set<LocalGet*>* getGetsReached(Expression* parent) {
+    if (auto* set = parent->dynCast<LocalSet>()) {
+      auto iter = localGraph.setInfluences.find(set);
+      if (iter != localGraph.setInfluences.end()) {
+        return &iter->second;
+      }
+    }
+    return nullptr;
   }
 
   BranchUtils::NameSet branchesSentByParent(Expression* child,
