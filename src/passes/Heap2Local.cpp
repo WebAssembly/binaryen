@@ -89,6 +89,10 @@ struct Heap2LocalOptimizer {
       if (!TypeUpdating::canHandleAsLocal(field)) {
         return false;
       }
+      if (field.isPacked()) {
+        // TODO: support packed fields by adding coercions/truncations.
+        return false;
+      }
     }
     return true;
   }
@@ -193,17 +197,37 @@ struct Heap2LocalOptimizer {
     // We can do it, hurray! All we have left to do is to set up the proper
     // replacements.
     Builder builder(*module);
-    
-    // Replace the allocation itself with assignments to locals.
 
-    // The allocated value itself must still be replaced, and with something of
-    // the exact same non-nullable type. Create a fake value, and depend on
-    // other optimizations to remove it.
-    auto* fakeValue = builder.makeRefAs(RefAsNonNull, builder.makeRefNull(allocation->type)); // TRAPPY
+    // Prepare a local index for each of the fields of the allocation.
+    auto& fields = type.getHeapType().getStruct().fields;
+    std::vector<Index> indexes;
+    for (auto field : fields) {
+      indexes.push_back(builder::addVar(func, field.type);
+    }
 
-    replacer.replacements[allocation] = builder.makeBlock({
-      fakeValue
-    });
+    // We do not remove the allocation itself here, rather we make it
+    // unnecessary, and then depend on other optimizations to clean up. (We
+    // cannot simply remove it because we need to replace it with something of
+    // the same non-nullable type.) First, assign the initial values to the
+    // new locals.
+    if (!allocation->isWithDefault()) {
+      // Add a tee to save the initial values in the proper locals.
+      for (Index i = 0; i < indexes.size(); i++) {
+        allocation->operands[i] = builder.makeTee(indexes[i], fields[i].type);
+      }
+    } else {
+      // Set the default values, and replace the allocation with a block that
+      // first does that, then contains the allocation.
+      // Note that we must assign the defaults because we might be in a loop,
+      // that is, there might be a previous value.
+      std::vector<Expression*> contents;
+      for (Index i = 0; i < indexes.size(); i++) {
+        contents.push_back(builder.makeConstantExpression(Literal::makeZero(fields[i].type));
+      }
+      contents.push_back(allocation);
+      replacer.replacements[allocation] = builder.makeBlock(contents);
+    }
+
     return true;
   }
 
