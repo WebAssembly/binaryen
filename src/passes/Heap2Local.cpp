@@ -278,6 +278,9 @@ struct Heap2LocalOptimizer {
       // Assume escaping unless we are certain otherwise.
       bool escapes = true;
 
+      // General operations
+      void visitDrop(Drop* curr) { escapes = false; }
+
       // Local operations. Locals by themselves do not escape; the analysis
       // tracks where locals are used.
       void visitLocalGet(LocalGet* curr) { escapes = false; }
