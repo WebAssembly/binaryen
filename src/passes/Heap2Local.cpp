@@ -397,7 +397,7 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // Multiple rounds of optimization may work, as once we turn one allocation
     // into locals, references written to its fields become references written
     // to locals, which we may see do not escape;
-    while (Heap2LocalOptimizer(func->body, getModule(), getPassOptions()).optimized) {
+    while (Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized) {
     }
   }
 };
