@@ -117,8 +117,14 @@ struct Heap2LocalOptimizer {
       return false;
     }
 
-    // All the sets we are written to.
+    // We must track all the sets we are written to so that we can verify
+    // exclusivity.
     std::unordered_set<LocalSet*> sets;
+
+    // We must track all the reads and writes from the allocation so that we can
+    // fix them up at the end, if the optimization ends up possible.
+    std::vector<StructSet*> writes;
+    std::vector<StructGet*> reads;
 
     // A queue of expressions that have already been checked themselves, and we
     // need to check if by flowing to their parents they may escape.
@@ -183,6 +189,13 @@ struct Heap2LocalOptimizer {
         }
       }
 
+      if (auto* write = parent->dynCast<StructSet>()) {
+        writes.push_back(write);
+      }
+      if (auto* read = parent->dynCast<StructGet>()) {
+        reads.push_back(read);
+      }
+
       // If the parent may send us on a branch, we will need to look at the
       // branch target(s).
       for (auto name : branchesSentByParent(child, parent)) {
@@ -198,11 +211,12 @@ struct Heap2LocalOptimizer {
     // replacements.
     Builder builder(*module);
 
-    // Prepare a local index for each of the fields of the allocation.
     auto& fields = type.getHeapType().getStruct().fields;
-    std::vector<Index> indexes;
+
+    // Map indexes in the struct to local index that will replace them.
+    std::vector<Index> localIndexes;
     for (auto field : fields) {
-      indexes.push_back(builder::addVar(func, field.type);
+      localIndexes.push_back(builder::addVar(func, field.type);
     }
 
     // We do not remove the allocation itself here, rather we make it
@@ -212,8 +226,8 @@ struct Heap2LocalOptimizer {
     // new locals.
     if (!allocation->isWithDefault()) {
       // Add a tee to save the initial values in the proper locals.
-      for (Index i = 0; i < indexes.size(); i++) {
-        allocation->operands[i] = builder.makeTee(indexes[i], fields[i].type);
+      for (Index i = 0; i < localIndexes.size(); i++) {
+        allocation->operands[i] = builder.makeTee(localIndexes[i], allocation->operands[i], fields[i].type);
       }
     } else {
       // Set the default values, and replace the allocation with a block that
@@ -221,11 +235,26 @@ struct Heap2LocalOptimizer {
       // Note that we must assign the defaults because we might be in a loop,
       // that is, there might be a previous value.
       std::vector<Expression*> contents;
-      for (Index i = 0; i < indexes.size(); i++) {
+      for (Index i = 0; i < localIndexes.size(); i++) {
         contents.push_back(builder.makeConstantExpression(Literal::makeZero(fields[i].type));
       }
       contents.push_back(allocation);
       replacer.replacements[allocation] = builder.makeBlock(contents);
+    }
+
+    // Next, replace StructGet and StructSets of the allocation with uses of the
+    // locals.
+    for (auto* write : writes) {
+      replacer.replacements[write] = builder.makeSequence(
+        builder.makeDrop(write->ref),
+        builder.makeLocalSet(localIndexes[write->index], write->value)
+      );
+    }
+    for (auto* read : reads) {
+      replacer.replacements[read] = builder.makeSequence(
+        builder.makeDrop(read->ref),
+        builder.makeLocalGet(localIndexes[read->index], fields[i].type)
+      );
     }
 
     return true;
