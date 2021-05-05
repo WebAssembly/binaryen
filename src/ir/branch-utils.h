@@ -333,6 +333,28 @@ public:
   }
 };
 
+// Provides a map of branch target names to the expression that corresponds to
+// them.
+struct BranchTargets {
+  BranchTargets(Expression* expr) { inner.walk(expr); }
+
+  Expression* get(Expression* curr) { return inner.map[curr]; }
+
+private:
+  struct Inner
+    : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name name) {
+        if (name.is()) {
+          map[name] = curr;
+        }
+      });
+    }
+
+    std::map<Name, Expression*> map;
+  } inner;
+};
+
 } // namespace BranchUtils
 
 } // namespace wasm
