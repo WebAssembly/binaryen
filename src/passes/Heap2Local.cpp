@@ -95,30 +95,25 @@ struct Heap2LocalOptimizer {
     return true;
   }
 
-  // All the expressions that may escape from the function. We lazily compute
-  // what escapes as we go, and memoize it here, so that we do not repeat work.
-  std::unordered_map<Expression*> escapes;
-
   // Analyze an allocation to see if we can convert it from a heap allocation to
-  // locals. Doing so requires two properties:
+  // locals. For that we need to prove two things:
   //
   //  * It must not escape from the function. If it escapes, we must pass out a
   //    reference anyhow. (In theory we could do a whole-program transformation
   //    to replace the reference with parameters in some cases, but inlining can
   //    hopefully let us optimize common cases.)
-  //  * It must be used "exclusively" in locals, without overlap. That is, we
-  //    cannot handle the case where a local.get might return our allocation,
-  //    but might also get some other value.
+  //  * It must be used "exclusively", without overlap. That is, we cannot
+  //    handle the case where a local.get might return our allocation, but might
+  //    also get some other value. We also cannot handle a select where one arm
+  //    is our allocation and another is something else.
   bool canConvertToLocals(StructNew* allocation) {
     auto fail = [&]() {
       escapes.insert(child);
       return false;
     }
 
-    // All the gets we are written to, that we have confirmed are used
-    // exclusively by us. Adding them to this set lets us avoid duplicate work,
-    // as a get may read from more than one set.
-    std::unordered_set<LocalSet*> exclusiveGets;
+    // All the sets we are written to.
+    std::unordered_set<LocalSet*> sets;
 
     // A queue of expressions that have already been checked themselves, and we
     // need to check if by flowing to their parents they may escape.
@@ -130,6 +125,24 @@ struct Heap2LocalOptimizer {
     // Keep flowing while we can.
     while (!flows.empty()) {
       auto* child = flows.pop();
+
+      // If we've already seen an expression, stop since we cannot optimize things that
+      // overlap in any way (see the notes on exclusivity, above).
+      //
+      // Note that our simple check whether something has already been seen is
+      // slightly stricter than we need, for example:
+      //
+      //    (select (A) (A) ..)
+      //
+      // Both arms are identical. We will reach the select twice, and assume the
+      // worst at that point, even though we could allow this. The assumption in
+      // this code is that often things like such a redundant select will be removed
+      // by other optimizations anyhow.
+      if (seen.count(child)) {
+        return fail();
+      }
+      seen.insert(child);
+
       auto* parent = parents.getParent(child);
 
       // If the parent may let us escape, then we are done.
@@ -158,6 +171,7 @@ struct Heap2LocalOptimizer {
             if (!exclusiveGets.count(get)) {
               // We do not know if this get is exclusive yet, so check it.
               // no we need the sets tath ten enddd
+  waka
               exclusiveGets.insert(get);
             }
 
@@ -177,6 +191,9 @@ struct Heap2LocalOptimizer {
 
     return true;
   }
+
+  // All the expressions we have already looked at.
+  std::unordered_set<Expression*> seen;
 
   // Checks if a parent's use of a child may cause it to escape.
   bool escapesViaParent(Expression* child, Expression* parent) {
