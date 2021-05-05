@@ -3,6 +3,7 @@
 
 (module
   (type $struct.A (struct (field (mut i32)) (field (mut f64))))
+  (type $struct.packed (struct (field (mut i8))))
 
   ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (drop
@@ -136,6 +137,24 @@
     (struct.set $struct.A 0
       (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
+      )
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $packed
+  ;; CHECK-NEXT:  (struct.set $struct.packed 0
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.packed
+  ;; CHECK-NEXT:    (rtt.canon $struct.packed)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $packed
+    ;; we do not optimize packed structs yet
+    (struct.set $struct.packed 0
+      (struct.new_default_with_rtt $struct.packed
+        (rtt.canon $struct.packed)
       )
       (i32.const 1)
     )
