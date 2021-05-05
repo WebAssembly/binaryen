@@ -39,7 +39,8 @@ namespace {
 struct Heap2LocalOptimizer {
   Function* func;
   Module* module;
-
+  const PassOptions& passOptions;
+  
   // To find allocations that do not escape, we must track locals so that we
   // can see which gets refer to the same allocation.
   // TODO: only scan reference types
@@ -58,8 +59,8 @@ struct Heap2LocalOptimizer {
 
   ExpressionReplacer replacer;
 
-  Heap2LocalOptimizer(Function* func, Module* module)
-    : localGraph(func), parents(func->body), branchTargets(func->body),
+  Heap2LocalOptimizer(Function* func, Module* module, const& PassOptions passOptions)
+    : passOptions(passOptions), localGraph(func), parents(func->body), branchTargets(func->body),
       allocations(func->body) {
     // We need to track what each set influences, to see where its value can
     // flow to.
@@ -250,7 +251,7 @@ struct Heap2LocalOptimizer {
     for (auto* read : reads) {
       replacer.replacements[read] = builder.makeSequence(
         builder.makeDrop(read->ref),
-        builder.makeLocalGet(localIndexes[read->index], fields[i].type));
+        builder.makeLocalGet(localIndexes[read->index], fields[read->index].type));
     }
 
     return true;
@@ -304,7 +305,7 @@ struct Heap2LocalOptimizer {
 
   bool flowsThroughParent(Expression* child, Expression* parent) {
     return child == Properties::getImmediateFallthrough(
-                      parent, getPassOptions(), getModule()->features);
+                      parent, passOptions, module->features);
   }
 
   // Checks whether a single value flows here. That is, we need to avoid things
@@ -324,7 +325,7 @@ struct Heap2LocalOptimizer {
   // out and via locals.
   bool flowsSingleValue(Expression* value) {
     auto* fallthrough = Properties::getFallthrough(
-      value, getPassOptions(), getModule()->features);
+      value, passOptions, module->features);
     if (fallthrough->is<StructNew>()) {
       // This is our allocation (one allocation cannot fall through another, so
       // it must be ours).
@@ -396,7 +397,7 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // Multiple rounds of optimization may work, as once we turn one allocation
     // into locals, references written to its fields become references written
     // to locals, which we may see do not escape;
-    while (Heap2LocalOptimizer(func->body, getModule()).optimized) {
+    while (Heap2LocalOptimizer(func->body, getModule(), getPassOptions()).optimized) {
     }
   }
 };
