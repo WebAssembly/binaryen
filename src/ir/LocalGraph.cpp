@@ -281,18 +281,24 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
   }
 }
 
-void LocalGraph::computeInfluences() {
+void LocalGraph::computeSetInfluences() {
+  for (auto& pair : locations) {
+    auto* curr = pair.first;
+    if (auto* get = curr->cast<LocalGet>()) {
+      for (auto* set : getSetses[get]) {
+        setInfluences[set].insert(get);
+      }
+    }
+  }
+}
+
+void LocalGraph::computeGetInfluences() {
   for (auto& pair : locations) {
     auto* curr = pair.first;
     if (auto* set = curr->dynCast<LocalSet>()) {
       FindAll<LocalGet> findAll(set->value);
       for (auto* get : findAll.list) {
         getInfluences[get].insert(set);
-      }
-    } else {
-      auto* get = curr->cast<LocalGet>();
-      for (auto* set : getSetses[get]) {
-        setInfluences[set].insert(get);
       }
     }
   }

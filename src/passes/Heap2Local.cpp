@@ -34,36 +34,33 @@ namespace wasm {
 
 namespace {
 
-struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
-  bool isFunctionParallel() override { return true; }
+struct Heap2LocalOptimizer {
+  Function* func;
+  Module* module;
 
-  Pass* create() override { return new Heap2Local(); }
+  // To find allocations that do not escape, we must track locals so that we
+  // can see which gets refer to the same allocation.
+  // TODO: only scan reference types
+  LocalGraph localGraph;
 
-  void doWalkFunction(Function* func) {
-    // Multiple rounds of optimization may work, as once we turn one allocation
-    // into locals, references written to its fields become references written
-    // to locals, which we may see do not escape;
-    while (optimize(func->body)) {
-    }
-  }
+  // To find what escapes, we need to follow where values flow, both up to
+  // parents, and via branches.
+  Parents parents;
+  BranchUtils::BranchTargets branchTargets;
 
-  bool optimize(Function* func) {
-    // To find allocations that do not escape, we must track locals so that we
-    // can see which gets refer to the same allocation.
-    LocalGraph localGraph(func);
+  // All the allocations in the function.
+  // TODO: Arrays (of constant size) as well.
+  FindAll<StructNew> allocations;
 
-    // All the allocations in the function.
-    // TODO: Arrays (of constant size) as well.
-    FindAll<StructNew> allocations(func->body);
+  bool optimized = false;
 
-    // To find what escapes, we need to follow where values flow, both up to
-    // parents, and via branches.
-    Parents parents(func->body);
-    BranchUtils::BranchTargets targets(func->body);
+  Heap2LocalOptimizer(Function* func, Module* module) : localGraph(func),
+      parents(func->body), branchTargets(func->body), allocations(func->body) {
 
-    // First, find all the things that do not escape.
     for (auto* allocation : allocations.list) {
-      analyzeAllocation(allocation);
+      if (canConvertToLocals(allocation, parents, branchTargets, localGraph)) {
+        ..
+      }
     }
 
     bool optimized = false;
@@ -77,9 +74,7 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
 
   // Analyze and allocation, finding out if it escapes. This populates the
   // "escapes" data structure.
-  void analyzeAllocation(StructNew* allocation,
-                         const Parents& parents,
-                         const BranchUtils::BranchTargets& targets) {
+  void canConvertToLocals(StructNew* allocation) {
     // A queue of expressions that have already been checked themselves, and we
     // need to check if by flowing to their parents they may escape.
     UniqueNonrepeatingDeferredQueue<Expression*> flows;
@@ -105,7 +100,7 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
       }
 
       // If the parent may send us on a branch, we will need to look at the
-      // target of the branch.
+      // branch target(s).
       for (auto name : branchesSentByParent(child, parent)) {
         flows.push(targets.getTarget(name));
       }
@@ -126,6 +121,12 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
       // Assume escaping unless we are certain otherwise.
       bool escapes = true;
 
+      // Local operations. Locals by themselves do not escape; the analysis
+      // tracks where locals are used.
+      void visitLocalGet(RefIs* curr) { escapes = false; }
+      void visitLocalSet(RefIs* curr) { escapes = false; }
+
+      // Reference operations
       void visitRefIs(RefIs* curr) { escapes = false; }
       void visitRefEq(RefEq* curr) { escapes = false; }
       void visitI31Get(I31Get* curr) { escapes = false; }
@@ -164,6 +165,20 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
         }
       });
     return names;
+  }
+};
+
+struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new Heap2Local(); }
+
+  void doWalkFunction(Function* func) {
+    // Multiple rounds of optimization may work, as once we turn one allocation
+    // into locals, references written to its fields become references written
+    // to locals, which we may see do not escape;
+    while (Heap2LocalOptimizer(func->body).optimized) {
+    }
   }
 };
 

@@ -55,7 +55,13 @@ struct LocalGraph {
   // Optional: compute the influence graphs between sets and gets
   // (useful for algorithms that propagate changes).
 
-  void computeInfluences();
+  void computeSetInfluences();
+  void computeGetInfluences();
+
+  void computeInfluences() {
+    computeSetInfluences();
+    computeGetInfluences();
+  }
 
   // for each get, the sets whose values are influenced by that get
   std::unordered_map<LocalGet*, std::unordered_set<LocalSet*>> getInfluences;
