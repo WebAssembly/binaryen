@@ -69,27 +69,8 @@ template<typename T> void operateOnScopeNameUses(Expression* expr, T func) {
 #include "wasm-delegations-fields.h"
 }
 
-// Similar to operateOnScopeNameUses, but also passes in the type that is sent
-// if the branch is taken. The type is none if there is no value.
-template<typename T>
-void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
-  operateOnScopeNameUses(expr, [&](Name& name) {
-    // There isn't a delegate mechanism for getting a sent value, so do a direct
-    // if-else chain. This will need to be updated with new br variants.
-    if (auto* br = expr->dynCast<Break>()) {
-      func(name, br->value ? br->value->type : Type::none);
-    } else if (auto* sw = expr->dynCast<Switch>()) {
-      func(name, sw->value ? sw->value->type : Type::none);
-    } else if (auto* br = expr->dynCast<BrOn>()) {
-      func(name, br->getCastType());
-    } else {
-      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
-    }
-  });
-}
-
 // Similar to operateOnScopeNameUses, but also passes in the expression that is
-// sent ifthe branch is taken. nullptr is given if there is no value.
+// sent if the branch is taken. nullptr is given if there is no value.
 template<typename T>
 void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
   operateOnScopeNameUses(expr, [&](Name& name) {
@@ -104,6 +85,15 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
+  });
+}
+
+// Similar to operateOnScopeNameUses, but also passes in the type that is sent
+// if the branch is taken. The type is none if there is no value.
+template<typename T>
+void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
+  operateOnScopeNameUsesAndSentValues(expr, [&](Name& name, Expression* value) {
+    func(name, value ? value->type : Type::none);
   });
 }
 
@@ -357,7 +347,7 @@ public:
 struct BranchTargets {
   BranchTargets(Expression* expr) { inner.walk(expr); }
 
-  Expression* getTarget(Expression* curr) { return inner.map[curr]; }
+  Expression* getTarget(Name name) { return inner.map[name]; }
 
 private:
   struct Inner
