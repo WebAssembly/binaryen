@@ -221,4 +221,55 @@
       )
     )
   )
+
+  ;; FIXME
+  ;; CHECK:      (func $with-init-values-loop
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (block $block (result f64)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.get $struct.A 0
+  ;; CHECK-NEXT:        (local.get $ref)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (f64.const 2.1828)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $with-init-values-loop
+    (local $ref (ref null $struct.A))
+    ;; A testcase showing why we need extra temp locals when assigning
+    ;; the initial values: they must all be present at once when the
+    ;; "allocation" happens, as the local might be used before.
+    (loop $loop
+      (local.set $ref
+        (struct.new_with_rtt $struct.A
+          (i32.const 2)
+          (block (result f64)
+            ;; imagine that we check if the reference is not null here, and if
+            ;; not then we read from the struct.
+            (drop
+              ;; A get from the struct. This should return the old value,
+              ;; before the assignment of "2" a few lines above us
+              (struct.get $struct.A 0
+                (local.get $ref)
+              )
+            )
+            (f64.const 2.1828)
+          )
+          (rtt.canon $struct.A)
+        )
+        (struct.set $struct.A 0
+          (local.get $ref)
+          (i32.const 3)
+        )
+      )
+    )
+  )
 )
