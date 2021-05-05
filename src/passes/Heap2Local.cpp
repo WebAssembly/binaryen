@@ -40,7 +40,7 @@ struct Heap2LocalOptimizer {
   Function* func;
   Module* module;
   const PassOptions& passOptions;
-  
+
   // To find allocations that do not escape, we must track locals so that we
   // can see which gets refer to the same allocation.
   // TODO: only scan reference types
@@ -59,9 +59,11 @@ struct Heap2LocalOptimizer {
 
   ExpressionReplacer replacer;
 
-  Heap2LocalOptimizer(Function* func, Module* module, const PassOptions& passOptions)
-    : passOptions(passOptions), localGraph(func), parents(func->body), branchTargets(func->body),
-      allocations(func->body) {
+  Heap2LocalOptimizer(Function* func,
+                      Module* module,
+                      const PassOptions& passOptions)
+    : passOptions(passOptions), localGraph(func), parents(func->body),
+      branchTargets(func->body), allocations(func->body) {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
@@ -235,7 +237,8 @@ struct Heap2LocalOptimizer {
       // that is, there might be a previous value.
       std::vector<Expression*> contents;
       for (Index i = 0; i < localIndexes.size(); i++) {
-        contents.push_back(builder.makeConstantExpression(Literal::makeZero(fields[i].type)));
+        contents.push_back(
+          builder.makeConstantExpression(Literal::makeZero(fields[i].type)));
       }
       contents.push_back(allocation);
       replacer.replacements[allocation] = builder.makeBlock(contents);
@@ -249,9 +252,10 @@ struct Heap2LocalOptimizer {
         builder.makeLocalSet(localIndexes[write->index], write->value));
     }
     for (auto* read : reads) {
-      replacer.replacements[read] = builder.makeSequence(
-        builder.makeDrop(read->ref),
-        builder.makeLocalGet(localIndexes[read->index], fields[read->index].type));
+      replacer.replacements[read] =
+        builder.makeSequence(builder.makeDrop(read->ref),
+                             builder.makeLocalGet(localIndexes[read->index],
+                                                  fields[read->index].type));
     }
 
     return true;
@@ -324,8 +328,8 @@ struct Heap2LocalOptimizer {
   // context we use it, which is to follow the uses of an allocation via flowing
   // out and via locals.
   bool flowsSingleValue(Expression* value) {
-    auto* fallthrough = Properties::getFallthrough(
-      value, passOptions, module->features);
+    auto* fallthrough =
+      Properties::getFallthrough(value, passOptions, module->features);
     if (fallthrough->is<StructNew>()) {
       // This is our allocation (one allocation cannot fall through another, so
       // it must be ours).
