@@ -77,4 +77,37 @@
       )
     )
   )
+
+  ;; CHECK:      (func $one-get-b
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (f64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:       (rtt.canon $struct.A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $one-get-b
+    ;; similar to the above, but using a different field index.
+    (drop
+      (struct.get $struct.A 1
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+      )
+    )
+  )
 )
