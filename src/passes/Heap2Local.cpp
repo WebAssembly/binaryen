@@ -325,7 +325,7 @@ struct Heap2LocalOptimizer {
       }
     }
 
-    if (rewriter.writes.empty() && rewriter.reads.empty()) {
+    if (rewriter.sets.empty() && rewriter.writes.empty() && rewriter.reads.empty()) {
       // The allocation is never used in any significant way in this function,
       // so there is nothing worth optimizing here.
       return false;

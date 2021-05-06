@@ -33,16 +33,28 @@
 
   ;; CHECK:      (func $to-local
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
-  ;; CHECK-NEXT:  (local.set $ref
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
-  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $to-local
     (local $ref (ref null $struct.A))
-    ;; While set to a local, this allocation has no get/set operations, so we
-    ;; ignore it.
+    ;; While set to a local, this allocation has no get/set operations. Other
+    ;; optimizations can remove it, but so can we, turning the set into a
+    ;; drop (and adding some unnecessary code to allocate the values, which we
+    ;; depend on other passes to remove).
     (local.set $ref
       (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
