@@ -804,6 +804,55 @@
     )
   )
 
+  ;; CHECK:      (func $initialize-with-reference
+  ;; CHECK-NEXT:  (local $0 (ref null $struct.recursive))
+  ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
+  ;; CHECK-NEXT:  (local $2 (ref null $struct.recursive))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.recursive))
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (struct.new_default_with_rtt $struct.recursive
+  ;; CHECK-NEXT:      (rtt.canon $struct.recursive)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.recursive
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (rtt.canon $struct.recursive)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $initialize-with-reference
+    (local $0 (ref null $struct.recursive))
+    (local.set $0
+      ;; The outer allocation can be optimized, as it does not escape.
+      (struct.new_with_rtt $struct.recursive
+        ;; The inner allocation should not prevent the outer one from being
+        ;; optimized through some form of confusion.
+        (struct.new_default_with_rtt $struct.recursive
+          (rtt.canon $struct.recursive)
+        )
+        (rtt.canon $struct.recursive)
+      )
+    )
+    (drop
+      (struct.get $struct.recursive 0
+        (local.get $0)
+      )
+    )
+  )
+
   ;; CHECK:      (func $escape-flow-out (result anyref)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (struct.set $struct.A 0
