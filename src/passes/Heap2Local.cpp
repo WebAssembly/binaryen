@@ -289,6 +289,7 @@ struct Heap2LocalOptimizer {
 
       auto* parent = parents.getParent(child);
 
+//std::cout << "getPCI\n" << *parent << " is parent of\n" << *child << '\n' << int(getParentChildInteraction(parent, child)) << '\n';
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {
           // If the parent may let us escape then we are done.
@@ -385,6 +386,9 @@ struct Heap2LocalOptimizer {
       // otherwise. If this is set to true, then do not need to check any
       // further. If it remains false, then we will analyze the value that
       // falls through later to check for mixing.
+      //
+      // Note that this does not need to be set for expressions of type none,
+      // as we can see later that the value does not continue onwards.
       bool fullyConsumes = false;
 
       // General operations
@@ -432,7 +436,9 @@ struct Heap2LocalOptimizer {
       return ParentChildInteraction::Escapes;
     }
 
-    if (checker.fullyConsumes) {
+    // If the parent has type none, then it by definition fully consumes the
+    // value as nothing continues onward.
+    if (checker.fullyConsumes || parent->type == Type::none) {
       return ParentChildInteraction::FullyConsumes;
     }
 
