@@ -192,7 +192,7 @@ struct MergeLocals
       // the live range unless we are definitely removing a conflict, same
       // logic as before).
       LocalGraph postGraph(func);
-      postGraph.computeInfluences();
+      postGraph.computeSetInfluences();
       for (auto& pair : optimizedToCopy) {
         auto* copy = pair.first;
         auto* trivial = pair.second;
