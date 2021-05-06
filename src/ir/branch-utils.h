@@ -88,6 +88,25 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
   });
 }
 
+// Similar to operateOnScopeNameUses, but also passes in the expression that is
+// sent if the branch is taken. nullptr is given if there is no value.
+template<typename T>
+void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value);
+    } else if (auto* br = expr->dynCast<BrOn>()) {
+      func(name, br->ref);
+    } else {
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
+    }
+  });
+}
+
 // Perform a generic operation on definitions of scope names in an expression.
 // The provided function receives a Name& which it can modify if it needs to.
 template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
@@ -331,6 +350,27 @@ public:
 #endif
     return result;
   }
+};
+
+// Provides a map of branch target names to the expressions that branch to
+// them.
+struct BranchTargets {
+  BranchTargets(Expression* expr) { inner.walk(expr); }
+
+  Expression* getTarget(Name name) { return inner.map[name]; }
+
+private:
+  struct Inner : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name name) {
+        if (name.is()) {
+          map[name] = curr;
+        }
+      });
+    }
+
+    std::map<Name, Expression*> map;
+  } inner;
 };
 
 } // namespace BranchUtils
