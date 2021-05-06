@@ -329,14 +329,12 @@
   ;; CHECK-NEXT: )
   (func $simple-one-local-get (result f64)
     (local $ref (ref null $struct.A))
-    ;; A simple optimizable allocation only used in one set, and also stored
-    ;; to a local. The local.set should not prevent our optimization, and the
-    ;; local.set can be turned into a drop.
     (local.set $ref
       (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
       )
     )
+    ;; A simple optimizable allocation only used in one get, via a local.
     (struct.get $struct.A 1
       (local.get $ref)
     )
@@ -683,7 +681,7 @@
     ;; Sending our allocation through a branch does not bother us.
     (struct.get $struct.A 1
       (block $block (result (ref null $struct.A))
-        ;; Before the reference are some things that should not confuse us.
+        ;; This call should not confuse us.
         (call $send-ref
           (ref.null $struct.A)
         )
@@ -1261,7 +1259,7 @@
   (func $multi-separate-same-local-index
     (local $ref (ref null $struct.A))
     ;; Multiple independent things we can optimize that use the same local
-    ;; index, but they do not conflict.
+    ;; index, but they do not conflict in their live ranges.
     (local.set $ref
       (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
