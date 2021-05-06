@@ -183,8 +183,8 @@ struct Heap2LocalOptimizer {
 
         // Store the initial values into the temp locals.
         for (Index i = 0; i < tempIndexes.size(); i++) {
-          contents.push_back(builder.makeLocalSet(
-            tempIndexes[i], allocation->operands[i]));
+          contents.push_back(
+            builder.makeLocalSet(tempIndexes[i], allocation->operands[i]));
         }
 
         // Copy them to the normal ones.
@@ -198,8 +198,8 @@ struct Heap2LocalOptimizer {
         // allocation is not used, but we need something with the right type
         // anyhow).
         for (Index i = 0; i < tempIndexes.size(); i++) {
-          allocation->operands[i] = builder.makeLocalGet(
-            localIndexes[i], fields[i].type);
+          allocation->operands[i] =
+            builder.makeLocalGet(localIndexes[i], fields[i].type);
         }
       } else {
         // Set the default values, and replace the allocation with a block that
@@ -227,8 +227,8 @@ struct Heap2LocalOptimizer {
       // Drop the ref (leaving it to other opts to remove, when possible), and
       // write the data to the local instead of the heap allocation.
       replaceCurrent(builder.makeSequence(
-          builder.makeDrop(curr->ref),
-          builder.makeLocalSet(localIndexes[curr->index], curr->value)));
+        builder.makeDrop(curr->ref),
+        builder.makeLocalSet(localIndexes[curr->index], curr->value)));
     }
 
     void visitStructGet(StructGet* curr) {
@@ -246,7 +246,8 @@ struct Heap2LocalOptimizer {
   enum class ParentChildInteraction {
     // The parent lets the child escape. E.g. the parent is a call.
     Escapes,
-    // The parent fully consumes the child in a safe, non-escaping way, and after
+    // The parent fully consumes the child in a safe, non-escaping way, and
+    // after
     // consuming it nothing remains to flow further through the parent. E.g.
     // the parent is a struct.get, which reads from the allocated heap value and
     // does nothing more with the reference.
@@ -296,8 +297,8 @@ struct Heap2LocalOptimizer {
         }
         case ParentChildInteraction::FullyConsumes: {
           // If the parent consumes us without escaping (e.g. the parent is a
-          // StructGet of the allocation), then all is well, and we do not need to
-          // check for flowing through the parent.
+          // StructGet of the allocation), then all is well, and we do not need
+          // to check for flowing through the parent.
           break;
         }
         case ParentChildInteraction::Flows: {
@@ -349,7 +350,8 @@ struct Heap2LocalOptimizer {
       }
     }
 
-    if (rewriter.sets.empty() && rewriter.writes.empty() && rewriter.reads.empty()) {
+    if (rewriter.sets.empty() && rewriter.writes.empty() &&
+        rewriter.reads.empty()) {
       // The allocation is never used in any significant way in this function,
       // so there is nothing worth optimizing here.
       return false;
@@ -368,7 +370,8 @@ struct Heap2LocalOptimizer {
   // All the expressions we have already looked at.
   std::unordered_set<Expression*> seen;
 
-  ParentChildInteraction getParentChildInteraction(Expression* parent, Expression* child) {
+  ParentChildInteraction getParentChildInteraction(Expression* parent,
+                                                   Expression* child) {
     // If there is no parent then we are the body of the function, and that
     // means we escape by flowing to the caller.
     if (!parent) {
@@ -444,7 +447,7 @@ struct Heap2LocalOptimizer {
     // Finally, check for mixing. If the child is the immediate fallthrough
     // of the parent then no other values can be mixed in.
     if (Properties::getImmediateFallthrough(
-                      parent, passOptions, module->features) == child) {
+          parent, passOptions, module->features) == child) {
       return ParentChildInteraction::Flows;
     }
 
