@@ -1423,7 +1423,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1445,15 +1447,14 @@
     (struct.set $struct.A 0
       ;; We can see that the input to this RefAsNonNull is always non-null, as
       ;; it is our allocation, and so it does not prevent us from optimizing
-      ;; here. We should also not see the ref.as_non_null in the output, as we
-      ;; optimize it out.
+      ;; here.
       (ref.as_non_null
         (local.get $ref)
       )
       (i32.const 1)
     )
+    ;; Another RefAsNonNull, to check we do not modify irrelevant ones.
     (drop
-      ;; Another RefAsNonNull, to check we do not modify irrelevant ones.
       (ref.as_non_null
         (ref.null any)
       )

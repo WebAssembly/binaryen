@@ -240,18 +240,6 @@ struct Heap2LocalOptimizer {
                              builder.makeLocalGet(localIndexes[curr->index],
                                                   fields[curr->index].type)));
     }
-
-    void visitRefAs(RefAs* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      if (curr->op == RefAsNonNull) {
-        // As it is our allocation that flows through here, we know it is not
-        // null, and can remove this node.
-        replaceCurrent(curr->value);
-      }
-    }
   };
 
   enum class ParentChildInteraction {
@@ -431,6 +419,9 @@ struct Heap2LocalOptimizer {
         if (curr->op == RefAsNonNull) {
           // As it is our allocation that flows through here, we know it is not
           // null, and can mark it as safe to optimize.
+          //
+          // Note that while we can look through it, we cannot optimize it out
+          // later: the outside might depend on receiving a non-nullable type.
           escapes = false;
         }
       }
