@@ -810,7 +810,37 @@
       )
       (i32.const 1)
     )
-    ;; The allocation escapes out to the caller.
+    ;; The allocation escapes out to the caller by flowing out.
     (local.get $ref)
+  )
+
+  ;; CHECK:      (func $escape-return (result anyref)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (struct.set $struct.A 0
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $escape-return (result anyref)
+    (local $ref (ref null $struct.A))
+    (struct.set $struct.A 0
+      (local.tee $ref
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+      )
+      (i32.const 1)
+    )
+    ;; The allocation escapes out to the caller by a return.
+    (return
+      (local.get $ref)
+    )
   )
 )
