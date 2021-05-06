@@ -96,9 +96,9 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
     // There isn't a delegate mechanism for getting a sent value, so do a direct
     // if-else chain. This will need to be updated with new br variants.
     if (auto* br = expr->dynCast<Break>()) {
-      func(name, br->value ? br->value : nullptr);
+      func(name, br->value);
     } else if (auto* sw = expr->dynCast<Switch>()) {
-      func(name, sw->value ? sw->value : nullptr);
+      func(name, sw->value);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->ref);
     } else {
