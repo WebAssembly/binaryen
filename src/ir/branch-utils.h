@@ -352,7 +352,7 @@ public:
   }
 };
 
-// Provides a map of branch target names to the expression that corresponds to
+// Provides a map of branch target names to the expressions that branch to
 // them.
 struct BranchTargets {
   BranchTargets(Expression* expr) { inner.walk(expr); }
