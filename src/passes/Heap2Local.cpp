@@ -389,8 +389,10 @@ struct Heap2LocalOptimizer {
       // further. If it remains false, then we will analyze the value that
       // falls through later to check for mixing.
       //
-      // Note that this does not need to be set for expressions of type none,
-      // as we can see later that the value does not continue onwards.
+      // Note that this does not need to be set for expressions if their type
+      // proves that the value does not continue onwards (e.g. if their type is
+      // none, or not a reference type), but for clarity some do still mark this
+      // field as true when it is clearly so.
       bool fullyConsumes = false;
 
       // General operations
@@ -438,9 +440,10 @@ struct Heap2LocalOptimizer {
       return ParentChildInteraction::Escapes;
     }
 
-    // If the parent has type none, then it by definition fully consumes the
-    // value as nothing continues onward.
-    if (checker.fullyConsumes || parent->type == Type::none) {
+    // If the parent returns a type that is not a reference, then it by
+    // definition it fully consumes the value as it does not flow our
+    // allocation onward.
+    if (checker.fullyConsumes || !parent->type.isRef()) {
       return ParentChildInteraction::FullyConsumes;
     }
 
