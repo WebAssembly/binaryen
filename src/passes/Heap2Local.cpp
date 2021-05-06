@@ -124,10 +124,9 @@ struct Heap2LocalOptimizer {
     // optimization.
     std::unordered_set<LocalSet*> sets;
 
-    // We must track all the reads and writes from the allocation so that we can
+    // We must track all expressions that the allocation reaches, so that we can
     // fix them up at the end, if the optimization ends up possible.
-    std::unordered_set<StructSet*> writes;
-    std::unordered_set<StructGet*> reads;
+    std::unordered_set<Expression*> reached;
 
     // Maps indexes in the struct to the local index that will replace them.
     std::vector<Index> localIndexes;
@@ -143,7 +142,7 @@ struct Heap2LocalOptimizer {
     }
 
     void visitLocalSet(LocalSet* curr) {
-      if (!sets.count(curr)) {
+      if (!reached.count(curr)) {
         return;
       }
 
@@ -220,7 +219,7 @@ struct Heap2LocalOptimizer {
     }
 
     void visitStructSet(StructSet* curr) {
-      if (!writes.count(curr)) {
+      if (!reached.count(curr)) {
         return;
       }
 
@@ -232,7 +231,7 @@ struct Heap2LocalOptimizer {
     }
 
     void visitStructGet(StructGet* curr) {
-      if (!reads.count(curr)) {
+      if (!reached.count(curr)) {
         return;
       }
 
@@ -243,6 +242,10 @@ struct Heap2LocalOptimizer {
     }
 
     void visitRefAs(RefAs* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
       if (curr->op == RefAsNonNull) {
         // As it is our allocation that flows through here, we know it is not
         // null, and can remove this node.
@@ -344,22 +347,18 @@ struct Heap2LocalOptimizer {
         }
       }
 
-      if (auto* write = parent->dynCast<StructSet>()) {
-        rewriter.writes.insert(write);
-      }
-      if (auto* read = parent->dynCast<StructGet>()) {
-        rewriter.reads.insert(read);
-      }
-
       // If the parent may send us on a branch, we will need to look at the
       // branch target(s).
       for (auto name : branchesSentByParent(child, parent)) {
         flows.push(branchTargets.getTarget(name));
       }
+
+      // If we got to here, then we can continue to hope that we can optimize
+      // this allocation. Mark the parent as reached by it, and continue.
+      rewriter.reached.insert(parent);
     }
 
-    if (rewriter.sets.empty() && rewriter.writes.empty() &&
-        rewriter.reads.empty()) {
+    if (rewriter.sets.empty() && rewriter.reached.empty()) {
       // The allocation is never used in any significant way in this function,
       // so there is nothing worth optimizing here.
       return false;
