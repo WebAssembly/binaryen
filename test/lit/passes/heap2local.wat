@@ -1028,11 +1028,14 @@
   ;; CHECK-NEXT:      (local.get $ref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $ref)
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $ref)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.get $2)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1093,8 +1096,11 @@
       (loop $inner
         (struct.set $struct.A 0
           (local.get $ref)
-          (struct.get $struct.A 0
-            (local.get $ref)
+          (i32.add
+            (struct.get $struct.A 0
+              (local.get $ref)
+            )
+            (i32.const 1)
           )
         )
         (br_if $inner
