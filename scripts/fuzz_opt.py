@@ -151,9 +151,7 @@ def randomize_fuzz_settings():
 
 IMPORTANT_INITIAL_CONTENTS = [
     os.path.join('lit', 'passes', 'optimize-instructions.wast'),
-    os.path.join('lit', 'passes', 'heap2local.wast'),
     os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
-    os.path.join('passes', 'Oz_fuzz-exec_all-features.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
@@ -1121,7 +1119,6 @@ if __name__ == '__main__':
               'speed:', counter / elapsed,
               'iters/sec, ', total_wasm_size / elapsed,
               'wasm_bytes/sec\n')
-        time.sleep(0.5)
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size
