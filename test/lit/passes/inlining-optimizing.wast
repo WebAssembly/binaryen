@@ -4,9 +4,22 @@
 (module
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
+ ;; CHECK:      (func $0
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
  (func $0
   (nop)
  )
+ ;; CHECK:      (func $1
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call_ref
+ ;; CHECK-NEXT:    (ref.cast
+ ;; CHECK-NEXT:     (ref.func $0)
+ ;; CHECK-NEXT:     (rtt.canon $none_=>_i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $1
   ;; $0 will be inlined into here. We will then optimize this function - but
   ;; we do so *without* optimizing $0 (as inlining-optimizing only optimizes
