@@ -840,6 +840,11 @@
       (struct.new_with_rtt $struct.recursive
         ;; The inner allocation should not prevent the outer one from being
         ;; optimized through some form of confusion.
+        ;; After the outer one is optimized, the inner one can be optimized in
+        ;; principle, as it can be seen to no longer escape. However, we depend
+        ;; on other optimizations to actually remove the outer allocation (like
+        ;; vacuum), and so it cannot be optimized. If we ran vaccum, and then
+        ;; additional iterations, this might be handled.
         (struct.new_default_with_rtt $struct.recursive
           (rtt.canon $struct.recursive)
         )
@@ -947,72 +952,6 @@
           (local.get $a)
           (rtt.canon $struct.nonnullable)
         )
-      )
-    )
-  )
-
-  ;; CHECK:      (func $multipass (param $C (ref $struct.recursive))
-  ;; CHECK-NEXT:  (local $B (ref null $struct.recursive))
-  ;; CHECK-NEXT:  (local $2 (ref null $struct.recursive))
-  ;; CHECK-NEXT:  (local $3 (ref null $struct.recursive))
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct.recursive))
-  ;; CHECK-NEXT:      (local.set $3
-  ;; CHECK-NEXT:       (local.tee $B
-  ;; CHECK-NEXT:        (struct.new_with_rtt $struct.recursive
-  ;; CHECK-NEXT:         (local.get $C)
-  ;; CHECK-NEXT:         (rtt.canon $struct.recursive)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $2
-  ;; CHECK-NEXT:       (local.get $3)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (struct.new_with_rtt $struct.recursive
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:       (rtt.canon $struct.recursive)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct.recursive 0
-  ;; CHECK-NEXT:    (local.get $B)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $multipass (param $C (ref $struct.recursive))
-    (local $B (ref null $struct.recursive))
-    ;; Multiple passes of optimizations are necessary to optimize this case,
-    ;; as we must remove on allocation to see that the one written to its field
-    ;; does not escape either.
-    ;;
-    ;; FIXME: This does not work yet, as we keep the outer allocation. It is
-    ;;        dropped, but we still keep it, and the inner allocation appears
-    ;;        to escape due to it.
-    ;;        TODO run vacuum internally after success?
-    (drop
-      (struct.get $struct.recursive 0
-        ;; Construct A -> B -> $C
-        (struct.new_with_rtt $struct.recursive
-          (local.tee $B
-            (struct.new_with_rtt $struct.recursive
-              (local.get $C)
-              (rtt.canon $struct.recursive)
-            )
-          )
-          (rtt.canon $struct.recursive)
-        )
-      )
-    )
-    ;; Another struct.get of B.
-    (drop
-      (struct.get $struct.recursive 0
-       (local.get $B)
       )
     )
   )

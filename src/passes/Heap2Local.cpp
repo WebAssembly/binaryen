@@ -512,14 +512,16 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
   Pass* create() override { return new Heap2Local(); }
 
   void doWalkFunction(Function* func) {
-    // Multiple rounds of optimization may work, as once we turn one allocation
-    // into locals, references written to its fields become references written
-    // to locals, which we may see do not escape;
-    bool optimized = false;
-    while (Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized) {
-      optimized = true;
-    }
-    if (optimized) {
+    // Multiple rounds of optimization may work in theory, as once we turn one
+    // allocation into locals, references written to its fields become
+    // references written to locals, which we may see do not escape. However,
+    // this does not work yet, since we do not remove the original allocation -
+    // we just "detach" it from other things and then depend on other
+    // optimizations to remove it. That means this pass must be interleaved with
+    // vacuum, in particular, to optimize such nested allocations.
+    // TODO Consider running multiple iterations here, and running vacuum in
+    //      between them.
+    if (Heap2LocalOptimizer(func, getModule(), getPassOptions()).optimized) {
       TypeUpdating::handleNonDefaultableLocals(func, *getModule());
     }
   }
