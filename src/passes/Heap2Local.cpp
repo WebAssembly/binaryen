@@ -394,12 +394,12 @@ struct Heap2LocalOptimizer {
     struct Checker : public Visitor<Checker> {
       Expression* child;
 
-      // Assume escaping (or some other problem we cannot handle) unless we are
+      // Assume escaping (or some other problem we cannot analyze) unless we are
       // certain otherwise.
       bool escapes = true;
 
       // Assume we do not fully consume the value unless we are certain
-      // otherwise. If this is set to true, then do not need to check any
+      // otherwise. If this is set to true, then we do not need to check any
       // further. If it remains false, then we will analyze the value that
       // falls through later to check for mixing.
       //
@@ -415,6 +415,9 @@ struct Heap2LocalOptimizer {
         // We do not mark fullyConsumes as the value may continue through this
         // and other control flow structures.
       }
+      // Note that If is not supported here, because for our value to flow
+      // through it there must be an if-else, and that means there is no single
+      // value falling through anyhow.
       void visitLoop(Loop* curr) { escapes = false; }
       void visitDrop(Drop* curr) {
         escapes = false;
@@ -428,8 +431,7 @@ struct Heap2LocalOptimizer {
       void visitLocalGet(LocalGet* curr) { escapes = false; }
       void visitLocalSet(LocalSet* curr) { escapes = false; }
 
-      // Reference operations. If we accept them here, we also need to add code
-      // to replace them properly if we optimize. TODO add more
+      // Reference operations. TODO add more
       void visitRefAs(RefAs* curr) {
         // TODO General OptimizeInstructions integration, that is, since we know
         //      that our allocation is what flows into this RefAs, we can
@@ -439,7 +441,8 @@ struct Heap2LocalOptimizer {
           // null, and can mark it as safe to optimize.
           //
           // Note that while we can look through it, we cannot optimize it out
-          // later: the outside might depend on receiving a non-nullable type.
+          // later: the outside might depend on receiving a non-nullable type
+          // (even though we have proven that it cannot be null).
           escapes = false;
         }
       }
@@ -468,9 +471,8 @@ struct Heap2LocalOptimizer {
       return ParentChildInteraction::Escapes;
     }
 
-    // If the parent returns a type that is not a reference, then it by
-    // definition it fully consumes the value as it does not flow our
-    // allocation onward.
+    // If the parent returns a type that is not a reference, then by definition
+    // it fully consumes the value as it does not flow our allocation onward.
     if (checker.fullyConsumes || !parent->type.isRef()) {
       return ParentChildInteraction::FullyConsumes;
     }
