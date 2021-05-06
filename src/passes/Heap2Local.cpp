@@ -440,7 +440,6 @@ struct Heap2LocalOptimizer {
         fullyConsumes = true;
       }
 
-
       // TODO Array and I31 operations
     } checker;
 
