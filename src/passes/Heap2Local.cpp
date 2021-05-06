@@ -358,6 +358,8 @@ struct Heap2LocalOptimizer {
       void visitBlock(Block* curr) { escapes = false; }
       void visitLoop(Loop* curr) { escapes = false; }
       void visitDrop(Drop* curr) { escapes = false; }
+      void visitBreak(Break* curr) { escapes = false; }
+      void visitSwitch(Switch* curr) { escapes = false; }
 
       // Local operations. Locals by themselves do not escape; the analysis
       // tracks where locals are used.
