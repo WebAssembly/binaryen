@@ -9,6 +9,8 @@
 
   (type $struct.nondefaultable (struct (field (rtt $struct.A))))
 
+  (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
+
   ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
@@ -753,5 +755,62 @@
     (struct.get $struct.A 1
       (local.get $ref)
     )
+  )
+
+  ;; CHECK:      (func $tee (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $1)
+  ;; CHECK-NEXT: )
+  (func $tee (result i32)
+    (local $ref (ref null $struct.A))
+    (struct.get $struct.A 0
+      ;; A tee flows out the value, and we can optimize this allocation.
+      (local.tee $ref
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $escape-flow-out (result anyref)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (struct.set $struct.A 0
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $ref)
+  ;; CHECK-NEXT: )
+  (func $escape-flow-out (result anyref)
+    (local $ref (ref null $struct.A))
+    (struct.set $struct.A 0
+      (local.tee $ref
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+      )
+      (i32.const 1)
+    )
+    ;; The allocation escapes out to the caller.
+    (local.get $ref)
   )
 )

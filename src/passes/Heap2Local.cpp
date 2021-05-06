@@ -149,7 +149,11 @@ struct Heap2LocalOptimizer {
 
       // We don't need any sets of the reference to any of the locals it
       // originally was written to.
-      replaceCurrent(builder.makeDrop(curr->value));
+      if (curr->isTee()) {
+        replaceCurrent(curr->value);
+      } else {
+        replaceCurrent(builder.makeDrop(curr->value));
+      }
     }
 
     void visitStructNew(StructNew* curr) {
