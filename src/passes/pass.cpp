@@ -436,7 +436,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("reorder-locals");
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
-  if (wasm->features.hasGC()) {
+  if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
     addIfNoDWARFIssues("heap2local");
   }
   // if we are willing to work hard, also optimize copies before coalescing
