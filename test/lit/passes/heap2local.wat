@@ -373,6 +373,50 @@
   (func $send-ref (param (ref null $struct.A))
   )
 
+  ;; CHECK:      (func $safe-to-drop (result f64)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result f64)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $safe-to-drop (result f64)
+    (local $ref (ref null $struct.A))
+    (local.set $ref
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    ;; An extra drop does not let the allocation escape.
+    (drop
+      (local.get $ref)
+    )
+    (struct.get $struct.A 1
+      (local.get $ref)
+      (i32.const 1)
+    )
+  )
+
   ;; CHECK:      (func $escape-via-call (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
