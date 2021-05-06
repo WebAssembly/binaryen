@@ -668,4 +668,40 @@
       )
     )
   )
+
+  ;; CHECK:      (func $non-exclusive-get (result f64)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct.A 1
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-exclusive-get (result f64)
+    (local $ref (ref null $struct.A))
+    (local.set $ref
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    (if (i32.const 1)
+      (local.set $ref
+        (ref.null $struct.A)
+      )
+    )
+    ;; A get that receives two different allocations, and so we should not try
+    ;; to optimize it.
+    (struct.get $struct.A 1
+      (local.get $ref)
+    )
+  )
 )
