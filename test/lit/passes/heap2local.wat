@@ -967,55 +967,153 @@
     )
   )
 
-  ;; CHECK:      (func $with-init-values-loop
+  ;; CHECK:      (func $before-loop-use-multi (param $x i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
-  ;; CHECK-NEXT:  (loop $loop
-  ;; CHECK-NEXT:   (local.set $ref
-  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.A
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (struct.get $struct.A 0
-  ;; CHECK-NEXT:        (local.get $ref)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 f64)
+  ;; CHECK-NEXT:  (loop $outer
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result (ref $struct.A))
+  ;; CHECK-NEXT:     (local.set $4
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $5
   ;; CHECK-NEXT:      (f64.const 2.1828)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (local.get $5)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br $loop)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (f64.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (loop $inner
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $ref)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br_if $inner
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $outer)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $with-init-values-loop
+  (func $before-loop-use-multi (param $x i32)
     (local $ref (ref null $struct.A))
-    ;; A testcase showing why we need extra temp locals when assigning
-    ;; the initial values: they must all be present at once when the
-    ;; "allocation" happens, as the local might be used before.
-    (loop $loop
+    ;; Allocate in a loop, and use that allocation multiple times in that loop
+    ;; in various ways inside
+    (loop $outer
       (local.set $ref
         (struct.new_with_rtt $struct.A
           (i32.const 2)
-          (block (result f64)
-            ;; imagine that we check if the reference is not null here, and if
-            ;; not then we read from the struct.
-            (drop
-              ;; A get from the struct. This should return the old value,
-              ;; before the assignment of "2" a few lines above us
-              (struct.get $struct.A 0
-                (local.get $ref)
-              )
-            )
-            (f64.const 2.1828)
-          )
+          (f64.const 2.1828)
           (rtt.canon $struct.A)
         )
-        (struct.set $struct.A 0
-          (local.get $ref)
-          (i32.const 3)
+      )
+      (drop
+        (struct.get $struct.A 0
+         (local.get $ref)
         )
       )
-      (br $loop)
+      (if (local.get $x)
+        (drop
+          (struct.get $struct.A 1
+            (local.get $ref)
+          )
+        )
+        (struct.set $struct.A 1
+          (local.get $ref)
+          (f64.const 42)
+        )
+      )
+      (loop $inner
+        (struct.set $struct.A 0
+          (local.get $ref)
+          (struct.get $struct.A 0
+            (local.get $ref)
+          )
+        )
+        (br_if $inner
+          (local.get $x)
+        )
+      )
+      (if (local.get $x)
+        (drop
+          (struct.get $struct.A 0
+            (local.get $ref)
+          )
+        )
+        (drop
+          (struct.get $struct.A 1
+            (local.get $ref)
+          )
+        )
+      )
+      (br $outer)
     )
   )
 )
