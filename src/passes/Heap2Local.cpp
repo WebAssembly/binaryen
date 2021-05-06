@@ -241,6 +241,14 @@ struct Heap2LocalOptimizer {
                              builder.makeLocalGet(localIndexes[curr->index],
                                                   fields[curr->index].type)));
     }
+
+    void visitRefAs(RefAs* curr) {
+      if (curr->op == RefAsNonNull) {
+        // As it is our allocation that flows through here, we know it is not
+        // null, and can remove this node.
+        replaceCurrent(curr->value);
+      }
+    }
   };
 
   enum class ParentChildInteraction {
@@ -381,7 +389,8 @@ struct Heap2LocalOptimizer {
     struct Checker : public Visitor<Checker> {
       Expression* child;
 
-      // Assume escaping unless we are certain otherwise.
+      // Assume escaping (or some other problem we cannot handle) unless we are
+      // certain otherwise.
       bool escapes = true;
 
       // Assume we do not fully consume the value unless we are certain
@@ -414,6 +423,20 @@ struct Heap2LocalOptimizer {
       void visitLocalGet(LocalGet* curr) { escapes = false; }
       void visitLocalSet(LocalSet* curr) { escapes = false; }
 
+      // Reference operations. If we accept them here, we also need to add code
+      // to replace them properly if we optimize. TODO add more
+      void visitRefAs(RefAs* curr) {
+        // TODO General OptimizeInstructions integration, that is, since we know
+        //      that our allocation is what flows into this RefAs, we can
+        //      know the exact outcome of the operation.
+        if (curr->op == RefAsNonNull) {
+          // As it is our allocation that flows through here, we know it is not
+          // null, and can mark it as safe to optimize.
+          escapes = false;
+        }
+      }
+
+      // GC operations.
       void visitStructSet(StructSet* curr) {
         // The reference does not escape (but the value is stored to memory and
         // therefore might).
@@ -427,8 +450,6 @@ struct Heap2LocalOptimizer {
         fullyConsumes = true;
       }
 
-      // TODO Reference operations like ref.is etc. They do not escape, but we
-      //      will need to replace them properly if we optimize.
 
       // TODO Array and I31 operations
     } checker;
