@@ -182,8 +182,8 @@ struct Heap2LocalOptimizer {
         // We should still see the old value there, not new_K. The temp locals
         // ensure that:
         //
-        //  temp_K   = value_X
-        //  temp_K+1 = (read local_K, value_Y)
+        //  temp_K   = new_K
+        //  temp_K+1 = (read local_K, new_K+1)
         //  ..
         //  local_K   = temp_K
         //  local_K+1 = temp_K+1
