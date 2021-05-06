@@ -316,7 +316,7 @@
     )
   )
 
-  ;; FIXME
+  ;; FIXME fix it and move to the endd
   ;; CHECK:      (func $with-init-values-loop
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (loop $loop
@@ -364,6 +364,43 @@
           (i32.const 3)
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $send-ref (param $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $send-ref (param (ref null $struct.A))
+  )
+
+  ;; CHECK:      (func $escape-via-call (result f64)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $send-ref
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct.A 1
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $escape-via-call (result f64)
+    (local $ref (ref null $struct.A))
+    (local.set $ref
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    ;; The allocation escapes into a call.
+    (call $send-ref
+      (local.get $ref)
+    )
+    (struct.get $struct.A 1
+      (local.get $ref)
+      (i32.const 1)
     )
   )
 )
