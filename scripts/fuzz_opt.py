@@ -151,7 +151,9 @@ def randomize_fuzz_settings():
 
 IMPORTANT_INITIAL_CONTENTS = [
     os.path.join('lit', 'passes', 'optimize-instructions.wast'),
+    os.path.join('lit', 'passes', 'heap2local.wast'),
     os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+    os.path.join('passes', 'Oz_fuzz-exec_all-features.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
