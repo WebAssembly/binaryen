@@ -4045,7 +4045,7 @@ void BinaryenElementSegmentSetTable(BinaryenElementSegmentRef elem,
                                     const char* table) {
   ((ElementSegment*)elem)->table = table;
 }
-bool BinayenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
+bool BinaryenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
   return ((ElementSegment*)elem)->table.isNull();
 }
 
