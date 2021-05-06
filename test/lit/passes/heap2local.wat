@@ -638,17 +638,14 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
-  ;; CHECK-NEXT:    (call $send-ref
-  ;; CHECK-NEXT:     (ref.null $struct.A)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (call $send-ref
+  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -661,7 +658,7 @@
       )
     )
     ;; Sending our allocation through a branch does not bother us.
-    (drop
+    (struct.get $struct.A 1
       (block $block (result (ref null $struct.A))
         ;; Before the reference are some things that should not confuse us.
         (call $send-ref
@@ -669,9 +666,6 @@
         )
         (local.get $ref)
       )
-    )
-    (struct.get $struct.A 1
-      (local.get $ref)
     )
   )
 )
