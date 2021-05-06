@@ -504,4 +504,45 @@
       (i32.const 1)
     )
   )
+
+  ;; CHECK:      (func $escape-after-multiflow (result f64)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $send-ref
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct.A 1
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $escape-after-multiflow (result f64)
+    (local $ref (ref null $struct.A))
+    (local.set $ref
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    ;; An escape after multiple flows.
+    (call $send-ref
+      (block (result (ref null $struct.A))
+        (block (result (ref null $struct.A))
+          (loop (result (ref null $struct.A))
+            (local.get $ref)
+          )
+        )
+      )
+    )
+    (struct.get $struct.A 1
+      (local.get $ref)
+      (i32.const 1)
+    )
+  )
 )
