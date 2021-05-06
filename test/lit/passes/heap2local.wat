@@ -789,36 +789,32 @@
   )
 
   ;; CHECK:      (func $tee-set
-  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.recursive))
+  ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref $struct.recursive))
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (ref.null $struct.recursive)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $2
-  ;; CHECK-NEXT:     (f64.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
-  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.recursive
+  ;; CHECK-NEXT:     (rtt.canon $struct.recursive)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $1
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (ref.null $struct.recursive)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tee-set
-    (local $ref (ref null $struct.A))
-    ;; As above, but with a set.
-    (struct.set $struct.A 0
+    (local $ref (ref null $struct.recursive))
+    ;; As above, but with a set, and also a recursive type.
+    (struct.set $struct.recursive 0
       (local.tee $ref
-        (struct.new_default_with_rtt $struct.A
-          (rtt.canon $struct.A)
+        (struct.new_default_with_rtt $struct.recursive
+          (rtt.canon $struct.recursive)
         )
       )
-      (i32.const 1)
+      (ref.null $struct.recursive)
     )
   )
 
