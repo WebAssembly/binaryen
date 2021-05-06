@@ -977,6 +977,9 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
+    ["--heap2local"],
+    ["--heap2local"],
+    ["--heap2local"],
     ["--generate-stack-ir"],
     ["--licm"],
     ["--memory-packing"],
@@ -1111,6 +1114,7 @@ if __name__ == '__main__':
               'speed:', counter / elapsed,
               'iters/sec, ', total_wasm_size / elapsed,
               'wasm_bytes/sec\n')
+        time.sleep(0.5)
         with open(raw_input_data, 'wb') as f:
             f.write(bytes([random.randint(0, 255) for x in range(input_size)]))
         assert os.path.getsize(raw_input_data) == input_size
