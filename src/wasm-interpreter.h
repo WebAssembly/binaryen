@@ -1440,9 +1440,18 @@ public:
     if (cast.originalRef.isFunction()) {
       // Function casts are simple in that they have no RTT hierarchies; instead
       // each reference has the canonical RTT for the signature.
-      // We must have a module in order to perform the cast, to get the type.
-      assert(module);
-      auto* func = module->getFunction(cast.originalRef.getFunc());
+      // We must have a module in order to perform the cast, to get the type. If
+      // we do not have one, or if the function is not present (which may happen
+      // if we are optimizing a function before the entire module is built),
+      // then this is not something we can precompute.
+      auto* func = module
+                     ? module->getFunctionOrNull(cast.originalRef.getFunc())
+                     : nullptr;
+      if (!func) {
+        cast.outcome = cast.Break;
+        cast.breaking = NONCONSTANT_FLOW;
+        return cast;
+      }
       seenRtt = Literal(Type(Rtt(0, func->sig)));
       cast.castRef =
         Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
