@@ -234,7 +234,7 @@
     )
   )
 
-  ;; CHECK:      (func $one-set-one-local
+  ;; CHECK:      (func $simple-one-local-set
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -260,7 +260,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $one-set-one-local
+  (func $simple-one-local-set
     (local $ref (ref null $struct.A))
     ;; A simple optimizable allocation only used in one set, and also stored
     ;; to a local. The local.set should not prevent our optimization, and the
@@ -271,6 +271,46 @@
       )
     )
     (struct.set $struct.A 0
+      (local.get $ref)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $simple-one-local-get (result f64)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result f64)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simple-one-local-get (result f64)
+    (local $ref (ref null $struct.A))
+    ;; A simple optimizable allocation only used in one set, and also stored
+    ;; to a local. The local.set should not prevent our optimization, and the
+    ;; local.set can be turned into a drop.
+    (local.set $ref
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    (struct.get $struct.A 1
       (local.get $ref)
       (i32.const 1)
     )
