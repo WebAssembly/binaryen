@@ -243,13 +243,34 @@ struct Heap2LocalOptimizer {
     }
   };
 
+  enum class ParentChildInteraction {
+    // The parent lets the child escape. E.g. the parent is a call.
+    Escapes,
+    // The parent fully consumes the child in a safe, non-escaping way, and after
+    // consuming it nothing remains to flow further through the parent. E.g.
+    // the parent is a struct.get, which reads from the allocated heap value and
+    // does nothing more with the reference.
+    FullyConsumes,
+    // The parent flows the child out, that is, the child is the single value
+    // that can flow out from the parent. E.g. the parent is a block with no
+    // branches and the child is the final value that is returned.
+    Flows,
+    // The parent does not consume the child completely, so the child's value
+    // can be used through it. However the child does not flow cleanly through.
+    // E.g. the parent is a block with branches, and the value on them may be
+    // returned from the block and not only the child. This means the allocation
+    // is not used in an exclusive way, and we cannot optimize it.
+    Mixes,
+  };
+
   // Analyze an allocation to see if we can convert it from a heap allocation to
   // locals.
   bool convertToLocals(StructNew* allocation) {
     Rewriter rewriter(allocation, func, module);
 
     // A queue of expressions that have already been checked themselves, and we
-    // need to check if by flowing to their parents they may escape.
+    // need to check when happens further up, that is, what happens in the
+    // interaction between the chlid and the parent.
     UniqueNonrepeatingDeferredQueue<Expression*> flows;
 
     // Start the flow from the expression itself.
@@ -261,16 +282,6 @@ struct Heap2LocalOptimizer {
 
       // If we've already seen an expression, stop since we cannot optimize
       // things that overlap in any way (see the notes on exclusivity, above).
-      //
-      // Note that our simple check whether something has already been seen is
-      // slightly stricter than we need, for example:
-      //
-      //    (select (A) (A) ..)
-      //
-      // Both arms are identical. We will reach the select twice, and assume the
-      // worst at that point, even though we could allow this. The assumption in
-      // this code is that often things like such a redundant select will be
-      // removed by other optimizations anyhow.
       if (seen.count(child)) {
         return false;
       }
@@ -278,25 +289,38 @@ struct Heap2LocalOptimizer {
 
       auto* parent = parents.getParent(child);
 
-      // If the parent may let us escape, then we are done.
-      if (escapesViaParent(child, parent)) {
-        return false;
-      }
-
-      // If the value flows through the parent, we need to look further at
-      // the grandparent.
-      if (flowsThroughParent(child, parent)) {
-        flows.push(parent);
+      switch (getParentChildInteraction(parent, child)) {
+        case ParentChildInteraction::Escapes: {
+          // If the parent may let us escape then we are done.
+          return false;
+        }
+        case ParentChildInteraction::FullyConsumes: {
+          // If the parent consumes us without escaping (e.g. the parent is a
+          // StructGet of the allocation), then all is well, and we do not need to
+          // check for flowing through the parent.
+          break;
+        }
+        case ParentChildInteraction::Flows: {
+          // The value flows through the parent; we need to look further at the
+          // grandparent.
+          flows.push(parent);
+          break;
+        }
+        case ParentChildInteraction::Mixes: {
+          // Our allocation is not used exclusively via the parent, as other
+          // values are mixed with it. Give up.
+          return false;
+        }
       }
 
       if (auto* set = parent->dynCast<LocalSet>()) {
         // This is one of the sets we are written to, and so we must check for
         // exclusive use of our allocation there. The first part of that is to
         // see that only we are written by the set, and no other value (so the
-        // value is exclusive for our use).
-        if (!flowsSingleValue(child)) {
-          return false;
-        }
+        // value is exclusive for our use). That is already handled by our
+        // checks above, as we see that things flow through their parents (if
+        // a child flows through the parent, that means it is the single value
+        // that flows out, unless a trap etc. happens).
 
         // The second part of exclusivity is to see that any gets reading this
         // set are exclusive to our allocation. We do that at the end, once we
@@ -344,24 +368,36 @@ struct Heap2LocalOptimizer {
   // All the expressions we have already looked at.
   std::unordered_set<Expression*> seen;
 
-  // Checks if a parent's use of a child may cause it to escape.
-  bool escapesViaParent(Expression* child, Expression* parent) {
+  ParentChildInteraction getParentChildInteraction(Expression* parent, Expression* child) {
     // If there is no parent then we are the body of the function, and that
     // means we escape by flowing to the caller.
     if (!parent) {
-      return true;
+      return ParentChildInteraction::Escapes;
     }
 
-    struct EscapeChecker : public Visitor<EscapeChecker> {
+    struct Checker : public Visitor<Checker> {
       Expression* child;
 
       // Assume escaping unless we are certain otherwise.
       bool escapes = true;
 
+      // Assume we do not fully consume the value unless we are certain
+      // otherwise. If this is set to true, then do not need to check any
+      // further. If it remains false, then we will analyze the value that
+      // falls through later to check for mixing.
+      bool fullyConsumes = false;
+
       // General operations
-      void visitBlock(Block* curr) { escapes = false; }
+      void visitBlock(Block* curr) {
+        escapes = false;
+        // We do not mark fullyConsumes as the value may continue through this
+        // and other control flow structures.
+      }
       void visitLoop(Loop* curr) { escapes = false; }
-      void visitDrop(Drop* curr) { escapes = false; }
+      void visitDrop(Drop* curr) {
+        escapes = false;
+        fullyConsumes = true;
+      }
       void visitBreak(Break* curr) { escapes = false; }
       void visitSwitch(Switch* curr) { escapes = false; }
 
@@ -370,65 +406,44 @@ struct Heap2LocalOptimizer {
       void visitLocalGet(LocalGet* curr) { escapes = false; }
       void visitLocalSet(LocalSet* curr) { escapes = false; }
 
-      // Reference operations XXX FIXME ref.is etc. do not escape, but they do
-      // return a value, they may trap, etc..? Do we keep the allocation alive
-      // just for them? then cannot drop the local.sets.
-      //void visitRefIs(RefIs* curr) { escapes = false; }
-      //void visitRefEq(RefEq* curr) { escapes = false; }
-      //void visitRefTest(RefTest* curr) { escapes = false; }
-      //void visitRefCast(RefCast* curr) { escapes = false; }
-      //void visitBrOn(BrOn* curr) { escapes = false; }
-      //void visitRefAs(RefAs* curr) { escapes = false; }
       void visitStructSet(StructSet* curr) {
         // The reference does not escape (but the value is stored to memory and
         // therefore might).
         if (curr->ref == child) {
           escapes = false;
+          fullyConsumes = true;
         }
       }
-      void visitStructGet(StructGet* curr) { escapes = false; }
-      // TODO: Array and I31 operations
+      void visitStructGet(StructGet* curr) {
+        escapes = false;
+        fullyConsumes = true;
+      }
+
+      // TODO Reference operations like ref.is etc. They do not escape, but we
+      //      will need to replace them properly if we optimize.
+
+      // TODO Array and I31 operations
     } checker;
 
     checker.child = child;
     checker.visit(parent);
-    return checker.escapes;
-  }
 
-  bool flowsThroughParent(Expression* child, Expression* parent) {
-    return child == Properties::getImmediateFallthrough(
-                      parent, passOptions, module->features);
-  }
+    if (checker.escapes) {
+      return ParentChildInteraction::Escapes;
+    }
 
-  // Checks whether a single value flows here. That is, we need to avoid things
-  // like
-  //
-  //  (if ..
-  //    (value1)
-  //    (value2)
-  //  )
-  //
-  // (It is ok if zero values flow out, or if some paths end in a trap or
-  // exception; we just cannot tolerate multiple values, if a value does in fact
-  // flow out.)
-  //
-  // This is not a general-purpose analysis, rather it is only valid in the
-  // context we use it, which is to follow the uses of an allocation via flowing
-  // out and via locals.
-  bool flowsSingleValue(Expression* value) {
-    auto* fallthrough =
-      Properties::getFallthrough(value, passOptions, module->features);
-    if (fallthrough->is<StructNew>()) {
-      // This is our allocation (one allocation cannot fall through another, so
-      // it must be ours).
-      return true;
+    if (checker.fullyConsumes) {
+      return ParentChildInteraction::FullyConsumes;
     }
-    if (fallthrough->is<LocalGet>()) {
-      // This is a local.get of our allocation.
-      return true;
+
+    // Finally, check for mixing. If the child is the immediate fallthrough
+    // of the parent then no other values can be mixed in.
+    if (Properties::getImmediateFallthrough(
+                      parent, passOptions, module->features) == child) {
+      return ParentChildInteraction::Flows;
     }
-    // TODO: branches
-    return false;
+
+    return ParentChildInteraction::Mixes;
   }
 
   std::unordered_set<LocalGet*>* getGetsReached(LocalSet* set) {
