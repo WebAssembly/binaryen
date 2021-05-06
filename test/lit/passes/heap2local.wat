@@ -332,59 +332,6 @@
     )
   )
 
-  ;; FIXME fix it and move to the endd
-  ;; CHECK:      (func $with-init-values-loop
-  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
-  ;; CHECK-NEXT:  (loop $loop
-  ;; CHECK-NEXT:   (local.set $ref
-  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.A
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (struct.get $struct.A 0
-  ;; CHECK-NEXT:        (local.get $ref)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (f64.const 2.1828)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (rtt.canon $struct.A)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br $loop)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $with-init-values-loop
-    (local $ref (ref null $struct.A))
-    ;; A testcase showing why we need extra temp locals when assigning
-    ;; the initial values: they must all be present at once when the
-    ;; "allocation" happens, as the local might be used before.
-    (loop $loop
-      (local.set $ref
-        (struct.new_with_rtt $struct.A
-          (i32.const 2)
-          (block (result f64)
-            ;; imagine that we check if the reference is not null here, and if
-            ;; not then we read from the struct.
-            (drop
-              ;; A get from the struct. This should return the old value,
-              ;; before the assignment of "2" a few lines above us
-              (struct.get $struct.A 0
-                (local.get $ref)
-              )
-            )
-            (f64.const 2.1828)
-          )
-          (rtt.canon $struct.A)
-        )
-        (struct.set $struct.A 0
-          (local.get $ref)
-          (i32.const 3)
-        )
-      )
-      (br $loop)
-    )
-  )
-
   ;; CHECK:      (func $send-ref (param $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -994,6 +941,10 @@
     ;; Multiple passes of optimizations are necessary to optimize this case,
     ;; as we must remove on allocation to see that the one written to its field
     ;; does not escape either.
+    ;;
+    ;; FIXME: This does not work yet, as we keep the outer allocation. It is
+    ;;        dropped, but we still keep it, and the inner allocation appears
+    ;;        to escape due to it.
     (drop
       (struct.get $struct.recursive 0
         ;; Construct A -> B -> $C
@@ -1013,6 +964,58 @@
       (struct.get $struct.recursive 0
        (local.get $B)
       )
+    )
+  )
+
+  ;; CHECK:      (func $with-init-values-loop
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (struct.get $struct.A 0
+  ;; CHECK-NEXT:        (local.get $ref)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (f64.const 2.1828)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $loop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $with-init-values-loop
+    (local $ref (ref null $struct.A))
+    ;; A testcase showing why we need extra temp locals when assigning
+    ;; the initial values: they must all be present at once when the
+    ;; "allocation" happens, as the local might be used before.
+    (loop $loop
+      (local.set $ref
+        (struct.new_with_rtt $struct.A
+          (i32.const 2)
+          (block (result f64)
+            ;; imagine that we check if the reference is not null here, and if
+            ;; not then we read from the struct.
+            (drop
+              ;; A get from the struct. This should return the old value,
+              ;; before the assignment of "2" a few lines above us
+              (struct.get $struct.A 0
+                (local.get $ref)
+              )
+            )
+            (f64.const 2.1828)
+          )
+          (rtt.canon $struct.A)
+        )
+        (struct.set $struct.A 0
+          (local.get $ref)
+          (i32.const 3)
+        )
+      )
+      (br $loop)
     )
   )
 )
