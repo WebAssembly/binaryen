@@ -545,4 +545,42 @@
       (i32.const 1)
     )
   )
+
+  ;; CHECK:      (func $non-exclusive-set (result f64)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (select (result (ref $struct.A))
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct.A 1
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-exclusive-set (result f64)
+    (local $ref (ref null $struct.A))
+    ;; A set that receives two different allocations, and so we should not try
+    ;; to optimize it.
+    (local.set $ref
+      (select
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+        (i32.const 1)
+      )
+    )
+    (struct.get $struct.A 1
+      (local.get $ref)
+      (i32.const 1)
+    )
+  )
 )
