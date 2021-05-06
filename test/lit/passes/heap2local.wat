@@ -945,6 +945,7 @@
     ;; FIXME: This does not work yet, as we keep the outer allocation. It is
     ;;        dropped, but we still keep it, and the inner allocation appears
     ;;        to escape due to it.
+    ;;        TODO run vacuum internally after success?
     (drop
       (struct.get $struct.recursive 0
         ;; Construct A -> B -> $C
@@ -1068,7 +1069,7 @@
   (func $before-loop-use-multi (param $x i32)
     (local $ref (ref null $struct.A))
     ;; Allocate in a loop, and use that allocation multiple times in that loop
-    ;; in various ways inside
+    ;; in various ways inside.
     (loop $outer
       (local.set $ref
         (struct.new_with_rtt $struct.A
@@ -1120,6 +1121,93 @@
         )
       )
       (br $outer)
+    )
+  )
+
+  ;; CHECK:      (func $multi-separate
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (f64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:       (rtt.canon $struct.A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (f64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:       (rtt.canon $struct.A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $5
+  ;; CHECK-NEXT:       (f64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:       (rtt.canon $struct.A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multi-separate
+    ;; Multiple independent things we can optimize.
+    (drop
+      (struct.get $struct.A 0
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct.A 0
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+      )
+    )
+    (drop
+      (struct.get $struct.A 1
+        (struct.new_default_with_rtt $struct.A
+          (rtt.canon $struct.A)
+        )
+      )
     )
   )
 )
