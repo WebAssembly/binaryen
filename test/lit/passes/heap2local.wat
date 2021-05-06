@@ -818,6 +818,31 @@
     )
   )
 
+  ;; CHECK:      (func $set-value
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.recursive))
+  ;; CHECK-NEXT:  (struct.set $struct.recursive 0
+  ;; CHECK-NEXT:   (ref.null $struct.recursive)
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.recursive
+  ;; CHECK-NEXT:     (rtt.canon $struct.recursive)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set-value
+    (local $ref (ref null $struct.recursive))
+    (struct.set $struct.recursive 0
+      (ref.null $struct.recursive)
+      ;; As above, but operands reversed: the allocation is now the value, not
+      ;; the reference, and so it escapes.
+      (local.tee $ref
+        (struct.new_default_with_rtt $struct.recursive
+          (rtt.canon $struct.recursive)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $escape-flow-out (result anyref)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (struct.set $struct.A 0
