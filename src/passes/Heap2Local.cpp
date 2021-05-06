@@ -289,7 +289,6 @@ struct Heap2LocalOptimizer {
 
       auto* parent = parents.getParent(child);
 
-//std::cout << "getPCI\n" << *parent << " is parent of\n" << *child << '\n' << int(getParentChildInteraction(parent, child)) << '\n';
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {
           // If the parent may let us escape then we are done.
