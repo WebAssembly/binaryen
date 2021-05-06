@@ -372,25 +372,31 @@ def fix_spec_output(out):
 
 
 def run_vm(cmd):
-    # ignore some types of errors
-    known_issues = [
-        # can be caused by flatten, ssa, etc. passes
-        'local count too large',
-        # https://github.com/WebAssembly/binaryen/issues/3767
-        # note that this text is a little too broad, but the problem is rare
-        # enough that it's unlikely to hide an unrelated issue
-        'found br_if of type',
-        # all host limitations are arbitrary and may differ between VMs and also
-        # be affected by optimizations, so ignore them.
-        HOST_LIMIT_PREFIX,
-    ]
-    try:
-        return run(cmd)
-    except subprocess.CalledProcessError:
-        output = run_unchecked(cmd)
+    def filter_known_issues(output):
+        known_issues = [
+            # can be caused by flatten, ssa, etc. passes
+            'local count too large',
+            # https://github.com/WebAssembly/binaryen/issues/3767
+            # note that this text is a little too broad, but the problem is rare
+            # enough that it's unlikely to hide an unrelated issue
+            'found br_if of type',
+            # all host limitations are arbitrary and may differ between VMs and also
+            # be affected by optimizations, so ignore them.
+            HOST_LIMIT_PREFIX,
+        ]
         for issue in known_issues:
             if issue in output:
                 return IGNORE
+        return output
+
+    try:
+        # some known issues do not cause the entire process to fail
+        return filter_known_issues(run(cmd))
+    except subprocess.CalledProcessError:
+        # other known issues do make it fail, so re-run without checking for
+        # success and see if we should ignore it
+        if filter_known_issues(run_unchecked(cmd)) == IGNORE:
+            return IGNORE
         raise
 
 
