@@ -1394,7 +1394,8 @@
         (drop
           ;; A branch to the block. This ensures its name is not removable. And
           ;; it indicates that the block does not have a single value that
-          ;; flows out.
+          ;; flows out, which means we do not have exclusive use of the
+          ;; allocation on this path, and must give up.
           (br_if $block
             (ref.null $struct.A)
             (i32.const 0)
