@@ -11,6 +11,8 @@
 
   (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
+  (type $struct.nonnullable (struct (field (ref $struct.A))))
+
   ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
@@ -898,4 +900,47 @@
       (local.get $ref)
     )
   )
+
+  ;; CHECK:      (func $non-nullable (param $a (ref $struct.A))
+  ;; CHECK-NEXT:  (local $1 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $2 (ref null $struct.A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $struct.nonnullable))
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (ref.as_non_null
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_with_rtt $struct.nonnullable
+  ;; CHECK-NEXT:       (ref.as_non_null
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (rtt.canon $struct.nonnullable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $non-nullable (param $a (ref $struct.A))
+    (drop
+      ;; An optimizable case where the type is non-nullable, which requires
+      ;; special handling in locals.
+      (struct.get $struct.nonnullable 0
+        (struct.new_with_rtt $struct.nonnullable
+          (local.get $a)
+          (rtt.canon $struct.nonnullable)
+        )
+      )
+    )
+  )
+  ;; test multiple rounds
 )
