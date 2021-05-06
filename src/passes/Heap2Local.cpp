@@ -64,6 +64,10 @@ struct Heap2LocalOptimizer {
   Parents parents;
   BranchUtils::BranchTargets branchTargets;
 
+  // All the allocations in the function.
+  // TODO: Arrays (of constant size) as well.
+  FindAll<StructNew> allocations;
+
   bool optimized = false;
 
   Heap2LocalOptimizer(Function* func,
@@ -74,10 +78,6 @@ struct Heap2LocalOptimizer {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
-
-    // All the allocations in the function.
-    // TODO: Arrays (of constant size) as well.
-    FindAll<StructNew> allocations;
 
     for (auto* allocation : allocations.list) {
       // The point of this optimization is to replace heap allocations with
