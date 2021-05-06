@@ -51,7 +51,7 @@ int main() {
       BinaryenConst(module, BinaryenLiteralInt32(0)));
     BinaryenAddPassiveElementSegment(module, "passive", funcNames, 1);
     assert(NULL != BinaryenGetElementSegmentByIndex(module, 2));
-    assert(1 == BinayenElementSegmentIsPassive(
+    assert(1 == BinaryenElementSegmentIsPassive(
                   BinaryenGetElementSegment(module, "passive")));
     BinaryenTableRef t2 = BinaryenGetTableByIndex(module, 1);
     assert(t2 != NULL);
