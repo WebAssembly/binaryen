@@ -264,10 +264,9 @@ struct Heap2LocalOptimizer {
     // The parent lets the child escape. E.g. the parent is a call.
     Escapes,
     // The parent fully consumes the child in a safe, non-escaping way, and
-    // after
-    // consuming it nothing remains to flow further through the parent. E.g.
-    // the parent is a struct.get, which reads from the allocated heap value and
-    // does nothing more with the reference.
+    // after consuming it nothing remains to flow further through the parent.
+    // E.g. the parent is a struct.get, which reads from the allocated heap
+    // value and does nothing more with the reference.
     FullyConsumes,
     // The parent flows the child out, that is, the child is the single value
     // that can flow out from the parent. E.g. the parent is a block with no
@@ -287,11 +286,11 @@ struct Heap2LocalOptimizer {
     Rewriter rewriter(allocation, func, module);
 
     // A queue of expressions that have already been checked themselves, and we
-    // need to check when happens further up, that is, what happens in the
-    // interaction between the chlid and the parent.
+    // need to check what happens further up, that is, what happens in the
+    // parent as the value goes from the child to them.
     UniqueNonrepeatingDeferredQueue<Expression*> flows;
 
-    // Start the flow from the expression itself.
+    // Start the flow from the allocation itself.
     flows.push(allocation);
 
     // Keep flowing while we can.
@@ -300,6 +299,11 @@ struct Heap2LocalOptimizer {
 
       // If we've already seen an expression, stop since we cannot optimize
       // things that overlap in any way (see the notes on exclusivity, above).
+      // Note that we use a nonrepeating queue here, so we already do not visit
+      // the same thing more than once; what this check does is verify we don't
+      // look at something that another allocation reached, which would be in a
+      // different call to this function and use a different queue (any overlap
+      // between calls would prove non-exclusivity).
       if (seen.count(child)) {
         return false;
       }
@@ -313,9 +317,8 @@ struct Heap2LocalOptimizer {
           return false;
         }
         case ParentChildInteraction::FullyConsumes: {
-          // If the parent consumes us without escaping (e.g. the parent is a
-          // StructGet of the allocation), then all is well, and we do not need
-          // to check for flowing through the parent.
+          // If the parent consumes us without letting us escape then all is
+          // well (and there is nothing flowing from the parent to check).
           break;
         }
         case ParentChildInteraction::Flows: {
@@ -333,19 +336,14 @@ struct Heap2LocalOptimizer {
 
       if (auto* set = parent->dynCast<LocalSet>()) {
         // This is one of the sets we are written to, and so we must check for
-        // exclusive use of our allocation there. The first part of that is to
-        // see that only we are written by the set, and no other value (so the
-        // value is exclusive for our use). That is already handled by our
-        // checks above, as we see that things flow through their parents (if
-        // a child flows through the parent, that means it is the single value
-        // that flows out, unless a trap etc. happens).
-
-        // The second part of exclusivity is to see that any gets reading this
-        // set are exclusive to our allocation. We do that at the end, once we
-        // know all of our sets.
+        // exclusive use of our allocation by all the gets that read the value.
+        // (We need to rule out our writing a value here, and a get reading
+        // either that value or something that is not our allocation, that some
+        // other set writes and which can also reach that get). Note the set,
+        // and we will check the gets at the end once we know all of our sets.
         rewriter.sets.insert(set);
 
-        // We must also look at all the places that read what the set writes.
+        // We must also look at how the value flows from those gets.
         if (auto* getsReached = getGetsReached(set)) {
           for (auto* get : *getsReached) {
             flows.push(get);
@@ -364,7 +362,9 @@ struct Heap2LocalOptimizer {
       rewriter.reached.insert(parent);
     }
 
-    if (rewriter.sets.empty() && rewriter.reached.empty()) {
+    // We finished the loop over the flows. Do the final checks.
+
+    if (rewriter.reached.empty()) {
       // The allocation is never used in any significant way in this function,
       // so there is nothing worth optimizing here.
       return false;
