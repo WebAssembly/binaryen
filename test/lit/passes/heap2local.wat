@@ -942,5 +942,49 @@
       )
     )
   )
-  ;; test multiple rounds
+
+  ;; CHECK:      (func $multipass (param $in (ref $struct.recursive))
+  ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
+  ;; CHECK-NEXT:  (local $2 (ref null $struct.recursive))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $struct.recursive))
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (struct.new_with_rtt $struct.recursive
+  ;; CHECK-NEXT:        (local.get $in)
+  ;; CHECK-NEXT:        (rtt.canon $struct.recursive)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_with_rtt $struct.recursive
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (rtt.canon $struct.recursive)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $multipass (param $in (ref $struct.recursive))
+    ;; Multiple passes of optimizations are necessary to optimize this case,
+    ;; as we must remove on allocation to see that the one written to its field
+    ;; does not escape either.
+    (drop
+      ;; Construct A -> B -> $in
+      (struct.get $struct.recursive 0
+        (struct.new_with_rtt $struct.recursive
+          (struct.new_with_rtt $struct.recursive
+            (local.get $in)
+            (rtt.canon $struct.recursive)
+          )
+          (rtt.canon $struct.recursive)
+        )
+      )
+      ;; Add another struct.get
+    )
+  )
 )
