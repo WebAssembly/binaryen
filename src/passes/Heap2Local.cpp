@@ -162,26 +162,57 @@ struct Heap2LocalOptimizer {
       // cannot simply remove it because we need to replace it with something of
       // the same non-nullable type.) First, assign the initial values to the
       // new locals.
+
+      std::vector<Expression*> contents;
+
       if (!allocation->isWithDefault()) {
-        // Add a tee to save the initial values in the proper locals.
-        for (Index i = 0; i < localIndexes.size(); i++) {
-          allocation->operands[i] = builder.makeLocalTee(
-            localIndexes[i], allocation->operands[i], fields[i].type);
+        // We must assign the initial values to temp indexes, then copy them
+        // over all at once. If instead we did set directly, then imagine if
+        // right after the initial value for field K we read field K in the
+        // initial value of field K+1. We should still see the old value there,
+        // not the new one.
+        std::vector<Index> tempIndexes;
+
+        for (auto field : fields) {
+          tempIndexes.push_back(builder.addVar(func, field.type));
+        }
+
+        // Store the initial values into the temp locals.
+        for (Index i = 0; i < tempIndexes.size(); i++) {
+          contents.push_back(builder.makeLocalSet(
+            tempIndexes[i], allocation->operands[i]));
+        }
+
+        // Copy them to the normal ones.
+        for (Index i = 0; i < tempIndexes.size(); i++) {
+          contents.push_back(builder.makeLocalSet(
+            localIndexes[i],
+            builder.makeLocalGet(tempIndexes[i], fields[i].type)));
+        }
+
+        // Read the values in the allocation (we don't need to, as the
+        // allocation is not used, but we need something with the right type
+        // anyhow).
+        for (Index i = 0; i < tempIndexes.size(); i++) {
+          allocation->operands[i] = builder.makeLocalGet(
+            localIndexes[i], fields[i].type);
         }
       } else {
         // Set the default values, and replace the allocation with a block that
         // first does that, then contains the allocation.
         // Note that we must assign the defaults because we might be in a loop,
         // that is, there might be a previous value.
-        std::vector<Expression*> contents;
         for (Index i = 0; i < localIndexes.size(); i++) {
           contents.push_back(builder.makeLocalSet(
             localIndexes[i],
             builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
         }
-        contents.push_back(allocation);
-        replaceCurrent(builder.makeBlock(contents));
       }
+
+      // Put the allocation itself at the end of the block, so the block has the
+      // exact same type as the allocation it replaces.
+      contents.push_back(allocation);
+      replaceCurrent(builder.makeBlock(contents));
     }
 
     void visitStructSet(StructSet* curr) {

@@ -168,17 +168,29 @@
   ;; CHECK:      (func $with-init-values
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (struct.new_with_rtt $struct.A
-  ;; CHECK-NEXT:      (local.tee $0
+  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (i32.const 2)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.tee $1
+  ;; CHECK-NEXT:      (local.set $3
   ;; CHECK-NEXT:       (f64.const 3.14159)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (rtt.canon $struct.A)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $0)
