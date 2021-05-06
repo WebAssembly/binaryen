@@ -2490,7 +2490,7 @@ BinaryenElementSegmentGetData(BinaryenElementSegmentRef elem,
                               BinaryenIndex dataId);
 // Returns true if the specified elem segment is passive
 BINARYEN_API bool
-BinayenElementSegmentIsPassive(BinaryenElementSegmentRef elem);
+BinaryenElementSegmentIsPassive(BinaryenElementSegmentRef elem);
 
 //
 // ========== Global Operations ==========
