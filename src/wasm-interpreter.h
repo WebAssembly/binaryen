@@ -1444,7 +1444,9 @@ public:
       // we do not have one, or if the function is not present (which may happen
       // if we are optimizing a function before the entire module is built),
       // then this is not something we can precompute.
-      auto* func = module ? module->getFunctionOrNull(cast.originalRef.getFunc()) : nullptr;
+      auto* func = module
+                     ? module->getFunctionOrNull(cast.originalRef.getFunc())
+                     : nullptr;
       if (!func) {
         cast.outcome = cast.Break;
         cast.breaking = NONCONSTANT_FLOW;
