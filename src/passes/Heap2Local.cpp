@@ -16,18 +16,21 @@
 
 //
 // Find heap allocations that never escape the current function, and lower the
-// object into locals.
+// allocation's data into locals. That is, avoid allocating a GC object, and
+// instead use one local for each of its fields.
 //
-// For us to replace an allocation with locals, need to prove two things:
+// For us to replace an allocation with locals, we need to prove two things:
 //
 //  * It must not escape from the function. If it escapes, we must pass out a
 //    reference anyhow. (In theory we could do a whole-program transformation
 //    to replace the reference with parameters in some cases, but inlining can
-//    hopefully let us optimize common cases.)
+//    hopefully let us optimize most cases.)
 //  * It must be used "exclusively", without overlap. That is, we cannot
 //    handle the case where a local.get might return our allocation, but might
 //    also get some other value. We also cannot handle a select where one arm
-//    is our allocation and another is something else.
+//    is our allocation and another is something else. If the use is exclusive
+//    then we have a simple guarantee of being able to replace the heap
+//    allocation with the locals.
 //
 
 #include "ir/branch-utils.h"
@@ -52,7 +55,7 @@ struct Heap2LocalOptimizer {
   const PassOptions& passOptions;
 
   // To find allocations that do not escape, we must track locals so that we
-  // can see which gets refer to the same allocation.
+  // can see how allocations flow from sets to gets and so forth.
   // TODO: only scan reference types
   LocalGraph localGraph;
 
@@ -60,10 +63,6 @@ struct Heap2LocalOptimizer {
   // parents, and via branches.
   Parents parents;
   BranchUtils::BranchTargets branchTargets;
-
-  // All the allocations in the function.
-  // TODO: Arrays (of constant size) as well.
-  FindAll<StructNew> allocations;
 
   bool optimized = false;
 
@@ -75,6 +74,10 @@ struct Heap2LocalOptimizer {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
+
+    // All the allocations in the function.
+    // TODO: Arrays (of constant size) as well.
+    FindAll<StructNew> allocations;
 
     for (auto* allocation : allocations.list) {
       // The point of this optimization is to replace heap allocations with
@@ -104,8 +107,8 @@ struct Heap2LocalOptimizer {
   }
 
   // Handles the rewriting that we do to perform the optimization. We store the
-  // data that rewriting will need later here while we analyze, and then if we
-  // can do the optimization, we tell it to run.
+  // data that rewriting will need here, while we analyze, and then if we can do
+  // the optimization, we tell it to run.
   //
   // TODO: Doing a single rewrite walk at the end would be more efficient, but
   //       it would need to be more complex.
@@ -120,8 +123,7 @@ struct Heap2LocalOptimizer {
         fields(allocation->type.getHeapType().getStruct().fields) {}
 
     // We must track all the local.sets that write the allocation, to verify
-    // exclusivity. We also want to update them later, if we can do the
-    // optimization.
+    // exclusivity.
     std::unordered_set<LocalSet*> sets;
 
     // We must track all expressions that the allocation reaches, so that we can
@@ -132,7 +134,7 @@ struct Heap2LocalOptimizer {
     std::vector<Index> localIndexes;
 
     void applyOptimization() {
-      // Allocate locals to store the allocation's data in.
+      // Allocate locals to store the allocation's fields in.
       for (auto field : fields) {
         localIndexes.push_back(builder.addVar(func, field.type));
       }
@@ -163,17 +165,28 @@ struct Heap2LocalOptimizer {
       // We do not remove the allocation itself here, rather we make it
       // unnecessary, and then depend on other optimizations to clean up. (We
       // cannot simply remove it because we need to replace it with something of
-      // the same non-nullable type.) First, assign the initial values to the
-      // new locals.
+      // the same non-nullable type.)
 
+      // First, assign the initial values to the new locals.
       std::vector<Expression*> contents;
 
       if (!allocation->isWithDefault()) {
         // We must assign the initial values to temp indexes, then copy them
-        // over all at once. If instead we did set directly, then imagine if
-        // right after the initial value for field K we read field K in the
-        // initial value of field K+1. We should still see the old value there,
-        // not the new one.
+        // over all at once. If instead we did set them as we go, then if right
+        // after the initial value for field K, we read field K in the initial
+        // value of field K+1, that could be a problem, like this:
+        //
+        //  local_K   = new_K
+        //  local_K+1 = (read local_K, new_K+1)
+        //
+        // We should still see the old value there, not new_K. The temp locals
+        // ensure that:
+        //
+        //  temp_K   = value_X
+        //  temp_K+1 = (read local_K, value_Y)
+        //  ..
+        //  local_K   = temp_K
+        //  local_K+1 = temp_K+1
         std::vector<Index> tempIndexes;
 
         for (auto field : fields) {
@@ -194,12 +207,17 @@ struct Heap2LocalOptimizer {
         }
 
         // Read the values in the allocation (we don't need to, as the
-        // allocation is not used, but we need something with the right type
-        // anyhow).
+        // allocation is not used after our optimization, but we need something
+        // with the right type anyhow).
         for (Index i = 0; i < tempIndexes.size(); i++) {
           allocation->operands[i] =
             builder.makeLocalGet(localIndexes[i], fields[i].type);
         }
+
+        // TODO Check if the nondefault case does not increase code size in some
+        //      cases. A heap allocation that implicitly sets the default values
+        //      is smaller than multiple explicit settings of locals to
+        //      defaults.
       } else {
         // Set the default values, and replace the allocation with a block that
         // first does that, then contains the allocation.
