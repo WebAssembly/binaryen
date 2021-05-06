@@ -621,6 +621,56 @@
     )
   )
 
+  ;; CHECK:      (func $local-copies-conditional (param $x i32) (result f64)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result f64)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $local-copies-conditional (param $x i32) (result f64)
+    (local $ref (ref null $struct.A))
+    (local.set $ref
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    ;; Possibly copying our allocation through locals does not bother us. Note
+    ;; that as a result of this the final local.get has two sets that send it
+    ;; values, but we know they are both the same allocation.
+    (if (local.get $x)
+      (local.set $ref
+        (local.get $ref)
+      )
+    )
+    (struct.get $struct.A 1
+      (local.get $ref)
+    )
+  )
+
   ;; CHECK:      (func $branch-value (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
@@ -669,7 +719,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-exclusive-get (result f64)
+  ;; CHECK:      (func $non-exclusive-get (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
@@ -677,7 +727,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.set $ref
   ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
@@ -686,14 +736,14 @@
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $non-exclusive-get (result f64)
+  (func $non-exclusive-get (param $x i32) (result f64)
     (local $ref (ref null $struct.A))
     (local.set $ref
       (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
       )
     )
-    (if (i32.const 1)
+    (if (local.get $x)
       (local.set $ref
         (ref.null $struct.A)
       )
