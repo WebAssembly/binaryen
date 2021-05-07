@@ -32,6 +32,46 @@
 //    then we have a simple guarantee of being able to replace the heap
 //    allocation with the locals.
 //
+// Non-exclusive uses are optimizable too, but they require more work and add
+// overhead. For example, here is a non-exclusive use:
+//
+//   var x;
+//   if (..) {
+//     x = new Something(); // the allocation we want to optimize
+//   } else {
+//     x = something_else;
+//   }
+//   // 'x' here is not used exclusively by our allocation
+//   return x.field0;
+//
+// To optimize x.field0, we'd need to check if it contains our allocation or
+// not, perhaps marking a boolean as true when it is, then doing an if on that
+// local, etc.:
+//
+//   var x_is_our_alloc; // whether x is our allocation
+//   var x; // keep x around for when it is not our allocation
+//   var x_field0; // the value of field0 on x, when x is our allocation
+//   if (..) {
+//     x_field0 = ..default value for the type..
+//     x_is_our_alloc = true;
+//   } else {
+//     x = something_else;
+//     x_is_our_alloc = false;
+//   }
+//   return x_is_our_alloc ? x_field0 : x.field0;
+//
+// (node splitting/code duplication is another possible approach). On the other
+// hand, if the allocation is used exclusively in all places (the if-else above
+// does not have an else any more) then we can do this:
+//
+//   var x_field0; // the value of field0 on x
+//   if (..) {
+//     x_field0 = ..default value for the type..
+//   }
+//   return x_field0;
+//
+// This optimization focuses on such cases.
+//
 
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
