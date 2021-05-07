@@ -285,17 +285,20 @@ struct Heap2LocalOptimizer {
   bool convertToLocals(StructNew* allocation) {
     Rewriter rewriter(allocation, func, module);
 
-    // A queue of expressions that have already been checked themselves, and we
-    // need to check what happens further up, that is, what happens in the
-    // parent as the value goes from the child to them.
-    UniqueNonrepeatingDeferredQueue<Expression*> flows;
+    // A queue of flows from children to parents. It is ok for the value to
+    // be at the child, and we need to check if it is ok to be at the parent,
+    // and to flow from the child to the parent.
+    using ChildAndParent = std::pair<Expression*, Expression*>;
+    UniqueNonrepeatingDeferredQueue<ChildAndParent> flows;
 
-    // Start the flow from the allocation itself.
-    flows.push(allocation);
+    // Start the flow from the allocation itself to its parent.
+    flows.push({allocation, parents.getParent(allocation)});
 
     // Keep flowing while we can.
     while (!flows.empty()) {
-      auto* child = flows.pop();
+      auto flow = flows.pop();
+      auto* child = flow.first;
+      auto* parent = flow.second;
 
       // If we've already seen an expression, stop since we cannot optimize
       // things that overlap in any way (see the notes on exclusivity, above).
@@ -308,8 +311,6 @@ struct Heap2LocalOptimizer {
         return false;
       }
       seen.insert(child);
-
-      auto* parent = parents.getParent(child);
 
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {
@@ -324,7 +325,7 @@ struct Heap2LocalOptimizer {
         case ParentChildInteraction::Flows: {
           // The value flows through the parent; we need to look further at the
           // grandparent.
-          flows.push(parent);
+          flows.push({parent, parents.getParent(parent)});
           break;
         }
         case ParentChildInteraction::Mixes: {
@@ -346,15 +347,16 @@ struct Heap2LocalOptimizer {
         // We must also look at how the value flows from those gets.
         if (auto* getsReached = getGetsReached(set)) {
           for (auto* get : *getsReached) {
-            flows.push(get);
+            flows.push({get, parents.getParent(get)});
           }
         }
       }
 
-      // If the parent may send us on a branch, we will need to look at the
+      // If the parent may send us on a branch, we will need to look at the flow
+      // to the branch target.
       // branch target(s).
       for (auto name : branchesSentByParent(child, parent)) {
-        flows.push(branchTargets.getTarget(name));
+        flows.push({parent, branchTargets.getTarget(name)});
       }
 
       // If we got to here, then we can continue to hope that we can optimize
