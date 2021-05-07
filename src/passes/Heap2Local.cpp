@@ -335,9 +335,12 @@ struct Heap2LocalOptimizer {
   bool convertToLocals(StructNew* allocation) {
     Rewriter rewriter(allocation, func, module);
 
-    // A queue of flows from children to parents. It is ok for the allocation to
-    // be at the child, and we need to check if it is ok to be at the parent,
-    // and to flow from the child to the parent.
+    // A queue of flows from children to parents. When something is in the queue
+    // here then it assumed that it is ok for the allocation to be at the child
+    // (that is, we have already checked the child before placing it in the
+    // queue), and we need to check if it is ok to be at the parent, and to flow
+    // from the child to the parent. We will analyze that (see
+    // ParentChildInteraction, above) and continue accordingly.
     using ChildAndParent = std::pair<Expression*, Expression*>;
     UniqueNonrepeatingDeferredQueue<ChildAndParent> flows;
 
