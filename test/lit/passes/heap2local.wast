@@ -765,10 +765,10 @@
         (rtt.canon $struct.A)
       )
     )
-    ;; Sending our allocation through a branch does not bother us.
+    ;; Returning our allocation from a block does not bother us.
     (struct.get $struct.A 1
-      (block $block (result (ref null $struct.A))
-        ;; This call should not confuse us.
+      (block (result (ref null $struct.A))
+        ;; This call in the block should not bother us either.
         (call $send-ref
           (ref.null $struct.A)
         )
