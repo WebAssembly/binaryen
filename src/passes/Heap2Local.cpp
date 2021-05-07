@@ -175,21 +175,27 @@ struct Heap2LocalOptimizer {
 
       if (!allocation->isWithDefault()) {
         // We must assign the initial values to temp indexes, then copy them
-        // over all at once. If instead we did set them as we go, then if right
-        // after the initial value for field K, we read field K in the initial
-        // value of field K+1, that could be a problem, like this:
+        // over all at once. If instead we did set them as we go, then we might
+        // hit a problem like this:
         //
-        //  local_K   = new_K
-        //  local_K+1 = (read local_K, new_K+1)
+        //  (local.set X (new_X))
+        //  (local.set Y (block (result ..)
+        //                 (.. (local.get X) ..) ;; returns new_X, wrongly
+        //                 (new_Y)
+        //               )
         //
-        // We should still see the old value there, not new_K. The temp locals
-        // ensure that:
+        // Note how we assign to the local X and use it during the assignment to
+        // the local Y - but we should still see the old value of X, not new_X.
+        // Temp locals X', Y' can ensure that:
         //
-        //  temp_K   = new_K
-        //  temp_K+1 = (read local_K, new_K+1)
+        //  (local.set X' (new_X))
+        //  (local.set Y' (block (result ..)
+        //                  (.. (local.get X) ..) ;; returns the proper, old X
+        //                  (new_Y)
+        //                )
         //  ..
-        //  local_K   = temp_K
-        //  local_K+1 = temp_K+1
+        //  (local.set X (local.get X'))
+        //  (local.set Y (local.get Y'))
         std::vector<Index> tempIndexes;
 
         for (auto field : fields) {
