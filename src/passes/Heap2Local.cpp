@@ -417,12 +417,6 @@ struct Heap2LocalOptimizer {
 
     // We finished the loop over the flows. Do the final checks.
 
-    if (rewriter.reached.empty()) {
-      // The allocation is never used in any significant way in this function,
-      // so there is nothing worth optimizing here.
-      return false;
-    }
-
     if (!getsAreExclusiveToSets(rewriter.sets)) {
       return false;
     }

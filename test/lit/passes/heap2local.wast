@@ -31,9 +31,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simple
-    ;; Other passes can remove such a simple case of an unneeded allocation, and
-    ;; we do not bother with it, as there are struct get/set operations that we
-    ;; can optimize out.
+    ;; Other passes can remove such a trivial case of an unused allocation, but
+    ;; we still optimize it.
     (drop
       (struct.new_default_with_rtt $struct.A
         (rtt.canon $struct.A)
