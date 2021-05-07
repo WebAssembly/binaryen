@@ -285,7 +285,7 @@ struct Heap2LocalOptimizer {
   bool convertToLocals(StructNew* allocation) {
     Rewriter rewriter(allocation, func, module);
 
-    // A queue of flows from children to parents. It is ok for the value to
+    // A queue of flows from children to parents. It is ok for the allocation to
     // be at the child, and we need to check if it is ok to be at the parent,
     // and to flow from the child to the parent.
     using ChildAndParent = std::pair<Expression*, Expression*>;
