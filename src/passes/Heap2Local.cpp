@@ -391,10 +391,8 @@ struct Heap2LocalOptimizer {
       if (auto* set = parent->dynCast<LocalSet>()) {
         // This is one of the sets we are written to, and so we must check for
         // exclusive use of our allocation by all the gets that read the value.
-        // (We need to rule out our writing a value here, and a get reading
-        // either that value or something that is not our allocation, that some
-        // other set writes and which can also reach that get). Note the set,
-        // and we will check the gets at the end once we know all of our sets.
+        // Note the set, and we will check the gets at the end once we know all
+        // of our sets.
         rewriter.sets.insert(set);
 
         // We must also look at how the value flows from those gets.
