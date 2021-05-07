@@ -238,6 +238,31 @@
     )
   )
 
+  ;; CHECK:      (func $ignore-unreachable
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block 
+  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ignore-unreachable
+    ;; An unreachable allocation is not worth trying to process; DCE should
+    ;; remove it.
+    (drop
+      (struct.get $struct.A 0
+        (struct.new_with_rtt $struct.A
+          (i32.const 2)
+          (unreachable)
+          (rtt.canon $struct.A)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $nondefaultable
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct.nondefaultable 0

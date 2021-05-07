@@ -93,6 +93,9 @@ struct Heap2LocalOptimizer {
   }
 
   bool canHandleAsLocals(Type type) {
+    if (type == Type::unreachable) {
+      return false;
+    }
     auto& fields = type.getHeapType().getStruct().fields;
     for (auto field : fields) {
       if (!TypeUpdating::canHandleAsLocal(field.type)) {
