@@ -129,8 +129,9 @@ struct Heap2LocalOptimizer {
     // exclusivity.
     std::unordered_set<LocalSet*> sets;
 
-    // We must track all expressions that the allocation reaches, so that we can
-    // fix them up at the end, if the optimization ends up possible.
+    // All the expressions we reached during the flow analysis. That is exactly
+    // all the places where our allocation is used. We track these so that we
+    // can fix them up at the end, if the optimization ends up possible.
     std::unordered_set<Expression*> reached;
 
     // Maps indexes in the struct to the local index that will replace them.
