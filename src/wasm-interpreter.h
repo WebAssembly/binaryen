@@ -1643,7 +1643,8 @@ public:
       if (init.breaking()) {
         return init;
       }
-      auto value = init.getSingleValue();
+      auto field = curr->type.getHeapType().getArray().element;
+      auto value = truncateForPacking(init.getSingleValue(), field);
       for (Index i = 0; i < num; i++) {
         data[i] = value;
       }

@@ -241,6 +241,21 @@
    )
   )
  )
+ (func "init-array-packed" (result i32)
+  (local $x (ref null $bytes))
+  (local.set $x
+   (array.new_with_rtt $bytes
+    (i32.const -43) ;; initialize the i8 values with a negative i32
+    (i32.const 50)
+    (rtt.canon $bytes)
+   )
+  )
+  ;; read the value, which should be -43 & 255 ==> 213
+  (array.get_u $bytes
+   (local.get $x)
+   (i32.const 10)
+  )
+ )
 )
 (module
  (type $[mut:i8] (array (mut i8)))
