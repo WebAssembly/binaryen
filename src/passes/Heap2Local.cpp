@@ -410,8 +410,13 @@ struct Heap2LocalOptimizer {
       }
 
       // If the parent may send us on a branch, we will need to look at the flow
-      // to the branch target.
-      // branch target(s).
+      // to the branch target(s).
+      //
+      // TODO: We cannot quite optimize the branching case yet since
+      //       getFallthrough does not look at branches. As a result, we will
+      //       not see the branching instruction as flowing out of the parent
+      //       even if it is. That should be easy to fix in getFallthrough, but
+      //       it might make it require linear time.
       for (auto name : branchesSentByParent(child, parent)) {
         flows.push({parent, branchTargets.getTarget(name)});
       }
