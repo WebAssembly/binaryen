@@ -495,12 +495,15 @@ struct Heap2LocalOptimizer {
         //      know the exact outcome of the operation.
         if (curr->op == RefAsNonNull) {
           // As it is our allocation that flows through here, we know it is not
-          // null, and can mark it as safe to optimize.
-          //
-          // Note that while we can look through it, we cannot optimize it out
-          // later: the outside might depend on receiving a non-nullable type
-          // (even though we have proven that it cannot be null).
+          // null (so there is no trap), and we can continue to (hopefully)
+          // optimize this allocation.
           escapes = false;
+
+          // Note that while we can look through this operation, we cannot get
+          // rid of it later, as its parent might depend on receiving a
+          // non-nullable type. So we will leave the RefAsNonNull as it is,
+          // even if we do optimize the allocation, and we depend on other
+          // passes to remove the RefAsNonNull.
         }
       }
 
