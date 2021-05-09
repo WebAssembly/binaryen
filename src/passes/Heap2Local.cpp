@@ -427,7 +427,6 @@ struct Heap2LocalOptimizer {
     }
 
     // We finished the loop over the flows. Do the final checks.
-
     if (!getsAreExclusiveToSets(rewriter.sets)) {
       return false;
     }
