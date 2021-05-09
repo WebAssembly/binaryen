@@ -19,6 +19,84 @@
 // allocation's data into locals. That is, avoid allocating a GC object, and
 // instead use one local for each of its fields.
 //
+// To get a sense for what this pass does, here is an example to clarify. First,
+// in pseudocode:
+//
+//   ref = new Int(42)
+//   do {
+//     ref.set(ref.get() + 1)
+//   } while (import(ref.get())
+//
+// That is, we allocate an int on the heap and use it as a counter.
+// Unnecessarily, as it could be a normal int on the stack.
+//
+// Wat:
+//
+//   (module
+//    ;; A boxed integer: an entire struct just to hold an int.
+//    (type $boxed-int (struct (field (mut i32))))
+//
+//    (import "env" "import" (func $import (param i32) (result i32)))
+//
+//    (func "example"
+//     (local $ref (ref null $boxed-int))
+//
+//     ;; Allocate a boxed integer of 42 and save the reference to it.
+//     (local.set $ref
+//      (struct.new_with_rtt $boxed-int
+//       (i32.const 42)
+//       (rtt.canon $boxed-int)
+//      )
+//     )
+//
+//     ;; Increment the integer in a loop, looking for some condition.
+//     (loop $loop
+//      (struct.set $boxed-int 0
+//       (local.get $ref)
+//       (i32.add
+//        (struct.get $boxed-int 0
+//         (local.get $ref)
+//        )
+//        (i32.const 1)
+//       )
+//      )
+//      (br_if $loop
+//       (call $import
+//        (struct.get $boxed-int 0
+//         (local.get $ref)
+//        )
+//       )
+//      )
+//     )
+//    )
+//   )
+//
+// Before this pass, the optimizer could do essentially nothing with this. Even
+// with this pass, running -O1 has no effect, as the pass is only used in -O2+.
+// However, running --heap2local -O1 leads to this:
+//
+//    (func $0
+//     (local $0 i32)
+//     (local.set $0
+//      (i32.const 42)
+//     )
+//     (loop $loop
+//      (br_if $loop
+//       (call $import
+//        (local.tee $0
+//         (i32.add
+//          (local.get $0)
+//          (i32.const 1)
+//         )
+//        )
+//       )
+//      )
+//     )
+//    )
+//
+// All the GC heap operations have been removed, and we just have a plain int
+// now, allowing a bunch of other opts to run.
+//
 // For us to replace an allocation with locals, we need to prove two things:
 //
 //  * It must not escape from the function. If it escapes, we must pass out a
