@@ -411,12 +411,6 @@ struct Heap2LocalOptimizer {
 
       // If the parent may send us on a branch, we will need to look at the flow
       // to the branch target(s).
-      //
-      // TODO: We cannot quite optimize the branching case yet since
-      //       getFallthrough does not look at branches. As a result, we will
-      //       not see the branching instruction as flowing out of the parent
-      //       even if it is. That should be easy to fix in getFallthrough, but
-      //       it might make it require linear time.
       for (auto name : branchesSentByParent(child, parent)) {
         flows.push({parent, branchTargets.getTarget(name)});
       }
@@ -539,6 +533,11 @@ struct Heap2LocalOptimizer {
 
     // Finally, check for mixing. If the child is the immediate fallthrough
     // of the parent then no other values can be mixed in.
+    //
+    // TODO: Also check if we are sent via a branch (and that branch sends the
+    //       single value exiting the parent).
+    // TODO: Also check for safe merges where our allocation is in all places,
+    //       like two if or select arms, or branches.
     if (Properties::getImmediateFallthrough(
           parent, passOptions, module->features) == child) {
       return ParentChildInteraction::Flows;
