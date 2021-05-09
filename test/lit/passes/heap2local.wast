@@ -96,9 +96,9 @@
   (func $one-get
     ;; An allocation followed by an immediate get of a field. This is a non-
     ;; escaping allocation, with a use, so we can optimize it out. The
-    ;; allocation is dropped (letting later opts remove it), and the allocation's
-    ;; data is moved to locals: we write the initial value to the locals, and
-    ;; we read from the locals instead of the struct.get.
+    ;; allocation is dropped (letting later opts remove it), and the
+    ;; allocation's data is moved to locals: we write the initial value to the
+    ;; locals, and we read from the locals instead of the struct.get.
     (drop
       (struct.get $struct.A 0
         (struct.new_default_with_rtt $struct.A
@@ -239,7 +239,7 @@
 
   ;; CHECK:      (func $ignore-unreachable
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block 
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (struct.new_with_rtt $struct.A
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:     (unreachable)
