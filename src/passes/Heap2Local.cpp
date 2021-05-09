@@ -194,6 +194,12 @@ struct Heap2LocalOptimizer {
 
       // We don't need any sets of the reference to any of the locals it
       // originally was written to.
+      //
+      // Note that after we remove the sets, other passes can easily remove the
+      // gets, and so we do not bother to do anything for them. (Also, in
+      // general it is not trivial to replace the gets - we'd need something of
+      // the same type, but the type might be a non-nullable reference type in
+      // the case of a parameter, and in the future maybe of some locals.)
       if (curr->isTee()) {
         replaceCurrent(curr->value);
       } else {
