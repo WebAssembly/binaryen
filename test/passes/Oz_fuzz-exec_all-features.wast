@@ -256,6 +256,18 @@
    (i32.const 10)
   )
  )
+ (func $call-target (param $0 eqref)
+  (nop)
+ )
+ (func "cast-func-to-struct"
+  (drop
+   ;; An impossible cast of a function to a struct, which should fail.
+   (ref.cast
+    (ref.func $call-target)
+    (rtt.canon $struct)
+   )
+  )
+ )
 )
 (module
  (type $[mut:i8] (array (mut i8)))

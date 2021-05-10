@@ -1453,6 +1453,10 @@ public:
         return cast;
       }
       seenRtt = Literal(Type(Rtt(0, func->sig)));
+      if (!seenRtt.isSubRtt(intendedRtt)) {
+        cast.outcome = cast.Failure;
+        return cast;
+      }
       cast.castRef =
         Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
     } else {
@@ -1460,14 +1464,14 @@ public:
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
       seenRtt = gcData->rtt;
+      if (!seenRtt.isSubRtt(intendedRtt)) {
+        cast.outcome = cast.Failure;
+        return cast;
+      }
       cast.castRef =
         Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
     }
-    if (!seenRtt.isSubRtt(intendedRtt)) {
-      cast.outcome = cast.Failure;
-    } else {
-      cast.outcome = cast.Success;
-    }
+    cast.outcome = cast.Success;
     return cast;
   }
 
