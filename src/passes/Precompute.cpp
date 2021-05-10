@@ -325,8 +325,8 @@ private:
         // perform a "bad" cast, say of a function to a struct, is a case where
         // the fallthrough value's type is very different than the actually
         // returned value's type. To handle that, if we precomputed a value and
-        // if it has the wrong type precompute it again without looking through
-        // to the fallthrough.
+        // if it has the wrong type then precompute it again without looking
+        // through to the fallthrough.
         if (values.isConcrete() &&
             !Type::isSubType(values.getType(), set->value->type)) {
           values = precomputeValue(set->value);
