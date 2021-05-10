@@ -321,23 +321,13 @@ private:
         // has a non-null type, while its input may be nullable. That does not
         // matter either, as if we managed to precompute it then the value had
         // the more specific (in this example, non-nullable) type. But there
-        // is a situation where this can cause an issue, RefCast on a null.
-        // RefCast passes through a null, even if the type is wrong (we may be
-        // trying to cast between completely incompatible types). All nulls
-        // are identical in wasm, so it does not matter normally, but in our
-        // IR we track the types, and so we must ensure that the type is
-        // correct (that is, it must be a null of the type that the RefCast
-        // returns).
-        size_t index = 0;
-        if (values.isConcrete()) {
-          for (auto t : set->value->type) {
-            assert(index <= values.size());
-            if (values[index].isNull()) {
-              values[index] =
-                Literal::makeNull(Type(t.getHeapType(), Nullable));
-            }
-            index++;
-          }
+        // is a situation where this can cause an issue: RefCast. An attempt to
+        // perform a "bad" cast, say of a function to a struct, is a case where
+        // the fallthrough value is different than the actually returned value.
+        // To handle that, if the result has the wrong type, precompute it
+        // without looking through to the fallthrough.
+        if (!Type::isSubType(values.getType(), set->value->type)) {
+          values = precomputeValue(set->value);
         }
         setValues[set] = values;
         if (values.isConcrete()) {

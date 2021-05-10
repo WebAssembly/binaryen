@@ -6,9 +6,11 @@
  (type $struct (struct (mut i32)))
  (type $empty (struct))
 
- ;; two incompatible types
+ ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
  (type $B (struct (field (mut f64))))
+
+ (type $func-return-i32 (func (result i32)))
 
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
@@ -458,6 +460,43 @@
     (tuple.extract 0
      (local.get $temp)
     )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $receive-f64 (param $0 f64)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $receive-f64 (param f64)
+  (unreachable)
+ )
+
+ ;; CHECK:      (func $bad-cast-and-get-non-null (param $temp (ref $func-return-i32))
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (ref.cast
+ ;; CHECK-NEXT:    (ref.func $receive-f64)
+ ;; CHECK-NEXT:    (rtt.canon $func-return-i32)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call_ref
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $bad-cast-and-get-non-null (param $temp (ref $func-return-i32))
+  ;; Try to cast a function to an incompatible type.
+  (local.set $temp
+   (ref.cast
+    (ref.func $receive-f64)
+    (rtt.canon $func-return-i32)
+   )
+  )
+  (drop
+   ;; Call the reference in the local. Precompute should not be confused by the
+   ;; attempt above to store a different type.
+   (call_ref
+    (local.get $temp)
    )
   )
  )
