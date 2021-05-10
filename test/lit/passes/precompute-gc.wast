@@ -398,7 +398,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $bad-cast-and-get
+ ;; CHECK:      (func $odd-cast-and-get
  ;; CHECK-NEXT:  (local $temp (ref null $B))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (ref.null $B)
@@ -409,11 +409,12 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $bad-cast-and-get
+ (func $odd-cast-and-get
   (local $temp (ref null $B))
   ;; Try to cast a null of A to B. While the types are incompatible, ref.cast
   ;; returns a null when given a null (and the null must have the type that the
-  ;; ref.cast instruction has, that is, the value is a null of type $B).
+  ;; ref.cast instruction has, that is, the value is a null of type $B). So this
+  ;; is an odd cast that "works".
   (local.set $temp
    (ref.cast
     (ref.null $A)
@@ -421,15 +422,15 @@
    )
   )
   (drop
-   ;; Read from the reference in the local. Precompute should not be confused by
-   ;; the attempt above to store a different type.
+   ;; Read from the local, which precompute should set to a null with the proper
+   ;; type.
    (struct.get $B 0
     (local.get $temp)
    )
   )
  )
 
- ;; CHECK:      (func $bad-cast-and-get-tuple
+ ;; CHECK:      (func $odd-cast-and-get-tuple
  ;; CHECK-NEXT:  (local $temp ((ref null $B) i32))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (tuple.make
@@ -443,7 +444,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $bad-cast-and-get-tuple
+ (func $odd-cast-and-get-tuple
   (local $temp ((ref null $B) i32))
   ;; As above, but with a tuple.
   (local.set $temp
@@ -471,7 +472,7 @@
   (unreachable)
  )
 
- ;; CHECK:      (func $bad-cast-and-get-non-null (param $temp (ref $func-return-i32))
+ ;; CHECK:      (func $odd-cast-and-get-non-null (param $temp (ref $func-return-i32))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (ref.cast
  ;; CHECK-NEXT:    (ref.func $receive-f64)
@@ -484,7 +485,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $bad-cast-and-get-non-null (param $temp (ref $func-return-i32))
+ (func $odd-cast-and-get-non-null (param $temp (ref $func-return-i32))
   ;; Try to cast a function to an incompatible type.
   (local.set $temp
    (ref.cast
@@ -493,8 +494,8 @@
    )
   )
   (drop
-   ;; Call the reference in the local. Precompute should not be confused by the
-   ;; attempt above to store a different type.
+   ;; Read from the local, checking whether precompute set a value there (it
+   ;; should not, as the cast fails).
    (call_ref
     (local.get $temp)
    )
