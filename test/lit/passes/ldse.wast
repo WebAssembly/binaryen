@@ -1449,4 +1449,33 @@
    (i32.const 30)
   )
  )
+
+ ;; CHECK:      (func $gc-unreachable (param $x (ref $A))
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (loop $loop
+ ;; CHECK-NEXT:    (br $loop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (struct.set $A 0
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i32.const 20)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $gc-unreachable (param $x (ref $A))
+  ;; An unreachable store should be ignored, even if dead.
+  (struct.set $A 0
+   (local.get $x)
+   ;; Test unreachability without an explicit unreachable, using a loop that
+   ;; never exits.
+   (loop $loop
+    (br $loop)
+   )
+  )
+  ;; An apparent trample of that dead store.
+  (struct.set $A 0
+   (local.get $x)
+   (i32.const 20)
+  )
+ )
 )

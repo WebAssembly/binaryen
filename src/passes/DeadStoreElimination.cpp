@@ -124,9 +124,13 @@ struct Logic {
   //============================================================================
 
   // Returns whether an expression is a store.
+  //
+  // The main code will automatically ignore unreachable (irrelevant) stores.
   bool isStore(Expression* curr) { WASM_UNREACHABLE("unimp"); };
 
   // Returns whether an expression is a load.
+  //
+  // The main code will automatically ignore unreachable (irrelevant) loads.
   bool isLoad(Expression* curr) { WASM_UNREACHABLE("unimp"); };
 
   // Returns whether the expression is a barrier to our analysis: something that
@@ -248,7 +252,7 @@ struct DeadStoreCFG
     auto& exprs = this->currBasicBlock->contents.exprs;
 
     // Add all relevant things to the list of exprs for the current basic block.
-    if (logic.isStore(curr) || logic.isLoad(curr)) {
+    if (isStore(curr) || isLoad(curr)) {
       exprs.push_back(curr);
     } else if (logic.isBarrier(curr, currEffects)) {
       // Barriers can be very common, so as a minor optimization avoid having
@@ -259,6 +263,14 @@ struct DeadStoreCFG
     } else if (logic.mayInteract(curr, currEffects)) {
       exprs.push_back(curr);
     }
+  }
+
+  // Filter out unreachable (irrelevant) loads and stores.
+  bool isStore(Expression* curr) {
+    return curr->type != Type::unreachable && logic.isStore(curr);
+  }
+  bool isLoad(Expression* curr) {
+    return curr->type != Type::unreachable && logic.isLoad(curr);
   }
 
   // All the stores we can optimize, that is, stores that write to a non-local
@@ -292,7 +304,7 @@ struct DeadStoreCFG
       for (size_t i = 0; i < block->contents.exprs.size(); i++) {
         auto* store = block->contents.exprs[i];
 
-        if (!logic.isStore(store)) {
+        if (!isStore(store)) {
           continue;
         }
 
