@@ -309,8 +309,10 @@
  )
  (func $unreachables-1
   (drop
-   (block 
-    (unreachable)
+   (block
+    (drop
+     (unreachable)
+    )
    )
   )
  )
@@ -321,15 +323,23 @@
   )
  )
  (func $unreachables-3
-  (block 
-   (unreachable)
-   (unreachable)
+  (block
+   (drop
+    (unreachable)
+   )
+   (drop
+    (unreachable)
+   )
   )
  )
  (func $unreachables-4
-  (block 
-   (unreachable)
-   (f32.const 1)
+  (block
+   (drop
+    (unreachable)
+   )
+   (drop
+    (f32.const 1)
+   )
   )
  )
 )
