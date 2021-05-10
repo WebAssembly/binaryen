@@ -977,7 +977,7 @@ void StructGet::finalize() {
 }
 
 void StructSet::finalize() {
-  if (ref->type == Type::unreachable) {
+  if (ref->type == Type::unreachable || value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::none;

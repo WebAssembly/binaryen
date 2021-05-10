@@ -1,14 +1,14 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
+ (type $none_=>_none (func))
  (type $grandchild (struct (field i32) (field i64)))
+ (type $struct.C (struct (field $named-mut (mut f32))))
  (type $vector (array (mut f64)))
  (type $matrix (array (mut (ref null $vector))))
  (type $anyref_=>_none (func (param anyref)))
  (type $parent (struct ))
  (type $child (struct (field i32)))
- (type $struct.C (struct (field $named-mut (mut f32))))
- (type $none_=>_none (func))
  (type $nested-child-struct (struct (field (mut (ref $child)))))
  (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
  (type $rtt_$parent_=>_none (func (param (rtt $parent))))
@@ -307,17 +307,29 @@
    )
   )
  )
- (func $unreachables
+ (func $unreachables-1
   (drop
    (block 
     (unreachable)
    )
   )
-  (drop
-   (block 
-    (unreachable)
-    (unreachable)
-   )
+ )
+ (func $unreachables-2
+  (struct.set $struct.C $named-mut
+   (ref.null $struct.C)
+   (unreachable)
+  )
+ )
+ (func $unreachables-3
+  (block 
+   (unreachable)
+   (unreachable)
+  )
+ )
+ (func $unreachables-4
+  (block 
+   (unreachable)
+   (f32.const 1)
   )
  )
 )
