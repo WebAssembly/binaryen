@@ -323,9 +323,10 @@ private:
         // the more specific (in this example, non-nullable) type. But there
         // is a situation where this can cause an issue: RefCast. An attempt to
         // perform a "bad" cast, say of a function to a struct, is a case where
-        // the fallthrough value is different than the actually returned value.
-        // To handle that, if the result has the wrong type, precompute it
-        // without looking through to the fallthrough.
+        // the fallthrough value's type is very different than the actually
+        // returned value's type. To handle that, if we precomputed a value and
+        // if it has the wrong type precompute it again without looking through
+        // to the fallthrough.
         if (values.isConcrete() &&
             !Type::isSubType(values.getType(), set->value->type)) {
           values = precomputeValue(set->value);
