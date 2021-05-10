@@ -36,6 +36,8 @@
 [host limit allocation failure]
 [fuzz-exec] calling init-array-packed
 [fuzz-exec] note result: init-array-packed => 213
+[fuzz-exec] calling cast-func-to-struct
+[trap cast error]
 (module
  (type $struct (struct (field (mut i32))))
  (type $void_func (func))
@@ -44,8 +46,9 @@
  (type $int_func (func (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
+ (type $eqref_=>_none (func (param eqref)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
- (elem declare func $a-void-func)
+ (elem declare func $a-void-func $call-target)
  (export "structs" (func $0))
  (export "arrays" (func $1))
  (export "rtts" (func $2))
@@ -55,6 +58,7 @@
  (export "rtt-and-cast-on-func" (func $8))
  (export "array-alloc-failure" (func $9))
  (export "init-array-packed" (func $10))
+ (export "cast-func-to-struct" (func $12))
  (func $0 (; has Stack IR ;)
   (local $0 (ref null $struct))
   (call $log
@@ -293,6 +297,17 @@
    (i32.const 10)
   )
  )
+ (func $call-target (; has Stack IR ;) (param $0 eqref)
+  (nop)
+ )
+ (func $12 (; has Stack IR ;)
+  (drop
+   (ref.cast
+    (ref.func $call-target)
+    (rtt.canon $struct)
+   )
+  )
+ )
 )
 [fuzz-exec] calling structs
 [LoggingExternalInterface logging 0]
@@ -331,6 +346,8 @@
 [fuzz-exec] calling array-alloc-failure
 [fuzz-exec] calling init-array-packed
 [fuzz-exec] note result: init-array-packed => 213
+[fuzz-exec] calling cast-func-to-struct
+[trap cast error]
 ignoring comparison of ExecutionResults!
 [fuzz-exec] calling foo
 [host limit allocation failure]
