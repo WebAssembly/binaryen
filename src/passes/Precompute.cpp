@@ -318,7 +318,7 @@ private:
         // that pass through the value. Normally that does not matter here,
         // for example, (block .. (value)) returns the value unmodified.
         // However, some things change the type, for example RefAsNonNull has
-        // has a non-null type, while its input may be nullable. That does not
+        // a non-null type, while its input may be nullable. That does not
         // matter either, as if we managed to precompute it then the value had
         // the more specific (in this example, non-nullable) type. But there
         // is a situation where this can cause an issue: RefCast. An attempt to
