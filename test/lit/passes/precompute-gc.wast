@@ -454,8 +454,6 @@
    )
   )
   (drop
-   ;; Read from the reference in the local. Precompute should not be confused by
-   ;; the attempt above to store a different type.
    (struct.get $B 0
     (tuple.extract 0
      (local.get $temp)
