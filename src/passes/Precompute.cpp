@@ -326,7 +326,8 @@ private:
         // the fallthrough value is different than the actually returned value.
         // To handle that, if the result has the wrong type, precompute it
         // without looking through to the fallthrough.
-        if (!Type::isSubType(values.getType(), set->value->type)) {
+        if (values.isConcrete() &&
+            !Type::isSubType(values.getType(), set->value->type)) {
           values = precomputeValue(set->value);
         }
         setValues[set] = values;
