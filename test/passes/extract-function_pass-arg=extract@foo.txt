@@ -14,3 +14,15 @@
   (nop)
  )
 )
+(module
+ (type $none (func))
+ (import "env" "other" (func $other))
+ (table $t 10 funcref)
+ (elem $0 (i32.const 0) $other)
+ (export "foo" (func $foo))
+ (func $foo
+  (call_indirect (type $none)
+   (i32.const 10)
+  )
+ )
+)
