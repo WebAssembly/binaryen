@@ -611,15 +611,28 @@ struct Heap2LocalOptimizer {
 
     // Finally, check for mixing. If the child is the immediate fallthrough
     // of the parent then no other values can be mixed in.
-    //
-    // TODO: Also check if we are sent via a branch (and that branch sends the
-    //       single value exiting the parent).
-    // TODO: Also check for safe merges where our allocation is in all places,
-    //       like two if or select arms, or branches.
     if (Properties::getImmediateFallthrough(
           parent, passOptions, module->features) == child) {
       return ParentChildInteraction::Flows;
     }
+
+    // Likewise, if the child branches to the parent, and it is the sole branch,
+    // then there is no mixing.
+    auto branches = branchTargets.getBranches().size();
+    if (branches.size() == 1) {
+      auto* br = *branches.begin();
+      Expression* value = nullptr;
+      operateOnScopeNameUsesAndSentValues(br, [&](Name name, Expression* brValue) {
+        value = brValue;
+      });
+      assert(value);
+      if (value == child) {
+        return ParentChildInteraction::Flows;
+      }
+    }
+
+    // TODO: Also check for safe merges where our allocation is in all places,
+    //       like two if or select arms, or branches.
 
     return ParentChildInteraction::Mixes;
   }

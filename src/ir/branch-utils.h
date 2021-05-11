@@ -352,24 +352,41 @@ public:
   }
 };
 
-// Provides a map of branch target names to the expressions that branch to
-// them.
+// Answers queries about getting the branch target for a name, or getting all
+// the branches to that name.
 struct BranchTargets {
   BranchTargets(Expression* expr) { inner.walk(expr); }
 
-  Expression* getTarget(Name name) { return inner.map[name]; }
+  // Gets the expression that defines this branch target, i.e., where we branch
+  // to if we branch to that name.
+  Expression* getTarget(Name name) { return inner.targets[name]; }
+
+  // Gets the expressions branching to a target.
+  std::unordered_set<Expression*> getBranches(Name name) {
+    auto iter = inner.branches.find(name);
+    if (iter != inner.branches.end()) {
+      return iter->second;
+    }
+    return {};
+  }
 
 private:
   struct Inner : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
     void visitExpression(Expression* curr) {
       operateOnScopeNameDefs(curr, [&](Name name) {
         if (name.is()) {
-          map[name] = curr;
+          targets[name] = curr;
+        }
+      });
+      operateOnScopeNameUses(curr, [&](Name& name) {
+        if (name.is()) {
+          branches[name].insert(curr);
         }
       });
     }
 
-    std::map<Name, Expression*> map;
+    std::map<Name, Expression*> targets;
+    std::map<Name, std::unordered_set<Expression*>> branches;
   } inner;
 };
 
