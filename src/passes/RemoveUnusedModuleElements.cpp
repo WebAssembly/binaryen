@@ -229,6 +229,8 @@ struct RemoveUnusedModuleElements : public Pass {
              analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Table, curr->name)) == 0;
     });
+    // TODO: After removing elements, we may be able to remove more things, and
+    //       should do another pass.
 
     // Handle the memory
     if (!exportsMemory && !analyzer.usesMemory) {
