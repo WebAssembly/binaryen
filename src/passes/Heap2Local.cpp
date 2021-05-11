@@ -620,7 +620,8 @@ struct Heap2LocalOptimizer {
     // Likewise, if the child branches to the parent, and it is the sole branch,
     // with no other value exiting the block (in particular, no final value at
     // the end that flows out), then there is no mixing.
-    auto branches = branchTargets.getBranches(BranchUtils::getDefinedName(parent));
+    auto branches =
+      branchTargets.getBranches(BranchUtils::getDefinedName(parent));
     if (branches.size() == 1 &&
         BranchUtils::getSentValue(*branches.begin()) == child) {
       // TODO: support more branch targets.

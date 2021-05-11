@@ -240,9 +240,7 @@ inline NameSet getBranchTargets(Expression* ast) {
 // name if there is none.
 inline Name getDefinedName(Expression* curr) {
   Name ret;
-  operateOnScopeNameDefs(curr, [&](Name& name) {
-    ret = name;
-  });
+  operateOnScopeNameDefs(curr, [&](Name& name) { ret = name; });
   return ret;
 }
 
@@ -250,9 +248,8 @@ inline Name getDefinedName(Expression* curr) {
 
 inline Expression* getSentValue(Expression* curr) {
   Expression* ret = nullptr;
-  operateOnScopeNameUsesAndSentValues(curr, [&](Name name, Expression* value) {
-    ret = value;
-  });
+  operateOnScopeNameUsesAndSentValues(
+    curr, [&](Name name, Expression* value) { ret = value; });
   return ret;
 }
 
