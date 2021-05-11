@@ -17,9 +17,8 @@
 // Removes code from all functions but one, leaving a valid module with (mostly)
 // just the code from that function, as best we can.
 //
-// It is beneficial to run --remove-unused-module-elements after this pass, as
-// it can remove things not reachable from the extracted function, and this pass
-// will do so automatically for you.
+// This pass will run --remove-unused-module-elements automatically for you, in
+// order to remove as many things as possible.
 
 #include "pass.h"
 #include "wasm.h"
@@ -47,15 +46,15 @@ struct ExtractFunction : public Pass {
     if (!found) {
       Fatal() << "could not find the function to extract\n";
     }
-    // leave just an export for the thing we want
-    if (!module->getExportOrNull(name)) {
-      module->exports.clear();
-      auto* export_ = new Export;
-      export_->name = name;
-      export_->value = name;
-      export_->kind = ExternalKind::Function;
-      module->addExport(export_);
-    }
+
+    // Leave just one export, for the thing we want.
+    module->exports.clear();
+    auto* export_ = new Export;
+    export_->name = name;
+    export_->value = name;
+    export_->kind = ExternalKind::Function;
+    module->addExport(export_);
+
     // Remove unneeded things.
     PassRunner postRunner(runner);
     postRunner.add("remove-unused-module-elements");
