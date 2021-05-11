@@ -240,10 +240,12 @@
   ;; CHECK:      (func $ignore-unreachable
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.A
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
