@@ -15,12 +15,12 @@
  */
 
 // Removes code from all functions but one, leaving a valid module with (mostly)
-// just the code you want to debug.
+// just the code from that function, as best we can.
 //
 // It is beneficial to run --remove-unused-module-elements after this pass, as
-// it can remove things not reachable from the extracted function.
+// it can remove things not reachable from the extracted function, and this pass
+// will do so automatically for you.
 
-#include "ir/find_all.h"
 #include "pass.h"
 #include "wasm.h"
 
@@ -32,7 +32,7 @@ struct ExtractFunction : public Pass {
       "extract",
       "ExtractFunction usage:  wasm-opt --pass-arg=extract@FUNCTION_NAME");
     std::cerr << "extracting " << name << "\n";
-    Function* found = nullptr;
+    bool found = false;
     for (auto& func : module->functions) {
       if (func->name != name) {
         // Turn it into an import.
@@ -41,20 +41,11 @@ struct ExtractFunction : public Pass {
         func->vars.clear();
         func->body = nullptr;
       } else {
-        found = func.get();
+        found = true;
       }
     }
     if (!found) {
       Fatal() << "could not find the function to extract\n";
-    }
-    // clear data
-    module->memory.segments.clear();
-    // clear tables, if there are no indirect calls
-    // TODO: be more precise here
-    if (!found->imported()) {
-      if (FindAll<CallIndirect>(found->body).list.empty()) {
-        module->tables.clear();
-      }
     }
     // leave just an export for the thing we want
     if (!module->getExportOrNull(name)) {
@@ -65,6 +56,11 @@ struct ExtractFunction : public Pass {
       export_->kind = ExternalKind::Function;
       module->addExport(export_);
     }
+    // Remove unneeded things.
+    PassRunner postRunner(runner);
+    postRunner.add("remove-unused-module-elements");
+    postRunner.setIsNested(true);
+    postRunner.run();
   }
 };
 
