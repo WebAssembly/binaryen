@@ -1,14 +1,14 @@
 (module
  (type ${i32_f32_f64} (struct (field i32) (field f32) (field f64)))
  (type ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref ${i32_f32_f64})) (field (mut (ref ${i32_f32_f64})))))
+ (type $none_=>_none (func))
  (type ${i32_i64} (struct (field i32) (field i64)))
  (type $[mut:f64] (array (mut f64)))
  (type $[mut:ref?|[mut:f64]|] (array (mut (ref null $[mut:f64]))))
+ (type ${mut:f32} (struct (field (mut f32))))
  (type $anyref_=>_none (func (param anyref)))
  (type ${} (struct ))
  (type ${i32} (struct (field i32)))
- (type ${mut:f32} (struct (field (mut f32))))
- (type $none_=>_none (func))
  (type ${mut:ref|{i32}|} (struct (field (mut (ref ${i32})))))
  (type $rtt_1_{}_=>_none (func (param (rtt 1 ${}))))
  (type $rtt_{}_=>_none (func (param (rtt ${}))))
@@ -307,6 +307,18 @@
   )
  )
  (func $8
+  (unreachable)
+ )
+ (func $9
+  (drop
+   (ref.null ${mut:f32})
+  )
+  (unreachable)
+ )
+ (func $10
+  (unreachable)
+ )
+ (func $11
   (unreachable)
  )
 )
