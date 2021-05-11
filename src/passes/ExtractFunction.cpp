@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-// Removes code from all functions but one, leaving a valid module
-// with (mostly) just the code you want to debug (function-parallel,
-// non-lto) passes on.
+// Removes code from all functions but one, leaving a valid module with (mostly)
+// just the code you want to debug.
+//
+// It is beneficial to run --remove-unused-module-elements after this pass, as
+// it can remove things not reachable from the extracted function.
 
+#include "ir/find_all.h"
 #include "pass.h"
 #include "wasm.h"
 
@@ -29,7 +32,7 @@ struct ExtractFunction : public Pass {
       "extract",
       "ExtractFunction usage:  wasm-opt --pass-arg=extract@FUNCTION_NAME");
     std::cerr << "extracting " << name << "\n";
-    bool found = false;
+    Function* found = nullptr;
     for (auto& func : module->functions) {
       if (func->name != name) {
         // Turn it into an import.
@@ -38,7 +41,7 @@ struct ExtractFunction : public Pass {
         func->vars.clear();
         func->body = nullptr;
       } else {
-        found = true;
+        found = func.get();
       }
     }
     if (!found) {
@@ -46,9 +49,11 @@ struct ExtractFunction : public Pass {
     }
     // clear data
     module->memory.segments.clear();
-    // TODO: if the extracted function contains a call_indirect, the referenced
-    // table should not be removed.
-    module->tables.clear();
+    // clear tables, if there are no indirect calls
+    // TODO: be more precise here
+    if (FindAll<CallIndirect>(func->body).list.empty()) {
+      module->tables.clear();
+    }
     // leave just an export for the thing we want
     if (!module->getExportOrNull(name)) {
       module->exports.clear();
