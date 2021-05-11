@@ -236,6 +236,26 @@ inline NameSet getBranchTargets(Expression* ast) {
   return scanner.targets;
 }
 
+// Get the name of the branch target that defined in the expression, or an empty
+// name if there is none.
+inline Name getDefinedName(Expression* curr) {
+  Name ret;
+  operateOnScopeNameDefs(curr, [&](Name& name) {
+    ret = name;
+  });
+  return ret;
+}
+
+// Retrn the value sent by a branch instruction, or nullptr if there is none.
+
+inline Expression* getSentValue(Expression* curr) {
+  Expression* ret = nullptr;
+  operateOnScopeNameUsesAndSentValues(curr, [&](Name name, Expression* value) {
+    ret = value;
+  });
+  return ret;
+}
+
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
