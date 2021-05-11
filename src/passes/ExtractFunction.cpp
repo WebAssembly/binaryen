@@ -51,8 +51,10 @@ struct ExtractFunction : public Pass {
     module->memory.segments.clear();
     // clear tables, if there are no indirect calls
     // TODO: be more precise here
-    if (FindAll<CallIndirect>(func->body).list.empty()) {
-      module->tables.clear();
+    if (!found->imported()) {
+      if (FindAll<CallIndirect>(found->body).list.empty()) {
+        module->tables.clear();
+      }
     }
     // leave just an export for the thing we want
     if (!module->getExportOrNull(name)) {

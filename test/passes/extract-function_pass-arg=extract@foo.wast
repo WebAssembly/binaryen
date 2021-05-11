@@ -12,7 +12,7 @@
 (module
   ;; Use another function in the table.
   (table $t 10 funcref)
-  (elem $0 (table $t1) (i32.const 0) func $other)
+  (elem $0 (table $t) (i32.const 0) func $other)
   (func $foo
   )
   (func $other

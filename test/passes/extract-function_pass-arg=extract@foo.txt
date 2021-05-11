@@ -7,3 +7,12 @@
   (call $bar)
  )
 )
+(module
+ (type $none_=>_none (func))
+ (import "env" "other" (func $other))
+ (elem $0 (i32.const 0) $other)
+ (export "foo" (func $foo))
+ (func $foo
+  (nop)
+ )
+)
