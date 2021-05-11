@@ -1926,7 +1926,7 @@ struct PrintExpressionContents
     // where if the ref is unreachable, we don't know what heap type to print),
     // then print the children in a block, which is good enough as this
     // instruction is never reached anyhow.
-    printMedium(o, "block");
+    printMedium(o, "block ;; (replaces something unreachable we can't emit)");
   }
   void printFieldName(HeapType type, Index index) {
     processFieldName(wasm, type, index, [&](Name name) {
@@ -2350,7 +2350,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     // See the parallel function in PrintExpressionContents for background.
     //
     // Emit a block with drops of the children.
-    o << "(block";
+    o << "(block ;; (replaces something unreachable we can't emit)";
     incIndent();
     for (auto* child : ChildIterator(curr)) {
       Drop drop;

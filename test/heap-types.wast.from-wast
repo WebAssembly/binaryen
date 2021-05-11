@@ -309,7 +309,7 @@
  )
  (func $unreachables-1
   (drop
-   (block
+   (block ;; (replaces something unreachable we can't emit)
     (drop
      (unreachable)
     )
@@ -323,7 +323,7 @@
   )
  )
  (func $unreachables-3
-  (block
+  (block ;; (replaces something unreachable we can't emit)
    (drop
     (unreachable)
    )
@@ -333,7 +333,7 @@
   )
  )
  (func $unreachables-4
-  (block
+  (block ;; (replaces something unreachable we can't emit)
    (drop
     (unreachable)
    )
