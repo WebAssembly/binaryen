@@ -414,6 +414,11 @@ struct Heap2LocalOptimizer {
     Mixes,
   };
 
+  // All the child-parent pairs we have already looked at. We never need to look
+  // as such a pair again, as it would indicate mixing.
+  using ChildAndParent = std::pair<Expression*, Expression*>;
+  std::unordered_set<ChildAndParent> seen;
+
   // Analyze an allocation to see if we can convert it from a heap allocation to
   // locals.
   bool convertToLocals(StructNew* allocation) {
@@ -425,7 +430,6 @@ struct Heap2LocalOptimizer {
     // queue), and we need to check if it is ok to be at the parent, and to flow
     // from the child to the parent. We will analyze that (see
     // ParentChildInteraction, above) and continue accordingly.
-    using ChildAndParent = std::pair<Expression*, Expression*>;
     UniqueNonrepeatingDeferredQueue<ChildAndParent> flows;
 
     // Start the flow from the allocation itself to its parent.
@@ -437,17 +441,17 @@ struct Heap2LocalOptimizer {
       auto* child = flow.first;
       auto* parent = flow.second;
 
-      // If we've already seen an expression, stop since we cannot optimize
+      // If we've already seen XXX an expression, stop since we cannot optimize
       // things that overlap in any way (see the notes on exclusivity, above).
       // Note that we use a nonrepeating queue here, so we already do not visit
       // the same thing more than once; what this check does is verify we don't
       // look at something that another allocation reached, which would be in a
       // different call to this function and use a different queue (any overlap
       // between calls would prove non-exclusivity).
-      if (seen.count(child)) {
+      if (seen.count(flow)) {
         return false;
       }
-      seen.insert(child);
+      seen.insert(flow);
 
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {
@@ -490,7 +494,7 @@ struct Heap2LocalOptimizer {
       // If the parent may send us on a branch, we will need to look at the flow
       // to the branch target(s).
       for (auto name : branchesSentByParent(child, parent)) {
-        flows.push({parent, branchTargets.getTarget(name)});
+        flows.push({child, branchTargets.getTarget(name)});
       }
 
       // If we got to here, then we can continue to hope that we can optimize
@@ -508,9 +512,6 @@ struct Heap2LocalOptimizer {
 
     return true;
   }
-
-  // All the expressions we have already looked at.
-  std::unordered_set<Expression*> seen;
 
   ParentChildInteraction getParentChildInteraction(Expression* parent,
                                                    Expression* child) {
@@ -617,11 +618,17 @@ struct Heap2LocalOptimizer {
     }
 
     // Likewise, if the child branches to the parent, and it is the sole branch,
-    // then there is no mixing.
+    // with no other value exiting the block (in particular, no final value at
+    // the end that flows out), then there is no mixing.
     auto branches = branchTargets.getBranches(BranchUtils::getDefinedName(parent));
     if (branches.size() == 1 &&
         BranchUtils::getSentValue(*branches.begin()) == child) {
-      return ParentChildInteraction::Flows;
+      // TODO: support more branch targets.
+      if (auto* parentAsBlock = parent->dynCast<Block>()) {
+        if (parentAsBlock->list.back()->type == Type::unreachable) {
+          return ParentChildInteraction::Flows;
+        }
+      }
     }
 
     // TODO: Also check for safe merges where our allocation is in all places,

@@ -731,7 +731,7 @@
     )
   )
 
-  ;; CHECK:      (func $branch-value (result f64)
+  ;; CHECK:      (func $block-value (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -760,7 +760,7 @@
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $branch-value (result f64)
+  (func $block-value (result f64)
     (local $ref (ref null $struct.A))
     (local.set $ref
       (struct.new_default_with_rtt $struct.A
@@ -1528,6 +1528,63 @@
           )
         )
         (ref.null $struct.A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $branch-to-block-no-fallthrough (result f64)
+  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result f64)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block $block (result (ref null $struct.A))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (br_if $block
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (return
+  ;; CHECK-NEXT:      (f64.const 2.1828)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $branch-to-block-no-fallthrough (result f64)
+    (local $0 (ref null $struct.A))
+    (local.set $0
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    (struct.get $struct.A 1
+      (block $block (result (ref null $struct.A))
+        (drop
+          ;; A branch to the block of our allocation. In this case there is no
+          ;; other value reaching the block, and so our branch is the sole value
+          ;; which means there is no mixing, and we can optimize this.
+          (br_if $block
+            (local.get $0)
+            (i32.const 0)
+          )
+        )
+        (return (f64.const 2.1828))
       )
     )
   )
