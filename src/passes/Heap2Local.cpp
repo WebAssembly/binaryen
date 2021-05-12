@@ -394,6 +394,9 @@ struct Heap2LocalOptimizer {
     }
   };
 
+  // All the expressions we have already looked at.
+  std::unordered_set<Expression*> seen;
+
   enum class ParentChildInteraction {
     // The parent lets the child escape. E.g. the parent is a call.
     Escapes,
@@ -444,10 +447,10 @@ struct Heap2LocalOptimizer {
       // look at something that another allocation reached, which would be in a
       // different call to this function and use a different queue (any overlap
       // between calls would prove non-exclusivity).
-      if (seen.count(child)) {
+      if (seen.count(parent)) {
         return false;
       }
-      seen.insert(child);
+      seen.insert(parent);
 
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {
@@ -490,7 +493,7 @@ struct Heap2LocalOptimizer {
       // If the parent may send us on a branch, we will need to look at the flow
       // to the branch target(s).
       for (auto name : branchesSentByParent(child, parent)) {
-        flows.push({parent, branchTargets.getTarget(name)});
+        flows.push({child, branchTargets.getTarget(name)});
       }
 
       // If we got to here, then we can continue to hope that we can optimize
@@ -508,9 +511,6 @@ struct Heap2LocalOptimizer {
 
     return true;
   }
-
-  // All the expressions we have already looked at.
-  std::unordered_set<Expression*> seen;
 
   ParentChildInteraction getParentChildInteraction(Expression* parent,
                                                    Expression* child) {
@@ -611,15 +611,28 @@ struct Heap2LocalOptimizer {
 
     // Finally, check for mixing. If the child is the immediate fallthrough
     // of the parent then no other values can be mixed in.
-    //
-    // TODO: Also check if we are sent via a branch (and that branch sends the
-    //       single value exiting the parent).
-    // TODO: Also check for safe merges where our allocation is in all places,
-    //       like two if or select arms, or branches.
     if (Properties::getImmediateFallthrough(
           parent, passOptions, module->features) == child) {
       return ParentChildInteraction::Flows;
     }
+
+    // Likewise, if the child branches to the parent, and it is the sole branch,
+    // with no other value exiting the block (in particular, no final value at
+    // the end that flows out), then there is no mixing.
+    auto branches =
+      branchTargets.getBranches(BranchUtils::getDefinedName(parent));
+    if (branches.size() == 1 &&
+        BranchUtils::getSentValue(*branches.begin()) == child) {
+      // TODO: support more types of branch targets.
+      if (auto* parentAsBlock = parent->dynCast<Block>()) {
+        if (parentAsBlock->list.back()->type == Type::unreachable) {
+          return ParentChildInteraction::Flows;
+        }
+      }
+    }
+
+    // TODO: Also check for safe merges where our allocation is in all places,
+    //       like two if or select arms, or branches.
 
     return ParentChildInteraction::Mixes;
   }
