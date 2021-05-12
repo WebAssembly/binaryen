@@ -2351,6 +2351,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     //
     // Emit a block with drops of the children.
     o << "(block";
+    if (!minify) {
+      o << " ;; (replaces something unreachable we can't emit)";
+    }
     incIndent();
     for (auto* child : ChildIterator(curr)) {
       Drop drop;
