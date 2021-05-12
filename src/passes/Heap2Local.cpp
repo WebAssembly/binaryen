@@ -394,6 +394,9 @@ struct Heap2LocalOptimizer {
     }
   };
 
+  // All the expressions we have already looked at.
+  std::unordered_set<Expression*> seen;
+
   enum class ParentChildInteraction {
     // The parent lets the child escape. E.g. the parent is a call.
     Escapes,
@@ -414,11 +417,6 @@ struct Heap2LocalOptimizer {
     Mixes,
   };
 
-  // All the child-parent pairs we have already looked at. We never need to look
-  // as such a pair again, as it would indicate mixing.
-  using ChildAndParent = std::pair<Expression*, Expression*>;
-  std::unordered_set<Expression*> seen;
-
   // Analyze an allocation to see if we can convert it from a heap allocation to
   // locals.
   bool convertToLocals(StructNew* allocation) {
@@ -430,6 +428,7 @@ struct Heap2LocalOptimizer {
     // queue), and we need to check if it is ok to be at the parent, and to flow
     // from the child to the parent. We will analyze that (see
     // ParentChildInteraction, above) and continue accordingly.
+    using ChildAndParent = std::pair<Expression*, Expression*>;
     UniqueNonrepeatingDeferredQueue<ChildAndParent> flows;
 
     // Start the flow from the allocation itself to its parent.
@@ -441,7 +440,7 @@ struct Heap2LocalOptimizer {
       auto* child = flow.first;
       auto* parent = flow.second;
 
-      // If we've already seen XXX an expression, stop since we cannot optimize
+      // If we've already seen an expression, stop since we cannot optimize
       // things that overlap in any way (see the notes on exclusivity, above).
       // Note that we use a nonrepeating queue here, so we already do not visit
       // the same thing more than once; what this check does is verify we don't
