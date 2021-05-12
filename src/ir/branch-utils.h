@@ -236,16 +236,15 @@ inline NameSet getBranchTargets(Expression* ast) {
   return scanner.targets;
 }
 
-// Get the name of the branch target that defined in the expression, or an empty
-// name if there is none.
+// Get the name of the branch target that is defined in the expression, or an
+// empty name if there is none.
 inline Name getDefinedName(Expression* curr) {
   Name ret;
   operateOnScopeNameDefs(curr, [&](Name& name) { ret = name; });
   return ret;
 }
 
-// Retrn the value sent by a branch instruction, or nullptr if there is none.
-
+// Return the value sent by a branch instruction, or nullptr if there is none.
 inline Expression* getSentValue(Expression* curr) {
   Expression* ret = nullptr;
   operateOnScopeNameUsesAndSentValues(
@@ -369,8 +368,8 @@ public:
   }
 };
 
-// Answers queries about getting the branch target for a name, or getting all
-// the branches to that name.
+// Stores information about branch targets, specifically, finding them by their
+// name, and finding the branches to them.
 struct BranchTargets {
   BranchTargets(Expression* expr) { inner.walk(expr); }
 

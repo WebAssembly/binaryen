@@ -623,7 +623,7 @@ struct Heap2LocalOptimizer {
       branchTargets.getBranches(BranchUtils::getDefinedName(parent));
     if (branches.size() == 1 &&
         BranchUtils::getSentValue(*branches.begin()) == child) {
-      // TODO: support more branch targets.
+      // TODO: support more types of branch targets.
       if (auto* parentAsBlock = parent->dynCast<Block>()) {
         if (parentAsBlock->list.back()->type == Type::unreachable) {
           return ParentChildInteraction::Flows;
