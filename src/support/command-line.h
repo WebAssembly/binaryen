@@ -42,10 +42,9 @@ public:
     One,
     // Multiple arguments, in the form --flag A B C
     N,
-    // An optional single argument, in the form  --flag A  or --flag=A. In the
-    // first form, A must not start with a "-" (otherwise we will think the
-    // optional argument is not present, and A is the next flag, that is, the
-    // same as --flag1 --flag2).
+    // An optional single argument, in the form --flag=A (we disallow --flag A
+    // as that would be ambiguous regarding whether A is another flag, or an
+    // argument to us).
     Optional
   };
 
