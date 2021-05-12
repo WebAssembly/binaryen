@@ -417,7 +417,7 @@ struct Heap2LocalOptimizer {
   // All the child-parent pairs we have already looked at. We never need to look
   // as such a pair again, as it would indicate mixing.
   using ChildAndParent = std::pair<Expression*, Expression*>;
-  std::unordered_set<ChildAndParent> seen;
+  std::unordered_set<Expression*> seen;
 
   // Analyze an allocation to see if we can convert it from a heap allocation to
   // locals.
@@ -448,10 +448,10 @@ struct Heap2LocalOptimizer {
       // look at something that another allocation reached, which would be in a
       // different call to this function and use a different queue (any overlap
       // between calls would prove non-exclusivity).
-      if (seen.count(flow)) {
+      if (seen.count(parent)) {
         return false;
       }
-      seen.insert(flow);
+      seen.insert(parent);
 
       switch (getParentChildInteraction(parent, child)) {
         case ParentChildInteraction::Escapes: {
