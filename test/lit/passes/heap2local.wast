@@ -1644,6 +1644,62 @@
     )
   )
 
+  ;; CHECK:      (func $two-branches-b (result f64)
+  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct.A 1
+  ;; CHECK-NEXT:   (block $block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (f64.const 2.1828)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $two-branches-b (result f64)
+    (local $0 (ref null $struct.A))
+    (local.set $0
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    (struct.get $struct.A 1
+      (block $block (result (ref null $struct.A))
+        (drop
+          (br_if $block
+            (local.get $0)
+            (i32.const 0)
+          )
+        )
+        (drop
+          ;; As in $two-branches, but the value here is our allocation, the same
+          ;; as in the first branch above us. We do not yet optimize such merges
+          ;; of our allocation, but we could in the future.
+          (br_if $block
+            (local.get $0)
+            (i32.const 0)
+          )
+        )
+        (return (f64.const 2.1828))
+      )
+    )
+  )
+
   ;; CHECK:      (func $br_if_flow (result f64)
   ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $0
