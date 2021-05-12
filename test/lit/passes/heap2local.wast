@@ -1674,8 +1674,9 @@
     )
     (struct.get $struct.A 1
       (block $block (result (ref null $struct.A))
-        ;; The branch here is optimizable in principle. However, the br_if also
-        ;; flows out a value, and our allocation escapes.
+        ;; If it were not for the call here then we would be able to optimize
+        ;; the allocation in this function. (The branch with the allocation is
+        ;; ok, but the br_if also flows the value into a call, that escapes it.)
         (call $send-ref
           (br_if $block
             (local.get $0)
