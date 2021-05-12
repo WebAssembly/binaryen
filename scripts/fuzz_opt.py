@@ -983,6 +983,8 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
+    ["--heap2local"],
+    ["--remove-unused-names", "--heap2local"],
     ["--generate-stack-ir"],
     ["--ldse"],
     ["--licm"],
@@ -1056,6 +1058,14 @@ def randomize_opt_flags():
     # possibly converge. don't do this very often as it can be slow.
     if random.random() < 0.05:
         ret += ['--converge']
+    # possibly inline all the things as much as possible. inlining that much may
+    # be realistic in some cases (on GC benchmarks it is very helpful), but
+    # also, inlining so much allows other optimizations to kick in, which
+    # increases coverage
+    # (the specific number here doesn't matter, but it is far higher than the
+    # wasm limitation on function body size which is 128K)
+    if random.random() < 0.5:
+        ret += ['-fimfs=99999999']
     assert ret.count('--flatten') <= 1
     return ret
 

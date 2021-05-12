@@ -1443,7 +1443,7 @@ public:
       // We must have a module in order to perform the cast, to get the type. If
       // we do not have one, or if the function is not present (which may happen
       // if we are optimizing a function before the entire module is built),
-      // then this is not something we cannot precompute.
+      // then this is something we cannot precompute.
       auto* func = module
                      ? module->getFunctionOrNull(cast.originalRef.getFunc())
                      : nullptr;
@@ -1453,6 +1453,10 @@ public:
         return cast;
       }
       seenRtt = Literal(Type(Rtt(0, func->sig)));
+      if (!seenRtt.isSubRtt(intendedRtt)) {
+        cast.outcome = cast.Failure;
+        return cast;
+      }
       cast.castRef =
         Literal(func->name, Type(intendedRtt.type.getHeapType(), NonNullable));
     } else {
@@ -1460,14 +1464,14 @@ public:
       assert(cast.originalRef.isData());
       auto gcData = cast.originalRef.getGCData();
       seenRtt = gcData->rtt;
+      if (!seenRtt.isSubRtt(intendedRtt)) {
+        cast.outcome = cast.Failure;
+        return cast;
+      }
       cast.castRef =
         Literal(gcData, Type(intendedRtt.type.getHeapType(), NonNullable));
     }
-    if (!seenRtt.isSubRtt(intendedRtt)) {
-      cast.outcome = cast.Failure;
-    } else {
-      cast.outcome = cast.Success;
-    }
+    cast.outcome = cast.Success;
     return cast;
   }
 
