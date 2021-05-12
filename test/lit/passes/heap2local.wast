@@ -239,7 +239,13 @@
 
   ;; CHECK:      (func $ignore-unreachable
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:      (rtt.canon $struct.A)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1575,6 +1581,61 @@
           ;; which means there is no mixing, and we can optimize this.
           (br_if $block
             (local.get $0)
+            (i32.const 0)
+          )
+        )
+        (return (f64.const 2.1828))
+      )
+    )
+  )
+
+  ;; CHECK:      (func $two-branches (result f64)
+  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct.A 1
+  ;; CHECK-NEXT:   (block $block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (ref.null $struct.A)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (f64.const 2.1828)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $two-branches (result f64)
+    (local $0 (ref null $struct.A))
+    (local.set $0
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    (struct.get $struct.A 1
+      (block $block (result (ref null $struct.A))
+        (drop
+          ;; A branch to the block of our allocation.
+          (br_if $block
+            (local.get $0)
+            (i32.const 0)
+          )
+        )
+        (drop
+          ;; Another branch, causing mixing that prevents optimizations.
+          (br_if $block
+            (ref.null $struct.A)
             (i32.const 0)
           )
         )
