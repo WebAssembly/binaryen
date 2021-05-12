@@ -131,6 +131,7 @@ void Options::parse(int argc, const char* argv[]) {
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
     std::string currentOption = argv[i];
+
     if (dashes(currentOption) == 0) {
       // Positional.
       switch (positional) {
@@ -155,6 +156,7 @@ void Options::parse(int argc, const char* argv[]) {
       }
       continue;
     }
+
     // Non-positional.
     std::string argument;
     auto equal = currentOption.find_first_of('=');
