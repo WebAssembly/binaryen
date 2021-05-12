@@ -983,6 +983,8 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
+    ["--heap2local"],
+    ["--remove-unused-names", "--heap2local"],
     ["--generate-stack-ir"],
     ["--licm"],
     ["--memory-packing"],

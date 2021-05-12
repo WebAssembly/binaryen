@@ -1443,7 +1443,7 @@ public:
       // We must have a module in order to perform the cast, to get the type. If
       // we do not have one, or if the function is not present (which may happen
       // if we are optimizing a function before the entire module is built),
-      // then this is not something we cannot precompute.
+      // then this is something we cannot precompute.
       auto* func = module
                      ? module->getFunctionOrNull(cast.originalRef.getFunc())
                      : nullptr;

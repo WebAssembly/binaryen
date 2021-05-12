@@ -60,38 +60,20 @@
  (export "init-array-packed" (func $10))
  (export "cast-func-to-struct" (func $12))
  (func $0 (; has Stack IR ;)
-  (local $0 (ref null $struct))
+  (local $0 i32)
   (call $log
-   (struct.get $struct 0
-    (local.tee $0
-     (struct.new_default_with_rtt $struct
-      (rtt.canon $struct)
-     )
-    )
-   )
+   (i32.const 0)
   )
-  (struct.set $struct 0
-   (local.get $0)
+  (call $log
    (i32.const 42)
   )
   (call $log
-   (struct.get $struct 0
-    (local.get $0)
+   (local.tee $0
+    (i32.const 100)
    )
   )
-  (struct.set $struct 0
-   (local.get $0)
+  (call $log
    (i32.const 100)
-  )
-  (call $log
-   (struct.get $struct 0
-    (local.get $0)
-   )
-  )
-  (call $log
-   (struct.get $struct 0
-    (local.get $0)
-   )
   )
  )
  (func $1 (; has Stack IR ;)
