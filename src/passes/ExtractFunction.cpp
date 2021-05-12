@@ -30,7 +30,7 @@ struct ExtractFunction : public Pass {
     Name name =
       runner->options.getArgument("extract-function",
                                   "ExtractFunction usage:  wasm-opt "
-                                  "--pass-arg=extract-function@FUNCTION_NAME");
+                                  "--extract-function@FUNCTION_NAME");
     std::cerr << "extracting " << name << "\n";
     bool found = false;
     for (auto& func : module->functions) {
