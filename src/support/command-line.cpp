@@ -136,11 +136,13 @@ void Options::parse(int argc, const char* argv[]) {
       // Positional.
       switch (positional) {
         case Arguments::Zero:
+          // Optional arguments must use --flag=A format, and not separated by
+          // spaces (which would be ambiguous).
+        case Arguments::Optional:
           std::cerr << "Unexpected positional argument '" << currentOption
                     << "'\n";
           exit(EXIT_FAILURE);
         case Arguments::One:
-        case Arguments::Optional:
           if (positionalsSeen) {
             std::cerr << "Unexpected second positional argument '"
                       << currentOption << "' for " << positionalName << '\n';
@@ -198,11 +200,6 @@ void Options::parse(int argc, const char* argv[]) {
         }
         break;
       case Arguments::Optional:
-        if (!argument.size()) {
-          if (i + 1 != e) {
-            argument = argv[++i];
-          }
-        }
         break;
     }
     option->action(this, argument);
