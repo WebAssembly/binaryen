@@ -87,7 +87,7 @@ template std::vector<char> wasm::read_file<>(const std::string&,
                                              Flags::BinaryOption);
 
 wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
-  : outfile(), out([this, filename, binary]() {
+  : outfile(), out([this, filename, binary]() -> std::streambuf* {
       if (filename == "-" || filename.empty()) {
         return std::cout.rdbuf();
       }
