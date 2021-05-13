@@ -33,9 +33,14 @@ struct PrintFunctionMap : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
+    // If an argument is provided, write to that file; otherwise write to
+    // stdout.
+    Name outFile = runner->options.getArgument("symbolmap", "");
+    Output output(outFile, Flags::BinaryOptions::Text);
+    auto& o = output.getStream();
     Index i = 0;
     for (auto& func : module->functions) {
-      std::cout << i++ << ':' << func->name.str << '\n';
+      o << i++ << ':' << func->name.str << '\n';
     }
   }
 };
