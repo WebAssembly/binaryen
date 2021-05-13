@@ -14,6 +14,7 @@ class SymbolMapTest(utils.BinaryenTestCase):
         args = [input_wasm, '--symbolmap']
         stdout_output = shared.run_process(shared.WASM_OPT + args,
                                            capture_output=True).stdout
-        self.assertEqual(file_output, stdout_output)
+        # ignore whitespace in the comparison as on windows stdout gets an \r
+        self.assertEqual(file_output.strip(), stdout_output.strip())
         # the wat contains a single function "add"
         self.assertIn('0:add', file_output)
