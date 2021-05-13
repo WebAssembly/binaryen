@@ -25,6 +25,7 @@
 //
 
 #include "pass.h"
+#include "support/file.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -35,8 +36,8 @@ struct PrintFunctionMap : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // If an argument is provided, write to that file; otherwise write to
     // stdout.
-    Name outFile = runner->options.getArgument("symbolmap", "");
-    Output output(outFile, Flags::BinaryOptions::Text);
+    auto outFile = runner->options.getArgumentOrDefault("symbolmap", "");
+    Output output(outFile, Flags::Text);
     auto& o = output.getStream();
     Index i = 0;
     for (auto& func : module->functions) {
