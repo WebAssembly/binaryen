@@ -150,7 +150,7 @@ struct RemoveUnusedModuleElements : public Pass {
     if (module->start.is()) {
       auto startFunction = module->getFunction(module->start);
       // Can be skipped if the start function is empty.
-      if (startFunction->body->is<Nop>()) {
+      if (!startFunction->imported() && startFunction->body->is<Nop>()) {
         module->start.clear();
       } else {
         roots.emplace_back(ModuleElementKind::Function, module->start);

@@ -272,6 +272,11 @@
  )
 )
 (module
+ (type $none_=>_none (func))
+ (import "env" "start" (func $start))
+ (start $start)
+)
+(module
 )
 (module
 )

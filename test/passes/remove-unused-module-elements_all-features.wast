@@ -239,6 +239,10 @@
     (drop (i32.const 0))
   )
 )
+(module ;; imported start cannot be removed
+  (import "env" "start" (func $start))
+  (start $start)
+)
 (module ;; the function and the table can be removed
  (type $0 (func (param f64) (result f64)))
  (table 6 6 funcref)
