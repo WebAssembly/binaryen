@@ -88,26 +88,20 @@ template std::vector<char> wasm::read_file<>(const std::string&,
 
 wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
   : outfile(), out([this, filename, binary]() {
-      if (filename == "-") {
+      if (filename == "-" || filename.empty()) {
         return std::cout.rdbuf();
       }
-      std::streambuf* buffer;
-      if (filename.size()) {
-        BYN_TRACE("Opening '" << filename << "'\n");
-        auto flags = std::ofstream::out | std::ofstream::trunc;
-        if (binary == Flags::Binary) {
-          flags |= std::ofstream::binary;
-        }
-        outfile.open(filename, flags);
-        if (!outfile.is_open()) {
-          std::cerr << "Failed opening '" << filename << "'" << std::endl;
-          exit(EXIT_FAILURE);
-        }
-        buffer = outfile.rdbuf();
-      } else {
-        buffer = std::cout.rdbuf();
+      BYN_TRACE("Opening '" << filename << "'\n");
+      auto flags = std::ofstream::out | std::ofstream::trunc;
+      if (binary == Flags::Binary) {
+        flags |= std::ofstream::binary;
       }
-      return buffer;
+      outfile.open(filename, flags);
+      if (!outfile.is_open()) {
+        std::cerr << "Failed opening '" << filename << "'" << std::endl;
+        exit(EXIT_FAILURE);
+      }
+      return outfile.rdbuf();
     }()) {}
 
 void wasm::copy_file(std::string input, std::string output) {
