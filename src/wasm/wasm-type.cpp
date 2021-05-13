@@ -2906,14 +2906,14 @@ std::vector<HeapType> TypeBuilder::build() {
     heapTypes.push_back(entry.get());
   }
 
-#ifdef TIME_CANONICALIZATION
+#if TIME_CANONICALIZATION
   auto start = std::chrono::steady_clock::now();
 #endif
 
   // Canonicalize the shape of the type definition graph.
   ShapeCanonicalizer minimized(heapTypes);
 
-#ifdef TIME_CANONICALIZATION
+#if TIME_CANONICALIZATION
   auto afterShape = std::chrono::steady_clock::now();
 #endif
 
@@ -2922,7 +2922,7 @@ std::vector<HeapType> TypeBuilder::build() {
   // canonical versions.
   std::vector<HeapType> canonical = globallyCanonicalize(minimized.infos);
 
-#ifdef TIME_CANONICALIZATION
+#if TIME_CANONICALIZATION
   auto afterGlobal = std::chrono::steady_clock::now();
 
   std::cerr << "Starting types: " << heapTypes.size() << '\n';
