@@ -262,9 +262,18 @@ void PassRegistry::registerPasses() {
     "print-full", "print in full s-expression format", createFullPrinterPass);
   registerPass(
     "print-call-graph", "print call graph", createPrintCallGraphPass);
+
+  // Register PrintFunctionMap using its normal name.
   registerPass("print-function-map",
                "print a map of function indexes to names",
                createPrintFunctionMapPass);
+  // Also register it as "symbolmap" so that  wasm-opt --symbolmap=foo  is the
+  // same as  wasm-as --symbolmap=foo  even though the latter is not a pass
+  // (wasm-as cannot run arbitrary passes).
+  // TODO: switch emscripten to this name, then remove the old one
+  registerPass(
+    "symbolmap", "(alias for print-function-map)", createPrintFunctionMapPass);
+
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
                createPrintStackIRPass);
