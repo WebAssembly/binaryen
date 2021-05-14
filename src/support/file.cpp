@@ -87,21 +87,26 @@ template std::vector<char> wasm::read_file<>(const std::string&,
                                              Flags::BinaryOption);
 
 wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
-  : outfile(), out([this, filename, binary]() -> std::streambuf* {
+  : outfile(), out([this, filename, binary]() {
+      // Ensure a single return at the very end, to avoid clang-tidy warnings
+      // about the types of different returns here.
+      std::streambuf* buffer;
       if (filename == "-" || filename.empty()) {
-        return std::cout.rdbuf();
+        buffer = std::cout.rdbuf();
+      } else {
+        BYN_TRACE("Opening '" << filename << "'\n");
+        auto flags = std::ofstream::out | std::ofstream::trunc;
+        if (binary == Flags::Binary) {
+          flags |= std::ofstream::binary;
+        }
+        outfile.open(filename, flags);
+        if (!outfile.is_open()) {
+          std::cerr << "Failed opening '" << filename << "'" << std::endl;
+          exit(EXIT_FAILURE);
+        }
+        buffer = outfile.rdbuf();
       }
-      BYN_TRACE("Opening '" << filename << "'\n");
-      auto flags = std::ofstream::out | std::ofstream::trunc;
-      if (binary == Flags::Binary) {
-        flags |= std::ofstream::binary;
-      }
-      outfile.open(filename, flags);
-      if (!outfile.is_open()) {
-        std::cerr << "Failed opening '" << filename << "'" << std::endl;
-        exit(EXIT_FAILURE);
-      }
-      return outfile.rdbuf();
+      return buffer;
     }()) {}
 
 void wasm::copy_file(std::string input, std::string output) {
