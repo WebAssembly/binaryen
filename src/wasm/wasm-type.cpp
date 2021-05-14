@@ -2760,7 +2760,7 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
       ChildUpdater(ShapeCanonicalizer& canonicalizer)
         : canonicalizer(canonicalizer) {}
       void noteChild(HeapType* child) {
-        if (child->isBasic() || !isTemp(*child)) {
+        if (isBasicOrBasicKind(*child) || !isTemp(*child)) {
           // Child doesn't need replacement.
           return;
         }
