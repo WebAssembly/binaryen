@@ -377,8 +377,7 @@ void PassRegistry::registerPasses() {
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
   auto pass = PassRegistry::get()->createPass(passName);
-  if (!pass->invalidatesDWARF() ||
-      !Debug::shouldPreserveDWARF(options, *wasm)) {
+  if (!pass->invalidatesDWARF() || !shouldPreserveDWARF()) {
     doAdd(std::move(pass));
   }
 }
@@ -661,7 +660,7 @@ void PassRunner::runOnFunction(Function* func) {
 }
 
 void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
-  if (Debug::shouldPreserveDWARF(options, *wasm) && pass->invalidatesDWARF()) {
+  if (pass->invalidatesDWARF() && shouldPreserveDWARF()) {
     std::cerr << "warning: running pass '" << pass->name
               << "' which is not fully compatible with DWARF\n";
   }
