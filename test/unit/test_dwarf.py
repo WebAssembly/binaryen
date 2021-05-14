@@ -45,7 +45,7 @@ class DWARFTest(utils.BinaryenTestCase):
         # section to skew the results
         shared.run_process(shared.WASM_OPT + ['b.wasm', '-o', 'c.wasm'])
         # compare the sizes. there might be a tiny difference in size to to
-        # minor roundtrip changes, so ignore up to 1%
+        # minor roundtrip changes, so ignore up to a tiny %
         a_size = os.path.getsize('a.wasm')
         c_size = os.path.getsize('c.wasm')
-        self.assertLess((100 * (a_size - c_size)) / c_size, 1)
+        self.assertLess((100 * abs(a_size - c_size)) / c_size, 1)
