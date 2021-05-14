@@ -61,7 +61,7 @@ static std::string runCommand(std::string command) {
 
 static bool willRemoveDebugInfo(const std::vector<std::string>& passes) {
   for (auto& pass : passes) {
-    if (pass == "strip" || pass == "strip-debug" || pass == "strip-dwarf") {
+    if (PassRunner::passRemovesDebugInfo(pass)) {
       return true;
     }
   }

@@ -256,6 +256,9 @@ struct PassRunner {
   //  3: like 1, and also dumps out byn-* files for each pass as it is run.
   static int getPassDebug();
 
+  // Returns whether a pass by that name will remove debug info.
+  static bool passRemovesDebugInfo(const std::string& name);
+
 protected:
   bool isNested = false;
 

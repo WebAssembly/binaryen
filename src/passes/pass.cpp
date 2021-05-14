@@ -811,4 +811,25 @@ int PassRunner::getPassDebug() {
   return passDebug;
 }
 
+bool PassRunner::passRemovesDebugInfo(const std::string& name) {
+  return pass == "strip" || pass == "strip-debug" || pass == "strip-dwarf";
+}
+
+bool PassRunner::shouldPreserveDWARF() {
+  // Check if the debugging subsystem wants to preserve DWARF.
+  if (!Debug::shouldPreserveDWARF(options, *wasm)) {
+    return false;
+  }
+
+  // We may need DWARF. Check if one of our previous passes would remove it
+  // anyhow, in which case, there is nothing to preserve.
+  for (auto& pass : passes) {
+    if (passRemovesDebugInfo(pass->name)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 } // namespace wasm
