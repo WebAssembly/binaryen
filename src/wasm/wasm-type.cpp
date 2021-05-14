@@ -2438,10 +2438,10 @@ struct ShapeCanonicalizer {
   // indices corresponding to globally canonical HeapTypes.
   std::vector<std::unique_ptr<HeapTypeInfo>> infos;
 
-  // Maps each input root HeapType to the index of its partition in
-  // `partitions`, which is also the index of its minimized version in
-  // `minimized`, and if that minimized version is not globally canonical, also
-  // the index of the minimized HeapTypeInfo in `infos`.
+  // Returns the partition index for an input root HeapType. This index is also
+  // the index of its minimized version in `minimized`, and if that minimized
+  // version is not globally canonical, also the index of the minimized
+  // HeapTypeInfo in `infos`.
   size_t getIndex(HeapType type);
 
   ShapeCanonicalizer(std::vector<HeapType>& roots);
