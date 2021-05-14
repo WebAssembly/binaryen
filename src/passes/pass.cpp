@@ -812,7 +812,7 @@ int PassRunner::getPassDebug() {
 }
 
 bool PassRunner::passRemovesDebugInfo(const std::string& name) {
-  return pass == "strip" || pass == "strip-debug" || pass == "strip-dwarf";
+  return name == "strip" || name == "strip-debug" || name == "strip-dwarf";
 }
 
 bool PassRunner::shouldPreserveDWARF() {

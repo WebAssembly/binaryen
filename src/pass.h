@@ -275,6 +275,8 @@ private:
   // If a function is passed, we operate just on that function;
   // otherwise, the whole module.
   void handleAfterEffects(Pass* pass, Function* func = nullptr);
+
+  bool shouldPreserveDWARF();
 };
 
 //
