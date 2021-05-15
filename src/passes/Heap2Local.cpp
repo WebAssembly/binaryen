@@ -273,7 +273,10 @@ struct Heap2LocalOptimizer {
       // Our allocation passes through this block. We must turn its type into a
       // nullable one, because we will remove things like RefAsNonNull of it,
       // which means we may no longer have a non-nullable value as out input,
-      // and we would fail to validate.
+      // and we could fail to validate. It is safe to make this change in terms
+      // of our parent, since we know very specifically that only safe things
+      // will end up using our value, like a StructGet or a Drop, which do not
+      // care about non-nullability.
       assert(curr->type.isRef());
       curr->type = Type(curr->type.getHeapType(), Nullable);
     }
