@@ -1763,9 +1763,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1819,9 +1817,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
   ;; CHECK-NEXT:   (drop

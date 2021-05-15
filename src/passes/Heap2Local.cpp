@@ -265,6 +265,19 @@ struct Heap2LocalOptimizer {
       walk(func->body);
     }
 
+    void visitBlock(Block* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // Our allocation passes through this block. We must turn its type into a
+      // nullable one, because we will remove things like RefAsNonNull of it,
+      // which means we may no longer have a non-nullable value as out input,
+      // and we would fail to validate.
+      assert(curr->type.isRef());
+      curr->type = Type(curr->type.getHeapType(), Nullable);
+    }
+
     void visitLocalSet(LocalSet* curr) {
       if (!reached.count(curr)) {
         return;
@@ -368,6 +381,17 @@ struct Heap2LocalOptimizer {
       // exact same type as the allocation it replaces.
       contents.push_back(allocation);
       replaceCurrent(builder.makeBlock(contents));
+    }
+
+    void visitRefAs(RefAs* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // It is safe to optimize out this RefAsNonNull, since we proved it
+      // contains our allocation, and so cannot trap.
+      assert(curr->op == RefAsNonNull);
+      replaceCurrent(curr->value);
     }
 
     void visitStructSet(StructSet* curr) {
@@ -570,12 +594,6 @@ struct Heap2LocalOptimizer {
           // null (so there is no trap), and we can continue to (hopefully)
           // optimize this allocation.
           escapes = false;
-
-          // Note that while we can look through this operation, we cannot get
-          // rid of it later, as its parent might depend on receiving a
-          // non-nullable type. So we will leave the RefAsNonNull as it is,
-          // even if we do optimize the allocation, and we depend on other
-          // passes to remove the RefAsNonNull.
         }
       }
 
