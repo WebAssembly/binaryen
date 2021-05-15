@@ -1800,4 +1800,56 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ref-as-non-null-through-local (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-as-non-null-through-local (result i32)
+    (local $ref (ref null $struct.A))
+    (local.set $ref
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    ;; Copy the allocation through a ref.as_non_null. This must not trap: it may
+    ;; trap if we leave the ref.as_non_null there and also we do not assign
+    ;; anything to the local (if we skip assignments to the local when we
+    ;; optimize). To avoid that, we should remove the ref.as_non_null, which is
+    ;; safe since we know our allocation is passed into it, which is not null,
+    ;; and will not trap.
+    (local.set $ref
+      (ref.as_non_null
+        (local.get $ref)
+      )
+    )
+    (struct.get $struct.A 0
+      (local.get $ref)
+    )
+  )
 )
