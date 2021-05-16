@@ -376,8 +376,8 @@ struct Heap2LocalOptimizer {
       // Replace the allocation with a null reference. This changes the type
       // from non-nullable to nullable, but as we optimize away the code that
       // the allocation reaches, we will handle that.
-      contents.push_back(builder.makeRefNull(
-        Type(allocation->type.getHeapType(), Nullable)));
+      contents.push_back(
+        builder.makeRefNull(Type(allocation->type.getHeapType(), Nullable)));
       replaceCurrent(builder.makeBlock(contents));
     }
 
