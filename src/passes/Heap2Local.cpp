@@ -265,6 +265,15 @@ struct Heap2LocalOptimizer {
       walk(func->body);
     }
 
+    // Rewrite the code in visit* methods. The general approach taken is to
+    // replace the allocation with a null reference (which may require changing
+    // types in some places, like making a block return value nullable), and to
+    // remove all uses of it as much as possible, using the information we have
+    // (for example, when our allocation reaches a RefAsNonNull we can simply
+    // remove that operation as we know it would not throw). Some things are
+    // left to other passes, like getting rid of dropped code without side
+    // effects.
+
     void visitBlock(Block* curr) {
       if (!reached.count(curr)) {
         return;
@@ -315,11 +324,6 @@ struct Heap2LocalOptimizer {
       if (curr != allocation) {
         return;
       }
-
-      // We do not remove the allocation itself here, rather we make it
-      // unnecessary, and then depend on other optimizations to clean up. (We
-      // cannot simply remove it because we need to replace it with something of
-      // the same non-nullable type.)
 
       // First, assign the initial values to the new locals.
       std::vector<Expression*> contents;
