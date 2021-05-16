@@ -356,21 +356,12 @@ struct Heap2LocalOptimizer {
             builder.makeLocalGet(tempIndexes[i], fields[i].type)));
         }
 
-        // Read the values in the allocation (we don't need to, as the
-        // allocation is not used after our optimization, but we need something
-        // with the right type anyhow).
-        for (Index i = 0; i < tempIndexes.size(); i++) {
-          allocation->operands[i] =
-            builder.makeLocalGet(localIndexes[i], fields[i].type);
-        }
-
         // TODO Check if the nondefault case does not increase code size in some
         //      cases. A heap allocation that implicitly sets the default values
         //      is smaller than multiple explicit settings of locals to
         //      defaults.
       } else {
-        // Set the default values, and replace the allocation with a block that
-        // first does that, then contains the allocation.
+        // Set the default values.
         // Note that we must assign the defaults because we might be in a loop,
         // that is, there might be a previous value.
         for (Index i = 0; i < localIndexes.size(); i++) {
@@ -380,9 +371,13 @@ struct Heap2LocalOptimizer {
         }
       }
 
-      // Put the allocation itself at the end of the block, so the block has the
-      // exact same type as the allocation it replaces.
-      contents.push_back(allocation);
+      // Drop the RTT (as it may have side effects; leave it to other passes).
+      contents.push_back(builder.makeDrop(allocation->rtt));
+      // Replace the allocation with a null reference. This changes the type
+      // from non-nullable to nullable, but as we optimize away the code that
+      // the allocation reaches, we will handle that.
+      contents.push_back(builder.makeRefNull(
+        Type(allocation->type.getHeapType(), Nullable)));
       replaceCurrent(builder.makeBlock(contents));
     }
 
