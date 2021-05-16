@@ -1869,4 +1869,63 @@
       (local.get $ref)
     )
   )
+
+  ;; CHECK:      (func $br_if-allocation (result f64)
+  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:       (local.set $3
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $4
+  ;; CHECK-NEXT:        (f64.const 13.37)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $2
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (rtt.canon $struct.A)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null $struct.A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (f64.const 2.1828)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $2)
+  ;; CHECK-NEXT: )
+  (func $br_if-allocation (result f64)
+    (local $0 (ref null $struct.A))
+    (struct.get $struct.A 1
+      (block $block (result (ref null $struct.A))
+        (drop
+          ;; Our allocation flows into a br_if, which therefore has non-nullable
+          ;; type, which we must update after optimizing.
+          (br_if $block
+            (struct.new_with_rtt $struct.A
+              (i32.const 42)
+              (f64.const 13.37)
+              (rtt.canon $struct.A)
+            )
+            (i32.const 0)
+          )
+        )
+        (return (f64.const 2.1828))
+      )
+    )
+  )
 )

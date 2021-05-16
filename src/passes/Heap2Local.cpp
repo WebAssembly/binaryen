@@ -301,6 +301,16 @@ struct Heap2LocalOptimizer {
       }
     }
 
+    void visitBreak(Break* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // Breaks that our allocation flows through may change type, as we now
+      // have a nullable type there.
+      curr->finalize();
+    }
+
     void visitStructNew(StructNew* curr) {
       if (curr != allocation) {
         return;
