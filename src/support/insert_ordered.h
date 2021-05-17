@@ -15,6 +15,7 @@
  */
 
 #include <list>
+#include <stddef.h>
 #include <unordered_map>
 
 // like std::set, except that begin() -> end() iterates in the
