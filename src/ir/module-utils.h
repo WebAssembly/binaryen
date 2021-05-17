@@ -22,7 +22,7 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "pass.h"
-#include "support/insertion_order.h"
+#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -310,7 +310,7 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 template<typename T> struct ParallelFunctionAnalysis {
   Module& wasm;
 
-  typedef ordered_map<Function*, T> Map;
+  typedef InsertOrderedMap<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;
@@ -378,7 +378,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     bool hasNonDirectCall = false;
   };
 
-  typedef ordered_map<Function*, T> Map;
+  typedef InsertOrderedMap<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;
@@ -548,7 +548,7 @@ inline void collectHeapTypes(Module& wasm,
   // As we do this we may find more and more types, as nested children of
   // previous ones. Each such type will appear in the type section once, so
   // we just need to visit it once.
-  ordered_set<HeapType> newTypes;
+  InsertOrderedSet<HeapType> newTypes;
   for (auto& pair : counts) {
     newTypes.insert(pair.first);
   }

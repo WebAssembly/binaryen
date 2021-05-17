@@ -31,7 +31,7 @@
 //
 
 #include "pass.h"
-#include "support/insertion_order.h"
+#include "support/insert_ordered.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -46,7 +46,7 @@ struct ConstHoisting : public WalkerPass<PostWalker<ConstHoisting>> {
 
   Pass* create() override { return new ConstHoisting; }
 
-  ordered_map<Literal, std::vector<Expression**>> uses;
+  InsertOrderedMap<Literal, std::vector<Expression**>> uses;
 
   void visitConst(Const* curr) {
     uses[curr->value].push_back(getCurrentPointer());

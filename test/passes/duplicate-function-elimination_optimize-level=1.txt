@@ -86,9 +86,9 @@
  )
 )
 (module
- (type $2 (func))
- (type $3 (func (param i32)))
  (type $S (func (result i32)))
+ (type $3 (func (param i32)))
+ (type $2 (func))
  (memory $0 0)
  (func $keep4-similar-but-func-sig-differs
   (drop
@@ -105,8 +105,8 @@
  )
 )
 (module
- (type $1 (func (param i32)))
  (type $S (func (result i32)))
+ (type $1 (func (param i32)))
  (memory $0 0)
  (func $keep2-similar-but-func-sig-differs (param $i i32)
   (drop

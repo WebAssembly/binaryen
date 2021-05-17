@@ -28,7 +28,7 @@
 #include "ir/import-utils.h"
 #include "pass.h"
 #include "support/debug.h"
-#include "support/insertion_order.h"
+#include "support/insert_ordered.h"
 #include "wasm-builder.h"
 
 #define DEBUG_TYPE "generate-dyncalls"
@@ -82,7 +82,7 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
 
   bool onlyI64;
   // The set of all invokes' signatures
-  ordered_set<Signature> invokeSigs;
+  InsertOrderedSet<Signature> invokeSigs;
 };
 
 static bool hasI64(Signature sig) {

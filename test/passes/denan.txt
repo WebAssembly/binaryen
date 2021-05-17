@@ -1,8 +1,8 @@
 (module
  (type $f32_=>_f32 (func (param f32) (result f32)))
  (type $f64_=>_f64 (func (param f64) (result f64)))
- (type $i32_f32_i64_f64_=>_none (func (param i32 f32 i64 f64)))
  (type $f32_f64_=>_none (func (param f32 f64)))
+ (type $i32_f32_i64_f64_=>_none (func (param i32 f32 i64 f64)))
  (global $global$1 (mut f32) (f32.const 0))
  (global $global$2 (mut f32) (f32.const 12.34000015258789))
  (func $foo32 (param $x f32) (result f32)
@@ -156,9 +156,9 @@
  )
 )
 (module
- (type $none_=>_none (func))
- (type $f32_=>_f32 (func (param f32) (result f32)))
  (type $f64_=>_f64 (func (param f64) (result f64)))
+ (type $f32_=>_f32 (func (param f32) (result f32)))
+ (type $none_=>_none (func))
  (func $deNan32
   (nop)
  )

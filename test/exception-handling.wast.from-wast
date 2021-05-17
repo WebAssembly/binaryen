@@ -1,8 +1,8 @@
 (module
  (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
+ (type $i32_=>_none (func (param i32)))
  (event $e-i32 (attr 0) (param i32))
  (event $e-i64 (attr 0) (param i64))
  (event $e-i32-i64 (attr 0) (param i32 i64))

@@ -242,8 +242,8 @@
  )
 )
 (module
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
  (func $foo (param $x i32) (result i32)
   (drop
    (return_call $bar)
@@ -280,8 +280,8 @@
  )
 )
 (module
- (type $funcref_i32_f64_=>_i64 (func (param funcref i32 f64) (result i64)))
  (type $f32_=>_funcref (func (param f32) (result funcref)))
+ (type $funcref_i32_f64_=>_i64 (func (param funcref i32 f64) (result i64)))
  (elem declare func $0)
  (export "export" (func $1))
  (func $0 (param $0 funcref) (param $1 i32) (param $2 f64) (result i64)
