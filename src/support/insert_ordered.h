@@ -18,6 +18,8 @@
 #include <stddef.h>
 #include <unordered_map>
 
+#include "support/utilities.h"
+
 // like std::set, except that begin() -> end() iterates in the
 // order that elements were added to the set (not in the order
 // of operator<(T, T))
@@ -120,10 +122,12 @@ template<typename Key, typename T> struct InsertOrderedMap {
 
   InsertOrderedMap() = default;
   InsertOrderedMap(InsertOrderedMap& other) {
-    abort(); // TODO, watch out for iterators
+    // TODO, watch out for iterators.
+    WASM_UNREACHABLE("unimp");
   }
   InsertOrderedMap& operator=(const InsertOrderedMap& other) {
-    abort(); // TODO, watch out for iterators
+    // TODO, watch out for iterators.
+    WASM_UNREACHABLE("unimp");
   }
   bool operator==(const InsertOrderedMap& other) {
     return Map == other.Map && List == other.List;
