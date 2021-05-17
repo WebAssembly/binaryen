@@ -14,11 +14,14 @@
  * limitations under the License.
  */
 
+#include <list>
+#include <unordered_map>
+
 // like std::set, except that begin() -> end() iterates in the
 // order that elements were added to the set (not in the order
 // of operator<(T, T))
 template<typename T> struct InsertOrderedSet {
-  std::map<T, typename std::list<T>::iterator> Map;
+  std::unordered_map<T, typename std::list<T>::iterator> Map;
   std::list<T> List;
 
   typedef typename std::list<T>::iterator iterator;
@@ -72,7 +75,7 @@ template<typename T> struct InsertOrderedSet {
 // order that elements were added to the map (not in the order
 // of operator<(Key, Key))
 template<typename Key, typename T> struct InsertOrderedMap {
-  std::map<Key, typename std::list<std::pair<Key, T>>::iterator> Map;
+  std::unordered_map<Key, typename std::list<std::pair<Key, T>>::iterator> Map;
   std::list<std::pair<Key, T>> List;
 
   T& operator[](const Key& k) {
