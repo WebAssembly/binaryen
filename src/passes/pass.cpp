@@ -523,6 +523,9 @@ static void dumpWast(Name name, Module* wasm) {
 }
 
 void PassRunner::run() {
+  assert(!ran);
+  ran = true;
+
   static const int passDebug = getPassDebug();
   // Emit logging information when asked for. At passDebug level 1+ we log
   // the main passes, while in 2 we also log nested ones. Note that for
@@ -663,6 +666,9 @@ void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
   if (pass->invalidatesDWARF() && shouldPreserveDWARF()) {
     std::cerr << "warning: running pass '" << pass->name
               << "' which is not fully compatible with DWARF\n";
+  }
+  if (passRemovesDebugInfo(pass->name)) {
+    addedPassesRemovedDWARF = true;
   }
   passes.emplace_back(std::move(pass));
 }
@@ -822,10 +828,8 @@ bool PassRunner::shouldPreserveDWARF() {
 
   // We may need DWARF. Check if one of our previous passes would remove it
   // anyhow, in which case, there is nothing to preserve.
-  for (auto& pass : passes) {
-    if (passRemovesDebugInfo(pass->name)) {
-      return false;
-    }
+  if (addedPassesRemovedDWARF) {
+    return false;
   }
 
   return true;
