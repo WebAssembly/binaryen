@@ -31,7 +31,7 @@ namespace OptUtils {
 
 // Run useful optimizations after inlining new code into a set
 // of functions.
-inline void optimizeAfterInlining(std::unordered_set<Function*>& funcs,
+inline void optimizeAfterInlining(const std::unordered_set<Function*>& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
   // save the full list of functions on the side

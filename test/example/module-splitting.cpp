@@ -126,12 +126,33 @@ int main() {
      )
     ))");
 
+  // Non-deferred function in table multiple times
+  do_test({"foo"}, R"(
+    (module
+     (table $table 2 funcref)
+     (elem (i32.const 0) $foo $foo)
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
   // Non-deferred function in table at non-const offset
   do_test({"foo"}, R"(
     (module
      (import "env" "base" (global $base i32))
      (table $table 1 funcref)
      (elem (global.get $base) $foo)
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Non-deferred function in table at non-const offset multiple times
+  do_test({"foo"}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (table $table 2 funcref)
+     (elem (global.get $base) $foo $foo)
      (func $foo (param i32) (result i32)
       (local.get 0)
      )
@@ -189,6 +210,16 @@ int main() {
      )
     ))");
 
+  // Deferred function in table multiple times
+  do_test({}, R"(
+    (module
+     (table $table 2 funcref)
+     (elem (i32.const 0) $foo $foo)
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
   // Deferred exported function in table at a weird offset
   do_test({}, R"(
     (module
@@ -206,6 +237,18 @@ int main() {
      (import "env" "base" (global $base i32))
      (table $table 1000 funcref)
      (elem (global.get $base) $foo)
+     (export "foo" (func $foo))
+     (func $foo (param i32) (result i32)
+      (local.get 0)
+     )
+    ))");
+
+  // Deferred exported function in table at a non-const offset multiple times
+  do_test({}, R"(
+    (module
+     (import "env" "base" (global $base i32))
+     (table $table 1000 funcref)
+     (elem (global.get $base) $foo $foo)
      (export "foo" (func $foo))
      (func $foo (param i32) (result i32)
       (local.get 0)

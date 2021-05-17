@@ -26,6 +26,7 @@
 
 #include <memory>
 
+#include "asmjs/shared-constants.h"
 #include "ir/element-utils.h"
 #include "ir/module-utils.h"
 #include "pass.h"
@@ -71,6 +72,16 @@ struct MetaDCEGraph {
   typedef Name ImportId;
 
   ImportId getImportId(Name module, Name base) {
+    if (module == "GOT.func" || module == "GOT.mem") {
+      // If a module imports a symbol from `GOT.func` of `GOT.mem` that
+      // corresponds to the address of a symbol in the `env` namespace.  The
+      // `GOT.func` and `GOT.mem` don't actually exist anywhere but reference
+      // other symbols.  For this reason we treat an import from one of these
+      // namespaces as an import from the `env` namespace.  (i.e.  any usage of
+      // a `GOT.mem` or `GOT.func` import requires the corresponding env import
+      // to be kept alive.
+      module = ENV;
+    }
     return std::string(module.str) + " (*) " + std::string(base.str);
   }
 

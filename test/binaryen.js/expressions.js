@@ -1173,7 +1173,7 @@ console.log("# SIMDLoad");
 (function testSIMDLoad() {
   const module = new binaryen.Module();
 
-  var op = binaryen.Operations.LoadExtSVec8x8ToVecI16x8;
+  var op = binaryen.Operations.Load8x8SVec128;
   var offset = 16;
   var align = 2;
   var ptr = module.i32.const(1);
@@ -1185,7 +1185,7 @@ console.log("# SIMDLoad");
   assert(theSIMDLoad.ptr === ptr);
   assert(theSIMDLoad.type === binaryen.v128);
 
-  theSIMDLoad.op = op = binaryen.Operations.LoadSplatVec8x16;
+  theSIMDLoad.op = op = binaryen.Operations.Load8SplatVec128;
   assert(theSIMDLoad.op === op);
   theSIMDLoad.offset = offset = 32;
   assert(theSIMDLoad.offset === offset);

@@ -373,17 +373,23 @@ struct DAE : public Pass {
           // Great, it's not used. Check if none of the calls has a param with
           // side effects, as that would prevent us removing them (flattening
           // should have been done earlier).
-          bool canRemove =
+          bool callParamsAreValid =
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
               return EffectAnalyzer(runner->options, module->features, operand)
                 .hasSideEffects();
             });
-          if (canRemove) {
+          // The type must be valid for us to handle as a local (since we
+          // replace the parameter with a local).
+          // TODO: if there are no references at all, we can avoid creating a
+          //       local
+          bool typeIsValid =
+            TypeUpdating::canHandleAsLocal(func->getLocalType(i));
+          if (callParamsAreValid && typeIsValid) {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
             removeParameter(func, i, calls);
-            TypeUpdating::handleNonNullableLocals(func, *module);
+            TypeUpdating::handleNonDefaultableLocals(func, *module);
             changed.insert(func);
           }
         }

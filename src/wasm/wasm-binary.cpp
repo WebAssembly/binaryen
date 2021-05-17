@@ -2186,7 +2186,7 @@ void WasmBinaryBuilder::readFunctions() {
       }
     }
 
-    TypeUpdating::handleNonNullableLocals(func, wasm);
+    TypeUpdating::handleNonDefaultableLocals(func, wasm);
 
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
@@ -5044,7 +5044,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = XorVec128;
       break;
-    case BinaryConsts::V128AndNot:
+    case BinaryConsts::V128Andnot:
       curr = allocator.alloc<Binary>();
       curr->op = AndNotVec128;
       break;
@@ -5140,23 +5140,23 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = AvgrUVecI16x8;
       break;
-    case BinaryConsts::I16x8Q15MulrSatS:
+    case BinaryConsts::I16x8Q15mulrSatS:
       curr = allocator.alloc<Binary>();
       curr->op = Q15MulrSatSVecI16x8;
       break;
-    case BinaryConsts::I16x8ExtMulLowSI8x16:
+    case BinaryConsts::I16x8ExtmulLowI8x16S:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulLowSVecI16x8;
       break;
-    case BinaryConsts::I16x8ExtMulHighSI8x16:
+    case BinaryConsts::I16x8ExtmulHighI8x16S:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulHighSVecI16x8;
       break;
-    case BinaryConsts::I16x8ExtMulLowUI8x16:
+    case BinaryConsts::I16x8ExtmulLowI8x16U:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulLowUVecI16x8;
       break;
-    case BinaryConsts::I16x8ExtMulHighUI8x16:
+    case BinaryConsts::I16x8ExtmulHighI8x16U:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulHighUVecI16x8;
       break;
@@ -5188,23 +5188,23 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MaxUVecI32x4;
       break;
-    case BinaryConsts::I32x4DotSVecI16x8:
+    case BinaryConsts::I32x4DotI16x8S:
       curr = allocator.alloc<Binary>();
       curr->op = DotSVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I32x4ExtMulLowSI16x8:
+    case BinaryConsts::I32x4ExtmulLowI16x8S:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulLowSVecI32x4;
       break;
-    case BinaryConsts::I32x4ExtMulHighSI16x8:
+    case BinaryConsts::I32x4ExtmulHighI16x8S:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulHighSVecI32x4;
       break;
-    case BinaryConsts::I32x4ExtMulLowUI16x8:
+    case BinaryConsts::I32x4ExtmulLowI16x8U:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulLowUVecI32x4;
       break;
-    case BinaryConsts::I32x4ExtMulHighUI16x8:
+    case BinaryConsts::I32x4ExtmulHighI16x8U:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulHighUVecI32x4;
       break;
@@ -5220,19 +5220,19 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MulVecI64x2;
       break;
-    case BinaryConsts::I64x2ExtMulLowSI32x4:
+    case BinaryConsts::I64x2ExtmulLowI32x4S:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulLowSVecI64x2;
       break;
-    case BinaryConsts::I64x2ExtMulHighSI32x4:
+    case BinaryConsts::I64x2ExtmulHighI32x4S:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulHighSVecI64x2;
       break;
-    case BinaryConsts::I64x2ExtMulLowUI32x4:
+    case BinaryConsts::I64x2ExtmulLowI32x4U:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulLowUVecI64x2;
       break;
-    case BinaryConsts::I64x2ExtMulHighUI32x4:
+    case BinaryConsts::I64x2ExtmulHighI32x4U:
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulHighUVecI64x2;
       break;
@@ -5260,11 +5260,11 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MaxVecF32x4;
       break;
-    case BinaryConsts::F32x4PMin:
+    case BinaryConsts::F32x4Pmin:
       curr = allocator.alloc<Binary>();
       curr->op = PMinVecF32x4;
       break;
-    case BinaryConsts::F32x4PMax:
+    case BinaryConsts::F32x4Pmax:
       curr = allocator.alloc<Binary>();
       curr->op = PMaxVecF32x4;
       break;
@@ -5292,31 +5292,31 @@ bool WasmBinaryBuilder::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = MaxVecF64x2;
       break;
-    case BinaryConsts::F64x2PMin:
+    case BinaryConsts::F64x2Pmin:
       curr = allocator.alloc<Binary>();
       curr->op = PMinVecF64x2;
       break;
-    case BinaryConsts::F64x2PMax:
+    case BinaryConsts::F64x2Pmax:
       curr = allocator.alloc<Binary>();
       curr->op = PMaxVecF64x2;
       break;
-    case BinaryConsts::I8x16NarrowSI16x8:
+    case BinaryConsts::I8x16NarrowI16x8S:
       curr = allocator.alloc<Binary>();
       curr->op = NarrowSVecI16x8ToVecI8x16;
       break;
-    case BinaryConsts::I8x16NarrowUI16x8:
+    case BinaryConsts::I8x16NarrowI16x8U:
       curr = allocator.alloc<Binary>();
       curr->op = NarrowUVecI16x8ToVecI8x16;
       break;
-    case BinaryConsts::I16x8NarrowSI32x4:
+    case BinaryConsts::I16x8NarrowI32x4S:
       curr = allocator.alloc<Binary>();
       curr->op = NarrowSVecI32x4ToVecI16x8;
       break;
-    case BinaryConsts::I16x8NarrowUI32x4:
+    case BinaryConsts::I16x8NarrowI32x4U:
       curr = allocator.alloc<Binary>();
       curr->op = NarrowUVecI32x4ToVecI16x8;
       break;
-    case BinaryConsts::V8x16Swizzle:
+    case BinaryConsts::I8x16Swizzle:
       curr = allocator.alloc<Binary>();
       curr->op = SwizzleVec8x16;
       break;
@@ -5489,103 +5489,103 @@ bool WasmBinaryBuilder::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = NearestVecF64x2;
       break;
-    case BinaryConsts::I16x8ExtAddPairWiseSI8x16:
+    case BinaryConsts::I16x8ExtaddPairwiseI8x16S:
       curr = allocator.alloc<Unary>();
       curr->op = ExtAddPairwiseSVecI8x16ToI16x8;
       break;
-    case BinaryConsts::I16x8ExtAddPairWiseUI8x16:
+    case BinaryConsts::I16x8ExtaddPairwiseI8x16U:
       curr = allocator.alloc<Unary>();
       curr->op = ExtAddPairwiseUVecI8x16ToI16x8;
       break;
-    case BinaryConsts::I32x4ExtAddPairWiseSI16x8:
+    case BinaryConsts::I32x4ExtaddPairwiseI16x8S:
       curr = allocator.alloc<Unary>();
       curr->op = ExtAddPairwiseSVecI16x8ToI32x4;
       break;
-    case BinaryConsts::I32x4ExtAddPairWiseUI16x8:
+    case BinaryConsts::I32x4ExtaddPairwiseI16x8U:
       curr = allocator.alloc<Unary>();
       curr->op = ExtAddPairwiseUVecI16x8ToI32x4;
       break;
-    case BinaryConsts::I32x4TruncSatSF32x4:
+    case BinaryConsts::I32x4TruncSatF32x4S:
       curr = allocator.alloc<Unary>();
       curr->op = TruncSatSVecF32x4ToVecI32x4;
       break;
-    case BinaryConsts::I32x4TruncSatUF32x4:
+    case BinaryConsts::I32x4TruncSatF32x4U:
       curr = allocator.alloc<Unary>();
       curr->op = TruncSatUVecF32x4ToVecI32x4;
       break;
-    case BinaryConsts::F32x4ConvertSI32x4:
+    case BinaryConsts::F32x4ConvertI32x4S:
       curr = allocator.alloc<Unary>();
       curr->op = ConvertSVecI32x4ToVecF32x4;
       break;
-    case BinaryConsts::F32x4ConvertUI32x4:
+    case BinaryConsts::F32x4ConvertI32x4U:
       curr = allocator.alloc<Unary>();
       curr->op = ConvertUVecI32x4ToVecF32x4;
       break;
-    case BinaryConsts::I16x8ExtendLowSI8x16:
+    case BinaryConsts::I16x8ExtendLowI8x16S:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendLowSVecI8x16ToVecI16x8;
       break;
-    case BinaryConsts::I16x8ExtendHighSI8x16:
+    case BinaryConsts::I16x8ExtendHighI8x16S:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendHighSVecI8x16ToVecI16x8;
       break;
-    case BinaryConsts::I16x8ExtendLowUI8x16:
+    case BinaryConsts::I16x8ExtendLowI8x16U:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendLowUVecI8x16ToVecI16x8;
       break;
-    case BinaryConsts::I16x8ExtendHighUI8x16:
+    case BinaryConsts::I16x8ExtendHighI8x16U:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendHighUVecI8x16ToVecI16x8;
       break;
-    case BinaryConsts::I32x4ExtendLowSI16x8:
+    case BinaryConsts::I32x4ExtendLowI16x8S:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendLowSVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I32x4ExtendHighSI16x8:
+    case BinaryConsts::I32x4ExtendHighI16x8S:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendHighSVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I32x4ExtendLowUI16x8:
+    case BinaryConsts::I32x4ExtendLowI16x8U:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendLowUVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I32x4ExtendHighUI16x8:
+    case BinaryConsts::I32x4ExtendHighI16x8U:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendHighUVecI16x8ToVecI32x4;
       break;
-    case BinaryConsts::I64x2ExtendLowSI32x4:
+    case BinaryConsts::I64x2ExtendLowI32x4S:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendLowSVecI32x4ToVecI64x2;
       break;
-    case BinaryConsts::I64x2ExtendHighSI32x4:
+    case BinaryConsts::I64x2ExtendHighI32x4S:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendHighSVecI32x4ToVecI64x2;
       break;
-    case BinaryConsts::I64x2ExtendLowUI32x4:
+    case BinaryConsts::I64x2ExtendLowI32x4U:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendLowUVecI32x4ToVecI64x2;
       break;
-    case BinaryConsts::I64x2ExtendHighUI32x4:
+    case BinaryConsts::I64x2ExtendHighI32x4U:
       curr = allocator.alloc<Unary>();
       curr->op = ExtendHighUVecI32x4ToVecI64x2;
       break;
-    case BinaryConsts::F64x2ConvertLowSI32x4:
+    case BinaryConsts::F64x2ConvertLowI32x4S:
       curr = allocator.alloc<Unary>();
       curr->op = ConvertLowSVecI32x4ToVecF64x2;
       break;
-    case BinaryConsts::F64x2ConvertLowUI32x4:
+    case BinaryConsts::F64x2ConvertLowI32x4U:
       curr = allocator.alloc<Unary>();
       curr->op = ConvertLowUVecI32x4ToVecF64x2;
       break;
-    case BinaryConsts::I32x4TruncSatZeroSF64x2:
+    case BinaryConsts::I32x4TruncSatF64x2SZero:
       curr = allocator.alloc<Unary>();
       curr->op = TruncSatZeroSVecF64x2ToVecI32x4;
       break;
-    case BinaryConsts::I32x4TruncSatZeroUF64x2:
+    case BinaryConsts::I32x4TruncSatF64x2UZero:
       curr = allocator.alloc<Unary>();
       curr->op = TruncSatZeroUVecF64x2ToVecI32x4;
       break;
-    case BinaryConsts::F32x4DemoteZeroF64x2:
+    case BinaryConsts::F32x4DemoteF64x2Zero:
       curr = allocator.alloc<Unary>();
       curr->op = DemoteZeroVecF64x2ToVecF32x4;
       break;
@@ -5725,7 +5725,7 @@ bool WasmBinaryBuilder::maybeVisitSIMDReplace(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitSIMDShuffle(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::V8x16Shuffle) {
+  if (code != BinaryConsts::I8x16Shuffle) {
     return false;
   }
   auto* curr = allocator.alloc<SIMDShuffle>();
@@ -5832,53 +5832,53 @@ bool WasmBinaryBuilder::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
   }
   SIMDLoad* curr;
   switch (code) {
-    case BinaryConsts::V8x16LoadSplat:
+    case BinaryConsts::V128Load8Splat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec8x16;
+      curr->op = Load8SplatVec128;
       break;
-    case BinaryConsts::V16x8LoadSplat:
+    case BinaryConsts::V128Load16Splat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec16x8;
+      curr->op = Load16SplatVec128;
       break;
-    case BinaryConsts::V32x4LoadSplat:
+    case BinaryConsts::V128Load32Splat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec32x4;
+      curr->op = Load32SplatVec128;
       break;
-    case BinaryConsts::V64x2LoadSplat:
+    case BinaryConsts::V128Load64Splat:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadSplatVec64x2;
+      curr->op = Load64SplatVec128;
       break;
-    case BinaryConsts::I16x8LoadExtSVec8x8:
+    case BinaryConsts::V128Load8x8S:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtSVec8x8ToVecI16x8;
+      curr->op = Load8x8SVec128;
       break;
-    case BinaryConsts::I16x8LoadExtUVec8x8:
+    case BinaryConsts::V128Load8x8U:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtUVec8x8ToVecI16x8;
+      curr->op = Load8x8UVec128;
       break;
-    case BinaryConsts::I32x4LoadExtSVec16x4:
+    case BinaryConsts::V128Load16x4S:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtSVec16x4ToVecI32x4;
+      curr->op = Load16x4SVec128;
       break;
-    case BinaryConsts::I32x4LoadExtUVec16x4:
+    case BinaryConsts::V128Load16x4U:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtUVec16x4ToVecI32x4;
+      curr->op = Load16x4UVec128;
       break;
-    case BinaryConsts::I64x2LoadExtSVec32x2:
+    case BinaryConsts::V128Load32x2S:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtSVec32x2ToVecI64x2;
+      curr->op = Load32x2SVec128;
       break;
-    case BinaryConsts::I64x2LoadExtUVec32x2:
+    case BinaryConsts::V128Load32x2U:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = LoadExtUVec32x2ToVecI64x2;
+      curr->op = Load32x2UVec128;
       break;
     case BinaryConsts::V128Load32Zero:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = Load32Zero;
+      curr->op = Load32ZeroVec128;
       break;
     case BinaryConsts::V128Load64Zero:
       curr = allocator.alloc<SIMDLoad>();
-      curr->op = Load64Zero;
+      curr->op = Load64ZeroVec128;
       break;
     default:
       return false;

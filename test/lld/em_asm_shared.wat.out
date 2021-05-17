@@ -18,7 +18,7 @@
  (global $global$2 i32 (i32.const 4))
  (global $global$3 i32 (i32.const 6))
  (global $global$4 i32 (i32.const 90))
- (export "__post_instantiate" (func $__wasm_call_ctors))
+ (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__original_main" (func $__original_main))
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE" (global $global$0))
  (export "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE" (global $global$1))
@@ -105,16 +105,16 @@
   "declares": [
     "emscripten_asm_const_int"
   ],
-  "externs": [
-    "___stack_pointer",
-    "___memory_base",
-    "___table_base",
-    "__ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE",
-    "__ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE",
-    "__ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE"
+  "globalImports": [
+    "__stack_pointer",
+    "__memory_base",
+    "__table_base",
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJEEE6bufferE",
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiiEEE6bufferE",
+    "_ZN20__em_asm_sig_builderI19__em_asm_type_tupleIJiEEE6bufferE"
   ],
   "exports": [
-    "__post_instantiate",
+    "__wasm_call_ctors",
     "__original_main",
     "main"
   ],

@@ -88,6 +88,25 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
   });
 }
 
+// Similar to operateOnScopeNameUses, but also passes in the expression that is
+// sent if the branch is taken. nullptr is given if there is no value.
+template<typename T>
+void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
+  operateOnScopeNameUses(expr, [&](Name& name) {
+    // There isn't a delegate mechanism for getting a sent value, so do a direct
+    // if-else chain. This will need to be updated with new br variants.
+    if (auto* br = expr->dynCast<Break>()) {
+      func(name, br->value);
+    } else if (auto* sw = expr->dynCast<Switch>()) {
+      func(name, sw->value);
+    } else if (auto* br = expr->dynCast<BrOn>()) {
+      func(name, br->ref);
+    } else {
+      assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
+    }
+  });
+}
+
 // Perform a generic operation on definitions of scope names in an expression.
 // The provided function receives a Name& which it can modify if it needs to.
 template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
@@ -217,6 +236,22 @@ inline NameSet getBranchTargets(Expression* ast) {
   return scanner.targets;
 }
 
+// Get the name of the branch target that is defined in the expression, or an
+// empty name if there is none.
+inline Name getDefinedName(Expression* curr) {
+  Name ret;
+  operateOnScopeNameDefs(curr, [&](Name& name) { ret = name; });
+  return ret;
+}
+
+// Return the value sent by a branch instruction, or nullptr if there is none.
+inline Expression* getSentValue(Expression* curr) {
+  Expression* ret = nullptr;
+  operateOnScopeNameUsesAndSentValues(
+    curr, [&](Name name, Expression* value) { ret = value; });
+  return ret;
+}
+
 // Finds if there are branches targeting a name. Note that since names are
 // unique in our IR, we just need to look for the name, and do not need
 // to analyze scoping.
@@ -331,6 +366,44 @@ public:
 #endif
     return result;
   }
+};
+
+// Stores information about branch targets, specifically, finding them by their
+// name, and finding the branches to them.
+struct BranchTargets {
+  BranchTargets(Expression* expr) { inner.walk(expr); }
+
+  // Gets the expression that defines this branch target, i.e., where we branch
+  // to if we branch to that name.
+  Expression* getTarget(Name name) { return inner.targets[name]; }
+
+  // Gets the expressions branching to a target.
+  std::unordered_set<Expression*> getBranches(Name name) {
+    auto iter = inner.branches.find(name);
+    if (iter != inner.branches.end()) {
+      return iter->second;
+    }
+    return {};
+  }
+
+private:
+  struct Inner : public PostWalker<Inner, UnifiedExpressionVisitor<Inner>> {
+    void visitExpression(Expression* curr) {
+      operateOnScopeNameDefs(curr, [&](Name name) {
+        if (name.is()) {
+          targets[name] = curr;
+        }
+      });
+      operateOnScopeNameUses(curr, [&](Name& name) {
+        if (name.is()) {
+          branches[name].insert(curr);
+        }
+      });
+    }
+
+    std::map<Name, Expression*> targets;
+    std::map<Name, std::unordered_set<Expression*>> branches;
+  } inner;
 };
 
 } // namespace BranchUtils

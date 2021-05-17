@@ -201,6 +201,9 @@ public:
   // Returns true if left is a subtype of right. Subtype includes itself.
   static bool isSubType(Type left, Type right);
 
+  // Return the ordered HeapType children, looking through child Types.
+  std::vector<HeapType> getHeapTypeChildren();
+
   // Computes the least upper bound from the type lattice.
   // If one of the type is unreachable, the other type becomes the result. If
   // the common supertype does not exist, returns none, a poison value.
@@ -356,10 +359,13 @@ public:
   bool operator!=(const HeapType& other) const { return id != other.id; }
   bool operator!=(const BasicHeapType& other) const { return id != other; }
 
-  std::string toString() const;
-
   // Returns true if left is a subtype of right. Subtype includes itself.
   static bool isSubType(HeapType left, HeapType right);
+
+  // Return the ordered HeapType children, looking through child Types.
+  std::vector<HeapType> getHeapTypeChildren();
+
+  std::string toString() const;
 };
 
 typedef std::vector<Type> TypeList;
@@ -372,12 +378,16 @@ struct Tuple {
   Tuple(std::initializer_list<Type> types) : types(types) { validate(); }
   Tuple(const TypeList& types) : types(types) { validate(); }
   Tuple(TypeList&& types) : types(std::move(types)) { validate(); }
+
+  // Allow copies when constructing.
+  Tuple(const Tuple& other) : types(other.types) { validate(); }
+
+  // Prevent accidental copies.
+  Tuple& operator=(const Tuple&) = delete;
+
   bool operator==(const Tuple& other) const { return types == other.types; }
   bool operator!=(const Tuple& other) const { return !(*this == other); }
   std::string toString() const;
-
-  // Prevent accidental copies
-  Tuple& operator=(const Tuple&) = delete;
 
 private:
   void validate() {

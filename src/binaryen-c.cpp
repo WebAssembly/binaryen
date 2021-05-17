@@ -665,30 +665,18 @@ BinaryenOp BinaryenConvertSVecI32x4ToVecF32x4(void) {
 BinaryenOp BinaryenConvertUVecI32x4ToVecF32x4(void) {
   return ConvertUVecI32x4ToVecF32x4;
 }
-BinaryenOp BinaryenLoadSplatVec8x16(void) { return LoadSplatVec8x16; }
-BinaryenOp BinaryenLoadSplatVec16x8(void) { return LoadSplatVec16x8; }
-BinaryenOp BinaryenLoadSplatVec32x4(void) { return LoadSplatVec32x4; }
-BinaryenOp BinaryenLoadSplatVec64x2(void) { return LoadSplatVec64x2; }
-BinaryenOp BinaryenLoadExtSVec8x8ToVecI16x8(void) {
-  return LoadExtSVec8x8ToVecI16x8;
-}
-BinaryenOp BinaryenLoadExtUVec8x8ToVecI16x8(void) {
-  return LoadExtUVec8x8ToVecI16x8;
-}
-BinaryenOp BinaryenLoadExtSVec16x4ToVecI32x4(void) {
-  return LoadExtSVec16x4ToVecI32x4;
-}
-BinaryenOp BinaryenLoadExtUVec16x4ToVecI32x4(void) {
-  return LoadExtUVec16x4ToVecI32x4;
-}
-BinaryenOp BinaryenLoadExtSVec32x2ToVecI64x2(void) {
-  return LoadExtSVec32x2ToVecI64x2;
-}
-BinaryenOp BinaryenLoadExtUVec32x2ToVecI64x2(void) {
-  return LoadExtUVec32x2ToVecI64x2;
-}
-BinaryenOp BinaryenLoad32Zero(void) { return Load32Zero; }
-BinaryenOp BinaryenLoad64Zero(void) { return Load64Zero; }
+BinaryenOp BinaryenLoad8SplatVec128(void) { return Load8SplatVec128; }
+BinaryenOp BinaryenLoad16SplatVec128(void) { return Load16SplatVec128; }
+BinaryenOp BinaryenLoad32SplatVec128(void) { return Load32SplatVec128; }
+BinaryenOp BinaryenLoad64SplatVec128(void) { return Load64SplatVec128; }
+BinaryenOp BinaryenLoad8x8SVec128(void) { return Load8x8SVec128; }
+BinaryenOp BinaryenLoad8x8UVec128(void) { return Load8x8UVec128; }
+BinaryenOp BinaryenLoad16x4SVec128(void) { return Load16x4SVec128; }
+BinaryenOp BinaryenLoad16x4UVec128(void) { return Load16x4UVec128; }
+BinaryenOp BinaryenLoad32x2SVec128(void) { return Load32x2SVec128; }
+BinaryenOp BinaryenLoad32x2UVec128(void) { return Load32x2UVec128; }
+BinaryenOp BinaryenLoad32ZeroVec128(void) { return Load32ZeroVec128; }
+BinaryenOp BinaryenLoad64ZeroVec128(void) { return Load64ZeroVec128; }
 BinaryenOp BinaryenLoad8LaneVec128(void) { return Load8LaneVec128; }
 BinaryenOp BinaryenLoad16LaneVec128(void) { return Load16LaneVec128; }
 BinaryenOp BinaryenLoad32LaneVec128(void) { return Load32LaneVec128; }
@@ -3893,7 +3881,11 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 
 char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   std::stringstream ss;
+  bool colors = Colors::isEnabled();
+
+  Colors::setEnabled(false); // do not use colors for writing
   ss << *(Module*)module;
+  Colors::setEnabled(colors); // restore colors state
 
   const std::string out = ss.str();
   const int len = out.length() + 1;
@@ -3919,7 +3911,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
 
 void BinaryenModuleInterpret(BinaryenModuleRef module) {
   ShellExternalInterface interface;
-  ModuleInstance instance(*(Module*)module, &interface);
+  ModuleInstance instance(*(Module*)module, &interface, {});
 }
 
 BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
@@ -4057,7 +4049,7 @@ void BinaryenElementSegmentSetTable(BinaryenElementSegmentRef elem,
                                     const char* table) {
   ((ElementSegment*)elem)->table = table;
 }
-bool BinayenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
+bool BinaryenElementSegmentIsPassive(BinaryenElementSegmentRef elem) {
   return ((ElementSegment*)elem)->table.isNull();
 }
 

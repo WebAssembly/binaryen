@@ -26,15 +26,13 @@
 // functions. The secondary module imports all of its dependencies from the
 // primary module.
 //
-// This code currently makes a few assumptions about the modules that will be
+// This code currently makes a couple assumptions about the modules that will be
 // split and will fail assertions if those assumptions are not true.
 //
 //   1) It assumes that mutable-globals are allowed.
 //
 //   2) It assumes that either all segment offsets are constants or there is
 //      exactly one segment that may have a non-constant offset.
-//
-//   3) It assumes that each function appears in the table at most once.
 //
 // These requirements will be relaxed as necessary in the future, but for now
 // this code should be considered experimental and used with care.

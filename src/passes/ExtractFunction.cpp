@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-// Removes code from all functions but one, leaving a valid module
-// with (mostly) just the code you want to debug (function-parallel,
-// non-lto) passes on.
+// Removes code from all functions but one, leaving a valid module with (mostly)
+// just the code from that function, as best we can.
+//
+// This pass will run --remove-unused-module-elements automatically for you, in
+// order to remove as many things as possible.
 
 #include "pass.h"
 #include "wasm.h"
@@ -26,8 +28,8 @@ namespace wasm {
 struct ExtractFunction : public Pass {
   void run(PassRunner* runner, Module* module) override {
     Name name = runner->options.getArgument(
-      "extract",
-      "ExtractFunction usage:  wasm-opt --pass-arg=extract@FUNCTION_NAME");
+      "extract-function",
+      "ExtractFunction usage:  wasm-opt --extract-function@FUNCTION_NAME");
     std::cerr << "extracting " << name << "\n";
     bool found = false;
     for (auto& func : module->functions) {
@@ -44,20 +46,20 @@ struct ExtractFunction : public Pass {
     if (!found) {
       Fatal() << "could not find the function to extract\n";
     }
-    // clear data
-    module->memory.segments.clear();
-    // TODO: if the extracted function contains a call_indirect, the referenced
-    // table should not be removed.
-    module->tables.clear();
-    // leave just an export for the thing we want
-    if (!module->getExportOrNull(name)) {
-      module->exports.clear();
-      auto* export_ = new Export;
-      export_->name = name;
-      export_->value = name;
-      export_->kind = ExternalKind::Function;
-      module->addExport(export_);
-    }
+
+    // Leave just one export, for the thing we want.
+    module->exports.clear();
+    auto* export_ = new Export;
+    export_->name = name;
+    export_->value = name;
+    export_->kind = ExternalKind::Function;
+    module->addExport(export_);
+
+    // Remove unneeded things.
+    PassRunner postRunner(runner);
+    postRunner.add("remove-unused-module-elements");
+    postRunner.setIsNested(true);
+    postRunner.run();
   }
 };
 

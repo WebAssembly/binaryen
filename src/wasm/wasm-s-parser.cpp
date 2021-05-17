@@ -339,8 +339,19 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
   Index i = 1;
   if (module[i]->dollared()) {
     wasm.name = module[i]->str();
+    if (module.size() == 2) {
+      return;
+    }
     i++;
   }
+
+  // spec tests have a `binary` keyword after the optional module name. Skip it
+  Name BINARY("binary");
+  if (module[i]->isStr() && module[i]->str() == BINARY &&
+      !module[i]->quoted()) {
+    i++;
+  }
+
   if (i < module.size() && module[i]->isStr()) {
     // these s-expressions contain a binary module, actually
     std::vector<char> data;
@@ -2032,24 +2043,24 @@ Expression* SExpressionWasmBuilder::makeSIMDLoad(Element& s, SIMDLoadOp op) {
   ret->op = op;
   Address defaultAlign;
   switch (op) {
-    case LoadSplatVec8x16:
+    case Load8SplatVec128:
       defaultAlign = 1;
       break;
-    case LoadSplatVec16x8:
+    case Load16SplatVec128:
       defaultAlign = 2;
       break;
-    case LoadSplatVec32x4:
-    case Load32Zero:
+    case Load32SplatVec128:
+    case Load32ZeroVec128:
       defaultAlign = 4;
       break;
-    case LoadSplatVec64x2:
-    case LoadExtSVec8x8ToVecI16x8:
-    case LoadExtUVec8x8ToVecI16x8:
-    case LoadExtSVec16x4ToVecI32x4:
-    case LoadExtUVec16x4ToVecI32x4:
-    case LoadExtSVec32x2ToVecI64x2:
-    case LoadExtUVec32x2ToVecI64x2:
-    case Load64Zero:
+    case Load64SplatVec128:
+    case Load8x8SVec128:
+    case Load8x8UVec128:
+    case Load16x4SVec128:
+    case Load16x4UVec128:
+    case Load32x2SVec128:
+    case Load32x2UVec128:
+    case Load64ZeroVec128:
       defaultAlign = 8;
       break;
   }
@@ -3290,6 +3301,10 @@ void SExpressionWasmBuilder::parseElem(Element& s, Table* table) {
     // Offset expression (offset (<expr>)) | (<expr>)
     auto& inner = *s[i++];
     if (elementStartsWith(inner, OFFSET)) {
+      if (inner.size() > 2) {
+        throw ParseException(
+          "Invalid offset for an element segment.", s.line, s.col);
+      }
       segment->offset = parseExpression(inner[1]);
     } else {
       segment->offset = parseExpression(inner);

@@ -50,7 +50,7 @@ std::string read_possible_response_file(const std::string&);
 
 class Output {
 public:
-  // An empty filename will open stdout instead.
+  // An empty filename or "-" will open stdout instead.
   Output(const std::string& filename, Flags::BinaryOption binary);
   ~Output() = default;
   template<typename T> std::ostream& operator<<(const T& v) { return out << v; }

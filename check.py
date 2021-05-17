@@ -230,6 +230,8 @@ def run_spec_tests():
         if 'exports.wast' in base:  # FIXME
             continue
 
+        run_spec_test(wast)
+
         # check binary format. here we can verify execution of the final
         # result, no need for an output verification
         # some wast files cannot be split:
@@ -241,21 +243,21 @@ def run_spec_tests():
         if base not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
             split_num = 0
             actual = ''
-            for module, asserts in support.split_wast(wast):
-                print('        testing split module', split_num)
-                split_num += 1
-                support.write_wast('split.wast', module, asserts)
-                run_spec_test('split.wast')    # before binary stuff - just check it's still ok split out
-                run_opt_test('split.wast')    # also that our optimizer doesn't break on it
-                result_wast = shared.binary_format_check('split.wast', verify_final_result=False, original_wast=wast)
-                # add the asserts, and verify that the test still passes
-                open(result_wast, 'a').write('\n' + '\n'.join(asserts))
-                actual += run_spec_test(result_wast)
+            with open('spec.wast', 'w') as transformed_spec_file:
+                for module, asserts in support.split_wast(wast):
+                    print('        testing split module', split_num)
+                    split_num += 1
+                    support.write_wast('split.wast', module, asserts)
+                    run_opt_test('split.wast')    # also that our optimizer doesn't break on it
+                    result_wast_file = shared.binary_format_check('split.wast', verify_final_result=False, original_wast=wast)
+                    with open(result_wast_file) as f:
+                        result_wast = f.read()
+                        # add the asserts, and verify that the test still passes
+                        transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
+
             # compare all the outputs to the expected output
+            actual = run_spec_test('spec.wast')
             check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
-        else:
-            # handle unsplittable wast files
-            run_spec_test(wast)
 
 
 def run_validator_tests():
@@ -329,15 +331,18 @@ def run_unittest():
 
 
 def run_lit():
-    lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
-    lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
-    # lit expects to be run as its own executable
-    cmd = [sys.executable, lit_script, lit_tests, '-vv']
-    result = subprocess.run(cmd)
-    if result.returncode != 0:
-        shared.num_failures += 1
-    if shared.options.abort_on_first_failure and shared.num_failures:
-        raise Exception("lit test failed")
+    def run():
+        lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
+        lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
+        # lit expects to be run as its own executable
+        cmd = [sys.executable, lit_script, lit_tests, '-vv']
+        result = subprocess.run(cmd)
+        if result.returncode != 0:
+            shared.num_failures += 1
+        if shared.options.abort_on_first_failure and shared.num_failures:
+            raise Exception("lit test failed")
+
+    shared.with_pass_debug(run)
 
 
 TEST_SUITES = OrderedDict([

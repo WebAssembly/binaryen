@@ -150,7 +150,7 @@ struct RemoveUnusedModuleElements : public Pass {
     if (module->start.is()) {
       auto startFunction = module->getFunction(module->start);
       // Can be skipped if the start function is empty.
-      if (startFunction->body->is<Nop>()) {
+      if (!startFunction->imported() && startFunction->body->is<Nop>()) {
         module->start.clear();
       } else {
         roots.emplace_back(ModuleElementKind::Function, module->start);
@@ -229,6 +229,10 @@ struct RemoveUnusedModuleElements : public Pass {
              analyzer.reachable.count(
                ModuleElement(ModuleElementKind::Table, curr->name)) == 0;
     });
+    // TODO: After removing elements, we may be able to remove more things, and
+    //       should continue to work. (For example, after removing a reference
+    //       to a function from an element segment, we may be able to remove
+    //       that function, etc.)
 
     // Handle the memory
     if (!exportsMemory && !analyzer.usesMemory) {

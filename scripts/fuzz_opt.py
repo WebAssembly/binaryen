@@ -212,6 +212,27 @@ def pick_initial_contents():
         '--disable-exception-handling',
         # has not been fuzzed in general yet
         '--disable-memory64',
+        # avoid multivalue for now due to bad interactions with gc rtts in
+        # stacky code. for example, this fails to roundtrip as the tuple code
+        # ends up creating stacky binary code that needs to spill rtts to locals,
+        # which is not allowed:
+        #
+        # (module
+        #  (type $other (struct))
+        #  (func $foo (result (rtt $other))
+        #   (select
+        #    (rtt.canon $other)
+        #    (rtt.canon $other)
+        #    (tuple.extract 1
+        #     (tuple.make
+        #      (i32.const 0)
+        #      (i32.const 0)
+        #     )
+        #    )
+        #   )
+        #  )
+        # )
+        '--disable-multivalue',
         # DWARF is incompatible with multivalue atm; it's more important to
         # fuzz multivalue since we aren't actually fuzzing DWARF here
         '--strip-dwarf',
@@ -236,6 +257,9 @@ IGNORE = '[binaryen-fuzzer-ignore]'
 
 # Traps are reported as [trap REASON]
 TRAP_PREFIX = '[trap '
+
+# Host limits are reported as [host limit REASON]
+HOST_LIMIT_PREFIX = '[host limit '
 
 # --fuzz-exec reports calls as [fuzz-exec] calling foo
 FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
@@ -346,22 +370,31 @@ def fix_spec_output(out):
 
 
 def run_vm(cmd):
-    # ignore some vm assertions, if bugs have already been filed
-    known_issues = [
-        # can be caused by flatten, ssa, etc. passes
-        'local count too large',
-        # https://github.com/WebAssembly/binaryen/issues/3767
-        # note that this text is a little too broad, but the problem is rare
-        # enough that it's unlikely to hide an unrelated issue
-        'found br_if of type',
-    ]
-    try:
-        return run(cmd)
-    except subprocess.CalledProcessError:
-        output = run_unchecked(cmd)
+    def filter_known_issues(output):
+        known_issues = [
+            # can be caused by flatten, ssa, etc. passes
+            'local count too large',
+            # https://github.com/WebAssembly/binaryen/issues/3767
+            # note that this text is a little too broad, but the problem is rare
+            # enough that it's unlikely to hide an unrelated issue
+            'found br_if of type',
+            # all host limitations are arbitrary and may differ between VMs and also
+            # be affected by optimizations, so ignore them.
+            HOST_LIMIT_PREFIX,
+        ]
         for issue in known_issues:
             if issue in output:
                 return IGNORE
+        return output
+
+    try:
+        # some known issues do not cause the entire process to fail
+        return filter_known_issues(run(cmd))
+    except subprocess.CalledProcessError:
+        # other known issues do make it fail, so re-run without checking for
+        # success and see if we should ignore it
+        if filter_known_issues(run_unchecked(cmd)) == IGNORE:
+            return IGNORE
         raise
 
 
@@ -950,6 +983,8 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
+    ["--heap2local"],
+    ["--remove-unused-names", "--heap2local"],
     ["--generate-stack-ir"],
     ["--licm"],
     ["--memory-packing"],
@@ -1022,6 +1057,14 @@ def randomize_opt_flags():
     # possibly converge. don't do this very often as it can be slow.
     if random.random() < 0.05:
         ret += ['--converge']
+    # possibly inline all the things as much as possible. inlining that much may
+    # be realistic in some cases (on GC benchmarks it is very helpful), but
+    # also, inlining so much allows other optimizations to kick in, which
+    # increases coverage
+    # (the specific number here doesn't matter, but it is far higher than the
+    # wasm limitation on function body size which is 128K)
+    if random.random() < 0.5:
+        ret += ['-fimfs=99999999']
     assert ret.count('--flatten') <= 1
     return ret
 

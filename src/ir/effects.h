@@ -716,6 +716,20 @@ private:
   }
 };
 
+// Calculate effects only on the node itself (shallowly), and not on
+// children.
+class ShallowEffectAnalyzer : public EffectAnalyzer {
+public:
+  ShallowEffectAnalyzer(const PassOptions& passOptions,
+                        FeatureSet features,
+                        Expression* ast = nullptr)
+    : EffectAnalyzer(passOptions, features) {
+    if (ast) {
+      visit(ast);
+    }
+  }
+};
+
 } // namespace wasm
 
 #endif // wasm_ir_effects_h

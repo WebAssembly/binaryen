@@ -80,7 +80,7 @@
   "declares": [
     "emscripten_asm_const_int"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",

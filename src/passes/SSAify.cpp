@@ -90,7 +90,7 @@ struct SSAify : public Pass {
     module = module_;
     func = func_;
     LocalGraph graph(func);
-    graph.computeInfluences();
+    graph.computeSetInfluences();
     graph.computeSSAIndexes();
     // create new local indexes, one for each set
     createNewIndexes(graph);
@@ -100,7 +100,7 @@ struct SSAify : public Pass {
     // add prepends to function
     addPrepends();
     // Handle non-nullability in new locals we added.
-    TypeUpdating::handleNonNullableLocals(func, *module);
+    TypeUpdating::handleNonDefaultableLocals(func, *module);
   }
 
   void createNewIndexes(LocalGraph& graph) {

@@ -223,9 +223,18 @@ inline Index getZeroExtBits(Expression* curr) {
 // and other operations that receive a value and let it flow through them. If
 // there is no value falling through, returns the node itself (as that is the
 // value that trivially falls through, with 0 steps in the middle).
-inline Expression* getFallthrough(Expression* curr,
-                                  const PassOptions& passOptions,
-                                  FeatureSet features) {
+//
+// Note that this returns the value that would fall through if one does in fact
+// do so. For example, the final element in a block may not fall through if we
+// hit a return or a trap or an exception is thrown before we get there.
+//
+// This method returns the 'immediate' fallthrough, that is, the immediate
+// child of this expression. See getFallthrough for a method that looks all the
+// way to the final value falling through, potentially through multiple
+// intermediate expressions.
+inline Expression* getImmediateFallthrough(Expression* curr,
+                                           const PassOptions& passOptions,
+                                           FeatureSet features) {
   // If the current node is unreachable, there is no value
   // falling through.
   if (curr->type == Type::unreachable) {
@@ -233,34 +242,54 @@ inline Expression* getFallthrough(Expression* curr,
   }
   if (auto* set = curr->dynCast<LocalSet>()) {
     if (set->isTee()) {
-      return getFallthrough(set->value, passOptions, features);
+      return set->value;
     }
   } else if (auto* block = curr->dynCast<Block>()) {
     // if no name, we can't be broken to, and then can look at the fallthrough
     if (!block->name.is() && block->list.size() > 0) {
-      return getFallthrough(block->list.back(), passOptions, features);
+      return block->list.back();
     }
   } else if (auto* loop = curr->dynCast<Loop>()) {
-    return getFallthrough(loop->body, passOptions, features);
+    return loop->body;
   } else if (auto* iff = curr->dynCast<If>()) {
     if (iff->ifFalse) {
       // Perhaps just one of the two actually returns.
       if (iff->ifTrue->type == Type::unreachable) {
-        return getFallthrough(iff->ifFalse, passOptions, features);
+        return iff->ifFalse;
       } else if (iff->ifFalse->type == Type::unreachable) {
-        return getFallthrough(iff->ifTrue, passOptions, features);
+        return iff->ifTrue;
       }
     }
   } else if (auto* br = curr->dynCast<Break>()) {
     if (br->condition && br->value) {
-      return getFallthrough(br->value, passOptions, features);
+      return br->value;
     }
   } else if (auto* tryy = curr->dynCast<Try>()) {
     if (!EffectAnalyzer(passOptions, features, tryy->body).throws) {
-      return getFallthrough(tryy->body, passOptions, features);
+      return tryy->body;
     }
+  } else if (auto* as = curr->dynCast<RefCast>()) {
+    return as->ref;
+  } else if (auto* as = curr->dynCast<RefAs>()) {
+    return as->value;
+  } else if (auto* br = curr->dynCast<BrOn>()) {
+    return br->ref;
   }
   return curr;
+}
+
+// Similar to getImmediateFallthrough, but looks through multiple children to
+// find the final value that falls through.
+inline Expression* getFallthrough(Expression* curr,
+                                  const PassOptions& passOptions,
+                                  FeatureSet features) {
+  while (1) {
+    auto* next = getImmediateFallthrough(curr, passOptions, features);
+    if (next == curr) {
+      return curr;
+    }
+    curr = next;
+  }
 }
 
 // Returns whether the resulting value here must fall through without being

@@ -45,7 +45,22 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     std::vector<BasicBlock*> out, in;
   };
 
-  BasicBlock* entry; // the entry block
+  // The entry block at the function's start. This always exists.
+  BasicBlock* entry;
+
+  // The exit block at the end, where control flow reaches the end of the
+  // function. If the function has a control flow path that flows out (that is,
+  // exits the function without a return or an unreachable or such), then that
+  // control flow path ends in this block. In particular, if the function flows
+  // out a value (as opposed to only returning values using an explicit return)
+  // then that value would be at the end of this block.
+  // Put another way, this block has a control flow edge out of the function,
+  // and that edge is not because of a return. (Hence an analysis that cares
+  // about reaching the end of the function must not only look for returns, but
+  // also the end of this block.)
+  // Note: It is possible for this block to not exist, if the function ends in
+  // a return or an unreachable.
+  BasicBlock* exit;
 
   // override this with code to create a BasicBlock if necessary
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
@@ -409,6 +424,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     startBasicBlock();
     entry = currBasicBlock;
     ControlFlowWalker<SubType, VisitorType>::doWalkFunction(func);
+    exit = currBasicBlock;
 
     assert(branches.size() == 0);
     assert(ifStack.size() == 0);

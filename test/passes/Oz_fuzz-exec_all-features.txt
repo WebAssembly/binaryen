@@ -33,17 +33,22 @@
 [LoggingExternalInterface logging 3]
 [trap cast error]
 [fuzz-exec] calling array-alloc-failure
-[trap allocation failure]
+[host limit allocation failure]
+[fuzz-exec] calling init-array-packed
+[fuzz-exec] note result: init-array-packed => 213
+[fuzz-exec] calling cast-func-to-struct
+[trap cast error]
 (module
  (type $struct (struct (field (mut i32))))
  (type $void_func (func))
  (type $extendedstruct (struct (field (mut i32)) (field f64)))
  (type $bytes (array (mut i8)))
+ (type $int_func (func (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $anyref_=>_none (func (param anyref)))
- (type $int_func (func (result i32)))
+ (type $eqref_=>_none (func (param eqref)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
- (elem declare func $a-void-func)
+ (elem declare func $a-void-func $call-target)
  (export "structs" (func $0))
  (export "arrays" (func $1))
  (export "rtts" (func $2))
@@ -52,39 +57,23 @@
  (export "br_on_data" (func $6))
  (export "rtt-and-cast-on-func" (func $8))
  (export "array-alloc-failure" (func $9))
+ (export "init-array-packed" (func $10))
+ (export "cast-func-to-struct" (func $12))
  (func $0 (; has Stack IR ;)
-  (local $0 (ref null $struct))
+  (local $0 i32)
   (call $log
-   (struct.get $struct 0
-    (local.tee $0
-     (struct.new_default_with_rtt $struct
-      (rtt.canon $struct)
-     )
-    )
-   )
+   (i32.const 0)
   )
-  (struct.set $struct 0
-   (local.get $0)
+  (call $log
    (i32.const 42)
   )
   (call $log
-   (struct.get $struct 0
-    (local.get $0)
+   (local.tee $0
+    (i32.const 100)
    )
   )
-  (struct.set $struct 0
-   (local.get $0)
+  (call $log
    (i32.const 100)
-  )
-  (call $log
-   (struct.get $struct 0
-    (local.get $0)
-   )
-  )
-  (call $log
-   (struct.get $struct 0
-    (local.get $0)
-   )
   )
  )
  (func $1 (; has Stack IR ;)
@@ -139,13 +128,30 @@
    (i32.const 0)
   )
   (call $log
-   (i32.const 0)
+   (ref.test
+    (array.new_with_rtt $bytes
+     (i32.const 20)
+     (i32.const 10)
+     (rtt.canon $bytes)
+    )
+    (rtt.canon $struct)
+   )
   )
   (call $log
-   (i32.const 1)
+   (ref.test
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+    (rtt.canon $struct)
+   )
   )
   (call $log
-   (i32.const 0)
+   (ref.test
+    (struct.new_default_with_rtt $struct
+     (rtt.canon $struct)
+    )
+    (rtt.canon $extendedstruct)
+   )
   )
   (call $log
    (ref.test
@@ -175,6 +181,33 @@
   )
  )
  (func $3 (; has Stack IR ;)
+  (drop
+   (block $block (result (ref $struct))
+    (drop
+     (block $extendedblock (result (ref $extendedstruct))
+      (drop
+       (br_on_cast $block
+        (br_on_cast $extendedblock
+         (struct.new_default_with_rtt $struct
+          (rtt.canon $struct)
+         )
+         (rtt.canon $extendedstruct)
+        )
+        (rtt.canon $struct)
+       )
+      )
+      (call $log
+       (i32.const -1)
+      )
+      (return)
+     )
+    )
+    (call $log
+     (i32.const -2)
+    )
+    (return)
+   )
+  )
   (call $log
    (i32.const 3)
   )
@@ -217,12 +250,7 @@
   (call $log
    (i32.const 2)
   )
-  (call_ref
-   (ref.cast
-    (ref.func $a-void-func)
-    (rtt.canon $void_func)
-   )
-  )
+  (call $a-void-func)
   (call $log
    (i32.const 3)
   )
@@ -240,6 +268,27 @@
  )
  (func $9 (; has Stack IR ;)
   (nop)
+ )
+ (func $10 (; has Stack IR ;) (result i32)
+  (array.get_u $bytes
+   (array.new_with_rtt $bytes
+    (i32.const -43)
+    (i32.const 50)
+    (rtt.canon $bytes)
+   )
+   (i32.const 10)
+  )
+ )
+ (func $call-target (; has Stack IR ;) (param $0 eqref)
+  (nop)
+ )
+ (func $12 (; has Stack IR ;)
+  (drop
+   (ref.cast
+    (ref.func $call-target)
+    (rtt.canon $struct)
+   )
+  )
  )
 )
 [fuzz-exec] calling structs
@@ -277,3 +326,20 @@
 [LoggingExternalInterface logging 3]
 [trap cast error]
 [fuzz-exec] calling array-alloc-failure
+[fuzz-exec] calling init-array-packed
+[fuzz-exec] note result: init-array-packed => 213
+[fuzz-exec] calling cast-func-to-struct
+[trap cast error]
+ignoring comparison of ExecutionResults!
+[fuzz-exec] calling foo
+[host limit allocation failure]
+(module
+ (type $none_=>_i32 (func (result i32)))
+ (export "foo" (func $0))
+ (func $0 (; has Stack IR ;) (result i32)
+  (i32.const 0)
+ )
+)
+[fuzz-exec] calling foo
+[fuzz-exec] note result: foo => 0
+ignoring comparison of ExecutionResults!

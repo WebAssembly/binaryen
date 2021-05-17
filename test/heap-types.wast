@@ -258,12 +258,51 @@
       )
     )
   )
-  (func $unreachables
+  (func $unreachables-1
     (drop
-      (struct.get $struct.A 0 (unreachable))
+      (struct.get $struct.C 0 (unreachable))
     )
-    (drop
-      (struct.set $struct.A 0 (unreachable) (unreachable))
+  )
+  (func $unreachables-2
+    (struct.set $struct.C 0 (ref.null $struct.C) (unreachable))
+  )
+  (func $unreachables-3
+    (struct.set $struct.C 0 (unreachable) (unreachable))
+  )
+  (func $unreachables-4
+    (struct.set $struct.C 0 (unreachable) (f32.const 1))
+  )
+  (func $unreachables-array-1
+    (array.get $vector
+      (unreachable)
+      (i32.const 2)
+    )
+  )
+  (func $unreachables-array-2
+    (array.get $vector
+      (ref.null $vector)
+      (unreachable)
+    )
+  )
+  (func $unreachables-array-3
+    (array.set $vector
+      (unreachable)
+      (i32.const 2)
+      (f64.const 2.18281828)
+    )
+  )
+  (func $unreachables-array-4
+    (array.set $vector
+      (ref.null $vector)
+      (unreachable)
+      (f64.const 2.18281828)
+    )
+  )
+  (func $unreachables-array-5
+    (array.set $vector
+      (ref.null $vector)
+      (i32.const 2)
+      (unreachable)
     )
   )
 )

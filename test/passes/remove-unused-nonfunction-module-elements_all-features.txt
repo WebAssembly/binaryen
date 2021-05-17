@@ -224,9 +224,9 @@
  (import "env" "memory" (memory $0 256))
  (data (global.get $memoryBase) "hello, world!")
  (import "env" "table" (table $timport$0 0 funcref))
- (elem (global.get $tableBase) $waka)
  (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "tableBase" (global $tableBase i32))
+ (elem (global.get $tableBase) $waka)
  (func $waka
   (nop)
  )
