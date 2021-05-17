@@ -1,10 +1,10 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
- (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $none_=>_none (func))
+ (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
+ (type $vector (array (mut f64)))
  (type $grandchild (struct (field i32) (field i64)))
  (type $struct.C (struct (field $named-mut (mut f32))))
- (type $vector (array (mut f64)))
  (type $matrix (array (mut (ref null $vector))))
  (type $anyref_=>_none (func (param anyref)))
  (type $parent (struct ))
@@ -340,6 +340,49 @@
    (drop
     (f32.const 1)
    )
+  )
+ )
+ (func $unreachables-array-1
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (unreachable)
+   )
+   (drop
+    (i32.const 2)
+   )
+  )
+ )
+ (func $unreachables-array-2
+  (array.get $vector
+   (ref.null $vector)
+   (unreachable)
+  )
+ )
+ (func $unreachables-array-3
+  (block ;; (replaces something unreachable we can't emit)
+   (drop
+    (unreachable)
+   )
+   (drop
+    (i32.const 2)
+   )
+   (drop
+    (f64.const 2.18281828)
+   )
+  )
+ )
+ (func $unreachables-array-4
+  (array.set $vector
+   (ref.null $vector)
+   (unreachable)
+   (f64.const 2.18281828)
+  )
+ )
+ (func $unreachables-array-5
+  (array.set $vector
+   (ref.null $vector)
+   (i32.const 2)
+   (unreachable)
   )
  )
 )
