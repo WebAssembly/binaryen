@@ -472,6 +472,11 @@ bool isTemp(HeapType type) {
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;
 }
 
+// Code that traverses the structure of Types often has to be agnostic to the
+// difference between Basic and BasicKind HeapTypes, so uses this helper. On the
+// other hand, canonicalization code often has to differentiate between them so
+// the BasicKind types can be replaced with the corresponding Baic types.
+// BasicKind types should never be visible via the public type API.
 bool isBasicOrBasicKind(HeapType type) {
   return type.isBasic() ||
          getHeapTypeInfo(type)->kind == HeapTypeInfo::BasicKind;
@@ -2313,7 +2318,17 @@ namespace wasm {
 namespace {
 
 // The Refined Partitions data structure used in Valmari-Lehtinen DFA
-// minimization.
+// minimization. The translation from terms used in the Valmari-Lehtinen paper
+// to the more expanded terms used here is:
+//
+//   Block => Set
+//   elems => elements
+//   loc => elementIndices
+//   sidx => setIndices
+//   first => beginnings
+//   end => endings
+//   mid => pivots
+//
 struct Partitions {
   // The number of sets.
   size_t sets = 0;
