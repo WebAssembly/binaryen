@@ -386,8 +386,7 @@ void PassRegistry::registerPasses() {
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
   auto pass = PassRegistry::get()->createPass(passName);
-  if (!pass->invalidatesDWARF() ||
-      !Debug::shouldPreserveDWARF(options, *wasm)) {
+  if (!pass->invalidatesDWARF() || !shouldPreserveDWARF()) {
     doAdd(std::move(pass));
   }
 }
@@ -533,6 +532,9 @@ static void dumpWast(Name name, Module* wasm) {
 }
 
 void PassRunner::run() {
+  assert(!ran);
+  ran = true;
+
   static const int passDebug = getPassDebug();
   // Emit logging information when asked for. At passDebug level 1+ we log
   // the main passes, while in 2 we also log nested ones. Note that for
@@ -670,9 +672,12 @@ void PassRunner::runOnFunction(Function* func) {
 }
 
 void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
-  if (Debug::shouldPreserveDWARF(options, *wasm) && pass->invalidatesDWARF()) {
+  if (pass->invalidatesDWARF() && shouldPreserveDWARF()) {
     std::cerr << "warning: running pass '" << pass->name
               << "' which is not fully compatible with DWARF\n";
+  }
+  if (passRemovesDebugInfo(pass->name)) {
+    addedPassesRemovedDWARF = true;
   }
   passes.emplace_back(std::move(pass));
 }
@@ -818,6 +823,25 @@ int PassRunner::getPassDebug() {
   static const int passDebug =
     getenv("BINARYEN_PASS_DEBUG") ? atoi(getenv("BINARYEN_PASS_DEBUG")) : 0;
   return passDebug;
+}
+
+bool PassRunner::passRemovesDebugInfo(const std::string& name) {
+  return name == "strip" || name == "strip-debug" || name == "strip-dwarf";
+}
+
+bool PassRunner::shouldPreserveDWARF() {
+  // Check if the debugging subsystem wants to preserve DWARF.
+  if (!Debug::shouldPreserveDWARF(options, *wasm)) {
+    return false;
+  }
+
+  // We may need DWARF. Check if one of our previous passes would remove it
+  // anyhow, in which case, there is nothing to preserve.
+  if (addedPassesRemovedDWARF) {
+    return false;
+  }
+
+  return true;
 }
 
 } // namespace wasm

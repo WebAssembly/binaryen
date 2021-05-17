@@ -256,10 +256,20 @@ struct PassRunner {
   //  3: like 1, and also dumps out byn-* files for each pass as it is run.
   static int getPassDebug();
 
-protected:
-  bool isNested = false;
+  // Returns whether a pass by that name will remove debug info.
+  static bool passRemovesDebugInfo(const std::string& name);
 
 private:
+  // Whether this is a nested pass runner.
+  bool isNested = false;
+
+  // Whether the passes we have added so far to be run (but not necessarily run
+  // yet) have removed DWARF.
+  bool addedPassesRemovedDWARF = false;
+
+  // Whether this pass runner has run. A pass runner should only be run once.
+  bool ran = false;
+
   void doAdd(std::unique_ptr<Pass> pass);
 
   void runPass(Pass* pass);
@@ -272,6 +282,8 @@ private:
   // If a function is passed, we operate just on that function;
   // otherwise, the whole module.
   void handleAfterEffects(Pass* pass, Function* func = nullptr);
+
+  bool shouldPreserveDWARF();
 };
 
 //
