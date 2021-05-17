@@ -2591,9 +2591,8 @@ void ShapeCanonicalizer::initialize(std::vector<HeapType>& roots) {
   struct Initializer : HeapTypeGraphWalker<Initializer> {
     ShapeCanonicalizer& canonicalizer;
 
-    // Maps shallow HeapType shapes to corresponding HeapType indices. TODO: use
-    // an insertion-ordered map here to make the algorithm deterministic.
-    std::unordered_map<ShallowHeapType, std::vector<size_t>> initialPartitions;
+    // Maps shallow HeapType shapes to corresponding HeapType indices.
+    InsertOrderedMap<ShallowHeapType, std::vector<size_t>> initialPartitions;
 
     // Maps `dest` HeapType indices to their input transitions.
     std::map<size_t, std::vector<Transition>> transitions;
