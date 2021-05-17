@@ -25,6 +25,7 @@
 
 #include "compiler-support.h"
 #include "support/hash.h"
+#include "support/insert_ordered.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
 
