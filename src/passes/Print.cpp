@@ -1977,6 +1977,10 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
   }
   void visitArrayGet(ArrayGet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
     const auto& element = curr->ref->type.getHeapType().getArray().element;
     if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
@@ -1990,6 +1994,10 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
     printMedium(o, "array.set ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
@@ -2370,6 +2378,20 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     visitExpression(curr);
   }
   void visitStructGet(StructGet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement(curr);
+      return;
+    }
+    visitExpression(curr);
+  }
+  void visitArraySet(ArraySet* curr) {
+    if (curr->ref->type == Type::unreachable) {
+      printUnreachableReplacement(curr);
+      return;
+    }
+    visitExpression(curr);
+  }
+  void visitArrayGet(ArrayGet* curr) {
     if (curr->ref->type == Type::unreachable) {
       printUnreachableReplacement(curr);
       return;
