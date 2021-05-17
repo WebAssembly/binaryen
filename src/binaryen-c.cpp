@@ -3881,7 +3881,11 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 
 char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   std::stringstream ss;
+  bool colors = Colors::isEnabled();
+
+  Colors::setEnabled(false); // do not use colors for writing
   ss << *(Module*)module;
+  Colors::setEnabled(colors); // restore colors state
 
   const std::string out = ss.str();
   const int len = out.length() + 1;

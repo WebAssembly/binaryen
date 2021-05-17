@@ -25,6 +25,7 @@
 //
 
 #include "pass.h"
+#include "support/file.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -33,9 +34,14 @@ struct PrintFunctionMap : public Pass {
   bool modifiesBinaryenIR() override { return false; }
 
   void run(PassRunner* runner, Module* module) override {
+    // If an argument is provided, write to that file; otherwise write to
+    // stdout.
+    auto outFile = runner->options.getArgumentOrDefault("symbolmap", "");
+    Output output(outFile, Flags::Text);
+    auto& o = output.getStream();
     Index i = 0;
     for (auto& func : module->functions) {
-      std::cout << i++ << ':' << func->name.str << '\n';
+      o << i++ << ':' << func->name.str << '\n';
     }
   }
 };
