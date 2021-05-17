@@ -265,6 +265,31 @@ struct Heap2LocalOptimizer {
       walk(func->body);
     }
 
+    // Rewrite the code in visit* methods. The general approach taken is to
+    // replace the allocation with a null reference (which may require changing
+    // types in some places, like making a block return value nullable), and to
+    // remove all uses of it as much as possible, using the information we have
+    // (for example, when our allocation reaches a RefAsNonNull we can simply
+    // remove that operation as we know it would not throw). Some things are
+    // left to other passes, like getting rid of dropped code without side
+    // effects.
+
+    void visitBlock(Block* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // Our allocation passes through this block. We must turn its type into a
+      // nullable one, because we will remove things like RefAsNonNull of it,
+      // which means we may no longer have a non-nullable value as our input,
+      // and we could fail to validate. It is safe to make this change in terms
+      // of our parent, since we know very specifically that only safe things
+      // will end up using our value, like a StructGet or a Drop, which do not
+      // care about non-nullability.
+      assert(curr->type.isRef());
+      curr->type = Type(curr->type.getHeapType(), Nullable);
+    }
+
     void visitLocalSet(LocalSet* curr) {
       if (!reached.count(curr)) {
         return;
@@ -285,15 +310,20 @@ struct Heap2LocalOptimizer {
       }
     }
 
+    void visitBreak(Break* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // Breaks that our allocation flows through may change type, as we now
+      // have a nullable type there.
+      curr->finalize();
+    }
+
     void visitStructNew(StructNew* curr) {
       if (curr != allocation) {
         return;
       }
-
-      // We do not remove the allocation itself here, rather we make it
-      // unnecessary, and then depend on other optimizations to clean up. (We
-      // cannot simply remove it because we need to replace it with something of
-      // the same non-nullable type.)
 
       // First, assign the initial values to the new locals.
       std::vector<Expression*> contents;
@@ -340,21 +370,12 @@ struct Heap2LocalOptimizer {
             builder.makeLocalGet(tempIndexes[i], fields[i].type)));
         }
 
-        // Read the values in the allocation (we don't need to, as the
-        // allocation is not used after our optimization, but we need something
-        // with the right type anyhow).
-        for (Index i = 0; i < tempIndexes.size(); i++) {
-          allocation->operands[i] =
-            builder.makeLocalGet(localIndexes[i], fields[i].type);
-        }
-
         // TODO Check if the nondefault case does not increase code size in some
         //      cases. A heap allocation that implicitly sets the default values
         //      is smaller than multiple explicit settings of locals to
         //      defaults.
       } else {
-        // Set the default values, and replace the allocation with a block that
-        // first does that, then contains the allocation.
+        // Set the default values.
         // Note that we must assign the defaults because we might be in a loop,
         // that is, there might be a previous value.
         for (Index i = 0; i < localIndexes.size(); i++) {
@@ -364,10 +385,25 @@ struct Heap2LocalOptimizer {
         }
       }
 
-      // Put the allocation itself at the end of the block, so the block has the
-      // exact same type as the allocation it replaces.
-      contents.push_back(allocation);
+      // Drop the RTT (as it may have side effects; leave it to other passes).
+      contents.push_back(builder.makeDrop(allocation->rtt));
+      // Replace the allocation with a null reference. This changes the type
+      // from non-nullable to nullable, but as we optimize away the code that
+      // the allocation reaches, we will handle that.
+      contents.push_back(
+        builder.makeRefNull(Type(allocation->type.getHeapType(), Nullable)));
       replaceCurrent(builder.makeBlock(contents));
+    }
+
+    void visitRefAs(RefAs* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // It is safe to optimize out this RefAsNonNull, since we proved it
+      // contains our allocation, and so cannot trap.
+      assert(curr->op == RefAsNonNull);
+      replaceCurrent(curr->value);
     }
 
     void visitStructSet(StructSet* curr) {
@@ -570,12 +606,6 @@ struct Heap2LocalOptimizer {
           // null (so there is no trap), and we can continue to (hopefully)
           // optimize this allocation.
           escapes = false;
-
-          // Note that while we can look through this operation, we cannot get
-          // rid of it later, as its parent might depend on receiving a
-          // non-nullable type. So we will leave the RefAsNonNull as it is,
-          // even if we do optimize the allocation, and we depend on other
-          // passes to remove the RefAsNonNull.
         }
       }
 

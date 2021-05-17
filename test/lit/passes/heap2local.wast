@@ -17,16 +17,17 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -45,16 +46,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -77,16 +79,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (rtt.canon $struct.A)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $0)
@@ -114,16 +117,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (rtt.canon $struct.A)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $1)
@@ -145,16 +149,17 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $0
@@ -199,7 +204,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
   ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (i32.const 2)
   ;; CHECK-NEXT:      )
@@ -212,11 +217,10 @@
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (local.get $3)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (struct.new_with_rtt $struct.A
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (rtt.canon $struct.A)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $0)
@@ -292,16 +296,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
@@ -334,16 +339,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
@@ -377,16 +383,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -450,16 +457,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -580,16 +588,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -624,16 +633,17 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -686,16 +696,17 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
@@ -736,16 +747,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
@@ -820,16 +832,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $1)
@@ -850,13 +863,14 @@
   ;; CHECK-NEXT:  (local $ref (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.recursive))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (ref.null $struct.recursive)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.recursive
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.recursive)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.recursive)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $1
@@ -906,7 +920,7 @@
   ;; CHECK-NEXT:  (local $1 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (local $2 (ref null $struct.recursive))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.recursive))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (struct.new_default_with_rtt $struct.recursive
   ;; CHECK-NEXT:      (rtt.canon $struct.recursive)
@@ -915,10 +929,10 @@
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_with_rtt $struct.recursive
-  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.recursive)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.recursive)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1017,7 +1031,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $struct.A))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct.nonnullable))
+  ;; CHECK-NEXT:     (block (result (ref null $struct.nonnullable))
   ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (local.get $a)
   ;; CHECK-NEXT:      )
@@ -1026,12 +1040,10 @@
   ;; CHECK-NEXT:        (local.get $2)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (struct.new_with_rtt $struct.nonnullable
-  ;; CHECK-NEXT:       (ref.as_non_null
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (rtt.canon $struct.nonnullable)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct.nonnullable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.as_non_null
@@ -1061,7 +1073,7 @@
   ;; CHECK-NEXT:  (local $5 f64)
   ;; CHECK-NEXT:  (loop $outer
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block (result (ref $struct.A))
+  ;; CHECK-NEXT:    (block (result (ref null $struct.A))
   ;; CHECK-NEXT:     (local.set $4
   ;; CHECK-NEXT:      (i32.const 2)
   ;; CHECK-NEXT:     )
@@ -1074,11 +1086,10 @@
   ;; CHECK-NEXT:     (local.set $3
   ;; CHECK-NEXT:      (local.get $5)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (struct.new_with_rtt $struct.A
-  ;; CHECK-NEXT:      (local.get $2)
-  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (rtt.canon $struct.A)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -1219,16 +1230,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
   ;; CHECK-NEXT:      (local.set $0
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (rtt.canon $struct.A)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $0)
@@ -1237,16 +1249,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
   ;; CHECK-NEXT:      (local.set $2
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $3
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (rtt.canon $struct.A)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $2)
@@ -1255,16 +1268,17 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $struct.A))
+  ;; CHECK-NEXT:     (block (result (ref null $struct.A))
   ;; CHECK-NEXT:      (local.set $4
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $5
   ;; CHECK-NEXT:       (f64.const 0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (rtt.canon $struct.A)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $5)
@@ -1303,16 +1317,17 @@
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1324,16 +1339,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $4
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1379,29 +1395,31 @@
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $4
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $5
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1537,16 +1555,17 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
@@ -1749,23 +1768,22 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $struct.A))
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.new_default_with_rtt $struct.A
+  ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (rtt.canon $struct.A)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1797,6 +1815,116 @@
     (drop
       (ref.as_non_null
         (ref.null any)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-as-non-null-through-local (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (rtt.canon $struct.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-as-non-null-through-local (result i32)
+    (local $ref (ref null $struct.A))
+    (local.set $ref
+      (struct.new_default_with_rtt $struct.A
+        (rtt.canon $struct.A)
+      )
+    )
+    ;; Copy the allocation through a ref.as_non_null. This must not trap: it may
+    ;; trap if we leave the ref.as_non_null there and also we do not assign
+    ;; anything to the local (if we skip assignments to the local when we
+    ;; optimize). To avoid that, we should remove the ref.as_non_null, which is
+    ;; safe since we know our allocation is passed into it, which is not null,
+    ;; and will not trap.
+    (local.set $ref
+      (ref.as_non_null
+        (local.get $ref)
+      )
+    )
+    (struct.get $struct.A 0
+      (local.get $ref)
+    )
+  )
+
+  ;; CHECK:      (func $br_if-allocation (result f64)
+  ;; CHECK-NEXT:  (local $0 (ref null $struct.A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (block (result (ref null $struct.A))
+  ;; CHECK-NEXT:       (local.set $3
+  ;; CHECK-NEXT:        (i32.const 42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $4
+  ;; CHECK-NEXT:        (f64.const 13.37)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $2
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (rtt.canon $struct.A)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null $struct.A)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (f64.const 2.1828)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $2)
+  ;; CHECK-NEXT: )
+  (func $br_if-allocation (result f64)
+    (local $0 (ref null $struct.A))
+    (struct.get $struct.A 1
+      (block $block (result (ref null $struct.A))
+        (drop
+          ;; Our allocation flows into a br_if, which therefore has non-nullable
+          ;; type, which we must update after optimizing.
+          (br_if $block
+            (struct.new_with_rtt $struct.A
+              (i32.const 42)
+              (f64.const 13.37)
+              (rtt.canon $struct.A)
+            )
+            (i32.const 0)
+          )
+        )
+        (return (f64.const 2.1828))
       )
     )
   )
