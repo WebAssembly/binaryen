@@ -124,8 +124,8 @@ struct Branch {
   Render(RelooperBuilder& Builder, Block* Target, bool SetLabel);
 };
 
-typedef InsertOrderedSet<Block*> BlockSet;
-typedef InsertOrderedMap<Block*, Branch*> BlockBranchMap;
+typedef wasm::InsertOrderedSet<Block*> BlockSet;
+typedef wasm::InsertOrderedMap<Block*, Branch*> BlockBranchMap;
 
 // Represents a basic block of code - some instructions that end with a
 // control flow modifier (a branch, return or throw).
@@ -313,7 +313,7 @@ struct Relooper {
   void SetMinSize(bool MinSize_) { MinSize = MinSize_; }
 };
 
-typedef InsertOrderedMap<Block*, BlockSet> BlockBlockSetMap;
+typedef wasm::InsertOrderedMap<Block*, BlockSet> BlockBlockSetMap;
 
 #ifdef RELOOPER_DEBUG
 struct Debugging {

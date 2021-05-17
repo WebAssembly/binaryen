@@ -14,11 +14,16 @@
  * limitations under the License.
  */
 
+#ifndef wasm_support_insert_ordered_h
+#define wasm_support_insert_ordered_h
+
 #include <list>
 #include <stddef.h>
 #include <unordered_map>
 
 #include "support/utilities.h"
+
+namespace wasm {
 
 // like std::set, except that begin() -> end() iterates in the
 // order that elements were added to the set (not in the order
@@ -134,3 +139,7 @@ template<typename Key, typename T> struct InsertOrderedMap {
   }
   bool operator!=(const InsertOrderedMap& other) { return !(*this == other); }
 };
+
+} // namespace wasm
+
+#endif // wasm_support_insert_ordered_h
