@@ -656,7 +656,7 @@ class CompareVMs(TestCaseHandler):
 # Check for determinism - the same command must have the same output.
 class CheckDeterminism(TestCaseHandler):
     # not that important
-    frequency = 1.0 # 0.1
+    frequency = 0.1
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         # check for determinism
