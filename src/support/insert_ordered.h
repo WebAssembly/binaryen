@@ -101,6 +101,12 @@ template<typename Key, typename T> struct InsertOrderedMap {
   typedef typename std::list<std::pair<const Key, T>>::iterator iterator;
   iterator begin() { return List.begin(); }
   iterator end() { return List.end(); }
+
+  typedef
+    typename std::list<std::pair<const Key, T>>::const_iterator const_iterator;
+  const_iterator begin() const { return List.begin(); }
+  const_iterator end() const { return List.end(); }
+
   iterator find(const Key& k) {
     auto it = Map.find(k);
     if (it == Map.end()) {

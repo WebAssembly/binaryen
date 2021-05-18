@@ -537,9 +537,9 @@ inline void collectHeapTypes(Module& wasm,
     });
 
   // Combine the function info with the module info.
-  for (auto& pair : analysis.map) {
-    Counts& functionCounts = pair.second;
-    for (auto& innerPair : functionCounts) {
+  for (const auto& pair : analysis.map) {
+    const Counts& functionCounts = pair.second;
+    for (const auto& innerPair : functionCounts) {
       counts[innerPair.first] += innerPair.second;
     }
   }
