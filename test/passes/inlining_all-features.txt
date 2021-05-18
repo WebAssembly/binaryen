@@ -127,8 +127,8 @@
 )
 (module
  (type $struct (struct ))
- (type $none_=>_none (func))
  (type $rtt_$struct_=>_none (func (param (rtt $struct))))
+ (type $none_=>_none (func))
  (func $0 (param $rtt (rtt $struct))
   (nop)
  )

@@ -22,6 +22,7 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -306,10 +307,12 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 // some computation that the operation performs.
 // The operation performend should not modify the wasm module in any way.
 // TODO: enforce this
-template<typename T> struct ParallelFunctionAnalysis {
+template<typename K, typename V> using DefaultMap = std::map<K, V>;
+template<typename T, template<typename, typename> class MapT = DefaultMap>
+struct ParallelFunctionAnalysis {
   Module& wasm;
 
-  typedef std::map<Function*, T> Map;
+  typedef MapT<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;
@@ -467,7 +470,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
 inline void collectHeapTypes(Module& wasm,
                              std::vector<HeapType>& types,
                              std::unordered_map<HeapType, Index>& typeIndices) {
-  struct Counts : public std::unordered_map<HeapType, size_t> {
+  struct Counts : public InsertOrderedMap<HeapType, size_t> {
     void note(HeapType type) {
       if (!type.isBasic()) {
         (*this)[type]++;
@@ -522,7 +525,7 @@ inline void collectHeapTypes(Module& wasm,
   }
 
   // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
+  ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
     wasm, [&](Function* func, Counts& counts) {
       counts.note(func->sig);
       for (auto type : func->vars) {
@@ -534,9 +537,9 @@ inline void collectHeapTypes(Module& wasm,
     });
 
   // Combine the function info with the module info.
-  for (auto& pair : analysis.map) {
-    Counts& functionCounts = pair.second;
-    for (auto& innerPair : functionCounts) {
+  for (const auto& pair : analysis.map) {
+    const Counts& functionCounts = pair.second;
+    for (const auto& innerPair : functionCounts) {
       counts[innerPair.first] += innerPair.second;
     }
   }
@@ -547,7 +550,7 @@ inline void collectHeapTypes(Module& wasm,
   // As we do this we may find more and more types, as nested children of
   // previous ones. Each such type will appear in the type section once, so
   // we just need to visit it once.
-  std::unordered_set<HeapType> newTypes;
+  InsertOrderedSet<HeapType> newTypes;
   for (auto& pair : counts) {
     newTypes.insert(pair.first);
   }
@@ -565,13 +568,10 @@ inline void collectHeapTypes(Module& wasm,
     }
   }
 
-  // Sort by frequency and then simplicity.
+  // Sort by frequency and then original insertion order.
   std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
   std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    if (a.second != b.second) {
-      return a.second > b.second;
-    }
-    return a.first < b.first;
+    return a.second > b.second;
   });
   for (Index i = 0; i < sorted.size(); ++i) {
     typeIndices[sorted[i].first] = i;

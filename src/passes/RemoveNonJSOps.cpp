@@ -43,6 +43,7 @@
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
 #include "passes/intrinsics-module.h"
+#include "support/insert_ordered.h"
 #include "wasm-builder.h"
 #include "wasm-s-parser.h"
 
@@ -51,7 +52,7 @@ namespace wasm {
 struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   std::unique_ptr<Builder> builder;
   std::unordered_set<Name> neededIntrinsics;
-  std::set<std::pair<Name, Type>> neededImportedGlobals;
+  InsertOrderedSet<std::pair<Name, Type>> neededImportedGlobals;
 
   bool isFunctionParallel() override { return false; }
 

@@ -20,6 +20,7 @@
 #include "ir/branch-utils.h"
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -141,7 +142,7 @@ private:
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract.
-  std::map<Type, Index> scratchLocals;
+  InsertOrderedMap<Type, Index> scratchLocals;
   void countScratchLocals();
   void setScratchLocals();
 };

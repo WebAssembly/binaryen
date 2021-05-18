@@ -83,23 +83,42 @@ template<typename T> struct InsertOrderedSet {
 // order that elements were added to the map (not in the order
 // of operator<(Key, Key))
 template<typename Key, typename T> struct InsertOrderedMap {
-  std::unordered_map<Key, typename std::list<std::pair<Key, T>>::iterator> Map;
-  std::list<std::pair<Key, T>> List;
+  std::unordered_map<Key, typename std::list<std::pair<const Key, T>>::iterator>
+    Map;
+  std::list<std::pair<const Key, T>> List;
 
-  T& operator[](const Key& k) {
-    auto it = Map.find(k);
-    if (it == Map.end()) {
-      List.push_back(std::make_pair(k, T()));
-      auto e = --List.end();
-      Map.insert(std::make_pair(k, e));
-      return e->second;
-    }
-    return it->second->second;
-  }
-
-  typedef typename std::list<std::pair<Key, T>>::iterator iterator;
+  typedef typename std::list<std::pair<const Key, T>>::iterator iterator;
   iterator begin() { return List.begin(); }
   iterator end() { return List.end(); }
+
+  typedef
+    typename std::list<std::pair<const Key, T>>::const_iterator const_iterator;
+  const_iterator begin() const { return List.begin(); }
+  const_iterator end() const { return List.end(); }
+
+  std::pair<iterator, bool> insert(std::pair<const Key, T>& kv) {
+    // Try inserting with a placeholder list iterator.
+    auto inserted = Map.insert({kv.first, List.end()});
+    if (inserted.second) {
+      // This is a new item; insert it in the list and update the iterator.
+      List.push_back(kv);
+      inserted.first->second = std::prev(List.end());
+    }
+    return {inserted.first->second, inserted.second};
+  }
+
+  T& operator[](const Key& k) {
+    std::pair<const Key, T> kv = {k, {}};
+    return insert(kv).first->second;
+  }
+
+  iterator find(const Key& k) {
+    auto it = Map.find(k);
+    if (it == Map.end()) {
+      return end();
+    }
+    return it->second;
+  }
 
   void erase(const Key& k) {
     auto it = Map.find(k);
@@ -126,14 +145,19 @@ template<typename Key, typename T> struct InsertOrderedMap {
   size_t count(const Key& k) const { return Map.count(k); }
 
   InsertOrderedMap() = default;
-  InsertOrderedMap(InsertOrderedMap& other) {
-    // TODO, watch out for iterators.
-    WASM_UNREACHABLE("unimp");
+  InsertOrderedMap(const InsertOrderedMap& other) {
+    for (auto kv : other) {
+      insert(kv);
+    }
   }
   InsertOrderedMap& operator=(const InsertOrderedMap& other) {
-    // TODO, watch out for iterators.
-    WASM_UNREACHABLE("unimp");
+    if (this != &other) {
+      this->~InsertOrderedMap();
+      new (this) InsertOrderedMap<Key, T>(other);
+    }
+    return *this;
   }
+
   bool operator==(const InsertOrderedMap& other) {
     return Map == other.Map && List == other.List;
   }

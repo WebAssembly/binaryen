@@ -128,24 +128,6 @@ struct HeapTypeInfo {
   bool operator!=(const HeapTypeInfo& other) const { return !(*this == other); }
 };
 
-// Helper for coinductively comparing Types and HeapTypes according to some
-// arbitrary notion of complexity.
-struct TypeComparator {
-  // Set of HeapTypes we are assuming are equivalent as long as we cannot prove
-  // otherwise.
-  std::unordered_set<std::pair<HeapType, HeapType>> seen;
-  bool lessThan(Type a, Type b);
-  bool lessThan(HeapType a, HeapType b);
-  bool lessThan(const TypeInfo& a, const TypeInfo& b);
-  bool lessThan(const HeapTypeInfo& a, const HeapTypeInfo& b);
-  bool lessThan(const Tuple& a, const Tuple& b);
-  bool lessThan(const Field& a, const Field& b);
-  bool lessThan(const Signature& a, const Signature& b);
-  bool lessThan(const Struct& a, const Struct& b);
-  bool lessThan(const Array& a, const Array& b);
-  bool lessThan(const Rtt& a, const Rtt& b);
-};
-
 // Helper for coinductively checking whether a pair of Types or HeapTypes are in
 // a subtype relation.
 struct SubTyper {
@@ -833,10 +815,6 @@ Nullability Type::getNullability() const {
   return isNullable() ? Nullable : NonNullable;
 }
 
-bool Type::operator<(const Type& other) const {
-  return TypeComparator().lessThan(*this, other);
-}
-
 unsigned Type::getByteSize() const {
   // TODO: alignment?
   auto getSingleByteSize = [](Type t) {
@@ -1116,10 +1094,6 @@ bool HeapType::isArray() const {
   }
 }
 
-bool HeapType::operator<(const HeapType& other) const {
-  return TypeComparator().lessThan(*this, other);
-}
-
 Signature HeapType::getSignature() const {
   assert(isSignature());
   return getHeapTypeInfo(*this)->signature;
@@ -1143,10 +1117,6 @@ std::vector<HeapType> HeapType::getHeapTypeChildren() {
   HeapTypeChildCollector collector;
   collector.walkRoot(this);
   return collector.children;
-}
-
-bool Signature::operator<(const Signature& other) const {
-  return TypeComparator().lessThan(*this, other);
 }
 
 template<typename T> static std::string genericToString(const T& t) {
@@ -1202,127 +1172,6 @@ unsigned Field::getByteSize() const {
 }
 
 namespace {
-
-bool TypeComparator::lessThan(Type a, Type b) {
-  if (a == b) {
-    return false;
-  }
-  if (a.isBasic() && b.isBasic()) {
-    return a.getBasic() < b.getBasic();
-  }
-  if (a.isBasic()) {
-    return true;
-  }
-  if (b.isBasic()) {
-    return false;
-  }
-  return lessThan(*getTypeInfo(a), *getTypeInfo(b));
-}
-
-bool TypeComparator::lessThan(HeapType a, HeapType b) {
-  if (a == b) {
-    return false;
-  }
-  if (seen.count({a, b})) {
-    // We weren't able to disprove that a == b since we last saw them, so it
-    // holds coinductively that a < b is false.
-    return false;
-  }
-  if (a.isBasic() && b.isBasic()) {
-    return a.getBasic() < b.getBasic();
-  }
-  if (a.isBasic()) {
-    return true;
-  }
-  if (b.isBasic()) {
-    return false;
-  }
-  // As we recurse, we will coinductively assume that a == b unless proven
-  // otherwise.
-  seen.insert({a, b});
-  return lessThan(*getHeapTypeInfo(a), *getHeapTypeInfo(b));
-}
-
-bool TypeComparator::lessThan(const TypeInfo& a, const TypeInfo& b) {
-  if (a.kind != b.kind) {
-    return a.kind < b.kind;
-  }
-  switch (a.kind) {
-    case TypeInfo::TupleKind:
-      return lessThan(a.tuple, b.tuple);
-    case TypeInfo::RefKind:
-      if (a.ref.nullable != b.ref.nullable) {
-        return a.ref.nullable < b.ref.nullable;
-      }
-      return lessThan(a.ref.heapType, b.ref.heapType);
-    case TypeInfo::RttKind:
-      return lessThan(a.rtt, b.rtt);
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-bool TypeComparator::lessThan(const HeapTypeInfo& a, const HeapTypeInfo& b) {
-  if (a.kind != b.kind) {
-    return a.kind < b.kind;
-  }
-  switch (a.kind) {
-    case HeapTypeInfo::BasicKind:
-      return a.basic < b.basic;
-    case HeapTypeInfo::SignatureKind:
-      return lessThan(a.signature, b.signature);
-    case HeapTypeInfo::StructKind:
-      return lessThan(a.struct_, b.struct_);
-    case HeapTypeInfo::ArrayKind:
-      return lessThan(a.array, b.array);
-  }
-  WASM_UNREACHABLE("unexpected kind");
-}
-
-bool TypeComparator::lessThan(const Tuple& a, const Tuple& b) {
-  return std::lexicographical_compare(
-    a.types.begin(),
-    a.types.end(),
-    b.types.begin(),
-    b.types.end(),
-    [&](Type ta, Type tb) { return lessThan(ta, tb); });
-}
-
-bool TypeComparator::lessThan(const Field& a, const Field& b) {
-  if (a.mutable_ != b.mutable_) {
-    return a.mutable_ < b.mutable_;
-  }
-  if (a.type == Type::i32 && b.type == Type::i32) {
-    return a.packedType < b.packedType;
-  }
-  return lessThan(a.type, b.type);
-}
-
-bool TypeComparator::lessThan(const Signature& a, const Signature& b) {
-  if (a.results != b.results) {
-    return lessThan(a.results, b.results);
-  }
-  return lessThan(a.params, b.params);
-}
-
-bool TypeComparator::lessThan(const Struct& a, const Struct& b) {
-  return std::lexicographical_compare(
-    a.fields.begin(),
-    a.fields.end(),
-    b.fields.begin(),
-    b.fields.end(),
-    [&](const Field& fa, const Field& fb) { return lessThan(fa, fb); });
-}
-
-bool TypeComparator::lessThan(const Array& a, const Array& b) {
-  return lessThan(a.element, b.element);
-}
-
-bool TypeComparator::lessThan(const Rtt& a, const Rtt& b) {
-  if (a.depth != b.depth) {
-    return a.depth < b.depth;
-  }
-  return lessThan(a.heapType, b.heapType);
-}
 
 bool SubTyper::isSubType(Type a, Type b) {
   if (a == b) {
@@ -1546,7 +1395,8 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
   // Allocate a new slot to construct the LUB of this pair if we have not
   // already seen it before. Canonicalize the pair to have the element with the
   // smaller ID first since order does not matter.
-  auto pair = std::make_pair(std::min(a, b), std::max(a, b));
+  auto pair =
+    a.getID() < b.getID() ? std::make_pair(a, b) : std::make_pair(b, a);
   size_t index = builder.size();
   auto result = indices.insert({pair, index});
   if (!result.second) {

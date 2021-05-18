@@ -152,8 +152,8 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (func $child (param $0 i32) (result i32)
   (i32.const 1234)
  )
@@ -164,8 +164,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $f32_i32_=>_i32 (func (param f32 i32) (result i32)))
+ (type $none_=>_none (func))
  (global $hangLimit (mut i32) (i32.const 25))
  (memory $0 1 1)
  (export "hangLimitInitializer" (func $hangLimitInitializer))

@@ -242,8 +242,8 @@
  )
 )
 (module
- (type $none_=>_i32 (func (result i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (func $foo (param $x i32) (result i32)
   (drop
    (return_call $bar)

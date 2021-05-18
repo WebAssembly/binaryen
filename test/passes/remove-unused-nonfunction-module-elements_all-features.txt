@@ -330,8 +330,8 @@
  )
 )
 (module
- (type $0 (func (param i32)))
  (type $i64_=>_none (func (param i64)))
+ (type $0 (func (param i32)))
  (event $e1 (attr 0) (param i64))
  (export "e1" (event $e1))
  (func $f (param $0 i32)

@@ -6,8 +6,8 @@
 
 ;; CHECK:      (module
 ;; CHECK-NEXT:  (type $A (struct (field (ref $C))))
-;; CHECK-NEXT:  (type $B (func (param (ref $A)) (result (ref $B))))
 ;; CHECK-NEXT:  (type $C (struct (field (mut (ref $B)))))
+;; CHECK-NEXT:  (type $B (func (param (ref $A)) (result (ref $B))))
 ;; CHECK-NEXT:  (type $D (struct (field (ref $C)) (field (ref $A))))
 ;; CHECK-NEXT:  (global $g0 (rtt 0 $A) (rtt.canon $A))
 ;; CHECK-NEXT:  (global $g1 (rtt 1 $D) (rtt.sub $D

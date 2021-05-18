@@ -29,6 +29,7 @@ high chance for set at start of loop
 
 #include "ir/branch-utils.h"
 #include "ir/memory-utils.h"
+#include "support/insert_ordered.h"
 #include <ir/find_all.h>
 #include <ir/literal-utils.h>
 #include <ir/manipulation.h>
@@ -459,7 +460,7 @@ private:
     }
   }
 
-  std::map<Type, std::vector<Name>> globalsByType;
+  std::unordered_map<Type, std::vector<Name>> globalsByType;
 
   void setupGlobals() {
     // If there were initial wasm contents, there may be imported globals. That
@@ -650,7 +651,7 @@ private:
     std::vector<Expression*> hangStack;
 
     // type => list of locals with that type
-    std::map<Type, std::vector<Index>> typeLocals;
+    std::unordered_map<Type, std::vector<Index>> typeLocals;
 
     FunctionCreationContext(TranslateToFuzzReader& parent, Function* func)
       : parent(parent), func(func) {
@@ -782,7 +783,7 @@ private:
     struct Scanner
       : public PostWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
       // A map of all expressions, categorized by type.
-      std::map<Type, std::vector<Expression*>> exprsByType;
+      InsertOrderedMap<Type, std::vector<Expression*>> exprsByType;
 
       void visitExpression(Expression* curr) {
         exprsByType[curr->type].push_back(curr);

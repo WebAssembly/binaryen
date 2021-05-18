@@ -580,8 +580,8 @@
  )
 )
 (module
- (type $0 (func))
  (type $2 (func (param i64 f32 i32)))
+ (type $0 (func))
  (type $1 (func (param i32 f64) (result i32)))
  (global $global$0 (mut i32) (i32.const 10))
  (table $0 23 23 funcref)
@@ -695,8 +695,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $none_=>_i64 (func (result i64)))
+ (type $none_=>_none (func))
  (global $glob (mut i32) (i32.const 1))
  (func $i64-shifts (result i64)
   (local $temp i64)
@@ -765,8 +765,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $none_=>_anyref (func (result anyref)))
+ (type $none_=>_none (func))
  (func $subtype-test (result anyref)
   (local $0 funcref)
   (local $1 funcref)

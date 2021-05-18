@@ -606,8 +606,8 @@ After:
 )
 Secondary:
 (module
- (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_none (func))
  (import "primary" "%table" (table $table 1000 funcref))
  (import "primary" "%global" (global $base i32))
  (import "primary" "%null" (func $null))
