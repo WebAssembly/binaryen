@@ -87,17 +87,6 @@ template<typename Key, typename T> struct InsertOrderedMap {
     Map;
   std::list<std::pair<const Key, T>> List;
 
-  T& operator[](const Key& k) {
-    auto it = Map.find(k);
-    if (it == Map.end()) {
-      List.push_back(std::make_pair(k, T()));
-      auto e = --List.end();
-      Map.insert(std::make_pair(k, e));
-      return e->second;
-    }
-    return it->second->second;
-  }
-
   typedef typename std::list<std::pair<const Key, T>>::iterator iterator;
   iterator begin() { return List.begin(); }
   iterator end() { return List.end(); }
@@ -106,6 +95,22 @@ template<typename Key, typename T> struct InsertOrderedMap {
     typename std::list<std::pair<const Key, T>>::const_iterator const_iterator;
   const_iterator begin() const { return List.begin(); }
   const_iterator end() const { return List.end(); }
+
+  std::pair<iterator, bool> insert(std::pair<const Key, T>& kv) {
+    // Try inserting with a placeholder list iterator.
+    auto inserted = Map.insert({kv.first, List.end()});
+    if (inserted.second) {
+      // This is a new item; insert it in the list and update the iterator.
+      List.push_back(kv);
+      inserted.first->second = std::prev(List.end());
+    }
+    return {inserted.first->second, inserted.second};
+  }
+
+  T& operator[](const Key& k) {
+    std::pair<const Key, T> kv = {k, {}};
+    return insert(kv).first->second;
+  }
 
   iterator find(const Key& k) {
     auto it = Map.find(k);
@@ -152,15 +157,7 @@ template<typename Key, typename T> struct InsertOrderedMap {
     }
     return *this;
   }
-  InsertOrderedMap(InsertOrderedMap&& other)
-    : Map(std::move(other.Map)), List(std::move(other.List)) {}
-  InsertOrderedMap& operator=(InsertOrderedMap&& other) {
-    if (this != &other) {
-      this->~InsertOrderedMap();
-      new (this) InsertOrderedMap<Key, T>(std::move(other));
-    }
-    return *this;
-  }
+
   bool operator==(const InsertOrderedMap& other) {
     return Map == other.Map && List == other.List;
   }
