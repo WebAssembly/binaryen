@@ -83,8 +83,9 @@ template<typename T> struct InsertOrderedSet {
 // order that elements were added to the map (not in the order
 // of operator<(Key, Key))
 template<typename Key, typename T> struct InsertOrderedMap {
-  std::unordered_map<Key, typename std::list<std::pair<Key, T>>::iterator> Map;
-  std::list<std::pair<Key, T>> List;
+  std::unordered_map<Key, typename std::list<std::pair<const Key, T>>::iterator>
+    Map;
+  std::list<std::pair<const Key, T>> List;
 
   T& operator[](const Key& k) {
     auto it = Map.find(k);
@@ -97,7 +98,7 @@ template<typename Key, typename T> struct InsertOrderedMap {
     return it->second->second;
   }
 
-  typedef typename std::list<std::pair<Key, T>>::iterator iterator;
+  typedef typename std::list<std::pair<const Key, T>>::iterator iterator;
   iterator begin() { return List.begin(); }
   iterator end() { return List.end(); }
   iterator find(const Key& k) {

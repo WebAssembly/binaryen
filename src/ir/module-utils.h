@@ -308,7 +308,7 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 // The operation performend should not modify the wasm module in any way.
 // TODO: enforce this
 template<typename K, typename V> using DefaultMap = std::map<K, V>;
-template<typename T, template<typename, typename> typename MapT = DefaultMap>
+template<typename T, template<typename, typename> class MapT = DefaultMap>
 struct ParallelFunctionAnalysis {
   Module& wasm;
 
