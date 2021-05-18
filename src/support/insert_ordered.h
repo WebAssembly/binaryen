@@ -140,7 +140,7 @@ template<typename Key, typename T> struct InsertOrderedMap {
   size_t count(const Key& k) const { return Map.count(k); }
 
   InsertOrderedMap() = default;
-  InsertOrderedMap(InsertOrderedMap& other) {
+  InsertOrderedMap(const InsertOrderedMap& other) {
     for (auto kv : other) {
       insert(kv);
     }
