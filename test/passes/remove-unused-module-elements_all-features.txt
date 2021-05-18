@@ -229,8 +229,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
+ (type $none_=>_none (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (import "env" "imported" (global $imported i32))
  (import "env" "_puts" (func $_puts (param i32) (result i32)))
@@ -297,8 +297,8 @@
 )
 (module
  (type $0 (func (param i32)))
- (type $none_=>_none (func))
  (type $i64_=>_none (func (param i64)))
+ (type $none_=>_none (func))
  (event $e-export (attr 0) (param i64))
  (event $e-throw (attr 0) (param i32))
  (event $e-catch (attr 0) (param i32))

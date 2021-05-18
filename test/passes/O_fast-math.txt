@@ -1,7 +1,7 @@
 (module
  (type $none_=>_f32 (func (result f32)))
- (type $f64_=>_f64 (func (param f64) (result f64)))
  (type $f32_=>_f32 (func (param f32) (result f32)))
+ (type $f64_=>_f64 (func (param f64) (result f64)))
  (export "div" (func $0))
  (export "mul1" (func $1))
  (export "mul2" (func $2))

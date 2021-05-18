@@ -19,7 +19,6 @@
 // emscripten output.
 //
 
-#include "support/insert_ordered.h"
 #include <asmjs/shared-constants.h>
 #include <ir/import-utils.h>
 #include <ir/localize.h>
@@ -100,10 +99,10 @@ struct PostEmscripten : public Pass {
 
       Pass* create() override { return new OptimizeInvokes(map, flatTable); }
 
-      InsertOrderedMap<Function*, Info>& map;
+      std::map<Function*, Info>& map;
       TableUtils::FlatTable& flatTable;
 
-      OptimizeInvokes(InsertOrderedMap<Function*, Info>& map,
+      OptimizeInvokes(std::map<Function*, Info>& map,
                       TableUtils::FlatTable& flatTable)
         : map(map), flatTable(flatTable) {}
 

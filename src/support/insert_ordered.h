@@ -134,12 +134,25 @@ template<typename Key, typename T> struct InsertOrderedMap {
 
   InsertOrderedMap() = default;
   InsertOrderedMap(InsertOrderedMap& other) {
-    // TODO, watch out for iterators.
-    WASM_UNREACHABLE("unimp");
+    for (auto kv : other) {
+      insert(kv);
+    }
   }
   InsertOrderedMap& operator=(const InsertOrderedMap& other) {
-    // TODO, watch out for iterators.
-    WASM_UNREACHABLE("unimp");
+    if (this != &other) {
+      this->~InsertOrderedMap();
+      new (this) InsertOrderedMap<Key, T>(other);
+    }
+    return *this;
+  }
+  InsertOrderedMap(InsertOrderedMap&& other)
+    : Map(std::move(other.Map)), List(std::move(other.List)) {}
+  InsertOrderedMap& operator=(InsertOrderedMap&& other) {
+    if (this != &other) {
+      this->~InsertOrderedMap();
+      new (this) InsertOrderedMap<Key, T>(std::move(other));
+    }
+    return *this;
   }
   bool operator==(const InsertOrderedMap& other) {
     return Map == other.Map && List == other.List;

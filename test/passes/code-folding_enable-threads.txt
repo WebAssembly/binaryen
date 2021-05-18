@@ -141,8 +141,8 @@
  )
 )
 (module
- (type $i32_=>_none (func (param i32)))
  (type $0 (func))
+ (type $i32_=>_none (func (param i32)))
  (global $global$0 (mut i32) (i32.const 10))
  (func $determinism
   (block $folding-inner0
