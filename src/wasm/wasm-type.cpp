@@ -29,7 +29,7 @@
 #include "wasm-features.h"
 #include "wasm-type.h"
 
-#define TRACE_CANONICALIZATION 0
+#define TRACE_CANONICALIZATION 1
 #define TIME_CANONICALIZATION 0
 
 #if TRACE_CANONICALIZATION || TIME_CANONICALIZATION
@@ -42,7 +42,7 @@
 
 namespace wasm {
 
-namespace {
+// namespace {
 
 struct TypeInfo {
   using type_t = Type;
@@ -409,7 +409,7 @@ struct HeapTypeChildCollector : HeapTypeChildWalker<HeapTypeChildCollector> {
   void noteChild(HeapType* child) { children.push_back(*child); }
 };
 
-} // anonymous namespace
+// } // anonymous namespace
 } // namespace wasm
 
 namespace std {
@@ -444,7 +444,7 @@ public:
 } // namespace std
 
 namespace wasm {
-namespace {
+// namespace {
 
 TypeInfo* getTypeInfo(Type type) {
   assert(type.isCompound());
@@ -745,7 +745,7 @@ TypeID Store<Info>::recordCanonical(std::unique_ptr<Info>&& info) {
   return id;
 }
 
-} // anonymous namespace
+// } // anonymous namespace
 
 Type::Type(std::initializer_list<Type> types) : Type(Tuple(types)) {}
 
@@ -1218,7 +1218,7 @@ unsigned Field::getByteSize() const {
   WASM_UNREACHABLE("impossible packed type");
 }
 
-namespace {
+// namespace {
 
 bool TypeComparator::lessThan(Type a, Type b) {
   if (a == b) {
@@ -2191,7 +2191,7 @@ void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
   }
 }
 
-} // anonymous namespace
+// } // anonymous namespace
 
 struct TypeBuilder::Impl {
   TypeStore typeStore;
@@ -2281,7 +2281,7 @@ Type TypeBuilder::getTempRttType(Rtt rtt) {
   return markTemp(impl->typeStore.canonicalize(rtt));
 }
 
-namespace {
+// namespace {
 
 // A wrapper around a HeapType that provides equality and hashing based only on
 // its top-level shape, up to but not including its closest HeapType
@@ -2301,7 +2301,7 @@ bool ShallowHeapType::operator==(const ShallowHeapType& other) const {
     .eq(this->heapType, other.heapType);
 }
 
-} // anonymous namespace
+// } // anonymous namespace
 } // namespace wasm
 
 namespace std {
@@ -2316,7 +2316,7 @@ public:
 } // namespace std
 
 namespace wasm {
-namespace {
+// namespace {
 
 // The Refined Partitions data structure used in Valmari-Lehtinen DFA
 // minimization. The translation from terms used in the Valmari-Lehtinen paper
@@ -2775,7 +2775,7 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
       ChildUpdater(ShapeCanonicalizer& canonicalizer)
         : canonicalizer(canonicalizer) {}
       void noteChild(HeapType* child) {
-        if (isBasicOrBasicKind(*child) || !isTemp(*child)) {
+        if (child->isBasic() || !isTemp(*child)) {
           // Child doesn't need replacement.
           return;
         }
@@ -2911,7 +2911,7 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
   return results;
 }
 
-} // anonymous namespace
+// } // anonymous namespace
 
 std::vector<HeapType> TypeBuilder::build() {
   std::vector<HeapType> heapTypes;
