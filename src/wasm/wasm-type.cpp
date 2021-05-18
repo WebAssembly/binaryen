@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <array>
 #include <cassert>
+#include <map>
 #include <shared_mutex>
 #include <sstream>
 #include <unordered_map>
@@ -24,13 +25,19 @@
 
 #include "compiler-support.h"
 #include "support/hash.h"
+#include "support/insert_ordered.h"
 #include "wasm-features.h"
 #include "wasm-type.h"
 
 #define TRACE_CANONICALIZATION 0
+#define TIME_CANONICALIZATION 0
 
-#if TRACE_CANONICALIZATION
+#if TRACE_CANONICALIZATION || TIME_CANONICALIZATION
 #include <iostream>
+#endif
+
+#if TIME_CANONICALIZATION
+#include <chrono>
 #endif
 
 namespace wasm {
@@ -446,6 +453,16 @@ bool isTemp(Type type) { return !type.isBasic() && getTypeInfo(type)->isTemp; }
 
 bool isTemp(HeapType type) {
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;
+}
+
+// Code that traverses the structure of Types often has to be agnostic to the
+// difference between Basic and BasicKind HeapTypes, so uses this helper. On the
+// other hand, canonicalization code often has to differentiate between them so
+// the BasicKind types can be replaced with the corresponding Baic types.
+// BasicKind types should never be visible via the public type API.
+bool isBasicOrBasicKind(HeapType type) {
+  return type.isBasic() ||
+         getHeapTypeInfo(type)->kind == HeapTypeInfo::BasicKind;
 }
 
 // Given a Type that may or may not be backed by the simplest possible
@@ -2118,10 +2135,10 @@ namespace {
 
 // A wrapper around a HeapType that provides equality and hashing based only on
 // its top-level shape, up to but not including its closest HeapType
-// descendants. This is the shape that determines the most fine-grained
-// initial partitions for Hopcroft's algorithm and also the shape that
-// determines the "alphabet" for transitioning to the child HeapTypes in the DFA
-// view of the type definition.
+// descendants. This is the shape that determines the most fine-grained initial
+// partitions for DFA minimization and also the shape that determines the
+// "alphabet" for transitioning to the child HeapTypes in the DFA view of the
+// type definition.
 struct ShallowHeapType {
   HeapType heapType;
 
@@ -2151,9 +2168,132 @@ public:
 namespace wasm {
 namespace {
 
-// Uses Hopcroft's DFA minimization algorithm to construct a minimal type
-// definition graph from an input graph. See
-// https://en.wikipedia.org/wiki/DFA_minimization#Hopcroft's_algorithm.
+// The Refined Partitions data structure used in Valmari-Lehtinen DFA
+// minimization. The translation from terms used in the Valmari-Lehtinen paper
+// to the more expanded terms used here is:
+//
+//   Block => Set
+//   elems => elements
+//   loc => elementIndices
+//   sidx => setIndices
+//   first => beginnings
+//   end => endings
+//   mid => pivots
+//
+struct Partitions {
+  // The number of sets.
+  size_t sets = 0;
+
+  // The partitioned elements. Elements in the same set are next to each other.
+  // Within each set, "marked" elements come first followed by "unmarked"
+  // elements.
+  std::vector<size_t> elements;
+
+  // Maps elements to their indices in `elements`.
+  std::vector<size_t> elementIndices;
+
+  // Maps elements to their sets, identified by an index.
+  std::vector<size_t> setIndices;
+
+  // Maps sets to the indices of their first elements in `elements`.
+  std::vector<size_t> beginnings;
+
+  // Maps sets to (one past) the indices of their ends in `elements`.
+  std::vector<size_t> endings;
+
+  // Maps sets to the indices of their first unmarked elements in `elements`.
+  std::vector<size_t> pivots;
+
+  Partitions() = default;
+
+  // Allocate space up front so we never need to re-allocate. The actual
+  // contents of all the vectors will need to be externally initialized,
+  // though.
+  Partitions(size_t size)
+    : elements(size), elementIndices(size), setIndices(size), beginnings(size),
+      endings(size), pivots(size) {}
+
+  struct Set {
+    using Iterator = std::vector<size_t>::iterator;
+
+    Partitions& partitions;
+    size_t index;
+
+    Set(Partitions& partitions, size_t index)
+      : partitions(partitions), index(index) {}
+
+    Iterator begin() {
+      return partitions.elements.begin() + partitions.beginnings[index];
+    }
+    Iterator end() {
+      return partitions.elements.begin() + partitions.endings[index];
+    }
+    size_t size() {
+      return partitions.endings[index] - partitions.beginnings[index];
+    }
+
+    bool hasMarks() {
+      return partitions.pivots[index] != partitions.beginnings[index];
+    }
+
+    // Split the set between marked and unmarked elements if there are both
+    // marked and unmarked elements. Unmark all elements of this set regardless.
+    // Return the index of the new partition or 0 if there was no split.
+    size_t split();
+  };
+
+  Set getSet(size_t index) { return {*this, index}; }
+
+  // Returns the set containing an element, which can be iterated upon. The set
+  // may be invalidated by calls to `mark` or `Set::split`.
+  Set getSetForElem(size_t element) { return getSet(setIndices[element]); }
+
+  void mark(size_t element) {
+    size_t index = elementIndices[element];
+    size_t set = setIndices[element];
+    size_t pivot = pivots[set];
+    if (index >= pivot) {
+      // Move the pivot element into the location of the newly marked element.
+      elements[index] = elements[pivot];
+      elementIndices[elements[index]] = index;
+      // Move the newly marked element into the pivot location.
+      elements[pivot] = element;
+      elementIndices[element] = pivot;
+      // Update the pivot index to mark the element.
+      ++pivots[set];
+    }
+  }
+};
+
+size_t Partitions::Set::split() {
+  size_t begin = partitions.beginnings[index];
+  size_t end = partitions.endings[index];
+  size_t pivot = partitions.pivots[index];
+  if (pivot == begin) {
+    // No elements marked, so there is nothing to do.
+    return 0;
+  }
+  if (pivot == end) {
+    // All elements were marked, so just unmark them.
+    partitions.pivots[index] = begin;
+    return 0;
+  }
+  // Create a new set covering the marked region.
+  size_t newIndex = partitions.sets++;
+  partitions.beginnings[newIndex] = begin;
+  partitions.pivots[newIndex] = begin;
+  partitions.endings[newIndex] = pivot;
+  for (size_t i = begin; i < pivot; ++i) {
+    partitions.setIndices[partitions.elements[i]] = newIndex;
+  }
+  // Update the old set. The end and pivot are already correct.
+  partitions.beginnings[index] = pivot;
+  return newIndex;
+}
+
+// Uses Valmari and Lehtinen's partial DFA minimization algorithm to construct a
+// minimal type definition graph from an input graph. See
+// https://arxiv.org/pdf/0802.2826.pdf.
 struct ShapeCanonicalizer {
   // The minimized HeapTypes, possibly including both new temporary HeapTypes as
   // well as globally canonical HeapTypes that were reachable from the input
@@ -2164,48 +2304,63 @@ struct ShapeCanonicalizer {
   // indices corresponding to globally canonical HeapTypes.
   std::vector<std::unique_ptr<HeapTypeInfo>> infos;
 
-  // Maps each input root HeapType to the index of its partition in
-  // `partitions`, which is also the index of its minimized version in
-  // `minimized`, and if that minimized version is not globally canonical, also
-  // the index of the minimized HeapTypeInfo in `infos`.
-  std::unordered_map<HeapType, size_t> partitionIndices;
+  // Returns the partition index for an input root HeapType. This index is also
+  // the index of its minimized version in `minimized`, and if that minimized
+  // version is not globally canonical, also the index of the minimized
+  // HeapTypeInfo in `infos`.
+  size_t getIndex(HeapType type);
 
   ShapeCanonicalizer(std::vector<HeapType>& roots);
 
 private:
-  using TypeSet = std::unordered_set<HeapType>;
+  // Maps state indices to their underlying HeapTypes and vice versa.
+  std::vector<HeapType> heapTypes;
+  std::unordered_map<HeapType, size_t> states;
 
-  // The partitioning of the input HeapTypes used by Hopcroft's algorithm.
-  std::vector<TypeSet> partitions;
+  // A DFA transition into a state.
+  struct Transition {
+    size_t pred;
+    size_t label;
+  };
 
-  // Hopcroft's algorithm needs to be able to find the predecessors of a
-  // particular state via a given symbol in the alphabet. We use simple child
-  // indices as the alphabet.
-  size_t alphabetSize = 0;
-  std::unordered_map<HeapType, std::unordered_map<size_t, TypeSet>> preds;
+  // The transitions arranged such that the transitions leading to state `q` are
+  // `transitions[transitionIndices[q] : transitionIndices[q+1]]`.
+  std::vector<Transition> transitions;
+  std::vector<size_t> transitionIndices;
 
-  void initializePredecessors(std::vector<HeapType>& roots);
-  void initializePartitions();
+  // The state partitions.
+  Partitions partitions;
+
+  // The splitters, which are partitions of the input transitions.
+  Partitions splitters;
+
+  void initialize(std::vector<HeapType>& roots);
   void translatePartitionsToTypes();
 
   // Return pointers to the non-basic HeapType children of `ht`, including
   // BasicKind children.
   std::vector<HeapType*> getChildren(HeapType ht);
-  const TypeSet& getPredsOf(HeapType type, size_t symbol);
-  TypeSet getIntersection(const TypeSet& a, const TypeSet& b);
-  TypeSet getDifference(const TypeSet& a, const TypeSet& b);
 
 #if TRACE_CANONICALIZATION
   void dumpPartitions() {
-    for (auto& partition : partitions) {
-      for (HeapType type : partition) {
-        std::cerr << type << '\n';
+    for (size_t set = 0; set < partitions.sets; ++set) {
+      std::cerr << "Partition " << set << '\n';
+      std::cerr << "begin: " << partitions.beginnings[set]
+                << ", end: " << partitions.endings[set]
+                << ", pivot: " << partitions.pivots[set] << '\n';
+      for (size_t index : partitions.getSet(set)) {
+        assert(partitions.setIndices[index] == set);
+        std::cerr << heapTypes[index] << '\n';
       }
       std::cerr << '\n';
     }
   }
 #endif
 };
+
+size_t ShapeCanonicalizer::getIndex(HeapType type) {
+  return partitions.getSetForElem(states.at(type)).index;
+}
 
 ShapeCanonicalizer::ShapeCanonicalizer(std::vector<HeapType>& roots) {
 #if TRACE_CANONICALIZATION
@@ -2216,82 +2371,76 @@ ShapeCanonicalizer::ShapeCanonicalizer(std::vector<HeapType>& roots) {
   std::cerr << '\n';
 #endif
 
-  initializePredecessors(roots);
-  initializePartitions();
+  initialize(roots);
 
 #if TRACE_CANONICALIZATION
   std::cerr << "Initial partitions:\n";
   dumpPartitions();
 #endif
 
-  // The Hopcroft's algorithm's list of partitions that may still be
-  // distinguishing partitions. Starts out containing all partitions.
-  std::set<size_t> distinguishers;
-  for (size_t i = 0; i < partitions.size(); ++i) {
-    distinguishers.insert(i);
+  // The list of splitter partitions that might be able to split states in some
+  // state partition. Starts out containing all splitter partitions.
+  std::vector<size_t> potentialSplitters;
+  potentialSplitters.reserve(splitters.sets);
+  for (size_t i = 0; i < splitters.sets; ++i) {
+    potentialSplitters.push_back(i);
   }
 
-  // Hopcroft's algorithm
-  while (distinguishers.size()) {
-    // Choose a partition that might be able to distinguish between the members
-    // of some other partition.
-    auto distinguishingIndexIt = distinguishers.begin();
-    size_t distinguishingIndex = *distinguishingIndexIt;
-    TypeSet distinguishing = partitions[distinguishingIndex];
-    distinguishers.erase(distinguishingIndexIt);
-    // For each possibly distinguishing transition symbol...
-    for (size_t symbol = 0; symbol < alphabetSize; ++symbol) {
-      // Find all types that reach one of the current distinguishing types via
-      // `symbol`.
-      TypeSet currPreds;
-      for (auto type : distinguishing) {
-        const TypeSet& specificPreds = getPredsOf(type, symbol);
-        currPreds.insert(specificPreds.begin(), specificPreds.end());
+  while (!potentialSplitters.empty()) {
+    size_t potentialSplitter = potentialSplitters.back();
+    potentialSplitters.pop_back();
+
+    // The partitions that may be able to be split.
+    std::vector<size_t> markedPartitions;
+
+    // Mark states that are predecessors via this splitter partition.
+    for (size_t transition : splitters.getSet(potentialSplitter)) {
+      size_t state = transitions[transition].pred;
+      auto partition = partitions.getSetForElem(state);
+      if (!partition.hasMarks()) {
+        markedPartitions.push_back(partition.index);
       }
-      // Find partitions that contain some elements that are predecessors of the
-      // current distinguishing partition and some elements that are not
-      // predecessors of the current distinguishing partition.
-      for (size_t distinguishedIndex = 0, end = partitions.size();
-           distinguishedIndex < end;
-           ++distinguishedIndex) {
-        TypeSet& distinguished = partitions[distinguishedIndex];
-        TypeSet intersection = getIntersection(distinguished, currPreds);
-        if (intersection.empty()) {
-          continue;
-        }
-        TypeSet difference = getDifference(distinguished, currPreds);
-        if (difference.empty()) {
-          continue;
-        }
+      partitions.mark(state);
+    }
 
-#if TRACE_CANONICALIZATION
-        std::cerr << "Partition " << distinguishingIndex
-                  << " distinguishes partition " << distinguishedIndex
-                  << " via child " << symbol << "\n";
-#endif
+    // Try to split each partition with marked states.
+    for (size_t partition : markedPartitions) {
+      size_t newPartition = partitions.getSet(partition).split();
+      if (!newPartition) {
+        // There was nothing to split.
+        continue;
+      }
 
-        // We can split the partition! Replace it with the intersection and add
-        // the difference as a new partition.
-        partitions[distinguishedIndex] = std::move(intersection);
-        size_t newPartitionIndex = partitions.size();
-        for (auto movedType : difference) {
-          partitionIndices[movedType] = newPartitionIndex;
-        }
-        partitions.emplace_back(std::move(difference));
-        // If the split partition was a potential distinguisher, both smaller
-        // partitions are as well. Otherwise, we only need to add the smaller of
-        // the two smaller partitions as a new potential distinguisher.
-        if (distinguishers.count(distinguishedIndex) ||
-            partitions[newPartitionIndex].size() <=
-              partitions[distinguishedIndex].size()) {
-          distinguishers.insert(newPartitionIndex);
-        } else {
-          distinguishers.insert(distinguishedIndex);
-        }
+      // We only want to keep using the smaller of the two split partitions.
+      if (partitions.getSet(newPartition).size() <
+          partitions.getSet(partition).size()) {
+        newPartition = partition;
+      }
 
-#if TRACE_CANONICALIZATION
-        dumpPartitions();
-#endif
+      // The splitter partitions that may need to be split to match the new
+      // split of the state partitions.
+      std::vector<size_t> markedSplitters;
+
+      // Mark transitions that lead to the newly split off states.
+      for (size_t state : partitions.getSet(newPartition)) {
+        for (size_t t = transitionIndices[state],
+                    end = transitionIndices[state + 1];
+             t < end;
+             ++t) {
+          auto splitter = splitters.getSetForElem(t);
+          if (!splitter.hasMarks()) {
+            markedSplitters.push_back(splitter.index);
+          }
+          splitters.mark(t);
+        }
+      }
+
+      // Split the splitters and update `potentialSplitters`.
+      for (size_t splitter : markedSplitters) {
+        size_t newSplitter = splitters.getSet(splitter).split();
+        if (newSplitter) {
+          potentialSplitters.push_back(newSplitter);
+        }
       }
     }
   }
@@ -2304,58 +2453,130 @@ ShapeCanonicalizer::ShapeCanonicalizer(std::vector<HeapType>& roots) {
   translatePartitionsToTypes();
 }
 
-void ShapeCanonicalizer::initializePredecessors(std::vector<HeapType>& roots) {
-  struct Walker : HeapTypeGraphWalker<Walker> {
+void ShapeCanonicalizer::initialize(std::vector<HeapType>& roots) {
+  struct Initializer : HeapTypeGraphWalker<Initializer> {
     ShapeCanonicalizer& canonicalizer;
-    Walker(ShapeCanonicalizer& canonicalizer) : canonicalizer(canonicalizer) {}
-    void noteHeapType(HeapType ht) {
-      if (ht.isBasic()) {
-        return;
+
+    // Maps shallow HeapType shapes to corresponding HeapType indices.
+    InsertOrderedMap<ShallowHeapType, std::vector<size_t>> initialPartitions;
+
+    // Maps `dest` HeapType indices to their input transitions.
+    std::map<size_t, std::vector<Transition>> transitions;
+    size_t numTransitions = 0;
+
+    Initializer(ShapeCanonicalizer& canonicalizer)
+      : canonicalizer(canonicalizer) {}
+
+    size_t getIndex(HeapType type) {
+      // Allocate an index for the HeapType if it doesn't already have one.
+      auto inserted =
+        canonicalizer.states.insert({type, canonicalizer.states.size()});
+      if (inserted.second) {
+        canonicalizer.heapTypes.push_back(type);
       }
-      // Ensure each compound HeapType gets an entry even if it has no
-      // predecessors.
-      canonicalizer.preds.insert({ht, {}});
-      size_t index = 0;
-      for (HeapType* child : canonicalizer.getChildren(ht)) {
-        // Skip children that represent basic HeapTypes.
-        if (getHeapTypeInfo(*child)->kind == HeapTypeInfo::BasicKind) {
-          continue;
+      return inserted.first->second;
+    }
+
+    void noteHeapType(HeapType type) {
+      size_t index = getIndex(type);
+
+      // Allocate an initial partition for this HeapType's shallow shape if one
+      // does not already exist, then append the HeapType to the partition.
+      initialPartitions[ShallowHeapType(type)].push_back(index);
+
+      // Traverse the non-basic children to collect graph edges, i.e.
+      // transitions in the DFA.
+      struct TransitionInitializer
+        : HeapTypeChildWalker<TransitionInitializer> {
+        Initializer& initializer;
+        size_t parent;
+        size_t label = 0;
+        TransitionInitializer(Initializer& initializer, size_t parent)
+          : initializer(initializer), parent(parent) {}
+        void noteChild(HeapType* childType) {
+          if (isBasicOrBasicKind(*childType)) {
+            return;
+          }
+          // Record the transition from parent to child.
+          size_t child = initializer.getIndex(*childType);
+          initializer.transitions[child].push_back({parent, label++});
+          ++initializer.numTransitions;
         }
-        canonicalizer.preds[*child][index++].insert(ht);
-      }
-      canonicalizer.alphabetSize = std::max(canonicalizer.alphabetSize, index);
+      };
+      TransitionInitializer(*this, index).walkRoot(&type);
     }
   };
-  Walker walker(*this);
-  for (HeapType& root : roots) {
-    walker.walkRoot(&root);
-  }
-}
 
-void ShapeCanonicalizer::initializePartitions() {
-  // Create the initial partitions based on the top-level shape of the heap
-  // types. If two heap types are differentiable without recursing into their
-  // child heap types, then they are obviously not equivalent and can be placed
-  // in different partitions. Starting with this fine-grained partition lets us
-  // use simple child indices as our transition alphabet since we will never mix
-  // up equivalent indices from different kinds of types, for example
-  // considering a struct and a signature with the same children to be the same
-  // type.
-  std::unordered_map<ShallowHeapType, size_t> initialIndices;
-  for (auto& pair : preds) {
-    HeapType type = pair.first;
-    ShallowHeapType shallow(type);
-    auto inserted = initialIndices.insert({shallow, partitions.size()});
-    if (inserted.second) {
-      // We have not seen a type with this shape before; create a new
-      // partition.
-      partitionIndices[type] = partitions.size();
-      partitions.emplace_back(TypeSet{type});
-    } else {
-      // Add to the partition we have already created for this type shape.
-      size_t index = inserted.first->second;
-      partitionIndices[type] = index;
-      partitions[index].insert(type);
+  Initializer initializer(*this);
+  for (HeapType& root : roots) {
+    initializer.walkRoot(&root);
+  }
+
+  // Now that we have initialized maps containing all the necessary data, use
+  // them to initialize the flattened vector-based data structures that we will
+  // use to efficiently run the minimization algorithm.
+
+  // Initialize `partitions`.
+  partitions = Partitions(heapTypes.size());
+  size_t elementIndex = 0;
+  for (auto pair : initializer.initialPartitions) {
+    size_t set = partitions.sets++;
+    partitions.beginnings[set] = elementIndex;
+    partitions.pivots[set] = elementIndex;
+    for (size_t elem : pair.second) {
+      partitions.elements[elementIndex] = elem;
+      partitions.elementIndices[elem] = elementIndex;
+      partitions.setIndices[elem] = set;
+      ++elementIndex;
+    }
+    partitions.endings[set] = elementIndex;
+  }
+
+  // Initialize `transitions` and `transitionIndices`.
+  transitions.reserve(initializer.numTransitions);
+  transitionIndices.resize(heapTypes.size() + 1);
+  for (size_t dest = 0; dest < heapTypes.size(); ++dest) {
+    // Record the first index of transitions leading to `dest`.
+    transitionIndices[dest] = transitions.size();
+    auto it = initializer.transitions.find(dest);
+    if (it != initializer.transitions.end()) {
+      transitions.insert(
+        transitions.end(), it->second.begin(), it->second.end());
+    }
+  }
+  // Record one-past the end of the transitions leading to the final `dest`.
+  transitionIndices[heapTypes.size()] = transitions.size();
+
+  // Initialize `splitters`. The initial sets are partitioned by destination
+  // state partition and transition label.
+  splitters = Partitions(transitions.size());
+  elementIndex = 0;
+  for (size_t statePartition = 0; statePartition < partitions.sets;
+       ++statePartition) {
+    // The in-transitions leading to states in the current partition, organized
+    // by transition label.
+    std::map<size_t, std::vector<size_t>> currTransitions;
+    for (size_t state : partitions.getSet(statePartition)) {
+      for (size_t transition = transitionIndices[state],
+                  end = transitionIndices[state + 1];
+           transition < end;
+           ++transition) {
+        currTransitions[transitions[transition].label].push_back(transition);
+      }
+    }
+    // Create a splitter partition for each in-transition label leading to the
+    // current state partition.
+    for (auto& pair : currTransitions) {
+      size_t set = splitters.sets++;
+      splitters.beginnings[set] = elementIndex;
+      splitters.pivots[set] = elementIndex;
+      for (size_t transition : pair.second) {
+        splitters.elements[elementIndex] = transition;
+        splitters.elementIndices[transition] = elementIndex;
+        splitters.setIndices[transition] = set;
+        ++elementIndex;
+      }
+      splitters.endings[set] = elementIndex;
     }
   }
 }
@@ -2374,20 +2595,22 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
   // globally canonical type, no temporary types will end up being patched into
   // the globally canonical types and we can skip patching the children of those
   // types.
-  for (auto& partition : partitions) {
-    auto it = std::find_if(partition.begin(), partition.end(), [](HeapType ht) {
-      return !isTemp(ht);
-    });
+  for (size_t p = 0; p < partitions.sets; ++p) {
+    auto partition = partitions.getSet(p);
+    auto it = std::find_if(partition.begin(),
+                           partition.end(),
+                           [this](size_t i) { return !isTemp(heapTypes[i]); });
     if (it == partition.end()) {
       // We do not already know about a globally canonical type for this
       // partition. Create a copy.
-      const auto& representative = *getHeapTypeInfo(*partition.begin());
+      const auto& representative =
+        *getHeapTypeInfo(heapTypes[*partition.begin()]);
       infos.push_back(std::make_unique<HeapTypeInfo>(representative));
       infos.back()->isTemp = true;
       results.push_back(asHeapType(infos.back()));
     } else {
       // We already have a globally canonical type for this partition.
-      results.push_back(*it);
+      results.push_back(heapTypes[*it]);
       infos.push_back({});
     }
   }
@@ -2396,14 +2619,26 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
       // No need to replace the children of globally canonical HeapTypes.
       continue;
     }
-    for (auto* child : getChildren(asHeapType(info))) {
-      auto partitionIt = partitionIndices.find(*child);
-      if (partitionIt == partitionIndices.end() || !isTemp(*child)) {
-        // This child has already been replaced or is already canonical.
-        continue;
+
+    struct ChildUpdater : HeapTypeChildWalker<ChildUpdater> {
+      ShapeCanonicalizer& canonicalizer;
+      ChildUpdater(ShapeCanonicalizer& canonicalizer)
+        : canonicalizer(canonicalizer) {}
+      void noteChild(HeapType* child) {
+        if (child->isBasic() || !isTemp(*child)) {
+          // Child doesn't need replacement.
+          return;
+        }
+        auto it = canonicalizer.states.find(*child);
+        if (it != canonicalizer.states.end()) {
+          // Child hasn't already been replaced; replace it.
+          auto set = canonicalizer.partitions.getSetForElem(it->second);
+          *child = canonicalizer.results.at(set.index);
+        }
       }
-      *child = results.at(partitionIt->second);
-    }
+    };
+    HeapType root = asHeapType(info);
+    ChildUpdater(*this).walkRoot(&root);
   }
 
 #if TRACE_CANONICALIZATION
@@ -2413,56 +2648,6 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
   }
   std::cerr << '\n';
 #endif
-}
-
-std::vector<HeapType*> ShapeCanonicalizer::getChildren(HeapType ht) {
-  struct Collector : HeapTypeChildWalker<Collector> {
-    std::vector<HeapType*> children;
-    void noteChild(HeapType* child) {
-      if (!child->isBasic()) {
-        children.push_back(child);
-      }
-    }
-  } collector;
-  collector.walkRoot(&ht);
-  return collector.children;
-}
-
-const std::unordered_set<HeapType>&
-ShapeCanonicalizer::getPredsOf(HeapType type, size_t symbol) {
-  static TypeSet empty;
-  auto predsIt = preds.find(type);
-  assert(predsIt != preds.end());
-  auto& predsOfType = predsIt->second;
-  auto specificPredsIt = predsOfType.find(symbol);
-  if (specificPredsIt == predsOfType.end()) {
-    return empty;
-  }
-  return specificPredsIt->second;
-}
-
-std::unordered_set<HeapType>
-ShapeCanonicalizer::getIntersection(const TypeSet& a, const TypeSet& b) {
-  TypeSet ret;
-  const TypeSet& smaller = a.size() < b.size() ? a : b;
-  const TypeSet& bigger = a.size() < b.size() ? b : a;
-  for (auto type : smaller) {
-    if (bigger.count(type)) {
-      ret.insert(type);
-    }
-  }
-  return ret;
-}
-
-std::unordered_set<HeapType>
-ShapeCanonicalizer::getDifference(const TypeSet& a, const TypeSet& b) {
-  TypeSet ret;
-  for (auto type : a) {
-    if (!b.count(type)) {
-      ret.insert(type);
-    }
-  }
-  return ret;
 }
 
 // Replaces temporary types and heap types in a type definition graph with their
@@ -2586,18 +2771,44 @@ std::vector<HeapType> TypeBuilder::build() {
     heapTypes.push_back(entry.get());
   }
 
+#if TIME_CANONICALIZATION
+  auto start = std::chrono::steady_clock::now();
+#endif
+
   // Canonicalize the shape of the type definition graph.
   ShapeCanonicalizer minimized(heapTypes);
+
+#if TIME_CANONICALIZATION
+  auto afterShape = std::chrono::steady_clock::now();
+#endif
 
   // The shape of the definition graph is now canonicalized, but it is still
   // comprised of temporary types and heap types. Get or create their globally
   // canonical versions.
   std::vector<HeapType> canonical = globallyCanonicalize(minimized.infos);
 
+#if TIME_CANONICALIZATION
+  auto afterGlobal = std::chrono::steady_clock::now();
+
+  std::cerr << "Starting types: " << heapTypes.size() << '\n';
+  std::cerr << "Minimized types: " << minimized.results.size() << '\n';
+
+  std::cerr << "Shape canonicalization: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                 afterShape - start)
+                 .count()
+            << " ms\n";
+  std::cerr << "Global canonicalization: "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(
+                 afterGlobal - afterShape)
+                 .count()
+            << " ms\n";
+#endif
+
   // Map the original heap types to their minimized and globally canonical
   // versions.
   for (auto& type : heapTypes) {
-    size_t index = minimized.partitionIndices.at(type);
+    size_t index = minimized.getIndex(type);
     // TODO: This is messy. Clean it up.
     if (minimized.infos.at(index)) {
       type = canonical.at(index);
