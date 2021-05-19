@@ -1,11 +1,15 @@
 ;; RUN: wasm-split %s --keep-funcs=bar -o1 %t.1.wasm -o2 %t.2.wasm --symbolmap
-;; RUN: filecheck %s --check-prefix PRIMARY < %t.1.wasm.symbolmap
-;; RUN: filecheck %s --check-prefix SECONDARY < %t.2.wasm.symbolmap
+;; RUN: filecheck %s --check-prefix PRIMARY-MAP < %t.1.wasm.symbolmap
+;; RUN: filecheck %s --check-prefix SECONDARY-MAP < %t.2.wasm.symbolmap
+;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY
 
-;; PRIMARY: 0:bar
+;; PRIMARY-MAP: 0:bar
 
-;; SECONDARY: 0:baz
-;; SECONDARY: 1:foo
+;; SECONDARY-MAP: 0:baz
+;; SECONDARY-MAP: 1:foo
+
+;; Check that the names have been stripped.
+;; PRIMARY: (func $0
 
 (module
   (func $foo
