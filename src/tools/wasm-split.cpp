@@ -20,6 +20,7 @@
 #include "ir/module-splitting.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "pass.h"
 #include "support/file.h"
 #include "support/name.h"
 #include "support/utilities.h"
