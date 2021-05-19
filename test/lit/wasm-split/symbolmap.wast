@@ -1,6 +1,6 @@
 ;; RUN: wasm-split %s --keep-funcs=bar -o1 %t.1.wasm -o2 %t.2.wasm --symbolmap
-;; RUN: filecheck %s --check-prefix PRIMARY-MAP < %t.1.wasm.symbolmap
-;; RUN: filecheck %s --check-prefix SECONDARY-MAP < %t.2.wasm.symbolmap
+;; RUN: filecheck %s --check-prefix PRIMARY-MAP < %t.1.wasm.symbols
+;; RUN: filecheck %s --check-prefix SECONDARY-MAP < %t.2.wasm.symbols
 ;; RUN: wasm-dis %t.1.wasm | filecheck %s --check-prefix PRIMARY
 
 ;; PRIMARY-MAP: 0:bar

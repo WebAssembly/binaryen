@@ -661,8 +661,8 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
   adjustTableSize(*secondary, options.initialTableSize);
 
   if (options.symbolMap) {
-    writeSymbolMap(wasm, options.primaryOutput + ".symbolmap");
-    writeSymbolMap(*secondary, options.secondaryOutput + ".symbolmap");
+    writeSymbolMap(wasm, options.primaryOutput + ".symbols");
+    writeSymbolMap(*secondary, options.secondaryOutput + ".symbols");
   }
 
   // Write the output modules
