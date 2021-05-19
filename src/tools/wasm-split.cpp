@@ -48,6 +48,7 @@ std::set<Name> parseNameList(const std::string& list) {
 struct WasmSplitOptions : ToolOptions {
   bool verbose = false;
   bool emitBinary = true;
+  bool symbolMap = false;
 
   bool instrument = false;
 
@@ -140,6 +141,12 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            secondaryOutput = argument;
          })
+    .add("--symbolmap",
+         "",
+         "Write a symbol map file for each of the output modules. Not usable "
+         "with --instrument.",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { symbolMap = true; })
     .add("--import-namespace",
          "",
          "The namespace from which to import objects from the primary "
@@ -227,6 +234,9 @@ bool WasmSplitOptions::validate() {
     }
     if (splitFuncs.size()) {
       fail("--split-funcs cannot be used with --instrument");
+    }
+    if (symbolMap) {
+      fail("--symbolmap cannot be used with --instrument");
     }
   } else {
     if (output.size()) {
@@ -552,6 +562,14 @@ std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
   return keptFuncs;
 }
 
+void writeSymbolMap(Module& wasm, std::string filename) {
+  PassOptions options;
+  options.arguments["symbolmap"] = filename;
+  PassRunner runner(&wasm, options);
+  runner.add("symbolmap");
+  runner.run();
+}
+
 void splitModule(Module& wasm, const WasmSplitOptions& options) {
   std::set<Name> keepFuncs;
 
@@ -640,6 +658,11 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
 
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize);
+
+  if (options.symbolMap) {
+    writeSymbolMap(wasm, options.primaryOutput + ".symbolmap");
+    writeSymbolMap(*secondary, options.secondaryOutput + ".symbolmap");
+  }
 
   // Write the output modules
   ModuleWriter writer;
