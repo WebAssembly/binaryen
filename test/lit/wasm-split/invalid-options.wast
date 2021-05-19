@@ -13,6 +13,10 @@
 ;; RUN: not wasm-split %s --instrument -o2 %t 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-OUT2
 
+;; --instrument cannot be used with --symbolmap
+;; RUN: not wasm-split %s --instrument --symbolmap 2>&1 \
+;; RUN:   | filecheck %s --check-prefix INSTRUMENT-SYMBOLMAP
+
 ;; --instrument cannot be used with --import-namespace
 ;; RUN: not wasm-split %s --instrument --import-namespace=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix INSTRUMENT-IMPORT-NS
@@ -46,6 +50,8 @@
 ;; INSTRUMENT-OUT1: error: primary output cannot be used with --instrument
 
 ;; INSTRUMENT-OUT2: error: secondary output cannot be used with --instrument
+
+;; INSTRUMENT-SYMBOLMAP: error: --symbolmap cannot be used with --instrument
 
 ;; INSTRUMENT-IMPORT-NS: error: --import-namespace cannot be used with --instrument
 
