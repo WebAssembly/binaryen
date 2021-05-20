@@ -101,6 +101,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // but their usage does not overlap in time, and this is more efficient.
   std::vector<std::vector<BasicBlock*>> processCatchStack;
 
+  // Variable to store the catch index within catch bodies. To be used in
+  // doStartCatch and doEndCatch.
+  Index catchIndex = 0;
+
   BasicBlock* startBasicBlock() {
     currBasicBlock = ((SubType*)this)->makeBasicBlock();
     basicBlocks.push_back(std::unique_ptr<BasicBlock>(currBasicBlock));
@@ -306,14 +310,22 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->unwindExprStack.pop_back();
   }
 
-  static void doStartCatch(SubType* self, Expression** currp, Index i) {
-    // Get the block that starts this catch
-    self->currBasicBlock = self->processCatchStack.back()[i];
+  static void incrementCatchIndex(SubType* self, Expression** currp) {
+    self->catchIndex++;
   }
 
-  static void doEndCatch(SubType* self, Expression** currp, Index i) {
+  static void resetCatchIndex(SubType* self, Expression** currp) {
+    self->catchIndex = 0;
+  }
+
+  static void doStartCatch(SubType* self, Expression** currp) {
+    // Get the block that starts this catch
+    self->currBasicBlock = self->processCatchStack.back()[self->catchIndex];
+  }
+
+  static void doEndCatch(SubType* self, Expression** currp) {
     // We are done with this catch; set the block that ends it
-    self->processCatchStack.back()[i] = self->currBasicBlock;
+    self->processCatchStack.back()[self->catchIndex] = self->currBasicBlock;
   }
 
   static void doEndTry(SubType* self, Expression** currp) {
@@ -381,19 +393,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       case Expression::Id::TryId: {
         self->pushTask(SubType::doEndTry, currp);
         auto& catchBodies = curr->cast<Try>()->catchBodies;
-        using namespace std::placeholders;
         for (Index i = 0; i < catchBodies.size(); i++) {
-          auto doEndCatchI = [i](SubType* self, Expression** currp) {
-            doEndCatch(self, currp, i);
-          };
-          self->pushTask(doEndCatchI, currp);
+          self->pushTask(incrementCatchIndex, currp);
+          self->pushTask(doEndCatch, currp);
           self->pushTask(SubType::scan, &catchBodies[i]);
-          auto doStartCatchI = [i](SubType* self, Expression** currp) {
-            doStartCatch(self, currp, i);
-          };
-          self->pushTask(doStartCatchI, currp);
+          self->pushTask(doStartCatch, currp);
         }
         self->pushTask(SubType::doStartCatches, currp);
+        self->pushTask(resetCatchIndex, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->body);
         self->pushTask(SubType::doStartTry, currp);
         return; // don't do anything else
