@@ -24,6 +24,7 @@
 // 2:baz
 //
 
+#include "ir/module-utils.h"
 #include "pass.h"
 #include "support/file.h"
 #include "wasm.h"
@@ -40,9 +41,11 @@ struct PrintFunctionMap : public Pass {
     Output output(outFile, Flags::Text);
     auto& o = output.getStream();
     Index i = 0;
-    for (auto& func : module->functions) {
+    auto write = [&](Function* func) {
       o << i++ << ':' << func->name.str << '\n';
-    }
+    };
+    ModuleUtils::iterImportedFunctions(*module, write);
+    ModuleUtils::iterDefinedFunctions(*module, write);
   }
 };
 
