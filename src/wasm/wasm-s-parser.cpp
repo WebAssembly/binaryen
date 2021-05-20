@@ -2628,6 +2628,9 @@ Index SExpressionWasmBuilder::getStructIndex(Element& type, Element& field) {
 
 Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
   auto heapType = parseHeapType(*s[1]);
+  if (!heapType.isStruct()) {
+    throw ParseException("bad struct heap type", s.line, s.col);
+  }
   auto index = getStructIndex(*s[1], *s[2]);
   auto type = heapType.getStruct().fields[index].type;
   auto ref = parseExpression(*s[3]);
@@ -2637,6 +2640,9 @@ Expression* SExpressionWasmBuilder::makeStructGet(Element& s, bool signed_) {
 
 Expression* SExpressionWasmBuilder::makeStructSet(Element& s) {
   auto heapType = parseHeapType(*s[1]);
+  if (!heapType.isStruct()) {
+    throw ParseException("bad struct heap type", s.line, s.col);
+  }
   auto index = getStructIndex(*s[1], *s[2]);
   auto ref = parseExpression(*s[3]);
   validateHeapTypeUsingChild(ref, heapType, s);
