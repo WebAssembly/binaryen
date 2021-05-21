@@ -25,27 +25,47 @@
 
 namespace wasm {
 
-struct LowerGC : public Pass {
-  // The layout of a struct in linear memory.
-  struct Layout {
-    // The total size of the struct.
-    Address size;
-    // The offsets of fields. Note that the first field's offset may not be 0,
-    // as we need room for the rtt.
-    SmallVector<Address, 4> fieldOffsets;
-  };
+namespace {
 
+// The layout of a struct in linear memory.
+struct Layout {
+  // The total size of the struct.
+  Address size;
+  // The offsets of fields. Note that the first field's offset may not be 0,
+  // as we need room for the rtt.
+  SmallVector<Address, 4> fieldOffsets;
+};
+
+using Layouts = std::unordered_map<HeapType, Layout>;
+
+struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
+  bool isFunctionParallel() override { return true; }
+
+  Layouts* layouts;
+
+  LowerGCCode* create() override { return new LowerGCCode(layouts); }
+
+  LowerGCCode(Layouts* layouts) : layouts(layouts) {}
+
+  void visitCall(Call* curr) {
+  }
+};
+
+} // anonymous namespace
+
+struct LowerGC : public Pass {
   void run(PassRunner* runner, Module* module_) override {
     module = module_;
     addMemory();
     computeStructLayouts();
+    lowerCode(runner);
   }
 
 private:
   Module* module;
 
   // Layouts of all the structs in the module
-  std::unordered_map<HeapType, Layout> layouts;
+  Layouts layouts;
 
   Address pointerSize;
 
@@ -91,6 +111,15 @@ private:
       return pointerSize;
     }
     return type.getByteSize();
+  }
+
+  void lowerCode(PassRunner* runner) {
+    PassRunner subRunner(runner);
+    subRunner.add(make_unique<LowerGCCode>(&layouts));
+    subRunner.setIsNested(true);
+    subRunner.run();
+
+    LowerGCCode(&layouts).runOnModuleCode();
   }
 };
 
