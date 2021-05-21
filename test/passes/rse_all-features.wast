@@ -441,7 +441,8 @@
       )
     )
     ;; This should NOT be dropped because the exception might not be caught by
-    ;; the inner catches, and the local.set may not run.
+    ;; the inner catches, and the local.set above us may not have run, and
+    ;; other possible code paths do not even set the local.
     (local.set $x (i32.const 1))
   )
   (func $nested-catch2
