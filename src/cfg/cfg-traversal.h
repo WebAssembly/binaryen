@@ -101,9 +101,9 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // but their usage does not overlap in time, and this is more efficient.
   std::vector<std::vector<BasicBlock*>> processCatchStack;
 
-  // Variable to store the catch index within catch bodies. To be used in
+  // Stack to store the catch indices within catch bodies. To be used in
   // doStartCatch and doEndCatch.
-  Index catchIndex = 0;
+  std::vector<Index> catchIndexStack;
 
   BasicBlock* startBasicBlock() {
     currBasicBlock = ((SubType*)this)->makeBasicBlock();
@@ -308,24 +308,23 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->processCatchStack.push_back(self->unwindCatchStack.back());
     self->unwindCatchStack.pop_back();
     self->unwindExprStack.pop_back();
+    self->catchIndexStack.push_back(0);
   }
 
   static void incrementCatchIndex(SubType* self, Expression** currp) {
-    self->catchIndex++;
-  }
-
-  static void resetCatchIndex(SubType* self, Expression** currp) {
-    self->catchIndex = 0;
+    self->catchIndexStack.back()++;
   }
 
   static void doStartCatch(SubType* self, Expression** currp) {
     // Get the block that starts this catch
-    self->currBasicBlock = self->processCatchStack.back()[self->catchIndex];
+    self->currBasicBlock =
+      self->processCatchStack.back()[self->catchIndexStack.back()];
   }
 
   static void doEndCatch(SubType* self, Expression** currp) {
     // We are done with this catch; set the block that ends it
-    self->processCatchStack.back()[self->catchIndex] = self->currBasicBlock;
+    self->processCatchStack.back()[self->catchIndexStack.back()] =
+      self->currBasicBlock;
   }
 
   static void doEndTry(SubType* self, Expression** currp) {
@@ -338,6 +337,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->link(self->tryStack.back(), self->currBasicBlock);
     self->tryStack.pop_back();
     self->processCatchStack.pop_back();
+    self->catchIndexStack.pop_back();
   }
 
   static void doEndThrow(SubType* self, Expression** currp) {
@@ -400,7 +400,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
           self->pushTask(doStartCatch, currp);
         }
         self->pushTask(SubType::doStartCatches, currp);
-        self->pushTask(resetCatchIndex, currp);
         self->pushTask(SubType::scan, &curr->cast<Try>()->body);
         self->pushTask(SubType::doStartTry, currp);
         return; // don't do anything else

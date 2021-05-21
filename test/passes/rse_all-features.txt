@@ -4,6 +4,7 @@
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_f64_=>_none (func (param i32 f64)))
  (event $e (attr 0) (param i32))
+ (event $e2 (attr 0) (param))
  (func $basic (param $x i32) (param $y f64)
   (local $a f32)
   (local $b i64)
@@ -642,6 +643,86 @@
    )
   )
   (local.set $x
+   (i32.const 1)
+  )
+ )
+ (func $nested-catch1
+  (local $x i32)
+  (try $try
+   (do
+    (throw $e
+     (i32.const 0)
+    )
+   )
+   (catch $e
+    (drop
+     (pop i32)
+    )
+   )
+   (catch $e2
+    (try $try6
+     (do
+      (throw $e
+       (i32.const 0)
+      )
+     )
+     (catch $e
+      (drop
+       (pop i32)
+      )
+     )
+     (catch $e2
+      (local.set $x
+       (i32.const 1)
+      )
+     )
+    )
+   )
+  )
+  (local.set $x
+   (i32.const 1)
+  )
+ )
+ (func $nested-catch2
+  (local $x i32)
+  (try $try
+   (do
+    (throw $e
+     (i32.const 0)
+    )
+   )
+   (catch $e
+    (drop
+     (pop i32)
+    )
+    (local.set $x
+     (i32.const 1)
+    )
+   )
+   (catch_all
+    (try $try7
+     (do
+      (throw $e
+       (i32.const 0)
+      )
+     )
+     (catch $e
+      (drop
+       (pop i32)
+      )
+      (local.set $x
+       (i32.const 1)
+      )
+     )
+     (catch_all
+      (local.set $x
+       (i32.const 1)
+      )
+     )
+    )
+   )
+  )
+  (drop
    (i32.const 1)
   )
  )
