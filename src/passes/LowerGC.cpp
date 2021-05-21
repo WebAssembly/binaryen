@@ -56,18 +56,25 @@ struct LoweringInfo {
 };
 
 // Lower GC instructions.
-struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
+struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>> {
   bool isFunctionParallel() override { return true; }
 
   LoweringInfo* loweringInfo;
+
+  using Parent = WalkerPass<PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>>;
 
   LowerGCCode* create() override { return new LowerGCCode(loweringInfo); }
 
   LowerGCCode(LoweringInfo* loweringInfo) : loweringInfo(loweringInfo) {}
 
+  void visitExpression(Expression* curr) {
+    // Update the type.
+    curr->type = lower(curr->type);
+  }
+
   void visitStructNew(StructNew* curr) {
     Builder builder(*getModule());
-    auto type = curr->rtt->type.getHeapType();
+    auto type = relevantHeapTypes[curr];
     std::vector<Expression*> list;
     auto local = builder.addVar(getFunction(), loweringInfo->pointerType);
     // Malloc space for our struct.
@@ -117,7 +124,7 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
   Expression* lower(StructSet* curr) {
     // TODO: ignore unreachable, or run dce before
     Builder builder(*getModule());
-    auto type = curr->ref->type.getHeapType();
+    auto type = relevantHeapTypes[curr];
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
     return
@@ -138,7 +145,7 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
   Expression* lower(StructGet* curr) {
     // TODO: ignore unreachable, or run dce before
     Builder builder(*getModule());
-    auto type = curr->ref->type.getHeapType();
+    auto type = relevantHeapTypes[curr];
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
     return
@@ -151,24 +158,9 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
         loweredType
       );
   }
-};
 
-// Lower GC types on all instructions. For example, this turns a local.get from
-// a reference to an i32. We must do this in a separate pass after LowerGCCode
-// as we still need the heap types to be present while we lower instructions
-// (because we use the heap types to figure out the layout of struct
-// operations).
-struct LowerGCTypes : public WalkerPass<PostWalker<LowerGCTypes, UnifiedExpressionVisitor<LowerGCTypes>>> {
-  bool isFunctionParallel() override { return true; }
-
-  LowerGCTypes* create() override { return new LowerGCTypes(); }
-
-  void visitExpression(Expression* curr) {
-    // Update the type.
-    curr->type = lower(curr->type);
-  }
-
-  void visitFunction(Function* func) {
+  void doWalkFunction(Function* func) {
+    // Lower the types on the function itself.
     std::vector<Type> params;
     for (auto t : func->sig.params) {
       params.push_back(lower(t));
@@ -181,9 +173,34 @@ struct LowerGCTypes : public WalkerPass<PostWalker<LowerGCTypes, UnifiedExpressi
     for (auto& t : func->vars) {
       t = lower(t);
     }
+
+    // Scan the function for types we will need later. We cannot do this in a
+    // single pass, as we cannot e.g. lower the rtt a struct operation receives
+    // before we process the struct (if we did, the struct would not receive the
+    // heap type, and we would not know what to lower).
+    struct Scanner : public PostWalker<Scanner> {
+      std::unordered_map<Expression*, HeapType> relevantHeapTypes;
+
+      void visitStructNew(StructNew* curr) {
+        relevantHeapTypes[curr] = curr->rtt->type.getHeapType();
+      }
+      void visitStructGet(StructGet* curr) {
+        relevantHeapTypes[curr] = curr->ref->type.getHeapType();
+      }
+      void visitStructSet(StructSet* curr) {
+        relevantHeapTypes[curr] = curr->ref->type.getHeapType();
+      }
+    } scanner;
+    scanner.walk(func->body);
+    relevantHeapTypes = std::move(scanner.relevantHeapTypes);
+
+    // Lower all the code.
+    Parent::doWalkFunction(func);
   }
 
 private:
+  std::unordered_map<Expression*, HeapType> relevantHeapTypes;
+
   Type lower(Type type) {
     return getLoweredType(type, getModule()->memory);
   }
@@ -261,12 +278,10 @@ private:
   void lowerCode(PassRunner* runner) {
     PassRunner subRunner(runner);
     subRunner.add(std::unique_ptr<LowerGCCode>(LowerGCCode(&loweringInfo).create()));
-    subRunner.add(std::make_unique<LowerGCTypes>());
     subRunner.setIsNested(true);
     subRunner.run();
 
     LowerGCCode(&loweringInfo).walkModuleCode(module);
-    LowerGCTypes().walkModuleCode(module);
   }
 };
 
