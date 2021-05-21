@@ -311,10 +311,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->catchIndexStack.push_back(0);
   }
 
-  static void incrementCatchIndex(SubType* self, Expression** currp) {
-    self->catchIndexStack.back()++;
-  }
-
   static void doStartCatch(SubType* self, Expression** currp) {
     // Get the block that starts this catch
     self->currBasicBlock =
@@ -325,6 +321,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // We are done with this catch; set the block that ends it
     self->processCatchStack.back()[self->catchIndexStack.back()] =
       self->currBasicBlock;
+    self->catchIndexStack.back()++;
   }
 
   static void doEndTry(SubType* self, Expression** currp) {
@@ -394,7 +391,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::doEndTry, currp);
         auto& catchBodies = curr->cast<Try>()->catchBodies;
         for (Index i = 0; i < catchBodies.size(); i++) {
-          self->pushTask(incrementCatchIndex, currp);
           self->pushTask(doEndCatch, currp);
           self->pushTask(SubType::scan, &catchBodies[i]);
           self->pushTask(doStartCatch, currp);
