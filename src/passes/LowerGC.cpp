@@ -56,12 +56,15 @@ struct LoweringInfo {
 };
 
 // Lower GC instructions.
-struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>> {
+struct LowerGCCode
+  : public WalkerPass<
+      PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>> {
   bool isFunctionParallel() override { return true; }
 
   LoweringInfo* loweringInfo;
 
-  using Parent = WalkerPass<PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>>;
+  using Parent =
+    WalkerPass<PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>>;
 
   LowerGCCode* create() override { return new LowerGCCode(loweringInfo); }
 
@@ -78,25 +81,20 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode, UnifiedExpression
     std::vector<Expression*> list;
     auto local = builder.addVar(getFunction(), loweringInfo->pointerType);
     // Malloc space for our struct.
-    list.push_back(
-      builder.makeLocalSet(
-        local,
-        builder.makeCall(
-          loweringInfo->malloc,
-          { builder.makeConst(int32_t(loweringInfo->layouts[type].size)) },
-          loweringInfo->pointerType
-        )
-      )
-    );
+    list.push_back(builder.makeLocalSet(
+      local,
+      builder.makeCall(
+        loweringInfo->malloc,
+        {builder.makeConst(int32_t(loweringInfo->layouts[type].size))},
+        loweringInfo->pointerType)));
     // Store the rtt.
-    list.push_back(builder.makeStore(
-      loweringInfo->pointerSize,
-      0,
-      loweringInfo->pointerSize,
-      builder.makeLocalGet(local, loweringInfo->pointerType),
-      curr->rtt,
-      loweringInfo->pointerType
-    ));
+    list.push_back(
+      builder.makeStore(loweringInfo->pointerSize,
+                        0,
+                        loweringInfo->pointerSize,
+                        builder.makeLocalGet(local, loweringInfo->pointerType),
+                        curr->rtt,
+                        loweringInfo->pointerType));
     // Store the values, by representing them as StructSets.
     auto& fields = type.getStruct().fields;
     StructSet set(getModule()->allocator);
@@ -112,14 +110,10 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode, UnifiedExpression
     }
     // Return the pointer.
     list.push_back(builder.makeLocalGet(local, loweringInfo->pointerType));
-    replaceCurrent(
-      builder.makeBlock(list)
-    );
+    replaceCurrent(builder.makeBlock(list));
   }
 
-  void visitStructSet(StructSet* curr) {
-    replaceCurrent(lower(curr));
-  }
+  void visitStructSet(StructSet* curr) { replaceCurrent(lower(curr)); }
 
   Expression* lower(StructSet* curr) {
     // TODO: ignore unreachable, or run dce before
@@ -127,20 +121,16 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode, UnifiedExpression
     auto type = relevantHeapTypes[curr];
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
-    return
-      builder.makeStore(
-        loweredType.getByteSize(),
-        loweringInfo->layouts[type].fieldOffsets[curr->index],
-        loweredType.getByteSize(),
-        curr->ref,
-        curr->value,
-        loweredType
-      );
+    return builder.makeStore(
+      loweredType.getByteSize(),
+      loweringInfo->layouts[type].fieldOffsets[curr->index],
+      loweredType.getByteSize(),
+      curr->ref,
+      curr->value,
+      loweredType);
   }
 
-  void visitStructGet(StructGet* curr) {
-    replaceCurrent(lower(curr));
-  }
+  void visitStructGet(StructGet* curr) { replaceCurrent(lower(curr)); }
 
   Expression* lower(StructGet* curr) {
     // TODO: ignore unreachable, or run dce before
@@ -148,15 +138,13 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode, UnifiedExpression
     auto type = relevantHeapTypes[curr];
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
-    return
-      builder.makeLoad(
-        loweredType.getByteSize(),
-        false, // TODO: signedness
-        loweringInfo->layouts[type].fieldOffsets[curr->index],
-        loweredType.getByteSize(),
-        curr->ref,
-        loweredType
-      );
+    return builder.makeLoad(
+      loweredType.getByteSize(),
+      false, // TODO: signedness
+      loweringInfo->layouts[type].fieldOffsets[curr->index],
+      loweredType.getByteSize(),
+      curr->ref,
+      loweredType);
   }
 
   void doWalkFunction(Function* func) {
@@ -201,9 +189,7 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode, UnifiedExpression
 private:
   std::unordered_map<Expression*, HeapType> relevantHeapTypes;
 
-  Type lower(Type type) {
-    return getLoweredType(type, getModule()->memory);
-  }
+  Type lower(Type type) { return getLoweredType(type, getModule()->memory); }
 };
 
 } // anonymous namespace
@@ -271,13 +257,15 @@ private:
     for (auto& field : fields) {
       layout.fieldOffsets.push_back(nextField);
       // TODO: packed types? for now, always use i32 for them
-      nextField = nextField + getLoweredType(field.type, module->memory).getByteSize();
+      nextField =
+        nextField + getLoweredType(field.type, module->memory).getByteSize();
     }
   }
 
   void lowerCode(PassRunner* runner) {
     PassRunner subRunner(runner);
-    subRunner.add(std::unique_ptr<LowerGCCode>(LowerGCCode(&loweringInfo).create()));
+    subRunner.add(
+      std::unique_ptr<LowerGCCode>(LowerGCCode(&loweringInfo).create()));
     subRunner.setIsNested(true);
     subRunner.run();
 
