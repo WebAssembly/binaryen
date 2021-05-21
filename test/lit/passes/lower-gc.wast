@@ -11,6 +11,38 @@
  (type $struct-ref (struct (field (mut (ref $empty)))))
  (type $struct-rtt (struct (field (mut (rtt $empty)))))
 
+ ;; CHECK:      (func $loads (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load offset=4
+ ;; CHECK-NEXT:    (local.get $ref-i32)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i64.load offset=4
+ ;; CHECK-NEXT:    (local.get $ref-i64)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (f32.load offset=4
+ ;; CHECK-NEXT:    (local.get $ref-f32)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (f64.load offset=4
+ ;; CHECK-NEXT:    (local.get $ref-f64)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load offset=4
+ ;; CHECK-NEXT:    (local.get $ref-ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load offset=4
+ ;; CHECK-NEXT:    (local.get $ref-rtt)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $loads
   (param $ref-i32 (ref $struct-i32))
   (param $ref-i64 (ref $struct-i64))

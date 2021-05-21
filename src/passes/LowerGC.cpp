@@ -46,6 +46,7 @@ struct Layout {
 
 using Layouts = std::unordered_map<HeapType, Layout>;
 
+// Lower GC instructions.
 struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
   bool isFunctionParallel() override { return true; }
 
@@ -89,6 +90,42 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
         loweredType
       )
     );
+  }
+};
+
+// Lower GC types on all instructions. For example, this turns a local.get from
+// a reference to an i32. We must do this in a separate pass after LowerGCCode
+// as we still need the heap types to be present while we lower instructions
+// (because we use the heap types to figure out the layout of struct
+// operations).
+struct LowerGCTypes : public WalkerPass<PostWalker<LowerGCTypes, UnifiedExpressionVisitor<LowerGCTypes>>> {
+  bool isFunctionParallel() override { return true; }
+
+  LowerGCTypes* create() override { return new LowerGCTypes(); }
+
+  void visitExpression(Expression* curr) {
+    // Update the type.
+    curr->type = lower(curr->type);
+  }
+
+  void visitFunction(Function* func) {
+    std::vector<Type> params;
+    for (auto t : func->sig.params) {
+      params.push_back(lower(t));
+    }
+    std::vector<Type> results;
+    for (auto t : func->sig.results) {
+      results.push_back(lower(t));
+    }
+    func->sig = Signature(Type(params), Type(results));
+    for (auto& t : func->vars) {
+      t = lower(t);
+    }
+  }
+
+private:
+  Type lower(Type type) {
+    return getLoweredType(type, getModule()->memory);
   }
 };
 
@@ -148,10 +185,12 @@ private:
   void lowerCode(PassRunner* runner) {
     PassRunner subRunner(runner);
     subRunner.add(std::unique_ptr<LowerGCCode>(LowerGCCode(&layouts).create()));
+    subRunner.add(std::make_unique<LowerGCTypes>());
     subRunner.setIsNested(true);
     subRunner.run();
 
     LowerGCCode(&layouts).walkModuleCode(module);
+    LowerGCTypes().walkModuleCode(module);
   }
 };
 
