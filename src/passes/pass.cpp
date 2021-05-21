@@ -171,6 +171,9 @@ void PassRegistry::registerPasses() {
   registerPass("log-execution",
                "instrument the build with logging of where execution goes",
                createLogExecutionPass);
+  registerPass("lower-gc",
+               "lower wasm GC to wasm MVP using linear memory",
+               createLowerGCPass);
   registerPass("i64-to-i32-lowering",
                "lower all uses of i64s to use i32s instead",
                createI64ToI32LoweringPass);
