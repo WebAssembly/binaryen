@@ -137,6 +137,9 @@ void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   WasmBinaryWriter writer(&wasm, buffer);
   // if debug info is used, then we want to emit the names section
   writer.setNamesSection(debugInfo);
+  if (emitModuleName) {
+    writer.setEmitModuleName(true);
+  }
   std::unique_ptr<std::ofstream> sourceMapStream;
   if (sourceMapFilename.size()) {
     sourceMapStream = make_unique<std::ofstream>();

@@ -60,7 +60,7 @@ void WasmBinaryWriter::write() {
   writeDataCount();
   writeFunctions();
   writeDataSegments();
-  if (debugInfo) {
+  if (debugInfo || emitModuleName) {
     writeNames();
   }
   if (sourceMap && !sourceMapUrl.empty()) {
@@ -661,11 +661,17 @@ void WasmBinaryWriter::writeNames() {
   writeInlineString(BinaryConsts::UserSections::Name);
 
   // module name
-  if (wasm->name.is()) {
+  if (emitModuleName && wasm->name.is()) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameModule);
     writeEscapedName(wasm->name.str);
     finishSubsection(substart);
+  }
+
+  if (!debugInfo) {
+    // We were only writing the module name.
+    finishSection(start);
+    return;
   }
 
   // function names

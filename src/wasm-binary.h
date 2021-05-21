@@ -1170,7 +1170,11 @@ public:
     std::vector<Entry> functionBodies;
   } tableOfContents;
 
-  void setNamesSection(bool set) { debugInfo = set; }
+  void setNamesSection(bool set) {
+    debugInfo = set;
+    emitModuleName = set;
+  }
+  void setEmitModuleName(bool set) { emitModuleName = set; }
   void setSourceMap(std::ostream* set, std::string url) {
     sourceMap = set;
     sourceMapUrl = url;
@@ -1265,6 +1269,8 @@ private:
   std::vector<HeapType> types;
 
   bool debugInfo = true;
+  bool emitModuleName = true;
+
   std::ostream* sourceMap = nullptr;
   std::string sourceMapUrl;
   std::string symbolMap;
