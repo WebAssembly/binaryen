@@ -8,7 +8,7 @@
  (type $struct-i64 (struct (mut i64)))
  (type $struct-f32 (struct (field (mut f32))))
  (type $struct-f64 (struct (field (mut f64))))
- (type $struct-ref (struct (field (mut (ref $empty)))))
+ (type $struct-ref (struct (field (mut (ref null $empty)))))
  (type $struct-rtt (struct (field (mut (rtt $empty)))))
 
  ;; CHECK:      (func $loads (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
@@ -68,5 +68,19 @@
   (drop
    (struct.get $struct-rtt 0 (local.get $ref-rtt))
   )
+ )
+ (func $stores
+  (param $ref-i32 (ref $struct-i32))
+  (param $ref-i64 (ref $struct-i64))
+  (param $ref-f32 (ref $struct-f32))
+  (param $ref-f64 (ref $struct-f64))
+  (param $ref-ref (ref $struct-ref))
+  (param $ref-rtt (ref $struct-rtt))
+  (struct.set $struct-i32 0 (local.get $ref-i32) (i32.const 0))
+  (struct.set $struct-i64 0 (local.get $ref-i64) (i64.const 0))
+  (struct.set $struct-f32 0 (local.get $ref-f32) (f32.const 0))
+  (struct.set $struct-f64 0 (local.get $ref-f64) (f64.const 0))
+  (struct.set $struct-ref 0 (local.get $ref-ref) (ref.null $empty))
+  (struct.set $struct-rtt 0 (local.get $ref-rtt) (rtt.canon $empty))
  )
 )
