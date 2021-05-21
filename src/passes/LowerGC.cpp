@@ -72,6 +72,24 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
       )
     );
   }
+
+  void visitStructGet(StructGet* curr) {
+    // TODO: ignore unreachable, or run dce before
+    Builder builder(*getModule());
+    auto type = curr->ref->type.getHeapType();
+    auto& field = type.getStruct().fields[curr->index];
+    auto loweredType = getLoweredType(field.type, getModule()->memory);
+    replaceCurrent(
+      builder.makeLoad(
+        loweredType.getByteSize(),
+        false, // TODO: signedness
+        (*layouts)[type].fieldOffsets[curr->index],
+        loweredType.getByteSize(),
+        curr->ref,
+        loweredType
+      )
+    );
+  }
 };
 
 } // anonymous namespace
