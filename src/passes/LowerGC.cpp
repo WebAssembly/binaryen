@@ -46,50 +46,109 @@ struct Layout {
 
 using Layouts = std::unordered_map<HeapType, Layout>;
 
+struct LoweringInfo {
+  Layouts layouts;
+
+  Name malloc;
+
+  Address pointerSize;
+  Type pointerType;
+};
+
 // Lower GC instructions.
 struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
   bool isFunctionParallel() override { return true; }
 
-  Layouts* layouts;
+  LoweringInfo* loweringInfo;
 
-  LowerGCCode* create() override { return new LowerGCCode(layouts); }
+  LowerGCCode* create() override { return new LowerGCCode(loweringInfo); }
 
-  LowerGCCode(Layouts* layouts) : layouts(layouts) {}
+  LowerGCCode(LoweringInfo* loweringInfo) : loweringInfo(loweringInfo) {}
+
+  void visitStructNew(StructSet* curr) {
+    Builder builder(*getModule());
+    auto type = curr->ref->type.getHeapType();
+    std::vector<Expression*> list;
+    auto local = builder.addVar(getFunction(), loweringInfo->pointerType);
+    // Malloc space for our struct.
+    list.push_back(
+      builder.makeLocalSet(
+        local
+        builder.makeCall(
+          loweringInfo->malloc,
+          builder.makeConst(int32_t(loweringInfo->structLayouts[type].size))
+        )
+      )
+    );
+    // Store the rtt.
+    list.push_back(builder.makeStore(
+      loweringInfo->pointerSize,
+      0,
+      loweringInfo->pointerSize,
+      builder.makeLocalGet(local, loweringInfo->pointerType),
+      curr->rtt,
+      loweredType
+    ));
+    // Store the values, by representing them as StructSets.
+    auto& fields = type.getStruct().fields;
+    StructSet set;
+    set.ref = builder.makeLocalGet(local, loweringInfo->pointerType);
+    for (Index i = 0; i < fields.size(); i++) {
+      set.index = i;
+      if (curr->isWithDefault()) {
+        set.value = builder.makeConst(LiteralUtils::makeZero(fields[i].type));
+      } else {
+        set.value = curr->operands[o];
+      }
+      list.push_back(lower(&set));
+    }
+    // Return the pointer.
+    list.push_back(builder.makeLocalGet(local, loweringInfo->pointerType));
+    replaceCurrent(
+      builder.makeBlock(list)
+    );
+  }
 
   void visitStructSet(StructSet* curr) {
+    replaceCurrent(lower(curr));
+  }
+
+  Expression* lower(StructSet* curr) {
     // TODO: ignore unreachable, or run dce before
     Builder builder(*getModule());
     auto type = curr->ref->type.getHeapType();
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
-    replaceCurrent(
+    return
       builder.makeStore(
         loweredType.getByteSize(),
-        (*layouts)[type].fieldOffsets[curr->index],
+        loweringInfo->layouts[type].fieldOffsets[curr->index],
         loweredType.getByteSize(),
         curr->ref,
         curr->value,
         loweredType
-      )
-    );
+      );
   }
 
   void visitStructGet(StructGet* curr) {
+    replaceCurrent(lower(curr));
+  }
+
+  Expression* lower(StructGet* curr) {
     // TODO: ignore unreachable, or run dce before
     Builder builder(*getModule());
     auto type = curr->ref->type.getHeapType();
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
-    replaceCurrent(
+    return
       builder.makeLoad(
         loweredType.getByteSize(),
         false, // TODO: signedness
-        (*layouts)[type].fieldOffsets[curr->index],
+        loweringInfo->layouts[type].fieldOffsets[curr->index],
         loweredType.getByteSize(),
         curr->ref,
         loweredType
-      )
-    );
+      );
   }
 };
 
@@ -135,6 +194,7 @@ struct LowerGC : public Pass {
   void run(PassRunner* runner, Module* module_) override {
     module = module_;
     addMemory();
+    addRuntime();
     computeStructLayouts();
     lowerCode(runner);
   }
@@ -142,10 +202,7 @@ struct LowerGC : public Pass {
 private:
   Module* module;
 
-  // Layouts of all the structs in the module
-  Layouts layouts;
-
-  Address pointerSize;
+  LoweringInfo loweringInfo;
 
   void addMemory() {
     module->memory.exists = true;
@@ -154,7 +211,25 @@ private:
     module->memory.initial = module->memory.max = 256;
 
     assert(!module->memory.is64());
-    pointerSize = 4;
+    loweringInfo->pointerSize = 4;
+    loweringInfo->pointerType = module->memory->indexType;
+  }
+
+  void addRuntime() {
+    Builder builder(*getModule());
+    loweringInfo->malloc = "malloc";
+    /*
+    auto* malloc = module->addFunction(builder.makeFunction(
+      "malloc", { Type::i32, Type::i32 }, {},
+      builder.makeSequence(
+        builder.makeGlobalSet(
+        builder.makeBinary(
+        ),
+        builder.makeBinary(
+        ),
+      )
+      ));
+    */
   }
 
   void computeStructLayouts() {
@@ -165,7 +240,7 @@ private:
     ModuleUtils::collectHeapTypes(*module, types, typeIndices);
     for (auto type : types) {
       if (type.isStruct()) {
-        computeLayout(type, layouts[type]);
+        computeLayout(type, loweringInfo.layouts[type]);
       }
     }
   }
@@ -173,7 +248,7 @@ private:
   void computeLayout(HeapType type, Layout& layout) {
     // A pointer to the RTT takes up the first bytes in the struct, so fields
     // start afterwards.
-    Address nextField = pointerSize;
+    Address nextField = loweringInfo->pointerSize;
     auto& fields = type.getStruct().fields;
     for (auto& field : fields) {
       layout.fieldOffsets.push_back(nextField);
@@ -184,12 +259,12 @@ private:
 
   void lowerCode(PassRunner* runner) {
     PassRunner subRunner(runner);
-    subRunner.add(std::unique_ptr<LowerGCCode>(LowerGCCode(&layouts).create()));
+    subRunner.add(std::unique_ptr<LowerGCCode>(LowerGCCode(&loweringInfo).create()));
     subRunner.add(std::make_unique<LowerGCTypes>());
     subRunner.setIsNested(true);
     subRunner.run();
 
-    LowerGCCode(&layouts).walkModuleCode(module);
+    LowerGCCode(&loweringInfo).walkModuleCode(module);
     LowerGCTypes().walkModuleCode(module);
   }
 };
