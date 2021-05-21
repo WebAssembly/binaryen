@@ -27,6 +27,14 @@ namespace wasm {
 
 namespace {
 
+Type getLoweredType(Type type, Memory& memory) {
+  // References and Rtts are pointers.
+  if (type.isRef() || type.isRtt()) {
+    return memory.indexType;
+  }
+  return type;
+}
+
 // The layout of a struct in linear memory.
 struct Layout {
   // The total size of the struct.
@@ -47,7 +55,22 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
 
   LowerGCCode(Layouts* layouts) : layouts(layouts) {}
 
-  void visitCall(Call* curr) {
+  void visitStructSet(StructSet* curr) {
+    // TODO: ignore unreachable, or run dce before
+    Builder builder(*getModule());
+    auto type = curr->ref->type.getHeapType();
+    auto& field = type.getStruct().fields[curr->index];
+    auto loweredType = getLoweredType(field.type, getModule()->memory);
+    replaceCurrent(
+      builder.makeStore(
+        loweredType.getByteSize(),
+        (*layouts)[type].fieldOffsets[curr->index],
+        loweredType.getByteSize(),
+        curr->ref,
+        curr->value,
+        loweredType
+      )
+    );
   }
 };
 
@@ -99,27 +122,18 @@ private:
     auto& fields = type.getStruct().fields;
     for (auto& field : fields) {
       layout.fieldOffsets.push_back(nextField);
-      nextField = nextField + getLoweredByteSize(field.type);
+      // TODO: packed types? for now, always use i32 for them
+      nextField = nextField + getLoweredType(field.type, module->memory).getByteSize();
     }
-  }
-
-  // Get the size of a type after lowering it.
-  // TODO: packed types? for now, always use i32 for them
-  Address getLoweredByteSize(Type type) {
-    // References and Rtts are pointers.
-    if (type.isRef() || type.isRtt()) {
-      return pointerSize;
-    }
-    return type.getByteSize();
   }
 
   void lowerCode(PassRunner* runner) {
     PassRunner subRunner(runner);
-    subRunner.add(make_unique<LowerGCCode>(&layouts));
+    subRunner.add(std::unique_ptr<LowerGCCode>(LowerGCCode(&layouts).create()));
     subRunner.setIsNested(true);
     subRunner.run();
 
-    LowerGCCode(&layouts).runOnModuleCode();
+    LowerGCCode(&layouts).walkModuleCode(module);
   }
 };
 
