@@ -288,6 +288,7 @@
   )
 
   (event $e (attr 0) (param i32))
+  (event $e2 (attr 0))
   (func $try1
     (local $x i32)
     (try
@@ -414,6 +415,63 @@
     )
     ;; Unlike nested-try2, the exception may not be caught by the inner catch,
     ;; so the local.set may not run. So this should NOT be dropped.
+    (local.set $x (i32.const 1))
+  )
+  (func $nested-catch1
+    (local $x i32)
+    (try
+      (do
+        (throw $e (i32.const 0))
+      )
+      (catch $e
+        (drop (pop i32))
+      )
+      (catch $e2
+        (try
+          (do
+            (throw $e (i32.const 0))
+          )
+          (catch $e
+            (drop (pop i32))
+          )
+          (catch $e2
+            (local.set $x (i32.const 1))
+          )
+        )
+      )
+    )
+    ;; This should NOT be dropped because the exception might not be caught by
+    ;; the inner catches, and the local.set above us may not have run, and
+    ;; other possible code paths do not even set the local.
+    (local.set $x (i32.const 1))
+  )
+  (func $nested-catch2
+    (local $x i32)
+    (try
+      (do
+        (throw $e (i32.const 0))
+      )
+      (catch $e
+        (drop (pop i32))
+        (local.set $x (i32.const 1))
+      )
+      (catch_all
+        (try
+          (do
+            (throw $e (i32.const 0))
+          )
+          (catch $e
+            (drop (pop i32))
+            (local.set $x (i32.const 1))
+          )
+          (catch_all
+            (local.set $x (i32.const 1))
+          )
+        )
+      )
+    )
+    ;; This should be dropped because the exception is guaranteed to be caught
+    ;; by one of the catches and it will set the local to 1.
     (local.set $x (i32.const 1))
   )
 )

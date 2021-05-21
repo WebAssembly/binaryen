@@ -282,7 +282,7 @@ struct Walker : public VisitorType {
   // nested.
 
   // Tasks receive the this pointer and a pointer to the pointer to operate on
-  using TaskFunc = std::function<void(SubType*, Expression**)>;
+  typedef void (*TaskFunc)(SubType*, Expression**);
 
   struct Task {
     TaskFunc func;
