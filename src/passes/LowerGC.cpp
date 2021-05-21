@@ -65,18 +65,19 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
 
   LowerGCCode(LoweringInfo* loweringInfo) : loweringInfo(loweringInfo) {}
 
-  void visitStructNew(StructSet* curr) {
+  void visitStructNew(StructNew* curr) {
     Builder builder(*getModule());
-    auto type = curr->ref->type.getHeapType();
+    auto type = curr->rtt->type.getHeapType();
     std::vector<Expression*> list;
     auto local = builder.addVar(getFunction(), loweringInfo->pointerType);
     // Malloc space for our struct.
     list.push_back(
       builder.makeLocalSet(
-        local
+        local,
         builder.makeCall(
           loweringInfo->malloc,
-          builder.makeConst(int32_t(loweringInfo->structLayouts[type].size))
+          { builder.makeConst(int32_t(loweringInfo->layouts[type].size)) },
+          loweringInfo->pointerType
         )
       )
     );
@@ -87,18 +88,18 @@ struct LowerGCCode : public WalkerPass<PostWalker<LowerGCCode>> {
       loweringInfo->pointerSize,
       builder.makeLocalGet(local, loweringInfo->pointerType),
       curr->rtt,
-      loweredType
+      loweringInfo->pointerType
     ));
     // Store the values, by representing them as StructSets.
     auto& fields = type.getStruct().fields;
-    StructSet set;
+    StructSet set(getModule()->allocator);
     set.ref = builder.makeLocalGet(local, loweringInfo->pointerType);
     for (Index i = 0; i < fields.size(); i++) {
       set.index = i;
       if (curr->isWithDefault()) {
-        set.value = builder.makeConst(LiteralUtils::makeZero(fields[i].type));
+        set.value = LiteralUtils::makeZero(fields[i].type, *getModule());
       } else {
-        set.value = curr->operands[o];
+        set.value = curr->operands[i];
       }
       list.push_back(lower(&set));
     }
@@ -211,13 +212,13 @@ private:
     module->memory.initial = module->memory.max = 256;
 
     assert(!module->memory.is64());
-    loweringInfo->pointerSize = 4;
-    loweringInfo->pointerType = module->memory->indexType;
+    loweringInfo.pointerSize = 4;
+    loweringInfo.pointerType = module->memory.indexType;
   }
 
   void addRuntime() {
-    Builder builder(*getModule());
-    loweringInfo->malloc = "malloc";
+    Builder builder(*module);
+    loweringInfo.malloc = "malloc";
     /*
     auto* malloc = module->addFunction(builder.makeFunction(
       "malloc", { Type::i32, Type::i32 }, {},
@@ -248,7 +249,7 @@ private:
   void computeLayout(HeapType type, Layout& layout) {
     // A pointer to the RTT takes up the first bytes in the struct, so fields
     // start afterwards.
-    Address nextField = loweringInfo->pointerSize;
+    Address nextField = loweringInfo.pointerSize;
     auto& fields = type.getStruct().fields;
     for (auto& field : fields) {
       layout.fieldOffsets.push_back(nextField);
