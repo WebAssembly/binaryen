@@ -69,6 +69,32 @@
    (struct.get $struct-rtt 0 (local.get $ref-rtt))
   )
  )
+ ;; CHECK:      (func $stores (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
+ ;; CHECK-NEXT:  (i32.store offset=4
+ ;; CHECK-NEXT:   (local.get $ref-i32)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i64.store offset=4
+ ;; CHECK-NEXT:   (local.get $ref-i64)
+ ;; CHECK-NEXT:   (i64.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.store offset=4
+ ;; CHECK-NEXT:   (local.get $ref-f32)
+ ;; CHECK-NEXT:   (f32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f64.store offset=4
+ ;; CHECK-NEXT:   (local.get $ref-f64)
+ ;; CHECK-NEXT:   (f64.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=4
+ ;; CHECK-NEXT:   (local.get $ref-ref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=4
+ ;; CHECK-NEXT:   (local.get $ref-rtt)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $stores
   (param $ref-i32 (ref $struct-i32))
   (param $ref-i64 (ref $struct-i64))

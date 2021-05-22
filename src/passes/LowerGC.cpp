@@ -125,7 +125,6 @@ struct LowerGCCode
     auto type = relevantHeapTypes[curr];
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
-std::cout << "maek store " << *curr->ref << " : " << *curr->value << " : " << loweredType << '\n';
     return builder.makeStore(
       loweredType.getByteSize(),
       loweringInfo->layouts[type].fieldOffsets[curr->index],
@@ -150,6 +149,11 @@ std::cout << "maek store " << *curr->ref << " : " << *curr->value << " : " << lo
       loweredType.getByteSize(),
       curr->ref,
       loweredType);
+  }
+
+  void visitRttCanon(RttCanon* curr) {
+    // FIXME actual rtt allocations and values
+    replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
   }
 
   void doWalkFunction(Function* func) {
