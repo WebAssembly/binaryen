@@ -75,6 +75,10 @@ struct LowerGCCode
     curr->type = lower(curr->type);
   }
 
+  void visitRefNull(RefNull* curr) {
+    replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
+  }
+
   void visitStructNew(StructNew* curr) {
     Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
@@ -121,6 +125,7 @@ struct LowerGCCode
     auto type = relevantHeapTypes[curr];
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
+std::cout << "maek store " << *curr->ref << " : " << *curr->value << " : " << loweredType << '\n';
     return builder.makeStore(
       loweredType.getByteSize(),
       loweringInfo->layouts[type].fieldOffsets[curr->index],
@@ -197,9 +202,13 @@ private:
 struct LowerGC : public Pass {
   void run(PassRunner* runner, Module* module_) override {
     module = module_;
+    std::cout << "add mem\n";
     addMemory();
+    std::cout << "add run\n";
     addRuntime();
+    std::cout << "comp layouts\n";
     computeStructLayouts();
+    std::cout << "lower code\n";
     lowerCode(runner);
   }
 
