@@ -11,6 +11,8 @@
  (type $struct-ref (struct (field (mut (ref null $empty)))))
  (type $struct-rtt (struct (field (mut (rtt $empty)))))
 
+ (type $many-fields (struct (field (mut i32)) (field (mut f64)) (field (mut f32))))
+
  ;; CHECK:      (func $loads (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.load offset=4
@@ -108,5 +110,25 @@
   (struct.set $struct-f64 0 (local.get $ref-f64) (f64.const 0))
   (struct.set $struct-ref 0 (local.get $ref-ref) (ref.null $empty))
   (struct.set $struct-rtt 0 (local.get $ref-rtt) (rtt.canon $empty))
+ )
+ ;; CHECK:      (func $many-fields (param $ref i32)
+ ;; CHECK-NEXT:  (i32.store offset=4
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f64.store offset=8
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (f64.const 3.14159)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f32.store offset=16
+ ;; CHECK-NEXT:   (local.get $ref)
+ ;; CHECK-NEXT:   (f32.const 2.718280076980591)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $many-fields
+  (param $ref (ref $many-fields))
+  (struct.set $struct-i32 0 (local.get $ref) (i32.const 1))
+  (struct.set $struct-i32 1 (local.get $ref) (f64.const 3.14159))
+  (struct.set $struct-i32 2 (local.get $ref) (f32.const 2.71828))
  )
 )
