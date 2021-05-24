@@ -71,7 +71,8 @@ struct LowerGCCode
   LowerGCCode(LoweringInfo* loweringInfo) : loweringInfo(loweringInfo) {}
 
   void visitExpression(Expression* curr) {
-    // Update the type.
+    // Update the type. This helps things like local.get, control flow
+    // structures, etc.
     curr->type = lower(curr->type);
   }
 
@@ -110,7 +111,7 @@ struct LowerGCCode
       } else {
         set.value = curr->operands[i];
       }
-      list.push_back(lower(&set));
+      list.push_back(lower(&set, type));
     }
     // Return the pointer.
     list.push_back(builder.makeLocalGet(local, loweringInfo->pointerType));
@@ -119,10 +120,15 @@ struct LowerGCCode
 
   void visitStructSet(StructSet* curr) { replaceCurrent(lower(curr)); }
 
-  Expression* lower(StructSet* curr) {
+  // Lower a StructSet. If a type is given, then we use that, otherwise we will
+  // look up the type using relevantHeapTypes (which were computed by first
+  // scanning all the code).
+  Expression* lower(StructSet* curr, HeapType type=HeapType::any) {
     // TODO: ignore unreachable, or run dce before
     Builder builder(*getModule());
-    auto type = relevantHeapTypes[curr];
+    if (type == HeapType::any) {
+      type = relevantHeapTypes[curr];
+    }
     auto& field = type.getStruct().fields[curr->index];
     auto loweredType = getLoweredType(field.type, getModule()->memory);
     return builder.makeStore(
@@ -234,19 +240,29 @@ private:
 
   void addRuntime() {
     Builder builder(*module);
+    auto* nextMalloc = module->addGlobal(builder.makeGlobal("nextMalloc", Type::i32,
+        builder.makeConst(int32_t(0)),
+        Builder::Mutable));
     loweringInfo.malloc = "malloc";
-    /*
-    auto* malloc = module->addFunction(builder.makeFunction(
+    // TODO: more than a simple bump allocator that never frees or collects.
+    module->addFunction(builder.makeFunction(
       "malloc", { Type::i32, Type::i32 }, {},
       builder.makeSequence(
         builder.makeGlobalSet(
-        builder.makeBinary(
+          nextMalloc->name,
+          builder.makeBinary(
+            AddInt32,
+            builder.makeGlobalGet(nextMalloc->name, Type::i32),
+            builder.makeLocalGet(0, Type::i32)
+          )
         ),
         builder.makeBinary(
-        ),
+          SubInt32,
+          builder.makeGlobalGet(nextMalloc->name, Type::i32),
+          builder.makeLocalGet(0, Type::i32)
+        )
       )
-      ));
-    */
+    ));
   }
 
   void computeStructLayouts() {
@@ -273,6 +289,7 @@ private:
       nextField =
         nextField + getLoweredType(field.type, module->memory).getByteSize();
     }
+    layout.size = nextField;
   }
 
   void lowerCode(PassRunner* runner) {

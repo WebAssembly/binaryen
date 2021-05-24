@@ -131,4 +131,32 @@
   (struct.set $struct-i32 1 (local.get $ref) (f64.const 3.14159))
   (struct.set $struct-i32 2 (local.get $ref) (f32.const 2.71828))
  )
+ ;; CHECK:      (func $new
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (call $malloc
+ ;; CHECK-NEXT:      (i32.const 8)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.store
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.store offset=4
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $new
+  (drop
+   (struct.new_with_rtt $struct-i32
+    (rtt.canon $struct-i32)
+   )
+  )
+ )
 )
