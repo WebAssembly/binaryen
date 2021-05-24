@@ -146,7 +146,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.store offset=4
  ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:     (i32.const 42)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
@@ -155,6 +155,7 @@
  (func $new
   (drop
    (struct.new_with_rtt $struct-i32
+    (i32.const 42)
     (rtt.canon $struct-i32)
    )
   )
