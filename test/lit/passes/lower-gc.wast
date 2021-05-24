@@ -127,9 +127,9 @@
  ;; CHECK-NEXT: )
  (func $many-fields
   (param $ref (ref $many-fields))
-  (struct.set $struct-i32 0 (local.get $ref) (i32.const 1))
-  (struct.set $struct-i32 1 (local.get $ref) (f64.const 3.14159))
-  (struct.set $struct-i32 2 (local.get $ref) (f32.const 2.71828))
+  (struct.set $many-fields 0 (local.get $ref) (i32.const 1))
+  (struct.set $many-fields 1 (local.get $ref) (f64.const 3.14159))
+  (struct.set $many-fields 2 (local.get $ref) (f32.const 2.71828))
  )
  ;; CHECK:      (func $new
  ;; CHECK-NEXT:  (local $0 i32)
@@ -156,6 +156,42 @@
   (drop
    (struct.new_with_rtt $struct-i32
     (rtt.canon $struct-i32)
+   )
+  )
+ )
+ ;; CHECK:      (func $new-default
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (call $malloc
+ ;; CHECK-NEXT:      (i32.const 20)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.store
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.store offset=4
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (f64.store offset=8
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (f64.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (f32.store offset=16
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (f32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $new-default
+  (drop
+   (struct.new_default_with_rtt $many-fields
+    (rtt.canon $many-fields)
    )
   )
  )
