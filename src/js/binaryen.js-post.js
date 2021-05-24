@@ -82,6 +82,7 @@ function initializeConstants() {
     'SIMDTernary',
     'SIMDShift',
     'SIMDLoad',
+    'SIMDLoadStoreLane',
     'MemoryInit',
     'DataDrop',
     'MemoryCopy',
@@ -2998,6 +2999,17 @@ Module['getExpressionInfo'] = function(expr) {
         'align': Module['_BinaryenSIMDLoadGetAlign'](expr),
         'ptr': Module['_BinaryenSIMDLoadGetPtr'](expr)
       };
+    case Module['SIMDLoadStoreLaneId']:
+      return {
+        'id': id,
+        'type': type,
+        'op': Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr),
+        'offset': Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expr),
+        'align': Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expr),
+        'index': Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expr),
+        'ptr': Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expr),
+        'vec': Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr)
+      };
     case Module['MemoryInitId']:
       return {
         'id': id,
@@ -4240,6 +4252,48 @@ Module['SIMDLoad'] = makeExpressionWrapper({
   },
   'setPtr'(expr, ptrExpr) {
     Module['_BinaryenSIMDLoadSetPtr'](expr, ptrExpr);
+  }
+});
+
+Module['SIMDLoadStoreLane'] = makeExpressionWrapper({
+  'getOp'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenSIMDLoadStoreLaneSetOp'](expr, op);
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenSIMDLoadStoreLaneSetOffset'](expr, offset);
+  },
+  'getAlign'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expr);
+  },
+  'setAlign'(expr, align) {
+    Module['_BinaryenSIMDLoadStoreLaneSetAlign'](expr, align);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expr);
+  },
+  'setIndex'(expr, align) {
+    Module['_BinaryenSIMDLoadStoreLaneSetIndex'](expr, align);
+  },
+  'getPtr'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expr);
+  },
+  'setPtr'(expr, ptrExpr) {
+    Module['_BinaryenSIMDLoadStoreLaneSetPtr'](expr, ptrExpr);
+  },
+  'getVec'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr);
+  },
+  'setVec'(expr, ptrExpr) {
+    Module['_BinaryenSIMDLoadStoreLaneSetVec'](expr, ptrExpr);
+  },
+  'isStore'(expr) {
+    return Boolean(Module['_BinaryenSIMDLoadStoreLaneIsStore'](expr));
   }
 });
 

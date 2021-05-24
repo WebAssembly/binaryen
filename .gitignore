@@ -36,6 +36,7 @@ test/lit/lit.site.cfg.py
 
 # files commonly related to building out-of-tree
 /build/
+/embuild/
 
 # macOS
 .DS_Store

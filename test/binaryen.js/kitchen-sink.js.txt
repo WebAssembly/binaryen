@@ -77,6 +77,7 @@ SIMDShuffleId: 31
 SIMDTernaryId: 32
 SIMDShiftId: 33
 SIMDLoadId: 34
+SIMDLoadStoreLaneId: 35
 MemoryInitId: 36
 DataDropId: 37
 MemoryCopyId: 38
