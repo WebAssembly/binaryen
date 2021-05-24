@@ -1696,7 +1696,7 @@ BinaryenSIMDLoadStoreLaneSetVec(BinaryenExpressionRef expr,
                                 BinaryenExpressionRef vecExpr);
 // Gets whether a SIMD load/store lane expression performs a store. Otherwise it
 // performs a load.
-BINARYEN_API bool BinaryenSIMDLoadStoreIsStore(BinaryenExpressionRef expr);
+BINARYEN_API bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr);
 
 // MemoryInit
 

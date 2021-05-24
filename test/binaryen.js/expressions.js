@@ -1227,6 +1227,7 @@ console.log("# SIMDLoadStoreLane");
   assert(theSIMDLoadStoreLane.ptr === ptr);
   assert(theSIMDLoadStoreLane.vec === vec);
   assert(theSIMDLoadStoreLane.type === binaryen.v128);
+  assert(theSIMDLoadStoreLane.store === false);
 
   theSIMDLoadStoreLane.op = op = binaryen.Operations.Load16LaneVec128;
   assert(theSIMDLoadStoreLane.op === op);
@@ -1254,6 +1255,7 @@ console.log("# SIMDLoadStoreLane");
   theSIMDLoadStoreLane.op = op = binaryen.Operations.Store16LaneVec128;
   assert(theSIMDLoadStoreLane.op === op);
   theSIMDLoadStoreLane.type = binaryen.f64;
+  assert(theSIMDLoadStoreLane.store === true);
   theSIMDLoadStoreLane.finalize();
   assert(theSIMDLoadStoreLane.type === binaryen.none);
 

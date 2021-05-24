@@ -2738,7 +2738,7 @@ void BinaryenSIMDLoadStoreLaneSetVec(BinaryenExpressionRef expr,
   assert(vecExpr);
   static_cast<SIMDLoadStoreLane*>(expression)->vec = (Expression*)vecExpr;
 }
-bool BinaryenSIMDLoadStoreIsStore(BinaryenExpressionRef expr) {
+bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<SIMDLoadStoreLane>());
   return static_cast<SIMDLoadStoreLane*>(expression)->isStore();
