@@ -179,11 +179,11 @@ struct LowerGCCode
     auto rttLocal = builder.addVar(getFunction(), Type::i32);
     auto sizeLocal = builder.addVar(getFunction(), Type::i32);
     auto initLocal = builder.addVar(getFunction(), Type::i32);
+    list.push_back(builder.makeLocalSet(rttLocal, curr->rtt));
+    list.push_back(builder.makeLocalSet(sizeLocal, curr->size));
+    list.push_back(builder.makeLocalSet(initLocal, curr->init));
     // Compute the size of the array.
-    list.push_back(rtt)
-    list.push_back(ref)
-    list.push_back(value)
-    auto* size = builder.makeBinary(
+    auto* linearSize = builder.makeBinary(
       AddInt32,
       builder.makeBinary(
         MulInt32,
@@ -200,7 +200,7 @@ struct LowerGCCode
       builder.makeCall(
         loweringInfo->malloc,
         {
-          size
+          linearSize
         },
         loweringInfo->pointerType)));
     // Store the rtt.
@@ -215,7 +215,6 @@ struct LowerGCCode
     auto counterLocal = builder.addVar(getFunction(), Type::i32);
     ArraySet setInitialValue(getModule()->allocator);
     setInitialValue.ref = builder.makeLocalGet(refLocal, loweringInfo->pointerType);
-    auto initLocal = builder.addVar(getFunction(), loweredElementType);
     if (!curr->isWithDefault()) {
       list.push_back(builder.makeLocalSet(initLocal, curr->init));
       setInitialValue.value = builder.makeLocalGet(initLocal, loweredElementType);
@@ -235,7 +234,7 @@ struct LowerGCCode
               nullptr,
               builder.makeUnary(
                 EqZInt32,
-                builder.makeLocalGet(counterLocal)
+                builder.makeLocalGet(counterLocal, Type::i32)
               )
             ),
             &setInitialValue,
@@ -246,7 +245,7 @@ struct LowerGCCode
                 builder.makeLocalGet(counterLocal, Type::i32),
                 builder.makeConst(int32_t(1))
               )
-            )
+            ),
             builder.makeBreak(loopName)
           }
         )
