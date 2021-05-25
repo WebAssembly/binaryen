@@ -1214,7 +1214,7 @@ console.log("# SIMDLoadStoreLane");
   var op = binaryen.Operations.Load8LaneVec128;
   var offset = 16;
   var index = 1;
-  var align = 2;
+  var align = 1;
   var ptr = module.i32.const(1);
   var vec = module.v128.const([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
   const theSIMDLoadStoreLane = binaryen.SIMDLoadStoreLane(module.v128.load8_lane(offset, align, index, ptr, vec));
@@ -1233,7 +1233,7 @@ console.log("# SIMDLoadStoreLane");
   assert(theSIMDLoadStoreLane.op === op);
   theSIMDLoadStoreLane.offset = offset = 32;
   assert(theSIMDLoadStoreLane.offset === offset);
-  theSIMDLoadStoreLane.align = align = 4;
+  theSIMDLoadStoreLane.align = align = 2;
   assert(theSIMDLoadStoreLane.align === align);
   theSIMDLoadStoreLane.index = index = 2;
   assert(theSIMDLoadStoreLane.index === index);
@@ -1249,7 +1249,7 @@ console.log("# SIMDLoadStoreLane");
   assert(
     theSIMDLoadStoreLane.toText()
     ==
-    "(v128.load16_lane offset=32 align=4 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
+    "(v128.load16_lane offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
   );
 
   theSIMDLoadStoreLane.op = op = binaryen.Operations.Store16LaneVec128;
@@ -1263,7 +1263,7 @@ console.log("# SIMDLoadStoreLane");
   assert(
     theSIMDLoadStoreLane.toText()
     ==
-    "(v128.store16_lane offset=32 align=4 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
+    "(v128.store16_lane offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
   );
 
   module.dispose();
