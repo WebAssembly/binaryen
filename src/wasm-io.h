@@ -82,7 +82,10 @@ private:
 
 class ModuleWriter : public ModuleIOBase {
   bool binary = true;
+
+  // TODO: Remove `emitModuleName`. See the comment in wasm-binary.h
   bool emitModuleName = false;
+
   std::string symbolMap;
   std::string sourceMapFilename;
   std::string sourceMapUrl;

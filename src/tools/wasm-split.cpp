@@ -54,6 +54,7 @@ struct WasmSplitOptions : ToolOptions {
 
   bool instrument = false;
 
+  // TODO: Remove this. See the comment in wasm-binary.h.
   bool emitModuleNames = false;
 
   std::string profileFile;
@@ -199,7 +200,9 @@ WasmSplitOptions::WasmSplitOptions()
       "--emit-module-names",
       "",
       "Emit module names, even if not emitting the rest of the names section. "
-      "Can help differentiate the modules in stack traces.",
+      "Can help differentiate the modules in stack traces. This option will be "
+      "removed once simpler ways of naming modules are widely available. See "
+      "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
       Options::Arguments::Zero,
       [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
     .add("--initial-table",
