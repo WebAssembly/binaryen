@@ -29,7 +29,7 @@ namespace wasm {
 
 class ModuleIOBase {
 protected:
-  bool debugInfo = true;
+  bool debugInfo;
 
 public:
   // Whether we support debug info (the names section).
