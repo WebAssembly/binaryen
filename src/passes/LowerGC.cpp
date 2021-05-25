@@ -132,7 +132,7 @@ struct LowerGCCode
   // Lower a StructSet. If a type is given, then we use that, otherwise we will
   // look up the type using relevantHeapTypes (which were computed by first
   // scanning all the code).
-  Expression* lower(StructSet* curr, HeapType type=HeapType::any) {
+  Expression* lower(StructSet* curr, HeapType type = HeapType::any) {
     // TODO: ignore unreachable, or run dce before
     Builder builder(*getModule());
     if (type == HeapType::any) {
@@ -166,7 +166,6 @@ struct LowerGCCode
       loweredType);
   }
 
-
   void visitArrayNew(ArrayNew* curr) {
     Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
@@ -188,69 +187,54 @@ struct LowerGCCode
       builder.makeBinary(
         MulInt32,
         builder.makeConst(int32_t(loweredElementType.getByteSize())),
-        curr->size
-      ),
+        curr->size),
       // Room for the rtt and size.
-      builder.makeConst(int32_t(8))
-    );
+      builder.makeConst(int32_t(8)));
     // Malloc space for our array.
     auto refLocal = builder.addVar(getFunction(), loweringInfo->pointerType);
     list.push_back(builder.makeLocalSet(
       refLocal,
       builder.makeCall(
-        loweringInfo->malloc,
-        {
-          linearSize
-        },
-        loweringInfo->pointerType)));
+        loweringInfo->malloc, {linearSize}, loweringInfo->pointerType)));
     // Store the rtt.
-    list.push_back(
-      builder.makeStore(loweringInfo->pointerSize,
-                        0,
-                        loweringInfo->pointerSize,
-                        builder.makeLocalGet(refLocal, loweringInfo->pointerType),
-                        curr->rtt,
-                        loweringInfo->pointerType));
+    list.push_back(builder.makeStore(
+      loweringInfo->pointerSize,
+      0,
+      loweringInfo->pointerSize,
+      builder.makeLocalGet(refLocal, loweringInfo->pointerType),
+      curr->rtt,
+      loweringInfo->pointerType));
     // Store the values, by representing them as ArraySets.
     auto counterLocal = builder.addVar(getFunction(), Type::i32);
     ArraySet setInitialValue(getModule()->allocator);
-    setInitialValue.ref = builder.makeLocalGet(refLocal, loweringInfo->pointerType);
+    setInitialValue.ref =
+      builder.makeLocalGet(refLocal, loweringInfo->pointerType);
     if (!curr->isWithDefault()) {
       list.push_back(builder.makeLocalSet(initLocal, curr->init));
-      setInitialValue.value = builder.makeLocalGet(initLocal, loweredElementType);
+      setInitialValue.value =
+        builder.makeLocalGet(initLocal, loweredElementType);
     } else {
-      setInitialValue.value = LiteralUtils::makeZero(loweredElementType, *getModule());
+      setInitialValue.value =
+        LiteralUtils::makeZero(loweredElementType, *getModule());
     }
     Name loopName("loop");
     Name blockName("block");
-    list.push_back(
-      builder.makeLoop(
-        loopName,
-        builder.makeBlock(
-          blockName,
-          {
-            builder.makeBreak(
-              loopName,
-              nullptr,
-              builder.makeUnary(
-                EqZInt32,
-                builder.makeLocalGet(counterLocal, Type::i32)
-              )
-            ),
-            &setInitialValue,
-            builder.makeLocalSet(
-              counterLocal,
-              builder.makeBinary(
-                SubInt32,
-                builder.makeLocalGet(counterLocal, Type::i32),
-                builder.makeConst(int32_t(1))
-              )
-            ),
-            builder.makeBreak(loopName)
-          }
-        )
-      )
-    );
+    list.push_back(builder.makeLoop(
+      loopName,
+      builder.makeBlock(
+        blockName,
+        {builder.makeBreak(
+           loopName,
+           nullptr,
+           builder.makeUnary(EqZInt32,
+                             builder.makeLocalGet(counterLocal, Type::i32))),
+         &setInitialValue,
+         builder.makeLocalSet(
+           counterLocal,
+           builder.makeBinary(SubInt32,
+                              builder.makeLocalGet(counterLocal, Type::i32),
+                              builder.makeConst(int32_t(1)))),
+         builder.makeBreak(loopName)})));
     // Return the pointer.
     list.push_back(builder.makeLocalGet(refLocal, loweringInfo->pointerType));
     replaceCurrent(builder.makeBlock(list));
@@ -261,7 +245,7 @@ struct LowerGCCode
   // Lower a ArraySet. If a type is given, then we use that, otherwise we will
   // look up the type using relevantHeapTypes (which were computed by first
   // scanning all the code).
-  Expression* lower(ArraySet* curr, HeapType type=HeapType::any) {
+  Expression* lower(ArraySet* curr, HeapType type = HeapType::any) {
     // TODO: ignore unreachable, or run dce before
     Builder builder(*getModule());
     if (type == HeapType::any) {
@@ -278,14 +262,8 @@ struct LowerGCCode
         builder.makeBinary(
           MulInt32,
           builder.makeConst(int32_t(loweredElementType.getByteSize())),
-          curr->size
-        ),
-        builder.makeBinary(
-          AddInt32,
-          curr->ref,
-          builder.makeConst(int32_t(8))
-        )
-      ),
+          curr->size),
+        builder.makeBinary(AddInt32, curr->ref, builder.makeConst(int32_t(8)))),
       curr->value,
       loweredType);
   }
@@ -403,29 +381,26 @@ private:
 
   void addRuntime() {
     Builder builder(*module);
-    auto* nextMalloc = module->addGlobal(builder.makeGlobal("nextMalloc", Type::i32,
-        builder.makeConst(int32_t(0)),
-        Builder::Mutable));
+    auto* nextMalloc =
+      module->addGlobal(builder.makeGlobal("nextMalloc",
+                                           Type::i32,
+                                           builder.makeConst(int32_t(0)),
+                                           Builder::Mutable));
     loweringInfo.malloc = "malloc";
     // TODO: more than a simple bump allocator that never frees or collects.
     module->addFunction(builder.makeFunction(
-      "malloc", { Type::i32, Type::i32 }, {},
+      "malloc",
+      {Type::i32, Type::i32},
+      {},
       builder.makeSequence(
         builder.makeGlobalSet(
           nextMalloc->name,
-          builder.makeBinary(
-            AddInt32,
-            builder.makeGlobalGet(nextMalloc->name, Type::i32),
-            builder.makeLocalGet(0, Type::i32)
-          )
-        ),
-        builder.makeBinary(
-          SubInt32,
-          builder.makeGlobalGet(nextMalloc->name, Type::i32),
-          builder.makeLocalGet(0, Type::i32)
-        )
-      )
-    ));
+          builder.makeBinary(AddInt32,
+                             builder.makeGlobalGet(nextMalloc->name, Type::i32),
+                             builder.makeLocalGet(0, Type::i32))),
+        builder.makeBinary(SubInt32,
+                           builder.makeGlobalGet(nextMalloc->name, Type::i32),
+                           builder.makeLocalGet(0, Type::i32)))));
   }
 
   void computeStructLayouts() {
