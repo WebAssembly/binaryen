@@ -676,6 +676,7 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
   if (options.exportPrefix.size()) {
     config.newExportPrefix = options.exportPrefix;
   }
+  config.minimizeNewExportNames = !options.passOptions.debugInfo;
   std::unique_ptr<Module> secondary =
     ModuleSplitting::splitFunctions(wasm, config);
 

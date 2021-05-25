@@ -276,6 +276,10 @@ struct ModuleSplitter {
   classifyFunctions(const Module& primary, const Config& config);
   static std::map<Name, Name> initExportedPrimaryFuncs(const Module& primary);
 
+  // Minimizing names of newly exported functions.
+  size_t exportNum = 0;
+  std::string generateMinimizedExportName();
+
   // Other helpers
   void exportImportFunction(Name func);
 
@@ -336,6 +340,34 @@ ModuleSplitter::initExportedPrimaryFuncs(const Module& primary) {
   return functionExportNames;
 }
 
+std::string ModuleSplitter::generateMinimizedExportName() {
+  // Minimized export names don't need to be human readable at all, so use as
+  // much of the space of single-byte UTF-8 unicode code points as possible.
+  // Binaryen does not actually handle unicode well, though, so only use code
+  // points that correspond to easily printable glyphs: 0x20-0x7E.
+  static std::array<uint8_t, 95> chars = ([]() {
+    std::array<uint8_t, 95> array;
+    size_t i = 0;
+    for (uint8_t c = 0x20; c <= 0x7E; ++c) {
+      array[i++] = c;
+    }
+    assert(i == 95);
+    return array;
+  })();
+
+  std::string name;
+  do {
+    size_t n = exportNum++;
+    std::stringstream ss;
+    do {
+      ss << chars[n % chars.size()];
+      n /= chars.size();
+    } while (n);
+    name = ss.str();
+  } while (primary.getExportOrNull(name) != nullptr);
+  return name;
+}
+
 void ModuleSplitter::exportImportFunction(Name funcName) {
   Name exportName;
   // If the function is already exported, use the existing export name.
@@ -344,8 +376,12 @@ void ModuleSplitter::exportImportFunction(Name funcName) {
   if (exportIt != exportedPrimaryFuncs.end()) {
     exportName = exportIt->second;
   } else {
-    exportName = Names::getValidExportName(
-      primary, config.newExportPrefix + funcName.c_str());
+    if (config.minimizeNewExportNames) {
+      exportName = config.newExportPrefix + generateMinimizedExportName();
+    } else {
+      exportName = Names::getValidExportName(
+        primary, config.newExportPrefix + funcName.c_str());
+    }
     primary.addExport(
       Builder::makeExport(exportName, funcName, ExternalKind::Function));
     exportedPrimaryFuncs[funcName] = exportName;

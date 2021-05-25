@@ -64,6 +64,8 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   assert(valid && "secondary invalid!");
 }
 
+void test_minimized_exports();
+
 int main() {
   // Trivial module
   do_test({}, "(module)");
@@ -437,4 +439,43 @@ int main() {
      (export "foo2" (func $foo))
      (func $foo)
     ))");
+
+  test_minimized_exports();
+}
+
+void test_minimized_exports() {
+  Module primary;
+  primary.features = FeatureSet::All;
+
+  std::set<Name> keep;
+  Expression* callBody = nullptr;
+
+  Builder builder(primary);
+
+  for (size_t i = 0; i < 100; ++i) {
+    Name name =
+      std::string(3 - std::to_string(i).length(), '0') + std::to_string(i);
+    primary.addFunction(Builder::makeFunction(name, {}, {}, builder.makeNop()));
+    keep.insert(name);
+    callBody =
+      builder.blockify(callBody, builder.makeCall(name, {}, Type::none));
+
+    if (i == 50) {
+      primary.addExport(
+        Builder::makeExport("already_exported", name, ExternalKind::Function));
+    }
+  }
+
+  primary.addFunction(Builder::makeFunction("call", {}, {}, callBody));
+
+  ModuleSplitting::Config config;
+  config.primaryFuncs = std::move(keep);
+  config.newExportPrefix = "%";
+  config.minimizeNewExportNames = true;
+
+  auto secondary = splitFunctions(primary, config);
+  std::cout << "Minimized names primary:\n";
+  std::cout << primary << "\n";
+  std::cout << "Minimized names secondary:\n";
+  std::cout << *secondary << "\n";
 }
