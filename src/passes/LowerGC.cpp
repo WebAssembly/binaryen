@@ -17,6 +17,15 @@
 //
 // Lowers Wasm GC to linear memory.
 //
+// Layouts:
+//   Struct:
+//     u32 rtt
+//     fields...
+//   Array:
+//     u32 rtt
+//     u32 size
+//     fields...
+//
 
 #include "ir/module-utils.h"
 #include "pass.h"
@@ -157,6 +166,117 @@ struct LowerGCCode
       loweredType);
   }
 
+
+  void visitArrayNew(ArrayNew* curr) {
+    Builder builder(*getModule());
+    auto type = relevantHeapTypes[curr];
+
+    auto element = type.getArray().element;
+    auto loweredElementType = getLoweredType(element.type, getModule()->memory);
+
+    std::vector<Expression*> list;
+    auto local = builder.addVar(getFunction(), loweringInfo->pointerType);
+    // Compute the size of the array.
+    auto* size = builder.makeBinary(
+      AddInt32,
+      builder.makeBinary(
+        MulInt32,
+        builder.makeConst(int32_t(loweredElementType.getByteSize())),
+        curr->size
+      ),
+      // Room for the rtt and size.
+      builder.makeConst(int32_t(8))
+    );
+    // Malloc space for our array.
+    list.push_back(builder.makeLocalSet(
+      local,
+      builder.makeCall(
+        loweringInfo->malloc,
+        {
+          size
+        },
+        loweringInfo->pointerType)));
+    // Store the rtt.
+    list.push_back(
+      builder.makeStore(loweringInfo->pointerSize,
+                        0,
+                        loweringInfo->pointerSize,
+                        builder.makeLocalGet(local, loweringInfo->pointerType),
+                        curr->rtt,
+                        loweringInfo->pointerType));
+    // Store the values, by representing them as ArraySets.
+    ArraySet set(getModule()->allocator);
+    set.ref = builder.makeLocalGet(local, loweringInfo->pointerType);
+    Index initLocal = builder.addVar(getFunction(), loweredElementType);
+    if (!curr->isWithDefault()) {
+      list.push_back(builder.makeLocalSet(initLocal, curr->init));
+    }
+    for (Index i = 0; i < fields.size(); i++) {
+      set.index = i;
+      if (curr->isWithDefault()) {
+        set.value = LiteralUtils::makeZero(loweredElementType, *getModule());
+      } else {
+        set.value = builder.makeLocalGet(initLocal, loweredElementType);
+      }
+      list.push_back(lower(&set, type));
+    }
+    // Return the pointer.
+    list.push_back(builder.makeLocalGet(local, loweringInfo->pointerType));
+    replaceCurrent(builder.makeBlock(list));
+  }
+
+  void visitArraySet(ArraySet* curr) { replaceCurrent(lower(curr)); }
+
+  // Lower a ArraySet. If a type is given, then we use that, otherwise we will
+  // look up the type using relevantHeapTypes (which were computed by first
+  // scanning all the code).
+  Expression* lower(ArraySet* curr, HeapType type=HeapType::any) {
+    // TODO: ignore unreachable, or run dce before
+    Builder builder(*getModule());
+    if (type == HeapType::any) {
+      type = relevantHeapTypes[curr];
+    }
+    auto& element = type.getArray().element;
+    auto loweredType = getLoweredType(element.type, getModule()->memory);
+    return builder.makeStore(
+      loweredType.getByteSize(),
+      0,
+      loweredType.getByteSize(),
+      builder.makeBinary(
+        AddInt32,
+        builder.makeBinary(
+          MulInt32,
+          builder.makeConst(int32_t(loweredElementType.getByteSize())),
+          curr->size
+        ),
+        builder.makeBinary(
+          AddInt32,
+          curr->ref,
+          builder.makeConst(int32_t(8))
+        )
+      ),
+      curr->value,
+      loweredType);
+  }
+
+  void visitArrayGet(ArrayGet* curr) { replaceCurrent(lower(curr)); }
+
+  Expression* lower(ArrayGet* curr) {
+    // TODO: ignore unreachable, or run dce before
+    Builder builder(*getModule());
+    auto type = relevantHeapTypes[curr];
+    auto& field = type.getArray().fields[curr->index];
+    auto loweredType = getLoweredType(field.type, getModule()->memory);
+    return builder.makeLoad(
+      loweredType.getByteSize(),
+      false, // TODO: signedness
+      loweringInfo->layouts[type].fieldOffsets[curr->index],
+      loweredType.getByteSize(),
+      curr->ref,
+      loweredType);
+  }
+---
+
   void visitRttCanon(RttCanon* curr) {
     // FIXME actual rtt allocations and values
     replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
@@ -191,6 +311,16 @@ struct LowerGCCode
         relevantHeapTypes[curr] = curr->ref->type.getHeapType();
       }
       void visitStructSet(StructSet* curr) {
+        relevantHeapTypes[curr] = curr->ref->type.getHeapType();
+      }
+
+      void visitArrayNew(ArrayNew* curr) {
+        relevantHeapTypes[curr] = curr->rtt->type.getHeapType();
+      }
+      void visitArrayGet(ArrayGet* curr) {
+        relevantHeapTypes[curr] = curr->ref->type.getHeapType();
+      }
+      void visitArraySet(ArraySet* curr) {
         relevantHeapTypes[curr] = curr->ref->type.getHeapType();
       }
     } scanner;
