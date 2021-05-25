@@ -175,8 +175,14 @@ struct LowerGCCode
     auto loweredElementType = getLoweredType(element.type, getModule()->memory);
 
     std::vector<Expression*> list;
-    auto local = builder.addVar(getFunction(), loweringInfo->pointerType);
+    // Capture the inputs into locals.
+    auto rttLocal = builder.addVar(getFunction(), Type::i32);
+    auto sizeLocal = builder.addVar(getFunction(), Type::i32);
+    auto initLocal = builder.addVar(getFunction(), Type::i32);
     // Compute the size of the array.
+    list.push_back(rtt)
+    list.push_back(ref)
+    list.push_back(value)
     auto* size = builder.makeBinary(
       AddInt32,
       builder.makeBinary(
@@ -188,8 +194,9 @@ struct LowerGCCode
       builder.makeConst(int32_t(8))
     );
     // Malloc space for our array.
+    auto refLocal = builder.addVar(getFunction(), loweringInfo->pointerType);
     list.push_back(builder.makeLocalSet(
-      local,
+      refLocal,
       builder.makeCall(
         loweringInfo->malloc,
         {
@@ -201,27 +208,52 @@ struct LowerGCCode
       builder.makeStore(loweringInfo->pointerSize,
                         0,
                         loweringInfo->pointerSize,
-                        builder.makeLocalGet(local, loweringInfo->pointerType),
+                        builder.makeLocalGet(refLocal, loweringInfo->pointerType),
                         curr->rtt,
                         loweringInfo->pointerType));
     // Store the values, by representing them as ArraySets.
-    ArraySet set(getModule()->allocator);
-    set.ref = builder.makeLocalGet(local, loweringInfo->pointerType);
-    Index initLocal = builder.addVar(getFunction(), loweredElementType);
+    auto counterLocal = builder.addVar(getFunction(), Type::i32);
+    ArraySet setInitialValue(getModule()->allocator);
+    setInitialValue.ref = builder.makeLocalGet(refLocal, loweringInfo->pointerType);
+    auto initLocal = builder.addVar(getFunction(), loweredElementType);
     if (!curr->isWithDefault()) {
       list.push_back(builder.makeLocalSet(initLocal, curr->init));
+      setInitialValue.value = builder.makeLocalGet(initLocal, loweredElementType);
+    } else {
+      setInitialValue.value = LiteralUtils::makeZero(loweredElementType, *getModule());
     }
-    for (Index i = 0; i < fields.size(); i++) {
-      set.index = i;
-      if (curr->isWithDefault()) {
-        set.value = LiteralUtils::makeZero(loweredElementType, *getModule());
-      } else {
-        set.value = builder.makeLocalGet(initLocal, loweredElementType);
-      }
-      list.push_back(lower(&set, type));
-    }
+    Name loopName("loop");
+    Name blockName("block");
+    list.push_back(
+      builder.makeLoop(
+        loopName,
+        builder.makeBlock(
+          blockName,
+          {
+            builder.makeBreak(
+              loopName,
+              nullptr,
+              builder.makeUnary(
+                EqZInt32,
+                builder.makeLocalGet(counterLocal)
+              )
+            ),
+            &setInitialValue,
+            builder.makeLocalSet(
+              counterLocal,
+              builder.makeBinary(
+                SubInt32,
+                builder.makeLocalGet(counterLocal, Type::i32),
+                builder.makeConst(int32_t(1))
+              )
+            )
+            builder.makeBreak(loopName)
+          }
+        )
+      )
+    );
     // Return the pointer.
-    list.push_back(builder.makeLocalGet(local, loweringInfo->pointerType));
+    list.push_back(builder.makeLocalGet(refLocal, loweringInfo->pointerType));
     replaceCurrent(builder.makeBlock(list));
   }
 
@@ -275,7 +307,6 @@ struct LowerGCCode
       curr->ref,
       loweredType);
   }
----
 
   void visitRttCanon(RttCanon* curr) {
     // FIXME actual rtt allocations and values
@@ -329,6 +360,9 @@ struct LowerGCCode
 
     // Lower all the code.
     Parent::doWalkFunction(func);
+
+    // Ensure unique names for the loops that we created.
+    UniqueNameMapper::uniquify(func->body);
   }
 
 private:
