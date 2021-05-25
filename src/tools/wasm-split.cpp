@@ -23,6 +23,7 @@
 #include "pass.h"
 #include "support/file.h"
 #include "support/name.h"
+#include "support/path.h"
 #include "support/utilities.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
@@ -52,6 +53,9 @@ struct WasmSplitOptions : ToolOptions {
   bool symbolMap = false;
 
   bool instrument = false;
+
+  // TODO: Remove this. See the comment in wasm-binary.h.
+  bool emitModuleNames = false;
 
   std::string profileFile;
   std::string profileExport = DEFAULT_PROFILE_EXPORT;
@@ -192,6 +196,15 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& arguments) {
            passOptions.debugInfo = true;
          })
+    .add(
+      "--emit-module-names",
+      "",
+      "Emit module names, even if not emitting the rest of the names section. "
+      "Can help differentiate the modules in stack traces. This option will be "
+      "removed once simpler ways of naming modules are widely available. See "
+      "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
     .add("--initial-table",
          "",
          "A hack to ensure the split and instrumented modules have the same "
@@ -500,6 +513,18 @@ void adjustTableSize(Module& wasm, int initialSize) {
   table->initial = initialSize;
 }
 
+void writeModule(Module& wasm,
+                 std::string filename,
+                 const WasmSplitOptions& options) {
+  ModuleWriter writer;
+  writer.setBinary(options.emitBinary);
+  writer.setDebugInfo(options.passOptions.debugInfo);
+  if (options.emitModuleNames) {
+    writer.setEmitModuleName(true);
+  }
+  writer.write(wasm, filename);
+}
+
 void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   // Check that the profile export name is not already taken
   if (wasm.getExportOrNull(options.profileExport) != nullptr) {
@@ -513,10 +538,7 @@ void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   adjustTableSize(wasm, options.initialTableSize);
 
   // Write the output modules
-  ModuleWriter writer;
-  writer.setBinary(options.emitBinary);
-  writer.setDebugInfo(options.passOptions.debugInfo);
-  writer.write(wasm, options.output);
+  writeModule(wasm, options.output, options);
 }
 
 // See "wasm-split profile format" above for more information.
@@ -665,12 +687,18 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
     writeSymbolMap(*secondary, options.secondaryOutput + ".symbols");
   }
 
-  // Write the output modules
-  ModuleWriter writer;
-  writer.setBinary(options.emitBinary);
-  writer.setDebugInfo(options.passOptions.debugInfo);
-  writer.write(wasm, options.primaryOutput);
-  writer.write(*secondary, options.secondaryOutput);
+  // Set the names of the split modules. This can help differentiate them in
+  // stack traces.
+  if (options.emitModuleNames) {
+    if (!wasm.name) {
+      wasm.name = Path::getBaseName(options.primaryOutput);
+    }
+    secondary->name = Path::getBaseName(options.secondaryOutput);
+  }
+
+  // write the output modules
+  writeModule(wasm, options.primaryOutput, options);
+  writeModule(*secondary, options.secondaryOutput, options);
 }
 
 } // anonymous namespace
