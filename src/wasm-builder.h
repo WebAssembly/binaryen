@@ -151,30 +151,38 @@ public:
     ret->finalize();
     return ret;
   }
-  template<typename T>
-  Block* makeBlock(const T& items) {
+  Block* makeBlock(const std::vector<Expression*>& items) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->list.set(items);
     ret->finalize();
     return ret;
   }
-  template<typename T>
-  Block* makeBlock(const T& items, Type type) {
+  Block* makeBlock(const std::vector<Expression*>& items, Type type) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->list.set(items);
     ret->finalize(type);
     return ret;
   }
-  template<typename T>
-  Block* makeBlock(Name name, const T& items) {
+  Block* makeBlock(const ExpressionList& items) {
+    auto* ret = wasm.allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize();
+    return ret;
+  }
+  Block* makeBlock(const ExpressionList& items, Type type) {
+    auto* ret = wasm.allocator.alloc<Block>();
+    ret->list.set(items);
+    ret->finalize(type);
+    return ret;
+  }
+  Block* makeBlock(Name name, const ExpressionList& items) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
     ret->finalize();
     return ret;
   }
-  template<typename T>
-  Block* makeBlock(Name name, const T& items, Type type) {
+  Block* makeBlock(Name name, const ExpressionList& items, Type type) {
     auto* ret = wasm.allocator.alloc<Block>();
     ret->name = name;
     ret->list.set(items);
