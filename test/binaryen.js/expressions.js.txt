@@ -180,12 +180,12 @@
 )
 
 # SIMDLoadStoreLane
-(v128.load16_lane offset=32 align=4 2
+(v128.load16_lane offset=32 2
  (i32.const 2)
  (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
 )
 
-(v128.store16_lane offset=32 align=4 2
+(v128.store16_lane offset=32 2
  (i32.const 2)
  (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)
 )
