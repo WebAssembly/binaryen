@@ -239,4 +239,38 @@
    (array.get $doubles (local.get $ref-doubles) (i32.const 7))
   )
  )
+ ;; CHECK:      (func $array-sets (param $ref-bytes i32) (param $ref-doubles i32)
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (i32.add
+ ;; CHECK-NEXT:     (local.get $ref-bytes)
+ ;; CHECK-NEXT:     (i32.const 8)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.mul
+ ;; CHECK-NEXT:     (i32.const 4)
+ ;; CHECK-NEXT:     (i32.const 7)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 42)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (f64.store
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (i32.add
+ ;; CHECK-NEXT:     (local.get $ref-doubles)
+ ;; CHECK-NEXT:     (i32.const 8)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.mul
+ ;; CHECK-NEXT:     (i32.const 8)
+ ;; CHECK-NEXT:     (i32.const 7)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (f64.const 3.14159)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-sets
+  (param $ref-bytes (ref $bytes))
+  (param $ref-doubles (ref $doubles))
+  (array.set $bytes (local.get $ref-bytes) (i32.const 7) (i32.const 42))
+  (array.set $doubles (local.get $ref-doubles) (i32.const 7) (f64.const 3.14159))
+ )
 )
