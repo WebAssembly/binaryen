@@ -259,14 +259,7 @@ struct LowerGCCode
       loweredType.getByteSize(),
       0,
       loweredType.getByteSize(),
-      builder.makeBinary(
-        AddInt32,
-        builder.makeBinary(AddInt32, curr->ref, builder.makeConst(int32_t(8))),
-        builder.makeBinary(
-          MulInt32,
-          builder.makeConst(int32_t(loweredType.getByteSize())),
-          curr->index)
-      ),
+      makeArrayAddress(curr->ref, curr->index, loweredType),
       curr->value,
       loweredType);
   }
@@ -286,14 +279,7 @@ struct LowerGCCode
       false, // TODO: signedness
       0,
       loweredType.getByteSize(),
-      builder.makeBinary(
-        AddInt32,
-        builder.makeBinary(AddInt32, curr->ref, builder.makeConst(int32_t(8))),
-        builder.makeBinary(
-          MulInt32,
-          builder.makeConst(int32_t(loweredType.getByteSize())),
-          curr->index)
-      ),
+      makeArrayAddress(curr->ref, curr->index, loweredType),
       loweredType);
   }
 
@@ -358,6 +344,18 @@ private:
   std::unordered_map<Expression*, HeapType> relevantHeapTypes;
 
   Type lower(Type type) { return getLoweredType(type, getModule()->memory); }
+
+  Expression* makeArrayAddress(Expression* ref, Expression* index, Type loweredType) {
+    Builder builder(*getModule());
+    return builder.makeBinary(
+      AddInt32,
+      builder.makeBinary(AddInt32, ref, builder.makeConst(int32_t(8))),
+      builder.makeBinary(
+        MulInt32,
+        builder.makeConst(int32_t(loweredType.getByteSize())),
+        index)
+    );
+  }
 };
 
 } // anonymous namespace
