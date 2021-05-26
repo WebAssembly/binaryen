@@ -30,6 +30,7 @@
 #ifndef cfg_traversal_h
 #define cfg_traversal_h
 
+#include "ir/branch-utils.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -203,34 +204,20 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->loopStack.pop_back();
   }
 
-  static void doEndBreak(SubType* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Break>();
-    self->branches[self->findBreakTarget(curr->name)].push_back(
-      self->currBasicBlock); // branch to the target
-    if (curr->condition) {
+  static void doEndBranch(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+    auto branchTargets = BranchUtils::getUniqueTargets(curr);
+    // Add branches to the targets.
+    for (auto target : branchTargets) {
+      self->branches[self->findBreakTarget(target)].push_back(
+        self->currBasicBlock);
+    }
+    if (curr->type != Type::unreachable) {
       auto* last = self->currBasicBlock;
       self->link(last, self->startBasicBlock()); // we might fall through
     } else {
       self->startUnreachableBlock();
     }
-  }
-
-  static void doEndSwitch(SubType* self, Expression** currp) {
-    auto* curr = (*currp)->cast<Switch>();
-    // we might see the same label more than once; do not spam branches
-    std::set<Name> seen;
-    for (Name target : curr->targets) {
-      if (!seen.count(target)) {
-        self->branches[self->findBreakTarget(target)].push_back(
-          self->currBasicBlock); // branch to the target
-        seen.insert(target);
-      }
-    }
-    if (!seen.count(curr->default_)) {
-      self->branches[self->findBreakTarget(curr->default_)].push_back(
-        self->currBasicBlock); // branch to the target
-    }
-    self->startUnreachableBlock();
   }
 
   static void doEndThrowingInst(SubType* self, Expression** currp) {
@@ -366,22 +353,6 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::doEndLoop, currp);
         break;
       }
-      case Expression::Id::BreakId: {
-        self->pushTask(SubType::doEndBreak, currp);
-        break;
-      }
-      case Expression::Id::SwitchId: {
-        self->pushTask(SubType::doEndSwitch, currp);
-        break;
-      }
-      case Expression::Id::ReturnId: {
-        self->pushTask(SubType::doStartUnreachableBlock, currp);
-        break;
-      }
-      case Expression::Id::UnreachableId: {
-        self->pushTask(SubType::doStartUnreachableBlock, currp);
-        break;
-      }
       case Expression::Id::CallId:
       case Expression::Id::CallIndirectId: {
         self->pushTask(SubType::doEndCall, currp);
@@ -405,7 +376,13 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
         self->pushTask(SubType::doEndThrow, currp);
         break;
       }
-      default: {}
+      default: {
+        if (Properties::isBranch(curr)) {
+          self->pushTask(SubType::doEndBranch, currp);
+        } else if (curr->type == Type::unreachable) {
+          self->pushTask(SubType::doStartUnreachableBlock, currp);
+        }
+      }
     }
 
     ControlFlowWalker<SubType, VisitorType>::scan(self, currp);
