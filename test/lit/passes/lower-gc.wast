@@ -13,7 +13,10 @@
 
  (type $many-fields (struct (field (mut i32)) (field (mut f64)) (field (mut f32))))
 
- ;; CHECK:      (func $loads (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
+ (type $bytes (array (mut i8)))
+ (type $doubles (array (mut f64)))
+
+ ;; CHECK:      (func $struct-gets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.load offset=4
  ;; CHECK-NEXT:    (local.get $ref-i32)
@@ -45,7 +48,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $loads
+ (func $struct-gets
   (param $ref-i32 (ref $struct-i32))
   (param $ref-i64 (ref $struct-i64))
   (param $ref-f32 (ref $struct-f32))
@@ -71,7 +74,7 @@
    (struct.get $struct-rtt 0 (local.get $ref-rtt))
   )
  )
- ;; CHECK:      (func $stores (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
+ ;; CHECK:      (func $struct-sets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
  ;; CHECK-NEXT:  (i32.store offset=4
  ;; CHECK-NEXT:   (local.get $ref-i32)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -97,7 +100,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $stores
+ (func $struct-sets
   (param $ref-i32 (ref $struct-i32))
   (param $ref-i64 (ref $struct-i64))
   (param $ref-f32 (ref $struct-f32))
@@ -194,6 +197,46 @@
    (struct.new_default_with_rtt $many-fields
     (rtt.canon $many-fields)
    )
+  )
+ )
+ ;; CHECK:      (func $array-gets (param $ref-bytes i32) (param $ref-doubles i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.load
+ ;; CHECK-NEXT:    (i32.add
+ ;; CHECK-NEXT:     (i32.add
+ ;; CHECK-NEXT:      (local.get $ref-bytes)
+ ;; CHECK-NEXT:      (i32.const 8)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.mul
+ ;; CHECK-NEXT:      (i32.const 4)
+ ;; CHECK-NEXT:      (i32.const 7)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (f64.load
+ ;; CHECK-NEXT:    (i32.add
+ ;; CHECK-NEXT:     (i32.add
+ ;; CHECK-NEXT:      (local.get $ref-doubles)
+ ;; CHECK-NEXT:      (i32.const 8)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.mul
+ ;; CHECK-NEXT:      (i32.const 8)
+ ;; CHECK-NEXT:      (i32.const 7)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $array-gets
+  (param $ref-bytes (ref $bytes))
+  (param $ref-doubles (ref $doubles))
+  (drop
+   (array.get $bytes (local.get $ref-bytes) (i32.const 7))
+  )
+  (drop
+   (array.get $doubles (local.get $ref-doubles) (i32.const 7))
   )
  )
 )
