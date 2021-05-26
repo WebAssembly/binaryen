@@ -251,19 +251,22 @@ struct LowerGCCode
     if (type == HeapType::any) {
       type = relevantHeapTypes[curr];
     }
-    auto& element = type.getArray().element;
+    auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, getModule()->memory);
+    // Note that we carefully keep the inputs in the same order as we use them,
+    // so we do not need to save them to locals first.
     return builder.makeStore(
       loweredType.getByteSize(),
       0,
       loweredType.getByteSize(),
       builder.makeBinary(
         AddInt32,
+        builder.makeBinary(AddInt32, curr->ref, builder.makeConst(int32_t(8))),
         builder.makeBinary(
           MulInt32,
-          builder.makeConst(int32_t(loweredElementType.getByteSize())),
-          curr->size),
-        builder.makeBinary(AddInt32, curr->ref, builder.makeConst(int32_t(8)))),
+          builder.makeConst(int32_t(loweredType.getByteSize())),
+          curr->index)
+      ),
       curr->value,
       loweredType);
   }
@@ -274,14 +277,23 @@ struct LowerGCCode
     // TODO: ignore unreachable, or run dce before
     Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
-    auto& field = type.getArray().fields[curr->index];
-    auto loweredType = getLoweredType(field.type, getModule()->memory);
+    auto element = type.getArray().element;
+    auto loweredType = getLoweredType(element.type, getModule()->memory);
+    // Note that we carefully keep the inputs in the same order as we use them,
+    // so we do not need to save them to locals first.
     return builder.makeLoad(
       loweredType.getByteSize(),
       false, // TODO: signedness
-      loweringInfo->layouts[type].fieldOffsets[curr->index],
+      0,
       loweredType.getByteSize(),
-      curr->ref,
+      builder.makeBinary(
+        AddInt32,
+        builder.makeBinary(AddInt32, curr->ref, builder.makeConst(int32_t(8))),
+        builder.makeBinary(
+          MulInt32,
+          builder.makeConst(int32_t(loweredType.getByteSize())),
+          curr->index)
+      ),
       loweredType);
   }
 
