@@ -920,7 +920,7 @@ void BrOn::finalize() {
   }
   switch (op) {
     case BrOnNull:
-      // If we do not branch, it flows out the existing value as non-null.
+      // If we do not branch, we flow out the existing value as non-null.
       type = Type(ref->type.getHeapType(), NonNullable);
       break;
     case BrOnCast:
