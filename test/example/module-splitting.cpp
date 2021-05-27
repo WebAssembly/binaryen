@@ -452,17 +452,20 @@ void test_minimized_exports() {
 
   Builder builder(primary);
 
-  for (size_t i = 0; i < 100; ++i) {
-    Name name =
-      std::string(3 - std::to_string(i).length(), '0') + std::to_string(i);
+  for (size_t i = 0; i < 10; ++i) {
+    Name name = std::to_string(i);
     primary.addFunction(Builder::makeFunction(name, {}, {}, builder.makeNop()));
     keep.insert(name);
     callBody =
       builder.blockify(callBody, builder.makeCall(name, {}, Type::none));
 
-    if (i == 50) {
+    if (i == 3) {
       primary.addExport(
         Builder::makeExport("already_exported", name, ExternalKind::Function));
+    }
+    if (i == 7) {
+      primary.addExport(
+        Builder::makeExport("%b", name, ExternalKind::Function));
     }
   }
 
