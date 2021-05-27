@@ -3,25 +3,46 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (func $br_on_non_data
+  ;; CHECK:      (func $br_on_non_data-1
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $any (result anyref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_non_data $any
-  ;; CHECK-NEXT:      (ref.func $br_on_non_data)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $br_on_non_data-1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null any)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $br_on_non_data
+  (func $br_on_non_data-1
     (drop
       (block $any (result anyref)
         (drop
           ;; A function is not data, and so we should branch.
           (br_on_non_data $any
-            (ref.func $br_on_non_data)
+            (ref.func $br_on_non_data-1)
+          )
+        )
+        (ref.null any)
+      )
+    )
+  )
+  ;; CHECK:      (func $br_on_non_data-2 (param $data dataref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $any (result anyref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $data)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $br_on_non_data-2 (param $data (ref data))
+    (drop
+      (block $any (result anyref)
+        (drop
+          ;; Data is provided here, and so we will not branch.
+          (br_on_non_data $any
+            (local.get $data)
           )
         )
         (ref.null any)
