@@ -34,6 +34,10 @@
 [fuzz-exec] calling br_on_non_data-data
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_non_data-other
+[fuzz-exec] calling br-on_non_null
+[fuzz-exec] calling br-on_non_null-2
+[LoggingExternalInterface logging 1]
+[trap unreachable]
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
@@ -75,11 +79,13 @@
  (export "br_on_non_data-null" (func $9))
  (export "br_on_non_data-data" (func $10))
  (export "br_on_non_data-other" (func $9))
- (export "rtt-and-cast-on-func" (func $13))
+ (export "br-on_non_null" (func $9))
+ (export "br-on_non_null-2" (func $13))
+ (export "rtt-and-cast-on-func" (func $15))
  (export "array-alloc-failure" (func $9))
- (export "init-array-packed" (func $15))
- (export "cast-func-to-struct" (func $17))
- (export "array-copy" (func $18))
+ (export "init-array-packed" (func $17))
+ (export "cast-func-to-struct" (func $19))
+ (export "array-copy" (func $20))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -314,12 +320,22 @@
    (i32.const 1)
   )
  )
+ (func $13 (; has Stack IR ;)
+  (drop
+   (block
+    (call $log
+     (i32.const 1)
+    )
+    (unreachable)
+   )
+  )
+ )
  (func $a-void-func (; has Stack IR ;)
   (call $log
    (i32.const 1337)
   )
  )
- (func $13 (; has Stack IR ;)
+ (func $15 (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
@@ -345,7 +361,7 @@
    (i32.const 4)
   )
  )
- (func $15 (; has Stack IR ;) (result i32)
+ (func $17 (; has Stack IR ;) (result i32)
   (array.get_u $bytes
    (array.new_with_rtt $bytes
     (i32.const -43)
@@ -358,7 +374,7 @@
  (func $call-target (; has Stack IR ;) (param $0 eqref)
   (nop)
  )
- (func $17 (; has Stack IR ;)
+ (func $19 (; has Stack IR ;)
   (drop
    (ref.cast
     (ref.func $call-target)
@@ -366,7 +382,7 @@
    )
   )
  )
- (func $18 (; has Stack IR ;)
+ (func $20 (; has Stack IR ;)
   (local $0 (ref null $bytes))
   (local $1 (ref null $bytes))
   (array.set $bytes
@@ -460,6 +476,10 @@
 [fuzz-exec] calling br_on_non_data-data
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_non_data-other
+[fuzz-exec] calling br-on_non_null
+[fuzz-exec] calling br-on_non_null-2
+[LoggingExternalInterface logging 1]
+[trap unreachable]
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]

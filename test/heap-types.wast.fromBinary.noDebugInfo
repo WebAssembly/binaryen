@@ -322,19 +322,17 @@
    )
   )
   (drop
-   (block $label$5 (result anyref)
-    (local.set $3
-     (br_on_non_func $label$5
-      (local.get $0)
-     )
+   (block $label$5 (result (ref any))
+    (br_on_non_null $label$5
+     (local.get $0)
     )
-    (ref.null any)
+    (unreachable)
    )
   )
   (drop
    (block $label$6 (result anyref)
-    (local.set $4
-     (br_on_non_data $label$6
+    (local.set $3
+     (br_on_non_func $label$6
       (local.get $0)
      )
     )
@@ -343,8 +341,18 @@
   )
   (drop
    (block $label$7 (result anyref)
+    (local.set $4
+     (br_on_non_data $label$7
+      (local.get $0)
+     )
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $label$8 (result anyref)
     (local.set $5
-     (br_on_non_i31 $label$7
+     (br_on_non_i31 $label$8
       (local.get $0)
      )
     )
