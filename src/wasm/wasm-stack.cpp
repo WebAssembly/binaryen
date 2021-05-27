@@ -2049,6 +2049,12 @@ void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
 }
 
+void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayCopy);
+  parent.writeIndexedHeapType(curr->destRef->type.getHeapType());
+  parent.writeIndexedHeapType(curr->srcRef->type.getHeapType());
+}
+
 void BinaryInstWriter::visitRefAs(RefAs* curr) {
   switch (curr->op) {
     case RefAsNonNull:
