@@ -655,6 +655,16 @@ switch (DELEGATE_ID) {
     DELEGATE_END(ArrayLen);
     break;
   }
+  case Expression::Id::ArrayCopyId: {
+    DELEGATE_START(ArrayLen);
+    DELEGATE_FIELD_CHILD(ArrayCopy, length);
+    DELEGATE_FIELD_CHILD(ArrayCopy, srcIndex);
+    DELEGATE_FIELD_CHILD(ArrayCopy, srcRef);
+    DELEGATE_FIELD_CHILD(ArrayCopy, destIndex);
+    DELEGATE_FIELD_CHILD(ArrayCopy, destRef);
+    DELEGATE_END(ArrayLen);
+    break;
+  }
   case Expression::Id::RefAsId: {
     DELEGATE_START(RefAs);
     DELEGATE_FIELD_INT(RefAs, op);

@@ -640,6 +640,7 @@ public:
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
+    ArrayCopyId,
     RefAsId,
     NumExpressionIds
   };
@@ -1445,12 +1446,12 @@ class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew(MixedArena& allocator) {}
 
-  Expression* rtt;
-  Expression* size;
   // If set, then the initial value is assigned to all entries in the array. If
   // not set, this is array.new_with_default and the default of the type is
   // used.
   Expression* init = nullptr;
+  Expression* size;
+  Expression* rtt;
 
   bool isWithDefault() { return !init; }
 
@@ -1485,6 +1486,19 @@ public:
   ArrayLen(MixedArena& allocator) {}
 
   Expression* ref;
+
+  void finalize();
+};
+
+class ArrayCopy : public SpecificExpression<Expression::ArrayCopyId> {
+public:
+  ArrayCopy(MixedArena& allocator) {}
+
+  Expression* destRef;
+  Expression* destIndex;
+  Expression* srcRef;
+  Expression* srcIndex;
+  Expression* length;
 
   void finalize();
 };

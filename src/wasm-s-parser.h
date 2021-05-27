@@ -286,6 +286,7 @@ private:
   Expression* makeArrayGet(Element& s, bool signed_ = false);
   Expression* makeArraySet(Element& s);
   Expression* makeArrayLen(Element& s);
+  Expression* makeArrayCopy(Element& s);
   Expression* makeRefAs(Element& s, RefAsOp op);
 
   // Helper functions

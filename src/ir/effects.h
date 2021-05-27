@@ -618,6 +618,12 @@ private:
         parent.implicitTrap = true;
       }
     }
+    void visitArrayLen(ArrayLen* curr) {
+      // traps when a ref is null
+      if (curr->srcRef->type.isNullable() || curr->destRef->type.isNullable()) {
+        parent.implicitTrap = true;
+      }
+    }
     void visitRefAs(RefAs* curr) {
       // traps when the arg is not valid
       if (curr->value->type.isNullable()) {

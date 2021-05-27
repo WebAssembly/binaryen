@@ -1618,6 +1618,13 @@ public:
       truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
+
+  // Arbitrary deterministic limit on size. If we need to allocate a Literals
+  // vector that takes around 1-2GB of memory then we are likely to hit memory
+  // limits on 32-bit machines, and in particular on wasm32 VMs that do not
+  // have 4GB support, so give up there.
+  static const Index ArrayLimit = (1 << 30) / sizeof(Literal);
+
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
     auto rtt = this->visit(curr->rtt);
@@ -1630,11 +1637,7 @@ public:
     }
     const auto& element = curr->rtt->type.getHeapType().getArray().element;
     Index num = size.getSingleValue().geti32();
-    // Arbitrary deterministic limit on size. If we need to allocate a Literals
-    // vector that takes around 1-2GB of memory then we are likely to hit memory
-    // limits on 32-bit machines, and in particular on wasm32 VMs that do not
-    // have 4GB support, so give up there.
-    if (num >= (1 << 30) / sizeof(Literal)) {
+    if (num >= ArrayLimit) {
       hostLimit("allocation failure");
     }
     Literals data(num);
@@ -1714,6 +1717,58 @@ public:
       trap("null ref");
     }
     return Literal(int32_t(data->values.size()));
+  }
+  Flow visitArrayCopy(ArrayCopy* curr) {
+    NOTE_ENTER("ArrayCopy");
+    Flow destRef = this->visit(curr->destRef);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow destIndex = this->visit(curr->destIndex);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow srcRef = this->visit(curr->srcRef);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow srcIndex = this->visit(curr->srcIndex);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow length = this->visit(curr->length);
+    if (dest.breaking()) {
+      return dest;
+    }
+    auto destData = destRef.getSingleValue().getGCData();
+    if (!destData) {
+      trap("null ref");
+    }
+    auto srcData = srcRef.getSingleValue().getGCData();
+    if (!srcData) {
+      trap("null ref");
+    }
+    auto destVal = destIndex.getSingleValue().getUnsigned();
+    auto srcVal = srcIndex.getSingleValue().getUnsigned();
+    auto lengthVal = length.getSingleValue().getUnsigned();
+    if (lengthVal >= ArrayLimit) {
+      hostLimit("allocation failure");
+    }
+    std::vector<Literal> copied;
+    copied.resize(lengthVal);
+    for (size_t i = 0; i < length; i++) {
+      if (srcVal + i >= srcData->values.size()) {
+        trap("oob");
+      }
+      copied[i] = srcData->values[srcVal + i];
+    }
+    for (size_t i = 0; i < length; i++) {
+      if (destVal + i >= destData->values.size()) {
+        trap("oob");
+      }
+      destData->values[destVal + i] = copied[i];
+    }
+    return Flow();
   }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");
