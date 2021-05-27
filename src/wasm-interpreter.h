@@ -1536,40 +1536,44 @@ public:
       // If the branch is not taken, we return the non-null value.
       return {value};
     }
+    // See if the input is the right kind (ignoring the flipping behavior of
+    // BrOn*).
+    bool isRightKind;
     if (value.isNull()) {
-      return {value};
+      // A null is never the right kind.
+      isRightKind = false;
+    } else {
+      switch (curr->op) {
+        case BrOnNonFunc:
+        case BrOnFunc:
+          isRightKind = value.type.isFunction();
+          break;
+        case BrOnNonData:
+        case BrOnData:
+          isRightKind = value.isData();
+          break;
+        case BrOnNonI31:
+        case BrOnI31:
+          isRightKind = value.type.getHeapType() == HeapType::i31;
+          break;
+        default:
+          WASM_UNREACHABLE("invalid br_on_*");
+      }
     }
-    bool flip = false;
+    // The Non* operations require us to flip the normal behavior.
     switch (curr->op) {
       case BrOnNonFunc:
-        flip = true;
-        [[fallthrough]];
-      case BrOnFunc:
-        if ((!value.type.isFunction()) ^ flip) {
-          return {value};
-        }
-        break;
       case BrOnNonData:
-        flip = true;
-        [[fallthrough]];
-      case BrOnData:
-        if ((!value.isData()) ^ flip) {
-          return {value};
-        }
-        break;
       case BrOnNonI31:
-        flip = true;
-        [[fallthrough]];
-      case BrOnI31:
-        if ((value.type.getHeapType() != HeapType::i31) ^ flip) {
-          return {value};
-        }
+        isRightKind = !isRightKind;
         break;
-      default:
-        WASM_UNREACHABLE("invalid br_on_*");
+      default: {}
     }
-    // No problems: take the branch.
-    return Flow(curr->name, value);
+    if (isRightKind) {
+      // Take the branch.
+      return Flow(curr->name, value);
+    }
+    return {value};
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {
