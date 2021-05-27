@@ -27,7 +27,7 @@ namespace GCTypeUtils {
 // certain kind. Various wasm instructions check if something is a function or
 // data etc., and that code is shared here.
 
-enum Kind { Func, NonFunc, Data, NonData, I31, NonI31, Other };
+enum Kind { Func, Data, I31, Other };
 
 enum EvaluationResult {
   // The result is not known at compile time.
@@ -46,6 +46,9 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
   Kind expected;
   Expression* child;
 
+  // Some operations flip the condition.
+  bool flip = false;
+
   if (auto* br = curr->dynCast<BrOn>()) {
     switch (br->op) {
       // We don't check nullability here.
@@ -54,23 +57,23 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
       case BrOnCast:
       case BrOnCastFail:
         return Unknown;
+      case BrOnNonFunc:
+        flip = true;
+        [[fallthrough]];
       case BrOnFunc:
         expected = Func;
         break;
-      case BrOnNonFunc:
-        expected = NonFunc;
-        break;
+      case BrOnNonData:
+        flip = true;
+        [[fallthrough]];
       case BrOnData:
         expected = Data;
         break;
-      case BrOnNonData:
-        expected = NonData;
-        break;
+      case BrOnNonI31:
+        flip = true;
+        [[fallthrough]];
       case BrOnI31:
         expected = I31;
-        break;
-      case BrOnNonI31:
-        expected = NonI31;
         break;
       default:
         WASM_UNREACHABLE("unhandled BrOn");
@@ -130,7 +133,11 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
     return Unknown;
   }
 
-  return actual == expected ? Success : Failure;
+  auto success = actual == expected;
+  if (flip) {
+    success = !success;
+  }
+  return success ? Success : Failure;
 }
 
 } // namespace GCTypeUtils
