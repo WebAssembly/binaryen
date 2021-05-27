@@ -404,7 +404,7 @@ Index getMaxBits(Expression* curr,
       case ExtendS32Int64:
       case ExtendSInt32: {
         auto maxBits = getMaxBits(unary->value, localInfoProvider);
-        return maxBits == 32 ? Index(64) : maxBits;
+        return maxBits >= 32 ? Index(64) : maxBits;
       }
       default: {
       }
