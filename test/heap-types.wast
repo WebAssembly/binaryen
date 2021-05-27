@@ -305,4 +305,13 @@
       (unreachable)
     )
   )
+  (func $array-copy (param $x (ref $vector)) (param $y (ref null $vector))
+    (array.copy $vector $vector
+      (local.get $x)
+      (i32.const 11)
+      (local.get $y)
+      (i32.const 42)
+      (i32.const 1337)
+    )
+  )
 )
