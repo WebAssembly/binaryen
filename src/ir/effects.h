@@ -618,7 +618,7 @@ private:
         parent.implicitTrap = true;
       }
     }
-    void visitArrayLen(ArrayLen* curr) {
+    void visitArrayCopy(ArrayCopy* curr) {
       // traps when a ref is null
       if (curr->srcRef->type.isNullable() || curr->destRef->type.isNullable()) {
         parent.implicitTrap = true;
