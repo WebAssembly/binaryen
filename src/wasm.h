@@ -1377,7 +1377,7 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast has an rtt that is used in the cast.
+  // BrOnCast* has an rtt that is used in the cast.
   Expression* rtt;
 
   // TODO: BrOnNull also has an optional extra value in the spec, which we do

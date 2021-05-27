@@ -2244,7 +2244,7 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
     shouldBeTrue(
       curr->ref->type.isRef(), curr, "br_on_cast ref must have ref type");
   }
-  if (curr->op == BrOnCast) {
+  if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
     // Note that an unreachable rtt is not supported: the text and binary
     // formats do not provide the type, so if it's unreachable we should not
     // even create a br_on_cast in such a case, as we'd have no idea what it
