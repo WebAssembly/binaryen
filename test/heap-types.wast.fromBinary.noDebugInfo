@@ -1,7 +1,7 @@
 (module
  (type ${i32_f32_f64} (struct (field i32) (field f32) (field f64)))
- (type $none_=>_none (func))
  (type ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|} (struct (field i8) (field (mut i16)) (field (ref ${i32_f32_f64})) (field (mut (ref ${i32_f32_f64})))))
+ (type $none_=>_none (func))
  (type $[mut:f64] (array (mut f64)))
  (type ${i32_i64} (struct (field i32) (field i64)))
  (type $[mut:ref?|[mut:f64]|] (array (mut (ref null $[mut:f64]))))
@@ -194,6 +194,7 @@
  )
  (func $4
   (local $0 (ref null ${i32_f32_f64}))
+  (local $1 (ref null ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
   (drop
    (ref.test
     (ref.null ${i32_f32_f64})
@@ -220,6 +221,17 @@
      )
      (unreachable)
     )
+   )
+  )
+  (drop
+   (block $label$3 (result (ref null ${i32_f32_f64}))
+    (local.set $1
+     (br_on_cast_fail $label$3
+      (ref.null ${i32_f32_f64})
+      (rtt.canon ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|})
+     )
+    )
+    (ref.null ${i32_f32_f64})
    )
   )
  )
@@ -268,6 +280,9 @@
  (func $7 (param $0 anyref)
   (local $1 anyref)
   (local $2 anyref)
+  (local $3 funcref)
+  (local $4 (ref null data))
+  (local $5 (ref null i31))
   (block $label$1
    (local.set $2
     (br_on_null $label$1
@@ -303,6 +318,36 @@
      )
     )
     (ref.null i31)
+   )
+  )
+  (drop
+   (block $label$5 (result anyref)
+    (local.set $3
+     (br_on_non_func $label$5
+      (local.get $0)
+     )
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $label$6 (result anyref)
+    (local.set $4
+     (br_on_non_data $label$6
+      (local.get $0)
+     )
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $label$7 (result anyref)
+    (local.set $5
+     (br_on_non_i31 $label$7
+      (local.get $0)
+     )
+    )
+    (ref.null any)
    )
   )
  )
