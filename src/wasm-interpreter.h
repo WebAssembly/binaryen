@@ -1567,7 +1567,8 @@ public:
       case BrOnNonI31:
         isRightKind = !isRightKind;
         break;
-      default: {}
+      default: {
+      }
     }
     if (isRightKind) {
       // Take the branch.
