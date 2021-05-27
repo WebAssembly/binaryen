@@ -6510,7 +6510,7 @@ bool WasmBinaryBuilder::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
   auto* srcRef = popNonVoidExpression();
   auto* destIndex = popNonVoidExpression();
   auto* destRef = popNonVoidExpression();
-  validateHeapTypeUsingChild(destRef, destheapType);
+  validateHeapTypeUsingChild(destRef, destHeapType);
   validateHeapTypeUsingChild(srcRef, srcHeapType);
   out =
     Builder(wasm).makeArrayCopy(destRef, destIndex, srcRef, srcIndex, length);

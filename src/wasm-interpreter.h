@@ -1721,24 +1721,24 @@ public:
   Flow visitArrayCopy(ArrayCopy* curr) {
     NOTE_ENTER("ArrayCopy");
     Flow destRef = this->visit(curr->destRef);
-    if (dest.breaking()) {
-      return dest;
+    if (destRef.breaking()) {
+      return destRef;
     }
     Flow destIndex = this->visit(curr->destIndex);
-    if (dest.breaking()) {
-      return dest;
+    if (destIndex.breaking()) {
+      return destIndex;
     }
     Flow srcRef = this->visit(curr->srcRef);
-    if (dest.breaking()) {
-      return dest;
+    if (srcRef.breaking()) {
+      return srcRef;
     }
     Flow srcIndex = this->visit(curr->srcIndex);
-    if (dest.breaking()) {
-      return dest;
+    if (srcIndex.breaking()) {
+      return srcIndex;
     }
     Flow length = this->visit(curr->length);
-    if (dest.breaking()) {
-      return dest;
+    if (length.breaking()) {
+      return length;
     }
     auto destData = destRef.getSingleValue().getGCData();
     if (!destData) {
@@ -1748,21 +1748,21 @@ public:
     if (!srcData) {
       trap("null ref");
     }
-    auto destVal = destIndex.getSingleValue().getUnsigned();
-    auto srcVal = srcIndex.getSingleValue().getUnsigned();
-    auto lengthVal = length.getSingleValue().getUnsigned();
+    size_t destVal = destIndex.getSingleValue().getUnsigned();
+    size_t srcVal = srcIndex.getSingleValue().getUnsigned();
+    size_t lengthVal = length.getSingleValue().getUnsigned();
     if (lengthVal >= ArrayLimit) {
       hostLimit("allocation failure");
     }
     std::vector<Literal> copied;
     copied.resize(lengthVal);
-    for (size_t i = 0; i < length; i++) {
+    for (size_t i = 0; i < lengthVal; i++) {
       if (srcVal + i >= srcData->values.size()) {
         trap("oob");
       }
       copied[i] = srcData->values[srcVal + i];
     }
-    for (size_t i = 0; i < length; i++) {
+    for (size_t i = 0; i < lengthVal; i++) {
       if (destVal + i >= destData->values.size()) {
         trap("oob");
       }

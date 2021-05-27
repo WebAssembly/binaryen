@@ -1064,7 +1064,7 @@ struct OptimizeInstructions
 
   void visitArrayLen(ArrayLen* curr) { skipNonNullCast(curr->ref); }
 
-  void visitArrayLen(ArrayLen* curr) {
+  void visitArrayCopy(ArrayCopy* curr) {
     skipNonNullCast(curr->destRef);
     skipNonNullCast(curr->srcRef);
   }
