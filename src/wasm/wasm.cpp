@@ -923,7 +923,7 @@ void BrOn::finalize() {
       // If we do not branch, we flow out the existing value as non-null.
       type = Type(ref->type.getHeapType(), NonNullable);
       break;
-    case BrONonNull:
+    case BrOnNonNull:
       // If we do not branch, we flow out nothing (the spec could also have had
       // us flow out the null, but it does not).
       type = Type::none;

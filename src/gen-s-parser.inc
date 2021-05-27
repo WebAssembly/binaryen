@@ -109,6 +109,9 @@ switch (op[0]) {
                           case 'i':
                             if (strcmp(op, "br_on_non_i31") == 0) { return makeBrOn(s, BrOnNonI31); }
                             goto parse_error;
+                          case 'n':
+                            if (strcmp(op, "br_on_non_null") == 0) { return makeBrOn(s, BrOnNonNull); }
+                            goto parse_error;
                           default: goto parse_error;
                         }
                       }

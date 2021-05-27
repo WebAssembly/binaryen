@@ -302,6 +302,27 @@
    )
   )
  )
+ (func "br-on_non_null"
+  (drop
+   (block $non-null (result (ref any))
+    (br_on_non_null $non-null (ref.func $a-void-func))
+    ;; $x refers to a function, which is not null, so we will branch, and not
+    ;; log
+    (call $log (i32.const 1))
+    (unreachable)
+   )
+  )
+ )
+ (func "br-on_non_null-2"
+  (drop
+   (block $non-null (result (ref any))
+    (br_on_non_null $non-null (ref.null any))
+    ;; $x is null, and so we will not branch, and log and then trap
+    (call $log (i32.const 1))
+    (unreachable)
+   )
+  )
+ )
  (func $a-void-func
   (call $log (i32.const 1337))
  )
