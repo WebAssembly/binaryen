@@ -619,10 +619,8 @@ private:
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
-      // traps when a ref is null
-      if (curr->srcRef->type.isNullable() || curr->destRef->type.isNullable()) {
-        parent.implicitTrap = true;
-      }
+      // traps when a ref is null, or when out of bounds.
+      parent.implicitTrap = true;
     }
     void visitRefAs(RefAs* curr) {
       // traps when the arg is not valid
