@@ -1891,14 +1891,26 @@ struct PrintExpressionContents
       case BrOnCast:
         printMedium(o, "br_on_cast ");
         break;
+      case BrOnCastFail:
+        printMedium(o, "br_on_cast_fail ");
+        break;
       case BrOnFunc:
         printMedium(o, "br_on_func ");
+        break;
+      case BrOnNonFunc:
+        printMedium(o, "br_on_non_func ");
         break;
       case BrOnData:
         printMedium(o, "br_on_data ");
         break;
+      case BrOnNonData:
+        printMedium(o, "br_on_non_data ");
+        break;
       case BrOnI31:
         printMedium(o, "br_on_i31 ");
+        break;
+      case BrOnNonI31:
+        printMedium(o, "br_on_non_i31 ");
         break;
       default:
         WASM_UNREACHABLE("invalid ref.is_*");

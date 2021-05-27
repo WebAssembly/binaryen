@@ -916,14 +916,36 @@ void BrOn::finalize() {
   if (ref->type == Type::unreachable ||
       (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
-  } else {
-    if (op == BrOnNull) {
-      // If BrOnNull does not branch, it flows out the existing value as
-      // non-null.
+    return;
+  }
+  switch (op) {
+    case BrOnNull:
+      // If we do not branch, it flows out the existing value as non-null.
       type = Type(ref->type.getHeapType(), NonNullable);
-    } else {
+      break;
+    case BrOnCast:
+    case BrOnFunc:
+    case BrOnData:
+    case BrOnI31:
+      // If we do not branch, we return the input in this case.
       type = ref->type;
-    }
+      break;
+    case BrOnCastFail:
+      // If we do not branch, the cast worked, and we have something of the cast
+      // type.
+      type = Type(rtt->type.getHeapType(), NonNullable);
+      break;
+    case BrOnNonFunc:
+      type = Type(HeapType::func, NonNullable);
+      break;
+    case BrOnData:
+      type = Type(HeapType::data, NonNullable);
+      break;
+    case BrOnI31:
+      type = Type(HeapType::i31, NonNullable);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid br_on_*");
   }
 }
 
@@ -934,12 +956,19 @@ Type BrOn::getCastType() {
       return Type::none;
     case BrOnCast:
       return Type(rtt->type.getHeapType(), NonNullable);
+    case BrOnCastFail:
+      return Type(rtt->type.getHeapType(), NonNullable);
     case BrOnFunc:
       return Type::funcref;
     case BrOnData:
       return Type::dataref;
     case BrOnI31:
       return Type::i31ref;
+    case BrOnCastFail:
+    case BrOnNonFunc:
+    case BrOnNonData:
+    case BrOnNonI31:
+      return ref->type;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
