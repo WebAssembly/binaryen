@@ -180,6 +180,50 @@
    )
   )
  )
+ (func "br_on_failed_cast-1"
+  (local $any anyref)
+  ;; create a simple $struct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $struct (rtt.canon $struct))
+  )
+  (drop
+   (block $any (result (ref null any))
+    (call $log (i32.const 1))
+    (drop
+     ;; try to cast our simple $struct to an extended, which will fail, and
+     ;; so we will branch, skipping the next logging.
+     (br_on_cast_fail $any
+      (local.get $any)
+      (rtt.canon $extendedstruct)
+     )
+    )
+    (call $log (i32.const 999)) ;; we should skip this
+    (ref.null any)
+   )
+  )
+ )
+ (func "br_on_failed_cast-2"
+  (local $any anyref)
+  ;; create an $extendedstruct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $extendedstruct (rtt.canon $extendedstruct))
+  )
+  (drop
+   (block $any (result (ref null any))
+    (call $log (i32.const 1))
+    (drop
+     ;; try to cast our simple $struct to an extended, which will succeed, and
+     ;; so we will continue to the next logging.
+     (br_on_cast_fail $any
+      (local.get $any)
+      (rtt.canon $extendedstruct)
+     )
+    )
+    (call $log (i32.const 999))
+    (ref.null any)
+   )
+  )
+ )
  (func "cast-null-anyref-to-gc"
   ;; a null anyref is a literal which is not even of GC data, as it's not an
   ;; array or a struct, so our casting code should not assume it is. it is ok
