@@ -2017,6 +2017,17 @@ struct PrintExpressionContents
     printMedium(o, "array.len ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
+  void visitArrayCopy(ArrayCopy* curr) {
+    if (curr->srcRef->type == Type::unreachable ||
+        curr->destRef->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
+    printMedium(o, "array.copy ");
+    TypeNamePrinter(o, wasm).print(curr->destRef->type.getHeapType());
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->srcRef->type.getHeapType());
+  }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
       case RefAsNonNull:

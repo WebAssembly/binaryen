@@ -268,6 +268,54 @@
    )
   )
  )
+ (func "array-copy"
+  (local $x (ref null $bytes))
+  (local $y (ref null $bytes))
+  ;; Create an array of 10's, of size 100.
+  (local.set $x
+   (array.new_with_rtt $bytes
+    (i32.const 10)
+    (i32.const 100)
+    (rtt.canon $bytes)
+   )
+  )
+  ;; Create an array of zeros of size 200, and also set one index there.
+  (local.set $y
+   (array.new_default_with_rtt $bytes
+    (i32.const 200)
+    (rtt.canon $bytes)
+   )
+  )
+  (array.set $bytes
+   (local.get $y)
+   (i32.const 42)
+   (i32.const 99)
+  )
+  ;; Log out a value from $x before.
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 10))
+  )
+  (array.copy $bytes $bytes
+   (local.get $x)
+   (i32.const 10)
+   (local.get $y)
+   (i32.const 42)
+   (i32.const 2)
+  )
+  ;; Log out some value from $x after. Indexes 10 and 11 should be modified.
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 9))
+  )
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 10))
+  )
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 11))
+  )
+  (call $log
+   (array.get_u $bytes (local.get $x) (i32.const 12))
+  )
+ )
 )
 (module
  (type $[mut:i8] (array (mut i8)))

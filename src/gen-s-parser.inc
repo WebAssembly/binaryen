@@ -11,6 +11,9 @@ switch (op[0]) {
     switch (op[1]) {
       case 'r': {
         switch (op[6]) {
+          case 'c':
+            if (strcmp(op, "array.copy") == 0) { return makeArrayCopy(s); }
+            goto parse_error;
           case 'g': {
             switch (op[9]) {
               case '\0':

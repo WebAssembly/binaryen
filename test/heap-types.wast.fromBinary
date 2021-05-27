@@ -1,8 +1,14 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
+<<<<<<< HEAD
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $none_=>_none (func))
  (type $vector (array (mut f64)))
+=======
+ (type $vector (array (mut f64)))
+ (type $none_=>_none (func))
+ (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
+>>>>>>> origin/main
  (type $grandchild (struct (field i32) (field i64)))
  (type $matrix (array (mut (ref null $vector))))
  (type $struct.C (struct (field $named-mut (mut f32))))
@@ -17,6 +23,7 @@
  (type $nested-child-array (array (mut (ref $child))))
  (type $rtt_1_$parent_=>_none (func (param (rtt 1 $parent))))
  (type $rtt_$parent_=>_none (func (param (rtt $parent))))
+ (type $ref|$vector|_ref?|$vector|_=>_none (func (param (ref $vector) (ref null $vector))))
  (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
  (global $rttchild (rtt 1 $child) (rtt.sub $child
   (global.get $rttparent)
@@ -392,6 +399,15 @@
    (i32.const 2)
   )
   (unreachable)
+ )
+ (func $array-copy (param $x (ref $vector)) (param $y (ref null $vector))
+  (array.copy $vector $vector
+   (local.get $x)
+   (i32.const 11)
+   (local.get $y)
+   (i32.const 42)
+   (i32.const 1337)
+  )
  )
 )
 

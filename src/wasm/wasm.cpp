@@ -1045,6 +1045,18 @@ void ArrayLen::finalize() {
   }
 }
 
+void ArrayCopy::finalize() {
+  if (srcRef->type == Type::unreachable ||
+      srcIndex->type == Type::unreachable ||
+      destRef->type == Type::unreachable ||
+      destIndex->type == Type::unreachable ||
+      length->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
+  }
+}
+
 void RefAs::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;

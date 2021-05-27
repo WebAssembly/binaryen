@@ -854,6 +854,20 @@ public:
     ret->finalize();
     return ret;
   }
+  ArrayCopy* makeArrayCopy(Expression* destRef,
+                           Expression* destIndex,
+                           Expression* srcRef,
+                           Expression* srcIndex,
+                           Expression* length) {
+    auto* ret = wasm.allocator.alloc<ArrayCopy>();
+    ret->destRef = destRef;
+    ret->destIndex = destIndex;
+    ret->srcRef = srcRef;
+    ret->srcIndex = srcIndex;
+    ret->length = length;
+    ret->finalize();
+    return ret;
+  }
   RefAs* makeRefAs(RefAsOp op, Expression* value) {
     auto* ret = wasm.allocator.alloc<RefAs>();
     ret->op = op;
