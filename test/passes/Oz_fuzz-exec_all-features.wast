@@ -253,17 +253,33 @@
   )
  )
  (func "br_on_non_data" (param $x anyref)
-  (local $y anyref)
   (drop
-   (block $data (result anyref)
-    (local.set $y
-     (br_on_non_data $data (local.get $x))
+   (block $any (result anyref)
+    (drop
+     (br_on_non_data $any (local.get $x))
     )
     ;; the input to $x is nullptr (as that is what --fuzz-exec passes in), and
     ;; so it is not data, and the branch will be taken, and no logging will
     ;; occur.
     (call $log (i32.const 1))
-    (call $get_data)
+    (ref.null any)
+   )
+  )
+ )
+ (func "br_on_non_data-2" (param $x anyref)
+  (local.set $x
+   (struct.new_default_with_rtt $struct
+    (rtt.canon $struct)
+   )
+  )
+  (drop
+   (block $any (result anyref)
+    (drop
+     (br_on_non_data $any (local.get $x))
+    )
+    ;; $x refers to valid data, and so we will not branch, and will log.
+    (call $log (i32.const 1))
+    (ref.null any)
    )
   )
  )

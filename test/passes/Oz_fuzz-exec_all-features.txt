@@ -31,6 +31,8 @@
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_non_data
+[fuzz-exec] calling br_on_non_data-2
+[LoggingExternalInterface logging 1]
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
@@ -70,11 +72,12 @@
  (export "cast-null-anyref-to-gc" (func $6))
  (export "br_on_data" (func $8))
  (export "br_on_non_data" (func $9))
- (export "rtt-and-cast-on-func" (func $11))
- (export "array-alloc-failure" (func $12))
- (export "init-array-packed" (func $13))
- (export "cast-func-to-struct" (func $15))
- (export "array-copy" (func $16))
+ (export "br_on_non_data-2" (func $10))
+ (export "rtt-and-cast-on-func" (func $12))
+ (export "array-alloc-failure" (func $13))
+ (export "init-array-packed" (func $14))
+ (export "cast-func-to-struct" (func $16))
+ (export "array-copy" (func $17))
  (func $0 (; has Stack IR ;)
   (local $0 i32)
   (call $log
@@ -303,19 +306,22 @@
  )
  (func $9 (; has Stack IR ;) (param $0 anyref)
   (drop
-   (block $data (result anyref)
+   (block $any (result anyref)
     (drop
-     (br_on_non_data $data
+     (br_on_non_data $any
       (local.get $0)
      )
     )
     (call $log
      (i32.const 1)
     )
-    (struct.new_default_with_rtt $struct
-     (rtt.canon $struct)
-    )
+    (ref.null any)
    )
+  )
+ )
+ (func $10 (; has Stack IR ;) (param $0 anyref)
+  (call $log
+   (i32.const 1)
   )
  )
  (func $a-void-func (; has Stack IR ;)
@@ -323,7 +329,7 @@
    (i32.const 1337)
   )
  )
- (func $11 (; has Stack IR ;)
+ (func $12 (; has Stack IR ;)
   (call $log
    (i32.const 0)
   )
@@ -349,10 +355,10 @@
    (i32.const 4)
   )
  )
- (func $12 (; has Stack IR ;)
+ (func $13 (; has Stack IR ;)
   (nop)
  )
- (func $13 (; has Stack IR ;) (result i32)
+ (func $14 (; has Stack IR ;) (result i32)
   (array.get_u $bytes
    (array.new_with_rtt $bytes
     (i32.const -43)
@@ -365,7 +371,7 @@
  (func $call-target (; has Stack IR ;) (param $0 eqref)
   (nop)
  )
- (func $15 (; has Stack IR ;)
+ (func $16 (; has Stack IR ;)
   (drop
    (ref.cast
     (ref.func $call-target)
@@ -373,7 +379,7 @@
    )
   )
  )
- (func $16 (; has Stack IR ;)
+ (func $17 (; has Stack IR ;)
   (local $0 (ref null $bytes))
   (local $1 (ref null $bytes))
   (array.set $bytes
@@ -464,6 +470,8 @@
 [fuzz-exec] calling br_on_data
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_non_data
+[fuzz-exec] calling br_on_non_data-2
+[LoggingExternalInterface logging 1]
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
