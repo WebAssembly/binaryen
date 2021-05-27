@@ -1888,6 +1888,9 @@ struct PrintExpressionContents
       case BrOnNull:
         printMedium(o, "br_on_null ");
         break;
+      case BrOnNonNull:
+        printMedium(o, "br_on_non_null ");
+        break;
       case BrOnCast:
         printMedium(o, "br_on_cast ");
         break;

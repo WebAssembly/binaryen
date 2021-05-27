@@ -923,6 +923,11 @@ void BrOn::finalize() {
       // If we do not branch, we flow out the existing value as non-null.
       type = Type(ref->type.getHeapType(), NonNullable);
       break;
+    case BrONonNull:
+      // If we do not branch, we flow out nothing (the spec could also have had
+      // us flow out the null, but it does not).
+      type = Type::none;
+      break;
     case BrOnCast:
     case BrOnFunc:
     case BrOnData:
@@ -954,6 +959,9 @@ Type BrOn::getCastType() {
     case BrOnNull:
       // BrOnNull does not send a value on the branch.
       return Type::none;
+    case BrOnNonNull:
+      // BrOnNonNull sends the non-nullable type on the branch.
+      return Type(ref->type.getHeapType(), NonNullable);
     case BrOnCast:
       return Type(rtt->type.getHeapType(), NonNullable);
     case BrOnFunc:

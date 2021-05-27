@@ -53,6 +53,7 @@ inline EvaluationResult evaluateKindCheck(Expression* curr) {
     switch (br->op) {
       // We don't check nullability here.
       case BrOnNull:
+      case BrOnNonNull:
       // Casts can only be known at runtime using RTTs.
       case BrOnCast:
       case BrOnCastFail:

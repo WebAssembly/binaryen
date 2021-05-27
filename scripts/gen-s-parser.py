@@ -539,6 +539,7 @@ instructions = [
     ("ref.test",             "makeRefTest(s)"),
     ("ref.cast",             "makeRefCast(s)"),
     ("br_on_null",           "makeBrOn(s, BrOnNull)"),
+    ("br_on_non_null",       "makeBrOn(s, BrOnNonNull)"),
     ("br_on_cast",           "makeBrOn(s, BrOnCast)"),
     ("br_on_cast_fail",      "makeBrOn(s, BrOnCastFail)"),
     ("br_on_func",           "makeBrOn(s, BrOnFunc)"),

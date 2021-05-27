@@ -545,6 +545,7 @@ enum RefAsOp {
 
 enum BrOnOp {
   BrOnNull,
+  BrOnNonNull,
   BrOnCast,
   BrOnCastFail,
   BrOnFunc,

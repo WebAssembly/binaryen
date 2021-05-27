@@ -1954,6 +1954,9 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
     case BrOnNull:
       o << int8_t(BinaryConsts::BrOnNull);
       break;
+    case BrOnNonNull:
+      o << int8_t(BinaryConsts::BrOnNonNull);
+      break;
     case BrOnCast:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
       break;

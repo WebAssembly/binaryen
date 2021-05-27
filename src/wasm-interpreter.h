@@ -1536,6 +1536,15 @@ public:
       // If the branch is not taken, we return the non-null value.
       return {value};
     }
+    if (curr->op == BrOnNonNull) {
+      // Unlike the others, BrOnNull does not return a value if it does not take
+      // the branch.
+      if (value.isNull()) {
+        return Flow();
+      }
+      // If the branch is taken, we send the non-null value.
+      return Flow(curr->name);
+    }
     // See if the input is the right kind (ignoring the flipping behavior of
     // BrOn*).
     bool isRightKind;

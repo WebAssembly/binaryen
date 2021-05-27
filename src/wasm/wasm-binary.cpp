@@ -3377,6 +3377,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::BrOnNull:
       maybeVisitBrOn(curr, code);
       break;
+    case BinaryConsts::BrOnNonNull:
+      maybeVisitBrOn(curr, code);
+      break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
       break;
@@ -6332,6 +6335,9 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
   switch (code) {
     case BinaryConsts::BrOnNull:
       op = BrOnNull;
+      break;
+    case BinaryConsts::BrOnNonNull:
+      op = BrOnNonNull;
       break;
     case BinaryConsts::BrOnCast:
       op = BrOnCast;
