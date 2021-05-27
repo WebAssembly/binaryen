@@ -2697,7 +2697,8 @@ Expression* SExpressionWasmBuilder::makeArrayCopy(Element& s) {
   validateHeapTypeUsingChild(srcRef, srcHeapType, s);
   auto destIndex = parseExpression(*s[6]);
   auto length = parseExpression(*s[7]);
-  return Builder(wasm).makeArrayCopy(destRef, destIndex, srcRef, srcIndex, length);
+  return Builder(wasm).makeArrayCopy(
+    destRef, destIndex, srcRef, srcIndex, length);
 }
 
 Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {

@@ -614,7 +614,8 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   }
   Index visitArrayCopy(ArrayCopy* curr) {
     // Similar to MemoryCopy.
-    return 6 + visit(curr->destRef) + visit(curr->destIndex) + visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
+    return 6 + visit(curr->destRef) + visit(curr->destIndex) +
+           visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
   }
   Index visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
 

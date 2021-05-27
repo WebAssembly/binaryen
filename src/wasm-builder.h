@@ -854,9 +854,11 @@ public:
     ret->finalize();
     return ret;
   }
-  ArrayCopy*
-  makeArrayCopy(Expression* destRef, Expression* destIndex,
-                Expression* srcRef, Expression* srcIndex, Expression* length) {
+  ArrayCopy* makeArrayCopy(Expression* destRef,
+                           Expression* destIndex,
+                           Expression* srcRef,
+                           Expression* srcIndex,
+                           Expression* length) {
     auto* ret = wasm.allocator.alloc<ArrayCopy>();
     ret->destRef = destRef;
     ret->destIndex = destIndex;
