@@ -96,6 +96,7 @@ public:
   Flow visitArrayNew(ArrayNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayGet(ArrayGet* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitArrayLen(ArrayLen* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitArrayCopy(ArrayCopy* curr) { return Flow(NONCONSTANT_FLOW); }
 };
 
 struct Precompute

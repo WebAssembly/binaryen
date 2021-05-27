@@ -1064,6 +1064,11 @@ struct OptimizeInstructions
 
   void visitArrayLen(ArrayLen* curr) { skipNonNullCast(curr->ref); }
 
+  void visitArrayCopy(ArrayCopy* curr) {
+    skipNonNullCast(curr->destRef);
+    skipNonNullCast(curr->srcRef);
+  }
+
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
       return;

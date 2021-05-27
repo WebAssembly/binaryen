@@ -385,6 +385,7 @@ public:
   void visitArrayGet(ArrayGet* curr);
   void visitArraySet(ArraySet* curr);
   void visitArrayLen(ArrayLen* curr);
+  void visitArrayCopy(ArrayCopy* curr);
   void visitFunction(Function* curr);
 
   // helpers
@@ -2455,6 +2456,31 @@ void FunctionValidator::visitArrayLen(ArrayLen* curr) {
     getModule()->features.hasGC(), curr, "array.len requires gc to be enabled");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "array.len result must be an i32");
+}
+
+void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
+  shouldBeTrue(getModule()->features.hasGC(),
+               curr,
+               "array.copy requires gc to be enabled");
+  shouldBeEqualOrFirstIsUnreachable(curr->srcIndex->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.copy src index must be an i32");
+  shouldBeEqualOrFirstIsUnreachable(curr->destIndex->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "array.copy dest index must be an i32");
+  if (curr->type == Type::unreachable) {
+    return;
+  }
+  const auto& srcElement = curr->srcRef->type.getHeapType().getArray().element;
+  const auto& destElement =
+    curr->destRef->type.getHeapType().getArray().element;
+  shouldBeSubType(srcElement.type,
+                  destElement.type,
+                  curr,
+                  "array.copy must have the proper types");
+  shouldBeTrue(destElement.mutable_, curr, "array.copy type must be mutable");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
