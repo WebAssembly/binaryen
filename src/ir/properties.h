@@ -146,6 +146,11 @@ inline Expression* getSignExtValue(Expression* curr) {
   if (curr->type != Type::i32) {
     return nullptr;
   }
+  // if (auto* unary = curr->dynCast<Unary>()) {
+  //   if (unary->op == ExtendS8Int32 || unary->op == ExtendS16Int32) {
+  //     return unary->value;
+  //   }
+  // }
   using namespace Match;
   int32_t leftShift = 0, rightShift = 0;
   Expression* extended = nullptr;

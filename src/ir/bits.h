@@ -387,19 +387,19 @@ Index getMaxBits(Expression* curr,
         return std::min(Index(32), getMaxBits(unary->value, localInfoProvider));
       case ExtendS8Int32: {
         auto maxBits = getMaxBits(unary->value, localInfoProvider);
-        return maxBits == 8 ? Index(32) : maxBits;
+        return maxBits >= 8 ? Index(32) : maxBits;
       }
       case ExtendS16Int32: {
         auto maxBits = getMaxBits(unary->value, localInfoProvider);
-        return maxBits == 16 ? Index(32) : maxBits;
+        return maxBits >= 16 ? Index(32) : maxBits;
       }
       case ExtendS8Int64: {
         auto maxBits = getMaxBits(unary->value, localInfoProvider);
-        return maxBits == 8 ? Index(64) : maxBits;
+        return maxBits >= 8 ? Index(64) : maxBits;
       }
       case ExtendS16Int64: {
         auto maxBits = getMaxBits(unary->value, localInfoProvider);
-        return maxBits == 16 ? Index(64) : maxBits;
+        return maxBits >= 16 ? Index(64) : maxBits;
       }
       case ExtendS32Int64:
       case ExtendSInt32: {
