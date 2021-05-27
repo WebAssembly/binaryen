@@ -21,28 +21,31 @@ namespace wasm {
 
 namespace Names {
 
-// Reserved words in JS up to size 4 - size 5 and above would mean we use an
-// astronomical number of symbols, which is not realistic anyhow.
-std::unordered_set<std::string> MinifiedNameGenerator::reserved = {"do",
-                                                                   "if",
-                                                                   "in",
-                                                                   "for",
-                                                                   "new",
-                                                                   "try",
-                                                                   "var",
-                                                                   "env",
-                                                                   "let",
-                                                                   "case",
-                                                                   "else",
-                                                                   "enum",
-                                                                   "void",
-                                                                   "this",
-                                                                   "with"};
+// Reserved words in JS that we will not emit up to size 4 - size 5 and above
+// would mean we use an astronomical number of symbols, which is not realistic
+// anyhow.
+static std::unordered_set<std::string> reserved = {"do",
+                                                   "if",
+                                                   "in",
+                                                   "for",
+                                                   "new",
+                                                   "try",
+                                                   "var",
+                                                   "env",
+                                                   "let",
+                                                   "case",
+                                                   "else",
+                                                   "enum",
+                                                   "void",
+                                                   "this",
+                                                   "with"};
 
-std::string MinifiedNameGenerator::validInitialChars =
+// Possible initial letters.
+static std::string validInitialChars =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$";
 
-std::string MinifiedNameGenerator::validLaterChars =
+// Possible later letters.
+static std::string validLaterChars =
   "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_$0123456789";
 
 std::string MinifiedNameGenerator::getName() {

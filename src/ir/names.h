@@ -88,15 +88,6 @@ inline Name getValidElementSegmentName(Module& module, Name root) {
 }
 
 class MinifiedNameGenerator {
-  // Reserved words we must not emit.
-  static std::unordered_set<std::string> reserved;
-
-  // Possible initial letters.
-  static std::string validInitialChars;
-
-  // Possible later letters.
-  static std::string validLaterChars;
-
   size_t state = 0;
 
 public:
