@@ -6333,21 +6333,33 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     case BinaryConsts::BrOnCast:
       op = BrOnCast;
       break;
+    case BinaryConsts::BrOnCastFail:
+      op = BrOnCastFail;
+      break;
     case BinaryConsts::BrOnFunc:
       op = BrOnFunc;
+      break;
+    case BinaryConsts::BrOnNonFunc:
+      op = BrOnNonFunc;
       break;
     case BinaryConsts::BrOnData:
       op = BrOnData;
       break;
+    case BinaryConsts::BrOnNonData:
+      op = BrOnNonData;
+      break;
     case BinaryConsts::BrOnI31:
       op = BrOnI31;
+      break;
+    case BinaryConsts::BrOnNonI31:
+      op = BrOnNonI31;
       break;
     default:
       return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
   Expression* rtt = nullptr;
-  if (op == BrOnCast) {
+  if (op == BrOnCast || op == BrOnCastFail) {
     rtt = popNonVoidExpression();
   }
   auto* ref = popNonVoidExpression();

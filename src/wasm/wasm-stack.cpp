@@ -1957,14 +1957,26 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
     case BrOnCast:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
       break;
+    case BrOnCastFail:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastFail);
+      break;
     case BrOnFunc:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnFunc);
+      break;
+    case BrOnNonFunc:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonFunc);
       break;
     case BrOnData:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnData);
       break;
+    case BrOnNonData:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonData);
+      break;
     case BrOnI31:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnI31);
+      break;
+    case BrOnNonI31:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonI31);
       break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
