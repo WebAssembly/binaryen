@@ -350,7 +350,7 @@
   (unreachable)
  )
  (func $17 (param $0 (ref $[mut:f64])) (param $1 (ref null $[mut:f64]))
-  (array.copy $[mut:f64]$[mut:f64]
+  (array.copy $[mut:f64] $[mut:f64]
    (local.get $0)
    (i32.const 11)
    (local.get $1)

@@ -2013,6 +2013,7 @@ struct PrintExpressionContents
     }
     printMedium(o, "array.copy ");
     TypeNamePrinter(o, wasm).print(curr->destRef->type.getHeapType());
+    o << ' ';
     TypeNamePrinter(o, wasm).print(curr->srcRef->type.getHeapType());
   }
   void visitRefAs(RefAs* curr) {
