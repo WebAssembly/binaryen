@@ -1069,9 +1069,9 @@ enum ASTNodes {
   BrOnFunc = 0x60,
   BrOnData = 0x61,
   BrOnI31 = 0x62,
-  BrOnFunc = 0x63,
-  BrOnData = 0x64,
-  BrOnI31 = 0x65,
+  BrOnNonFunc = 0x63,
+  BrOnNonData = 0x64,
+  BrOnNonI31 = 0x65,
 };
 
 enum MemoryAccess {

@@ -1500,17 +1500,25 @@ public:
   }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
-    // BrOnCast uses the casting infrastructure, so handle it first.
-    if (curr->op == BrOnCast) {
+    // BrOnCast* uses the casting infrastructure, so handle it first.
+    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       auto cast = doCast(curr);
       if (cast.outcome == cast.Break) {
         return cast.breaking;
       }
       if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
-        return cast.originalRef;
+        if (curr->op == BrOnCast) {
+          return cast.originalRef;
+        } else {
+          return Flow(curr->name, cast.originalRef);
+        }
       }
       assert(cast.outcome == cast.Success);
-      return Flow(curr->name, cast.castRef);
+      if (curr->op == BrOnCast) {
+        return Flow(curr->name, cast.castRef);
+      } else {
+        return cast.castRef;
+      }
     }
     // The others do a simpler check for the type.
     Flow flow = visit(curr->ref);
@@ -1531,19 +1539,29 @@ public:
     if (value.isNull()) {
       return {value};
     }
+    bool flip = false;
     switch (curr->op) {
+      case BrOnNonFunc:
+        flip = true;
+        [[fallthrough]];
       case BrOnFunc:
-        if (!value.type.isFunction()) {
+        if (!value.type.isFunction() ^^ flip) {
           return {value};
         }
         break;
+      case BrOnNonData:
+        flip = true;
+        [[fallthrough]];
       case BrOnData:
-        if (!value.isData()) {
+        if (!value.isData() ^^ flip) {
           return {value};
         }
         break;
+      case BrOnNonI31:
+        flip = true;
+        [[fallthrough]];
       case BrOnI31:
-        if (value.type.getHeapType() != HeapType::i31) {
+        if ((value.type.getHeapType() != HeapType::i31) ^^ flip) {
           return {value};
         }
         break;
