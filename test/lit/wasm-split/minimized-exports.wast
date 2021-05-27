@@ -4,8 +4,8 @@
 
 ;; PRIMARY:      (module
 ;; PRIMARY-NEXT:   (type $none_=>_none (func))
-;; PRIMARY-NEXT:   (export "% " (func $1))
-;; PRIMARY-NEXT:   (export "%!" (func $0))
+;; PRIMARY-NEXT:   (export "%a" (func $1))
+;; PRIMARY-NEXT:   (export "%b" (func $0))
 ;; PRIMARY-NEXT:   (func $0
 ;; PRIMARY-NEXT:     (nop)
 ;; PRIMARY-NEXT:   )
@@ -16,8 +16,8 @@
 
 ;; SECONDARY:      (module
 ;; SECONDARY-NEXT:   (type $none_=>_none (func))
-;; SECONDARY-NEXT:   (import "primary" "% " (func $fimport$0))
-;; SECONDARY-NEXT:   (import "primary" "%!" (func $fimport$1))
+;; SECONDARY-NEXT:   (import "primary" "%a" (func $fimport$0))
+;; SECONDARY-NEXT:   (import "primary" "%b" (func $fimport$1))
 ;; SECONDARY-NEXT:   (func $0
 ;; SECONDARY-NEXT:     (call $fimport$1)
 ;; SECONDARY-NEXT:     (call $fimport$0)
