@@ -405,6 +405,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       anotherCycle = true;
       return;
     }
+    if (curr->op == BrOnNonNull) {
+      // This cannot be null, so the br is always taken.
+      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
+      anotherCycle = true;
+      return;
+    }
 
     // Check if the type is the kind we are checking for.
     auto result = GCTypeUtils::evaluateKindCheck(curr);
