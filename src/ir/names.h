@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef wasm_ir_names_h
 #define wasm_ir_names_h
 
@@ -87,6 +86,23 @@ inline Name getValidElementSegmentName(Module& module, Name root) {
   return getValidName(
     root, [&](Name test) { return !module.getElementSegmentOrNull(test); });
 }
+
+class MinifiedNameGenerator {
+  // Reserved words we must not emit.
+  static std::unordered_set<std::string> reserved;
+
+  // Possible initial letters.
+  static std::string validInitialChars;
+
+  // Possible later letters.
+  static std::string validLaterChars;
+
+  size_t state = 0;
+
+public:
+  // Get a fresh minified name.
+  std::string getName();
+};
 
 } // namespace Names
 
