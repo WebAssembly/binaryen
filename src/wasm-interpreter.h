@@ -1545,7 +1545,7 @@ public:
         flip = true;
         [[fallthrough]];
       case BrOnFunc:
-        if (!value.type.isFunction() ^^ flip) {
+        if ((!value.type.isFunction()) ^ flip) {
           return {value};
         }
         break;
@@ -1553,7 +1553,7 @@ public:
         flip = true;
         [[fallthrough]];
       case BrOnData:
-        if (!value.isData() ^^ flip) {
+        if ((!value.isData()) ^ flip) {
           return {value};
         }
         break;
@@ -1561,7 +1561,7 @@ public:
         flip = true;
         [[fallthrough]];
       case BrOnI31:
-        if ((value.type.getHeapType() != HeapType::i31) ^^ flip) {
+        if ((value.type.getHeapType() != HeapType::i31) ^ flip) {
           return {value};
         }
         break;

@@ -938,10 +938,10 @@ void BrOn::finalize() {
     case BrOnNonFunc:
       type = Type(HeapType::func, NonNullable);
       break;
-    case BrOnData:
+    case BrOnNonData:
       type = Type(HeapType::data, NonNullable);
       break;
-    case BrOnI31:
+    case BrOnNonI31:
       type = Type(HeapType::i31, NonNullable);
       break;
     default:
@@ -955,8 +955,6 @@ Type BrOn::getCastType() {
       // BrOnNull does not send a value on the branch.
       return Type::none;
     case BrOnCast:
-      return Type(rtt->type.getHeapType(), NonNullable);
-    case BrOnCastFail:
       return Type(rtt->type.getHeapType(), NonNullable);
     case BrOnFunc:
       return Type::funcref;
