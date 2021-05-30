@@ -39,32 +39,32 @@
 
 ;; Split mode requires -o1 and -o2 rather than -o
 ;; RUN: not wasm-split %s -o %t 2>&1 \
-;; RUN:   | filecheck %s --check-prefix NO-INSTRUMENT-OUT
+;; RUN:   | filecheck %s --check-prefix SPLIT-OUT
 
 ;; --instrument is required to use --profile-export
 ;; RUN: not wasm-split %s --profile-export=foo 2>&1 \
-;; RUN:   | filecheck %s --check-prefix NO-INSTRUMENT-PROFILE-EXPORT
+;; RUN:   | filecheck %s --check-prefix SPLIT-PROFILE-EXPORT
 
-;; INSTRUMENT-PROFILE: error: --profile cannot be used with --instrument
+;; INSTRUMENT-PROFILE: error: Option --profile cannot be used in instrument mode.
 
-;; INSTRUMENT-OUT1: error: primary output cannot be used with --instrument
+;; INSTRUMENT-OUT1: error: Option --primary-output cannot be used in instrument mode.
 
-;; INSTRUMENT-OUT2: error: secondary output cannot be used with --instrument
+;; INSTRUMENT-OUT2: error: Option --secondary-output cannot be used in instrument mode.
 
-;; INSTRUMENT-SYMBOLMAP: error: --symbolmap cannot be used with --instrument
+;; INSTRUMENT-SYMBOLMAP: error: Option --symbolmap cannot be used in instrument mode.
 
-;; INSTRUMENT-IMPORT-NS: error: --import-namespace cannot be used with --instrument
+;; INSTRUMENT-IMPORT-NS: error: Option --import-namespace cannot be used in instrument mode.
 
-;; INSTRUMENT-PLACEHOLDER-NS: error: --placeholder-namespace cannot be used with --instrument
+;; INSTRUMENT-PLACEHOLDER-NS: error: Option --placeholder-namespace cannot be used in instrument mode.
 
-;; INSTRUMENT-EXPORT-PREFIX: error: --export-prefix cannot be used with --instrument
+;; INSTRUMENT-EXPORT-PREFIX: error: Option --export-prefix cannot be used in instrument mode.
 
-;; INSTRUMENT-KEEP-FUNCS: error: --keep-funcs cannot be used with --instrument
+;; INSTRUMENT-KEEP-FUNCS: error: Option --keep-funcs cannot be used in instrument mode.
 
-;; INSTRUMENT-SPLIT-FUNCS: error: --split-funcs cannot be used with --instrument
+;; INSTRUMENT-SPLIT-FUNCS: error: Option --split-funcs cannot be used in instrument mode.
 
-;; NO-INSTRUMENT-OUT: error: must provide separate primary and secondary output with -o1 and -o2
+;; SPLIT-OUT: error: Option --output cannot be used in split mode.
 
-;; NO-INSTRUMENT-PROFILE-EXPORT: error: --profile-export must be used with --instrument
+;; SPLIT-PROFILE-EXPORT: error: Option --profile-export cannot be used in split mode.
 
 (module)
