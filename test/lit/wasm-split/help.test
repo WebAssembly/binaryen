@@ -1,6 +1,6 @@
 ;; RUN: wasm-split --help | filecheck %s
 
-CHECK:      wasm-split INFILE
+CHECK:      wasm-split INFILES
 CHECK-NEXT:
 CHECK-NEXT: Split a module into a primary module and a secondary module, or instrument a
 CHECK-NEXT: module to gather a profile that can inform future splitting, or manage such
@@ -16,6 +16,8 @@ CHECK-NEXT:                                        modules. The default mode.
 CHECK-NEXT:   --instrument                         Instrument an input module to allow it to
 CHECK-NEXT:                                        generate a profile that can be used to
 CHECK-NEXT:                                        guide splitting.
+CHECK-NEXT:   --merge-profiles                     Merge multiple profiles for the same
+CHECK-NEXT:                                        module into a single profile.
 CHECK-NEXT:   --profile                            [split] The profile to use to guide
 CHECK-NEXT:                                        splitting.
 CHECK-NEXT:   --keep-funcs                         [split] Comma-separated list of functions
@@ -41,7 +43,6 @@ CHECK-NEXT:                                        primary module.
 CHECK-NEXT:   --export-prefix                      [split] An identifying prefix to prepend
 CHECK-NEXT:                                        to new export names created by module
 CHECK-NEXT:                                        splitting.
-CHECK-NEXT:   --output,-o                          [instrument] Output file.
 CHECK-NEXT:   --profile-export                     [instrument] The export name of the
 CHECK-NEXT:                                        function the embedder calls to write the
 CHECK-NEXT:                                        profile into memory. Defaults to
@@ -59,10 +60,11 @@ CHECK-NEXT:                                        same table size when using Em
 CHECK-NEXT:                                        SPLIT_MODULE mode with dynamic linking.
 CHECK-NEXT:                                        TODO: Figure out a more elegant solution
 CHECK-NEXT:                                        for that use case and remove this.
+CHECK-NEXT:   --emit-text,-S                       [split, instrument] Emit text instead of
+CHECK-NEXT:                                        binary for the output file or files.
+CHECK-NEXT:   --debuginfo,-g                       [split, instrument] Emit names section in
+CHECK-NEXT:                                        wasm binary (or full debuginfo in wast)
+CHECK-NEXT:   --output,-o                          [instrument, merge-profiles] Output file.
 CHECK-NEXT:   --verbose,-v                         Verbose output mode. Prints the functions
 CHECK-NEXT:                                        that will be kept and split out when
 CHECK-NEXT:                                        splitting a module.
-CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
-CHECK-NEXT:                                        output file or files.
-CHECK-NEXT:   --debuginfo,-g                       Emit names section in wasm binary (or
-CHECK-NEXT:                                        full debuginfo in wast)

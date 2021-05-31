@@ -45,6 +45,14 @@
 ;; RUN: not wasm-split %s --profile-export=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix SPLIT-PROFILE-EXPORT
 
+;; -S cannot be used with --merge-profiles
+;; RUN: not wasm-split %s --merge-profiles -S 2>&1 \
+;; RUN:   | filecheck %s --check-prefix MERGE-EMIT-TEXT
+
+;; -g cannot be used with --merge-profiles
+;; RUN: not wasm-split %s --merge-profiles -g 2>&1 \
+;; RUN:   | filecheck %s --check-prefix MERGE-DEBUGINFO
+
 ;; INSTRUMENT-PROFILE: error: Option --profile cannot be used in instrument mode.
 
 ;; INSTRUMENT-OUT1: error: Option --primary-output cannot be used in instrument mode.
@@ -66,5 +74,9 @@
 ;; SPLIT-OUT: error: Option --output cannot be used in split mode.
 
 ;; SPLIT-PROFILE-EXPORT: error: Option --profile-export cannot be used in split mode.
+
+;; MERGE-EMIT-TEXT: error: Option --emit-text cannot be used in merge-profiles mode.
+
+;; MERGE-DEBUGINFO: error: Option --debuginfo cannot be used in merge-profiles mode.
 
 (module)
