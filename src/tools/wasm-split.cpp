@@ -48,11 +48,17 @@ std::set<Name> parseNameList(const std::string& list) {
 }
 
 struct WasmSplitOptions : ToolOptions {
+  enum class Mode : unsigned {
+    Split,
+    Instrument,
+  };
+  Mode mode = Mode::Split;
+  constexpr static size_t NumModes =
+    static_cast<unsigned>(Mode::Instrument) + 1;
+
   bool verbose = false;
   bool emitBinary = true;
   bool symbolMap = false;
-
-  bool instrument = false;
 
   // TODO: Remove this. See the comment in wasm-binary.h.
   bool emitModuleNames = false;
@@ -77,7 +83,22 @@ struct WasmSplitOptions : ToolOptions {
   // Figure out a more elegant solution for that use case and remove this.
   int initialTableSize = -1;
 
+  // The options that are valid for each mode.
+  std::array<std::unordered_set<std::string>, NumModes> validOptions;
+  std::vector<std::string> usedOptions;
+
   WasmSplitOptions();
+  WasmSplitOptions& add(const std::string& longName,
+                        const std::string& shortName,
+                        const std::string& description,
+                        std::vector<Mode>&& modes,
+                        Arguments arguments,
+                        const Action& action);
+  WasmSplitOptions& add(const std::string& longName,
+                        const std::string& shortName,
+                        const std::string& description,
+                        Arguments arguments,
+                        const Action& action);
   bool validate();
   void parse(int argc, const char* argv[]);
 };
@@ -85,35 +106,35 @@ struct WasmSplitOptions : ToolOptions {
 WasmSplitOptions::WasmSplitOptions()
   : ToolOptions("wasm-split",
                 "Split a module into a primary module and a secondary "
-                "module or instrument a module to gather a profile that "
-                "can inform future splitting.") {
+                "module, or instrument a module to gather a profile that "
+                "can inform future splitting, or manage such profiles. Options "
+                "that are only accepted in particular modes are marked with "
+                "the accepted \"[<modes>]\" in their descriptions.") {
   (*this)
-    .add("--instrument",
+    .add("--split",
          "",
-         "Instrument the module to generate a profile that can be used to "
-         "guide splitting",
+         "Split an input module into two output modules. The default mode.",
          Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { instrument = true; })
+         [&](Options* o, const std::string& arugment) { mode = Mode::Split; })
+    .add(
+      "--instrument",
+      "",
+      "Instrument an input module to allow it to generate a profile that can"
+      " be used to guide splitting.",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { mode = Mode::Instrument; })
     .add(
       "--profile",
       "",
-      "The profile to use to guide splitting. May not be used with "
-      "--instrument.",
+      "The profile to use to guide splitting.",
+      {Mode::Split},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { profileFile = argument; })
-    .add("--profile-export",
-         "",
-         "The export name of the function the embedder calls to write the "
-         "profile into memory. Defaults to `__write_profile`. Must be used "
-         "with --instrument.",
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           profileExport = argument;
-         })
     .add("--keep-funcs",
          "",
          "Comma-separated list of functions to keep in the primary module, "
          "regardless of any profile.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            keepFuncs = parseNameList(argument);
@@ -123,39 +144,38 @@ WasmSplitOptions::WasmSplitOptions()
          "Comma-separated list of functions to split into the secondary "
          "module, regardless of any profile. If there is no profile, then "
          "this defaults to all functions defined in the module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            splitFuncs = parseNameList(argument);
          })
-    .add("--output",
-         "-o",
-         "Output file. Only usable with --instrument.",
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) { output = argument; })
     .add("--primary-output",
          "-o1",
-         "Output file for the primary module. Not usable with --instrument.",
+         "Output file for the primary module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            primaryOutput = argument;
          })
     .add("--secondary-output",
          "-o2",
-         "Output file for the secondary module. Not usable with --instrument.",
+         "Output file for the secondary module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            secondaryOutput = argument;
          })
     .add("--symbolmap",
          "",
-         "Write a symbol map file for each of the output modules. Not usable "
-         "with --instrument.",
+         "Write a symbol map file for each of the output modules.",
+         {Mode::Split},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { symbolMap = true; })
     .add("--import-namespace",
          "",
          "The namespace from which to import objects from the primary "
          "module into the secondary module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
@@ -164,6 +184,7 @@ WasmSplitOptions::WasmSplitOptions()
          "",
          "The namespace from which to import placeholder functions into "
          "the primary module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            placeholderNamespace = argument;
@@ -173,8 +194,45 @@ WasmSplitOptions::WasmSplitOptions()
       "",
       "An identifying prefix to prepend to new export names created "
       "by module splitting.",
+      {Mode::Split},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { exportPrefix = argument; })
+    .add("--output",
+         "-o",
+         "Output file.",
+         {Mode::Instrument},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { output = argument; })
+    .add("--profile-export",
+         "",
+         "The export name of the function the embedder calls to write the "
+         "profile into memory. Defaults to `__write_profile`.",
+         {Mode::Instrument},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           profileExport = argument;
+         })
+    .add(
+      "--emit-module-names",
+      "",
+      "Emit module names, even if not emitting the rest of the names section. "
+      "Can help differentiate the modules in stack traces. This option will be "
+      "removed once simpler ways of naming modules are widely available. See "
+      "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
+      {Mode::Split, Mode::Instrument},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
+    .add("--initial-table",
+         "",
+         "A hack to ensure the split and instrumented modules have the same "
+         "table size when using Emscripten's SPLIT_MODULE mode with dynamic "
+         "linking. TODO: Figure out a more elegant solution for that use "
+         "case and remove this.",
+         {Mode::Split, Mode::Instrument},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           initialTableSize = std::stoi(argument);
+         })
     .add("--verbose",
          "-v",
          "Verbose output mode. Prints the functions that will be kept "
@@ -196,29 +254,65 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& arguments) {
            passOptions.debugInfo = true;
          })
-    .add(
-      "--emit-module-names",
-      "",
-      "Emit module names, even if not emitting the rest of the names section. "
-      "Can help differentiate the modules in stack traces. This option will be "
-      "removed once simpler ways of naming modules are widely available. See "
-      "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
-      Options::Arguments::Zero,
-      [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
-    .add("--initial-table",
-         "",
-         "A hack to ensure the split and instrumented modules have the same "
-         "table size when using Emscripten's SPLIT_MODULE mode with dynamic "
-         "linking. TODO: Figure out a more elegant solution for that use "
-         "case and remove this.",
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           initialTableSize = std::stoi(argument);
-         })
     .add_positional(
       "INFILE",
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { input = argument; });
+}
+
+std::ostream& operator<<(std::ostream& o, WasmSplitOptions::Mode& mode) {
+  switch (mode) {
+    case WasmSplitOptions::Mode::Split:
+      o << "split";
+      break;
+    case WasmSplitOptions::Mode::Instrument:
+      o << "instrument";
+      break;
+  }
+  return o;
+}
+
+WasmSplitOptions& WasmSplitOptions::add(const std::string& longName,
+                                        const std::string& shortName,
+                                        const std::string& description,
+                                        std::vector<Mode>&& modes,
+                                        Arguments arguments,
+                                        const Action& action) {
+  // Insert the valid modes at the beginning of the description.
+  std::stringstream desc;
+  if (modes.size()) {
+    desc << '[';
+    std::string sep = "";
+    for (Mode m : modes) {
+      validOptions[static_cast<unsigned>(m)].insert(longName);
+      desc << sep << m;
+      sep = ", ";
+    }
+    desc << "] ";
+  }
+  desc << description;
+  ToolOptions::add(
+    longName,
+    shortName,
+    desc.str(),
+    arguments,
+    [&, action, longName](Options* o, const std::string& argument) {
+      usedOptions.push_back(longName);
+      action(o, argument);
+    });
+  return *this;
+}
+
+WasmSplitOptions& WasmSplitOptions::add(const std::string& longName,
+                                        const std::string& shortName,
+                                        const std::string& description,
+                                        Arguments arguments,
+                                        const Action& action) {
+  // Add an option valid in all modes.
+  for (unsigned i = 0; i < NumModes; ++i) {
+    validOptions[i].insert(longName);
+  }
+  return add(longName, shortName, description, {}, arguments, action);
 }
 
 bool WasmSplitOptions::validate() {
@@ -231,46 +325,27 @@ bool WasmSplitOptions::validate() {
   if (!input.size()) {
     fail("no input file");
   }
-  if (instrument) {
-    using Opt = std::pair<const std::string&, const std::string>;
-    for (auto& opt : {Opt{profileFile, "--profile"},
-                      Opt{primaryOutput, "primary output"},
-                      Opt{secondaryOutput, "secondary output"},
-                      Opt{importNamespace, "--import-namespace"},
-                      Opt{placeholderNamespace, "--placeholder-namespace"},
-                      Opt{exportPrefix, "--export-prefix"}}) {
-      if (opt.first.size()) {
-        fail(opt.second + " cannot be used with --instrument");
-      }
-    }
-    if (keepFuncs.size()) {
-      fail("--keep-funcs cannot be used with --instrument");
-    }
-    if (splitFuncs.size()) {
-      fail("--split-funcs cannot be used with --instrument");
-    }
-    if (symbolMap) {
-      fail("--symbolmap cannot be used with --instrument");
-    }
-  } else {
-    if (output.size()) {
-      fail(
-        "must provide separate primary and secondary output with -o1 and -o2");
-    }
-    if (profileExport != DEFAULT_PROFILE_EXPORT) {
-      fail("--profile-export must be used with --instrument");
+
+  // Validate that all used options are allowed in the current mode.
+  for (std::string& opt : usedOptions) {
+    if (!validOptions[static_cast<unsigned>(mode)].count(opt)) {
+      std::stringstream msg;
+      msg << "Option " << opt << " cannot be used in " << mode << " mode.";
+      fail(msg.str());
     }
   }
 
-  std::vector<Name> impossible;
-  std::set_intersection(keepFuncs.begin(),
-                        keepFuncs.end(),
-                        splitFuncs.begin(),
-                        splitFuncs.end(),
-                        std::inserter(impossible, impossible.end()));
-  for (auto& func : impossible) {
-    fail(std::string("Cannot both keep and split out function ") +
-         func.c_str());
+  if (mode == Mode::Split) {
+    std::vector<Name> impossible;
+    std::set_intersection(keepFuncs.begin(),
+                          keepFuncs.end(),
+                          splitFuncs.begin(),
+                          splitFuncs.end(),
+                          std::inserter(impossible, impossible.end()));
+    for (auto& func : impossible) {
+      fail(std::string("Cannot both keep and split out function ") +
+           func.c_str());
+    }
   }
 
   return valid;
@@ -719,9 +794,12 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error validating input";
   }
 
-  if (options.instrument) {
-    instrumentModule(wasm, options);
-  } else {
-    splitModule(wasm, options);
+  switch (options.mode) {
+    case WasmSplitOptions::Mode::Split:
+      splitModule(wasm, options);
+      break;
+    case WasmSplitOptions::Mode::Instrument:
+      instrumentModule(wasm, options);
+      break;
   }
 }
