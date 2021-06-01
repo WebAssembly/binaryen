@@ -275,12 +275,28 @@ def compare(x, y, context):
         ))
 
 
+# converts a possibly-signed integer to an unsigned integer
+def unsign(x, bits):
+  return x & (2**bits - 1)
+
+
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
     # handle nan comparisons like -nan:0x7ffff0 vs NaN, ignoring the bits
     if 'nan' in x.lower() and 'nan' in y.lower():
         return True
+    # if one input is a pair, then it is in fact a 64-bit integer that is
+    # reported as two 32-bit chunks. convert such 'low high' pairs into a 64-bit
+    # integer for comparison to the other value
+    if ' ' in x or ' ' in y:
+        def to_64_bit(a):
+            if ' ' not in a:
+                return unsign(int(a), bits=64)
+            low, high = map(lambda x: unsign(int(x), bits=32), a.split(' '))
+            return low + (2**32) * high
+
+        return to_64_bit(x) == to_64_bit(y)
     # float() on the strings will handle many minor differences, like
     # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
     try:
