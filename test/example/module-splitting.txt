@@ -1107,3 +1107,75 @@ Secondary:
 )
 
 
+Minimized names primary:
+(module
+ (type $none_=>_none (func))
+ (export "already_exported" (func $3))
+ (export "%b" (func $7))
+ (export "%a" (func $0))
+ (export "%c" (func $1))
+ (export "%d" (func $2))
+ (export "%e" (func $4))
+ (export "%f" (func $5))
+ (export "%g" (func $6))
+ (export "%h" (func $8))
+ (export "%i" (func $9))
+ (func $0
+  (nop)
+ )
+ (func $1
+  (nop)
+ )
+ (func $2
+  (nop)
+ )
+ (func $3
+  (nop)
+ )
+ (func $4
+  (nop)
+ )
+ (func $5
+  (nop)
+ )
+ (func $6
+  (nop)
+ )
+ (func $7
+  (nop)
+ )
+ (func $8
+  (nop)
+ )
+ (func $9
+  (nop)
+ )
+)
+
+Minimized names secondary:
+(module
+ (type $none_=>_none (func))
+ (import "primary" "%a" (func $0))
+ (import "primary" "%c" (func $1))
+ (import "primary" "%d" (func $2))
+ (import "primary" "already_exported" (func $3))
+ (import "primary" "%e" (func $4))
+ (import "primary" "%f" (func $5))
+ (import "primary" "%g" (func $6))
+ (import "primary" "%b" (func $7))
+ (import "primary" "%h" (func $8))
+ (import "primary" "%i" (func $9))
+ (func $call
+  (call $0)
+  (call $1)
+  (call $2)
+  (call $3)
+  (call $4)
+  (call $5)
+  (call $6)
+  (call $7)
+  (call $8)
+  (call $9)
+ )
+)
+
