@@ -53,7 +53,8 @@ struct WasmSplitOptions : ToolOptions {
     Instrument,
   };
   Mode mode = Mode::Split;
-  constexpr static unsigned MODES = static_cast<unsigned>(Mode::Instrument) + 1;
+  constexpr static size_t NumModes =
+    static_cast<unsigned>(Mode::Instrument) + 1;
 
   bool verbose = false;
   bool emitBinary = true;
@@ -83,7 +84,7 @@ struct WasmSplitOptions : ToolOptions {
   int initialTableSize = -1;
 
   // The options that are valid for each mode.
-  std::array<std::unordered_set<std::string>, MODES> validOptions;
+  std::array<std::unordered_set<std::string>, NumModes> validOptions;
   std::vector<std::string> usedOptions;
 
   WasmSplitOptions();
@@ -106,7 +107,9 @@ WasmSplitOptions::WasmSplitOptions()
   : ToolOptions("wasm-split",
                 "Split a module into a primary module and a secondary "
                 "module, or instrument a module to gather a profile that "
-                "can inform future splitting, or manage such profiles.") {
+                "can inform future splitting, or manage such profiles. Options "
+                "that are only accepted in particular modes are marked with "
+                "the accepted \"[<modes>]\" in their descriptions.") {
   (*this)
     .add("--split",
          "",
@@ -306,7 +309,7 @@ WasmSplitOptions& WasmSplitOptions::add(const std::string& longName,
                                         Arguments arguments,
                                         const Action& action) {
   // Add an option valid in all modes.
-  for (unsigned i = 0; i < MODES; ++i) {
+  for (unsigned i = 0; i < NumModes; ++i) {
     validOptions[i].insert(longName);
   }
   return add(longName, shortName, description, {}, arguments, action);

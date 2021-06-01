@@ -4,7 +4,8 @@ CHECK:      wasm-split INFILE
 CHECK-NEXT:
 CHECK-NEXT: Split a module into a primary module and a secondary module, or instrument a
 CHECK-NEXT: module to gather a profile that can inform future splitting, or manage such
-CHECK-NEXT: profiles.
+CHECK-NEXT: profiles. Options that are only accepted in particular modes are marked with the
+CHECK-NEXT: accepted "[<modes>]" in their descriptions.
 CHECK-NEXT:
 CHECK-NEXT: Options:
 
