@@ -39,7 +39,9 @@ struct NameTypes : public Pass {
     // Ensure simple names.
     size_t i = 0;
     for (auto& type : types) {
-      module->typeNames[type].name = "type$" + std::to_string(i++);
+      if (module->typeNames.count(type) == 0) {
+        module->typeNames[type].name = "type$" + std::to_string(i++);
+      }
     }
   }
 };

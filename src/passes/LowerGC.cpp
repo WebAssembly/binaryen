@@ -485,7 +485,7 @@ private:
       module->addFunction(builder.makeFunction(
         name + '$' + module->typeNames[type].name.str,
         {Type(params), Type::i32},
-        {},
+        {loweringInfo.pointerType},
         builder.makeBlock(list)
       ));
     }
