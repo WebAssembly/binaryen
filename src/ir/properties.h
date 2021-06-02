@@ -150,17 +150,17 @@ inline Expression* getSignExtValue(Expression* curr) {
     if (unary->op == ExtendS8Int32 || unary->op == ExtendS16Int32) {
       return unary->value;
     }
-  } else {
-    using namespace Match;
-    int32_t leftShift = 0, rightShift = 0;
-    Expression* extended = nullptr;
-    if (matches(curr,
-                binary(ShrSInt32,
-                       binary(ShlInt32, any(&extended), i32(&leftShift)),
-                       i32(&rightShift))) &&
-        leftShift == rightShift && leftShift != 0) {
-      return extended;
-    }
+    return nullptr;
+  }
+  using namespace Match;
+  int32_t leftShift = 0, rightShift = 0;
+  Expression* extended = nullptr;
+  if (matches(curr,
+              binary(ShrSInt32,
+                     binary(ShlInt32, any(&extended), i32(&leftShift)),
+                     i32(&rightShift))) &&
+      leftShift == rightShift && leftShift != 0) {
+    return extended;
   }
   return nullptr;
 }
