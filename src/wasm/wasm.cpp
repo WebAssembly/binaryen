@@ -916,22 +916,52 @@ void BrOn::finalize() {
   if (ref->type == Type::unreachable ||
       (rtt && rtt->type == Type::unreachable)) {
     type = Type::unreachable;
-  } else {
-    if (op == BrOnNull) {
-      // If BrOnNull does not branch, it flows out the existing value as
-      // non-null.
+    return;
+  }
+  switch (op) {
+    case BrOnNull:
+      // If we do not branch, we flow out the existing value as non-null.
       type = Type(ref->type.getHeapType(), NonNullable);
-    } else {
+      break;
+    case BrOnNonNull:
+      // If we do not branch, we flow out nothing (the spec could also have had
+      // us flow out the null, but it does not).
+      type = Type::none;
+      break;
+    case BrOnCast:
+    case BrOnFunc:
+    case BrOnData:
+    case BrOnI31:
+      // If we do not branch, we return the input in this case.
       type = ref->type;
-    }
+      break;
+    case BrOnCastFail:
+      // If we do not branch, the cast worked, and we have something of the cast
+      // type.
+      type = Type(rtt->type.getHeapType(), NonNullable);
+      break;
+    case BrOnNonFunc:
+      type = Type(HeapType::func, NonNullable);
+      break;
+    case BrOnNonData:
+      type = Type(HeapType::data, NonNullable);
+      break;
+    case BrOnNonI31:
+      type = Type(HeapType::i31, NonNullable);
+      break;
+    default:
+      WASM_UNREACHABLE("invalid br_on_*");
   }
 }
 
-Type BrOn::getCastType() {
+Type BrOn::getSentType() {
   switch (op) {
     case BrOnNull:
       // BrOnNull does not send a value on the branch.
       return Type::none;
+    case BrOnNonNull:
+      // BrOnNonNull sends the non-nullable type on the branch.
+      return Type(ref->type.getHeapType(), NonNullable);
     case BrOnCast:
       return Type(rtt->type.getHeapType(), NonNullable);
     case BrOnFunc:
@@ -940,6 +970,11 @@ Type BrOn::getCastType() {
       return Type::dataref;
     case BrOnI31:
       return Type::i31ref;
+    case BrOnCastFail:
+    case BrOnNonFunc:
+    case BrOnNonData:
+    case BrOnNonI31:
+      return ref->type;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
   }
@@ -1015,6 +1050,18 @@ void ArrayLen::finalize() {
     type = Type::unreachable;
   } else {
     type = Type::i32;
+  }
+}
+
+void ArrayCopy::finalize() {
+  if (srcRef->type == Type::unreachable ||
+      srcIndex->type == Type::unreachable ||
+      destRef->type == Type::unreachable ||
+      destIndex->type == Type::unreachable ||
+      length->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type::none;
   }
 }
 

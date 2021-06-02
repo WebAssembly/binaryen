@@ -194,6 +194,7 @@
   (func $rtt-param-without-depth (param $rtt (rtt $parent)))
   (func $rtt-operations
     (local $temp.A (ref null $struct.A))
+    (local $temp.B (ref null $struct.B))
     (drop
       (ref.test (ref.null $struct.A) (rtt.canon $struct.B))
     )
@@ -213,6 +214,16 @@
         (unreachable)
       )
     )
+    (drop
+      (block $out2 (result (ref null $struct.A))
+        ;; set the value to a local with type $struct.A, showing that the value
+        ;; flowing out has the right type
+        (local.set $temp.B
+          (br_on_cast_fail $out2 (ref.null $struct.A) (rtt.canon $struct.B))
+        )
+        (ref.null $struct.A)
+      )
+    )
   )
   (func $ref.is_X (param $x anyref)
     (if (ref.is_func (local.get $x)) (unreachable))
@@ -228,6 +239,9 @@
   (func $br_on_X (param $x anyref)
     (local $y anyref)
     (local $z (ref null any))
+    (local $temp-func (ref null func))
+    (local $temp-data (ref null data))
+    (local $temp-i31 (ref null i31))
     (block $null
       (local.set $z
         (br_on_null $null (local.get $x))
@@ -255,6 +269,36 @@
           (br_on_i31 $i31 (local.get $x))
         )
         (ref.null i31)
+      )
+    )
+    (drop
+      (block $non-null (result (ref any))
+        (br_on_non_null $non-null (local.get $x))
+        (unreachable)
+      )
+    )
+    (drop
+      (block $non-func (result anyref)
+        (local.set $temp-func
+          (br_on_non_func $non-func (local.get $x))
+        )
+        (ref.null any)
+      )
+    )
+    (drop
+      (block $non-data (result anyref)
+        (local.set $temp-data
+          (br_on_non_data $non-data (local.get $x))
+        )
+        (ref.null any)
+      )
+    )
+    (drop
+      (block $non-i31 (result anyref)
+        (local.set $temp-i31
+          (br_on_non_i31 $non-i31 (local.get $x))
+        )
+        (ref.null any)
       )
     )
   )
@@ -303,6 +347,15 @@
       (ref.null $vector)
       (i32.const 2)
       (unreachable)
+    )
+  )
+  (func $array-copy (param $x (ref $vector)) (param $y (ref null $vector))
+    (array.copy $vector $vector
+      (local.get $x)
+      (i32.const 11)
+      (local.get $y)
+      (i32.const 42)
+      (i32.const 1337)
     )
   )
 )

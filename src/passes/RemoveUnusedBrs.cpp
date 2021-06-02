@@ -389,10 +389,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     // First, check for a possible null which would prevent all other
     // optimizations.
-    // (Note: if the spec had BrOnNonNull, instead of BrOnNull, then we could
-    // replace a br_on_func whose input is (ref null func) with br_on_non_null,
-    // as only the null check would be needed. But as things are, we cannot do
-    // such a thing.)
+    // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
+    // input is (ref null func) with br_on_non_null (as only the null check
+    // would be needed).
     auto refType = curr->ref->type;
     if (refType.isNullable()) {
       return;
@@ -402,6 +401,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // This cannot be null, so the br is never taken, and the non-null value
       // flows through.
       replaceCurrent(curr->ref);
+      anotherCycle = true;
+      return;
+    }
+    if (curr->op == BrOnNonNull) {
+      // This cannot be null, so the br is always taken.
+      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
       anotherCycle = true;
       return;
     }

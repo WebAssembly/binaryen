@@ -153,7 +153,7 @@ void ReFinalize::visitBrOn(BrOn* curr) {
   if (curr->type == Type::unreachable) {
     replaceUntaken(curr->ref, nullptr);
   } else {
-    updateBreakValueType(curr->name, curr->getCastType());
+    updateBreakValueType(curr->name, curr->getSentType());
   }
 }
 void ReFinalize::visitRttCanon(RttCanon* curr) { curr->finalize(); }
@@ -165,6 +165,7 @@ void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
 void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
+void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {

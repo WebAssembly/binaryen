@@ -266,6 +266,8 @@ struct ModuleSplitter {
 
   TableSlotManager tableManager;
 
+  Names::MinifiedNameGenerator minified;
+
   // Map from internal function names to (one of) their corresponding export
   // names.
   std::map<Name, Name> exportedPrimaryFuncs;
@@ -344,8 +346,14 @@ void ModuleSplitter::exportImportFunction(Name funcName) {
   if (exportIt != exportedPrimaryFuncs.end()) {
     exportName = exportIt->second;
   } else {
-    exportName = Names::getValidExportName(
-      primary, config.newExportPrefix + funcName.c_str());
+    if (config.minimizeNewExportNames) {
+      do {
+        exportName = config.newExportPrefix + minified.getName();
+      } while (primary.getExportOrNull(exportName) != nullptr);
+    } else {
+      exportName = Names::getValidExportName(
+        primary, config.newExportPrefix + funcName.c_str());
+    }
     primary.addExport(
       Builder::makeExport(exportName, funcName, ExternalKind::Function));
     exportedPrimaryFuncs[funcName] = exportName;

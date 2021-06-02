@@ -153,6 +153,7 @@ function test_ids() {
   console.log("SIMDTernaryId: " + binaryen.SIMDTernaryId);
   console.log("SIMDShiftId: " + binaryen.SIMDShiftId);
   console.log("SIMDLoadId: " + binaryen.SIMDLoadId);
+  console.log("SIMDLoadStoreLaneId: " + binaryen.SIMDLoadStoreLaneId);
   console.log("MemoryInitId: " + binaryen.MemoryInitId);
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);

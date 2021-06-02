@@ -2668,6 +2668,81 @@ void BinaryenSIMDLoadSetPtr(BinaryenExpressionRef expr,
   assert(ptrExpr);
   static_cast<SIMDLoad*>(expression)->ptr = (Expression*)ptrExpr;
 }
+// SIMDLoadStoreLane
+BinaryenOp BinaryenSIMDLoadStoreLaneGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->op;
+}
+void BinaryenSIMDLoadStoreLaneSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->op = SIMDLoadStoreLaneOp(op);
+}
+uint32_t BinaryenSIMDLoadStoreLaneGetOffset(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->offset;
+}
+void BinaryenSIMDLoadStoreLaneSetOffset(BinaryenExpressionRef expr,
+                                        uint32_t offset) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->offset = offset;
+}
+uint32_t BinaryenSIMDLoadStoreLaneGetAlign(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->align;
+}
+void BinaryenSIMDLoadStoreLaneSetAlign(BinaryenExpressionRef expr,
+                                       uint32_t align) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->align = align;
+}
+uint8_t BinaryenSIMDLoadStoreLaneGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->index;
+}
+void BinaryenSIMDLoadStoreLaneSetIndex(BinaryenExpressionRef expr,
+                                       uint8_t index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->index = index;
+}
+BinaryenExpressionRef
+BinaryenSIMDLoadStoreLaneGetPtr(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->ptr;
+}
+void BinaryenSIMDLoadStoreLaneSetPtr(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef ptrExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  assert(ptrExpr);
+  static_cast<SIMDLoadStoreLane*>(expression)->ptr = (Expression*)ptrExpr;
+}
+BinaryenExpressionRef
+BinaryenSIMDLoadStoreLaneGetVec(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->vec;
+}
+void BinaryenSIMDLoadStoreLaneSetVec(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef vecExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  assert(vecExpr);
+  static_cast<SIMDLoadStoreLane*>(expression)->vec = (Expression*)vecExpr;
+}
+bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->isStore();
+}
 // MemoryInit
 uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;

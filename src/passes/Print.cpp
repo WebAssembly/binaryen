@@ -1888,17 +1888,32 @@ struct PrintExpressionContents
       case BrOnNull:
         printMedium(o, "br_on_null ");
         break;
+      case BrOnNonNull:
+        printMedium(o, "br_on_non_null ");
+        break;
       case BrOnCast:
         printMedium(o, "br_on_cast ");
+        break;
+      case BrOnCastFail:
+        printMedium(o, "br_on_cast_fail ");
         break;
       case BrOnFunc:
         printMedium(o, "br_on_func ");
         break;
+      case BrOnNonFunc:
+        printMedium(o, "br_on_non_func ");
+        break;
       case BrOnData:
         printMedium(o, "br_on_data ");
         break;
+      case BrOnNonData:
+        printMedium(o, "br_on_non_data ");
+        break;
       case BrOnI31:
         printMedium(o, "br_on_i31 ");
+        break;
+      case BrOnNonI31:
+        printMedium(o, "br_on_non_i31 ");
         break;
       default:
         WASM_UNREACHABLE("invalid ref.is_*");
@@ -2004,6 +2019,17 @@ struct PrintExpressionContents
   void visitArrayLen(ArrayLen* curr) {
     printMedium(o, "array.len ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
+  }
+  void visitArrayCopy(ArrayCopy* curr) {
+    if (curr->srcRef->type == Type::unreachable ||
+        curr->destRef->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
+    printMedium(o, "array.copy ");
+    TypeNamePrinter(o, wasm).print(curr->destRef->type.getHeapType());
+    o << ' ';
+    TypeNamePrinter(o, wasm).print(curr->srcRef->type.getHeapType());
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {

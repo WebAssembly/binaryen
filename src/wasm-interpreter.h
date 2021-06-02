@@ -1500,17 +1500,25 @@ public:
   }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
-    // BrOnCast uses the casting infrastructure, so handle it first.
-    if (curr->op == BrOnCast) {
+    // BrOnCast* uses the casting infrastructure, so handle it first.
+    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       auto cast = doCast(curr);
       if (cast.outcome == cast.Break) {
         return cast.breaking;
       }
       if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
-        return cast.originalRef;
+        if (curr->op == BrOnCast) {
+          return cast.originalRef;
+        } else {
+          return Flow(curr->name, cast.originalRef);
+        }
       }
       assert(cast.outcome == cast.Success);
-      return Flow(curr->name, cast.castRef);
+      if (curr->op == BrOnCast) {
+        return Flow(curr->name, cast.castRef);
+      } else {
+        return cast.castRef;
+      }
     }
     // The others do a simpler check for the type.
     Flow flow = visit(curr->ref);
@@ -1528,30 +1536,54 @@ public:
       // If the branch is not taken, we return the non-null value.
       return {value};
     }
+    if (curr->op == BrOnNonNull) {
+      // Unlike the others, BrOnNonNull does not return a value if it does not
+      // take the branch.
+      if (value.isNull()) {
+        return Flow();
+      }
+      // If the branch is taken, we send the non-null value.
+      return Flow(curr->name, value);
+    }
+    // See if the input is the right kind (ignoring the flipping behavior of
+    // BrOn*).
+    bool isRightKind;
     if (value.isNull()) {
-      return {value};
+      // A null is never the right kind.
+      isRightKind = false;
+    } else {
+      switch (curr->op) {
+        case BrOnNonFunc:
+        case BrOnFunc:
+          isRightKind = value.type.isFunction();
+          break;
+        case BrOnNonData:
+        case BrOnData:
+          isRightKind = value.isData();
+          break;
+        case BrOnNonI31:
+        case BrOnI31:
+          isRightKind = value.type.getHeapType() == HeapType::i31;
+          break;
+        default:
+          WASM_UNREACHABLE("invalid br_on_*");
+      }
     }
+    // The Non* operations require us to flip the normal behavior.
     switch (curr->op) {
-      case BrOnFunc:
-        if (!value.type.isFunction()) {
-          return {value};
-        }
+      case BrOnNonFunc:
+      case BrOnNonData:
+      case BrOnNonI31:
+        isRightKind = !isRightKind;
         break;
-      case BrOnData:
-        if (!value.isData()) {
-          return {value};
-        }
-        break;
-      case BrOnI31:
-        if (value.type.getHeapType() != HeapType::i31) {
-          return {value};
-        }
-        break;
-      default:
-        WASM_UNREACHABLE("invalid br_on_*");
+      default: {
+      }
     }
-    // No problems: take the branch.
-    return Flow(curr->name, value);
+    if (isRightKind) {
+      // Take the branch.
+      return Flow(curr->name, value);
+    }
+    return {value};
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {
@@ -1618,6 +1650,13 @@ public:
       truncateForPacking(value.getSingleValue(), field);
     return Flow();
   }
+
+  // Arbitrary deterministic limit on size. If we need to allocate a Literals
+  // vector that takes around 1-2GB of memory then we are likely to hit memory
+  // limits on 32-bit machines, and in particular on wasm32 VMs that do not
+  // have 4GB support, so give up there.
+  static const Index ArrayLimit = (1 << 30) / sizeof(Literal);
+
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
     auto rtt = this->visit(curr->rtt);
@@ -1630,11 +1669,7 @@ public:
     }
     const auto& element = curr->rtt->type.getHeapType().getArray().element;
     Index num = size.getSingleValue().geti32();
-    // Arbitrary deterministic limit on size. If we need to allocate a Literals
-    // vector that takes around 1-2GB of memory then we are likely to hit memory
-    // limits on 32-bit machines, and in particular on wasm32 VMs that do not
-    // have 4GB support, so give up there.
-    if (num >= (1 << 30) / sizeof(Literal)) {
+    if (num >= ArrayLimit) {
       hostLimit("allocation failure");
     }
     Literals data(num);
@@ -1714,6 +1749,58 @@ public:
       trap("null ref");
     }
     return Literal(int32_t(data->values.size()));
+  }
+  Flow visitArrayCopy(ArrayCopy* curr) {
+    NOTE_ENTER("ArrayCopy");
+    Flow destRef = this->visit(curr->destRef);
+    if (destRef.breaking()) {
+      return destRef;
+    }
+    Flow destIndex = this->visit(curr->destIndex);
+    if (destIndex.breaking()) {
+      return destIndex;
+    }
+    Flow srcRef = this->visit(curr->srcRef);
+    if (srcRef.breaking()) {
+      return srcRef;
+    }
+    Flow srcIndex = this->visit(curr->srcIndex);
+    if (srcIndex.breaking()) {
+      return srcIndex;
+    }
+    Flow length = this->visit(curr->length);
+    if (length.breaking()) {
+      return length;
+    }
+    auto destData = destRef.getSingleValue().getGCData();
+    if (!destData) {
+      trap("null ref");
+    }
+    auto srcData = srcRef.getSingleValue().getGCData();
+    if (!srcData) {
+      trap("null ref");
+    }
+    size_t destVal = destIndex.getSingleValue().getUnsigned();
+    size_t srcVal = srcIndex.getSingleValue().getUnsigned();
+    size_t lengthVal = length.getSingleValue().getUnsigned();
+    if (lengthVal >= ArrayLimit) {
+      hostLimit("allocation failure");
+    }
+    std::vector<Literal> copied;
+    copied.resize(lengthVal);
+    for (size_t i = 0; i < lengthVal; i++) {
+      if (srcVal + i >= srcData->values.size()) {
+        trap("oob");
+      }
+      copied[i] = srcData->values[srcVal + i];
+    }
+    for (size_t i = 0; i < lengthVal; i++) {
+      if (destVal + i >= destData->values.size()) {
+        trap("oob");
+      }
+      destData->values[destVal + i] = copied[i];
+    }
+    return Flow();
   }
   Flow visitRefAs(RefAs* curr) {
     NOTE_ENTER("RefAs");

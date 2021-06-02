@@ -60,7 +60,7 @@ void WasmBinaryWriter::write() {
   writeDataCount();
   writeFunctions();
   writeDataSegments();
-  if (debugInfo) {
+  if (debugInfo || emitModuleName) {
     writeNames();
   }
   if (sourceMap && !sourceMapUrl.empty()) {
@@ -661,11 +661,17 @@ void WasmBinaryWriter::writeNames() {
   writeInlineString(BinaryConsts::UserSections::Name);
 
   // module name
-  if (wasm->name.is()) {
+  if (emitModuleName && wasm->name.is()) {
     auto substart =
       startSubsection(BinaryConsts::UserSections::Subsection::NameModule);
     writeEscapedName(wasm->name.str);
     finishSubsection(substart);
+  }
+
+  if (!debugInfo) {
+    // We were only writing the module name.
+    finishSection(start);
+    return;
   }
 
   // function names
@@ -3371,6 +3377,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
     case BinaryConsts::BrOnNull:
       maybeVisitBrOn(curr, code);
       break;
+    case BinaryConsts::BrOnNonNull:
+      maybeVisitBrOn(curr, code);
+      break;
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
       break;
@@ -3539,6 +3548,9 @@ BinaryConsts::ASTNodes WasmBinaryBuilder::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitArrayLen(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitArrayCopy(curr, opcode)) {
         break;
       }
       if (opcode == BinaryConsts::RefIsFunc ||
@@ -6324,24 +6336,39 @@ bool WasmBinaryBuilder::maybeVisitBrOn(Expression*& out, uint32_t code) {
     case BinaryConsts::BrOnNull:
       op = BrOnNull;
       break;
+    case BinaryConsts::BrOnNonNull:
+      op = BrOnNonNull;
+      break;
     case BinaryConsts::BrOnCast:
       op = BrOnCast;
+      break;
+    case BinaryConsts::BrOnCastFail:
+      op = BrOnCastFail;
       break;
     case BinaryConsts::BrOnFunc:
       op = BrOnFunc;
       break;
+    case BinaryConsts::BrOnNonFunc:
+      op = BrOnNonFunc;
+      break;
     case BinaryConsts::BrOnData:
       op = BrOnData;
       break;
+    case BinaryConsts::BrOnNonData:
+      op = BrOnNonData;
+      break;
     case BinaryConsts::BrOnI31:
       op = BrOnI31;
+      break;
+    case BinaryConsts::BrOnNonI31:
+      op = BrOnNonI31;
       break;
     default:
       return false;
   }
   auto name = getBreakTarget(getU32LEB()).name;
   Expression* rtt = nullptr;
-  if (op == BrOnCast) {
+  if (op == BrOnCast || op == BrOnCastFail) {
     rtt = popNonVoidExpression();
   }
   auto* ref = popNonVoidExpression();
@@ -6487,6 +6514,24 @@ bool WasmBinaryBuilder::maybeVisitArrayLen(Expression*& out, uint32_t code) {
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
   out = Builder(wasm).makeArrayLen(ref);
+  return true;
+}
+
+bool WasmBinaryBuilder::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::ArrayCopy) {
+    return false;
+  }
+  auto destHeapType = getIndexedHeapType();
+  auto srcHeapType = getIndexedHeapType();
+  auto* length = popNonVoidExpression();
+  auto* srcIndex = popNonVoidExpression();
+  auto* srcRef = popNonVoidExpression();
+  auto* destIndex = popNonVoidExpression();
+  auto* destRef = popNonVoidExpression();
+  validateHeapTypeUsingChild(destRef, destHeapType);
+  validateHeapTypeUsingChild(srcRef, srcHeapType);
+  out =
+    Builder(wasm).makeArrayCopy(destRef, destIndex, srcRef, srcIndex, length);
   return true;
 }
 

@@ -1019,6 +1019,7 @@ enum ASTNodes {
   RefFunc = 0xd2,
   RefAsNonNull = 0xd3,
   BrOnNull = 0xd4,
+  BrOnNonNull = 0xd6,
 
   // exception handling opcodes
 
@@ -1051,6 +1052,7 @@ enum ASTNodes {
   ArrayGetU = 0x15,
   ArraySet = 0x16,
   ArrayLen = 0x17,
+  ArrayCopy = 0x18,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
@@ -1059,6 +1061,7 @@ enum ASTNodes {
   RefTest = 0x40,
   RefCast = 0x41,
   BrOnCast = 0x42,
+  BrOnCastFail = 0x43,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
   RefIsI31 = 0x52,
@@ -1068,6 +1071,9 @@ enum ASTNodes {
   BrOnFunc = 0x60,
   BrOnData = 0x61,
   BrOnI31 = 0x62,
+  BrOnNonFunc = 0x63,
+  BrOnNonData = 0x64,
+  BrOnNonI31 = 0x65,
 };
 
 enum MemoryAccess {
@@ -1170,7 +1176,11 @@ public:
     std::vector<Entry> functionBodies;
   } tableOfContents;
 
-  void setNamesSection(bool set) { debugInfo = set; }
+  void setNamesSection(bool set) {
+    debugInfo = set;
+    emitModuleName = set;
+  }
+  void setEmitModuleName(bool set) { emitModuleName = set; }
   void setSourceMap(std::ostream* set, std::string url) {
     sourceMap = set;
     sourceMapUrl = url;
@@ -1265,6 +1275,13 @@ private:
   std::vector<HeapType> types;
 
   bool debugInfo = true;
+
+  // TODO: Remove `emitModuleName` in the future once there are better ways to
+  // ensure modules have meaningful names in stack traces.For example, using
+  // ObjectURLs works in FireFox, but not Chrome. See
+  // https://bugs.chromium.org/p/v8/issues/detail?id=11808.
+  bool emitModuleName = true;
+
   std::ostream* sourceMap = nullptr;
   std::string sourceMapUrl;
   std::string symbolMap;
@@ -1609,6 +1626,7 @@ public:
   bool maybeVisitArrayGet(Expression*& out, uint32_t code);
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
+  bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);
