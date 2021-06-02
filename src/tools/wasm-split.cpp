@@ -26,6 +26,7 @@
 #include "support/path.h"
 #include "support/utilities.h"
 #include "tool-options.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-type.h"
@@ -51,10 +52,11 @@ struct WasmSplitOptions : ToolOptions {
   enum class Mode : unsigned {
     Split,
     Instrument,
+    MergeProfiles,
   };
   Mode mode = Mode::Split;
   constexpr static size_t NumModes =
-    static_cast<unsigned>(Mode::Instrument) + 1;
+    static_cast<unsigned>(Mode::MergeProfiles) + 1;
 
   bool verbose = false;
   bool emitBinary = true;
@@ -69,7 +71,7 @@ struct WasmSplitOptions : ToolOptions {
   std::set<Name> keepFuncs;
   std::set<Name> splitFuncs;
 
-  std::string input;
+  std::vector<std::string> inputFiles;
   std::string output;
   std::string primaryOutput;
   std::string secondaryOutput;
@@ -123,6 +125,13 @@ WasmSplitOptions::WasmSplitOptions()
       " be used to guide splitting.",
       Options::Arguments::Zero,
       [&](Options* o, const std::string& argument) { mode = Mode::Instrument; })
+    .add("--merge-profiles",
+         "",
+         "Merge multiple profiles for the same module into a single profile.",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           mode = Mode::MergeProfiles;
+         })
     .add(
       "--profile",
       "",
@@ -197,12 +206,6 @@ WasmSplitOptions::WasmSplitOptions()
       {Mode::Split},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { exportPrefix = argument; })
-    .add("--output",
-         "-o",
-         "Output file.",
-         {Mode::Instrument},
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) { output = argument; })
     .add("--profile-export",
          "",
          "The export name of the function the embedder calls to write the "
@@ -233,6 +236,26 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            initialTableSize = std::stoi(argument);
          })
+    .add("--emit-text",
+         "-S",
+         "Emit text instead of binary for the output file or files.",
+         {Mode::Split, Mode::Instrument},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { emitBinary = false; })
+    .add("--debuginfo",
+         "-g",
+         "Emit names section in wasm binary (or full debuginfo in wast)",
+         {Mode::Split, Mode::Instrument},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) {
+           passOptions.debugInfo = true;
+         })
+    .add("--output",
+         "-o",
+         "Output file.",
+         {Mode::Instrument, Mode::MergeProfiles},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { output = argument; })
     .add("--verbose",
          "-v",
          "Verbose output mode. Prints the functions that will be kept "
@@ -242,22 +265,11 @@ WasmSplitOptions::WasmSplitOptions()
            verbose = true;
            quiet = false;
          })
-    .add("--emit-text",
-         "-S",
-         "Emit text instead of binary for the output file or files.",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { emitBinary = false; })
-    .add("--debuginfo",
-         "-g",
-         "Emit names section in wasm binary (or full debuginfo in wast)",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) {
-           passOptions.debugInfo = true;
-         })
-    .add_positional(
-      "INFILE",
-      Options::Arguments::One,
-      [&](Options* o, const std::string& argument) { input = argument; });
+    .add_positional("INFILES",
+                    Options::Arguments::N,
+                    [&](Options* o, const std::string& argument) {
+                      inputFiles.push_back(argument);
+                    });
 }
 
 std::ostream& operator<<(std::ostream& o, WasmSplitOptions::Mode& mode) {
@@ -267,6 +279,9 @@ std::ostream& operator<<(std::ostream& o, WasmSplitOptions::Mode& mode) {
       break;
     case WasmSplitOptions::Mode::Instrument:
       o << "instrument";
+      break;
+    case WasmSplitOptions::Mode::MergeProfiles:
+      o << "merge-profiles";
       break;
   }
   return o;
@@ -322,8 +337,20 @@ bool WasmSplitOptions::validate() {
     valid = false;
   };
 
-  if (!input.size()) {
+  // Validate the positional arguments.
+  if (inputFiles.size() == 0) {
     fail("no input file");
+  }
+  switch (mode) {
+    case Mode::Split:
+    case Mode::Instrument:
+      if (inputFiles.size() > 1) {
+        fail("Cannot have more than one input file.");
+      }
+      break;
+    case Mode::MergeProfiles:
+      // Any number >= 1 allowed.
+      break;
   }
 
   // Validate that all used options are allowed in the current mode.
@@ -364,7 +391,7 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
   ModuleReader reader;
   reader.setProfile(options.profile);
   try {
-    reader.read(options.input, wasm);
+    reader.read(options.inputFiles[0], wasm);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     std::cerr << '\n';
@@ -374,6 +401,10 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
                "request for silly amounts of memory)";
   }
   options.applyFeatures(wasm);
+
+  if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
+    Fatal() << "error validating input";
+  }
 }
 
 // Add a global monotonic counter and a timestamp global for each function, code
@@ -600,13 +631,16 @@ void writeModule(Module& wasm,
   writer.write(wasm, filename);
 }
 
-void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
+void instrumentModule(const WasmSplitOptions& options) {
+  Module wasm;
+  parseInput(wasm, options);
+
   // Check that the profile export name is not already taken
   if (wasm.getExportOrNull(options.profileExport) != nullptr) {
     Fatal() << "error: Export " << options.profileExport << " already exists.";
   }
 
-  uint64_t moduleHash = hashFile(options.input);
+  uint64_t moduleHash = hashFile(options.inputFiles[0]);
   PassRunner runner(&wasm, options.passOptions);
   Instrumenter(options.profileExport, moduleHash).run(&runner, &wasm);
 
@@ -616,14 +650,18 @@ void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
   writeModule(wasm, options.output, options);
 }
 
+struct ProfileData {
+  uint64_t hash;
+  std::vector<size_t> timestamps;
+};
+
 // See "wasm-split profile format" above for more information.
-std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
-  auto profileData =
-    read_file<std::vector<char>>(options.profileFile, Flags::Binary);
+ProfileData readProfile(const std::string& file) {
+  auto profileData = read_file<std::vector<char>>(file, Flags::Binary);
   size_t i = 0;
   auto readi32 = [&]() {
     if (i + 4 > profileData.size()) {
-      Fatal() << "Unexpected end of profile data";
+      Fatal() << "Unexpected end of profile data in " << file;
     }
     uint32_t i32 = 0;
     i32 |= uint32_t(uint8_t(profileData[i++]));
@@ -633,31 +671,15 @@ std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
     return i32;
   };
 
-  // Read and compare the 8-byte module hash.
-  uint64_t expected = readi32();
-  expected |= uint64_t(readi32()) << 32;
-  if (expected != hashFile(options.input)) {
-    Fatal() << "error: checksum in profile does not match module checksum. "
-            << "The split module must be the original module that was "
-            << "instrumented to generate the profile.";
+  uint64_t hash = readi32();
+  hash |= uint64_t(readi32()) << 32;
+
+  std::vector<size_t> timestamps;
+  while (i < profileData.size()) {
+    timestamps.push_back(readi32());
   }
 
-  std::set<Name> keptFuncs;
-  ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-    uint32_t timestamp = readi32();
-    // TODO: provide an option to set the timestamp threshold. For now, kee the
-    // function if the profile shows it being run at all.
-    if (timestamp > 0) {
-      keptFuncs.insert(func->name);
-    }
-  });
-
-  if (i != profileData.size()) {
-    // TODO: Handle concatenated profile data.
-    Fatal() << "Unexpected extra profile data";
-  }
-
-  return keptFuncs;
+  return {hash, timestamps};
 }
 
 void writeSymbolMap(Module& wasm, std::string filename) {
@@ -668,12 +690,33 @@ void writeSymbolMap(Module& wasm, std::string filename) {
   runner.run();
 }
 
-void splitModule(Module& wasm, const WasmSplitOptions& options) {
+void splitModule(const WasmSplitOptions& options) {
+  Module wasm;
+  parseInput(wasm, options);
+
   std::set<Name> keepFuncs;
 
   if (options.profileFile.size()) {
-    // Use the profile to initialize `keepFuncs`
-    keepFuncs = readProfile(wasm, options);
+    // Use the profile to initialize `keepFuncs`.
+    uint64_t hash = hashFile(options.inputFiles[0]);
+    ProfileData profile = readProfile(options.profileFile);
+    if (profile.hash != hash) {
+      Fatal() << "error: checksum in profile does not match module checksum. "
+              << "The split module must be the original module that was "
+              << "instrumented to generate the profile.";
+    }
+    size_t i = 0;
+    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
+      if (i >= profile.timestamps.size()) {
+        Fatal() << "Unexpected end of profile data";
+      }
+      if (profile.timestamps[i++] > 0) {
+        keepFuncs.insert(func->name);
+      }
+    });
+    if (i != profile.timestamps.size()) {
+      Fatal() << "Unexpected extra profile data";
+    }
   }
 
   // Add in the functions specified with --keep-funcs
@@ -777,6 +820,77 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
   writeModule(*secondary, options.secondaryOutput, options);
 }
 
+void mergeProfiles(const WasmSplitOptions& options) {
+  // Read the initial profile. We will merge other profiles into this one.
+  ProfileData data = readProfile(options.inputFiles[0]);
+
+  // In verbose mode, we want to find profiles that don't contribute to the
+  // merged profile. To do that, keep track of how many profiles each function
+  // appears in. If any profile contains only functions that appear in multiple
+  // profiles, it could be dropped.
+  std::vector<size_t> numProfiles;
+  if (options.verbose) {
+    numProfiles.resize(data.timestamps.size());
+    for (size_t t = 0; t < data.timestamps.size(); ++t) {
+      if (data.timestamps[t]) {
+        numProfiles[t] = 1;
+      }
+    }
+  }
+
+  // Read all the other profiles, taking the minimum nonzero timestamp for each
+  // function.
+  for (size_t i = 1; i < options.inputFiles.size(); ++i) {
+    ProfileData newData = readProfile(options.inputFiles[i]);
+    if (newData.hash != data.hash) {
+      Fatal() << "Checksum in profile " << options.inputFiles[i]
+              << " does not match hash in profile " << options.inputFiles[0];
+    }
+    if (newData.timestamps.size() != data.timestamps.size()) {
+      Fatal() << "Profile " << options.inputFiles[i]
+              << " incompatible with profile " << options.inputFiles[0];
+    }
+    for (size_t t = 0; t < data.timestamps.size(); ++t) {
+      if (data.timestamps[t] && newData.timestamps[t]) {
+        data.timestamps[t] =
+          std::min(data.timestamps[t], newData.timestamps[t]);
+      } else if (newData.timestamps[t]) {
+        data.timestamps[t] = newData.timestamps[t];
+      }
+      if (options.verbose && newData.timestamps[t]) {
+        ++numProfiles[t];
+      }
+    }
+  }
+
+  // Check for useless profiles.
+  if (options.verbose) {
+    for (const auto& file : options.inputFiles) {
+      bool useless = true;
+      ProfileData newData = readProfile(file);
+      for (size_t t = 0; t < newData.timestamps.size(); ++t) {
+        if (newData.timestamps[t] && numProfiles[t] == 1) {
+          useless = false;
+          break;
+        }
+      }
+      if (useless) {
+        std::cout << "Profile " << file
+                  << " only includes functions included in other profiles.\n";
+      }
+    }
+  }
+
+  // Write the combined profile.
+  BufferWithRandomAccess buffer;
+  buffer << data.hash;
+  for (size_t t = 0; t < data.timestamps.size(); ++t) {
+    buffer << uint32_t(data.timestamps[t]);
+  }
+  Output out(options.output, Flags::Binary);
+  buffer.writeTo(out.getStream());
+}
+
 } // anonymous namespace
 
 int main(int argc, const char* argv[]) {
@@ -787,19 +901,15 @@ int main(int argc, const char* argv[]) {
     Fatal() << "Invalid command line arguments";
   }
 
-  Module wasm;
-  parseInput(wasm, options);
-
-  if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
-    Fatal() << "error validating input";
-  }
-
   switch (options.mode) {
     case WasmSplitOptions::Mode::Split:
-      splitModule(wasm, options);
+      splitModule(options);
       break;
     case WasmSplitOptions::Mode::Instrument:
-      instrumentModule(wasm, options);
+      instrumentModule(options);
+      break;
+    case WasmSplitOptions::Mode::MergeProfiles:
+      mergeProfiles(options);
       break;
   }
 }
