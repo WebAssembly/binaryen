@@ -110,15 +110,21 @@ struct LowerGCCode
   void visitStructSet(StructSet* curr) {
     Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
-    auto name = std::string("StructSet$") + getModule()->typeNames[type].name.str + '$' + std::to_string(curr->index);
-    replaceCurrent(builder.makeCall(name, {curr->ref, curr->value}, Type::none));
+    auto name = std::string("StructSet$") +
+                getModule()->typeNames[type].name.str + '$' +
+                std::to_string(curr->index);
+    replaceCurrent(
+      builder.makeCall(name, {curr->ref, curr->value}, Type::none));
   }
 
   void visitStructGet(StructGet* curr) {
     Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
-    auto name = std::string("StructGet$") + getModule()->typeNames[type].name.str + '$' + std::to_string(curr->index);
-    replaceCurrent(builder.makeCall(name, {curr->ref}, getLoweredType(curr->type, getModule()->memory)));
+    auto name = std::string("StructGet$") +
+                getModule()->typeNames[type].name.str + '$' +
+                std::to_string(curr->index);
+    replaceCurrent(builder.makeCall(
+      name, {curr->ref}, getLoweredType(curr->type, getModule()->memory)));
   }
 
   void visitArrayNew(ArrayNew* curr) {
@@ -300,16 +306,15 @@ private:
 
   Type lower(Type type) { return getLoweredType(type, getModule()->memory); }
 
-  Expression* makeArrayAddress(Expression* ref, Expression* index, Type loweredType) {
+  Expression*
+  makeArrayAddress(Expression* ref, Expression* index, Type loweredType) {
     Builder builder(*getModule());
     return builder.makeBinary(
       AddInt32,
       builder.makeBinary(AddInt32, ref, builder.makeConst(int32_t(8))),
-      builder.makeBinary(
-        MulInt32,
-        builder.makeConst(int32_t(loweredType.getByteSize())),
-        index)
-    );
+      builder.makeBinary(MulInt32,
+                         builder.makeConst(int32_t(loweredType.getByteSize())),
+                         index));
   }
 };
 
@@ -411,7 +416,7 @@ private:
     auto typeName = module->typeNames[type].name.str;
     auto& fields = type.getStruct().fields;
     Builder builder(*module);
-    for (bool withDefault : { true, false }) {
+    for (bool withDefault : {true, false}) {
       std::vector<Type> params;
       // Store the values, by performing StructSet operations.
       for (Index i = 0; i < fields.size(); i++) {
@@ -433,13 +438,13 @@ private:
           {builder.makeConst(int32_t(loweringInfo.layouts[type].size))},
           loweringInfo.pointerType)));
       // Store the rtt.
-      list.push_back(
-        builder.makeStore(loweringInfo.pointerSize,
-                          0,
-                          loweringInfo.pointerSize,
-                          builder.makeLocalGet(local, loweringInfo.pointerType),
-                          builder.makeLocalGet(rttParam, loweringInfo.pointerType),
-                          loweringInfo.pointerType));
+      list.push_back(builder.makeStore(
+        loweringInfo.pointerSize,
+        0,
+        loweringInfo.pointerSize,
+        builder.makeLocalGet(local, loweringInfo.pointerType),
+        builder.makeLocalGet(rttParam, loweringInfo.pointerType),
+        loweringInfo.pointerType));
       // Store the values, by performing StructSet operations.
       for (Index i = 0; i < fields.size(); i++) {
         Expression* value;
@@ -451,12 +456,8 @@ private:
         }
         list.push_back(builder.makeCall(
           std::string("StructSet$") + typeName + '$' + std::to_string(i),
-          {
-            builder.makeLocalGet(local, loweringInfo.pointerType),
-            value
-          },
-          Type::none
-        ));
+          {builder.makeLocalGet(local, loweringInfo.pointerType), value},
+          Type::none));
       }
       // Return the pointer.
       list.push_back(builder.makeLocalGet(local, loweringInfo.pointerType));
@@ -464,12 +465,10 @@ private:
       if (withDefault) {
         name += "WithDefault";
       }
-      module->addFunction(builder.makeFunction(
-        name + '$' + typeName,
-        {Type(params), Type::i32},
-        {loweringInfo.pointerType},
-        builder.makeBlock(list)
-      ));
+      module->addFunction(builder.makeFunction(name + '$' + typeName,
+                                               {Type(params), Type::i32},
+                                               {loweringInfo.pointerType},
+                                               builder.makeBlock(list)));
     }
   }
 
@@ -480,17 +479,16 @@ private:
       auto& field = fields[i];
       auto loweredType = getLoweredType(field.type, module->memory);
       module->addFunction(builder.makeFunction(
-        std::string("StructSet$") + module->typeNames[type].name.str + '$' + std::to_string(i),
+        std::string("StructSet$") + module->typeNames[type].name.str + '$' +
+          std::to_string(i),
         {{loweringInfo.pointerType, loweredType}, Type::none},
         {},
-        builder.makeStore(
-          loweredType.getByteSize(),
-          loweringInfo.layouts[type].fieldOffsets[i],
-          loweredType.getByteSize(),
-          builder.makeLocalGet(0, loweringInfo.pointerType),
-          builder.makeLocalGet(1, loweredType),
-          loweredType)
-      ));
+        builder.makeStore(loweredType.getByteSize(),
+                          loweringInfo.layouts[type].fieldOffsets[i],
+                          loweredType.getByteSize(),
+                          builder.makeLocalGet(0, loweringInfo.pointerType),
+                          builder.makeLocalGet(1, loweredType),
+                          loweredType)));
     }
   }
 
@@ -501,17 +499,16 @@ private:
       auto& field = fields[i];
       auto loweredType = getLoweredType(field.type, module->memory);
       module->addFunction(builder.makeFunction(
-        std::string("StructGet$") + module->typeNames[type].name.str + '$' + std::to_string(i),
+        std::string("StructGet$") + module->typeNames[type].name.str + '$' +
+          std::to_string(i),
         {loweringInfo.pointerType, loweredType},
         {},
-        builder.makeLoad(
-          loweredType.getByteSize(),
-          false, // TODO: signedness
-          loweringInfo.layouts[type].fieldOffsets[i],
-          loweredType.getByteSize(),
-          builder.makeLocalGet(0, loweringInfo.pointerType),
-          loweredType)
-      ));
+        builder.makeLoad(loweredType.getByteSize(),
+                         false, // TODO: signedness
+                         loweringInfo.layouts[type].fieldOffsets[i],
+                         loweredType.getByteSize(),
+                         builder.makeLocalGet(0, loweringInfo.pointerType),
+                         loweredType)));
     }
   }
 
