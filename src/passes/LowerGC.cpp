@@ -92,17 +92,19 @@ struct LowerGCCode
 
   void visitStructNew(StructNew* curr) {
     auto type = relevantHeapTypes[curr];
-    ExpressionList operands;
+    std::vector<Expression*> operands;
     std::string name = getExpressionName(curr);
     if (curr->isWithDefault()) {
       name += "WithDefault";
     } else {
-      operands = curr->operands;
+      for (auto* operand : curr->operands) {
+        operands.push_back(operand);
+      }
     }
     operands.push_back(curr->rtt);
-    name += '$' + getModule()->typeNames[type];
+    name += std::string("$") + getModule()->typeNames[type].name.str;
     Builder builder(*getModule());
-    return builder.makeCall(name, operands, loweringInfo->pointerType);
+    replaceCurrent(builder.makeCall(name, operands, loweringInfo->pointerType));
   }
 
   void visitStructSet(StructSet* curr) { replaceCurrent(lower(curr)); }
@@ -429,19 +431,18 @@ private:
 
   void makeStructNew(HeapType type) {
     auto& fields = type.getStruct().fields;
-    Builder builder(*getModule());
+    Builder builder(*module);
     for (bool withDefault : { true, false }) {
       std::vector<Type> params;
       // Store the values, by performing StructSet operations.
       for (Index i = 0; i < fields.size(); i++) {
         if (!withDefault) {
-          value = LiteralUtils::makeZero(fields[i].type, *getModule());
-        } else {
           params.push_back(fields[i].type);
         }
       }
       // Add the RTT parameter.
-      params.push_back(loweringInfo->pointerType);
+      params.push_back(loweringInfo.pointerType);
+      auto rttParam = params.size();
       // We need one local to store the allocated value.
       auto local = params.size();
       std::vector<Expression*> list;
@@ -449,41 +450,41 @@ private:
       list.push_back(builder.makeLocalSet(
         local,
         builder.makeCall(
-          loweringInfo->malloc,
-          {builder.makeConst(int32_t(loweringInfo->layouts[type].size))},
-          loweringInfo->pointerType)));
+          loweringInfo.malloc,
+          {builder.makeConst(int32_t(loweringInfo.layouts[type].size))},
+          loweringInfo.pointerType)));
       // Store the rtt.
       list.push_back(
-        builder.makeStore(loweringInfo->pointerSize,
+        builder.makeStore(loweringInfo.pointerSize,
                           0,
-                          loweringInfo->pointerSize,
-                          builder.makeLocalGet(local, loweringInfo->pointerType),
-                          curr->rtt,
-                          loweringInfo->pointerType));
+                          loweringInfo.pointerSize,
+                          builder.makeLocalGet(local, loweringInfo.pointerType),
+                          builder.makeLocalGet(rttParam, loweringInfo.pointerType),
+                          loweringInfo.pointerType));
       // Store the values, by performing StructSet operations.
       for (Index i = 0; i < fields.size(); i++) {
         Expression* value;
         if (withDefault) {
-          value = LiteralUtils::makeZero(fields[i].type, *getModule());
+          value = LiteralUtils::makeZero(fields[i].type, *module);
         } else {
           auto paramType = fields[i].type;
           value = builder.makeLocalGet(i, paramType);
         }
         list.push_back(builder.makeCall(
           "StructSet$" + std::to_string(i),
-          value,
+          {value},
           Type::none
         ));
       }
       // Return the pointer.
-      list.push_back(builder.makeLocalGet(local, loweringInfo->pointerType));
+      list.push_back(builder.makeLocalGet(local, loweringInfo.pointerType));
       std::string name = "StructNew";
       if (withDefault) {
         name += "WithDefault";
       }
       module->addFunction(builder.makeFunction(
-        name + '$' + module->typeNames[type],
-        {params, Type::i32},
+        name + '$' + module->typeNames[type].name.str,
+        {Type(params), Type::i32},
         {},
         builder.makeBlock(list)
       ));
