@@ -107,43 +107,18 @@ struct LowerGCCode
     replaceCurrent(builder.makeCall(name, operands, loweringInfo->pointerType));
   }
 
-  void visitStructSet(StructSet* curr) { replaceCurrent(lower(curr)); }
-
-  // Lower a StructSet. If a type is given, then we use that, otherwise we will
-  // look up the type using relevantHeapTypes (which were computed by first
-  // scanning all the code).
-  Expression* lower(StructSet* curr, HeapType type = HeapType::any) {
-    // TODO: ignore unreachable, or run dce before
-    Builder builder(*getModule());
-    if (type == HeapType::any) {
-      type = relevantHeapTypes[curr];
-    }
-    auto& field = type.getStruct().fields[curr->index];
-    auto loweredType = getLoweredType(field.type, getModule()->memory);
-    return builder.makeStore(
-      loweredType.getByteSize(),
-      loweringInfo->layouts[type].fieldOffsets[curr->index],
-      loweredType.getByteSize(),
-      curr->ref,
-      curr->value,
-      loweredType);
-  }
-
-  void visitStructGet(StructGet* curr) { replaceCurrent(lower(curr)); }
-
-  Expression* lower(StructGet* curr) {
-    // TODO: ignore unreachable, or run dce before
+  void visitStructSet(StructSet* curr) {
     Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
-    auto& field = type.getStruct().fields[curr->index];
-    auto loweredType = getLoweredType(field.type, getModule()->memory);
-    return builder.makeLoad(
-      loweredType.getByteSize(),
-      false, // TODO: signedness
-      loweringInfo->layouts[type].fieldOffsets[curr->index],
-      loweredType.getByteSize(),
-      curr->ref,
-      loweredType);
+    auto name = std::string("StructSet$") + getModule()->typeNames[type].name.str + '$' + std::to_string(curr->index);
+    replaceCurrent(builder.makeCall(name, {curr->ref, curr->value}, Type::none));
+  }
+
+  void visitStructGet(StructGet* curr) {
+    Builder builder(*getModule());
+    auto type = relevantHeapTypes[curr];
+    auto name = std::string("StructGet$") + getModule()->typeNames[type].name.str + '$' + std::to_string(curr->index);
+    replaceCurrent(builder.makeCall(name, {curr->ref}, getLoweredType(curr->type, getModule()->memory)));
   }
 
   void visitArrayNew(ArrayNew* curr) {
@@ -347,6 +322,7 @@ struct LowerGC : public Pass {
     {
       PassRunner subRunner(runner);
       subRunner.add("name-types");
+      subRunner.add("dce");
       subRunner.setIsNested(true);
       subRunner.run();
     }
@@ -411,6 +387,8 @@ private:
       if (type.isStruct()) {
         computeLayout(type, loweringInfo.layouts[type]);
         makeStructNew(type);
+        makeStructSet(type);
+        makeStructGet(type);
       }
     }
   }
@@ -487,6 +465,48 @@ private:
         {Type(params), Type::i32},
         {loweringInfo.pointerType},
         builder.makeBlock(list)
+      ));
+    }
+  }
+
+  void makeStructSet(HeapType type) {
+    auto& fields = type.getStruct().fields;
+    Builder builder(*module);
+    for (Index i = 0; i < fields.size(); i++) {
+      auto& field = fields[i];
+      auto loweredType = getLoweredType(field.type, module->memory);
+      module->addFunction(builder.makeFunction(
+        std::string("StructGet$") + module->typeNames[type].name.str + '$' + std::to_string(i),
+        {{loweringInfo.pointerType, loweredType}, Type::none},
+        {},
+        builder.makeStore(
+          loweredType.getByteSize(),
+          loweringInfo.layouts[type].fieldOffsets[i],
+          loweredType.getByteSize(),
+          builder.makeLocalGet(0, loweringInfo.pointerType),
+          builder.makeLocalGet(1, loweredType),
+          Type::none)
+      ));
+    }
+  }
+
+  void makeStructGet(HeapType type) {
+    auto& fields = type.getStruct().fields;
+    Builder builder(*module);
+    for (Index i = 0; i < fields.size(); i++) {
+      auto& field = fields[i];
+      auto loweredType = getLoweredType(field.type, module->memory);
+      module->addFunction(builder.makeFunction(
+        std::string("StructGet$") + module->typeNames[type].name.str + '$' + std::to_string(i),
+        {loweringInfo.pointerType, loweredType},
+        {},
+        builder.makeLoad(
+          loweredType.getByteSize(),
+          false, // TODO: signedness
+          loweringInfo.layouts[type].fieldOffsets[i],
+          loweredType.getByteSize(),
+          builder.makeLocalGet(0, loweringInfo.pointerType),
+          loweredType)
       ));
     }
   }
