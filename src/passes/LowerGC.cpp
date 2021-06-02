@@ -128,120 +128,39 @@ struct LowerGCCode
   }
 
   void visitArrayNew(ArrayNew* curr) {
-    Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
-
-    auto element = type.getArray().element;
-    auto loweredElementType = getLoweredType(element.type, getModule()->memory);
-
-    std::vector<Expression*> list;
-    // Capture the inputs into locals.
-    auto rttLocal = builder.addVar(getFunction(), Type::i32);
-    auto sizeLocal = builder.addVar(getFunction(), Type::i32);
-    auto initLocal = builder.addVar(getFunction(), Type::i32);
-    list.push_back(builder.makeLocalSet(rttLocal, curr->rtt));
-    list.push_back(builder.makeLocalSet(sizeLocal, curr->size));
-    list.push_back(builder.makeLocalSet(initLocal, curr->init));
-    // Compute the size of the array.
-    auto* linearSize = builder.makeBinary(
-      AddInt32,
-      builder.makeBinary(
-        MulInt32,
-        builder.makeConst(int32_t(loweredElementType.getByteSize())),
-        curr->size),
-      // Room for the rtt and size.
-      builder.makeConst(int32_t(8)));
-    // Malloc space for our array.
-    auto refLocal = builder.addVar(getFunction(), loweringInfo->pointerType);
-    list.push_back(builder.makeLocalSet(
-      refLocal,
-      builder.makeCall(
-        loweringInfo->malloc, {linearSize}, loweringInfo->pointerType)));
-    // Store the rtt.
-    list.push_back(builder.makeStore(
-      loweringInfo->pointerSize,
-      0,
-      loweringInfo->pointerSize,
-      builder.makeLocalGet(refLocal, loweringInfo->pointerType),
-      curr->rtt,
-      loweringInfo->pointerType));
-    // Store the values, by representing them as ArraySets.
-    auto counterLocal = builder.addVar(getFunction(), Type::i32);
-    ArraySet setInitialValue(getModule()->allocator);
-    setInitialValue.ref =
-      builder.makeLocalGet(refLocal, loweringInfo->pointerType);
-    if (!curr->isWithDefault()) {
-      list.push_back(builder.makeLocalSet(initLocal, curr->init));
-      setInitialValue.value =
-        builder.makeLocalGet(initLocal, loweredElementType);
+    std::vector<Expression*> operands;
+    std::string name = getExpressionName(curr);
+    if (curr->isWithDefault()) {
+      name += "WithDefault";
     } else {
-      setInitialValue.value =
-        LiteralUtils::makeZero(loweredElementType, *getModule());
+      operands.push_back(curr->init);
     }
-    Name loopName("loop");
-    Name blockName("block");
-    list.push_back(builder.makeLoop(
-      loopName,
-      builder.makeBlock(
-        blockName,
-        {builder.makeBreak(
-           loopName,
-           nullptr,
-           builder.makeUnary(EqZInt32,
-                             builder.makeLocalGet(counterLocal, Type::i32))),
-         &setInitialValue,
-         builder.makeLocalSet(
-           counterLocal,
-           builder.makeBinary(SubInt32,
-                              builder.makeLocalGet(counterLocal, Type::i32),
-                              builder.makeConst(int32_t(1)))),
-         builder.makeBreak(loopName)})));
-    // Return the pointer.
-    list.push_back(builder.makeLocalGet(refLocal, loweringInfo->pointerType));
-    replaceCurrent(builder.makeBlock(list));
-  }
-
-  void visitArraySet(ArraySet* curr) { replaceCurrent(lower(curr)); }
-
-  // Lower a ArraySet. If a type is given, then we use that, otherwise we will
-  // look up the type using relevantHeapTypes (which were computed by first
-  // scanning all the code).
-  Expression* lower(ArraySet* curr, HeapType type = HeapType::any) {
-    // TODO: ignore unreachable, or run dce before
+    operands.push_back(curr->size);
+    operands.push_back(curr->rtt);
+    name += std::string("$") + getModule()->typeNames[type].name.str;
     Builder builder(*getModule());
-    if (type == HeapType::any) {
-      type = relevantHeapTypes[curr];
-    }
-    auto element = type.getArray().element;
-    auto loweredType = getLoweredType(element.type, getModule()->memory);
-    // Note that we carefully keep the inputs in the same order as we use them,
-    // so we do not need to save them to locals first.
-    return builder.makeStore(
-      loweredType.getByteSize(),
-      0,
-      loweredType.getByteSize(),
-      makeArrayAddress(curr->ref, curr->index, loweredType),
-      curr->value,
-      loweredType);
+    replaceCurrent(builder.makeCall(name, operands, loweringInfo->pointerType));
   }
 
-  void visitArrayGet(ArrayGet* curr) { replaceCurrent(lower(curr)); }
-
-  Expression* lower(ArrayGet* curr) {
-    // TODO: ignore unreachable, or run dce before
+  void visitArraySet(ArraySet* curr) {
     Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
+    auto name = std::string("ArraySet$") +
+                getModule()->typeNames[type].name.str;
+    replaceCurrent(
+      builder.makeCall(name, {curr->ref, curr->index, curr->value}, Type::none));
+  }
+
+  void visitArrayGet(ArrayGet* curr) {
+    Builder builder(*getModule());
+    auto type = relevantHeapTypes[curr];
+    auto name = std::string("ArrayGet$") +
+                getModule()->typeNames[type].name.str;
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, getModule()->memory);
-    // Note that we carefully keep the inputs in the same order as we use them,
-    // so we do not need to save them to locals first.
-    return builder.makeLoad(
-      loweredType.getByteSize(),
-      false, // TODO: signedness
-      0,
-      loweredType.getByteSize(),
-      makeArrayAddress(curr->ref, curr->index, loweredType),
-      loweredType);
+    replaceCurrent(builder.makeCall(
+      name, {curr->ref, curr->index}, loweredType));
   }
 
   void visitRttCanon(RttCanon* curr) {

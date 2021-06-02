@@ -78,7 +78,7 @@
   )
  )
 
- (;;func $array-gets
+ (func $array-gets
   (param $ref-bytes (ref $bytes))
   (param $ref-doubles (ref $doubles))
   (drop
@@ -87,16 +87,16 @@
   (drop
    (array.get $doubles (local.get $ref-doubles) (i32.const 7))
   )
- ;;)
+ )
 
- (;;func $array-sets
+ (func $array-sets
   (param $ref-bytes (ref $bytes))
   (param $ref-doubles (ref $doubles))
   (array.set $bytes (local.get $ref-bytes) (i32.const 7) (i32.const 42))
   (array.set $doubles (local.get $ref-doubles) (i32.const 7) (f64.const 3.14159))
- ;;)
+ )
 
- (;;func $new-array
+ (func $new-array
   (drop
    (array.new_with_rtt $bytes
     (i32.const 42)
@@ -104,14 +104,14 @@
     (rtt.canon $bytes)
    )
   )
- ;;)
+ )
 
- (;;func $new-array-default
+ (func $new-array-default
   (drop
    (array.new_default_with_rtt $doubles
     (i32.const 11)
     (rtt.canon $doubles)
    )
   )
- ;;)
+ )
 )
