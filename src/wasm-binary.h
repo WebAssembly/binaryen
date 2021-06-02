@@ -1019,6 +1019,7 @@ enum ASTNodes {
   RefFunc = 0xd2,
   RefAsNonNull = 0xd3,
   BrOnNull = 0xd4,
+  BrOnNonNull = 0xd6,
 
   // exception handling opcodes
 
@@ -1060,6 +1061,7 @@ enum ASTNodes {
   RefTest = 0x40,
   RefCast = 0x41,
   BrOnCast = 0x42,
+  BrOnCastFail = 0x43,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
   RefIsI31 = 0x52,
@@ -1069,6 +1071,9 @@ enum ASTNodes {
   BrOnFunc = 0x60,
   BrOnData = 0x61,
   BrOnI31 = 0x62,
+  BrOnNonFunc = 0x63,
+  BrOnNonData = 0x64,
+  BrOnNonI31 = 0x65,
 };
 
 enum MemoryAccess {

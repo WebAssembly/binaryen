@@ -545,10 +545,15 @@ enum RefAsOp {
 
 enum BrOnOp {
   BrOnNull,
+  BrOnNonNull,
   BrOnCast,
+  BrOnCastFail,
   BrOnFunc,
+  BrOnNonFunc,
   BrOnData,
+  BrOnNonData,
   BrOnI31,
+  BrOnNonI31,
 };
 
 //
@@ -1374,7 +1379,7 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast has an rtt that is used in the cast.
+  // BrOnCast* has an rtt that is used in the cast.
   Expression* rtt;
 
   // TODO: BrOnNull also has an optional extra value in the spec, which we do
@@ -1385,7 +1390,8 @@ public:
 
   void finalize();
 
-  Type getCastType();
+  // Returns the type sent on the branch, if it is taken.
+  Type getSentType();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {

@@ -1500,17 +1500,25 @@ public:
   }
   Flow visitBrOn(BrOn* curr) {
     NOTE_ENTER("BrOn");
-    // BrOnCast uses the casting infrastructure, so handle it first.
-    if (curr->op == BrOnCast) {
+    // BrOnCast* uses the casting infrastructure, so handle it first.
+    if (curr->op == BrOnCast || curr->op == BrOnCastFail) {
       auto cast = doCast(curr);
       if (cast.outcome == cast.Break) {
         return cast.breaking;
       }
       if (cast.outcome == cast.Null || cast.outcome == cast.Failure) {
-        return cast.originalRef;
+        if (curr->op == BrOnCast) {
+          return cast.originalRef;
+        } else {
+          return Flow(curr->name, cast.originalRef);
+        }
       }
       assert(cast.outcome == cast.Success);
-      return Flow(curr->name, cast.castRef);
+      if (curr->op == BrOnCast) {
+        return Flow(curr->name, cast.castRef);
+      } else {
+        return cast.castRef;
+      }
     }
     // The others do a simpler check for the type.
     Flow flow = visit(curr->ref);
@@ -1528,30 +1536,54 @@ public:
       // If the branch is not taken, we return the non-null value.
       return {value};
     }
+    if (curr->op == BrOnNonNull) {
+      // Unlike the others, BrOnNonNull does not return a value if it does not
+      // take the branch.
+      if (value.isNull()) {
+        return Flow();
+      }
+      // If the branch is taken, we send the non-null value.
+      return Flow(curr->name, value);
+    }
+    // See if the input is the right kind (ignoring the flipping behavior of
+    // BrOn*).
+    bool isRightKind;
     if (value.isNull()) {
-      return {value};
+      // A null is never the right kind.
+      isRightKind = false;
+    } else {
+      switch (curr->op) {
+        case BrOnNonFunc:
+        case BrOnFunc:
+          isRightKind = value.type.isFunction();
+          break;
+        case BrOnNonData:
+        case BrOnData:
+          isRightKind = value.isData();
+          break;
+        case BrOnNonI31:
+        case BrOnI31:
+          isRightKind = value.type.getHeapType() == HeapType::i31;
+          break;
+        default:
+          WASM_UNREACHABLE("invalid br_on_*");
+      }
     }
+    // The Non* operations require us to flip the normal behavior.
     switch (curr->op) {
-      case BrOnFunc:
-        if (!value.type.isFunction()) {
-          return {value};
-        }
+      case BrOnNonFunc:
+      case BrOnNonData:
+      case BrOnNonI31:
+        isRightKind = !isRightKind;
         break;
-      case BrOnData:
-        if (!value.isData()) {
-          return {value};
-        }
-        break;
-      case BrOnI31:
-        if (value.type.getHeapType() != HeapType::i31) {
-          return {value};
-        }
-        break;
-      default:
-        WASM_UNREACHABLE("invalid br_on_*");
+      default: {
+      }
     }
-    // No problems: take the branch.
-    return Flow(curr->name, value);
+    if (isRightKind) {
+      // Take the branch.
+      return Flow(curr->name, value);
+    }
+    return {value};
   }
   Flow visitRttCanon(RttCanon* curr) { return Literal(curr->type); }
   Flow visitRttSub(RttSub* curr) {

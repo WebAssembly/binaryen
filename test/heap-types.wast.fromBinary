@@ -1,8 +1,8 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
+ (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $vector (array (mut f64)))
  (type $none_=>_none (func))
- (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $grandchild (struct (field i32) (field i64)))
  (type $matrix (array (mut (ref null $vector))))
  (type $struct.C (struct (field $named-mut (mut f32))))
@@ -195,6 +195,7 @@
  )
  (func $rtt-operations
   (local $temp.A (ref null $struct.A))
+  (local $temp.B (ref null $struct.B))
   (drop
    (ref.test
     (ref.null $struct.A)
@@ -221,6 +222,17 @@
      )
      (unreachable)
     )
+   )
+  )
+  (drop
+   (block $label$3 (result (ref null $struct.A))
+    (local.set $temp.B
+     (br_on_cast_fail $label$3
+      (ref.null $struct.A)
+      (rtt.canon $struct.B)
+     )
+    )
+    (ref.null $struct.A)
    )
   )
  )
@@ -269,6 +281,9 @@
  (func $br_on_X (param $x anyref)
   (local $y anyref)
   (local $z anyref)
+  (local $temp-func funcref)
+  (local $temp-data (ref null data))
+  (local $temp-i31 (ref null i31))
   (block $label$1
    (local.set $z
     (br_on_null $label$1
@@ -304,6 +319,44 @@
      )
     )
     (ref.null i31)
+   )
+  )
+  (drop
+   (block $label$5 (result (ref any))
+    (br_on_non_null $label$5
+     (local.get $x)
+    )
+    (unreachable)
+   )
+  )
+  (drop
+   (block $label$6 (result anyref)
+    (local.set $temp-func
+     (br_on_non_func $label$6
+      (local.get $x)
+     )
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $label$7 (result anyref)
+    (local.set $temp-data
+     (br_on_non_data $label$7
+      (local.get $x)
+     )
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $label$8 (result anyref)
+    (local.set $temp-i31
+     (br_on_non_i31 $label$8
+      (local.get $x)
+     )
+    )
+    (ref.null any)
    )
   )
  )

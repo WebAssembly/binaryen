@@ -180,6 +180,50 @@
    )
   )
  )
+ (func "br_on_failed_cast-1"
+  (local $any anyref)
+  ;; create a simple $struct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $struct (rtt.canon $struct))
+  )
+  (drop
+   (block $any (result (ref null any))
+    (call $log (i32.const 1))
+    (drop
+     ;; try to cast our simple $struct to an extended, which will fail, and
+     ;; so we will branch, skipping the next logging.
+     (br_on_cast_fail $any
+      (local.get $any)
+      (rtt.canon $extendedstruct)
+     )
+    )
+    (call $log (i32.const 999)) ;; we should skip this
+    (ref.null any)
+   )
+  )
+ )
+ (func "br_on_failed_cast-2"
+  (local $any anyref)
+  ;; create an $extendedstruct, store it in an anyref
+  (local.set $any
+   (struct.new_default_with_rtt $extendedstruct (rtt.canon $extendedstruct))
+  )
+  (drop
+   (block $any (result (ref null any))
+    (call $log (i32.const 1))
+    (drop
+     ;; try to cast our simple $struct to an extended, which will succeed, and
+     ;; so we will continue to the next logging.
+     (br_on_cast_fail $any
+      (local.get $any)
+      (rtt.canon $extendedstruct)
+     )
+    )
+    (call $log (i32.const 999))
+    (ref.null any)
+   )
+  )
+ )
  (func "cast-null-anyref-to-gc"
   ;; a null anyref is a literal which is not even of GC data, as it's not an
   ;; array or a struct, so our casting code should not assume it is. it is ok
@@ -205,6 +249,77 @@
     )
     (call $log (i32.const 1))
     (call $get_data)
+   )
+  )
+ )
+ (func "br_on_non_data-null"
+  (local $x anyref)
+  (drop
+   (block $any (result anyref)
+    (drop
+     (br_on_non_data $any (local.get $x))
+    )
+    ;; $x is a null, and so it is not data, and the branch will be taken, and no
+    ;; logging will occur.
+    (call $log (i32.const 1))
+    (ref.null any)
+   )
+  )
+ )
+ (func "br_on_non_data-data"
+  (local $x anyref)
+  ;; set x to valid data
+  (local.set $x
+   (struct.new_default_with_rtt $struct
+    (rtt.canon $struct)
+   )
+  )
+  (drop
+   (block $any (result anyref)
+    (drop
+     (br_on_non_data $any (local.get $x))
+    )
+    ;; $x refers to valid data, and so we will not branch, and will log.
+    (call $log (i32.const 1))
+    (ref.null any)
+   )
+  )
+ )
+ (func "br_on_non_data-other"
+  (local $x anyref)
+  ;; set x to something that is not null, but also not data
+  (local.set $x
+   (ref.func $a-void-func)
+  )
+  (drop
+   (block $any (result anyref)
+    (drop
+     (br_on_non_data $any (local.get $x))
+    )
+    ;; $x refers to a function, so we will branch, and not log
+    (call $log (i32.const 1))
+    (ref.null any)
+   )
+  )
+ )
+ (func "br-on_non_null"
+  (drop
+   (block $non-null (result (ref any))
+    (br_on_non_null $non-null (ref.func $a-void-func))
+    ;; $x refers to a function, which is not null, so we will branch, and not
+    ;; log
+    (call $log (i32.const 1))
+    (unreachable)
+   )
+  )
+ )
+ (func "br-on_non_null-2"
+  (drop
+   (block $non-null (result (ref any))
+    (br_on_non_null $non-null (ref.null any))
+    ;; $x is null, and so we will not branch, and log and then trap
+    (call $log (i32.const 1))
+    (unreachable)
    )
   )
  )
