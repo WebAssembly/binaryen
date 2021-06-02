@@ -408,6 +408,7 @@ private:
   }
 
   void makeStructNew(HeapType type) {
+    auto typeName = module->typeNames[type].name.str;
     auto& fields = type.getStruct().fields;
     Builder builder(*module);
     for (bool withDefault : { true, false }) {
@@ -419,8 +420,8 @@ private:
         }
       }
       // Add the RTT parameter.
-      params.push_back(loweringInfo.pointerType);
       auto rttParam = params.size();
+      params.push_back(loweringInfo.pointerType);
       // We need one local to store the allocated value.
       auto local = params.size();
       std::vector<Expression*> list;
@@ -449,8 +450,11 @@ private:
           value = builder.makeLocalGet(i, paramType);
         }
         list.push_back(builder.makeCall(
-          "StructSet$" + std::to_string(i),
-          {value},
+          std::string("StructSet$") + typeName + '$' + std::to_string(i),
+          {
+            builder.makeLocalGet(local, loweringInfo.pointerType),
+            value
+          },
           Type::none
         ));
       }
@@ -461,7 +465,7 @@ private:
         name += "WithDefault";
       }
       module->addFunction(builder.makeFunction(
-        name + '$' + module->typeNames[type].name.str,
+        name + '$' + typeName,
         {Type(params), Type::i32},
         {loweringInfo.pointerType},
         builder.makeBlock(list)
@@ -476,7 +480,7 @@ private:
       auto& field = fields[i];
       auto loweredType = getLoweredType(field.type, module->memory);
       module->addFunction(builder.makeFunction(
-        std::string("StructGet$") + module->typeNames[type].name.str + '$' + std::to_string(i),
+        std::string("StructSet$") + module->typeNames[type].name.str + '$' + std::to_string(i),
         {{loweringInfo.pointerType, loweredType}, Type::none},
         {},
         builder.makeStore(
@@ -485,7 +489,7 @@ private:
           loweredType.getByteSize(),
           builder.makeLocalGet(0, loweringInfo.pointerType),
           builder.makeLocalGet(1, loweredType),
-          Type::none)
+          loweredType)
       ));
     }
   }
