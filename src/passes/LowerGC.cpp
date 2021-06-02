@@ -64,7 +64,8 @@ struct LoweringInfo {
   Type pointerType;
 };
 
-// Lower GC instructions.
+// Lower GC instructions. Most turn into function calls, and we rely on inlining
+// and other optimizations to improve the code.
 struct LowerGCCode
   : public WalkerPass<
       PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>> {
@@ -90,41 +91,18 @@ struct LowerGCCode
   }
 
   void visitStructNew(StructNew* curr) {
-    Builder builder(*getModule());
     auto type = relevantHeapTypes[curr];
-    std::vector<Expression*> list;
-    auto local = builder.addVar(getFunction(), loweringInfo->pointerType);
-    // Malloc space for our struct.
-    list.push_back(builder.makeLocalSet(
-      local,
-      builder.makeCall(
-        loweringInfo->malloc,
-        {builder.makeConst(int32_t(loweringInfo->layouts[type].size))},
-        loweringInfo->pointerType)));
-    // Store the rtt.
-    list.push_back(
-      builder.makeStore(loweringInfo->pointerSize,
-                        0,
-                        loweringInfo->pointerSize,
-                        builder.makeLocalGet(local, loweringInfo->pointerType),
-                        curr->rtt,
-                        loweringInfo->pointerType));
-    // Store the values, by representing them as StructSets.
-    auto& fields = type.getStruct().fields;
-    StructSet set(getModule()->allocator);
-    set.ref = builder.makeLocalGet(local, loweringInfo->pointerType);
-    for (Index i = 0; i < fields.size(); i++) {
-      set.index = i;
-      if (curr->isWithDefault()) {
-        set.value = LiteralUtils::makeZero(fields[i].type, *getModule());
-      } else {
-        set.value = curr->operands[i];
-      }
-      list.push_back(lower(&set, type));
+    ExpressionList operands;
+    std::string name = getExpressionName(curr);
+    if (curr->isWithDefault()) {
+      name += "WithDefault";
+    } else {
+      operands = curr->operands;
     }
-    // Return the pointer.
-    list.push_back(builder.makeLocalGet(local, loweringInfo->pointerType));
-    replaceCurrent(builder.makeBlock(list));
+    operands.push_back(curr->rtt);
+    name += '$' + getModule()->typeNames[type];
+    Builder builder(*getModule());
+    return builder.makeCall(name, operands, loweringInfo->pointerType);
   }
 
   void visitStructSet(StructSet* curr) { replaceCurrent(lower(curr)); }
@@ -362,6 +340,14 @@ private:
 
 struct LowerGC : public Pass {
   void run(PassRunner* runner, Module* module_) override {
+    // First, ensure types have names, as we use the names when creating the
+    // runtime code.
+    {
+      PassRunner subRunner(runner);
+      subRunner.add("name-types");
+      subRunner.setIsNested(true);
+      subRunner.run();
+    }
     module = module_;
     std::cout << "add mem\n";
     addMemory();
@@ -422,6 +408,7 @@ private:
     for (auto type : types) {
       if (type.isStruct()) {
         computeLayout(type, loweringInfo.layouts[type]);
+        makeStructNew(type);
       }
     }
   }
@@ -438,6 +425,69 @@ private:
         nextField + getLoweredType(field.type, module->memory).getByteSize();
     }
     layout.size = nextField;
+  }
+
+  void makeStructNew(HeapType type) {
+    auto& fields = type.getStruct().fields;
+    Builder builder(*getModule());
+    for (bool withDefault : { true, false }) {
+      std::vector<Type> params;
+      // Store the values, by performing StructSet operations.
+      for (Index i = 0; i < fields.size(); i++) {
+        if (!withDefault) {
+          value = LiteralUtils::makeZero(fields[i].type, *getModule());
+        } else {
+          params.push_back(fields[i].type);
+        }
+      }
+      // Add the RTT parameter.
+      params.push_back(loweringInfo->pointerType);
+      // We need one local to store the allocated value.
+      auto local = params.size();
+      std::vector<Expression*> list;
+      // Malloc space for our struct.
+      list.push_back(builder.makeLocalSet(
+        local,
+        builder.makeCall(
+          loweringInfo->malloc,
+          {builder.makeConst(int32_t(loweringInfo->layouts[type].size))},
+          loweringInfo->pointerType)));
+      // Store the rtt.
+      list.push_back(
+        builder.makeStore(loweringInfo->pointerSize,
+                          0,
+                          loweringInfo->pointerSize,
+                          builder.makeLocalGet(local, loweringInfo->pointerType),
+                          curr->rtt,
+                          loweringInfo->pointerType));
+      // Store the values, by performing StructSet operations.
+      for (Index i = 0; i < fields.size(); i++) {
+        Expression* value;
+        if (withDefault) {
+          value = LiteralUtils::makeZero(fields[i].type, *getModule());
+        } else {
+          auto paramType = fields[i].type;
+          value = builder.makeLocalGet(i, paramType);
+        }
+        list.push_back(builder.makeCall(
+          "StructSet$" + std::to_string(i),
+          value,
+          Type::none
+        ));
+      }
+      // Return the pointer.
+      list.push_back(builder.makeLocalGet(local, loweringInfo->pointerType));
+      std::string name = "StructNew";
+      if (withDefault) {
+        name += "WithDefault";
+      }
+      module->addFunction(builder.makeFunction(
+        name + '$' + module->typeNames[type],
+        {params, Type::i32},
+        {},
+        builder.makeBlock(list)
+      ));
+    }
   }
 
   void lowerCode(PassRunner* runner) {
