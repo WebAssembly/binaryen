@@ -1390,7 +1390,8 @@ public:
 
   void finalize();
 
-  Type getCastType();
+  // Returns the type sent on the branch, if it is taken.
+  Type getSentType();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {

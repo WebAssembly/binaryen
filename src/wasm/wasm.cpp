@@ -954,7 +954,7 @@ void BrOn::finalize() {
   }
 }
 
-Type BrOn::getCastType() {
+Type BrOn::getSentType() {
   switch (op) {
     case BrOnNull:
       // BrOnNull does not send a value on the branch.

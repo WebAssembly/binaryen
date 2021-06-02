@@ -2252,7 +2252,7 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
     // casts to.
     shouldBeTrue(
       curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
-    noteBreak(curr->name, curr->getCastType(), curr);
+    noteBreak(curr->name, curr->getSentType(), curr);
   } else {
     shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");
   }
