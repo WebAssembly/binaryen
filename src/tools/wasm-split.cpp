@@ -824,7 +824,7 @@ void mergeProfiles(const WasmSplitOptions& options) {
   // Read the initial profile. We will merge other profiles into this one.
   ProfileData data = readProfile(options.inputFiles[0]);
 
-  // In verbose mode, we want to find profiles that don't contributed to the
+  // In verbose mode, we want to find profiles that don't contribute to the
   // merged profile. To do that, keep track of how many profiles each function
   // appears in. If any profile contains only functions that appear in multiple
   // profiles, it could be dropped.
