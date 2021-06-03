@@ -582,11 +582,11 @@ void test_bits() {
   u.op = ExtendS32Int64;
   c0.value = Literal(int64_t(0));
   assert_equal(getMaxBits(&u), 0);
-  c0.value = Literal(int64_t(0x7FFFFFFF));
+  c0.value = Literal(int64_t(0x000000007FFFFFFFLL));
   assert_equal(getMaxBits(&u), 31);
-  c0.value = Literal(int64_t(0xFFFFFFFF));
+  c0.value = Literal(int64_t(0x00000000FFFFFFFFLL));
   assert_equal(getMaxBits(&u), 64);
-  c0.value = Literal(int64_t(-1));
+  c0.value = Literal(int64_t(-1LL));
   assert_equal(getMaxBits(&u), 64);
 }
 
