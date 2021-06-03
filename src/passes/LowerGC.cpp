@@ -817,12 +817,19 @@ private:
   void processGlobals() {
     Builder builder(*module);
     for (auto& global : module->globals) {
+      global->type = lower(global->type);
       if (global->init && global->init->is<RttSub>()) {
         startBlock->list.push_back(
-          builder.makeCall("RttSub", {global->init->cast<RttSub>()->parent}, Type::i32)
+          builder.makeGlobalSet(
+            global->name,
+            builder.makeCall("RttSub", {global->init->cast<RttSub>()->parent}, Type::i32)
+          )
         );
         // Set a 0 as a placeholder for the global.
         global->init = builder.makeConst(int32_t(0));
+        // Unfortunately, we must make the global mutable so we can write to it
+        // after initialization.
+        global->mutable_ = true;
       }
     }
   }
@@ -834,8 +841,12 @@ private:
     subRunner.setIsNested(true);
     subRunner.run();
 
-    LowerGCCode(&loweringInfo).walkModuleCode(module);
+    LowerGCCode lower(&loweringInfo);
+    lower.setModule(module);
+    lower.walkModuleCode(module);
   }
+
+  Type lower(Type type) { return getLoweredType(type, module->memory); }
 };
 
 Pass* createLowerGCPass() { return new LowerGC(); }
