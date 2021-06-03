@@ -612,8 +612,8 @@ private:
         list.push_back(builder.makeIf(
           builder.makeBinary(
             NeInt32,
-            builder.makeLocalGet(0, loweringInfo.pointerType),
-            getRttKind(builder.makeLocalGet(0, loweringInfo.pointerType))
+            getRttKind(builder.makeLocalGet(0, loweringInfo.pointerType)),
+            builder.makeConst(int32_t(kind))
           ),
           builder.makeUnreachable()
         ));
