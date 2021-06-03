@@ -1,6 +1,6 @@
 add mem
-add run
 comp layouts
+add run
 lower code
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
@@ -24,8 +24,9 @@ lower code
  (type $f64_i32_i32_=>_i32 (func (param f64 i32 i32) (result i32)))
  (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
  (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
- (global $nextMalloc (mut i32) (i32.const 8))
+ (global $nextMalloc (mut i32) (i32.const 48))
  (memory $0 256 256)
+ (start $LowerGC$start)
  (func $struct-gets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
   (drop
    (call $StructGet$struct-i32$0
@@ -156,16 +157,46 @@ lower code
    )
   )
  )
- (func $malloc (param $0 i32) (result i32)
-  (global.set $nextMalloc
-   (i32.add
-    (global.get $nextMalloc)
-    (local.get $0)
-   )
+ (func $LowerGC$start
+  (i32.store
+   (i32.const 8)
+   (i32.const 1)
   )
-  (i32.sub
-   (global.get $nextMalloc)
-   (local.get $0)
+  (i32.store
+   (i32.const 12)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 16)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 20)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 24)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 28)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 32)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 36)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 40)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 44)
+   (i32.const 0)
   )
  )
  (func $StructNewWithDefault$many-fields (param $0 i32) (result i32)
@@ -823,5 +854,17 @@ lower code
    (unreachable)
   )
   (local.get $0)
+ )
+ (func $malloc (param $0 i32) (result i32)
+  (global.set $nextMalloc
+   (i32.add
+    (global.get $nextMalloc)
+    (local.get $0)
+   )
+  )
+  (i32.sub
+   (global.get $nextMalloc)
+   (local.get $0)
+  )
  )
 )

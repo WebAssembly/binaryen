@@ -276,6 +276,7 @@ struct LowerGC : public Pass {
     }
     module = module_;
     std::cout << "add mem\n";
+    pickNames();
     addMemory();
     addStart();
     std::cout << "comp layouts\n";
@@ -294,6 +295,10 @@ private:
   LoweringInfo loweringInfo;
 
   Block* startBlock;
+
+  void pickNames() {
+    loweringInfo.malloc = "malloc";
+  }
 
   void addMemory() {
     module->memory.exists = true;
@@ -335,10 +340,9 @@ private:
                                            Type::i32,
                                            builder.makeConst(int32_t(loweringInfo.mallocStart)),
                                            Builder::Mutable));
-    loweringInfo.malloc = "malloc";
     // TODO: more than a simple bump allocator that never frees or collects.
     module->addFunction(builder.makeFunction(
-      "malloc",
+      loweringInfo.malloc,
       {Type::i32, Type::i32},
       {},
       builder.makeSequence(
