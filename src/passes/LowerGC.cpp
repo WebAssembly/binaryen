@@ -480,7 +480,7 @@ private:
         initialization = builder.makeLocalGet(initParam, loweredType);
       }
       initialization = builder.makeCall(
-          std::string("") + typeName,
+          std::string("ArraySet$") + typeName,
           {
            builder.makeLocalGet(alloc, loweringInfo.pointerType),
            builder.makeLocalGet(counter, loweringInfo.pointerType),
