@@ -82,7 +82,7 @@ lower code
   )
   (call $StructSet$struct-rtt$0
    (local.get $ref-rtt)
-   (i32.const 0)
+   (i32.const 24)
   )
  )
  (func $many-fields (param $ref i32)
@@ -103,14 +103,14 @@ lower code
   (drop
    (call $StructNew$struct-i32
     (i32.const 42)
-    (i32.const 0)
+    (i32.const 16)
    )
   )
  )
  (func $new-struct-default
   (drop
    (call $StructNewWithDefault$many-fields
-    (i32.const 0)
+    (i32.const 8)
    )
   )
  )
@@ -145,7 +145,7 @@ lower code
    (call $ArrayNew$bytes
     (i32.const 42)
     (i32.const 11)
-    (i32.const 0)
+    (i32.const 32)
    )
   )
  )
@@ -153,7 +153,7 @@ lower code
   (drop
    (call $ArrayNewWithDefault$doubles
     (i32.const 11)
-    (i32.const 0)
+    (i32.const 40)
    )
   )
  )
@@ -546,7 +546,7 @@ lower code
   )
   (call $StructSet$struct-rtt$0
    (local.get $1)
-   (i32.const 0)
+   (i32.const 24)
   )
   (local.get $1)
  )

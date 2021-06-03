@@ -94,6 +94,10 @@ struct LoweringInfo {
 
   Address pointerSize;
   Type pointerType;
+
+  // The addresses of rtt.canons. Each rtt.canon will be turned into a constant
+  // containing the address for that type.
+  std::unordered_map<HeapType, Address> rttCanonAddrs;
 };
 
 // Lower GC instructions. Most turn into function calls, and we rely on inlining
@@ -217,9 +221,10 @@ struct LowerGCCode
   }
 
   void visitRttCanon(RttCanon* curr) {
+    auto type = curr->type.getHeapType();
     visitExpression(curr);
     // FIXME actual rtt allocations and values
-    replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
+    replaceCurrent(LiteralUtils::makeFromInt32(loweringInfo->rttCanonAddrs[type], loweringInfo->pointerType, *getModule()));
   }
 
   void doWalkFunction(Function* func) {
@@ -728,7 +733,8 @@ private:
 
   void makeRttCanon(HeapType type) {
     // Allocate this rtt at the next free location.
-    auto ptr = loweringInfo.mallocStart;
+    auto addr = loweringInfo.mallocStart;
+    loweringInfo.rttCanonAddrs[type] = addr;
     int32_t rttValue;
     if (type.isFunction()) {
       rttValue = RttFunc;
@@ -743,7 +749,7 @@ private:
       4,
       0,
       4,
-      builder.makeConst(int32_t(ptr)),
+      builder.makeConst(int32_t(addr)),
       builder.makeConst(int32_t(rttValue)),
       Type::i32
     ));
@@ -753,7 +759,7 @@ private:
       loweringInfo.pointerSize,
       0,
       loweringInfo.pointerSize,
-      builder.makeConst(int32_t(ptr + 4)),
+      builder.makeConst(int32_t(addr + 4)),
       builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
       loweringInfo.pointerType
     ));
