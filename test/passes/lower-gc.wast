@@ -114,4 +114,12 @@
    )
   )
  )
+
+ (func $rtt.sub
+  (drop
+   (rtt.sub $struct-i32
+    (rtt.canon $empty)
+   )
+  )
+ )
 )

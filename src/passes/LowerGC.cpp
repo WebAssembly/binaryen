@@ -223,8 +223,13 @@ struct LowerGCCode
   void visitRttCanon(RttCanon* curr) {
     auto type = curr->type.getHeapType();
     visitExpression(curr);
-    // FIXME actual rtt allocations and values
     replaceCurrent(LiteralUtils::makeFromInt32(loweringInfo->rttCanonAddrs[type], loweringInfo->pointerType, *getModule()));
+  }
+
+  void visitRttSub(RttSub* curr) {
+    visitExpression(curr);
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeCall("RttSub", {curr->parent}, loweringInfo->pointerType));
   }
 
   void doWalkFunction(Function* func) {
@@ -280,17 +285,14 @@ struct LowerGC : public Pass {
       subRunner.run();
     }
     module = module_;
-    std::cout << "add mem\n";
     pickNames();
     addMemory();
     addStart();
-    std::cout << "comp layouts\n";
     addGCRuntime();
-    std::cout << "add run\n";
     // After adding the GC runtime, which may allocate memory, we can create our
     // malloc runtime and initialize it.
     addMalloc();
-    std::cout << "lower code\n";
+    processGlobals();
     lowerCode(runner);
   }
 
@@ -807,6 +809,22 @@ private:
                          {loweringInfo.pointerType, loweringInfo.pointerType},
                          {loweringInfo.pointerType},
                          builder.makeBlock(list)));
+  }
+
+  // Some global initializers need to be lowered into non-globals. Specifically,
+  // rtt.sub operations are turned into calls, which are not allowed in global
+  // inits, so we add them to the start.
+  void processGlobals() {
+    Builder builder(*module);
+    for (auto& global : module->globals) {
+      if (global->init && global->init->is<RttSub>()) {
+        startBlock->list.push_back(
+          builder.makeCall("RttSub", {global->init->cast<RttSub>()->parent}, Type::i32)
+        );
+        // Set a 0 as a placeholder for the global.
+        global->init = builder.makeConst(int32_t(0));
+      }
+    }
   }
 
   void lowerCode(PassRunner* runner) {
