@@ -88,6 +88,9 @@ struct LoweringInfo {
   Layouts layouts;
 
   Name malloc;
+  // Start allocating at address 8, so that lower numbers can have special
+  // meanings (like 0 meaning "null").
+  Address mallocStart = 8;
 
   Address pointerSize;
   Type pointerType;
@@ -274,10 +277,13 @@ struct LowerGC : public Pass {
     module = module_;
     std::cout << "add mem\n";
     addMemory();
-    std::cout << "add run\n";
-    addMalloc();
+    addStart();
     std::cout << "comp layouts\n";
     addGCRuntime();
+    std::cout << "add run\n";
+    // After adding the GC runtime, which may allocate memory, we can create our
+    // malloc runtime and initialize it.
+    addMalloc();
     std::cout << "lower code\n";
     lowerCode(runner);
   }
@@ -286,6 +292,8 @@ private:
   Module* module;
 
   LoweringInfo loweringInfo;
+
+  Block* startBlock;
 
   void addMemory() {
     module->memory.exists = true;
@@ -298,14 +306,34 @@ private:
     loweringInfo.pointerType = module->memory.indexType;
   }
 
+  void addStart() {
+    Builder builder(*module);
+    startBlock = builder.makeBlock();
+    if (module->start.is()) {
+      // There is already a start function. Add our block before it.
+      auto* func = module->getFunction(module->start);
+      func->body = builder.makeSequence(
+        startBlock,
+        func->body
+      );
+      return;
+    }
+    // Add a new start function.
+    module->start = "LowerGC$start";
+    module->addFunction(builder.makeFunction(
+      module->start,
+      {Type::none, Type::none},
+      {},
+      startBlock
+    ));
+  }
+
   void addMalloc() {
     Builder builder(*module);
-    // Start allocating at address 8, so that lower numbers can have special
-    // meanings (like 0 meaning "null").
     auto* nextMalloc =
       module->addGlobal(builder.makeGlobal("nextMalloc",
                                            Type::i32,
-                                           builder.makeConst(int32_t(8)),
+                                           builder.makeConst(int32_t(loweringInfo.mallocStart)),
                                            Builder::Mutable));
     loweringInfo.malloc = "malloc";
     // TODO: more than a simple bump allocator that never frees or collects.
@@ -695,6 +723,37 @@ private:
   }
 
   void makeRttCanon(HeapType type) {
+    // Allocate this rtt at the next free location.
+    auto ptr = loweringInfo.mallocStart;
+    int32_t rttValue;
+    if (type.isFunction()) {
+      rttValue = RttFunc;
+    } else if (type.isData()) {
+      rttValue = RttData;
+    } else {
+      WASM_UNREACHABLE("bad rtt");
+    }
+    Builder builder(*module);
+    // Write the rtt kind.
+    startBlock->list.push_back(builder.makeStore(
+      4,
+      0,
+      4,
+      builder.makeConst(int32_t(ptr)),
+      builder.makeConst(int32_t(rttValue)),
+      Type::i32
+    ));
+    // Write the null pointer that indicates this is an rtt canon (and not a
+    // sub).
+    startBlock->list.push_back(builder.makeStore(
+      loweringInfo.pointerSize,
+      0,
+      loweringInfo.pointerSize,
+      builder.makeConst(int32_t(ptr + 4)),
+      builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
+      loweringInfo.pointerType
+    ));
+    loweringInfo.mallocStart = loweringInfo.mallocStart + 4 + loweringInfo.pointerSize;
   }
 
   void lowerCode(PassRunner* runner) {
