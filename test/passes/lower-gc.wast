@@ -12,6 +12,11 @@
  (type $bytes (array (mut i8)))
  (type $doubles (array (mut f64)))
 
+ (global $global0 (rtt 0 $empty) (rtt.canon $empty))
+ (global $global1 (rtt 1 $struct-i32) (rtt.sub $struct-i32
+  (global.get $global0)
+ ))
+
  (func $struct-gets
   (param $ref-i32 (ref $struct-i32))
   (param $ref-i64 (ref $struct-i64))
