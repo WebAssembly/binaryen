@@ -102,14 +102,17 @@ struct LowerGCCode
   }
 
   void visitRefNull(RefNull* curr) {
+    visitExpression(curr);
     replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
   }
 
   void visitRefAs(RefAs* curr) {
+    visitExpression(curr);
     // waka
   }
 
   void visitStructNew(StructNew* curr) {
+    visitExpression(curr);
     auto type = originalTypes[&curr->rtt];
     std::vector<Expression*> operands;
     std::string name = getExpressionName(curr);
@@ -127,6 +130,7 @@ struct LowerGCCode
   }
 
   void visitStructSet(StructSet* curr) {
+    visitExpression(curr);
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name = std::string("StructSet$") +
@@ -137,6 +141,7 @@ struct LowerGCCode
   }
 
   void visitStructGet(StructGet* curr) {
+    visitExpression(curr);
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name = std::string("StructGet$") +
@@ -147,6 +152,7 @@ struct LowerGCCode
   }
 
   void visitArrayNew(ArrayNew* curr) {
+    visitExpression(curr);
     auto type = originalTypes[&curr->rtt];
     std::vector<Expression*> operands;
     std::string name = getExpressionName(curr);
@@ -163,6 +169,7 @@ struct LowerGCCode
   }
 
   void visitArraySet(ArraySet* curr) {
+    visitExpression(curr);
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name = std::string("ArraySet$") +
@@ -172,6 +179,7 @@ struct LowerGCCode
   }
 
   void visitArrayGet(ArrayGet* curr) {
+    visitExpression(curr);
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name = std::string("ArrayGet$") +
@@ -183,6 +191,7 @@ struct LowerGCCode
   }
 
   void visitRttCanon(RttCanon* curr) {
+    visitExpression(curr);
     // FIXME actual rtt allocations and values
     replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
   }
