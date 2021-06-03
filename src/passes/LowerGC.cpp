@@ -729,6 +729,7 @@ private:
         makeRttCanon(type);
       }
     }
+    makeRttSub();
   }
 
   void makeRttCanon(HeapType type) {
@@ -764,6 +765,48 @@ private:
       loweringInfo.pointerType
     ));
     loweringInfo.mallocStart = loweringInfo.mallocStart + 4 + loweringInfo.pointerSize;
+  }
+
+  void makeRttSub() {
+    Builder builder(*module);
+    // We need one local to store the allocated value. It has index 1, after
+    // the input rtt.
+    auto alloc = 1;
+    std::vector<Expression*> list;
+    // Malloc space for our struct.
+    list.push_back(builder.makeLocalSet(
+      alloc,
+      builder.makeCall(
+        loweringInfo.malloc,
+        {builder.makeConst(int32_t(4 + loweringInfo.pointerSize))},
+        loweringInfo.pointerType)));
+    // Copy the kind from the input rtt
+    list.push_back(builder.makeStore(
+      4,
+      0,
+      4,
+      builder.makeLocalGet(alloc, loweringInfo.pointerType),
+      builder.makeLoad(4,
+                       false,
+                       0,
+                       4,
+                       builder.makeLocalGet(0, loweringInfo.pointerType),
+                       Type::i32),
+      loweringInfo.pointerType));
+    // Store a pointer to the parent rtt.
+    list.push_back(builder.makeStore(
+      loweringInfo.pointerSize,
+      4,
+      loweringInfo.pointerSize,
+      builder.makeLocalGet(alloc, loweringInfo.pointerType),
+      builder.makeLocalGet(0, loweringInfo.pointerType),
+      loweringInfo.pointerType));
+    // Return the pointer.
+    list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
+    module->addFunction(builder.makeFunction("RttSub",
+                         {loweringInfo.pointerType, loweringInfo.pointerType},
+                         {loweringInfo.pointerType},
+                         builder.makeBlock(list)));
   }
 
   void lowerCode(PassRunner* runner) {

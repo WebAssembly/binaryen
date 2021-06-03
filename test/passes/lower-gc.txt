@@ -855,6 +855,25 @@ lower code
   )
   (local.get $0)
  )
+ (func $RttSub (param $0 i32) (result i32)
+  (local $1 i32)
+  (local.set $1
+   (call $malloc
+    (i32.const 8)
+   )
+  )
+  (i32.store
+   (local.get $1)
+   (i32.load
+    (local.get $0)
+   )
+  )
+  (i32.store offset=4
+   (local.get $1)
+   (local.get $0)
+  )
+  (local.get $1)
+ )
  (func $malloc (param $0 i32) (result i32)
   (global.set $nextMalloc
    (i32.add
