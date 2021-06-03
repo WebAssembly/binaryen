@@ -39,6 +39,25 @@ namespace wasm {
 
 namespace {
 
+const char* getName(RefAsOp op) {
+  switch (op) {
+    case RefAsNonNull:
+      return "RefAsNonNull";
+      break;
+    case RefAsFunc:
+      return "RefAsFunc";
+      break;
+    case RefAsData:
+      return "RefAsData";
+      break;
+    case RefAsI31:
+      return "RefAsI31";
+      break;
+    default:
+      WASM_UNREACHABLE("unimplemented ref.as_*");
+  }
+}
+
 enum RttKind {
   RttFunc = 0,
   RttData = 1,
@@ -90,7 +109,10 @@ struct LowerGCCode
 
   LowerGCCode(LoweringInfo* loweringInfo) : loweringInfo(loweringInfo) {}
 
-  // TODO: call this in all the places
+  // visitExpression() performs generic fixups that are needed in all classes.
+  // When a specific visitor is defined, they must also call this one, and
+  // before doing any changes (so that we can record the original type, which
+  // may then be needed by the parent expression, etc.).
   void visitExpression(Expression* curr) {
     auto type = curr->type;
     if (type.isRef() || type.isRtt()) {
@@ -108,7 +130,8 @@ struct LowerGCCode
 
   void visitRefAs(RefAs* curr) {
     visitExpression(curr);
-    // waka
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeCall(getName(curr->op), {curr->value}, loweringInfo->pointerType));
   }
 
   void visitStructNew(StructNew* curr) {
@@ -319,6 +342,7 @@ private:
         makeArrayGet(type);
       }
     }
+    makeRefAs();
   }
 
   void computeLayout(HeapType type, Layout& layout) {
@@ -569,6 +593,66 @@ private:
                        loweredType.getByteSize(),
                        makeArrayOffset(loweredType),
                        loweredType)));
+  }
+
+  void makeRefAs() {
+    Builder builder(*module);
+    for (RefAsOp op : { RefAsNonNull, RefAsFunc, RefAsData, RefAsI31 }) {
+      std::vector<Expression*> list;
+      // Check for null.
+      list.push_back(builder.makeIf(
+        builder.makeUnary(
+          EqZInt32,
+          builder.makeLocalGet(0, loweringInfo.pointerType)
+        ),
+        builder.makeUnreachable()
+      ));
+      // Check for a kind, if we need to.
+      auto compareRttTo = [&](RttKind kind) {
+        list.push_back(builder.makeIf(
+          builder.makeBinary(
+            NeInt32,
+            builder.makeLocalGet(0, loweringInfo.pointerType),
+            getRttKind(builder.makeLocalGet(0, loweringInfo.pointerType))
+          ),
+          builder.makeUnreachable()
+        ));
+      };
+      switch (op) {
+        case RefAsNonNull:
+          break;
+        case RefAsFunc:
+          compareRttTo(RttFunc);
+          break;
+        case RefAsData:
+          compareRttTo(RttData);
+          break;
+        case RefAsI31:
+          compareRttTo(RttI31);
+          break;
+        default:
+          WASM_UNREACHABLE("unimplemented ref.as_*");
+      }
+      // If we passed all the checks, we can return the pointer.
+      list.push_back(builder.makeLocalGet(0, loweringInfo.pointerType));
+      module->addFunction(builder.makeFunction(
+        getName(op),
+        {loweringInfo.pointerType, loweringInfo.pointerType},
+        {},
+        builder.makeBlock(list)
+      ));
+    }
+  }
+
+  // Given a pointer, load the RTT for it.
+  Expression* getRttKind(Expression* ptr) {
+    // The RTT is the very first field in all GC objects.
+    return Builder(*module).makeLoad(4,
+                            false,
+                            0,
+                            4,
+                            ptr,
+                            Type::i32);
   }
 
   void lowerCode(PassRunner* runner) {

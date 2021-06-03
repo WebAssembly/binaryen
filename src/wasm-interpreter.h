@@ -1833,7 +1833,7 @@ public:
         }
         break;
       default:
-        WASM_UNREACHABLE("unimplemented ref.is_*");
+        WASM_UNREACHABLE("unimplemented ref.as_*");
     }
     return value;
   }
