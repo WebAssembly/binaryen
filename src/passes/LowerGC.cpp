@@ -26,8 +26,8 @@
 //     u32 size
 //     elements...
 //   Rtts:
-//     u32 what (func, data, i31, extern)
-//     details...?
+//     u32     what (func, data, i31, extern)
+//     pointer parent (or null if this is from rtt.canon)
 //
 
 #include "ir/module-utils.h"
@@ -275,9 +275,9 @@ struct LowerGC : public Pass {
     std::cout << "add mem\n";
     addMemory();
     std::cout << "add run\n";
-    addRuntime();
+    addMalloc();
     std::cout << "comp layouts\n";
-    computeStructLayouts();
+    addGCRuntime();
     std::cout << "lower code\n";
     lowerCode(runner);
   }
@@ -298,7 +298,7 @@ private:
     loweringInfo.pointerType = module->memory.indexType;
   }
 
-  void addRuntime() {
+  void addMalloc() {
     Builder builder(*module);
     // Start allocating at address 8, so that lower numbers can have special
     // meanings (like 0 meaning "null").
@@ -324,12 +324,14 @@ private:
                            builder.makeLocalGet(0, Type::i32)))));
   }
 
-  void computeStructLayouts() {
+  void addGCRuntime() {
     // Collect all the heap types in order to analyze them and decide on their
     // layout in linear memory.
     std::vector<HeapType> types;
     std::unordered_map<HeapType, Index> typeIndices;
     ModuleUtils::collectHeapTypes(*module, types, typeIndices);
+
+    // Emit support code.
     for (auto type : types) {
       if (type.isStruct()) {
         computeLayout(type, loweringInfo.layouts[type]);
@@ -343,6 +345,8 @@ private:
       }
     }
     makeRefAs();
+
+    addRttSupport(types);
   }
 
   void computeLayout(HeapType type, Layout& layout) {
@@ -653,6 +657,44 @@ private:
                             4,
                             ptr,
                             Type::i32);
+  }
+
+  void addRttSupport(const std::vector<HeapType>& types) {
+    // Analyze the code for heap type usage.
+    struct UsageInfo {
+      // Types used in rtt.canon instructions.
+      std::unordered_map<HeapType, std::atomic<bool>> rttCanons;
+    } usageInfo;
+    // Initialize the data so it is safe to operate on in parallel.
+    for (auto type : types) {
+      usageInfo.rttCanons[type] = false;
+    }
+    {
+      struct Analysis : public WalkerPass<PostWalker<Analysis>> {
+        UsageInfo* usageInfo;
+
+        Analysis(UsageInfo* usageInfo) : usageInfo(usageInfo) {}
+
+        void visitRttCanon(RttCanon* curr) {
+          usageInfo->rttCanons[curr->type.getHeapType()] = true;
+        }
+      };
+      PassRunner runner(module);
+      Analysis analysis(&usageInfo);
+      analysis.run(&runner, module);
+      // fill in global uses
+      analysis.walkModuleCode(module);
+    }
+    for (auto& kv : usageInfo.rttCanons) {
+      HeapType type = kv.first;
+      bool used = kv.second;
+      if (used) {
+        makeRttCanon(type);
+      }
+    }
+  }
+
+  void makeRttCanon(HeapType type) {
   }
 
   void lowerCode(PassRunner* runner) {
