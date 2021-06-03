@@ -32,6 +32,15 @@
 
 namespace wasm {
 
+enum class TypeSystem {
+  Equirecursive,
+  Nominal,
+};
+
+// This should only ever be called before any Types or HeapTypes have been
+// created. The default system is equirecursive.
+void setTypeSystem(TypeSystem system);
+
 // The types defined in this file. All of them are small and typically passed by
 // value except for `Tuple` and `Struct`, which may own an unbounded amount of
 // data.
@@ -328,7 +337,16 @@ public:
   // Choose an arbitrary heap type as the default.
   constexpr HeapType() : HeapType(func) {}
 
+  // Construct a HeapType referring to the single canonical HeapType for the
+  // given signature. In nominal mode, this is the first HeapType created with
+  // this signature.
   HeapType(Signature signature);
+
+  // Create a HeapType with the given structure. In equirecursive mode, this may
+  // be the same as a previous HeapType created with the same contents. In
+  // nominal mode, this will be a fresh type distinct from all previously
+  // created HeapTypes.
+  // TODO: make these explicit to differentiate them.
   HeapType(const Struct& struct_);
   HeapType(Struct&& struct_);
   HeapType(Array array);
@@ -513,7 +531,8 @@ struct TypeBuilder {
   // The number of HeapType slots in the TypeBuilder.
   size_t size();
 
-  // Sets the heap type at index `i`. May only be called before `build`.
+  // Sets the heap type at index `i`. May only be called before `build`. The
+  // BasicHeapType overload may not be used in nominal mode.
   void setHeapType(size_t i, HeapType::BasicHeapType basic);
   void setHeapType(size_t i, Signature signature);
   void setHeapType(size_t i, const Struct& struct_);
@@ -531,8 +550,9 @@ struct TypeBuilder {
   Type getTempRefType(HeapType heapType, Nullability nullable);
   Type getTempRttType(Rtt rtt);
 
-  // Canonicalizes and returns all of the heap types. May only be called once
-  // all of the heap types have been initialized with `setHeapType`.
+  // Returns all of the newly constructed heap types. May only be called once
+  // all of the heap types have been initialized with `setHeapType`. In nominal
+  // mode, all of the constructed HeapTypes will be fresh and distinct.
   std::vector<HeapType> build();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType

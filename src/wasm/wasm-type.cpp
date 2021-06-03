@@ -42,6 +42,9 @@
 
 namespace wasm {
 
+static TypeSystem typeSystem = TypeSystem::Equirecursive;
+void setTypeSystem(TypeSystem system) { typeSystem = system; }
+
 namespace {
 
 struct TypeInfo {
@@ -403,9 +406,7 @@ public:
 
 template<> class hash<wasm::HeapTypeInfo> {
 public:
-  size_t operator()(const wasm::HeapTypeInfo& info) const {
-    return wasm::FiniteShapeHasher().hash(info);
-  }
+  size_t operator()(const wasm::HeapTypeInfo& info) const;
 };
 
 template<typename T> class hash<reference_wrapper<const T>> {
@@ -636,7 +637,24 @@ bool HeapTypeInfo::operator==(const HeapTypeInfo& other) const {
   // important during global canonicalization, when newly created
   // canonically-shaped graphs are checked against the existing globally
   // canonical graphs.
-  return FiniteShapeEquator().eq(*this, other);
+  if (typeSystem == TypeSystem::Equirecursive) {
+    return FiniteShapeEquator().eq(*this, other);
+  }
+
+  if (kind != other.kind) {
+    return false;
+  }
+  switch (kind) {
+    case wasm::HeapTypeInfo::BasicKind:
+      return basic == other.basic;
+    case wasm::HeapTypeInfo::SignatureKind:
+      return signature == other.signature;
+    case wasm::HeapTypeInfo::StructKind:
+      return struct_ == other.struct_;
+    case wasm::HeapTypeInfo::ArrayKind:
+      return array == other.array;
+  }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 template<typename Info> struct Store {
@@ -652,11 +670,12 @@ template<typename Info> struct Store {
   bool isGlobalStore();
 #endif
 
-  typename Info::type_t canonicalize(const Info& info);
-  typename Info::type_t canonicalize(std::unique_ptr<Info>&& info);
+  typename Info::type_t insert(const Info& info);
+  typename Info::type_t insert(std::unique_ptr<Info>&& info);
+  bool hasCanonical(const Info& info, typename Info::type_t& canonical);
 
 private:
-  TypeID recordCanonical(std::unique_ptr<Info>&& info);
+  TypeID doInsert(std::unique_ptr<Info>&& info);
 };
 
 using TypeStore = Store<TypeInfo>;
@@ -689,40 +708,56 @@ template<typename Info> bool Store<Info>::isGlobalStore() {
 #endif
 
 template<typename Info>
-typename Info::type_t Store<Info>::canonicalize(const Info& info) {
+typename Info::type_t Store<Info>::insert(const Info& info) {
   typename Info::type_t canonical;
   if (info.getCanonical(canonical)) {
     return canonical;
   }
   std::lock_guard<std::recursive_mutex> lock(mutex);
-  auto indexIt = typeIDs.find(std::cref(info));
-  if (indexIt != typeIDs.end()) {
-    return typename Info::type_t(indexIt->second);
+  if (std::is_same<Info, TypeInfo>::value ||
+      typeSystem == TypeSystem::Equirecursive) {
+    auto indexIt = typeIDs.find(std::cref(info));
+    if (indexIt != typeIDs.end()) {
+      return typename Info::type_t(indexIt->second);
+    }
   }
-  return typename Info::type_t(recordCanonical(std::make_unique<Info>(info)));
+  return typename Info::type_t(doInsert(std::make_unique<Info>(info)));
 }
 
 template<typename Info>
-typename Info::type_t Store<Info>::canonicalize(std::unique_ptr<Info>&& info) {
+typename Info::type_t Store<Info>::insert(std::unique_ptr<Info>&& info) {
   typename Info::type_t canonical;
   if (info->getCanonical(canonical)) {
     return canonical;
   }
   std::lock_guard<std::recursive_mutex> lock(mutex);
-  auto indexIt = typeIDs.find(std::cref(*info));
-  if (indexIt != typeIDs.end()) {
-    return typename Info::type_t(indexIt->second);
+  if (std::is_same<Info, TypeInfo>::value ||
+      typeSystem == TypeSystem::Equirecursive) {
+    auto indexIt = typeIDs.find(std::cref(*info));
+    if (indexIt != typeIDs.end()) {
+      return typename Info::type_t(indexIt->second);
+    }
   }
   info->isTemp = false;
-  return typename Info::type_t(recordCanonical(std::move(info)));
+  return typename Info::type_t(doInsert(std::move(info)));
 }
 
 template<typename Info>
-TypeID Store<Info>::recordCanonical(std::unique_ptr<Info>&& info) {
+bool Store<Info>::hasCanonical(const Info& info, typename Info::type_t& out) {
+  auto indexIt = typeIDs.find(std::cref(info));
+  if (indexIt != typeIDs.end()) {
+    out = typename Info::type_t(indexIt->second);
+    return true;
+  }
+  return false;
+}
+
+template<typename Info>
+TypeID Store<Info>::doInsert(std::unique_ptr<Info>&& info) {
   assert((!isGlobalStore() || !info->isTemp) && "Leaking temporary type!");
   TypeID id = uintptr_t(info.get());
   assert(id > Info::type_t::_last_basic_type);
-  typeIDs[*info] = id;
+  typeIDs.insert({*info, id});
   constructedTypes.emplace_back(std::move(info));
   return id;
 }
@@ -737,7 +772,7 @@ Type::Type(const Tuple& tuple) {
     assert(!isTemp(type) && "Leaking temporary type!");
   }
 #endif
-  new (this) Type(globalTypeStore.canonicalize(tuple));
+  new (this) Type(globalTypeStore.insert(tuple));
 }
 
 Type::Type(Tuple&& tuple) {
@@ -746,17 +781,17 @@ Type::Type(Tuple&& tuple) {
     assert(!isTemp(type) && "Leaking temporary type!");
   }
 #endif
-  new (this) Type(globalTypeStore.canonicalize(std::move(tuple)));
+  new (this) Type(globalTypeStore.insert(std::move(tuple)));
 }
 
 Type::Type(HeapType heapType, Nullability nullable) {
   assert(!isTemp(heapType) && "Leaking temporary type!");
-  new (this) Type(globalTypeStore.canonicalize(TypeInfo(heapType, nullable)));
+  new (this) Type(globalTypeStore.insert(TypeInfo(heapType, nullable)));
 }
 
 Type::Type(Rtt rtt) {
   assert(!isTemp(rtt.heapType) && "Leaking temporary type!");
-  new (this) Type(globalTypeStore.canonicalize(rtt));
+  new (this) Type(globalTypeStore.insert(rtt));
 }
 
 bool Type::isTuple() const {
@@ -1045,7 +1080,13 @@ const Type& Type::operator[](size_t index) const {
 HeapType::HeapType(Signature sig) {
   assert(!isTemp(sig.params) && "Leaking temporary type!");
   assert(!isTemp(sig.results) && "Leaking temporary type!");
-  new (this) HeapType(globalHeapTypeStore.canonicalize(sig));
+  HeapType canonical;
+  if (typeSystem == TypeSystem::Nominal &&
+      globalHeapTypeStore.hasCanonical(sig, canonical)) {
+    new (this) HeapType(canonical);
+  } else {
+    new (this) HeapType(globalHeapTypeStore.insert(sig));
+  }
 }
 
 HeapType::HeapType(const Struct& struct_) {
@@ -1054,7 +1095,7 @@ HeapType::HeapType(const Struct& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  new (this) HeapType(globalHeapTypeStore.canonicalize(struct_));
+  new (this) HeapType(globalHeapTypeStore.insert(struct_));
 }
 
 HeapType::HeapType(Struct&& struct_) {
@@ -1063,12 +1104,12 @@ HeapType::HeapType(Struct&& struct_) {
     assert(!isTemp(field.type) && "Leaking temporary type!");
   }
 #endif
-  new (this) HeapType(globalHeapTypeStore.canonicalize(std::move(struct_)));
+  new (this) HeapType(globalHeapTypeStore.insert(std::move(struct_)));
 }
 
 HeapType::HeapType(Array array) {
   assert(!isTemp(array.element.type) && "Leaking temporary type!");
-  new (this) HeapType(globalHeapTypeStore.canonicalize(array));
+  new (this) HeapType(globalHeapTypeStore.insert(array));
 }
 
 bool HeapType::isFunction() const {
@@ -2085,6 +2126,7 @@ size_t TypeBuilder::size() { return impl->entries.size(); }
 
 void TypeBuilder::setHeapType(size_t i, HeapType::BasicHeapType basic) {
   assert(i < size() && "Index out of bounds");
+  assert(typeSystem != TypeSystem::Nominal);
   impl->entries[i].set(basic);
 }
 
@@ -2114,7 +2156,10 @@ HeapType TypeBuilder::getTempHeapType(size_t i) {
 }
 
 Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
-  Type ret = impl->typeStore.canonicalize(tuple);
+  if (typeSystem == TypeSystem::Nominal) {
+    return globalTypeStore.insert(tuple);
+  }
+  Type ret = impl->typeStore.insert(tuple);
   if (tuple.types.size() > 1) {
     return markTemp(ret);
   } else {
@@ -2124,11 +2169,17 @@ Type TypeBuilder::getTempTupleType(const Tuple& tuple) {
 }
 
 Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
-  return markTemp(impl->typeStore.canonicalize(TypeInfo(type, nullable)));
+  if (typeSystem == TypeSystem::Nominal) {
+    return globalTypeStore.insert(TypeInfo(type, nullable));
+  }
+  return markTemp(impl->typeStore.insert(TypeInfo(type, nullable)));
 }
 
 Type TypeBuilder::getTempRttType(Rtt rtt) {
-  return markTemp(impl->typeStore.canonicalize(rtt));
+  if (typeSystem == TypeSystem::Nominal) {
+    return globalTypeStore.insert(rtt);
+  }
+  return markTemp(impl->typeStore.insert(rtt));
 }
 
 namespace {
@@ -2655,7 +2706,6 @@ void ShapeCanonicalizer::translatePartitionsToTypes() {
 // leaking into the global stores.
 std::vector<HeapType>
 globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
-
   // Map each temporary Type and HeapType to the locations where they will
   // have to be replaced with canonical Types and HeapTypes.
   struct Locations : TypeGraphWalker<Locations> {
@@ -2722,7 +2772,7 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
       continue;
     }
     HeapType original = asHeapType(info);
-    HeapType canonical = globalHeapTypeStore.canonicalize(std::move(info));
+    HeapType canonical = globalHeapTypeStore.insert(std::move(info));
     if (original != canonical) {
       canonicalHeapTypes[original] = canonical;
     }
@@ -2740,7 +2790,7 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
       Type original = pair.first;
       auto& uses = pair.second;
       if (original.isTuple() == tuples) {
-        Type canonical = globalTypeStore.canonicalize(*getTypeInfo(original));
+        Type canonical = globalTypeStore.insert(*getTypeInfo(original));
         for (Type* use : uses) {
           *use = canonical;
         }
@@ -2761,11 +2811,9 @@ globallyCanonicalize(std::vector<std::unique_ptr<HeapTypeInfo>>& infos) {
   return results;
 }
 
-} // anonymous namespace
-
-std::vector<HeapType> TypeBuilder::build() {
+std::vector<HeapType> buildEquirecursive(TypeBuilder& builder) {
   std::vector<HeapType> heapTypes;
-  for (auto& entry : impl->entries) {
+  for (auto& entry : builder.impl->entries) {
     assert(entry.initialized && "Cannot access uninitialized HeapType");
     entry.info->isFinalized = true;
     heapTypes.push_back(entry.get());
@@ -2818,6 +2866,44 @@ std::vector<HeapType> TypeBuilder::build() {
   }
 
   return heapTypes;
+}
+
+std::vector<HeapType> buildNominal(TypeBuilder& builder) {
+#if TIME_CANONICALIZATION
+  auto start = std::chrono::steady_clock::now();
+#endif
+
+  // Just move the HeapTypes to the global store. The Types are already in the
+  // global store.
+  std::vector<HeapType> heapTypes;
+  for (auto& entry : builder.impl->entries) {
+    assert(entry.initialized && "Cannot access uninitialized HeapType");
+    entry.info->isFinalized = true;
+    heapTypes.push_back(globalHeapTypeStore.insert(std::move(entry.info)));
+  }
+
+#if TIME_CANONICALIZATION
+  auto end = std::chrono::steady_clock::now();
+  std::cerr << "Building took "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                     start)
+                 .count()
+            << " ms\n";
+#endif
+
+  return heapTypes;
+}
+
+} // anonymous namespace
+
+std::vector<HeapType> TypeBuilder::build() {
+  switch (typeSystem) {
+    case TypeSystem::Equirecursive:
+      return buildEquirecursive(*this);
+    case TypeSystem::Nominal:
+      return buildNominal(*this);
+  }
+  WASM_UNREACHABLE("unexpected type system");
 }
 
 } // namespace wasm
@@ -2897,6 +2983,29 @@ size_t hash<wasm::TypeInfo>::operator()(const wasm::TypeInfo& info) const {
       return digest;
     case wasm::TypeInfo::RttKind:
       wasm::rehash(digest, info.rtt);
+      return digest;
+  }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+size_t
+hash<wasm::HeapTypeInfo>::operator()(const wasm::HeapTypeInfo& info) const {
+  if (wasm::typeSystem == wasm::TypeSystem::Equirecursive) {
+    return wasm::FiniteShapeHasher().hash(info);
+  }
+
+  auto digest = wasm::hash(info.kind);
+  switch (info.kind) {
+    case wasm::HeapTypeInfo::BasicKind:
+      WASM_UNREACHABLE("Basic HeapTypeInfo should have been canonicalized");
+    case wasm::HeapTypeInfo::SignatureKind:
+      wasm::rehash(digest, info.signature);
+      return digest;
+    case wasm::HeapTypeInfo::StructKind:
+      wasm::rehash(digest, info.struct_);
+      return digest;
+    case wasm::HeapTypeInfo::ArrayKind:
+      wasm::rehash(digest, info.array);
       return digest;
   }
   WASM_UNREACHABLE("unexpected kind");
