@@ -24,7 +24,10 @@
 //   Array:
 //     u32 rtt
 //     u32 size
-//     fields...
+//     elements...
+//   Rtts:
+//     u32 what (func, data, i31, extern)
+//     details...?
 //
 
 #include "ir/module-utils.h"
@@ -35,6 +38,13 @@
 namespace wasm {
 
 namespace {
+
+enum RttKind {
+  RttFunc = 0,
+  RttData = 1,
+  RttI31 = 2,
+  RttExtern = 3,
+};
 
 Type getLoweredType(Type type, Memory& memory) {
   // References and Rtts are pointers.
@@ -80,18 +90,27 @@ struct LowerGCCode
 
   LowerGCCode(LoweringInfo* loweringInfo) : loweringInfo(loweringInfo) {}
 
+  // TODO: call this in all the places
   void visitExpression(Expression* curr) {
-    // Update the type. This helps things like local.get, control flow
-    // structures, etc.
-    curr->type = lower(curr->type);
+    auto type = curr->type;
+    if (type.isRef() || type.isRtt()) {
+      originalTypes[getCurrentPointer()] = type.getHeapType();
+    }
+    // Update the type. This avoids us needing to write out stubs for things
+    // like local.get, control flow structures, etc.
+    curr->type = lower(type);
   }
 
   void visitRefNull(RefNull* curr) {
     replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
   }
 
+  void visitRefAs(RefAs* curr) {
+    // waka
+  }
+
   void visitStructNew(StructNew* curr) {
-    auto type = relevantHeapTypes[curr];
+    auto type = originalTypes[&curr->rtt];
     std::vector<Expression*> operands;
     std::string name = getExpressionName(curr);
     if (curr->isWithDefault()) {
@@ -109,7 +128,7 @@ struct LowerGCCode
 
   void visitStructSet(StructSet* curr) {
     Builder builder(*getModule());
-    auto type = relevantHeapTypes[curr];
+    auto type = originalTypes[&curr->ref];
     auto name = std::string("StructSet$") +
                 getModule()->typeNames[type].name.str + '$' +
                 std::to_string(curr->index);
@@ -119,7 +138,7 @@ struct LowerGCCode
 
   void visitStructGet(StructGet* curr) {
     Builder builder(*getModule());
-    auto type = relevantHeapTypes[curr];
+    auto type = originalTypes[&curr->ref];
     auto name = std::string("StructGet$") +
                 getModule()->typeNames[type].name.str + '$' +
                 std::to_string(curr->index);
@@ -128,7 +147,7 @@ struct LowerGCCode
   }
 
   void visitArrayNew(ArrayNew* curr) {
-    auto type = relevantHeapTypes[curr];
+    auto type = originalTypes[&curr->rtt];
     std::vector<Expression*> operands;
     std::string name = getExpressionName(curr);
     if (curr->isWithDefault()) {
@@ -145,7 +164,7 @@ struct LowerGCCode
 
   void visitArraySet(ArraySet* curr) {
     Builder builder(*getModule());
-    auto type = relevantHeapTypes[curr];
+    auto type = originalTypes[&curr->ref];
     auto name = std::string("ArraySet$") +
                 getModule()->typeNames[type].name.str;
     replaceCurrent(
@@ -154,7 +173,7 @@ struct LowerGCCode
 
   void visitArrayGet(ArrayGet* curr) {
     Builder builder(*getModule());
-    auto type = relevantHeapTypes[curr];
+    auto type = originalTypes[&curr->ref];
     auto name = std::string("ArrayGet$") +
                 getModule()->typeNames[type].name.str;
     auto element = type.getArray().element;
@@ -183,36 +202,6 @@ struct LowerGCCode
       t = lower(t);
     }
 
-    // Scan the function for types we will need later. We cannot do this in a
-    // single pass, as we cannot e.g. lower the rtt a struct operation receives
-    // before we process the struct (if we did, the struct would not receive the
-    // heap type, and we would not know what to lower).
-    struct Scanner : public PostWalker<Scanner> {
-      std::unordered_map<Expression*, HeapType> relevantHeapTypes;
-
-      void visitStructNew(StructNew* curr) {
-        relevantHeapTypes[curr] = curr->rtt->type.getHeapType();
-      }
-      void visitStructGet(StructGet* curr) {
-        relevantHeapTypes[curr] = curr->ref->type.getHeapType();
-      }
-      void visitStructSet(StructSet* curr) {
-        relevantHeapTypes[curr] = curr->ref->type.getHeapType();
-      }
-
-      void visitArrayNew(ArrayNew* curr) {
-        relevantHeapTypes[curr] = curr->rtt->type.getHeapType();
-      }
-      void visitArrayGet(ArrayGet* curr) {
-        relevantHeapTypes[curr] = curr->ref->type.getHeapType();
-      }
-      void visitArraySet(ArraySet* curr) {
-        relevantHeapTypes[curr] = curr->ref->type.getHeapType();
-      }
-    } scanner;
-    scanner.walk(func->body);
-    relevantHeapTypes = std::move(scanner.relevantHeapTypes);
-
     // Lower all the code.
     Parent::doWalkFunction(func);
 
@@ -221,7 +210,18 @@ struct LowerGCCode
   }
 
 private:
-  std::unordered_map<Expression*, HeapType> relevantHeapTypes;
+  // We note the original heap types of expressions as we go, because when we
+  // change say an RTT into an integer, we need to know the type that RTT had if
+  // it is used in something like StructGet.
+  //
+  // Note that we map the location of the pointer, and not the pointer itself,
+  // as we may replace expressions. In the example above, an RttCanon may be
+  // replaced by a Const. But we know that the pointer to the expression exists
+  // at the time we use it (in the StructSet, before we possibly replace that as
+  // well).
+  //
+  // (If an expression has no heap type, we do not note anything for it here.)
+  std::unordered_map<Expression**, HeapType> originalTypes;
 
   Type lower(Type type) { return getLoweredType(type, getModule()->memory); }
 };
@@ -268,10 +268,12 @@ private:
 
   void addRuntime() {
     Builder builder(*module);
+    // Start allocating at address 8, so that lower numbers can have special
+    // meanings (like 0 meaning "null").
     auto* nextMalloc =
       module->addGlobal(builder.makeGlobal("nextMalloc",
                                            Type::i32,
-                                           builder.makeConst(int32_t(0)),
+                                           builder.makeConst(int32_t(8)),
                                            Builder::Mutable));
     loweringInfo.malloc = "malloc";
     // TODO: more than a simple bump allocator that never frees or collects.
@@ -544,6 +546,7 @@ private:
   }
 
   void makeArrayGet(HeapType type) {
+    // TODO: null checks everywhere
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, module->memory);
     Builder builder(*module);
