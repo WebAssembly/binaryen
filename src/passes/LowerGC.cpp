@@ -445,7 +445,7 @@ private:
       // Add a local to store the allocated value.
       auto alloc = params.size();
       // Add a local for the initialization loop.
-      auto counter = params.size();
+      auto counter = alloc + 1;
       std::vector<Expression*> list;
       // Malloc space for our Array.
       list.push_back(builder.makeLocalSet(
@@ -480,8 +480,12 @@ private:
         initialization = builder.makeLocalGet(initParam, loweredType);
       }
       initialization = builder.makeCall(
-          std::string("ArraySet$") + typeName,
-          {builder.makeLocalGet(alloc, loweringInfo.pointerType), initialization},
+          std::string("") + typeName,
+          {
+           builder.makeLocalGet(alloc, loweringInfo.pointerType),
+           builder.makeLocalGet(counter, loweringInfo.pointerType),
+           initialization
+          },
           Type::none);
       list.push_back(builder.makeLoop(
         loopName,
@@ -528,14 +532,14 @@ private:
     auto loweredType = getLoweredType(element.type, module->memory);
     Builder builder(*module);
     module->addFunction(builder.makeFunction(
-      std::string("ArraySet$") + module->typeNames[type].name.str + '$',
+      std::string("ArraySet$") + module->typeNames[type].name.str,
       {{loweringInfo.pointerType, loweringInfo.pointerType, loweredType}, Type::none},
       {},
       builder.makeStore(loweredType.getByteSize(),
                         0,
                         loweredType.getByteSize(),
                         makeArrayOffset(loweredType),
-                        builder.makeLocalGet(1, loweredType),
+                        builder.makeLocalGet(2, loweredType),
                         loweredType)));
   }
 
