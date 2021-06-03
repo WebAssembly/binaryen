@@ -554,7 +554,7 @@ void test_bits() {
   assert_equal(getMaxBits(&u), 0);
   c0.value = Literal(int16_t(0x7FFF));
   assert_equal(getMaxBits(&u), 15);
-  c0.value = Literal(int16_t(-1));
+  c0.value = Literal(int16_t(0x8000));
   assert_equal(getMaxBits(&u), 32);
 
   u.type = Type::i64;
@@ -573,7 +573,7 @@ void test_bits() {
   assert_equal(getMaxBits(&u), 0);
   c0.value = Literal(int16_t(0x7FFF));
   assert_equal(getMaxBits(&u), 15);
-  c0.value = Literal(int16_t(-1));
+  c0.value = Literal(int16_t(0x8000));
   assert_equal(getMaxBits(&u), 64);
 
   u.type = Type::i64;
@@ -582,9 +582,9 @@ void test_bits() {
   u.op = ExtendS32Int64;
   c0.value = Literal(int64_t(0));
   assert_equal(getMaxBits(&u), 0);
-  c0.value = Literal(int64_t(0x000000007FFFFFFFLL));
+  c0.value = Literal(int64_t(0x7FFFFFFFLL));
   assert_equal(getMaxBits(&u), 31);
-  c0.value = Literal(int64_t(0x00000000FFFFFFFFLL));
+  c0.value = Literal(int64_t(0xFFFFFFFFLL));
   assert_equal(getMaxBits(&u), 64);
   c0.value = Literal(int64_t(-1LL));
   assert_equal(getMaxBits(&u), 64);
