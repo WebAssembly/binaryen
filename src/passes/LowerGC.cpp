@@ -224,17 +224,6 @@ private:
   std::unordered_map<Expression*, HeapType> relevantHeapTypes;
 
   Type lower(Type type) { return getLoweredType(type, getModule()->memory); }
-
-  Expression*
-  makeArrayAddress(Expression* ref, Expression* index, Type loweredType) {
-    Builder builder(*getModule());
-    return builder.makeBinary(
-      AddInt32,
-      builder.makeBinary(AddInt32, ref, builder.makeConst(int32_t(8))),
-      builder.makeBinary(MulInt32,
-                         builder.makeConst(int32_t(loweredType.getByteSize())),
-                         index));
-  }
 };
 
 } // anonymous namespace
@@ -313,6 +302,10 @@ private:
         makeStructNew(type);
         makeStructSet(type);
         makeStructGet(type);
+      } else if (type.isArray()) {
+        makeArrayNew(type);
+        makeArraySet(type);
+        makeArrayGet(type);
       }
     }
   }
@@ -347,11 +340,11 @@ private:
       auto rttParam = params.size();
       params.push_back(loweringInfo.pointerType);
       // We need one local to store the allocated value.
-      auto local = params.size();
+      auto alloc = params.size();
       std::vector<Expression*> list;
       // Malloc space for our struct.
       list.push_back(builder.makeLocalSet(
-        local,
+        alloc,
         builder.makeCall(
           loweringInfo.malloc,
           {builder.makeConst(int32_t(loweringInfo.layouts[type].size))},
@@ -361,7 +354,7 @@ private:
         loweringInfo.pointerSize,
         0,
         loweringInfo.pointerSize,
-        builder.makeLocalGet(local, loweringInfo.pointerType),
+        builder.makeLocalGet(alloc, loweringInfo.pointerType),
         builder.makeLocalGet(rttParam, loweringInfo.pointerType),
         loweringInfo.pointerType));
       // Store the values, by performing StructSet operations.
@@ -375,11 +368,11 @@ private:
         }
         list.push_back(builder.makeCall(
           std::string("StructSet$") + typeName + '$' + std::to_string(i),
-          {builder.makeLocalGet(local, loweringInfo.pointerType), value},
+          {builder.makeLocalGet(alloc, loweringInfo.pointerType), value},
           Type::none));
       }
       // Return the pointer.
-      list.push_back(builder.makeLocalGet(local, loweringInfo.pointerType));
+      list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
       std::string name = "StructNew";
       if (withDefault) {
         name += "WithDefault";
@@ -429,6 +422,137 @@ private:
                          builder.makeLocalGet(0, loweringInfo.pointerType),
                          loweredType)));
     }
+  }
+
+  void makeArrayNew(HeapType type) {
+    auto typeName = module->typeNames[type].name.str; // waka
+    auto element = type.getArray().element;
+    auto loweredType = getLoweredType(element.type, module->memory);
+    Builder builder(*module);
+    for (bool withDefault : {true, false}) {
+      std::vector<Type> params;
+      Index initParam = -1;
+      if (!withDefault) {
+        initParam = 0;
+        params.push_back(loweredType);
+      }
+      // Add the size parameter.
+      auto sizeParam = params.size();
+      params.push_back(loweringInfo.pointerType);
+      // Add the RTT parameter.
+      auto rttParam = params.size();
+      params.push_back(loweringInfo.pointerType);
+      // Add a local to store the allocated value.
+      auto alloc = params.size();
+      // Add a local for the initialization loop.
+      auto counter = params.size();
+      std::vector<Expression*> list;
+      // Malloc space for our Array.
+      list.push_back(builder.makeLocalSet(
+        alloc,
+        builder.makeCall(
+          loweringInfo.malloc,
+          {builder.makeConst(int32_t(loweringInfo.layouts[type].size))},
+          loweringInfo.pointerType)));
+      // Store the size.
+      list.push_back(builder.makeStore(
+        loweringInfo.pointerSize,
+        4,
+        loweringInfo.pointerSize,
+        builder.makeLocalGet(alloc, loweringInfo.pointerType),
+        builder.makeLocalGet(sizeParam, loweringInfo.pointerType),
+        loweringInfo.pointerType));
+      // Store the rtt.
+      list.push_back(builder.makeStore(
+        loweringInfo.pointerSize,
+        0,
+        loweringInfo.pointerSize,
+        builder.makeLocalGet(alloc, loweringInfo.pointerType),
+        builder.makeLocalGet(rttParam, loweringInfo.pointerType),
+        loweringInfo.pointerType));
+      // Store the values, by performing ArraySet operations.
+      Name loopName("loop");
+      Name blockName("block");
+      Expression* initialization;
+      if (withDefault) {
+        initialization = LiteralUtils::makeZero(loweredType, *module);
+      } else {
+        initialization = builder.makeLocalGet(initParam, loweredType);
+      }
+      initialization = builder.makeCall(
+          std::string("ArraySet$") + typeName,
+          {builder.makeLocalGet(alloc, loweringInfo.pointerType), initialization},
+          Type::none);
+      list.push_back(builder.makeLoop(
+        loopName,
+        builder.makeBlock(
+          blockName,
+          {builder.makeBreak(
+             loopName,
+             nullptr,
+             builder.makeUnary(EqZInt32,
+                               builder.makeLocalGet(counter, Type::i32))),
+           initialization,
+           builder.makeLocalSet(
+             counter,
+             builder.makeBinary(SubInt32,
+                                builder.makeLocalGet(counter, Type::i32),
+                                builder.makeConst(int32_t(1)))),
+           builder.makeBreak(loopName)})));
+      // Return the pointer.
+      list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
+      std::string name = "ArrayNew";
+      if (withDefault) {
+        name += "WithDefault";
+      }
+      module->addFunction(builder.makeFunction(name + '$' + typeName,
+                                               {Type(params), Type::i32},
+                                               {loweringInfo.pointerType, loweringInfo.pointerType},
+                                               builder.makeBlock(list)));
+    }
+  }
+
+  Expression*
+  makeArrayOffset(Type loweredType) {
+    Builder builder(*module);
+    return builder.makeBinary(
+      AddInt32,
+      builder.makeBinary(AddInt32, builder.makeLocalGet(0, loweringInfo.pointerType), builder.makeConst(int32_t(8))),
+      builder.makeBinary(MulInt32,
+                         builder.makeConst(int32_t(loweredType.getByteSize())),
+                         builder.makeLocalGet(1, loweringInfo.pointerType)));
+  }
+
+  void makeArraySet(HeapType type) {
+    auto element = type.getArray().element;
+    auto loweredType = getLoweredType(element.type, module->memory);
+    Builder builder(*module);
+    module->addFunction(builder.makeFunction(
+      std::string("ArraySet$") + module->typeNames[type].name.str + '$',
+      {{loweringInfo.pointerType, loweringInfo.pointerType, loweredType}, Type::none},
+      {},
+      builder.makeStore(loweredType.getByteSize(),
+                        0,
+                        loweredType.getByteSize(),
+                        makeArrayOffset(loweredType),
+                        builder.makeLocalGet(1, loweredType),
+                        loweredType)));
+  }
+
+  void makeArrayGet(HeapType type) {
+    auto element = type.getArray().element;
+    auto loweredType = getLoweredType(element.type, module->memory);
+    Builder builder(*module);
+    module->addFunction(builder.makeFunction(
+      std::string("ArrayGet$") + module->typeNames[type].name.str,
+      {{loweringInfo.pointerType, loweringInfo.pointerType}, loweredType},
+      {},
+      builder.makeLoad(loweredType.getByteSize(),
+                       false, // TODO: signedness
+                       0,
+                       loweredType.getByteSize(),
+                       makeArrayOffset(loweredType),
+                       loweredType)));
   }
 
   void lowerCode(PassRunner* runner) {
