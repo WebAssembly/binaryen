@@ -29,10 +29,12 @@
 //
 //   Rtts:
 //     u32/RttKind what (func, data, i31, extern)
-//     pointer     new-type (this is a pointer to new type the rtt.sub adds
+//     pointer     decl (this is a pointer to new type the rtt.sub declares
 //                           on top of the fiven rtt. to represent that type,
 //                           we point to the the rtt.canon for it. or, if this
-//                           is an rtt.canon and not .sub, this is null)
+//                           is an rtt.canon and not .sub, this still contains
+//                           the "new" type that is defined in the rtt.canon,
+//                           that is, it points to itself)
 //     pointer     parent (or null if this is from rtt.canon)
 //
 //     - That is, an rtt.canon contains a "what" and then two nulls. There is a
@@ -40,7 +42,7 @@
 //       it, basically. An rtt.sub has two pointers, the first saying the type
 //       it is for. That is represented as a pointer to the rtt.canon for that
 //       type. The second pointer is the RTT it is a sub of. For example,
-//         (rtt.canon $foo)     =>  [kind, 0, 0] at address FOO
+//         (rtt.canon $foo)     => [kind, FOO, 0] at address FOO
 //         (rtt.sub $bar
 //          (rtt.canon $foo))   => [kind, BAR, FOO] at address SUB1
 //         (rtt.sub $quux
@@ -749,7 +751,86 @@ private:
       ),
       builder.makeReturn(builder.makeConst(int32_t(0)))
     ));
-    
+    // Check if the chain of sub-rtts match. That is, we are looking for
+    // something like this:
+    //
+    //  ref's rtt ----> A -> B -> C -> D (where D is an rtt.canon)
+    //  rtt param --------------> C -> D
+    //
+    // Start with a loop to find rttParam in the ref's RTT chain (in the example
+    // above, find C in the first line).
+    Name loop1("loop1");
+    Name block1("block1");
+    list.push_back(builder.makeLoop(
+      loop1,
+      builder.makeBlock(
+        block1,
+        {
+          // If we found what we want, exit the loop.
+          builder.makeBreak(
+            block1,
+            nullptr,
+            builder.makePointerEq(
+              getRttDecl(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+              getRttDecl(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
+            )
+          ),
+          // If we reached the end of the ref's rtt's chain, it is not a sub-
+          // rtt.
+          builder.makeIf(
+            builder.makePointerEq(
+              getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+              builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType))
+            ),
+            builder.makeReturn(builder.makeConst(int32_t(0)))
+          ),
+          // We can look forward down the chain.
+          builder.makeLocalSet(
+            refRttLocal,
+            getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))
+          ),
+          builder.makeBreak(loop1)
+        }
+      )
+    ));
+    // We found the place where the two chains coincide. From here, they must
+    // be identical.
+    FIXME from here
+    Name loop2("loop2");
+    Name block2("block2");
+    list.push_back(builder.makeLoop(
+      loop2,
+      builder.makeBlock(
+        block2,
+        {
+          // If we found what we want, exit the loop.
+          builder.makeBreak(
+            block2,
+            nullptr,
+            builder.makePointerEq(
+              getRttDecl(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+              getRttDecl(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
+            )
+          ),
+          // If we reached the end of the ref's rtt's chain, it is not a sub-
+          // rtt.
+          builder.makeIf(
+            builder.makePointerEq(
+              getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+              builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType))
+            ),
+            builder.makeReturn(builder.makeConst(int32_t(0)))
+          ),
+          // We can look forward down the chain.
+          builder.makeLocalSet(
+            refRttLocal,
+            getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))
+          ),
+          builder.makeBreak(loop2)
+        }
+      )
+    ));
+
     module->addFunction(builder.makeFunction(
       getName(op),
       {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
@@ -772,7 +853,7 @@ cast
                             loweringInfo.pointerType);
   }
 
-  // Given a pointer to an RTT, load it's kind.
+  // Given a pointer to an RTT, load its kind.
   Expression* getRttKind(Expression* ptr) {
     // The RTT kind is the very first field in an RTT
     return Builder(*module).makeLoad(4,
@@ -783,6 +864,24 @@ cast
                             Type::i32);
   }
 
+  // Given a pointer to an RTT, load its declared type.
+  Expression* getRttDecl(Expression* ptr) {
+    // The RTT declared new type is the second field, after the kind (i32).
+    return Builder(*module).makeSimpleLoad(
+                            ptr,
+                            Type::i32,
+                            4);
+  }
+
+  // Given a pointer to an RTT, load its parent.
+  Expression* getRttParent(Expression* ptr) {
+    // The RTT parent is the third field, after the kind (i32) and the decl
+    // (pointer).
+    return Builder(*module).makeSimpleLoad(
+                            ptr,
+                            Type::i32,
+                            4 + loweringInfo.pointerSize);
+  }
 
   void addRttSupport(const std::vector<HeapType>& types) {
     // Analyze the code for heap type usage.
@@ -834,23 +933,17 @@ cast
     }
     Builder builder(*module);
     // Write the rtt kind.
-    startBlock->list.push_back(builder.makeStore(
-      4,
-      0,
-      4,
+    startBlock->list.push_back(builder.makeSimpleStore(
       builder.makeConst(int32_t(addr)),
       builder.makeConst(int32_t(rttValue)),
       Type::i32
     ));
-    // Write null pointers for the type type fields.
-    startBlock->list.push_back(builder.makeStore(
-      loweringInfo.pointerSize,
-      0,
-      loweringInfo.pointerSize,
+    // Write the type field, which points to ourself.
+    startBlock->list.push_back(builder.makePointerStore(
       builder.makeConst(int32_t(addr + 4)),
-      builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
-      loweringInfo.pointerType
+      builder.makeConst(Literal::makeFromInt32(addr, loweringInfo.pointerType))
     ));
+    // Write a null pointer for the parent.
     startBlock->list.push_back(builder.makeStore(
       loweringInfo.pointerSize,
       0,

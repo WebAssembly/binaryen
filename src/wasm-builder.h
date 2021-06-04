@@ -947,6 +947,53 @@ public:
     return ret;
   }
 
+  // Makes a simple load that is aligned, of the full size, and unsigned.
+  Expression* makeSimpleUnsignedLoad(Expression* ptr, Type type, Address offset=0) {
+    auto size = type.getByteSize();
+    return makeLoad(size, false, offset, size, ptr, type);
+  }
+
+  // Makes a simple load that is aligned, of the full size, and signed.
+  Expression* makeSimpleSignedLoad(Expression* ptr, Type type, Address offset=0) {
+    auto size = type.getByteSize();
+    return makeLoad(size, true, offset, size, ptr, type);
+  }
+
+  // Makes a simple store that is aligned and of the full size.
+  Expression* makeSimpleStore(Expression* ptr, Expression* value, Type type, Address offset=0) {
+    auto size = type.getByteSize();
+    return makeLoad(size, offset, size, ptr, value, type);
+  }
+
+  Expression* makePointerStore(Expression* ptr, Expression* value, Address offset=0) {
+    if (wasm.memory.is64()) {
+      return makeStore(8, offset, 8, ptr, value, Type::i64);
+    }
+    return makeStore(4, offset, 4, ptr, value, Type::i32);
+  }
+
+  Expression* makePointerConst(Address addr) {
+    if (wasm.memory.is64()) {
+      return makeConst(int64_t(addr));
+    }
+    return makeConst(int32_t(addr));
+  }
+
+  Expression* makePointerLoad(Expression* ptr, Address offset=0) {
+    return makeSimpleUnsignedLoad(ptr, wasm.memory.indexType, offset);
+  }
+
+  Expression* makePointerStore(Expression* ptr, Expression* value, Address offset=0) {
+    return makeSimpleStore(ptr, value, wasm.memory.indexType, offset);
+  }
+
+  Expression* makePointerEq(Expression* a, Expression* b) {
+    if (wasm.memory.is64()) {
+      return builder.makeBinary(EqInt64, a, b);
+    }
+    return builder.makeBinary(EqInt32, a, b);
+  }
+
   // Additional utility functions for building on top of nodes
   // Convenient to have these on Builder, as it has allocation built in
 
