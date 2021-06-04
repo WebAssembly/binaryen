@@ -807,7 +807,7 @@ private:
     Builder builder(*module);
     // We need one local to store the allocated value. It has index 2, after
     // the parameters, which are the new type, and the old rtt we are subbing.
-    auto alloc = 1;
+    auto alloc = 2;
     std::vector<Expression*> list;
     // Malloc space for our struct.
     list.push_back(builder.makeLocalSet(
