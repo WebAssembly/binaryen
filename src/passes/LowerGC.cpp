@@ -21,14 +21,37 @@
 //   Struct:
 //     u32 rtt
 //     fields...
+//
 //   Array:
 //     u32 rtt
 //     u32 size
 //     elements...
-//   Rtts:
-//     u32     what (func, data, i31, extern)
-//     pointer parent (or null if this is from rtt.canon)
 //
+//   Rtts:
+//     u32/RttKind what (func, data, i31, extern)
+//     pointer     new-type (this is a pointer to new type the rtt.sub adds
+//                           on top of the fiven rtt. to represent that type,
+//                           we point to the the rtt.canon for it. or, if this
+//                           is an rtt.canon and not .sub, this is null)
+//     pointer     parent (or null if this is from rtt.canon)
+//
+//     - That is, an rtt.canon contains a "what" and then two nulls. There is a
+//       single rtt.canon for each type, and that address is the unique ID for
+//       it, basically. An rtt.sub has two pointers, the first saying the type
+//       it is for. That is represented as a pointer to the rtt.canon for that
+//       type. The second pointer is the RTT it is a sub of. For example,
+//         (rtt.canon $foo)     =>  [kind, 0, 0] at address FOO
+//         (rtt.sub $bar
+//          (rtt.canon $foo))   => [kind, BAR, FOO] at address SUB1
+//         (rtt.sub $quux
+//          (rtt.sub $bar
+//           (rtt.canon $foo))) => [kind, QUUX, SUB1]
+//       Note that we keep rtt.canon addresses unique, but we do not currently
+//       make an effort to do the same for rtt.sub (which would require a hash
+//       map). To implement the "structural" comparison semantics of rtt.sub,
+//       we compare the chain of parents, using the fact that the pointes to
+//       rtt.canons in the second field are unique.
+// 
 
 #include "ir/module-utils.h"
 #include "pass.h"
@@ -227,9 +250,13 @@ struct LowerGCCode
   }
 
   void visitRttSub(RttSub* curr) {
+    auto type = curr->type.getHeapType();
     visitExpression(curr);
     Builder builder(*getModule());
-    replaceCurrent(builder.makeCall("RttSub", {curr->parent}, loweringInfo->pointerType));
+    replaceCurrent(builder.makeCall("RttSub", {
+      LiteralUtils::makeFromInt32(loweringInfo->rttCanonAddrs[type], loweringInfo->pointerType, *getModule()),
+      curr->parent
+    }, loweringInfo->pointerType));
   }
 
   void doWalkFunction(Function* func) {
@@ -756,8 +783,7 @@ private:
       builder.makeConst(int32_t(rttValue)),
       Type::i32
     ));
-    // Write the null pointer that indicates this is an rtt canon (and not a
-    // sub).
+    // Write null pointers for the type type fields.
     startBlock->list.push_back(builder.makeStore(
       loweringInfo.pointerSize,
       0,
@@ -766,13 +792,21 @@ private:
       builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
       loweringInfo.pointerType
     ));
+    startBlock->list.push_back(builder.makeStore(
+      loweringInfo.pointerSize,
+      0,
+      loweringInfo.pointerSize,
+      builder.makeConst(int32_t(addr + 4 + loweringInfo.pointerSize)),
+      builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
+      loweringInfo.pointerType
+    ));
     loweringInfo.mallocStart = loweringInfo.mallocStart + 4 + loweringInfo.pointerSize;
   }
 
   void makeRttSub() {
     Builder builder(*module);
-    // We need one local to store the allocated value. It has index 1, after
-    // the input rtt.
+    // We need one local to store the allocated value. It has index 2, after
+    // the parameters, which are the new type, and the old rtt we are subbing.
     auto alloc = 1;
     std::vector<Expression*> list;
     // Malloc space for our struct.
@@ -780,7 +814,7 @@ private:
       alloc,
       builder.makeCall(
         loweringInfo.malloc,
-        {builder.makeConst(int32_t(4 + loweringInfo.pointerSize))},
+        {builder.makeConst(int32_t(4 + 2 * loweringInfo.pointerSize))},
         loweringInfo.pointerType)));
     // Copy the kind from the input rtt
     list.push_back(builder.makeStore(
@@ -795,7 +829,7 @@ private:
                        builder.makeLocalGet(0, loweringInfo.pointerType),
                        Type::i32),
       loweringInfo.pointerType));
-    // Store a pointer to the parent rtt.
+    // Store a pointer to the new heap type.
     list.push_back(builder.makeStore(
       loweringInfo.pointerSize,
       4,
@@ -803,10 +837,18 @@ private:
       builder.makeLocalGet(alloc, loweringInfo.pointerType),
       builder.makeLocalGet(0, loweringInfo.pointerType),
       loweringInfo.pointerType));
+    // Store a pointer to the parent rtt.
+    list.push_back(builder.makeStore(
+      loweringInfo.pointerSize,
+      4,
+      loweringInfo.pointerSize,
+      builder.makeLocalGet(alloc, loweringInfo.pointerType),
+      builder.makeLocalGet(1, loweringInfo.pointerType),
+      loweringInfo.pointerType));
     // Return the pointer.
     list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
     module->addFunction(builder.makeFunction("RttSub",
-                         {loweringInfo.pointerType, loweringInfo.pointerType},
+                         {{loweringInfo.pointerType, loweringInfo.pointerType}, loweringInfo.pointerType},
                          {loweringInfo.pointerType},
                          builder.makeBlock(list)));
   }
@@ -817,20 +859,25 @@ private:
   void processGlobals() {
     Builder builder(*module);
     for (auto& global : module->globals) {
-      global->type = lower(global->type);
-      if (global->init && global->init->is<RttSub>()) {
-        startBlock->list.push_back(
-          builder.makeGlobalSet(
-            global->name,
-            builder.makeCall("RttSub", {global->init->cast<RttSub>()->parent}, Type::i32)
-          )
-        );
-        // Set a 0 as a placeholder for the global.
-        global->init = builder.makeConst(int32_t(0));
-        // Unfortunately, we must make the global mutable so we can write to it
-        // after initialization.
-        global->mutable_ = true;
+      if (global->init) {
+        if (auto* rttSub = global->init->dynCast<RttSub>()) {
+          startBlock->list.push_back(
+            builder.makeGlobalSet(
+              global->name,
+              builder.makeCall("RttSub", {
+                LiteralUtils::makeFromInt32(loweringInfo.rttCanonAddrs[rttSub->type.getHeapType()], loweringInfo.pointerType, *module),
+                rttSub->parent
+              }, Type::i32)
+            )
+          );
+          // Set a 0 as a placeholder for the global.
+          global->init = builder.makeConst(int32_t(0));
+          // Unfortunately, we must make the global mutable so we can write to it
+          // after initialization.
+          global->mutable_ = true;
+        }
       }
+      global->type = lower(global->type);
     }
   }
 
