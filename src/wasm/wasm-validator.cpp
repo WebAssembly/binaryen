@@ -2078,9 +2078,6 @@ void FunctionValidator::visitTry(Try* curr) {
   shouldBeFalse(curr->isCatch() && curr->isDelegate(),
                 curr,
                 "try cannot have both catch and delegate at the same time");
-  shouldBeTrue(curr->isCatch() || curr->isDelegate(),
-               curr,
-               "try should have either catches or a delegate");
 
   if (curr->isDelegate()) {
     noteDelegate(curr->delegateTarget, curr);
