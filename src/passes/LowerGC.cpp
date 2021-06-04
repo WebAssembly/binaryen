@@ -411,6 +411,8 @@ private:
       }
     }
     makeRefAs();
+    makeRefTest();
+    makeRefCast();
 
     addRttSupport(types);
   }
@@ -682,7 +684,7 @@ private:
         list.push_back(builder.makeIf(
           builder.makeBinary(
             NeInt32,
-            getRttKind(builder.makeLocalGet(0, loweringInfo.pointerType)),
+            getRttKind(getRtt(builder.makeLocalGet(0, loweringInfo.pointerType))),
             builder.makeConst(int32_t(kind))
           ),
           builder.makeUnreachable()
@@ -714,9 +716,65 @@ private:
     }
   }
 
+  void makeRefTest() {
+    // RefTest(a : ref, b : rtt). Returns 1 if the ref's rtt is a sub-rtt of
+    // the rtt param.
+    const Index refParam = 0;
+    const Index rttParam = 1;
+    // Store the ref's rtt in a local
+    const Index refRttLocal = 2;
+    Builder builder(*module);
+    std::vector<Expression*> list;
+    // Check for null.
+    list.push_back(builder.makeIf(
+      builder.makeUnary(
+        EqZInt32,
+        builder.makeLocalGet(refParam, loweringInfo.pointerType)
+      ),
+      builder.makeReturn(builder.makeConst(int32_t(0)))
+    ));
+    // Get the ref's rtt.
+    list.push_back(
+      builder.makeLocalSet(
+        refRttLocal,
+        getRtt(builder.makeLocalGet(refParam, loweringInfo.pointerType))
+      )
+    );
+    // Check for different kinds. 
+    list.push_back(builder.makeIf(
+      builder.makeUnary(
+        NeInt32,
+        getRttKind(builder.makeLocalGet(rttParam, loweringInfo.pointerType)),
+        getRttKind(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+      ),
+      builder.makeReturn(builder.makeConst(int32_t(0)))
+    ));
+    
+    module->addFunction(builder.makeFunction(
+      getName(op),
+      {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
+      {loweringInfo.pointerType},
+      builder.makeBlock(list)
+    ));
+  }
+
+cast
+ null flows through
+
   // Given a pointer, load the RTT for it.
-  Expression* getRttKind(Expression* ptr) {
+  Expression* getRtt(Expression* ptr) {
     // The RTT is the very first field in all GC objects.
+    return Builder(*module).makeLoad(loweringInfo.pointerSize,
+                            false,
+                            0,
+                            loweringInfo.pointerSize,
+                            ptr,
+                            loweringInfo.pointerType);
+  }
+
+  // Given a pointer to an RTT, load it's kind.
+  Expression* getRttKind(Expression* ptr) {
+    // The RTT kind is the very first field in an RTT
     return Builder(*module).makeLoad(4,
                             false,
                             0,
@@ -724,6 +782,7 @@ private:
                             ptr,
                             Type::i32);
   }
+
 
   void addRttSupport(const std::vector<HeapType>& types) {
     // Analyze the code for heap type usage.
