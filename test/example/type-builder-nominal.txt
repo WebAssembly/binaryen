@@ -44,6 +44,7 @@ After building types:
 (func (result (ref null ...1)))
 (func (result (ref null (func (result ...1)))))
 
+;; Test subtyping
 ;; Test TypeBuilder
 Before setting heap types:
 (ref $sig) => (ref [T](func))
@@ -90,3 +91,4 @@ After building types:
 (func (result (ref null ...1)))
 (func (result (ref null (func (result ...1)))))
 
+;; Test subtyping
