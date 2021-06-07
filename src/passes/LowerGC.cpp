@@ -849,11 +849,47 @@ private:
     ));
   }
 
+  void makeRefCast() {
+    // RefTest(a : ref, b : rtt).
+    const Index refParam = 0;
+    const Index rttParam = 1;
+    Builder builder(*module);
+    std::vector<Expression*> list;
+    // Check for null, and return it if so.
+    list.push_back(builder.makeIf(
+      builder.makeUnary(
+        EqZInt32,
+        builder.makeLocalGet(refParam, loweringInfo.pointerType)
+      ),
+      builder.makeReturn(builder.makeConst(int32_t(0)))
+    ));
+    // Trap if the cast fails.
+    list.push_back(builder.makeIf(
+      builder.makeUnary(
+        EqZInt32,
+        builder.makeCall(
+          "RefTest",
+          {
+            builder.makeLocalGet(refParam, loweringInfo.pointerType),
+            builder.makeLocalGet(rttParam, loweringInfo.pointerType)
+          },
+          Type::i32
+        )
+      ),
+      builder.makeUnreachable()
+    ));
+    // Success.
+    list.push_back(builder.makeReturn(
+      builder.makeLocalGet(refParam, loweringInfo.pointerType)
+    ));
+    module->addFunction(builder.makeFunction(
+      getName(op),
+      {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
+      {loweringInfo.pointerType},
+      builder.makeBlock(list)
+    ));
+  }
 
-/*
-cast
- null flows through
-*/
   // Given a pointer, load the RTT for it.
   Expression* getRtt(Expression* ptr) {
     // The RTT is the very first field in all GC objects.
