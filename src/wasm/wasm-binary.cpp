@@ -6077,12 +6077,6 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
     return;
   }
 
-  if (lastSeparator != BinaryConsts::Catch &&
-      lastSeparator != BinaryConsts::CatchAll &&
-      lastSeparator != BinaryConsts::Delegate) {
-    throwError("try scope should contain only catch/catch_all/delegate");
-  }
-
   Builder builder(wasm);
   // A nameless label shared by all catch body blocks
   Name catchLabel = getNextLabel();
