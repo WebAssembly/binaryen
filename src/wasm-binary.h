@@ -1405,6 +1405,14 @@ public:
   Signature getSignatureByFunctionIndex(Index index);
   Signature getSignatureByTypeIndex(Index index);
 
+  // The heap types of functions. This is cached for performance reasons, as
+  // computing the heap type from the signature (stored in functionSignatures)
+  // is not cheap.
+  // TODO: optimize that conversion and remove this
+  std::vector<HeapType> functionTypes;
+
+  HeapType getTypeByFunctionIndex(Index index);
+
   size_t nextLabel;
 
   Name getNextLabel();

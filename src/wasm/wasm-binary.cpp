@@ -2112,6 +2112,18 @@ Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
   return heapType.getSignature();
 }
 
+HeapType WasmBinaryBuilder::getTypeByFunctionIndex(Index index) {
+  // functionTypes is grown on demand, and contains HeapType::any for
+  // uninitialized elements, which we lazily fill.
+  if (functionTypes.size() <= index) {
+    functionTypes.resize(index + 1, HeapType::any);
+  }
+  if (functionTypes[index] != HeapType::any) {
+    return functionTypes[index];
+  }
+  return functionTypes[index] = HeapType(getSignatureByFunctionIndex(index));
+}
+
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
   size_t total = getU32LEB();
@@ -6049,8 +6061,7 @@ void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   functionRefs[index].push_back(curr); // we don't know function names yet
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
-  curr->finalize(
-    Type(HeapType(getSignatureByFunctionIndex(index)), NonNullable));
+  curr->finalize(Type(getTypeByFunctionIndex(index), NonNullable));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
