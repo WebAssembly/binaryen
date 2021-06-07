@@ -2113,15 +2113,12 @@ Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
 }
 
 HeapType WasmBinaryBuilder::getTypeByFunctionIndex(Index index) {
-  // functionTypes is grown on demand, and contains HeapType::any for
-  // uninitialized elements, which we lazily fill.
-  if (functionTypes.size() <= index) {
-    functionTypes.resize(index + 1, HeapType::any);
+  auto sig = getSignatureByFunctionIndex(index);
+  auto iter = signatureTypes.find(sig);
+  if (iter != signatureTypes.end()) {
+    return iter->second;
   }
-  if (functionTypes[index] != HeapType::any) {
-    return functionTypes[index];
-  }
-  return functionTypes[index] = HeapType(getSignatureByFunctionIndex(index));
+  return signatureTypes[sig] = HeapType(sig);
 }
 
 void WasmBinaryBuilder::readFunctions() {
