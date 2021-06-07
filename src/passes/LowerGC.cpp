@@ -795,7 +795,6 @@ private:
     ));
     // We found the place where the two chains coincide. From here, they must
     // be identical.
-    FIXME from here
     Name loop2("loop2");
     Name block2("block2");
     list.push_back(builder.makeLoop(
@@ -803,28 +802,39 @@ private:
       builder.makeBlock(
         block2,
         {
-          // If we found what we want, exit the loop.
-          builder.makeBreak(
-            block2,
-            nullptr,
-            builder.makePointerEq(
-              getRttDecl(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
-              getRttDecl(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
-            )
-          ),
-          // If we reached the end of the ref's rtt's chain, it is not a sub-
-          // rtt.
+          // If they differ, the chains are not equal.
           builder.makeIf(
-            builder.makePointerEq(
-              getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
-              builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType))
+            builder.makeUnary(EqZInt32,
+              builder.makePointerEq(
+                getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+                getRttParent(builder.makeLocalGet(rttParam, loweringInfo.pointerType)),
+              )
             ),
             builder.makeReturn(builder.makeConst(int32_t(0)))
+          ),
+          // They are equal here. Looking onward, if just one chain stops, then
+          // they are not equal.
+          builder.makeIf(
+            builder.makeBinary(
+              XorInt32,
+              builder.makePointerNullCheck(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+              builder.makePointerNullCheck(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
+            ),
+            builder.makeReturn(builder.makeConst(int32_t(0)))
+          ),
+          // If both stop, then they are equal.
+          builder.makeIf(
+            builder.makePointerNullCheck(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+            builder.makeReturn(builder.makeConst(int32_t(1)))
           ),
           // We can look forward down the chain.
           builder.makeLocalSet(
             refRttLocal,
             getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))
+          ),
+          builder.makeLocalSet(
+            rttParamLocal,
+            getRttParent(builder.makeLocalGet(rttParamLocal, loweringInfo.pointerType))
           ),
           builder.makeBreak(loop2)
         }
@@ -839,9 +849,11 @@ private:
     ));
   }
 
+
+/*
 cast
  null flows through
-
+*/
   // Given a pointer, load the RTT for it.
   Expression* getRtt(Expression* ptr) {
     // The RTT is the very first field in all GC objects.

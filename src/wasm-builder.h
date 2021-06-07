@@ -989,9 +989,16 @@ public:
 
   Expression* makePointerEq(Expression* a, Expression* b) {
     if (wasm.memory.is64()) {
-      return builder.makeBinary(EqInt64, a, b);
+      return makeBinary(EqInt64, a, b);
     }
-    return builder.makeBinary(EqInt32, a, b);
+    return makeBinary(EqInt32, a, b);
+  }
+
+  Expression* makePointerNullCheck(Expression* a) {
+    if (wasm.memory.is64()) {
+      return makeUnary(EqZInt64, a);
+    }
+    return makeUnary(EqZInt32, a);
   }
 
   // Additional utility functions for building on top of nodes
