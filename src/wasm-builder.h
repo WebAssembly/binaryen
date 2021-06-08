@@ -965,42 +965,6 @@ public:
     return makeLoad(size, offset, size, ptr, value, type);
   }
 
-  Expression* makePointerStore(Expression* ptr, Expression* value, Address offset=0) {
-    if (wasm.memory.is64()) {
-      return makeStore(8, offset, 8, ptr, value, Type::i64);
-    }
-    return makeStore(4, offset, 4, ptr, value, Type::i32);
-  }
-
-  Expression* makePointerConst(Address addr) {
-    if (wasm.memory.is64()) {
-      return makeConst(int64_t(addr));
-    }
-    return makeConst(int32_t(addr));
-  }
-
-  Expression* makePointerLoad(Expression* ptr, Address offset=0) {
-    return makeSimpleUnsignedLoad(ptr, wasm.memory.indexType, offset);
-  }
-
-  Expression* makePointerStore(Expression* ptr, Expression* value, Address offset=0) {
-    return makeSimpleStore(ptr, value, wasm.memory.indexType, offset);
-  }
-
-  Expression* makePointerEq(Expression* a, Expression* b) {
-    if (wasm.memory.is64()) {
-      return makeBinary(EqInt64, a, b);
-    }
-    return makeBinary(EqInt32, a, b);
-  }
-
-  Expression* makePointerNullCheck(Expression* a) {
-    if (wasm.memory.is64()) {
-      return makeUnary(EqZInt64, a);
-    }
-    return makeUnary(EqZInt32, a);
-  }
-
   // Additional utility functions for building on top of nodes
   // Convenient to have these on Builder, as it has allocation built in
 

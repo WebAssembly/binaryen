@@ -64,6 +64,45 @@ namespace wasm {
 
 namespace {
 
+class PointerBuilder : public Builder {
+public:
+  Expression* makePointerStore(Expression* ptr, Expression* value, Address offset=0) {
+    if (wasm.memory.is64()) {
+      return makeStore(8, offset, 8, ptr, value, Type::i64);
+    }
+    return makeStore(4, offset, 4, ptr, value, Type::i32);
+  }
+
+  Expression* makePointerConst(Address addr) {
+    if (wasm.memory.is64()) {
+      return makeConst(int64_t(addr));
+    }
+    return makeConst(int32_t(addr));
+  }
+
+  Expression* makePointerLoad(Expression* ptr, Address offset=0) {
+    return makeSimpleUnsignedLoad(ptr, wasm.memory.indexType, offset);
+  }
+
+  Expression* makePointerStore(Expression* ptr, Expression* value, Address offset=0) {
+    return makeSimpleStore(ptr, value, wasm.memory.indexType, offset);
+  }
+
+  Expression* makePointerEq(Expression* a, Expression* b) {
+    if (wasm.memory.is64()) {
+      return makeBinary(EqInt64, a, b);
+    }
+    return makeBinary(EqInt32, a, b);
+  }
+
+  Expression* makePointerNullCheck(Expression* a) {
+    if (wasm.memory.is64()) {
+      return makeUnary(EqZInt64, a);
+    }
+    return makeUnary(EqZInt32, a);
+  }
+};
+
 const char* getName(RefAsOp op) {
   switch (op) {
     case RefAsNonNull:
@@ -725,7 +764,7 @@ private:
     const Index rttParam = 1;
     // Store the ref's rtt in a local
     const Index refRttLocal = 2;
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     std::vector<Expression*> list;
     // Check for null.
     list.push_back(builder.makeIf(
@@ -979,7 +1018,7 @@ private:
     } else {
       WASM_UNREACHABLE("bad rtt");
     }
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     // Write the rtt kind.
     startBlock->list.push_back(builder.makeSimpleStore(
       builder.makeConst(int32_t(addr)),
