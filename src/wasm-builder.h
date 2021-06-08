@@ -962,7 +962,7 @@ public:
   // Makes a simple store that is aligned and of the full size.
   Expression* makeSimpleStore(Expression* ptr, Expression* value, Type type, Address offset=0) {
     auto size = type.getByteSize();
-    return makeLoad(size, offset, size, ptr, value, type);
+    return makeStore(size, offset, size, ptr, value, type);
   }
 
   // Additional utility functions for building on top of nodes
