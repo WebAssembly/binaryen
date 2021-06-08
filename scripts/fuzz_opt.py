@@ -293,8 +293,8 @@ def numbers_are_close_enough(x, y):
         def to_64_bit(a):
             if ' ' not in a:
                 return unsign(int(a), bits=64)
-            low, high = map(lambda x: unsign(int(x), bits=32), a.split(' '))
-            return low + (1 << 32) * high
+            low, high = a.split(' ')
+            return unsign(int(low), 32) + (1 << 32) * unsign(int(high), 32)
 
         return to_64_bit(x) == to_64_bit(y)
     # float() on the strings will handle many minor differences, like
