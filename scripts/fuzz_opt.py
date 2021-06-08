@@ -277,7 +277,7 @@ def compare(x, y, context):
 
 # converts a possibly-signed integer to an unsigned integer
 def unsign(x, bits):
-    return x & (2**bits - 1)
+    return x & ((1 << bits) - 1)
 
 
 # numbers are "close enough" if they just differ in printing, as different
