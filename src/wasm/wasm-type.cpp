@@ -714,6 +714,8 @@ typename Info::type_t Store<Info>::insert(const Info& info) {
     return canonical;
   }
   std::lock_guard<std::recursive_mutex> lock(mutex);
+  // Only HeapTypes in Nominal mode should be unconditionally added. In all
+  // other cases, deduplicate with existing types.
   if (std::is_same<Info, TypeInfo>::value ||
       typeSystem == TypeSystem::Equirecursive) {
     auto indexIt = typeIDs.find(std::cref(info));
@@ -731,6 +733,8 @@ typename Info::type_t Store<Info>::insert(std::unique_ptr<Info>&& info) {
     return canonical;
   }
   std::lock_guard<std::recursive_mutex> lock(mutex);
+  // Only HeapTypes in Nominal mode should be unconditionally added. In all
+  // other cases, deduplicate with existing types.
   if (std::is_same<Info, TypeInfo>::value ||
       typeSystem == TypeSystem::Equirecursive) {
     auto indexIt = typeIDs.find(std::cref(*info));
