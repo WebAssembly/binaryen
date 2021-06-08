@@ -42,6 +42,8 @@
 )
 
 (assert_invalid
+  ;; the same module as the first one in this file, but with a type added to
+  ;; the block
   (module
     (type $t (func (result i32)))
 
