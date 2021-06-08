@@ -294,7 +294,7 @@ def numbers_are_close_enough(x, y):
             if ' ' not in a:
                 return unsign(int(a), bits=64)
             low, high = map(lambda x: unsign(int(x), bits=32), a.split(' '))
-            return low + (2**32) * high
+            return low + (1 << 32) * high
 
         return to_64_bit(x) == to_64_bit(y)
     # float() on the strings will handle many minor differences, like
