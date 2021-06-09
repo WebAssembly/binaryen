@@ -145,4 +145,18 @@
    (ref.as_data (local.get $x))
   )
  )
+
+ (func $ref.func
+  (drop
+   (ref.func $ref.func)
+  )
+  ;; the same ref.func should be the same.
+  (drop
+   (ref.func $ref.func)
+  )
+  ;; a different one should be different.
+  (drop
+   (ref.func $ref.is)
+  )
+ )
 )
