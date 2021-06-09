@@ -338,6 +338,16 @@ struct LowerGCCode
       name, {curr->ref, curr->index}, loweredType));
   }
 
+  void visitArrayLen(ArrayLen* curr) {
+    visitExpression(curr);
+    Builder builder(*getModule());
+    auto type = originalTypes[&curr->ref];
+    auto name = std::string("ArrayLen$") +
+                getModule()->typeNames[type].name.str;
+    replaceCurrent(
+      builder.makeCall(name, {curr->ref}, Type::i32));
+  }
+
   void visitRefFunc(RefFunc* curr) {
     visitExpression(curr);
     replaceCurrent(LiteralUtils::makeFromInt32(loweringInfo->refFuncAddrs[curr->func], loweringInfo->pointerType, *getModule()));
@@ -530,6 +540,7 @@ private:
         makeArrayNew(type);
         makeArraySet(type);
         makeArrayGet(type);
+        makeArrayLen(type);
       }
     }
     makeRefAs();
@@ -789,6 +800,21 @@ private:
                        makeArrayOffset(loweredType),
                        loweredType)));
   }
+
+  void makeArrayLen(HeapType type) {
+    // TODO: null checks everywhere
+    PointerBuilder builder(*module);
+    module->addFunction(builder.makeFunction(
+      std::string("ArrayLen$") + module->typeNames[type].name.str,
+      {{loweringInfo.pointerType}, Type::i32},
+      {},
+      builder.makeSimpleUnsignedLoad(
+                       builder.makeLocalGet(0, loweringInfo.pointerType),
+                       Type::i32,
+                       4)
+    ));
+  }
+
 
   void makeRefAs() {
     Builder builder(*module);

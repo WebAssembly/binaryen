@@ -124,6 +124,12 @@
   )
  )
 
+ (func $array-len (param $x (ref $doubles)) (result i32)
+  (array.len $doubles
+   (local.get $x)
+  )
+ )
+
  (func $rtt.sub
   (drop
    (rtt.sub $struct-i32
