@@ -2139,7 +2139,7 @@ void WasmBinaryBuilder::readFunctions() {
 
     auto* func = new Function;
     func->name = Name::fromInt(i);
-    func->sig = functionTypes[functionImports.size() + i].getSignature();
+    func->sig = getSignatureByFunctionIndex(i);
     currFunction = func;
 
     if (DWARF) {
