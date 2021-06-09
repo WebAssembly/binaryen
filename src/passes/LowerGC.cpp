@@ -1294,7 +1294,19 @@ private:
 
     LowerGCCode lower(&loweringInfo);
     lower.setModule(module);
-    lower.walkModuleCode(module);
+    // Walk module-level code. We must avoid walkModuleCode() because we must
+    // *not* process the table. The table can contain RefFunc items, and we do
+    // not need to lower those.
+    for (auto& curr : module->globals) {
+      if (!curr->imported()) {
+        lower.walk(curr->init);
+      }
+    }
+    for (auto& curr : module->elementSegments) {
+      if (curr->offset) {
+        lower.walk(curr->offset);
+      }
+    }
   }
 
   Type lower(Type type) { return getLoweredType(type, module->memory); }
