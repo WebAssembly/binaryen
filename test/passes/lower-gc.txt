@@ -22,8 +22,10 @@
  (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
  (global $global0 i32 (i32.const 8))
  (global $global1 (mut i32) (i32.const 0))
- (global $nextMalloc (mut i32) (i32.const 48))
+ (global $nextMalloc (mut i32) (i32.const 68))
  (memory $0 256 256)
+ (table $lowergc-table 0 0 funcref)
+ (elem (i32.const 0))
  (start $LowerGC$start)
  (func $struct-gets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
   (drop
@@ -101,14 +103,14 @@
   (drop
    (call $StructNew$struct-i32
     (i32.const 42)
-    (i32.const 16)
+    (i32.const 20)
    )
   )
  )
  (func $new-struct-default
   (drop
    (call $StructNewWithDefault$many-fields
-    (i32.const 24)
+    (i32.const 32)
    )
   )
  )
@@ -143,7 +145,7 @@
    (call $ArrayNew$bytes
     (i32.const 42)
     (i32.const 11)
-    (i32.const 32)
+    (i32.const 44)
    )
   )
  )
@@ -151,14 +153,14 @@
   (drop
    (call $ArrayNewWithDefault$doubles
     (i32.const 11)
-    (i32.const 40)
+    (i32.const 56)
    )
   )
  )
  (func $rtt.sub
   (drop
    (call $RttSub
-    (i32.const 16)
+    (i32.const 20)
     (i32.const 8)
    )
   )
@@ -201,27 +203,15 @@
    (i32.const 0)
   )
   (i32.store
-   (i32.const 16)
-   (i32.const 1)
-  )
-  (i32.store
    (i32.const 20)
-   (i32.const 16)
-  )
-  (i32.store
-   (i32.const 24)
-   (i32.const 0)
-  )
-  (i32.store
-   (i32.const 24)
    (i32.const 1)
+  )
+  (i32.store
+   (i32.const 24)
+   (i32.const 20)
   )
   (i32.store
    (i32.const 28)
-   (i32.const 24)
-  )
-  (i32.store
-   (i32.const 32)
    (i32.const 0)
   )
   (i32.store
@@ -237,20 +227,32 @@
    (i32.const 0)
   )
   (i32.store
-   (i32.const 40)
+   (i32.const 44)
    (i32.const 1)
   )
   (i32.store
+   (i32.const 48)
    (i32.const 44)
-   (i32.const 40)
   )
   (i32.store
-   (i32.const 48)
+   (i32.const 52)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 56)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 60)
+   (i32.const 56)
+  )
+  (i32.store
+   (i32.const 64)
    (i32.const 0)
   )
   (global.set $global1
    (call $RttSub
-    (i32.const 16)
+    (i32.const 20)
     (global.get $global0)
    )
   )
