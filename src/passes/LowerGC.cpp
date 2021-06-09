@@ -117,6 +117,25 @@ const char* getName(RefAsOp op) {
   }
 }
 
+const char* getName(RefIsOp op) {
+  switch (op) {
+    case RefIsNull:
+      return "RefIsNull";
+      break;
+    case RefIsFunc:
+      return "RefIsFunc";
+      break;
+    case RefIsData:
+      return "RefIsData";
+      break;
+    case RefIsI31:
+      return "RefIsI31";
+      break;
+    default:
+      WASM_UNREACHABLE("unimplemented ref.is_*");
+  }
+}
+
 enum RttKind {
   RttFunc = 0,
   RttData = 1,
@@ -195,6 +214,12 @@ struct LowerGCCode
   }
 
   void visitRefAs(RefAs* curr) {
+    visitExpression(curr);
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeCall(getName(curr->op), {curr->value}, loweringInfo->pointerType));
+  }
+
+  void visitRefIs(RefIs* curr) {
     visitExpression(curr);
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(getName(curr->op), {curr->value}, loweringInfo->pointerType));
@@ -447,8 +472,10 @@ private:
       }
     }
     makeRefAs();
+    makeRefIs();
     makeRefTest();
     makeRefCast();
+    // TODO: makeRefFunc
 
     addRttSupport(types);
   }
@@ -746,6 +773,57 @@ private:
       module->addFunction(builder.makeFunction(
         getName(op),
         {loweringInfo.pointerType, loweringInfo.pointerType},
+        {},
+        builder.makeBlock(list)
+      ));
+    }
+  }
+
+  void makeRefIs() {
+    Builder builder(*module);
+    for (RefIsOp op : { RefIsNull, RefIsFunc, RefIsData, RefIsI31 }) {
+      std::vector<Expression*> list;
+      // Check for null.
+      list.push_back(builder.makeIf(
+        builder.makeUnary(
+          EqZInt32,
+          builder.makeLocalGet(0, loweringInfo.pointerType)
+        ),
+        builder.makeReturn(builder.makeConst(int32_t(0)))
+      ));
+      // Check for a kind, if we need to.
+      auto compareRttTo = [&](RttKind kind) {
+        list.push_back(builder.makeIf(
+          builder.makeBinary(
+            NeInt32,
+            getRttKind(getRtt(builder.makeLocalGet(0, loweringInfo.pointerType))),
+            builder.makeConst(int32_t(kind))
+          ),
+          builder.makeReturn(builder.makeConst(int32_t(0)))
+        ));
+      };
+      switch (op) {
+        case RefIsNull:
+          break;
+        case RefIsFunc:
+          compareRttTo(RttFunc);
+          break;
+        case RefIsData:
+          compareRttTo(RttData);
+          break;
+        case RefIsI31:
+          compareRttTo(RttI31);
+          break;
+        default:
+          WASM_UNREACHABLE("unimplemented ref.as_*");
+      }
+      // If we passed all the checks, we can return the pointer.
+      list.push_back(
+        builder.makeConst(int32_t(1))
+      );
+      module->addFunction(builder.makeFunction(
+        getName(op),
+        {loweringInfo.pointerType, Type::i32},
         {},
         builder.makeBlock(list)
       ));
