@@ -102,6 +102,13 @@ public:
     }
     return makeUnary(EqZInt32, a);
   }
+
+  Expression* makeTrapOnNullParam(Index param, Expression* otherwise=nullptr) {
+    return makeIf(
+      makePointerNullCheck(makeLocalGet(0, wasm.memory.indexType)),
+      makeUnreachable(),
+      otherwise);
+  }
 };
 
 const char* getName(RefAsOp op) {
@@ -627,7 +634,7 @@ private:
 
   void makeStructSet(HeapType type) {
     auto& fields = type.getStruct().fields;
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     for (Index i = 0; i < fields.size(); i++) {
       auto& field = fields[i];
       auto loweredType = getLoweredType(field.type, module->memory);
@@ -636,18 +643,19 @@ private:
           std::to_string(i),
         {{loweringInfo.pointerType, loweredType}, Type::none},
         {},
-        builder.makeStore(loweredType.getByteSize(),
-                          loweringInfo.layouts[type].fieldOffsets[i],
-                          loweredType.getByteSize(),
-                          builder.makeLocalGet(0, loweringInfo.pointerType),
-                          builder.makeLocalGet(1, loweredType),
-                          loweredType)));
+        builder.makeTrapOnNullParam(0,
+          builder.makeStore(loweredType.getByteSize(),
+                            loweringInfo.layouts[type].fieldOffsets[i],
+                            loweredType.getByteSize(),
+                            builder.makeLocalGet(0, loweringInfo.pointerType),
+                            builder.makeLocalGet(1, loweredType),
+                            loweredType))));
     }
   }
 
   void makeStructGet(HeapType type) {
     auto& fields = type.getStruct().fields;
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     for (Index i = 0; i < fields.size(); i++) {
       auto& field = fields[i];
       auto loweredType = getLoweredType(field.type, module->memory);
@@ -656,12 +664,13 @@ private:
           std::to_string(i),
         {loweringInfo.pointerType, loweredType},
         {},
-        builder.makeLoad(loweredType.getByteSize(),
-                         false, // TODO: signedness
-                         loweringInfo.layouts[type].fieldOffsets[i],
-                         loweredType.getByteSize(),
-                         builder.makeLocalGet(0, loweringInfo.pointerType),
-                         loweredType)));
+        builder.makeTrapOnNullParam(0,
+          builder.makeLoad(loweredType.getByteSize(),
+                           false, // TODO: signedness
+                           loweringInfo.layouts[type].fieldOffsets[i],
+                           loweredType.getByteSize(),
+                           builder.makeLocalGet(0, loweringInfo.pointerType),
+                           loweredType))));
     }
   }
 
@@ -771,47 +780,48 @@ private:
   void makeArraySet(HeapType type) {
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, module->memory);
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArraySet$") + module->typeNames[type].name.str,
       {{loweringInfo.pointerType, loweringInfo.pointerType, loweredType}, Type::none},
       {},
-      builder.makeStore(loweredType.getByteSize(),
-                        0,
-                        loweredType.getByteSize(),
-                        makeArrayOffset(loweredType),
-                        builder.makeLocalGet(2, loweredType),
-                        loweredType)));
+      builder.makeTrapOnNullParam(0,
+        builder.makeStore(loweredType.getByteSize(),
+                          0,
+                          loweredType.getByteSize(),
+                          makeArrayOffset(loweredType),
+                          builder.makeLocalGet(2, loweredType),
+                          loweredType))));
   }
 
   void makeArrayGet(HeapType type) {
-    // TODO: null checks everywhere
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, module->memory);
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArrayGet$") + module->typeNames[type].name.str,
       {{loweringInfo.pointerType, loweringInfo.pointerType}, loweredType},
       {},
-      builder.makeLoad(loweredType.getByteSize(),
-                       false, // TODO: signedness
-                       0,
-                       loweredType.getByteSize(),
-                       makeArrayOffset(loweredType),
-                       loweredType)));
+      builder.makeTrapOnNullParam(0,
+        builder.makeLoad(loweredType.getByteSize(),
+                         false, // TODO: signedness
+                         0,
+                         loweredType.getByteSize(),
+                         makeArrayOffset(loweredType),
+                         loweredType))));
   }
 
   void makeArrayLen(HeapType type) {
-    // TODO: null checks everywhere
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArrayLen$") + module->typeNames[type].name.str,
       {{loweringInfo.pointerType}, Type::i32},
       {},
-      builder.makeSimpleUnsignedLoad(
-                       builder.makeLocalGet(0, loweringInfo.pointerType),
-                       Type::i32,
-                       4)
+      builder.makeTrapOnNullParam(0,
+        builder.makeSimpleUnsignedLoad(
+                         builder.makeLocalGet(0, loweringInfo.pointerType),
+                         Type::i32,
+                         4))
     ));
   }
 

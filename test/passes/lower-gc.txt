@@ -397,14 +397,26 @@
   (local.get $2)
  )
  (func $StructSet$struct-i32$0 (param $0 i32) (param $1 i32)
-  (i32.store offset=4
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructGet$struct-i32$0 (param $0 i32) (result i32)
-  (i32.load offset=4
-   (local.get $0)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $StructNewWithDefault$many-fields (param $0 i32) (result i32)
@@ -458,36 +470,72 @@
   (local.get $4)
  )
  (func $StructSet$many-fields$0 (param $0 i32) (param $1 i32)
-  (i32.store offset=4
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructSet$many-fields$1 (param $0 i32) (param $1 f64)
-  (f64.store offset=8
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f64.store offset=8
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructSet$many-fields$2 (param $0 i32) (param $1 f32)
-  (f32.store offset=16
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f32.store offset=16
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructGet$many-fields$0 (param $0 i32) (result i32)
-  (i32.load offset=4
-   (local.get $0)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $StructGet$many-fields$1 (param $0 i32) (result f64)
-  (f64.load offset=8
-   (local.get $0)
+  (if (result f64)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f64.load offset=8
+    (local.get $0)
+   )
   )
  )
  (func $StructGet$many-fields$2 (param $0 i32) (result f32)
-  (f32.load offset=16
-   (local.get $0)
+  (if (result f32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f32.load offset=16
+    (local.get $0)
+   )
   )
  )
  (func $StructNewWithDefault$struct-i64 (param $0 i32) (result i32)
@@ -525,14 +573,26 @@
   (local.get $2)
  )
  (func $StructSet$struct-i64$0 (param $0 i32) (param $1 i64)
-  (i64.store offset=4
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i64.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructGet$struct-i64$0 (param $0 i32) (result i64)
-  (i64.load offset=4
-   (local.get $0)
+  (if (result i64)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i64.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $StructNewWithDefault$struct-f32 (param $0 i32) (result i32)
@@ -570,14 +630,26 @@
   (local.get $2)
  )
  (func $StructSet$struct-f32$0 (param $0 i32) (param $1 f32)
-  (f32.store offset=4
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f32.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructGet$struct-f32$0 (param $0 i32) (result f32)
-  (f32.load offset=4
-   (local.get $0)
+  (if (result f32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f32.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $StructNewWithDefault$struct-f64 (param $0 i32) (result i32)
@@ -615,14 +687,26 @@
   (local.get $2)
  )
  (func $StructSet$struct-f64$0 (param $0 i32) (param $1 f64)
-  (f64.store offset=4
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f64.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructGet$struct-f64$0 (param $0 i32) (result f64)
-  (f64.load offset=4
-   (local.get $0)
+  (if (result f64)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f64.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $StructNewWithDefault$struct-ref (param $0 i32) (result i32)
@@ -660,14 +744,26 @@
   (local.get $2)
  )
  (func $StructSet$struct-ref$0 (param $0 i32) (param $1 i32)
-  (i32.store offset=4
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructGet$struct-ref$0 (param $0 i32) (result i32)
-  (i32.load offset=4
-   (local.get $0)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $StructNewWithDefault$struct-rtt (param $0 i32) (result i32)
@@ -705,14 +801,26 @@
   (local.get $2)
  )
  (func $StructSet$struct-rtt$0 (param $0 i32) (param $1 i32)
-  (i32.store offset=4
-   (local.get $0)
-   (local.get $1)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
   )
  )
  (func $StructGet$struct-rtt$0 (param $0 i32) (result i32)
-  (i32.load offset=4
-   (local.get $0)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $ArrayNewWithDefault$doubles (param $0 i32) (param $1 i32) (result i32)
@@ -794,37 +902,55 @@
   (local.get $3)
  )
  (func $ArraySet$doubles (param $0 i32) (param $1 i32) (param $2 f64)
-  (f64.store
-   (i32.add
-    (i32.add
-     (local.get $0)
-     (i32.const 8)
-    )
-    (i32.mul
-     (i32.const 8)
-     (local.get $1)
-    )
+  (if
+   (i32.eqz
+    (local.get $0)
    )
-   (local.get $2)
+   (unreachable)
+   (f64.store
+    (i32.add
+     (i32.add
+      (local.get $0)
+      (i32.const 8)
+     )
+     (i32.mul
+      (i32.const 8)
+      (local.get $1)
+     )
+    )
+    (local.get $2)
+   )
   )
  )
  (func $ArrayGet$doubles (param $0 i32) (param $1 i32) (result f64)
-  (f64.load
-   (i32.add
+  (if (result f64)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (f64.load
     (i32.add
-     (local.get $0)
-     (i32.const 8)
-    )
-    (i32.mul
-     (i32.const 8)
-     (local.get $1)
+     (i32.add
+      (local.get $0)
+      (i32.const 8)
+     )
+     (i32.mul
+      (i32.const 8)
+      (local.get $1)
+     )
     )
    )
   )
  )
  (func $ArrayLen$doubles (param $0 i32) (result i32)
-  (i32.load offset=4
-   (local.get $0)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $ArrayNewWithDefault$bytes (param $0 i32) (param $1 i32) (result i32)
@@ -906,37 +1032,55 @@
   (local.get $3)
  )
  (func $ArraySet$bytes (param $0 i32) (param $1 i32) (param $2 i32)
-  (i32.store
-   (i32.add
-    (i32.add
-     (local.get $0)
-     (i32.const 8)
-    )
-    (i32.mul
-     (i32.const 4)
-     (local.get $1)
-    )
+  (if
+   (i32.eqz
+    (local.get $0)
    )
-   (local.get $2)
+   (unreachable)
+   (i32.store
+    (i32.add
+     (i32.add
+      (local.get $0)
+      (i32.const 8)
+     )
+     (i32.mul
+      (i32.const 4)
+      (local.get $1)
+     )
+    )
+    (local.get $2)
+   )
   )
  )
  (func $ArrayGet$bytes (param $0 i32) (param $1 i32) (result i32)
-  (i32.load
-   (i32.add
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load
     (i32.add
-     (local.get $0)
-     (i32.const 8)
-    )
-    (i32.mul
-     (i32.const 4)
-     (local.get $1)
+     (i32.add
+      (local.get $0)
+      (i32.const 8)
+     )
+     (i32.mul
+      (i32.const 4)
+      (local.get $1)
+     )
     )
    )
   )
  )
  (func $ArrayLen$bytes (param $0 i32) (result i32)
-  (i32.load offset=4
-   (local.get $0)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
   )
  )
  (func $RefAsNonNull (param $0 i32) (result i32)
