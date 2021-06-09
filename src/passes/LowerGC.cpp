@@ -708,8 +708,6 @@ private:
       params.push_back(loweringInfo.pointerType);
       // Add a local to store the allocated value.
       auto alloc = params.size();
-      // Add a local for the initialization loop.
-      auto counter = alloc + 1;
       std::vector<Expression*> list;
       // Malloc space for our Array.
       list.push_back(builder.makeLocalSet(
@@ -755,7 +753,11 @@ private:
           std::string("ArraySet$") + typeName,
           {
            builder.makeLocalGet(alloc, loweringInfo.pointerType),
-           builder.makeLocalGet(counter, loweringInfo.pointerType),
+           builder.makeBinary(
+             SubInt32,
+             builder.makeLocalGet(sizeParam, Type::i32),
+             builder.makeConst(int32_t(1))
+           ),
            initialization
           },
           Type::none);
@@ -764,15 +766,15 @@ private:
         builder.makeBlock(
           blockName,
           {builder.makeBreak(
-             loopName,
+             blockName,
              nullptr,
              builder.makeUnary(EqZInt32,
-                               builder.makeLocalGet(counter, Type::i32))),
+                               builder.makeLocalGet(sizeParam, Type::i32))),
            initialization,
            builder.makeLocalSet(
-             counter,
+             sizeParam,
              builder.makeBinary(SubInt32,
-                                builder.makeLocalGet(counter, Type::i32),
+                                builder.makeLocalGet(sizeParam, Type::i32),
                                 builder.makeConst(int32_t(1)))),
            builder.makeBreak(loopName)})));
       // Return the pointer.
@@ -782,8 +784,8 @@ private:
         name += "WithDefault";
       }
       module->addFunction(builder.makeFunction(name + '$' + typeName,
-                                               {Type(params), Type::i32},
-                                               {loweringInfo.pointerType, loweringInfo.pointerType},
+                                               {Type(params), loweringInfo.pointerType},
+                                               {loweringInfo.pointerType},
                                                builder.makeBlock(list)));
     }
   }
