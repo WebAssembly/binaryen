@@ -60,6 +60,7 @@
 // 
 
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/table-utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -184,12 +185,12 @@ struct LoweringInfo {
 
   // The addresses of ref.funcs. A singleton such instance is created for each
   // function.
-  std::unordered_map<HeapType, Address> refFuncAddrs;
+  std::unordered_map<Name, Address> refFuncAddrs;
 
   Address compileTimeMalloc(Address size) {
-    assert(ret % 4 == 0);
+    assert(size % 4 == 0);
     auto ret = mallocStart;
-    mallocStart += size;
+    mallocStart = mallocStart + size;
     return ret;
   }
 };
@@ -322,7 +323,7 @@ struct LowerGCCode
 
   void visitRefFunc(RefFunc* curr) {
     visitExpression(curr);
-    replaceCurrent(LiteralUtils::makeFromInt32(loweringInfo->refFuncAddrs[curr->name], loweringInfo->pointerType, *getModule()));
+    replaceCurrent(LiteralUtils::makeFromInt32(loweringInfo->refFuncAddrs[curr->func], loweringInfo->pointerType, *getModule()));
   }
 
   void visitRttCanon(RttCanon* curr) {
@@ -434,10 +435,10 @@ private:
     Builder builder(*module);
     // Add a new table just for us.
     // Start the table at size 0, and increase it as needed as we go.
-    table = wasm.addTable(builder.makeTable(
-      Names::getValidTableName(wasm, "lowergc-table"), Type::funcref, 0, 0));
+    table = module->addTable(builder.makeTable(
+      Names::getValidTableName(*module, "lowergc-table"), Type::funcref, 0, 0));
     // Add an element segment to append to.
-    segment = wasm.addElementSegment(
+    segment = module->addElementSegment(
       builder.makeElementSegment("lowergc-segment",
                      table->name,
                      builder.makeConst(int32_t(0))
@@ -1093,7 +1094,7 @@ private:
     for (auto type : types) {
       usageInfo.rttCanons[type] = false;
     }
-    for (auto* func : module->functions) {
+    for (auto& func : module->functions) {
       usageInfo.refFuncs[func->name] = false;
     }
     {
@@ -1103,7 +1104,7 @@ private:
         Analysis(UsageInfo* usageInfo) : usageInfo(usageInfo) {}
 
         void visitRefFunc(RefFunc* curr) {
-          usageInfo->refFuncs[curr->name] = true;
+          usageInfo->refFuncs[curr->func] = true;
           // ref.funcs use an rtt.canon internally. Mark the appropriate
           // rtt.canon here as well, so that it will exist when the ref.func
           // needs it later down.
@@ -1126,7 +1127,7 @@ private:
         makeRttCanon(type);
       }
     }
-    for (auto& kv : usageInfo.rttFuncs) {
+    for (auto& kv : usageInfo.refFuncs) {
       Name name = kv.first;
       bool used = kv.second;
       if (used) {
@@ -1229,8 +1230,8 @@ private:
     segment->data.push_back(
       builder.makeRefFunc(name, module->getFunction(name)->sig)
     );
-    table.initial++;
-    table.max++;
+    table->initial++;
+    table->max++;
     return index;
   }
 
@@ -1249,10 +1250,10 @@ private:
       builder.makePointerConst(loweringInfo.rttCanonAddrs[type])
     ));
     // Write the table index
-    auto type = HeapType(func->sig);
     startBlock->list.push_back(builder.makeSimpleStore(
       builder.makePointerConst(addr + 4),
-      builder.makeConst(int32_t(tableIndex))
+      builder.makeConst(int32_t(tableIndex)),
+      Type::i32
     ));
   }
 
