@@ -27,6 +27,10 @@
 //     u32 size
 //     elements...
 //
+//   Func:
+//     u32 rtt
+//     u32 index in the table
+//
 //   Rtts:
 //     u32/RttKind what (func, data, i31, extern)
 //     pointer     decl (this is a pointer to new type the rtt.sub declares
@@ -176,6 +180,10 @@ struct LoweringInfo {
   // The addresses of rtt.canons. Each rtt.canon will be turned into a constant
   // containing the address for that type.
   std::unordered_map<HeapType, Address> rttCanonAddrs;
+
+  // The addresses of ref.funcs. A singleton such instance is created for each
+  // function.
+  std::unordered_map<HeapType, Address> refFuncAddrs;
 };
 
 // Lower GC instructions. Most turn into function calls, and we rely on inlining
@@ -302,6 +310,11 @@ struct LowerGCCode
     auto loweredType = getLoweredType(element.type, getModule()->memory);
     replaceCurrent(builder.makeCall(
       name, {curr->ref, curr->index}, loweredType));
+  }
+
+  void visitRefFunc(RefFunc* curr) {
+    visitExpression(curr);
+    replaceCurrent(LiteralUtils::makeFromInt32(loweringInfo->refFuncAddrs[curr->name], loweringInfo->pointerType, *getModule()));
   }
 
   void visitRttCanon(RttCanon* curr) {
@@ -1048,10 +1061,15 @@ private:
     struct UsageInfo {
       // Types used in rtt.canon instructions.
       std::unordered_map<HeapType, std::atomic<bool>> rttCanons;
+
+      std::unordered_map<Name, std::atomic<bool>> refFuncs;
     } usageInfo;
     // Initialize the data so it is safe to operate on in parallel.
     for (auto type : types) {
       usageInfo.rttCanons[type] = false;
+    }
+    for (auto* func : module->functions) {
+      usageInfo.refFuncs[func->name] = false;
     }
     {
       struct Analysis : public WalkerPass<PostWalker<Analysis>> {
@@ -1059,6 +1077,9 @@ private:
 
         Analysis(UsageInfo* usageInfo) : usageInfo(usageInfo) {}
 
+        void visitRefFunc(RefFunc* curr) {
+          usageInfo->fefFuncs[curr->name] = true;
+        }
         void visitRttCanon(RttCanon* curr) {
           usageInfo->rttCanons[curr->type.getHeapType()] = true;
         }
@@ -1076,7 +1097,51 @@ private:
         makeRttCanon(type);
       }
     }
+    for (auto& kv : usageInfo.rttFuncs) {
+      Name name = kv.first;
+      bool used = kv.second;
+      if (used) {
+        makeRefFunc(name);
+      }
+    }
     makeRttSub();
+  }
+
+  void makeRefFunc(HeapType type) {
+FIXME
+    // Allocate this rtt at the next free location.
+    auto addr = loweringInfo.mallocStart;
+    loweringInfo.rttCanonAddrs[type] = addr;
+    int32_t rttValue;
+    if (type.isFunction()) {
+      rttValue = RttFunc;
+    } else if (type.isData()) {
+      rttValue = RttData;
+    } else {
+      WASM_UNREACHABLE("bad rtt");
+    }
+    PointerBuilder builder(*module);
+    // Write the rtt kind.
+    startBlock->list.push_back(builder.makeSimpleStore(
+      builder.makeConst(int32_t(addr)),
+      builder.makeConst(int32_t(rttValue)),
+      Type::i32
+    ));
+    // Write the type field, which points to ourself.
+    startBlock->list.push_back(builder.makePointerStore(
+      builder.makeConst(int32_t(addr + 4)),
+      builder.makeConst(Literal::makeFromInt32(addr, loweringInfo.pointerType))
+    ));
+    // Write a null pointer for the parent.
+    startBlock->list.push_back(builder.makeStore(
+      loweringInfo.pointerSize,
+      0,
+      loweringInfo.pointerSize,
+      builder.makeConst(int32_t(addr + 4 + loweringInfo.pointerSize)),
+      builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
+      loweringInfo.pointerType
+    ));
+    loweringInfo.mallocStart = loweringInfo.mallocStart + 4 + loweringInfo.pointerSize;
   }
 
   void makeRttCanon(HeapType type) {
