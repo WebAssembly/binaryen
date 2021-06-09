@@ -66,12 +66,7 @@ namespace {
 
 class PointerBuilder : public Builder {
 public:
-  Expression* makePointerStore(Expression* ptr, Expression* value, Address offset=0) {
-    if (wasm.memory.is64()) {
-      return makeStore(8, offset, 8, ptr, value, Type::i64);
-    }
-    return makeStore(4, offset, 4, ptr, value, Type::i32);
-  }
+  PointerBuilder(Module& wasm) : Builder(wasm) {}
 
   Expression* makePointerConst(Address addr) {
     if (wasm.memory.is64()) {
@@ -783,10 +778,10 @@ private:
     );
     // Check for different kinds. 
     list.push_back(builder.makeIf(
-      builder.makeUnary(
+      builder.makeBinary(
         NeInt32,
         getRttKind(builder.makeLocalGet(rttParam, loweringInfo.pointerType)),
-        getRttKind(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
+        getRttKind(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))
       ),
       builder.makeReturn(builder.makeConst(int32_t(0)))
     ));
@@ -846,7 +841,7 @@ private:
             builder.makeUnary(EqZInt32,
               builder.makePointerEq(
                 getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
-                getRttParent(builder.makeLocalGet(rttParam, loweringInfo.pointerType)),
+                getRttParent(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
               )
             ),
             builder.makeReturn(builder.makeConst(int32_t(0)))
@@ -872,8 +867,8 @@ private:
             getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))
           ),
           builder.makeLocalSet(
-            rttParamLocal,
-            getRttParent(builder.makeLocalGet(rttParamLocal, loweringInfo.pointerType))
+            rttParam,
+            getRttParent(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
           ),
           builder.makeBreak(loop2)
         }
@@ -881,7 +876,7 @@ private:
     ));
 
     module->addFunction(builder.makeFunction(
-      getName(op),
+      "RefTest",
       {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
       {loweringInfo.pointerType},
       builder.makeBlock(list)
@@ -922,7 +917,7 @@ private:
       builder.makeLocalGet(refParam, loweringInfo.pointerType)
     ));
     module->addFunction(builder.makeFunction(
-      getName(op),
+      "RefCast",
       {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
       {loweringInfo.pointerType},
       builder.makeBlock(list)
@@ -954,7 +949,7 @@ private:
   // Given a pointer to an RTT, load its declared type.
   Expression* getRttDecl(Expression* ptr) {
     // The RTT declared new type is the second field, after the kind (i32).
-    return Builder(*module).makeSimpleLoad(
+    return Builder(*module).makeSimpleUnsignedLoad(
                             ptr,
                             Type::i32,
                             4);
@@ -964,7 +959,7 @@ private:
   Expression* getRttParent(Expression* ptr) {
     // The RTT parent is the third field, after the kind (i32) and the decl
     // (pointer).
-    return Builder(*module).makeSimpleLoad(
+    return Builder(*module).makeSimpleUnsignedLoad(
                             ptr,
                             Type::i32,
                             4 + loweringInfo.pointerSize);

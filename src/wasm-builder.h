@@ -35,6 +35,7 @@ struct NameType {
 // General AST node builder
 
 class Builder {
+protected:
   Module& wasm;
 
 public:
