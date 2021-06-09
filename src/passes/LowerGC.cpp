@@ -225,6 +225,11 @@ struct LowerGCCode
     curr->type = lower(type);
   }
 
+  void visitCallIndirect(CallIndirect* curr) {
+    visitExpression(curr);
+    curr->sig = lower(curr->sig);
+  }
+
   void visitRefNull(RefNull* curr) {
     visitExpression(curr);
     replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
@@ -355,16 +360,8 @@ struct LowerGCCode
   }
 
   void doWalkFunction(Function* func) {
-    // Lower the types on the function itself.
-    std::vector<Type> params;
-    for (auto t : func->sig.params) {
-      params.push_back(lower(t));
-    }
-    std::vector<Type> results;
-    for (auto t : func->sig.results) {
-      results.push_back(lower(t));
-    }
-    func->sig = Signature(Type(params), Type(results));
+    func->sig = lower(func->sig);
+
     for (auto& t : func->vars) {
       t = lower(t);
     }
@@ -391,6 +388,18 @@ private:
   std::unordered_map<Expression**, HeapType> originalTypes;
 
   Type lower(Type type) { return getLoweredType(type, getModule()->memory); }
+
+  Signature lower(Signature sig) {
+    std::vector<Type> params;
+    for (auto t : sig.params) {
+      params.push_back(lower(t));
+    }
+    std::vector<Type> results;
+    for (auto t : sig.results) {
+      results.push_back(lower(t));
+    }
+    return Signature(Type(params), Type(results));
+  }
 };
 
 } // anonymous namespace
