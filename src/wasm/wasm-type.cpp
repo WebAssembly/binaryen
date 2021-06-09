@@ -770,7 +770,8 @@ TypeID Store<Info>::doInsert(std::unique_ptr<Info>&& info) {
 }
 
 // For nominal mode, explicitly track all the subtype relations. Each HeapType
-// can have only one immediate supertype. TODO:
+// can have only one immediate supertype. The lock guards all accesses to
+// `nominalSuperTypes` since it is shared between threads.
 std::unordered_map<HeapType, HeapType> nominalSuperTypes;
 std::mutex nominalSuperTypesLock;
 
