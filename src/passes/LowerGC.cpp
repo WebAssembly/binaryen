@@ -19,27 +19,27 @@
 //
 // Layouts:
 //   Struct:
-//     u32 rtt
+//     ptr rtt
 //     fields...
 //
 //   Array:
-//     u32 rtt
+//     ptr rtt
 //     u32 size
 //     elements...
 //
 //   Func:
-//     u32 rtt
+//     ptr rtt
 //     u32 index in the table
 //
 //   Rtts:
 //     u32/RttKind what (func, data, i31, extern)
-//     pointer     decl (this is a pointer to new type the rtt.sub declares
+//     ptr         decl (this is a pointer to new type the rtt.sub declares
 //                           on top of the fiven rtt. to represent that type,
 //                           we point to the the rtt.canon for it. or, if this
 //                           is an rtt.canon and not .sub, this still contains
 //                           the "new" type that is defined in the rtt.canon,
 //                           that is, it points to itself)
-//     pointer     parent (or null if this is from rtt.canon)
+//     ptr         parent (or null if this is from rtt.canon)
 //
 //     - That is, an rtt.canon contains a "what" and then two nulls. There is a
 //       single rtt.canon for each type, and that address is the unique ID for
@@ -185,6 +185,13 @@ struct LoweringInfo {
   // The addresses of ref.funcs. A singleton such instance is created for each
   // function.
   std::unordered_map<HeapType, Address> refFuncAddrs;
+
+  Address compileTimeMalloc(Address size) {
+    assert(ret % 4 == 0);
+    auto ret = mallocStart;
+    mallocStart += size;
+    return ret;
+  }
 };
 
 // Lower GC instructions. Most turn into function calls, and we rely on inlining
@@ -1131,7 +1138,9 @@ private:
 
   void makeRttCanon(HeapType type) {
     // Allocate this rtt at the next free location.
-    auto addr = loweringInfo.mallocStart;
+    auto addr = loweringInfo.compileTimeMalloc(
+      4 + 2 * loweringInfo.pointerSize
+    );
     loweringInfo.rttCanonAddrs[type] = addr;
     int32_t rttValue;
     if (type.isFunction()) {
@@ -1162,7 +1171,6 @@ private:
       builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
       loweringInfo.pointerType
     ));
-    loweringInfo.mallocStart = loweringInfo.mallocStart + 4 + loweringInfo.pointerSize;
   }
 
   void makeRttSub() {
@@ -1231,8 +1239,7 @@ private:
     // Add the function to the table.
     auto tableIndex = addToTable(name);
     // Allocate this ref.func at the next free location.
-    auto addr = loweringInfo.mallocStart;
-    loweringInfo.mallocStart = loweringInfo.mallocStart + 4 + loweringInfo.pointerSize;
+    auto addr = loweringInfo.compileTimeMalloc(4 + loweringInfo.pointerSize);
     loweringInfo.refFuncAddrs[name] = addr;
     PointerBuilder builder(*module);
     // Write the rtt.
