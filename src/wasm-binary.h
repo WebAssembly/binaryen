@@ -1404,8 +1404,10 @@ public:
   std::vector<HeapType> functionTypes;
 
   void readFunctionSignatures();
+  HeapType getTypeByIndex(Index index);
   HeapType getTypeByFunctionIndex(Index index);
-  HeapType getSigTypeByIndex(Index index);
+  Signature getSignatureByTypeIndex(Index index);
+  Signature getSignatureByFunctionIndex(Index index);
 
   size_t nextLabel;
 

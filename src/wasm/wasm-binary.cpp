@@ -1657,7 +1657,7 @@ Type WasmBinaryBuilder::getType(int initial) {
   // Single value types are negative; signature indices are non-negative
   if (initial >= 0) {
     // TODO: Handle block input types properly.
-    return getSigTypeByIndex(initial).getSignature().results;
+    return getSignatureByTypeIndex(initial).results;
   }
   Type type;
   if (getBasicType(initial, type)) {
@@ -1986,9 +1986,10 @@ void WasmBinaryBuilder::readImports() {
     switch (kind) {
       case ExternalKind::Function: {
         Name name(std::string("fimport$") + std::to_string(functionCounter++));
-        auto type = getSigTypeByIndex(getU32LEB());
-        functionTypes.push_back(type);
-        auto curr = builder.makeFunction(name, type.getSignature(), {});
+        auto index = getU32LEB();
+        functionTypes.push_back(getTypeByIndex(index));
+        auto curr =
+          builder.makeFunction(name, getSignatureByTypeIndex(index), {});
         curr->module = module;
         curr->base = base;
         functionImports.push_back(curr.get());
@@ -2052,8 +2053,8 @@ void WasmBinaryBuilder::readImports() {
         Name name(std::string("eimport$") + std::to_string(eventCounter++));
         auto attribute = getU32LEB();
         auto index = getU32LEB();
-        auto curr = builder.makeEvent(
-          name, attribute, getSigTypeByIndex(index).getSignature());
+        auto curr =
+          builder.makeEvent(name, attribute, getSignatureByTypeIndex(index));
         curr->module = module;
         curr->base = base;
         wasm.addEvent(std::move(curr));
@@ -2084,8 +2085,18 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto index = getU32LEB();
-    functionTypes.push_back(getSigTypeByIndex(index));
+    functionTypes.push_back(getTypeByIndex(index));
+    // Check that the type is a signature.
+    getSignatureByTypeIndex(index);
   }
+}
+
+HeapType WasmBinaryBuilder::getTypeByIndex(Index index) {
+  if (index >= types.size()) {
+    throwError("invalid type index " + std::to_string(index) + " / " +
+               std::to_string(types.size()));
+  }
+  return types[index];
 }
 
 HeapType WasmBinaryBuilder::getTypeByFunctionIndex(Index index) {
@@ -2095,16 +2106,20 @@ HeapType WasmBinaryBuilder::getTypeByFunctionIndex(Index index) {
   return functionTypes[index];
 }
 
-HeapType WasmBinaryBuilder::getSigTypeByIndex(Index index) {
-  if (index >= types.size()) {
-    throwError("invalid type index " + std::to_string(index) + " / " +
-               std::to_string(types.size()));
-  }
-  auto heapType = types[index];
+Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
+  auto heapType = getTypeByIndex(index);
   if (!heapType.isSignature()) {
     throwError("invalid signature type " + heapType.toString());
   }
-  return heapType;
+  return heapType.getSignature();
+}
+
+Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
+  auto heapType = getTypeByFunctionIndex(index);
+  if (!heapType.isSignature()) {
+    throwError("invalid signature type " + heapType.toString());
+  }
+  return heapType.getSignature();
 }
 
 void WasmBinaryBuilder::readFunctions() {
@@ -2875,10 +2890,9 @@ void WasmBinaryBuilder::readEvents() {
     BYN_TRACE("read one\n");
     auto attribute = getU32LEB();
     auto typeIndex = getU32LEB();
-    wasm.addEvent(
-      Builder::makeEvent("event$" + std::to_string(i),
-                         attribute,
-                         getSigTypeByIndex(typeIndex).getSignature()));
+    wasm.addEvent(Builder::makeEvent("event$" + std::to_string(i),
+                                     attribute,
+                                     getSignatureByTypeIndex(typeIndex)));
   }
 }
 
@@ -3876,7 +3890,7 @@ void WasmBinaryBuilder::visitSwitch(Switch* curr) {
 void WasmBinaryBuilder::visitCall(Call* curr) {
   BYN_TRACE("zz node: Call\n");
   auto index = getU32LEB();
-  auto sig = getTypeByFunctionIndex(index).getSignature();
+  auto sig = getSignatureByFunctionIndex(index);
   auto num = sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
@@ -3890,7 +3904,7 @@ void WasmBinaryBuilder::visitCall(Call* curr) {
 void WasmBinaryBuilder::visitCallIndirect(CallIndirect* curr) {
   BYN_TRACE("zz node: CallIndirect\n");
   auto index = getU32LEB();
-  curr->sig = getSigTypeByIndex(index).getSignature();
+  curr->sig = getSignatureByTypeIndex(index);
   Index tableIdx = getU32LEB();
   auto num = curr->sig.params.size();
   curr->operands.resize(num);
