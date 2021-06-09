@@ -242,6 +242,18 @@ struct LowerGCCode
     replaceCurrent(builder.makeCall(getName(curr->op), {curr->value}, loweringInfo->pointerType));
   }
 
+  void visitRefCast(RefCast* curr) {
+    visitExpression(curr);
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeCall("RefCast", {curr->ref, curr->rtt}, loweringInfo->pointerType));
+  }
+
+  void visitRefTest(RefTest* curr) {
+    visitExpression(curr);
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeCall("RefTest", {curr->ref, curr->rtt}, Type::i32));
+  }
+
   void visitStructNew(StructNew* curr) {
     visitExpression(curr);
     auto type = originalTypes[&curr->rtt];

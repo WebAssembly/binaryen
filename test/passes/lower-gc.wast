@@ -159,4 +159,16 @@
    (ref.func $ref.is)
   )
  )
+
+ (func $ref.cast (param $x anyref)
+  (drop
+   (ref.cast (local.get $x) (rtt.canon $empty))
+  )
+ )
+
+ (func $ref.test (param $x anyref)
+  (drop
+   (ref.test (local.get $x) (rtt.canon $empty))
+  )
+ )
 )
