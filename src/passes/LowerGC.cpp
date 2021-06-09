@@ -60,6 +60,7 @@
 // 
 
 #include "ir/module-utils.h"
+#include "ir/table-utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -388,6 +389,7 @@ struct LowerGC : public Pass {
     module = module_;
     pickNames();
     addMemory();
+    addTable();
     addStart();
     addGCRuntime();
     // After adding the GC runtime, which may allocate memory, we can create our
@@ -403,6 +405,8 @@ private:
   LoweringInfo loweringInfo;
 
   Block* startBlock;
+  Table* table;
+  ElementSegment* segment;
 
   void pickNames() {
     loweringInfo.malloc = "malloc";
@@ -417,6 +421,21 @@ private:
     assert(!module->memory.is64());
     loweringInfo.pointerSize = 4;
     loweringInfo.pointerType = module->memory.indexType;
+  }
+
+  void addTable() {
+    Builder builder(*module);
+    // Add a new table just for us.
+    // Start the table at size 0, and increase it as needed as we go.
+    table = wasm.addTable(builder.makeTable(
+      Names::getValidTableName(wasm, "lowergc-table"), Type::funcref, 0, 0));
+    // Add an element segment to append to.
+    segment = wasm.addElementSegment(
+      builder.makeElementSegment("lowergc-segment",
+                     table->name,
+                     builder.makeConst(int32_t(0))
+      )
+    );
   }
 
   void addStart() {
@@ -488,9 +507,8 @@ private:
     makeRefIs();
     makeRefTest();
     makeRefCast();
-    // TODO: makeRefFunc
 
-    addRttSupport(types);
+    addTypeSupport(types);
   }
 
   void computeLayout(HeapType type, Layout& layout) {
@@ -1056,7 +1074,7 @@ private:
                             4 + loweringInfo.pointerSize);
   }
 
-  void addRttSupport(const std::vector<HeapType>& types) {
+  void addTypeSupport(const std::vector<HeapType>& types) {
     // Analyze the code for heap type usage.
     struct UsageInfo {
       // Types used in rtt.canon instructions.
@@ -1078,7 +1096,11 @@ private:
         Analysis(UsageInfo* usageInfo) : usageInfo(usageInfo) {}
 
         void visitRefFunc(RefFunc* curr) {
-          usageInfo->fefFuncs[curr->name] = true;
+          usageInfo->refFuncs[curr->name] = true;
+          // ref.funcs use an rtt.canon internally. Mark the appropriate
+          // rtt.canon here as well, so that it will exist when the ref.func
+          // needs it later down.
+          usageInfo->rttCanons[curr->type.getHeapType()] = true;
         }
         void visitRttCanon(RttCanon* curr) {
           usageInfo->rttCanons[curr->type.getHeapType()] = true;
@@ -1105,43 +1127,6 @@ private:
       }
     }
     makeRttSub();
-  }
-
-  void makeRefFunc(HeapType type) {
-FIXME
-    // Allocate this rtt at the next free location.
-    auto addr = loweringInfo.mallocStart;
-    loweringInfo.rttCanonAddrs[type] = addr;
-    int32_t rttValue;
-    if (type.isFunction()) {
-      rttValue = RttFunc;
-    } else if (type.isData()) {
-      rttValue = RttData;
-    } else {
-      WASM_UNREACHABLE("bad rtt");
-    }
-    PointerBuilder builder(*module);
-    // Write the rtt kind.
-    startBlock->list.push_back(builder.makeSimpleStore(
-      builder.makeConst(int32_t(addr)),
-      builder.makeConst(int32_t(rttValue)),
-      Type::i32
-    ));
-    // Write the type field, which points to ourself.
-    startBlock->list.push_back(builder.makePointerStore(
-      builder.makeConst(int32_t(addr + 4)),
-      builder.makeConst(Literal::makeFromInt32(addr, loweringInfo.pointerType))
-    ));
-    // Write a null pointer for the parent.
-    startBlock->list.push_back(builder.makeStore(
-      loweringInfo.pointerSize,
-      0,
-      loweringInfo.pointerSize,
-      builder.makeConst(int32_t(addr + 4 + loweringInfo.pointerSize)),
-      builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
-      loweringInfo.pointerType
-    ));
-    loweringInfo.mallocStart = loweringInfo.mallocStart + 4 + loweringInfo.pointerSize;
   }
 
   void makeRttCanon(HeapType type) {
@@ -1228,6 +1213,40 @@ FIXME
                          {{loweringInfo.pointerType, loweringInfo.pointerType}, loweringInfo.pointerType},
                          {loweringInfo.pointerType},
                          builder.makeBlock(list)));
+  }
+
+  Index addToTable(Name name) {
+    Builder builder(*module);
+    auto index = segment->data.size();
+    segment->data.push_back(
+      builder.makeRefFunc(name, module->getFunction(name)->sig)
+    );
+    table.initial++;
+    table.max++;
+    return index;
+  }
+
+  void makeRefFunc(Name name) {
+    auto* func = module->getFunction(name);
+    // Add the function to the table.
+    auto tableIndex = addToTable(name);
+    // Allocate this ref.func at the next free location.
+    auto addr = loweringInfo.mallocStart;
+    loweringInfo.mallocStart = loweringInfo.mallocStart + 4 + loweringInfo.pointerSize;
+    loweringInfo.refFuncAddrs[name] = addr;
+    PointerBuilder builder(*module);
+    // Write the rtt.
+    auto type = HeapType(func->sig);
+    startBlock->list.push_back(builder.makePointerStore(
+      builder.makePointerConst(addr),
+      builder.makePointerConst(loweringInfo.rttCanonAddrs[type])
+    ));
+    // Write the table index
+    auto type = HeapType(func->sig);
+    startBlock->list.push_back(builder.makeSimpleStore(
+      builder.makePointerConst(addr + 4),
+      builder.makeConst(int32_t(tableIndex))
+    ));
   }
 
   // Some global initializers need to be lowered into non-globals. Specifically,
