@@ -96,6 +96,20 @@ public:
     return makeBinary(EqInt32, a, b);
   }
 
+  Expression* makePointerAdd(Expression* a, Expression* b) {
+    if (wasm.memory.is64()) {
+      return makeBinary(AddInt64, a, b);
+    }
+    return makeBinary(AddInt32, a, b);
+  }
+
+  Expression* makePointerMul(Expression* a, Expression* b) {
+    if (wasm.memory.is64()) {
+      return makeBinary(MulInt64, a, b);
+    }
+    return makeBinary(MulInt32, a, b);
+  }
+
   Expression* makePointerNullCheck(Expression* a) {
     if (wasm.memory.is64()) {
       return makeUnary(EqZInt64, a);
@@ -678,7 +692,7 @@ private:
     auto typeName = module->typeNames[type].name.str; // waka
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, module->memory);
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     for (bool withDefault : {true, false}) {
       std::vector<Type> params;
       Index initParam = -1;
@@ -702,7 +716,15 @@ private:
         alloc,
         builder.makeCall(
           loweringInfo.malloc,
-          {builder.makeConst(int32_t(loweringInfo.layouts[type].size))},
+          {
+            builder.makePointerAdd(
+              builder.makePointerConst(4 + loweringInfo.pointerSize),
+              builder.makePointerMul(
+                                 builder.makePointerConst(loweredType.getByteSize()),
+                                 builder.makeLocalGet(sizeParam, loweringInfo.pointerType)
+              )
+           )
+          },
           loweringInfo.pointerType)));
       // Store the size.
       list.push_back(builder.makeStore(
