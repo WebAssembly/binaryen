@@ -1401,11 +1401,11 @@ public:
   // The signatures of each function, including imported functions, given in the
   // import and function sections. Store HeapTypes instead of Signatures because
   // reconstructing the HeapTypes from the Signatures is expensive.
-  std::vector<HeapType> functionSignatures;
+  std::vector<HeapType> functionTypes;
 
   void readFunctionSignatures();
-  HeapType getSignatureByFunctionIndex(Index index);
-  HeapType getSignatureByTypeIndex(Index index);
+  HeapType getTypeByFunctionIndex(Index index);
+  HeapType getSigTypeByIndex(Index index);
 
   size_t nextLabel;
 
