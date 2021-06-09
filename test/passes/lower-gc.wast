@@ -127,4 +127,22 @@
    )
   )
  )
+
+ (func $ref.as (param $x anyref)
+  (drop
+   (ref.as_non_null (local.get $x))
+  )
+  (drop
+   (ref.as_func (local.get $x))
+  )
+ )
+
+ (func $ref.is (param $x anyref)
+  (drop
+   (ref.as_non_null (local.get $x))
+  )
+  (drop
+   (ref.as_data (local.get $x))
+  )
+ )
 )

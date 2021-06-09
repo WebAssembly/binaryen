@@ -3,12 +3,12 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $type$0 (func))
  (type $i32_i32_=>_none (func (param i32 i32)))
+ (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32)))
  (type $i32_f64_=>_none (func (param i32 f64)))
  (type $i32_f32_=>_none (func (param i32 f32)))
  (type $i32_=>_f64 (func (param i32) (result f64)))
  (type $i32_=>_f32 (func (param i32) (result f32)))
- (type $i32_=>_none (func (param i32)))
  (type $i32_f64_f32_i32_=>_i32 (func (param i32 f64 f32 i32) (result i32)))
  (type $i64_i32_=>_i32 (func (param i64 i32) (result i32)))
  (type $i32_i64_=>_none (func (param i32 i64)))
@@ -160,6 +160,30 @@
    (call $RttSub
     (i32.const 16)
     (i32.const 8)
+   )
+  )
+ )
+ (func $ref.as (param $x i32)
+  (drop
+   (call $RefAsNonNull
+    (local.get $x)
+   )
+  )
+  (drop
+   (call $RefAsFunc
+    (local.get $x)
+   )
+  )
+ )
+ (func $ref.is (param $x i32)
+  (drop
+   (call $RefAsNonNull
+    (local.get $x)
+   )
+  )
+  (drop
+   (call $RefAsData
+    (local.get $x)
    )
   )
  )
