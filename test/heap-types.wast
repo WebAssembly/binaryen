@@ -40,6 +40,12 @@
   (type $nested-child-struct (struct (field (mut (ref $child)))))
   (type $nested-child-array (array (mut (ref $child))))
 
+  (global $struct.new-in-global (ref $struct.A)
+    (struct.new_default_with_rtt $struct.A
+      (rtt.canon $struct.A)
+    )
+  )
+
   (func $structs (param $x (ref $struct.A)) (result (ref $struct.B))
     (local $tA (ref null $struct.A))
     (local $tB (ref null $struct.B))
