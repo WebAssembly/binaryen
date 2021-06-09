@@ -1,4 +1,6 @@
 (module
+ (type $any-any (func (param anyref) (result anyref)))
+
  (type $empty (struct))
  (type $struct-i32 (struct (mut i32)))
  (type $struct-i64 (struct (mut i64)))
@@ -11,6 +13,8 @@
 
  (type $bytes (array (mut i8)))
  (type $doubles (array (mut f64)))
+
+ (table $original-table 0 funcref)
 
  (global $global0 (rtt 0 $empty) (rtt.canon $empty))
  (global $global1 (rtt 1 $struct-i32) (rtt.sub $struct-i32
@@ -169,6 +173,13 @@
  (func $ref.test (param $x anyref)
   (drop
    (ref.test (local.get $x) (rtt.canon $empty))
+  )
+ )
+
+ (func $call_indirect (param $x (ref $empty)) (result anyref)
+  (call_indirect $original-table (type $any-any)
+   (local.get $x)
+   (i32.const 10)
   )
  )
 )
