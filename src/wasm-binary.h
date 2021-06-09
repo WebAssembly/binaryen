@@ -1398,12 +1398,14 @@ public:
                           Address defaultIfNoMax);
   void readImports();
 
-  // The signatures of each function, given in the function section
-  std::vector<Signature> functionSignatures;
+  // The signatures of each function, including imported functions, given in the
+  // import and function sections. Store HeapTypes instead of Signatures because
+  // reconstructing the HeapTypes from the Signatures is expensive.
+  std::vector<HeapType> functionSignatures;
 
   void readFunctionSignatures();
-  Signature getSignatureByFunctionIndex(Index index);
-  Signature getSignatureByTypeIndex(Index index);
+  HeapType getSignatureByFunctionIndex(Index index);
+  HeapType getSignatureByTypeIndex(Index index);
 
   size_t nextLabel;
 
