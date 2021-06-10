@@ -1987,6 +1987,7 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Function: {
         Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
+        functionTypes.push_back(getTypeByIndex(index));
         auto curr =
           builder.makeFunction(name, getSignatureByTypeIndex(index), {});
         curr->module = module;
@@ -2084,28 +2085,37 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto index = getU32LEB();
-    functionSignatures.push_back(getSignatureByTypeIndex(index));
+    functionTypes.push_back(getTypeByIndex(index));
+    // Check that the type is a signature.
+    getSignatureByTypeIndex(index);
   }
 }
 
-Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
-  Signature sig;
-  if (index < functionImports.size()) {
-    return functionImports[index]->sig;
-  }
-  Index adjustedIndex = index - functionImports.size();
-  if (adjustedIndex >= functionSignatures.size()) {
-    throwError("invalid function index");
-  }
-  return functionSignatures[adjustedIndex];
-}
-
-Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
+HeapType WasmBinaryBuilder::getTypeByIndex(Index index) {
   if (index >= types.size()) {
     throwError("invalid type index " + std::to_string(index) + " / " +
                std::to_string(types.size()));
   }
-  auto heapType = types[index];
+  return types[index];
+}
+
+HeapType WasmBinaryBuilder::getTypeByFunctionIndex(Index index) {
+  if (index >= functionTypes.size()) {
+    throwError("invalid function index");
+  }
+  return functionTypes[index];
+}
+
+Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
+  auto heapType = getTypeByIndex(index);
+  if (!heapType.isSignature()) {
+    throwError("invalid signature type " + heapType.toString());
+  }
+  return heapType.getSignature();
+}
+
+Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
+  auto heapType = getTypeByFunctionIndex(index);
   if (!heapType.isSignature()) {
     throwError("invalid signature type " + heapType.toString());
   }
@@ -2115,7 +2125,7 @@ Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
   size_t total = getU32LEB();
-  if (total != functionSignatures.size()) {
+  if (total != functionTypes.size() - functionImports.size()) {
     throwError("invalid function section size, must equal types");
   }
   for (size_t i = 0; i < total; i++) {
@@ -2129,7 +2139,7 @@ void WasmBinaryBuilder::readFunctions() {
 
     auto* func = new Function;
     func->name = Name::fromInt(i);
-    func->sig = functionSignatures[i];
+    func->sig = getSignatureByFunctionIndex(functionImports.size() + i);
     currFunction = func;
 
     if (DWARF) {
@@ -2860,7 +2870,7 @@ void WasmBinaryBuilder::readElementSegments() {
     } else {
       for (Index j = 0; j < size; j++) {
         Index index = getU32LEB();
-        auto sig = getSignatureByFunctionIndex(index);
+        auto sig = getTypeByFunctionIndex(index);
         // Use a placeholder name for now
         auto* refFunc = Builder(wasm).makeRefFunc(Name::fromInt(index), sig);
         functionRefs[index].push_back(refFunc);
@@ -6043,14 +6053,15 @@ void WasmBinaryBuilder::visitRefIs(RefIs* curr, uint8_t code) {
 void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   BYN_TRACE("zz node: RefFunc\n");
   Index index = getU32LEB();
-  if (index >= functionImports.size() + functionSignatures.size()) {
-    throwError("ref.func: invalid call index");
-  }
-  functionRefs[index].push_back(curr); // we don't know function names yet
+  // We don't know function names yet, so record this use to be updated later.
+  // Note that we do not need to check that 'index' is in bounds, as that will
+  // be verified in the next line. (Also, note that functionRefs[index] may
+  // write to an odd place in the functionRefs map if index is invalid, but that
+  // is harmless.)
+  functionRefs[index].push_back(curr);
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
-  curr->finalize(
-    Type(HeapType(getSignatureByFunctionIndex(index)), NonNullable));
+  curr->finalize(Type(getTypeByFunctionIndex(index), NonNullable));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
