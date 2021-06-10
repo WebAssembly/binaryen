@@ -101,6 +101,8 @@ struct HeapTypeInfo {
   // Otherwise, the type definition tree is still being constructed via the
   // TypeBuilder interface, so hashing and equality use pointer identity.
   bool isFinalized = true;
+  // In nominal mode, the supertype of this HeapType, if it exists.
+  HeapTypeInfo* supertype = nullptr;
   enum Kind {
     BasicKind,
     SignatureKind,
@@ -139,12 +141,11 @@ struct HeapTypeInfo {
 };
 
 // Helper for coinductively checking whether a pair of Types or HeapTypes are in
-// a subtype relation. In nominal mode, `assumptions` can be pre-filled with new
-// assumed subtype relations that are not yet globally recorded.
+// a subtype relation.
 struct SubTyper {
   // Set of HeapTypes we are assuming are equivalent as long as we cannot prove
   // otherwise.
-  std::unordered_set<std::pair<HeapType, HeapType>> assumptions;
+  std::unordered_set<std::pair<HeapType, HeapType>> seen;
   bool isSubType(Type a, Type b);
   bool isSubType(HeapType a, HeapType b);
   bool isSubType(const Tuple& a, const Tuple& b);
@@ -585,6 +586,7 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
 
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
+  supertype = other.supertype;
   switch (kind) {
     case BasicKind:
       new (&basic) auto(other.basic);
@@ -768,12 +770,6 @@ TypeID Store<Info>::doInsert(std::unique_ptr<Info>&& info) {
   constructedTypes.emplace_back(std::move(info));
   return id;
 }
-
-// For nominal mode, explicitly track all the subtype relations. Each HeapType
-// can have only one immediate supertype. The lock guards all accesses to
-// `nominalSuperTypes` since it is shared between threads.
-std::unordered_map<HeapType, HeapType> nominalSuperTypes;
-std::mutex nominalSuperTypesLock;
 
 } // anonymous namespace
 
@@ -1271,45 +1267,45 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (a == b) {
     return true;
   }
-  if (assumptions.count({a, b})) {
+  if (b.isBasic()) {
+    switch (b.getBasic()) {
+      case HeapType::func:
+        return a.isSignature();
+      case HeapType::ext:
+        return false;
+      case HeapType::any:
+        return true;
+      case HeapType::eq:
+        return a == HeapType::i31 || a.isData();
+      case HeapType::i31:
+        return false;
+      case HeapType::data:
+        return a.isData();
+    }
+  }
+  if (a.isBasic()) {
+    // Basic HeapTypes are never subtypes of compound HeapTypes.
+    return false;
+  }
+  if (typeSystem == TypeSystem::Nominal) {
+    // Subtyping must be declared in a nominal system, not derived from
+    // structure, so we will not recurse. TODO: optimize this search with some
+    // form of caching.
+    HeapTypeInfo* curr = getHeapTypeInfo(a);
+    while ((curr = curr->supertype)) {
+      if (curr == getHeapTypeInfo(b)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  // As we recurse, we will coinductively assume that a == b unless proven
+  // otherwise.
+  if (!seen.insert({a, b}).second) {
     // We weren't able to disprove that a == b since we last saw them, so the
     // relation holds coinductively.
     return true;
   }
-  // Everything is a subtype of any.
-  if (b == HeapType::any) {
-    return true;
-  }
-  // Various things are subtypes of eq.
-  if (b == HeapType::eq) {
-    return a == HeapType::i31 || a.isData();
-  }
-  // Some are also subtypes of data.
-  if (b == HeapType::data) {
-    return a.isData();
-  }
-  // Signatures are subtypes of funcref.
-  if (b == HeapType::func) {
-    return a.isSignature();
-  }
-  if (typeSystem == TypeSystem::Nominal) {
-    // Subtyping must be declared in a nominal system, not derived from
-    // structure, so we will not recurse.
-    std::lock_guard<std::mutex> lock(nominalSuperTypesLock);
-    HeapType curr = a;
-    while (true) {
-      auto it = nominalSuperTypes.find(curr);
-      if (it == nominalSuperTypes.end()) {
-        return false;
-      } else if (it->second == b) {
-        return true;
-      }
-      curr = it->second;
-    }
-  }
-  // As we recurse, we will coinductively assume that a == b unless proven
-  // otherwise.
-  assumptions.insert({a, b});
   if (a.isSignature() && b.isSignature()) {
     return isSubType(a.getSignature(), b.getSignature());
   }
@@ -1475,30 +1471,29 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
 
   if (typeSystem == TypeSystem::Nominal) {
     // Walk up the subtype tree to find the LUB.
-    std::lock_guard<std::mutex> lock(nominalSuperTypesLock);
-    std::unordered_set<HeapType> seen;
-    HeapType currA = a;
-    HeapType currB = b;
-    seen.insert(a);
-    seen.insert(b);
+    std::unordered_set<HeapTypeInfo*> seen;
+    auto* currA = infoA;
+    auto* currB = infoB;
+    seen.insert(currA);
+    seen.insert(currB);
     while (true) {
-      auto itA = nominalSuperTypes.find(currA);
-      auto itB = nominalSuperTypes.find(currB);
-      if (itA == nominalSuperTypes.end() && itB == nominalSuperTypes.end()) {
+      auto* nextA = currA->supertype;
+      auto* nextB = currB->supertype;
+      if (nextA == nullptr && nextB == nullptr) {
         // Did not find a LUB in the subtype tree.
         return getBasicLUB();
       }
-      if (itA != nominalSuperTypes.end()) {
-        if (!seen.insert(itA->second).second) {
-          return itA->second;
+      if (nextA) {
+        if (!seen.insert(nextA).second) {
+          return HeapType(uintptr_t(nextA));
         }
-        currA = itA->second;
+        currA = nextA;
       }
-      if (itB != nominalSuperTypes.end()) {
-        if (!seen.insert(itB->second).second) {
-          return itB->second;
+      if (currB) {
+        if (!seen.insert(nextB).second) {
+          return HeapType(uintptr_t(nextB));
         }
-        currB = itB->second;
+        currB = nextB;
       }
     }
   }
@@ -2181,6 +2176,7 @@ struct TypeBuilder::Impl {
       set(Signature());
     }
     void set(HeapTypeInfo&& hti) {
+      hti.supertype = info->supertype;
       *info = std::move(hti);
       info->isTemp = true;
       info->isFinalized = false;
@@ -2190,9 +2186,6 @@ struct TypeBuilder::Impl {
   };
 
   std::vector<Entry> entries;
-
-  // Used in nominal mode to record subtype relations.
-  std::unordered_map<HeapType, HeapType> superTypes;
 
   Impl(size_t n) : entries(n) {}
 };
@@ -2269,12 +2262,10 @@ Type TypeBuilder::getTempRttType(Rtt rtt) {
 }
 
 void TypeBuilder::setSubType(size_t i, size_t j) {
-  auto inserted =
-    impl->superTypes.insert({impl->entries[i].get(), impl->entries[j].get()});
-  if (!inserted.second) {
-    Fatal() << "HeapType " << i << " is already a subtype of HeapType "
-            << inserted.first->second << "\n";
-  }
+  assert(i < size() && j < size() && "index out of bounds");
+  HeapTypeInfo* sub = impl->entries[i].info.get();
+  HeapTypeInfo* super = impl->entries[j].info.get();
+  sub->supertype = super;
 }
 
 namespace {
@@ -2963,59 +2954,54 @@ std::vector<HeapType> buildEquirecursive(TypeBuilder& builder) {
   return heapTypes;
 }
 
-void validateSubTyping(
-  const std::unordered_map<HeapType, HeapType> superTypes) {
-  auto fail = [&](const std::pair<HeapType, HeapType>& pair) {
-    Fatal() << pair.first << " cannot be a subtype of " << pair.second;
-  };
-
-  SubTyper typer;
-  // Initialize the typer with the subtyping assumptions and ensure there are no
-  // cycles in the subtype graph.
-  for (auto pair : superTypes) {
-    InsertOrderedSet<HeapType> subs;
-    subs.insert(pair.first);
-    HeapType super = pair.second;
-    while (true) {
-      for (HeapType sub : subs) {
-        typer.assumptions.insert({sub, super});
-      }
-      subs.insert(super);
-      auto it = superTypes.find(super);
-      if (it == superTypes.end()) {
-        break;
-      }
-      super = it->second;
-      if (subs.count(super)) {
-        Fatal() << super << " cannot be a subtype of itself";
+void validateSubTyping(const std::vector<HeapType>& heapTypes) {
+  // Ensure there are no cycles in the subtype graph.
+  std::unordered_set<HeapTypeInfo*> seen;
+  for (HeapType type : heapTypes) {
+    std::unordered_set<HeapTypeInfo*> path;
+    for (auto* curr = getHeapTypeInfo(type);
+         seen.insert(curr).second && curr->supertype != nullptr;
+         curr = curr->supertype) {
+      if (!path.insert(curr).second) {
+        Fatal() << HeapType(uintptr_t(curr))
+                << " cannot be a subtype of itself";
       }
     }
   }
 
-  // Check that all the subtype relations are valid.
-  for (auto pair : superTypes) {
-    HeapTypeInfo* sub = getHeapTypeInfo(pair.first);
-    HeapTypeInfo* super = getHeapTypeInfo(pair.second);
+  // Ensure that all the subtype relations are valid.
+  for (HeapType type : heapTypes) {
+    auto* sub = getHeapTypeInfo(type);
+    auto* super = sub->supertype;
+    if (super == nullptr) {
+      continue;
+    }
+
+    auto fail = [&]() {
+      Fatal() << type << " cannot be a subtype of "
+              << HeapType(uintptr_t(super));
+    };
 
     if (sub->kind != super->kind) {
-      fail(pair);
+      fail();
     }
+    SubTyper typer;
     switch (sub->kind) {
       case HeapTypeInfo::BasicKind:
         WASM_UNREACHABLE("unexpected kind");
       case HeapTypeInfo::SignatureKind:
         if (!typer.isSubType(sub->signature, super->signature)) {
-          fail(pair);
+          fail();
         }
         break;
       case HeapTypeInfo::StructKind:
         if (!typer.isSubType(sub->struct_, super->struct_)) {
-          fail(pair);
+          fail();
         }
         break;
       case HeapTypeInfo::ArrayKind:
         if (!typer.isSubType(sub->array, super->array)) {
-          fail(pair);
+          fail();
         }
         break;
     }
@@ -3040,12 +3026,7 @@ std::vector<HeapType> buildNominal(TypeBuilder& builder) {
   auto afterMove = std::chrono::steady_clock::now();
 #endif
 
-  // Validate subtyping and make the subtyping information global.
-  validateSubTyping(builder.impl->superTypes);
-  std::lock_guard<std::mutex> lock(nominalSuperTypesLock);
-  for (auto pair : builder.impl->superTypes) {
-    nominalSuperTypes.insert(pair);
-  }
+  validateSubTyping(heapTypes);
 
 #if TIME_CANONICALIZATION
   auto end = std::chrono::steady_clock::now();
