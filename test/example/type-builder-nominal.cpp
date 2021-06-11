@@ -252,6 +252,148 @@ void test_recursive() {
   }
 }
 
+void test_subtypes() {
+  std::cout << ";; Test subtyping\n";
+
+  auto LUB = [&](HeapType a, HeapType b) {
+    Type refA = Type(a, Nullable);
+    Type refB = Type(b, Nullable);
+    Type lubAB = Type::getLeastUpperBound(refA, refB);
+    Type lubBA = Type::getLeastUpperBound(refB, refA);
+    assert(lubAB == lubBA);
+    assert(lubAB != Type::none);
+    HeapType lub = lubAB.getHeapType();
+    assert(Type::hasLeastUpperBound(refA, refB));
+    assert(Type::hasLeastUpperBound(refB, refA));
+    assert(Type::isSubType(refA, lubAB));
+    assert(Type::isSubType(refB, lubAB));
+    assert(HeapType::isSubType(a, lub));
+    assert(HeapType::isSubType(b, lub));
+    assert(lub == a || !HeapType::isSubType(lub, a));
+    assert(lub == b || !HeapType::isSubType(lub, b));
+    return lub;
+  };
+
+  {
+    // Basic Types
+    for (auto other : {HeapType::func,
+                       HeapType::ext,
+                       HeapType::any,
+                       HeapType::eq,
+                       HeapType::i31,
+                       HeapType::data}) {
+      assert(LUB(HeapType::any, other) == HeapType::any);
+    }
+    assert(LUB(HeapType::eq, HeapType::func) == HeapType::any);
+    assert(LUB(HeapType::i31, HeapType::data) == HeapType::eq);
+  }
+
+  {
+    // Identity
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(3);
+      builder[0] = Signature(Type::none, Type::none);
+      builder[1] = Struct{};
+      builder[2] = Array(Field(Type::i32, Mutable));
+      built = builder.build();
+    }
+    assert(LUB(built[0], built[0]) == built[0]);
+    assert(LUB(built[1], built[1]) == built[1]);
+    assert(LUB(built[2], built[2]) == built[2]);
+  }
+
+  {
+    // No subtype declarations mean no subtypes
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(5);
+      Type structRef0 = builder.getTempRefType(builder[0], Nullable);
+      Type structRef1 = builder.getTempRefType(builder[1], Nullable);
+      builder[0] = Struct{};
+      builder[1] = Struct{};
+      builder[2] = Signature(Type::none, Type::anyref);
+      builder[3] = Signature(Type::none, structRef0);
+      builder[4] = Signature(Type::none, structRef1);
+      built = builder.build();
+    }
+    assert(LUB(built[0], built[1]) == HeapType::data);
+    assert(LUB(built[2], built[3]) == HeapType::func);
+    assert(LUB(built[2], built[4]) == HeapType::func);
+  }
+
+  {
+    // Subtyping of identical types
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(6);
+      builder[0].subTypeOf(builder[1]);
+      builder[2].subTypeOf(builder[3]);
+      builder[4].subTypeOf(builder[5]);
+      builder[0] =
+        Struct({Field(Type::i32, Mutable), Field(Type::anyref, Mutable)});
+      builder[1] =
+        Struct({Field(Type::i32, Mutable), Field(Type::anyref, Mutable)});
+      builder[2] = Signature(Type::i32, Type::anyref);
+      builder[3] = Signature(Type::i32, Type::anyref);
+      builder[4] = Array(Field(Type::i32, Mutable));
+      builder[5] = Array(Field(Type::i32, Mutable));
+      built = builder.build();
+    }
+    assert(LUB(built[0], built[1]) == built[1]);
+    assert(LUB(built[2], built[3]) == built[3]);
+    assert(LUB(built[4], built[5]) == built[5]);
+  }
+
+  {
+    // Width subtyping
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(2);
+      builder[0] = Struct({Field(Type::i32, Immutable)});
+      builder[1] =
+        Struct({Field(Type::i32, Immutable), Field(Type::i32, Immutable)});
+      builder[1].subTypeOf(builder[0]);
+      built = builder.build();
+    }
+    assert(LUB(built[1], built[0]) == built[0]);
+  }
+
+  {
+    // Depth subtyping
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(2);
+      builder[0] = Struct({Field(Type::anyref, Immutable)});
+      builder[1] = Struct({Field(Type::funcref, Immutable)});
+      builder[1].subTypeOf(builder[0]);
+      built = builder.build();
+    }
+    assert(LUB(built[1], built[0]) == built[0]);
+  }
+
+  {
+    // Mutually recursive subtyping
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(4);
+      Type a = builder.getTempRefType(builder[0], Nullable);
+      Type b = builder.getTempRefType(builder[1], Nullable);
+      Type c = builder.getTempRefType(builder[2], Nullable);
+      Type d = builder.getTempRefType(builder[3], Nullable);
+      builder[1].subTypeOf(builder[0]);
+      builder[3].subTypeOf(builder[2]);
+      builder[0] = Struct({Field(c, Immutable)});
+      builder[1] = Struct({Field(d, Immutable)});
+      builder[2] = Struct({Field(a, Immutable)});
+      builder[3] = Struct({Field(b, Immutable)});
+      built = builder.build();
+    }
+    assert(LUB(built[0], built[1]) == built[0]);
+    assert(LUB(built[2], built[3]) == built[2]);
+  }
+}
+
 int main() {
   wasm::setTypeSystem(TypeSystem::Nominal);
 
@@ -262,5 +404,6 @@ int main() {
     test_canonicalization();
     test_signatures(i == 1);
     test_recursive();
+    test_subtypes();
   }
 }

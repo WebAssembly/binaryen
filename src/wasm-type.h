@@ -550,9 +550,16 @@ struct TypeBuilder {
   Type getTempRefType(HeapType heapType, Nullability nullable);
   Type getTempRttType(Rtt rtt);
 
+  // In nominal mode, declare the HeapType being built at index `i` to be an
+  // immediate subtype of the HeapType being built at index `j`. Does nothing in
+  // equirecursive mode.
+  void setSubType(size_t i, size_t j);
+
   // Returns all of the newly constructed heap types. May only be called once
   // all of the heap types have been initialized with `setHeapType`. In nominal
-  // mode, all of the constructed HeapTypes will be fresh and distinct.
+  // mode, all of the constructed HeapTypes will be fresh and distinct. In
+  // nominal mode, will also produce a fatal error if the declared subtype
+  // relationships are not valid.
   std::vector<HeapType> build();
 
   // Utility for ergonomically using operator[] instead of explicit setHeapType
@@ -579,6 +586,11 @@ struct TypeBuilder {
     }
     Entry& operator=(Array array) {
       builder.setHeapType(index, array);
+      return *this;
+    }
+    Entry& subTypeOf(Entry other) {
+      assert(&builder == &other.builder);
+      builder.setSubType(index, other.index);
       return *this;
     }
   };

@@ -101,6 +101,8 @@ struct HeapTypeInfo {
   // Otherwise, the type definition tree is still being constructed via the
   // TypeBuilder interface, so hashing and equality use pointer identity.
   bool isFinalized = true;
+  // In nominal mode, the supertype of this HeapType, if it exists.
+  HeapTypeInfo* supertype = nullptr;
   enum Kind {
     BasicKind,
     SignatureKind,
@@ -172,6 +174,8 @@ private:
   // temporary types, so they should never be used directly.
   bool lub(Type a, Type b, Type& out);
   HeapType lub(HeapType a, HeapType b);
+  HeapType::BasicHeapType lub(HeapType::BasicHeapType a,
+                              HeapType::BasicHeapType b);
   bool lub(const Tuple& a, const Tuple& b, Tuple& out);
   bool lub(const Field& a, const Field& b, Field& out);
   bool lub(const Signature& a, const Signature& b, Signature& out);
@@ -582,6 +586,7 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
 
 HeapTypeInfo::HeapTypeInfo(const HeapTypeInfo& other) {
   kind = other.kind;
+  supertype = other.supertype;
   switch (kind) {
     case BasicKind:
       new (&basic) auto(other.basic);
@@ -1262,30 +1267,45 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (a == b) {
     return true;
   }
-  if (seen.count({a, b})) {
+  if (b.isBasic()) {
+    switch (b.getBasic()) {
+      case HeapType::func:
+        return a.isSignature();
+      case HeapType::ext:
+        return false;
+      case HeapType::any:
+        return true;
+      case HeapType::eq:
+        return a == HeapType::i31 || a.isData();
+      case HeapType::i31:
+        return false;
+      case HeapType::data:
+        return a.isData();
+    }
+  }
+  if (a.isBasic()) {
+    // Basic HeapTypes are never subtypes of compound HeapTypes.
+    return false;
+  }
+  if (typeSystem == TypeSystem::Nominal) {
+    // Subtyping must be declared in a nominal system, not derived from
+    // structure, so we will not recurse. TODO: optimize this search with some
+    // form of caching.
+    HeapTypeInfo* curr = getHeapTypeInfo(a);
+    while ((curr = curr->supertype)) {
+      if (curr == getHeapTypeInfo(b)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  // As we recurse, we will coinductively assume that a == b unless proven
+  // otherwise.
+  if (!seen.insert({a, b}).second) {
     // We weren't able to disprove that a == b since we last saw them, so the
     // relation holds coinductively.
     return true;
   }
-  // Everything is a subtype of any.
-  if (b == HeapType::any) {
-    return true;
-  }
-  // Various things are subtypes of eq.
-  if (b == HeapType::eq) {
-    return a == HeapType::i31 || a.isData();
-  }
-  // Some are also subtypes of data.
-  if (b == HeapType::data) {
-    return a.isData();
-  }
-  // Signatures are subtypes of funcref.
-  if (b == HeapType::func) {
-    return a.isSignature();
-  }
-  // As we recurse, we will coinductively assume that a == b unless proven
-  // otherwise.
-  seen.insert({a, b});
   if (a.isSignature() && b.isSignature()) {
     return isSubType(a.getSignature(), b.getSignature());
   }
@@ -1416,44 +1436,71 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
   if (a == b) {
     return a;
   }
-  // Canonicalize to have the basic HeapType on the left.
-  if (b.isBasic()) {
-    std::swap(a, b);
+
+  auto getBasicApproximation = [](HeapType x) {
+    if (x.isBasic()) {
+      return x.getBasic();
+    }
+    auto* info = getHeapTypeInfo(x);
+    switch (info->kind) {
+      case HeapTypeInfo::BasicKind:
+        break;
+      case HeapTypeInfo::SignatureKind:
+        return HeapType::func;
+      case HeapTypeInfo::StructKind:
+      case HeapTypeInfo::ArrayKind:
+        return HeapType::data;
+    }
+    WASM_UNREACHABLE("unexpected kind");
+  };
+
+  auto getBasicLUB = [&]() {
+    return lub(getBasicApproximation(a), getBasicApproximation(b));
+  };
+
+  if (a.isBasic() || b.isBasic()) {
+    return getBasicLUB();
   }
-  if (a.isBasic()) {
-    switch (a.getBasic()) {
-      case HeapType::func:
-        if (b.isFunction()) {
-          return HeapType::func;
-        } else {
-          return HeapType::any;
+
+  HeapTypeInfo* infoA = getHeapTypeInfo(a);
+  HeapTypeInfo* infoB = getHeapTypeInfo(b);
+
+  if (infoA->kind != infoB->kind) {
+    return getBasicLUB();
+  }
+
+  if (typeSystem == TypeSystem::Nominal) {
+    // Walk up the subtype tree to find the LUB. Ascend the tree from both `a`
+    // and `b` in lockstep. The first type we see for a second time must be the
+    // LUB because there are no cycles and the only way to encounter a type
+    // twice is for it to be on the path above both `a` and `b`.
+    std::unordered_set<HeapTypeInfo*> seen;
+    auto* currA = infoA;
+    auto* currB = infoB;
+    seen.insert(currA);
+    seen.insert(currB);
+    while (true) {
+      auto* nextA = currA->supertype;
+      auto* nextB = currB->supertype;
+      if (nextA == nullptr && nextB == nullptr) {
+        // Did not find a LUB in the subtype tree.
+        return getBasicLUB();
+      }
+      if (nextA) {
+        if (!seen.insert(nextA).second) {
+          return HeapType(uintptr_t(nextA));
         }
-      case HeapType::ext:
-        return HeapType::any;
-      case HeapType::any:
-        return HeapType::any;
-      case HeapType::eq:
-        if (b == HeapType::i31 || b.isData()) {
-          return HeapType::eq;
-        } else {
-          return HeapType::any;
+        currA = nextA;
+      }
+      if (currB) {
+        if (!seen.insert(nextB).second) {
+          return HeapType(uintptr_t(nextB));
         }
-      case HeapType::i31:
-        if (b.isData()) {
-          return HeapType::eq;
-        } else {
-          return HeapType::any;
-        }
-      case HeapType::data:
-        if (b.isData()) {
-          return HeapType::data;
-        } else if (b == HeapType::i31) {
-          return HeapType::eq;
-        } else {
-          return HeapType::any;
-        }
+        currB = nextB;
+      }
     }
   }
+
   // Allocate a new slot to construct the LUB of this pair if we have not
   // already seen it before. Canonicalize the pair to have the element with the
   // smaller ID first since order does not matter.
@@ -1467,30 +1514,60 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
   }
 
   builder.grow(1);
-  if (a.isSignature() && b.isSignature()) {
-    Signature sig;
-    if (lub(a.getSignature(), b.getSignature(), sig)) {
-      return builder[index] = sig;
-    } else {
-      return builder[index] = HeapType::func;
+  switch (infoA->kind) {
+    case HeapTypeInfo::BasicKind:
+      WASM_UNREACHABLE("unexpected kind");
+    case HeapTypeInfo::SignatureKind: {
+      Signature sig;
+      if (lub(infoA->signature, infoB->signature, sig)) {
+        return builder[index] = sig;
+      } else {
+        return builder[index] = HeapType::func;
+      }
     }
-  } else if (a.isStruct() && b.isStruct()) {
-    return builder[index] = lub(a.getStruct(), b.getStruct());
-  } else if (a.isArray() && b.isArray()) {
-    Array array;
-    if (lub(a.getArray(), b.getArray(), array)) {
-      return builder[index] = array;
-    } else {
-      return builder[index] = HeapType::data;
+    case HeapTypeInfo::StructKind: {
+      return builder[index] = lub(infoA->struct_, infoB->struct_);
     }
-  } else {
-    // The types are not of the same kind, so the LUB is either `data` or `any`.
-    if (a.isSignature() || b.isSignature()) {
-      return builder[index] = HeapType::any;
-    } else {
-      return builder[index] = HeapType::data;
+    case HeapTypeInfo::ArrayKind: {
+      Array array;
+      if (lub(infoA->array, infoB->array, array)) {
+        return builder[index] = array;
+      } else {
+        return builder[index] = HeapType::data;
+      }
     }
   }
+  WASM_UNREACHABLE("unexpected kind");
+}
+
+HeapType::BasicHeapType TypeBounder::lub(HeapType::BasicHeapType a,
+                                         HeapType::BasicHeapType b) {
+  if (a == b) {
+    return a;
+  }
+  // Canonicalize to have `x` be the lesser type.
+  if (unsigned(a) > unsigned(b)) {
+    std::swap(a, b);
+  }
+  switch (a) {
+    case HeapType::func:
+    case HeapType::ext:
+    case HeapType::any:
+      return HeapType::any;
+    case HeapType::eq:
+      if (b == HeapType::i31 || b == HeapType::data) {
+        return HeapType::eq;
+      }
+      return HeapType::any;
+    case HeapType::i31:
+      if (b == HeapType::data) {
+        return HeapType::eq;
+      }
+      return HeapType::any;
+    case HeapType::data:
+      return HeapType::any;
+  }
+  WASM_UNREACHABLE("unexpected basic type");
 }
 
 bool TypeBounder::lub(const Tuple& a, const Tuple& b, Tuple& out) {
@@ -2102,6 +2179,7 @@ struct TypeBuilder::Impl {
       set(Signature());
     }
     void set(HeapTypeInfo&& hti) {
+      hti.supertype = info->supertype;
       *info = std::move(hti);
       info->isTemp = true;
       info->isFinalized = false;
@@ -2184,6 +2262,13 @@ Type TypeBuilder::getTempRttType(Rtt rtt) {
     return globalTypeStore.insert(rtt);
   }
   return markTemp(impl->typeStore.insert(rtt));
+}
+
+void TypeBuilder::setSubType(size_t i, size_t j) {
+  assert(i < size() && j < size() && "index out of bounds");
+  HeapTypeInfo* sub = impl->entries[i].info.get();
+  HeapTypeInfo* super = impl->entries[j].info.get();
+  sub->supertype = super;
 }
 
 namespace {
@@ -2872,6 +2957,64 @@ std::vector<HeapType> buildEquirecursive(TypeBuilder& builder) {
   return heapTypes;
 }
 
+void validateNominalSubTyping(const std::vector<HeapType>& heapTypes) {
+  assert(typeSystem == TypeSystem::Nominal);
+
+  // Ensure there are no cycles in the subtype graph. This is the classic DFA
+  // algorithm for detecting cycles, but in the form of a simple loop because
+  // each node (type) has at most one child (supertype).
+  std::unordered_set<HeapTypeInfo*> seen;
+  for (auto type : heapTypes) {
+    std::unordered_set<HeapTypeInfo*> path;
+    for (auto* curr = getHeapTypeInfo(type);
+         seen.insert(curr).second && curr->supertype != nullptr;
+         curr = curr->supertype) {
+      if (!path.insert(curr).second) {
+        Fatal() << HeapType(uintptr_t(curr))
+                << " cannot be a subtype of itself";
+      }
+    }
+  }
+
+  // Ensure that all the subtype relations are valid.
+  for (HeapType type : heapTypes) {
+    auto* sub = getHeapTypeInfo(type);
+    auto* super = sub->supertype;
+    if (super == nullptr) {
+      continue;
+    }
+
+    auto fail = [&]() {
+      Fatal() << type << " cannot be a subtype of "
+              << HeapType(uintptr_t(super));
+    };
+
+    if (sub->kind != super->kind) {
+      fail();
+    }
+    SubTyper typer;
+    switch (sub->kind) {
+      case HeapTypeInfo::BasicKind:
+        WASM_UNREACHABLE("unexpected kind");
+      case HeapTypeInfo::SignatureKind:
+        if (!typer.isSubType(sub->signature, super->signature)) {
+          fail();
+        }
+        break;
+      case HeapTypeInfo::StructKind:
+        if (!typer.isSubType(sub->struct_, super->struct_)) {
+          fail();
+        }
+        break;
+      case HeapTypeInfo::ArrayKind:
+        if (!typer.isSubType(sub->array, super->array)) {
+          fail();
+        }
+        break;
+    }
+  }
+}
+
 std::vector<HeapType> buildNominal(TypeBuilder& builder) {
 #if TIME_CANONICALIZATION
   auto start = std::chrono::steady_clock::now();
@@ -2887,10 +3030,21 @@ std::vector<HeapType> buildNominal(TypeBuilder& builder) {
   }
 
 #if TIME_CANONICALIZATION
+  auto afterMove = std::chrono::steady_clock::now();
+#endif
+
+  validateNominalSubTyping(heapTypes);
+
+#if TIME_CANONICALIZATION
   auto end = std::chrono::steady_clock::now();
-  std::cerr << "Building took "
-            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+  std::cerr << "Moving types took "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(afterMove -
                                                                      start)
+                 .count()
+            << " ms\n";
+  std::cerr << "Validating subtyping took "
+            << std::chrono::duration_cast<std::chrono::milliseconds>(end -
+                                                                     afterMove)
                  .count()
             << " ms\n";
 #endif
