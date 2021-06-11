@@ -2470,9 +2470,6 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     throw ParseException(
       "there should be at most one catch_all block at the end", s.line, s.col);
   }
-  if (ret->catchBodies.empty() && !ret->isDelegate()) {
-    throw ParseException("no catch bodies or delegate", s.line, s.col);
-  }
 
   ret->finalize(type);
 

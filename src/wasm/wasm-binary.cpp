@@ -6080,10 +6080,12 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   // blocks instead.
   curr->type = getType();
   curr->body = getBlockOrSingleton(curr->type);
-  if (lastSeparator != BinaryConsts::Catch &&
-      lastSeparator != BinaryConsts::CatchAll &&
-      lastSeparator != BinaryConsts::Delegate) {
-    throwError("No catch instruction within a try scope");
+
+  // try without catch or delegate
+  if (lastSeparator == BinaryConsts::End) {
+    curr->finalize();
+    out = curr;
+    return;
   }
 
   Builder builder(wasm);
@@ -6200,7 +6202,7 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   //     (catch $e
   //       (block   ;; Now this can be deleted when writing binary
   //         ...
-  //         (br $label0)
+  //         (br $label)
   //       )
   //     )
   //   )
