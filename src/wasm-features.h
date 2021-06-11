@@ -39,7 +39,8 @@ struct FeatureSet {
     GC = 1 << 10,
     Memory64 = 1 << 11,
     TypedFunctionReferences = 1 << 12,
-    All = (1 << 13) - 1
+    GCNNLocals = 1 << 13,
+    All = (1 << 14) - 1
   };
 
   static std::string toString(Feature f) {
@@ -70,6 +71,8 @@ struct FeatureSet {
         return "memory64";
       case TypedFunctionReferences:
         return "typed-function-references";
+      case GCNNLocals:
+        return "gc-nn-locals";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -113,6 +116,9 @@ struct FeatureSet {
   bool hasTypedFunctionReferences() const {
     return (features & TypedFunctionReferences) != 0;
   }
+  bool hasGCNNLocals() const {
+    return (features & GCNNLocals) != 0;
+  }
   bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
@@ -133,6 +139,9 @@ struct FeatureSet {
   void setMemory64(bool v = true) { set(Memory64, v); }
   void setTypedFunctionReferences(bool v = true) {
     set(TypedFunctionReferences, v);
+  }
+  void setGCNNLocals(bool v = true) {
+    set(GCNNLocals, v);
   }
   void setAll(bool v = true) { features = v ? All : MVP; }
 
