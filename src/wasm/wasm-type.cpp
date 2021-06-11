@@ -1470,7 +1470,10 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
   }
 
   if (typeSystem == TypeSystem::Nominal) {
-    // Walk up the subtype tree to find the LUB.
+    // Walk up the subtype tree to find the LUB. Ascend the tree from both `a`
+    // and `b` in lockstep. The first type we see for a second time must be the
+    // LUB because there are no cycles and the only way to encounter a type
+    // twice is for it to be on the path above both `a` and `b`.
     std::unordered_set<HeapTypeInfo*> seen;
     auto* currA = infoA;
     auto* currB = infoB;
@@ -2954,10 +2957,14 @@ std::vector<HeapType> buildEquirecursive(TypeBuilder& builder) {
   return heapTypes;
 }
 
-void validateSubTyping(const std::vector<HeapType>& heapTypes) {
-  // Ensure there are no cycles in the subtype graph.
+void validateNominalSubTyping(const std::vector<HeapType>& heapTypes) {
+  assert(typeSystem == TypeSystem::Nominal);
+
+  // Ensure there are no cycles in the subtype graph. This is the classic DFA
+  // algorithm for detecting cycles, but in the form of a simple loop because
+  // each node (type) has at most one child (supertype).
   std::unordered_set<HeapTypeInfo*> seen;
-  for (HeapType type : heapTypes) {
+  for (auto type : heapTypes) {
     std::unordered_set<HeapTypeInfo*> path;
     for (auto* curr = getHeapTypeInfo(type);
          seen.insert(curr).second && curr->supertype != nullptr;
@@ -3026,7 +3033,7 @@ std::vector<HeapType> buildNominal(TypeBuilder& builder) {
   auto afterMove = std::chrono::steady_clock::now();
 #endif
 
-  validateSubTyping(heapTypes);
+  validateNominalSubTyping(heapTypes);
 
 #if TIME_CANONICALIZATION
   auto end = std::chrono::steady_clock::now();
