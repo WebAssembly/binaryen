@@ -148,7 +148,7 @@ struct FeatureSet {
     features = v ? All : MVP;
     // By default disable GCNNLocals, forcing the user to opt in to that feature
     // explicitly. That is, wasm-opt -all will enable GC but *not* enable
-    // non-nullable locals. To get them, do wasm-opt -all --gc-nn-locals.
+    // non-nullable locals. To get them, do wasm-opt -all --enable-gc-nn-locals
     // FIXME: When the wasm spec stabilizies, this feature will go away, and
     //        this awkwardness with it.
     setGCNNLocals(false);
