@@ -68,8 +68,13 @@ struct Config {
   bool minimizeNewExportNames = false;
 };
 
+struct Results {
+  std::unique_ptr<Module> secondary;
+  std::map<size_t, Name> placeholderMap;
+};
+
 // Returns the new secondary module and modifies the `primary` module in place.
-std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config);
+Results splitFunctions(Module& primary, const Config& config);
 
 } // namespace ModuleSplitting
 

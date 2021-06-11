@@ -34,6 +34,8 @@ CHECK-NEXT:   --secondary-output,-o2               [split] Output file for the s
 CHECK-NEXT:                                        module.
 CHECK-NEXT:   --symbolmap                          [split] Write a symbol map file for each
 CHECK-NEXT:                                        of the output modules.
+CHECK-NEXT:   --placeholdermap                     [split] Write a file mapping placeholder
+CHECK-NEXT:                                        indices to the function names.
 CHECK-NEXT:   --import-namespace                   [split] The namespace from which to
 CHECK-NEXT:                                        import objects from the primary module
 CHECK-NEXT:                                        into the secondary module.
