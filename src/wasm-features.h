@@ -39,6 +39,7 @@ struct FeatureSet {
     GC = 1 << 10,
     Memory64 = 1 << 11,
     TypedFunctionReferences = 1 << 12,
+    // TODO: Remove this feature when the wasm spec stabilizes.
     GCNNLocals = 1 << 13,
     All = (1 << 14) - 1
   };
@@ -143,7 +144,15 @@ struct FeatureSet {
   void setGCNNLocals(bool v = true) {
     set(GCNNLocals, v);
   }
-  void setAll(bool v = true) { features = v ? All : MVP; }
+  void setAll(bool v = true) {
+    features = v ? All : MVP;
+    // By default disable GCNNLocals, forcing the user to opt in to that feature
+    // explicitly. That is, wasm-opt -all will enable GC but *not* enable
+    // non-nullable locals. To get them, do wasm-opt -all --gc-nn-locals.
+    // FIXME: When the wasm spec stabilizies, this feature will go away, and
+    //        this awkwardness with it.
+    setGCNNLocals(false);
+  }
 
   void enable(const FeatureSet& other) { features |= other.features; }
   void disable(const FeatureSet& other) {
