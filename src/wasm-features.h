@@ -117,9 +117,7 @@ struct FeatureSet {
   bool hasTypedFunctionReferences() const {
     return (features & TypedFunctionReferences) != 0;
   }
-  bool hasGCNNLocals() const {
-    return (features & GCNNLocals) != 0;
-  }
+  bool hasGCNNLocals() const { return (features & GCNNLocals) != 0; }
   bool hasAll() const { return (features & All) != 0; }
 
   void makeMVP() { features = MVP; }
@@ -141,9 +139,7 @@ struct FeatureSet {
   void setTypedFunctionReferences(bool v = true) {
     set(TypedFunctionReferences, v);
   }
-  void setGCNNLocals(bool v = true) {
-    set(GCNNLocals, v);
-  }
+  void setGCNNLocals(bool v = true) { set(GCNNLocals, v); }
   void setAll(bool v = true) {
     features = v ? All : MVP;
     // By default disable GCNNLocals, forcing the user to opt in to that feature
