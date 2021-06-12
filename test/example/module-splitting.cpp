@@ -50,7 +50,7 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   ModuleSplitting::Config config;
   config.primaryFuncs = keptFuncs;
   config.newExportPrefix = "%";
-  auto secondary = splitFunctions(*primary, config);
+  auto secondary = splitFunctions(*primary, config).secondary;
 
   std::cout << "After:\n";
   std::cout << *primary.get();
@@ -476,7 +476,7 @@ void test_minimized_exports() {
   config.newExportPrefix = "%";
   config.minimizeNewExportNames = true;
 
-  auto secondary = splitFunctions(primary, config);
+  auto secondary = splitFunctions(primary, config).secondary;
   std::cout << "Minimized names primary:\n";
   std::cout << primary << "\n";
   std::cout << "Minimized names secondary:\n";

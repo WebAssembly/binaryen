@@ -61,6 +61,7 @@ struct WasmSplitOptions : ToolOptions {
   bool verbose = false;
   bool emitBinary = true;
   bool symbolMap = false;
+  bool placeholderMap = false;
 
   // TODO: Remove this. See the comment in wasm-binary.h.
   bool emitModuleNames = false;
@@ -180,6 +181,13 @@ WasmSplitOptions::WasmSplitOptions()
          {Mode::Split},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { symbolMap = true; })
+    .add(
+      "--placeholdermap",
+      "",
+      "Write a file mapping placeholder indices to the function names.",
+      {Mode::Split},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { placeholderMap = true; })
     .add("--import-namespace",
          "",
          "The namespace from which to import objects from the primary "
@@ -690,6 +698,15 @@ void writeSymbolMap(Module& wasm, std::string filename) {
   runner.run();
 }
 
+void writePlaceholderMap(const std::map<size_t, Name> placeholderMap,
+                         std::string filename) {
+  Output output(filename, Flags::Text);
+  auto& o = output.getStream();
+  for (auto pair : placeholderMap) {
+    o << pair.first << ':' << pair.second << '\n';
+  }
+}
+
 void splitModule(const WasmSplitOptions& options) {
   Module wasm;
   parseInput(wasm, options);
@@ -795,8 +812,8 @@ void splitModule(const WasmSplitOptions& options) {
     config.newExportPrefix = options.exportPrefix;
   }
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
-  std::unique_ptr<Module> secondary =
-    ModuleSplitting::splitFunctions(wasm, config);
+  auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
+  auto& secondary = splitResults.secondary;
 
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize);
@@ -804,6 +821,11 @@ void splitModule(const WasmSplitOptions& options) {
   if (options.symbolMap) {
     writeSymbolMap(wasm, options.primaryOutput + ".symbols");
     writeSymbolMap(*secondary, options.secondaryOutput + ".symbols");
+  }
+
+  if (options.placeholderMap) {
+    writePlaceholderMap(splitResults.placeholderMap,
+                        options.primaryOutput + ".placeholders");
   }
 
   // Set the names of the split modules. This can help differentiate them in

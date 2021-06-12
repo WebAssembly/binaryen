@@ -272,6 +272,9 @@ struct ModuleSplitter {
   // names.
   std::map<Name, Name> exportedPrimaryFuncs;
 
+  // Map placeholder indices to the names of the functions they replace.
+  std::map<size_t, Name> placeholderMap;
+
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::pair<std::set<Name>, std::set<Name>>
@@ -483,6 +486,7 @@ void ModuleSplitter::setupTablePatching() {
   // `importNamespace`.`index`.
   forEachElement(primary, [&](Name, Name, Index index, Name& elem) {
     if (secondaryFuncs.count(elem)) {
+      placeholderMap[index] = elem;
       auto* secondaryFunc = secondary.getFunction(elem);
       replacedElems[index] = secondaryFunc;
       auto placeholder = std::make_unique<Function>();
@@ -655,8 +659,9 @@ void ModuleSplitter::shareImportableItems() {
 
 } // anonymous namespace
 
-std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
-  return std::move(ModuleSplitter(primary, config).secondaryPtr);
+Results splitFunctions(Module& primary, const Config& config) {
+  ModuleSplitter split(primary, config);
+  return {std::move(split.secondaryPtr), std::move(split.placeholderMap)};
 }
 
 } // namespace ModuleSplitting
