@@ -813,7 +813,7 @@ void splitModule(const WasmSplitOptions& options) {
   }
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
-  std::unique_ptr<Module> secondary = std::move(splitResults.secondary);
+  auto& secondary = splitResults.secondary;
 
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize);
