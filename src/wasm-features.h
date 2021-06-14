@@ -141,13 +141,22 @@ struct FeatureSet {
   }
   void setGCNNLocals(bool v = true) { set(GCNNLocals, v); }
   void setAll(bool v = true) {
-    features = v ? All : MVP;
-    // By default disable GCNNLocals, forcing the user to opt in to that feature
+    // Do not set GCNNLocals, which forces the user to opt in to that feature
     // explicitly. That is, wasm-opt -all will enable GC but *not* enable
     // non-nullable locals. To get them, do wasm-opt -all --enable-gc-nn-locals
-    // FIXME: When the wasm spec stabilizes, this feature will go away, and
-    //        this awkwardness with it.
-    setGCNNLocals(false);
+    // FIXME: When the wasm spec stabilizes, this feature will go away, as the
+    //        non-nullable locals experiment will either become the standard,
+    //        or it will go away.
+    if (v) {
+      // Leave the old GCNNLocals value unmodified. This makes things like
+      // --enable-gc-nn-locals -all work (that is, if we enable the feature,
+      // then -all does not disable it; it simply does not enable it by itself).
+      auto oldGCNNLocals = hasGCNNLocals();
+      features = All;
+      setGCNNLocals(oldGCNNLocals);
+    } else {
+      features = MVP;
+    }
   }
 
   void enable(const FeatureSet& other) { features |= other.features; }
