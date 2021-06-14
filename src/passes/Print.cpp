@@ -2496,7 +2496,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     o << ')';
   }
-  void handleHeapType(HeapType type, Module* curr) {
+  void handleHeapType(HeapType type, Module* module) {
     if (type.isSignature()) {
       handleSignature(type.getSignature());
     } else if (type.isArray()) {
@@ -2509,7 +2509,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     HeapType super;
     if (type.getSuperType(super)) {
       o << " (extends ";
-      TypeNamePrinter(o, curr).print(super);
+      TypeNamePrinter(o, module).print(super);
       o << ')';
     }
   }

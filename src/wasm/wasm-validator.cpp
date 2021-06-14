@@ -2508,9 +2508,6 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
-  if (!Type::isSubType(curr->body->type, curr->sig.results)) {
-    std::cerr << curr->body->type << "\n" << curr->sig.results << "\n";
-  }
   shouldBeSubType(curr->body->type,
                   curr->sig.results,
                   curr->body,
