@@ -10,19 +10,13 @@
   (type $sub-array (array (ref $sub-struct)) (extends $super-array))
   (type $super-array (array (ref $super-struct)))
 
+  ;; TODO: signature types as well, once functions store their HeapTypes.
+
   ;; CHECK:      (func $make-sub-struct (result (ref $sub-struct))
-  ;; CHECK-NEXT:  (struct.new_with_rtt $sub-struct
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:   (i64.const 7)
-  ;; CHECK-NEXT:   (rtt.canon $sub-struct)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $make-sub-struct (result (ref $sub-struct))
-    (struct.new_with_rtt $sub-struct
-      (i32.const 42)
-      (i64.const 7)
-      (rtt.canon $sub-struct)
-    )
+    (unreachable)
   )
 
   ;; CHECK:      (func $make-super-struct (result (ref $super-struct))
@@ -33,18 +27,10 @@
   )
 
   ;; CHECK:      (func $make-sub-array (result (ref $sub-array))
-  ;; CHECK-NEXT:  (array.new_with_rtt $sub-array
-  ;; CHECK-NEXT:   (call $make-sub-struct)
-  ;; CHECK-NEXT:   (i32.const 8)
-  ;; CHECK-NEXT:   (rtt.canon $sub-array)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $make-sub-array (result (ref $sub-array))
-    (array.new_with_rtt $sub-array
-      (call $make-sub-struct)
-      (i32.const 8)
-      (rtt.canon $sub-array)
-    )
+    (unreachable)
   )
 
   ;; CHECK:      (func $make-super-array (result (ref $super-array))

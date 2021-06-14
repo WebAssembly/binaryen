@@ -12,11 +12,7 @@
   (type $super-array (array (ref $super-struct)))
 
   (func $make-sub-struct (result (ref $sub-struct))
-    (struct.new_with_rtt $sub-struct
-      (i32.const 42)
-      (i64.const 7)
-      (rtt.canon $sub-struct)
-    )
+    (unreachable)
   )
 
   (func $make-super-struct (result (ref $super-struct))
@@ -24,11 +20,7 @@
   )
 
   (func $make-sub-array (result (ref $sub-array))
-    (array.new_with_rtt $sub-array
-      (call $make-sub-struct)
-      (i32.const 8)
-      (rtt.canon $sub-array)
-    )
+    (unreachable)
   )
 
   (func $make-super-array (result (ref $super-array))
