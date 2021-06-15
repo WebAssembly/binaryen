@@ -219,8 +219,11 @@ void WasmBinaryWriter::writeTypes() {
   for (Index i = 0; i < types.size(); ++i) {
     auto type = types[i];
     BYN_TRACE("write " << type << std::endl);
+    HeapType super;
+    bool hasSuper = type.getSuperType(super);
     if (type.isSignature()) {
-      o << S32LEB(BinaryConsts::EncodedType::Func);
+      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::FuncExtending
+                           : BinaryConsts::EncodedType::Func);
       auto sig = type.getSignature();
       for (auto& sigType : {sig.params, sig.results}) {
         o << U32LEB(sigType.size());
@@ -229,17 +232,22 @@ void WasmBinaryWriter::writeTypes() {
         }
       }
     } else if (type.isStruct()) {
-      o << S32LEB(BinaryConsts::EncodedType::Struct);
+      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::StructExtending
+                           : BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
       o << U32LEB(fields.size());
       for (const auto& field : fields) {
         writeField(field);
       }
     } else if (type.isArray()) {
-      o << S32LEB(BinaryConsts::EncodedType::Array);
+      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::ArrayExtending
+                           : BinaryConsts::EncodedType::Array);
       writeField(type.getArray().element);
     } else {
       WASM_UNREACHABLE("TODO GC type writing");
+    }
+    if (hasSuper) {
+      o << U32LEB(getTypeIndex(super));
     }
   }
   finishSection(start);
@@ -1901,14 +1909,26 @@ void WasmBinaryBuilder::readTypes() {
   for (size_t i = 0; i < numTypes; i++) {
     BYN_TRACE("read one\n");
     auto form = getS32LEB();
-    if (form == BinaryConsts::EncodedType::Func) {
+    if (form == BinaryConsts::EncodedType::Func ||
+        form == BinaryConsts::EncodedType::FuncExtending) {
       builder[i] = readSignatureDef();
-    } else if (form == BinaryConsts::EncodedType::Struct) {
+    } else if (form == BinaryConsts::EncodedType::Struct ||
+               form == BinaryConsts::EncodedType::StructExtending) {
       builder[i] = readStructDef();
-    } else if (form == BinaryConsts::EncodedType::Array) {
+    } else if (form == BinaryConsts::EncodedType::Array ||
+               form == BinaryConsts::EncodedType::ArrayExtending) {
       builder[i] = Array(readFieldDef());
     } else {
       throwError("bad type form " + std::to_string(form));
+    }
+    if (form == BinaryConsts::EncodedType::FuncExtending ||
+        form == BinaryConsts::EncodedType::StructExtending ||
+        form == BinaryConsts::EncodedType::ArrayExtending) {
+      auto superIndex = getU32LEB();
+      if (superIndex >= numTypes) {
+        throwError("bad supertype index " + std::to_string(superIndex));
+      }
+      builder[i].subTypeOf(builder[superIndex]);
     }
   }
 

@@ -2496,7 +2496,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     o << ')';
   }
-  void handleHeapType(HeapType type) {
+  void handleHeapType(HeapType type, Module* module) {
     if (type.isSignature()) {
       handleSignature(type.getSignature());
     } else if (type.isArray()) {
@@ -2505,6 +2505,12 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       handleStruct(type.getStruct());
     } else {
       o << type;
+    }
+    HeapType super;
+    if (type.getSuperType(super)) {
+      o << " (extends ";
+      TypeNamePrinter(o, module).print(super);
+      o << ')';
     }
   }
   void visitExport(Export* curr) {
@@ -2889,7 +2895,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       printMedium(o, "type") << ' ';
       TypeNamePrinter(o, curr).print(type);
       o << ' ';
-      handleHeapType(type);
+      handleHeapType(type, curr);
       o << ")" << maybeNewLine;
     }
     ModuleUtils::iterImportedMemories(

@@ -1176,6 +1176,18 @@ Array HeapType::getArray() const {
   return getHeapTypeInfo(*this)->array;
 }
 
+bool HeapType::getSuperType(HeapType& out) const {
+  if (isBasic()) {
+    return false;
+  }
+  HeapTypeInfo* super = getHeapTypeInfo(*this)->supertype;
+  if (super != nullptr) {
+    out = HeapType(uintptr_t(super));
+    return true;
+  }
+  return false;
+}
+
 bool HeapType::isSubType(HeapType left, HeapType right) {
   return SubTyper().isSubType(left, right);
 }

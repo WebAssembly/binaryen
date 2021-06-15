@@ -50,8 +50,9 @@ int unhex(char c) {
 
 namespace wasm {
 
-static Name STRUCT("struct"), FIELD("field"), ARRAY("array"), I8("i8"),
-  I16("i16"), RTT("rtt"), DECLARE("declare"), ITEM("item"), OFFSET("offset");
+static Name STRUCT("struct"), FIELD("field"), ARRAY("array"),
+  EXTENDS("extends"), I8("i8"), I16("i16"), RTT("rtt"), DECLARE("declare"),
+  ITEM("item"), OFFSET("offset");
 
 static Address getAddress(const Element* s) { return atoll(s->c_str()); }
 
@@ -857,15 +858,25 @@ void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
     Element& def = elem[1]->dollared() ? *elem[2] : *elem[1];
     Element& kind = *def[0];
     if (kind == FUNC) {
-      builder[index++] = parseSignatureDef(def);
+      builder[index] = parseSignatureDef(def);
     } else if (kind == STRUCT) {
       builder[index] = parseStructDef(def, index);
-      index++;
     } else if (kind == ARRAY) {
-      builder[index++] = parseArrayDef(def);
+      builder[index] = parseArrayDef(def);
     } else {
       throw ParseException("unknown heaptype kind", kind.line, kind.col);
     }
+    if (elementStartsWith(elem[elem.size() - 1], EXTENDS)) {
+      // '(' 'extends' $supertype ')'
+      Element& extends = *elem[elem.size() - 1];
+      auto it = typeIndices.find(extends[1]->c_str());
+      if (it == typeIndices.end()) {
+        throw ParseException(
+          "unknown dollared function type", elem.line, elem.col);
+      }
+      builder[index].subTypeOf(builder[it->second]);
+    }
+    ++index;
   });
 
   types = builder.build();
