@@ -29,6 +29,9 @@ bool canHandleAsLocal(Type type) {
 
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Check if this is an issue.
+  if (wasm.features.hasGCNNLocals()) {
+    return;
+  }
   bool hasNonNullable = false;
   for (auto type : func->vars) {
     if (type.isRef() && !type.isNullable()) {
