@@ -8,6 +8,8 @@
 
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
+ (global $rtt (mut (rtt $extendedstruct)) (rtt.canon $extendedstruct))
+
  (func "structs"
   (local $x (ref null $struct))
   (local $y (ref null $struct))
@@ -456,6 +458,20 @@
     (rtt.fresh_sub $extendedstruct
      (rtt.canon $struct)
     )
+   )
+  )
+  ;; Casts with fresh succeed, if we use the same fresh rtt.
+  (global.set $rtt
+   (rtt.fresh_sub $extendedstruct
+    (rtt.canon $struct)
+   )
+  )
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (global.get $rtt)
+    )
+    (global.get $rtt)
    )
   )
  )
