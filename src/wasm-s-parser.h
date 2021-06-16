@@ -135,7 +135,7 @@ class SExpressionWasmBuilder {
   int elemCounter = 0;
   int memoryCounter = 0;
   // we need to know function return types before we parse their contents
-  std::map<Name, Signature> functionSignatures;
+  std::map<Name, HeapType> functionTypes;
   std::unordered_map<cashew::IString, Index> debugInfoFileIndices;
 
   // Maps type indexes to a mapping of field index => name. This is not the same
@@ -296,13 +296,12 @@ private:
   std::vector<Type> parseParamOrLocal(Element& s);
   std::vector<NameType> parseParamOrLocal(Element& s, size_t& localIndex);
   std::vector<Type> parseResults(Element& s);
-  Signature parseTypeRef(Element& s);
+  HeapType parseTypeRef(Element& s);
   size_t parseTypeUse(Element& s,
                       size_t startPos,
-                      Signature& functionSignature,
+                      HeapType& functionType,
                       std::vector<NameType>& namedParams);
-  size_t
-  parseTypeUse(Element& s, size_t startPos, Signature& functionSignature);
+  size_t parseTypeUse(Element& s, size_t startPos, HeapType& functionType);
 
   void stringToBinary(const char* input, size_t size, std::vector<char>& data);
   void parseMemory(Element& s, bool preParseImport = false);

@@ -2318,10 +2318,12 @@ void FunctionValidator::visitStructNew(StructNew* curr) {
                       "struct.new must have the right number of operands")) {
       // All the fields must have the proper type.
       for (Index i = 0; i < fields.size(); i++) {
-        shouldBeSubType(curr->operands[i]->type,
-                        fields[i].type,
-                        curr,
-                        "struct.new operand must have proper type");
+        shouldBeSubType(
+          curr->operands[i]->type,
+          fields[i].type,
+          curr,
+          ("struct.new operand " + std::to_string(i) + " must have proper type")
+            .c_str());
       }
     }
   }

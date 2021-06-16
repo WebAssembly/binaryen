@@ -580,7 +580,7 @@ std::vector<Type> SExpressionWasmBuilder::parseResults(Element& s) {
 // Parses an element that references an entry in the type section. The element
 // should be in the form of (type name) or (type index).
 // (e.g. (type $a), (type 0))
-Signature SExpressionWasmBuilder::parseTypeRef(Element& s) {
+HeapType SExpressionWasmBuilder::parseTypeRef(Element& s) {
   assert(elementStartsWith(s, TYPE));
   if (s.size() != 2) {
     throw ParseException("invalid type reference", s.line, s.col);
@@ -589,7 +589,7 @@ Signature SExpressionWasmBuilder::parseTypeRef(Element& s) {
   if (!heapType.isSignature()) {
     throw ParseException("expected signature type", s.line, s.col);
   }
-  return heapType.getSignature();
+  return heapType;
 }
 
 // Prases typeuse, a reference to a type definition. It is in the form of either
@@ -602,7 +602,7 @@ Signature SExpressionWasmBuilder::parseTypeRef(Element& s) {
 size_t
 SExpressionWasmBuilder::parseTypeUse(Element& s,
                                      size_t startPos,
-                                     Signature& functionSignature,
+                                     HeapType& functionType,
                                      std::vector<NameType>& namedParams) {
   std::vector<Type> params, results;
   size_t i = startPos;
@@ -610,7 +610,7 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
   bool typeExists = false, paramsOrResultsExist = false;
   if (i < s.size() && elementStartsWith(*s[i], TYPE)) {
     typeExists = true;
-    functionSignature = parseTypeRef(*s[i++]);
+    functionType = parseTypeRef(*s[i++]);
   }
 
   size_t paramPos = i;
@@ -640,10 +640,10 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
   }
 
   if (!typeExists) {
-    functionSignature = inlineSig;
+    functionType = inlineSig;
   } else if (paramsOrResultsExist) {
     // verify that (type) and (params)/(result) match
-    if (inlineSig != functionSignature) {
+    if (inlineSig != functionType.getSignature()) {
       throw ParseException("type and param/result don't match",
                            s[paramPos]->line,
                            s[paramPos]->col);
@@ -651,15 +651,14 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
   }
 
   // Add implicitly defined type to global list so it has an index
-  auto heapType = HeapType(functionSignature);
-  if (std::find(types.begin(), types.end(), heapType) == types.end()) {
-    types.push_back(heapType);
+  if (std::find(types.begin(), types.end(), functionType) == types.end()) {
+    types.push_back(functionType);
   }
 
   // If only (type) is specified, populate `namedParams`
   if (!paramsOrResultsExist) {
     size_t index = 0;
-    for (const auto& param : functionSignature.params) {
+    for (const auto& param : functionType.getSignature().params) {
       namedParams.emplace_back(Name::fromInt(index++), param);
     }
   }
@@ -670,9 +669,9 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
 // Parses a typeuse. Use this when only FunctionType* is needed.
 size_t SExpressionWasmBuilder::parseTypeUse(Element& s,
                                             size_t startPos,
-                                            Signature& functionSignature) {
+                                            HeapType& functionType) {
   std::vector<NameType> params;
-  return parseTypeUse(s, startPos, functionSignature, params);
+  return parseTypeUse(s, startPos, functionType, params);
 }
 
 void SExpressionWasmBuilder::preParseHeapTypes(Element& module) {
@@ -913,9 +912,9 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   }
   functionNames.push_back(name);
   functionCounter++;
-  Signature sig;
-  parseTypeUse(s, i, sig);
-  functionSignatures[name] = sig;
+  HeapType type;
+  parseTypeUse(s, i, type);
+  functionTypes[name] = type;
 }
 
 size_t SExpressionWasmBuilder::parseFunctionNames(Element& s,
@@ -989,9 +988,9 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   }
 
   // parse typeuse: type/param/result
-  Signature sig;
+  HeapType type;
   std::vector<NameType> params;
-  i = parseTypeUse(s, i, sig, params);
+  i = parseTypeUse(s, i, type, params);
 
   // when (import) is inside a (func) element, this is not a function definition
   // but an import.
@@ -1006,8 +1005,8 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     im->setName(name, hasExplicitName);
     im->module = importModule;
     im->base = importBase;
-    im->sig = sig;
-    functionSignatures[name] = sig;
+    im->sig = type.getSignature();
+    functionTypes[name] = type;
     if (wasm.getFunctionOrNull(im->name)) {
       throw ParseException("duplicate import", s.line, s.col);
     }
@@ -1034,7 +1033,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
 
   // make a new function
   currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
-    name, std::move(params), sig.results, std::move(vars)));
+    name, std::move(params), type.getSignature().results, std::move(vars)));
   currFunction->profile = profile;
 
   // parse body
@@ -1061,7 +1060,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     autoBlock->name = FAKE_RETURN;
   }
   if (autoBlock) {
-    autoBlock->finalize(sig.results);
+    autoBlock->finalize(type.getSignature().results);
   }
   if (!currFunction->body) {
     currFunction->body = allocator.alloc<Nop>();
@@ -2258,7 +2257,7 @@ Expression* SExpressionWasmBuilder::makeCall(Element& s, bool isReturn) {
   auto target = getFunctionName(*s[1]);
   auto ret = allocator.alloc<Call>();
   ret->target = target;
-  ret->type = functionSignatures[ret->target].results;
+  ret->type = functionTypes[ret->target].getSignature().results;
   parseCallOperands(s, 2, s.size(), ret);
   ret->isReturn = isReturn;
   ret->finalize();
@@ -2277,7 +2276,9 @@ Expression* SExpressionWasmBuilder::makeCallIndirect(Element& s,
   } else {
     ret->table = wasm.tables.front()->name;
   }
-  i = parseTypeUse(s, i, ret->sig);
+  HeapType callType;
+  i = parseTypeUse(s, i, callType);
+  ret->sig = callType.getSignature();
   parseCallOperands(s, i, s.size() - 1, ret);
   ret->target = parseExpression(s[s.size() - 1]);
   ret->isReturn = isReturn;
@@ -2393,7 +2394,7 @@ Expression* SExpressionWasmBuilder::makeRefFunc(Element& s) {
   ret->func = func;
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
-  ret->finalize(Type(HeapType(functionSignatures[func]), NonNullable));
+  ret->finalize(Type(functionTypes[func], NonNullable));
   return ret;
 }
 
@@ -3036,11 +3037,13 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   if (kind == ExternalKind::Function) {
     auto func = make_unique<Function>();
 
-    j = parseTypeUse(inner, j, func->sig);
+    HeapType funcType;
+    j = parseTypeUse(inner, j, funcType);
+    func->sig = funcType.getSignature();
     func->setName(name, hasExplicitName);
     func->module = module;
     func->base = base;
-    functionSignatures[name] = func->sig;
+    functionTypes[name] = funcType;
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
     Type type;
@@ -3111,7 +3114,9 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       throw ParseException("invalid attribute", attrElem.line, attrElem.col);
     }
     event->attribute = atoi(attrElem[1]->c_str());
-    j = parseTypeUse(inner, j, event->sig);
+    HeapType eventType;
+    j = parseTypeUse(inner, j, eventType);
+    event->sig = eventType.getSignature();
     event->setName(name, hasExplicitName);
     event->module = module;
     event->base = base;
@@ -3398,7 +3403,7 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
     for (; i < s.size(); i++) {
       auto func = getFunctionName(*s[i]);
       segment->data.push_back(
-        Builder(wasm).makeRefFunc(func, functionSignatures[func]));
+        Builder(wasm).makeRefFunc(func, functionTypes[func].getSignature()));
     }
   }
   return wasm.addElementSegment(std::move(segment));
@@ -3507,7 +3512,9 @@ void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
   event->attribute = atoi(attrElem[1]->c_str());
 
   // Parse typeuse
-  i = parseTypeUse(s, i, event->sig);
+  HeapType eventType;
+  i = parseTypeUse(s, i, eventType);
+  event->sig = eventType.getSignature();
 
   // If there are more elements, they are invalid
   if (i < s.size()) {
