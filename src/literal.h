@@ -61,6 +61,10 @@ class Literal {
     // would do, but it is simple.)
     // The unique_ptr here is to avoid increasing the size of the union as well
     // as the Literal class itself.
+    // To support the experimental RttFreshSub instruction, which emits a sub-
+    // rtt that is not equal to any other (see RttSub in wasm.h), we emit a
+    // "poison" type into the rttSupers, which tells isSubRtt to compare as not
+    // equal. TODO: remove this when the spec stabilizes
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -647,6 +651,10 @@ private:
   Literal minUInt(const Literal& other) const;
   Literal maxUInt(const Literal& other) const;
   Literal avgrUInt(const Literal& other) const;
+
+  // A type that when present in RttSupers indicates that we should compare
+  // equal to nothing else (that is,
+  using RttFreshIndicatorType = Type::none;
 };
 
 class Literals : public SmallVector<Literal, 1> {

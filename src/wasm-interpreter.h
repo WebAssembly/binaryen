@@ -1594,6 +1594,11 @@ public:
     auto parentValue = parent.getSingleValue();
     auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
     newSupers->push_back(parentValue.type);
+    if (curr->fresh) {
+      // Push "Type::none" to indicate a value that compares unequal to
+      // everything.
+      newSupers->push_back(Type::none);
+    }
     return Literal(std::move(newSupers), curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
