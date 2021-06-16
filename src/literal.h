@@ -60,8 +60,8 @@ class Literal {
     // The unique_ptr here is to avoid increasing the size of the union as well
     // as the Literal class itself.
     // To support the experimental RttFreshSub instruction, we not only store
-    // the type, but also a reference to an allocation. TODO: remove this when
-    // the spec stabilizes.
+    // the type, but also a reference to an allocation.
+    // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -692,6 +692,7 @@ struct RttSuper {
   // normal sub, and for a fresh one we allocate a value here, which can then be
   // used to differentiate rtts. (The allocation is shared so that when copying
   // an rtt we remain equal.)
+  // TODO: Remove or optimize this when the spec stabilizes.
   std::shared_ptr<size_t> freshPtr;
 
   RttSuper(Type type) : type(type) {}
