@@ -762,7 +762,8 @@ template<> struct hash<wasm::Literal> {
       const auto& supers = a.getRttSupers();
       wasm::rehash(digest, supers.size());
       for (auto super : supers) {
-        wasm::rehash(digest, super.getID());
+        wasm::rehash(digest, super.type.getID());
+        wasm::rehash(digest, uintptr_t(super.freshPtr.get()));
       }
       return digest;
     }

@@ -1596,7 +1596,7 @@ public:
     newSupers->push_back(parentValue.type);
     if (curr->fresh) {
       auto& back = newSupers->back();
-      back->makeFresh();
+      back.makeFresh();
     }
     return Literal(std::move(newSupers), curr->type);
   }
