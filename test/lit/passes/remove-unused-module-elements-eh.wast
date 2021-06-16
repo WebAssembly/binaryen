@@ -1,20 +1,20 @@
 ;; RUN: wasm-opt %s --remove-unused-module-elements -all -S -o - | filecheck %s
 
-;; Non-exported and unused events can be removed
+;; Non-exported and unused tags can be removed
 (module
   (type $0 (func (param i32)))
 
-  ;; CHECK-NOT: (event $e-remove
-  ;; CHECK: (event $e-export
-  ;; CHECK: (event $e-throw
-  ;; CHECK: (event $e-catch
-  (event $e-remove (attr 0) (type $0))   ;; can be removed
-  (event $e-export (attr 0) (param i64)) ;; cannot be removed (exported)
-  (event $e-throw (attr 0) (type $0))    ;; cannot be removed (used in throw)
-  (event $e-catch (attr 0) (type $0))    ;; cannot be removed (used in catch)
+  ;; CHECK-NOT: (tag $e-remove
+  ;; CHECK: (tag $e-export
+  ;; CHECK: (tag $e-throw
+  ;; CHECK: (tag $e-catch
+  (tag $e-remove (attr 0) (type $0))   ;; can be removed
+  (tag $e-export (attr 0) (param i64)) ;; cannot be removed (exported)
+  (tag $e-throw (attr 0) (type $0))    ;; cannot be removed (used in throw)
+  (tag $e-catch (attr 0) (type $0))    ;; cannot be removed (used in catch)
 
-  (export "e-export" (event $e-export))
-  (import "env" "e" (event $e-import (attr 0) (param i32)))
+  (export "e-export" (tag $e-export))
+  (import "env" "e" (tag $e-import (attr 0) (param i32)))
 
   (start $start)
   (func $start

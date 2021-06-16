@@ -2,7 +2,7 @@
 ;; RUN:   -all -S -o - | filecheck %s
 
 (module
-  (event $e0 (attr 0) (param i32))
+  (tag $e0 (attr 0) (param i32))
 
   ;; CHECK:      (func $eh
   ;; CHECK-NEXT:  try $l0

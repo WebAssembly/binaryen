@@ -2071,9 +2071,9 @@ void FunctionValidator::visitTry(Try* curr) {
                     "unreachable try-catch must have unreachable catch body");
     }
   }
-  shouldBeTrue(curr->catchBodies.size() - curr->catchEvents.size() <= 1,
+  shouldBeTrue(curr->catchBodies.size() - curr->catchTags.size() <= 1,
                curr,
-               "the number of catch blocks and events do not match");
+               "the number of catch blocks and tags do not match");
 
   shouldBeFalse(curr->isCatch() && curr->isDelegate(),
                 curr,
@@ -2097,21 +2097,21 @@ void FunctionValidator::visitThrow(Throw* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  auto* event = getModule()->getEventOrNull(curr->event);
-  if (!shouldBeTrue(!!event, curr, "throw's event must exist")) {
+  auto* tag = getModule()->getTagOrNull(curr->tag);
+  if (!shouldBeTrue(!!tag, curr, "throw's tag must exist")) {
     return;
   }
-  if (!shouldBeTrue(curr->operands.size() == event->sig.params.size(),
+  if (!shouldBeTrue(curr->operands.size() == tag->sig.params.size(),
                     curr,
-                    "event's param numbers must match")) {
+                    "tag's param numbers must match")) {
     return;
   }
   size_t i = 0;
-  for (const auto& param : event->sig.params) {
+  for (const auto& param : tag->sig.params) {
     if (!shouldBeSubType(curr->operands[i]->type,
                          param,
                          curr->operands[i],
-                         "event param types must match") &&
+                         "tag param types must match") &&
         !info.quiet) {
       getStream() << "(on argument " << i << ")\n";
     }
@@ -2737,10 +2737,9 @@ static void validateExports(Module& module, ValidationInfo& info) {
       info.shouldBeTrue(name == Name("0") || name == module.memory.name,
                         name,
                         "module memory exports must be found");
-    } else if (exp->kind == ExternalKind::Event) {
-      info.shouldBeTrue(module.getEventOrNull(name),
-                        name,
-                        "module event exports must be found");
+    } else if (exp->kind == ExternalKind::Tag) {
+      info.shouldBeTrue(
+        module.getTagOrNull(name), name, "module tag exports must be found");
     } else {
       WASM_UNREACHABLE("invalid ExternalKind");
     }
@@ -2978,13 +2977,13 @@ static void validateTables(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateEvents(Module& module, ValidationInfo& info) {
-  if (!module.events.empty()) {
+static void validateTags(Module& module, ValidationInfo& info) {
+  if (!module.tags.empty()) {
     info.shouldBeTrue(module.features.hasExceptionHandling(),
-                      module.events[0]->name,
-                      "Module has events (event-handling is disabled)");
+                      module.tags[0]->name,
+                      "Module has tags (exception-handling is disabled)");
   }
-  for (auto& curr : module.events) {
+  for (auto& curr : module.tags) {
     info.shouldBeEqual(curr->attribute,
                        (unsigned)0,
                        curr->attribute,
@@ -2992,16 +2991,16 @@ static void validateEvents(Module& module, ValidationInfo& info) {
     info.shouldBeEqual(curr->sig.results,
                        Type(Type::none),
                        curr->name,
-                       "Event type's result type should be none");
+                       "Tag type's result type should be none");
     if (curr->sig.params.isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
-                        "Multivalue event type (multivalue is not enabled)");
+                        "Multivalue tag type (multivalue is not enabled)");
     }
     for (const auto& param : curr->sig.params) {
       info.shouldBeTrue(param.isConcrete(),
                         curr->name,
-                        "Values in an event should have concrete types");
+                        "Values in a tag should have concrete types");
     }
   }
 }
@@ -3048,7 +3047,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateGlobals(module, info);
     validateMemory(module, info);
     validateTables(module, info);
-    validateEvents(module, info);
+    validateTags(module, info);
     validateModule(module, info);
     validateFeatures(module, info);
   }

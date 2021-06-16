@@ -1,8 +1,8 @@
 (module
-  (event $e-i32 (attr 0) (param i32))
-  (event $e-i64 (attr 0) (param i64))
-  (event $e-i32-i64 (attr 0) (param i32 i64))
-  (event $e-empty (attr 0))
+  (tag $e-i32 (attr 0) (param i32))
+  (tag $e-i64 (attr 0) (param i64))
+  (tag $e-i32-i64 (attr 0) (param i32 i64))
+  (tag $e-empty (attr 0))
 
   (func $foo)
   (func $bar)
@@ -18,7 +18,7 @@
       )
     )
 
-    ;; try-catch with multivalue event
+    ;; try-catch with multivalue tag
     (try
       (do
         (throw $e-i32-i64 (i32.const 0) (i64.const 0))
@@ -197,7 +197,7 @@
       (delegate 0)
     )
 
-    ;; 'catch' body can be empty when the event's type is none.
+    ;; 'catch' body can be empty when the tag's type is none.
     (try
       (do)
       (catch $e-empty)

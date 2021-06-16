@@ -4,11 +4,11 @@
 (module
   ;; ---------------------------------------------------------------------------
   (import "a" "b" (func $foo (result i32)))
-  (event $event$0 (attr 0) (param i32))
+  (tag $tag$0 (attr 0) (param i32))
   (func $callee-with-label
     (try $label
       (do)
-      (catch $event$0
+      (catch $tag$0
         (nop)
       )
     )
@@ -24,7 +24,7 @@
   ;; CHECK-NEXT:      (do
   ;; CHECK-NEXT:       (nop)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (catch $event$0
+  ;; CHECK-NEXT:      (catch $tag$0
   ;; CHECK-NEXT:       (nop)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )

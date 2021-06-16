@@ -345,7 +345,7 @@ void BinaryenIRWriter<SubType>::visitLoop(Loop* curr) {
 template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   emit(curr);
   visitPossibleBlockContents(curr->body);
-  for (Index i = 0; i < curr->catchEvents.size(); i++) {
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
     emitCatch(curr, i);
     visitPossibleBlockContents(curr->catchBodies[i]);
   }

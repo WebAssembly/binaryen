@@ -96,7 +96,7 @@ Name SPECTEST("spectest");
 Name PRINT("print");
 Name EXIT("exit");
 Name SHARED("shared");
-Name EVENT("event");
+Name TAG("tag");
 Name ATTR("attr");
 
 // Expressions
@@ -1194,8 +1194,8 @@ Global* Module::getGlobal(Name name) {
   return getModuleElement(globalsMap, name, "getGlobal");
 }
 
-Event* Module::getEvent(Name name) {
-  return getModuleElement(eventsMap, name, "getEvent");
+Tag* Module::getTag(Name name) {
+  return getModuleElement(tagsMap, name, "getTag");
 }
 
 template<typename Map>
@@ -1227,8 +1227,8 @@ Global* Module::getGlobalOrNull(Name name) {
   return getModuleElementOrNull(globalsMap, name);
 }
 
-Event* Module::getEventOrNull(Name name) {
-  return getModuleElementOrNull(eventsMap, name);
+Tag* Module::getTagOrNull(Name name) {
+  return getModuleElementOrNull(tagsMap, name);
 }
 
 // TODO(@warchant): refactor all usages to use variant with unique_ptr
@@ -1275,8 +1275,8 @@ Global* Module::addGlobal(Global* curr) {
   return addModuleElement(globals, globalsMap, curr, "addGlobal");
 }
 
-Event* Module::addEvent(Event* curr) {
-  return addModuleElement(events, eventsMap, curr, "addEvent");
+Tag* Module::addTag(Tag* curr) {
+  return addModuleElement(tags, tagsMap, curr, "addTag");
 }
 
 Export* Module::addExport(std::unique_ptr<Export>&& curr) {
@@ -1302,8 +1302,8 @@ Global* Module::addGlobal(std::unique_ptr<Global>&& curr) {
   return addModuleElement(globals, globalsMap, std::move(curr), "addGlobal");
 }
 
-Event* Module::addEvent(std::unique_ptr<Event>&& curr) {
-  return addModuleElement(events, eventsMap, std::move(curr), "addEvent");
+Tag* Module::addTag(std::unique_ptr<Tag>&& curr) {
+  return addModuleElement(tags, tagsMap, std::move(curr), "addTag");
 }
 
 void Module::addStart(const Name& s) { start = s; }
@@ -1334,9 +1334,7 @@ void Module::removeElementSegment(Name name) {
 void Module::removeGlobal(Name name) {
   removeModuleElement(globals, globalsMap, name);
 }
-void Module::removeEvent(Name name) {
-  removeModuleElement(events, eventsMap, name);
-}
+void Module::removeTag(Name name) { removeModuleElement(tags, tagsMap, name); }
 
 template<typename Vector, typename Map, typename Elem>
 void removeModuleElements(Vector& v,
@@ -1369,8 +1367,8 @@ void Module::removeElementSegments(std::function<bool(ElementSegment*)> pred) {
 void Module::removeGlobals(std::function<bool(Global*)> pred) {
   removeModuleElements(globals, globalsMap, pred);
 }
-void Module::removeEvents(std::function<bool(Event*)> pred) {
-  removeModuleElements(events, eventsMap, pred);
+void Module::removeTags(std::function<bool(Tag*)> pred) {
+  removeModuleElements(tags, tagsMap, pred);
 }
 
 void Module::updateMaps() {
@@ -1394,9 +1392,9 @@ void Module::updateMaps() {
   for (auto& curr : globals) {
     globalsMap[curr->name] = curr.get();
   }
-  eventsMap.clear();
-  for (auto& curr : events) {
-    eventsMap[curr->name] = curr.get();
+  tagsMap.clear();
+  for (auto& curr : tags) {
+    tagsMap[curr->name] = curr.get();
   }
 }
 

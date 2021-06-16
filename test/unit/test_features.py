@@ -184,16 +184,16 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         '''
         self.check_reference_types(module, 'all used types should be allowed')
 
-    def test_event(self):
+    def test_tag(self):
         module = '''
         (module
-         (event $e (attr 0) (param i32))
+         (tag $e (attr 0) (param i32))
          (func $foo
             (throw $e (i32.const 0))
          )
         )
         '''
-        self.check_exception_handling(module, 'Module has events')
+        self.check_exception_handling(module, 'Module has tags')
 
     def test_multivalue_import(self):
         module = '''
@@ -218,13 +218,13 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         self.check_multivalue(module, 'Multivalue function results ' +
                               '(multivalue is not enabled)')
 
-    def test_multivalue_event(self):
+    def test_multivalue_tag(self):
         module = '''
         (module
-         (event $foo (attr 0) (param i32 i64))
+         (tag $foo (attr 0) (param i32 i64))
         )
         '''
-        self.check_multivalue_exception_handling(module, 'Multivalue event type ' +
+        self.check_multivalue_exception_handling(module, 'Multivalue tag type ' +
                                                  '(multivalue is not enabled)')
 
     def test_multivalue_block(self):

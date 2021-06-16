@@ -2,14 +2,14 @@
 ;; RUN: wasm-opt %s --remove-unused-names -all -S -o - | filecheck %s
 
 (module
-  (event $event$0 (attr 0) (param i32))
+  (tag $tag$0 (attr 0) (param i32))
 
   ;; CHECK:      (func $func0
   ;; CHECK-NEXT:  (try $label$9
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $event$0
+  ;; CHECK-NEXT:   (catch $tag$0
   ;; CHECK-NEXT:    (try $label$8
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (try
@@ -19,7 +19,7 @@
   ;; CHECK-NEXT:       (delegate $label$8)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (catch $event$0
+  ;; CHECK-NEXT:     (catch $tag$0
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
@@ -31,7 +31,7 @@
   (func $func0
     (try $label$9 ;; needed due to a rethrow
       (do)
-      (catch $event$0
+      (catch $tag$0
         (try $label$8 ;; needed due to a delegate
           (do
             (try $label$6 ;; this one is not needed
@@ -41,7 +41,7 @@
               (delegate $label$8)
             )
           )
-          (catch $event$0
+          (catch $tag$0
             (drop
               (pop i32)
             )

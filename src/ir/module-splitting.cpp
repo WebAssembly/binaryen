@@ -18,7 +18,7 @@
 //
 //   1. Create the new secondary module.
 //
-//   2. Export globals, events, tables, and memories from the primary module and
+//   2. Export globals, tags, tables, and memories from the primary module and
 //      import them in the secondary module.
 //
 //   3. Move the deferred functions from the primary to the secondary module.
@@ -648,12 +648,12 @@ void ModuleSplitter::shareImportableItems() {
     secondary.addGlobal(std::move(secondaryGlobal));
   }
 
-  for (auto& event : primary.events) {
-    auto secondaryEvent = std::make_unique<Event>();
-    secondaryEvent->attribute = event->attribute;
-    secondaryEvent->sig = event->sig;
-    makeImportExport(*event, *secondaryEvent, "event", ExternalKind::Event);
-    secondary.addEvent(std::move(secondaryEvent));
+  for (auto& tag : primary.tags) {
+    auto secondaryTag = std::make_unique<Tag>();
+    secondaryTag->attribute = tag->attribute;
+    secondaryTag->sig = tag->sig;
+    makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
+    secondary.addTag(std::move(secondaryTag));
   }
 }
 

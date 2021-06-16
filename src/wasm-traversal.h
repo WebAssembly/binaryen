@@ -50,7 +50,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitElementSegment(ElementSegment* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
-  ReturnType visitEvent(Event* curr) { return ReturnType(); }
+  ReturnType visitTag(Tag* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
 
   ReturnType visit(Expression* curr) {
@@ -176,9 +176,7 @@ struct Walker : public VisitorType {
     setFunction(nullptr);
   }
 
-  void walkEvent(Event* event) {
-    static_cast<SubType*>(this)->visitEvent(event);
-  }
+  void walkTag(Tag* tag) { static_cast<SubType*>(this)->visitTag(tag); }
 
   void walkFunctionInModule(Function* func, Module* module) {
     setModule(module);
@@ -243,11 +241,11 @@ struct Walker : public VisitorType {
         self->walkFunction(curr.get());
       }
     }
-    for (auto& curr : module->events) {
+    for (auto& curr : module->tags) {
       if (curr->imported()) {
-        self->visitEvent(curr.get());
+        self->visitTag(curr.get());
       } else {
-        self->walkEvent(curr.get());
+        self->walkTag(curr.get());
       }
     }
     for (auto& curr : module->tables) {

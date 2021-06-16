@@ -125,13 +125,13 @@ public:
     return glob;
   }
 
-  static std::unique_ptr<Event>
-  makeEvent(Name name, uint32_t attribute, Signature sig) {
-    auto event = std::make_unique<Event>();
-    event->name = name;
-    event->attribute = attribute;
-    event->sig = sig;
-    return event;
+  static std::unique_ptr<Tag>
+  makeTag(Name name, uint32_t attribute, Signature sig) {
+    auto tag = std::make_unique<Tag>();
+    tag->name = name;
+    tag->attribute = attribute;
+    tag->sig = sig;
+    return tag;
   }
 
   // IR nodes
@@ -647,7 +647,7 @@ public:
 private:
   Try* makeTry(Name name,
                Expression* body,
-               const std::vector<Name>& catchEvents,
+               const std::vector<Name>& catchTags,
                const std::vector<Expression*>& catchBodies,
                Name delegateTarget,
                Type type,
@@ -655,7 +655,7 @@ private:
     auto* ret = wasm.allocator.alloc<Try>();
     ret->name = name;
     ret->body = body;
-    ret->catchEvents.set(catchEvents);
+    ret->catchTags.set(catchTags);
     ret->catchBodies.set(catchBodies);
     if (hasType) {
       ret->finalize(type);
@@ -667,30 +667,30 @@ private:
 
 public:
   Try* makeTry(Expression* body,
-               const std::vector<Name>& catchEvents,
+               const std::vector<Name>& catchTags,
                const std::vector<Expression*>& catchBodies) {
     return makeTry(
-      Name(), body, catchEvents, catchBodies, Name(), Type::none, false);
+      Name(), body, catchTags, catchBodies, Name(), Type::none, false);
   }
   Try* makeTry(Expression* body,
-               const std::vector<Name>& catchEvents,
+               const std::vector<Name>& catchTags,
                const std::vector<Expression*>& catchBodies,
                Type type) {
-    return makeTry(Name(), body, catchEvents, catchBodies, Name(), type, true);
+    return makeTry(Name(), body, catchTags, catchBodies, Name(), type, true);
   }
   Try* makeTry(Name name,
                Expression* body,
-               const std::vector<Name>& catchEvents,
+               const std::vector<Name>& catchTags,
                const std::vector<Expression*>& catchBodies) {
     return makeTry(
-      name, body, catchEvents, catchBodies, Name(), Type::none, false);
+      name, body, catchTags, catchBodies, Name(), Type::none, false);
   }
   Try* makeTry(Name name,
                Expression* body,
-               const std::vector<Name>& catchEvents,
+               const std::vector<Name>& catchTags,
                const std::vector<Expression*>& catchBodies,
                Type type) {
-    return makeTry(name, body, catchEvents, catchBodies, Name(), type, true);
+    return makeTry(name, body, catchTags, catchBodies, Name(), type, true);
   }
   Try* makeTry(Expression* body, Name delegateTarget) {
     return makeTry(Name(), body, {}, {}, delegateTarget, Type::none, false);
@@ -704,12 +704,12 @@ public:
   Try* makeTry(Name name, Expression* body, Name delegateTarget, Type type) {
     return makeTry(name, body, {}, {}, delegateTarget, type, true);
   }
-  Throw* makeThrow(Event* event, const std::vector<Expression*>& args) {
-    return makeThrow(event->name, args);
+  Throw* makeThrow(Tag* tag, const std::vector<Expression*>& args) {
+    return makeThrow(tag->name, args);
   }
-  Throw* makeThrow(Name event, const std::vector<Expression*>& args) {
+  Throw* makeThrow(Name tag, const std::vector<Expression*>& args) {
     auto* ret = wasm.allocator.alloc<Throw>();
-    ret->event = event;
+    ret->tag = tag;
     ret->operands.set(args);
     ret->finalize();
     return ret;
