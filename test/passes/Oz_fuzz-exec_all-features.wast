@@ -431,6 +431,34 @@
    (array.get_u $bytes (local.get $x) (i32.const 12))
   )
  )
+ (func "rtt_Fresh"
+  ;; Casting to the same sequence of rtt.subs works.
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (rtt.sub $extendedstruct
+      (rtt.canon $struct)
+     )
+    )
+    (rtt.sub $extendedstruct
+     (rtt.canon $struct)
+    )
+   )
+  )
+  ;; But not with fresh!
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $extendedstruct
+     (rtt.sub $extendedstruct
+      (rtt.canon $struct)
+     )
+    )
+    (rtt.fresh_sub $extendedstruct
+     (rtt.canon $struct)
+    )
+   )
+  )
+ )
 )
 (module
  (type $[mut:i8] (array (mut i8)))
