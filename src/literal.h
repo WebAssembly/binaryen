@@ -696,16 +696,12 @@ struct RttSuper {
 
   RttSuper(Type type) : type(type) {}
 
-  void makeFresh() {
-    freshPtr = std::make_shared<size_t>();
-  }
+  void makeFresh() { freshPtr = std::make_shared<size_t>(); }
 
   bool operator==(const RttSuper& other) const {
     return type == other.type && freshPtr == other.freshPtr;
   }
-  bool operator!=(const RttSuper& other) const {
-    return !(*this == other);
-  }
+  bool operator!=(const RttSuper& other) const { return !(*this == other); }
 };
 
 struct RttSupers : std::vector<RttSuper> {};
