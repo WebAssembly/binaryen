@@ -2078,9 +2078,6 @@ void FunctionValidator::visitTry(Try* curr) {
   shouldBeFalse(curr->isCatch() && curr->isDelegate(),
                 curr,
                 "try cannot have both catch and delegate at the same time");
-  shouldBeTrue(curr->isCatch() || curr->isDelegate(),
-               curr,
-               "try should have either catches or a delegate");
 
   if (curr->isDelegate()) {
     noteDelegate(curr->delegateTarget, curr);
@@ -2252,10 +2249,10 @@ void FunctionValidator::visitBrOn(BrOn* curr) {
     // casts to.
     shouldBeTrue(
       curr->rtt->type.isRtt(), curr, "br_on_cast rtt must have rtt type");
-    noteBreak(curr->name, curr->getSentType(), curr);
   } else {
     shouldBeTrue(curr->rtt == nullptr, curr, "non-cast BrOn must not have rtt");
   }
+  noteBreak(curr->name, curr->getSentType(), curr);
 }
 
 void FunctionValidator::visitRttCanon(RttCanon* curr) {
@@ -2499,6 +2496,9 @@ void FunctionValidator::visitFunction(Function* curr) {
     shouldBeTrue(result.isConcrete(), curr, "results must be concretely typed");
   }
   for (const auto& var : curr->vars) {
+    if (var.isRef() && getModule()->features.hasGCNNLocals()) {
+      continue;
+    }
     features |= var.getFeatures();
     shouldBeTrue(var.isDefaultable(), var, "vars must be defaultable");
   }

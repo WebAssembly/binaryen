@@ -566,6 +566,13 @@ inline void collectHeapTypes(Module& wasm,
         counts.note(child);
       }
     }
+    HeapType super;
+    if (ht.getSuperType(super)) {
+      if (!counts.count(super)) {
+        newTypes.insert(super);
+      }
+      counts.note(super);
+    }
   }
 
   // Sort by frequency and then original insertion order.

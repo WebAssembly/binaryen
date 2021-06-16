@@ -540,64 +540,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
- (event $e (attr 0) (param))
- (func $foo
-  (nop)
- )
- (func $try_unreachable
-  (try $try
-   (do
-    (unreachable)
-   )
-   (catch_all
-    (nop)
-   )
-  )
-  (call $foo)
- )
- (func $catch_unreachable
-  (try $try
-   (do
-    (nop)
-   )
-   (catch_all
-    (unreachable)
-   )
-  )
-  (call $foo)
- )
- (func $both_unreachable
-  (try $try
-   (do
-    (unreachable)
-   )
-   (catch_all
-    (unreachable)
-   )
-  )
- )
- (func $throw
-  (block $label$0
-   (block $label$1
-    (throw $e)
-   )
-  )
- )
- (func $rethrow
-  (try $l0
-   (do
-    (nop)
-   )
-   (catch $e
-    (drop
-     (i32.const 0)
-    )
-    (rethrow $l0)
-   )
-  )
- )
+ (type $none_=>_none (func))
  (func $unnecessary-concrete-block (result i32)
   (block $foo
    (nop)

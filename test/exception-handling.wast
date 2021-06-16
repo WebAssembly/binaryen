@@ -131,6 +131,13 @@
         )
       )
     )
+
+    ;; try without catch or delegate
+    (try
+      (do
+        (throw $e-i32 (i32.const 0))
+      )
+    )
   )
 
   (func $delegate-test

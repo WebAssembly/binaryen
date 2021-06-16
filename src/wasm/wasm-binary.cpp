@@ -219,8 +219,11 @@ void WasmBinaryWriter::writeTypes() {
   for (Index i = 0; i < types.size(); ++i) {
     auto type = types[i];
     BYN_TRACE("write " << type << std::endl);
+    HeapType super;
+    bool hasSuper = type.getSuperType(super);
     if (type.isSignature()) {
-      o << S32LEB(BinaryConsts::EncodedType::Func);
+      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::FuncExtending
+                           : BinaryConsts::EncodedType::Func);
       auto sig = type.getSignature();
       for (auto& sigType : {sig.params, sig.results}) {
         o << U32LEB(sigType.size());
@@ -229,17 +232,22 @@ void WasmBinaryWriter::writeTypes() {
         }
       }
     } else if (type.isStruct()) {
-      o << S32LEB(BinaryConsts::EncodedType::Struct);
+      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::StructExtending
+                           : BinaryConsts::EncodedType::Struct);
       auto fields = type.getStruct().fields;
       o << U32LEB(fields.size());
       for (const auto& field : fields) {
         writeField(field);
       }
     } else if (type.isArray()) {
-      o << S32LEB(BinaryConsts::EncodedType::Array);
+      o << S32LEB(hasSuper ? BinaryConsts::EncodedType::ArrayExtending
+                           : BinaryConsts::EncodedType::Array);
       writeField(type.getArray().element);
     } else {
       WASM_UNREACHABLE("TODO GC type writing");
+    }
+    if (hasSuper) {
+      o << U32LEB(getTypeIndex(super));
     }
   }
   finishSection(start);
@@ -1901,14 +1909,26 @@ void WasmBinaryBuilder::readTypes() {
   for (size_t i = 0; i < numTypes; i++) {
     BYN_TRACE("read one\n");
     auto form = getS32LEB();
-    if (form == BinaryConsts::EncodedType::Func) {
+    if (form == BinaryConsts::EncodedType::Func ||
+        form == BinaryConsts::EncodedType::FuncExtending) {
       builder[i] = readSignatureDef();
-    } else if (form == BinaryConsts::EncodedType::Struct) {
+    } else if (form == BinaryConsts::EncodedType::Struct ||
+               form == BinaryConsts::EncodedType::StructExtending) {
       builder[i] = readStructDef();
-    } else if (form == BinaryConsts::EncodedType::Array) {
+    } else if (form == BinaryConsts::EncodedType::Array ||
+               form == BinaryConsts::EncodedType::ArrayExtending) {
       builder[i] = Array(readFieldDef());
     } else {
       throwError("bad type form " + std::to_string(form));
+    }
+    if (form == BinaryConsts::EncodedType::FuncExtending ||
+        form == BinaryConsts::EncodedType::StructExtending ||
+        form == BinaryConsts::EncodedType::ArrayExtending) {
+      auto superIndex = getU32LEB();
+      if (superIndex >= numTypes) {
+        throwError("bad supertype index " + std::to_string(superIndex));
+      }
+      builder[i].subTypeOf(builder[superIndex]);
     }
   }
 
@@ -1987,6 +2007,7 @@ void WasmBinaryBuilder::readImports() {
       case ExternalKind::Function: {
         Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
+        functionTypes.push_back(getTypeByIndex(index));
         auto curr =
           builder.makeFunction(name, getSignatureByTypeIndex(index), {});
         curr->module = module;
@@ -2084,28 +2105,37 @@ void WasmBinaryBuilder::readFunctionSignatures() {
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto index = getU32LEB();
-    functionSignatures.push_back(getSignatureByTypeIndex(index));
+    functionTypes.push_back(getTypeByIndex(index));
+    // Check that the type is a signature.
+    getSignatureByTypeIndex(index);
   }
 }
 
-Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
-  Signature sig;
-  if (index < functionImports.size()) {
-    return functionImports[index]->sig;
-  }
-  Index adjustedIndex = index - functionImports.size();
-  if (adjustedIndex >= functionSignatures.size()) {
-    throwError("invalid function index");
-  }
-  return functionSignatures[adjustedIndex];
-}
-
-Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
+HeapType WasmBinaryBuilder::getTypeByIndex(Index index) {
   if (index >= types.size()) {
     throwError("invalid type index " + std::to_string(index) + " / " +
                std::to_string(types.size()));
   }
-  auto heapType = types[index];
+  return types[index];
+}
+
+HeapType WasmBinaryBuilder::getTypeByFunctionIndex(Index index) {
+  if (index >= functionTypes.size()) {
+    throwError("invalid function index");
+  }
+  return functionTypes[index];
+}
+
+Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
+  auto heapType = getTypeByIndex(index);
+  if (!heapType.isSignature()) {
+    throwError("invalid signature type " + heapType.toString());
+  }
+  return heapType.getSignature();
+}
+
+Signature WasmBinaryBuilder::getSignatureByFunctionIndex(Index index) {
+  auto heapType = getTypeByFunctionIndex(index);
   if (!heapType.isSignature()) {
     throwError("invalid signature type " + heapType.toString());
   }
@@ -2115,7 +2145,7 @@ Signature WasmBinaryBuilder::getSignatureByTypeIndex(Index index) {
 void WasmBinaryBuilder::readFunctions() {
   BYN_TRACE("== readFunctions\n");
   size_t total = getU32LEB();
-  if (total != functionSignatures.size()) {
+  if (total != functionTypes.size() - functionImports.size()) {
     throwError("invalid function section size, must equal types");
   }
   for (size_t i = 0; i < total; i++) {
@@ -2129,7 +2159,7 @@ void WasmBinaryBuilder::readFunctions() {
 
     auto* func = new Function;
     func->name = Name::fromInt(i);
-    func->sig = functionSignatures[i];
+    func->sig = getSignatureByFunctionIndex(functionImports.size() + i);
     currFunction = func;
 
     if (DWARF) {
@@ -2860,7 +2890,7 @@ void WasmBinaryBuilder::readElementSegments() {
     } else {
       for (Index j = 0; j < size; j++) {
         Index index = getU32LEB();
-        auto sig = getSignatureByFunctionIndex(index);
+        auto sig = getTypeByFunctionIndex(index);
         // Use a placeholder name for now
         auto* refFunc = Builder(wasm).makeRefFunc(Name::fromInt(index), sig);
         functionRefs[index].push_back(refFunc);
@@ -6043,14 +6073,15 @@ void WasmBinaryBuilder::visitRefIs(RefIs* curr, uint8_t code) {
 void WasmBinaryBuilder::visitRefFunc(RefFunc* curr) {
   BYN_TRACE("zz node: RefFunc\n");
   Index index = getU32LEB();
-  if (index >= functionImports.size() + functionSignatures.size()) {
-    throwError("ref.func: invalid call index");
-  }
-  functionRefs[index].push_back(curr); // we don't know function names yet
+  // We don't know function names yet, so record this use to be updated later.
+  // Note that we do not need to check that 'index' is in bounds, as that will
+  // be verified in the next line. (Also, note that functionRefs[index] may
+  // write to an odd place in the functionRefs map if index is invalid, but that
+  // is harmless.)
+  functionRefs[index].push_back(curr);
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
-  curr->finalize(
-    Type(HeapType(getSignatureByFunctionIndex(index)), NonNullable));
+  curr->finalize(Type(getTypeByFunctionIndex(index), NonNullable));
 }
 
 void WasmBinaryBuilder::visitRefEq(RefEq* curr) {
@@ -6069,10 +6100,12 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   // blocks instead.
   curr->type = getType();
   curr->body = getBlockOrSingleton(curr->type);
-  if (lastSeparator != BinaryConsts::Catch &&
-      lastSeparator != BinaryConsts::CatchAll &&
-      lastSeparator != BinaryConsts::Delegate) {
-    throwError("No catch instruction within a try scope");
+
+  // try without catch or delegate
+  if (lastSeparator == BinaryConsts::End) {
+    curr->finalize();
+    out = curr;
+    return;
   }
 
   Builder builder(wasm);
@@ -6189,7 +6222,7 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   //     (catch $e
   //       (block   ;; Now this can be deleted when writing binary
   //         ...
-  //         (br $label0)
+  //         (br $label)
   //       )
   //     )
   //   )

@@ -42,7 +42,7 @@ struct ToolOptions : public Options {
            Arguments::Zero,
            [this](Options*, const std::string&) {
              hasFeatureOptions = true;
-             enabledFeatures.makeMVP();
+             enabledFeatures.setMVP();
              disabledFeatures.setAll();
            })
       .add("--all-features",
@@ -52,7 +52,7 @@ struct ToolOptions : public Options {
            [this](Options*, const std::string&) {
              hasFeatureOptions = true;
              enabledFeatures.setAll();
-             disabledFeatures.makeMVP();
+             disabledFeatures.setMVP();
            })
       .add("--detect-features",
            "",
@@ -61,8 +61,8 @@ struct ToolOptions : public Options {
            [this](Options*, const std::string&) {
              hasFeatureOptions = true;
              detectFeatures = true;
-             enabledFeatures.makeMVP();
-             disabledFeatures.makeMVP();
+             enabledFeatures.setMVP();
+             disabledFeatures.setMVP();
            })
       .add("--quiet",
            "-q",
@@ -91,6 +91,7 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::Memory64, "memory64")
       .addFeature(FeatureSet::TypedFunctionReferences,
                   "typed function references")
+      .addFeature(FeatureSet::GCNNLocals, "GC non-null locals")
       .add("--no-validation",
            "-n",
            "Disables validation, assumes inputs are correct",
@@ -114,6 +115,14 @@ struct ToolOptions : public Options {
                value = argument.substr(colon + 1);
              }
              passOptions.arguments[key] = value;
+           })
+      .add("--nominal",
+           "",
+           "Use the prototype nominal type system instead of the normal "
+           "equirecursive type system.",
+           Options::Arguments::Zero,
+           [](Options* o, const std::string& argument) {
+             setTypeSystem(TypeSystem::Nominal);
            });
   }
 

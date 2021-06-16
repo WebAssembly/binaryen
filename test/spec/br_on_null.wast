@@ -40,3 +40,19 @@
   (func (param $r (ref func)) (drop (br_on_null 0 (local.get $r))))
   (func (param $r (ref extern)) (drop (br_on_null 0 (local.get $r))))
 )
+
+(assert_invalid
+  ;; the same module as the first one in this file, but with a type added to
+  ;; the block
+  (module
+    (type $t (func (result i32)))
+
+    (func $nn (param $r (ref $t)) (result i32)
+      (block $l (ref null $t) ;; br_on_null sends no value; a br to here is bad
+        (return (call_ref (br_on_null $l (local.get $r))))
+      )
+      (i32.const -1)
+    )
+  )
+  "bad break type"
+)

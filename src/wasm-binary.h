@@ -380,9 +380,12 @@ enum EncodedType {
   rtt = -0x18,     // 0x68
   dataref = -0x19, // 0x67
   // func_type form
-  Func = -0x20,   // 0x60
-  Struct = -0x21, // 0x5f
-  Array = -0x22,  // 0x5e
+  Func = -0x20,            // 0x60
+  Struct = -0x21,          // 0x5f
+  Array = -0x22,           // 0x5e
+  FuncExtending = -0x23,   // 0x5d
+  StructExtending = -0x24, // 0x5c
+  ArrayExtending = -0x25,  // 0x5b
   // block_type
   Empty = -0x40 // 0x40
 };
@@ -1398,12 +1401,16 @@ public:
                           Address defaultIfNoMax);
   void readImports();
 
-  // The signatures of each function, given in the function section
-  std::vector<Signature> functionSignatures;
+  // The signatures of each function, including imported functions, given in the
+  // import and function sections. Store HeapTypes instead of Signatures because
+  // reconstructing the HeapTypes from the Signatures is expensive.
+  std::vector<HeapType> functionTypes;
 
   void readFunctionSignatures();
-  Signature getSignatureByFunctionIndex(Index index);
+  HeapType getTypeByIndex(Index index);
+  HeapType getTypeByFunctionIndex(Index index);
   Signature getSignatureByTypeIndex(Index index);
+  Signature getSignatureByFunctionIndex(Index index);
 
   size_t nextLabel;
 

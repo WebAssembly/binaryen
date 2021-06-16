@@ -25,6 +25,9 @@
  (global $global$2 (rtt 2 ${i32_i64}) (rtt.sub ${i32_i64}
   (global.get $global$1)
  ))
+ (global $global$3 (ref ${i32_f32_f64}) (struct.new_default_with_rtt ${i32_f32_f64}
+  (rtt.canon ${i32_f32_f64})
+ ))
  (func $0 (param $0 (ref ${i32_f32_f64})) (result (ref ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
   (local $1 (ref null ${i32_f32_f64}))
   (local $2 (ref null ${i8_mut:i16_ref|{i32_f32_f64}|_mut:ref|{i32_f32_f64}|}))
