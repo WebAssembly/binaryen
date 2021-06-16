@@ -31,9 +31,7 @@ namespace wasm {
 
 class Literals;
 struct GCData;
-// Subclass the vector type so that this is not easily confused with a vector of
-// types (which could be confusing on the Literal constructor).
-struct RttSupers : std::vector<Type> {};
+struct RttSupers;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -61,10 +59,9 @@ class Literal {
     // would do, but it is simple.)
     // The unique_ptr here is to avoid increasing the size of the union as well
     // as the Literal class itself.
-    // To support the experimental RttFreshSub instruction, which emits a sub-
-    // rtt that is not equal to any other (see RttSub in wasm.h), we emit a
-    // "poison" type into the rttSupers, which tells isSubRtt to compare as not
-    // equal. TODO: remove this when the spec stabilizes
+    // To support the experimental RttFreshSub instruction, we not only store
+    // the type, but also a reference to an allocation. TODO: remove this when
+    // the spec stabilizes.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -651,10 +648,6 @@ private:
   Literal minUInt(const Literal& other) const;
   Literal maxUInt(const Literal& other) const;
   Literal avgrUInt(const Literal& other) const;
-
-  // A type that when present in RttSupers indicates that we should compare
-  // equal to nothing else (that is,
-  using RttFreshIndicatorType = Type::none;
 };
 
 class Literals : public SmallVector<Literal, 1> {
@@ -691,6 +684,24 @@ struct GCData {
   Literals values;
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
+
+struct RttSuper {
+  // The type of the super.
+  Type type;
+  // A shared allocation, used to implement rtt.fresh_sub. This is null for a
+  // normal sub, and for a fresh one we allocate a value here, which can then be
+  // used to differentiate rtts. (The allocation is shared so that when copying
+  // an rtt we remain equal.)
+  std::shared_ptr<size_t> freshPtr;
+
+  RttSuper(Type type) : type(type) {}
+
+  void makeFresh() {
+    freshPtr = std::make_shared<size_t>();
+  }
+};
+
+struct RttSupers : std::vector<RttSuper> {};
 
 } // namespace wasm
 
