@@ -373,6 +373,16 @@ struct LowerGCCode
     replaceCurrent(builder.makeCall(name, {curr->ref}, Type::i32));
   }
 
+  void visitArrayCopy(ArrayCopy* curr) {
+    visitExpression(curr);
+    Builder builder(*getModule());
+    auto type = originalTypes[&curr->ref];
+    auto name =
+      std::string("ArrayCopy$") + getModule()->typeNames[type].name.str;
+    replaceCurrent(builder.makeCall(
+      name, {curr->destRef, curr->destIndex, curr->srcRef, curr->srcIndex, curr->length}, Type::none));
+  }
+
   void visitRefFunc(RefFunc* curr) {
     visitExpression(curr);
     replaceCurrent(
@@ -550,7 +560,11 @@ private:
     std::unordered_map<HeapType, Index> typeIndices;
     ModuleUtils::collectHeapTypes(*module, types, typeIndices);
 
-    // Emit support code.
+    // Emit support code for specific types.
+    //
+    // Note that some of this support code will end up identical, e.g., the
+    // getting the length of an array does not depend on the type. Those can be
+    // de-duplicated by other passes later.
     for (auto type : types) {
       if (type.isStruct()) {
         computeLayout(type, loweringInfo.layouts[type]);
@@ -562,6 +576,7 @@ private:
         makeArraySet(type);
         makeArrayGet(type);
         makeArrayLen(type);
+        makeArrayCopy(type);
       }
     }
     makeRefAs();
@@ -843,6 +858,102 @@ private:
         0,
         builder.makeSimpleUnsignedLoad(
           builder.makeLocalGet(0, loweringInfo.pointerType), Type::i32, 4))));
+  }
+
+  void makeArrayCopy(HeapType type) {
+    auto typeName = module->typeNames[type].name.str;
+// WAKA from here
+    auto element = type.getArray().element;
+    auto loweredType = getLoweredType(element.type, module->memory);
+    PointerBuilder builder(*module);
+    for (bool withDefault : {true, false}) {
+      std::vector<Type> params;
+      Index initParam = -1;
+      if (!withDefault) {
+        initParam = 0;
+        params.push_back(loweredType);
+      }
+      // Add the size parameter.
+      auto sizeParam = params.size();
+      params.push_back(loweringInfo.pointerType);
+      // Add the RTT parameter.
+      auto rttParam = params.size();
+      params.push_back(loweringInfo.pointerType);
+      // Add a local to store the allocated value.
+      auto alloc = params.size();
+      std::vector<Expression*> list;
+      // Malloc space for our Array.
+      list.push_back(builder.makeLocalSet(
+        alloc,
+        builder.makeCall(
+          loweringInfo.malloc,
+          {builder.makePointerAdd(
+            builder.makePointerConst(4 + loweringInfo.pointerSize),
+            builder.makePointerMul(
+              builder.makePointerConst(loweredType.getByteSize()),
+              builder.makeLocalGet(sizeParam, loweringInfo.pointerType)))},
+          loweringInfo.pointerType)));
+      // Store the size.
+      list.push_back(builder.makeStore(
+        loweringInfo.pointerSize,
+        4,
+        loweringInfo.pointerSize,
+        builder.makeLocalGet(alloc, loweringInfo.pointerType),
+        builder.makeLocalGet(sizeParam, loweringInfo.pointerType),
+        loweringInfo.pointerType));
+      // Store the rtt.
+      list.push_back(builder.makeStore(
+        loweringInfo.pointerSize,
+        0,
+        loweringInfo.pointerSize,
+        builder.makeLocalGet(alloc, loweringInfo.pointerType),
+        builder.makeLocalGet(rttParam, loweringInfo.pointerType),
+        loweringInfo.pointerType));
+      // Store the values, by performing ArraySet operations.
+      Name loopName("loop");
+      Name blockName("block");
+      Expression* initialization;
+      if (withDefault) {
+        initialization = LiteralUtils::makeZero(loweredType, *module);
+      } else {
+        initialization = builder.makeLocalGet(initParam, loweredType);
+      }
+      initialization = builder.makeCall(
+        std::string("ArraySet$") + typeName,
+        {builder.makeLocalGet(alloc, loweringInfo.pointerType),
+         builder.makeBinary(SubInt32,
+                            builder.makeLocalGet(sizeParam, Type::i32),
+                            builder.makeConst(int32_t(1))),
+         initialization},
+        Type::none);
+      list.push_back(builder.makeLoop(
+        loopName,
+        builder.makeBlock(
+          blockName,
+          {builder.makeBreak(
+             blockName,
+             nullptr,
+             builder.makeUnary(EqZInt32,
+                               builder.makeLocalGet(sizeParam, Type::i32))),
+           initialization,
+           builder.makeLocalSet(
+             sizeParam,
+             builder.makeBinary(SubInt32,
+                                builder.makeLocalGet(sizeParam, Type::i32),
+                                builder.makeConst(int32_t(1)))),
+           builder.makeBreak(loopName)})));
+      // Return the pointer.
+      list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
+      std::string name = "ArrayNew";
+      if (withDefault) {
+        name += "WithDefault";
+      }
+      module->addFunction(
+        builder.makeFunction(name + '$' + typeName,
+                             {Type(params), loweringInfo.pointerType},
+                             {loweringInfo.pointerType},
+                             builder.makeBlock(list)));
+    }
   }
 
   void makeRefAs() {
