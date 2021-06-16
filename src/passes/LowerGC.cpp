@@ -57,7 +57,7 @@
 //       map). To implement the "structural" comparison semantics of rtt.sub,
 //       we compare the chain of parents, using the fact that the pointes to
 //       rtt.canons in the second field are unique.
-// 
+//
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -81,11 +81,12 @@ public:
     return makeConst(int32_t(addr));
   }
 
-  Expression* makePointerLoad(Expression* ptr, Address offset=0) {
+  Expression* makePointerLoad(Expression* ptr, Address offset = 0) {
     return makeSimpleUnsignedLoad(ptr, wasm.memory.indexType, offset);
   }
 
-  Expression* makePointerStore(Expression* ptr, Expression* value, Address offset=0) {
+  Expression*
+  makePointerStore(Expression* ptr, Expression* value, Address offset = 0) {
     return makeSimpleStore(ptr, value, wasm.memory.indexType, offset);
   }
 
@@ -117,11 +118,11 @@ public:
     return makeUnary(EqZInt32, a);
   }
 
-  Expression* makeTrapOnNullParam(Index param, Expression* otherwise=nullptr) {
-    return makeIf(
-      makePointerNullCheck(makeLocalGet(0, wasm.memory.indexType)),
-      makeUnreachable(),
-      otherwise);
+  Expression* makeTrapOnNullParam(Index param,
+                                  Expression* otherwise = nullptr) {
+    return makeIf(makePointerNullCheck(makeLocalGet(0, wasm.memory.indexType)),
+                  makeUnreachable(),
+                  otherwise);
   }
 };
 
@@ -259,25 +260,29 @@ struct LowerGCCode
   void visitRefAs(RefAs* curr) {
     visitExpression(curr);
     Builder builder(*getModule());
-    replaceCurrent(builder.makeCall(getName(curr->op), {curr->value}, loweringInfo->pointerType));
+    replaceCurrent(builder.makeCall(
+      getName(curr->op), {curr->value}, loweringInfo->pointerType));
   }
 
   void visitRefIs(RefIs* curr) {
     visitExpression(curr);
     Builder builder(*getModule());
-    replaceCurrent(builder.makeCall(getName(curr->op), {curr->value}, loweringInfo->pointerType));
+    replaceCurrent(builder.makeCall(
+      getName(curr->op), {curr->value}, loweringInfo->pointerType));
   }
 
   void visitRefCast(RefCast* curr) {
     visitExpression(curr);
     Builder builder(*getModule());
-    replaceCurrent(builder.makeCall("RefCast", {curr->ref, curr->rtt}, loweringInfo->pointerType));
+    replaceCurrent(builder.makeCall(
+      "RefCast", {curr->ref, curr->rtt}, loweringInfo->pointerType));
   }
 
   void visitRefTest(RefTest* curr) {
     visitExpression(curr);
     Builder builder(*getModule());
-    replaceCurrent(builder.makeCall("RefTest", {curr->ref, curr->rtt}, Type::i32));
+    replaceCurrent(
+      builder.makeCall("RefTest", {curr->ref, curr->rtt}, Type::i32));
   }
 
   void visitStructNew(StructNew* curr) {
@@ -341,53 +346,61 @@ struct LowerGCCode
     visitExpression(curr);
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
-    auto name = std::string("ArraySet$") +
-                getModule()->typeNames[type].name.str;
-    replaceCurrent(
-      builder.makeCall(name, {curr->ref, curr->index, curr->value}, Type::none));
+    auto name =
+      std::string("ArraySet$") + getModule()->typeNames[type].name.str;
+    replaceCurrent(builder.makeCall(
+      name, {curr->ref, curr->index, curr->value}, Type::none));
   }
 
   void visitArrayGet(ArrayGet* curr) {
     visitExpression(curr);
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
-    auto name = std::string("ArrayGet$") +
-                getModule()->typeNames[type].name.str;
+    auto name =
+      std::string("ArrayGet$") + getModule()->typeNames[type].name.str;
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, getModule()->memory);
-    replaceCurrent(builder.makeCall(
-      name, {curr->ref, curr->index}, loweredType));
+    replaceCurrent(
+      builder.makeCall(name, {curr->ref, curr->index}, loweredType));
   }
 
   void visitArrayLen(ArrayLen* curr) {
     visitExpression(curr);
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
-    auto name = std::string("ArrayLen$") +
-                getModule()->typeNames[type].name.str;
-    replaceCurrent(
-      builder.makeCall(name, {curr->ref}, Type::i32));
+    auto name =
+      std::string("ArrayLen$") + getModule()->typeNames[type].name.str;
+    replaceCurrent(builder.makeCall(name, {curr->ref}, Type::i32));
   }
 
   void visitRefFunc(RefFunc* curr) {
     visitExpression(curr);
-    replaceCurrent(LiteralUtils::makeFromInt32(loweringInfo->refFuncAddrs[curr->func], loweringInfo->pointerType, *getModule()));
+    replaceCurrent(
+      LiteralUtils::makeFromInt32(loweringInfo->refFuncAddrs[curr->func],
+                                  loweringInfo->pointerType,
+                                  *getModule()));
   }
 
   void visitRttCanon(RttCanon* curr) {
     auto type = curr->type.getHeapType();
     visitExpression(curr);
-    replaceCurrent(LiteralUtils::makeFromInt32(loweringInfo->rttCanonAddrs[type], loweringInfo->pointerType, *getModule()));
+    replaceCurrent(
+      LiteralUtils::makeFromInt32(loweringInfo->rttCanonAddrs[type],
+                                  loweringInfo->pointerType,
+                                  *getModule()));
   }
 
   void visitRttSub(RttSub* curr) {
     auto type = curr->type.getHeapType();
     visitExpression(curr);
     Builder builder(*getModule());
-    replaceCurrent(builder.makeCall("RttSub", {
-      LiteralUtils::makeFromInt32(loweringInfo->rttCanonAddrs[type], loweringInfo->pointerType, *getModule()),
-      curr->parent
-    }, loweringInfo->pointerType));
+    replaceCurrent(builder.makeCall(
+      "RttSub",
+      {LiteralUtils::makeFromInt32(loweringInfo->rttCanonAddrs[type],
+                                   loweringInfo->pointerType,
+                                   *getModule()),
+       curr->parent},
+      loweringInfo->pointerType));
   }
 
   void doWalkFunction(Function* func) {
@@ -468,9 +481,7 @@ private:
   Table* table;
   ElementSegment* segment;
 
-  void pickNames() {
-    loweringInfo.malloc = "malloc";
-  }
+  void pickNames() { loweringInfo.malloc = "malloc"; }
 
   void addMemory() {
     module->memory.exists = true;
@@ -490,12 +501,8 @@ private:
     table = module->addTable(builder.makeTable(
       Names::getValidTableName(*module, "lowergc-table"), Type::funcref, 0, 0));
     // Add an element segment to append to.
-    segment = module->addElementSegment(
-      builder.makeElementSegment("lowergc-segment",
-                     table->name,
-                     builder.makeConst(int32_t(0))
-      )
-    );
+    segment = module->addElementSegment(builder.makeElementSegment(
+      "lowergc-segment", table->name, builder.makeConst(int32_t(0))));
   }
 
   void addStart() {
@@ -504,29 +511,22 @@ private:
     if (module->start.is()) {
       // There is already a start function. Add our block before it.
       auto* func = module->getFunction(module->start);
-      func->body = builder.makeSequence(
-        startBlock,
-        func->body
-      );
+      func->body = builder.makeSequence(startBlock, func->body);
       return;
     }
     // Add a new start function.
     module->start = "LowerGC$start";
     module->addFunction(builder.makeFunction(
-      module->start,
-      {Type::none, Type::none},
-      {},
-      startBlock
-    ));
+      module->start, {Type::none, Type::none}, {}, startBlock));
   }
 
   void addMalloc() {
     Builder builder(*module);
-    auto* nextMalloc =
-      module->addGlobal(builder.makeGlobal("nextMalloc",
-                                           Type::i32,
-                                           builder.makeConst(int32_t(loweringInfo.mallocStart)),
-                                           Builder::Mutable));
+    auto* nextMalloc = module->addGlobal(
+      builder.makeGlobal("nextMalloc",
+                         Type::i32,
+                         builder.makeConst(int32_t(loweringInfo.mallocStart)),
+                         Builder::Mutable));
     // TODO: more than a simple bump allocator that never frees or collects.
     module->addFunction(builder.makeFunction(
       loweringInfo.malloc,
@@ -657,7 +657,8 @@ private:
           std::to_string(i),
         {{loweringInfo.pointerType, loweredType}, Type::none},
         {},
-        builder.makeTrapOnNullParam(0,
+        builder.makeTrapOnNullParam(
+          0,
           builder.makeStore(loweredType.getByteSize(),
                             loweringInfo.layouts[type].fieldOffsets[i],
                             loweredType.getByteSize(),
@@ -678,7 +679,8 @@ private:
           std::to_string(i),
         {loweringInfo.pointerType, loweredType},
         {},
-        builder.makeTrapOnNullParam(0,
+        builder.makeTrapOnNullParam(
+          0,
           builder.makeLoad(loweredType.getByteSize(),
                            false, // TODO: signedness
                            loweringInfo.layouts[type].fieldOffsets[i],
@@ -714,15 +716,11 @@ private:
         alloc,
         builder.makeCall(
           loweringInfo.malloc,
-          {
-            builder.makePointerAdd(
-              builder.makePointerConst(4 + loweringInfo.pointerSize),
-              builder.makePointerMul(
-                                 builder.makePointerConst(loweredType.getByteSize()),
-                                 builder.makeLocalGet(sizeParam, loweringInfo.pointerType)
-              )
-           )
-          },
+          {builder.makePointerAdd(
+            builder.makePointerConst(4 + loweringInfo.pointerSize),
+            builder.makePointerMul(
+              builder.makePointerConst(loweredType.getByteSize()),
+              builder.makeLocalGet(sizeParam, loweringInfo.pointerType)))},
           loweringInfo.pointerType)));
       // Store the size.
       list.push_back(builder.makeStore(
@@ -750,17 +748,13 @@ private:
         initialization = builder.makeLocalGet(initParam, loweredType);
       }
       initialization = builder.makeCall(
-          std::string("ArraySet$") + typeName,
-          {
-           builder.makeLocalGet(alloc, loweringInfo.pointerType),
-           builder.makeBinary(
-             SubInt32,
-             builder.makeLocalGet(sizeParam, Type::i32),
-             builder.makeConst(int32_t(1))
-           ),
-           initialization
-          },
-          Type::none);
+        std::string("ArraySet$") + typeName,
+        {builder.makeLocalGet(alloc, loweringInfo.pointerType),
+         builder.makeBinary(SubInt32,
+                            builder.makeLocalGet(sizeParam, Type::i32),
+                            builder.makeConst(int32_t(1))),
+         initialization},
+        Type::none);
       list.push_back(builder.makeLoop(
         loopName,
         builder.makeBlock(
@@ -783,19 +777,21 @@ private:
       if (withDefault) {
         name += "WithDefault";
       }
-      module->addFunction(builder.makeFunction(name + '$' + typeName,
-                                               {Type(params), loweringInfo.pointerType},
-                                               {loweringInfo.pointerType},
-                                               builder.makeBlock(list)));
+      module->addFunction(
+        builder.makeFunction(name + '$' + typeName,
+                             {Type(params), loweringInfo.pointerType},
+                             {loweringInfo.pointerType},
+                             builder.makeBlock(list)));
     }
   }
 
-  Expression*
-  makeArrayOffset(Type loweredType) {
+  Expression* makeArrayOffset(Type loweredType) {
     Builder builder(*module);
     return builder.makeBinary(
       AddInt32,
-      builder.makeBinary(AddInt32, builder.makeLocalGet(0, loweringInfo.pointerType), builder.makeConst(int32_t(8))),
+      builder.makeBinary(AddInt32,
+                         builder.makeLocalGet(0, loweringInfo.pointerType),
+                         builder.makeConst(int32_t(8))),
       builder.makeBinary(MulInt32,
                          builder.makeConst(int32_t(loweredType.getByteSize())),
                          builder.makeLocalGet(1, loweringInfo.pointerType)));
@@ -807,9 +803,11 @@ private:
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArraySet$") + module->typeNames[type].name.str,
-      {{loweringInfo.pointerType, loweringInfo.pointerType, loweredType}, Type::none},
+      {{loweringInfo.pointerType, loweringInfo.pointerType, loweredType},
+       Type::none},
       {},
-      builder.makeTrapOnNullParam(0,
+      builder.makeTrapOnNullParam(
+        0,
         builder.makeStore(loweredType.getByteSize(),
                           0,
                           loweredType.getByteSize(),
@@ -827,12 +825,12 @@ private:
       {{loweringInfo.pointerType, loweringInfo.pointerType}, loweredType},
       {},
       builder.makeTrapOnNullParam(0,
-        builder.makeLoad(loweredType.getByteSize(),
-                         false, // TODO: signedness
-                         0,
-                         loweredType.getByteSize(),
-                         makeArrayOffset(loweredType),
-                         loweredType))));
+                                  builder.makeLoad(loweredType.getByteSize(),
+                                                   false, // TODO: signedness
+                                                   0,
+                                                   loweredType.getByteSize(),
+                                                   makeArrayOffset(loweredType),
+                                                   loweredType))));
   }
 
   void makeArrayLen(HeapType type) {
@@ -841,37 +839,29 @@ private:
       std::string("ArrayLen$") + module->typeNames[type].name.str,
       {{loweringInfo.pointerType}, Type::i32},
       {},
-      builder.makeTrapOnNullParam(0,
+      builder.makeTrapOnNullParam(
+        0,
         builder.makeSimpleUnsignedLoad(
-                         builder.makeLocalGet(0, loweringInfo.pointerType),
-                         Type::i32,
-                         4))
-    ));
+          builder.makeLocalGet(0, loweringInfo.pointerType), Type::i32, 4))));
   }
-
 
   void makeRefAs() {
     Builder builder(*module);
-    for (RefAsOp op : { RefAsNonNull, RefAsFunc, RefAsData, RefAsI31 }) {
+    for (RefAsOp op : {RefAsNonNull, RefAsFunc, RefAsData, RefAsI31}) {
       std::vector<Expression*> list;
       // Check for null.
       list.push_back(builder.makeIf(
-        builder.makeUnary(
-          EqZInt32,
-          builder.makeLocalGet(0, loweringInfo.pointerType)
-        ),
-        builder.makeUnreachable()
-      ));
+        builder.makeUnary(EqZInt32,
+                          builder.makeLocalGet(0, loweringInfo.pointerType)),
+        builder.makeUnreachable()));
       // Check for a kind, if we need to.
       auto compareRttTo = [&](RttKind kind) {
         list.push_back(builder.makeIf(
-          builder.makeBinary(
-            NeInt32,
-            getRttKind(getRtt(builder.makeLocalGet(0, loweringInfo.pointerType))),
-            builder.makeConst(int32_t(kind))
-          ),
-          builder.makeUnreachable()
-        ));
+          builder.makeBinary(NeInt32,
+                             getRttKind(getRtt(builder.makeLocalGet(
+                               0, loweringInfo.pointerType))),
+                             builder.makeConst(int32_t(kind))),
+          builder.makeUnreachable()));
       };
       switch (op) {
         case RefAsNonNull:
@@ -894,33 +884,27 @@ private:
         getName(op),
         {loweringInfo.pointerType, loweringInfo.pointerType},
         {},
-        builder.makeBlock(list)
-      ));
+        builder.makeBlock(list)));
     }
   }
 
   void makeRefIs() {
     Builder builder(*module);
-    for (RefIsOp op : { RefIsNull, RefIsFunc, RefIsData, RefIsI31 }) {
+    for (RefIsOp op : {RefIsNull, RefIsFunc, RefIsData, RefIsI31}) {
       std::vector<Expression*> list;
       // Check for null.
       list.push_back(builder.makeIf(
-        builder.makeUnary(
-          EqZInt32,
-          builder.makeLocalGet(0, loweringInfo.pointerType)
-        ),
-        builder.makeReturn(builder.makeConst(int32_t(0)))
-      ));
+        builder.makeUnary(EqZInt32,
+                          builder.makeLocalGet(0, loweringInfo.pointerType)),
+        builder.makeReturn(builder.makeConst(int32_t(0)))));
       // Check for a kind, if we need to.
       auto compareRttTo = [&](RttKind kind) {
         list.push_back(builder.makeIf(
-          builder.makeBinary(
-            NeInt32,
-            getRttKind(getRtt(builder.makeLocalGet(0, loweringInfo.pointerType))),
-            builder.makeConst(int32_t(kind))
-          ),
-          builder.makeReturn(builder.makeConst(int32_t(0)))
-        ));
+          builder.makeBinary(NeInt32,
+                             getRttKind(getRtt(builder.makeLocalGet(
+                               0, loweringInfo.pointerType))),
+                             builder.makeConst(int32_t(kind))),
+          builder.makeReturn(builder.makeConst(int32_t(0)))));
       };
       switch (op) {
         case RefIsNull:
@@ -938,15 +922,12 @@ private:
           WASM_UNREACHABLE("unimplemented ref.as_*");
       }
       // If we passed all the checks, we can return the pointer.
-      list.push_back(
-        builder.makeConst(int32_t(1))
-      );
-      module->addFunction(builder.makeFunction(
-        getName(op),
-        {loweringInfo.pointerType, Type::i32},
-        {},
-        builder.makeBlock(list)
-      ));
+      list.push_back(builder.makeConst(int32_t(1)));
+      module->addFunction(
+        builder.makeFunction(getName(op),
+                             {loweringInfo.pointerType, Type::i32},
+                             {},
+                             builder.makeBlock(list)));
     }
   }
 
@@ -962,27 +943,20 @@ private:
     // Check for null.
     list.push_back(builder.makeIf(
       builder.makeUnary(
-        EqZInt32,
-        builder.makeLocalGet(refParam, loweringInfo.pointerType)
-      ),
-      builder.makeReturn(builder.makeConst(int32_t(0)))
-    ));
+        EqZInt32, builder.makeLocalGet(refParam, loweringInfo.pointerType)),
+      builder.makeReturn(builder.makeConst(int32_t(0)))));
     // Get the ref's rtt.
-    list.push_back(
-      builder.makeLocalSet(
-        refRttLocal,
-        getRtt(builder.makeLocalGet(refParam, loweringInfo.pointerType))
-      )
-    );
-    // Check for different kinds. 
+    list.push_back(builder.makeLocalSet(
+      refRttLocal,
+      getRtt(builder.makeLocalGet(refParam, loweringInfo.pointerType))));
+    // Check for different kinds.
     list.push_back(builder.makeIf(
       builder.makeBinary(
         NeInt32,
         getRttKind(builder.makeLocalGet(rttParam, loweringInfo.pointerType)),
-        getRttKind(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))
-      ),
-      builder.makeReturn(builder.makeConst(int32_t(0)))
-    ));
+        getRttKind(
+          builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))),
+      builder.makeReturn(builder.makeConst(int32_t(0)))));
     // Check if the chain of sub-rtts match. That is, we are looking for
     // something like this:
     //
@@ -997,34 +971,27 @@ private:
       loop1,
       builder.makeBlock(
         block1,
-        {
-          // If we found what we want, exit the loop.
-          builder.makeBreak(
-            block1,
-            nullptr,
-            builder.makePointerEq(
-              getRttDecl(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
-              getRttDecl(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
-            )
-          ),
-          // If we reached the end of the ref's rtt's chain, it is not a sub-
-          // rtt.
-          builder.makeIf(
-            builder.makePointerEq(
-              getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
-              builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType))
-            ),
-            builder.makeReturn(builder.makeConst(int32_t(0)))
-          ),
-          // We can look forward down the chain.
-          builder.makeLocalSet(
-            refRttLocal,
-            getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))
-          ),
-          builder.makeBreak(loop1)
-        }
-      )
-    ));
+        {// If we found what we want, exit the loop.
+         builder.makeBreak(
+           block1,
+           nullptr,
+           builder.makePointerEq(getRttDecl(builder.makeLocalGet(
+                                   refRttLocal, loweringInfo.pointerType)),
+                                 getRttDecl(builder.makeLocalGet(
+                                   rttParam, loweringInfo.pointerType)))),
+         // If we reached the end of the ref's rtt's chain, it is not a sub-
+         // rtt.
+         builder.makeIf(
+           builder.makePointerEq(getRttParent(builder.makeLocalGet(
+                                   refRttLocal, loweringInfo.pointerType)),
+                                 builder.makeConst(Literal::makeFromInt32(
+                                   0, loweringInfo.pointerType))),
+           builder.makeReturn(builder.makeConst(int32_t(0)))),
+         // We can look forward down the chain.
+         builder.makeLocalSet(refRttLocal,
+                              getRttParent(builder.makeLocalGet(
+                                refRttLocal, loweringInfo.pointerType))),
+         builder.makeBreak(loop1)})));
     // We found the place where the two chains coincide. From here, they must
     // be identical.
     Name loop2("loop2");
@@ -1033,52 +1000,42 @@ private:
       loop2,
       builder.makeBlock(
         block2,
-        {
-          // If they differ, the chains are not equal.
-          builder.makeIf(
-            builder.makeUnary(EqZInt32,
-              builder.makePointerEq(
-                getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
-                getRttParent(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
-              )
-            ),
-            builder.makeReturn(builder.makeConst(int32_t(0)))
-          ),
-          // They are equal here. Looking onward, if just one chain stops, then
-          // they are not equal.
-          builder.makeIf(
-            builder.makeBinary(
-              XorInt32,
-              builder.makePointerNullCheck(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
-              builder.makePointerNullCheck(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
-            ),
-            builder.makeReturn(builder.makeConst(int32_t(0)))
-          ),
-          // If both stop, then they are equal.
-          builder.makeIf(
-            builder.makePointerNullCheck(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType)),
-            builder.makeReturn(builder.makeConst(int32_t(1)))
-          ),
-          // We can look forward down the chain.
-          builder.makeLocalSet(
-            refRttLocal,
-            getRttParent(builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))
-          ),
-          builder.makeLocalSet(
-            rttParam,
-            getRttParent(builder.makeLocalGet(rttParam, loweringInfo.pointerType))
-          ),
-          builder.makeBreak(loop2)
-        }
-      )
-    ));
+        {// If they differ, the chains are not equal.
+         builder.makeIf(
+           builder.makeUnary(
+             EqZInt32,
+             builder.makePointerEq(getRttParent(builder.makeLocalGet(
+                                     refRttLocal, loweringInfo.pointerType)),
+                                   getRttParent(builder.makeLocalGet(
+                                     rttParam, loweringInfo.pointerType)))),
+           builder.makeReturn(builder.makeConst(int32_t(0)))),
+         // They are equal here. Looking onward, if just one chain stops, then
+         // they are not equal.
+         builder.makeIf(
+           builder.makeBinary(XorInt32,
+                              builder.makePointerNullCheck(builder.makeLocalGet(
+                                refRttLocal, loweringInfo.pointerType)),
+                              builder.makePointerNullCheck(builder.makeLocalGet(
+                                rttParam, loweringInfo.pointerType))),
+           builder.makeReturn(builder.makeConst(int32_t(0)))),
+         // If both stop, then they are equal.
+         builder.makeIf(builder.makePointerNullCheck(builder.makeLocalGet(
+                          refRttLocal, loweringInfo.pointerType)),
+                        builder.makeReturn(builder.makeConst(int32_t(1)))),
+         // We can look forward down the chain.
+         builder.makeLocalSet(refRttLocal,
+                              getRttParent(builder.makeLocalGet(
+                                refRttLocal, loweringInfo.pointerType))),
+         builder.makeLocalSet(rttParam,
+                              getRttParent(builder.makeLocalGet(
+                                rttParam, loweringInfo.pointerType))),
+         builder.makeBreak(loop2)})));
 
     module->addFunction(builder.makeFunction(
       "RefTest",
       {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
       {loweringInfo.pointerType},
-      builder.makeBlock(list)
-    ));
+      builder.makeBlock(list)));
   }
 
   void makeRefCast() {
@@ -1090,67 +1047,49 @@ private:
     // Check for null, and return it if so.
     list.push_back(builder.makeIf(
       builder.makeUnary(
-        EqZInt32,
-        builder.makeLocalGet(refParam, loweringInfo.pointerType)
-      ),
-      builder.makeReturn(builder.makeConst(int32_t(0)))
-    ));
+        EqZInt32, builder.makeLocalGet(refParam, loweringInfo.pointerType)),
+      builder.makeReturn(builder.makeConst(int32_t(0)))));
     // Trap if the cast fails.
     list.push_back(builder.makeIf(
       builder.makeUnary(
         EqZInt32,
         builder.makeCall(
           "RefTest",
-          {
-            builder.makeLocalGet(refParam, loweringInfo.pointerType),
-            builder.makeLocalGet(rttParam, loweringInfo.pointerType)
-          },
-          Type::i32
-        )
-      ),
-      builder.makeUnreachable()
-    ));
+          {builder.makeLocalGet(refParam, loweringInfo.pointerType),
+           builder.makeLocalGet(rttParam, loweringInfo.pointerType)},
+          Type::i32)),
+      builder.makeUnreachable()));
     // Success.
     list.push_back(builder.makeReturn(
-      builder.makeLocalGet(refParam, loweringInfo.pointerType)
-    ));
+      builder.makeLocalGet(refParam, loweringInfo.pointerType)));
     module->addFunction(builder.makeFunction(
       "RefCast",
       {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
       {loweringInfo.pointerType},
-      builder.makeBlock(list)
-    ));
+      builder.makeBlock(list)));
   }
 
   // Given a pointer, load the RTT for it.
   Expression* getRtt(Expression* ptr) {
     // The RTT is the very first field in all GC objects.
     return Builder(*module).makeLoad(loweringInfo.pointerSize,
-                            false,
-                            0,
-                            loweringInfo.pointerSize,
-                            ptr,
-                            loweringInfo.pointerType);
+                                     false,
+                                     0,
+                                     loweringInfo.pointerSize,
+                                     ptr,
+                                     loweringInfo.pointerType);
   }
 
   // Given a pointer to an RTT, load its kind.
   Expression* getRttKind(Expression* ptr) {
     // The RTT kind is the very first field in an RTT
-    return Builder(*module).makeLoad(4,
-                            false,
-                            0,
-                            4,
-                            ptr,
-                            Type::i32);
+    return Builder(*module).makeLoad(4, false, 0, 4, ptr, Type::i32);
   }
 
   // Given a pointer to an RTT, load its declared type.
   Expression* getRttDecl(Expression* ptr) {
     // The RTT declared new type is the second field, after the kind (i32).
-    return Builder(*module).makeSimpleUnsignedLoad(
-                            ptr,
-                            Type::i32,
-                            4);
+    return Builder(*module).makeSimpleUnsignedLoad(ptr, Type::i32, 4);
   }
 
   // Given a pointer to an RTT, load its parent.
@@ -1158,9 +1097,7 @@ private:
     // The RTT parent is the third field, after the kind (i32) and the decl
     // (pointer).
     return Builder(*module).makeSimpleUnsignedLoad(
-                            ptr,
-                            Type::i32,
-                            4 + loweringInfo.pointerSize);
+      ptr, Type::i32, 4 + loweringInfo.pointerSize);
   }
 
   void addTypeSupport(const std::vector<HeapType>& types) {
@@ -1220,9 +1157,8 @@ private:
 
   void makeRttCanon(HeapType type) {
     // Allocate this rtt at the next free location.
-    auto addr = loweringInfo.compileTimeMalloc(
-      4 + 2 * loweringInfo.pointerSize
-    );
+    auto addr =
+      loweringInfo.compileTimeMalloc(4 + 2 * loweringInfo.pointerSize);
     loweringInfo.rttCanonAddrs[type] = addr;
     int32_t rttValue;
     if (type.isFunction()) {
@@ -1234,16 +1170,15 @@ private:
     }
     PointerBuilder builder(*module);
     // Write the rtt kind.
-    startBlock->list.push_back(builder.makeSimpleStore(
-      builder.makeConst(int32_t(addr)),
-      builder.makeConst(int32_t(rttValue)),
-      Type::i32
-    ));
+    startBlock->list.push_back(
+      builder.makeSimpleStore(builder.makeConst(int32_t(addr)),
+                              builder.makeConst(int32_t(rttValue)),
+                              Type::i32));
     // Write the type field, which points to ourself.
-    startBlock->list.push_back(builder.makePointerStore(
-      builder.makeConst(int32_t(addr + 4)),
-      builder.makeConst(Literal::makeFromInt32(addr, loweringInfo.pointerType))
-    ));
+    startBlock->list.push_back(
+      builder.makePointerStore(builder.makeConst(int32_t(addr + 4)),
+                               builder.makeConst(Literal::makeFromInt32(
+                                 addr, loweringInfo.pointerType))));
     // Write a null pointer for the parent.
     startBlock->list.push_back(builder.makeStore(
       loweringInfo.pointerSize,
@@ -1251,8 +1186,7 @@ private:
       loweringInfo.pointerSize,
       builder.makeConst(int32_t(addr + 4 + loweringInfo.pointerSize)),
       builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
-      loweringInfo.pointerType
-    ));
+      loweringInfo.pointerType));
   }
 
   void makeRttSub() {
@@ -1282,35 +1216,36 @@ private:
                        Type::i32),
       loweringInfo.pointerType));
     // Store a pointer to the new heap type.
-    list.push_back(builder.makeStore(
-      loweringInfo.pointerSize,
-      4,
-      loweringInfo.pointerSize,
-      builder.makeLocalGet(alloc, loweringInfo.pointerType),
-      builder.makeLocalGet(0, loweringInfo.pointerType),
-      loweringInfo.pointerType));
+    list.push_back(
+      builder.makeStore(loweringInfo.pointerSize,
+                        4,
+                        loweringInfo.pointerSize,
+                        builder.makeLocalGet(alloc, loweringInfo.pointerType),
+                        builder.makeLocalGet(0, loweringInfo.pointerType),
+                        loweringInfo.pointerType));
     // Store a pointer to the parent rtt.
-    list.push_back(builder.makeStore(
-      loweringInfo.pointerSize,
-      4,
-      loweringInfo.pointerSize,
-      builder.makeLocalGet(alloc, loweringInfo.pointerType),
-      builder.makeLocalGet(1, loweringInfo.pointerType),
-      loweringInfo.pointerType));
+    list.push_back(
+      builder.makeStore(loweringInfo.pointerSize,
+                        4,
+                        loweringInfo.pointerSize,
+                        builder.makeLocalGet(alloc, loweringInfo.pointerType),
+                        builder.makeLocalGet(1, loweringInfo.pointerType),
+                        loweringInfo.pointerType));
     // Return the pointer.
     list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
-    module->addFunction(builder.makeFunction("RttSub",
-                         {{loweringInfo.pointerType, loweringInfo.pointerType}, loweringInfo.pointerType},
-                         {loweringInfo.pointerType},
-                         builder.makeBlock(list)));
+    module->addFunction(builder.makeFunction(
+      "RttSub",
+      {{loweringInfo.pointerType, loweringInfo.pointerType},
+       loweringInfo.pointerType},
+      {loweringInfo.pointerType},
+      builder.makeBlock(list)));
   }
 
   Index addToTable(Name name) {
     Builder builder(*module);
     auto index = segment->data.size();
     segment->data.push_back(
-      builder.makeRefFunc(name, HeapType(module->getFunction(name)->sig))
-    );
+      builder.makeRefFunc(name, HeapType(module->getFunction(name)->sig)));
     table->initial++;
     table->max++;
     return index;
@@ -1328,14 +1263,12 @@ private:
     auto type = HeapType(func->sig);
     startBlock->list.push_back(builder.makePointerStore(
       builder.makePointerConst(addr),
-      builder.makePointerConst(loweringInfo.rttCanonAddrs[type])
-    ));
+      builder.makePointerConst(loweringInfo.rttCanonAddrs[type])));
     // Write the table index
-    startBlock->list.push_back(builder.makeSimpleStore(
-      builder.makePointerConst(addr + 4),
-      builder.makeConst(int32_t(tableIndex)),
-      Type::i32
-    ));
+    startBlock->list.push_back(
+      builder.makeSimpleStore(builder.makePointerConst(addr + 4),
+                              builder.makeConst(int32_t(tableIndex)),
+                              Type::i32));
   }
 
   // Some global initializers need to be lowered into non-globals. Specifically,
@@ -1346,19 +1279,20 @@ private:
     for (auto& global : module->globals) {
       if (global->init) {
         if (auto* rttSub = global->init->dynCast<RttSub>()) {
-          startBlock->list.push_back(
-            builder.makeGlobalSet(
-              global->name,
-              builder.makeCall("RttSub", {
-                LiteralUtils::makeFromInt32(loweringInfo.rttCanonAddrs[rttSub->type.getHeapType()], loweringInfo.pointerType, *module),
-                rttSub->parent
-              }, Type::i32)
-            )
-          );
+          startBlock->list.push_back(builder.makeGlobalSet(
+            global->name,
+            builder.makeCall(
+              "RttSub",
+              {LiteralUtils::makeFromInt32(
+                 loweringInfo.rttCanonAddrs[rttSub->type.getHeapType()],
+                 loweringInfo.pointerType,
+                 *module),
+               rttSub->parent},
+              Type::i32)));
           // Set a 0 as a placeholder for the global.
           global->init = builder.makeConst(int32_t(0));
-          // Unfortunately, we must make the global mutable so we can write to it
-          // after initialization.
+          // Unfortunately, we must make the global mutable so we can write to
+          // it after initialization.
           global->mutable_ = true;
         }
       }
