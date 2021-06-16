@@ -2906,8 +2906,11 @@ switch (op[0]) {
           case 'c':
             if (strcmp(op, "rtt.canon") == 0) { return makeRttCanon(s); }
             goto parse_error;
+          case 'f':
+            if (strcmp(op, "rtt.fresh_sub") == 0) { return makeRttSub(s, true); }
+            goto parse_error;
           case 's':
-            if (strcmp(op, "rtt.sub") == 0) { return makeRttSub(s); }
+            if (strcmp(op, "rtt.sub") == 0) { return makeRttSub(s, false); }
             goto parse_error;
           default: goto parse_error;
         }
