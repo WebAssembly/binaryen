@@ -1595,8 +1595,7 @@ public:
     auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
     newSupers->push_back(parentValue.type);
     if (curr->fresh) {
-      auto& back = newSupers->back();
-      back.makeFresh();
+      newSupers->back().makeFresh();
     }
     return Literal(std::move(newSupers), curr->type);
   }
