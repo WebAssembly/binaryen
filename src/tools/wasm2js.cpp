@@ -839,8 +839,7 @@ void AssertionEmitter::emit() {
     Element& e = *root[i];
     if (e.isList() && e.size() >= 1 && e[0]->isStr() &&
         e[0]->str() == Name("module")) {
-      wasm.~Module();
-      new (&wasm) Module();
+      ModuleUtils::clearModule(wasm);
       std::stringstream funcNameS;
       funcNameS << ASM_FUNC.c_str() << i;
       std::stringstream moduleNameS;
