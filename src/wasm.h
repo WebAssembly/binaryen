@@ -1407,6 +1407,11 @@ public:
 
   Expression* parent;
 
+  // rtt.fresh_sub is like rtt.sub, but never caching or canonicalizing (i.e.,
+  // it always returns a fresh RTT, non-identical to any other RTT in the
+  // system).
+  bool fresh = false;
+
   void finalize();
 };
 

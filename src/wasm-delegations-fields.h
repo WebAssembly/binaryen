@@ -599,6 +599,7 @@ switch (DELEGATE_ID) {
   case Expression::Id::RttSubId: {
     DELEGATE_START(RttSub);
     DELEGATE_FIELD_CHILD(RttSub, parent);
+    DELEGATE_FIELD_INT(RttSub, fresh);
     DELEGATE_END(RttSub);
     break;
   }
