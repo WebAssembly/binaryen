@@ -1061,6 +1061,7 @@ enum ASTNodes {
   I31GetU = 0x22,
   RttCanon = 0x30,
   RttSub = 0x31,
+  RttFreshSub = 0x32,
   RefTest = 0x40,
   RefCast = 0x41,
   BrOnCast = 0x42,

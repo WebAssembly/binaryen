@@ -25,6 +25,9 @@
  (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild
   (global.get $rttchild)
  ))
+ (global $rttfreshgrandchild (rtt 2 $grandchild) (rtt.fresh_sub $grandchild
+  (global.get $rttchild)
+ ))
  (global $struct.new-in-global (ref $struct.A) (struct.new_default_with_rtt $struct.A
   (rtt.canon $struct.A)
  ))

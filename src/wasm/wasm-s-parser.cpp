@@ -2599,6 +2599,12 @@ Expression* SExpressionWasmBuilder::makeRttSub(Element& s) {
   return Builder(wasm).makeRttSub(heapType, parent);
 }
 
+Expression* SExpressionWasmBuilder::makeRttFreshSub(Element& s) {
+  auto heapType = parseHeapType(*s[1]);
+  auto parent = parseExpression(*s[2]);
+  return Builder(wasm).makeRttFreshSub(heapType, parent);
+}
+
 Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
   auto heapType = parseHeapType(*s[1]);
   auto numOperands = s.size() - 3;
