@@ -129,6 +129,9 @@ void PassRegistry::registerPasses() {
   registerPass("extract-function",
                "leaves just one function (useful for debugging)",
                createExtractFunctionPass);
+  registerPass("extract-function-index",
+               "leaves just one function selected by index",
+               createExtractFunctionIndexPass);
   registerPass(
     "flatten", "flattens out code, removing nesting", createFlattenPass);
   registerPass("fpcast-emu",
