@@ -326,7 +326,7 @@ enum Section {
   Code = 10,
   Data = 11,
   DataCount = 12,
-  Event = 13
+  Tag = 13
 };
 
 // A passive segment is a segment that will not be automatically copied into a
@@ -1109,7 +1109,7 @@ class WasmBinaryWriter {
   // just use them directly).
   struct BinaryIndexes {
     std::unordered_map<Name, Index> functionIndexes;
-    std::unordered_map<Name, Index> eventIndexes;
+    std::unordered_map<Name, Index> tagIndexes;
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
     std::unordered_map<Name, Index> elemIndexes;
@@ -1132,7 +1132,7 @@ class WasmBinaryWriter {
         }
       };
       addIndexes(wasm.functions, functionIndexes);
-      addIndexes(wasm.events, eventIndexes);
+      addIndexes(wasm.tags, tagIndexes);
       addIndexes(wasm.tables, tableIndexes);
 
       for (auto& curr : wasm.elementSegments) {
@@ -1212,12 +1212,12 @@ public:
   void writeExports();
   void writeDataCount();
   void writeDataSegments();
-  void writeEvents();
+  void writeTags();
 
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getTableIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
-  uint32_t getEventIndex(Name name) const;
+  uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
 
   void writeTableDeclarations();
@@ -1393,7 +1393,7 @@ public:
   Name getFunctionName(Index index);
   Name getTableName(Index index);
   Name getGlobalName(Index index);
-  Name getEventName(Index index);
+  Name getTagName(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,
@@ -1555,7 +1555,7 @@ public:
   void readTableDeclarations();
   void readElementSegments();
 
-  void readEvents();
+  void readTags();
 
   static Name escape(Name name);
   void readNames(size_t);

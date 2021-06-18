@@ -76,7 +76,7 @@ int main() {
      (memory $mem (shared 3 42))
      (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
-     (event $e (attr 0) (param i32))
+     (tag $e (attr 0) (param i32))
     ))");
 
   // Imported global stuff
@@ -85,7 +85,7 @@ int main() {
      (import "env" "mem" (memory $mem (shared 3 42)))
      (import "env" "tab" (table $tab 3 42 funcref))
      (import "env" "glob" (global $glob (mut i32)))
-     (import "env" "e" (event $e (attr 0) (param i32)))
+     (import "env" "e" (tag $e (attr 0) (param i32)))
     ))");
 
   // Exported global stuff
@@ -94,11 +94,11 @@ int main() {
      (memory $mem (shared 3 42))
      (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
-     (event $e (attr 0) (param i32))
+     (tag $e (attr 0) (param i32))
      (export "mem" (memory $mem))
      (export "tab" (table $tab))
      (export "glob" (global $glob))
-     (export "e" (event $e))
+     (export "e" (tag $e))
     ))");
 
   // Non-deferred function

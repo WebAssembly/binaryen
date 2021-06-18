@@ -1849,7 +1849,7 @@ struct PrintExpressionContents
   }
   void visitThrow(Throw* curr) {
     printMedium(o, "throw ");
-    printName(curr->event, o);
+    printName(curr->tag, o);
   }
   void visitRethrow(Rethrow* curr) {
     printMedium(o, "rethrow ");
@@ -2345,12 +2345,12 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     maybePrintImplicitBlock(curr->body, true);
     decIndent();
     o << "\n";
-    for (size_t i = 0; i < curr->catchEvents.size(); i++) {
+    for (size_t i = 0; i < curr->catchTags.size(); i++) {
       doIndent(o, indent);
       printDebugDelimiterLocation(curr, i);
       o << '(';
       printMedium(o, "catch ");
-      printName(curr->catchEvents[i], o);
+      printName(curr->catchTags[i], o);
       incIndent();
       maybePrintImplicitBlock(curr->catchBodies[i], true);
       decIndent();
@@ -2358,7 +2358,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     if (curr->hasCatchAll()) {
       doIndent(o, indent);
-      printDebugDelimiterLocation(curr, curr->catchEvents.size());
+      printDebugDelimiterLocation(curr, curr->catchTags.size());
       o << '(';
       printMedium(o, "catch_all");
       incIndent();
@@ -2534,8 +2534,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       case ExternalKind::Global:
         o << "global";
         break;
-      case ExternalKind::Event:
-        o << "event";
+      case ExternalKind::Tag:
+        o << "tag";
         break;
       case ExternalKind::Invalid:
         WASM_UNREACHABLE("invalid ExternalKind");
@@ -2672,28 +2672,28 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
     o << maybeNewLine;
   }
-  void visitEvent(Event* curr) {
+  void visitTag(Tag* curr) {
     if (curr->imported()) {
-      visitImportedEvent(curr);
+      visitImportedTag(curr);
     } else {
-      visitDefinedEvent(curr);
+      visitDefinedTag(curr);
     }
   }
-  void visitImportedEvent(Event* curr) {
+  void visitImportedTag(Tag* curr) {
     doIndent(o, indent);
     o << '(';
     emitImportHeader(curr);
-    o << "(event ";
+    o << "(tag ";
     printName(curr->name, o);
     o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
     printParamType(o, curr->sig.params, currModule);
     o << "))";
     o << maybeNewLine;
   }
-  void visitDefinedEvent(Event* curr) {
+  void visitDefinedTag(Tag* curr) {
     doIndent(o, indent);
     o << '(';
-    printMedium(o, "event ");
+    printMedium(o, "tag ");
     printName(curr->name, o);
     o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
     printParamType(o, curr->sig.params, currModule);
@@ -2910,8 +2910,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterImportedFunctions(
       *curr, [&](Function* func) { visitFunction(func); });
-    ModuleUtils::iterImportedEvents(*curr,
-                                    [&](Event* event) { visitEvent(event); });
+    ModuleUtils::iterImportedTags(*curr, [&](Tag* tag) { visitTag(tag); });
     ModuleUtils::iterDefinedGlobals(
       *curr, [&](Global* global) { visitGlobal(global); });
     ModuleUtils::iterDefinedMemories(
@@ -2931,8 +2930,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       }
       o << ')' << maybeNewLine;
     }
-    ModuleUtils::iterDefinedEvents(*curr,
-                                   [&](Event* event) { visitEvent(event); });
+    ModuleUtils::iterDefinedTags(*curr, [&](Tag* tag) { visitTag(tag); });
     for (auto& child : curr->exports) {
       doIndent(o, indent);
       visitExport(child.get());
@@ -3102,7 +3100,7 @@ printStackInst(StackInst* inst, std::ostream& o, Function* func) {
     }
     case StackInst::Catch: {
       // Because StackInst does not have info on which catch within a try this
-      // is, we can't print the event name.
+      // is, we can't print the tag name.
       printMedium(o, "catch");
       break;
     }
@@ -3186,7 +3184,7 @@ printStackIR(StackIR* ir, std::ostream& o, Function* func) {
         doIndent();
         printMedium(o, "catch ");
         Try* curr = inst->origin->cast<Try>();
-        printName(curr->catchEvents[catchIndexStack.back()++], o);
+        printName(curr->catchTags[catchIndexStack.back()++], o);
         indent++;
         break;
       }

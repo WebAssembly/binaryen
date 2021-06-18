@@ -45,7 +45,7 @@ BinaryenFeatureAll: 16383
  (table $0 1 1 funcref)
  (elem $0 (table $0) (i32.const 0) func "$kitchen()sinker")
  (elem $passive func "$kitchen()sinker")
- (event $a-event (attr 0) (param i32))
+ (tag $a-tag (attr 0) (param i32))
  (export "kitchen_sinker" (func "$kitchen()sinker"))
  (export "mem" (memory $0))
  (start $starter)
@@ -1990,11 +1990,11 @@ BinaryenFeatureAll: 16383
       )
       (try
        (do
-        (throw $a-event
+        (throw $a-tag
          (i32.const 0)
         )
        )
-       (catch $a-event
+       (catch $a-tag
         (drop
          (pop i32)
         )
@@ -2007,7 +2007,7 @@ BinaryenFeatureAll: 16383
        (do
         (try
          (do
-          (throw $a-event
+          (throw $a-tag
            (i32.const 0)
           )
          )

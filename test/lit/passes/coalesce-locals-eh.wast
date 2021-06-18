@@ -9,7 +9,7 @@
     (i32.const 1984)
   )
 
- (event $e (attr 0))
+ (tag $e (attr 0))
   ;; CHECK:      (func $bug-cfg-traversal (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do

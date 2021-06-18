@@ -61,7 +61,7 @@ struct Metrics
     counts["[imports]"] = imports.getNumImports();
     counts["[funcs]"] = imports.getNumDefinedFunctions();
     counts["[globals]"] = imports.getNumDefinedGlobals();
-    counts["[events]"] = imports.getNumDefinedEvents();
+    counts["[tags]"] = imports.getNumDefinedTags();
     counts["[exports]"] = module->exports.size();
     counts["[tables]"] = imports.getNumDefinedTables();
     // add memory and table

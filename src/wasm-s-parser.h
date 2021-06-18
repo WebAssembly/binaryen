@@ -127,10 +127,10 @@ class SExpressionWasmBuilder {
   std::vector<Name> functionNames;
   std::vector<Name> tableNames;
   std::vector<Name> globalNames;
-  std::vector<Name> eventNames;
+  std::vector<Name> tagNames;
   int functionCounter = 0;
   int globalCounter = 0;
-  int eventCounter = 0;
+  int tagCounter = 0;
   int tableCounter = 0;
   int elemCounter = 0;
   int memoryCounter = 0;
@@ -168,7 +168,7 @@ private:
   Name getFunctionName(Element& s);
   Name getTableName(Element& s);
   Name getGlobalName(Element& s);
-  Name getEventName(Element& s);
+  Name getTagName(Element& s);
   void parseStart(Element& s) { wasm.addStart(getFunctionName(*s[1])); }
 
   // returns the next index in s
@@ -323,7 +323,7 @@ private:
   // Parses something like (func ..), (array ..), (struct)
   HeapType parseHeapType(Element& s);
 
-  void parseEvent(Element& s, bool preParseImport = false);
+  void parseTag(Element& s, bool preParseImport = false);
 
   Function::DebugLocation getDebugLocation(const SourceLocation& loc);
 

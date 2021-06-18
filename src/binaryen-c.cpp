@@ -201,8 +201,8 @@ BinaryenExternalKind BinaryenExternalMemory(void) {
 BinaryenExternalKind BinaryenExternalGlobal(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Global);
 }
-BinaryenExternalKind BinaryenExternalEvent(void) {
-  return static_cast<BinaryenExternalKind>(ExternalKind::Event);
+BinaryenExternalKind BinaryenExternalTag(void) {
+  return static_cast<BinaryenExternalKind>(ExternalKind::Tag);
 }
 
 // Features
@@ -1287,8 +1287,8 @@ BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenExpressionRef body,
-                                  const char** catchEvents,
-                                  BinaryenIndex numCatchEvents,
+                                  const char** catchTags,
+                                  BinaryenIndex numCatchTags,
                                   BinaryenExpressionRef* catchBodies,
                                   BinaryenIndex numCatchBodies,
                                   const char* delegateTarget) {
@@ -1297,8 +1297,8 @@ BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
     ret->name = name;
   }
   ret->body = (Expression*)body;
-  for (BinaryenIndex i = 0; i < numCatchEvents; i++) {
-    ret->catchEvents.push_back(catchEvents[i]);
+  for (BinaryenIndex i = 0; i < numCatchTags; i++) {
+    ret->catchTags.push_back(catchTags[i]);
   }
   for (BinaryenIndex i = 0; i < numCatchBodies; i++) {
     ret->catchBodies.push_back((Expression*)catchBodies[i]);
@@ -1311,7 +1311,7 @@ BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
 }
 
 BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
-                                    const char* event,
+                                    const char* tag,
                                     BinaryenExpressionRef* operands,
                                     BinaryenIndex numOperands) {
   std::vector<Expression*> args;
@@ -1319,7 +1319,7 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
     args.push_back((Expression*)operands[i]);
   }
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeThrow(event, args));
+    Builder(*(Module*)module).makeThrow(tag, args));
 }
 
 BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
@@ -2979,55 +2979,55 @@ void BinaryenTrySetBody(BinaryenExpressionRef expr,
   assert(bodyExpr);
   static_cast<Try*>(expression)->body = (Expression*)bodyExpr;
 }
-BinaryenIndex BinaryenTryGetNumCatchEvents(BinaryenExpressionRef expr) {
+BinaryenIndex BinaryenTryGetNumCatchTags(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->catchEvents.size();
+  return static_cast<Try*>(expression)->catchTags.size();
 }
 BinaryenIndex BinaryenTryGetNumCatchBodies(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
   return static_cast<Try*>(expression)->catchBodies.size();
 }
-const char* BinaryenTryGetCatchEventAt(BinaryenExpressionRef expr,
-                                       BinaryenIndex index) {
+const char* BinaryenTryGetCatchTagAt(BinaryenExpressionRef expr,
+                                     BinaryenIndex index) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(index < static_cast<Try*>(expression)->catchEvents.size());
-  return static_cast<Try*>(expression)->catchEvents[index].c_str();
+  assert(index < static_cast<Try*>(expression)->catchTags.size());
+  return static_cast<Try*>(expression)->catchTags[index].c_str();
 }
-void BinaryenTrySetCatchEventAt(BinaryenExpressionRef expr,
-                                BinaryenIndex index,
-                                const char* catchEvent) {
+void BinaryenTrySetCatchTagAt(BinaryenExpressionRef expr,
+                              BinaryenIndex index,
+                              const char* catchTag) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(index < static_cast<Try*>(expression)->catchEvents.size());
-  assert(catchEvent);
-  static_cast<Try*>(expression)->catchEvents[index] = catchEvent;
+  assert(index < static_cast<Try*>(expression)->catchTags.size());
+  assert(catchTag);
+  static_cast<Try*>(expression)->catchTags[index] = catchTag;
 }
-BinaryenIndex BinaryenTryAppendCatchEvent(BinaryenExpressionRef expr,
-                                          const char* catchEvent) {
+BinaryenIndex BinaryenTryAppendCatchTag(BinaryenExpressionRef expr,
+                                        const char* catchTag) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(catchEvent);
-  auto& list = static_cast<Try*>(expression)->catchEvents;
+  assert(catchTag);
+  auto& list = static_cast<Try*>(expression)->catchTags;
   auto index = list.size();
-  list.push_back(catchEvent);
+  list.push_back(catchTag);
   return index;
 }
-void BinaryenTryInsertCatchEventAt(BinaryenExpressionRef expr,
-                                   BinaryenIndex index,
-                                   const char* catchEvent) {
+void BinaryenTryInsertCatchTagAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 const char* catchTag) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(catchEvent);
-  static_cast<Try*>(expression)->catchEvents.insertAt(index, catchEvent);
+  assert(catchTag);
+  static_cast<Try*>(expression)->catchTags.insertAt(index, catchTag);
 }
-const char* BinaryenTryRemoveCatchEventAt(BinaryenExpressionRef expr,
-                                          BinaryenIndex index) {
+const char* BinaryenTryRemoveCatchTagAt(BinaryenExpressionRef expr,
+                                        BinaryenIndex index) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->catchEvents.removeAt(index).c_str();
+  return static_cast<Try*>(expression)->catchTags.removeAt(index).c_str();
 }
 BinaryenExpressionRef BinaryenTryGetCatchBodyAt(BinaryenExpressionRef expr,
                                                 BinaryenIndex index) {
@@ -3092,15 +3092,15 @@ bool BinaryenTryIsDelegate(BinaryenExpressionRef expr) {
   return static_cast<Try*>(expression)->isDelegate();
 }
 // Throw
-const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {
+const char* BinaryenThrowGetTag(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Throw>());
-  return static_cast<Throw*>(expression)->event.c_str();
+  return static_cast<Throw*>(expression)->tag.c_str();
 }
-void BinaryenThrowSetEvent(BinaryenExpressionRef expr, const char* eventName) {
+void BinaryenThrowSetTag(BinaryenExpressionRef expr, const char* tagName) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Throw>());
-  static_cast<Throw*>(expression)->event = eventName;
+  static_cast<Throw*>(expression)->tag = tagName;
 }
 BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -3348,26 +3348,26 @@ BinaryenGlobalRef BinaryenGetGlobalByIndex(BinaryenModuleRef module,
   return globals[index].get();
 }
 
-// Events
+// Tags
 
-BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
-                                  const char* name,
-                                  uint32_t attribute,
-                                  BinaryenType params,
-                                  BinaryenType results) {
-  auto* ret = new Event();
+BinaryenTagRef BinaryenAddTag(BinaryenModuleRef module,
+                              const char* name,
+                              uint32_t attribute,
+                              BinaryenType params,
+                              BinaryenType results) {
+  auto* ret = new Tag();
   ret->setExplicitName(name);
   ret->attribute = attribute;
   ret->sig = Signature(Type(params), Type(results));
-  ((Module*)module)->addEvent(ret);
+  ((Module*)module)->addTag(ret);
   return ret;
 }
 
-BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
-  return ((Module*)module)->getEventOrNull(name);
+BinaryenTagRef BinaryenGetTag(BinaryenModuleRef module, const char* name) {
+  return ((Module*)module)->getTagOrNull(name);
 }
-void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name) {
-  ((Module*)module)->removeEvent(name);
+void BinaryenRemoveTag(BinaryenModuleRef module, const char* name) {
+  ((Module*)module)->removeTag(name);
 }
 
 // Imports
@@ -3419,19 +3419,19 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
   ret->mutable_ = mutable_;
   ((Module*)module)->addGlobal(ret);
 }
-void BinaryenAddEventImport(BinaryenModuleRef module,
-                            const char* internalName,
-                            const char* externalModuleName,
-                            const char* externalBaseName,
-                            uint32_t attribute,
-                            BinaryenType params,
-                            BinaryenType results) {
-  auto* ret = new Event();
+void BinaryenAddTagImport(BinaryenModuleRef module,
+                          const char* internalName,
+                          const char* externalModuleName,
+                          const char* externalBaseName,
+                          uint32_t attribute,
+                          BinaryenType params,
+                          BinaryenType results) {
+  auto* ret = new Tag();
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   ret->sig = Signature(Type(params), Type(results));
-  ((Module*)module)->addEvent(ret);
+  ((Module*)module)->addTag(ret);
 }
 
 // Exports
@@ -3481,13 +3481,13 @@ BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
   ((Module*)module)->addExport(ret);
   return ret;
 }
-BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
-                                         const char* internalName,
-                                         const char* externalName) {
+BinaryenExportRef BinaryenAddTagExport(BinaryenModuleRef module,
+                                       const char* internalName,
+                                       const char* externalName) {
   auto* ret = new Export();
   ret->value = internalName;
   ret->name = externalName;
-  ret->kind = ExternalKind::Event;
+  ret->kind = ExternalKind::Tag;
   ((Module*)module)->addExport(ret);
   return ret;
 }
@@ -4146,21 +4146,21 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 }
 
 //
-// =========== Event operations ===========
+// =========== Tag operations ===========
 //
 
-const char* BinaryenEventGetName(BinaryenEventRef event) {
-  return ((Event*)event)->name.c_str();
+const char* BinaryenTagGetName(BinaryenTagRef tag) {
+  return ((Tag*)tag)->name.c_str();
 }
-uint32_t BinaryenEventGetAttribute(BinaryenEventRef event) {
-  return ((Event*)event)->attribute;
+uint32_t BinaryenTagGetAttribute(BinaryenTagRef tag) {
+  return ((Tag*)tag)->attribute;
 }
-BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
-  return ((Event*)event)->sig.params.getID();
+BinaryenType BinaryenTagGetParams(BinaryenTagRef tag) {
+  return ((Tag*)tag)->sig.params.getID();
 }
 
-BinaryenType BinaryenEventGetResults(BinaryenEventRef event) {
-  return ((Event*)event)->sig.results.getID();
+BinaryenType BinaryenTagGetResults(BinaryenTagRef tag) {
+  return ((Tag*)tag)->sig.results.getID();
 }
 
 //
@@ -4191,10 +4191,10 @@ const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
     return "";
   }
 }
-const char* BinaryenEventImportGetModule(BinaryenEventRef import) {
-  auto* event = (Event*)import;
-  if (event->imported()) {
-    return event->module.c_str();
+const char* BinaryenTagImportGetModule(BinaryenTagRef import) {
+  auto* tag = (Tag*)import;
+  if (tag->imported()) {
+    return tag->module.c_str();
   } else {
     return "";
   }
@@ -4223,10 +4223,10 @@ const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
     return "";
   }
 }
-const char* BinaryenEventImportGetBase(BinaryenEventRef import) {
-  auto* event = (Event*)import;
-  if (event->imported()) {
-    return event->base.c_str();
+const char* BinaryenTagImportGetBase(BinaryenTagRef import) {
+  auto* tag = (Tag*)import;
+  if (tag->imported()) {
+    return tag->base.c_str();
   } else {
     return "";
   }
