@@ -9,7 +9,7 @@
  (func $10
   ;; A non-nullable local. The pass should ignore it (as we cannot optimize
   ;; anything here anyhow: the code must assign to the local before reading from
-  ;; it).
+  ;; it, so no sets can be redundant in that sense).
   (local $1 (ref func))
  )
 )
