@@ -7,10 +7,9 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $10
-  ;; A non-nullable local. The pass should ignore it (as we cannot emit a zero
-  ;; for it that we'd try to propagate to callers; in fact, it would be a bug
-  ;; if the code referred to that value, as it must assign to the local before
-  ;; reading from it, so there is nothing we can optimize anyhow).
+  ;; A non-nullable local. The pass should ignore it (as we cannot optimize
+  ;; anything here anyhow: the code must assign to the local before reading from
+  ;; it).
   (local $1 (ref func))
  )
 )
