@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --inlining --enable-gc-nn-locals -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (func $caller-n
+ ;; CHECK:      (func $caller-nullable
  ;; CHECK-NEXT:  (local $0 funcref)
  ;; CHECK-NEXT:  (block $__inlined_func$target-nullable
  ;; CHECK-NEXT:   (local.set $0
