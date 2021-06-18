@@ -295,7 +295,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     auto type = from->vars[i];
     if (type.isRef() && !type.isNullable()) {
       // Non-nullable locals do not need to be zeroed out. They have no zero
-      // value, and by definition should not be used before being read from, so
+      // value, and by definition should not be used before being written to, so
       // any value we set here would not be observed anyhow.
       continue;
     }
