@@ -20,7 +20,7 @@
  (table $0 3 3 funcref)
  (elem (i32.const 0) $0 $1 $2)
  (elem declare func $27 $3)
- (tag $tag$0 (attr 0) (param i32))
+ (tag $tag$0 (param i32))
  (export "export_func" (func $fimport$0))
  (export "export_global" (global $gimport$0))
  (func $0 (param $0 externref)

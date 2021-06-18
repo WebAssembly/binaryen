@@ -1,8 +1,8 @@
 (module
-  (tag $e-i32 (attr 0) (param i32))
-  (tag $e-i64 (attr 0) (param i64))
-  (tag $e-i32-i64 (attr 0) (param i32 i64))
-  (tag $e-empty (attr 0))
+  (tag $e-i32 (param i32))
+  (tag $e-i64 (param i64))
+  (tag $e-i32-i64 (param i32 i64))
+  (tag $e-empty)
 
   (func $foo)
   (func $bar)

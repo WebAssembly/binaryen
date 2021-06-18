@@ -2685,7 +2685,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     emitImportHeader(curr);
     o << "(tag ";
     printName(curr->name, o);
-    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
+    o << maybeSpace;
     printParamType(o, curr->sig.params, currModule);
     o << "))";
     o << maybeNewLine;
@@ -2695,7 +2695,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     o << '(';
     printMedium(o, "tag ");
     printName(curr->name, o);
-    o << maybeSpace << "(attr " << curr->attribute << ')' << maybeSpace;
+    o << maybeSpace;
     printParamType(o, curr->sig.params, currModule);
     o << ")" << maybeNewLine;
   }

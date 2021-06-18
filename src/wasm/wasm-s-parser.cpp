@@ -3109,14 +3109,6 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     }
   } else if (kind == ExternalKind::Tag) {
     auto tag = make_unique<Tag>();
-    if (j >= inner.size()) {
-      throw ParseException("tag does not have an attribute", s.line, s.col);
-    }
-    auto& attrElem = *inner[j++];
-    if (!elementStartsWith(attrElem, ATTR) || attrElem.size() != 2) {
-      throw ParseException("invalid attribute", attrElem.line, attrElem.col);
-    }
-    tag->attribute = atoi(attrElem[1]->c_str());
     j = parseTypeUse(inner, j, tag->sig);
     tag->setName(name, hasExplicitName);
     tag->module = module;
@@ -3497,20 +3489,6 @@ void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
     ex->value = tag->name;
     ex->kind = ExternalKind::Tag;
   }
-
-  // Parse attribute
-  if (i >= s.size()) {
-    throw ParseException("tag does not have an attribute", s.line, s.col);
-  }
-  auto& attrElem = *s[i++];
-  if (!elementStartsWith(attrElem, ATTR) || attrElem.size() != 2) {
-    throw ParseException("invalid attribute", attrElem.line, attrElem.col);
-  }
-  if (!attrElem[1]->isStr()) {
-    throw ParseException(
-      "invalid attribute", attrElem[1]->line, attrElem[1]->col);
-  }
-  tag->attribute = atoi(attrElem[1]->c_str());
 
   // Parse typeuse
   i = parseTypeUse(s, i, tag->sig);

@@ -5002,7 +5002,7 @@
   (import "env" "__memory_base" (global i32))
   (import "env" "__table_base" (global i32))
   (import "other" "anything" (func $internalInfinity))
-  (import "env" "tagname1" (tag $tagname1 (attr 0) (param i32)))
+  (import "env" "tagname1" (tag $tagname1 (param i32)))
   (import "wasi_unstable" "longname3" (func $internal3_wasi)) ;; overlapping base
   (import "wasi_unstable" "longname3-only" (func $internal3_wasi_only))
   (export "exp1" (func $foo1))
@@ -5010,5 +5010,5 @@
   (func $foo1)
   (func $foo2)
   (export "tag1" (tag $tag1))
-  (tag $tag1 (attr 0) (param i32 i32))
+  (tag $tag1 (param i32 i32))
 )

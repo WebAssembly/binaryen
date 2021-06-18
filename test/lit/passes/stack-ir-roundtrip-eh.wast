@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --generate-stack-ir --roundtrip -all -S -o - | filecheck %s
 
 (module
- (tag $tag (attr 0) (param i32))
+ (tag $tag (param i32))
   ;; CHECK:      (func $delegate-child
   ;; CHECK-NEXT:  (try $label$9
   ;; CHECK-NEXT:   (do

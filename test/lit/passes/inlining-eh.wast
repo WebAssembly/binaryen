@@ -4,7 +4,7 @@
 (module
   ;; ---------------------------------------------------------------------------
   (import "a" "b" (func $foo (result i32)))
-  (tag $tag$0 (attr 0) (param i32))
+  (tag $tag$0 (param i32))
   (func $callee-with-label
     (try $label
       (do)

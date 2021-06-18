@@ -5,7 +5,7 @@
 ;; reachable
 (module
   (func $foo)
-  (tag $e (attr 0))
+  (tag $e)
 
   ;; CHECK:      (func $try_unreachable
   ;; CHECK-NEXT:  (try $try

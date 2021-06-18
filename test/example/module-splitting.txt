@@ -16,7 +16,7 @@ Before:
  (global $glob (mut i32) (i32.const 7))
  (memory $mem (shared 3 42))
  (table $tab 3 42 funcref)
- (tag $e (attr 0) (param i32))
+ (tag $e (param i32))
 )
 Keeping: <none>
 After:
@@ -25,7 +25,7 @@ After:
  (global $glob (mut i32) (i32.const 7))
  (memory $mem (shared 3 42))
  (table $tab 3 42 funcref)
- (tag $e (attr 0) (param i32))
+ (tag $e (param i32))
  (export "%memory" (memory $mem))
  (export "%table" (table $tab))
  (export "%global" (global $glob))
@@ -37,7 +37,7 @@ Secondary:
  (import "primary" "%memory" (memory $mem (shared 3 42)))
  (import "primary" "%table" (table $tab 3 42 funcref))
  (import "primary" "%global" (global $glob (mut i32)))
- (import "primary" "%tag" (tag $e (attr 0) (param i32)))
+ (import "primary" "%tag" (tag $e (param i32)))
 )
 
 
@@ -47,7 +47,7 @@ Before:
  (import "env" "mem" (memory $mem (shared 3 42)))
  (import "env" "tab" (table $tab 3 42 funcref))
  (import "env" "glob" (global $glob (mut i32)))
- (import "env" "e" (tag $e (attr 0) (param i32)))
+ (import "env" "e" (tag $e (param i32)))
 )
 Keeping: <none>
 After:
@@ -56,7 +56,7 @@ After:
  (import "env" "mem" (memory $mem (shared 3 42)))
  (import "env" "tab" (table $tab 3 42 funcref))
  (import "env" "glob" (global $glob (mut i32)))
- (import "env" "e" (tag $e (attr 0) (param i32)))
+ (import "env" "e" (tag $e (param i32)))
  (export "%memory" (memory $mem))
  (export "%table" (table $tab))
  (export "%global" (global $glob))
@@ -68,7 +68,7 @@ Secondary:
  (import "primary" "%memory" (memory $mem (shared 3 42)))
  (import "primary" "%table" (table $tab 3 42 funcref))
  (import "primary" "%global" (global $glob (mut i32)))
- (import "primary" "%tag" (tag $e (attr 0) (param i32)))
+ (import "primary" "%tag" (tag $e (param i32)))
 )
 
 
@@ -78,7 +78,7 @@ Before:
  (global $glob (mut i32) (i32.const 7))
  (memory $mem (shared 3 42))
  (table $tab 3 42 funcref)
- (tag $e (attr 0) (param i32))
+ (tag $e (param i32))
  (export "mem" (memory $mem))
  (export "tab" (table $tab))
  (export "glob" (global $glob))
@@ -91,7 +91,7 @@ After:
  (global $glob (mut i32) (i32.const 7))
  (memory $mem (shared 3 42))
  (table $tab 3 42 funcref)
- (tag $e (attr 0) (param i32))
+ (tag $e (param i32))
  (export "mem" (memory $mem))
  (export "tab" (table $tab))
  (export "glob" (global $glob))
@@ -103,7 +103,7 @@ Secondary:
  (import "primary" "mem" (memory $mem (shared 3 42)))
  (import "primary" "tab" (table $tab 3 42 funcref))
  (import "primary" "glob" (global $glob (mut i32)))
- (import "primary" "e" (tag $e (attr 0) (param i32)))
+ (import "primary" "e" (tag $e (param i32)))
 )
 
 
