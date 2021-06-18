@@ -105,7 +105,7 @@ public:
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void emitResultType(Type type);
   void emitIfElse(If* curr);

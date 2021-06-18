@@ -130,7 +130,7 @@ BINARYEN_API BinaryenExpressionId BinaryenInvalidId(void);
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   BINARYEN_API BinaryenExpressionId Binaryen##CLASS_TO_VISIT##Id(void);
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
 // External kinds (call to get the value of each; you can cache them)
 
