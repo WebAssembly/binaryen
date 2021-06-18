@@ -4,42 +4,42 @@
 (module
  ;; CHECK:      (func $caller-n
  ;; CHECK-NEXT:  (local $0 funcref)
- ;; CHECK-NEXT:  (block $__inlined_func$target-n
+ ;; CHECK-NEXT:  (block $__inlined_func$target-nullable
  ;; CHECK-NEXT:   (local.set $0
  ;; CHECK-NEXT:    (ref.null func)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $caller-n
+ (func $caller-nullable
   ;; Call a function with a nullable local. After the inlining there will
   ;; be a new local in this function for the use of the inlined code, and also
   ;; we assign the null value to that local in the inlined block (which does
   ;; not matter much here, but in general if we had a loop that the inlined
   ;; block was inside of, that would be important to get the right behavior).
-  (call $target-n)
+  (call $target-nullable)
  )
 
- (func $target-n
+ (func $target-nullable
   (local $1 (ref null func))
  )
 
- ;; CHECK:      (func $caller-nn
+ ;; CHECK:      (func $caller-non-nullable
  ;; CHECK-NEXT:  (local $0 (ref func))
- ;; CHECK-NEXT:  (block $__inlined_func$target-nn
+ ;; CHECK-NEXT:  (block $__inlined_func$target-non-nullable
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $caller-nn
+ (func $caller-non-nullable
   ;; Call a function with a non-nullable local. After the inlining there will
   ;; be a new local in this function for the use of the inlined code. We do not
   ;; need to zero it out (such locals cannot be used before being set anyhow, so
   ;; no zero is needed; and we cannot set a zero anyhow as none exists for the
   ;; type).
-  (call $target-nn)
+  (call $target-non-nullable)
  )
 
- (func $target-nn
+ (func $target-non-nullable
   (local $1 (ref func))
  )
 )
