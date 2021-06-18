@@ -110,7 +110,7 @@ const char* getExpressionName(Expression* curr) {
   case Expression::Id::CLASS_TO_VISIT##Id:                                     \
     return #CLASS_TO_VISIT;
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
     default:
       WASM_UNREACHABLE("invalid id");
