@@ -42,6 +42,7 @@ Pass* createDuplicateImportEliminationPass();
 Pass* createDuplicateFunctionEliminationPass();
 Pass* createEmitTargetFeaturesPass();
 Pass* createExtractFunctionPass();
+Pass* createExtractFunctionIndexPass();
 Pass* createFlattenPass();
 Pass* createFuncCastEmulationPass();
 Pass* createFullPrinterPass();

@@ -185,7 +185,7 @@ BinaryenExpressionId BinaryenInvalidId(void) {
     return Expression::Id::CLASS_TO_VISIT##Id;                                 \
   }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
 // External kinds
 

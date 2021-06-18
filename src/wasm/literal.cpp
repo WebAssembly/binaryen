@@ -520,8 +520,11 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     }
   } else if (literal.type.isRtt()) {
     o << "[rtt ";
-    for (Type super : literal.getRttSupers()) {
-      o << super << " :> ";
+    for (auto& super : literal.getRttSupers()) {
+      o << super.type << " :> ";
+      if (super.freshPtr) {
+        o << " (fresh)";
+      }
     }
     o << literal.type << ']';
   } else {
@@ -2436,7 +2439,7 @@ bool Literal::isSubRtt(const Literal& other) const {
   // we have the same amount of supers, and must be completely identical to
   // other.
   if (otherSupers.size() < supers.size()) {
-    return other.type == supers[otherSupers.size()];
+    return other.type == supers[otherSupers.size()].type;
   } else {
     return other.type == type;
   }

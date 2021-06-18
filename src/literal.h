@@ -31,9 +31,7 @@ namespace wasm {
 
 class Literals;
 struct GCData;
-// Subclass the vector type so that this is not easily confused with a vector of
-// types (which could be confusing on the Literal constructor).
-struct RttSupers : std::vector<Type> {};
+struct RttSupers;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -61,6 +59,9 @@ class Literal {
     // would do, but it is simple.)
     // The unique_ptr here is to avoid increasing the size of the union as well
     // as the Literal class itself.
+    // To support the experimental RttFreshSub instruction, we not only store
+    // the type, but also a reference to an allocation.
+    // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -684,6 +685,28 @@ struct GCData {
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
 
+struct RttSuper {
+  // The type of the super.
+  Type type;
+  // A shared allocation, used to implement rtt.fresh_sub. This is null for a
+  // normal sub, and for a fresh one we allocate a value here, which can then be
+  // used to differentiate rtts. (The allocation is shared so that when copying
+  // an rtt we remain equal.)
+  // TODO: Remove or optimize this when the spec stabilizes.
+  std::shared_ptr<size_t> freshPtr;
+
+  RttSuper(Type type) : type(type) {}
+
+  void makeFresh() { freshPtr = std::make_shared<size_t>(); }
+
+  bool operator==(const RttSuper& other) const {
+    return type == other.type && freshPtr == other.freshPtr;
+  }
+  bool operator!=(const RttSuper& other) const { return !(*this == other); }
+};
+
+struct RttSupers : std::vector<RttSuper> {};
+
 } // namespace wasm
 
 namespace std {
@@ -743,7 +766,8 @@ template<> struct hash<wasm::Literal> {
       const auto& supers = a.getRttSupers();
       wasm::rehash(digest, supers.size());
       for (auto super : supers) {
-        wasm::rehash(digest, super.getID());
+        wasm::rehash(digest, super.type.getID());
+        wasm::rehash(digest, uintptr_t(super.freshPtr.get()));
       }
       return digest;
     }

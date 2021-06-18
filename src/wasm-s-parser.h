@@ -278,6 +278,7 @@ private:
   Expression* makeBrOn(Element& s, BrOnOp op);
   Expression* makeRttCanon(Element& s);
   Expression* makeRttSub(Element& s);
+  Expression* makeRttFreshSub(Element& s);
   Expression* makeStructNew(Element& s, bool default_);
   Index getStructIndex(Element& type, Element& field);
   Expression* makeStructGet(Element& s, bool signed_ = false);

@@ -795,6 +795,11 @@ public:
     ret->finalize();
     return ret;
   }
+  RttSub* makeRttFreshSub(HeapType heapType, Expression* parent) {
+    auto* ret = makeRttSub(heapType, parent);
+    ret->fresh = true;
+    return ret;
+  }
   template<typename T>
   StructNew* makeStructNew(Expression* rtt, const T& args) {
     auto* ret = wasm.allocator.alloc<StructNew>();

@@ -6419,12 +6419,16 @@ bool WasmBinaryBuilder::maybeVisitRttCanon(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::RttSub) {
+  if (code != BinaryConsts::RttSub && code != BinaryConsts::RttFreshSub) {
     return false;
   }
   auto targetHeapType = getIndexedHeapType();
   auto* parent = popNonVoidExpression();
-  out = Builder(wasm).makeRttSub(targetHeapType, parent);
+  if (code == BinaryConsts::RttSub) {
+    out = Builder(wasm).makeRttSub(targetHeapType, parent);
+  } else {
+    out = Builder(wasm).makeRttFreshSub(targetHeapType, parent);
+  }
   return true;
 }
 

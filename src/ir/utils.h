@@ -113,7 +113,7 @@ struct ReFinalize
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void visitFunction(Function* curr);
 
@@ -139,7 +139,7 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { curr->finalize(); }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }

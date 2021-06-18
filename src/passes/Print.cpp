@@ -1925,7 +1925,11 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
   }
   void visitRttSub(RttSub* curr) {
-    printMedium(o, "rtt.sub ");
+    if (curr->fresh) {
+      printMedium(o, "rtt.fresh_sub ");
+    } else {
+      printMedium(o, "rtt.sub ");
+    }
     TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
   }
   void visitStructNew(StructNew* curr) {
