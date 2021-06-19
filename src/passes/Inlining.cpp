@@ -292,9 +292,16 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   // Zero out the vars (as we may be in a loop, and may depend on their
   // zero-init value
   for (Index i = 0; i < from->vars.size(); i++) {
+    auto type = from->vars[i];
+    if (type.isRef() && !type.isNullable()) {
+      // Non-nullable locals do not need to be zeroed out. They have no zero
+      // value, and by definition should not be used before being written to, so
+      // any value we set here would not be observed anyhow.
+      continue;
+    }
     block->list.push_back(
       builder.makeLocalSet(updater.localMapping[from->getVarIndexBase() + i],
-                           LiteralUtils::makeZero(from->vars[i], *module)));
+                           LiteralUtils::makeZero(type, *module)));
   }
   // Generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
