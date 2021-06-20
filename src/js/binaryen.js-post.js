@@ -2396,8 +2396,8 @@ function wrapModule(module, self = {}) {
   self['removeElementSegment'] = function(name) {
     return preserveStack(() => Module['_BinaryenRemoveElementSegment'](module, strToStack(name)));
   };
-  self['addTag'] = function(name, attribute, params, results) {
-    return preserveStack(() => Module['_BinaryenAddTag'](module, strToStack(name), attribute, params, results));
+  self['addTag'] = function(name, params, results) {
+    return preserveStack(() => Module['_BinaryenAddTag'](module, strToStack(name), params, results));
   };
   self['getTag'] = function(name) {
     return preserveStack(() => Module['_BinaryenGetTag'](module, strToStack(name)));
@@ -2425,9 +2425,9 @@ function wrapModule(module, self = {}) {
       Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)
     );
   };
-  self['addTagImport'] = function(internalName, externalModuleName, externalBaseName, attribute, params, results) {
+  self['addTagImport'] = function(internalName, externalModuleName, externalBaseName, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenAddTagImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results)
+      Module['_BinaryenAddTagImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)
     );
   };
   self['addExport'] = // deprecated
@@ -3212,7 +3212,6 @@ Module['getTagInfo'] = function(tag) {
     'name': UTF8ToString(Module['_BinaryenTagGetName'](tag)),
     'module': UTF8ToString(Module['_BinaryenTagImportGetModule'](tag)),
     'base': UTF8ToString(Module['_BinaryenTagImportGetBase'](tag)),
-    'attribute': Module['_BinaryenTagGetAttribute'](tag),
     'params': Module['_BinaryenTagGetParams'](tag),
     'results': Module['_BinaryenTagGetResults'](tag)
   };

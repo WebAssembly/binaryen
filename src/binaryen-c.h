@@ -2072,7 +2072,6 @@ BINARYEN_API void BinaryenAddTagImport(BinaryenModuleRef module,
                                        const char* internalName,
                                        const char* externalModuleName,
                                        const char* externalBaseName,
-                                       uint32_t attribute,
                                        BinaryenType params,
                                        BinaryenType results);
 
@@ -2142,7 +2141,6 @@ BINARYEN_REF(Tag);
 // Adds a tag to the module.
 BINARYEN_API BinaryenTagRef BinaryenAddTag(BinaryenModuleRef module,
                                            const char* name,
-                                           uint32_t attribute,
                                            BinaryenType params,
                                            BinaryenType results);
 // Gets a tag reference by name. Returns NULL if the tag does not exist.
@@ -2555,8 +2553,6 @@ BinaryenGlobalGetInitExpr(BinaryenGlobalRef global);
 
 // Gets the name of the specified `Tag`.
 BINARYEN_API const char* BinaryenTagGetName(BinaryenTagRef tag);
-// Gets the attribute of the specified `Tag`.
-BINARYEN_API uint32_t BinaryenTagGetAttribute(BinaryenTagRef tag);
 // Gets the parameters type of the specified `Tag`.
 BINARYEN_API BinaryenType BinaryenTagGetParams(BinaryenTagRef tag);
 // Gets the results type of the specified `Tag`.

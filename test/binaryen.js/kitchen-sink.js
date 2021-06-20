@@ -192,7 +192,7 @@ function test_core() {
   module = new binaryen.Module();
 
   // Create a tag
-  var tag = module.addTag("a-tag", 0, binaryen.i32, binaryen.none);
+  var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
 
   // Literals and consts
 
@@ -702,7 +702,7 @@ function test_core() {
   module.addFunctionImport("an-imported", "module", "base", iF, binaryen.f32);
   module.addGlobalImport("a-global-imp", "module", "base", binaryen.i32, false);
   module.addGlobalImport("a-mut-global-imp", "module", "base", binaryen.i32, true);
-  module.addTagImport("a-tag-imp", "module", "base", 0, binaryen.i32, binaryen.none);
+  module.addTagImport("a-tag-imp", "module", "base", binaryen.i32, binaryen.none);
 
   // Exports
 
@@ -973,7 +973,7 @@ function test_binaries() {
     var adder = module.addFunction("adder", ii, binaryen.i32, [], add);
     var initExpr = module.i32.const(3);
     var global = module.addGlobal("a-global", binaryen.i32, false, initExpr)
-    var tag = module.addTag("a-tag", 0, binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none);
+    var tag = module.addTag("a-tag", binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none);
     binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
     binaryen.setDebugInfo(false);
@@ -1038,7 +1038,7 @@ function test_parsing() {
   var adder = module.addFunction("adder", ii, binaryen.i32, [], add);
   var initExpr = module.i32.const(3);
   var global = module.addGlobal("a-global", binaryen.i32, false, initExpr)
-  var tag = module.addTag("a-tag", 0, binaryen.i32, binaryen.none);
+  var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
   text = module.emitText();
   module.dispose();
   module = null;

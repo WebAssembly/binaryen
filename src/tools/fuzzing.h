@@ -499,7 +499,6 @@ private:
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
       auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag$"),
-                                 WASM_TAG_ATTRIBUTE_EXCEPTION,
                                  Signature(getControlFlowType(), Type::none));
       wasm.addTag(std::move(tag));
     }

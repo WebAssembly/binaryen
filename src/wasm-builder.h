@@ -125,11 +125,9 @@ public:
     return glob;
   }
 
-  static std::unique_ptr<Tag>
-  makeTag(Name name, uint32_t attribute, Signature sig) {
+  static std::unique_ptr<Tag> makeTag(Name name, Signature sig) {
     auto tag = std::make_unique<Tag>();
     tag->name = name;
-    tag->attribute = attribute;
     tag->sig = sig;
     return tag;
   }

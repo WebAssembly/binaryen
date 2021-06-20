@@ -66,7 +66,6 @@ inline Global* copyGlobal(Global* global, Module& out) {
 inline Tag* copyTag(Tag* tag, Module& out) {
   auto* ret = new Tag();
   ret->name = tag->name;
-  ret->attribute = tag->attribute;
   ret->sig = tag->sig;
   out.addTag(ret);
   return ret;
