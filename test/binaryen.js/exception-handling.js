@@ -19,7 +19,7 @@ var module = new binaryen.Module();
 module.setFeatures(binaryen.Features.ReferenceTypes |
                    binaryen.Features.ExceptionHandling);
 
-module.addTag("e", 0, binaryen.i32, binaryen.none);
+module.addTag("e", binaryen.i32, binaryen.none);
 
 // (try $l0
 //   (do
