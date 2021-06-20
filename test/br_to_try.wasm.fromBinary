@@ -1,7 +1,7 @@
 (module
  (type $i32_=>_none (func (param i32)))
  (type $none_=>_none (func))
- (tag $tag$0 (attr 0) (param i32))
+ (tag $tag$0 (param i32))
  (func $0
   (try $label$3
    (do

@@ -187,7 +187,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
     def test_tag(self):
         module = '''
         (module
-         (tag $e (attr 0) (param i32))
+         (tag $e (param i32))
          (func $foo
             (throw $e (i32.const 0))
          )
@@ -221,7 +221,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
     def test_multivalue_tag(self):
         module = '''
         (module
-         (tag $foo (attr 0) (param i32 i64))
+         (tag $foo (param i32 i64))
         )
         '''
         self.check_multivalue_exception_handling(module, 'Multivalue tag type ' +

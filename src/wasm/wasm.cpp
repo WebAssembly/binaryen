@@ -97,7 +97,6 @@ Name PRINT("print");
 Name EXIT("exit");
 Name SHARED("shared");
 Name TAG("tag");
-Name ATTR("attr");
 
 // Expressions
 

@@ -66,7 +66,6 @@ extern Name PRINT;
 extern Name EXIT;
 extern Name SHARED;
 extern Name TAG;
-extern Name ATTR;
 
 } // namespace wasm
 
