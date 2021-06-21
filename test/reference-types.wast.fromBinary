@@ -20,7 +20,7 @@
  (table $0 3 3 funcref)
  (elem (i32.const 0) $take_externref $take_funcref $take_anyref)
  (elem declare func $foo $ref-taken-but-not-in-table)
- (event $event$0 (attr 0) (param i32))
+ (tag $tag$0 (param i32))
  (export "export_func" (func $import_func))
  (export "export_global" (global $import_global))
  (func $take_externref (param $0 externref)
@@ -512,7 +512,7 @@
     (do
      (local.get $local_externref)
     )
-    (catch $event$0
+    (catch $tag$0
      (drop
       (pop i32)
      )
@@ -525,7 +525,7 @@
     (do
      (ref.func $foo)
     )
-    (catch $event$0
+    (catch $tag$0
      (drop
       (pop i32)
      )
@@ -538,7 +538,7 @@
     (do
      (local.get $local_externref)
     )
-    (catch $event$0
+    (catch $tag$0
      (drop
       (pop i32)
      )
@@ -551,7 +551,7 @@
     (do
      (ref.func $foo)
     )
-    (catch $event$0
+    (catch $tag$0
      (drop
       (pop i32)
      )

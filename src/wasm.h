@@ -1266,16 +1266,16 @@ public:
 
 class Try : public SpecificExpression<Expression::TryId> {
 public:
-  Try(MixedArena& allocator) : catchEvents(allocator), catchBodies(allocator) {}
+  Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
 
   Name name; // label that can only be targeted by 'delegate's
   Expression* body;
-  ArenaVector<Name> catchEvents;
+  ArenaVector<Name> catchTags;
   ExpressionList catchBodies;
   Name delegateTarget; // target try's label
 
   bool hasCatchAll() const {
-    return catchBodies.size() - catchEvents.size() == 1;
+    return catchBodies.size() - catchTags.size() == 1;
   }
   bool isCatch() const { return !catchBodies.empty(); }
   bool isDelegate() const { return delegateTarget.is(); }
@@ -1287,7 +1287,7 @@ class Throw : public SpecificExpression<Expression::ThrowId> {
 public:
   Throw(MixedArena& allocator) : operands(allocator) {}
 
-  Name event;
+  Name tag;
   ExpressionList operands;
 
   void finalize();
@@ -1686,7 +1686,7 @@ enum class ExternalKind {
   Table = 1,
   Memory = 2,
   Global = 3,
-  Event = 4,
+  Tag = 4,
   Invalid = -1
 };
 
@@ -1801,13 +1801,13 @@ public:
   bool mutable_ = false;
 };
 
-// Kinds of event attributes.
-enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
+// Kinds of tag attributes.
+enum WasmTagAttribute : unsigned { WASM_TAG_ATTRIBUTE_EXCEPTION = 0x0 };
 
-class Event : public Importable {
+class Tag : public Importable {
 public:
-  // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
-  uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
+  // Kind of tag. Currently only WASM_TAG_ATTRIBUTE_EXCEPTION is possible.
+  uint32_t attribute = WASM_TAG_ATTRIBUTE_EXCEPTION;
   Signature sig;
 };
 
@@ -1833,7 +1833,7 @@ public:
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
-  std::vector<std::unique_ptr<Event>> events;
+  std::vector<std::unique_ptr<Tag>> tags;
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
@@ -1879,7 +1879,7 @@ private:
   std::unordered_map<Name, Table*> tablesMap;
   std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
-  std::unordered_map<Name, Event*> eventsMap;
+  std::unordered_map<Name, Tag*> tagsMap;
 
 public:
   Module() = default;
@@ -1889,26 +1889,26 @@ public:
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
   Global* getGlobal(Name name);
-  Event* getEvent(Name name);
+  Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
-  Event* getEventOrNull(Name name);
+  Tag* getTagOrNull(Name name);
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
   Global* addGlobal(Global* curr);
-  Event* addEvent(Event* curr);
+  Tag* addTag(Tag* curr);
 
   Export* addExport(std::unique_ptr<Export>&& curr);
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
-  Event* addEvent(std::unique_ptr<Event>&& curr);
+  Tag* addTag(std::unique_ptr<Tag>&& curr);
 
   void addStart(const Name& s);
 
@@ -1917,14 +1917,14 @@ public:
   void removeTable(Name name);
   void removeElementSegment(Name name);
   void removeGlobal(Name name);
-  void removeEvent(Name name);
+  void removeTag(Name name);
 
   void removeExports(std::function<bool(Export*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
-  void removeEvents(std::function<bool(Event*)> pred);
+  void removeTags(std::function<bool(Tag*)> pred);
 
   void updateMaps();
 

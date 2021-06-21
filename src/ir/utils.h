@@ -113,7 +113,7 @@ struct ReFinalize
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void visitFunction(Function* curr);
 
@@ -122,7 +122,7 @@ struct ReFinalize
   void visitTable(Table* curr);
   void visitElementSegment(ElementSegment* curr);
   void visitMemory(Memory* curr);
-  void visitEvent(Event* curr);
+  void visitTag(Tag* curr);
   void visitModule(Module* curr);
 
 private:
@@ -139,14 +139,14 @@ struct ReFinalizeNode : public OverriddenVisitor<ReFinalizeNode> {
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) { curr->finalize(); }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
   void visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }
   void visitTable(Table* curr) { WASM_UNREACHABLE("unimp"); }
   void visitElementSegment(ElementSegment* curr) { WASM_UNREACHABLE("unimp"); }
   void visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
-  void visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
+  void visitTag(Tag* curr) { WASM_UNREACHABLE("unimp"); }
   void visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
   // given a stack of nested expressions, update them all from child to parent

@@ -2,8 +2,8 @@
 ;; RUN: wasm-opt %s --rse -all -S -o - | filecheck %s
 
 (module
-  (event $e (attr 0) (param i32))
-  (event $e2 (attr 0))
+  (tag $e (param i32))
+  (tag $e2)
 
   ;; CHECK:      (func $try1
   ;; CHECK-NEXT:  (local $x i32)

@@ -1,5 +1,4 @@
 total
- [events]       : 2       
  [exports]      : 0       
  [funcs]        : 1       
  [globals]      : 1       
@@ -7,6 +6,7 @@ total
  [memory-data]  : 9       
  [table-data]   : 3       
  [tables]       : 1       
+ [tags]         : 2       
  [total]        : 30      
  [vars]         : 1       
  Binary         : 1       
@@ -23,8 +23,8 @@ total
  (data (i32.const 0) "\ff\ef\0f\1f 0@P\99")
  (table $0 256 256 funcref)
  (elem (i32.const 0) $ifs $ifs $ifs)
- (event $e0 (attr 0) (param i32))
- (event $e1 (attr 0) (param i32 i32))
+ (tag $e0 (param i32))
+ (tag $e1 (param i32 i32))
  (func $ifs (param $x i32)
   (local $y f32)
   (block $block0
@@ -66,12 +66,12 @@ total
  )
 )
 total
- [events]       : 0       
  [exports]      : 0       
  [funcs]        : 0       
  [globals]      : 0       
  [imports]      : 0       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
  [vars]         : 0       
 (module

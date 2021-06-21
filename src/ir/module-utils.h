@@ -63,12 +63,12 @@ inline Global* copyGlobal(Global* global, Module& out) {
   return ret;
 }
 
-inline Event* copyEvent(Event* event, Module& out) {
-  auto* ret = new Event();
-  ret->name = event->name;
-  ret->attribute = event->attribute;
-  ret->sig = event->sig;
-  out.addEvent(ret);
+inline Tag* copyTag(Tag* tag, Module& out) {
+  auto* ret = new Tag();
+  ret->name = tag->name;
+  ret->attribute = tag->attribute;
+  ret->sig = tag->sig;
+  out.addTag(ret);
   return ret;
 }
 
@@ -120,8 +120,8 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
   }
-  for (auto& curr : in.events) {
-    copyEvent(curr.get(), out);
+  for (auto& curr : in.tags) {
+    copyTag(curr.get(), out);
   }
   for (auto& curr : in.elementSegments) {
     copyElementSegment(curr.get(), out);
@@ -278,16 +278,16 @@ template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedEvents(Module& wasm, T visitor) {
-  for (auto& import : wasm.events) {
+template<typename T> inline void iterImportedTags(Module& wasm, T visitor) {
+  for (auto& import : wasm.tags) {
     if (import->imported()) {
       visitor(import.get());
     }
   }
 }
 
-template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
-  for (auto& import : wasm.events) {
+template<typename T> inline void iterDefinedTags(Module& wasm, T visitor) {
+  for (auto& import : wasm.tags) {
     if (!import->imported()) {
       visitor(import.get());
     }
@@ -299,7 +299,7 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
   iterImportedTables(wasm, visitor);
   iterImportedGlobals(wasm, visitor);
   iterImportedFunctions(wasm, visitor);
-  iterImportedEvents(wasm, visitor);
+  iterImportedTags(wasm, visitor);
 }
 
 // Helper class for performing an operation on all the functions in the module,
@@ -514,7 +514,7 @@ inline void collectHeapTypes(Module& wasm,
   // Collect module-level info.
   Counts counts;
   CodeScanner(counts).walkModuleCode(&wasm);
-  for (auto& curr : wasm.events) {
+  for (auto& curr : wasm.tags) {
     counts.note(curr->sig);
   }
   for (auto& curr : wasm.tables) {

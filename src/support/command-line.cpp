@@ -79,6 +79,7 @@ Options::Options(const std::string& command, const std::string& description)
             std::max(optionWidth, o.longName.size() + o.shortName.size());
         }
         for (const auto& o : options) {
+          std::cout << '\n';
           bool long_n_short = o.longName.size() != 0 && o.shortName.size() != 0;
           size_t pad = 1 + optionWidth - o.longName.size() - o.shortName.size();
           std::cout << "  " << o.longName << (long_n_short ? ',' : ' ')

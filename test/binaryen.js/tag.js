@@ -13,21 +13,21 @@ module.setFeatures(binaryen.Features.ReferenceTypes |
 
 var pairType = binaryen.createType([binaryen.i32, binaryen.f32]);
 
-var event_ = module.addEvent("a-event", 0, binaryen.i32, binaryen.none);
+var tag = module.addTag("a-tag", 0, binaryen.i32, binaryen.none);
 
-console.log("GetEvent is equal: " + (event_ === module.getEvent("a-event")));
+console.log("GetTag is equal: " + (tag === module.getTag("a-tag")));
 
-var eventInfo = binaryen.getEventInfo(event_);
-console.log("getEventInfo=" + JSON.stringify(cleanInfo(eventInfo)));
+var tagInfo = binaryen.getTagInfo(tag);
+console.log("getTagInfo=" + JSON.stringify(cleanInfo(tagInfo)));
 
-module.addEventExport("a-event", "a-event-exp");
-module.addEventImport("a-event-imp", "module", "base", 0, pairType, binaryen.none);
+module.addTagExport("a-tag", "a-tag-exp");
+module.addTagImport("a-tag-imp", "module", "base", 0, pairType, binaryen.none);
 
 assert(module.validate());
 console.log(module.emitText());
 
-module.removeExport("a-event-exp");
-module.removeEvent("a-event");
+module.removeExport("a-tag-exp");
+module.removeTag("a-tag");
 
 assert(module.validate());
 console.log(module.emitText());
