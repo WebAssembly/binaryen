@@ -200,7 +200,7 @@ public:
     setupTables();
     setupGlobals();
     if (wasm.features.hasExceptionHandling()) {
-      setupEvents();
+      setupTags();
     }
     modifyInitialFunctions();
     addImportLoggingSupport();
@@ -495,14 +495,13 @@ private:
     }
   }
 
-  void setupEvents() {
+  void setupTags() {
     Index num = upTo(3);
     for (size_t i = 0; i < num; i++) {
-      auto event =
-        builder.makeEvent(Names::getValidEventName(wasm, "event$"),
-                          WASM_EVENT_ATTRIBUTE_EXCEPTION,
-                          Signature(getControlFlowType(), Type::none));
-      wasm.addEvent(std::move(event));
+      auto tag = builder.makeTag(Names::getValidTagName(wasm, "tag$"),
+                                 WASM_TAG_ATTRIBUTE_EXCEPTION,
+                                 Signature(getControlFlowType(), Type::none));
+      wasm.addTag(std::move(tag));
     }
   }
 

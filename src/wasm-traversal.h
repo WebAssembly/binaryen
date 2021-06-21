@@ -41,7 +41,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr) {                     \
     return ReturnType();                                                       \
   }
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   // Module-level visitors
   ReturnType visitExport(Export* curr) { return ReturnType(); }
@@ -50,7 +50,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
   ReturnType visitTable(Table* curr) { return ReturnType(); }
   ReturnType visitElementSegment(ElementSegment* curr) { return ReturnType(); }
   ReturnType visitMemory(Memory* curr) { return ReturnType(); }
-  ReturnType visitEvent(Event* curr) { return ReturnType(); }
+  ReturnType visitTag(Tag* curr) { return ReturnType(); }
   ReturnType visitModule(Module* curr) { return ReturnType(); }
 
   ReturnType visit(Expression* curr) {
@@ -62,7 +62,7 @@ template<typename SubType, typename ReturnType = void> struct Visitor {
     return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
       static_cast<CLASS_TO_VISIT*>(curr))
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -84,7 +84,7 @@ struct OverriddenVisitor {
     WASM_UNREACHABLE("Derived class must implement visit" #CLASS_TO_VISIT);    \
   }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   ReturnType visit(Expression* curr) {
     assert(curr);
@@ -95,7 +95,7 @@ struct OverriddenVisitor {
     return static_cast<SubType*>(this)->visit##CLASS_TO_VISIT(                 \
       static_cast<CLASS_TO_VISIT*>(curr))
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
       default:
         WASM_UNREACHABLE("unexpected expression type");
@@ -117,7 +117,7 @@ struct UnifiedExpressionVisitor : public Visitor<SubType, ReturnType> {
     return static_cast<SubType*>(this)->visitExpression(curr);                 \
   }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 };
 
 //
@@ -176,9 +176,7 @@ struct Walker : public VisitorType {
     setFunction(nullptr);
   }
 
-  void walkEvent(Event* event) {
-    static_cast<SubType*>(this)->visitEvent(event);
-  }
+  void walkTag(Tag* tag) { static_cast<SubType*>(this)->visitTag(tag); }
 
   void walkFunctionInModule(Function* func, Module* module) {
     setModule(module);
@@ -243,11 +241,11 @@ struct Walker : public VisitorType {
         self->walkFunction(curr.get());
       }
     }
-    for (auto& curr : module->events) {
+    for (auto& curr : module->tags) {
       if (curr->imported()) {
-        self->visitEvent(curr.get());
+        self->visitTag(curr.get());
       } else {
-        self->walkEvent(curr.get());
+        self->walkTag(curr.get());
       }
     }
     for (auto& curr : module->tables) {
@@ -327,7 +325,7 @@ struct Walker : public VisitorType {
     self->visit##CLASS_TO_VISIT((*currp)->cast<CLASS_TO_VISIT>());             \
   }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void setModule(Module* module) { currModule = module; }
 
@@ -377,7 +375,7 @@ struct PostWalker : public Walker<SubType, VisitorType> {
 #define DELEGATE_FIELD_TYPE(id, name)
 #define DELEGATE_FIELD_ADDRESS(id, name)
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
   }
 };
 

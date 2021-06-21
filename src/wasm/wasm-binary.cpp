@@ -52,7 +52,7 @@ void WasmBinaryWriter::write() {
   writeFunctionSignatures();
   writeTableDeclarations();
   writeMemory();
-  writeEvents();
+  writeTags();
   writeGlobals();
   writeExports();
   writeStart();
@@ -278,12 +278,12 @@ void WasmBinaryWriter::writeImports() {
     writeType(global->type);
     o << U32LEB(global->mutable_);
   });
-  ModuleUtils::iterImportedEvents(*wasm, [&](Event* event) {
-    BYN_TRACE("write one event\n");
-    writeImportHeader(event);
-    o << U32LEB(int32_t(ExternalKind::Event));
-    o << U32LEB(event->attribute);
-    o << U32LEB(getTypeIndex(event->sig));
+  ModuleUtils::iterImportedTags(*wasm, [&](Tag* tag) {
+    BYN_TRACE("write one tag\n");
+    writeImportHeader(tag);
+    o << U32LEB(int32_t(ExternalKind::Tag));
+    o << U32LEB(tag->attribute);
+    o << U32LEB(getTypeIndex(tag->sig));
   });
   if (wasm->memory.imported()) {
     BYN_TRACE("write one memory\n");
@@ -460,8 +460,8 @@ void WasmBinaryWriter::writeExports() {
       case ExternalKind::Global:
         o << U32LEB(getGlobalIndex(curr->value));
         break;
-      case ExternalKind::Event:
-        o << U32LEB(getEventIndex(curr->value));
+      case ExternalKind::Tag:
+        o << U32LEB(getTagIndex(curr->value));
         break;
       default:
         WASM_UNREACHABLE("unexpected extern kind");
@@ -523,9 +523,9 @@ uint32_t WasmBinaryWriter::getGlobalIndex(Name name) const {
   return it->second;
 }
 
-uint32_t WasmBinaryWriter::getEventIndex(Name name) const {
-  auto it = indexes.eventIndexes.find(name);
-  assert(it != indexes.eventIndexes.end());
+uint32_t WasmBinaryWriter::getTagIndex(Name name) const {
+  auto it = indexes.tagIndexes.find(name);
+  assert(it != indexes.tagIndexes.end());
   return it->second;
 }
 
@@ -646,18 +646,18 @@ void WasmBinaryWriter::writeElementSegments() {
   finishSection(start);
 }
 
-void WasmBinaryWriter::writeEvents() {
-  if (importInfo->getNumDefinedEvents() == 0) {
+void WasmBinaryWriter::writeTags() {
+  if (importInfo->getNumDefinedTags() == 0) {
     return;
   }
-  BYN_TRACE("== writeEvents\n");
-  auto start = startSection(BinaryConsts::Section::Event);
-  auto num = importInfo->getNumDefinedEvents();
+  BYN_TRACE("== writeTags\n");
+  auto start = startSection(BinaryConsts::Section::Tag);
+  auto num = importInfo->getNumDefinedTags();
   o << U32LEB(num);
-  ModuleUtils::iterDefinedEvents(*wasm, [&](Event* event) {
+  ModuleUtils::iterDefinedTags(*wasm, [&](Tag* tag) {
     BYN_TRACE("write one\n");
-    o << U32LEB(event->attribute);
-    o << U32LEB(getTypeIndex(event->sig));
+    o << U32LEB(tag->attribute);
+    o << U32LEB(getTypeIndex(tag->sig));
   });
 
   finishSection(start);
@@ -1419,8 +1419,8 @@ void WasmBinaryBuilder::read() {
       case BinaryConsts::Section::Table:
         readTableDeclarations();
         break;
-      case BinaryConsts::Section::Event:
-        readEvents();
+      case BinaryConsts::Section::Tag:
+        readTags();
         break;
       default: {
         readUserSection(payloadLen);
@@ -1956,11 +1956,11 @@ Name WasmBinaryBuilder::getGlobalName(Index index) {
   return wasm.globals[index]->name;
 }
 
-Name WasmBinaryBuilder::getEventName(Index index) {
-  if (index >= wasm.events.size()) {
-    throwError("invalid event index");
+Name WasmBinaryBuilder::getTagName(Index index) {
+  if (index >= wasm.tags.size()) {
+    throwError("invalid tag index");
   }
-  return wasm.events[index]->name;
+  return wasm.tags[index]->name;
 }
 
 void WasmBinaryBuilder::getResizableLimits(Address& initial,
@@ -1994,7 +1994,7 @@ void WasmBinaryBuilder::readImports() {
   size_t memoryCounter = 0;
   size_t functionCounter = 0;
   size_t globalCounter = 0;
-  size_t eventCounter = 0;
+  size_t tagCounter = 0;
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
     auto module = getInlineString();
@@ -2069,15 +2069,15 @@ void WasmBinaryBuilder::readImports() {
         wasm.addGlobal(std::move(curr));
         break;
       }
-      case ExternalKind::Event: {
-        Name name(std::string("eimport$") + std::to_string(eventCounter++));
+      case ExternalKind::Tag: {
+        Name name(std::string("eimport$") + std::to_string(tagCounter++));
         auto attribute = getU32LEB();
         auto index = getU32LEB();
         auto curr =
-          builder.makeEvent(name, attribute, getSignatureByTypeIndex(index));
+          builder.makeTag(name, attribute, getSignatureByTypeIndex(index));
         curr->module = module;
         curr->base = base;
-        wasm.addEvent(std::move(curr));
+        wasm.addTag(std::move(curr));
         break;
       }
       default: {
@@ -2705,8 +2705,8 @@ void WasmBinaryBuilder::processNames() {
       case ExternalKind::Global:
         curr->value = getGlobalName(index);
         break;
-      case ExternalKind::Event:
-        curr->value = getEventName(index);
+      case ExternalKind::Tag:
+        curr->value = getTagName(index);
         break;
       default:
         throwError("bad export kind");
@@ -2902,17 +2902,17 @@ void WasmBinaryBuilder::readElementSegments() {
   }
 }
 
-void WasmBinaryBuilder::readEvents() {
-  BYN_TRACE("== readEvents\n");
-  size_t numEvents = getU32LEB();
-  BYN_TRACE("num: " << numEvents << std::endl);
-  for (size_t i = 0; i < numEvents; i++) {
+void WasmBinaryBuilder::readTags() {
+  BYN_TRACE("== readTags\n");
+  size_t numTags = getU32LEB();
+  BYN_TRACE("num: " << numTags << std::endl);
+  for (size_t i = 0; i < numTags; i++) {
     BYN_TRACE("read one\n");
     auto attribute = getU32LEB();
     auto typeIndex = getU32LEB();
-    wasm.addEvent(Builder::makeEvent("event$" + std::to_string(i),
-                                     attribute,
-                                     getSignatureByTypeIndex(typeIndex)));
+    wasm.addTag(Builder::makeTag("tag$" + std::to_string(i),
+                                 attribute,
+                                 getSignatureByTypeIndex(typeIndex)));
   }
 }
 
@@ -6113,10 +6113,10 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
   Name catchLabel = getNextLabel();
   breakStack.push_back({catchLabel, curr->type});
 
-  auto readCatchBody = [&](Type eventType) {
+  auto readCatchBody = [&](Type tagType) {
     auto start = expressionStack.size();
-    if (eventType != Type::none) {
-      pushExpression(builder.makePop(eventType));
+    if (tagType != Type::none) {
+      pushExpression(builder.makePop(tagType));
     }
     processExpressions();
     size_t end = expressionStack.size();
@@ -6137,12 +6137,12 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
          lastSeparator == BinaryConsts::CatchAll) {
     if (lastSeparator == BinaryConsts::Catch) {
       auto index = getU32LEB();
-      if (index >= wasm.events.size()) {
-        throwError("bad event index");
+      if (index >= wasm.tags.size()) {
+        throwError("bad tag index");
       }
-      auto* event = wasm.events[index].get();
-      curr->catchEvents.push_back(event->name);
-      readCatchBody(event->sig.params);
+      auto* tag = wasm.tags[index].get();
+      curr->catchTags.push_back(tag->name);
+      readCatchBody(tag->sig.params);
 
     } else { // catch_all
       if (curr->hasCatchAll()) {
@@ -6240,12 +6240,12 @@ void WasmBinaryBuilder::visitTryOrTryInBlock(Expression*& out) {
 void WasmBinaryBuilder::visitThrow(Throw* curr) {
   BYN_TRACE("zz node: Throw\n");
   auto index = getU32LEB();
-  if (index >= wasm.events.size()) {
-    throwError("bad event index");
+  if (index >= wasm.tags.size()) {
+    throwError("bad tag index");
   }
-  auto* event = wasm.events[index].get();
-  curr->event = event->name;
-  size_t num = event->sig.params.size();
+  auto* tag = wasm.tags[index].get();
+  curr->tag = tag->name;
+  size_t num = tag->sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
@@ -6419,12 +6419,16 @@ bool WasmBinaryBuilder::maybeVisitRttCanon(Expression*& out, uint32_t code) {
 }
 
 bool WasmBinaryBuilder::maybeVisitRttSub(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::RttSub) {
+  if (code != BinaryConsts::RttSub && code != BinaryConsts::RttFreshSub) {
     return false;
   }
   auto targetHeapType = getIndexedHeapType();
   auto* parent = popNonVoidExpression();
-  out = Builder(wasm).makeRttSub(targetHeapType, parent);
+  if (code == BinaryConsts::RttSub) {
+    out = Builder(wasm).makeRttSub(targetHeapType, parent);
+  } else {
+    out = Builder(wasm).makeRttFreshSub(targetHeapType, parent);
+  }
   return true;
 }
 

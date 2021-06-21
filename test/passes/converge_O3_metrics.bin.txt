@@ -1,5 +1,4 @@
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 1       
@@ -7,6 +6,7 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 553     
  [vars]         : 2       
  Binary         : 12      
@@ -229,7 +229,6 @@ total
  )
 )
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 0             -1
@@ -237,6 +236,7 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 549           -4
  [vars]         : 2       
  Binary         : 12      
@@ -452,7 +452,6 @@ total
  )
 )
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 0       
@@ -460,6 +459,7 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 549     
  [vars]         : 2       
  Binary         : 12      

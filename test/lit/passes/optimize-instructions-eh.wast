@@ -4,7 +4,7 @@
 
 (module
   (func $dummy)
-  (event $e (attr 0) (param i32))
+  (tag $e (param i32))
 
   ;; The following are the unit tests for Properties::getFallthrough for EH
   ;; instructions, which are used in one of binary optimizations in

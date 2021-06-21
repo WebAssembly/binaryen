@@ -41,7 +41,7 @@
 namespace wasm {
 
 struct WasmException {
-  Name event;
+  Name tag;
   Literals values;
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
@@ -1358,9 +1358,9 @@ public:
     if (flow.breaking()) {
       return flow;
     }
-    NOTE_EVAL1(curr->event);
+    NOTE_EVAL1(curr->tag);
     WasmException exn;
-    exn.event = curr->event;
+    exn.tag = curr->tag;
     for (auto item : arguments) {
       exn.values.push_back(item);
     }
@@ -1594,6 +1594,9 @@ public:
     auto parentValue = parent.getSingleValue();
     auto newSupers = std::make_unique<RttSupers>(parentValue.getRttSupers());
     newSupers->push_back(parentValue.type);
+    if (curr->fresh) {
+      newSupers->back().makeFresh();
+    }
     return Literal(std::move(newSupers), curr->type);
   }
   Flow visitStructNew(StructNew* curr) {
@@ -3224,8 +3227,8 @@ private:
           return ret;
         };
 
-        for (size_t i = 0; i < curr->catchEvents.size(); i++) {
-          if (curr->catchEvents[i] == e.event) {
+        for (size_t i = 0; i < curr->catchTags.size(); i++) {
+          if (curr->catchTags[i] == e.tag) {
             instance.multiValues.push_back(e.values);
             return processCatchBody(curr->catchBodies[i]);
           }

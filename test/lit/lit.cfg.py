@@ -15,7 +15,8 @@ for tool_file in os.listdir(bin_dir):
     tool = tool_file[:-4] if tool_file.endswith('.exe') else tool_file
     config.substitutions.append((tool, tool_path))
 
-# Also make the `not` command available
-not_file = config.binaryen_src_root + '/scripts/not.py'
-python = sys.executable.replace('\\', '/')
-config.substitutions.append(('not', python + ' ' + not_file))
+# Also make the `not` and `foreach` commands available
+for tool in ('not', 'foreach'):
+    tool_file = config.binaryen_src_root + '/scripts/' + tool + '.py'
+    python = sys.executable.replace('\\', '/')
+    config.substitutions.append((tool, python + ' ' + tool_file))

@@ -550,6 +550,7 @@ instructions = [
     ("br_on_non_i31",        "makeBrOn(s, BrOnNonI31)"),
     ("rtt.canon",            "makeRttCanon(s)"),
     ("rtt.sub",              "makeRttSub(s)"),
+    ("rtt.fresh_sub",        "makeRttFreshSub(s)"),
     ("struct.new_with_rtt",  "makeStructNew(s, false)"),
     ("struct.new_default_with_rtt", "makeStructNew(s, true)"),
     ("struct.get",           "makeStructGet(s)"),

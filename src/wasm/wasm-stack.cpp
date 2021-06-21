@@ -1858,7 +1858,7 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
   o << int8_t(BinaryConsts::Catch)
-    << U32LEB(parent.getEventIndex(curr->catchEvents[i]));
+    << U32LEB(parent.getTagIndex(curr->catchTags[i]));
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
@@ -1879,7 +1879,7 @@ void BinaryInstWriter::emitDelegate(Try* curr) {
 }
 
 void BinaryInstWriter::visitThrow(Throw* curr) {
-  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getEventIndex(curr->event));
+  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getTagIndex(curr->tag));
 }
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
@@ -1993,7 +1993,8 @@ void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
 }
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
+  o << int8_t(BinaryConsts::GCPrefix);
+  o << U32LEB(curr->fresh ? BinaryConsts::RttFreshSub : BinaryConsts::RttSub);
   parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 

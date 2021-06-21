@@ -1,5 +1,4 @@
 total
- [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 0       
@@ -7,6 +6,7 @@ total
  [memory-data]  : 0       
  [table-data]   : 0       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 1964    
  [vars]         : 9       
  Binary         : 240     

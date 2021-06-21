@@ -411,8 +411,8 @@ void SExpressionWasmBuilder::preParseImports(Element& curr) {
       parseTable(curr, true /* preParseImport */);
     } else if (id == MEMORY) {
       parseMemory(curr, true /* preParseImport */);
-    } else if (id == EVENT) {
-      parseEvent(curr, true /* preParseImport */);
+    } else if (id == TAG) {
+      parseTag(curr, true /* preParseImport */);
     } else {
       throw ParseException(
         "fancy import we don't support yet", curr.line, curr.col);
@@ -455,8 +455,8 @@ void SExpressionWasmBuilder::parseModuleElement(Element& curr) {
   if (id == TYPE) {
     return; // already done
   }
-  if (id == EVENT) {
-    return parseEvent(curr);
+  if (id == TAG) {
+    return parseTag(curr);
   }
   std::cerr << "bad module element " << id.str << '\n';
   throw ParseException("unknown module element", curr.line, curr.col);
@@ -502,16 +502,16 @@ Name SExpressionWasmBuilder::getGlobalName(Element& s) {
   }
 }
 
-Name SExpressionWasmBuilder::getEventName(Element& s) {
+Name SExpressionWasmBuilder::getTagName(Element& s) {
   if (s.dollared()) {
     return s.str();
   } else {
     // index
     size_t offset = atoi(s.str().c_str());
-    if (offset >= eventNames.size()) {
-      throw ParseException("unknown event in getEventName", s.line, s.col);
+    if (offset >= tagNames.size()) {
+      throw ParseException("unknown tag in getTagName", s.line, s.col);
     }
-    return eventNames[offset];
+    return tagNames[offset];
   }
 }
 
@@ -2454,11 +2454,11 @@ Expression* SExpressionWasmBuilder::makeTry(Element& s) {
     if (inner.size() < 2) {
       throw ParseException("invalid catch block", inner.line, inner.col);
     }
-    Name event = getEventName(*inner[1]);
-    if (!wasm.getEventOrNull(event)) {
-      throw ParseException("bad event name", inner[1]->line, inner[1]->col);
+    Name tag = getTagName(*inner[1]);
+    if (!wasm.getTagOrNull(tag)) {
+      throw ParseException("bad tag name", inner[1]->line, inner[1]->col);
     }
-    ret->catchEvents.push_back(getEventName(*inner[1]));
+    ret->catchTags.push_back(getTagName(*inner[1]));
     ret->catchBodies.push_back(makeMaybeBlock(inner, 2, type));
   }
 
@@ -2505,9 +2505,9 @@ Expression* SExpressionWasmBuilder::makeThrow(Element& s) {
   auto ret = allocator.alloc<Throw>();
   Index i = 1;
 
-  ret->event = getEventName(*s[i++]);
-  if (!wasm.getEventOrNull(ret->event)) {
-    throw ParseException("bad event name", s[1]->line, s[1]->col);
+  ret->tag = getTagName(*s[i++]);
+  if (!wasm.getTagOrNull(ret->tag)) {
+    throw ParseException("bad tag name", s[1]->line, s[1]->col);
   }
   for (; i < s.size(); i++) {
     ret->operands.push_back(parseExpression(s[i]));
@@ -2596,6 +2596,12 @@ Expression* SExpressionWasmBuilder::makeRttSub(Element& s) {
   auto heapType = parseHeapType(*s[1]);
   auto parent = parseExpression(*s[2]);
   return Builder(wasm).makeRttSub(heapType, parent);
+}
+
+Expression* SExpressionWasmBuilder::makeRttFreshSub(Element& s) {
+  auto heapType = parseHeapType(*s[1]);
+  auto parent = parseExpression(*s[2]);
+  return Builder(wasm).makeRttFreshSub(heapType, parent);
 }
 
 Expression* SExpressionWasmBuilder::makeStructNew(Element& s, bool default_) {
@@ -2949,9 +2955,9 @@ void SExpressionWasmBuilder::parseExport(Element& s) {
     } else if (elementStartsWith(inner, GLOBAL)) {
       ex->kind = ExternalKind::Global;
       ex->value = getGlobalName(*inner[1]);
-    } else if (inner[0]->str() == EVENT) {
-      ex->kind = ExternalKind::Event;
-      ex->value = getEventName(*inner[1]);
+    } else if (inner[0]->str() == TAG) {
+      ex->kind = ExternalKind::Tag;
+      ex->value = getTagName(*inner[1]);
     } else {
       throw ParseException("invalid export", inner.line, inner.col);
     }
@@ -2984,8 +2990,8 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       kind = ExternalKind::Table;
     } else if (elementStartsWith(*s[3], GLOBAL)) {
       kind = ExternalKind::Global;
-    } else if ((*s[3])[0]->str() == EVENT) {
-      kind = ExternalKind::Event;
+    } else if ((*s[3])[0]->str() == TAG) {
+      kind = ExternalKind::Tag;
     } else {
       newStyle = false; // either (param..) or (result..)
     }
@@ -3010,9 +3016,9 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       name = Name("mimport$" + std::to_string(memoryCounter++));
     } else if (kind == ExternalKind::Table) {
       name = Name("timport$" + std::to_string(tableCounter++));
-    } else if (kind == ExternalKind::Event) {
-      name = Name("eimport$" + std::to_string(eventCounter++));
-      eventNames.push_back(name);
+    } else if (kind == ExternalKind::Tag) {
+      name = Name("eimport$" + std::to_string(tagCounter++));
+      tagNames.push_back(name);
     } else {
       throw ParseException("invalid import", s[3]->line, s[3]->col);
     }
@@ -3101,21 +3107,13 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
     } else {
       j = parseMemoryLimits(inner, j);
     }
-  } else if (kind == ExternalKind::Event) {
-    auto event = make_unique<Event>();
-    if (j >= inner.size()) {
-      throw ParseException("event does not have an attribute", s.line, s.col);
-    }
-    auto& attrElem = *inner[j++];
-    if (!elementStartsWith(attrElem, ATTR) || attrElem.size() != 2) {
-      throw ParseException("invalid attribute", attrElem.line, attrElem.col);
-    }
-    event->attribute = atoi(attrElem[1]->c_str());
-    j = parseTypeUse(inner, j, event->sig);
-    event->setName(name, hasExplicitName);
-    event->module = module;
-    event->base = base;
-    wasm.addEvent(event.release());
+  } else if (kind == ExternalKind::Tag) {
+    auto tag = make_unique<Tag>();
+    j = parseTypeUse(inner, j, tag->sig);
+    tag->setName(name, hasExplicitName);
+    tag->module = module;
+    tag->base = base;
+    wasm.addTag(tag.release());
   }
   // If there are more elements, they are invalid
   if (j < inner.size()) {
@@ -3430,23 +3428,23 @@ HeapType SExpressionWasmBuilder::parseHeapType(Element& s) {
   throw ParseException("invalid heap type", s.line, s.col);
 }
 
-void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
-  auto event = make_unique<Event>();
+void SExpressionWasmBuilder::parseTag(Element& s, bool preParseImport) {
+  auto tag = make_unique<Tag>();
   size_t i = 1;
 
   // Parse name
   if (s[i]->isStr() && s[i]->dollared()) {
     auto& inner = *s[i++];
-    event->setExplicitName(inner.str());
-    if (wasm.getEventOrNull(event->name)) {
-      throw ParseException("duplicate event", inner.line, inner.col);
+    tag->setExplicitName(inner.str());
+    if (wasm.getTagOrNull(tag->name)) {
+      throw ParseException("duplicate tag", inner.line, inner.col);
     }
   } else {
-    event->name = Name::fromInt(eventCounter);
-    assert(!wasm.getEventOrNull(event->name));
+    tag->name = Name::fromInt(tagCounter);
+    assert(!wasm.getTagOrNull(tag->name));
   }
-  eventCounter++;
-  eventNames.push_back(event->name);
+  tagCounter++;
+  tagNames.push_back(tag->name);
 
   // Parse import, if any
   if (i < s.size() && elementStartsWith(*s[i], IMPORT)) {
@@ -3463,14 +3461,14 @@ void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
       throw ParseException(
         "invalid import base name", importElem[2]->line, importElem[2]->col);
     }
-    event->module = importElem[1]->str();
-    event->base = importElem[2]->str();
+    tag->module = importElem[1]->str();
+    tag->base = importElem[2]->str();
   }
 
   // Parse export, if any
   if (i < s.size() && elementStartsWith(*s[i], EXPORT)) {
     auto& exportElem = *s[i++];
-    if (event->module.is()) {
+    if (tag->module.is()) {
       throw ParseException("import and export cannot be specified together",
                            exportElem.line,
                            exportElem.col);
@@ -3488,33 +3486,19 @@ void SExpressionWasmBuilder::parseEvent(Element& s, bool preParseImport) {
       throw ParseException(
         "duplicate export", exportElem[1]->line, exportElem[1]->col);
     }
-    ex->value = event->name;
-    ex->kind = ExternalKind::Event;
+    ex->value = tag->name;
+    ex->kind = ExternalKind::Tag;
   }
-
-  // Parse attribute
-  if (i >= s.size()) {
-    throw ParseException("event does not have an attribute", s.line, s.col);
-  }
-  auto& attrElem = *s[i++];
-  if (!elementStartsWith(attrElem, ATTR) || attrElem.size() != 2) {
-    throw ParseException("invalid attribute", attrElem.line, attrElem.col);
-  }
-  if (!attrElem[1]->isStr()) {
-    throw ParseException(
-      "invalid attribute", attrElem[1]->line, attrElem[1]->col);
-  }
-  event->attribute = atoi(attrElem[1]->c_str());
 
   // Parse typeuse
-  i = parseTypeUse(s, i, event->sig);
+  i = parseTypeUse(s, i, tag->sig);
 
   // If there are more elements, they are invalid
   if (i < s.size()) {
     throw ParseException("invalid element", s[i]->line, s[i]->col);
   }
 
-  wasm.addEvent(event.release());
+  wasm.addTag(tag.release());
 }
 
 void SExpressionWasmBuilder::validateHeapTypeUsingChild(Expression* child,

@@ -35,7 +35,7 @@
   (global $global_anyref3 (mut anyref) (ref.null func))
   (global $global_anyref4 (mut anyref) (ref.func $foo))
 
-  (event $e-i32 (attr 0) (param i32))
+  (tag $e-i32 (param i32))
 
   (func $test
     (local $local_externref externref)

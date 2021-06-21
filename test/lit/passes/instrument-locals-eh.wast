@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --instrument-locals -all -S -o - | filecheck %s
 
 (module
-  (event $e (attr 0) (param i32))
+  (tag $e (param i32))
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $x i32)

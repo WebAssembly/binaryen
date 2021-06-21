@@ -36,6 +36,7 @@
   (global $rttparent (rtt 0 $parent) (rtt.canon $parent))
   (global $rttchild (rtt 1 $child) (rtt.sub $child (global.get $rttparent)))
   (global $rttgrandchild (rtt 2 $grandchild) (rtt.sub $grandchild (global.get $rttchild)))
+  (global $rttfreshgrandchild (rtt 2 $grandchild) (rtt.fresh_sub $grandchild (global.get $rttchild)))
 
   (type $nested-child-struct (struct (field (mut (ref $child)))))
   (type $nested-child-array (array (mut (ref $child))))

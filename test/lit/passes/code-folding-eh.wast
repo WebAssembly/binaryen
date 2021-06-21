@@ -3,7 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
-  (event $e-i32 (attr 0) (param i32))
+  (tag $e-i32 (param i32))
 
   ;; CHECK:      (func $pop-test
   ;; CHECK-NEXT:  (block $folding-inner0

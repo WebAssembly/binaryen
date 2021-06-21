@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --code-pushing -all -S -o - | filecheck %s
 
 (module
-  (event $e (attr 0) (param i32))
+  (tag $e (param i32))
 
   ;; CHECK:      (func $cant-push-past-call
   ;; CHECK-NEXT:  (local $x i32)

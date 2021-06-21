@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --generate-stack-ir --roundtrip -all -S -o - | filecheck %s
 
 (module
- (event $event (attr 0) (param i32))
+ (tag $tag (param i32))
   ;; CHECK:      (func $delegate-child
   ;; CHECK-NEXT:  (try $label$9
   ;; CHECK-NEXT:   (do
@@ -10,7 +10,7 @@
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (catch $event$0
+  ;; CHECK-NEXT:     (catch $tag$0
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
@@ -23,7 +23,7 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $event$0
+  ;; CHECK-NEXT:   (catch $tag$0
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (pop i32)
   ;; CHECK-NEXT:    )
@@ -35,7 +35,7 @@
       (do
         (try
           (do)
-          (catch $event
+          (catch $tag
             (drop
               (pop i32)
             )
@@ -51,7 +51,7 @@
           )
         )
       )
-      (catch $event
+      (catch $tag
         (drop
           (pop i32)
         )
