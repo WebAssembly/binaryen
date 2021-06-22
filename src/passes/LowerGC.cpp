@@ -290,7 +290,7 @@ struct LowerGCCode
     curr->operands.push_back(curr->target);
     Builder builder(*getModule());
     std::string name = "CallRef$";
-    name += getModule()->typeNames[type].name.str;
+    name += getModule()->typeNames[curr->target->type.getHeapType()].name.str;
     replaceCurrent(builder.makeCall(
       name, curr->operands, curr->type));
   }
@@ -508,7 +508,7 @@ private:
     loweringInfo.pointerType = module->memory.indexType;
   }
 
-  static const char* TableName = "lowergc-table";
+  const char* TableName = "lowergc-table";
 
   void addTable() {
     Builder builder(*module);
