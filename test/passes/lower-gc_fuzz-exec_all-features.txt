@@ -1010,7 +1010,7 @@
    (unreachable)
    (if (result i32)
     (i32.eqz
-     (local.get $1)
+     (local.get $2)
     )
     (i32.load8_u
      (i32.add
@@ -1458,7 +1458,7 @@
 [fuzz-exec] calling arrays
 [LoggingExternalInterface logging 50]
 [LoggingExternalInterface logging 42]
-[LoggingExternalInterface logging -128]
+[LoggingExternalInterface logging 128]
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling rtts
@@ -1500,7 +1500,7 @@
 [fuzz-exec] calling array-alloc-failure
 [trap final > memory: 18446744073709551615 > 16777216]
 [fuzz-exec] calling init-array-packed
-[fuzz-exec] note result: init-array-packed => -43
+[fuzz-exec] note result: init-array-packed => 213
 [fuzz-exec] calling cast-func-to-struct
 [trap unreachable]
 ignoring comparison of ExecutionResults!

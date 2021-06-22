@@ -964,7 +964,7 @@ private:
       body = builder.makeIf(
         builder.makeUnary(
           EqZInt32,
-          builder.makeLocalGet(1, Type::i32)
+          builder.makeLocalGet(2, Type::i32)
         ),
         makeLoad(false),
         makeLoad(true)

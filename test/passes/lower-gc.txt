@@ -1339,7 +1339,7 @@
    (unreachable)
    (if (result i32)
     (i32.eqz
-     (local.get $1)
+     (local.get $2)
     )
     (i32.load8_u
      (i32.add
