@@ -349,14 +349,15 @@ struct LowerGCCode
         // br_on_null branches on null, and flows out the non-null value
         // otherwise. It does not send a value on the branch.
         replaceCurrent(
-          builder.makeSequence(
+          builder.makeBlock({
             set,
             builder.makeBreak(
               curr->name,
               nullptr,
               makeCheck("RefIsNull")
-            )
-          )
+            ),
+            makeGetRef()
+          })
         );
         return;
       case BrOnNonNull:

@@ -194,4 +194,71 @@
    (ref.func $call_ref)
   )
  )
+
+ (func $br_on_X (param $x anyref)
+  (local $y anyref)
+  (local $z (ref null any))
+  (local $temp-func (ref null func))
+  (local $temp-data (ref null data))
+  (local $temp-i31 (ref null i31))
+  (block $null
+   (local.set $z
+    (br_on_null $null (local.get $x))
+   )
+  )
+  (drop
+   (block $func (result funcref)
+    (local.set $y
+     (br_on_func $func (local.get $x))
+    )
+    (ref.null func)
+   )
+  )
+  (drop
+   (block $data (result (ref null data))
+    (local.set $y
+     (br_on_data $data (local.get $x))
+    )
+    (ref.null data)
+   )
+  )
+  (drop
+   (block $i31 (result (ref null i31))
+    (local.set $y
+     (br_on_i31 $i31 (local.get $x))
+    )
+    (ref.null i31)
+   )
+  )
+  (drop
+   (block $non-null (result (ref any))
+    (br_on_non_null $non-null (local.get $x))
+    (unreachable)
+   )
+  )
+  (drop
+   (block $non-func (result anyref)
+    (local.set $temp-func
+     (br_on_non_func $non-func (local.get $x))
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $non-data (result anyref)
+    (local.set $temp-data
+     (br_on_non_data $non-data (local.get $x))
+    )
+    (ref.null any)
+   )
+  )
+  (drop
+   (block $non-i31 (result anyref)
+    (local.set $temp-i31
+     (br_on_non_i31 $non-i31 (local.get $x))
+    )
+    (ref.null any)
+   )
+  )
+ )
 )
