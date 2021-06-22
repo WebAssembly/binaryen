@@ -171,28 +171,10 @@ enum RttKind {
   RttExtern = 3,
 };
 
-HeapType getLoweredType(HeapType type, Memory& memory) {
-  if (type.isFunction()) {
-    auto sig = type.getHeapType().getSignature();
-    std::vector<Type> params, results;
-    for (auto param : sig.params) {
-      params.push_back(getLoweredType(param, memory));
-    }
-    for (auto result : sig.results) {
-      results.push_back(getLoweredType(result, memory));
-    }
-    return Signature(Type(params), Type(results));
-  }
-  return type;
-}
-
 Type getLoweredType(Type type, Memory& memory) {
   // References and Rtts are pointers.
   if (type.isRef() || type.isRtt()) {
     return memory.indexType;
-  }
-  if (type.isFunction()) {
-    return Type(getLoweredType(type.getHeapType()), type.isNullable() ? Nullable : NonNullable);
   }
   return type;
 }
@@ -859,7 +841,7 @@ private:
 
   void makeArrayGet(HeapType type) {
     auto element = type.getArray().element;
-    auto loweredType = getLoweredType(element.type, module->memory);
+    auto loweredType = getLoweredType(element.type, module->memory); // TODO: lower()
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArrayGet$") + module->typeNames[type].name.str,
@@ -887,19 +869,29 @@ private:
   }
 
   void makeCallRef(HeapType type) {
-    auto sig = lower(type).getSignature();
+    auto sig = type.getSignature();
+    std::vector<Type> loweredParams, loweredResults;
+    for (auto param : sig.params) {
+      loweredParams.push_back(lower(param));
+    }
+    for (auto result : sig.results) {
+      loweredResults.push_back(lower(result));
+    }
     // The reference is passed after the parameters.
     auto refParam = sig.params.size();
+    // The new runtime function receives the lowered params, and then the
+    // function pointer.
+    auto runtimeFunctionParams = loweredParams;
+    runtimeFunctionParams.push_back(Type::i32);
+
     PointerBuilder builder(*module);
-    std::vector<Expression*> params;
+    std::vector<Expression*> args;
     for (Index i = 0; i < sig.params.size(); i++) {
-      params.push_back(builder.makeLocalGet(i, sig.params[i]));
+      args.push_back(builder.makeLocalGet(i, loweredParams[i]));
     }
-    auto newSig = sig;
-    newSig.params.push_back(Type::i32);
     module->addFunction(builder.makeFunction(
       std::string("CallRef$") + module->typeNames[type].name.str,
-      newSig,
+      Signature(Type(runtimeFunctionParams), Type(loweredResults)),
       {},
       builder.makeTrapOnNullParam(
         refParam,
@@ -911,8 +903,8 @@ private:
             Type::i32,
             4
           ),
-          params,
-          sig
+          args,
+          Signature(Type(loweredParams), Type(loweredResults))
         )
       )
     ));
@@ -1398,7 +1390,6 @@ private:
   }
 
   Type lower(Type type) { return getLoweredType(type, module->memory); }
-  HeapType lower(HeapType type) { return getLoweredType(type, module->memory); }
 };
 
 Pass* createLowerGCPass() { return new LowerGC(); }
