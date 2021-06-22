@@ -658,7 +658,9 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
   // If only (type) is specified, populate `namedParams`
   if (!paramsOrResultsExist) {
     size_t index = 0;
-    for (const auto& param : functionType.getSignature().params) {
+    assert(functionType.isSignature());
+    Signature sig = functionType.getSignature();
+    for (const auto& param : sig.params) {
       namedParams.emplace_back(Name::fromInt(index++), param);
     }
   }
