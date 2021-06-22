@@ -1215,7 +1215,7 @@
     (i32.add
      (i32.const 8)
      (i32.mul
-      (i32.const 4)
+      (i32.const 1)
       (local.get $0)
      )
     )
@@ -1262,7 +1262,7 @@
     (i32.add
      (i32.const 8)
      (i32.mul
-      (i32.const 4)
+      (i32.const 1)
       (local.get $1)
      )
     )
@@ -1308,14 +1308,14 @@
     (local.get $0)
    )
    (unreachable)
-   (i32.store
+   (i32.store8
     (i32.add
      (i32.add
       (local.get $0)
       (i32.const 8)
      )
      (i32.mul
-      (i32.const 4)
+      (i32.const 1)
       (local.get $1)
      )
     )
@@ -1329,14 +1329,14 @@
     (local.get $0)
    )
    (unreachable)
-   (i32.load
+   (i32.load8_u
     (i32.add
      (i32.add
       (local.get $0)
       (i32.const 8)
      )
      (i32.mul
-      (i32.const 4)
+      (i32.const 1)
       (local.get $1)
      )
     )

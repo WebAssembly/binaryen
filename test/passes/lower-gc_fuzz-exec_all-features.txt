@@ -885,7 +885,7 @@
     (i32.add
      (i32.const 8)
      (i32.mul
-      (i32.const 4)
+      (i32.const 1)
       (local.get $0)
      )
     )
@@ -932,7 +932,7 @@
     (i32.add
      (i32.const 8)
      (i32.mul
-      (i32.const 4)
+      (i32.const 1)
       (local.get $1)
      )
     )
@@ -978,14 +978,14 @@
     (local.get $0)
    )
    (unreachable)
-   (i32.store
+   (i32.store8
     (i32.add
      (i32.add
       (local.get $0)
       (i32.const 8)
      )
      (i32.mul
-      (i32.const 4)
+      (i32.const 1)
       (local.get $1)
      )
     )
@@ -999,14 +999,14 @@
     (local.get $0)
    )
    (unreachable)
-   (i32.load
+   (i32.load8_u
     (i32.add
      (i32.add
       (local.get $0)
       (i32.const 8)
      )
      (i32.mul
-      (i32.const 4)
+      (i32.const 1)
       (local.get $1)
      )
     )
@@ -1432,8 +1432,8 @@
 [fuzz-exec] calling arrays
 [LoggingExternalInterface logging 50]
 [LoggingExternalInterface logging 42]
-[LoggingExternalInterface logging 65408]
-[LoggingExternalInterface logging 65408]
+[LoggingExternalInterface logging 128]
+[LoggingExternalInterface logging 128]
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling rtts
 [LoggingExternalInterface logging 0]
@@ -1472,9 +1472,9 @@
 [LoggingExternalInterface logging 3]
 [trap unreachable]
 [fuzz-exec] calling array-alloc-failure
-[trap final > memory: 18446744073709551612 > 16777216]
+[trap final > memory: 18446744073709551615 > 16777216]
 [fuzz-exec] calling init-array-packed
-[fuzz-exec] note result: init-array-packed => -43
+[fuzz-exec] note result: init-array-packed => 213
 [fuzz-exec] calling cast-func-to-struct
 [trap unreachable]
 ignoring comparison of ExecutionResults!

@@ -400,7 +400,7 @@ struct LowerGCCode
                 getModule()->typeNames[type].name.str + '$' +
                 std::to_string(curr->index);
     replaceCurrent(builder.makeCall(
-      name, {curr->ref}, getLoweredType(curr->type, getModule()->memory)));
+      name, {curr->ref, builder.makeConst(int32_t(curr->signed_))}, getLoweredType(curr->type, getModule()->memory)));
   }
 
   void visitArrayNew(ArrayNew* curr) {
@@ -439,7 +439,7 @@ struct LowerGCCode
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, getModule()->memory);
     replaceCurrent(
-      builder.makeCall(name, {curr->ref, curr->index}, loweredType));
+      builder.makeCall(name, {curr->ref, curr->index, builder.makeConst(int32_t(curr->signed_))}, loweredType));
   }
 
   void visitArrayLen(ArrayLen* curr) {
@@ -781,19 +781,37 @@ private:
       auto& field = fields[i];
       auto loweredType = getLoweredType(field.type, module->memory);
       auto bytes = getBytes(field);
-      module->addFunction(builder.makeFunction(
-        std::string("StructGet$") + module->typeNames[type].name.str + '$' +
-          std::to_string(i),
-        {loweringInfo.pointerType, loweredType},
-        {},
-        builder.makeTrapOnNullParam(
-          0,
-          builder.makeLoad(bytes,
-                           false, // TODO: signedness
+      auto makeLoad = [&](bool signed_) { 
+          return builder.makeLoad(bytes,
+                           signed_,
                            loweringInfo.layouts[type].fieldOffsets[i],
                            bytes,
                            builder.makeLocalGet(0, loweringInfo.pointerType),
-                           loweredType))));
+                           loweredType);
+      };
+      Expression* body;
+      if (field.isPacked()) {
+        body = builder.makeIf(
+          builder.makeUnary(
+            EqZInt32,
+            builder.makeLocalGet(1, Type::i32)
+          ),
+          makeLoad(false),
+          makeLoad(true)
+        );
+      } else {
+        body = makeLoad(false);
+      }
+      module->addFunction(builder.makeFunction(
+        std::string("StructGet$") + module->typeNames[type].name.str + '$' +
+          std::to_string(i),
+        // Receives the pointer and a bool for being signed, returns the result.
+        {{loweringInfo.pointerType, Type::i32}, loweredType},
+        {},
+        builder.makeTrapOnNullParam(
+          0,
+          body
+      )));
     }
   }
 
@@ -931,17 +949,39 @@ private:
     auto loweredType =
       getLoweredType(element.type, module->memory); // TODO: lower()
     PointerBuilder builder(*module);
-    module->addFunction(builder.makeFunction(
-      std::string("ArrayGet$") + module->typeNames[type].name.str,
-      {{loweringInfo.pointerType, loweringInfo.pointerType}, loweredType},
-      {},
-      builder.makeTrapOnNullParam(0,
-                                  builder.makeLoad(bytes,
-                                                   false, // TODO: signedness
+
+
+    auto makeLoad = [&](bool signed_) { 
+      return builder.makeLoad(bytes,
+                                                   signed_,
                                                    0,
                                                    bytes,
                                                    makeArrayOffset(element),
-                                                   loweredType))));
+                                                   loweredType);
+    };
+    Expression* body;
+    if (element.isPacked()) {
+      body = builder.makeIf(
+        builder.makeUnary(
+          EqZInt32,
+          builder.makeLocalGet(1, Type::i32)
+        ),
+        makeLoad(false),
+        makeLoad(true)
+      );
+    } else {
+      body = makeLoad(false);
+    }
+
+
+    module->addFunction(builder.makeFunction(
+      std::string("ArrayGet$") + module->typeNames[type].name.str,
+      // Receives the pointer, an index, and a bool for being signed, returns
+      // the result.
+      {{loweringInfo.pointerType, loweringInfo.pointerType}, loweredType},
+      {},
+      builder.makeTrapOnNullParam(0,
+                                 body)));
   }
 
   void makeArrayLen(HeapType type) {
@@ -1447,8 +1487,7 @@ private:
     }
   }
 
-  // Given a field in a struct or an array, and the lowered type for it, return
-  // how many bytes it uses.
+  // Given a field in a struct or an array, return how many bytes it uses.
   unsigned getBytes(const Field& field) {
     auto loweredType = getLoweredType(field.type, module->memory);
     // For packed fields, return the proper packed size.
