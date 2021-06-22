@@ -156,33 +156,6 @@ const char* getName(RefIsOp op) {
   }
 }
 
-const char* getName(BrOnOp op) {
-  switch (op) {
-    case BrOnNull:
-      return "BrOnNull";
-    case BrOnNonNull:
-      return "BrOnNonNull";
-    case BrOnCast:
-      return "BrOnCast";
-    case BrOnCastFail:
-      return "BrOnCastFail";
-    case BrOnFunc:
-      return "BrOnFunc";
-    case BrOnNonFunc:
-      return "BrOnNonFunc";
-    case BrOnData:
-      return "BrOnData";
-    case BrOnNonData:
-      return "BrOnNonData";
-    case BrOnI31:
-      return "BrOnI31";
-    case BrOnNonI31:
-      return "BrOnNonI31";
-    default:
-      WASM_UNREACHABLE("unimplemented br_*");
-  };
-};
-
 enum RttKind {
   RttFunc = 0,
   RttData = 1,
@@ -304,14 +277,6 @@ struct LowerGCCode
       builder.makeCall("RefTest", {curr->ref, curr->rtt}, Type::i32));
   }
 
-  // TODO: template these funcs?
-  void visitBrOn(BrOn* curr) {
-    visitExpression(curr);
-    Builder builder(*getModule());
-    replaceCurrent(builder.makeCall(
-      getName(curr->op), {curr->value}, loweringInfo->pointerType));
-  }
-
   void visitCallRef(CallRef* curr) {
     visitExpression(curr);
     auto type = originalTypes[&curr->target];
@@ -321,6 +286,69 @@ struct LowerGCCode
     name += getModule()->typeNames[type].name.str;
     replaceCurrent(builder.makeCall(
       name, curr->operands, curr->type));
+  }
+
+  void visitBrOn(BrOn* curr) {
+    visitExpression(curr);
+    Builder builder(*getModule());
+    // Store the ref to a local, as we may need to access it twice.
+    auto ref = builder.addVar(Type::i32, getFunction());
+    auto* set = builder.makeLocalSet(ref, curr->ref);
+    // The condition must be set in each case of the switch.
+    Expression* condition;
+    // The value is nullptr unless a case sets it.
+    Expression* value = nullptr;
+    auto makeGetRef = [&]() {
+      return builder.makeLocalGet(ref, Type::i32);
+    };
+    auto makeCheck = [&](const char* name) {
+      return builder.makeCall(name, makeGetRef(), Type::i32);
+    };
+    auto makeReversedCheck = [&](const char* name) {
+      return builder.makeUnary(
+        EqZInt32,
+        makeCheck(name)
+      );
+    };
+    switch (curr->op) {
+      case BrOnNull:
+        // br_on_null branches on null, and flows out the non-null value
+        // otherwise.
+        condition = makeCheck("RefIsNull");
+        value = makeGetRef();
+        break;
+      case BrOnNonNull:
+        condition = makeReversedCheck("RefIsNull");
+        break;
+      case BrOnCast:
+        break;
+      case BrOnCastFail:
+        break;
+      case BrOnFunc:
+        break;
+      case BrOnNonFunc:
+        break;
+      case BrOnData:
+        break;
+      case BrOnNonData:
+        break;
+      case BrOnI31:
+        break;
+      case BrOnNonI31:
+        break;
+      default:
+        WASM_UNREACHABLE("unimplemented br_as_*");
+    }
+    replaceCurrent(
+      builder.makeSequence(
+        set,
+        builder.makeBreak(
+          curr->name,
+          value,
+          condition
+        )
+      )
+    );
   }
 
   void visitStructNew(StructNew* curr) {
@@ -618,7 +646,6 @@ private:
     makeRefIs();
     makeRefTest();
     makeRefCast();
-    makeBrOn();
 
     addTypeSupport(types);
   }
@@ -1160,60 +1187,6 @@ private:
       {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
       {loweringInfo.pointerType},
       builder.makeBlock(list)));
-  }
-
-  void makeBrOn() {
-    Builder builder(*module);
-    for (BrOn op : {
-      BrOnNull,
-      BrOnNonNull,
-      BrOnCast,
-      BrOnCastFail,
-      BrOnFunc,
-      BrOnNonFunc,
-      BrOnData,
-      BrOnNonData,
-      BrOnI31,
-      BrOnNonI31
-    }) {
-      std::vector<Expression*> list;
-      // Check for null.
-      list.push_back(builder.makeIf(
-        builder.makeUnary(EqZInt32,
-                          builder.makeLocalGet(0, loweringInfo.pointerType)),
-        builder.makeReturn(builder.makeConst(int32_t(0)))));
-      // Check for a kind, if we need to.
-      auto compareRttTo = [&](RttKind kind) {
-        list.push_back(builder.makeIf(
-          builder.makeBinary(NeInt32,
-                             getRttKind(getRtt(builder.makeLocalGet(
-                               0, loweringInfo.pointerType))),
-                             builder.makeConst(int32_t(kind))),
-          builder.makeReturn(builder.makeConst(int32_t(0)))));
-      };
-      switch (op) {
-        case RefIsNull:
-          break;
-        case RefIsFunc:
-          compareRttTo(RttFunc);
-          break;
-        case RefIsData:
-          compareRttTo(RttData);
-          break;
-        case RefIsI31:
-          compareRttTo(RttI31);
-          break;
-        default:
-          WASM_UNREACHABLE("unimplemented ref.as_*");
-      }
-      // If we passed all the checks, we can return the pointer.
-      list.push_back(builder.makeConst(int32_t(1)));
-      module->addFunction(
-        builder.makeFunction(getName(op),
-                             {loweringInfo.pointerType, Type::i32},
-                             {},
-                             builder.makeBlock(list)));
-    }
   }
 
   // Given a pointer, load the RTT for it.
