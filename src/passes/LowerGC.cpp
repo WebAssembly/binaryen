@@ -292,7 +292,7 @@ struct LowerGCCode
     visitExpression(curr);
     Builder builder(*getModule());
     // Store the ref to a local, as we may need to access it twice.
-    auto ref = builder.addVar(Type::i32, getFunction());
+    auto ref = builder.addVar(getFunction(), Type::i32);
     auto* set = builder.makeLocalSet(ref, curr->ref);
     auto makeGetRef = [&]() {
       return builder.makeLocalGet(ref, Type::i32);
@@ -365,7 +365,7 @@ struct LowerGCCode
         replaceCurrent(
           builder.makeSequence(
             set,
-            buider.makeDrop(
+            builder.makeDrop(
               builder.makeBreak(
                 curr->name,
                 makeGetRef(),
@@ -374,7 +374,7 @@ struct LowerGCCode
             )
           )
         );
-        break;
+        return;
 
       default:
         WASM_UNREACHABLE("unimplemented br_as_*");
