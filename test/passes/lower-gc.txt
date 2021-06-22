@@ -27,7 +27,7 @@
  (memory $0 256 256)
  (table $original-table 0 funcref)
  (table $lowergc-table 3 3 funcref)
- (elem (table $lowergc-table) (i32.const 0) func $ref.func $call_ref $ref.is)
+ (elem (table $lowergc-table) (i32.const 0) func $call_ref $ref.func $ref.is)
  (start $LowerGC$start)
  (func $struct-gets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
   (drop
@@ -198,10 +198,10 @@
  )
  (func $ref.func
   (drop
-   (i32.const 92)
+   (i32.const 100)
   )
   (drop
-   (i32.const 92)
+   (i32.const 100)
   )
   (drop
    (i32.const 108)
@@ -231,7 +231,7 @@
  )
  (func $call_ref
   (call $CallRef$type$0
-   (i32.const 100)
+   (i32.const 92)
   )
  )
  (func $br_on_X (param $x i32)
