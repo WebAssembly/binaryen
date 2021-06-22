@@ -345,6 +345,10 @@ function(binaryen_add_executable name sources)
   set_property(TARGET ${name} PROPERTY CXX_STANDARD_REQUIRED ON)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
+  if (MSVC)
+    install(FILES ${CMAKE_BINARY_DIR}/bin/${name}.pdb
+            DESTINATION ${CMAKE_INSTALL_BINDIR})
+  endif()
 endfunction()
 
 binaryen_add_executable(wasm-opt src/tools/wasm-opt.cpp)

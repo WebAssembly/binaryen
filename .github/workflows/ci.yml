@@ -78,14 +78,14 @@ jobs:
 
     - name: cmake (win)
       # -G "Visual Studio 15 2017"
-      run: cmake -S . -B out -DCMAKE_INSTALL_PREFIX=out/install
+      run: cmake -S . -B out -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_BUILD_TYPE=RelWithDebInfo
       if: matrix.os == 'windows-latest'
 
     - name: build
-      run: cmake --build out --config Release
+      run: cmake --build out --config RelWithDebInfo
 
     - name: install
-      run: cmake --install out --config Release
+      run: cmake --install out --config RelWithDebInfo
 
     - name: strip
       run: find out/install/ -type f -perm -u=x -exec strip -x {} +
