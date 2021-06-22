@@ -1270,7 +1270,7 @@ private:
       // Types used in rtt.canon instructions.
       std::unordered_map<HeapType, std::atomic<bool>> rttCanons;
 
-      std::unordered_map<Name, std::atomic<bool>> refFuncs;
+      std::map<Name, std::atomic<bool>> refFuncs;
     } usageInfo;
     // Initialize the data so it is safe to operate on in parallel.
     for (auto type : types) {
