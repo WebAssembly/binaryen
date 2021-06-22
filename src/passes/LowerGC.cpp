@@ -685,9 +685,8 @@ private:
     auto& fields = type.getStruct().fields;
     for (auto& field : fields) {
       layout.fieldOffsets.push_back(nextField);
-      // TODO: packed types? for now, always use i32 for them
-      nextField =
-        nextField + getLoweredType(field.type, module->memory).getByteSize();
+      auto bytes = getBytes(field);
+      nextField = nextField + bytes;
     }
     layout.size = nextField;
   }
@@ -758,6 +757,7 @@ private:
     for (Index i = 0; i < fields.size(); i++) {
       auto& field = fields[i];
       auto loweredType = getLoweredType(field.type, module->memory);
+      auto bytes = getBytes(field);
       module->addFunction(builder.makeFunction(
         std::string("StructSet$") + module->typeNames[type].name.str + '$' +
           std::to_string(i),
@@ -765,9 +765,9 @@ private:
         {},
         builder.makeTrapOnNullParam(
           0,
-          builder.makeStore(loweredType.getByteSize(),
+          builder.makeStore(bytes,
                             loweringInfo.layouts[type].fieldOffsets[i],
-                            loweredType.getByteSize(),
+                            bytes,
                             builder.makeLocalGet(0, loweringInfo.pointerType),
                             builder.makeLocalGet(1, loweredType),
                             loweredType))));
@@ -780,6 +780,7 @@ private:
     for (Index i = 0; i < fields.size(); i++) {
       auto& field = fields[i];
       auto loweredType = getLoweredType(field.type, module->memory);
+      auto bytes = getBytes(field);
       module->addFunction(builder.makeFunction(
         std::string("StructGet$") + module->typeNames[type].name.str + '$' +
           std::to_string(i),
@@ -787,10 +788,10 @@ private:
         {},
         builder.makeTrapOnNullParam(
           0,
-          builder.makeLoad(loweredType.getByteSize(),
+          builder.makeLoad(bytes,
                            false, // TODO: signedness
                            loweringInfo.layouts[type].fieldOffsets[i],
-                           loweredType.getByteSize(),
+                           bytes,
                            builder.makeLocalGet(0, loweringInfo.pointerType),
                            loweredType))));
     }
@@ -800,6 +801,7 @@ private:
     auto typeName = module->typeNames[type].name.str; // waka
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, module->memory);
+    auto bytes = getBytes(element);
     PointerBuilder builder(*module);
     for (bool withDefault : {true, false}) {
       std::vector<Type> params;
@@ -825,7 +827,7 @@ private:
           {builder.makePointerAdd(
             builder.makePointerConst(4 + loweringInfo.pointerSize),
             builder.makePointerMul(
-              builder.makePointerConst(loweredType.getByteSize()),
+              builder.makePointerConst(bytes),
               builder.makeLocalGet(sizeParam, loweringInfo.pointerType)))},
           loweringInfo.pointerType)));
       // Store the size.
@@ -891,7 +893,7 @@ private:
     }
   }
 
-  Expression* makeArrayOffset(Type loweredType) {
+  Expression* makeArrayOffset(const Field& field) {
     Builder builder(*module);
     return builder.makeBinary(
       AddInt32,
@@ -899,13 +901,14 @@ private:
                          builder.makeLocalGet(0, loweringInfo.pointerType),
                          builder.makeConst(int32_t(8))),
       builder.makeBinary(MulInt32,
-                         builder.makeConst(int32_t(loweredType.getByteSize())),
+                         builder.makeConst(int32_t(getBytes(field))),
                          builder.makeLocalGet(1, loweringInfo.pointerType)));
   }
 
   void makeArraySet(HeapType type) {
     auto element = type.getArray().element;
     auto loweredType = getLoweredType(element.type, module->memory);
+    auto bytes = getBytes(element);
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArraySet$") + module->typeNames[type].name.str,
@@ -914,16 +917,17 @@ private:
       {},
       builder.makeTrapOnNullParam(
         0,
-        builder.makeStore(loweredType.getByteSize(),
+        builder.makeStore(bytes,
                           0,
-                          loweredType.getByteSize(),
-                          makeArrayOffset(loweredType),
+                          bytes,
+                          makeArrayOffset(element),
                           builder.makeLocalGet(2, loweredType),
                           loweredType))));
   }
 
   void makeArrayGet(HeapType type) {
     auto element = type.getArray().element;
+    auto bytes = getBytes(element);
     auto loweredType =
       getLoweredType(element.type, module->memory); // TODO: lower()
     PointerBuilder builder(*module);
@@ -932,11 +936,11 @@ private:
       {{loweringInfo.pointerType, loweringInfo.pointerType}, loweredType},
       {},
       builder.makeTrapOnNullParam(0,
-                                  builder.makeLoad(loweredType.getByteSize(),
+                                  builder.makeLoad(bytes,
                                                    false, // TODO: signedness
                                                    0,
-                                                   loweredType.getByteSize(),
-                                                   makeArrayOffset(loweredType),
+                                                   bytes,
+                                                   makeArrayOffset(element),
                                                    loweredType))));
   }
 
@@ -1441,6 +1445,19 @@ private:
       }
       global->type = lower(global->type);
     }
+  }
+
+  // Given a field in a struct or an array, and the lowered type for it, return
+  // how many bytes it uses.
+  unsigned getBytes(const Field& field) {
+    auto loweredType = getLoweredType(field.type, module->memory);
+    // For packed fields, return the proper packed size.
+    if (field.type == Type::i32) {
+      return field.getByteSize();
+    }
+    // For everything else, the lowered size is what matters (e.g. a reference
+    // would become an i32 on wasm32 => 4 bytes).
+    return loweredType.getByteSize();
   }
 
   void lowerCode(PassRunner* runner) {
