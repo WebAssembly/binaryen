@@ -171,13 +171,28 @@ enum RttKind {
   RttExtern = 3,
 };
 
+HeapType getLoweredType(HeapType type, Memory& memory) {
+  if (type.isFunction()) {
+    auto sig = type.getHeapType().getSignature();
+    std::vector<Type> params, results;
+    for (auto param : sig.params) {
+      params.push_back(getLoweredType(param, memory));
+    }
+    for (auto result : sig.results) {
+      results.push_back(getLoweredType(result, memory));
+    }
+    return Signature(Type(params), Type(results));
+  }
+  return type;
+}
+
 Type getLoweredType(Type type, Memory& memory) {
   // References and Rtts are pointers.
   if (type.isRef() || type.isRtt()) {
     return memory.indexType;
   }
   if (type.isFunction()) {
-    auto sig = type.
+    return Type(getLoweredType(type.getHeapType()), type.isNullable() ? Nullable : NonNullable);
   }
   return type;
 }
@@ -1383,6 +1398,7 @@ private:
   }
 
   Type lower(Type type) { return getLoweredType(type, module->memory); }
+  HeapType lower(HeapType type) { return getLoweredType(type, module->memory); }
 };
 
 Pass* createLowerGCPass() { return new LowerGC(); }
