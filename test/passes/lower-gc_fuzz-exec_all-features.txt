@@ -1193,7 +1193,7 @@
     (local.get $0)
    )
    (return
-    (i32.const 0)
+    (i32.const 1)
    )
   )
   (i32.const 1)
@@ -1462,7 +1462,7 @@
 [LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling rtts
-[LoggingExternalInterface logging 0]
+[LoggingExternalInterface logging 1]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]
@@ -1490,6 +1490,8 @@
 [LoggingExternalInterface logging 1]
 [trap unreachable]
 [fuzz-exec] calling br-on_non_null-2
+[LoggingExternalInterface logging 1]
+[trap unreachable]
 [fuzz-exec] calling rtt-and-cast-on-func
 [LoggingExternalInterface logging 0]
 [LoggingExternalInterface logging 1]

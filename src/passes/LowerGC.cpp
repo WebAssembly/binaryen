@@ -1083,7 +1083,7 @@ private:
       list.push_back(builder.makeIf(
         builder.makeUnary(EqZInt32,
                           builder.makeLocalGet(0, loweringInfo.pointerType)),
-        builder.makeReturn(builder.makeConst(int32_t(0)))));
+        builder.makeReturn(builder.makeConst(int32_t(op == RefIsNull)))));
       // Check for a kind, if we need to.
       auto compareRttTo = [&](RttKind kind) {
         list.push_back(builder.makeIf(
