@@ -346,7 +346,7 @@ function(binaryen_add_executable name sources)
   binaryen_setup_rpath(${name})
   install(TARGETS ${name} DESTINATION ${CMAKE_INSTALL_BINDIR})
   if (MSVC)
-    install(FILES ${CMAKE_BINARY_DIR}/${name}.pdb
+    install(FILES ${CMAKE_BINARY_DIR}/bin/${name}.pdb
             DESTINATION ${CMAKE_INSTALL_BINDIR})
   endif()
 endfunction()
