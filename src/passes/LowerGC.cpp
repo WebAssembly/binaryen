@@ -284,8 +284,7 @@ struct LowerGCCode
     Builder builder(*getModule());
     std::string name = "CallRef$";
     name += getModule()->typeNames[type].name.str;
-    replaceCurrent(builder.makeCall(
-      name, curr->operands, curr->type));
+    replaceCurrent(builder.makeCall(name, curr->operands, curr->type));
   }
 
   void visitBrOn(BrOn* curr) {
@@ -294,26 +293,18 @@ struct LowerGCCode
     // Store the ref to a local, as we may need to access it twice.
     auto ref = builder.addVar(getFunction(), Type::i32);
     auto* set = builder.makeLocalSet(ref, curr->ref);
-    auto makeGetRef = [&]() {
-      return builder.makeLocalGet(ref, Type::i32);
-    };
+    auto makeGetRef = [&]() { return builder.makeLocalGet(ref, Type::i32); };
     auto makeCheck = [&](const char* name) {
-      return builder.makeCall(name, { makeGetRef() }, Type::i32);
+      return builder.makeCall(name, {makeGetRef()}, Type::i32);
     };
     auto makeReversedCheck = [&](const char* name) {
-      return builder.makeUnary(
-        EqZInt32,
-        makeCheck(name)
-      );
+      return builder.makeUnary(EqZInt32, makeCheck(name));
     };
     auto makeCastCheck = [&]() {
-      return builder.makeCall("RefTest", { makeGetRef(), curr->rtt }, Type::i32);
+      return builder.makeCall("RefTest", {makeGetRef(), curr->rtt}, Type::i32);
     };
     auto makeReversedCastCheck = [&]() {
-      return builder.makeUnary(
-        EqZInt32,
-        makeCastCheck()
-      );
+      return builder.makeUnary(EqZInt32, makeCastCheck());
     };
     // The condition must be set in each case of the switch.
     Expression* condition;
@@ -348,33 +339,18 @@ struct LowerGCCode
       case BrOnNull:
         // br_on_null branches on null, and flows out the non-null value
         // otherwise. It does not send a value on the branch.
-        replaceCurrent(
-          builder.makeBlock({
-            set,
-            builder.makeBreak(
-              curr->name,
-              nullptr,
-              makeCheck("RefIsNull")
-            ),
-            makeGetRef()
-          })
-        );
+        replaceCurrent(builder.makeBlock(
+          {set,
+           builder.makeBreak(curr->name, nullptr, makeCheck("RefIsNull")),
+           makeGetRef()}));
         return;
       case BrOnNonNull:
         // br_on_non_null branches on non-null with the value, and does not flow
         // anything out.
-        replaceCurrent(
-          builder.makeSequence(
-            set,
-            builder.makeDrop(
-              builder.makeBreak(
-                curr->name,
-                makeGetRef(),
-                makeReversedCheck("RefIsNull")
-              )
-            )
-          )
-        );
+        replaceCurrent(builder.makeSequence(
+          set,
+          builder.makeDrop(builder.makeBreak(
+            curr->name, makeGetRef(), makeReversedCheck("RefIsNull")))));
         return;
 
       default:
@@ -383,16 +359,8 @@ struct LowerGCCode
 
     // The default behavior is to break on the condition, and both send the
     // reference and flow it out.
-    replaceCurrent(
-      builder.makeSequence(
-        set,
-        builder.makeBreak(
-          curr->name,
-          makeGetRef(),
-          condition
-        )
-      )
-    );
+    replaceCurrent(builder.makeSequence(
+      set, builder.makeBreak(curr->name, makeGetRef(), condition)));
   }
 
   void visitStructNew(StructNew* curr) {
@@ -483,9 +451,7 @@ struct LowerGCCode
     replaceCurrent(builder.makeCall(name, {curr->ref}, Type::i32));
   }
 
-  void visitArrayCopy(ArrayCopy* curr) {
-    WASM_UNREACHABLE("TODO: ArrayCopy");
-  }
+  void visitArrayCopy(ArrayCopy* curr) { WASM_UNREACHABLE("TODO: ArrayCopy"); }
 
   void visitRefFunc(RefFunc* curr) {
     visitExpression(curr);
@@ -940,7 +906,8 @@ private:
 
   void makeArrayGet(HeapType type) {
     auto element = type.getArray().element;
-    auto loweredType = getLoweredType(element.type, module->memory); // TODO: lower()
+    auto loweredType =
+      getLoweredType(element.type, module->memory); // TODO: lower()
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArrayGet$") + module->typeNames[type].name.str,
@@ -998,15 +965,9 @@ private:
           TableName,
           // Load the function pointer from the reference
           builder.makeSimpleUnsignedLoad(
-            builder.makeLocalGet(refParam, Type::i32),
-            Type::i32,
-            4
-          ),
+            builder.makeLocalGet(refParam, Type::i32), Type::i32, 4),
           args,
-          Signature(Type(loweredParams), Type(loweredResults))
-        )
-      )
-    ));
+          Signature(Type(loweredParams), Type(loweredResults))))));
   }
 
   void makeRefAs() {
