@@ -130,16 +130,12 @@ const char* getName(RefAsOp op) {
   switch (op) {
     case RefAsNonNull:
       return "RefAsNonNull";
-      break;
     case RefAsFunc:
       return "RefAsFunc";
-      break;
     case RefAsData:
       return "RefAsData";
-      break;
     case RefAsI31:
       return "RefAsI31";
-      break;
     default:
       WASM_UNREACHABLE("unimplemented ref.as_*");
   }
@@ -149,20 +145,43 @@ const char* getName(RefIsOp op) {
   switch (op) {
     case RefIsNull:
       return "RefIsNull";
-      break;
     case RefIsFunc:
       return "RefIsFunc";
-      break;
     case RefIsData:
       return "RefIsData";
-      break;
     case RefIsI31:
       return "RefIsI31";
-      break;
     default:
       WASM_UNREACHABLE("unimplemented ref.is_*");
   }
 }
+
+const char* getName(BrOnOp op) {
+  switch (op) {
+    case BrOnNull:
+      return "BrOnNull";
+    case BrOnNonNull:
+      return "BrOnNonNull";
+    case BrOnCast:
+      return "BrOnCast";
+    case BrOnCastFail:
+      return "BrOnCastFail";
+    case BrOnFunc:
+      return "BrOnFunc";
+    case BrOnNonFunc:
+      return "BrOnNonFunc";
+    case BrOnData:
+      return "BrOnData";
+    case BrOnNonData:
+      return "BrOnNonData";
+    case BrOnI31:
+      return "BrOnI31";
+    case BrOnNonI31:
+      return "BrOnNonI31";
+    default:
+      WASM_UNREACHABLE("unimplemented br_*");
+  };
+};
 
 enum RttKind {
   RttFunc = 0,
@@ -283,6 +302,14 @@ struct LowerGCCode
     Builder builder(*getModule());
     replaceCurrent(
       builder.makeCall("RefTest", {curr->ref, curr->rtt}, Type::i32));
+  }
+
+  // TODO: template these funcs?
+  void visitBrOn(BrOn* curr) {
+    visitExpression(curr);
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeCall(
+      getName(curr->op), {curr->value}, loweringInfo->pointerType));
   }
 
   void visitCallRef(CallRef* curr) {
@@ -591,6 +618,7 @@ private:
     makeRefIs();
     makeRefTest();
     makeRefCast();
+    makeBrOn();
 
     addTypeSupport(types);
   }
@@ -1132,6 +1160,60 @@ private:
       {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
       {loweringInfo.pointerType},
       builder.makeBlock(list)));
+  }
+
+  void makeBrOn() {
+    Builder builder(*module);
+    for (BrOn op : {
+      BrOnNull,
+      BrOnNonNull,
+      BrOnCast,
+      BrOnCastFail,
+      BrOnFunc,
+      BrOnNonFunc,
+      BrOnData,
+      BrOnNonData,
+      BrOnI31,
+      BrOnNonI31
+    }) {
+      std::vector<Expression*> list;
+      // Check for null.
+      list.push_back(builder.makeIf(
+        builder.makeUnary(EqZInt32,
+                          builder.makeLocalGet(0, loweringInfo.pointerType)),
+        builder.makeReturn(builder.makeConst(int32_t(0)))));
+      // Check for a kind, if we need to.
+      auto compareRttTo = [&](RttKind kind) {
+        list.push_back(builder.makeIf(
+          builder.makeBinary(NeInt32,
+                             getRttKind(getRtt(builder.makeLocalGet(
+                               0, loweringInfo.pointerType))),
+                             builder.makeConst(int32_t(kind))),
+          builder.makeReturn(builder.makeConst(int32_t(0)))));
+      };
+      switch (op) {
+        case RefIsNull:
+          break;
+        case RefIsFunc:
+          compareRttTo(RttFunc);
+          break;
+        case RefIsData:
+          compareRttTo(RttData);
+          break;
+        case RefIsI31:
+          compareRttTo(RttI31);
+          break;
+        default:
+          WASM_UNREACHABLE("unimplemented ref.as_*");
+      }
+      // If we passed all the checks, we can return the pointer.
+      list.push_back(builder.makeConst(int32_t(1)));
+      module->addFunction(
+        builder.makeFunction(getName(op),
+                             {loweringInfo.pointerType, Type::i32},
+                             {},
+                             builder.makeBlock(list)));
+    }
   }
 
   // Given a pointer, load the RTT for it.
