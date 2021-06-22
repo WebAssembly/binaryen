@@ -285,6 +285,16 @@ struct LowerGCCode
       builder.makeCall("RefTest", {curr->ref, curr->rtt}, Type::i32));
   }
 
+  void visitCallRef(CallRef* curr) {
+    visitExpression(curr);
+    curr->operands.push_back(curr->target);
+    Builder builder(*getModule());
+    std::string name = "CallRef$";
+    name += getModule()->typeNames[type].name.str;
+    replaceCurrent(builder.makeCall(
+      name, curr->operands, curr->type));
+  }
+
   void visitStructNew(StructNew* curr) {
     visitExpression(curr);
     auto type = originalTypes[&curr->rtt];
@@ -374,13 +384,7 @@ struct LowerGCCode
   }
 
   void visitArrayCopy(ArrayCopy* curr) {
-    visitExpression(curr);
-    Builder builder(*getModule());
-    auto type = originalTypes[&curr->ref];
-    auto name =
-      std::string("ArrayCopy$") + getModule()->typeNames[type].name.str;
-    replaceCurrent(builder.makeCall(
-      name, {curr->destRef, curr->destIndex, curr->srcRef, curr->srcIndex, curr->length}, Type::none));
+    WASM_UNREACHABLE("TODO: ArrayCopy");
   }
 
   void visitRefFunc(RefFunc* curr) {
@@ -504,12 +508,14 @@ private:
     loweringInfo.pointerType = module->memory.indexType;
   }
 
+  static const char* TableName = "lowergc-table";
+
   void addTable() {
     Builder builder(*module);
     // Add a new table just for us.
     // Start the table at size 0, and increase it as needed as we go.
     table = module->addTable(builder.makeTable(
-      Names::getValidTableName(*module, "lowergc-table"), Type::funcref, 0, 0));
+      Names::getValidTableName(*module, TableName), Type::funcref, 0, 0));
     // Add an element segment to append to.
     segment = module->addElementSegment(builder.makeElementSegment(
       "lowergc-segment", table->name, builder.makeConst(int32_t(0))));
@@ -576,7 +582,8 @@ private:
         makeArraySet(type);
         makeArrayGet(type);
         makeArrayLen(type);
-        makeArrayCopy(type);
+      } else if (type.isFunction()) {
+        makeCallRef(type);
       }
     }
     makeRefAs();
@@ -860,100 +867,34 @@ private:
           builder.makeLocalGet(0, loweringInfo.pointerType), Type::i32, 4))));
   }
 
-  void makeArrayCopy(HeapType type) {
-    auto typeName = module->typeNames[type].name.str;
-// WAKA from here
-    auto element = type.getArray().element;
-    auto loweredType = getLoweredType(element.type, module->memory);
+  void makeCallRef(HeapType type) {
+    auto sig = type.getSignature();
+    // The reference is passed after the parameters.
+    auto refParam = sig.params.size();
     PointerBuilder builder(*module);
-    for (bool withDefault : {true, false}) {
-      std::vector<Type> params;
-      Index initParam = -1;
-      if (!withDefault) {
-        initParam = 0;
-        params.push_back(loweredType);
-      }
-      // Add the size parameter.
-      auto sizeParam = params.size();
-      params.push_back(loweringInfo.pointerType);
-      // Add the RTT parameter.
-      auto rttParam = params.size();
-      params.push_back(loweringInfo.pointerType);
-      // Add a local to store the allocated value.
-      auto alloc = params.size();
-      std::vector<Expression*> list;
-      // Malloc space for our Array.
-      list.push_back(builder.makeLocalSet(
-        alloc,
-        builder.makeCall(
-          loweringInfo.malloc,
-          {builder.makePointerAdd(
-            builder.makePointerConst(4 + loweringInfo.pointerSize),
-            builder.makePointerMul(
-              builder.makePointerConst(loweredType.getByteSize()),
-              builder.makeLocalGet(sizeParam, loweringInfo.pointerType)))},
-          loweringInfo.pointerType)));
-      // Store the size.
-      list.push_back(builder.makeStore(
-        loweringInfo.pointerSize,
-        4,
-        loweringInfo.pointerSize,
-        builder.makeLocalGet(alloc, loweringInfo.pointerType),
-        builder.makeLocalGet(sizeParam, loweringInfo.pointerType),
-        loweringInfo.pointerType));
-      // Store the rtt.
-      list.push_back(builder.makeStore(
-        loweringInfo.pointerSize,
-        0,
-        loweringInfo.pointerSize,
-        builder.makeLocalGet(alloc, loweringInfo.pointerType),
-        builder.makeLocalGet(rttParam, loweringInfo.pointerType),
-        loweringInfo.pointerType));
-      // Store the values, by performing ArraySet operations.
-      Name loopName("loop");
-      Name blockName("block");
-      Expression* initialization;
-      if (withDefault) {
-        initialization = LiteralUtils::makeZero(loweredType, *module);
-      } else {
-        initialization = builder.makeLocalGet(initParam, loweredType);
-      }
-      initialization = builder.makeCall(
-        std::string("ArraySet$") + typeName,
-        {builder.makeLocalGet(alloc, loweringInfo.pointerType),
-         builder.makeBinary(SubInt32,
-                            builder.makeLocalGet(sizeParam, Type::i32),
-                            builder.makeConst(int32_t(1))),
-         initialization},
-        Type::none);
-      list.push_back(builder.makeLoop(
-        loopName,
-        builder.makeBlock(
-          blockName,
-          {builder.makeBreak(
-             blockName,
-             nullptr,
-             builder.makeUnary(EqZInt32,
-                               builder.makeLocalGet(sizeParam, Type::i32))),
-           initialization,
-           builder.makeLocalSet(
-             sizeParam,
-             builder.makeBinary(SubInt32,
-                                builder.makeLocalGet(sizeParam, Type::i32),
-                                builder.makeConst(int32_t(1)))),
-           builder.makeBreak(loopName)})));
-      // Return the pointer.
-      list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
-      std::string name = "ArrayNew";
-      if (withDefault) {
-        name += "WithDefault";
-      }
-      module->addFunction(
-        builder.makeFunction(name + '$' + typeName,
-                             {Type(params), loweringInfo.pointerType},
-                             {loweringInfo.pointerType},
-                             builder.makeBlock(list)));
+    std::vector<Expression*> params;
+    for (Index i = 0; i < sig.params.size(); i++) {
+      params.push_back(builder.makeLocalGet(i, sig.params[i]));
     }
+    module->addFunction(builder.makeFunction(
+      std::string("CallRef$") + module->typeNames[type].name.str,
+      sig,
+      {},
+      builder.makeTrapOnNullParam(
+        refParam,
+        builder.makeCallIndirect(
+          TableName,
+          // Load the function pointer from the reference
+          builder.makeSimpleUnsignedLoad(
+            builder.makeLocalGet(refParam, Type::i32),
+            Type::i32,
+            4
+          ),
+          params,
+          sig
+        )
+      )
+    ));
   }
 
   void makeRefAs() {
