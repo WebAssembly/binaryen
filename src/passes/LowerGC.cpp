@@ -176,6 +176,9 @@ Type getLoweredType(Type type, Memory& memory) {
   if (type.isRef() || type.isRtt()) {
     return memory.indexType;
   }
+  if (type.isFunction()) {
+    auto sig = type.
+  }
   return type;
 }
 
@@ -287,10 +290,11 @@ struct LowerGCCode
 
   void visitCallRef(CallRef* curr) {
     visitExpression(curr);
+    auto type = originalTypes[&curr->target];
     curr->operands.push_back(curr->target);
     Builder builder(*getModule());
     std::string name = "CallRef$";
-    name += getModule()->typeNames[curr->target->type.getHeapType()].name.str;
+    name += getModule()->typeNames[type].name.str;
     replaceCurrent(builder.makeCall(
       name, curr->operands, curr->type));
   }
@@ -868,7 +872,7 @@ private:
   }
 
   void makeCallRef(HeapType type) {
-    auto sig = type.getSignature();
+    auto sig = lower(type).getSignature();
     // The reference is passed after the parameters.
     auto refParam = sig.params.size();
     PointerBuilder builder(*module);
@@ -876,9 +880,11 @@ private:
     for (Index i = 0; i < sig.params.size(); i++) {
       params.push_back(builder.makeLocalGet(i, sig.params[i]));
     }
+    auto newSig = sig;
+    newSig.params.push_back(Type::i32);
     module->addFunction(builder.makeFunction(
       std::string("CallRef$") + module->typeNames[type].name.str,
-      sig,
+      newSig,
       {},
       builder.makeTrapOnNullParam(
         refParam,

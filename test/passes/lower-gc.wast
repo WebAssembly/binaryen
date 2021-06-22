@@ -188,4 +188,10 @@
    (i32.const 10)
   )
  )
+
+ (func $call_ref
+  (call_ref
+   (ref.func $call_ref)
+  )
+ )
 )
