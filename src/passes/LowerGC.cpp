@@ -294,15 +294,11 @@ struct LowerGCCode
     // Store the ref to a local, as we may need to access it twice.
     auto ref = builder.addVar(Type::i32, getFunction());
     auto* set = builder.makeLocalSet(ref, curr->ref);
-    // The condition must be set in each case of the switch.
-    Expression* condition;
-    // The value is nullptr unless a case sets it.
-    Expression* value = nullptr;
     auto makeGetRef = [&]() {
       return builder.makeLocalGet(ref, Type::i32);
     };
     auto makeCheck = [&](const char* name) {
-      return builder.makeCall(name, makeGetRef(), Type::i32);
+      return builder.makeCall(name, { makeGetRef() }, Type::i32);
     };
     auto makeReversedCheck = [&](const char* name) {
       return builder.makeUnary(
@@ -310,41 +306,88 @@ struct LowerGCCode
         makeCheck(name)
       );
     };
+    auto makeCastCheck = [&]() {
+      return builder.makeCall("RefTest", { makeGetRef(), curr->rtt }, Type::i32);
+    };
+    auto makeReversedCastCheck = [&]() {
+      return builder.makeUnary(
+        EqZInt32,
+        makeCastCheck()
+      );
+    };
+    // The condition must be set in each case of the switch.
+    Expression* condition;
     switch (curr->op) {
-      case BrOnNull:
-        // br_on_null branches on null, and flows out the non-null value
-        // otherwise.
-        condition = makeCheck("RefIsNull");
-        value = makeGetRef();
-        break;
-      case BrOnNonNull:
-        condition = makeReversedCheck("RefIsNull");
-        break;
-      case BrOnCast:
-        break;
-      case BrOnCastFail:
-        break;
       case BrOnFunc:
+        condition = makeCheck("RefIsFunc");
         break;
       case BrOnNonFunc:
+        condition = makeReversedCheck("RefIsFunc");
         break;
       case BrOnData:
+        condition = makeCheck("RefIsData");
         break;
       case BrOnNonData:
+        condition = makeReversedCheck("RefIsData");
         break;
       case BrOnI31:
+        condition = makeCheck("RefIsI31");
         break;
       case BrOnNonI31:
+        condition = makeReversedCheck("RefIsI31");
         break;
+      case BrOnCast:
+        condition = makeCastCheck();
+        break;
+      case BrOnCastFail:
+        condition = makeReversedCastCheck();
+        break;
+
+      // The null operations are special in that they do not send or flow out
+      // a value in all cases, unlike the previous.
+      case BrOnNull:
+        // br_on_null branches on null, and flows out the non-null value
+        // otherwise. It does not send a value on the branch.
+        replaceCurrent(
+          builder.makeSequence(
+            set,
+            builder.makeBreak(
+              curr->name,
+              nullptr,
+              makeCheck("RefIsNull")
+            )
+          )
+        );
+        return;
+      case BrOnNonNull:
+        // br_on_non_null branches on non-null with the value, and does not flow
+        // anything out.
+        replaceCurrent(
+          builder.makeSequence(
+            set,
+            buider.makeDrop(
+              builder.makeBreak(
+                curr->name,
+                makeGetRef(),
+                makeReversedCheck("RefIsNull")
+              )
+            )
+          )
+        );
+        break;
+
       default:
         WASM_UNREACHABLE("unimplemented br_as_*");
     }
+
+    // The default behavior is to break on the condition, and both send the
+    // reference and flow it out.
     replaceCurrent(
       builder.makeSequence(
         set,
         builder.makeBreak(
           curr->name,
-          value,
+          makeGetRef(),
           condition
         )
       )
