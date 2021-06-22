@@ -978,7 +978,7 @@ private:
       std::string("ArrayGet$") + module->typeNames[type].name.str,
       // Receives the pointer, an index, and a bool for being signed, returns
       // the result.
-      {{loweringInfo.pointerType, loweringInfo.pointerType}, loweredType},
+      {{loweringInfo.pointerType, loweringInfo.pointerType, Type::i32}, loweredType},
       {},
       builder.makeTrapOnNullParam(0,
                                  body)));

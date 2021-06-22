@@ -7,20 +7,20 @@
  (type $i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32)))
  (type $i32_f64_=>_none (func (param i32 f64)))
  (type $i32_f32_=>_none (func (param i32 f32)))
- (type $i32_=>_f64 (func (param i32) (result f64)))
- (type $i32_=>_f32 (func (param i32) (result f32)))
+ (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
+ (type $i32_i32_=>_f32 (func (param i32 i32) (result f32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_f64_f32_i32_=>_i32 (func (param i32 f64 f32 i32) (result i32)))
  (type $i64_i32_=>_i32 (func (param i64 i32) (result i32)))
  (type $i32_i64_=>_none (func (param i32 i64)))
- (type $i32_=>_i64 (func (param i32) (result i64)))
+ (type $i32_i32_=>_i64 (func (param i32 i32) (result i64)))
  (type $f32_i32_=>_i32 (func (param f32 i32) (result i32)))
  (type $f64_i32_=>_i32 (func (param f64 i32) (result i32)))
  (type $f64_i32_i32_=>_i32 (func (param f64 i32 i32) (result i32)))
  (type $i32_i32_f64_=>_none (func (param i32 i32 f64)))
- (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
+ (type $i32_i32_i32_=>_f64 (func (param i32 i32 i32) (result f64)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32 i32)))
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (global $global0 i32 (i32.const 20))
  (global $global1 (mut i32) (i32.const 0))
  (global $nextMalloc (mut i32) (i32.const 116))
@@ -33,31 +33,37 @@
   (drop
    (call $StructGet$struct-i32$0
     (local.get $ref-i32)
+    (i32.const 0)
    )
   )
   (drop
    (call $StructGet$struct-i64$0
     (local.get $ref-i64)
+    (i32.const 0)
    )
   )
   (drop
    (call $StructGet$struct-f32$0
     (local.get $ref-f32)
+    (i32.const 0)
    )
   )
   (drop
    (call $StructGet$struct-f64$0
     (local.get $ref-f64)
+    (i32.const 0)
    )
   )
   (drop
    (call $StructGet$struct-ref$0
     (local.get $ref-ref)
+    (i32.const 0)
    )
   )
   (drop
    (call $StructGet$struct-rtt$0
     (local.get $ref-rtt)
+    (i32.const 0)
    )
   )
  )
@@ -121,12 +127,14 @@
    (call $ArrayGet$bytes
     (local.get $ref-bytes)
     (i32.const 7)
+    (i32.const 0)
    )
   )
   (drop
    (call $ArrayGet$doubles
     (local.get $ref-doubles)
     (i32.const 7)
+    (i32.const 0)
    )
   )
  )
@@ -599,7 +607,7 @@
    )
   )
  )
- (func $StructGet$struct-i32$0 (param $0 i32) (result i32)
+ (func $StructGet$struct-i32$0 (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $0)
@@ -696,7 +704,7 @@
    )
   )
  )
- (func $StructGet$many-fields$0 (param $0 i32) (result i32)
+ (func $StructGet$many-fields$0 (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $0)
@@ -707,7 +715,7 @@
    )
   )
  )
- (func $StructGet$many-fields$1 (param $0 i32) (result f64)
+ (func $StructGet$many-fields$1 (param $0 i32) (param $1 i32) (result f64)
   (if (result f64)
    (i32.eqz
     (local.get $0)
@@ -718,7 +726,7 @@
    )
   )
  )
- (func $StructGet$many-fields$2 (param $0 i32) (result f32)
+ (func $StructGet$many-fields$2 (param $0 i32) (param $1 i32) (result f32)
   (if (result f32)
    (i32.eqz
     (local.get $0)
@@ -789,7 +797,7 @@
    )
   )
  )
- (func $StructGet$struct-i64$0 (param $0 i32) (result i64)
+ (func $StructGet$struct-i64$0 (param $0 i32) (param $1 i32) (result i64)
   (if (result i64)
    (i32.eqz
     (local.get $0)
@@ -846,7 +854,7 @@
    )
   )
  )
- (func $StructGet$struct-f32$0 (param $0 i32) (result f32)
+ (func $StructGet$struct-f32$0 (param $0 i32) (param $1 i32) (result f32)
   (if (result f32)
    (i32.eqz
     (local.get $0)
@@ -903,7 +911,7 @@
    )
   )
  )
- (func $StructGet$struct-f64$0 (param $0 i32) (result f64)
+ (func $StructGet$struct-f64$0 (param $0 i32) (param $1 i32) (result f64)
   (if (result f64)
    (i32.eqz
     (local.get $0)
@@ -960,7 +968,7 @@
    )
   )
  )
- (func $StructGet$struct-ref$0 (param $0 i32) (result i32)
+ (func $StructGet$struct-ref$0 (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $0)
@@ -1017,7 +1025,7 @@
    )
   )
  )
- (func $StructGet$struct-rtt$0 (param $0 i32) (result i32)
+ (func $StructGet$struct-rtt$0 (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $0)
@@ -1143,7 +1151,7 @@
    )
   )
  )
- (func $ArrayGet$doubles (param $0 i32) (param $1 i32) (result f64)
+ (func $ArrayGet$doubles (param $0 i32) (param $1 i32) (param $2 i32) (result f64)
   (if (result f64)
    (i32.eqz
     (local.get $0)
@@ -1323,21 +1331,38 @@
    )
   )
  )
- (func $ArrayGet$bytes (param $0 i32) (param $1 i32) (result i32)
+ (func $ArrayGet$bytes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $0)
    )
    (unreachable)
-   (i32.load8_u
-    (i32.add
+   (if (result i32)
+    (i32.eqz
+     (local.get $1)
+    )
+    (i32.load8_u
      (i32.add
-      (local.get $0)
-      (i32.const 8)
+      (i32.add
+       (local.get $0)
+       (i32.const 8)
+      )
+      (i32.mul
+       (i32.const 1)
+       (local.get $1)
+      )
      )
-     (i32.mul
-      (i32.const 1)
-      (local.get $1)
+    )
+    (i32.load8_s
+     (i32.add
+      (i32.add
+       (local.get $0)
+       (i32.const 8)
+      )
+      (i32.mul
+       (i32.const 1)
+       (local.get $1)
+      )
      )
     )
    )

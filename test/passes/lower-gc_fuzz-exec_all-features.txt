@@ -58,10 +58,10 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $int_func (func (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_f64_i32_=>_i32 (func (param i32 f64 i32) (result i32)))
  (type $i32_f64_=>_none (func (param i32 f64)))
- (type $i32_=>_f64 (func (param i32) (result f64)))
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (global $nextMalloc (mut i32) (i32.const 96))
@@ -97,6 +97,7 @@
   (call $log
    (call $StructGet$struct$0
     (local.get $x)
+    (i32.const 0)
    )
   )
   (call $StructSet$struct$0
@@ -106,6 +107,7 @@
   (call $log
    (call $StructGet$struct$0
     (local.get $x)
+    (i32.const 0)
    )
   )
   (local.set $y
@@ -118,11 +120,13 @@
   (call $log
    (call $StructGet$struct$0
     (local.get $x)
+    (i32.const 0)
    )
   )
   (call $log
    (call $StructGet$struct$0
     (local.get $y)
+    (i32.const 0)
    )
   )
  )
@@ -144,6 +148,7 @@
    (call $ArrayGet$bytes
     (local.get $x)
     (i32.const 10)
+    (i32.const 0)
    )
   )
   (call $ArraySet$bytes
@@ -155,18 +160,21 @@
    (call $ArrayGet$bytes
     (local.get $x)
     (i32.const 10)
+    (i32.const 0)
    )
   )
   (call $log
    (call $ArrayGet$bytes
     (local.get $x)
     (i32.const 10)
+    (i32.const 1)
    )
   )
   (call $log
    (call $ArrayGet$bytes
     (local.get $x)
     (i32.const 20)
+    (i32.const 1)
    )
   )
  )
@@ -617,6 +625,7 @@
   (call $ArrayGet$bytes
    (local.get $x)
    (i32.const 10)
+   (i32.const 0)
   )
  )
  (func $call-target (param $0 i32)
@@ -766,7 +775,7 @@
    )
   )
  )
- (func $StructGet$struct$0 (param $0 i32) (result i32)
+ (func $StructGet$struct$0 (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $0)
@@ -856,7 +865,7 @@
    )
   )
  )
- (func $StructGet$extendedstruct$0 (param $0 i32) (result i32)
+ (func $StructGet$extendedstruct$0 (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $0)
@@ -867,7 +876,7 @@
    )
   )
  )
- (func $StructGet$extendedstruct$1 (param $0 i32) (result f64)
+ (func $StructGet$extendedstruct$1 (param $0 i32) (param $1 i32) (result f64)
   (if (result f64)
    (i32.eqz
     (local.get $0)
@@ -993,21 +1002,38 @@
    )
   )
  )
- (func $ArrayGet$bytes (param $0 i32) (param $1 i32) (result i32)
+ (func $ArrayGet$bytes (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
   (if (result i32)
    (i32.eqz
     (local.get $0)
    )
    (unreachable)
-   (i32.load8_u
-    (i32.add
+   (if (result i32)
+    (i32.eqz
+     (local.get $1)
+    )
+    (i32.load8_u
      (i32.add
-      (local.get $0)
-      (i32.const 8)
+      (i32.add
+       (local.get $0)
+       (i32.const 8)
+      )
+      (i32.mul
+       (i32.const 1)
+       (local.get $1)
+      )
      )
-     (i32.mul
-      (i32.const 1)
-      (local.get $1)
+    )
+    (i32.load8_s
+     (i32.add
+      (i32.add
+       (local.get $0)
+       (i32.const 8)
+      )
+      (i32.mul
+       (i32.const 1)
+       (local.get $1)
+      )
      )
     )
    )
@@ -1432,8 +1458,8 @@
 [fuzz-exec] calling arrays
 [LoggingExternalInterface logging 50]
 [LoggingExternalInterface logging 42]
-[LoggingExternalInterface logging 128]
-[LoggingExternalInterface logging 128]
+[LoggingExternalInterface logging -128]
+[LoggingExternalInterface logging -128]
 [LoggingExternalInterface logging 42]
 [fuzz-exec] calling rtts
 [LoggingExternalInterface logging 0]
@@ -1474,7 +1500,7 @@
 [fuzz-exec] calling array-alloc-failure
 [trap final > memory: 18446744073709551615 > 16777216]
 [fuzz-exec] calling init-array-packed
-[fuzz-exec] note result: init-array-packed => 213
+[fuzz-exec] note result: init-array-packed => -43
 [fuzz-exec] calling cast-func-to-struct
 [trap unreachable]
 ignoring comparison of ExecutionResults!
