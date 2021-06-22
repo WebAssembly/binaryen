@@ -1801,13 +1801,8 @@ public:
   bool mutable_ = false;
 };
 
-// Kinds of tag attributes.
-enum WasmTagAttribute : unsigned { WASM_TAG_ATTRIBUTE_EXCEPTION = 0x0 };
-
 class Tag : public Importable {
 public:
-  // Kind of tag. Currently only WASM_TAG_ATTRIBUTE_EXCEPTION is possible.
-  uint32_t attribute = WASM_TAG_ATTRIBUTE_EXCEPTION;
   Signature sig;
 };
 

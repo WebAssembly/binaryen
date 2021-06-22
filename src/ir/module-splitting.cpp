@@ -650,7 +650,6 @@ void ModuleSplitter::shareImportableItems() {
 
   for (auto& tag : primary.tags) {
     auto secondaryTag = std::make_unique<Tag>();
-    secondaryTag->attribute = tag->attribute;
     secondaryTag->sig = tag->sig;
     makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
     secondary.addTag(std::move(secondaryTag));

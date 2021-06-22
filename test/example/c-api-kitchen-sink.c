@@ -317,7 +317,7 @@ void test_core() {
   BinaryenExpressionRef i31refExpr = BinaryenI31New(module, makeInt32(module, 1));
 
   // Tags
-  BinaryenAddTag(module, "a-tag", 0, BinaryenTypeInt32(), BinaryenTypeNone());
+  BinaryenAddTag(module, "a-tag", BinaryenTypeInt32(), BinaryenTypeNone());
 
   BinaryenAddTable(module, "tab", 0, 100);
 
