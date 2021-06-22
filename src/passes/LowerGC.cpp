@@ -610,19 +610,37 @@ private:
                          builder.makeConst(int32_t(loweringInfo.mallocStart)),
                          Builder::Mutable));
     // TODO: more than a simple bump allocator that never frees or collects.
-    module->addFunction(builder.makeFunction(
-      loweringInfo.malloc,
-      {Type::i32, Type::i32},
-      {},
-      builder.makeSequence(
+    auto* alloc = 
         builder.makeGlobalSet(
           nextMalloc->name,
           builder.makeBinary(AddInt32,
                              builder.makeGlobalGet(nextMalloc->name, Type::i32),
-                             builder.makeLocalGet(0, Type::i32))),
-        builder.makeBinary(SubInt32,
+                             builder.makeLocalGet(0, Type::i32)));
+    auto* check =
+      builder.makeIf(
+        builder.makeBinary(
+          GeUInt32,
+          builder.makeGlobalGet(nextMalloc->name, Type::i32),
+          builder.makeBinary(
+            MulInt32,
+            builder.makeMemorySize(),
+            builder.makeConst(uint32_t(Memory::kPageSize))
+          )
+        ),
+        builder.makeUnreachable()
+      );
+    auto* ret = builder.makeBinary(SubInt32,
                            builder.makeGlobalGet(nextMalloc->name, Type::i32),
-                           builder.makeLocalGet(0, Type::i32)))));
+                           builder.makeLocalGet(0, Type::i32));
+    module->addFunction(builder.makeFunction(
+      loweringInfo.malloc,
+      {Type::i32, Type::i32},
+      {},
+      builder.makeBlock({
+        alloc,
+        check,
+        ret
+      })));
   }
 
   void addGCRuntime() {

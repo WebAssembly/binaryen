@@ -1726,6 +1726,16 @@
     (local.get $0)
    )
   )
+  (if
+   (i32.ge_u
+    (global.get $nextMalloc)
+    (i32.mul
+     (memory.size)
+     (i32.const 65536)
+    )
+   )
+   (unreachable)
+  )
   (i32.sub
    (global.get $nextMalloc)
    (local.get $0)
