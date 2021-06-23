@@ -10,6 +10,13 @@
 
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
+ ;; Test the basic RTT usage in globals. We must update the rtt.sub at runtime
+ ;; as we allocate it only then.
+ (global $rtt-0 (rtt 0 $struct) (rtt.canon $struct))
+ (global $rtt-1 (rtt 1 $struct) (rtt.sub $struct
+  (global.get $rtt-0)
+ ))
+
  (func "structs"
   (local $x (ref null $struct))
   (local $y (ref null $struct))
@@ -379,6 +386,27 @@
    (ref.cast
     (ref.func $call-target)
     (rtt.canon $struct)
+   )
+  )
+ )
+ (func "rtt-globals"
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $struct
+     (global.get $rtt-1)
+    )
+    ;; rtt-1 is a sub-rtt of 0, so this works
+    (global.get $rtt-0)
+   )
+  )
+  (call $log
+   (ref.test
+    (struct.new_default_with_rtt $struct
+     (global.get $rtt-0)
+    )
+    ;; rtt-0 is not a sub-rtt of 1, so this fails
+    ;; XXX This fails!
+    (global.get $rtt-1)
    )
   )
  )
