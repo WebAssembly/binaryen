@@ -1066,7 +1066,7 @@
  (func $CallRef$type$0 (param $0 i32) (param $1 i32)
   (if
    (i32.eqz
-    (local.get $0)
+    (local.get $1)
    )
    (unreachable)
    (call_indirect $lowergc-table (type $type$0)
@@ -1093,7 +1093,7 @@
  (func $CallRef$type$2 (param $0 i32) (param $1 i32)
   (if
    (i32.eqz
-    (local.get $0)
+    (local.get $1)
    )
    (unreachable)
    (call_indirect $lowergc-table (type $type$0)
@@ -1107,7 +1107,7 @@
  (func $CallRef$type$3 (param $0 i32) (param $1 i32)
   (if
    (i32.eqz
-    (local.get $0)
+    (local.get $1)
    )
    (unreachable)
    (call_indirect $lowergc-table (type $type$0)

@@ -195,6 +195,13 @@
   )
  )
 
+ (func $call_ref_i64 (param $x i64)
+  (call_ref
+   (i64.const 100)
+   (ref.func $call_ref_i64)
+  )
+ )
+
  (func $br_on_X (param $x anyref)
   (local $y anyref)
   (local $z (ref null any))

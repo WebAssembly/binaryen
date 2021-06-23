@@ -120,7 +120,7 @@ public:
 
   Expression* makeTrapOnNullParam(Index param,
                                   Expression* otherwise = nullptr) {
-    return makeIf(makePointerNullCheck(makeLocalGet(0, wasm.memory.indexType)),
+    return makeIf(makePointerNullCheck(makeLocalGet(param, wasm.memory.indexType)),
                   makeUnreachable(),
                   otherwise);
   }
