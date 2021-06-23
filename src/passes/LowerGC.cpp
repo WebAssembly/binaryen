@@ -1413,7 +1413,7 @@ private:
     // Store a pointer to the parent rtt.
     list.push_back(
       builder.makeStore(loweringInfo.pointerSize,
-                        4,
+                        8,
                         loweringInfo.pointerSize,
                         builder.makeLocalGet(alloc, loweringInfo.pointerType),
                         builder.makeLocalGet(1, loweringInfo.pointerType),
