@@ -1109,7 +1109,7 @@ private:
           WASM_UNREACHABLE("unimplemented ref.as_*");
       }
       // If we passed all the checks, we can return the pointer.
-      list.push_back(builder.makeConst(int32_t(1)));
+      list.push_back(builder.makeConst(int32_t(op != RefIsNull)));
       module->addFunction(
         builder.makeFunction(getName(op),
                              {loweringInfo.pointerType, Type::i32},

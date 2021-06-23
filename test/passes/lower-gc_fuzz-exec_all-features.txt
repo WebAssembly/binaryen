@@ -1196,7 +1196,7 @@
     (i32.const 1)
    )
   )
-  (i32.const 1)
+  (i32.const 0)
  )
  (func $RefIsFunc (param $0 i32) (result i32)
   (if
@@ -1487,8 +1487,6 @@
 [LoggingExternalInterface logging 1]
 [fuzz-exec] calling br_on_non_data-other
 [fuzz-exec] calling br-on_non_null
-[LoggingExternalInterface logging 1]
-[trap unreachable]
 [fuzz-exec] calling br-on_non_null-2
 [LoggingExternalInterface logging 1]
 [trap unreachable]
