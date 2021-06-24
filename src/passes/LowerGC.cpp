@@ -1501,7 +1501,7 @@ private:
       "RttSub",
       {{loweringInfo.pointerType, loweringInfo.pointerType},
        loweringInfo.pointerType},
-      {loweringInfo.pointerType},
+      {loweringInfo.pointerType, Type::i32, loweringInfo.pointerType},
       builder.makeBlock(list)));
   }
 
