@@ -67,6 +67,10 @@ public:
     return makeConst(int32_t(addr));
   }
 
+  Expression* makePointerGet(Index index) {
+    return makeLocalGet(index, wasm.memory.indexType);
+  }
+
   Expression* makePointerLoad(Expression* ptr, Address offset = 0) {
     return makeSimpleUnsignedLoad(ptr, wasm.memory.indexType, offset);
   }
@@ -86,6 +90,13 @@ public:
       return makeBinary(EqInt64, a, b);
     }
     return makeBinary(EqInt32, a, b);
+  }
+
+  Expression* makePointerNe(Expression* a, Expression* b) {
+    if (wasm.memory.is64()) {
+      return makeBinary(NeInt64, a, b);
+    }
+    return makeBinary(NeInt32, a, b);
   }
 
   Expression* makePointerAdd(Expression* a, Expression* b) {
@@ -1116,6 +1127,8 @@ private:
     const Index rttParam = 1;
     // Store the ref's rtt in a local
     const Index refRttLocal = 2;
+    // Store the size in a local as we loop.
+    const Index sizeLocal = 3;
     PointerBuilder builder(*module);
     std::vector<Expression*> list;
     // Check for null.
@@ -1136,86 +1149,75 @@ private:
           builder.makeLocalGet(refRttLocal, loweringInfo.pointerType))),
       builder.makeReturn(builder.makeConst(int32_t(0)))));
     // Check if the chain of sub-rtts match. That is, we are looking for
-    // something like this:
-    //
-    //  ref's rtt ----> A -> B -> C -> D (where D is an rtt.canon)
-    //  rtt param --------------> C -> D
-    //
-    // Start with a loop to find rttParam in the ref's RTT chain (in the example
-    // above, find C in the first line).
-    // Making this harder is that we can have repeat types,
-    //
-    //  ref's rtt ----> B -> B -> B -> A
-    //  rtt param --------------> B -> A
-    Name loop1("loop1");
-    Name block1("block1");
+    // the ref's rtt to be a super-rtt of the other, which means it is identical
+    // to it, or adds further things to the list of types at the end. First,
+    // check the size makes sense.
+    list.push_back(builder.makeIf(
+      builder.makeBinary(
+        GtUInt32,
+        getRttSize(builder.makePointerGet(rttParam)),
+        getRttSize(
+          builder.makePointerGet(refRttLocal))),
+      builder.makeReturn(builder.makeConst(int32_t(0)))));
+    // The sizes are compatible, scan the list of types.
+    list.push_back(
+      builder.makeLocalSet(sizeLocal,
+        getRttSize(builder.makePointerGet(rttParam))
+      )
+    );
+    Name loop("loop");
     list.push_back(builder.makeLoop(
-      loop1,
-      builder.makeBlock(
-        block1,
-        {// If we found what we want, exit the loop.
-         builder.makeBreak(
-           block1,
-           nullptr,
-           builder.makePointerEq(getRttDecl(builder.makeLocalGet(
-                                   refRttLocal, loweringInfo.pointerType)),
-                                 getRttDecl(builder.makeLocalGet(
-                                   rttParam, loweringInfo.pointerType)))),
-         // If we reached the end of the ref's rtt's chain, it is not a sub-
-         // rtt.
-         builder.makeIf(
-           builder.makePointerEq(getRttParent(builder.makeLocalGet(
-                                   refRttLocal, loweringInfo.pointerType)),
-                                 builder.makeConst(Literal::makeFromInt32(
-                                   0, loweringInfo.pointerType))),
-           builder.makeReturn(builder.makeConst(int32_t(0)))),
-         // We can look forward down the chain.
-         builder.makeLocalSet(refRttLocal,
-                              getRttParent(builder.makeLocalGet(
-                                refRttLocal, loweringInfo.pointerType))),
-         builder.makeBreak(loop1)})));
-    // We found the place where the two chains coincide. From here, they must
-    // be identical.
-    Name loop2("loop2");
-    Name block2("block2");
-    list.push_back(builder.makeLoop(
-      loop2,
-      builder.makeBlock(
-        block2,
-        {// If they differ, the chains are not equal.
-         builder.makeIf(
-           builder.makeUnary(
-             EqZInt32,
-             builder.makePointerEq(getRttParent(builder.makeLocalGet(
-                                     refRttLocal, loweringInfo.pointerType)),
-                                   getRttParent(builder.makeLocalGet(
-                                     rttParam, loweringInfo.pointerType)))),
-           builder.makeReturn(builder.makeConst(int32_t(0)))),
-         // They are equal here. Looking onward, if just one chain stops, then
-         // they are not equal.
-         builder.makeIf(
-           builder.makeBinary(XorInt32,
-                              builder.makePointerNullCheck(builder.makeLocalGet(
-                                refRttLocal, loweringInfo.pointerType)),
-                              builder.makePointerNullCheck(builder.makeLocalGet(
-                                rttParam, loweringInfo.pointerType))),
-           builder.makeReturn(builder.makeConst(int32_t(0)))),
-         // If both stop, then they are equal.
-         builder.makeIf(builder.makePointerNullCheck(builder.makeLocalGet(
-                          refRttLocal, loweringInfo.pointerType)),
-                        builder.makeReturn(builder.makeConst(int32_t(1)))),
-         // We can look forward down the chain.
-         builder.makeLocalSet(refRttLocal,
-                              getRttParent(builder.makeLocalGet(
-                                refRttLocal, loweringInfo.pointerType))),
-         builder.makeLocalSet(rttParam,
-                              getRttParent(builder.makeLocalGet(
-                                rttParam, loweringInfo.pointerType))),
-         builder.makeBreak(loop2)})));
-
+      loop,
+      builder.makeBlock(std::vector<Expression*>{
+        // Compare one value.
+        builder.makeIf(
+          builder.makePointerNe(
+            builder.makePointerLoad(
+              builder.makePointerGet(rttParam),
+              // Constantly pass offsets of 8 here, to skip the first two fields
+              // in each rtt data structure. We could also first do an increment,
+              // at the cost of code size.
+              8
+            ),
+            builder.makePointerLoad(
+              builder.makePointerGet(refRttLocal),
+              8
+            )
+          ),
+          builder.makeReturn(builder.makeConst(int32_t(0)))
+        ),
+        // Increment both pointers
+        builder.makeLocalSet(rttParam,
+          builder.makePointerAdd(
+            builder.makePointerGet(rttParam),
+            builder.makePointerConst(loweringInfo.pointerSize)
+          )
+        ),
+        builder.makeLocalSet(refRttLocal,
+          builder.makePointerAdd(
+            builder.makePointerGet(refRttLocal),
+            builder.makePointerConst(loweringInfo.pointerSize)
+          )
+        ),
+        // Loop while there is more.
+        builder.makeLocalSet(sizeLocal,
+          builder.makeBinary(
+            SubInt32,
+            builder.makeLocalGet(sizeLocal, Type::i32),
+            builder.makeConst(int32_t(1))
+          )
+        ),
+        builder.makeBreak(
+          loop,
+          nullptr,
+          builder.makeLocalGet(sizeLocal, Type::i32)
+        ),
+        builder.makeReturn(builder.makeConst(int32_t(1)))
+      })
+    ));
     module->addFunction(builder.makeFunction(
       "RefTest",
-      {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
+      {{loweringInfo.pointerType, Type::i32}, Type::i32},
       {loweringInfo.pointerType},
       builder.makeBlock(list)));
   }
@@ -1268,18 +1270,9 @@ private:
     return Builder(*module).makeLoad(4, false, 0, 4, ptr, Type::i32);
   }
 
-  // Given a pointer to an RTT, load its declared type.
-  Expression* getRttDecl(Expression* ptr) {
-    // The RTT declared new type is the second field, after the kind (i32).
-    return Builder(*module).makeSimpleUnsignedLoad(ptr, Type::i32, 4);
-  }
-
-  // Given a pointer to an RTT, load its parent.
-  Expression* getRttParent(Expression* ptr) {
-    // The RTT parent is the third field, after the kind (i32) and the decl
-    // (pointer).
-    return Builder(*module).makeSimpleUnsignedLoad(
-      ptr, Type::i32, 4 + loweringInfo.pointerSize);
+  Expression* getRttSize(Expression* ptr) {
+    // The RTT kind is the very first field in an RTT
+    return PointerBuilder(*module).makeSimpleUnsignedLoad(ptr, Type::i32, 4);
   }
 
   void addTypeSupport(const std::vector<HeapType>& types) {
