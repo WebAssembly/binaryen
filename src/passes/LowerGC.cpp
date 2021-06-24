@@ -1368,24 +1368,52 @@ private:
   }
 
   void makeRttSub() {
-    Builder builder(*module);
-    // We need one local to store the allocated value. It has index 2, after
+    PointerBuilder builder(*module);
+    // We receive two params, the new type and the old parent rtt.
+    auto newTypeParam = 0;
+    auto parentRttParam = 1;
+    // We need a local to store the allocated value. It has index 2, after
     // the parameters, which are the new type, and the old rtt we are subbing.
-    auto alloc = 2;
+    auto allocLocal = 2;
+    // We also need a local for the size of the list of types in the old rtt.
+    auto sizeLocal = 3;
+    // Finally, we need a temp pointer for the copy loop.
+    auto tempLocal = 4;
     std::vector<Expression*> list;
+    // Get the size of the old rtt.
+    list.push_back(builder.makeLocalSet(
+      sizeLocal,
+      builder.makeSimpleUnsignedLoad(
+        builder.makeLocalGet(parentRttParam, loweringInfo.pointerType),
+        Type::i32,
+        4
+      )
+    ));
     // Malloc space for our struct.
     list.push_back(builder.makeLocalSet(
-      alloc,
+      allocLocal,
       builder.makeCall(
         loweringInfo.malloc,
-        {builder.makeConst(int32_t(4 + 2 * loweringInfo.pointerSize))},
+        {
+          builder.makeBinary(
+            AddInt32,
+            builder.makeBinary(
+              MulInt32,
+              builder.makeLocalGet(sizeLocal, Type::i32),
+              builder.makeConst(int32_t(loweringInfo.pointerSize))
+            ),
+            // +8 for the first two fields (kind and size), +a pointer size as
+            // the list of types is one larger.
+            builder.makeConst(int32_t(8 + loweringInfo.pointerSize))
+          )
+        },
         loweringInfo.pointerType)));
     // Copy the kind from the input rtt
     list.push_back(builder.makeStore(
       4,
       0,
       4,
-      builder.makeLocalGet(alloc, loweringInfo.pointerType),
+      builder.makeLocalGet(allocLocal, loweringInfo.pointerType),
       builder.makeLoad(4,
                        false,
                        0,
@@ -1393,24 +1421,82 @@ private:
                        builder.makeLocalGet(0, loweringInfo.pointerType),
                        Type::i32),
       loweringInfo.pointerType));
-    // Store a pointer to the new heap type.
+    // Store the new size, which is one larger.
     list.push_back(
-      builder.makeStore(loweringInfo.pointerSize,
-                        4,
-                        loweringInfo.pointerSize,
-                        builder.makeLocalGet(alloc, loweringInfo.pointerType),
-                        builder.makeLocalGet(0, loweringInfo.pointerType),
-                        loweringInfo.pointerType));
-    // Store a pointer to the parent rtt.
+      builder.makeSimpleStore(
+        builder.makeLocalGet(allocLocal, loweringInfo.pointerType),
+        builder.makeBinary(
+          AddInt32,
+          builder.makeLocalGet(sizeLocal, Type::i32),
+          builder.makeConst(int32_t(1))
+        ),
+        Type::i32,
+        4
+      )
+    );
+    // Copy the old types, using *temp++ = *parent++;
     list.push_back(
-      builder.makeStore(loweringInfo.pointerSize,
-                        8,
-                        loweringInfo.pointerSize,
-                        builder.makeLocalGet(alloc, loweringInfo.pointerType),
-                        builder.makeLocalGet(1, loweringInfo.pointerType),
-                        loweringInfo.pointerType));
+      builder.makeLocalSet(tempLocal,
+        builder.makeLocalGet(allocLocal, loweringInfo.pointerType)
+      )
+    );
+    Name loop("loop");
+    list.push_back(builder.makeLoop(
+      loop,
+      builder.makeBlock({
+        // Copy one value.
+        builder.makeSimpleStore(
+          builder.makeLocalGet(tempLocal, loweringInfo.pointerType),
+          builder.makeSimpleUnsignedLoad(
+            builder.makeLocalGet(parentRttParam, loweringInfo.pointerType),
+            Type::i32,
+            // Constantly pass offsets of 8 here, to skip the first two fields
+            // in each rtt data structure. We could also first do an increment,
+            // at the cost of code size.
+            8
+          ),
+          Type::i32,
+          8
+        ),
+        // Increment both pointers
+        builder.makeLocalSet(tempLocal,
+          builder.makePointerAdd(
+            builder.makeLocalGet(tempLocal, loweringInfo.pointerType),
+            builder.makePointerConst(4)
+          )
+        ),
+        builder.makeLocalSet(parentRttLocal,
+          builder.makePointerAdd(
+            builder.makeLocalGet(parentRttLocal, loweringInfo.pointerType),
+            builder.makePointerConst(4)
+          )
+        ),
+        // Loop while there is more.
+        builder.makeLocalSet(sizeLocal,
+          builder.makeBinary(
+            SubInt32,
+            builder.makeLocalGet(sizeLocal, Type::i32),
+            builder.makeConst(int32_t(1))
+          )
+        ),
+        builder.makeBreak(
+          loop,
+          nullptr,
+          builder.makeLocalGet(sizeLocal, Type::i32)
+        )
+      })
+    ));
+    // Store a pointer to the new heap type at the end of the new list.
+    list.push_back(
+      builder.makeSimpleStore(
+        builder.makeLocalGet(tempLocal, loweringInfo.pointerType),
+        builder.makeLocalGet(newTypeParam, loweringInfo.pointerType),
+        Type::i32,
+        8
+      )
+    );
     // Return the pointer.
-    list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
+    list.push_back(builder.makeLocalGet(allocLocal, loweringInfo.pointerType));
     module->addFunction(builder.makeFunction(
       "RttSub",
       {{loweringInfo.pointerType, loweringInfo.pointerType},
