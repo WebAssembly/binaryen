@@ -354,14 +354,6 @@
   ;; will never be reached
   (call $log (i32.const 4))
  )
- (func "array-alloc-failure"
-  (drop
-   (array.new_default_with_rtt $bytes
-    (i32.const -1) ;; un-allocatable size (4GB * sizeof(Literal))
-    (rtt.canon $bytes)
-   )
-  )
- )
  (func "init-array-packed" (result i32)
   (local $x (ref null $bytes))
   (local.set $x
@@ -406,6 +398,20 @@
     )
     ;; rtt-0 is not a sub-rtt of 1, so this fails
     (global.get $rtt-1)
+   )
+  )
+ )
+)
+(module
+ ;; Note that this test must be separate as it "breaks" the malloc impl
+ ;; which does not check for wrapping, causing later allocations to fail.
+ ;; TODO fix the malloc, or replace it with a real one.
+ (type $bytes (array (mut i8)))
+ (func "array-alloc-failure"
+  (drop
+   (array.new_default_with_rtt $bytes
+    (i32.const -1) ;; un-allocatable size (4GB * sizeof(Literal))
+    (rtt.canon $bytes)
    )
   )
  )
