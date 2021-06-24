@@ -1217,8 +1217,8 @@ private:
     ));
     module->addFunction(builder.makeFunction(
       "RefTest",
-      {{loweringInfo.pointerType, Type::i32}, Type::i32},
-      {loweringInfo.pointerType},
+      {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
+      {loweringInfo.pointerType, Type::i32},
       builder.makeBlock(list)));
   }
 
