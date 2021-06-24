@@ -545,8 +545,8 @@ struct LowerGC : public Pass {
     pickNames();
     addMemory();
     addTable();
-    addStart();
     addGCRuntime();
+    addStart();
     // After adding the GC runtime, which may allocate memory, we can create our
     // malloc runtime and initialize it.
     addMalloc();
