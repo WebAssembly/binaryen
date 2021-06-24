@@ -57,7 +57,7 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
 
   void visitModule(Module* curr) {
     // Add the import
-    HeapType type = HeapType(Signature(Type::i32, Type::none));
+    HeapType type = Signature(Type::i32, Type::none);
     auto import = Builder::makeFunction(LOGGER, type, {});
     import->module = ENV;
     import->base = LOGGER;

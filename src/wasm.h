@@ -1661,12 +1661,8 @@ public:
   Signature getSig() { return type.getSignature(); }
   Type getParams() { return getSig().params; }
   Type getResults() { return getSig().results; }
-  void setParams(Type params) {
-    type = HeapType(Signature(params, getResults()));
-  }
-  void setResults(Type results) {
-    type = HeapType(Signature(getParams(), results));
-  }
+  void setParams(Type params) { type = Signature(params, getResults()); }
+  void setResults(Type results) { type = Signature(getParams(), results); }
 
   size_t getNumParams();
   size_t getNumVars();

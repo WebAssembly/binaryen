@@ -451,7 +451,7 @@ void test_minimized_exports() {
   Expression* callBody = nullptr;
 
   Builder builder(primary);
-  auto funcType = HeapType(Signature(Type::none, Type::none));
+  auto funcType = Signature(Type::none, Type::none);
 
   for (size_t i = 0; i < 10; ++i) {
     Name name = std::to_string(i);

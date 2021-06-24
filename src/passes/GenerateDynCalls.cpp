@@ -74,7 +74,7 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
       // The first parameter is a pointer to the original function that's called
       // by the invoke, so skip it
       std::vector<Type> newParams(sig.params.begin() + 1, sig.params.end());
-      invokeTypes.insert(HeapType(Signature(Type(newParams), sig.results)));
+      invokeTypes.insert(Signature(Type(newParams), sig.results));
     }
   }
 
@@ -137,7 +137,7 @@ void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
     namedParams.emplace_back(std::to_string(p++), param);
     params.push_back(param);
   }
-  auto type = HeapType(Signature(Type(params), sig.results));
+  auto type = Signature(Type(params), sig.results);
   auto f = builder.makeFunction(name, std::move(namedParams), type, {});
   Expression* fptr = builder.makeLocalGet(0, Type::i32);
   std::vector<Expression*> args;

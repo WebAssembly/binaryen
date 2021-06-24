@@ -212,11 +212,11 @@ private:
     for (Index i = 0; i < numParams; i++) {
       thunkParams.push_back(Type::i64);
     }
-    auto thunkType = HeapType(Signature(Type(thunkParams), Type::i64));
-    auto thunkFunc = builder.makeFunction(thunk,
-                                          thunkType,
-                                          {}, // no vars
-                                          toABI(call, module));
+    auto thunkFunc =
+      builder.makeFunction(thunk,
+                           Signature(Type(thunkParams), Type::i64),
+                           {}, // no vars
+                           toABI(call, module));
     module->addFunction(std::move(thunkFunc));
     return thunk;
   }

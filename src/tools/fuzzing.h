@@ -415,11 +415,8 @@ private:
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
-    auto* hasher = wasm.addFunction(
-      builder.makeFunction("hashMemory",
-                           HeapType(Signature(Type::none, Type::i32)),
-                           {Type::i32},
-                           body));
+    auto* hasher = wasm.addFunction(builder.makeFunction(
+      "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
@@ -595,7 +592,7 @@ private:
     auto funcName = Names::getValidFunctionName(wasm, exportName);
     auto* func = new Function;
     func->name = funcName;
-    func->type = HeapType(Signature(Type::none, Type::none));
+    func->type = Signature(Type::none, Type::none);
     func->body = builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
                                        builder.makeConst(int32_t(HANG_LIMIT)));
     wasm.addFunction(func);
@@ -619,7 +616,7 @@ private:
       func->name = name;
       func->module = "fuzzing-support";
       func->base = name;
-      func->type = HeapType(Signature(type, Type::none));
+      func->type = Signature(type, Type::none);
       wasm.addFunction(func);
     }
   }
@@ -687,7 +684,7 @@ private:
       funcContext->typeLocals[type].push_back(params.size());
       params.push_back(type);
     }
-    func->type = HeapType(Signature(Type(params), getControlFlowType()));
+    func->type = Signature(Type(params), getControlFlowType());
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
@@ -1055,7 +1052,7 @@ private:
     }
     auto* invoker = new Function;
     invoker->name = name;
-    invoker->type = HeapType(Signature(Type::none, Type::none));
+    invoker->type = Signature(Type::none, Type::none);
     invoker->body = builder.makeBlock(invocations);
     wasm.addFunction(invoker);
     auto* export_ = new Export;
@@ -2148,7 +2145,7 @@ private:
       auto heapType = type.getHeapType();
       if (heapType == HeapType::func) {
         // The specific signature does not matter.
-        heapType = HeapType(Signature(Type::none, Type::none));
+        heapType = Signature(Type::none, Type::none);
       }
       auto* func = wasm.addFunction(builder.makeFunction(
         Names::getValidFunctionName(wasm, "ref_func_target"),

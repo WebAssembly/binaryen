@@ -1573,7 +1573,7 @@ private:
                        builder.makeUnreachable()));
       body->finalize();
       auto func = builder.makeFunction(
-        name, HeapType(Signature(Type(params), Type::none)), {}, body);
+        name, Signature(Type(params), Type::none), {}, body);
       module->addFunction(std::move(func));
       module->addExport(builder.makeExport(name, name, ExternalKind::Function));
     };
@@ -1585,7 +1585,7 @@ private:
 
     module->addFunction(
       builder.makeFunction(ASYNCIFY_GET_STATE,
-                           HeapType(Signature(Type::none, Type::i32)),
+                           Signature(Type::none, Type::i32),
                            {},
                            builder.makeGlobalGet(ASYNCIFY_STATE, Type::i32)));
     module->addExport(builder.makeExport(

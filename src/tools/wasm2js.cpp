@@ -658,7 +658,7 @@ Ref AssertionEmitter::emitAssertReturnFunc(Builder& wasmBuilder,
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(testFuncName,
                              std::vector<NameType>{},
-                             HeapType(Signature(Type::none, body->type)),
+                             Signature(Type::none, body->type),
                              std::vector<NameType>{},
                              body));
   Ref jsFunc = processFunction(testFunc.get());
@@ -676,7 +676,7 @@ Ref AssertionEmitter::emitAssertReturnNanFunc(Builder& wasmBuilder,
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(testFuncName,
                              std::vector<NameType>{},
-                             HeapType(Signature(Type::none, body->type)),
+                             Signature(Type::none, body->type),
                              std::vector<NameType>{},
                              body));
   Ref jsFunc = processFunction(testFunc.get());
@@ -695,7 +695,7 @@ Ref AssertionEmitter::emitAssertTrapFunc(Builder& wasmBuilder,
   std::unique_ptr<Function> exprFunc(
     wasmBuilder.makeFunction(innerFuncName,
                              std::vector<NameType>{},
-                             HeapType(Signature(Type::none, expr->type)),
+                             Signature(Type::none, expr->type),
                              std::vector<NameType>{},
                              expr));
   IString expectedErr = e[2]->str();
@@ -729,7 +729,7 @@ Ref AssertionEmitter::emitInvokeFunc(Builder& wasmBuilder,
   std::unique_ptr<Function> testFunc(
     wasmBuilder.makeFunction(testFuncName,
                              std::vector<NameType>{},
-                             HeapType(Signature(Type::none, body->type)),
+                             Signature(Type::none, body->type),
                              std::vector<NameType>{},
                              body));
   Ref jsFunc = processFunction(testFunc.get());

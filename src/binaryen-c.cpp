@@ -3281,7 +3281,7 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
   auto* ret = new Function;
   ret->setExplicitName(name);
   // TODO: Take a HeapType rather than params and results.
-  ret->type = HeapType(Signature(Type(params), Type(results)));
+  ret->type = Signature(Type(params), Type(results));
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -3382,7 +3382,7 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   // TODO: Take a HeapType rather than params and results.
-  ret->type = HeapType(Signature(Type(params), Type(results)));
+  ret->type = Signature(Type(params), Type(results));
   ((Module*)module)->addFunction(ret);
 }
 void BinaryenAddTableImport(BinaryenModuleRef module,

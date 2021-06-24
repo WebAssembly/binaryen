@@ -502,7 +502,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
       processFunction(wasm,
                       wasm->addFunction(builder.makeFunction(
                         WASM_FETCH_HIGH_BITS,
-                        HeapType(Signature(Type::none, Type::i32)),
+                        Signature(Type::none, Type::i32),
                         {},
                         builder.makeReturn(builder.makeGlobalGet(
                           INT64_TO_32_HIGH_BITS, Type::i32))))));

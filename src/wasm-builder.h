@@ -955,7 +955,7 @@ public:
     Signature sig = func->getSig();
     std::vector<Type> params(sig.params.begin(), sig.params.end());
     params.push_back(type);
-    func->type = HeapType(Signature(Type(params), sig.results));
+    func->type = Signature(Type(params), sig.results);
     Index index = func->localNames.size();
     func->localIndices[name] = index;
     func->localNames[index] = name;
@@ -984,7 +984,7 @@ public:
   }
 
   static void clearLocals(Function* func) {
-    func->type = HeapType(Signature(Type::none, func->getResults()));
+    func->type = Signature(Type::none, func->getResults());
     func->vars.clear();
     clearLocalNames(func);
   }

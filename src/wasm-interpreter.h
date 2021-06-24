@@ -2425,7 +2425,7 @@ private:
   void initializeTableContents() {
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Function dummyFunc;
-      dummyFunc.type = HeapType(Signature(Type::none, Type::none));
+      dummyFunc.type = Signature(Type::none, Type::none);
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
 
@@ -2477,7 +2477,7 @@ private:
       // we don't actually have a function, but we need one in order to visit
       // the memory.init and data.drop instructions.
       Function dummyFunc;
-      dummyFunc.type = HeapType(Signature(Type::none, Type::none));
+      dummyFunc.type = Signature(Type::none, Type::none);
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
       runner.visit(&init);

@@ -534,7 +534,7 @@ void Instrumenter::addProfileExport() {
   // writes the profile if the given space is sufficient to hold it.
   auto name = Names::getValidFunctionName(*wasm, profileExport);
   auto writeProfile = Builder::makeFunction(
-    name, HeapType(Signature({Type::i32, Type::i32}, Type::i32)), {});
+    name, Signature({Type::i32, Type::i32}, Type::i32), {});
   writeProfile->hasExplicitName = true;
   writeProfile->setLocalName(0, "addr");
   writeProfile->setLocalName(1, "size");

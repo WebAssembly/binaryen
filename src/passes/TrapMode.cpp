@@ -132,7 +132,7 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
       builder.makeConst(zeroLit),
       result);
   }
-  auto funcType = HeapType(Signature({type, type}, type));
+  auto funcType = Signature({type, type}, type);
   auto func = Builder::makeFunction(getBinaryFuncName(curr), funcType, {});
   func->body =
     builder.makeIf(builder.makeUnary(eqZOp, builder.makeLocalGet(1, type)),
@@ -193,8 +193,8 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
       WASM_UNREACHABLE("unexpected op");
   }
 
-  auto func = Builder::makeFunction(
-    getUnaryFuncName(curr), HeapType(Signature(type, retType)), {});
+  auto func =
+    Builder::makeFunction(getUnaryFuncName(curr), Signature(type, retType), {});
   func->body = builder.makeUnary(truncOp, builder.makeLocalGet(0, type));
   // too small XXX this is different than asm.js, which does frem. here we
   // clamp, which is much simpler/faster, and similar to native builds
@@ -250,7 +250,7 @@ void ensureF64ToI64JSImport(TrappingFunctionContainer& trappingFunctions) {
   import->name = F64_TO_INT;
   import->module = ASM2WASM;
   import->base = F64_TO_INT;
-  import->type = HeapType(Signature(Type::f64, Type::i32));
+  import->type = Signature(Type::f64, Type::i32);
   trappingFunctions.addImport(import);
 }
 

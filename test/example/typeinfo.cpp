@@ -50,18 +50,18 @@ void test_compound() {
   }
   {
     Signature signature(Type::i32, Type::none);
-    assert(Type(HeapType(signature), NonNullable).getID() ==
-           Type(HeapType(signature), NonNullable).getID());
-    assert(Type(HeapType(signature), NonNullable).getID() !=
-           Type(HeapType(signature), Nullable).getID());
+    assert(Type(signature, NonNullable).getID() ==
+           Type(signature, NonNullable).getID());
+    assert(Type(signature, NonNullable).getID() !=
+           Type(signature, Nullable).getID());
 
     Signature sameSignature(Type::i32, Type::none);
-    assert(Type(HeapType(signature), NonNullable).getID() ==
-           Type(HeapType(sameSignature), NonNullable).getID());
+    assert(Type(signature, NonNullable).getID() ==
+           Type(sameSignature, NonNullable).getID());
 
     Signature otherSignature(Type::f64, Type::none);
-    assert(Type(HeapType(signature), NonNullable).getID() !=
-           Type(HeapType(otherSignature), NonNullable).getID());
+    assert(Type(signature, NonNullable).getID() !=
+           Type(otherSignature, NonNullable).getID());
   }
   {
     Struct struct_{};
@@ -152,7 +152,7 @@ void test_printing() {
     std::cout << HeapType(HeapType::i31) << "\n";
     std::cout << Type(HeapType::i31, Nullable) << "\n";
     std::cout << Type(HeapType::i31, NonNullable) << "\n";
-    std::cout << HeapType(Signature(Type::none, Type::none)) << "\n";
+    std::cout << Signature(Type::none, Type::none) << "\n";
     std::cout << HeapType(Struct{}) << "\n";
     std::cout << HeapType(Array({Type::i32, Immutable})) << "\n";
   }
@@ -160,12 +160,12 @@ void test_printing() {
     std::cout << "\n;; Signature\n";
     Signature emptySignature(Type::none, Type::none);
     std::cout << emptySignature << "\n";
-    std::cout << Type(HeapType(emptySignature), NonNullable) << "\n";
-    std::cout << Type(HeapType(emptySignature), Nullable) << "\n";
+    std::cout << Type(emptySignature, NonNullable) << "\n";
+    std::cout << Type(emptySignature, Nullable) << "\n";
     Signature signature(Type::i32, Type::f64);
     std::cout << signature << "\n";
-    std::cout << Type(HeapType(signature), NonNullable) << "\n";
-    std::cout << Type(HeapType(signature), Nullable) << "\n";
+    std::cout << Type(signature, NonNullable) << "\n";
+    std::cout << Type(signature, Nullable) << "\n";
   }
   {
     std::cout << "\n;; Struct\n";
@@ -220,7 +220,7 @@ void test_printing() {
     std::cout << Type(Rtt(3, HeapType::eq)) << "\n";
     std::cout << Rtt(4, HeapType::i31) << "\n";
     std::cout << Type(Rtt(4, HeapType::i31)) << "\n";
-    Rtt signatureRtt(6, HeapType(Signature(Type::none, Type::none)));
+    Rtt signatureRtt(6, Signature(Type::none, Type::none));
     std::cout << signatureRtt << "\n";
     std::cout << Type(signatureRtt) << "\n";
     Rtt structRtt(7, Struct{});
@@ -251,11 +251,10 @@ void test_printing() {
   {
     std::cout << "\n;; Struct of references\n";
     Struct structOfSignature({
-      {Type(HeapType(Signature(Type::none, Type::none)), NonNullable),
-       Immutable},
-      {Type(HeapType(Signature(Type::none, Type::none)), NonNullable), Mutable},
-      {Type(HeapType(Signature(Type::none, Type::none)), Nullable), Immutable},
-      {Type(HeapType(Signature(Type::none, Type::none)), Nullable), Mutable},
+      {Type(Signature(Type::none, Type::none), NonNullable), Immutable},
+      {Type(Signature(Type::none, Type::none), NonNullable), Mutable},
+      {Type(Signature(Type::none, Type::none), Nullable), Immutable},
+      {Type(Signature(Type::none, Type::none), Nullable), Mutable},
     });
     std::cout << structOfSignature << "\n";
     std::cout << Type(structOfSignature, NonNullable) << "\n";
@@ -280,7 +279,7 @@ void test_printing() {
     std::cout << Type(structOfArray, Nullable) << "\n";
     Struct structOfEverything({
       {Type::i32, Mutable},
-      {Type(HeapType(Signature(Type::none, Type::none)), Nullable), Mutable},
+      {Type(Signature(Type::none, Type::none), Nullable), Mutable},
       {Type(Struct{}, Nullable), Mutable},
       {Type(Array({Type::i32, Mutable}), Nullable), Mutable},
     });
@@ -291,7 +290,7 @@ void test_printing() {
   {
     std::cout << "\n;; Array of references\n";
     Array arrayOfSignature(
-      {Type(HeapType(Signature(Type::none, Type::none)), Nullable), Immutable});
+      {Type(Signature(Type::none, Type::none), Nullable), Immutable});
     std::cout << arrayOfSignature << "\n";
     std::cout << Type(arrayOfSignature, NonNullable) << "\n";
     std::cout << Type(arrayOfSignature, Nullable) << "\n";
@@ -308,8 +307,8 @@ void test_printing() {
   {
     std::cout << "\n;; Tuple of references\n";
     Tuple tuple({
-      Type(HeapType(Signature(Type::none, Type::none)), NonNullable),
-      Type(HeapType(Signature(Type::none, Type::none)), Nullable),
+      Type(Signature(Type::none, Type::none), NonNullable),
+      Type(Signature(Type::none, Type::none), Nullable),
       Type(Struct{}, NonNullable),
       Type(Struct{}, Nullable),
       Type(Array({Type::i32, Immutable}), NonNullable),
@@ -322,17 +321,17 @@ void test_printing() {
   {
     std::cout << "\n;; Recursive (not really)\n";
     Signature signatureSignature(Type::none, Type::none);
-    signatureSignature.params = Type(HeapType(signatureSignature), NonNullable);
+    signatureSignature.params = Type(signatureSignature, NonNullable);
     //                                ^ copies
     std::cout << signatureSignature << "\n";
-    std::cout << Type(HeapType(signatureSignature), NonNullable) << "\n";
+    std::cout << Type(signatureSignature, NonNullable) << "\n";
     Signature signatureArraySignature(Type::none, Type::none);
-    signatureArraySignature.params = Type(
-      Array({Type(HeapType(signatureArraySignature), NonNullable), Immutable}),
-      NonNullable);
+    signatureArraySignature.params =
+      Type(Array({Type(signatureArraySignature, NonNullable), Immutable}),
+           NonNullable);
     //                 ^ copies
     std::cout << signatureArraySignature << "\n";
-    std::cout << Type(HeapType(signatureArraySignature), NonNullable) << "\n";
+    std::cout << Type(signatureArraySignature, NonNullable) << "\n";
   }
 }
 

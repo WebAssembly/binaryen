@@ -222,7 +222,7 @@ private:
     if (resultsType == Type::i64) {
       resultsType = Type::i32;
     }
-    legal->type = HeapType(Signature(paramsType, resultsType));
+    legal->type = Signature(paramsType, resultsType);
     if (func->getResults() == Type::i64) {
       Function* f =
         getFunctionOrImport(module, SET_TEMP_RET0, Type::i32, Type::none);
@@ -281,7 +281,7 @@ private:
       call->type = im->getResults();
       stub->body = call;
     }
-    legalIm->type = HeapType(Signature(Type(params), call->type));
+    legalIm->type = Signature(Type(params), call->type);
 
     const auto& stubName = stub->name;
     if (!module->getFunctionOrNull(stubName)) {
@@ -305,8 +305,7 @@ private:
       return f;
     }
     // Failing that create a new function import.
-    auto import =
-      Builder::makeFunction(name, HeapType(Signature(params, results)), {});
+    auto import = Builder::makeFunction(name, Signature(params, results), {});
     import->module = ENV;
     import->base = name;
     auto* ret = import.get();

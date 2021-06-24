@@ -245,7 +245,7 @@ private:
   Index id = 0;
 
   void addImport(Module* wasm, Name name, Type params, Type results) {
-    HeapType type = HeapType(Signature(params, results));
+    HeapType type = Signature(params, results);
     auto import = Builder::makeFunction(name, type, {});
     import->module = ENV;
     import->base = name;

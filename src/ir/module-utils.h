@@ -502,7 +502,7 @@ inline void collectHeapTypes(Module& wasm,
       } else if (Properties::isControlFlowStructure(curr)) {
         if (curr->type.isTuple()) {
           // TODO: Allow control flow to have input types as well
-          counts.note(HeapType(Signature(Type::none, curr->type)));
+          counts.note(Signature(Type::none, curr->type));
         } else {
           counts.note(curr->type);
         }

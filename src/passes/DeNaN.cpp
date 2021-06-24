@@ -120,8 +120,7 @@ struct DeNaN : public WalkerPass<
     // Add helper functions after the walk, so they are not instrumented.
     Builder builder(*module);
     auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
-      auto func =
-        Builder::makeFunction(name, HeapType(Signature(type, type)), {});
+      auto func = Builder::makeFunction(name, Signature(type, type), {});
       // Compare the value to itself to check if it is a NaN, and return 0 if
       // so:
       //

@@ -135,7 +135,7 @@ struct SafeHeap : public Pass {
       sbrk = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        GET_SBRK_PTR, HeapType(Signature(Type::none, indexType)), {});
+        GET_SBRK_PTR, Signature(Type::none, indexType), {});
       getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
       import->base = GET_SBRK_PTR;
@@ -145,7 +145,7 @@ struct SafeHeap : public Pass {
       segfault = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        SEGFAULT_IMPORT, HeapType(Signature(Type::none, Type::none)), {});
+        SEGFAULT_IMPORT, Signature(Type::none, Type::none), {});
       segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
@@ -155,7 +155,7 @@ struct SafeHeap : public Pass {
       alignfault = existing->name;
     } else {
       auto import = Builder::makeFunction(
-        ALIGNFAULT_IMPORT, HeapType(Signature(Type::none, Type::none)), {});
+        ALIGNFAULT_IMPORT, Signature(Type::none, Type::none), {});
 
       alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
@@ -249,7 +249,7 @@ struct SafeHeap : public Pass {
     }
     // pointer, offset
     auto indexType = module->memory.indexType;
-    auto funcType = HeapType(Signature({indexType, indexType}, style.type));
+    auto funcType = Signature({indexType, indexType}, style.type);
     auto func = Builder::makeFunction(name, funcType, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
@@ -290,7 +290,7 @@ struct SafeHeap : public Pass {
     auto indexType = module->memory.indexType;
     // pointer, offset, value
     auto funcType =
-      HeapType(Signature({indexType, indexType, style.valueType}, Type::none));
+      Signature({indexType, indexType, style.valueType}, Type::none);
     auto func = Builder::makeFunction(name, funcType, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
