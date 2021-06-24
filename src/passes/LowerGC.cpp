@@ -1443,7 +1443,7 @@ private:
     Name loop("loop");
     list.push_back(builder.makeLoop(
       loop,
-      builder.makeBlock({
+      builder.makeBlock(std::vector<Expression*>{
         // Copy one value.
         builder.makeSimpleStore(
           builder.makeLocalGet(tempLocal, loweringInfo.pointerType),
@@ -1465,9 +1465,9 @@ private:
             builder.makePointerConst(4)
           )
         ),
-        builder.makeLocalSet(parentRttLocal,
+        builder.makeLocalSet(parentRttParam,
           builder.makePointerAdd(
-            builder.makeLocalGet(parentRttLocal, loweringInfo.pointerType),
+            builder.makeLocalGet(parentRttParam, loweringInfo.pointerType),
             builder.makePointerConst(4)
           )
         ),
