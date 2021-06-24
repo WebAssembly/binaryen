@@ -405,7 +405,6 @@
      (global.get $rtt-0)
     )
     ;; rtt-0 is not a sub-rtt of 1, so this fails
-    ;; XXX This fails!
     (global.get $rtt-1)
    )
   )

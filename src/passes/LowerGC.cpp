@@ -33,30 +33,16 @@
 //
 //   Rtts:
 //     u32/RttKind what (func, data, i31, extern)
-//     ptr         decl (this is a pointer to new type the rtt.sub declares
-//                           on top of the fiven rtt. to represent that type,
-//                           we point to the the rtt.canon for it. or, if this
-//                           is an rtt.canon and not .sub, this still contains
-//                           the "new" type that is defined in the rtt.canon,
-//                           that is, it points to itself)
-//     ptr         parent (or null if this is from rtt.canon)
-//
-//     - That is, an rtt.canon contains a "what" and then two nulls. There is a
-//       single rtt.canon for each type, and that address is the unique ID for
-//       it, basically. An rtt.sub has two pointers, the first saying the type
-//       it is for. That is represented as a pointer to the rtt.canon for that
-//       type. The second pointer is the RTT it is a sub of. For example,
-//         (rtt.canon $foo)     => [kind, FOO, 0] at address FOO
-//         (rtt.sub $bar
-//          (rtt.canon $foo))   => [kind, BAR, FOO] at address SUB1
-//         (rtt.sub $quux
-//          (rtt.sub $bar
-//           (rtt.canon $foo))) => [kind, QUUX, SUB1]
+//     u32         size of the chain of types. This is the same as RttSupers
+//                      in literal.h
+//     ptr*        chain of types. Each is a pointer to the rtt.canon for the
+//                 type. In an rtt.canon, this points to the object itself,
+//                 that is, we will have ptr => [kind, 1, ptr]. An rtt.sub
+//                 copies the chain of the parent, and appends the new type at
+//                 the end, much like RttSupers as mentioned earlier.
 //       Note that we keep rtt.canon addresses unique, but we do not currently
 //       make an effort to do the same for rtt.sub (which would require a hash
-//       map). To implement the "structural" comparison semantics of rtt.sub,
-//       we compare the chain of parents, using the fact that the pointes to
-//       rtt.canons in the second field are unique.
+//       map).
 //
 
 #include "ir/module-utils.h"
@@ -88,6 +74,11 @@ public:
   Expression*
   makePointerStore(Expression* ptr, Expression* value, Address offset = 0) {
     return makeSimpleStore(ptr, value, wasm.memory.indexType, offset);
+  }
+
+  Expression*
+  makePointerStore(Expression* ptr, Address addr, Address offset = 0) {
+    return makeSimpleStore(ptr, makePointerConst(addr), wasm.memory.indexType, offset);
   }
 
   Expression* makePointerEq(Expression* a, Expression* b) {
@@ -1152,6 +1143,10 @@ private:
     //
     // Start with a loop to find rttParam in the ref's RTT chain (in the example
     // above, find C in the first line).
+    // Making this harder is that we can have repeat types,
+    //
+    //  ref's rtt ----> B -> B -> B -> A
+    //  rtt param --------------> B -> A
     Name loop1("loop1");
     Name block1("block1");
     list.push_back(builder.makeLoop(
@@ -1345,7 +1340,7 @@ private:
   void makeRttCanon(HeapType type) {
     // Allocate this rtt at the next free location.
     auto addr =
-      loweringInfo.compileTimeMalloc(4 + 2 * loweringInfo.pointerSize);
+      loweringInfo.compileTimeMalloc(8 + loweringInfo.pointerSize);
     loweringInfo.rttCanonAddrs[type] = addr;
     int32_t rttValue;
     if (type.isFunction()) {
@@ -1361,19 +1356,15 @@ private:
       builder.makeSimpleStore(builder.makeConst(int32_t(addr)),
                               builder.makeConst(int32_t(rttValue)),
                               Type::i32));
-    // Write the type field, which points to ourself.
+    // Write the size field.
+    startBlock->list.push_back(
+      builder.makeSimpleStore(builder.makeConst(int32_t(addr + 4)),
+                              builder.makeConst(int32_t(1)),
+                              Type::i32));
+    // Write the list, which is just a pointer to ourselves.
     startBlock->list.push_back(
       builder.makePointerStore(builder.makeConst(int32_t(addr + 4)),
-                               builder.makeConst(Literal::makeFromInt32(
-                                 addr, loweringInfo.pointerType))));
-    // Write a null pointer for the parent.
-    startBlock->list.push_back(builder.makeStore(
-      loweringInfo.pointerSize,
-      0,
-      loweringInfo.pointerSize,
-      builder.makeConst(int32_t(addr + 4 + loweringInfo.pointerSize)),
-      builder.makeConst(Literal::makeFromInt32(0, loweringInfo.pointerType)),
-      loweringInfo.pointerType));
+                               addr));
   }
 
   void makeRttSub() {
