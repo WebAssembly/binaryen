@@ -158,7 +158,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     freeTemps.clear();
     Module temp;
     auto* oldFunc = ModuleUtils::copyFunction(func, temp);
-    func->sig.params = Type::none;
+    func->setParams(Type::none);
     func->vars.clear();
     func->localNames.clear();
     func->localIndices.clear();
@@ -191,8 +191,8 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
     if (func->imported()) {
       return;
     }
-    if (func->sig.results == Type::i64) {
-      func->sig.results = Type::i32;
+    if (func->getResults() == Type::i64) {
+      func->setResults(Type::i32);
       // body may not have out param if it ends with control flow
       if (hasOutParam(func->body)) {
         TempVar highBits = fetchOutParam(func->body);
@@ -250,7 +250,7 @@ struct I64ToI32Lowering : public WalkerPass<PostWalker<I64ToI32Lowering>> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn &&
-        getModule()->getFunction(curr->target)->sig.results == Type::i64) {
+        getModule()->getFunction(curr->target)->getResults() == Type::i64) {
       Fatal()
         << "i64 to i32 lowering of return_call values not yet implemented";
     }

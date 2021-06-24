@@ -1609,7 +1609,7 @@ using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
-  Signature sig; // parameters and return value
+  HeapType type; // parameters and return value
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
@@ -1657,6 +1657,16 @@ public:
   std::unordered_map<Expression*, BinaryLocations::DelimiterLocations>
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
+
+  Signature getSig() { return type.getSignature(); }
+  Type getParams() { return getSig().params; }
+  Type getResults() { return getSig().results; }
+  void setParams(Type params) {
+    type = HeapType(Signature(params, getResults()));
+  }
+  void setResults(Type results) {
+    type = HeapType(Signature(getParams(), results));
+  }
 
   size_t getNumParams();
   size_t getNumVars();

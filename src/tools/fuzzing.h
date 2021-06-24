@@ -415,8 +415,11 @@ private:
     }
     contents.push_back(builder.makeLocalGet(0, Type::i32));
     auto* body = builder.makeBlock(contents);
-    auto* hasher = wasm.addFunction(builder.makeFunction(
-      "hashMemory", Signature(Type::none, Type::i32), {Type::i32}, body));
+    auto* hasher = wasm.addFunction(
+      builder.makeFunction("hashMemory",
+                           HeapType(Signature(Type::none, Type::i32)),
+                           {Type::i32},
+                           body));
     wasm.addExport(
       builder.makeExport(hasher->name, hasher->name, ExternalKind::Function));
     // Export memory so JS fuzzing can use it
@@ -592,7 +595,7 @@ private:
     auto funcName = Names::getValidFunctionName(wasm, exportName);
     auto* func = new Function;
     func->name = funcName;
-    func->sig = Signature(Type::none, Type::none);
+    func->type = HeapType(Signature(Type::none, Type::none));
     func->body = builder.makeGlobalSet(HANG_LIMIT_GLOBAL,
                                        builder.makeConst(int32_t(HANG_LIMIT)));
     wasm.addFunction(func);
@@ -616,7 +619,7 @@ private:
       func->name = name;
       func->module = "fuzzing-support";
       func->base = name;
-      func->sig = Signature(type, Type::none);
+      func->type = HeapType(Signature(type, Type::none));
       wasm.addFunction(func);
     }
   }
@@ -684,7 +687,7 @@ private:
       funcContext->typeLocals[type].push_back(params.size());
       params.push_back(type);
     }
-    func->sig = Signature(Type(params), getControlFlowType());
+    func->type = HeapType(Signature(Type(params), getControlFlowType()));
     Index numVars = upToSquared(MAX_VARS);
     for (Index i = 0; i < numVars; i++) {
       auto type = getConcreteType();
@@ -698,7 +701,7 @@ private:
       func->vars.push_back(type);
     }
     // with small chance, make the body unreachable
-    auto bodyType = func->sig.results;
+    auto bodyType = func->getResults();
     if (oneIn(10)) {
       bodyType = Type::unreachable;
     }
@@ -737,7 +740,7 @@ private:
     }
     // add some to an elem segment
     while (oneIn(3) && !finishedInput) {
-      auto type = Type(HeapType(func->sig), NonNullable);
+      auto type = Type(func->type, NonNullable);
       std::vector<ElementSegment*> compatibleSegments;
       ModuleUtils::iterActiveElementSegments(
         wasm, [&](ElementSegment* segment) {
@@ -746,7 +749,7 @@ private:
           }
         });
       auto& randomElem = compatibleSegments[upTo(compatibleSegments.size())];
-      randomElem->data.push_back(builder.makeRefFunc(func->name, func->sig));
+      randomElem->data.push_back(builder.makeRefFunc(func->name, func->type));
     }
     numAddedFunctions++;
     return func;
@@ -760,8 +763,8 @@ private:
         builder.makeSequence(makeHangLimitCheck(), loop->body, loop->type);
     }
     // recursion limit
-    func->body =
-      builder.makeSequence(makeHangLimitCheck(), func->body, func->sig.results);
+    func->body = builder.makeSequence(
+      makeHangLimitCheck(), func->body, func->getResults());
   }
 
   // Recombination and mutation can replace a node with another node of the same
@@ -967,7 +970,7 @@ private:
         // We can't allow extra imports, as the fuzzing infrastructure wouldn't
         // know what to provide.
         func->module = func->base = Name();
-        func->body = make(func->sig.results);
+        func->body = make(func->getResults());
       }
       // Optionally, fuzz the function contents.
       if (upTo(RESOLUTION) >= chance) {
@@ -1033,12 +1036,12 @@ private:
     std::vector<Expression*> invocations;
     while (oneIn(2) && !finishedInput) {
       std::vector<Expression*> args;
-      for (const auto& type : func->sig.params) {
+      for (const auto& type : func->getParams()) {
         args.push_back(makeConst(type));
       }
       Expression* invoke =
-        builder.makeCall(func->name, args, func->sig.results);
-      if (func->sig.results.isConcrete()) {
+        builder.makeCall(func->name, args, func->getResults());
+      if (func->getResults().isConcrete()) {
         invoke = builder.makeDrop(invoke);
       }
       invocations.push_back(invoke);
@@ -1052,7 +1055,7 @@ private:
     }
     auto* invoker = new Function;
     invoker->name = name;
-    invoker->sig = Signature(Type::none, Type::none);
+    invoker->type = HeapType(Signature(Type::none, Type::none));
     invoker->body = builder.makeBlock(invocations);
     wasm.addFunction(invoker);
     auto* export_ = new Export;
@@ -1236,8 +1239,8 @@ private:
     }
     assert(type == Type::unreachable);
     Expression* ret = nullptr;
-    if (funcContext->func->sig.results.isConcrete()) {
-      ret = makeTrivial(funcContext->func->sig.results);
+    if (funcContext->func->getResults().isConcrete()) {
+      ret = makeTrivial(funcContext->func->getResults());
     }
     return builder.makeReturn(ret);
   }
@@ -1437,13 +1440,13 @@ private:
         target = pick(wasm.functions).get();
       }
       isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 funcContext->func->sig.results == target->sig.results;
-      if (target->sig.results != type && !isReturn) {
+                 funcContext->func->getResults() == target->getResults();
+      if (target->getResults() != type && !isReturn) {
         continue;
       }
       // we found one!
       std::vector<Expression*> args;
-      for (const auto& argType : target->sig.params) {
+      for (const auto& argType : target->getParams()) {
         args.push_back(make(argType));
       }
       return builder.makeCall(target->name, args, type, isReturn);
@@ -1468,8 +1471,8 @@ private:
       if (auto* get = data[i]->dynCast<RefFunc>()) {
         targetFn = wasm.getFunction(get->func);
         isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                   funcContext->func->sig.results == targetFn->sig.results;
-        if (targetFn->sig.results == type || isReturn) {
+                   funcContext->func->getResults() == targetFn->getResults();
+        if (targetFn->getResults() == type || isReturn) {
           break;
         }
       }
@@ -1490,12 +1493,12 @@ private:
       target = make(Type::i32);
     }
     std::vector<Expression*> args;
-    for (const auto& type : targetFn->sig.params) {
+    for (const auto& type : targetFn->getParams()) {
       args.push_back(make(type));
     }
     // TODO: use a random table
     return builder.makeCallIndirect(
-      funcrefTableName, target, args, targetFn->sig, isReturn);
+      funcrefTableName, target, args, targetFn->getSig(), isReturn);
   }
 
   Expression* makeCallRef(Type type) {
@@ -1511,19 +1514,19 @@ private:
       // TODO: handle unreachable
       target = wasm.functions[upTo(wasm.functions.size())].get();
       isReturn = type == Type::unreachable && wasm.features.hasTailCall() &&
-                 funcContext->func->sig.results == target->sig.results;
-      if (target->sig.results == type || isReturn) {
+                 funcContext->func->getResults() == target->getResults();
+      if (target->getResults() == type || isReturn) {
         break;
       }
       i++;
     }
     std::vector<Expression*> args;
-    for (const auto& type : target->sig.params) {
+    for (const auto& type : target->getParams()) {
       args.push_back(make(type));
     }
     // TODO: half the time make a completely random item with that type.
     return builder.makeCallRef(
-      builder.makeRefFunc(target->name, target->sig), args, type, isReturn);
+      builder.makeRefFunc(target->name, target->type), args, type, isReturn);
   }
 
   Expression* makeLocalGet(Type type) {
@@ -2112,7 +2115,7 @@ private:
         if (!wasm.functions.empty() && !oneIn(wasm.functions.size())) {
           target = pick(wasm.functions).get();
         }
-        return builder.makeRefFunc(target->name, target->sig);
+        return builder.makeRefFunc(target->name, target->type);
       }
       if (type == Type::i31ref) {
         return builder.makeI31New(makeConst(Type::i32));
@@ -2133,8 +2136,8 @@ private:
       }
       // TODO: randomize the order
       for (auto& func : wasm.functions) {
-        if (type == Type(HeapType(func->sig), NonNullable)) {
-          return builder.makeRefFunc(func->name, func->sig);
+        if (type == Type(func->type, NonNullable)) {
+          return builder.makeRefFunc(func->name, func->type);
         }
       }
       // We failed to find a function, so create a null reference if we can.
@@ -2143,17 +2146,13 @@ private:
       }
       // Last resort: create a function.
       auto heapType = type.getHeapType();
-      Signature sig;
-      if (heapType.isSignature()) {
-        sig = heapType.getSignature();
-      } else {
-        assert(heapType == HeapType::func);
+      if (heapType == HeapType::func) {
         // The specific signature does not matter.
-        sig = Signature(Type::none, Type::none);
+        heapType = HeapType(Signature(Type::none, Type::none));
       }
       auto* func = wasm.addFunction(builder.makeFunction(
         Names::getValidFunctionName(wasm, "ref_func_target"),
-        sig,
+        heapType,
         {},
         builder.makeUnreachable()));
       return builder.makeRefFunc(func->name, heapType);
@@ -2681,8 +2680,8 @@ private:
   }
 
   Expression* makeReturn(Type type) {
-    return builder.makeReturn(funcContext->func->sig.results.isConcrete()
-                                ? make(funcContext->func->sig.results)
+    return builder.makeReturn(funcContext->func->getResults().isConcrete()
+                                ? make(funcContext->func->getResults())
                                 : nullptr);
   }
 

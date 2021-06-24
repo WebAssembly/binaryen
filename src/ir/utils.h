@@ -237,7 +237,7 @@ struct AutoDrop : public WalkerPass<ExpressionStackWalker<AutoDrop>> {
   void doWalkFunction(Function* curr) {
     ReFinalize().walkFunctionInModule(curr, getModule());
     walk(curr->body);
-    if (curr->sig.results == Type::none && curr->body->type.isConcrete()) {
+    if (curr->getResults() == Type::none && curr->body->type.isConcrete()) {
       curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
     ReFinalize().walkFunctionInModule(curr, getModule());

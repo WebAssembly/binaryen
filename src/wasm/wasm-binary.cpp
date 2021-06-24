@@ -269,7 +269,7 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one function\n");
     writeImportHeader(func);
     o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getTypeIndex(func->sig));
+    o << U32LEB(getTypeIndex(func->type));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     BYN_TRACE("write one global\n");
@@ -283,7 +283,7 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(tag);
     o << U32LEB(int32_t(ExternalKind::Tag));
     o << uint8_t(0); // Reserved 'attribute' field. Always 0.
-    o << U32LEB(getTypeIndex(tag->sig));
+    o << U32LEB(getTypeIndex(HeapType(tag->sig)));
   });
   if (wasm->memory.imported()) {
     BYN_TRACE("write one memory\n");
@@ -318,7 +318,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     BYN_TRACE("write one\n");
-    o << U32LEB(getTypeIndex(func->sig));
+    o << U32LEB(getTypeIndex(func->type));
   });
   finishSection(start);
 }
@@ -657,7 +657,7 @@ void WasmBinaryWriter::writeTags() {
   ModuleUtils::iterDefinedTags(*wasm, [&](Tag* tag) {
     BYN_TRACE("write one\n");
     o << uint8_t(0); // Reserved 'attribute' field. Always 0.
-    o << U32LEB(getTypeIndex(tag->sig));
+    o << U32LEB(getTypeIndex(HeapType(tag->sig)));
   });
 
   finishSection(start);
@@ -2008,8 +2008,7 @@ void WasmBinaryBuilder::readImports() {
         Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
         functionTypes.push_back(getTypeByIndex(index));
-        auto curr =
-          builder.makeFunction(name, getSignatureByTypeIndex(index), {});
+        auto curr = builder.makeFunction(name, getTypeByIndex(index), {});
         curr->module = module;
         curr->base = base;
         functionImports.push_back(curr.get());
@@ -2158,7 +2157,7 @@ void WasmBinaryBuilder::readFunctions() {
 
     auto* func = new Function;
     func->name = Name::fromInt(i);
-    func->sig = getSignatureByFunctionIndex(functionImports.size() + i);
+    func->type = getTypeByFunctionIndex(functionImports.size() + i);
     currFunction = func;
 
     if (DWARF) {
@@ -2197,7 +2196,7 @@ void WasmBinaryBuilder::readFunctions() {
       auto currFunctionIndex = functionImports.size() + functions.size();
       bool isStart = startIndex == currFunctionIndex;
       if (!skipFunctionBodies || isStart) {
-        func->body = getBlockOrSingleton(func->sig.results);
+        func->body = getBlockOrSingleton(func->getResults());
       } else {
         // When skipping the function body we need to put something valid in
         // their place so we validate. An unreachable is always acceptable
@@ -6004,8 +6003,9 @@ void WasmBinaryBuilder::visitSelect(Select* curr, uint8_t code) {
 void WasmBinaryBuilder::visitReturn(Return* curr) {
   BYN_TRACE("zz node: Return\n");
   requireFunctionContext("return");
-  if (currFunction->sig.results.isConcrete()) {
-    curr->value = popTypedExpression(currFunction->sig.results);
+  Type type = currFunction->getResults();
+  if (type.isConcrete()) {
+    curr->value = popTypedExpression(type);
   }
   curr->finalize();
 }

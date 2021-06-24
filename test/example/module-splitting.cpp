@@ -451,10 +451,12 @@ void test_minimized_exports() {
   Expression* callBody = nullptr;
 
   Builder builder(primary);
+  auto funcType = HeapType(Signature(Type::none, Type::none));
 
   for (size_t i = 0; i < 10; ++i) {
     Name name = std::to_string(i);
-    primary.addFunction(Builder::makeFunction(name, {}, {}, builder.makeNop()));
+    primary.addFunction(
+      Builder::makeFunction(name, funcType, {}, builder.makeNop()));
     keep.insert(name);
     callBody =
       builder.blockify(callBody, builder.makeCall(name, {}, Type::none));
@@ -469,7 +471,7 @@ void test_minimized_exports() {
     }
   }
 
-  primary.addFunction(Builder::makeFunction("call", {}, {}, callBody));
+  primary.addFunction(Builder::makeFunction("call", funcType, {}, callBody));
 
   ModuleSplitting::Config config;
   config.primaryFuncs = std::move(keep);

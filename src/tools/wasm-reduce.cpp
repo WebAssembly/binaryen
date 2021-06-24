@@ -483,7 +483,7 @@ struct Reducer
         auto* save = curr;
         Unreachable un;
         Nop nop;
-        bool useUnreachable = getFunction()->sig.results != Type::none;
+        bool useUnreachable = getFunction()->getResults() != Type::none;
         if (useUnreachable) {
           replaceCurrent(&un);
         } else {
@@ -977,7 +977,7 @@ struct Reducer
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {
-        auto funcSig = func->sig;
+        auto funcType = func->type;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
           if (!(child->type.isConcrete() || child->type == Type::none)) {
@@ -985,7 +985,8 @@ struct Reducer
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          func->sig.results = child->type;
+          auto newSig = Signature(funcType.getSignature().params, child->type);
+          func->type = HeapType(newSig);
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!
@@ -994,7 +995,7 @@ struct Reducer
             break;
           }
           // Undo.
-          func->sig = funcSig;
+          func->type = funcType;
           func->body = funcBody;
         }
       }

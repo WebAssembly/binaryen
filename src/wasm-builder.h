@@ -43,12 +43,13 @@ public:
   // make* functions create an expression instance.
 
   static std::unique_ptr<Function> makeFunction(Name name,
-                                                Signature sig,
+                                                HeapType type,
                                                 std::vector<Type>&& vars,
                                                 Expression* body = nullptr) {
+    assert(type.isSignature());
     auto func = std::make_unique<Function>();
     func->name = name;
-    func->sig = sig;
+    func->type = type;
     func->body = body;
     func->vars.swap(vars);
     return func;
@@ -56,20 +57,21 @@ public:
 
   static std::unique_ptr<Function> makeFunction(Name name,
                                                 std::vector<NameType>&& params,
-                                                Type resultType,
+                                                HeapType type,
                                                 std::vector<NameType>&& vars,
                                                 Expression* body = nullptr) {
+    assert(type.isSignature());
     auto func = std::make_unique<Function>();
     func->name = name;
+    func->type = type;
     func->body = body;
-    std::vector<Type> paramVec;
-    for (auto& param : params) {
-      paramVec.push_back(param.type);
+    for (size_t i = 0; i < params.size(); ++i) {
+      NameType& param = params[i];
+      assert(func->getParams()[i] == param.type);
       Index index = func->localNames.size();
       func->localIndices[param.name] = index;
       func->localNames[index] = param.name;
     }
-    func->sig = Signature(Type(paramVec), resultType);
     for (auto& var : vars) {
       func->vars.push_back(var.type);
       Index index = func->localNames.size();
@@ -948,11 +950,12 @@ public:
 
   static Index addParam(Function* func, Name name, Type type) {
     // only ok to add a param if no vars, otherwise indices are invalidated
-    assert(func->localIndices.size() == func->sig.params.size());
+    assert(func->localIndices.size() == func->getParams().size());
     assert(name.is());
-    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
+    Signature sig = func->getSig();
+    std::vector<Type> params(sig.params.begin(), sig.params.end());
     params.push_back(type);
-    func->sig.params = Type(params);
+    func->type = HeapType(Signature(Type(params), sig.results));
     Index index = func->localNames.size();
     func->localIndices[name] = index;
     func->localNames[index] = name;
@@ -981,7 +984,7 @@ public:
   }
 
   static void clearLocals(Function* func) {
-    func->sig.params = Type::none;
+    func->type = HeapType(Signature(Type::none, func->getResults()));
     func->vars.clear();
     clearLocalNames(func);
   }

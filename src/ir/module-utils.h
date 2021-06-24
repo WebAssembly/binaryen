@@ -33,7 +33,7 @@ namespace ModuleUtils {
 inline Function* copyFunction(Function* func, Module& out) {
   auto* ret = new Function();
   ret->name = func->name;
-  ret->sig = func->sig;
+  ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
@@ -490,7 +490,7 @@ inline void collectHeapTypes(Module& wasm,
 
     void visitExpression(Expression* curr) {
       if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(call->sig);
+        counts.note(HeapType(call->sig));
       } else if (curr->is<RefNull>()) {
         counts.note(curr->type);
       } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
@@ -502,7 +502,7 @@ inline void collectHeapTypes(Module& wasm,
       } else if (Properties::isControlFlowStructure(curr)) {
         if (curr->type.isTuple()) {
           // TODO: Allow control flow to have input types as well
-          counts.note(Signature(Type::none, curr->type));
+          counts.note(HeapType(Signature(Type::none, curr->type)));
         } else {
           counts.note(curr->type);
         }
@@ -514,7 +514,7 @@ inline void collectHeapTypes(Module& wasm,
   Counts counts;
   CodeScanner(counts).walkModuleCode(&wasm);
   for (auto& curr : wasm.tags) {
-    counts.note(curr->sig);
+    counts.note(HeapType(curr->sig));
   }
   for (auto& curr : wasm.tables) {
     counts.note(curr->type);
@@ -526,7 +526,7 @@ inline void collectHeapTypes(Module& wasm,
   // Collect info from functions in parallel.
   ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
     wasm, [&](Function* func, Counts& counts) {
-      counts.note(func->sig);
+      counts.note(func->type);
       for (auto type : func->vars) {
         counts.note(type);
       }

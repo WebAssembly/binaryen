@@ -69,7 +69,7 @@ void test_canonicalization() {
 
   // (type $struct (struct (field (ref null $sig) (ref null $sig))))
   // (type $sig (func))
-  HeapType sig = Signature(Type::none, Type::none);
+  HeapType sig = HeapType(Signature(Type::none, Type::none));
   HeapType struct_ = Struct({Field(Type(sig, Nullable), Immutable),
                              Field(Type(sig, Nullable), Immutable)});
 
@@ -111,9 +111,9 @@ void test_signatures(bool warm) {
   std::vector<HeapType> built = builder.build();
 
   HeapType small = HeapType(Signature(Type::anyref, Type::i31ref));
-  HeapType big =
-    HeapType(Signature(Type(Signature(Type::anyref, Type::i31ref), Nullable),
-                       Type(Signature(Type::anyref, Type::i31ref), Nullable)));
+  HeapType big = HeapType(
+    Signature(Type(HeapType(Signature(Type::anyref, Type::i31ref)), Nullable),
+              Type(HeapType(Signature(Type::anyref, Type::i31ref)), Nullable)));
   if (warm) {
     assert(built[0] != small);
     assert(built[1] != big);

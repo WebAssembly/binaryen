@@ -340,7 +340,7 @@ public:
   // Construct a HeapType referring to the single canonical HeapType for the
   // given signature. In nominal mode, this is the first HeapType created with
   // this signature.
-  HeapType(Signature signature);
+  explicit HeapType(Signature signature);
 
   // Create a HeapType with the given structure. In equirecursive mode, this may
   // be the same as a previous HeapType created with the same contents. In

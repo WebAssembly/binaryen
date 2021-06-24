@@ -75,7 +75,7 @@ void test_canonicalization() {
 
   // (type $struct (struct (field (ref null $sig) (ref null $sig))))
   // (type $sig (func))
-  HeapType sig = Signature(Type::none, Type::none);
+  HeapType sig = HeapType(Signature(Type::none, Type::none));
   HeapType struct_ = Struct({Field(Type(sig, Nullable), Immutable),
                              Field(Type(sig, Nullable), Immutable)});
 
@@ -318,20 +318,23 @@ void test_lub() {
 
   {
     // Funcref with specific signature
-    assert(LUB(Type::funcref, Type(Signature(), Nullable)) == Type::funcref);
+    assert(LUB(Type::funcref, Type(HeapType(Signature()), Nullable)) ==
+           Type::funcref);
   }
 
   {
     // Incompatible signatures
-    Type a(Signature(Type::none, Type::anyref), Nullable);
-    Type b(Signature(Type::anyref, Type::none), Nullable);
+    Type a(HeapType(Signature(Type::none, Type::anyref)), Nullable);
+    Type b(HeapType(Signature(Type::anyref, Type::none)), Nullable);
     assert(LUB(a, b) == Type::funcref);
   }
 
   {
     // Signatures incompatible in tuple size
-    Type a(Signature(Type::none, {Type::anyref, Type::anyref}), Nullable);
-    Type b(Signature(Type::none, {Type::anyref, Type::anyref, Type::anyref}),
+    Type a(HeapType(Signature(Type::none, {Type::anyref, Type::anyref})),
+           Nullable);
+    Type b(HeapType(
+             Signature(Type::none, {Type::anyref, Type::anyref, Type::anyref})),
            Nullable);
     assert(LUB(a, b) == Type::funcref);
   }

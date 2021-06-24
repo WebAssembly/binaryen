@@ -26,7 +26,7 @@ void BinaryInstWriter::emitResultType(Type type) {
   if (type == Type::unreachable) {
     parent.writeType(Type::none);
   } else if (type.isTuple()) {
-    o << S32LEB(parent.getTypeIndex(Signature(Type::none, type)));
+    o << S32LEB(parent.getTypeIndex(HeapType(Signature(Type::none, type))));
   } else {
     parent.writeType(type);
   }
@@ -84,7 +84,8 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 
   int8_t op =
     curr->isReturn ? BinaryConsts::RetCallIndirect : BinaryConsts::CallIndirect;
-  o << op << U32LEB(parent.getTypeIndex(curr->sig)) << U32LEB(tableIdx);
+  o << op << U32LEB(parent.getTypeIndex(HeapType(curr->sig)))
+    << U32LEB(tableIdx);
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {

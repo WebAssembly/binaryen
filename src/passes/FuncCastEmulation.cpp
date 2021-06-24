@@ -199,11 +199,11 @@ private:
     }
     // The item in the table may be a function or a function import.
     auto* func = module->getFunction(name);
-    Type type = func->sig.results;
+    Type type = func->getResults();
     Builder builder(*module);
     std::vector<Expression*> callOperands;
     Index i = 0;
-    for (const auto& param : func->sig.params) {
+    for (const auto& param : func->getParams()) {
       callOperands.push_back(
         fromABI(builder.makeLocalGet(i++, Type::i64), param, module));
     }
@@ -212,11 +212,11 @@ private:
     for (Index i = 0; i < numParams; i++) {
       thunkParams.push_back(Type::i64);
     }
-    auto thunkFunc =
-      builder.makeFunction(thunk,
-                           Signature(Type(thunkParams), Type::i64),
-                           {}, // no vars
-                           toABI(call, module));
+    auto thunkType = HeapType(Signature(Type(thunkParams), Type::i64));
+    auto thunkFunc = builder.makeFunction(thunk,
+                                          thunkType,
+                                          {}, // no vars
+                                          toABI(call, module));
     module->addFunction(std::move(thunkFunc));
     return thunk;
   }
