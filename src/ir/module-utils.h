@@ -490,7 +490,7 @@ inline void collectHeapTypes(Module& wasm,
 
     void visitExpression(Expression* curr) {
       if (auto* call = curr->dynCast<CallIndirect>()) {
-        counts.note(HeapType(call->sig));
+        counts.note(call->sig);
       } else if (curr->is<RefNull>()) {
         counts.note(curr->type);
       } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
@@ -514,7 +514,7 @@ inline void collectHeapTypes(Module& wasm,
   Counts counts;
   CodeScanner(counts).walkModuleCode(&wasm);
   for (auto& curr : wasm.tags) {
-    counts.note(HeapType(curr->sig));
+    counts.note(curr->sig);
   }
   for (auto& curr : wasm.tables) {
     counts.note(curr->type);

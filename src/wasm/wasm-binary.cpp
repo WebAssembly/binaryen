@@ -283,7 +283,7 @@ void WasmBinaryWriter::writeImports() {
     writeImportHeader(tag);
     o << U32LEB(int32_t(ExternalKind::Tag));
     o << uint8_t(0); // Reserved 'attribute' field. Always 0.
-    o << U32LEB(getTypeIndex(HeapType(tag->sig)));
+    o << U32LEB(getTypeIndex(tag->sig));
   });
   if (wasm->memory.imported()) {
     BYN_TRACE("write one memory\n");
@@ -657,7 +657,7 @@ void WasmBinaryWriter::writeTags() {
   ModuleUtils::iterDefinedTags(*wasm, [&](Tag* tag) {
     BYN_TRACE("write one\n");
     o << uint8_t(0); // Reserved 'attribute' field. Always 0.
-    o << U32LEB(getTypeIndex(HeapType(tag->sig)));
+    o << U32LEB(getTypeIndex(tag->sig));
   });
 
   finishSection(start);

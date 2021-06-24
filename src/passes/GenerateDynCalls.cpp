@@ -137,8 +137,8 @@ void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
     namedParams.emplace_back(std::to_string(p++), param);
     params.push_back(param);
   }
-  auto type = Signature(Type(params), sig.results);
-  auto f = builder.makeFunction(name, std::move(namedParams), type, {});
+  auto f = builder.makeFunction(
+    name, std::move(namedParams), Signature(Type(params), sig.results), {});
   Expression* fptr = builder.makeLocalGet(0, Type::i32);
   std::vector<Expression*> args;
   Index i = 0;

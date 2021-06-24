@@ -985,8 +985,7 @@ struct Reducer
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          auto newSig = Signature(funcType.getSignature().params, child->type);
-          func->type = HeapType(newSig);
+          func->type = Signature(funcType.getSignature().params, child->type);
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!

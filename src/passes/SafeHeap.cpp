@@ -249,8 +249,8 @@ struct SafeHeap : public Pass {
     }
     // pointer, offset
     auto indexType = module->memory.indexType;
-    auto funcType = Signature({indexType, indexType}, style.type);
-    auto func = Builder::makeFunction(name, funcType, {indexType});
+    auto funcSig = Signature({indexType, indexType}, style.type);
+    auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
@@ -289,9 +289,9 @@ struct SafeHeap : public Pass {
     }
     auto indexType = module->memory.indexType;
     // pointer, offset, value
-    auto funcType =
+    auto funcSig =
       Signature({indexType, indexType, style.valueType}, Type::none);
-    auto func = Builder::makeFunction(name, funcType, {indexType});
+    auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(

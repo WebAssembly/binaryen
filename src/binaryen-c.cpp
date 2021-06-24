@@ -4153,9 +4153,6 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 const char* BinaryenTagGetName(BinaryenTagRef tag) {
   return ((Tag*)tag)->name.c_str();
 }
-
-// TODO: add BinaryenTagGetType
-
 BinaryenType BinaryenTagGetParams(BinaryenTagRef tag) {
   return ((Tag*)tag)->sig.params.getID();
 }

@@ -157,8 +157,7 @@ private:
   std::map<Name, Name> illegalImportsToLegal;
 
   template<typename T> bool isIllegal(T* t) {
-    auto sig = t->getSig();
-    for (const auto& param : sig.params) {
+    for (const auto& param : t->getParams()) {
       if (param == Type::i64) {
         return true;
       }
@@ -217,16 +216,12 @@ private:
         legalParams.push_back(param);
       }
     }
-    Type paramsType(legalParams);
-    Type resultsType = func->getResults();
-    if (resultsType == Type::i64) {
-      resultsType = Type::i32;
-    }
-    legal->type = Signature(paramsType, resultsType);
+    Type resultsType =
+      func->getResults() == Type::i64 ? Type::i32 : func->getResults();
+    legal->type = Signature(Type(legalParams), resultsType);
     if (func->getResults() == Type::i64) {
       Function* f =
         getFunctionOrImport(module, SET_TEMP_RET0, Type::i32, Type::none);
-      assert(f);
       auto index = Builder::addVar(legal, Name(), Type::i64);
       auto* block = builder.makeBlock();
       block->list.push_back(builder.makeLocalSet(index, call));

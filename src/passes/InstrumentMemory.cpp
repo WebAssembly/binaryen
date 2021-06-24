@@ -158,8 +158,7 @@ private:
   Index id;
 
   void addImport(Module* curr, Name name, Type params, Type results) {
-    HeapType type = Signature(params, results);
-    auto import = Builder::makeFunction(name, type, {});
+    auto import = Builder::makeFunction(name, Signature(params, results), {});
     import->module = ENV;
     import->base = name;
     curr->addFunction(std::move(import));

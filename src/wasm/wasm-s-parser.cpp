@@ -640,7 +640,7 @@ SExpressionWasmBuilder::parseTypeUse(Element& s,
   }
 
   if (!typeExists) {
-    functionType = HeapType(inlineSig);
+    functionType = inlineSig;
   } else if (paramsOrResultsExist) {
     // verify that (type) and (params)/(result) match
     if (inlineSig != functionType.getSignature()) {

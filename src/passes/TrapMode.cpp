@@ -132,8 +132,8 @@ Function* generateBinaryFunc(Module& wasm, Binary* curr) {
       builder.makeConst(zeroLit),
       result);
   }
-  auto funcType = Signature({type, type}, type);
-  auto func = Builder::makeFunction(getBinaryFuncName(curr), funcType, {});
+  auto funcSig = Signature({type, type}, type);
+  auto func = Builder::makeFunction(getBinaryFuncName(curr), funcSig, {});
   func->body =
     builder.makeIf(builder.makeUnary(eqZOp, builder.makeLocalGet(1, type)),
                    builder.makeConst(zeroLit),
@@ -217,6 +217,7 @@ Function* generateUnaryFunc(Module& wasm, Unary* curr) {
     // NB: min here as well. anything invalid => to the min
     builder.makeConst(iMin),
     func->body);
+  // TODO: use unique_ptr properly and do not release ownership.
   return func.release();
 }
 
