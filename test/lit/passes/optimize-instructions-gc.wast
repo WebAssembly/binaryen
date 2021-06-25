@@ -612,7 +612,11 @@
     )
   )
 
+  ;; CHECK:      (func $nothing
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $nothing)
+
 
   ;; CHECK:      (func $ref-eq-corner-cases (param $x eqref)
   ;; CHECK-NEXT:  (drop

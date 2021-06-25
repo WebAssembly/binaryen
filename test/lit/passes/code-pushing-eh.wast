@@ -111,7 +111,11 @@
     )
   )
 
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $foo)
+
   ;; CHECK:      (func $cant-push-past-try
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out

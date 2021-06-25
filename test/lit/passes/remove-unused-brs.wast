@@ -54,7 +54,11 @@
     )
   )
 
+  ;; CHECK:      (func $nothing
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $nothing)
+
 
   ;; CHECK:      (func $restructure-br_if-condition-reorderable (param $x i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)

@@ -66,7 +66,11 @@
     )
   )
 
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $foo)
+
   ;; CHECK:      (func $try-call-optimize-terminating-tails (result i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do

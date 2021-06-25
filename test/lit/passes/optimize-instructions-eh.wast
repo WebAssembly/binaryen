@@ -3,6 +3,9 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (func $dummy
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $dummy)
   (tag $e (param i32))
 
@@ -16,6 +19,7 @@
   ;; (expr). For example:
   ;; (i32.add (local.get $x) (i32.const 7)) can be just (local.get $x) when $x
   ;; is guaranteed to contain a value equal to or less than 7.
+
 
   ;; CHECK:      (func $getFallthrough-try-no-throw
   ;; CHECK-NEXT:  (local $x i32)

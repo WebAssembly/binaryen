@@ -99,7 +99,11 @@
     (local.set $x (i32.const 1))
   )
 
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $foo)
+
   ;; CHECK:      (func $try4
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try
