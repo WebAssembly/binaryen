@@ -38,6 +38,8 @@ struct RoundTrip : public Pass {
     // Write, clear, and read the module
     WasmBinaryWriter(module, buffer).write();
     ModuleUtils::clearModule(*module);
+    // Apply the features to allow the wasm to load itself properly.
+    module->features = features;
     auto input = buffer.getAsChars();
     WasmBinaryBuilder parser(*module, input);
     parser.setDWARF(runner->options.debugInfo);
@@ -48,7 +50,8 @@ struct RoundTrip : public Pass {
       std::cerr << '\n';
       Fatal() << "error in parsing wasm binary";
     }
-    // Reapply features
+    // Apply the features again to combine them with the features section
+    // properly.
     module->features = features;
   }
 };

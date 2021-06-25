@@ -244,6 +244,8 @@ int main(int argc, const char* argv[]) {
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
     reader.setProfile(options.profile);
+    // Apply the features to allow the wasm to load itself properly.
+    options.applyFeatures(wasm);
     try {
       reader.read(inputFile, wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
@@ -259,6 +261,8 @@ int main(int argc, const char* argv[]) {
                  "request for silly amounts of memory)";
     }
 
+    // Apply the features again to combine them with the features section
+    // properly.
     options.applyFeatures(wasm);
 
     if (options.passOptions.validate) {
