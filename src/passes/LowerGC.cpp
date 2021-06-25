@@ -251,6 +251,15 @@ struct LowerGCCode
     replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
   }
 
+  void visitRefEq(RefEq* curr) {
+    visitExpression(curr);
+    replaceCurrent(
+      PointerBuilder(*getModule()).makePointerEq(
+        curr->left, curr->right
+      )
+    );
+  }
+
   void visitRefAs(RefAs* curr) {
     visitExpression(curr);
     Builder builder(*getModule());

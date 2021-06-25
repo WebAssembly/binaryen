@@ -268,6 +268,9 @@
    )
   )
  )
+ (func "ref-eq" (param $x eqref) (param $y eqref) (result i32)
+  (ref.eq (local.get $x) (local.get $y))
+ )
 )
 ;; On an empty module we should do very little (and not crash).
 (module)
