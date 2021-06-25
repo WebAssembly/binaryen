@@ -3,9 +3,6 @@
 
 (module
  (tag $tag (param i32))
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-  ;; CHECK:      (type $none_=>_none (func))
-  ;; CHECK:      (tag $tag$0 (param i32))
   ;; CHECK:      (func $delegate-child
   ;; CHECK-NEXT:  (try $label$9
   ;; CHECK-NEXT:   (do

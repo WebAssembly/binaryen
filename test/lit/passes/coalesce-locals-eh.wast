@@ -2,10 +2,6 @@
 ;; RUN: wasm-opt %s --coalesce-locals -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
-  ;; CHECK:      (tag $e (param))
   ;; CHECK:      (func $bar (result i32)
   ;; CHECK-NEXT:  (i32.const 1984)
   ;; CHECK-NEXT: )
@@ -13,6 +9,7 @@
     (i32.const 1984)
   )
 
+ ;; CHECK:      (tag $e (param))
  (tag $e)
   ;; CHECK:      (func $bug-cfg-traversal (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (try $try

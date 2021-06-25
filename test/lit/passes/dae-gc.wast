@@ -2,11 +2,9 @@
 ;; RUN: wasm-opt %s -all --dae -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
  ;; CHECK:      (type ${} (struct ))
  (type ${} (struct))
 
- ;; CHECK:      (type $rtt_${}_=>_none (func (param (rtt ${}))))
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (call $bar)
  ;; CHECK-NEXT: )

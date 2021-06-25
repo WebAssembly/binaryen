@@ -2,7 +2,6 @@
 ;; RUN: wasm-opt %s --rse --enable-gc-nn-locals -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
  ;; CHECK:      (func $10
  ;; CHECK-NEXT:  (local $1 (ref func))
  ;; CHECK-NEXT:  (nop)

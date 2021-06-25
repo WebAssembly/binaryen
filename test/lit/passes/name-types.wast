@@ -3,8 +3,6 @@
 
 (module
  (type $obnoxious-super-long-type-name_____________________________1 (struct))
- ;; CHECK:      (type $type$0 (func (param (ref $type$1))))
- ;; CHECK:      (type $type$1 (struct ))
  ;; CHECK:      (func $foo (param $x (ref $type$1))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )

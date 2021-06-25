@@ -3,9 +3,6 @@
 
 (module
   ;; ---------------------------------------------------------------------------
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-  ;; CHECK:      (type $none_=>_none (func))
   ;; CHECK:      (import "a" "b" (func $foo (result i32)))
   (import "a" "b" (func $foo (result i32)))
   ;; CHECK:      (tag $tag$0 (param i32))

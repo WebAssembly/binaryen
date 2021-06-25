@@ -2,8 +2,6 @@
 ;; RUN: wasm-opt %s --remove-unused-names -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
   ;; CHECK:      (tag $tag$0 (param i32))
   (tag $tag$0 (param i32))
 

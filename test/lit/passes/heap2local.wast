@@ -6,26 +6,18 @@
   ;; CHECK:      (type $struct.A (struct (field (mut i32)) (field (mut f64))))
   (type $struct.A (struct (field (mut i32)) (field (mut f64))))
 
-  ;; CHECK:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
-  ;; CHECK:      (type $none_=>_none (func))
-  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
-  ;; CHECK:      (type $struct.nonnullable (struct (field (ref $struct.A))))
   ;; CHECK:      (type $struct.packed (struct (field (mut i8))))
   (type $struct.packed (struct (field (mut i8))))
 
   ;; CHECK:      (type $struct.nondefaultable (struct (field (rtt $struct.A))))
   (type $struct.nondefaultable (struct (field (rtt $struct.A))))
 
+  ;; CHECK:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
   (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
+  ;; CHECK:      (type $struct.nonnullable (struct (field (ref $struct.A))))
   (type $struct.nonnullable (struct (field (ref $struct.A))))
 
-  ;; CHECK:      (type $i32_=>_f64 (func (param i32) (result f64)))
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
-  ;; CHECK:      (type $ref?|$struct.A|_=>_none (func (param (ref null $struct.A))))
-  ;; CHECK:      (type $ref|$struct.A|_=>_none (func (param (ref $struct.A))))
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
   ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)

@@ -3,9 +3,6 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
   ;; CHECK:      (tag $e-i32 (param i32))
   (tag $e-i32 (param i32))
 

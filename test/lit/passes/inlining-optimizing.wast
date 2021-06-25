@@ -6,7 +6,6 @@
  (type $none_=>_none (func))
  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32 (func (result i32)))
- ;; CHECK:      (elem declare func $0)
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )

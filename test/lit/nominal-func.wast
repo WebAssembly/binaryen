@@ -12,8 +12,6 @@
   (type $foo_t (func))
   (type $struct (struct (ref $foo_t)))
 
-  ;; CHECK:      (type $none_=>_ref|$foo_t| (func (result (ref $foo_t))))
-  ;; CHECK:      (elem declare func $foo)
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )

@@ -3,29 +3,12 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64))))
-  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
-  ;; CHECK:      (type $ref|$struct|_ref|func|_dataref_i31ref_=>_none (func (param (ref $struct) (ref func) dataref i31ref)))
-  ;; CHECK:      (type $ref?|$struct|_funcref_ref?|data|_ref?|i31|_=>_none (func (param (ref null $struct) funcref (ref null data) (ref null i31))))
-  ;; CHECK:      (type $funcref_ref?|data|_ref?|i31|_=>_none (func (param funcref (ref null data) (ref null i31))))
-  ;; CHECK:      (type $none_=>_none (func))
-  ;; CHECK:      (type $eqref_=>_none (func (param eqref)))
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
-  ;; CHECK:      (type $ref?|$struct|_ref?|$struct|_i32_=>_none (func (param (ref null $struct) (ref null $struct) i32)))
-  ;; CHECK:      (type $array (array (mut i8)))
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-  ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
-  ;; CHECK:      (type $ref?|$array|_=>_none (func (param (ref null $array))))
-  ;; CHECK:      (type $ref?|$struct|_ref?|$array|_=>_none (func (param (ref null $struct) (ref null $array))))
-  ;; CHECK:      (type $none_=>_eqref (func (result eqref)))
-  ;; CHECK:      (type $eqref_eqref_=>_none (func (param eqref eqref)))
-  ;; CHECK:      (type $i32_ref?|$struct|_ref?|$struct|_=>_none (func (param i32 (ref null $struct) (ref null $struct))))
-  ;; CHECK:      (type $ref|$struct|_ref|$struct|_i32_=>_none (func (param (ref $struct) (ref $struct) i32)))
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
 
   (type $empty (struct))
 
+  ;; CHECK:      (type $struct (struct (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64))))
   (type $struct (struct
     (field $i8  (mut i8))
     (field $i16 (mut i16))
@@ -33,6 +16,7 @@
     (field $i64 (mut i64))
   ))
 
+  ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
   ;; These functions test if an `if` with subtyped arms is correctly folded

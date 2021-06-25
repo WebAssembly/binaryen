@@ -3,14 +3,6 @@
 ;; RUN: wasm-opt %s --poppify --no-validation -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-  ;; CHECK:      (type $none_=>_i32_i64 (func (result i32 i64)))
-  ;; CHECK:      (type $none_=>_none (func))
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
-  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
-  ;; CHECK:      (type $none_=>_f32 (func (result f32)))
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
 

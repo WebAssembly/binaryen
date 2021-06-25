@@ -5,8 +5,6 @@
 (module
   ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
   (type $0 (func (param i32 i32) (result i32)))
-  ;; CHECK:      (type $none_=>_f64 (func (result f64)))
-  ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
   ;; CHECK:      (memory $0 0)
   (memory $0 0)
   ;; CHECK:      (func $conditionals (param $0 i32) (param $1 i32) (result i32)
