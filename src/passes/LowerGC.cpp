@@ -532,6 +532,8 @@ private:
 
 struct LowerGC : public Pass {
   void run(PassRunner* runner, Module* module_) override {
+    module = module_;
+
     // Collect all the heap types in order to analyze them and decide on their
     // layout in linear memory.
     std::vector<HeapType> types;
@@ -548,7 +550,6 @@ struct LowerGC : public Pass {
       subRunner.run();
     }
 
-    module = module_;
     pickNames();
     addMemory();
     addTable();
