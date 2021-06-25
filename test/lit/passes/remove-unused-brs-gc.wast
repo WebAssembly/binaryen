@@ -3,6 +3,9 @@
 ;; RUN:  | filecheck %s
 
 (module
+ ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $dataref_=>_none (func (param dataref)))
+ ;; CHECK:      (elem declare func $br_on_non_data-1)
  ;; CHECK:      (func $br_on_non_data-1
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $any (result anyref)

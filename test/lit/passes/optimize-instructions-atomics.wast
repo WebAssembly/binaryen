@@ -2,6 +2,8 @@
 ;; RUN: wasm-opt %s --optimize-instructions --enable-threads -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (import "env" "memory" (memory $0 (shared 256 256)))
  (import "env" "memory" (memory $0 (shared 256 256)))
 
  ;; CHECK:      (func $x

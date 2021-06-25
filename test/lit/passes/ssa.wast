@@ -2,6 +2,9 @@
 ;; RUN: wasm-opt %s -all --ssa -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $ref|func|_=>_none (func (param (ref func))))
+ ;; CHECK:      (elem declare func $bar $foo)
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )

@@ -6,8 +6,13 @@
 ;; returning (ref null $A).
 
 (module
+ ;; CHECK:      (type $A (struct (field (ref null $C))))
  (type $A (struct (field (ref null $C))))
+ ;; CHECK:      (type $ref?|$A|_=>_ref?|$A| (func (param (ref null $A)) (result (ref null $A))))
+ ;; CHECK:      (type $B (struct (field (ref null $D))))
  (type $B (struct (field (ref null $D))))
+ ;; CHECK:      (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))))
+ ;; CHECK:      (type $C (struct (field (mut (ref $A)))))
  (type $C (struct (field (mut (ref $A)))))
  (type $D (struct (field (mut (ref $A))) (field (mut (ref $A)))))
 

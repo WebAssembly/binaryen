@@ -4,9 +4,17 @@
 
 (module
 
+  ;; CHECK:      (type $super-struct (struct (field i32)))
+  ;; CHECK:      (type $sub-struct (struct (field i32) (field i64)) (extends $super-struct))
   (type $sub-struct (struct i32 i64) (extends $super-struct))
   (type $super-struct (struct i32))
 
+  ;; CHECK:      (type $super-array (array (ref $super-struct)))
+  ;; CHECK:      (type $none_=>_ref|$sub-struct| (func (result (ref $sub-struct))))
+  ;; CHECK:      (type $none_=>_ref|$super-struct| (func (result (ref $super-struct))))
+  ;; CHECK:      (type $none_=>_ref|$sub-array| (func (result (ref $sub-array))))
+  ;; CHECK:      (type $none_=>_ref|$super-array| (func (result (ref $super-array))))
+  ;; CHECK:      (type $sub-array (array (ref $sub-struct)) (extends $super-array))
   (type $sub-array (array (ref $sub-struct)) (extends $super-array))
   (type $super-array (array (ref $super-struct)))
 

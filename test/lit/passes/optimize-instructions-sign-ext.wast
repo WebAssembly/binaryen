@@ -2,6 +2,7 @@
 ;; RUN: wasm-opt %s --optimize-instructions --enable-sign-ext -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $i32_i32_i32_f64_=>_none (func (param i32 i32 i32 f64)))
   ;; CHECK:      (func $duplicate-elimination (param $x i32) (param $y i32) (param $z i32) (param $w f64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.extend8_s

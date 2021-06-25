@@ -3,6 +3,8 @@
 
 (module
   (memory 0)
+  ;; CHECK:      (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+  ;; CHECK:      (memory $0 0)
   ;; CHECK:      (func $optimize-bulk-memory-copy (param $dst i32) (param $src i32) (param $sz i32)
   ;; CHECK-NEXT:  (memory.copy
   ;; CHECK-NEXT:   (local.get $dst)

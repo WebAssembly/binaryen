@@ -2,6 +2,8 @@
 ;; RUN: wasm-opt %s -all --ssa --enable-gc-nn-locals -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (elem declare func $nn-locals)
  ;; CHECK:      (func $nn-locals
  ;; CHECK-NEXT:  (local $x (ref func))
  ;; CHECK-NEXT:  (local.set $x

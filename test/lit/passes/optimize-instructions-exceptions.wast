@@ -3,6 +3,7 @@
 ;; RUN:   --enable-exception-handling -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $none_=>_none (func))
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (try $try (result i32)

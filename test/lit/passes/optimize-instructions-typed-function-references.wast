@@ -3,6 +3,8 @@
 ;; RUN:   --enable-typed-function-references -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $ref?|$i32-i32|_=>_i32 (func (param (ref null $i32-i32)) (result i32)))
+  ;; CHECK:      (type $i32-i32 (func (param i32) (result i32)))
   (type $i32-i32 (func (param i32) (result i32)))
   ;; this function has a reference parameter. we analyze parameters, and should
   ;; not be confused by a type that has no bit size, in particular. this test

@@ -3,7 +3,11 @@
 ;; RUN:   | filecheck %s
 
 (module
+ ;; CHECK:      (type $array (array (mut i8)))
  (type $array (array (mut i8)))
+ ;; CHECK:      (type $dataref_=>_none (func (param dataref)))
+ ;; CHECK:      (type $ref?|$array|_=>_ref?|$array| (func (param (ref null $array)) (result (ref null $array))))
+ ;; CHECK:      (global $global (ref null $array) (ref.null $array))
  (global $global (ref null $array) (ref.null $array))
 
  ;; CHECK:      (func $test-dead-get-non-nullable (param $0 dataref)

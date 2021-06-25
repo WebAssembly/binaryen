@@ -2,7 +2,10 @@
 ;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $none (func))
  (type $none (func))
+ ;; CHECK:      (type $none_=>_funcref_ref|$none| (func (result funcref (ref $none))))
+ ;; CHECK:      (elem declare func $foo)
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (local $0 (funcref (ref null $none)))
  ;; CHECK-NEXT:  (local $1 funcref)

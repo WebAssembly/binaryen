@@ -5,6 +5,9 @@
 ;; RUN: wasm-opt %s -all -O1 --flatten --rereloop -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $none_=>_funcref (func (result funcref)))
+ ;; CHECK:      (elem declare func $foo)
+ ;; CHECK:      (export "foo" (func $foo))
  (export "foo" (func $foo))
  ;; CHECK:      (func $foo (result funcref)
  ;; CHECK-NEXT:  (local $0 funcref)

@@ -2,7 +2,9 @@
 ;; RUN: wasm-opt %s -all --flatten -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $simplefunc (func))
  (type $simplefunc (func))
+ ;; CHECK:      (type $ref|$simplefunc|_=>_ref|$simplefunc| (func (param (ref $simplefunc)) (result (ref $simplefunc))))
  ;; CHECK:      (func $0 (param $0 (ref $simplefunc)) (result (ref $simplefunc))
  ;; CHECK-NEXT:  (local $1 (ref null $simplefunc))
  ;; CHECK-NEXT:  (local.set $1

@@ -6,6 +6,7 @@
 ;; RUN: wasm-opt -all --simplify-locals %s -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct
     (field (mut i32))
   ))
@@ -21,6 +22,8 @@
   ;;   a.0 = 10
   ;;   return a.0
   ;;
+  ;; CHECK:      (type $ref?|$A|_=>_i32 (func (param (ref null $A)) (result i32)))
+  ;; CHECK:      (export "test" (func $test))
   ;; CHECK:      (func $test (param $x (ref null $A)) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local.set $y

@@ -3,10 +3,17 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $parent (struct (field i32)))
   (type $parent (struct (field i32)))
+  ;; CHECK:      (type $child (struct (field i32) (field f64)))
   (type $child  (struct (field i32) (field f64)))
+  ;; CHECK:      (type $other (struct (field i64) (field f32)))
   (type $other  (struct (field i64) (field f32)))
 
+  ;; CHECK:      (type $none_=>_none (func))
+  ;; CHECK:      (type $ref|$parent|_ref|$child|_ref|$other|_rtt_$parent_rtt_$child_rtt_$other_=>_none (func (param (ref $parent) (ref $child) (ref $other) (rtt $parent) (rtt $child) (rtt $other))))
+  ;; CHECK:      (type $ref|$parent|_rtt_$parent_=>_none (func (param (ref $parent) (rtt $parent))))
+  ;; CHECK:      (type $eqref_=>_none (func (param eqref)))
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )

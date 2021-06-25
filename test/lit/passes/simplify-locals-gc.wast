@@ -3,9 +3,11 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
   ;; Writes to heap objects cannot be reordered with reads.
+  ;; CHECK:      (type $ref|$struct|_=>_i32 (func (param (ref $struct)) (result i32)))
   ;; CHECK:      (func $no-reorder-past-write (param $x (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp

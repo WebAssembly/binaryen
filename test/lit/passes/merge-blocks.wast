@@ -4,6 +4,7 @@
 
 (module
  (type $anyref_=>_none (func (param anyref)))
+ ;; CHECK:      (type $none_=>_none (func))
  ;; CHECK:      (func $br_on_to_drop
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop

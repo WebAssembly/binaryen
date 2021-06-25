@@ -3,7 +3,11 @@
 ;; RUN:   | filecheck %s
 
 (module
+ ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (mut i32)))
+ ;; CHECK:      (type $B (struct (field (mut f64))))
+ ;; CHECK:      (type $func-return-i32 (func (result i32)))
+ ;; CHECK:      (type $empty (struct ))
  (type $empty (struct))
 
  ;; two incompatible struct types
@@ -12,8 +16,17 @@
 
  (type $func-return-i32 (func (result i32)))
 
+ ;; CHECK:      (type $none_=>_none (func))
+ ;; CHECK:      (type $i32_=>_none (func (param i32)))
+ ;; CHECK:      (type $ref?|$struct|_=>_none (func (param (ref null $struct))))
+ ;; CHECK:      (type $ref?|$struct|_ref?|$struct|_=>_none (func (param (ref null $struct) (ref null $struct))))
+ ;; CHECK:      (type $f64_=>_none (func (param f64)))
+ ;; CHECK:      (type $ref|$func-return-i32|_=>_none (func (param (ref $func-return-i32))))
+ ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
+ ;; CHECK:      (elem declare func $receive-f64)
+ ;; CHECK:      (export "test" (func $load-from-struct-bad-escape))
  ;; CHECK:      (func $test-fallthrough (result i32)
  ;; CHECK-NEXT:  (local $x funcref)
  ;; CHECK-NEXT:  (local.set $x
