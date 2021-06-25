@@ -139,9 +139,9 @@ struct SimplifyLocals
     } else if (curr->is<If>()) {
       assert(!curr->cast<If>()
                 ->ifFalse); // if-elses are handled by doNoteIf* methods
-    } else if (curr->is<Switch>()) {
-      auto* sw = curr->cast<Switch>();
-      auto targets = BranchUtils::getUniqueTargets(sw);
+    } else {
+      // TODO support BrOn, Switch, etc. where possible
+      auto targets = BranchUtils::getUniqueTargets(curr);
       for (auto target : targets) {
         self->unoptimizableBlocks.insert(target);
       }

@@ -248,15 +248,6 @@ struct Reducer
   void reduceUsingPasses() {
     // run optimization passes until we can't shrink it any more
     std::vector<std::string> passes = {
-      "-Oz",
-      "-Os",
-      "-O1",
-      "-O2",
-      "-O3",
-      "-O4",
-      "--flatten -Os",
-      "--flatten -O3",
-      "--flatten --local-cse -Os",
       "--coalesce-locals --vacuum",
       "--dce",
       "--duplicate-function-elimination",
@@ -269,6 +260,7 @@ struct Reducer
       "--precompute",
       "--remove-imports",
       "--remove-memory",
+//      --remove-table
       "--remove-unused-names --remove-unused-brs",
       "--remove-unused-module-elements",
       "--remove-unused-nonfunction-module-elements",
@@ -480,6 +472,7 @@ struct Reducer
       // nop, and it is useful to do so when possible.
       if (!curr->is<Unreachable>() && !curr->is<Nop>() &&
           shouldTryToReduce(1000)) {
+// util this
         auto* save = curr;
         Unreachable un;
         Nop nop;
@@ -789,6 +782,7 @@ struct Reducer
   template<typename T, typename U, typename C>
   void
   reduceByZeroing(T* segment, U zero, C isZero, size_t bonus, bool shrank) {
+    bonus /= 4;
     for (auto& item : segment->data) {
       if (!shouldTryToReduce(bonus) || isZero(item)) {
         continue;
@@ -810,6 +804,7 @@ struct Reducer
   }
 
   template<typename T> bool shrinkByReduction(T* segment, size_t bonus) {
+    bonus /= 4;
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool justShrank = false;
