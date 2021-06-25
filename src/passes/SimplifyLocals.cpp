@@ -50,6 +50,7 @@
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/find_all.h>
+#include <ir/linear-execution.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
 #include <pass.h>
