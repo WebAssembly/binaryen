@@ -3352,12 +3352,10 @@ BinaryenGlobalRef BinaryenGetGlobalByIndex(BinaryenModuleRef module,
 
 BinaryenTagRef BinaryenAddTag(BinaryenModuleRef module,
                               const char* name,
-                              uint32_t attribute,
                               BinaryenType params,
                               BinaryenType results) {
   auto* ret = new Tag();
   ret->setExplicitName(name);
-  ret->attribute = attribute;
   ret->sig = Signature(Type(params), Type(results));
   ((Module*)module)->addTag(ret);
   return ret;
@@ -3423,7 +3421,6 @@ void BinaryenAddTagImport(BinaryenModuleRef module,
                           const char* internalName,
                           const char* externalModuleName,
                           const char* externalBaseName,
-                          uint32_t attribute,
                           BinaryenType params,
                           BinaryenType results) {
   auto* ret = new Tag();
@@ -4151,9 +4148,6 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 
 const char* BinaryenTagGetName(BinaryenTagRef tag) {
   return ((Tag*)tag)->name.c_str();
-}
-uint32_t BinaryenTagGetAttribute(BinaryenTagRef tag) {
-  return ((Tag*)tag)->attribute;
 }
 BinaryenType BinaryenTagGetParams(BinaryenTagRef tag) {
   return ((Tag*)tag)->sig.params.getID();

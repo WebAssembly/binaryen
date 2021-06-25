@@ -2984,10 +2984,6 @@ static void validateTags(Module& module, ValidationInfo& info) {
                       "Module has tags (exception-handling is disabled)");
   }
   for (auto& curr : module.tags) {
-    info.shouldBeEqual(curr->attribute,
-                       (unsigned)0,
-                       curr->attribute,
-                       "Currently only attribute 0 is supported");
     info.shouldBeEqual(curr->sig.results,
                        Type(Type::none),
                        curr->name,

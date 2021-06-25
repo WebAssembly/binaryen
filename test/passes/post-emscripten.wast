@@ -3,8 +3,7 @@
   (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
   (memory 256 256)
   (table 7 7 funcref)
-  (elem (i32.const 0) $f1 $exc $other_safe $other_unsafe $deep_safe $deep_unsafe)
-  (func $f1)
+  (elem (i32.const 1) $exc $other_safe $other_unsafe $deep_safe $deep_unsafe)
   (func $exc
     (call $invoke_vif
       (i32.const 2) ;; other_safe()
@@ -28,6 +27,18 @@
     )
     (call $invoke_vif
       (i32.add (i32.const 1) (i32.const 1)) ;; nonconstant
+      (i32.const 42)
+      (f32.const 3.14159)
+    )
+    ;; there is no function at index 0, so this cannot be optimized
+    (call $invoke_vif
+      (i32.const 0)
+      (i32.const 42)
+      (f32.const 3.14159)
+    )
+    ;; there is no function at index 1337, so this cannot be optimized
+    (call $invoke_vif
+      (i32.const 1337)
       (i32.const 42)
       (f32.const 3.14159)
     )

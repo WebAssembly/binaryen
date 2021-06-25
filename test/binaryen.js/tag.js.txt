@@ -1,5 +1,5 @@
 GetTag is equal: true
-getTagInfo={"name":"a-tag","module":"","base":"","attribute":0,"params":2,"results":0}
+getTagInfo={"name":"a-tag","module":"","base":"","params":2,"results":0}
 (module
  (type $i32_=>_none (func (param i32)))
  (type $i32_f32_=>_none (func (param i32 f32)))
