@@ -260,7 +260,7 @@ struct Reducer
       "--precompute",
       "--remove-imports",
       "--remove-memory",
-//      --remove-table
+      //      --remove-table
       "--remove-unused-names --remove-unused-brs",
       "--remove-unused-module-elements",
       "--remove-unused-nonfunction-module-elements",
@@ -472,7 +472,7 @@ struct Reducer
       // nop, and it is useful to do so when possible.
       if (!curr->is<Unreachable>() && !curr->is<Nop>() &&
           shouldTryToReduce(1000)) {
-// util this
+        // util this
         auto* save = curr;
         Unreachable un;
         Nop nop;
