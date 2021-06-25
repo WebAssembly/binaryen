@@ -585,8 +585,8 @@ private:
   void addMemory() {
     module->memory.exists = true;
 
-    // 16MB, arbitrarily for now.
-    module->memory.initial = module->memory.max = 256;
+    // 1GB, arbitrarily for now.
+    module->memory.initial = module->memory.max = 16384;
 
     assert(!module->memory.is64());
     loweringInfo.pointerSize = 4;
