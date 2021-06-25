@@ -269,3 +269,5 @@
   )
  )
 )
+;; On an empty module we should do very little (and not crash).
+(module)

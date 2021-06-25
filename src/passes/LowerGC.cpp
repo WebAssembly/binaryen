@@ -532,7 +532,13 @@ private:
 
 struct LowerGC : public Pass {
   void run(PassRunner* runner, Module* module_) override {
-    // First, ensure types have names, as we use the names when creating the
+    // Collect all the heap types in order to analyze them and decide on their
+    // layout in linear memory.
+    std::vector<HeapType> types;
+    std::unordered_map<HeapType, Index> typeIndices;
+    ModuleUtils::collectHeapTypes(*module, types, typeIndices);
+
+    // Ensure types have names, as we use the names when creating the
     // runtime code.
     {
       PassRunner subRunner(runner);
@@ -541,12 +547,13 @@ struct LowerGC : public Pass {
       subRunner.setIsNested(true);
       subRunner.run();
     }
+
     module = module_;
     pickNames();
     addMemory();
     addTable();
-    addGCRuntime();
     addStart();
+    addGCRuntime(types);
     // After adding the GC runtime, which may allocate memory, we can create our
     // malloc runtime and initialize it.
     addMalloc();
@@ -645,13 +652,7 @@ private:
       })));
   }
 
-  void addGCRuntime() {
-    // Collect all the heap types in order to analyze them and decide on their
-    // layout in linear memory.
-    std::vector<HeapType> types;
-    std::unordered_map<HeapType, Index> typeIndices;
-    ModuleUtils::collectHeapTypes(*module, types, typeIndices);
-
+  void addGCRuntime(const std::vector<HeapType>& types) {
     // Emit support code for specific types.
     //
     // Note that some of this support code will end up identical, e.g., the
