@@ -3,11 +3,11 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (tag $e (param i32))
   ;; CHECK:      (func $dummy
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $dummy)
-  ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
 
   ;; The following are the unit tests for Properties::getFallthrough for EH

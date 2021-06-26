@@ -4,14 +4,14 @@
 
 (module
 
+  ;; CHECK:      (type $super-struct (struct (field i32)))
   ;; CHECK:      (type $sub-struct (struct (field i32) (field i64)) (extends $super-struct))
   (type $sub-struct (struct i32 i64) (extends $super-struct))
-  ;; CHECK:      (type $super-struct (struct (field i32)))
   (type $super-struct (struct i32))
 
+  ;; CHECK:      (type $super-array (array (ref $super-struct)))
   ;; CHECK:      (type $sub-array (array (ref $sub-struct)) (extends $super-array))
   (type $sub-array (array (ref $sub-struct)) (extends $super-array))
-  ;; CHECK:      (type $super-array (array (ref $super-struct)))
   (type $super-array (array (ref $super-struct)))
 
   ;; TODO: signature types as well, once functions store their HeapTypes.

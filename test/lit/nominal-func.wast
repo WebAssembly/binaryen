@@ -6,11 +6,11 @@
 
 (module
   ;; This will be the "canonical" function type rather than $foo_t
+  ;; CHECK:      (type $bad_t (func))
   (type $bad_t (func))
 
   ;; CHECK:      (type $foo_t (func))
   (type $foo_t (func))
-  (type $struct (struct (ref $foo_t)))
 
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (unreachable)

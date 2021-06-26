@@ -5,15 +5,15 @@
 (module
  ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (mut i32)))
+ ;; CHECK:      (type $B (struct (field (mut f64))))
+ ;; CHECK:      (type $func-return-i32 (func (result i32)))
  ;; CHECK:      (type $empty (struct ))
  (type $empty (struct))
 
  ;; two incompatible struct types
  (type $A (struct (field (mut f32))))
- ;; CHECK:      (type $B (struct (field (mut f64))))
  (type $B (struct (field (mut f64))))
 
- ;; CHECK:      (type $func-return-i32 (func (result i32)))
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))

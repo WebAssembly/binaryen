@@ -3,12 +3,13 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $struct (struct (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64))))
+  ;; CHECK:      (type $array (array (mut i8)))
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
 
   (type $empty (struct))
 
-  ;; CHECK:      (type $struct (struct (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64))))
   (type $struct (struct
     (field $i8  (mut i8))
     (field $i16 (mut i16))
@@ -16,7 +17,6 @@
     (field $i64 (mut i64))
   ))
 
-  ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
   ;; These functions test if an `if` with subtyped arms is correctly folded

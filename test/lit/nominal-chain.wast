@@ -7,6 +7,7 @@
 ;; types.
 
 (module
+  ;; CHECK:      (type $root (struct ))
   ;; CHECK:      (type $leaf (struct (field i32) (field i64) (field f32) (field f64)) (extends $twig))
   (type $leaf (struct i32 i64 f32 f64) (extends $twig))
 
@@ -19,7 +20,6 @@
   ;; CHECK:      (type $trunk (struct (field i32)) (extends $root))
   (type $trunk (struct i32) (extends $root))
 
-  ;; CHECK:      (type $root (struct ))
   (type $root (struct))
 
   ;; CHECK:      (func $make-root (result (ref null $root))

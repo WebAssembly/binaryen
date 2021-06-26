@@ -4,11 +4,11 @@
 ;; If either try body or catch body is reachable, the whole try construct is
 ;; reachable
 (module
+  ;; CHECK:      (tag $e (param))
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
-  ;; CHECK:      (tag $e (param))
   (tag $e)
 
 
