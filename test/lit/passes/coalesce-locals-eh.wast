@@ -2,6 +2,7 @@
 ;; RUN: wasm-opt %s --coalesce-locals -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (tag $e (param))
   ;; CHECK:      (func $bar (result i32)
   ;; CHECK-NEXT:  (i32.const 1984)
   ;; CHECK-NEXT: )

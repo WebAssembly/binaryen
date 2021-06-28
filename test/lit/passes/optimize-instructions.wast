@@ -3,6 +3,7 @@
 
 (module
   (memory 0)
+  ;; CHECK:      (type $0 (func (param i32 i64)))
   (type $0 (func (param i32 i64)))
   ;; CHECK:      (func $and-and (param $i1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.and

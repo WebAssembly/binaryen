@@ -3,11 +3,18 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $parent (struct (field i32)))
   (type $parent (struct (field i32)))
+  ;; CHECK:      (type $child (struct (field i32) (field f64)))
   (type $child  (struct (field i32) (field f64)))
+  ;; CHECK:      (type $other (struct (field i64) (field f32)))
   (type $other  (struct (field i64) (field f32)))
 
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $foo)
+
 
   ;; CHECK:      (func $ref-cast-iit (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $child-rtt (rtt $child)) (param $other-rtt (rtt $other))
   ;; CHECK-NEXT:  (drop

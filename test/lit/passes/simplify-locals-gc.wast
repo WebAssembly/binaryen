@@ -3,6 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
   ;; Writes to heap objects cannot be reordered with reads.
