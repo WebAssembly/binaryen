@@ -141,7 +141,9 @@ struct SimplifyLocals
       assert(!curr->cast<If>()
                 ->ifFalse); // if-elses are handled by doNoteIf* methods
     } else {
-      // TODO support BrOn, Switch, etc. where possible
+      // Not one of the recognized instructions, so do not optimize here: mark
+      //  all the targets as unoptimizable.
+      // TODO optimize BrOn, Switch, etc.
       auto targets = BranchUtils::getUniqueTargets(curr);
       for (auto target : targets) {
         self->unoptimizableBlocks.insert(target);
