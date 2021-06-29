@@ -420,6 +420,9 @@ struct Inlining : public Pass {
           continue;
         }
         Name inlinedName = inlinedFunction->name;
+        if (!canInlineInto(func->name, inlinedName)) {
+          continue;
+        }
 #ifdef INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
@@ -445,6 +448,20 @@ struct Inlining : public Pass {
     });
     // return whether we did any work
     return inlinedUses.size() > 0;
+  }
+
+  // Checks if we are allowed to inline source into target.
+  bool canInlineInto(Name target, Name source) {
+    // We wish to avoid certain extremely-large sizes after inlining, as they
+    // may hit limits in VMs and/or slow down startup (measurements there
+    // indicate something like ~1 second to optimize a 100K function). See e.g.
+    // https://github.com/WebAssembly/binaryen/pull/3730#issuecomment-867939138
+    // https://github.com/emscripten-core/emscripten/issues/13899#issuecomment-825073344
+    auto combinedSize = infos[target].size + infos[source].size;
+    // Estimate the binary size from the number of instructions.
+    auto estimatedBinarySize = Measurer::BytesPerExpr * combinedSize;
+    const Index MaxCombinedBinarySize = 400 * 1024;
+    return estimatedBinarySize < MaxCombinedBinarySize;
   }
 };
 
