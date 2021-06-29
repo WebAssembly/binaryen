@@ -17,6 +17,7 @@
 #ifndef wasm_ir_linear_execution_h
 #define wasm_ir_linear_execution_h
 
+#include <ir/properties.h>
 #include <wasm-traversal.h>
 #include <wasm.h>
 
@@ -126,7 +127,17 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doNoteNonLinear, currp);
         break;
       }
+      case Expression::Id::BrOnId: {
+        self->pushTask(SubType::doVisitBrOn, currp);
+        self->pushTask(SubType::doNoteNonLinear, currp);
+        self->maybePushTask(SubType::scan, &curr->cast<BrOn>()->rtt);
+        self->pushTask(SubType::scan, &curr->cast<BrOn>()->ref);
+        break;
+      }
       default: {
+        // All relevant things should have been handled.
+        assert(!Properties::isControlFlowStructure(curr));
+        assert(!Properties::isBranch(curr));
         // other node types do not have control flow, use regular post-order
         PostWalker<SubType, VisitorType>::scan(self, currp);
       }
