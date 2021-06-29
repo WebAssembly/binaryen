@@ -142,7 +142,7 @@ struct SimplifyLocals
                 ->ifFalse); // if-elses are handled by doNoteIf* methods
     } else {
       // Not one of the recognized instructions, so do not optimize here: mark
-      //  all the targets as unoptimizable.
+      // all the targets as unoptimizable.
       // TODO optimize BrOn, Switch, etc.
       auto targets = BranchUtils::getUniqueTargets(curr);
       for (auto target : targets) {
