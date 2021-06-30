@@ -701,15 +701,21 @@ private:
   void makeStructNew(HeapType type) {
     auto typeName = module->typeNames[type].name.str;
     auto& fields = type.getStruct().fields;
-    for (auto& field : fields) {
-      if (field.type.isNonNullable()) {
-        // StructNew cannot be called on a struct with a non-nullable field, so
-        // we do not need to emit a function here.
-        return;
-      }
-    }
     Builder builder(*module);
     for (bool withDefault : {true, false}) {
+      if (withDefault) {
+        bool isDefaultable = true;
+        for (auto& field : fields) {
+          if (!field.type.isDefaultable()) {
+            isDefaultable = false;
+            break;
+          }
+        }
+        // We do not need a defaultable variant for a non-defaultable struct.
+        if (!isDefaultable) {
+          continue;
+        }
+      }
       std::vector<Type> params;
       // Store the values, by performing StructSet operations.
       for (Index i = 0; i < fields.size(); i++) {
@@ -826,15 +832,14 @@ private:
   void makeArrayNew(HeapType type) {
     auto typeName = module->typeNames[type].name.str; // waka
     auto element = type.getArray().element;
-    if (element.type.isNonNullable()) {
-      // ArrayNew cannot be called on a struct with a non-nullable field, so we
-      // do not need to emit a function here.
-      return;
-    }
     auto loweredType = getLoweredType(element.type, module->memory);
     auto bytes = getBytes(element);
     PointerBuilder builder(*module);
     for (bool withDefault : {true, false}) {
+      if (withDefault && !element.type.isDefaultable()) {
+        // We do not need a defaultable variant for a non-defaultable array.
+        continue;
+      }
       std::vector<Type> params;
       Index initParam = -1;
       if (!withDefault) {
