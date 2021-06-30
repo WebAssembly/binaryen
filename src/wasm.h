@@ -1609,7 +1609,7 @@ using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
-  HeapType type; // parameters and return value
+  HeapType type = HeapType(Signature()); // parameters and return value
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 

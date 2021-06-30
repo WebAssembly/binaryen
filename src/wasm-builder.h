@@ -983,12 +983,6 @@ public:
     func->localIndices.clear();
   }
 
-  static void clearLocals(Function* func) {
-    func->type = Signature(Type::none, func->getResults());
-    func->vars.clear();
-    clearLocalNames(func);
-  }
-
   // ensure a node is a block, if it isn't already, and optionally append to the
   // block
   Block* blockify(Expression* any, Expression* append = nullptr) {
