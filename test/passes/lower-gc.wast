@@ -8,6 +8,7 @@
  (type $struct-f64 (struct (field (mut f64))))
  (type $struct-ref (struct (field (mut (ref null $empty)))))
  (type $struct-rtt (struct (field (mut (rtt $empty)))))
+ (type $struct-nn (struct (field (ref func))))
 
  (type $many-fields (struct (field (mut i32)) (field (mut f64)) (field (mut f32))))
 
@@ -270,6 +271,11 @@
  )
  (func "ref-eq" (param $x eqref) (param $y eqref) (result i32)
   (ref.eq (local.get $x) (local.get $y))
+ )
+ (func "struct-nn" (param $x (ref $struct-nn)) (result (ref $struct-nn))
+  ;; Use this type, so that we emit the support code for it, which tests our
+  ;; handling of a struct with a non-nullable field.
+  (local.get $x)
  )
 )
 ;; On an empty module we should do very little (and not crash).

@@ -68,7 +68,7 @@
  (global $rtt-0 i32 (i32.const 68))
  (global $rtt-1 (mut i32) (i32.const 0))
  (global $nextMalloc (mut i32) (i32.const 96))
- (memory $0 256 256)
+ (memory $0 16384 16384)
  (table $lowergc-table 2 2 funcref)
  (elem (i32.const 0) $a-void-func $call-target)
  (export "structs" (func $0))
@@ -1558,7 +1558,7 @@
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (global $nextMalloc (mut i32) (i32.const 20))
- (memory $0 256 256)
+ (memory $0 16384 16384)
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
  (export "array-alloc-failure" (func $0))
@@ -2118,5 +2118,5 @@
  )
 )
 [fuzz-exec] calling array-alloc-failure
-[trap final > memory: 18446744073709551615 > 16777216]
+[trap final > memory: 18446744073709551615 > 1073741824]
 ignoring comparison of ExecutionResults!

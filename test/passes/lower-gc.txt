@@ -1,9 +1,9 @@
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_=>_none (func (param i32)))
  (type $type$0 (func))
- (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $type$7 (func (param i64)))
@@ -26,11 +26,12 @@
  (global $global0 i32 (i32.const 20))
  (global $global1 (mut i32) (i32.const 0))
  (global $nextMalloc (mut i32) (i32.const 136))
- (memory $0 256 256)
+ (memory $0 16384 16384)
  (table $original-table 0 funcref)
  (table $lowergc-table 4 4 funcref)
  (elem (table $lowergc-table) (i32.const 0) func $call_ref $call_ref_i64 $ref.func $ref.is)
  (export "ref-eq" (func $20))
+ (export "struct-nn" (func $21))
  (start $LowerGC$start)
  (func $struct-gets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
   (drop
@@ -114,14 +115,14 @@
   (drop
    (call $StructNew$struct-i32
     (i32.const 42)
-    (i32.const 56)
+    (i32.const 44)
    )
   )
  )
  (func $new-struct-default
   (drop
    (call $StructNewWithDefault$many-fields
-    (i32.const 80)
+    (i32.const 68)
    )
   )
  )
@@ -178,7 +179,7 @@
  (func $rtt.sub
   (drop
    (call $RttSub
-    (i32.const 56)
+    (i32.const 44)
     (i32.const 20)
    )
   )
@@ -421,6 +422,9 @@
    (local.get $y)
   )
  )
+ (func $21 (param $x i32) (result i32)
+  (local.get $x)
+ )
  (func $LowerGC$start
   (i32.store
    (i32.const 8)
@@ -460,7 +464,7 @@
   )
   (i32.store
    (i32.const 44)
-   (i32.const 0)
+   (i32.const 1)
   )
   (i32.store
    (i32.const 48)
@@ -472,7 +476,7 @@
   )
   (i32.store
    (i32.const 56)
-   (i32.const 1)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 60)
@@ -484,7 +488,7 @@
   )
   (i32.store
    (i32.const 68)
-   (i32.const 0)
+   (i32.const 1)
   )
   (i32.store
    (i32.const 72)
@@ -496,7 +500,7 @@
   )
   (i32.store
    (i32.const 80)
-   (i32.const 1)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 84)
@@ -520,7 +524,7 @@
   )
   (i32.store
    (i32.const 104)
-   (i32.const 44)
+   (i32.const 32)
   )
   (i32.store
    (i32.const 108)
@@ -528,7 +532,7 @@
   )
   (i32.store
    (i32.const 112)
-   (i32.const 32)
+   (i32.const 80)
   )
   (i32.store
    (i32.const 116)
@@ -536,7 +540,7 @@
   )
   (i32.store
    (i32.const 120)
-   (i32.const 44)
+   (i32.const 32)
   )
   (i32.store
    (i32.const 124)
@@ -544,7 +548,7 @@
   )
   (i32.store
    (i32.const 128)
-   (i32.const 68)
+   (i32.const 56)
   )
   (i32.store
    (i32.const 132)
@@ -552,7 +556,7 @@
   )
   (global.set $global1
    (call $RttSub
-    (i32.const 56)
+    (i32.const 44)
     (global.get $global0)
    )
   )
@@ -1414,6 +1418,29 @@
    )
   )
  )
+ (func $StructSet$struct-nn$0 (param $0 i32) (param $1 i32)
+  (if
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.store offset=4
+    (local.get $0)
+    (local.get $1)
+   )
+  )
+ )
+ (func $StructGet$struct-nn$0 (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
+  )
+ )
  (func $CallRef$type$4 (param $0 i32) (param $1 i32)
   (if
    (i32.eqz
@@ -1495,6 +1522,20 @@
     (local.get $1)
     (i32.load offset=4
      (local.get $2)
+    )
+   )
+  )
+ )
+ (func $CallRef$type$9 (param $0 i32) (param $1 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $1)
+   )
+   (unreachable)
+   (call_indirect $lowergc-table (type $i32_=>_i32)
+    (local.get $0)
+    (i32.load offset=4
+     (local.get $1)
     )
    )
   )
@@ -1860,7 +1901,7 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_none (func))
  (global $nextMalloc (mut i32) (i32.const 8))
- (memory $0 256 256)
+ (memory $0 16384 16384)
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
  (start $LowerGC$start)

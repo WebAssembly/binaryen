@@ -701,6 +701,13 @@ private:
   void makeStructNew(HeapType type) {
     auto typeName = module->typeNames[type].name.str;
     auto& fields = type.getStruct().fields;
+    for (auto& field : fields) {
+      if (field.type.isNonNullable()) {
+        // StructNew cannot be called on a struct with a non-nullable field, so
+        // we do not need to emit a function here.
+        return;
+      }
+    }
     Builder builder(*module);
     for (bool withDefault : {true, false}) {
       std::vector<Type> params;
@@ -819,6 +826,11 @@ private:
   void makeArrayNew(HeapType type) {
     auto typeName = module->typeNames[type].name.str; // waka
     auto element = type.getArray().element;
+    if (element.type.isNonNullable()) {
+      // ArrayNew cannot be called on a struct with a non-nullable field, so we
+      // do not need to emit a function here.
+      return;
+    }
     auto loweredType = getLoweredType(element.type, module->memory);
     auto bytes = getBytes(element);
     PointerBuilder builder(*module);

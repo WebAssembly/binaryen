@@ -146,7 +146,14 @@ public:
   bool isRef() const;
   bool isFunction() const;
   bool isData() const;
+  // Checks whether a type is nullable. This returns false for a value that is
+  // not a reference, that is, for which nullability is irrelevant.
   bool isNullable() const;
+  // Checks whether a type is non-nullable. This returns false for a value that
+  // is not a reference, that is, for which nullability is irrelevant. (For
+  // that reason, this is only the negation of isNullable() on references, but
+  // both return false on non-references.)
+  bool isNonNullable() const;
   bool isRtt() const;
   bool isStruct() const;
   bool isArray() const;

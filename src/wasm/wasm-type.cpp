@@ -845,6 +845,14 @@ bool Type::isNullable() const {
   }
 }
 
+bool Type::isNonNullable() const {
+  if (isRef()) {
+    return !isNullable();
+  } else {
+    return false;
+  }
+}
+
 bool Type::isRtt() const {
   if (isBasic()) {
     return false;
