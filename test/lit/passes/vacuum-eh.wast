@@ -2,7 +2,9 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
+  ;; CHECK:      (tag $e2 (param i32))
   (tag $e2 (param i32))
 
   ;; CHECK:      (func $try-test

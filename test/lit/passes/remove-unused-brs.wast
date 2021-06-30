@@ -4,7 +4,9 @@
 
 
 (module
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
   (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
   (type $i32_=>_none (func (param i32)))
 
   ;; Regression test in which we need to calculate a proper LUB.
@@ -54,7 +56,11 @@
     )
   )
 
+  ;; CHECK:      (func $nothing
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $nothing)
+
 
   ;; CHECK:      (func $restructure-br_if-condition-reorderable (param $x i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
