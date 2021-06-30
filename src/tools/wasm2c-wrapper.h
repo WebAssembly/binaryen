@@ -27,7 +27,7 @@
 namespace wasm {
 
 // Mangle a name in (hopefully) exactly the same way wasm2c does.
-static inline std::string wasm2cMangle(Name name, Signature sig) {
+inline std::string wasm2cMangle(Name name, Signature sig) {
   const char escapePrefix = 'Z';
   std::string mangled = "Z_";
   const char* original = name.str;
@@ -78,7 +78,7 @@ static inline std::string wasm2cMangle(Name name, Signature sig) {
   return mangled;
 }
 
-static inline std::string generateWasm2CWrapper(Module& wasm) {
+inline std::string generateWasm2CWrapper(Module& wasm) {
   // First, emit implementations of the wasm's imports so that the wasm2c code
   // can call them. The names use wasm2c's name mangling.
   std::string ret = R"(

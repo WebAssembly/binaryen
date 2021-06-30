@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-static inline std::string generateJSWrapper(Module& wasm) {
+inline std::string generateJSWrapper(Module& wasm) {
   std::string ret;
   ret += "if (typeof console === 'undefined') {\n"
          "  console = { log: print };\n"

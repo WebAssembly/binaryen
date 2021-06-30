@@ -24,7 +24,7 @@
 
 namespace wasm {
 
-static inline std::string generateSpecWrapper(Module& wasm) {
+inline std::string generateSpecWrapper(Module& wasm) {
   std::string ret;
   for (auto& exp : wasm.exports) {
     auto* func = wasm.getFunctionOrNull(exp->value);
