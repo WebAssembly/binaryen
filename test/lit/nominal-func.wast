@@ -4,7 +4,6 @@
 
 (module
   ;; This will be the "canonical" function type rather than $foo_t
-  ;; CHECK:      (type $bad_t (func))
   (type $bad_t (func))
 
   ;; CHECK:      (type $foo_t (func))
