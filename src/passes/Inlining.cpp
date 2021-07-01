@@ -143,7 +143,7 @@ struct FunctionInfoScanner
 
     // We cannot inline a function if we cannot handle placing it in a local, as
     // all params become locals.
-    for (auto param : curr->sig.params) {
+    for (auto param : curr->getParams()) {
       if (!TypeUpdating::canHandleAsLocal(param)) {
         info.uninlineable = true;
       }
@@ -233,7 +233,7 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunction(curr->target)->sig.results);
+      handleReturnCall(curr, module->getFunction(curr->target)->getResults());
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
@@ -262,7 +262,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
   // Works for return_call, too
-  Type retType = module->getFunction(call->target)->sig.results;
+  Type retType = module->getFunction(call->target)->getResults();
   Builder builder(*module);
   auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.str);
@@ -285,7 +285,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     updater.localMapping[i] = builder.addVar(into, from->getLocalType(i));
   }
   // Assign the operands into the params
-  for (Index i = 0; i < from->sig.params.size(); i++) {
+  for (Index i = 0; i < from->getParams().size(); i++) {
     block->list.push_back(
       builder.makeLocalSet(updater.localMapping[i], call->operands[i]));
   }

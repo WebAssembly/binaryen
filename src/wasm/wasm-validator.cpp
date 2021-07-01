@@ -461,7 +461,7 @@ private:
                     curr,
                     "return_call* should have unreachable type");
       shouldBeEqual(
-        getFunction()->sig.results,
+        getFunction()->getResults(),
         sig.results,
         curr,
         "return_call* callee return type must match caller return type");
@@ -785,7 +785,7 @@ void FunctionValidator::visitCall(Call* curr) {
   if (!shouldBeTrue(!!target, curr, "call target must exist")) {
     return;
   }
-  validateCallParamsAndResult(curr, target->sig);
+  validateCallParamsAndResult(curr, target->getSig());
 }
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
@@ -2481,17 +2481,17 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
-  if (curr->sig.results.isTuple()) {
+  if (curr->getResults().isTuple()) {
     shouldBeTrue(getModule()->features.hasMultivalue(),
                  curr->body,
                  "Multivalue function results (multivalue is not enabled)");
   }
   FeatureSet features;
-  for (const auto& param : curr->sig.params) {
+  for (const auto& param : curr->getParams()) {
     features |= param.getFeatures();
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
   }
-  for (const auto& result : curr->sig.results) {
+  for (const auto& result : curr->getResults()) {
     features |= result.getFeatures();
     shouldBeTrue(result.isConcrete(), curr, "results must be concretely typed");
   }
@@ -2512,12 +2512,12 @@ void FunctionValidator::visitFunction(Function* curr) {
   // if function has no result, it is ignored
   // if body is unreachable, it might be e.g. a return
   shouldBeSubType(curr->body->type,
-                  curr->sig.results,
+                  curr->getResults(),
                   curr->body,
                   "function body type must match, if function returns");
   for (Type returnType : returnTypes) {
     shouldBeSubType(returnType,
-                    curr->sig.results,
+                    curr->getResults(),
                     curr->body,
                     "function result must match, if function has returns");
   }
@@ -2657,20 +2657,20 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
 
 static void validateImports(Module& module, ValidationInfo& info) {
   ModuleUtils::iterImportedFunctions(module, [&](Function* curr) {
-    if (curr->sig.results.isTuple()) {
+    if (curr->getResults().isTuple()) {
       info.shouldBeTrue(module.features.hasMultivalue(),
                         curr->name,
                         "Imported multivalue function "
                         "(multivalue is not enabled)");
     }
     if (info.validateWeb) {
-      for (const auto& param : curr->sig.params) {
+      for (const auto& param : curr->getParams()) {
         info.shouldBeUnequal(param,
                              Type(Type::i64),
                              curr->name,
                              "Imported function must not have i64 parameters");
       }
-      for (const auto& result : curr->sig.results) {
+      for (const auto& result : curr->getResults()) {
         info.shouldBeUnequal(result,
                              Type(Type::i64),
                              curr->name,
@@ -2693,14 +2693,14 @@ static void validateExports(Module& module, ValidationInfo& info) {
     if (curr->kind == ExternalKind::Function) {
       if (info.validateWeb) {
         Function* f = module.getFunction(curr->value);
-        for (const auto& param : f->sig.params) {
+        for (const auto& param : f->getParams()) {
           info.shouldBeUnequal(
             param,
             Type(Type::i64),
             f->name,
             "Exported function must not have i64 parameters");
         }
-        for (const auto& result : f->sig.results) {
+        for (const auto& result : f->getResults()) {
           info.shouldBeUnequal(result,
                                Type(Type::i64),
                                f->name,
@@ -3007,10 +3007,10 @@ static void validateModule(Module& module, ValidationInfo& info) {
     auto func = module.getFunctionOrNull(module.start);
     if (info.shouldBeTrue(
           func != nullptr, module.start, "start must be found")) {
-      info.shouldBeTrue(func->sig.params == Type::none,
+      info.shouldBeTrue(func->getParams() == Type::none,
                         module.start,
                         "start must have 0 params");
-      info.shouldBeTrue(func->sig.results == Type::none,
+      info.shouldBeTrue(func->getResults() == Type::none,
                         module.start,
                         "start must not return a value");
     }

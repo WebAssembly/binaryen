@@ -914,9 +914,7 @@ void SExpressionWasmBuilder::preParseFunctionType(Element& s) {
   }
   functionNames.push_back(name);
   functionCounter++;
-  HeapType type;
-  parseTypeUse(s, i, type);
-  functionTypes[name] = type;
+  parseTypeUse(s, i, functionTypes[name]);
 }
 
 size_t SExpressionWasmBuilder::parseFunctionNames(Element& s,
@@ -1007,12 +1005,12 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
     im->setName(name, hasExplicitName);
     im->module = importModule;
     im->base = importBase;
-    im->sig = type.getSignature();
+    im->type = type;
     functionTypes[name] = type;
     if (wasm.getFunctionOrNull(im->name)) {
       throw ParseException("duplicate import", s.line, s.col);
     }
-    wasm.addFunction(im.release());
+    wasm.addFunction(std::move(im));
     if (currFunction) {
       throw ParseException("import module inside function dec", s.line, s.col);
     }
@@ -1034,8 +1032,8 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   }
 
   // make a new function
-  currFunction = std::unique_ptr<Function>(Builder(wasm).makeFunction(
-    name, std::move(params), type.getSignature().results, std::move(vars)));
+  currFunction = std::unique_ptr<Function>(
+    Builder(wasm).makeFunction(name, std::move(params), type, std::move(vars)));
   currFunction->profile = profile;
 
   // parse body
@@ -3045,13 +3043,11 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   if (kind == ExternalKind::Function) {
     auto func = make_unique<Function>();
 
-    HeapType funcType;
-    j = parseTypeUse(inner, j, funcType);
-    func->sig = funcType.getSignature();
+    j = parseTypeUse(inner, j, func->type);
     func->setName(name, hasExplicitName);
     func->module = module;
     func->base = base;
-    functionTypes[name] = funcType;
+    functionTypes[name] = func->type;
     wasm.addFunction(func.release());
   } else if (kind == ExternalKind::Global) {
     Type type;
@@ -3403,7 +3399,7 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
     for (; i < s.size(); i++) {
       auto func = getFunctionName(*s[i]);
       segment->data.push_back(
-        Builder(wasm).makeRefFunc(func, functionTypes[func].getSignature()));
+        Builder(wasm).makeRefFunc(func, functionTypes[func]));
     }
   }
   return wasm.addElementSegment(std::move(segment));

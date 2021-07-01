@@ -171,7 +171,7 @@ void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
   // if the function has a return value
-  if (curr->sig.results != Type::none && curr->body->type == Type::none) {
+  if (curr->getResults() != Type::none && curr->body->type == Type::none) {
     Builder builder(*getModule());
     curr->body = builder.blockify(curr->body, builder.makeUnreachable());
   }
