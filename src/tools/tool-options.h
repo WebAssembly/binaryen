@@ -41,7 +41,6 @@ struct ToolOptions : public Options {
            "Disable all non-MVP features",
            Arguments::Zero,
            [this](Options*, const std::string&) {
-             hasFeatureOptions = true;
              enabledFeatures.setMVP();
              disabledFeatures.setAll();
            })
@@ -50,20 +49,14 @@ struct ToolOptions : public Options {
            "Enable all features",
            Arguments::Zero,
            [this](Options*, const std::string&) {
-             hasFeatureOptions = true;
              enabledFeatures.setAll();
              disabledFeatures.setMVP();
            })
       .add("--detect-features",
            "",
-           "Use features from the target features section, or MVP (default)",
+           "(deprecated - this flag does nothing)",
            Arguments::Zero,
-           [this](Options*, const std::string&) {
-             hasFeatureOptions = true;
-             detectFeatures = true;
-             enabledFeatures.setMVP();
-             disabledFeatures.setMVP();
-           })
+           [this](Options*, const std::string&) {})
       .add("--quiet",
            "-q",
            "Emit less verbose output and hide trivial warnings.",
@@ -134,7 +127,6 @@ struct ToolOptions : public Options {
            std::string("Enable ") + description,
            Arguments::Zero,
            [=](Options*, const std::string&) {
-             hasFeatureOptions = true;
              enabledFeatures.set(feature, true);
              disabledFeatures.set(feature, false);
            })
@@ -144,7 +136,6 @@ struct ToolOptions : public Options {
            std::string("Disable ") + description,
            Arguments::Zero,
            [=](Options*, const std::string&) {
-             hasFeatureOptions = true;
              enabledFeatures.set(feature, false);
              disabledFeatures.set(feature, true);
            });
@@ -152,24 +143,11 @@ struct ToolOptions : public Options {
   }
 
   void applyFeatures(Module& module) const {
-    if (hasFeatureOptions) {
-      if (!detectFeatures && module.hasFeaturesSection) {
-        FeatureSet optionsFeatures = FeatureSet::MVP;
-        optionsFeatures.enable(enabledFeatures);
-        optionsFeatures.disable(disabledFeatures);
-        if (!(module.features <= optionsFeatures)) {
-          Fatal() << "features section is not a subset of specified features. "
-                  << "Use --detect-features to resolve.";
-        }
-      }
-      module.features.enable(enabledFeatures);
-      module.features.disable(disabledFeatures);
-    }
+    module.features.enable(enabledFeatures);
+    module.features.disable(disabledFeatures);
   }
 
 private:
-  bool hasFeatureOptions = false;
-  bool detectFeatures = false;
   FeatureSet enabledFeatures = FeatureSet::MVP;
   FeatureSet disabledFeatures = FeatureSet::MVP;
 };

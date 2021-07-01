@@ -3974,7 +3974,7 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   buffer.resize(inputSize);
   std::copy_n(input, inputSize, buffer.begin());
   try {
-    WasmBinaryBuilder parser(*wasm, buffer);
+    WasmBinaryBuilder parser(*wasm, FeatureSet::MVP, buffer);
     parser.read();
   } catch (ParseException& p) {
     p.dump(std::cerr);
