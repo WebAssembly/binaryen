@@ -442,7 +442,7 @@
    (i32.const 1)
   )
   (i32.store
-   (i32.const 12)
+   (i32.const 16)
    (i32.const 8)
   )
   (i32.store
@@ -454,7 +454,7 @@
    (i32.const 1)
   )
   (i32.store
-   (i32.const 24)
+   (i32.const 28)
    (i32.const 20)
   )
   (i32.store
@@ -466,7 +466,7 @@
    (i32.const 1)
   )
   (i32.store
-   (i32.const 36)
+   (i32.const 40)
    (i32.const 32)
   )
   (i32.store
@@ -478,7 +478,7 @@
    (i32.const 1)
   )
   (i32.store
-   (i32.const 48)
+   (i32.const 52)
    (i32.const 44)
   )
   (i32.store
@@ -490,7 +490,7 @@
    (i32.const 1)
   )
   (i32.store
-   (i32.const 60)
+   (i32.const 64)
    (i32.const 56)
   )
   (i32.store
@@ -502,7 +502,7 @@
    (i32.const 1)
   )
   (i32.store
-   (i32.const 72)
+   (i32.const 76)
    (i32.const 68)
   )
   (i32.store
@@ -514,7 +514,7 @@
    (i32.const 1)
   )
   (i32.store
-   (i32.const 84)
+   (i32.const 88)
    (i32.const 80)
   )
   (i32.store
@@ -526,7 +526,7 @@
    (i32.const 1)
   )
   (i32.store
-   (i32.const 96)
+   (i32.const 100)
    (i32.const 92)
   )
   (i32.store

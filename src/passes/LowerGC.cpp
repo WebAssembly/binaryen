@@ -1345,7 +1345,7 @@ private:
                               Type::i32));
     // Write the list, which is just a pointer to ourselves.
     startBlock->list.push_back(
-      builder.makePointerStore(builder.makeConst(int32_t(addr + 4)), addr));
+      builder.makePointerStore(builder.makeConst(int32_t(addr + 8)), addr));
   }
 
   void makeRttSub() {
