@@ -1,9 +1,9 @@
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_=>_none (func (param i32)))
  (type $type$0 (func))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32)))
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $type$7 (func (param i64)))
@@ -23,6 +23,7 @@
  (type $i32_i32_i32_=>_f64 (func (param i32 i32 i32) (result f64)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_none (func (param i32 i32 i32 i32 i32 i32 i32)))
  (type $i64_i32_=>_none (func (param i64 i32)))
+ (import "module" "func" (func $send-any (param i32)))
  (global $global0 i32 (i32.const 20))
  (global $global1 (mut i32) (i32.const 0))
  (global $nextMalloc (mut i32) (i32.const 136))
@@ -32,6 +33,7 @@
  (elem (table $lowergc-table) (i32.const 0) func $call_ref $call_ref_i64 $ref.func $ref.is)
  (export "ref-eq" (func $20))
  (export "struct-nn" (func $21))
+ (export "send-any" (func $22))
  (start $LowerGC$start)
  (func $struct-gets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
   (drop
@@ -122,7 +124,7 @@
  (func $new-struct-default
   (drop
    (call $StructNewWithDefault$many-fields
-    (i32.const 68)
+    (i32.const 80)
    )
   )
  )
@@ -425,6 +427,11 @@
  (func $21 (param $x i32) (result i32)
   (local.get $x)
  )
+ (func $22
+  (call $send-any
+   (i32.const 0)
+  )
+ )
  (func $LowerGC$start
   (i32.store
    (i32.const 8)
@@ -488,7 +495,7 @@
   )
   (i32.store
    (i32.const 68)
-   (i32.const 1)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 72)
@@ -500,7 +507,7 @@
   )
   (i32.store
    (i32.const 80)
-   (i32.const 0)
+   (i32.const 1)
   )
   (i32.store
    (i32.const 84)
@@ -532,7 +539,7 @@
   )
   (i32.store
    (i32.const 112)
-   (i32.const 80)
+   (i32.const 68)
   )
   (i32.store
    (i32.const 116)
@@ -657,6 +664,20 @@
    )
   )
  )
+ (func $CallRef$type$1 (param $0 i32) (param $1 i32)
+  (if
+   (i32.eqz
+    (local.get $1)
+   )
+   (unreachable)
+   (call_indirect $lowergc-table (type $i32_=>_none)
+    (local.get $0)
+    (i32.load offset=4
+     (local.get $1)
+    )
+   )
+  )
+ )
  (func $StructNewWithDefault$many-fields (param $0 i32) (result i32)
   (local $1 i32)
   (local.set $1
@@ -773,20 +794,6 @@
    (unreachable)
    (f32.load offset=16
     (local.get $0)
-   )
-  )
- )
- (func $CallRef$type$1 (param $0 i32) (param $1 i32)
-  (if
-   (i32.eqz
-    (local.get $1)
-   )
-   (unreachable)
-   (call_indirect $lowergc-table (type $i32_=>_none)
-    (local.get $0)
-    (i32.load offset=4
-     (local.get $1)
-    )
    )
   )
  )
