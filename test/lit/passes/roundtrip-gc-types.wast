@@ -10,6 +10,7 @@
  ;; CHECK:      (type $A (struct (field (ref $C))))
  (type $A (struct (field (ref $C))))
  ;; CHECK:      (type $C (struct (field (mut (ref $B)))))
+
  ;; CHECK:      (type $B (func (param (ref $A)) (result (ref $B))))
  (type $B (func (param (ref $A)) (result (ref $B))))
  (type $C (struct (field (mut (ref $B)))))

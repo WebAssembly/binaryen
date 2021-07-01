@@ -7,7 +7,9 @@
   (type $struct.A (struct (field (mut i32)) (field (mut f64))))
 
   ;; CHECK:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
+
   ;; CHECK:      (type $struct.nonnullable (struct (field (ref $struct.A))))
+
   ;; CHECK:      (type $struct.packed (struct (field (mut i8))))
   (type $struct.packed (struct (field (mut i8))))
 

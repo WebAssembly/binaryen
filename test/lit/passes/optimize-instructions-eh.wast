@@ -4,6 +4,7 @@
 
 (module
   ;; CHECK:      (tag $e (param i32))
+
   ;; CHECK:      (func $dummy
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )

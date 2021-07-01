@@ -4,7 +4,9 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64))))
+
   ;; CHECK:      (type $array (array (mut i8)))
+
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
 

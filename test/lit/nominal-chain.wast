@@ -8,6 +8,7 @@
 
 (module
   ;; CHECK:      (type $root (struct ))
+
   ;; CHECK:      (type $leaf (struct (field i32) (field i64) (field f32) (field f64)) (extends $twig))
   (type $leaf (struct i32 i64 f32 f64) (extends $twig))
 

@@ -5,6 +5,7 @@
 
 (module
   ;; CHECK:      (type $func (func))
+
   ;; CHECK:      (type $struct (struct (field (ref $array)) (field (ref null $func))))
   (type $struct (struct
     (field (ref $array))

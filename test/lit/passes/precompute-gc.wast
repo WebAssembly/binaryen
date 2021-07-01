@@ -6,7 +6,9 @@
  ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (mut i32)))
  ;; CHECK:      (type $B (struct (field (mut f64))))
+
  ;; CHECK:      (type $func-return-i32 (func (result i32)))
+
  ;; CHECK:      (type $empty (struct ))
  (type $empty (struct))
 

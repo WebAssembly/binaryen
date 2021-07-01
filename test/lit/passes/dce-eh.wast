@@ -5,6 +5,7 @@
 ;; reachable
 (module
   ;; CHECK:      (tag $e (param))
+
   ;; CHECK:      (func $foo
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
