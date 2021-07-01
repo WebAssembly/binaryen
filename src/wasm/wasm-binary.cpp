@@ -3245,7 +3245,8 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
                BinaryConsts::UserSections::TypedFunctionReferencesFeature) {
       feature = FeatureSet::TypedFunctionReferences;
     } else {
-      WASM_UNREACHABLE("unknown feature");
+      // Silently ignore unknown features (this may be and old binaryen running
+      // on a new wasm).
     }
 
     if (disallowed && wasm.features.has(feature)) {
