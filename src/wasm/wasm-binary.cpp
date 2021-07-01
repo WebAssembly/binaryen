@@ -1319,7 +1319,9 @@ void WasmBinaryWriter::writeField(const Field& field) {
 
 // reader
 
-WasmBinaryBuilder::WasmBinaryBuilder(Module& wasm, FeatureSet features, const std::vector<char>& input)
+WasmBinaryBuilder::WasmBinaryBuilder(Module& wasm,
+                                     FeatureSet features,
+                                     const std::vector<char>& input)
   : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
     nextDebugLocation(0, {0, 0, 0}), debugLocation() {
   wasm.features = features;
@@ -3207,8 +3209,7 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
       throwError("Unrecognized feature policy prefix");
     }
     if (required) {
-      std::cerr
-        << "warning: required features in feature section are ignored";
+      std::cerr << "warning: required features in feature section are ignored";
     }
 
     Name name = getInlineString();
@@ -3250,7 +3251,9 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
     }
 
     if (disallowed && wasm.features.has(feature)) {
-      std::cerr << "warning: feature " << feature.toString() << " was enabled by the user, but disallowed in the features section.";
+      std::cerr
+        << "warning: feature " << feature.toString()
+        << " was enabled by the user, but disallowed in the features section.";
     }
     if (required || used) {
       wasm.features.enable(feature);
