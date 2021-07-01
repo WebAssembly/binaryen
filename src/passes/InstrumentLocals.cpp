@@ -79,43 +79,49 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
   void visitLocalGet(LocalGet* curr) {
     Builder builder(*getModule());
     Name import;
-    TODO_SINGLE_COMPOUND(curr->type);
-    switch (curr->type.getBasic()) {
-      case Type::i32:
-        import = get_i32;
-        break;
-      case Type::i64:
-        return; // TODO
-      case Type::f32:
-        import = get_f32;
-        break;
-      case Type::f64:
-        import = get_f64;
-        break;
-      case Type::v128:
-        import = get_v128;
-        break;
-      case Type::funcref:
-        import = get_funcref;
-        break;
-      case Type::externref:
-        import = get_externref;
-        break;
-      case Type::anyref:
-        import = get_anyref;
-        break;
-      case Type::eqref:
-        import = get_eqref;
-        break;
-      case Type::i31ref:
-        import = get_i31ref;
-        break;
-      case Type::dataref:
-        import = get_dataref;
-        break;
-      case Type::none:
-      case Type::unreachable:
-        WASM_UNREACHABLE("unexpected type");
+    auto type = curr->type;
+    if (type.isRef() && !type.isBasic()) {
+      // For non-basic references, use anyref
+      import = set_anyref;
+    } else {
+      TODO_SINGLE_COMPOUND(type);
+      switch (type.getBasic()) {
+        case Type::i32:
+          import = get_i32;
+          break;
+        case Type::i64:
+          return; // TODO
+        case Type::f32:
+          import = get_f32;
+          break;
+        case Type::f64:
+          import = get_f64;
+          break;
+        case Type::v128:
+          import = get_v128;
+          break;
+        case Type::funcref:
+          import = get_funcref;
+          break;
+        case Type::externref:
+          import = get_externref;
+          break;
+        case Type::anyref:
+          import = get_anyref;
+          break;
+        case Type::eqref:
+          import = get_eqref;
+          break;
+        case Type::i31ref:
+          import = get_i31ref;
+          break;
+        case Type::dataref:
+          import = get_dataref;
+          break;
+        case Type::none:
+        case Type::unreachable:
+          WASM_UNREACHABLE("unexpected type");
+      }
     }
     replaceCurrent(builder.makeCall(import,
                                     {builder.makeConst(int32_t(id++)),
@@ -139,44 +145,49 @@ struct InstrumentLocals : public WalkerPass<PostWalker<InstrumentLocals>> {
       // FIXME: support typed function references
       return;
     }
-    TODO_SINGLE_COMPOUND(curr->value->type);
-    switch (type.getBasic()) {
-      case Type::i32:
-        import = set_i32;
-        break;
-      case Type::i64:
-        return; // TODO
-      case Type::f32:
-        import = set_f32;
-        break;
-      case Type::f64:
-        import = set_f64;
-        break;
-      case Type::v128:
-        import = set_v128;
-        break;
-      case Type::funcref:
-        import = set_funcref;
-        break;
-      case Type::externref:
-        import = set_externref;
-        break;
-      case Type::anyref:
-        import = set_anyref;
-        break;
-      case Type::eqref:
-        import = set_eqref;
-        break;
-      case Type::i31ref:
-        import = set_i31ref;
-        break;
-      case Type::dataref:
-        import = set_dataref;
-        break;
-      case Type::unreachable:
-        return; // nothing to do here
-      default:
-        WASM_UNREACHABLE("unexpected type");
+    if (type.isRef() && !type.isBasic()) {
+      // For non-basic references, use anyref
+      import = set_anyref;
+    } else {
+      TODO_SINGLE_COMPOUND(curr->type);
+      switch (type.getBasic()) {
+        case Type::i32:
+          import = set_i32;
+          break;
+        case Type::i64:
+          return; // TODO
+        case Type::f32:
+          import = set_f32;
+          break;
+        case Type::f64:
+          import = set_f64;
+          break;
+        case Type::v128:
+          import = set_v128;
+          break;
+        case Type::funcref:
+          import = set_funcref;
+          break;
+        case Type::externref:
+          import = set_externref;
+          break;
+        case Type::anyref:
+          import = set_anyref;
+          break;
+        case Type::eqref:
+          import = set_eqref;
+          break;
+        case Type::i31ref:
+          import = set_i31ref;
+          break;
+        case Type::dataref:
+          import = set_dataref;
+          break;
+        case Type::unreachable:
+          return; // nothing to do here
+        default:
+          WASM_UNREACHABLE("unexpected type");
+      }
     }
     curr->value = builder.makeCall(import,
                                    {builder.makeConst(int32_t(id++)),
