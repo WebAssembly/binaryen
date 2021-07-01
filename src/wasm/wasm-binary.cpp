@@ -3194,7 +3194,6 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
 
 void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
   wasm.hasFeaturesSection = true;
-  wasm.features = FeatureSet::MVP;
 
   auto sectionPos = pos;
   size_t numFeatures = getU32LEB();
