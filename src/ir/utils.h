@@ -33,11 +33,17 @@ struct Measurer
 
   void visitExpression(Expression* curr) { size++; }
 
+  // Measure the number of expressions.
   static Index measure(Expression* tree) {
     Measurer measurer;
     measurer.walk(tree);
     return measurer.size;
   }
+
+  // A rough estimate of average binary size per expression. The number here is
+  // based on measurements on real-world (MVP) wasm files, on which observed
+  // ratios were 2.2 - 2.8.
+  static constexpr double BytesPerExpr = 2.5;
 };
 
 struct ExpressionAnalyzer {
