@@ -330,8 +330,8 @@ struct Reducer
     loadWorking();
     reduced = 0;
     funcsSeen = 0;
-    // before we do any changes, it should be valid to write out the module:
-    // size should be as expected, and output should be as expected
+    // Before we do any changes, it should be valid to write out the module:
+    // size should be as expected, and output should be as expected.
     ProgramResult result;
     if (!writeAndTestReduction(result)) {
       std::cerr << "\n|! WARNING: writing before destructive reduction fails, "
@@ -475,35 +475,6 @@ struct Reducer
   // since we don't need to duplicate work that they do
 
   void visitExpression(Expression* curr) {
-    if (getFunction() && curr == getFunction()->body) {
-      // At the top level, we can try to reduce anything to an unreachable or a
-      // nop, and it is useful to do so when possible.
-      if (!curr->is<Unreachable>() && !curr->is<Nop>() &&
-          shouldTryToReduce(1000)) {
-        auto* save = curr;
-        Unreachable un;
-        Nop nop;
-        bool useUnreachable = getFunction()->sig.results != Type::none;
-        if (useUnreachable) {
-          replaceCurrent(&un);
-        } else {
-          replaceCurrent(&nop);
-        }
-        if (writeAndTestReduction()) {
-          if (useUnreachable) {
-            replaceCurrent(builder->makeUnreachable());
-          } else {
-            replaceCurrent(builder->makeNop());
-          }
-          std::cerr << "|        body emptied (" << getFunction()->name
-                    << ")\n";
-          noteReduction();
-          return;
-        } else {
-          replaceCurrent(save);
-        }
-      }
-    }
     // type-based reductions
     if (curr->type == Type::none) {
       if (tryToReduceCurrentToNop()) {
@@ -813,7 +784,6 @@ struct Reducer
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool justShrank = false;
-    bool shrank = false;
 
     auto& data = segment->data;
     // when we succeed, try to shrink by more and more, similar to bisection
@@ -828,18 +798,17 @@ struct Reducer
         }
         justShrank = writeAndTestReduction();
         if (justShrank) {
-          std::cerr << "|      shrank segment (skip: " << skip << ")\n";
-          shrank = true;
+          std::cerr << "|      shrank segment from " << save.size() << " => " << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
           skip = std::min(size_t(factor), 2 * skip);
         } else {
           data = save;
-          break;
+          return false;
         }
       }
     }
 
-    return shrank;
+    return true;
   }
 
   void shrinkElementSegments(Module* module) {
@@ -862,7 +831,7 @@ struct Reducer
     // while we are shrinking successfully, keep going exponentially.
     bool shrank = false;
     for (auto& segment : module->elementSegments) {
-      shrank = shrinkByReduction(segment.get(), 100);
+      shrank = shrank || shrinkByReduction(segment.get(), 1);
     }
     // the "opposite" of shrinking: copy a 'zero' element
     for (auto& segment : module->elementSegments) {
@@ -882,7 +851,7 @@ struct Reducer
             return f->func == e->func;
           }
         },
-        100,
+        1,
         shrank);
     }
   }
@@ -901,11 +870,11 @@ struct Reducer
     size_t skip = 1;
     // If we just removed some functions in the previous iteration, keep trying
     // to remove more as this is one of the most efficient ways to reduce.
-    bool justRemoved = false;
+    bool justReduced = true;
     for (size_t i = 0; i < functionNames.size(); i++) {
-      if (!justRemoved &&
+      if (!justReduced &&
           functionsWeTriedToRemove.count(functionNames[i]) == 1 &&
-          !shouldTryToReduce(std::max((factor / 100) + 1, 1000))) {
+          !shouldTryToReduce(std::max((factor / 5) + 1, 20000))) {
         continue;
       }
       std::vector<Name> names;
@@ -922,8 +891,14 @@ struct Reducer
       }
       std::cout << "|    try to remove " << names.size()
                 << " functions (skip: " << skip << ")\n";
-      justRemoved = tryToRemoveFunctions(names);
-      if (justRemoved) {
+      justReduced = tryToRemoveFunctions(names);
+      if (!justReduced) {
+        for (auto name : names) {
+          assert(module->getFunctionOrNull(name));
+        }
+        justReduced = tryToEmptyFunctions(names);
+      }
+      if (justReduced) {
         noteReduction(names.size());
         i += skip;
         skip = std::min(size_t(factor), 2 * skip);
@@ -1001,6 +976,40 @@ struct Reducer
     }
   }
 
+  // Try to empty out the bodies of some functions.
+  bool tryToEmptyFunctions(std::vector<Name> names) {
+    std::vector<Expression*> oldBodies;
+    size_t actuallyEmptied = 0;
+    for (auto name : names) {
+      auto* func = module->getFunction(name);
+      auto* oldBody = func->body;
+      oldBodies.push_back(oldBody);
+      if (oldBody->is<Unreachable>() || oldBody->is<Nop>()) {
+        continue;
+      }
+      actuallyEmptied++;
+      bool useUnreachable = func->sig.results != Type::none;
+      if (useUnreachable) {
+        func->body = builder->makeUnreachable();
+      } else {
+        func->body = builder->makeNop();
+      }
+    }
+    if (actuallyEmptied > 0 && writeAndTestReduction()) {
+      std::cerr << "|      emptied " << actuallyEmptied << " / "
+                << names.size() << " functions\n";
+      return true;
+    } else {
+      // Restore the bodies.
+      for (size_t i = 0; i < names.size(); i++) {
+        module->getFunction(names[i])->body = oldBodies[i];
+      }
+      return false;
+    }
+  }
+
+  // Try to actually remove functions. If they are somehow referred to, we will
+  // get a validation error and undo it.
   bool tryToRemoveFunctions(std::vector<Name> names) {
     for (auto name : names) {
       module->removeFunction(name);
@@ -1346,6 +1355,8 @@ int main(int argc, const char* argv[]) {
     }
 
     // check if the full cycle (destructive/passes) has helped or not
+    // this may not be useful, if very minor destrctive opts incrase wasm
+    // size slightly. should measue after passes
     if (lastPostPassesSize && newSize >= lastPostPassesSize) {
       std::cerr << "|  progress has stopped, skipping to the end\n";
       if (factor == 1) {
@@ -1354,7 +1365,7 @@ int main(int argc, const char* argv[]) {
         stopping = true;
       } else {
         // just try to remove all we can and finish up
-        factor = 1;
+        factor = (factor + 1) / 2; // stable on 1
       }
     }
     lastPostPassesSize = newSize;
