@@ -167,12 +167,28 @@ enum RttKind {
   RttExtern = 3,
 };
 
-Type getLoweredType(Type type, Memory& memory) {
+static Type lowerType(Type type, Memory& memory) {
   // References and Rtts are pointers.
   if (type.isRef() || type.isRtt()) {
     return memory.indexType;
   }
   return type;
+}
+
+static Type lowerType(Type type, Module& wasm) {
+  return lowerType(type, wasm.memory);
+}
+
+Signature lowerSig(Signature sig, Module& wasm) {
+  std::vector<Type> params;
+  for (auto t : sig.params) {
+    params.push_back(lowerType(t, wasm));
+  }
+  std::vector<Type> results;
+  for (auto t : sig.results) {
+    results.push_back(lowerType(t, wasm));
+  }
+  return Signature(Type(params), Type(results));
 }
 
 // The layout of a struct in linear memory.
@@ -412,7 +428,7 @@ struct LowerGCCode
     replaceCurrent(
       builder.makeCall(name,
                        {curr->ref, builder.makeConst(int32_t(curr->signed_))},
-                       getLoweredType(curr->type, getModule()->memory)));
+                       lower(curr->type)));
   }
 
   void visitArrayNew(ArrayNew* curr) {
@@ -449,7 +465,7 @@ struct LowerGCCode
     auto name =
       std::string("ArrayGet$") + getModule()->typeNames[type].name.str;
     auto element = type.getArray().element;
-    auto loweredType = getLoweredType(element.type, getModule()->memory);
+    auto loweredType = lower(element.type);
     replaceCurrent(builder.makeCall(
       name,
       {curr->ref, curr->index, builder.makeConst(int32_t(curr->signed_))},
@@ -498,8 +514,6 @@ struct LowerGCCode
   }
 
   void doWalkFunction(Function* func) {
-    func->sig = lower(func->sig);
-
     for (auto& t : func->vars) {
       t = lower(t);
     }
@@ -525,19 +539,8 @@ private:
   // (If an expression has no heap type, we do not note anything for it here.)
   std::unordered_map<Expression**, HeapType> originalTypes;
 
-  Type lower(Type type) { return getLoweredType(type, getModule()->memory); }
-
-  Signature lower(Signature sig) {
-    std::vector<Type> params;
-    for (auto t : sig.params) {
-      params.push_back(lower(t));
-    }
-    std::vector<Type> results;
-    for (auto t : sig.results) {
-      results.push_back(lower(t));
-    }
-    return Signature(Type(params), Type(results));
-  }
+  Type lower(Type type) { return lowerType(type, *getModule()); }
+  Signature lower(Signature sig) { return lowerSig(sig, *getModule()); }
 };
 
 } // anonymous namespace
@@ -776,7 +779,7 @@ private:
     PointerBuilder builder(*module);
     for (Index i = 0; i < fields.size(); i++) {
       auto& field = fields[i];
-      auto loweredType = getLoweredType(field.type, module->memory);
+      auto loweredType = lower(field.type);
       auto bytes = getBytes(field);
       module->addFunction(builder.makeFunction(
         std::string("StructSet$") + module->typeNames[type].name.str + '$' +
@@ -799,7 +802,7 @@ private:
     PointerBuilder builder(*module);
     for (Index i = 0; i < fields.size(); i++) {
       auto& field = fields[i];
-      auto loweredType = getLoweredType(field.type, module->memory);
+      auto loweredType = lower(field.type);
       auto bytes = getBytes(field);
       auto makeLoad = [&](bool signed_) {
         return builder.makeLoad(
@@ -832,7 +835,7 @@ private:
   void makeArrayNew(HeapType type) {
     auto typeName = module->typeNames[type].name.str; // waka
     auto element = type.getArray().element;
-    auto loweredType = getLoweredType(element.type, module->memory);
+    auto loweredType = lower(element.type);
     auto bytes = getBytes(element);
     PointerBuilder builder(*module);
     for (bool withDefault : {true, false}) {
@@ -943,7 +946,7 @@ private:
 
   void makeArraySet(HeapType type) {
     auto element = type.getArray().element;
-    auto loweredType = getLoweredType(element.type, module->memory);
+    auto loweredType = lower(element.type);
     auto bytes = getBytes(element);
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
@@ -965,7 +968,7 @@ private:
     auto element = type.getArray().element;
     auto bytes = getBytes(element);
     auto loweredType =
-      getLoweredType(element.type, module->memory); // TODO: lower()
+      lower(element.type);
     PointerBuilder builder(*module);
 
     auto makeLoad = [&](bool signed_) {
@@ -1516,7 +1519,7 @@ private:
 
   // Given a field in a struct or an array, return how many bytes it uses.
   unsigned getBytes(const Field& field) {
-    auto loweredType = getLoweredType(field.type, module->memory);
+    auto loweredType = lower(field.type);
     // For packed fields, return the proper packed size.
     if (field.type == Type::i32) {
       return field.getByteSize();
@@ -1532,6 +1535,11 @@ private:
       std::unique_ptr<LowerGCCode>(LowerGCCode(&loweringInfo).create()));
     subRunner.setIsNested(true);
     subRunner.run();
+
+    // Lower the signatures of imported and defined functions.
+    for (auto& func : module->functions) {
+      func->sig = lower(func->sig);
+    }
 
     LowerGCCode lower(&loweringInfo);
     lower.setModule(module);
@@ -1550,7 +1558,8 @@ private:
     }
   }
 
-  Type lower(Type type) { return getLoweredType(type, module->memory); }
+  Type lower(Type type) { return lowerType(type, *module); }
+  Signature lower(Signature sig) { return lowerSig(sig, *module); }
 };
 
 Pass* createLowerGCPass() { return new LowerGC(); }

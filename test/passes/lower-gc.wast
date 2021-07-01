@@ -15,6 +15,8 @@
  (type $bytes (array (mut i8)))
  (type $doubles (array (mut f64)))
 
+ (import "module" "func" (func $send-any (param anyref)))
+
  (table $original-table 0 funcref)
 
  (global $global0 (rtt 0 $empty) (rtt.canon $empty))
@@ -276,6 +278,11 @@
   ;; Use this type, so that we emit the support code for it, which tests our
   ;; handling of a struct with a non-nullable field.
   (local.get $x)
+ )
+ (func "send-any"
+  (call $send-any
+   (ref.null $empty)
+  )
  )
 )
 ;; On an empty module we should do very little (and not crash).
