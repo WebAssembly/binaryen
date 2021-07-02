@@ -646,6 +646,8 @@ private:
                          Type::i32,
                          builder.makeConst(int32_t(loweringInfo.mallocStart)),
                          Builder::Mutable));
+    // Disallow further allocation at compile time.
+    loweringInfo.mallocStart = 0;
     // TODO: more than a simple bump allocator that never frees or collects.
     auto* alloc = builder.makeGlobalSet(
       nextMalloc->name,
