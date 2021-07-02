@@ -287,3 +287,7 @@
 )
 ;; On an empty module we should do very little (and not crash).
 (module)
+;; If a memory already exists, we should append to it.
+(module
+ (memory $0 1 1)
+)

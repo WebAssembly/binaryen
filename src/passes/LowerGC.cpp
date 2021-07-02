@@ -206,9 +206,7 @@ struct LoweringInfo {
   Layouts layouts;
 
   Name malloc;
-  // Start allocating at address 8, so that lower numbers can have special
-  // meanings (like 0 meaning "null").
-  Address mallocStart = 8;
+  Address mallocStart = 0;
 
   Address pointerSize;
   Type pointerType;
@@ -222,6 +220,7 @@ struct LoweringInfo {
   std::unordered_map<Name, Address> refFuncAddrs;
 
   Address compileTimeMalloc(Address size) {
+    assert(mallocStart > 0);
     assert(size % 4 == 0);
     auto ret = mallocStart;
     mallocStart = mallocStart + size;
@@ -589,12 +588,25 @@ private:
   void pickNames() { loweringInfo.malloc = "malloc"; }
 
   void addMemory() {
-    module->memory.exists = true;
-
     // 1GB, arbitrarily for now.
-    module->memory.initial = module->memory.max = 16384;
+    const Address MemoryPages = 16384;
+    if (!module->memory.exists) {
+      // Add a memory and use all of it.
+      module->memory.exists = true;
+      module->memory.initial = module->memory.max = MemoryPages;
+      // Start allocating at address 8, so that lower numbers can have special
+      // meanings (like 0 meaning "null").
+      loweringInfo.mallocStart = 8;
+    } else {
+      // Append to an existing (non-growing) memory.
+      if (module->memory.initial != module->memory.max) {
+        Fatal() << "LowerGC disallows memory growth";
+      }
+      loweringInfo.mallocStart = module->memory.initial * Memory::kPageSize;
+      module->memory.initial = module->memory.max = module->memory.initial + MemoryPages;
+    }
 
-    assert(!module->memory.is64());
+    assert(!module->memory.is64()); // TODO: use getByteSize()
     loweringInfo.pointerSize = 4;
     loweringInfo.pointerType = module->memory.indexType;
   }
