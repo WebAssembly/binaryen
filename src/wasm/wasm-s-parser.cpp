@@ -362,7 +362,8 @@ SExpressionWasmBuilder::SExpressionWasmBuilder(Module& wasm,
         stringToBinary(str, size, data);
       }
     }
-    WasmBinaryBuilder binaryBuilder(wasm, data);
+    // TODO: support applying features here
+    WasmBinaryBuilder binaryBuilder(wasm, FeatureSet::MVP, data);
     binaryBuilder.read();
     return;
   }

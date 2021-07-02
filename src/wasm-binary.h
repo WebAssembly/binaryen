@@ -1338,9 +1338,9 @@ class WasmBinaryBuilder {
   std::vector<HeapType> types;
 
 public:
-  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
-    : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
-      nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
+  WasmBinaryBuilder(Module& wasm,
+                    FeatureSet features,
+                    const std::vector<char>& input);
 
   void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
