@@ -56,7 +56,7 @@ struct ToolOptions : public Options {
            "",
            "(deprecated - this flag does nothing)",
            Arguments::Zero,
-           [this](Options*, const std::string&) {})
+           [](Options*, const std::string&) {})
       .add("--quiet",
            "-q",
            "Emit less verbose output and hide trivial warnings.",
