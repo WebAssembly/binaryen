@@ -2228,7 +2228,9 @@ void WasmBinaryBuilder::readFunctions() {
       }
     }
 
-    TypeUpdating::handleNonDefaultableLocals(func, wasm);
+    if (!wasm.features.hasGCNNLocals()) {
+      TypeUpdating::handleNonDefaultableLocals(func, wasm);
+    }
 
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
@@ -2560,14 +2562,16 @@ void WasmBinaryBuilder::pushExpression(Expression* curr) {
     Builder builder(wasm);
     // Non-nullable types require special handling as they cannot be stored to
     // a local.
-    std::vector<Type> nullableTypes;
-    for (auto t : type) {
-      if (t.isRef() && !t.isNullable()) {
-        t = Type(t.getHeapType(), Nullable);
+    std::vector<Type> finalTypes;
+    if (!wasm.features.hasGCNNLocals()) {
+      for (auto t : type) {
+        if (t.isRef() && !t.isNullable()) {
+          t = Type(t.getHeapType(), Nullable);
+        }
+        finalTypes.push_back(t);
       }
-      nullableTypes.push_back(t);
     }
-    auto nullableType = Type(Tuple(nullableTypes));
+    auto nullableType = Type(Tuple(finalTypes));
     Index tuple = builder.addVar(currFunction, nullableType);
     expressionStack.push_back(builder.makeLocalSet(tuple, curr));
     for (Index i = 0; i < nullableType.size(); ++i) {
