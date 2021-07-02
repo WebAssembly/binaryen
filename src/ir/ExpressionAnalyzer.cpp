@@ -60,7 +60,7 @@ bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
     }
   }
   // The value might be used, so it depends on if the function returns
-  return func->sig.results != Type::none;
+  return func->getResults() != Type::none;
 }
 
 // Checks if a value is dropped.

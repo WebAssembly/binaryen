@@ -2278,9 +2278,11 @@ Type TypeBuilder::getTempRttType(Rtt rtt) {
 
 void TypeBuilder::setSubType(size_t i, size_t j) {
   assert(i < size() && j < size() && "index out of bounds");
-  HeapTypeInfo* sub = impl->entries[i].info.get();
-  HeapTypeInfo* super = impl->entries[j].info.get();
-  sub->supertype = super;
+  if (typeSystem == TypeSystem::Nominal) {
+    HeapTypeInfo* sub = impl->entries[i].info.get();
+    HeapTypeInfo* super = impl->entries[j].info.get();
+    sub->supertype = super;
+  }
 }
 
 namespace {

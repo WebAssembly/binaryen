@@ -353,27 +353,19 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
                                '--enable-simd', '--enable-sign-ext',
                                self.input_path('signext_target_feature.wasm')])
 
-    def test_incompatible_features(self):
+    def test_superset_even_without_detect_features(self):
+        # It is ok to enable additional features past what is in the section,
+        # even without passing --detect-features (which is now a no-op).
         path = self.input_path('signext_target_feature.wasm')
-        p = shared.run_process(
+        shared.run_process(
             shared.WASM_OPT + ['--print', '--enable-simd', '-o', os.devnull,
-                               path],
-            check=False, capture_output=True
-        )
-        self.assertNotEqual(p.returncode, 0)
-        self.assertIn('Fatal: features section is not a subset of specified features. ' +
-                      'Use --detect-features to resolve.',
-                      p.stderr)
+                               path])
 
-    def test_incompatible_features_forced(self):
+    def test_superset_with_detect_features(self):
         path = self.input_path('signext_target_feature.wasm')
-        p = shared.run_process(
-            shared.WASM_OPT + ['--print', '--detect-features', '-mvp',
-                               '--enable-simd', '-o', os.devnull, path],
-            check=False, capture_output=True
-        )
-        self.assertNotEqual(p.returncode, 0)
-        self.assertIn('all used features should be allowed', p.stderr)
+        shared.run_process(
+            shared.WASM_OPT + ['--print', '--detect-features',
+                               '--enable-simd', '-o', os.devnull, path])
 
     def test_explicit_detect_features(self):
         self.check_features('signext_target_feature.wasm', ['simd', 'sign-ext'],

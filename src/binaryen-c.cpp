@@ -3280,7 +3280,8 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
                                         BinaryenExpressionRef body) {
   auto* ret = new Function;
   ret->setExplicitName(name);
-  ret->sig = Signature(Type(params), Type(results));
+  // TODO: Take a HeapType rather than params and results.
+  ret->type = Signature(Type(params), Type(results));
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -3380,7 +3381,8 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->sig = Signature(Type(params), Type(results));
+  // TODO: Take a HeapType rather than params and results.
+  ret->type = Signature(Type(params), Type(results));
   ((Module*)module)->addFunction(ret);
 }
 void BinaryenAddTableImport(BinaryenModuleRef module,
@@ -3547,7 +3549,7 @@ BinaryenAddActiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -3564,7 +3566,7 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -3972,7 +3974,8 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   buffer.resize(inputSize);
   std::copy_n(input, inputSize, buffer.begin());
   try {
-    WasmBinaryBuilder parser(*wasm, buffer);
+    // TODO: allow providing features in the C API
+    WasmBinaryBuilder parser(*wasm, FeatureSet::MVP, buffer);
     parser.read();
   } catch (ParseException& p) {
     p.dump(std::cerr);
@@ -4006,14 +4009,16 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 // ========== Function Operations ==========
 //
 
+// TODO: add BinaryenFunctionGetType
+
 const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
   return ((Function*)func)->name.c_str();
 }
 BinaryenType BinaryenFunctionGetParams(BinaryenFunctionRef func) {
-  return ((Function*)func)->sig.params.getID();
+  return ((Function*)func)->getParams().getID();
 }
 BinaryenType BinaryenFunctionGetResults(BinaryenFunctionRef func) {
-  return ((Function*)func)->sig.results.getID();
+  return ((Function*)func)->getResults().getID();
 }
 BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
   return ((Function*)func)->vars.size();

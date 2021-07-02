@@ -2596,7 +2596,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     lastPrintedLocation = {0, 0, 0};
     o << '(';
     emitImportHeader(curr);
-    handleSignature(curr->sig, curr->name);
+    handleSignature(curr->getSig(), curr->name);
     o << ')';
     o << maybeNewLine;
   }
@@ -2613,9 +2613,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (!stackIR && curr->stackIR && !minify) {
       o << " (; has Stack IR ;)";
     }
-    if (curr->sig.params.size() > 0) {
+    if (curr->getParams().size() > 0) {
       Index i = 0;
-      for (const auto& param : curr->sig.params) {
+      for (const auto& param : curr->getParams()) {
         o << maybeSpace;
         o << '(';
         printMinor(o, "param ");
@@ -2625,9 +2625,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         ++i;
       }
     }
-    if (curr->sig.results != Type::none) {
+    if (curr->getResults() != Type::none) {
       o << maybeSpace;
-      printResultType(o, curr->sig.results, currModule);
+      printResultType(o, curr->getResults(), currModule);
     }
     incIndent();
     for (size_t i = curr->getVarIndexBase(); i < curr->getNumLocals(); i++) {

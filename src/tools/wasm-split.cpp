@@ -396,6 +396,7 @@ void WasmSplitOptions::parse(int argc, const char* argv[]) {
 }
 
 void parseInput(Module& wasm, const WasmSplitOptions& options) {
+  options.applyFeatures(wasm);
   ModuleReader reader;
   reader.setProfile(options.profile);
   try {
@@ -408,7 +409,6 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
     Fatal() << "error building module, std::bad_alloc (possibly invalid "
                "request for silly amounts of memory)";
   }
-  options.applyFeatures(wasm);
 
   if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
     Fatal() << "error validating input";

@@ -269,7 +269,7 @@ void WasmBinaryWriter::writeImports() {
     BYN_TRACE("write one function\n");
     writeImportHeader(func);
     o << U32LEB(int32_t(ExternalKind::Function));
-    o << U32LEB(getTypeIndex(func->sig));
+    o << U32LEB(getTypeIndex(func->type));
   });
   ModuleUtils::iterImportedGlobals(*wasm, [&](Global* global) {
     BYN_TRACE("write one global\n");
@@ -318,7 +318,7 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   o << U32LEB(importInfo->getNumDefinedFunctions());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     BYN_TRACE("write one\n");
-    o << U32LEB(getTypeIndex(func->sig));
+    o << U32LEB(getTypeIndex(func->type));
   });
   finishSection(start);
 }
@@ -1319,6 +1319,14 @@ void WasmBinaryWriter::writeField(const Field& field) {
 
 // reader
 
+WasmBinaryBuilder::WasmBinaryBuilder(Module& wasm,
+                                     FeatureSet features,
+                                     const std::vector<char>& input)
+  : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
+    nextDebugLocation(0, {0, 0, 0}), debugLocation() {
+  wasm.features = features;
+}
+
 bool WasmBinaryBuilder::hasDWARFSections() {
   assert(pos == 0);
   getInt32(); // magic
@@ -2008,8 +2016,7 @@ void WasmBinaryBuilder::readImports() {
         Name name(std::string("fimport$") + std::to_string(functionCounter++));
         auto index = getU32LEB();
         functionTypes.push_back(getTypeByIndex(index));
-        auto curr =
-          builder.makeFunction(name, getSignatureByTypeIndex(index), {});
+        auto curr = builder.makeFunction(name, getTypeByIndex(index), {});
         curr->module = module;
         curr->base = base;
         functionImports.push_back(curr.get());
@@ -2158,7 +2165,7 @@ void WasmBinaryBuilder::readFunctions() {
 
     auto* func = new Function;
     func->name = Name::fromInt(i);
-    func->sig = getSignatureByFunctionIndex(functionImports.size() + i);
+    func->type = getTypeByFunctionIndex(functionImports.size() + i);
     currFunction = func;
 
     if (DWARF) {
@@ -2197,7 +2204,7 @@ void WasmBinaryBuilder::readFunctions() {
       auto currFunctionIndex = functionImports.size() + functions.size();
       bool isStart = startIndex == currFunctionIndex;
       if (!skipFunctionBodies || isStart) {
-        func->body = getBlockOrSingleton(func->sig.results);
+        func->body = getBlockOrSingleton(func->getResults());
       } else {
         // When skipping the function body we need to put something valid in
         // their place so we validate. An unreachable is always acceptable
@@ -3191,22 +3198,21 @@ void WasmBinaryBuilder::readNames(size_t payloadLen) {
 
 void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
   wasm.hasFeaturesSection = true;
-  wasm.features = FeatureSet::MVP;
 
   auto sectionPos = pos;
   size_t numFeatures = getU32LEB();
   for (size_t i = 0; i < numFeatures; ++i) {
     uint8_t prefix = getInt8();
-    if (prefix != BinaryConsts::FeatureUsed) {
-      if (prefix == BinaryConsts::FeatureRequired) {
-        std::cerr
-          << "warning: required features in feature section are ignored";
-      } else if (prefix == BinaryConsts::FeatureDisallowed) {
-        std::cerr
-          << "warning: disallowed features in feature section are ignored";
-      } else {
-        throwError("Unrecognized feature policy prefix");
-      }
+
+    bool disallowed = prefix == BinaryConsts::FeatureDisallowed;
+    bool required = prefix == BinaryConsts::FeatureRequired;
+    bool used = prefix == BinaryConsts::FeatureUsed;
+
+    if (!disallowed && !required && !used) {
+      throwError("Unrecognized feature policy prefix");
+    }
+    if (required) {
+      std::cerr << "warning: required features in feature section are ignored";
     }
 
     Name name = getInlineString();
@@ -3214,35 +3220,46 @@ void WasmBinaryBuilder::readFeatures(size_t payloadLen) {
       throwError("ill-formed string extends beyond section");
     }
 
-    if (prefix != BinaryConsts::FeatureDisallowed) {
-      if (name == BinaryConsts::UserSections::AtomicsFeature) {
-        wasm.features.setAtomics();
-      } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
-        wasm.features.setBulkMemory();
-      } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
-        wasm.features.setExceptionHandling();
-      } else if (name == BinaryConsts::UserSections::MutableGlobalsFeature) {
-        wasm.features.setMutableGlobals();
-      } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
-        wasm.features.setTruncSat();
-      } else if (name == BinaryConsts::UserSections::SignExtFeature) {
-        wasm.features.setSignExt();
-      } else if (name == BinaryConsts::UserSections::SIMD128Feature) {
-        wasm.features.setSIMD();
-      } else if (name == BinaryConsts::UserSections::TailCallFeature) {
-        wasm.features.setTailCall();
-      } else if (name == BinaryConsts::UserSections::ReferenceTypesFeature) {
-        wasm.features.setReferenceTypes();
-      } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
-        wasm.features.setMultivalue();
-      } else if (name == BinaryConsts::UserSections::GCFeature) {
-        wasm.features.setGC();
-      } else if (name == BinaryConsts::UserSections::Memory64Feature) {
-        wasm.features.setMemory64();
-      } else if (name ==
-                 BinaryConsts::UserSections::TypedFunctionReferencesFeature) {
-        wasm.features.setTypedFunctionReferences();
-      }
+    FeatureSet feature;
+    if (name == BinaryConsts::UserSections::AtomicsFeature) {
+      feature = FeatureSet::Atomics;
+    } else if (name == BinaryConsts::UserSections::BulkMemoryFeature) {
+      feature = FeatureSet::BulkMemory;
+    } else if (name == BinaryConsts::UserSections::ExceptionHandlingFeature) {
+      feature = FeatureSet::ExceptionHandling;
+    } else if (name == BinaryConsts::UserSections::MutableGlobalsFeature) {
+      feature = FeatureSet::MutableGlobals;
+    } else if (name == BinaryConsts::UserSections::TruncSatFeature) {
+      feature = FeatureSet::TruncSat;
+    } else if (name == BinaryConsts::UserSections::SignExtFeature) {
+      feature = FeatureSet::SignExt;
+    } else if (name == BinaryConsts::UserSections::SIMD128Feature) {
+      feature = FeatureSet::SIMD;
+    } else if (name == BinaryConsts::UserSections::TailCallFeature) {
+      feature = FeatureSet::TailCall;
+    } else if (name == BinaryConsts::UserSections::ReferenceTypesFeature) {
+      feature = FeatureSet::ReferenceTypes;
+    } else if (name == BinaryConsts::UserSections::MultivalueFeature) {
+      feature = FeatureSet::Multivalue;
+    } else if (name == BinaryConsts::UserSections::GCFeature) {
+      feature = FeatureSet::GC;
+    } else if (name == BinaryConsts::UserSections::Memory64Feature) {
+      feature = FeatureSet::Memory64;
+    } else if (name ==
+               BinaryConsts::UserSections::TypedFunctionReferencesFeature) {
+      feature = FeatureSet::TypedFunctionReferences;
+    } else {
+      // Silently ignore unknown features (this may be and old binaryen running
+      // on a new wasm).
+    }
+
+    if (disallowed && wasm.features.has(feature)) {
+      std::cerr
+        << "warning: feature " << feature.toString()
+        << " was enabled by the user, but disallowed in the features section.";
+    }
+    if (required || used) {
+      wasm.features.enable(feature);
     }
   }
   if (pos != sectionPos + payloadLen) {
@@ -6008,8 +6025,9 @@ void WasmBinaryBuilder::visitSelect(Select* curr, uint8_t code) {
 void WasmBinaryBuilder::visitReturn(Return* curr) {
   BYN_TRACE("zz node: Return\n");
   requireFunctionContext("return");
-  if (currFunction->sig.results.isConcrete()) {
-    curr->value = popTypedExpression(currFunction->sig.results);
+  Type type = currFunction->getResults();
+  if (type.isConcrete()) {
+    curr->value = popTypedExpression(type);
   }
   curr->finalize();
 }

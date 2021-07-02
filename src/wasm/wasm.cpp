@@ -1087,14 +1087,14 @@ void RefAs::finalize() {
   }
 }
 
-size_t Function::getNumParams() { return sig.params.size(); }
+size_t Function::getNumParams() { return getParams().size(); }
 
 size_t Function::getNumVars() { return vars.size(); }
 
-size_t Function::getNumLocals() { return sig.params.size() + vars.size(); }
+size_t Function::getNumLocals() { return getParams().size() + vars.size(); }
 
 bool Function::isParam(Index index) {
-  size_t size = sig.params.size();
+  size_t size = getParams().size();
   assert(index < size + vars.size());
   return index < size;
 }
@@ -1141,12 +1141,12 @@ Index Function::getLocalIndex(Name name) {
   return iter->second;
 }
 
-Index Function::getVarIndexBase() { return sig.params.size(); }
+Index Function::getVarIndexBase() { return getParams().size(); }
 
 Type Function::getLocalType(Index index) {
-  auto numParams = sig.params.size();
+  auto numParams = getParams().size();
   if (index < numParams) {
-    return sig.params[index];
+    return getParams()[index];
   } else if (isVar(index)) {
     return vars[index - numParams];
   } else {

@@ -25,7 +25,7 @@
 
 namespace wasm {
 
-static std::string generateJSWrapper(Module& wasm) {
+inline std::string generateJSWrapper(Module& wasm) {
   std::string ret;
   ret += "if (typeof console === 'undefined') {\n"
          "  console = { log: print };\n"
@@ -96,7 +96,7 @@ static std::string generateJSWrapper(Module& wasm) {
     ret += "try {\n";
     ret += std::string("  console.log('[fuzz-exec] calling ") + exp->name.str +
            "');\n";
-    if (func->sig.results != Type::none) {
+    if (func->getResults() != Type::none) {
       ret += std::string("  console.log('[fuzz-exec] note result: ") +
              exp->name.str + " => ' + literal(";
     } else {
@@ -104,7 +104,7 @@ static std::string generateJSWrapper(Module& wasm) {
     }
     ret += std::string("instance.exports.") + exp->name.str + "(";
     bool first = true;
-    for (auto param : func->sig.params) {
+    for (auto param : func->getParams()) {
       // zeros in arguments TODO more?
       if (first) {
         first = false;
@@ -121,8 +121,8 @@ static std::string generateJSWrapper(Module& wasm) {
       }
     }
     ret += ")";
-    if (func->sig.results != Type::none) {
-      ret += ", '" + func->sig.results.toString() + "'))";
+    if (func->getResults() != Type::none) {
+      ret += ", '" + func->getResults().toString() + "'))";
       // TODO: getTempRet
     }
     ret += ";\n";

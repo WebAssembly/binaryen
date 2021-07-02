@@ -3,7 +3,13 @@
 ;; RUN:   | filecheck %s
 
 (module
+ ;; CHECK:      (type $struct (struct (field (mut i32))))
  (type $struct (struct (mut i32)))
+ ;; CHECK:      (type $B (struct (field (mut f64))))
+
+ ;; CHECK:      (type $func-return-i32 (func (result i32)))
+
+ ;; CHECK:      (type $empty (struct ))
  (type $empty (struct))
 
  ;; two incompatible struct types
@@ -12,6 +18,7 @@
 
  (type $func-return-i32 (func (result i32)))
 
+ ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
  ;; CHECK:      (func $test-fallthrough (result i32)
