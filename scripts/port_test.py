@@ -64,12 +64,18 @@ def port_test(args, test):
             for p in passes]
 
     run_line = (f';; RUN: foreach %s %t wasm-opt {" ".join(opts)} -S -o -'
-                ' | filecheck %s\n')
+                ' | filecheck %s')
+
+    notice = (f';; NOTE: This test was ported using port_test.py and could be'
+              ' cleaned up.')
 
     with open(test, 'r') as src_file:
-      with open(dest, 'w') as dest_file:
-          print(run_line, file=dest_file)
-          print(src_file.read(), file=dest_file, end='')
+        with open(dest, 'w') as dest_file:
+            print(notice, file=dest_file)
+            print('', file=dest_file)
+            print(run_line, file=dest_file)
+            print('', file=dest_file)
+            print(src_file.read(), file=dest_file, end='')
 
     update_script = os.path.join(script_dir, 'update_lit_checks.py')
     subprocess.run([sys.executable, update_script, '-f', '--all-items', dest])
