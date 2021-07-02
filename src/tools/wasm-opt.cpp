@@ -245,8 +245,6 @@ int main(int argc, const char* argv[]) {
     reader.setDWARF(options.passOptions.debugInfo &&
                     !willRemoveDebugInfo(options.passes));
     reader.setProfile(options.profile);
-    // Apply the features to allow the wasm to load itself properly.
-    options.applyFeatures(wasm);
     try {
       reader.read(inputFile, wasm, inputSourceMapFilename);
     } catch (ParseException& p) {

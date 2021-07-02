@@ -39,8 +39,6 @@ struct RoundTrip : public Pass {
     // Write, clear, and read the module
     WasmBinaryWriter(module, buffer).write();
     ModuleUtils::clearModule(*module);
-    // Apply the features to allow the wasm to load itself properly.
-    module->features = features;
     auto input = buffer.getAsChars();
     WasmBinaryBuilder parser(*module, features, input);
     parser.setDWARF(runner->options.debugInfo);
