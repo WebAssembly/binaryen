@@ -19,4 +19,4 @@ for tool_file in os.listdir(bin_dir):
 for tool in ('not', 'foreach'):
     tool_file = config.binaryen_src_root + '/scripts/' + tool + '.py'
     python = sys.executable.replace('\\', '/')
-    config.substitutions.append((tool, python + ' ' + tool_file))
+    config.substitutions.append((f' {tool} ', f' {python} {tool_file} '))

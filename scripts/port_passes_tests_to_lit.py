@@ -40,14 +40,6 @@ def port_test(args, test):
         warn('Skipping because only .wast files are supported')
         return
 
-    if 'translate-to-fuzz' in test or 'dwarf' in test:
-        warn('Skipping due to Windows issues')
-        return
-
-    if 'noprint' in test:
-        warn('Skipping due to nonstandard output')
-        return
-
     dest = os.path.join(test_dir, 'lit', 'passes', name)
     if not args.force and os.path.exists(dest):
         warn('Skipping because destination file already exist')
@@ -58,6 +50,15 @@ def port_test(args, test):
     if os.path.exists(passes_file):
         with open(passes_file) as f:
             joined_passes = f.read().strip()
+
+    if 'translate-to-fuzz' in joined_passes or 'dwarf' in joined_passes:
+        warn('Skipping due to Windows issues')
+        return
+
+    for bad in ['noprint', 'metrics', 'fuzz', 'print', 'emit']:
+        if bad in joined_passes:
+            warn('Skipping due to nonstandard output')
+            return
 
     passes = joined_passes.split('_')
     opts = [('--' + p if not p.startswith('O') and p != 'g' else '-' + p)
