@@ -275,12 +275,28 @@ def compare(x, y, context):
         ))
 
 
+# converts a possibly-signed integer to an unsigned integer
+def unsign(x, bits):
+    return x & ((1 << bits) - 1)
+
+
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
     # handle nan comparisons like -nan:0x7ffff0 vs NaN, ignoring the bits
     if 'nan' in x.lower() and 'nan' in y.lower():
         return True
+    # if one input is a pair, then it is in fact a 64-bit integer that is
+    # reported as two 32-bit chunks. convert such 'low high' pairs into a 64-bit
+    # integer for comparison to the other value
+    if ' ' in x or ' ' in y:
+        def to_64_bit(a):
+            if ' ' not in a:
+                return unsign(int(a), bits=64)
+            low, high = a.split(' ')
+            return unsign(int(low), 32) + (1 << 32) * unsign(int(high), 32)
+
+        return to_64_bit(x) == to_64_bit(y)
     # float() on the strings will handle many minor differences, like
     # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
     try:
@@ -370,25 +386,31 @@ def fix_spec_output(out):
 
 
 def run_vm(cmd):
-    # ignore some types of errors
-    known_issues = [
-        # can be caused by flatten, ssa, etc. passes
-        'local count too large',
-        # https://github.com/WebAssembly/binaryen/issues/3767
-        # note that this text is a little too broad, but the problem is rare
-        # enough that it's unlikely to hide an unrelated issue
-        'found br_if of type',
-        # all host limitations are arbitrary and may differ between VMs and also
-        # be affected by optimizations, so ignore them.
-        HOST_LIMIT_PREFIX,
-    ]
-    try:
-        return run(cmd)
-    except subprocess.CalledProcessError:
-        output = run_unchecked(cmd)
+    def filter_known_issues(output):
+        known_issues = [
+            # can be caused by flatten, ssa, etc. passes
+            'local count too large',
+            # https://github.com/WebAssembly/binaryen/issues/3767
+            # note that this text is a little too broad, but the problem is rare
+            # enough that it's unlikely to hide an unrelated issue
+            'found br_if of type',
+            # all host limitations are arbitrary and may differ between VMs and also
+            # be affected by optimizations, so ignore them.
+            HOST_LIMIT_PREFIX,
+        ]
         for issue in known_issues:
             if issue in output:
                 return IGNORE
+        return output
+
+    try:
+        # some known issues do not cause the entire process to fail
+        return filter_known_issues(run(cmd))
+    except subprocess.CalledProcessError:
+        # other known issues do make it fail, so re-run without checking for
+        # success and see if we should ignore it
+        if filter_known_issues(run_unchecked(cmd)) == IGNORE:
+            return IGNORE
         raise
 
 
@@ -977,6 +999,8 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
+    ["--heap2local"],
+    ["--remove-unused-names", "--heap2local"],
     ["--generate-stack-ir"],
     ["--licm"],
     ["--memory-packing"],
@@ -1049,6 +1073,14 @@ def randomize_opt_flags():
     # possibly converge. don't do this very often as it can be slow.
     if random.random() < 0.05:
         ret += ['--converge']
+    # possibly inline all the things as much as possible. inlining that much may
+    # be realistic in some cases (on GC benchmarks it is very helpful), but
+    # also, inlining so much allows other optimizations to kick in, which
+    # increases coverage
+    # (the specific number here doesn't matter, but it is far higher than the
+    # wasm limitation on function body size which is 128K)
+    if random.random() < 0.5:
+        ret += ['-fimfs=99999999']
     assert ret.count('--flatten') <= 1
     return ret
 

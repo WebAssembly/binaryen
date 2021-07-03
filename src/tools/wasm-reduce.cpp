@@ -483,7 +483,7 @@ struct Reducer
         auto* save = curr;
         Unreachable un;
         Nop nop;
-        bool useUnreachable = getFunction()->sig.results != Type::none;
+        bool useUnreachable = getFunction()->getResults() != Type::none;
         if (useUnreachable) {
           replaceCurrent(&un);
         } else {
@@ -977,7 +977,7 @@ struct Reducer
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {
-        auto funcSig = func->sig;
+        auto funcType = func->type;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
           if (!(child->type.isConcrete() || child->type == Type::none)) {
@@ -985,7 +985,7 @@ struct Reducer
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          func->sig.results = child->type;
+          func->type = Signature(funcType.getSignature().params, child->type);
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!
@@ -994,7 +994,7 @@ struct Reducer
             break;
           }
           // Undo.
-          func->sig = funcSig;
+          func->type = funcType;
           func->body = funcBody;
         }
       }
@@ -1359,13 +1359,19 @@ int main(int argc, const char* argv[]) {
     }
     lastPostPassesSize = newSize;
 
-    // if destructive reductions lead to useful proportionate pass reductions,
-    // keep going at the same factor, as pass reductions are far faster
+    // If destructive reductions lead to useful proportionate pass reductions,
+    // keep going at the same factor, as pass reductions are far faster.
     std::cerr << "|  pass progress: " << passProgress
               << ", last destructive: " << lastDestructiveReductions << '\n';
     if (passProgress >= 4 * lastDestructiveReductions) {
-      // don't change
       std::cerr << "|  progress is good, do not quickly decrease factor\n";
+      // While the amount of pass reductions is proportionately high, we do
+      // still want to reduce the factor by some amount. If we do not then there
+      // is a risk that both pass and destructive reductions are very low, and
+      // we get "stuck" cycling through them. In that case we simply need to do
+      // more destructive reductions to make real progress. For that reason,
+      // decrease the factor by some small percentage.
+      factor = std::max(1, (factor * 9) / 10);
     } else {
       if (factor > 10) {
         factor = (factor / 3) + 1;

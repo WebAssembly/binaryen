@@ -769,7 +769,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
           ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
         break;
       }
-      case ExternalKind::Event:
+      case ExternalKind::Tag:
       case ExternalKind::Invalid:
         Fatal() << "unsupported export type: " << export_->name << "\n";
     }
@@ -2250,6 +2250,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitArrayLen(ArrayLen* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayCopy(ArrayCopy* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

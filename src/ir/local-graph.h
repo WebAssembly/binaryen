@@ -48,10 +48,20 @@ struct LocalGraph {
                        // param)
   Locations locations; // where each get and set is (for easy replacing)
 
+  // Checks if two gets are equivalent, that is, definitely have the same
+  // value.
+  bool equivalent(LocalGet* a, LocalGet* b);
+
   // Optional: compute the influence graphs between sets and gets
   // (useful for algorithms that propagate changes).
 
-  void computeInfluences();
+  void computeSetInfluences();
+  void computeGetInfluences();
+
+  void computeInfluences() {
+    computeSetInfluences();
+    computeGetInfluences();
+  }
 
   // for each get, the sets whose values are influenced by that get
   std::unordered_map<LocalGet*, std::unordered_set<LocalSet*>> getInfluences;
@@ -84,6 +94,7 @@ struct LocalGraph {
   bool isSSA(Index x);
 
 private:
+  Function* func;
   std::set<Index> SSAIndexes;
 };
 

@@ -1858,7 +1858,7 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
   o << int8_t(BinaryConsts::Catch)
-    << U32LEB(parent.getEventIndex(curr->catchEvents[i]));
+    << U32LEB(parent.getTagIndex(curr->catchTags[i]));
 }
 
 void BinaryInstWriter::emitCatchAll(Try* curr) {
@@ -1879,7 +1879,7 @@ void BinaryInstWriter::emitDelegate(Try* curr) {
 }
 
 void BinaryInstWriter::visitThrow(Throw* curr) {
-  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getEventIndex(curr->event));
+  o << int8_t(BinaryConsts::Throw) << U32LEB(parent.getTagIndex(curr->tag));
 }
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
@@ -1954,17 +1954,32 @@ void BinaryInstWriter::visitBrOn(BrOn* curr) {
     case BrOnNull:
       o << int8_t(BinaryConsts::BrOnNull);
       break;
+    case BrOnNonNull:
+      o << int8_t(BinaryConsts::BrOnNonNull);
+      break;
     case BrOnCast:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCast);
+      break;
+    case BrOnCastFail:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnCastFail);
       break;
     case BrOnFunc:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnFunc);
       break;
+    case BrOnNonFunc:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonFunc);
+      break;
     case BrOnData:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnData);
       break;
+    case BrOnNonData:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonData);
+      break;
     case BrOnI31:
       o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnI31);
+      break;
+    case BrOnNonI31:
+      o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::BrOnNonI31);
       break;
     default:
       WASM_UNREACHABLE("invalid br_on_*");
@@ -1978,7 +1993,8 @@ void BinaryInstWriter::visitRttCanon(RttCanon* curr) {
 }
 
 void BinaryInstWriter::visitRttSub(RttSub* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RttSub);
+  o << int8_t(BinaryConsts::GCPrefix);
+  o << U32LEB(curr->fresh ? BinaryConsts::RttFreshSub : BinaryConsts::RttSub);
   parent.writeIndexedHeapType(curr->type.getRtt().heapType);
 }
 
@@ -2047,6 +2063,12 @@ void BinaryInstWriter::visitArraySet(ArraySet* curr) {
 void BinaryInstWriter::visitArrayLen(ArrayLen* curr) {
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayLen);
   parent.writeIndexedHeapType(curr->ref->type.getHeapType());
+}
+
+void BinaryInstWriter::visitArrayCopy(ArrayCopy* curr) {
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::ArrayCopy);
+  parent.writeIndexedHeapType(curr->destRef->type.getHeapType());
+  parent.writeIndexedHeapType(curr->srcRef->type.getHeapType());
 }
 
 void BinaryInstWriter::visitRefAs(RefAs* curr) {

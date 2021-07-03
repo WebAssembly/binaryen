@@ -88,11 +88,12 @@ template std::vector<char> wasm::read_file<>(const std::string&,
 
 wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
   : outfile(), out([this, filename, binary]() {
-      if (filename == "-") {
-        return std::cout.rdbuf();
-      }
+      // Ensure a single return at the very end, to avoid clang-tidy warnings
+      // about the types of different returns here.
       std::streambuf* buffer;
-      if (filename.size()) {
+      if (filename == "-" || filename.empty()) {
+        buffer = std::cout.rdbuf();
+      } else {
         BYN_TRACE("Opening '" << filename << "'\n");
         auto flags = std::ofstream::out | std::ofstream::trunc;
         if (binary == Flags::Binary) {
@@ -104,8 +105,6 @@ wasm::Output::Output(const std::string& filename, Flags::BinaryOption binary)
           exit(EXIT_FAILURE);
         }
         buffer = outfile.rdbuf();
-      } else {
-        buffer = std::cout.rdbuf();
       }
       return buffer;
     }()) {}

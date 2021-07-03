@@ -22,6 +22,7 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -32,7 +33,7 @@ namespace ModuleUtils {
 inline Function* copyFunction(Function* func, Module& out) {
   auto* ret = new Function();
   ret->name = func->name;
-  ret->sig = func->sig;
+  ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
@@ -62,12 +63,11 @@ inline Global* copyGlobal(Global* global, Module& out) {
   return ret;
 }
 
-inline Event* copyEvent(Event* event, Module& out) {
-  auto* ret = new Event();
-  ret->name = event->name;
-  ret->attribute = event->attribute;
-  ret->sig = event->sig;
-  out.addEvent(ret);
+inline Tag* copyTag(Tag* tag, Module& out) {
+  auto* ret = new Tag();
+  ret->name = tag->name;
+  ret->sig = tag->sig;
+  out.addTag(ret);
   return ret;
 }
 
@@ -119,8 +119,8 @@ inline void copyModule(const Module& in, Module& out) {
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
   }
-  for (auto& curr : in.events) {
-    copyEvent(curr.get(), out);
+  for (auto& curr : in.tags) {
+    copyTag(curr.get(), out);
   }
   for (auto& curr : in.elementSegments) {
     copyElementSegment(curr.get(), out);
@@ -277,16 +277,16 @@ template<typename T> inline void iterDefinedFunctions(Module& wasm, T visitor) {
   }
 }
 
-template<typename T> inline void iterImportedEvents(Module& wasm, T visitor) {
-  for (auto& import : wasm.events) {
+template<typename T> inline void iterImportedTags(Module& wasm, T visitor) {
+  for (auto& import : wasm.tags) {
     if (import->imported()) {
       visitor(import.get());
     }
   }
 }
 
-template<typename T> inline void iterDefinedEvents(Module& wasm, T visitor) {
-  for (auto& import : wasm.events) {
+template<typename T> inline void iterDefinedTags(Module& wasm, T visitor) {
+  for (auto& import : wasm.tags) {
     if (!import->imported()) {
       visitor(import.get());
     }
@@ -298,7 +298,7 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
   iterImportedTables(wasm, visitor);
   iterImportedGlobals(wasm, visitor);
   iterImportedFunctions(wasm, visitor);
-  iterImportedEvents(wasm, visitor);
+  iterImportedTags(wasm, visitor);
 }
 
 // Helper class for performing an operation on all the functions in the module,
@@ -306,10 +306,12 @@ template<typename T> inline void iterImports(Module& wasm, T visitor) {
 // some computation that the operation performs.
 // The operation performend should not modify the wasm module in any way.
 // TODO: enforce this
-template<typename T> struct ParallelFunctionAnalysis {
+template<typename K, typename V> using DefaultMap = std::map<K, V>;
+template<typename T, template<typename, typename> class MapT = DefaultMap>
+struct ParallelFunctionAnalysis {
   Module& wasm;
 
-  typedef std::map<Function*, T> Map;
+  typedef MapT<Function*, T> Map;
   Map map;
 
   typedef std::function<void(Function*, T&)> Func;
@@ -467,14 +469,15 @@ template<typename T> struct CallGraphPropertyAnalysis {
 inline void collectHeapTypes(Module& wasm,
                              std::vector<HeapType>& types,
                              std::unordered_map<HeapType, Index>& typeIndices) {
-  struct Counts : public std::unordered_map<HeapType, size_t> {
-    bool isRelevant(Type type) {
-      return (type.isRef() || type.isRtt()) && !type.getHeapType().isBasic();
+  struct Counts : public InsertOrderedMap<HeapType, size_t> {
+    void note(HeapType type) {
+      if (!type.isBasic()) {
+        (*this)[type]++;
+      }
     }
-    void note(HeapType type) { (*this)[type]++; }
-    void maybeNote(Type type) {
-      if (isRelevant(type)) {
-        note(type.getHeapType());
+    void note(Type type) {
+      for (HeapType ht : type.getHeapTypeChildren()) {
+        note(ht);
       }
     }
   };
@@ -489,19 +492,19 @@ inline void collectHeapTypes(Module& wasm,
       if (auto* call = curr->dynCast<CallIndirect>()) {
         counts.note(call->sig);
       } else if (curr->is<RefNull>()) {
-        counts.maybeNote(curr->type);
+        counts.note(curr->type);
       } else if (curr->is<RttCanon>() || curr->is<RttSub>()) {
         counts.note(curr->type.getRtt().heapType);
       } else if (auto* get = curr->dynCast<StructGet>()) {
-        counts.maybeNote(get->ref->type);
+        counts.note(get->ref->type);
       } else if (auto* set = curr->dynCast<StructSet>()) {
-        counts.maybeNote(set->ref->type);
+        counts.note(set->ref->type);
       } else if (Properties::isControlFlowStructure(curr)) {
         if (curr->type.isTuple()) {
           // TODO: Allow control flow to have input types as well
           counts.note(Signature(Type::none, curr->type));
         } else {
-          counts.maybeNote(curr->type);
+          counts.note(curr->type);
         }
       }
     }
@@ -510,24 +513,22 @@ inline void collectHeapTypes(Module& wasm,
   // Collect module-level info.
   Counts counts;
   CodeScanner(counts).walkModuleCode(&wasm);
-  for (auto& curr : wasm.events) {
+  for (auto& curr : wasm.tags) {
     counts.note(curr->sig);
   }
   for (auto& curr : wasm.tables) {
-    counts.maybeNote(curr->type);
+    counts.note(curr->type);
   }
   for (auto& curr : wasm.elementSegments) {
-    counts.maybeNote(curr->type);
+    counts.note(curr->type);
   }
 
   // Collect info from functions in parallel.
-  ModuleUtils::ParallelFunctionAnalysis<Counts> analysis(
+  ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
     wasm, [&](Function* func, Counts& counts) {
-      counts.note(func->sig);
+      counts.note(func->type);
       for (auto type : func->vars) {
-        for (auto t : type) {
-          counts.maybeNote(t);
-        }
+        counts.note(type);
       }
       if (!func->imported()) {
         CodeScanner(counts).walk(func->body);
@@ -535,66 +536,48 @@ inline void collectHeapTypes(Module& wasm,
     });
 
   // Combine the function info with the module info.
-  for (auto& pair : analysis.map) {
-    Counts& functionCounts = pair.second;
-    for (auto& innerPair : functionCounts) {
+  for (const auto& pair : analysis.map) {
+    const Counts& functionCounts = pair.second;
+    for (const auto& innerPair : functionCounts) {
       counts[innerPair.first] += innerPair.second;
     }
   }
 
-  // A generic utility to traverse the child types of a type.
-  // TODO: work with tlively to refactor this to a shared place
-  auto walkRelevantChildren = [&](HeapType type, auto callback) {
-    auto callIfRelevant = [&](Type type) {
-      if (counts.isRelevant(type)) {
-        callback(type.getHeapType());
-      }
-    };
-    if (type.isSignature()) {
-      auto sig = type.getSignature();
-      for (Type type : {sig.params, sig.results}) {
-        for (auto element : type) {
-          callIfRelevant(element);
-        }
-      }
-    } else if (type.isArray()) {
-      callIfRelevant(type.getArray().element.type);
-    } else if (type.isStruct()) {
-      auto fields = type.getStruct().fields;
-      for (auto field : fields) {
-        callIfRelevant(field.type);
-      }
-    }
-  };
   // Recursively traverse each reference type, which may have a child type that
   // is itself a reference type. This reflects an appearance in the binary
   // format that is in the type section itself.
   // As we do this we may find more and more types, as nested children of
   // previous ones. Each such type will appear in the type section once, so
   // we just need to visit it once.
-  std::unordered_set<HeapType> newTypes;
+  InsertOrderedSet<HeapType> newTypes;
   for (auto& pair : counts) {
     newTypes.insert(pair.first);
   }
   while (!newTypes.empty()) {
     auto iter = newTypes.begin();
-    auto type = *iter;
+    auto ht = *iter;
     newTypes.erase(iter);
-    walkRelevantChildren(type, [&](HeapType type) {
-      if (!counts.count(type)) {
-        newTypes.insert(type);
+    for (HeapType child : ht.getHeapTypeChildren()) {
+      if (!child.isBasic()) {
+        if (!counts.count(child)) {
+          newTypes.insert(child);
+        }
+        counts.note(child);
       }
-      counts.note(type);
-    });
+    }
+    HeapType super;
+    if (ht.getSuperType(super)) {
+      if (!counts.count(super)) {
+        newTypes.insert(super);
+      }
+      counts.note(super);
+    }
   }
 
-  // Sort by frequency and then simplicity.
+  // Sort by frequency and then original insertion order.
   std::vector<std::pair<HeapType, size_t>> sorted(counts.begin(), counts.end());
   std::stable_sort(sorted.begin(), sorted.end(), [&](auto a, auto b) {
-    if (a.second != b.second) {
-      return a.second > b.second;
-    }
-    return a.first < b.first;
+    return a.second > b.second;
   });
   for (Index i = 0; i < sorted.size(); ++i) {
     typeIndices[sorted[i].first] = i;

@@ -27,7 +27,7 @@
 namespace wasm {
 
 // Mangle a name in (hopefully) exactly the same way wasm2c does.
-static std::string wasm2cMangle(Name name, Signature sig) {
+inline std::string wasm2cMangle(Name name, Signature sig) {
   const char escapePrefix = 'Z';
   std::string mangled = "Z_";
   const char* original = name.str;
@@ -78,7 +78,7 @@ static std::string wasm2cMangle(Name name, Signature sig) {
   return mangled;
 }
 
-static std::string generateWasm2CWrapper(Module& wasm) {
+inline std::string generateWasm2CWrapper(Module& wasm) {
   // First, emit implementations of the wasm's imports so that the wasm2c code
   // can call them. The names use wasm2c's name mangling.
   std::string ret = R"(
@@ -169,7 +169,7 @@ int main(int argc, char** argv) {
 
     ret += std::string("          puts(\"[fuzz-exec] calling ") +
            exp->name.str + "\");\n";
-    auto result = func->sig.results;
+    auto result = func->getResults();
 
     // Emit the call itself.
     ret += "            ";
@@ -199,13 +199,13 @@ int main(int argc, char** argv) {
     ret += "(*";
 
     // Emit the callee's name with wasm2c name mangling.
-    ret += wasm2cMangle(exp->name, func->sig);
+    ret += wasm2cMangle(exp->name, func->getSig());
 
     ret += ")(";
 
     // Emit the parameters (all 0s, like the other wrappers).
     bool first = true;
-    for (const auto& param : func->sig.params) {
+    for (const auto& param : func->getParams()) {
       WASM_UNUSED(param);
       if (!first) {
         ret += ", ";

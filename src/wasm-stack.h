@@ -20,6 +20,7 @@
 #include "ir/branch-utils.h"
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "wasm-binary.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -104,7 +105,7 @@ public:
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
   void emitResultType(Type type);
   void emitIfElse(If* curr);
@@ -141,7 +142,7 @@ private:
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract.
-  std::map<Type, Index> scratchLocals;
+  InsertOrderedMap<Type, Index> scratchLocals;
   void countScratchLocals();
   void setScratchLocals();
 };
@@ -344,7 +345,7 @@ void BinaryenIRWriter<SubType>::visitLoop(Loop* curr) {
 template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   emit(curr);
   visitPossibleBlockContents(curr->body);
-  for (Index i = 0; i < curr->catchEvents.size(); i++) {
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
     emitCatch(curr, i);
     visitPossibleBlockContents(curr->catchBodies[i]);
   }

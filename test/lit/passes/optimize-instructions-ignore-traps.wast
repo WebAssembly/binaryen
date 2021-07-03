@@ -3,7 +3,9 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
   (type $0 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (memory $0 0)
   (memory $0 0)
   ;; CHECK:      (func $conditionals (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (local $2 i32)

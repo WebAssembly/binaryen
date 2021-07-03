@@ -277,16 +277,16 @@ def run_validator_tests():
     support.run_command(cmd, expected_status=1)
 
 
-def run_gcc_tests():
-    print('\n[ checking native gcc testcases...]\n')
+def run_example_tests():
+    print('\n[ checking native example testcases...]\n')
     if not shared.NATIVECC or not shared.NATIVEXX:
         shared.fail_with_error('Native compiler (e.g. gcc/g++) was not found in PATH!')
         return
     # windows + gcc will need some work
-    if shared.skip_if_on_windows('gcc'):
+    if shared.skip_if_on_windows('example'):
         return
 
-    for t in sorted(os.listdir(shared.get_test_dir('example'))):
+    for t in shared.get_tests(shared.get_test_dir('example')):
         output_file = 'example'
         cmd = ['-I' + os.path.join(shared.options.binaryen_root, 't'), '-g', '-pthread', '-o', output_file]
         if not t.endswith(('.c', '.cpp')):
@@ -331,15 +331,18 @@ def run_unittest():
 
 
 def run_lit():
-    lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
-    lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
-    # lit expects to be run as its own executable
-    cmd = [sys.executable, lit_script, lit_tests, '-vv']
-    result = subprocess.run(cmd)
-    if result.returncode != 0:
-        shared.num_failures += 1
-    if shared.options.abort_on_first_failure and shared.num_failures:
-        raise Exception("lit test failed")
+    def run():
+        lit_script = os.path.join(shared.options.binaryen_bin, 'binaryen-lit')
+        lit_tests = os.path.join(shared.options.binaryen_root, 'test', 'lit')
+        # lit expects to be run as its own executable
+        cmd = [sys.executable, lit_script, lit_tests, '-vv']
+        result = subprocess.run(cmd)
+        if result.returncode != 0:
+            shared.num_failures += 1
+        if shared.options.abort_on_first_failure and shared.num_failures:
+            raise Exception("lit test failed")
+
+    shared.with_pass_debug(run)
 
 
 TEST_SUITES = OrderedDict([
@@ -355,7 +358,7 @@ TEST_SUITES = OrderedDict([
     ('lld', lld.test_wasm_emscripten_finalize),
     ('wasm2js', wasm2js.test_wasm2js),
     ('validator', run_validator_tests),
-    ('gcc', run_gcc_tests),
+    ('example', run_example_tests),
     ('unit', run_unittest),
     ('binaryenjs', binaryenjs.test_binaryen_js),
     ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),

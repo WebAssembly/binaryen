@@ -405,7 +405,7 @@ struct DAE : public Pass {
     // once to remove a param, once to drop the return value).
     if (changed.empty()) {
       for (auto& func : module->functions) {
-        if (func->sig.results == Type::none) {
+        if (func->getResults() == Type::none) {
           continue;
         }
         auto name = func->name;
@@ -451,10 +451,11 @@ private:
     // Remove the parameter from the function. We must add a new local
     // for uses of the parameter, but cannot make it use the same index
     // (in general).
-    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
+    auto paramsType = func->getParams();
+    std::vector<Type> params(paramsType.begin(), paramsType.end());
     auto type = params[i];
     params.erase(params.begin() + i);
-    func->sig.params = Type(params);
+    func->setParams(Type(params));
     Index newIndex = Builder::addVar(func, type);
     // Update local operations.
     struct LocalUpdater : public PostWalker<LocalUpdater> {
@@ -482,7 +483,7 @@ private:
 
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
-    func->sig.results = Type::none;
+    func->setResults(Type::none);
     Builder builder(*module);
     // Remove any return values.
     struct ReturnUpdater : public PostWalker<ReturnUpdater> {

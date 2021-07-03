@@ -1064,6 +1064,11 @@ struct OptimizeInstructions
 
   void visitArrayLen(ArrayLen* curr) { skipNonNullCast(curr->ref); }
 
+  void visitArrayCopy(ArrayCopy* curr) {
+    skipNonNullCast(curr->destRef);
+    skipNonNullCast(curr->srcRef);
+  }
+
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -2810,6 +2815,7 @@ private:
   // Optimize an if-else or a select, something with a condition and two
   // arms with outputs.
   template<typename T> void optimizeTernary(T* curr) {
+    using namespace Abstract;
     using namespace Match;
     Builder builder(*getModule());
 
@@ -2829,32 +2835,43 @@ private:
     //      (Y)
     //    )
     //  )
-    if (curr->type != Type::unreachable) {
+    //
+    // Ignore unreachable code here; leave that for DCE.
+    if (curr->type != Type::unreachable &&
+        curr->ifTrue->type != Type::unreachable &&
+        curr->ifFalse->type != Type::unreachable) {
       Unary* un;
       Expression* x;
       Const* c;
       auto check = [&](Expression* a, Expression* b) {
-        if (matches(a, unary(&un, EqZInt32, any(&x))) && matches(b, ival(&c))) {
-          auto value = c->value.geti32();
+        if (matches(a, unary(&un, EqZ, any(&x))) && matches(b, ival(&c))) {
+          auto value = c->value.getInteger();
           return value == 0 || value == 1;
         }
         return false;
       };
       if (check(curr->ifTrue, curr->ifFalse) ||
           check(curr->ifFalse, curr->ifTrue)) {
+        // The new type of curr will be that of the value of the unary, as after
+        // we move the unary out, its value is curr's direct child.
+        auto newType = un->value->type;
         auto updateArm = [&](Expression* arm) -> Expression* {
           if (arm == un) {
             // This is the arm that had the eqz, which we need to remove.
             return un->value;
           } else {
             // This is the arm with the constant, which we need to flip.
-            c->value = Literal(int32_t(1 - c->value.geti32()));
+            // Note that we also need to set the type to match the other arm.
+            c->value =
+              Literal::makeFromInt32(1 - c->value.getInteger(), newType);
+            c->type = newType;
             return c;
           }
         };
         curr->ifTrue = updateArm(curr->ifTrue);
         curr->ifFalse = updateArm(curr->ifFalse);
         un->value = curr;
+        curr->finalize(newType);
         return replaceCurrent(un);
       }
     }
@@ -2886,9 +2903,10 @@ private:
           // TODO: consider the case with more than one child.
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
-            ChildIterator ifFalseChildren(curr->ifFalse);
             // ifTrue and ifFalse's children will become the direct children of
-            // curr, and so there must be an LUB for curr to have a proper type.
+            // curr, and so there must be an LUB for curr to have a proper new
+            // type after the transformation.
+            //
             // An example where that does not happen is this:
             //
             //  (if
@@ -2896,10 +2914,35 @@ private:
             //    (drop (i32.const 1))
             //    (drop (f64.const 2.0))
             //  )
+            ChildIterator ifFalseChildren(curr->ifFalse);
             auto* ifTrueChild = *ifTrueChildren.begin();
             auto* ifFalseChild = *ifFalseChildren.begin();
             bool validTypes =
               Type::hasLeastUpperBound(ifTrueChild->type, ifFalseChild->type);
+
+            // In addition, after we move code outside of curr then we need to
+            // not change unreachability - if we did, we'd need to propagate
+            // that further, and we leave such work to DCE and Vacuum anyhow.
+            // This can happen in something like this for example, where the
+            // outer type changes from i32 to unreachable if we move the
+            // returns outside:
+            //
+            //  (if (result i32)
+            //    (local.get $x)
+            //    (return
+            //      (local.get $y)
+            //    )
+            //    (return
+            //      (local.get $z)
+            //    )
+            //  )
+            assert(curr->ifTrue->type == curr->ifFalse->type);
+            auto newOuterType = curr->ifTrue->type;
+            if ((newOuterType == Type::unreachable) !=
+                (curr->type == Type::unreachable)) {
+              validTypes = false;
+            }
+
             // If the expression we are about to move outside has side effects,
             // then we cannot do so in general with a select: we'd be reducing
             // the amount of the effects as well as moving them. For an if,
@@ -2910,6 +2953,7 @@ private:
                                                        getModule()->features,
                                                        curr->ifTrue)
                                    .hasSideEffects();
+
             if (validTypes && validEffects) {
               // Replace ifTrue with its child.
               curr->ifTrue = ifTrueChild;

@@ -153,6 +153,7 @@ function test_ids() {
   console.log("SIMDTernaryId: " + binaryen.SIMDTernaryId);
   console.log("SIMDShiftId: " + binaryen.SIMDShiftId);
   console.log("SIMDLoadId: " + binaryen.SIMDLoadId);
+  console.log("SIMDLoadStoreLaneId: " + binaryen.SIMDLoadStoreLaneId);
   console.log("MemoryInitId: " + binaryen.MemoryInitId);
   console.log("DataDropId: " + binaryen.DataDropId);
   console.log("MemoryCopyId: " + binaryen.MemoryCopyId);
@@ -190,8 +191,8 @@ function test_core() {
 
   module = new binaryen.Module();
 
-  // Create an event
-  var event_ = module.addEvent("a-event", 0, binaryen.i32, binaryen.none);
+  // Create a tag
+  var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
 
   // Literals and consts
 
@@ -592,8 +593,8 @@ function test_core() {
     // Exception handling
     module.try(
       '',
-      module.throw("a-event", [module.i32.const(0)]),
-      ["a-event"],
+      module.throw("a-tag", [module.i32.const(0)]),
+      ["a-tag"],
       [module.drop(module.i32.pop())],
       ''
     ),
@@ -701,13 +702,13 @@ function test_core() {
   module.addFunctionImport("an-imported", "module", "base", iF, binaryen.f32);
   module.addGlobalImport("a-global-imp", "module", "base", binaryen.i32, false);
   module.addGlobalImport("a-mut-global-imp", "module", "base", binaryen.i32, true);
-  module.addEventImport("a-event-imp", "module", "base", 0, binaryen.i32, binaryen.none);
+  module.addTagImport("a-tag-imp", "module", "base", binaryen.i32, binaryen.none);
 
   // Exports
 
   module.addFunctionExport("kitchen()sinker", "kitchen_sinker");
   module.addGlobalExport("a-global", "a-global-exp");
-  module.addEventExport("a-event", "a-event-exp");
+  module.addTagExport("a-tag", "a-tag-exp");
 
   // Tables
   module.addTable("t1", 0, 2);
@@ -972,7 +973,7 @@ function test_binaries() {
     var adder = module.addFunction("adder", ii, binaryen.i32, [], add);
     var initExpr = module.i32.const(3);
     var global = module.addGlobal("a-global", binaryen.i32, false, initExpr)
-    var event_ = module.addEvent("a-event", 0, binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none);
+    var tag = module.addTag("a-tag", binaryen.createType([binaryen.i32, binaryen.i32]), binaryen.none);
     binaryen.setDebugInfo(true); // include names section
     buffer = module.emitBinary();
     binaryen.setDebugInfo(false);
@@ -1037,7 +1038,7 @@ function test_parsing() {
   var adder = module.addFunction("adder", ii, binaryen.i32, [], add);
   var initExpr = module.i32.const(3);
   var global = module.addGlobal("a-global", binaryen.i32, false, initExpr)
-  var event_ = module.addEvent("a-event", 0, binaryen.i32, binaryen.none);
+  var tag = module.addTag("a-tag", binaryen.i32, binaryen.none);
   text = module.emitText();
   module.dispose();
   module = null;

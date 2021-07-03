@@ -316,9 +316,8 @@ void test_core() {
     BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
   BinaryenExpressionRef i31refExpr = BinaryenI31New(module, makeInt32(module, 1));
 
-  // Events
-  BinaryenAddEvent(
-    module, "a-event", 0, BinaryenTypeInt32(), BinaryenTypeNone());
+  // Tags
+  BinaryenAddTag(module, "a-tag", BinaryenTypeInt32(), BinaryenTypeNone());
 
   BinaryenAddTable(module, "tab", 0, 100);
 
@@ -326,21 +325,21 @@ void test_core() {
 
   // (try
   //   (do
-  //     (throw $a-event (i32.const 0))
+  //     (throw $a-tag (i32.const 0))
   //   )
-  //   (catch $a-event
+  //   (catch $a-tag
   //     (drop (i32 pop))
   //   )
   //   (catch_all)
   // )
   BinaryenExpressionRef tryBody = BinaryenThrow(
-    module, "a-event", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1);
+    module, "a-tag", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1);
   BinaryenExpressionRef catchBody =
     BinaryenDrop(module, BinaryenPop(module, BinaryenTypeInt32()));
   BinaryenExpressionRef catchAllBody = BinaryenNop(module);
-  const char* catchEvents[] = {"a-event"};
+  const char* catchTags[] = {"a-tag"};
   BinaryenExpressionRef catchBodies[] = {catchBody, catchAllBody};
-  const char* emptyCatchEvents[] = {};
+  const char* emptyCatchTags[] = {};
   BinaryenExpressionRef emptyCatchBodies[] = {};
   BinaryenExpressionRef nopCatchBody[] = {BinaryenNop(module)};
 
@@ -829,12 +828,12 @@ void test_core() {
                   BinaryenRefAsI31(),
                   BinaryenRefNull(module, BinaryenTypeAnyref())),
     // Exception handling
-    BinaryenTry(module, NULL, tryBody, catchEvents, 1, catchBodies, 2, NULL),
+    BinaryenTry(module, NULL, tryBody, catchTags, 1, catchBodies, 2, NULL),
     // (try $try_outer
     //   (do
     //     (try
     //       (do
-    //         (throw $a-event (i32.const 0))
+    //         (throw $a-tag (i32.const 0))
     //       )
     //       (delegate $try_outer)
     //     )
@@ -846,12 +845,12 @@ void test_core() {
                 BinaryenTry(module,
                             NULL,
                             tryBody,
-                            emptyCatchEvents,
+                            emptyCatchTags,
                             0,
                             emptyCatchBodies,
                             0,
                             "try_outer"),
-                emptyCatchEvents,
+                emptyCatchTags,
                 0,
                 nopCatchBody,
                 1,

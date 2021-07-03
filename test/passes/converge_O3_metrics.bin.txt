@@ -1,5 +1,4 @@
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 1       
@@ -7,6 +6,7 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 553     
  [vars]         : 2       
  Binary         : 12      
@@ -27,9 +27,9 @@ total
 (module
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 2948) "\03")
  (data (i32.const 6828) "\04")
@@ -229,7 +229,6 @@ total
  )
 )
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 0             -1
@@ -237,6 +236,7 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 549           -4
  [vars]         : 2       
  Binary         : 12      
@@ -256,9 +256,9 @@ total
 (module
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 2948) "\03")
  (data (i32.const 6828) "\04")
@@ -452,7 +452,6 @@ total
  )
 )
 total
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 6       
  [globals]      : 0       
@@ -460,6 +459,7 @@ total
  [memory-data]  : 28      
  [table-data]   : 429     
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 549     
  [vars]         : 2       
  Binary         : 12      
@@ -479,9 +479,9 @@ total
 (module
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32 i32 i32 i32) (result i32)))
+ (type $i32_=>_i32 (func (param i32) (result i32)))
+ (type $none_=>_i32 (func (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (data (i32.const 2948) "\03")
  (data (i32.const 6828) "\04")

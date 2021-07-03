@@ -501,6 +501,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
   }
   Index visitMemoryCopy(MemoryCopy* curr) {
+    // TODO when the size is a constant, estimate the time based on that
     return 6 + visit(curr->dest) + visit(curr->source) + visit(curr->size);
   }
   Index visitMemoryFill(MemoryFill* curr) {
@@ -610,6 +611,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   }
   Index visitArrayLen(ArrayLen* curr) {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
+  }
+  Index visitArrayCopy(ArrayCopy* curr) {
+    // Similar to MemoryCopy.
+    return 6 + visit(curr->destRef) + visit(curr->destIndex) +
+           visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
   }
   Index visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
 

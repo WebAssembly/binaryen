@@ -1558,7 +1558,7 @@
 )
 
 (module
-  (event $e (attr 0) (param i32))
+  (tag $e (param i32))
   (func $foo)
 
   ;; 'nop' within 'block' of `throw' can be hoisted

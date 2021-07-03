@@ -299,6 +299,7 @@
 #include "cfg/liveness-traversal.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
+#include "ir/linear-execution.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
@@ -380,8 +381,8 @@ public:
   }
 
 private:
-  std::map<Type, Name> map;
-  std::map<Name, Type> rev;
+  std::unordered_map<Type, Name> map;
+  std::unordered_map<Name, Type> rev;
 
   // Collect the types returned from all calls for which call support globals
   // may need to be generated.
@@ -861,7 +862,7 @@ struct AsyncifyFlow : public Pass {
                          State::Rewinding), // TODO: such checks can be !normal
                        makeCallIndexPop()),
        process(func->body)});
-    if (func->sig.results != Type::none) {
+    if (func->getResults() != Type::none) {
       // Rewriting control flow may alter things; make sure the function ends in
       // something valid (which the optimizer can remove later).
       block->list.push_back(builder->makeUnreachable());
@@ -1203,7 +1204,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     walk(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
-    if (func->sig.results == Type::none) {
+    if (func->getResults() == Type::none) {
       // The function may have ended without a return; ensure one.
       barrier = builder->makeReturn();
     } else {
@@ -1221,12 +1222,12 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
                             builder->makeSequence(func->body, barrier))),
        makeCallIndexPush(unwindIndex),
        makeLocalSaving()});
-    if (func->sig.results != Type::none) {
+    if (func->getResults() != Type::none) {
       // If we unwind, we must still "return" a value, even if it will be
       // ignored on the outside.
       newBody->list.push_back(
-        LiteralUtils::makeZero(func->sig.results, *getModule()));
-      newBody->finalize(func->sig.results);
+        LiteralUtils::makeZero(func->getResults(), *getModule()));
+      newBody->finalize(func->getResults());
     }
     func->body = newBody;
     // Making things like returns conditional may alter types.
@@ -1237,7 +1238,7 @@ private:
   std::unique_ptr<AsyncifyBuilder> builder;
 
   Index rewindIndex;
-  std::map<Type, Index> fakeCallLocals;
+  std::unordered_map<Type, Index> fakeCallLocals;
   std::set<Index> relevantLiveLocals;
 
   void findRelevantLiveLocals(Function* func) {

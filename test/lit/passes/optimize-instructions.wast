@@ -3,6 +3,7 @@
 
 (module
   (memory 0)
+  ;; CHECK:      (type $0 (func (param i32 i64)))
   (type $0 (func (param i32 i64)))
   ;; CHECK:      (func $and-and (param $i1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.and
@@ -11868,6 +11869,50 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-i64-0 (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (if (result i64)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i64.const 1)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-i64-0 (param $x i32) (param $y i64)
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i32.const 0)
+        (i64.eqz
+          (local.get $y)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-i64-1 (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.eqz
+  ;; CHECK-NEXT:    (if (result i64)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-i64-1 (param $x i32) (param $y i64)
+    (drop
+      (if (result i32)
+        (local.get $x)
+        (i64.eqz
+          (local.get $y)
+        )
+        (i32.const 1)
+      )
+    )
+  )
   ;; CHECK:      (func $ternary-no (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
@@ -11887,6 +11932,46 @@
           (local.get $y)
         )
         (local.get $x)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-no-unreachable-1 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no-unreachable-1 (param $x i32) (result i32)
+    (if (result i32)
+      (local.get $x)
+      ;; one arm is an eqz, the other is 0 or 1, so we can put an eqz on the
+      ;; outside in theory, but we'd need to be careful with the unreachable
+      ;; type here. ignore this case, as DCE is the proper optimization anyhow.
+      (i32.eqz
+        (unreachable)
+      )
+      (i32.const 0)
+    )
+  )
+  ;; CHECK:      (func $ternary-no-unreachable-2 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-no-unreachable-2 (param $x i32) (result i32)
+    (if (result i32)
+      (local.get $x)
+      ;; as before, but flipped
+      (i32.const 0)
+      (i32.eqz
+        (unreachable)
       )
     )
   )
@@ -12180,6 +12265,33 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms-return-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-return-select (param $x i32) (param $y i32) (param $z i32) (result i32)
+    (block $block
+      ;; we cannot optimize a select currently as the return has side effects
+      (select
+        (return
+          (local.get $x)
+        )
+        (return
+          (local.get $y)
+        )
+        (local.get $z)
+      )
+    )
+  )
   ;; CHECK:      (func $send-i32 (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -12201,6 +12313,29 @@
       )
       (call $send-i32
         (local.get $y)
+      )
+    )
+  )
+  ;; CHECK:      (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-dont-change-to-unreachable (param $x i32) (param $y i32) (param $z i32) (result i32)
+    ;; if we move the returns outside, we'd become unreachable; avoid that.
+    (if (result i32)
+      (local.get $x)
+      (return
+        (local.get $y)
+      )
+      (return
+        (local.get $z)
       )
     )
   )

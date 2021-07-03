@@ -82,6 +82,7 @@ function initializeConstants() {
     'SIMDTernary',
     'SIMDShift',
     'SIMDLoad',
+    'SIMDLoadStoreLane',
     'MemoryInit',
     'DataDrop',
     'MemoryCopy',
@@ -121,7 +122,7 @@ function initializeConstants() {
     'Table',
     'Memory',
     'Global',
-    'Event'
+    'Tag'
   ].forEach(name => {
     Module['ExternalKinds'][name] = Module['External' + name] = Module['_BinaryenExternal' + name]();
   });
@@ -2296,12 +2297,12 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['try'] = function(name, body, catchEvents, catchBodies, delegateTarget) {
+  self['try'] = function(name, body, catchTags, catchBodies, delegateTarget) {
     return preserveStack(() =>
-      Module['_BinaryenTry'](module, name ? strToStack(name) : 0, body, i32sToStack(catchEvents.map(strToStack)), catchEvents.length, i32sToStack(catchBodies), catchBodies.length, delegateTarget ? strToStack(delegateTarget) : 0));
+      Module['_BinaryenTry'](module, name ? strToStack(name) : 0, body, i32sToStack(catchTags.map(strToStack)), catchTags.length, i32sToStack(catchBodies), catchBodies.length, delegateTarget ? strToStack(delegateTarget) : 0));
   };
-  self['throw'] = function(event_, operands) {
-    return preserveStack(() => Module['_BinaryenThrow'](module, strToStack(event_), i32sToStack(operands), operands.length));
+  self['throw'] = function(tag, operands) {
+    return preserveStack(() => Module['_BinaryenThrow'](module, strToStack(tag), i32sToStack(operands), operands.length));
   };
   self['rethrow'] = function(target) {
     return Module['_BinaryenRethrow'](module, strToStack(target));
@@ -2395,14 +2396,14 @@ function wrapModule(module, self = {}) {
   self['removeElementSegment'] = function(name) {
     return preserveStack(() => Module['_BinaryenRemoveElementSegment'](module, strToStack(name)));
   };
-  self['addEvent'] = function(name, attribute, params, results) {
-    return preserveStack(() => Module['_BinaryenAddEvent'](module, strToStack(name), attribute, params, results));
+  self['addTag'] = function(name, params, results) {
+    return preserveStack(() => Module['_BinaryenAddTag'](module, strToStack(name), params, results));
   };
-  self['getEvent'] = function(name) {
-    return preserveStack(() => Module['_BinaryenGetEvent'](module, strToStack(name)));
+  self['getTag'] = function(name) {
+    return preserveStack(() => Module['_BinaryenGetTag'](module, strToStack(name)));
   };
-  self['removeEvent'] = function(name) {
-    return preserveStack(() => Module['_BinaryenRemoveEvent'](module, strToStack(name)));
+  self['removeTag'] = function(name) {
+    return preserveStack(() => Module['_BinaryenRemoveTag'](module, strToStack(name)));
   };
   self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, params, results) {
     return preserveStack(() =>
@@ -2424,9 +2425,9 @@ function wrapModule(module, self = {}) {
       Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)
     );
   };
-  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, params, results) {
+  self['addTagImport'] = function(internalName, externalModuleName, externalBaseName, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results)
+      Module['_BinaryenAddTagImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)
     );
   };
   self['addExport'] = // deprecated
@@ -2442,8 +2443,8 @@ function wrapModule(module, self = {}) {
   self['addGlobalExport'] = function(internalName, externalName) {
     return preserveStack(() => Module['_BinaryenAddGlobalExport'](module, strToStack(internalName), strToStack(externalName)));
   };
-  self['addEventExport'] = function(internalName, externalName) {
-    return preserveStack(() => Module['_BinaryenAddEventExport'](module, strToStack(internalName), strToStack(externalName)));
+  self['addTagExport'] = function(internalName, externalName) {
+    return preserveStack(() => Module['_BinaryenAddTagExport'](module, strToStack(internalName), strToStack(externalName)));
   };
   self['removeExport'] = function(externalName) {
     return preserveStack(() => Module['_BinaryenRemoveExport'](module, strToStack(externalName)));
@@ -2998,6 +2999,17 @@ Module['getExpressionInfo'] = function(expr) {
         'align': Module['_BinaryenSIMDLoadGetAlign'](expr),
         'ptr': Module['_BinaryenSIMDLoadGetPtr'](expr)
       };
+    case Module['SIMDLoadStoreLaneId']:
+      return {
+        'id': id,
+        'type': type,
+        'op': Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr),
+        'offset': Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expr),
+        'align': Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expr),
+        'index': Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expr),
+        'ptr': Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expr),
+        'vec': Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr)
+      };
     case Module['MemoryInitId']:
       return {
         'id': id,
@@ -3063,7 +3075,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'name': UTF8ToString(Module['_BinaryenTryGetName'](expr)),
         'body': Module['_BinaryenTryGetBody'](expr),
-        'catchEvents': getAllNested(expr, Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTryGetCatchEventAt']),
+        'catchTags': getAllNested(expr, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']),
         'catchBodies': getAllNested(expr, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
         'hasCatchAll': Module['_BinaryenTryHasCatchAll'](expr),
         'delegateTarget': UTF8ToString(Module['_BinaryenTryGetDelegateTarget'](expr)),
@@ -3073,7 +3085,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'event': UTF8ToString(Module['_BinaryenThrowGetEvent'](expr)),
+        'tag': UTF8ToString(Module['_BinaryenThrowGetTag'](expr)),
         'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperandAt'])
       };
     case Module['RethrowId']:
@@ -3194,15 +3206,14 @@ Module['getElementSegmentInfo'] = function(segment) {
   }
 }
 
-// Obtains information about a 'Event'
-Module['getEventInfo'] = function(event_) {
+// Obtains information about a 'Tag'
+Module['getTagInfo'] = function(tag) {
   return {
-    'name': UTF8ToString(Module['_BinaryenEventGetName'](event_)),
-    'module': UTF8ToString(Module['_BinaryenEventImportGetModule'](event_)),
-    'base': UTF8ToString(Module['_BinaryenEventImportGetBase'](event_)),
-    'attribute': Module['_BinaryenEventGetAttribute'](event_),
-    'params': Module['_BinaryenEventGetParams'](event_),
-    'results': Module['_BinaryenEventGetResults'](event_)
+    'name': UTF8ToString(Module['_BinaryenTagGetName'](tag)),
+    'module': UTF8ToString(Module['_BinaryenTagImportGetModule'](tag)),
+    'base': UTF8ToString(Module['_BinaryenTagImportGetBase'](tag)),
+    'params': Module['_BinaryenTagGetParams'](tag),
+    'results': Module['_BinaryenTagGetResults'](tag)
   };
 };
 
@@ -4243,6 +4254,48 @@ Module['SIMDLoad'] = makeExpressionWrapper({
   }
 });
 
+Module['SIMDLoadStoreLane'] = makeExpressionWrapper({
+  'getOp'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenSIMDLoadStoreLaneSetOp'](expr, op);
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenSIMDLoadStoreLaneSetOffset'](expr, offset);
+  },
+  'getAlign'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expr);
+  },
+  'setAlign'(expr, align) {
+    Module['_BinaryenSIMDLoadStoreLaneSetAlign'](expr, align);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expr);
+  },
+  'setIndex'(expr, align) {
+    Module['_BinaryenSIMDLoadStoreLaneSetIndex'](expr, align);
+  },
+  'getPtr'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expr);
+  },
+  'setPtr'(expr, ptrExpr) {
+    Module['_BinaryenSIMDLoadStoreLaneSetPtr'](expr, ptrExpr);
+  },
+  'getVec'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr);
+  },
+  'setVec'(expr, ptrExpr) {
+    Module['_BinaryenSIMDLoadStoreLaneSetVec'](expr, ptrExpr);
+  },
+  'isStore'(expr) {
+    return Boolean(Module['_BinaryenSIMDLoadStoreLaneIsStore'](expr));
+  }
+});
+
 Module['MemoryInit'] = makeExpressionWrapper({
   'getSegment'(expr) {
     return Module['_BinaryenMemoryInitGetSegment'](expr);
@@ -4389,31 +4442,31 @@ Module['Try'] = makeExpressionWrapper({
   'setBody'(expr, bodyExpr) {
     Module['_BinaryenTrySetBody'](expr, bodyExpr);
   },
-  'getNumCatchEvents'(expr) {
-    return Module['_BinaryenTryGetNumCatchEvents'](expr);
+  'getNumCatchTags'(expr) {
+    return Module['_BinaryenTryGetNumCatchTags'](expr);
   },
-  'getCatchEvents'(expr) {
-    return getAllNested(expr, Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTryGetCatchEventAt']).map(p => UTF8ToString(p));
+  'getCatchTags'(expr) {
+    return getAllNested(expr, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']).map(p => UTF8ToString(p));
   },
-  'setCatchEvents'(expr, catchEvents) {
+  'setCatchTags'(expr, catchTags) {
     preserveStack(() => {
-      setAllNested(expr, catchEvents.map(strToStack), Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTrySetCatchEventAt'], Module['_BinaryenTryAppendCatchEvent'], Module['_BinaryenTryRemoveCatchEventAt']);
+      setAllNested(expr, catchTags.map(strToStack), Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTrySetCatchTagAt'], Module['_BinaryenTryAppendCatchTag'], Module['_BinaryenTryRemoveCatchTagAt']);
     });
   },
-  'getCatchEventAt'(expr, index) {
-    return UTF8ToString(Module['_BinaryenTryGetCatchEventAt'](expr, index));
+  'getCatchTagAt'(expr, index) {
+    return UTF8ToString(Module['_BinaryenTryGetCatchTagAt'](expr, index));
   },
-  'setCatchEventAt'(expr, index, catchEvent) {
-    preserveStack(() => { Module['_BinaryenTrySetCatchEventAt'](expr, index, strToStack(catchEvent)) });
+  'setCatchTagAt'(expr, index, catchTag) {
+    preserveStack(() => { Module['_BinaryenTrySetCatchTagAt'](expr, index, strToStack(catchTag)) });
   },
-  'appendCatchEvent'(expr, catchEvent) {
-    preserveStack(() => Module['_BinaryenTryAppendCatchEvent'](expr, strToStack(catchEvent)));
+  'appendCatchTag'(expr, catchTag) {
+    preserveStack(() => Module['_BinaryenTryAppendCatchTag'](expr, strToStack(catchTag)));
   },
-  'insertCatchEventAt'(expr, index, catchEvent) {
-    preserveStack(() => { Module['_BinaryenTryInsertCatchEventAt'](expr, index, strToStack(catchEvent)) });
+  'insertCatchTagAt'(expr, index, catchTag) {
+    preserveStack(() => { Module['_BinaryenTryInsertCatchTagAt'](expr, index, strToStack(catchTag)) });
   },
-  'removeCatchEventAt'(expr, index) {
-    return UTF8ToString(Module['_BinaryenTryRemoveCatchEventAt'](expr, index));
+  'removeCatchTagAt'(expr, index) {
+    return UTF8ToString(Module['_BinaryenTryRemoveCatchTagAt'](expr, index));
   },
   'getNumCatchBodies'(expr) {
     return Module['_BinaryenTryGetNumCatchBodies'](expr);
@@ -4455,11 +4508,11 @@ Module['Try'] = makeExpressionWrapper({
 });
 
 Module['Throw'] = makeExpressionWrapper({
-  'getEvent'(expr) {
-    return UTF8ToString(Module['_BinaryenThrowGetEvent'](expr));
+  'getTag'(expr) {
+    return UTF8ToString(Module['_BinaryenThrowGetTag'](expr));
   },
-  'setEvent'(expr, eventName) {
-    preserveStack(() => { Module['_BinaryenThrowSetEvent'](expr, strToStack(eventName)) });
+  'setTag'(expr, tagName) {
+    preserveStack(() => { Module['_BinaryenThrowSetTag'](expr, strToStack(tagName)) });
   },
   'getNumOperands'(expr) {
     return Module['_BinaryenThrowGetNumOperands'](expr);

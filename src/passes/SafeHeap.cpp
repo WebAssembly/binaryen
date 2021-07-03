@@ -134,32 +134,33 @@ struct SafeHeap : public Pass {
     } else if (auto* existing = info.getImportedFunction(ENV, SBRK)) {
       sbrk = existing->name;
     } else {
-      auto* import = new Function;
-      import->name = getSbrkPtr = GET_SBRK_PTR;
+      auto import = Builder::makeFunction(
+        GET_SBRK_PTR, Signature(Type::none, indexType), {});
+      getSbrkPtr = GET_SBRK_PTR;
       import->module = ENV;
       import->base = GET_SBRK_PTR;
-      import->sig = Signature(Type::none, indexType);
-      module->addFunction(import);
+      module->addFunction(std::move(import));
     }
     if (auto* existing = info.getImportedFunction(ENV, SEGFAULT_IMPORT)) {
       segfault = existing->name;
     } else {
-      auto* import = new Function;
-      import->name = segfault = SEGFAULT_IMPORT;
+      auto import = Builder::makeFunction(
+        SEGFAULT_IMPORT, Signature(Type::none, Type::none), {});
+      segfault = SEGFAULT_IMPORT;
       import->module = ENV;
       import->base = SEGFAULT_IMPORT;
-      import->sig = Signature(Type::none, Type::none);
-      module->addFunction(import);
+      module->addFunction(std::move(import));
     }
     if (auto* existing = info.getImportedFunction(ENV, ALIGNFAULT_IMPORT)) {
       alignfault = existing->name;
     } else {
-      auto* import = new Function;
-      import->name = alignfault = ALIGNFAULT_IMPORT;
+      auto import = Builder::makeFunction(
+        ALIGNFAULT_IMPORT, Signature(Type::none, Type::none), {});
+
+      alignfault = ALIGNFAULT_IMPORT;
       import->module = ENV;
       import->base = ALIGNFAULT_IMPORT;
-      import->sig = Signature(Type::none, Type::none);
-      module->addFunction(import);
+      module->addFunction(std::move(import));
     }
   }
 
@@ -246,12 +247,10 @@ struct SafeHeap : public Pass {
     if (module->getFunctionOrNull(name)) {
       return;
     }
-    auto* func = new Function;
-    func->name = name;
     // pointer, offset
     auto indexType = module->memory.indexType;
-    func->sig = Signature({indexType, indexType}, style.type);
-    func->vars.push_back(indexType); // pointer + offset
+    auto funcSig = Signature({indexType, indexType}, style.type);
+    auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
@@ -279,7 +278,7 @@ struct SafeHeap : public Pass {
     block->list.push_back(last);
     block->finalize(style.type);
     func->body = block;
-    module->addFunction(func);
+    module->addFunction(std::move(func));
   }
 
   // creates a function for a particular type of store
@@ -288,12 +287,11 @@ struct SafeHeap : public Pass {
     if (module->getFunctionOrNull(name)) {
       return;
     }
-    auto* func = new Function;
-    func->name = name;
-    // pointer, offset, value
     auto indexType = module->memory.indexType;
-    func->sig = Signature({indexType, indexType, style.valueType}, Type::none);
-    func->vars.push_back(indexType); // pointer + offset
+    // pointer, offset, value
+    auto funcSig =
+      Signature({indexType, indexType, style.valueType}, Type::none);
+    auto func = Builder::makeFunction(name, funcSig, {indexType});
     Builder builder(*module);
     auto* block = builder.makeBlock();
     block->list.push_back(builder.makeLocalSet(
@@ -316,7 +314,7 @@ struct SafeHeap : public Pass {
     block->list.push_back(store);
     block->finalize(Type::none);
     func->body = block;
-    module->addFunction(func);
+    module->addFunction(std::move(func));
   }
 
   Expression*
