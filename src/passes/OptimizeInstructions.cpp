@@ -2243,11 +2243,17 @@ private:
     }
     {
       // fval(C) / -x   ==>  -C / x
-      Expression* right;
-      if (matches(curr, binary(DivS, fval(), unary(Neg, any(&right))))) {
+      Expression* x;
+      if (matches(curr, binary(DivS, fval(), unary(Neg, any(&x))))) {
         left->value = left->value.neg();
-        curr->right = right;
+        curr->right = x;
         return curr;
+      }
+      // -0.0 - x  ==>  fneg(x)
+      if (fastMath && matches(curr, binary(Sub, fval(0), any(&x))) &&
+          left->value.isNegative()) {
+        return Builder(*getModule())
+          .makeUnary(Abstract::getUnary(type, Neg), x);
       }
     }
     return nullptr;
