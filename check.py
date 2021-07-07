@@ -39,8 +39,8 @@ def get_changelog_version():
     return int(version)
 
 
-def run_help_tests():
-    print('[ checking --help is useful... ]\n')
+def run_version_tests():
+    print('[ checking --version ... ]\n')
 
     not_executable_suffix = ['.txt', '.js', '.ilk', '.pdb', '.dll', '.wasm', '.manifest', 'binaryen-lit']
     bin_files = [os.path.join(shared.options.binaryen_bin, f) for f in os.listdir(shared.options.binaryen_bin)]
@@ -48,18 +48,6 @@ def run_help_tests():
     executables = sorted(executables)
     assert len(executables)
 
-    for e in executables:
-        print('.. %s --help' % e)
-        out, err = subprocess.Popen([e, '--help'],
-                                    stdout=subprocess.PIPE,
-                                    stderr=subprocess.PIPE).communicate()
-        out = out.decode('utf-8')
-        err = err.decode('utf-8')
-        assert len(err) == 0, 'Expected no stderr, got:\n%s' % err
-        assert os.path.basename(e).replace('.exe', '') in out, 'Expected help to contain program name, got:\n%s' % out
-        assert len(out.split('\n')) > 8, 'Expected some help, got:\n%s' % out
-
-    print('[ checking --version ... ]\n')
     changelog_version = get_changelog_version()
     for e in executables:
         print('.. %s --version' % e)
@@ -346,7 +334,7 @@ def run_lit():
 
 
 TEST_SUITES = OrderedDict([
-    ('help-messages', run_help_tests),
+    ('version', run_version_tests),
     ('wasm-opt', wasm_opt.test_wasm_opt),
     ('wasm-dis', run_wasm_dis_tests),
     ('crash', run_crash_tests),
