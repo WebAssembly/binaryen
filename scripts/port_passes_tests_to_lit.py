@@ -83,6 +83,9 @@ def port_test(args, test):
 
     if not args.no_delete:
         for f in glob.glob(test.replace('.wast', '.*')):
+            # Do not delete binary tests with the same name
+            if f.endswith('.wasm') or f.endswith('.bin.txt'):
+                continue
             os.remove(f)
             if args.git_add:
                 subprocess.run(['git', 'add', f])
