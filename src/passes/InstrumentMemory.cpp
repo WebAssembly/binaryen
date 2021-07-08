@@ -193,14 +193,18 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     } else {
       return; // TODO: other types, unreachable, etc.
     }
-    curr->value = builder.makeCall(
-      target, {builder.makeConst(int32_t(id++)), curr->value}, curr->value->type);
+    curr->value =
+      builder.makeCall(target,
+                       {builder.makeConst(int32_t(id++)), curr->value},
+                       curr->value->type);
   }
 
   void visitArrayGet(ArrayGet* curr) {
     Builder builder(*getModule());
-    curr->index = builder.makeCall(
-      array_get_index, {builder.makeConst(int32_t(id++)), curr->index}, Type::i32);
+    curr->index =
+      builder.makeCall(array_get_index,
+                       {builder.makeConst(int32_t(id++)), curr->index},
+                       Type::i32);
     Name target;
     if (curr->type == Type::i32) {
       target = array_get_val_i32;
@@ -219,8 +223,10 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
 
   void visitArraySet(ArraySet* curr) {
     Builder builder(*getModule());
-    curr->index = builder.makeCall(
-      array_set_index, {builder.makeConst(int32_t(id++)), curr->index}, Type::i32);
+    curr->index =
+      builder.makeCall(array_set_index,
+                       {builder.makeConst(int32_t(id++)), curr->index},
+                       Type::i32);
     Name target;
     if (curr->value->type == Type::i32) {
       target = array_set_val_i32;
@@ -233,8 +239,10 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     } else {
       return; // TODO: other types, unreachable, etc.
     }
-    curr->value = builder.makeCall(
-      target, {builder.makeConst(int32_t(id++)), curr->value}, curr->value->type);
+    curr->value =
+      builder.makeCall(target,
+                       {builder.makeConst(int32_t(id++)), curr->value},
+                       curr->value->type);
   }
 
   void visitModule(Module* curr) {

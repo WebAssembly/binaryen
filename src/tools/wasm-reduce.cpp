@@ -800,7 +800,8 @@ struct Reducer
         }
         justShrank = writeAndTestReduction();
         if (justShrank) {
-          std::cerr << "|      shrank segment from " << save.size() << " => " << data.size() << " (skip: " << skip << ")\n";
+          std::cerr << "|      shrank segment from " << save.size() << " => "
+                    << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
           skip = std::min(size_t(factor), 2 * skip);
         } else {
@@ -814,7 +815,7 @@ struct Reducer
   }
 
   void shrinkElementSegments(Module* module) {
-return;
+    return;
     std::cerr << "|    try to simplify elem segments\n";
 
     // First, shrink segment elements.
@@ -929,7 +930,8 @@ return;
 
     // Reduction of entire functions at a time is very effective, and we do it
     // with exponential growth and backoff, so keep doing it while it works.
-    while (reduceFunctions()) {}
+    while (reduceFunctions()) {
+    }
 
     shrinkElementSegments(curr);
 

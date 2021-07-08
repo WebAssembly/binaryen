@@ -603,7 +603,8 @@ private:
         Fatal() << "LowerGC disallows memory growth";
       }
       loweringInfo.mallocStart = module->memory.initial * Memory::kPageSize;
-      module->memory.initial = module->memory.max = module->memory.initial + MemoryPages;
+      module->memory.initial = module->memory.max =
+        module->memory.initial + MemoryPages;
     }
 
     assert(!module->memory.is64()); // TODO: use getByteSize()
@@ -985,8 +986,7 @@ private:
   void makeArrayGet(HeapType type) {
     auto element = type.getArray().element;
     auto bytes = getBytes(element);
-    auto loweredType =
-      lower(element.type);
+    auto loweredType = lower(element.type);
     PointerBuilder builder(*module);
 
     auto makeLoad = [&](bool signed_) {
