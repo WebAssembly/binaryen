@@ -50,6 +50,7 @@
 #include <ir/branch-utils.h>
 #include <ir/effects.h>
 #include <ir/find_all.h>
+#include <ir/linear-execution.h>
 #include <ir/local-utils.h>
 #include <ir/manipulation.h>
 #include <pass.h>
@@ -139,9 +140,11 @@ struct SimplifyLocals
     } else if (curr->is<If>()) {
       assert(!curr->cast<If>()
                 ->ifFalse); // if-elses are handled by doNoteIf* methods
-    } else if (curr->is<Switch>()) {
-      auto* sw = curr->cast<Switch>();
-      auto targets = BranchUtils::getUniqueTargets(sw);
+    } else {
+      // Not one of the recognized instructions, so do not optimize here: mark
+      // all the targets as unoptimizable.
+      // TODO optimize BrOn, Switch, etc.
+      auto targets = BranchUtils::getUniqueTargets(curr);
       for (auto target : targets) {
         self->unoptimizableBlocks.insert(target);
       }

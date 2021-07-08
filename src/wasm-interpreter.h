@@ -1452,7 +1452,7 @@ public:
         cast.breaking = NONCONSTANT_FLOW;
         return cast;
       }
-      seenRtt = Literal(Type(Rtt(0, func->sig)));
+      seenRtt = Literal(Type(Rtt(0, func->type)));
       if (!seenRtt.isSubRtt(intendedRtt)) {
         cast.outcome = cast.Failure;
         return cast;
@@ -2019,7 +2019,7 @@ public:
     if ((flags & FlagValues::TRAVERSE_CALLS) != 0 && this->module != nullptr) {
       auto* func = this->module->getFunction(curr->target);
       if (!func->imported()) {
-        if (func->sig.results.isConcrete()) {
+        if (func->getResults().isConcrete()) {
           auto numOperands = curr->operands.size();
           assert(numOperands == func->getNumParams());
           auto prevLocalValues = localValues;
@@ -2425,6 +2425,7 @@ private:
   void initializeTableContents() {
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
       Function dummyFunc;
+      dummyFunc.type = Signature(Type::none, Type::none);
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
 
@@ -2476,6 +2477,7 @@ private:
       // we don't actually have a function, but we need one in order to visit
       // the memory.init and data.drop instructions.
       Function dummyFunc;
+      dummyFunc.type = Signature(Type::none, Type::none);
       FunctionScope dummyScope(&dummyFunc, {});
       RuntimeExpressionRunner runner(*this, dummyScope, maxDepth);
       runner.visit(&init);
@@ -2490,19 +2492,20 @@ private:
 
     FunctionScope(Function* function, const LiteralList& arguments)
       : function(function) {
-      if (function->sig.params.size() != arguments.size()) {
+      if (function->getParams().size() != arguments.size()) {
         std::cerr << "Function `" << function->name << "` expects "
-                  << function->sig.params.size() << " parameters, got "
+                  << function->getParams().size() << " parameters, got "
                   << arguments.size() << " arguments." << std::endl;
         WASM_UNREACHABLE("invalid param count");
       }
       locals.resize(function->getNumLocals());
+      Type params = function->getParams();
       for (size_t i = 0; i < function->getNumLocals(); i++) {
         if (i < arguments.size()) {
-          if (!Type::isSubType(arguments[i].type, function->sig.params[i])) {
+          if (!Type::isSubType(arguments[i].type, params[i])) {
             std::cerr << "Function `" << function->name << "` expects type "
-                      << function->sig.params[i] << " for parameter " << i
-                      << ", got " << arguments[i].type << "." << std::endl;
+                      << params[i] << " for parameter " << i << ", got "
+                      << arguments[i].type << "." << std::endl;
             WASM_UNREACHABLE("invalid param count");
           }
           locals[i] = {arguments[i]};
@@ -2590,7 +2593,7 @@ private:
       }
 
       Index index = target.getSingleValue().geti32();
-      Type type = curr->isReturn ? scope.function->sig.results : curr->type;
+      Type type = curr->isReturn ? scope.function->getResults() : curr->type;
 
       Flow ret;
       auto* table = instance.wasm.getTable(curr->table);
@@ -3345,9 +3348,9 @@ public:
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     auto type = flow.getType();
-    if (!Type::isSubType(type, function->sig.results)) {
+    if (!Type::isSubType(type, function->getResults())) {
       std::cerr << "calling " << function->name << " resulted in " << type
-                << " but the function type is " << function->sig.results
+                << " but the function type is " << function->getResults()
                 << '\n';
       WASM_UNREACHABLE("unexpected result type");
     }

@@ -299,6 +299,7 @@
 #include "cfg/liveness-traversal.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
+#include "ir/linear-execution.h"
 #include "ir/literal-utils.h"
 #include "ir/memory-utils.h"
 #include "ir/module-utils.h"
@@ -861,7 +862,7 @@ struct AsyncifyFlow : public Pass {
                          State::Rewinding), // TODO: such checks can be !normal
                        makeCallIndexPop()),
        process(func->body)});
-    if (func->sig.results != Type::none) {
+    if (func->getResults() != Type::none) {
       // Rewriting control flow may alter things; make sure the function ends in
       // something valid (which the optimizer can remove later).
       block->list.push_back(builder->makeUnreachable());
@@ -1203,7 +1204,7 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
     walk(func->body);
     // After the normal function body, emit a barrier before the postamble.
     Expression* barrier;
-    if (func->sig.results == Type::none) {
+    if (func->getResults() == Type::none) {
       // The function may have ended without a return; ensure one.
       barrier = builder->makeReturn();
     } else {
@@ -1221,12 +1222,12 @@ struct AsyncifyLocals : public WalkerPass<PostWalker<AsyncifyLocals>> {
                             builder->makeSequence(func->body, barrier))),
        makeCallIndexPush(unwindIndex),
        makeLocalSaving()});
-    if (func->sig.results != Type::none) {
+    if (func->getResults() != Type::none) {
       // If we unwind, we must still "return" a value, even if it will be
       // ignored on the outside.
       newBody->list.push_back(
-        LiteralUtils::makeZero(func->sig.results, *getModule()));
-      newBody->finalize(func->sig.results);
+        LiteralUtils::makeZero(func->getResults(), *getModule()));
+      newBody->finalize(func->getResults());
     }
     func->body = newBody;
     // Making things like returns conditional may alter types.

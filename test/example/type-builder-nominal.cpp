@@ -110,10 +110,10 @@ void test_signatures(bool warm) {
   builder[1] = Signature(tempRef, tempRef);
   std::vector<HeapType> built = builder.build();
 
-  HeapType small = HeapType(Signature(Type::anyref, Type::i31ref));
+  HeapType small = Signature(Type::anyref, Type::i31ref);
   HeapType big =
-    HeapType(Signature(Type(Signature(Type::anyref, Type::i31ref), Nullable),
-                       Type(Signature(Type::anyref, Type::i31ref), Nullable)));
+    Signature(Type(Signature(Type::anyref, Type::i31ref), Nullable),
+              Type(Signature(Type::anyref, Type::i31ref), Nullable));
   if (warm) {
     assert(built[0] != small);
     assert(built[1] != big);

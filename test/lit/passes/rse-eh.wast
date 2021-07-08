@@ -2,7 +2,9 @@
 ;; RUN: wasm-opt %s --rse -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
+  ;; CHECK:      (tag $e2 (param))
   (tag $e2)
 
   ;; CHECK:      (func $try1
@@ -99,7 +101,11 @@
     (local.set $x (i32.const 1))
   )
 
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $foo)
+
   ;; CHECK:      (func $try4
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $try

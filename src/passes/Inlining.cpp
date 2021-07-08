@@ -143,7 +143,7 @@ struct FunctionInfoScanner
 
     // We cannot inline a function if we cannot handle placing it in a local, as
     // all params become locals.
-    for (auto param : curr->sig.params) {
+    for (auto param : curr->getParams()) {
       if (!TypeUpdating::canHandleAsLocal(param)) {
         info.uninlineable = true;
       }
@@ -233,7 +233,7 @@ struct Updater : public PostWalker<Updater> {
   }
   void visitCall(Call* curr) {
     if (curr->isReturn) {
-      handleReturnCall(curr, module->getFunction(curr->target)->sig.results);
+      handleReturnCall(curr, module->getFunction(curr->target)->getResults());
     }
   }
   void visitCallIndirect(CallIndirect* curr) {
@@ -262,7 +262,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
   // Works for return_call, too
-  Type retType = module->getFunction(call->target)->sig.results;
+  Type retType = module->getFunction(call->target)->getResults();
   Builder builder(*module);
   auto* block = builder.makeBlock();
   block->name = Name(std::string("__inlined_func$") + from->name.str);
@@ -285,7 +285,7 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
     updater.localMapping[i] = builder.addVar(into, from->getLocalType(i));
   }
   // Assign the operands into the params
-  for (Index i = 0; i < from->sig.params.size(); i++) {
+  for (Index i = 0; i < from->getParams().size(); i++) {
     block->list.push_back(
       builder.makeLocalSet(updater.localMapping[i], call->operands[i]));
   }
@@ -420,6 +420,9 @@ struct Inlining : public Pass {
           continue;
         }
         Name inlinedName = inlinedFunction->name;
+        if (!isUnderSizeLimit(func->name, inlinedName)) {
+          continue;
+        }
 #ifdef INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
@@ -445,6 +448,24 @@ struct Inlining : public Pass {
     });
     // return whether we did any work
     return inlinedUses.size() > 0;
+  }
+
+  // Checks if the combined size of the code after inlining is under the
+  // absolute size limit. We have an absolute limit in order to avoid
+  // extremely-large sizes after inlining, as they may hit limits in VMs and/or
+  // slow down startup (measurements there indicate something like ~1 second to
+  // optimize a 100K function). See e.g.
+  // https://github.com/WebAssembly/binaryen/pull/3730#issuecomment-867939138
+  // https://github.com/emscripten-core/emscripten/issues/13899#issuecomment-825073344
+  bool isUnderSizeLimit(Name target, Name source) {
+    // Estimate the combined binary size from the number of instructions.
+    auto combinedSize = infos[target].size + infos[source].size;
+    auto estimatedBinarySize = Measurer::BytesPerExpr * combinedSize;
+    // The limit is arbitrary, but based on the links above. It is a very high
+    // value that should appear very rarely in practice (for example, it does
+    // not occur on the Emscripten benchmark suite of real-world codebases).
+    const Index MaxCombinedBinarySize = 400 * 1024;
+    return estimatedBinarySize < MaxCombinedBinarySize;
   }
 };
 

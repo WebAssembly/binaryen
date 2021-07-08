@@ -1,0 +1,76 @@
+;; RUN: wasm-opt --help | filecheck %s
+
+;; CHECK-NEXT: wasm-opt INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: Read, write, and optimize files
+;; CHECK-NEXT:
+;; CHECK-NEXT: Options:
+
+;; Skip standard optimization options
+
+;; CHECK:        --output,-o                                   Output file (stdout if not
+;; CHECK-NEXT:                                                 specified)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-text,-S                                Emit text instead of binary for
+;; CHECK-NEXT:                                                 the output file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --converge,-c                                 Run passes to convergence,
+;; CHECK-NEXT:                                                 continuing while binary size
+;; CHECK-NEXT:                                                 decreases
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-exec-before,-feh                       Execute functions before
+;; CHECK-NEXT:                                                 optimization, helping fuzzing
+;; CHECK-NEXT:                                                 find bugs
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-exec,-fe                               Execute functions before and
+;; CHECK-NEXT:                                                 after optimization, helping
+;; CHECK-NEXT:                                                 fuzzing find bugs
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --extra-fuzz-command,-efc                     An extra command to run on the
+;; CHECK-NEXT:                                                 output before and after
+;; CHECK-NEXT:                                                 optimizing. The output is
+;; CHECK-NEXT:                                                 compared between the two, and an
+;; CHECK-NEXT:                                                 error occurs if they are not
+;; CHECK-NEXT:                                                 equal
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --translate-to-fuzz,-ttf                      Translate the input into a valid
+;; CHECK-NEXT:                                                 wasm module *somehow*, useful
+;; CHECK-NEXT:                                                 for fuzzing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --initial-fuzz,-if                            Initial wasm content in
+;; CHECK-NEXT:                                                 translate-to-fuzz (-ttf) mode
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --fuzz-passes,-fp                             Pick a random set of passes to
+;; CHECK-NEXT:                                                 run, useful for fuzzing. this
+;; CHECK-NEXT:                                                 depends on translate-to-fuzz (it
+;; CHECK-NEXT:                                                 picks the passes from the input)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-fuzz-memory                              don't emit memory ops when
+;; CHECK-NEXT:                                                 fuzzing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-fuzz-oob                                 don't emit out-of-bounds
+;; CHECK-NEXT:                                                 loads/stores/indirect calls when
+;; CHECK-NEXT:                                                 fuzzing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-js-wrapper,-ejw                        Emit a JavaScript wrapper file
+;; CHECK-NEXT:                                                 that can run the wasm with some
+;; CHECK-NEXT:                                                 test values, useful for fuzzing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-spec-wrapper,-esw                      Emit a wasm spec interpreter
+;; CHECK-NEXT:                                                 wrapper file that can run the
+;; CHECK-NEXT:                                                 wasm with some test values,
+;; CHECK-NEXT:                                                 useful for fuzzing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-wasm2c-wrapper,-esw                    Emit a C wrapper file that can
+;; CHECK-NEXT:                                                 run the wasm after it is
+;; CHECK-NEXT:                                                 compiled with wasm2c, useful for
+;; CHECK-NEXT:                                                 fuzzing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --input-source-map,-ism                       Consume source map from the
+;; CHECK-NEXT:                                                 specified file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map,-osm                      Emit source map to the specified
+;; CHECK-NEXT:                                                 file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map-url,-osu                  Emit specified string as source
+;; CHECK-NEXT:                                                 map URL

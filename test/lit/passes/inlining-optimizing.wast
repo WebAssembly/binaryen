@@ -2,7 +2,9 @@
 ;; RUN: wasm-opt %s -all --inlining-optimizing -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
+ ;; CHECK:      (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32 (func (result i32)))
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (nop)

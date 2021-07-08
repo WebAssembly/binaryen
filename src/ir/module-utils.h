@@ -33,7 +33,7 @@ namespace ModuleUtils {
 inline Function* copyFunction(Function* func, Module& out) {
   auto* ret = new Function();
   ret->name = func->name;
-  ret->sig = func->sig;
+  ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
@@ -526,7 +526,7 @@ inline void collectHeapTypes(Module& wasm,
   // Collect info from functions in parallel.
   ModuleUtils::ParallelFunctionAnalysis<Counts, InsertOrderedMap> analysis(
     wasm, [&](Function* func, Counts& counts) {
-      counts.note(func->sig);
+      counts.note(func->type);
       for (auto type : func->vars) {
         counts.note(type);
       }

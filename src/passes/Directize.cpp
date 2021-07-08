@@ -66,7 +66,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
         return;
       }
       auto* func = getModule()->getFunction(name);
-      if (curr->sig != func->sig) {
+      if (curr->sig != func->getSig()) {
         replaceWithUnreachable(curr);
         return;
       }

@@ -3,6 +3,7 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (tag $e-i32 (param i32))
   (tag $e-i32 (param i32))
 
   ;; CHECK:      (func $pop-test
@@ -66,7 +67,11 @@
     )
   )
 
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $foo)
+
   ;; CHECK:      (func $try-call-optimize-terminating-tails (result i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do

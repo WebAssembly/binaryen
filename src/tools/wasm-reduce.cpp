@@ -978,7 +978,7 @@ return;
       auto* func = module->functions[0].get();
       // We can't remove something that might have breaks to it.
       if (!func->imported() && !Properties::isNamedControlFlow(func->body)) {
-        auto funcSig = func->sig;
+        auto funcType = func->type;
         auto* funcBody = func->body;
         for (auto* child : ChildIterator(func->body)) {
           if (!(child->type.isConcrete() || child->type == Type::none)) {
@@ -986,7 +986,7 @@ return;
           }
           // Try to replace the body with the child, fixing up the function
           // to accept it.
-          func->sig.results = child->type;
+          func->type = Signature(funcType.getSignature().params, child->type);
           func->body = child;
           if (writeAndTestReduction()) {
             // great, we succeeded!
@@ -995,7 +995,7 @@ return;
             break;
           }
           // Undo.
-          func->sig = funcSig;
+          func->type = funcType;
           func->body = funcBody;
         }
       }

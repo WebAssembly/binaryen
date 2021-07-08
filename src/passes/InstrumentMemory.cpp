@@ -283,12 +283,10 @@ private:
   Index id;
 
   void addImport(Module* curr, Name name, Type params, Type results) {
-    auto import = new Function;
-    import->name = name;
+    auto import = Builder::makeFunction(name, Signature(params, results), {});
     import->module = ENV;
     import->base = name;
-    import->sig = Signature(params, results);
-    curr->addFunction(import);
+    curr->addFunction(std::move(import));
   }
 };
 
