@@ -637,7 +637,7 @@ private:
     // Add a new start function.
     module->start = "LowerGC$start";
     module->addFunction(builder.makeFunction(
-      module->start, {Type::none, Type::none}, {}, startBlock));
+      module->start, Signature({Type::none, Type::none}), {}, startBlock));
   }
 
   void addMalloc() {
@@ -669,7 +669,7 @@ private:
                          builder.makeLocalGet(0, Type::i32));
     module->addFunction(
       builder.makeFunction(loweringInfo.malloc,
-                           {Type::i32, Type::i32},
+                           Signature({Type::i32, Type::i32}),
                            {},
                            builder.makeBlock({alloc, check, ret})));
   }
@@ -787,7 +787,7 @@ private:
         name += "WithDefault";
       }
       module->addFunction(builder.makeFunction(name + '$' + typeName,
-                                               {Type(params), Type::i32},
+                                               Signature({Type(params), Type::i32}),
                                                {loweringInfo.pointerType},
                                                builder.makeBlock(list)));
     }
@@ -803,7 +803,7 @@ private:
       module->addFunction(builder.makeFunction(
         std::string("StructSet$") + module->typeNames[type].name.str + '$' +
           std::to_string(i),
-        {{loweringInfo.pointerType, loweredType}, Type::none},
+        Signature({{loweringInfo.pointerType, loweredType}, Type::none}),
         {},
         builder.makeTrapOnNullParam(
           0,
@@ -845,7 +845,7 @@ private:
         std::string("StructGet$") + module->typeNames[type].name.str + '$' +
           std::to_string(i),
         // Receives the pointer and a bool for being signed, returns the result.
-        {{loweringInfo.pointerType, Type::i32}, loweredType},
+        Signature({{loweringInfo.pointerType, Type::i32}, loweredType}),
         {},
         builder.makeTrapOnNullParam(0, body)));
     }
@@ -945,7 +945,7 @@ private:
       }
       module->addFunction(
         builder.makeFunction(name + '$' + typeName,
-                             {Type(params), loweringInfo.pointerType},
+                             Signature({Type(params), loweringInfo.pointerType}),
                              {loweringInfo.pointerType},
                              builder.makeBlock(list)));
     }
@@ -970,8 +970,8 @@ private:
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArraySet$") + module->typeNames[type].name.str,
-      {{loweringInfo.pointerType, loweringInfo.pointerType, loweredType},
-       Type::none},
+      Signature({{loweringInfo.pointerType, loweringInfo.pointerType, loweredType},
+       Type::none}),
       {},
       builder.makeTrapOnNullParam(
         0,
@@ -1007,8 +1007,8 @@ private:
       std::string("ArrayGet$") + module->typeNames[type].name.str,
       // Receives the pointer, an index, and a bool for being signed, returns
       // the result.
-      {{loweringInfo.pointerType, loweringInfo.pointerType, Type::i32},
-       loweredType},
+      Signature({{loweringInfo.pointerType, loweringInfo.pointerType, Type::i32},
+       loweredType}),
       {},
       builder.makeTrapOnNullParam(0, body)));
   }
@@ -1017,7 +1017,7 @@ private:
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArrayLen$") + module->typeNames[type].name.str,
-      {{loweringInfo.pointerType}, Type::i32},
+      Signature({{loweringInfo.pointerType}, Type::i32}),
       {},
       builder.makeTrapOnNullParam(
         0,
@@ -1098,7 +1098,7 @@ private:
       list.push_back(builder.makeLocalGet(0, loweringInfo.pointerType));
       module->addFunction(builder.makeFunction(
         getName(op),
-        {loweringInfo.pointerType, loweringInfo.pointerType},
+        Signature({loweringInfo.pointerType, loweringInfo.pointerType}),
         {},
         builder.makeBlock(list)));
     }
@@ -1141,7 +1141,7 @@ private:
       list.push_back(builder.makeConst(int32_t(op != RefIsNull)));
       module->addFunction(
         builder.makeFunction(getName(op),
-                             {loweringInfo.pointerType, Type::i32},
+                             Signature({loweringInfo.pointerType, Type::i32}),
                              {},
                              builder.makeBlock(list)));
     }
@@ -1225,7 +1225,7 @@ private:
         builder.makeReturn(builder.makeConst(int32_t(1)))})));
     module->addFunction(builder.makeFunction(
       "RefTest",
-      {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
+      Signature({{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32}),
       {loweringInfo.pointerType, Type::i32},
       builder.makeBlock(list)));
   }
@@ -1256,7 +1256,7 @@ private:
       builder.makeLocalGet(refParam, loweringInfo.pointerType)));
     module->addFunction(builder.makeFunction(
       "RefCast",
-      {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32},
+      Signature({{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32}),
       {loweringInfo.pointerType},
       builder.makeBlock(list)));
   }
@@ -1450,8 +1450,8 @@ private:
     list.push_back(builder.makeLocalGet(allocLocal, loweringInfo.pointerType));
     module->addFunction(builder.makeFunction(
       "RttSub",
-      {{loweringInfo.pointerType, loweringInfo.pointerType},
-       loweringInfo.pointerType},
+      Signature({loweringInfo.pointerType, loweringInfo.pointerType},
+       loweringInfo.pointerType),
       {loweringInfo.pointerType, Type::i32, loweringInfo.pointerType},
       builder.makeBlock(list)));
   }
