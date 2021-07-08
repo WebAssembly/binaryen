@@ -10,6 +10,8 @@
  (type $struct-rtt (struct (field (mut (rtt $empty)))))
  (type $struct-nn (struct (field (ref func))))
 
+ (type $struct-i32-f64 (struct (field (mut i32)) (field (mut i64))))
+
  (type $many-fields (struct (field (mut i32)) (field (mut f64)) (field (mut f32))))
 
  (type $bytes (array (mut i8)))
@@ -22,6 +24,12 @@
  (global $global0 (rtt 0 $empty) (rtt.canon $empty))
  (global $global1 (rtt 1 $struct-i32) (rtt.sub $struct-i32
   (global.get $global0)
+ ))
+ (global $global2 (rtt 2 $struct-i32-f64) (rtt.sub $struct-i32-f64
+  (global.get $global1)
+ ))
+ (global $global3 (rtt 3 $struct-i32-f64) (rtt.sub $struct-i32-f64
+  (global.get $global2)
  ))
 
  (func $struct-gets

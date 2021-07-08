@@ -65,9 +65,9 @@
  (type $i32_i32_=>_f64 (func (param i32 i32) (result f64)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
- (global $rtt-0 i32 (i32.const 68))
+ (global $rtt-0 i32 (i32.const 8))
  (global $rtt-1 (mut i32) (i32.const 0))
- (global $nextMalloc (mut i32) (i32.const 96))
+ (global $nextMalloc (mut i32) (i32.const 132))
  (memory $0 16384 16384)
  (table $lowergc-table 2 2 funcref)
  (elem (i32.const 0) $a-void-func $call-target)
@@ -94,7 +94,7 @@
   (local $y i32)
   (local.set $x
    (call $StructNewWithDefault$struct
-    (i32.const 68)
+    (i32.const 8)
    )
   )
   (call $log
@@ -139,7 +139,7 @@
    (call $ArrayNew$bytes
     (i32.const 42)
     (i32.const 50)
-    (i32.const 20)
+    (i32.const 44)
    )
   )
   (call $log
@@ -187,14 +187,14 @@
    (call $RefIsNull
     (call $RefCast
      (i32.const 0)
-     (i32.const 68)
+     (i32.const 8)
     )
    )
   )
   (call $log
    (call $RefTest
     (i32.const 0)
-    (i32.const 68)
+    (i32.const 8)
    )
   )
   (call $log
@@ -202,23 +202,23 @@
     (call $ArrayNew$bytes
      (i32.const 20)
      (i32.const 10)
-     (i32.const 20)
+     (i32.const 44)
     )
-    (i32.const 68)
+    (i32.const 8)
    )
   )
   (call $log
    (call $RefTest
     (call $StructNewWithDefault$struct
-     (i32.const 68)
+     (i32.const 8)
     )
-    (i32.const 68)
+    (i32.const 8)
    )
   )
   (call $log
    (call $RefTest
     (call $StructNewWithDefault$struct
-     (i32.const 68)
+     (i32.const 8)
     )
     (i32.const 32)
    )
@@ -227,7 +227,7 @@
    (call $StructNewWithDefault$extendedstruct
     (call $RttSub
      (i32.const 32)
-     (i32.const 68)
+     (i32.const 8)
     )
    )
   )
@@ -236,7 +236,7 @@
     (local.get $any)
     (call $RttSub
      (i32.const 32)
-     (i32.const 68)
+     (i32.const 8)
     )
    )
   )
@@ -249,7 +249,7 @@
   (call $log
    (call $RefTest
     (local.get $any)
-    (i32.const 68)
+    (i32.const 8)
    )
   )
  )
@@ -259,7 +259,7 @@
   (local $2 i32)
   (local.set $any
    (call $StructNewWithDefault$struct
-    (i32.const 68)
+    (i32.const 8)
    )
   )
   (drop
@@ -286,7 +286,7 @@
          (local.get $2)
          (call $RefTest
           (local.get $2)
-          (i32.const 68)
+          (i32.const 8)
          )
         )
        )
@@ -320,7 +320,7 @@
   (local $1 i32)
   (local.set $any
    (call $StructNewWithDefault$struct
-    (i32.const 68)
+    (i32.const 8)
    )
   )
   (drop
@@ -391,13 +391,13 @@
   (call $log
    (call $RefTest
     (i32.const 0)
-    (i32.const 68)
+    (i32.const 8)
    )
   )
  )
  (func $get_data (result i32)
   (call $StructNewWithDefault$struct
-   (i32.const 68)
+   (i32.const 8)
   )
  )
  (func $8 (param $x i32)
@@ -457,7 +457,7 @@
   (local $1 i32)
   (local.set $x
    (call $StructNewWithDefault$struct
-    (i32.const 68)
+    (i32.const 8)
    )
   )
   (drop
@@ -488,7 +488,7 @@
   (local $x i32)
   (local $1 i32)
   (local.set $x
-   (i32.const 80)
+   (i32.const 116)
   )
   (drop
    (block $any (result i32)
@@ -520,7 +520,7 @@
    (block $non-null (result i32)
     (block
      (local.set $0
-      (i32.const 80)
+      (i32.const 116)
      )
      (drop
       (br_if $non-null
@@ -576,21 +576,21 @@
    (i32.const 0)
   )
   (drop
-   (i32.const 56)
+   (i32.const 20)
   )
   (call $log
    (i32.const 1)
   )
   (drop
-   (i32.const 8)
+   (i32.const 56)
   )
   (call $log
    (i32.const 2)
   )
   (call $CallRef$void_func
    (call $RefCast
-    (i32.const 80)
-    (i32.const 56)
+    (i32.const 116)
+    (i32.const 20)
    )
   )
   (call $log
@@ -599,8 +599,8 @@
   (drop
    (call $CallRef$int_func
     (call $RefCast
-     (i32.const 80)
-     (i32.const 8)
+     (i32.const 116)
+     (i32.const 56)
     )
    )
   )
@@ -614,7 +614,7 @@
    (call $ArrayNew$bytes
     (i32.const -43)
     (i32.const 50)
-    (i32.const 20)
+    (i32.const 44)
    )
   )
   (call $ArrayGet$bytes
@@ -629,8 +629,8 @@
  (func $18
   (drop
    (call $RefCast
-    (i32.const 88)
-    (i32.const 68)
+    (i32.const 124)
+    (i32.const 8)
    )
   )
  )
@@ -655,7 +655,7 @@
  (func $LowerGC$start
   (i32.store
    (i32.const 8)
-   (i32.const 0)
+   (i32.const 1)
   )
   (i32.store
    (i32.const 12)
@@ -667,7 +667,7 @@
   )
   (i32.store
    (i32.const 20)
-   (i32.const 1)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 24)
@@ -691,7 +691,7 @@
   )
   (i32.store
    (i32.const 44)
-   (i32.const 0)
+   (i32.const 1)
   )
   (i32.store
    (i32.const 48)
@@ -715,7 +715,7 @@
   )
   (i32.store
    (i32.const 68)
-   (i32.const 1)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 72)
@@ -727,23 +727,59 @@
   )
   (i32.store
    (i32.const 80)
-   (i32.const 56)
-  )
-  (i32.store
-   (i32.const 84)
    (i32.const 0)
   )
   (i32.store
+   (i32.const 84)
+   (i32.const 1)
+  )
+  (i32.store
    (i32.const 88)
-   (i32.const 44)
+   (i32.const 80)
   )
   (i32.store
    (i32.const 92)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 96)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 100)
+   (i32.const 92)
+  )
+  (i32.store
+   (i32.const 104)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 108)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 112)
+   (i32.const 104)
+  )
+  (i32.store
+   (i32.const 116)
+   (i32.const 20)
+  )
+  (i32.store
+   (i32.const 120)
+   (i32.const 0)
+  )
+  (i32.store
+   (i32.const 124)
+   (i32.const 104)
+  )
+  (i32.store
+   (i32.const 128)
    (i32.const 1)
   )
   (global.set $rtt-1
    (call $RttSub
-    (i32.const 68)
+    (i32.const 8)
     (global.get $rtt-0)
    )
   )
@@ -1557,7 +1593,7 @@
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (global $nextMalloc (mut i32) (i32.const 20))
+ (global $nextMalloc (mut i32) (i32.const 32))
  (memory $0 16384 16384)
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
@@ -1567,14 +1603,14 @@
   (drop
    (call $ArrayNewWithDefault$bytes
     (i32.const -1)
-    (i32.const 8)
+    (i32.const 20)
    )
   )
  )
  (func $LowerGC$start
   (i32.store
    (i32.const 8)
-   (i32.const 1)
+   (i32.const 0)
   )
   (i32.store
    (i32.const 12)
@@ -1583,6 +1619,18 @@
   (i32.store
    (i32.const 16)
    (i32.const 8)
+  )
+  (i32.store
+   (i32.const 20)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 24)
+   (i32.const 1)
+  )
+  (i32.store
+   (i32.const 28)
+   (i32.const 20)
   )
  )
  (func $CallRef$type$0 (param $0 i32)

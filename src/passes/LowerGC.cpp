@@ -680,6 +680,10 @@ private:
     // getting the length of an array does not depend on the type. Those can be
     // de-duplicated by other passes later.
     for (auto type : types) {
+      // Generate a canonical RTT for each type. We need them not only for
+      // explicit rtt.canon instructions, but also internally in things like
+      // rtt.sub.
+      makeRttCanon(type);
       if (type.isStruct()) {
         computeLayout(type, loweringInfo.layouts[type]);
         makeStructNew(type);
@@ -1282,15 +1286,9 @@ private:
   void addTypeSupport(const std::vector<HeapType>& types) {
     // Analyze the code for heap type usage.
     struct UsageInfo {
-      // Types used in rtt.canon instructions.
-      std::unordered_map<HeapType, std::atomic<bool>> rttCanons;
-
       std::map<Name, std::atomic<bool>> refFuncs;
     } usageInfo;
     // Initialize the data so it is safe to operate on in parallel.
-    for (auto type : types) {
-      usageInfo.rttCanons[type] = false;
-    }
     for (auto& func : module->functions) {
       usageInfo.refFuncs[func->name] = false;
     }
@@ -1302,13 +1300,6 @@ private:
 
         void visitRefFunc(RefFunc* curr) {
           usageInfo->refFuncs[curr->func] = true;
-          // ref.funcs use an rtt.canon internally. Mark the appropriate
-          // rtt.canon here as well, so that it will exist when the ref.func
-          // needs it later down.
-          usageInfo->rttCanons[curr->type.getHeapType()] = true;
-        }
-        void visitRttCanon(RttCanon* curr) {
-          usageInfo->rttCanons[curr->type.getHeapType()] = true;
         }
       };
       PassRunner runner(module);
@@ -1316,13 +1307,6 @@ private:
       analysis.run(&runner, module);
       // fill in global uses
       analysis.walkModuleCode(module);
-    }
-    for (auto& kv : usageInfo.rttCanons) {
-      HeapType type = kv.first;
-      bool used = kv.second;
-      if (used) {
-        makeRttCanon(type);
-      }
     }
     for (auto& kv : usageInfo.refFuncs) {
       Name name = kv.first;
