@@ -1475,7 +1475,7 @@ private:
     loweringInfo.refFuncAddrs[name] = addr;
     PointerBuilder builder(*module);
     // Write the rtt.
-    auto type = HeapType(func->sig);
+    auto type = HeapType(func->getSig());
     startBlock->list.push_back(builder.makePointerStore(
       builder.makePointerConst(addr),
       builder.makePointerConst(loweringInfo.rttCanonAddrs[type])));
@@ -1536,7 +1536,7 @@ private:
 
     // Lower the signatures of imported and defined functions.
     for (auto& func : module->functions) {
-      func->sig = lower(func->sig);
+      func->type = Signature(lower(func->getSig()));
     }
 
     LowerGCCode lower(&loweringInfo);
