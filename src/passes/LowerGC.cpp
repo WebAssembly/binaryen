@@ -1460,7 +1460,7 @@ private:
     Builder builder(*module);
     auto index = segment->data.size();
     segment->data.push_back(
-      builder.makeRefFunc(name, HeapType(module->getFunction(name)->sig)));
+      builder.makeRefFunc(name, HeapType(module->getFunction(name)->getSig())));
     table->initial++;
     table->max++;
     return index;
