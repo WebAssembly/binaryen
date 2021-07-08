@@ -1016,7 +1016,7 @@ struct Reducer
         continue;
       }
       actuallyEmptied++;
-      bool useUnreachable = func->sig.results != Type::none;
+      bool useUnreachable = func->getResults() != Type::none;
       if (useUnreachable) {
         func->body = builder->makeUnreachable();
       } else {
