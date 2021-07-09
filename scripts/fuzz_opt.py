@@ -596,6 +596,7 @@ class CompareVMs(TestCaseHandler):
                                os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'),
                                '-I' + self.wasm2c_dir,
                                '-lm',
+                               '-s', 'ENVIRONMENT=shell',
                                '-s', 'ALLOW_MEMORY_GROWTH']
                 # disable the signal handler: emcc looks like unix, but wasm has
                 # no signals
