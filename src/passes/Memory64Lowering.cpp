@@ -98,6 +98,9 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     }
     // This is visited last.
     memory->indexType = Type::i32;
+    if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
+      memory->max = Memory::kMaxSize32;
+    }
   }
 };
 
