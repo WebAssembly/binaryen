@@ -786,10 +786,11 @@ private:
       if (withDefault) {
         name += "WithDefault";
       }
-      module->addFunction(builder.makeFunction(name + '$' + typeName,
-                                               Signature({Type(params), Type::i32}),
-                                               {loweringInfo.pointerType},
-                                               builder.makeBlock(list)));
+      module->addFunction(
+        builder.makeFunction(name + '$' + typeName,
+                             Signature({Type(params), Type::i32}),
+                             {loweringInfo.pointerType},
+                             builder.makeBlock(list)));
     }
   }
 
@@ -943,11 +944,11 @@ private:
       if (withDefault) {
         name += "WithDefault";
       }
-      module->addFunction(
-        builder.makeFunction(name + '$' + typeName,
-                             Signature({Type(params), loweringInfo.pointerType}),
-                             {loweringInfo.pointerType},
-                             builder.makeBlock(list)));
+      module->addFunction(builder.makeFunction(
+        name + '$' + typeName,
+        Signature({Type(params), loweringInfo.pointerType}),
+        {loweringInfo.pointerType},
+        builder.makeBlock(list)));
     }
   }
 
@@ -970,8 +971,9 @@ private:
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArraySet$") + module->typeNames[type].name.str,
-      Signature({{loweringInfo.pointerType, loweringInfo.pointerType, loweredType},
-       Type::none}),
+      Signature(
+        {{loweringInfo.pointerType, loweringInfo.pointerType, loweredType},
+         Type::none}),
       {},
       builder.makeTrapOnNullParam(
         0,
@@ -1007,8 +1009,9 @@ private:
       std::string("ArrayGet$") + module->typeNames[type].name.str,
       // Receives the pointer, an index, and a bool for being signed, returns
       // the result.
-      Signature({{loweringInfo.pointerType, loweringInfo.pointerType, Type::i32},
-       loweredType}),
+      Signature(
+        {{loweringInfo.pointerType, loweringInfo.pointerType, Type::i32},
+         loweredType}),
       {},
       builder.makeTrapOnNullParam(0, body)));
   }
@@ -1225,7 +1228,8 @@ private:
         builder.makeReturn(builder.makeConst(int32_t(1)))})));
     module->addFunction(builder.makeFunction(
       "RefTest",
-      Signature({{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32}),
+      Signature(
+        {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32}),
       {loweringInfo.pointerType, Type::i32},
       builder.makeBlock(list)));
   }
@@ -1256,7 +1260,8 @@ private:
       builder.makeLocalGet(refParam, loweringInfo.pointerType)));
     module->addFunction(builder.makeFunction(
       "RefCast",
-      Signature({{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32}),
+      Signature(
+        {{loweringInfo.pointerType, loweringInfo.pointerType}, Type::i32}),
       {loweringInfo.pointerType},
       builder.makeBlock(list)));
   }
@@ -1451,7 +1456,7 @@ private:
     module->addFunction(builder.makeFunction(
       "RttSub",
       Signature({loweringInfo.pointerType, loweringInfo.pointerType},
-       loweringInfo.pointerType),
+                loweringInfo.pointerType),
       {loweringInfo.pointerType, Type::i32, loweringInfo.pointerType},
       builder.makeBlock(list)));
   }
