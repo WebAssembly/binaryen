@@ -191,6 +191,80 @@ var asmLibraryArg = {
     console.log('store_val_f64 ' + [loc, value]);
     return value;
   },
+
+  struct_get_val_i32: function(loc, value) {
+    console.log('struct_get_val_i32 ' + [loc, value]);
+    return value;
+  },
+  struct_get_val_i64: function(loc, value) {
+    console.log('struct_get_val_i64 ' + [loc, value]);
+    return value;
+  },
+  struct_get_val_f32: function(loc, value) {
+    console.log('loastruct_get_val_i32d_ptr ' + [loc, value]);
+    return value;
+  },
+  struct_get_val_f64: function(loc, value) {
+    console.log('struct_get_val_f64 ' + [loc, value]);
+    return value;
+  },
+  struct_set_val_i32: function(loc, value) {
+    console.log('struct_set_val_i32 ' + [loc, value]);
+    return value;
+  },
+  struct_set_val_i64: function(loc, value) {
+    console.log('struct_set_val_i64 ' + [loc, value]);
+    return value;
+  },
+  struct_set_val_f32: function(loc, value) {
+    console.log('loastruct_set_val_i32d_ptr ' + [loc, value]);
+    return value;
+  },
+  struct_set_val_f64: function(loc, value) {
+    console.log('struct_set_val_f64 ' + [loc, value]);
+    return value;
+  },
+
+  array_get_val_i32: function(loc, value) {
+    console.log('array_get_val_i32 ' + [loc, value]);
+    return value;
+  },
+  array_get_val_i64: function(loc, value) {
+    console.log('array_get_val_i64 ' + [loc, value]);
+    return value;
+  },
+  array_get_val_f32: function(loc, value) {
+    console.log('loaarray_get_val_i32d_ptr ' + [loc, value]);
+    return value;
+  },
+  array_get_val_f64: function(loc, value) {
+    console.log('array_get_val_f64 ' + [loc, value]);
+    return value;
+  },
+  array_set_val_i32: function(loc, value) {
+    console.log('array_set_val_i32 ' + [loc, value]);
+    return value;
+  },
+  array_set_val_i64: function(loc, value) {
+    console.log('array_set_val_i64 ' + [loc, value]);
+    return value;
+  },
+  array_set_val_f32: function(loc, value) {
+    console.log('loaarray_set_val_i32d_ptr ' + [loc, value]);
+    return value;
+  },
+  array_set_val_f64: function(loc, value) {
+    console.log('array_set_val_f64 ' + [loc, value]);
+    return value;
+  },
+  array_get_index: function(loc, value) {
+    console.log('array_get_index ' + [loc, value]);
+    return value;
+  },
+  array_set_index: function(loc, value) {
+    console.log('array_set_index ' + [loc, value]);
+    return value;
+  },
 };
 
 var wasmMemory = new WebAssembly.Memory({ initial: 1 });
