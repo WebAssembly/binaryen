@@ -845,6 +845,14 @@ bool Type::isNullable() const {
   }
 }
 
+bool Type::isNonNullable() const {
+  if (isRef()) {
+    return !isNullable();
+  } else {
+    return false;
+  }
+}
+
 bool Type::isRtt() const {
   if (isBasic()) {
     return false;
@@ -869,7 +877,7 @@ bool Type::isDefaultable() const {
     }
     return true;
   }
-  return isConcrete() && (!isRef() || isNullable()) && !isRtt();
+  return isConcrete() && !isNonNullable() && !isRtt();
 }
 
 Nullability Type::getNullability() const {
