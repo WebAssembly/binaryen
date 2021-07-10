@@ -29,3 +29,7 @@
   (memory.copy (i64.const 1) (i64.const 2) (i64.const 3))
  )
 )
+
+(module
+  (memory $0 i64 1 65537)
+)
