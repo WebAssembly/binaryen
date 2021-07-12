@@ -120,9 +120,11 @@ def randomize_feature_opts():
 def update_feature_opts(wasm):
     global FEATURE_OPTS
     # we will re-compute the features; leave all other things as they are
-    EXTRA = filter(lambda x: not x.startswith('--enable') and not x.startswith('--disable') and x != '--all-features',
-                   FEATURE_OPTS)
+    EXTRA = [x for x in FEATURE_OPTS if not x.startswith('--enable') and not x.startswith('--disable') and x != '--all-features']
     FEATURE_OPTS = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print-features']).strip().split('\n')
+    # filter out '', which can happen if no features are enabled
+    FEATURE_OPTS = [x for x in FEATURE_OPTS if x]
+    print(FEATURE_OPTS, EXTRA)
     FEATURE_OPTS += EXTRA
 
 
