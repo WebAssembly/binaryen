@@ -464,7 +464,7 @@ def run_d8_wasm(wasm, liftoff=True):
 
 
 def all_disallowed(features):
-    return not any([('--enable-' + x) in FEATURE_OPTS for x in features])
+    return not any(('--enable-' + x) in FEATURE_OPTS for x in features)
 
 
 class TestCaseHandler:
