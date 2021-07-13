@@ -2572,7 +2572,7 @@ void WasmBinaryBuilder::pushExpression(Expression* curr) {
     std::vector<Type> finalTypes;
     if (!wasm.features.hasGCNNLocals()) {
       for (auto t : type) {
-        if (t.isRef() && !t.isNullable()) {
+        if (t.isNonNullable()) {
           t = Type(t.getHeapType(), Nullable);
         }
         finalTypes.push_back(t);
