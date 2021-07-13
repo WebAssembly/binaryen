@@ -1868,6 +1868,16 @@ Literal Literal::bitmaskI32x4() const {
 Literal Literal::allTrueI64x2() const {
   return all_true<2, &Literal::getLanesI64x2>(*this);
 }
+Literal Literal::bitmaskI64x2() const {
+  uint32_t result = 0;
+  LaneArray<2> lanes = getLanesI64x2();
+  for (size_t i = 0; i < 2; ++i) {
+    if (lanes[i].geti64() & (1ll << 63)) {
+      result = result | (1 << i);
+    }
+  }
+  return Literal(result);
+}
 
 template<int Lanes,
          LaneArray<Lanes> (Literal::*IntoLanes)() const,

@@ -570,6 +570,7 @@ public:
   Literal extMulHighUI32x4(const Literal& other) const;
   Literal absI64x2() const;
   Literal negI64x2() const;
+  Literal bitmaskI64x2() const;
   Literal allTrueI64x2() const;
   Literal shlI64x2(const Literal& other) const;
   Literal shrSI64x2(const Literal& other) const;
