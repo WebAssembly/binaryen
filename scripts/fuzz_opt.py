@@ -117,6 +117,21 @@ def randomize_feature_opts():
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
+ALL_FEATURE_OPTS = ['--all-features', '-all', '--mvp-features', '-mvp']
+
+
+def update_feature_opts(wasm):
+    global FEATURE_OPTS
+    # we will re-compute the features; leave all other things as they are
+    EXTRA = [x for x in FEATURE_OPTS if not x.startswith('--enable') and
+             not x.startswith('--disable') and x not in ALL_FEATURE_OPTS]
+    FEATURE_OPTS = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print-features']).strip().split('\n')
+    # filter out '', which can happen if no features are enabled
+    FEATURE_OPTS = [x for x in FEATURE_OPTS if x]
+    print(FEATURE_OPTS, EXTRA)
+    FEATURE_OPTS += EXTRA
+
+
 def randomize_fuzz_settings():
     # a list of the optimizations to run on the wasm
     global FUZZ_OPTS
@@ -448,6 +463,10 @@ def run_d8_wasm(wasm, liftoff=True):
     return run_d8_js(in_binaryen('scripts', 'fuzz_shell.js'), [wasm], liftoff=liftoff)
 
 
+def all_disallowed(features):
+    return not any(('--enable-' + x) in FEATURE_OPTS for x in features)
+
+
 class TestCaseHandler:
     # how frequent this handler will be run. 1 means always run it, 0.5 means half the
     # time
@@ -563,7 +582,7 @@ class CompareVMs(TestCaseHandler):
                 if random.random() < 0.5:
                     return False
                 # wasm2c doesn't support most features
-                return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
+                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc'])
 
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
@@ -667,7 +686,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd', '--disable-exception-handling', '--disable-multivalue']])
+        return all_disallowed(['simd', 'exception-handling', 'multivalue'])
 
 
 # Check for determinism - the same command must have the same output.
@@ -805,7 +824,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc'])
 
 
 class Asyncify(TestCaseHandler):
@@ -859,7 +878,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
+        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc'])
 
 
 # Check that the text format round-trips without error.
@@ -925,6 +944,7 @@ def test_one(random_input, given_wasm):
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
+    update_feature_opts('a.wasm')
 
     # create a second wasm for handlers that want to look at pairs.
     generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
@@ -1043,10 +1063,10 @@ def randomize_opt_flags():
             if has_flatten:
                 print('avoiding multiple --flatten in a single command, due to exponential overhead')
                 continue
-            if '--disable-exception-handling' not in FEATURE_OPTS:
+            if '--enable-exception-handling' in FEATURE_OPTS:
                 print('avoiding --flatten due to exception catching which does not support it yet')
                 continue
-            if '--disable-multivalue' not in FEATURE_OPTS and '--disable-reference-types' not in FEATURE_OPTS:
+            if '--enable-multivalue' in FEATURE_OPTS and '--enable-reference-types' in FEATURE_OPTS:
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
                 continue
             if '--gc' not in FEATURE_OPTS:
