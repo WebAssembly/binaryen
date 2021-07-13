@@ -263,7 +263,7 @@ def pick_initial_contents():
         try:
             run([in_bin('wasm-opt'), test_name, '-all', '--strip-target-features',
                  '-o', temp_test_name])
-        except:
+        except Exception:
             # the input can be invalid if e.g. it is raw data that is used with
             # -ttf as fuzzer input
             print('(initial contents are not valid wasm, ignoring)')
