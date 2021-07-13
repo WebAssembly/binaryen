@@ -163,7 +163,7 @@ var asmLibraryArg = {
     return low;
   },
   load_val_f32: function(loc, value) {
-    console.log('loaload_val_i32d_ptr ' + [loc, value]);
+    console.log('load_val_f32 ' + [loc, value]);
     return value;
   },
   load_val_f64: function(loc, value) {
@@ -184,7 +184,7 @@ var asmLibraryArg = {
     return low;
   },
   store_val_f32: function(loc, value) {
-    console.log('loastore_val_i32d_ptr ' + [loc, value]);
+    console.log('store_val_f32 ' + [loc, value]);
     return value;
   },
   store_val_f64: function(loc, value) {
@@ -234,7 +234,7 @@ var asmLibraryArg = {
     return value;
   },
   array_get_val_f32: function(loc, value) {
-    console.log('loaarray_get_val_i32d_ptr ' + [loc, value]);
+    console.log('array_get_val_f32 ' + [loc, value]);
     return value;
   },
   array_get_val_f64: function(loc, value) {
@@ -250,7 +250,7 @@ var asmLibraryArg = {
     return value;
   },
   array_set_val_f32: function(loc, value) {
-    console.log('loaarray_set_val_i32d_ptr ' + [loc, value]);
+    console.log('array_set_val_f32 ' + [loc, value]);
     return value;
   },
   array_set_val_f64: function(loc, value) {
