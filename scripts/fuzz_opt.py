@@ -117,10 +117,15 @@ def randomize_feature_opts():
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
 
 
+ALL_FEATURE_OPTS = ['--all-features', '-all', '--mvp-features', '-mvp']
+
+
 def update_feature_opts(wasm):
     global FEATURE_OPTS
     # we will re-compute the features; leave all other things as they are
-    EXTRA = [x for x in FEATURE_OPTS if not x.startswith('--enable') and not x.startswith('--disable') and x != '--all-features']
+    EXTRA = [x for x in FEATURE_OPTS if not x.startswith('--enable') and \
+                                        not x.startswith('--disable') and \
+                                        not x in ALL_FEATURE_OPTS]
     FEATURE_OPTS = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print-features']).strip().split('\n')
     # filter out '', which can happen if no features are enabled
     FEATURE_OPTS = [x for x in FEATURE_OPTS if x]
@@ -459,6 +464,10 @@ def run_d8_wasm(wasm, liftoff=True):
     return run_d8_js(in_binaryen('scripts', 'fuzz_shell.js'), [wasm], liftoff=liftoff)
 
 
+def all_disallowed(features):
+    return not any([('--enable-' + x) in FEATURE_OPTS for x in features)
+
+
 class TestCaseHandler:
     # how frequent this handler will be run. 1 means always run it, 0.5 means half the
     # time
@@ -574,7 +583,7 @@ class CompareVMs(TestCaseHandler):
                 if random.random() < 0.5:
                     return False
                 # wasm2c doesn't support most features
-                return not any([x in FEATURE_OPTS for x in ['--enable-exception-handling', '--enable-simd', '--enable-threads', '--enable-bulk-memory', '--enable-nontrapping-float-to-int', '--enable-tail-call', '--enable-sign-ext', '--enable-reference-types', '--enable-multivalue', '--enable-gc']])
+                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc'])
 
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
@@ -678,7 +687,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return not any([x in feature_opts for x in ['--enable-simd', '--enable-exception-handling', '--enable-multivalue']])
+        return all_disallowed(['simd', 'exception-handling', 'multivalue'])
 
 
 # Check for determinism - the same command must have the same output.
@@ -816,7 +825,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return not any([x in feature_opts for x in ['--enable-exception-handling', '--enable-simd', '--enable-threads', '--enable-bulk-memory', '--enable-nontrapping-float-to-int', '--enable-tail-call', '--enable-sign-ext', '--enable-reference-types', '--enable-multivalue', '--enable-gc']])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc'])
 
 
 class Asyncify(TestCaseHandler):
@@ -870,7 +879,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return not any([x in feature_opts for x in ['--enable-exception-handling', '--enable-simd', '--enable-tail-call', '--enable-reference-types', '--enable-multivalue', '--enable-gc']])
+        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc'])
 
 
 # Check that the text format round-trips without error.
