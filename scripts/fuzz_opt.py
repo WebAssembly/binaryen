@@ -255,7 +255,16 @@ def pick_initial_contents():
 
     # the given wasm may not work with the chosen feature opts. for example, if
     # we pick atomics.wast but want to run with --disable-atomics, then we'd
-    # error. test the wasm.
+    # error, so we need to test the wasm. first, make sure it doesn't have a
+    # features section, as that would enable a feature that we might want to
+    # be disabled, and our test would not error as we want it to.
+    if test_name.endswith('.wasm'):
+        temp_test_name = 'initial.wasm'
+        run([in_bin('wasm-opt'), test_name, '-all', '--strip-target-features',
+             '-o', temp_test_name])
+        test_name = temp_test_name
+
+    # next, test the wasm.
     try:
         run([in_bin('wasm-opt'), test_name] + FEATURE_OPTS,
             stderr=subprocess.PIPE,
