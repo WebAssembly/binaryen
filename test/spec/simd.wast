@@ -824,7 +824,8 @@
 
 ;; i64x2 arithmetic
 (assert_return (invoke "i64x2.neg" (v128.const i64x2 0x8000000000000000 42)) (v128.const i64x2 0x8000000000000000 -42))
-;; TODO: test i64x2.bitmask
+(assert_return (invoke "i64x2.bitmask" (v128.const i64x2 0x8000000000000000 42)) (i32.const 1))
+(assert_return (invoke "i64x2.bitmask" (v128.const i64x2 1 -1)) (i32.const 2))
 (assert_return (invoke "i64x2.shl" (v128.const i64x2 1 0x8000000000000000) (i32.const 1)) (v128.const i64x2 2 0))
 (assert_return (invoke "i64x2.shl" (v128.const i64x2 1 0x8000000000000000) (i32.const 64)) (v128.const i64x2 1 0x8000000000000000))
 (assert_return (invoke "i64x2.shr_s" (v128.const i64x2 1 0x8000000000000000) (i32.const 1)) (v128.const i64x2 0 0xc000000000000000))
