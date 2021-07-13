@@ -201,7 +201,7 @@ var asmLibraryArg = {
     return value;
   },
   struct_get_val_f32: function(loc, value) {
-    console.log('loastruct_get_val_i32d_ptr ' + [loc, value]);
+    console.log('struct_get_val_f32 ' + [loc, value]);
     return value;
   },
   struct_get_val_f64: function(loc, value) {
@@ -217,7 +217,7 @@ var asmLibraryArg = {
     return value;
   },
   struct_set_val_f32: function(loc, value) {
-    console.log('loastruct_set_val_i32d_ptr ' + [loc, value]);
+    console.log('struct_set_val_f32 ' + [loc, value]);
     return value;
   },
   struct_set_val_f64: function(loc, value) {
