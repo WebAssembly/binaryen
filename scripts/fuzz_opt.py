@@ -260,8 +260,14 @@ def pick_initial_contents():
     # be disabled, and our test would not error as we want it to.
     if test_name.endswith('.wasm'):
         temp_test_name = 'initial.wasm'
-        run([in_bin('wasm-opt'), test_name, '-all', '--strip-target-features',
-             '-o', temp_test_name])
+        try:
+            run([in_bin('wasm-opt'), test_name, '-all', '--strip-target-features',
+                 '-o', temp_test_name])
+        except:
+            # the input can be invalid if e.g. it is raw data that is used with
+            # -ttf as fuzzer input
+            print('(initial contents are not valid wasm, ignoring)')
+            return
         test_name = temp_test_name
 
     # next, test the wasm.
