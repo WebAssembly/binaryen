@@ -172,17 +172,8 @@ struct Precompute
     if (Properties::isConstantExpression(curr) || curr->is<Nop>()) {
       return;
     }
-    // Until engines implement v128.const and we have SIMD-aware optimizations
-    // that can break large v128.const instructions into smaller consts and
-    // splats, do not try to precompute v128 expressions.
-    if (curr->type.isVector()) {
-      return;
-    }
     // try to evaluate this into a const
     Flow flow = precomputeExpression(curr);
-    if (flow.getType().hasVector()) {
-      return;
-    }
     if (!canEmitConstantFor(flow.values)) {
       return;
     }
@@ -236,6 +227,12 @@ private:
   // Precompute an expression, returning a flow, which may be a constant
   // (that we can replace the expression with if replaceExpression is set).
   Flow precomputeExpression(Expression* curr, bool replaceExpression = true) {
+    // Until engines implement v128.const and we have SIMD-aware optimizations
+    // that can break large v128.const instructions into smaller consts and
+    // splats, do not try to precompute v128 expressions.
+    if (curr->type.isVector()) {
+      return Flow(NONCONSTANT_FLOW);
+    }
     Flow flow;
     try {
       flow =
@@ -248,6 +245,9 @@ private:
     // a type we can emit a constant for.
     if (!flow.breaking() && replaceExpression &&
         !canEmitConstantFor(flow.values)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+    if (flow.getType().hasVector()) {
       return Flow(NONCONSTANT_FLOW);
     }
     return flow;
