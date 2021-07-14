@@ -1215,7 +1215,8 @@ Literal Literal::avgrUInt(const Literal& other) const {
 }
 
 Literal Literal::q15MulrSat(const Literal& other) const {
-  int64_t value = (int64_t(geti32()) * int64_t(other.geti32()) + 0x4000LL) >> 15LL;
+  int64_t value =
+    (int64_t(geti32()) * int64_t(other.geti32()) + 0x4000LL) >> 15LL;
   int64_t lower = int64_t(std::numeric_limits<int16_t>::min());
   int64_t upper = int64_t(std::numeric_limits<int16_t>::max());
   return Literal(int32_t(std::min(std::max(value, lower), upper)));
