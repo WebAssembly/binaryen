@@ -649,7 +649,7 @@ private:
   Literal minUInt(const Literal& other) const;
   Literal maxUInt(const Literal& other) const;
   Literal avgrUInt(const Literal& other) const;
-  Literal q15MulrSat(const Literal& other) const;
+  Literal q15MulrSatSI16(const Literal& other) const;
 };
 
 class Literals : public SmallVector<Literal, 1> {

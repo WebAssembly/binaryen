@@ -1214,7 +1214,7 @@ Literal Literal::avgrUInt(const Literal& other) const {
   return Literal((geti32() + other.geti32() + 1) / 2);
 }
 
-Literal Literal::q15MulrSat(const Literal& other) const {
+Literal Literal::q15MulrSatSI16(const Literal& other) const {
   int64_t value =
     (int64_t(geti32()) * int64_t(other.geti32()) + 0x4000LL) >> 15LL;
   int64_t lower = int64_t(std::numeric_limits<int16_t>::min());
@@ -2209,8 +2209,8 @@ Literal Literal::avgrUI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::avgrUInt>(*this, other);
 }
 Literal Literal::q15MulrSatSI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesSI16x8, &Literal::q15MulrSat>(*this,
-                                                                   other);
+  return binary<8, &Literal::getLanesSI16x8, &Literal::q15MulrSatSI16>(*this,
+                                                                       other);
 }
 Literal Literal::addI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);
