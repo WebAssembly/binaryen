@@ -785,13 +785,6 @@
 )
 (assert_return
   (invoke "i16x8.q15mulr_sat_s"
-    (v128.const i16x8 -1 -1 -1 -1 -1 -1 -1 -1)
-    (v128.const i16x8 -1 -1 -1 -1 -1 -1 -1 -1)
-  )
-  (v128.const i16x8 0 0 0 0 0 0 0 0)
-)
-(assert_return
-  (invoke "i16x8.q15mulr_sat_s"
     (v128.const i16x8 -1 -16383 32765  65535 -32768 65535 -16385 -32768)
     (v128.const i16x8 -1 -16384     1 -32768 -32768     1 -16384     -1)
   )

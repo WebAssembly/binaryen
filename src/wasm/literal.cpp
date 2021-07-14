@@ -2208,7 +2208,8 @@ Literal Literal::avgrUI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::avgrUInt>(*this, other);
 }
 Literal Literal::q15MulrSatSI16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesSI16x8, &Literal::q15MulrSat>(*this, other);
+  return binary<8, &Literal::getLanesSI16x8, &Literal::q15MulrSat>(*this,
+                                                                   other);
 }
 Literal Literal::addI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);
