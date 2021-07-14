@@ -1070,6 +1070,14 @@ Literal Literal::subSatUI16(const Literal& other) const {
   return Literal(sub_sat_u<uint16_t>(geti32(), other.geti32()));
 }
 
+Literal Literal::q15MulrSatSI16(const Literal& other) const {
+  int64_t value =
+    (int64_t(geti32()) * int64_t(other.geti32()) + 0x4000LL) >> 15LL;
+  int64_t lower = int64_t(std::numeric_limits<int16_t>::min());
+  int64_t upper = int64_t(std::numeric_limits<int16_t>::max());
+  return Literal(int16_t(std::min(std::max(value, lower), upper)));
+}
+
 Literal Literal::mul(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
@@ -1212,14 +1220,6 @@ Literal Literal::maxUInt(const Literal& other) const {
 
 Literal Literal::avgrUInt(const Literal& other) const {
   return Literal((geti32() + other.geti32() + 1) / 2);
-}
-
-Literal Literal::q15MulrSatSI16(const Literal& other) const {
-  int64_t value =
-    (int64_t(geti32()) * int64_t(other.geti32()) + 0x4000LL) >> 15LL;
-  int64_t lower = int64_t(std::numeric_limits<int16_t>::min());
-  int64_t upper = int64_t(std::numeric_limits<int16_t>::max());
-  return Literal(int32_t(std::min(std::max(value, lower), upper)));
 }
 
 Literal Literal::and_(const Literal& other) const {

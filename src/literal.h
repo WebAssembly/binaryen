@@ -644,12 +644,12 @@ private:
   Literal subSatUI8(const Literal& other) const;
   Literal subSatSI16(const Literal& other) const;
   Literal subSatUI16(const Literal& other) const;
+  Literal q15MulrSatSI16(const Literal& other) const;
   Literal minInt(const Literal& other) const;
   Literal maxInt(const Literal& other) const;
   Literal minUInt(const Literal& other) const;
   Literal maxUInt(const Literal& other) const;
   Literal avgrUInt(const Literal& other) const;
-  Literal q15MulrSatSI16(const Literal& other) const;
 };
 
 class Literals : public SmallVector<Literal, 1> {
