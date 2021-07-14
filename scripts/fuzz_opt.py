@@ -886,7 +886,11 @@ class RoundtripText(TestCaseHandler):
     frequency = 0.05
 
     def handle(self, wasm):
-        run([in_bin('wasm-dis'), wasm, '-o', 'a.wast'])
+        # use name-types because in wasm GC we can end up truncating the default
+        # names which are very long, causing names to collide and the wast to be
+        # invalid
+        # FIXME: run name-types by default during load?
+        run([in_bin('wasm-opt'), wasm, '--name-types', '-S', '-o', 'a.wast'] + FEATURE_OPTS)
         run([in_bin('wasm-opt'), 'a.wast'] + FEATURE_OPTS)
 
 
