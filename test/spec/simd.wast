@@ -151,7 +151,7 @@
  (func (export "i16x8.max_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_s (local.get $0) (local.get $1)))
  (func (export "i16x8.max_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_u (local.get $0) (local.get $1)))
  (func (export "i16x8.avgr_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.avgr_u (local.get $0) (local.get $1)))
- ;; TODO: Q15 rounding, saturating multiplication
+ (func (export "i16x8.q15mulr_sat_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.q15mulr_sat_s (local.get $0) (local.get $1)))
  ;; TODO: extending multiplications
  (func (export "i32x4.abs") (param $0 v128) (result v128) (i32x4.abs (local.get $0)))
  (func (export "i32x4.neg") (param $0 v128) (result v128) (i32x4.neg (local.get $0)))
@@ -782,6 +782,20 @@
     (v128.const i16x8 768     1 32768 33024  1536 18688 65280     2)
   )
   (v128.const i16x8 384 32641 32768 32768 17280 38912 64640 16384)
+)
+(assert_return
+  (invoke "i16x8.q15mulr_sat_s"
+    (v128.const i16x8 -1 -1 -1 -1 -1 -1 -1 -1)
+    (v128.const i16x8 -1 -1 -1 -1 -1 -1 -1 -1)
+  )
+  (v128.const i16x8 0 0 0 0 0 0 0 0)
+)
+(assert_return
+  (invoke "i16x8.q15mulr_sat_s"
+    (v128.const i16x8 -1 -16383 32765  65535 -32768 65535 -16385 -32768)
+    (v128.const i16x8 -1 -16384     1 -32768 -32768     1 -16384     -1)
+  )
+  (v128.const i16x8 0 8192 1 1 32767 0 8193 1)
 )
 
 ;; i32x4 arithmetic

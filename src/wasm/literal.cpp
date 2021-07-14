@@ -1214,6 +1214,13 @@ Literal Literal::avgrUInt(const Literal& other) const {
   return Literal((geti32() + other.geti32() + 1) / 2);
 }
 
+Literal Literal::q15MulrSat(const Literal& other) const {
+  auto value = (int64_t(geti32()) * int64_t(other.geti32()) + 0x4000LL) >> 15LL;
+  auto lower = int64_t(std::numeric_limits<int16_t>::min());
+  auto upper = int64_t(std::numeric_limits<int16_t>::max());
+  return Literal(int32_t(std::min(std::max(value, lower), upper)));
+}
+
 Literal Literal::and_(const Literal& other) const {
   switch (type.getBasic()) {
     case Type::i32:
@@ -2201,7 +2208,7 @@ Literal Literal::avgrUI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::avgrUInt>(*this, other);
 }
 Literal Literal::q15MulrSatSI16x8(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement Q15 rounding, saturating multiplication");
+  return binary<8, &Literal::getLanesSI16x8, &Literal::q15MulrSat>(*this, other);
 }
 Literal Literal::addI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);
