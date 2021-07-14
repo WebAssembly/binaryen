@@ -1218,7 +1218,8 @@ Literal Literal::q15MulrSat(const Literal& other) const {
   auto value = (int64_t(geti32()) * int64_t(other.geti32()) + 0x4000LL) >> 15LL;
   auto lower = int64_t(std::numeric_limits<int16_t>::min());
   auto upper = int64_t(std::numeric_limits<int16_t>::max());
-  return Literal(int32_t(std::min(std::max(value, lower), upper)));
+  return Literal(int32_t(std::min<int64_t>(std::max<int64_t>(value, lower),
+                                           upper)));
 }
 
 Literal Literal::and_(const Literal& other) const {
