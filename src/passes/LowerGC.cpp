@@ -15,26 +15,28 @@
  */
 
 //
-// Lowers Wasm GC to linear memory.
+// Lowers Wasm GC to linear memory. This implements GC structs and arrays in
+// linear memory, and should be precise except for the actual collection of
+// garbage, which is left as a TODO
 //
 // Layouts:
 //   Struct:
-//     ptr rtt
+//     ptr         rtt
 //     fields...
 //
 //   Array:
-//     ptr rtt
-//     u32 size
+//     ptr         rtt
+//     u32         size
 //     elements...
 //
 //   Func:
-//     ptr rtt
-//     u32 index in the table
+//     ptr         rtt
+//     u32         index in the table
 //
 //   Rtts:
 //     u32/RttKind what (func, data, i31, extern)
 //     u32         size of the chain of types. This is the same as RttSupers
-//                      in literal.h
+//                 in literal.h
 //     ptr*        chain of types. Each is a pointer to the rtt.canon for the
 //                 type. In an rtt.canon, this points to the object itself,
 //                 that is, we will have ptr => [kind, 1, ptr]. An rtt.sub
