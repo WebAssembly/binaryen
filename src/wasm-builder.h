@@ -953,29 +953,6 @@ public:
     return ret;
   }
 
-  // Makes a simple load that is aligned, of the full size, and unsigned.
-  Expression*
-  makeSimpleUnsignedLoad(Expression* ptr, Type type, Address offset = 0) {
-    auto size = type.getByteSize();
-    return makeLoad(size, false, offset, size, ptr, type);
-  }
-
-  // Makes a simple load that is aligned, of the full size, and signed.
-  Expression*
-  makeSimpleSignedLoad(Expression* ptr, Type type, Address offset = 0) {
-    auto size = type.getByteSize();
-    return makeLoad(size, true, offset, size, ptr, type);
-  }
-
-  // Makes a simple store that is aligned and of the full size.
-  Expression* makeSimpleStore(Expression* ptr,
-                              Expression* value,
-                              Type type,
-                              Address offset = 0) {
-    auto size = type.getByteSize();
-    return makeStore(size, offset, size, ptr, value, type);
-  }
-
   // Additional utility functions for building on top of nodes
   // Convenient to have these on Builder, as it has allocation built in
 
