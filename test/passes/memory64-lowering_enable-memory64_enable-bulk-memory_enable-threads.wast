@@ -27,6 +27,12 @@
   (memory.init 0 (i64.const 1) (i32.const 2) (i32.const 3))
   (memory.fill (i64.const 1) (i32.const 2) (i64.const 3))
   (memory.copy (i64.const 1) (i64.const 2) (i64.const 3))
+  (drop (i32.atomic.load (i64.const 4)))
+  (i32.atomic.store (i64.const 4) (i32.const 8))
+  (drop (i32.atomic.rmw8.add_u (i64.const 1) (i32.const 2)))
+  (drop (i32.atomic.rmw8.cmpxchg_u (i64.const 1) (i32.const 2) (i32.const 3)))
+  (drop (memory.atomic.wait32 (i64.const 1) (i32.const 2) (i64.const 3)))
+  (drop (memory.atomic.notify (i64.const 1) (i32.const 2)))
  )
 )
 
