@@ -306,6 +306,9 @@ struct LowerGCCode
     curr->type = lower(type);
   }
 
+  // Specific visitors. Many of these call a runtime method that replaces an
+  // instruction. (We rely on inlining to make this fast.)
+
   void visitCallIndirect(CallIndirect* curr) {
     visitExpression(curr);
     curr->sig = lower(curr->sig);
@@ -328,7 +331,6 @@ struct LowerGCCode
   void visitRefAs(RefAs* curr) {
     visitExpression(curr);
 
-    // Replace the RefAs with a call to a runtime method.
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(
       getName(curr->op), {curr->value}, loweringInfo->pointerType));
@@ -372,10 +374,13 @@ struct LowerGCCode
 
   void visitBrOn(BrOn* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
+
     // Store the ref to a local, as we may need to access it twice.
     auto ref = builder.addVar(getFunction(), Type::i32);
     auto* set = builder.makeLocalSet(ref, curr->ref);
+
     auto makeGetRef = [&]() { return builder.makeLocalGet(ref, Type::i32); };
     auto makeCheck = [&](const char* name) {
       return builder.makeCall(name, {makeGetRef()}, Type::i32);
@@ -389,6 +394,7 @@ struct LowerGCCode
     auto makeReversedCastCheck = [&]() {
       return builder.makeUnary(EqZInt32, makeCastCheck());
     };
+
     // The condition must be set in each case of the switch.
     Expression* condition;
     switch (curr->op) {
@@ -448,6 +454,7 @@ struct LowerGCCode
 
   void visitStructNew(StructNew* curr) {
     visitExpression(curr);
+
     auto type = originalTypes[&curr->rtt];
     std::vector<Expression*> operands;
     std::string name = getExpressionName(curr);
@@ -466,6 +473,7 @@ struct LowerGCCode
 
   void visitStructSet(StructSet* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name = std::string("StructSet$") +
@@ -477,6 +485,7 @@ struct LowerGCCode
 
   void visitStructGet(StructGet* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name = std::string("StructGet$") +
@@ -490,6 +499,7 @@ struct LowerGCCode
 
   void visitArrayNew(ArrayNew* curr) {
     visitExpression(curr);
+
     auto type = originalTypes[&curr->rtt];
     std::vector<Expression*> operands;
     std::string name = getExpressionName(curr);
@@ -507,6 +517,7 @@ struct LowerGCCode
 
   void visitArraySet(ArraySet* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name =
@@ -517,6 +528,7 @@ struct LowerGCCode
 
   void visitArrayGet(ArrayGet* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name =
@@ -531,6 +543,7 @@ struct LowerGCCode
 
   void visitArrayLen(ArrayLen* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
     auto type = originalTypes[&curr->ref];
     auto name =
@@ -542,6 +555,7 @@ struct LowerGCCode
 
   void visitRefFunc(RefFunc* curr) {
     visitExpression(curr);
+
     replaceCurrent(
       LiteralUtils::makeFromInt32(loweringInfo->refFuncAddrs[curr->func],
                                   loweringInfo->pointerType,
@@ -549,6 +563,8 @@ struct LowerGCCode
   }
 
   void visitRttCanon(RttCanon* curr) {
+    // Use the original type to find the address of the singleton instance for
+    // this rtt.canon.
     auto type = curr->type.getHeapType();
     visitExpression(curr);
     replaceCurrent(
@@ -558,6 +574,8 @@ struct LowerGCCode
   }
 
   void visitRttSub(RttSub* curr) {
+    // Use the original type to find the address of the singleton instance for
+    // the type we are subtyping here.
     auto type = curr->type.getHeapType();
     visitExpression(curr);
     Builder builder(*getModule());
@@ -571,6 +589,8 @@ struct LowerGCCode
   }
 
   void doWalkFunction(Function* func) {
+    // Parameters and return values are already lowered on all functions
+    // (imported and not). Lower the variables.
     for (auto& t : func->vars) {
       t = lower(t);
     }
