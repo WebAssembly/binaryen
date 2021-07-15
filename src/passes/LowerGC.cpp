@@ -58,6 +58,7 @@ namespace wasm {
 
 namespace {
 
+// A Builder with additional helper functions for doing things with pointers.
 class PointerBuilder : public Builder {
 public:
   PointerBuilder(Module& wasm) : Builder(wasm) {}
@@ -85,6 +86,7 @@ public:
     return makeStore(size, offset, size, ptr, value, type);
   }
 
+  // Make a constant for a pointer value. This handles wasm32/64 differences.
   Expression* makePointerConst(Address addr) {
     if (wasm.memory.is64()) {
       return makeConst(int64_t(addr));
@@ -92,25 +94,30 @@ public:
     return makeConst(int32_t(addr));
   }
 
+  // Get a pointer from a local.
   Expression* makePointerGet(Index index) {
     return makeLocalGet(index, wasm.memory.indexType);
   }
 
+  // Load a pointer from memory.
   Expression* makePointerLoad(Expression* ptr, Address offset = 0) {
     return makeSimpleUnsignedLoad(ptr, wasm.memory.indexType, offset);
   }
 
+  // Store a pointer to memory.
   Expression*
   makePointerStore(Expression* ptr, Expression* value, Address offset = 0) {
     return makeSimpleStore(ptr, value, wasm.memory.indexType, offset);
   }
 
+  // Store a pointer to memory, where the pointer is a constant.
   Expression*
   makePointerStore(Expression* ptr, Address addr, Address offset = 0) {
     return makeSimpleStore(
       ptr, makePointerConst(addr), wasm.memory.indexType, offset);
   }
 
+  // Compare pointers.
   Expression* makePointerEq(Expression* a, Expression* b) {
     if (wasm.memory.is64()) {
       return makeBinary(EqInt64, a, b);
@@ -118,6 +125,7 @@ public:
     return makeBinary(EqInt32, a, b);
   }
 
+  // Check pointers are not equal.
   Expression* makePointerNe(Expression* a, Expression* b) {
     if (wasm.memory.is64()) {
       return makeBinary(NeInt64, a, b);
@@ -125,6 +133,7 @@ public:
     return makeBinary(NeInt32, a, b);
   }
 
+  // Add pointers.
   Expression* makePointerAdd(Expression* a, Expression* b) {
     if (wasm.memory.is64()) {
       return makeBinary(AddInt64, a, b);
@@ -132,6 +141,7 @@ public:
     return makeBinary(AddInt32, a, b);
   }
 
+  // Multiply pointers.
   Expression* makePointerMul(Expression* a, Expression* b) {
     if (wasm.memory.is64()) {
       return makeBinary(MulInt64, a, b);
@@ -139,6 +149,7 @@ public:
     return makeBinary(MulInt32, a, b);
   }
 
+  // Null-check a pointer.
   Expression* makePointerNullCheck(Expression* a) {
     if (wasm.memory.is64()) {
       return makeUnary(EqZInt64, a);
@@ -146,6 +157,8 @@ public:
     return makeUnary(EqZInt32, a);
   }
 
+  // Make a null check of a parameter to a function, that is, code that traps
+  // if the parameter is null.
   Expression* makeTrapOnNullParam(Index param,
                                   Expression* otherwise = nullptr) {
     return makeIf(
@@ -154,6 +167,9 @@ public:
       otherwise);
   }
 };
+
+// Return a string name for RefAs etc. ops, which we need to emit function names
+// for them.
 
 const char* getName(RefAsOp op) {
   switch (op) {
@@ -185,6 +201,7 @@ const char* getName(RefIsOp op) {
   }
 }
 
+// The kind of an rtt, as stored in memory in an rtt instance.
 enum RttKind {
   RttFunc = 0,
   RttData = 1,
@@ -192,8 +209,9 @@ enum RttKind {
   RttExtern = 3,
 };
 
+// Core lowering operation. Turns references and rtts into pointers in linear
+// memory.
 static Type lowerType(Type type, Memory& memory) {
-  // References and Rtts are pointers.
   if (type.isRef() || type.isRtt()) {
     return memory.indexType;
   }
@@ -220,31 +238,35 @@ Signature lowerSig(Signature sig, Module& wasm) {
 struct Layout {
   // The total size of the struct.
   Address size;
-  // The offsets of fields. Note that the first field's offset may not be 0,
-  // as we need room for the rtt.
+  // The offsets of fields. Note that the first field's offset will not be 0
+  // because we need room for the rtt.
   SmallVector<Address, 4> fieldOffsets;
 };
 
 using Layouts = std::unordered_map<HeapType, Layout>;
 
+// Information we need as we lower an entire module.
 struct LoweringInfo {
   Layouts layouts;
 
+  // The name of the malloc function, and where it should start allocating at.
   Name malloc;
   Address mallocStart = 0;
 
   Address pointerSize;
   Type pointerType;
 
-  // The addresses of rtt.canons. Each rtt.canon will be turned into a constant
-  // containing the address for that type.
+  // The addresses of rtt.canons. Each rtt.canon is statically allocated a
+  // singleton position in memory, and will point there.
   std::unordered_map<HeapType, Address> rttCanonAddrs;
 
-  // The addresses of ref.funcs. A singleton such instance is created for each
-  // function.
+  // As with rtt.canon, we allocate a singleton ref.func for each func that
+  // needs one.
   std::unordered_map<Name, Address> refFuncAddrs;
 
+  // Allocate memory at compile time.
   Address compileTimeMalloc(Address size) {
+    // We can only run after we have decided where to begin allocating.
     assert(mallocStart > 0);
     assert(size % 4 == 0);
     auto ret = mallocStart;
@@ -271,15 +293,16 @@ struct LowerGCCode
 
   // visitExpression() performs generic fixups that are needed in all classes.
   // When a specific visitor is defined, they must also call this one, and
-  // before doing any changes (so that we can record the original type, which
-  // may then be needed by the parent expression, etc.).
+  // before doing any changes.
   void visitExpression(Expression* curr) {
     auto type = curr->type;
+
+    // Record the original types of things, which may be needed later.
     if (type.isRef() || type.isRtt()) {
       originalTypes[getCurrentPointer()] = type.getHeapType();
     }
-    // Update the type. This avoids us needing to write out stubs for things
-    // like local.get, control flow structures, etc.
+
+    // Update the type.
     curr->type = lower(type);
   }
 
@@ -290,17 +313,22 @@ struct LowerGCCode
 
   void visitRefNull(RefNull* curr) {
     visitExpression(curr);
+
+    // A null is simply a zero.
     replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
   }
 
   void visitRefEq(RefEq* curr) {
     visitExpression(curr);
+
     replaceCurrent(
       PointerBuilder(*getModule()).makePointerEq(curr->left, curr->right));
   }
 
   void visitRefAs(RefAs* curr) {
     visitExpression(curr);
+
+    // Replace the RefAs with a call to a runtime method.
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(
       getName(curr->op), {curr->value}, loweringInfo->pointerType));
@@ -308,6 +336,7 @@ struct LowerGCCode
 
   void visitRefIs(RefIs* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(
       getName(curr->op), {curr->value}, loweringInfo->pointerType));
@@ -315,6 +344,7 @@ struct LowerGCCode
 
   void visitRefCast(RefCast* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
     replaceCurrent(builder.makeCall(
       "RefCast", {curr->ref, curr->rtt}, loweringInfo->pointerType));
@@ -322,6 +352,7 @@ struct LowerGCCode
 
   void visitRefTest(RefTest* curr) {
     visitExpression(curr);
+
     Builder builder(*getModule());
     replaceCurrent(
       builder.makeCall("RefTest", {curr->ref, curr->rtt}, Type::i32));
@@ -329,6 +360,8 @@ struct LowerGCCode
 
   void visitCallRef(CallRef* curr) {
     visitExpression(curr);
+
+    // Emit a call to a runtime method that handles the original type.
     auto type = originalTypes[&curr->target];
     curr->operands.push_back(curr->target);
     Builder builder(*getModule());
