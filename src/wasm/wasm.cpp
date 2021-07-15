@@ -959,9 +959,15 @@ Type BrOn::getSentType() {
       // BrOnNull does not send a value on the branch.
       return Type::none;
     case BrOnNonNull:
+      if (ref->type == Type::unreachable) {
+        return Type::unreachable;
+      }
       // BrOnNonNull sends the non-nullable type on the branch.
       return Type(ref->type.getHeapType(), NonNullable);
     case BrOnCast:
+      if (ref->type == Type::unreachable) {
+        return Type::unreachable;
+      }
       return Type(rtt->type.getHeapType(), NonNullable);
     case BrOnFunc:
       return Type::funcref;
