@@ -264,27 +264,29 @@ struct InstrumentMemory : public WalkerPass<PostWalker<InstrumentMemory>> {
     addImport(curr, store_val_f32, {Type::i32, Type::f32}, Type::f32);
     addImport(curr, store_val_f64, {Type::i32, Type::f64}, Type::f64);
 
-    // Struct get/set.
-    addImport(curr, struct_get_val_i32, {Type::i32, Type::i32}, Type::i32);
-    addImport(curr, struct_get_val_i64, {Type::i32, Type::i64}, Type::i64);
-    addImport(curr, struct_get_val_f32, {Type::i32, Type::f32}, Type::f32);
-    addImport(curr, struct_get_val_f64, {Type::i32, Type::f64}, Type::f64);
-    addImport(curr, struct_set_val_i32, {Type::i32, Type::i32}, Type::i32);
-    addImport(curr, struct_set_val_i64, {Type::i32, Type::i64}, Type::i64);
-    addImport(curr, struct_set_val_f32, {Type::i32, Type::f32}, Type::f32);
-    addImport(curr, struct_set_val_f64, {Type::i32, Type::f64}, Type::f64);
+    if (curr->features.hasGC()) {
+      // Struct get/set.
+      addImport(curr, struct_get_val_i32, {Type::i32, Type::i32}, Type::i32);
+      addImport(curr, struct_get_val_i64, {Type::i32, Type::i64}, Type::i64);
+      addImport(curr, struct_get_val_f32, {Type::i32, Type::f32}, Type::f32);
+      addImport(curr, struct_get_val_f64, {Type::i32, Type::f64}, Type::f64);
+      addImport(curr, struct_set_val_i32, {Type::i32, Type::i32}, Type::i32);
+      addImport(curr, struct_set_val_i64, {Type::i32, Type::i64}, Type::i64);
+      addImport(curr, struct_set_val_f32, {Type::i32, Type::f32}, Type::f32);
+      addImport(curr, struct_set_val_f64, {Type::i32, Type::f64}, Type::f64);
 
-    // Array get/set.
-    addImport(curr, array_get_val_i32, {Type::i32, Type::i32}, Type::i32);
-    addImport(curr, array_get_val_i64, {Type::i32, Type::i64}, Type::i64);
-    addImport(curr, array_get_val_f32, {Type::i32, Type::f32}, Type::f32);
-    addImport(curr, array_get_val_f64, {Type::i32, Type::f64}, Type::f64);
-    addImport(curr, array_set_val_i32, {Type::i32, Type::i32}, Type::i32);
-    addImport(curr, array_set_val_i64, {Type::i32, Type::i64}, Type::i64);
-    addImport(curr, array_set_val_f32, {Type::i32, Type::f32}, Type::f32);
-    addImport(curr, array_set_val_f64, {Type::i32, Type::f64}, Type::f64);
-    addImport(curr, array_get_index, {Type::i32, Type::i32}, Type::i32);
-    addImport(curr, array_set_index, {Type::i32, Type::i32}, Type::i32);
+      // Array get/set.
+      addImport(curr, array_get_val_i32, {Type::i32, Type::i32}, Type::i32);
+      addImport(curr, array_get_val_i64, {Type::i32, Type::i64}, Type::i64);
+      addImport(curr, array_get_val_f32, {Type::i32, Type::f32}, Type::f32);
+      addImport(curr, array_get_val_f64, {Type::i32, Type::f64}, Type::f64);
+      addImport(curr, array_set_val_i32, {Type::i32, Type::i32}, Type::i32);
+      addImport(curr, array_set_val_i64, {Type::i32, Type::i64}, Type::i64);
+      addImport(curr, array_set_val_f32, {Type::i32, Type::f32}, Type::f32);
+      addImport(curr, array_set_val_f64, {Type::i32, Type::f64}, Type::f64);
+      addImport(curr, array_get_index, {Type::i32, Type::i32}, Type::i32);
+      addImport(curr, array_set_index, {Type::i32, Type::i32}, Type::i32);
+    }
   }
 
 private:

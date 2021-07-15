@@ -500,7 +500,7 @@ public:
       case AllTrueVecI64x2:
         return value.allTrueI64x2();
       case BitmaskVecI64x2:
-        WASM_UNREACHABLE("unimp");
+        return value.bitmaskI64x2();
       case AbsVecF32x4:
         return value.absF32x4();
       case NegVecF32x4:

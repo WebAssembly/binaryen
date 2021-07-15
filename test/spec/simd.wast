@@ -151,7 +151,7 @@
  (func (export "i16x8.max_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_s (local.get $0) (local.get $1)))
  (func (export "i16x8.max_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_u (local.get $0) (local.get $1)))
  (func (export "i16x8.avgr_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.avgr_u (local.get $0) (local.get $1)))
- ;; TODO: Q15 rounding, saturating multiplication
+ (func (export "i16x8.q15mulr_sat_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.q15mulr_sat_s (local.get $0) (local.get $1)))
  ;; TODO: extending multiplications
  (func (export "i32x4.abs") (param $0 v128) (result v128) (i32x4.abs (local.get $0)))
  (func (export "i32x4.neg") (param $0 v128) (result v128) (i32x4.neg (local.get $0)))
@@ -783,6 +783,13 @@
   )
   (v128.const i16x8 384 32641 32768 32768 17280 38912 64640 16384)
 )
+(assert_return
+  (invoke "i16x8.q15mulr_sat_s"
+    (v128.const i16x8 -1 -16383 32765  65535 -32768 65535 -16385 -32768)
+    (v128.const i16x8 -1 -16384     1 -32768 -32768     1 -16384     -1)
+  )
+  (v128.const i16x8 0 8192 1 1 32767 0 8193 1)
+)
 
 ;; i32x4 arithmetic
 (assert_return (invoke "i32x4.abs" (v128.const i32x4 0 1 0x80000000 0x80000001)) (v128.const i32x4 0 1 0x80000000 0x7fffffff))
@@ -824,7 +831,8 @@
 
 ;; i64x2 arithmetic
 (assert_return (invoke "i64x2.neg" (v128.const i64x2 0x8000000000000000 42)) (v128.const i64x2 0x8000000000000000 -42))
-;; TODO: test i64x2.bitmask
+(assert_return (invoke "i64x2.bitmask" (v128.const i64x2 0x8000000000000000 42)) (i32.const 1))
+(assert_return (invoke "i64x2.bitmask" (v128.const i64x2 1 -1)) (i32.const 2))
 (assert_return (invoke "i64x2.shl" (v128.const i64x2 1 0x8000000000000000) (i32.const 1)) (v128.const i64x2 2 0))
 (assert_return (invoke "i64x2.shl" (v128.const i64x2 1 0x8000000000000000) (i32.const 64)) (v128.const i64x2 1 0x8000000000000000))
 (assert_return (invoke "i64x2.shr_s" (v128.const i64x2 1 0x8000000000000000) (i32.const 1)) (v128.const i64x2 0 0xc000000000000000))

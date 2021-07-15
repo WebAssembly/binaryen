@@ -570,6 +570,7 @@ public:
   Literal extMulHighUI32x4(const Literal& other) const;
   Literal absI64x2() const;
   Literal negI64x2() const;
+  Literal bitmaskI64x2() const;
   Literal allTrueI64x2() const;
   Literal shlI64x2(const Literal& other) const;
   Literal shrSI64x2(const Literal& other) const;
@@ -643,6 +644,7 @@ private:
   Literal subSatUI8(const Literal& other) const;
   Literal subSatSI16(const Literal& other) const;
   Literal subSatUI16(const Literal& other) const;
+  Literal q15MulrSatSI16(const Literal& other) const;
   Literal minInt(const Literal& other) const;
   Literal maxInt(const Literal& other) const;
   Literal minUInt(const Literal& other) const;

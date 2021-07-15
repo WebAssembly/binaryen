@@ -877,7 +877,7 @@ bool Type::isDefaultable() const {
     }
     return true;
   }
-  return isConcrete() && (!isRef() || isNullable()) && !isRtt();
+  return isConcrete() && !isNonNullable() && !isRtt();
 }
 
 Nullability Type::getNullability() const {
