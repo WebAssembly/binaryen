@@ -591,3 +591,9 @@
   )
  )
 )
+(module
+ (type $none_=>_ref|any| (func (result (ref any))))
+ (func $foo (result (ref any))
+  (unreachable)
+ )
+)
