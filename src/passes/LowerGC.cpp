@@ -597,9 +597,6 @@ struct LowerGCCode
 
     // Lower all the code.
     Parent::doWalkFunction(func);
-
-    // Ensure unique names for the loops that we created.
-    UniqueNameMapper::uniquify(func->body);
   }
 
 private:
