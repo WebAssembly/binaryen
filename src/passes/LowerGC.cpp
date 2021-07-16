@@ -809,6 +809,8 @@ private:
   }
 
   void makeStructNew(HeapType type) {
+    // StructNew$heap-type ([value1, .., valueN,] pointer rtt) -> allocated pointer
+
     auto typeName = module->typeNames[type].name.str;
     auto& fields = type.getStruct().fields;
     PointerBuilder builder(*module);
@@ -887,6 +889,8 @@ private:
   }
 
   void makeStructSet(HeapType type) {
+    // StructSet$heap-type (pointer ptr, type value)
+
     auto& fields = type.getStruct().fields;
     PointerBuilder builder(*module);
     for (Index i = 0; i < fields.size(); i++) {
@@ -909,9 +913,9 @@ private:
     }
   }
 
-// waka
-
   void makeStructGet(HeapType type) {
+    // StructGet$heap-type (pointer ptr, bool signed) -> loaded value
+
     auto& fields = type.getStruct().fields;
     PointerBuilder builder(*module);
     for (Index i = 0; i < fields.size(); i++) {
@@ -939,7 +943,6 @@ private:
       module->addFunction(builder.makeFunction(
         std::string("StructGet$") + module->typeNames[type].name.str + '$' +
           std::to_string(i),
-        // Receives the pointer and a bool for being signed, returns the result.
         Signature({{loweringInfo.pointerType, Type::i32}, loweredType}),
         {},
         builder.makeTrapOnNullParam(0, body)));
@@ -947,6 +950,10 @@ private:
   }
 
   void makeArrayNew(HeapType type) {
+    // ArrayNew$heap-type ([type value,]
+    //                      u32 size,
+    //                      pointer rtt) -> allocated pointer
+
     auto typeName = module->typeNames[type].name.str; // waka
     auto element = type.getArray().element;
     auto loweredType = lower(element.type);
@@ -963,15 +970,19 @@ private:
         initParam = 0;
         params.push_back(loweredType);
       }
+
       // Add the size parameter.
       auto sizeParam = params.size();
       params.push_back(loweringInfo.pointerType);
+
       // Add the RTT parameter.
       auto rttParam = params.size();
       params.push_back(loweringInfo.pointerType);
+
       // Add a local to store the allocated value.
       auto alloc = params.size();
       std::vector<Expression*> list;
+
       // Malloc space for our Array.
       list.push_back(builder.makeLocalSet(
         alloc,
@@ -983,22 +994,18 @@ private:
               builder.makePointerConst(bytes),
               builder.makePointerGet(sizeParam)))},
           loweringInfo.pointerType)));
+
       // Store the size.
-      list.push_back(builder.makeStore(
-        loweringInfo.pointerSize,
-        4,
-        loweringInfo.pointerSize,
+      list.push_back(builder.makePointerStore(
         builder.makePointerGet(alloc),
         builder.makePointerGet(sizeParam),
-        loweringInfo.pointerType));
+        4));
+
       // Store the rtt.
-      list.push_back(builder.makeStore(
-        loweringInfo.pointerSize,
-        0,
-        loweringInfo.pointerSize,
+      list.push_back(builder.makePointerStore(
         builder.makePointerGet(alloc),
-        builder.makePointerGet(rttParam),
-        loweringInfo.pointerType));
+        builder.makePointerGet(rttParam)));
+
       // Store the values, by performing ArraySet operations.
       Name loopName("loop");
       Name blockName("block");
@@ -1032,8 +1039,10 @@ private:
                                 builder.makeLocalGet(sizeParam, Type::i32),
                                 builder.makeConst(int32_t(1)))),
            builder.makeBreak(loopName)})));
+
       // Return the pointer.
       list.push_back(builder.makePointerGet(alloc));
+
       std::string name = "ArrayNew";
       if (withDefault) {
         name += "WithDefault";
@@ -1046,6 +1055,9 @@ private:
     }
   }
 
+  // Emit an expression to compute the offset in an array, assuming the pointer
+  // is in local #0 and the index in local #1. Basically this returns
+  // $0 + (fieldSize * $1)
   Expression* makeArrayOffset(const Field& field) {
     PointerBuilder builder(*module);
     return builder.makeBinary(
@@ -1059,6 +1071,8 @@ private:
   }
 
   void makeArraySet(HeapType type) {
+    // ArraySet$heap-type (pointer ptr, u32 index, type value)
+
     auto element = type.getArray().element;
     auto loweredType = lower(element.type);
     auto bytes = getBytes(element);
@@ -1080,11 +1094,12 @@ private:
   }
 
   void makeArrayGet(HeapType type) {
+    // ArrayGet$heap-type (pointer ptr, u32 index, bool signed) -> value
+
     auto element = type.getArray().element;
     auto bytes = getBytes(element);
     auto loweredType = lower(element.type);
     PointerBuilder builder(*module);
-
     auto makeLoad = [&](bool signed_) {
       return builder.makeLoad(
         bytes, signed_, 0, bytes, makeArrayOffset(element), loweredType);
@@ -1101,8 +1116,6 @@ private:
 
     module->addFunction(builder.makeFunction(
       std::string("ArrayGet$") + module->typeNames[type].name.str,
-      // Receives the pointer, an index, and a bool for being signed, returns
-      // the result.
       Signature(
         {{loweringInfo.pointerType, loweringInfo.pointerType, Type::i32},
          loweredType}),
@@ -1111,6 +1124,8 @@ private:
   }
 
   void makeArrayLen(HeapType type) {
+    // ArrayLen$heap-type (pointer ptr) -> u32
+
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
       std::string("ArrayLen$") + module->typeNames[type].name.str,
