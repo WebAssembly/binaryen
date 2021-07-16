@@ -821,23 +821,29 @@ private:
             break;
           }
         }
+
         // We do not need a defaultable variant for a non-defaultable struct.
         if (!isDefaultable) {
           continue;
         }
       }
+
+      // If this is not withDefault, add the params.
       std::vector<Type> params;
-      for (Index i = 0; i < fields.size(); i++) {
-        if (!withDefault) {
+      if (!withDefault) {
+        for (Index i = 0; i < fields.size(); i++) {
           params.push_back(fields[i].type);
         }
       }
+
       // Add the RTT parameter.
       auto rttParam = params.size();
       params.push_back(loweringInfo.pointerType);
+
       // We need one local to store the allocated value.
       auto alloc = params.size();
       std::vector<Expression*> list;
+
       // Malloc space for our struct.
       list.push_back(builder.makeLocalSet(
         alloc,
