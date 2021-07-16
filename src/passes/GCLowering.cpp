@@ -693,6 +693,7 @@ private:
       // Add a memory and use all of it.
       module->memory.exists = true;
       module->memory.initial = module->memory.max = MemoryPages;
+
       // Start allocating at address 8, so that lower numbers can have special
       // meanings (like 0 meaning "null").
       loweringInfo.mallocStart = 8;
@@ -712,11 +713,14 @@ private:
 
   void addTable() {
     Builder builder(*module);
+
     // Add a new table just for us.
     loweringInfo.tableName = Names::getValidTableName(*module, "lowergc-table");
+
     // Start the table at size 0, and increase it as needed as we go.
     table = module->addTable(
       builder.makeTable(loweringInfo.tableName, Type::funcref, 0, 0));
+
     // Add an element segment to append to.
     segment = module->addElementSegment(builder.makeElementSegment(
       "lowergc-segment", table->name, builder.makeConst(int32_t(0))));
@@ -747,15 +751,18 @@ private:
       Type::i32,
       builder.makeConst(int32_t(loweringInfo.mallocStart)),
       Builder::Mutable));
+
     // Disallow further allocation at compile time, by setting an invalid value
     // for the start.
     loweringInfo.mallocStart = 0;
+
     // Allocate by bumping nextMalloc and returning the previous value.
     auto* alloc = builder.makeGlobalSet(
       nextMalloc->name,
       builder.makeBinary(AddInt32,
                          builder.makeGlobalGet(nextMalloc->name, Type::i32),
                          builder.makeLocalGet(0, Type::i32)));
+
     // Check for an OOM.
     // TODO: integer overflow checks as well
     auto* check = builder.makeIf(
@@ -781,8 +788,7 @@ private:
   void addGCRuntime(const std::vector<HeapType>& types) {
     // Emit support code for specific types.
     //
-    // Note that some of this support code will end up identical, e.g.,
-    // getting the length of an array does not depend on the type. Those can be
+    // Note that some of this support code may end up identical; those can be
     // de-duplicated by other passes later. We also emit all the code here, and
     // rely on other passes to remove unneeded things.
     for (auto type : types) {
