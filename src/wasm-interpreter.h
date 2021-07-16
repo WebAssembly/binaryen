@@ -1836,7 +1836,7 @@ public:
         }
         break;
       default:
-        WASM_UNREACHABLE("unimplemented ref.as_*");
+        WASM_UNREACHABLE("unimplemented ref.is_*");
     }
     return value;
   }

@@ -1701,6 +1701,6 @@ private:
   Signature lower(Signature sig) { return lowerSig(sig, *module); }
 };
 
-Pass* createLowerGCPass() { return new LowerGC(); }
+Pass* createGCLoweringPass() { return new LowerGC(); }
 
 } // namespace wasm

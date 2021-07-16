@@ -142,7 +142,7 @@ void PassRegistry::registerPasses() {
     "func-metrics", "reports function metrics", createFunctionMetricsPass);
   registerPass("gc-lowering",
                "lower wasm GC to wasm MVP using linear memory",
-               createLowerGCPass);
+               createGCLoweringPass);
   registerPass("generate-dyncalls",
                "generate dynCall fuctions used by emscripten ABI",
                createGenerateDynCallsPass);
