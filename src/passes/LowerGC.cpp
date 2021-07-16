@@ -767,7 +767,7 @@ private:
     for (auto type : types) {
       makeRttCanon(type);
       if (type.isStruct()) {
-        computeLayout(type, loweringInfo.layouts[type]);
+        computeLayout(type);
         makeStructNew(type);
         makeStructSet(type);
         makeStructGet(type);
@@ -788,10 +788,14 @@ private:
     makeRefCast();
     makeRttSub();
 
-    addTypeSupport(types);
+    // Add runtime support based on actual usage of types.
+    addUsageBasedGCRuntime(types);
   }
 
-  void computeLayout(HeapType type, Layout& layout) {
+  // Compute the layout of a specific heap type.
+  void computeLayout(HeapType type) {
+    Layout &layout = loweringInfo.layouts[type];
+
     // A pointer to the RTT takes up the first bytes in the struct, so fields
     // start afterwards.
     Address nextField = loweringInfo.pointerSize;
@@ -823,7 +827,6 @@ private:
         }
       }
       std::vector<Type> params;
-      // Store the values, by performing StructSet operations.
       for (Index i = 0; i < fields.size(); i++) {
         if (!withDefault) {
           params.push_back(fields[i].type);
@@ -1372,8 +1375,10 @@ private:
     return PointerBuilder(*module).makeSimpleUnsignedLoad(ptr, Type::i32, 4);
   }
 
-  void addTypeSupport(const std::vector<HeapType>& types) {
-    // Analyze the code for heap type usage.
+  // Certain things require us to scan the actual usage of heap types in order
+  // to emit reasonable code. For example, we don't want to emit a ref.func for
+  // every single function.
+  void addUsageBasedGCRuntime(const std::vector<HeapType>& types) {
     struct UsageInfo {
       std::map<Name, std::atomic<bool>> refFuncs;
     } usageInfo;
