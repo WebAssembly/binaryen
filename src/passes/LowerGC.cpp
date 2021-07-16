@@ -1416,7 +1416,7 @@ private:
   }
 
   Expression* getRttSize(Expression* ptr) {
-    // The RTT kind is the second field in an RTT, after the kind.
+    // The RTT size is the second field in an RTT, after the kind.
     return PointerBuilder(*module).makeSimpleUnsignedLoad(ptr, Type::i32, 4);
   }
 
@@ -1514,10 +1514,8 @@ private:
     // Get the size of the old rtt.
     list.push_back(builder.makeLocalSet(
       sizeLocal,
-      builder.makeSimpleUnsignedLoad(
-        builder.makePointerGet(parentRttParam),
-        Type::i32,
-        4)));
+      getRttSize(builder.makePointerGet(parentRttParam))));
+
     // Malloc space for our struct.
     list.push_back(builder.makeLocalSet(
       allocLocal,
