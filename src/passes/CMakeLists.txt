@@ -28,6 +28,7 @@ set(passes_SOURCES
   ExtractFunction.cpp
   Flatten.cpp
   FuncCastEmulation.cpp
+  GCLowering.cpp
   GenerateDynCalls.cpp
   Heap2Local.cpp
   I64ToI32Lowering.cpp
@@ -39,7 +40,6 @@ set(passes_SOURCES
   LocalCSE.cpp
   LogExecution.cpp
   LoopInvariantCodeMotion.cpp
-  LowerGC.cpp
   Memory64Lowering.cpp
   MemoryPacking.cpp
   MergeBlocks.cpp
