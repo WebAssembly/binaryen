@@ -1523,6 +1523,8 @@ private:
         loweringInfo.malloc,
         {builder.makeBinary(
           AddInt32,
+          // The size of the list of types in the parent (to which we will be
+          // adding one, see below).
           builder.makeBinary(
             MulInt32,
             builder.makeLocalGet(sizeLocal, Type::i32),
@@ -1531,19 +1533,13 @@ private:
           // the list of types is one larger.
           builder.makeConst(int32_t(8 + loweringInfo.pointerSize)))},
         loweringInfo.pointerType)));
-    // Copy the kind from the input rtt
-    list.push_back(builder.makeStore(
-      4,
-      0,
-      4,
+
+    // Copy the kind.
+    list.push_back(builder.makeSimpleStore(
       builder.makePointerGet(allocLocal),
-      builder.makeLoad(4,
-                       false,
-                       0,
-                       4,
-                       builder.makePointerGet(0),
-                       Type::i32),
-      loweringInfo.pointerType));
+      getRttKind(builder.makePointerGet(0)),
+      Type::i32));
+
     // Store the new size, which is one larger.
     list.push_back(builder.makeSimpleStore(
       builder.makePointerGet(allocLocal),
