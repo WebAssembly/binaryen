@@ -1548,6 +1548,7 @@ private:
                          builder.makeConst(int32_t(1))),
       Type::i32,
       4));
+
     // Copy the old types, using *temp++ = *parent++;
     list.push_back(builder.makeLocalSet(
       tempLocal, builder.makePointerGet(allocLocal)));
@@ -1556,16 +1557,14 @@ private:
       loop,
       builder.makeBlock(std::vector<Expression*>{
         // Copy one value.
-        builder.makeSimpleStore(
+        builder.makePointerStore(
           builder.makePointerGet(tempLocal),
-          builder.makeSimpleUnsignedLoad(
+          builder.makePointerLoad(
             builder.makePointerGet(parentRttParam),
-            Type::i32,
             // Constantly pass offsets of 8 here, to skip the first two fields
             // in each rtt data structure. We could also first do an increment,
             // at the cost of code size.
             8),
-          Type::i32,
           8),
         // Increment both pointers
         builder.makeLocalSet(
