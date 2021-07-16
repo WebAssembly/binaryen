@@ -1678,10 +1678,12 @@ private:
   // Given a field in a struct or an array, return how many bytes it uses.
   unsigned getBytes(const Field& field) {
     auto loweredType = lower(field.type);
+
     // For packed fields, return the proper packed size.
     if (field.type == Type::i32) {
       return field.getByteSize();
     }
+
     // For everything else, the lowered size is what matters (e.g. a reference
     // would become an i32 on wasm32 => 4 bytes).
     return loweredType.getByteSize();
@@ -1701,6 +1703,7 @@ private:
 
     LowerGCCode lower(&loweringInfo);
     lower.setModule(module);
+
     // Walk module-level code. We must avoid walkModuleCode() because we must
     // *not* process the table. The table can contain RefFunc items, and we do
     // not need to lower those.
