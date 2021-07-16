@@ -20,31 +20,43 @@
 // garbage, which is left as a TODO
 //
 // Layouts:
+//
 //   Struct:
-//     ptr         rtt
-//     fields...
+//   +-----------------------+
+//   | (type)    | (purpose) |
+//   +-----------------------+
+//   | ptr       | rtt       |
+//   | types...  | data...   |
+//   +-----------------------+
 //
 //   Array:
-//     ptr         rtt
-//     u32         size
-//     elements...
+//   +-----------------+
+//   | ptr      | rtt  |
+//   | u32      | size |
+//   | type...  | data |
+//   +-----------------+
 //
 //   Func:
-//     ptr         rtt
-//     u32         index in the table
+//   +-------------------------------+
+//   | ptr      | rtt                |
+//   | u32      | Index in the table |
+//   +-------------------------------+
 //
 //   Rtts:
-//     u32/RttKind what (func, data, i31, extern)
-//     u32         size of the chain of types. This is the same as RttSupers
-//                 in literal.h
-//     ptr*        chain of types. Each is a pointer to the rtt.canon for the
-//                 type. In an rtt.canon, this points to the object itself,
-//                 that is, we will have ptr => [kind, 1, ptr]. An rtt.sub
-//                 copies the chain of the parent, and appends the new type at
-//                 the end, much like RttSupers as mentioned earlier.
-//       Note that we keep rtt.canon addresses unique, but we do not currently
-//       make an effort to do the same for rtt.sub (which would require a hash
-//       map).
+//   +-----------------------------------------------------------------------+
+//   | u32    | What (RttKind) - func, data, i31, extern                     |
+//   | u32    | Size of the list of types. This is the same as the           |
+//   |        |   size of RttSupers in literal.h                             |
+//   | ptr*   | List of types. Each is a pointer to the rtt.canon for the    |
+//   |        |   type. In an rtt.canon, this points to the object itself,   |
+//   |        |   that is, we will have ptr => [kind, 1, ptr]. An rtt.sub    |
+//   |        |   copies the list of the parent, and appends the new type at |
+//   |        |   the end, much like RttSupers as mentioned earlier.         |
+//   +-----------------------------------------------------------------------+
+//
+//  Note that we allocate unique rtt.canon addresses at compile time, but we do
+//  not currently make an effort to do the same for rtt.sub, which would require
+//  a hash map to be used at runtime.
 //
 
 #include "ir/module-utils.h"
