@@ -557,10 +557,7 @@ struct LowerGCCode
     visitExpression(curr);
 
     Builder builder(*getModule());
-    auto type = originalTypes[&curr->ref];
-    auto name =
-      std::string("ArrayLen$") + getModule()->typeNames[type].name.str;
-    replaceCurrent(builder.makeCall(name, {curr->ref}, Type::i32));
+    replaceCurrent(builder.makeCall("ArrayLen", {curr->ref}, Type::i32));
   }
 
   void visitArrayCopy(ArrayCopy* curr) { WASM_UNREACHABLE("TODO: ArrayCopy"); }
@@ -784,18 +781,18 @@ private:
         makeArrayNew(type);
         makeArraySet(type);
         makeArrayGet(type);
-        makeArrayLen(type);
       } else if (type.isFunction()) {
         makeCallRef(type);
       }
     }
 
-    // Emit general support code.
+    // Emit general support code that does not depend on the type.
     makeRefAs();
     makeRefIs();
     makeRefTest();
     makeRefCast();
     makeRttSub();
+    makeArrayLen();
 
     // Add runtime support based on actual usage of types.
     addUsageBasedGCRuntime(types);
@@ -1132,12 +1129,12 @@ private:
       builder.makeTrapOnNullParam(0, body)));
   }
 
-  void makeArrayLen(HeapType type) {
+  void makeArrayLen() {
     // ArrayLen$heap-type (pointer ptr) -> u32
 
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
-      std::string("ArrayLen$") + module->typeNames[type].name.str,
+      "ArrayLen",
       Signature({{loweringInfo.pointerType}, Type::i32}),
       {},
       builder.makeTrapOnNullParam(

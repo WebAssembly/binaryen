@@ -143,7 +143,7 @@
    )
   )
   (call $log
-   (call $ArrayLen$bytes
+   (call $ArrayLen
     (local.get $x)
    )
   )
@@ -1094,17 +1094,6 @@
    )
   )
  )
- (func $ArrayLen$bytes (param $0 i32) (result i32)
-  (if (result i32)
-   (i32.eqz
-    (local.get $0)
-   )
-   (unreachable)
-   (i32.load offset=4
-    (local.get $0)
-   )
-  )
- )
  (func $CallRef$int_func (param $0 i32) (result i32)
   (if (result i32)
    (i32.eqz
@@ -1512,6 +1501,17 @@
   )
   (local.get $2)
  )
+ (func $ArrayLen (param $0 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
+  )
+ )
  (func $malloc (param $0 i32) (result i32)
   (global.set $lowergc-next-malloc
    (i32.add
@@ -1801,17 +1801,6 @@
       )
      )
     )
-   )
-  )
- )
- (func $ArrayLen$bytes (param $0 i32) (result i32)
-  (if (result i32)
-   (i32.eqz
-    (local.get $0)
-   )
-   (unreachable)
-   (i32.load offset=4
-    (local.get $0)
    )
   )
  )
@@ -2153,6 +2142,17 @@
    (local.get $0)
   )
   (local.get $2)
+ )
+ (func $ArrayLen (param $0 i32) (result i32)
+  (if (result i32)
+   (i32.eqz
+    (local.get $0)
+   )
+   (unreachable)
+   (i32.load offset=4
+    (local.get $0)
+   )
+  )
  )
  (func $malloc (param $0 i32) (result i32)
   (global.set $lowergc-next-malloc
