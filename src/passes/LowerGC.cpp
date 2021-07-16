@@ -1412,11 +1412,11 @@ private:
   // Given a pointer to an RTT, load its kind.
   Expression* getRttKind(Expression* ptr) {
     // The RTT kind is the very first field in an RTT
-    return Builder(*module).makeLoad(4, false, 0, 4, ptr, Type::i32);
+    return PointerBuilder(*module).makeSimpleUnsignedLoad(ptr, Type::i32);
   }
 
   Expression* getRttSize(Expression* ptr) {
-    // The RTT kind is the very first field in an RTT
+    // The RTT kind is the second field in an RTT, after the kind.
     return PointerBuilder(*module).makeSimpleUnsignedLoad(ptr, Type::i32, 4);
   }
 
