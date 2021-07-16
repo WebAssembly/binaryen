@@ -813,7 +813,7 @@ struct Reducer
     return shrank;
   }
 
-  void shrinkElementSegments(Module* module) {
+  void shrinkElementSegments() {
     std::cerr << "|    try to simplify elem segments\n";
     Expression* first = nullptr;
     auto it =
@@ -923,7 +923,7 @@ struct Reducer
     while (reduceFunctions()) {
     }
 
-    shrinkElementSegments(module.get());
+    shrinkElementSegments();
 
     // try to remove exports
     std::cerr << "|    try to remove exports (with factor " << factor << ")\n";
