@@ -141,6 +141,15 @@ public:
     return makeBinary(AddInt32, a, b);
   }
 
+  // Add a pointers to a constant
+  Expression* makePointerAdd(Expression* a, Address b) {
+    auto* bExpression = makePointerConst(b);
+    if (wasm.memory.is64()) {
+      return makeBinary(AddInt64, a, bExpression);
+    }
+    return makeBinary(AddInt32, a, bExpression);
+  }
+
   // Multiply pointers.
   Expression* makePointerMul(Expression* a, Expression* b) {
     if (wasm.memory.is64()) {
@@ -1208,6 +1217,7 @@ private:
         default:
           WASM_UNREACHABLE("unimplemented ref.as_*");
       }
+
       // If we passed all the checks, we can return the pointer.
       list.push_back(builder.makePointerGet(0));
       module->addFunction(builder.makeFunction(
@@ -1219,14 +1229,18 @@ private:
   }
 
   void makeRefIs() {
+    // RefIs (pointer ptr) -> i32
+
     PointerBuilder builder(*module);
     for (RefIsOp op : {RefIsNull, RefIsFunc, RefIsData, RefIsI31}) {
       std::vector<Expression*> list;
+
       // Check for null.
       list.push_back(builder.makeIf(
         builder.makeUnary(EqZInt32,
                           builder.makePointerGet(0)),
         builder.makeReturn(builder.makeConst(int32_t(op == RefIsNull)))));
+
       // Check for a kind, if we need to.
       auto compareRttTo = [&](RttKind kind) {
         list.push_back(builder.makeIf(
@@ -1236,6 +1250,7 @@ private:
                              builder.makeConst(int32_t(kind))),
           builder.makeReturn(builder.makeConst(int32_t(0)))));
       };
+
       switch (op) {
         case RefIsNull:
           break;
@@ -1262,25 +1277,32 @@ private:
   }
 
   void makeRefTest() {
-    // RefTest(a : ref, b : rtt). Returns 1 if the ref's rtt is a sub-rtt of
-    // the rtt param.
+    // RefTest (pointer a, rtt b) -> u32 (1 if the ref's rtt is a sub-rtt of
+    // the rtt param)
+
     const Index refParam = 0;
     const Index rttParam = 1;
-    // Store the ref's rtt in a local
+
+    // We will store the ref's rtt in a local
     const Index refRttLocal = 2;
-    // Store the size in a local as we loop.
+
+    // We will store the size in a local as we loop.
     const Index sizeLocal = 3;
+
     PointerBuilder builder(*module);
     std::vector<Expression*> list;
+
     // Check for null.
     list.push_back(builder.makeIf(
       builder.makeUnary(
         EqZInt32, builder.makePointerGet(refParam)),
       builder.makeReturn(builder.makeConst(int32_t(0)))));
+
     // Get the ref's rtt.
     list.push_back(builder.makeLocalSet(
       refRttLocal,
       getRtt(builder.makePointerGet(refParam))));
+
     // Check for different kinds.
     list.push_back(builder.makeIf(
       builder.makeBinary(
@@ -1289,6 +1311,7 @@ private:
         getRttKind(
           builder.makePointerGet(refRttLocal))),
       builder.makeReturn(builder.makeConst(int32_t(0)))));
+
     // Check if the chain of sub-rtts match. That is, we are looking for
     // the ref's rtt to be a super-rtt of the other, which means it is identical
     // to it, or adds further things to the list of types at the end. First,
@@ -1298,7 +1321,8 @@ private:
                          getRttSize(builder.makePointerGet(rttParam)),
                          getRttSize(builder.makePointerGet(refRttLocal))),
       builder.makeReturn(builder.makeConst(int32_t(0)))));
-    // The sizes are compatible, scan the list of types.
+
+    // The sizes are potentially compatible. Scan the list of types.
     list.push_back(builder.makeLocalSet(
       sizeLocal, getRttSize(builder.makePointerGet(rttParam))));
     Name loop("loop");
@@ -1312,22 +1336,23 @@ private:
               builder.makePointerGet(rttParam),
               // Constantly pass offsets of 8 here, to skip the first two fields
               // in each rtt data structure. We could also first do an
-              // increment,
-              // at the cost of code size.
+              // increment, at the cost of code size.
               8),
             builder.makePointerLoad(builder.makePointerGet(refRttLocal), 8)),
           builder.makeReturn(builder.makeConst(int32_t(0)))),
+
         // Increment both pointers
         builder.makeLocalSet(
           rttParam,
           builder.makePointerAdd(
             builder.makePointerGet(rttParam),
-            builder.makePointerConst(loweringInfo.pointerSize))),
+            loweringInfo.pointerSize)),
         builder.makeLocalSet(
           refRttLocal,
           builder.makePointerAdd(
             builder.makePointerGet(refRttLocal),
-            builder.makePointerConst(loweringInfo.pointerSize))),
+            loweringInfo.pointerSize)),
+
         // Loop while there is more.
         builder.makeLocalSet(
           sizeLocal,
