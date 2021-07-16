@@ -811,7 +811,7 @@ private:
   void makeStructNew(HeapType type) {
     auto typeName = module->typeNames[type].name.str;
     auto& fields = type.getStruct().fields;
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     for (bool withDefault : {true, false}) {
       if (withDefault) {
         bool isDefaultable = true;
@@ -851,14 +851,12 @@ private:
           loweringInfo.malloc,
           {builder.makeConst(int32_t(loweringInfo.layouts[type].size))},
           loweringInfo.pointerType)));
+
       // Store the rtt.
-      list.push_back(builder.makeStore(
-        loweringInfo.pointerSize,
-        0,
-        loweringInfo.pointerSize,
+      list.push_back(builder.makePointerStore(
         builder.makeLocalGet(alloc, loweringInfo.pointerType),
-        builder.makeLocalGet(rttParam, loweringInfo.pointerType),
-        loweringInfo.pointerType));
+        builder.makeLocalGet(rttParam, loweringInfo.pointerType)));
+
       // Store the values, by performing StructSet operations.
       for (Index i = 0; i < fields.size(); i++) {
         Expression* value;
@@ -873,8 +871,9 @@ private:
           {builder.makeLocalGet(alloc, loweringInfo.pointerType), value},
           Type::none));
       }
-      // Return the pointer.
-      list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
+
+      // Return the allocated pointer.
+      list.push_back(builder.makePointerGet(alloc));
       std::string name = "StructNew";
       if (withDefault) {
         name += "WithDefault";
