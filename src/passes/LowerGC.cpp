@@ -264,6 +264,9 @@ struct LoweringInfo {
   // needs one.
   std::unordered_map<Name, Address> refFuncAddrs;
 
+  // The table we use for ref.func values.
+  Name tableName;
+
   // Allocate memory at compile time.
   Address compileTimeMalloc(Address size) {
     // We can only run after we have decided where to begin allocating.
@@ -688,14 +691,13 @@ private:
     loweringInfo.pointerSize = loweringInfo.pointerType.getByteSize();
   }
 
-  const char* TableName = "lowergc-table";
-
   void addTable() {
     Builder builder(*module);
     // Add a new table just for us.
+    loweringInfo.tableName = Names::getValidTableName(*module, "lowergc-table");
     // Start the table at size 0, and increase it as needed as we go.
     table = module->addTable(builder.makeTable(
-      Names::getValidTableName(*module, TableName), Type::funcref, 0, 0));
+      loweringInfo.tableName, Type::funcref, 0, 0));
     // Add an element segment to append to.
     segment = module->addElementSegment(builder.makeElementSegment(
       "lowergc-segment", table->name, builder.makeConst(int32_t(0))));
@@ -1132,7 +1134,7 @@ private:
       builder.makeTrapOnNullParam(
         refParam,
         builder.makeCallIndirect(
-          TableName,
+          loweringInfo.tableName,
           // Load the function pointer from the reference
           builder.makeSimpleUnsignedLoad(
             builder.makeLocalGet(refParam, Type::i32), Type::i32, 4),
