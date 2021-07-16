@@ -335,6 +335,7 @@ struct LowerGCCode
 
   void visitCallIndirect(CallIndirect* curr) {
     visitExpression(curr);
+
     curr->sig = lower(curr->sig);
   }
 
