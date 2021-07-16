@@ -1427,10 +1427,13 @@ private:
     struct UsageInfo {
       std::map<Name, std::atomic<bool>> refFuncs;
     } usageInfo;
+
     // Initialize the data so it is safe to operate on in parallel.
     for (auto& func : module->functions) {
       usageInfo.refFuncs[func->name] = false;
     }
+
+    // Scan the module.
     {
       struct Analysis : public WalkerPass<PostWalker<Analysis>> {
         UsageInfo* usageInfo;
@@ -1444,9 +1447,9 @@ private:
       PassRunner runner(module);
       Analysis analysis(&usageInfo);
       analysis.run(&runner, module);
-      // fill in global uses
       analysis.walkModuleCode(module);
     }
+
     for (auto& kv : usageInfo.refFuncs) {
       Name name = kv.first;
       bool used = kv.second;
@@ -1456,47 +1459,58 @@ private:
     }
   }
 
+  // Allocate an rtt.canon at compile time for the specified type.
   void makeRttCanon(HeapType type) {
+    PointerBuilder builder(*module);
+
     // Allocate this rtt at the next free location.
     auto addr = loweringInfo.compileTimeMalloc(8 + loweringInfo.pointerSize);
     loweringInfo.rttCanonAddrs[type] = addr;
-    int32_t rttValue;
+
+    // Write the rtt kind.
+    int32_t rttKind;
     if (type.isFunction()) {
-      rttValue = RttFunc;
+      rttKind = RttFunc;
     } else if (type.isData()) {
-      rttValue = RttData;
+      rttKind = RttData;
     } else {
       WASM_UNREACHABLE("bad rtt");
     }
-    PointerBuilder builder(*module);
-    // Write the rtt kind.
     startBlock->list.push_back(
       builder.makeSimpleStore(builder.makeConst(int32_t(addr)),
-                              builder.makeConst(int32_t(rttValue)),
+                              builder.makeConst(int32_t(rttKind)),
                               Type::i32));
-    // Write the size field.
+
+    // Write the size of the list of types, which for an rtt.canon is 1.
     startBlock->list.push_back(
       builder.makeSimpleStore(builder.makeConst(int32_t(addr + 4)),
                               builder.makeConst(int32_t(1)),
                               Type::i32));
+
     // Write the list, which is just a pointer to ourselves.
     startBlock->list.push_back(
       builder.makePointerStore(builder.makeConst(int32_t(addr + 8)), addr));
   }
 
   void makeRttSub() {
+    // RttSub(rtt newType, rtt parent) -> rtt
+
     PointerBuilder builder(*module);
+    std::vector<Expression*> list;
+
     // We receive two params, the new type and the old parent rtt.
     auto newTypeParam = 0;
     auto parentRttParam = 1;
-    // We need a local to store the allocated value. It has index 2, after
-    // the parameters, which are the new type, and the old rtt we are subbing.
+
+    // We need a local to store the allocated value.
     auto allocLocal = 2;
+
     // We also need a local for the size of the list of types in the old rtt.
     auto sizeLocal = 3;
+
     // Finally, we need a temp pointer for the copy loop.
     auto tempLocal = 4;
-    std::vector<Expression*> list;
+
     // Get the size of the old rtt.
     list.push_back(builder.makeLocalSet(
       sizeLocal,
