@@ -815,7 +815,7 @@ private:
   }
 
   void makeStructNew(HeapType type) {
-    // StructNew$heap-type ([value1, .., valueN,] pointer rtt) -> allocated pointer
+    // StructNew$heap-type ([value1, .., valueN,] ref rtt) -> allocated pointer
 
     auto typeName = module->typeNames[type].name.str;
     auto& fields = type.getStruct().fields;
@@ -895,7 +895,7 @@ private:
   }
 
   void makeStructSet(HeapType type) {
-    // StructSet$heap-type (pointer ptr, type value)
+    // StructSet$heap-type (ref ptr, type value)
 
     auto& fields = type.getStruct().fields;
     PointerBuilder builder(*module);
@@ -920,7 +920,7 @@ private:
   }
 
   void makeStructGet(HeapType type) {
-    // StructGet$heap-type (pointer ptr, bool signed) -> loaded value
+    // StructGet$heap-type (ref ptr, bool signed) -> loaded value
 
     auto& fields = type.getStruct().fields;
     PointerBuilder builder(*module);
@@ -958,7 +958,7 @@ private:
   void makeArrayNew(HeapType type) {
     // ArrayNew$heap-type ([type value,]
     //                      u32 size,
-    //                      pointer rtt) -> allocated pointer
+    //                      rtt rtt) -> allocated pointer
 
     auto typeName = module->typeNames[type].name.str; // waka
     auto element = type.getArray().element;
@@ -1077,7 +1077,7 @@ private:
   }
 
   void makeArraySet(HeapType type) {
-    // ArraySet$heap-type (pointer ptr, u32 index, type value)
+    // ArraySet$heap-type (ref ptr, u32 index, type value)
 
     auto element = type.getArray().element;
     auto loweredType = lower(element.type);
@@ -1100,7 +1100,7 @@ private:
   }
 
   void makeArrayGet(HeapType type) {
-    // ArrayGet$heap-type (pointer ptr, u32 index, bool signed) -> value
+    // ArrayGet$heap-type (ref ptr, u32 index, bool signed) -> value
 
     auto element = type.getArray().element;
     auto bytes = getBytes(element);
@@ -1130,7 +1130,7 @@ private:
   }
 
   void makeArrayLen() {
-    // ArrayLen$heap-type (pointer ptr) -> u32
+    // ArrayLen$heap-type (ref ptr) -> u32
 
     PointerBuilder builder(*module);
     module->addFunction(builder.makeFunction(
@@ -1184,7 +1184,7 @@ private:
   }
 
   void makeRefAs() {
-    // RefAs (pointer ptr) -> pointer
+    // RefAs (ref ptr) -> ref
 
     PointerBuilder builder(*module);
     for (RefAsOp op : {RefAsNonNull, RefAsFunc, RefAsData, RefAsI31}) {
@@ -1226,7 +1226,7 @@ private:
   }
 
   void makeRefIs() {
-    // RefIs (pointer ptr) -> i32
+    // RefIs (ref ptr) -> i32
 
     PointerBuilder builder(*module);
     for (RefIsOp op : {RefIsNull, RefIsFunc, RefIsData, RefIsI31}) {
@@ -1274,7 +1274,7 @@ private:
   }
 
   void makeRefTest() {
-    // RefTest (pointer a, rtt b) -> u32 (1 if the ref's rtt is a sub-rtt of
+    // RefTest (ref a, rtt b) -> u32 (1 if the ref's rtt is a sub-rtt of
     // the rtt param)
 
     const Index refParam = 0;
@@ -1368,16 +1368,19 @@ private:
   }
 
   void makeRefCast() {
-    // RefTest(a : ref, b : rtt).
+    // RefCast(ref a, rtt b) -> ref
+
     const Index refParam = 0;
     const Index rttParam = 1;
     PointerBuilder builder(*module);
     std::vector<Expression*> list;
+
     // Check for null, and return it if so.
     list.push_back(builder.makeIf(
       builder.makeUnary(
         EqZInt32, builder.makePointerGet(refParam)),
       builder.makeReturn(builder.makeConst(int32_t(0)))));
+
     // Trap if the cast fails.
     list.push_back(builder.makeIf(
       builder.makeUnary(
@@ -1388,6 +1391,7 @@ private:
            builder.makePointerGet(rttParam)},
           Type::i32)),
       builder.makeUnreachable()));
+
     // Success.
     list.push_back(builder.makeReturn(
       builder.makePointerGet(refParam)));
@@ -1402,12 +1406,7 @@ private:
   // Given a pointer, load the RTT for it.
   Expression* getRtt(Expression* ptr) {
     // The RTT is the very first field in all GC objects.
-    return Builder(*module).makeLoad(loweringInfo.pointerSize,
-                                     false,
-                                     0,
-                                     loweringInfo.pointerSize,
-                                     ptr,
-                                     loweringInfo.pointerType);
+    return PointerBuilder(*module).makePointerLoad(ptr);
   }
 
   // Given a pointer to an RTT, load its kind.
