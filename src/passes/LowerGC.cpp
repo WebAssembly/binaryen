@@ -903,11 +903,13 @@ private:
           builder.makeStore(bytes,
                             loweringInfo.layouts[type].fieldOffsets[i],
                             bytes,
-                            builder.makeLocalGet(0, loweringInfo.pointerType),
+                            builder.makePointerGet(0),
                             builder.makeLocalGet(1, loweredType),
                             loweredType))));
     }
   }
+
+// waka
 
   void makeStructGet(HeapType type) {
     auto& fields = type.getStruct().fields;
@@ -922,7 +924,7 @@ private:
           signed_,
           loweringInfo.layouts[type].fieldOffsets[i],
           bytes,
-          builder.makeLocalGet(0, loweringInfo.pointerType),
+          builder.makePointerGet(0),
           loweredType);
       };
       Expression* body;
@@ -979,23 +981,23 @@ private:
             builder.makePointerConst(4 + loweringInfo.pointerSize),
             builder.makePointerMul(
               builder.makePointerConst(bytes),
-              builder.makeLocalGet(sizeParam, loweringInfo.pointerType)))},
+              builder.makePointerGet(sizeParam)))},
           loweringInfo.pointerType)));
       // Store the size.
       list.push_back(builder.makeStore(
         loweringInfo.pointerSize,
         4,
         loweringInfo.pointerSize,
-        builder.makeLocalGet(alloc, loweringInfo.pointerType),
-        builder.makeLocalGet(sizeParam, loweringInfo.pointerType),
+        builder.makePointerGet(alloc),
+        builder.makePointerGet(sizeParam),
         loweringInfo.pointerType));
       // Store the rtt.
       list.push_back(builder.makeStore(
         loweringInfo.pointerSize,
         0,
         loweringInfo.pointerSize,
-        builder.makeLocalGet(alloc, loweringInfo.pointerType),
-        builder.makeLocalGet(rttParam, loweringInfo.pointerType),
+        builder.makePointerGet(alloc),
+        builder.makePointerGet(rttParam),
         loweringInfo.pointerType));
       // Store the values, by performing ArraySet operations.
       Name loopName("loop");
@@ -1008,7 +1010,7 @@ private:
       }
       initialization = builder.makeCall(
         std::string("ArraySet$") + typeName,
-        {builder.makeLocalGet(alloc, loweringInfo.pointerType),
+        {builder.makePointerGet(alloc),
          builder.makeBinary(SubInt32,
                             builder.makeLocalGet(sizeParam, Type::i32),
                             builder.makeConst(int32_t(1))),
@@ -1031,7 +1033,7 @@ private:
                                 builder.makeConst(int32_t(1)))),
            builder.makeBreak(loopName)})));
       // Return the pointer.
-      list.push_back(builder.makeLocalGet(alloc, loweringInfo.pointerType));
+      list.push_back(builder.makePointerGet(alloc));
       std::string name = "ArrayNew";
       if (withDefault) {
         name += "WithDefault";
@@ -1045,15 +1047,15 @@ private:
   }
 
   Expression* makeArrayOffset(const Field& field) {
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     return builder.makeBinary(
       AddInt32,
       builder.makeBinary(AddInt32,
-                         builder.makeLocalGet(0, loweringInfo.pointerType),
+                         builder.makePointerGet(0),
                          builder.makeConst(int32_t(8))),
       builder.makeBinary(MulInt32,
                          builder.makeConst(int32_t(getBytes(field))),
-                         builder.makeLocalGet(1, loweringInfo.pointerType)));
+                         builder.makePointerGet(1)));
   }
 
   void makeArraySet(HeapType type) {
@@ -1117,7 +1119,7 @@ private:
       builder.makeTrapOnNullParam(
         0,
         builder.makeSimpleUnsignedLoad(
-          builder.makeLocalGet(0, loweringInfo.pointerType), Type::i32, 4))));
+          builder.makePointerGet(0), Type::i32, 4))));
   }
 
   void makeCallRef(HeapType type) {
@@ -1157,20 +1159,20 @@ private:
   }
 
   void makeRefAs() {
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     for (RefAsOp op : {RefAsNonNull, RefAsFunc, RefAsData, RefAsI31}) {
       std::vector<Expression*> list;
       // Check for null.
       list.push_back(builder.makeIf(
         builder.makeUnary(EqZInt32,
-                          builder.makeLocalGet(0, loweringInfo.pointerType)),
+                          builder.makePointerGet(0)),
         builder.makeUnreachable()));
       // Check for a kind, if we need to.
       auto compareRttTo = [&](RttKind kind) {
         list.push_back(builder.makeIf(
           builder.makeBinary(NeInt32,
-                             getRttKind(getRtt(builder.makeLocalGet(
-                               0, loweringInfo.pointerType))),
+                             getRttKind(getRtt(builder.makePointerGet(
+                               0))),
                              builder.makeConst(int32_t(kind))),
           builder.makeUnreachable()));
       };
@@ -1190,7 +1192,7 @@ private:
           WASM_UNREACHABLE("unimplemented ref.as_*");
       }
       // If we passed all the checks, we can return the pointer.
-      list.push_back(builder.makeLocalGet(0, loweringInfo.pointerType));
+      list.push_back(builder.makePointerGet(0));
       module->addFunction(builder.makeFunction(
         getName(op),
         Signature({loweringInfo.pointerType, loweringInfo.pointerType}),
@@ -1200,13 +1202,13 @@ private:
   }
 
   void makeRefIs() {
-    Builder builder(*module);
+    PointerBuilder builder(*module);
     for (RefIsOp op : {RefIsNull, RefIsFunc, RefIsData, RefIsI31}) {
       std::vector<Expression*> list;
       // Check for null.
       list.push_back(builder.makeIf(
         builder.makeUnary(EqZInt32,
-                          builder.makeLocalGet(0, loweringInfo.pointerType)),
+                          builder.makePointerGet(0)),
         builder.makeReturn(builder.makeConst(int32_t(op == RefIsNull)))));
       // Check for a kind, if we need to.
       auto compareRttTo = [&](RttKind kind) {
@@ -1489,7 +1491,7 @@ private:
                        false,
                        0,
                        4,
-                       builder.makeLocalGet(0, loweringInfo.pointerType),
+                       builder.makePointerGet(0),
                        Type::i32),
       loweringInfo.pointerType));
     // Store the new size, which is one larger.
