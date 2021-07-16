@@ -792,3 +792,18 @@
     )
   )
 )
+(module
+  (func $foo (result (ref any))
+    (block $label$1 (result (ref any))
+      ;; this break has an unreachable input, and so it does not have a heap type
+      ;; there, and no heap type to send on the branch. this tests we do not hit
+      ;; the assertion in getHeapType() if we call that.
+      (br_on_non_null $label$1
+        (block (result anyref)
+          (unreachable)
+        )
+      )
+      (unreachable)
+    )
+  )
+)
