@@ -1615,19 +1615,26 @@ private:
     return index;
   }
 
+  // Create a ref.func instance. We allocate it at compile time, and write the
+  // fields of the instance during startup. (We could also in principle write
+  // to linear memory at compile time as well.)
   void makeRefFunc(Name name) {
     auto* func = module->getFunction(name);
+
     // Add the function to the table.
     auto tableIndex = addToTable(name);
+
     // Allocate this ref.func at the next free location.
     auto addr = loweringInfo.compileTimeMalloc(4 + loweringInfo.pointerSize);
     loweringInfo.refFuncAddrs[name] = addr;
     PointerBuilder builder(*module);
+
     // Write the rtt.
     auto type = HeapType(func->getSig());
     startBlock->list.push_back(builder.makePointerStore(
       builder.makePointerConst(addr),
       builder.makePointerConst(loweringInfo.rttCanonAddrs[type])));
+
     // Write the table index
     startBlock->list.push_back(
       builder.makeSimpleStore(builder.makePointerConst(addr + 4),
@@ -1637,12 +1644,17 @@ private:
 
   // Some global initializers need to be lowered into non-globals. Specifically,
   // rtt.sub operations are turned into calls, which are not allowed in global
-  // inits, so we add them to the start.
+  // inits, so we add them to the code that runs during startup.
   void processGlobals() {
     Builder builder(*module);
     for (auto& global : module->globals) {
       if (global->init) {
         if (auto* rttSub = global->init->dynCast<RttSub>()) {
+          // Set a 0 as a placeholder for the global in the wasm binary, which
+          // will be updated during startup.
+          global->init = builder.makeConst(int32_t(0));
+
+          // Add code in the start block to call rtt.sub.
           startBlock->list.push_back(builder.makeGlobalSet(
             global->name,
             builder.makeCall(
@@ -1653,8 +1665,7 @@ private:
                  *module),
                rttSub->parent},
               Type::i32)));
-          // Set a 0 as a placeholder for the global.
-          global->init = builder.makeConst(int32_t(0));
+
           // Unfortunately, we must make the global mutable so we can write to
           // it after initialization.
           global->mutable_ = true;
