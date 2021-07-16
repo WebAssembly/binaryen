@@ -608,7 +608,7 @@ private:
   // as we may replace expressions. In the example above, an RttCanon may be
   // replaced by a Const. But we know that the pointer to the expression exists
   // at the time we use it (in the StructSet, before we possibly replace that as
-  // well).
+  // well), so the pointer is a valid key to use in this lookup.
   //
   // (If an expression has no heap type, we do not note anything for it here.)
   std::unordered_map<Expression**, HeapType> originalTypes;
@@ -631,6 +631,8 @@ struct LowerGC : public Pass {
 
     // Ensure types have names, as we use the names when creating the
     // runtime code.
+    // Also remove unreachable code so that we do not need to handle that in
+    // any of the runtime.
     {
       PassRunner subRunner(runner);
       subRunner.add("name-types");
@@ -682,9 +684,8 @@ private:
         module->memory.initial + MemoryPages;
     }
 
-    assert(!module->memory.is64()); // TODO: use getByteSize()
-    loweringInfo.pointerSize = 4;
     loweringInfo.pointerType = module->memory.indexType;
+    loweringInfo.pointerSize = loweringInfo.pointerType.getByteSize();
   }
 
   const char* TableName = "lowergc-table";
