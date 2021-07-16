@@ -1566,6 +1566,7 @@ private:
             // at the cost of code size.
             8),
           8),
+
         // Increment both pointers
         builder.makeLocalSet(
           tempLocal,
@@ -1577,6 +1578,7 @@ private:
           builder.makePointerAdd(
             builder.makePointerGet(parentRttParam),
             builder.makePointerConst(4))),
+
         // Loop while there is more.
         builder.makeLocalSet(
           sizeLocal,
@@ -1585,12 +1587,13 @@ private:
                              builder.makeConst(int32_t(1)))),
         builder.makeBreak(
           loop, nullptr, builder.makeLocalGet(sizeLocal, Type::i32))})));
+
     // Store a pointer to the new heap type at the end of the new list.
-    list.push_back(builder.makeSimpleStore(
+    list.push_back(builder.makePointerStore(
       builder.makePointerGet(tempLocal),
       builder.makePointerGet(newTypeParam),
-      Type::i32,
       8));
+
     // Return the pointer.
     list.push_back(builder.makePointerGet(allocLocal));
     module->addFunction(builder.makeFunction(
@@ -1601,6 +1604,7 @@ private:
       builder.makeBlock(list)));
   }
 
+  // Add a function to the table and return its index there.
   Index addToTable(Name name) {
     Builder builder(*module);
     auto index = segment->data.size();
