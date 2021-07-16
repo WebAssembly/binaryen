@@ -786,6 +786,7 @@ private:
     makeRefIs();
     makeRefTest();
     makeRefCast();
+    makeRttSub();
 
     addTypeSupport(types);
   }
@@ -1403,7 +1404,6 @@ private:
         makeRefFunc(name);
       }
     }
-    makeRttSub();
   }
 
   void makeRttCanon(HeapType type) {
