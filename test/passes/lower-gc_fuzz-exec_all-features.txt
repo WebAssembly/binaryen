@@ -67,7 +67,7 @@
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
  (global $rtt-0 i32 (i32.const 8))
  (global $rtt-1 (mut i32) (i32.const 0))
- (global $nextMalloc (mut i32) (i32.const 132))
+ (global $lowergc-next-malloc (mut i32) (i32.const 132))
  (memory $0 16384 16384)
  (table $lowergc-table 2 2 funcref)
  (elem (i32.const 0) $a-void-func $call-target)
@@ -1507,15 +1507,15 @@
   (local.get $2)
  )
  (func $malloc (param $0 i32) (result i32)
-  (global.set $nextMalloc
+  (global.set $lowergc-next-malloc
    (i32.add
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (local.get $0)
    )
   )
   (if
    (i32.ge_u
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (i32.mul
      (memory.size)
      (i32.const 65536)
@@ -1524,7 +1524,7 @@
    (unreachable)
   )
   (i32.sub
-   (global.get $nextMalloc)
+   (global.get $lowergc-next-malloc)
    (local.get $0)
   )
  )
@@ -1593,7 +1593,7 @@
  (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_=>_none (func (param i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (global $nextMalloc (mut i32) (i32.const 32))
+ (global $lowergc-next-malloc (mut i32) (i32.const 32))
  (memory $0 16384 16384)
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
@@ -2143,15 +2143,15 @@
   (local.get $2)
  )
  (func $malloc (param $0 i32) (result i32)
-  (global.set $nextMalloc
+  (global.set $lowergc-next-malloc
    (i32.add
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (local.get $0)
    )
   )
   (if
    (i32.ge_u
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (i32.mul
      (memory.size)
      (i32.const 65536)
@@ -2160,7 +2160,7 @@
    (unreachable)
   )
   (i32.sub
-   (global.get $nextMalloc)
+   (global.get $lowergc-next-malloc)
    (local.get $0)
   )
  )

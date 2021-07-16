@@ -723,18 +723,20 @@ private:
   void addMalloc() {
     Builder builder(*module);
     auto* nextMalloc = module->addGlobal(
-      builder.makeGlobal("nextMalloc",
+      builder.makeGlobal(Names::getValidGlobalName(*module, "lowergc-next-malloc"),
                          Type::i32,
                          builder.makeConst(int32_t(loweringInfo.mallocStart)),
                          Builder::Mutable));
-    // Disallow further allocation at compile time.
+    // Disallow further allocation at compile time, by setting an invalid value
+    // for the start.
     loweringInfo.mallocStart = 0;
-    // TODO: more than a simple bump allocator that never frees or collects.
+    // Allocate by bumping nextMalloc and returning the previous value.
     auto* alloc = builder.makeGlobalSet(
       nextMalloc->name,
       builder.makeBinary(AddInt32,
                          builder.makeGlobalGet(nextMalloc->name, Type::i32),
                          builder.makeLocalGet(0, Type::i32)));
+    // Check for an OOM.
     auto* check = builder.makeIf(
       builder.makeBinary(
         GeUInt32,
@@ -752,18 +754,17 @@ private:
                            Signature({Type::i32, Type::i32}),
                            {},
                            builder.makeBlock({alloc, check, ret})));
+    // TODO: more than a simple bump allocator that never frees or collects.
   }
 
   void addGCRuntime(const std::vector<HeapType>& types) {
     // Emit support code for specific types.
     //
-    // Note that some of this support code will end up identical, e.g., the
+    // Note that some of this support code will end up identical, e.g.,
     // getting the length of an array does not depend on the type. Those can be
-    // de-duplicated by other passes later.
+    // de-duplicated by other passes later. We also emit all the code here, and
+    // rely on other passes to remove unneeded things.
     for (auto type : types) {
-      // Generate a canonical RTT for each type. We need them not only for
-      // explicit rtt.canon instructions, but also internally in things like
-      // rtt.sub.
       makeRttCanon(type);
       if (type.isStruct()) {
         computeLayout(type, loweringInfo.layouts[type]);
@@ -779,6 +780,8 @@ private:
         makeCallRef(type);
       }
     }
+
+    // Emit general support code.
     makeRefAs();
     makeRefIs();
     makeRefTest();

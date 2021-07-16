@@ -29,7 +29,7 @@
  (global $global1 (mut i32) (i32.const 0))
  (global $global2 (mut i32) (i32.const 0))
  (global $global3 (mut i32) (i32.const 0))
- (global $nextMalloc (mut i32) (i32.const 316))
+ (global $lowergc-next-malloc (mut i32) (i32.const 316))
  (memory $0 16384 16384)
  (table $original-table 0 funcref)
  (table $lowergc-table 4 4 funcref)
@@ -2164,15 +2164,15 @@
   (local.get $2)
  )
  (func $malloc (param $0 i32) (result i32)
-  (global.set $nextMalloc
+  (global.set $lowergc-next-malloc
    (i32.add
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (local.get $0)
    )
   )
   (if
    (i32.ge_u
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (i32.mul
      (memory.size)
      (i32.const 65536)
@@ -2181,7 +2181,7 @@
    (unreachable)
   )
   (i32.sub
-   (global.get $nextMalloc)
+   (global.get $lowergc-next-malloc)
    (local.get $0)
   )
  )
@@ -2190,7 +2190,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_none (func))
- (global $nextMalloc (mut i32) (i32.const 8))
+ (global $lowergc-next-malloc (mut i32) (i32.const 8))
  (memory $0 16384 16384)
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
@@ -2531,15 +2531,15 @@
   (local.get $2)
  )
  (func $malloc (param $0 i32) (result i32)
-  (global.set $nextMalloc
+  (global.set $lowergc-next-malloc
    (i32.add
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (local.get $0)
    )
   )
   (if
    (i32.ge_u
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (i32.mul
      (memory.size)
      (i32.const 65536)
@@ -2548,7 +2548,7 @@
    (unreachable)
   )
   (i32.sub
-   (global.get $nextMalloc)
+   (global.get $lowergc-next-malloc)
    (local.get $0)
   )
  )
@@ -2557,7 +2557,7 @@
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (type $none_=>_none (func))
- (global $nextMalloc (mut i32) (i32.const 65536))
+ (global $lowergc-next-malloc (mut i32) (i32.const 65536))
  (memory $0 16385 16385)
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
@@ -2898,15 +2898,15 @@
   (local.get $2)
  )
  (func $malloc (param $0 i32) (result i32)
-  (global.set $nextMalloc
+  (global.set $lowergc-next-malloc
    (i32.add
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (local.get $0)
    )
   )
   (if
    (i32.ge_u
-    (global.get $nextMalloc)
+    (global.get $lowergc-next-malloc)
     (i32.mul
      (memory.size)
      (i32.const 65536)
@@ -2915,7 +2915,7 @@
    (unreachable)
   )
   (i32.sub
-   (global.get $nextMalloc)
+   (global.get $lowergc-next-malloc)
    (local.get $0)
   )
  )
