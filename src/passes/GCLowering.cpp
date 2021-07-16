@@ -756,6 +756,7 @@ private:
                          builder.makeGlobalGet(nextMalloc->name, Type::i32),
                          builder.makeLocalGet(0, Type::i32)));
     // Check for an OOM.
+    // TODO: integer overflow checks as well
     auto* check = builder.makeIf(
       builder.makeBinary(
         GeUInt32,
