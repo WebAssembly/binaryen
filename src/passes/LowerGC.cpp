@@ -1138,6 +1138,8 @@ private:
   }
 
   void makeCallRef(HeapType type) {
+    // CallRef$heap-type (param1, .., paramN, u32 index) -> results
+
     auto sig = type.getSignature();
     std::vector<Type> loweredParams, loweredResults;
     for (auto param : sig.params) {
@@ -1146,8 +1148,10 @@ private:
     for (auto result : sig.results) {
       loweredResults.push_back(lower(result));
     }
+
     // The reference is passed after the parameters.
     auto refParam = sig.params.size();
+
     // The new runtime function receives the lowered params, and then the
     // function pointer.
     auto runtimeFunctionParams = loweredParams;
@@ -1174,14 +1178,12 @@ private:
   }
 
   void makeRefAs() {
+    // RefAs (pointer ptr) -> pointer
+
     PointerBuilder builder(*module);
     for (RefAsOp op : {RefAsNonNull, RefAsFunc, RefAsData, RefAsI31}) {
       std::vector<Expression*> list;
-      // Check for null.
-      list.push_back(builder.makeIf(
-        builder.makeUnary(EqZInt32,
-                          builder.makePointerGet(0)),
-        builder.makeUnreachable()));
+
       // Check for a kind, if we need to.
       auto compareRttTo = [&](RttKind kind) {
         list.push_back(builder.makeIf(
@@ -1212,7 +1214,7 @@ private:
         getName(op),
         Signature({loweringInfo.pointerType, loweringInfo.pointerType}),
         {},
-        builder.makeBlock(list)));
+        builder.makeTrapOnNullParam(0, builder.makeBlock(list))));
     }
   }
 
