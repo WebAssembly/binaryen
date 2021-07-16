@@ -912,14 +912,18 @@ struct Reducer
   }
 
   void visitModule(Module* curr) {
+    // The initial module given to us is our global object. As we continue to
+    // process things here, we may replace the module, so we should never again
+    // refer to curr.
     assert(curr == module.get());
+    curr = nullptr;
 
     // Reduction of entire functions at a time is very effective, and we do it
     // with exponential growth and backoff, so keep doing it while it works.
     while (reduceFunctions()) {
     }
 
-    shrinkElementSegments(curr);
+    shrinkElementSegments(module.get());
 
     // try to remove exports
     std::cerr << "|    try to remove exports (with factor " << factor << ")\n";
