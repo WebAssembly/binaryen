@@ -264,7 +264,7 @@ struct LoweringInfo {
   // needs one.
   std::unordered_map<Name, Address> refFuncAddrs;
 
-  // The table we use for ref.func values.
+  // The table we use for ref.func values and in call_ref.
   Name tableName;
 
   // Allocate memory at compile time.
@@ -703,19 +703,21 @@ private:
       "lowergc-segment", table->name, builder.makeConst(int32_t(0))));
   }
 
+  // Ensure a block of code in a start function that we can append to. If
+  // there is already a start, our code goes before it.
   void addStart() {
     Builder builder(*module);
+    auto oldStart = module->start;    
+    module->start = Names::getValidFunctionName(*module, "lowergc-start");
     startBlock = builder.makeBlock();
-    if (module->start.is()) {
-      // There is already a start function. Add our block before it.
-      auto* func = module->getFunction(module->start);
-      func->body = builder.makeSequence(startBlock, func->body);
-      return;
+    Expression* body;
+    if (oldStart.is()) {
+      body = builder.makeSequence(startBlock, builder.makeCall(oldStart, {}, Type::none));
+    } else {
+      body = startBlock;
     }
-    // Add a new start function.
-    module->start = "LowerGC$start";
     module->addFunction(builder.makeFunction(
-      module->start, Signature({Type::none, Type::none}), {}, startBlock));
+      module->start, Signature({Type::none, Type::none}), {}, body));
   }
 
   void addMalloc() {
