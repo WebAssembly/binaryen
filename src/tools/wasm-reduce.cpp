@@ -1012,7 +1012,10 @@ struct Reducer
       auto* func = module->getFunction(name);
       auto* oldBody = func->body;
       oldBodies.push_back(oldBody);
-      if (oldBody->is<Unreachable>() || oldBody->is<Nop>()) {
+      // Nothing to do for imported functions (body is nullptr) or for bodies
+      // that have already been as reduced as we can make them.
+      if (func->imported() || oldBody->is<Unreachable>() ||
+          oldBody->is<Nop>()) {
         continue;
       }
       actuallyEmptied++;
