@@ -37,7 +37,7 @@
  (export "ref-eq" (func $20))
  (export "struct-nn" (func $21))
  (export "send-any" (func $22))
- (start $LowerGC$start)
+ (start $lowergc-start)
  (func $struct-gets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
   (drop
    (call $StructGet$struct-i32$0
@@ -435,7 +435,7 @@
    (i32.const 0)
   )
  )
- (func $LowerGC$start
+ (func $lowergc-start
   (i32.store
    (i32.const 8)
    (i32.const 1)
@@ -2194,8 +2194,8 @@
  (memory $0 16384 16384)
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
- (start $LowerGC$start)
- (func $LowerGC$start
+ (start $lowergc-start)
+ (func $lowergc-start
  )
  (func $RefAsNonNull (param $0 i32) (result i32)
   (if
@@ -2561,8 +2561,8 @@
  (memory $0 16385 16385)
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
- (start $LowerGC$start)
- (func $LowerGC$start
+ (start $lowergc-start)
+ (func $lowergc-start
  )
  (func $RefAsNonNull (param $0 i32) (result i32)
   (if

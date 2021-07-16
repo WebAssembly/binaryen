@@ -88,7 +88,7 @@
  (export "init-array-packed" (func $16))
  (export "cast-func-to-struct" (func $18))
  (export "rtt-globals" (func $19))
- (start $LowerGC$start)
+ (start $lowergc-start)
  (func $0
   (local $x i32)
   (local $y i32)
@@ -652,7 +652,7 @@
    )
   )
  )
- (func $LowerGC$start
+ (func $lowergc-start
   (i32.store
    (i32.const 8)
    (i32.const 1)
@@ -1598,7 +1598,7 @@
  (table $lowergc-table 0 0 funcref)
  (elem (i32.const 0))
  (export "array-alloc-failure" (func $0))
- (start $LowerGC$start)
+ (start $lowergc-start)
  (func $0
   (drop
    (call $ArrayNewWithDefault$bytes
@@ -1607,7 +1607,7 @@
    )
   )
  )
- (func $LowerGC$start
+ (func $lowergc-start
   (i32.store
    (i32.const 8)
    (i32.const 0)
