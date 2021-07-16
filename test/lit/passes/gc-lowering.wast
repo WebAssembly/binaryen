@@ -54,7 +54,7 @@
   (global.get $global2)
  ))
 
- (func $struct-gets
+ (func "struct-gets"
   (param $ref-i32 (ref $struct-i32))
   (param $ref-i64 (ref $struct-i64))
   (param $ref-f32 (ref $struct-f32))
@@ -81,7 +81,7 @@
   )
  )
 
- (func $struct-sets
+ (func "struct-sets"
   (param $ref-i32 (ref $struct-i32))
   (param $ref-i64 (ref $struct-i64))
   (param $ref-f32 (ref $struct-f32))
@@ -96,14 +96,14 @@
   (struct.set $struct-rtt 0 (local.get $ref-rtt) (rtt.canon $empty))
  )
 
- (func $many-fields
+ (func "many-fields"
   (param $ref (ref $many-fields))
   (struct.set $many-fields 0 (local.get $ref) (i32.const 1))
   (struct.set $many-fields 1 (local.get $ref) (f64.const 3.14159))
   (struct.set $many-fields 2 (local.get $ref) (f32.const 2.71828))
  )
 
- (func $new-struct
+ (func "new-struct"
   (drop
    (struct.new_with_rtt $struct-i32
     (i32.const 42)
@@ -112,7 +112,7 @@
   )
  )
 
- (func $new-struct-default
+ (func "new-struct-default"
   (drop
    (struct.new_default_with_rtt $many-fields
     (rtt.canon $many-fields)
@@ -120,7 +120,7 @@
   )
  )
 
- (func $array-gets
+ (func "array-gets"
   (param $ref-bytes (ref $bytes))
   (param $ref-doubles (ref $doubles))
   (drop
@@ -131,14 +131,14 @@
   )
  )
 
- (func $array-sets
+ (func "array-sets"
   (param $ref-bytes (ref $bytes))
   (param $ref-doubles (ref $doubles))
   (array.set $bytes (local.get $ref-bytes) (i32.const 7) (i32.const 42))
   (array.set $doubles (local.get $ref-doubles) (i32.const 7) (f64.const 3.14159))
  )
 
- (func $new-array
+ (func "new-array"
   (drop
    (array.new_with_rtt $bytes
     (i32.const 42)
@@ -148,7 +148,7 @@
   )
  )
 
- (func $new-array-default
+ (func "new-array-default"
   (drop
    (array.new_default_with_rtt $doubles
     (i32.const 11)
@@ -157,13 +157,13 @@
   )
  )
 
- (func $array-len (param $x (ref $doubles)) (result i32)
+ (func "array-len" (param $x (ref $doubles)) (result i32)
   (array.len $doubles
    (local.get $x)
   )
  )
 
- (func $rtt.sub
+ (func "rtt.sub"
   (drop
    (rtt.sub $struct-i32
     (rtt.canon $empty)
@@ -171,7 +171,7 @@
   )
  )
 
- (func $ref.as (param $x anyref)
+ (func "ref.as" (param $x anyref)
   (drop
    (ref.as_non_null (local.get $x))
   )
@@ -208,7 +208,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $ref.is (param $x anyref)
+ (func "ref.is" (param $x anyref)
   (drop
    (ref.as_non_null (local.get $x))
   )
@@ -228,7 +228,7 @@
  ;; CHECK-NEXT:   (i32.const 308)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $ref.func
+ (func "ref.func"
   (drop
    (ref.func $ref.func)
   )
@@ -242,19 +242,19 @@
   )
  )
 
- (func $ref.cast (param $x anyref)
+ (func "ref.cast" (param $x anyref)
   (drop
    (ref.cast (local.get $x) (rtt.canon $empty))
   )
  )
 
- (func $ref.test (param $x anyref)
+ (func "ref.test" (param $x anyref)
   (drop
    (ref.test (local.get $x) (rtt.canon $empty))
   )
  )
 
- (func $call_indirect (param $x (ref $empty)) (result anyref)
+ (func "call_indirect" (param $x (ref $empty)) (result anyref)
   (call_indirect $original-table (type $any-any)
    (local.get $x)
    (i32.const 10)
@@ -266,7 +266,7 @@
  ;; CHECK-NEXT:   (i32.const 284)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $call_ref
+ (func "call_ref"
   (call_ref
    (ref.func $call_ref)
   )
@@ -278,14 +278,14 @@
  ;; CHECK-NEXT:   (i32.const 292)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $call_ref_i64 (param $x i64)
+ (func "call_ref_i64" (param $x i64)
   (call_ref
    (i64.const 100)
    (ref.func $call_ref_i64)
   )
  )
 
- (func $br_on_X (param $x anyref)
+ (func "br_on_X" (param $x anyref)
   (local $y anyref)
   (local $z (ref null any))
   (local $temp-func (ref null func))
