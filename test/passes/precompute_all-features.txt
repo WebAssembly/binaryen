@@ -1,8 +1,8 @@
 (module
  (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
- (type $none_=>_v128 (func (result v128)))
  (type $none_=>_f64 (func (result f64)))
+ (type $none_=>_v128 (func (result v128)))
  (type $0 (func (param i32)))
  (type $none_=>_i32_i64 (func (result i32 i64)))
  (type $none_=>_externref (func (result externref)))
@@ -220,13 +220,6 @@
  (func $no-simd-precompute (result v128)
   (i32x4.splat
    (i32.const 0)
-  )
- )
- (func $no-simd-precompute_2 (result v128)
-  (i32x4.extadd_pairwise_i16x8_s
-   (i32x4.splat
-    (i32.const 0)
-   )
   )
  )
  (func $no-simd-precompute-if (result v128)
