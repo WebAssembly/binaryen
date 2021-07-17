@@ -87,185 +87,59 @@
   (global.get $global2)
  ))
 
- (func "struct-gets"
-  (param $ref-i32 (ref $struct-i32))
-  (param $ref-i64 (ref $struct-i64))
-  (param $ref-f32 (ref $struct-f32))
-  (param $ref-f64 (ref $struct-f64))
-  (param $ref-ref (ref $struct-ref))
-  (param $ref-rtt (ref $struct-rtt))
-  (drop
-   (struct.get $struct-i32 0 (local.get $ref-i32))
-  )
-  (drop
-   (struct.get $struct-i64 0 (local.get $ref-i64))
-  )
-  (drop
-   (struct.get $struct-f32 0 (local.get $ref-f32))
-  )
-  (drop
-   (struct.get $struct-f64 0 (local.get $ref-f64))
-  )
-  (drop
-   (struct.get $struct-ref 0 (local.get $ref-ref))
-  )
-  (drop
-   (struct.get $struct-rtt 0 (local.get $ref-rtt))
-  )
- )
-
- (func "struct-sets"
-  (param $ref-i32 (ref $struct-i32))
-  (param $ref-i64 (ref $struct-i64))
-  (param $ref-f32 (ref $struct-f32))
-  (param $ref-f64 (ref $struct-f64))
-  (param $ref-ref (ref $struct-ref))
-  (param $ref-rtt (ref $struct-rtt))
-  (struct.set $struct-i32 0 (local.get $ref-i32) (i32.const 0))
-  (struct.set $struct-i64 0 (local.get $ref-i64) (i64.const 0))
-  (struct.set $struct-f32 0 (local.get $ref-f32) (f32.const 0))
-  (struct.set $struct-f64 0 (local.get $ref-f64) (f64.const 0))
-  (struct.set $struct-ref 0 (local.get $ref-ref) (ref.null $empty))
-  (struct.set $struct-rtt 0 (local.get $ref-rtt) (rtt.canon $empty))
- )
-
- (func "many-fields"
-  (param $ref (ref $many-fields))
-  (struct.set $many-fields 0 (local.get $ref) (i32.const 1))
-  (struct.set $many-fields 1 (local.get $ref) (f64.const 3.14159))
-  (struct.set $many-fields 2 (local.get $ref) (f32.const 2.71828))
- )
-
- (func "new-struct"
-  (drop
-   (struct.new_with_rtt $struct-i32
-    (i32.const 42)
-    (rtt.canon $struct-i32)
-   )
-  )
- )
-
- (func "new-struct-default"
-  (drop
-   (struct.new_default_with_rtt $many-fields
-    (rtt.canon $many-fields)
-   )
-  )
- )
-
- (func "array-gets"
-  (param $ref-bytes (ref $bytes))
-  (param $ref-doubles (ref $doubles))
-  (drop
-   (array.get $bytes (local.get $ref-bytes) (i32.const 7))
-  )
-  (drop
-   (array.get $doubles (local.get $ref-doubles) (i32.const 7))
-  )
- )
-
- (func "array-sets"
-  (param $ref-bytes (ref $bytes))
-  (param $ref-doubles (ref $doubles))
-  (array.set $bytes (local.get $ref-bytes) (i32.const 7) (i32.const 42))
-  (array.set $doubles (local.get $ref-doubles) (i32.const 7) (f64.const 3.14159))
- )
-
- (func "new-array"
-  (drop
-   (array.new_with_rtt $bytes
-    (i32.const 42)
-    (i32.const 11)
-    (rtt.canon $bytes)
-   )
-  )
- )
-
- (func "new-array-default"
-  (drop
-   (array.new_default_with_rtt $doubles
-    (i32.const 11)
-    (rtt.canon $doubles)
-   )
-  )
- )
-
- (func "array-len" (param $x (ref $doubles)) (result i32)
-  (array.len $doubles
-   (local.get $x)
-  )
- )
-
- (func "rtt.sub"
-  (drop
-   (rtt.sub $struct-i32
-    (rtt.canon $empty)
-   )
-  )
- )
-
- (func "ref.as" (param $x anyref)
-  (drop
-   (ref.as_non_null (local.get $x))
-  )
-  (drop
-   (ref.as_func (local.get $x))
-  )
- )
-
  ;; CHECK:      (table $lowergc-table 4 4 funcref)
 
  ;; CHECK:      (elem (table $lowergc-table) (i32.const 0) func $call_ref $call_ref_i64 $ref.func $ref.is)
 
- ;; CHECK:      (export "struct-gets" (func $0))
+ ;; CHECK:      (export "struct-gets" (func $struct-gets))
 
- ;; CHECK:      (export "struct-sets" (func $1))
+ ;; CHECK:      (export "struct-sets" (func $struct-sets))
 
- ;; CHECK:      (export "many-fields" (func $2))
+ ;; CHECK:      (export "many-fields" (func $many-fields))
 
- ;; CHECK:      (export "new-struct" (func $3))
+ ;; CHECK:      (export "new-struct" (func $new-struct))
 
- ;; CHECK:      (export "new-struct-default" (func $4))
+ ;; CHECK:      (export "new-struct-default" (func $new-struct-default))
 
- ;; CHECK:      (export "array-gets" (func $5))
+ ;; CHECK:      (export "array-gets" (func $array-gets))
 
- ;; CHECK:      (export "array-sets" (func $6))
+ ;; CHECK:      (export "array-sets" (func $array-sets))
 
- ;; CHECK:      (export "new-array" (func $7))
+ ;; CHECK:      (export "new-array" (func $new-array))
 
- ;; CHECK:      (export "new-array-default" (func $8))
+ ;; CHECK:      (export "new-array-default" (func $new-array-default))
 
- ;; CHECK:      (export "array-len" (func $9))
+ ;; CHECK:      (export "array-len" (func $array-len))
 
- ;; CHECK:      (export "rtt.sub" (func $10))
+ ;; CHECK:      (export "rtt.sub" (func $rtt.sub))
 
- ;; CHECK:      (export "ref.as" (func $11))
+ ;; CHECK:      (export "ref.as" (func $ref.as))
 
  ;; CHECK:      (export "ref.is" (func $ref.is))
 
  ;; CHECK:      (export "ref.func" (func $ref.func))
 
- ;; CHECK:      (export "ref.cast" (func $14))
+ ;; CHECK:      (export "ref.cast" (func $ref.cast))
 
- ;; CHECK:      (export "ref.test" (func $15))
+ ;; CHECK:      (export "ref.test" (func $ref.test))
 
- ;; CHECK:      (export "call_indirect" (func $16))
+ ;; CHECK:      (export "call_indirect" (func $call_indirect))
 
  ;; CHECK:      (export "call_ref" (func $call_ref))
 
  ;; CHECK:      (export "call_ref_i64" (func $call_ref_i64))
 
- ;; CHECK:      (export "br_on_X" (func $19))
+ ;; CHECK:      (export "br_on_X" (func $br_on_X))
 
- ;; CHECK:      (export "ref-eq" (func $20))
+ ;; CHECK:      (export "ref-eq" (func $ref-eq))
 
- ;; CHECK:      (export "struct-nn" (func $21))
+ ;; CHECK:      (export "struct-nn" (func $struct-nn))
 
- ;; CHECK:      (export "send-any" (func $22))
+ ;; CHECK:      (export "send-any" (func $send-anything))
 
  ;; CHECK:      (start $lowergc-start)
 
- ;; CHECK:      (func $0 (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
+ ;; CHECK:      (func $struct-gets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $StructGet$struct-i32$0
  ;; CHECK-NEXT:    (local.get $ref-i32)
@@ -303,8 +177,34 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $struct-gets (export "struct-gets")
+  (param $ref-i32 (ref $struct-i32))
+  (param $ref-i64 (ref $struct-i64))
+  (param $ref-f32 (ref $struct-f32))
+  (param $ref-f64 (ref $struct-f64))
+  (param $ref-ref (ref $struct-ref))
+  (param $ref-rtt (ref $struct-rtt))
+  (drop
+   (struct.get $struct-i32 0 (local.get $ref-i32))
+  )
+  (drop
+   (struct.get $struct-i64 0 (local.get $ref-i64))
+  )
+  (drop
+   (struct.get $struct-f32 0 (local.get $ref-f32))
+  )
+  (drop
+   (struct.get $struct-f64 0 (local.get $ref-f64))
+  )
+  (drop
+   (struct.get $struct-ref 0 (local.get $ref-ref))
+  )
+  (drop
+   (struct.get $struct-rtt 0 (local.get $ref-rtt))
+  )
+ )
 
- ;; CHECK:      (func $1 (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
+ ;; CHECK:      (func $struct-sets (param $ref-i32 i32) (param $ref-i64 i32) (param $ref-f32 i32) (param $ref-f64 i32) (param $ref-ref i32) (param $ref-rtt i32)
  ;; CHECK-NEXT:  (call $StructSet$struct-i32$0
  ;; CHECK-NEXT:   (local.get $ref-i32)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -330,8 +230,22 @@
  ;; CHECK-NEXT:   (i32.const 8)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $struct-sets (export "struct-sets")
+  (param $ref-i32 (ref $struct-i32))
+  (param $ref-i64 (ref $struct-i64))
+  (param $ref-f32 (ref $struct-f32))
+  (param $ref-f64 (ref $struct-f64))
+  (param $ref-ref (ref $struct-ref))
+  (param $ref-rtt (ref $struct-rtt))
+  (struct.set $struct-i32 0 (local.get $ref-i32) (i32.const 0))
+  (struct.set $struct-i64 0 (local.get $ref-i64) (i64.const 0))
+  (struct.set $struct-f32 0 (local.get $ref-f32) (f32.const 0))
+  (struct.set $struct-f64 0 (local.get $ref-f64) (f64.const 0))
+  (struct.set $struct-ref 0 (local.get $ref-ref) (ref.null $empty))
+  (struct.set $struct-rtt 0 (local.get $ref-rtt) (rtt.canon $empty))
+ )
 
- ;; CHECK:      (func $2 (param $ref i32)
+ ;; CHECK:      (func $many-fields (param $ref i32)
  ;; CHECK-NEXT:  (call $StructSet$many-fields$0
  ;; CHECK-NEXT:   (local.get $ref)
  ;; CHECK-NEXT:   (i32.const 1)
@@ -345,8 +259,14 @@
  ;; CHECK-NEXT:   (f32.const 2.718280076980591)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $many-fields (export "many-fields")
+  (param $ref (ref $many-fields))
+  (struct.set $many-fields 0 (local.get $ref) (i32.const 1))
+  (struct.set $many-fields 1 (local.get $ref) (f64.const 3.14159))
+  (struct.set $many-fields 2 (local.get $ref) (f32.const 2.71828))
+ )
 
- ;; CHECK:      (func $3
+ ;; CHECK:      (func $new-struct
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $StructNew$struct-i32
  ;; CHECK-NEXT:    (i32.const 42)
@@ -354,16 +274,31 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $new-struct (export "new-struct")
+  (drop
+   (struct.new_with_rtt $struct-i32
+    (i32.const 42)
+    (rtt.canon $struct-i32)
+   )
+  )
+ )
 
- ;; CHECK:      (func $4
+ ;; CHECK:      (func $new-struct-default
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $StructNewWithDefault$many-fields
  ;; CHECK-NEXT:    (i32.const 56)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $new-struct-default (export "new-struct-default")
+  (drop
+   (struct.new_default_with_rtt $many-fields
+    (rtt.canon $many-fields)
+   )
+  )
+ )
 
- ;; CHECK:      (func $5 (param $ref-bytes i32) (param $ref-doubles i32)
+ ;; CHECK:      (func $array-gets (param $ref-bytes i32) (param $ref-doubles i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $ArrayGet$bytes
  ;; CHECK-NEXT:    (local.get $ref-bytes)
@@ -379,8 +314,18 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $array-gets (export "array-gets")
+  (param $ref-bytes (ref $bytes))
+  (param $ref-doubles (ref $doubles))
+  (drop
+   (array.get $bytes (local.get $ref-bytes) (i32.const 7))
+  )
+  (drop
+   (array.get $doubles (local.get $ref-doubles) (i32.const 7))
+  )
+ )
 
- ;; CHECK:      (func $6 (param $ref-bytes i32) (param $ref-doubles i32)
+ ;; CHECK:      (func $array-sets (param $ref-bytes i32) (param $ref-doubles i32)
  ;; CHECK-NEXT:  (call $ArraySet$bytes
  ;; CHECK-NEXT:   (local.get $ref-bytes)
  ;; CHECK-NEXT:   (i32.const 7)
@@ -392,8 +337,14 @@
  ;; CHECK-NEXT:   (f64.const 3.14159)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $array-sets (export "array-sets")
+  (param $ref-bytes (ref $bytes))
+  (param $ref-doubles (ref $doubles))
+  (array.set $bytes (local.get $ref-bytes) (i32.const 7) (i32.const 42))
+  (array.set $doubles (local.get $ref-doubles) (i32.const 7) (f64.const 3.14159))
+ )
 
- ;; CHECK:      (func $7
+ ;; CHECK:      (func $new-array
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $ArrayNew$bytes
  ;; CHECK-NEXT:    (i32.const 42)
@@ -402,8 +353,17 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $new-array (export "new-array")
+  (drop
+   (array.new_with_rtt $bytes
+    (i32.const 42)
+    (i32.const 11)
+    (rtt.canon $bytes)
+   )
+  )
+ )
 
- ;; CHECK:      (func $8
+ ;; CHECK:      (func $new-array-default
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $ArrayNewWithDefault$doubles
  ;; CHECK-NEXT:    (i32.const 11)
@@ -411,14 +371,27 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $new-array-default (export "new-array-default")
+  (drop
+   (array.new_default_with_rtt $doubles
+    (i32.const 11)
+    (rtt.canon $doubles)
+   )
+  )
+ )
 
- ;; CHECK:      (func $9 (param $x i32) (result i32)
+ ;; CHECK:      (func $array-len (param $x i32) (result i32)
  ;; CHECK-NEXT:  (call $ArrayLen
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $array-len (export "array-len") (param $x (ref $doubles)) (result i32)
+  (array.len $doubles
+   (local.get $x)
+  )
+ )
 
- ;; CHECK:      (func $10
+ ;; CHECK:      (func $rtt.sub
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $RttSub
  ;; CHECK-NEXT:    (i32.const 32)
@@ -426,8 +399,15 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $rtt.sub (export "rtt.sub")
+  (drop
+   (rtt.sub $struct-i32
+    (rtt.canon $empty)
+   )
+  )
+ )
 
- ;; CHECK:      (func $11 (param $x i32)
+ ;; CHECK:      (func $ref.as (param $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $RefAsNonNull
  ;; CHECK-NEXT:    (local.get $x)
@@ -439,6 +419,14 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $ref.as (export "ref.as") (param $x anyref)
+  (drop
+   (ref.as_non_null (local.get $x))
+  )
+  (drop
+   (ref.as_func (local.get $x))
+  )
+ )
 
  ;; CHECK:      (func $ref.is (param $x i32)
  ;; CHECK-NEXT:  (drop
@@ -486,26 +474,7 @@
   )
  )
 
- (func "ref.cast" (param $x anyref)
-  (drop
-   (ref.cast (local.get $x) (rtt.canon $empty))
-  )
- )
-
- (func "ref.test" (param $x anyref)
-  (drop
-   (ref.test (local.get $x) (rtt.canon $empty))
-  )
- )
-
- (func "call_indirect" (param $x (ref $empty)) (result anyref)
-  (call_indirect $original-table (type $any-any)
-   (local.get $x)
-   (i32.const 10)
-  )
- )
-
- ;; CHECK:      (func $14 (param $x i32)
+ ;; CHECK:      (func $ref.cast (param $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $RefCast
  ;; CHECK-NEXT:    (local.get $x)
@@ -513,8 +482,13 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $ref.cast (export "ref.cast") (param $x anyref)
+  (drop
+   (ref.cast (local.get $x) (rtt.canon $empty))
+  )
+ )
 
- ;; CHECK:      (func $15 (param $x i32)
+ ;; CHECK:      (func $ref.test (param $x i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $RefTest
  ;; CHECK-NEXT:    (local.get $x)
@@ -522,13 +496,24 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $ref.test (export "ref.test") (param $x anyref)
+  (drop
+   (ref.test (local.get $x) (rtt.canon $empty))
+  )
+ )
 
- ;; CHECK:      (func $16 (param $x i32) (result i32)
+ ;; CHECK:      (func $call_indirect (param $x i32) (result i32)
  ;; CHECK-NEXT:  (call_indirect $original-table (type $i32_=>_i32)
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ (func $call_indirect (export "call_indirect") (param $x (ref $empty)) (result anyref)
+  (call_indirect $original-table (type $any-any)
+   (local.get $x)
+   (i32.const 10)
+  )
+ )
 
  ;; CHECK:      (func $call_ref
  ;; CHECK-NEXT:  (call $CallRef$type$0
@@ -554,7 +539,171 @@
   )
  )
 
- (func "br_on_X" (param $x anyref)
+ ;; CHECK:      (func $br_on_X (param $x i32)
+ ;; CHECK-NEXT:  (local $y i32)
+ ;; CHECK-NEXT:  (local $z i32)
+ ;; CHECK-NEXT:  (local $temp-func i32)
+ ;; CHECK-NEXT:  (local $temp-data i32)
+ ;; CHECK-NEXT:  (local $temp-i31 i32)
+ ;; CHECK-NEXT:  (local $6 i32)
+ ;; CHECK-NEXT:  (local $7 i32)
+ ;; CHECK-NEXT:  (local $8 i32)
+ ;; CHECK-NEXT:  (local $9 i32)
+ ;; CHECK-NEXT:  (local $10 i32)
+ ;; CHECK-NEXT:  (local $11 i32)
+ ;; CHECK-NEXT:  (local $12 i32)
+ ;; CHECK-NEXT:  (local $13 i32)
+ ;; CHECK-NEXT:  (block $null
+ ;; CHECK-NEXT:   (local.set $z
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (local.set $6
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br_if $null
+ ;; CHECK-NEXT:      (call $RefIsNull
+ ;; CHECK-NEXT:       (local.get $6)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $6)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $func (result i32)
+ ;; CHECK-NEXT:    (local.set $y
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $7
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br_if $func
+ ;; CHECK-NEXT:       (local.get $7)
+ ;; CHECK-NEXT:       (call $RefIsFunc
+ ;; CHECK-NEXT:        (local.get $7)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $data (result i32)
+ ;; CHECK-NEXT:    (local.set $y
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $8
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br_if $data
+ ;; CHECK-NEXT:       (local.get $8)
+ ;; CHECK-NEXT:       (call $RefIsData
+ ;; CHECK-NEXT:        (local.get $8)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $i31 (result i32)
+ ;; CHECK-NEXT:    (local.set $y
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $9
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br_if $i31
+ ;; CHECK-NEXT:       (local.get $9)
+ ;; CHECK-NEXT:       (call $RefIsI31
+ ;; CHECK-NEXT:        (local.get $9)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $non-null (result i32)
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (local.set $10
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (br_if $non-null
+ ;; CHECK-NEXT:       (local.get $10)
+ ;; CHECK-NEXT:       (i32.eqz
+ ;; CHECK-NEXT:        (call $RefIsNull
+ ;; CHECK-NEXT:         (local.get $10)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $non-func (result i32)
+ ;; CHECK-NEXT:    (local.set $temp-func
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $11
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br_if $non-func
+ ;; CHECK-NEXT:       (local.get $11)
+ ;; CHECK-NEXT:       (i32.eqz
+ ;; CHECK-NEXT:        (call $RefIsFunc
+ ;; CHECK-NEXT:         (local.get $11)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $non-data (result i32)
+ ;; CHECK-NEXT:    (local.set $temp-data
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $12
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br_if $non-data
+ ;; CHECK-NEXT:       (local.get $12)
+ ;; CHECK-NEXT:       (i32.eqz
+ ;; CHECK-NEXT:        (call $RefIsData
+ ;; CHECK-NEXT:         (local.get $12)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $non-i31 (result i32)
+ ;; CHECK-NEXT:    (local.set $temp-i31
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $13
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br_if $non-i31
+ ;; CHECK-NEXT:       (local.get $13)
+ ;; CHECK-NEXT:       (i32.eqz
+ ;; CHECK-NEXT:        (call $RefIsI31
+ ;; CHECK-NEXT:         (local.get $13)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on_X (export "br_on_X") (param $x anyref)
   (local $y anyref)
   (local $z (ref null any))
   (local $temp-func (ref null func))
@@ -620,202 +769,34 @@
    )
   )
  )
- (func "ref-eq" (param $x eqref) (param $y eqref) (result i32)
+ ;; CHECK:      (func $ref-eq (param $x i32) (param $y i32) (result i32)
+ ;; CHECK-NEXT:  (i32.eq
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $ref-eq (export "ref-eq") (param $x eqref) (param $y eqref) (result i32)
   (ref.eq (local.get $x) (local.get $y))
  )
- (func "struct-nn" (param $x (ref $struct-nn)) (result (ref $struct-nn))
+ ;; CHECK:      (func $struct-nn (param $x i32) (result i32)
+ ;; CHECK-NEXT:  (local.get $x)
+ ;; CHECK-NEXT: )
+ (func $struct-nn (export "struct-nn") (param $x (ref $struct-nn)) (result (ref $struct-nn))
   ;; Use this type, so that we emit the support code for it, which tests our
   ;; handling of a struct with a non-nullable field.
   (local.get $x)
  )
- (func "send-any"
+ ;; CHECK:      (func $send-anything
+ ;; CHECK-NEXT:  (call $send-any
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $send-anything (export "send-any")
   (call $send-any
    (ref.null $empty)
   )
  )
 )
-;; CHECK:      (func $19 (param $x i32)
-;; CHECK-NEXT:  (local $y i32)
-;; CHECK-NEXT:  (local $z i32)
-;; CHECK-NEXT:  (local $temp-func i32)
-;; CHECK-NEXT:  (local $temp-data i32)
-;; CHECK-NEXT:  (local $temp-i31 i32)
-;; CHECK-NEXT:  (local $6 i32)
-;; CHECK-NEXT:  (local $7 i32)
-;; CHECK-NEXT:  (local $8 i32)
-;; CHECK-NEXT:  (local $9 i32)
-;; CHECK-NEXT:  (local $10 i32)
-;; CHECK-NEXT:  (local $11 i32)
-;; CHECK-NEXT:  (local $12 i32)
-;; CHECK-NEXT:  (local $13 i32)
-;; CHECK-NEXT:  (block $null
-;; CHECK-NEXT:   (local.set $z
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (local.set $6
-;; CHECK-NEXT:      (local.get $x)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (br_if $null
-;; CHECK-NEXT:      (call $RefIsNull
-;; CHECK-NEXT:       (local.get $6)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (local.get $6)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (block $func (result i32)
-;; CHECK-NEXT:    (local.set $y
-;; CHECK-NEXT:     (block (result i32)
-;; CHECK-NEXT:      (local.set $7
-;; CHECK-NEXT:       (local.get $x)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:      (br_if $func
-;; CHECK-NEXT:       (local.get $7)
-;; CHECK-NEXT:       (call $RefIsFunc
-;; CHECK-NEXT:        (local.get $7)
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (block $data (result i32)
-;; CHECK-NEXT:    (local.set $y
-;; CHECK-NEXT:     (block (result i32)
-;; CHECK-NEXT:      (local.set $8
-;; CHECK-NEXT:       (local.get $x)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:      (br_if $data
-;; CHECK-NEXT:       (local.get $8)
-;; CHECK-NEXT:       (call $RefIsData
-;; CHECK-NEXT:        (local.get $8)
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (block $i31 (result i32)
-;; CHECK-NEXT:    (local.set $y
-;; CHECK-NEXT:     (block (result i32)
-;; CHECK-NEXT:      (local.set $9
-;; CHECK-NEXT:       (local.get $x)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:      (br_if $i31
-;; CHECK-NEXT:       (local.get $9)
-;; CHECK-NEXT:       (call $RefIsI31
-;; CHECK-NEXT:        (local.get $9)
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (block $non-null (result i32)
-;; CHECK-NEXT:    (block
-;; CHECK-NEXT:     (local.set $10
-;; CHECK-NEXT:      (local.get $x)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (drop
-;; CHECK-NEXT:      (br_if $non-null
-;; CHECK-NEXT:       (local.get $10)
-;; CHECK-NEXT:       (i32.eqz
-;; CHECK-NEXT:        (call $RefIsNull
-;; CHECK-NEXT:         (local.get $10)
-;; CHECK-NEXT:        )
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (unreachable)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (block $non-func (result i32)
-;; CHECK-NEXT:    (local.set $temp-func
-;; CHECK-NEXT:     (block (result i32)
-;; CHECK-NEXT:      (local.set $11
-;; CHECK-NEXT:       (local.get $x)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:      (br_if $non-func
-;; CHECK-NEXT:       (local.get $11)
-;; CHECK-NEXT:       (i32.eqz
-;; CHECK-NEXT:        (call $RefIsFunc
-;; CHECK-NEXT:         (local.get $11)
-;; CHECK-NEXT:        )
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (block $non-data (result i32)
-;; CHECK-NEXT:    (local.set $temp-data
-;; CHECK-NEXT:     (block (result i32)
-;; CHECK-NEXT:      (local.set $12
-;; CHECK-NEXT:       (local.get $x)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:      (br_if $non-data
-;; CHECK-NEXT:       (local.get $12)
-;; CHECK-NEXT:       (i32.eqz
-;; CHECK-NEXT:        (call $RefIsData
-;; CHECK-NEXT:         (local.get $12)
-;; CHECK-NEXT:        )
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (block $non-i31 (result i32)
-;; CHECK-NEXT:    (local.set $temp-i31
-;; CHECK-NEXT:     (block (result i32)
-;; CHECK-NEXT:      (local.set $13
-;; CHECK-NEXT:       (local.get $x)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:      (br_if $non-i31
-;; CHECK-NEXT:       (local.get $13)
-;; CHECK-NEXT:       (i32.eqz
-;; CHECK-NEXT:        (call $RefIsI31
-;; CHECK-NEXT:         (local.get $13)
-;; CHECK-NEXT:        )
-;; CHECK-NEXT:       )
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $20 (param $x i32) (param $y i32) (result i32)
-;; CHECK-NEXT:  (i32.eq
-;; CHECK-NEXT:   (local.get $x)
-;; CHECK-NEXT:   (local.get $y)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $21 (param $x i32) (result i32)
-;; CHECK-NEXT:  (local.get $x)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $22
-;; CHECK-NEXT:  (call $send-any
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
 ;; CHECK:      (func $lowergc-start
 ;; CHECK-NEXT:  (i32.store
 ;; CHECK-NEXT:   (i32.const 8)
@@ -1979,7 +1960,18 @@
  (memory $0 1 1)
  (type $empty (struct))
 
- (func "new-struct"
+ ;; CHECK:      (export "new-struct" (func $new-struct))
+
+ ;; CHECK:      (start $lowergc-start)
+
+ ;; CHECK:      (func $new-struct
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $StructNewWithDefault$empty
+ ;; CHECK-NEXT:    (i32.const 65548)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $new-struct (export "new-struct")
   (drop
    (struct.new_with_rtt $empty
     (rtt.canon $empty)
@@ -1987,18 +1979,6 @@
   )
  )
 )
-;; CHECK:      (export "new-struct" (func $0))
-
-;; CHECK:      (start $lowergc-start)
-
-;; CHECK:      (func $0
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (call $StructNewWithDefault$empty
-;; CHECK-NEXT:    (i32.const 65548)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
 ;; CHECK:      (func $lowergc-start
 ;; CHECK-NEXT:  (i32.store
 ;; CHECK-NEXT:   (i32.const 65536)
