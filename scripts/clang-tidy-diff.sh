@@ -17,6 +17,7 @@ if [ ! -e "$CLANG_TIDY" ]; then
   exit 1
 fi
 
+# This needs for FreeBSD and Darwin which doesn't support readlink -f command
 function realpath() {
   python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" $CLANG_TIDY;
 }
