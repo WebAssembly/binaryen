@@ -19,7 +19,7 @@ fi
 
 # This needs for FreeBSD and Darwin which doesn't support readlink -f command
 function realpath() {
-  python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" $CLANG_TIDY;
+  python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" $1;
 }
 
 CLANG_DIR=$(dirname $(dirname $(realpath $CLANG_TIDY)))
