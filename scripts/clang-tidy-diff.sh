@@ -8,7 +8,7 @@ if [ -n "$1" ]; then
 elif [ -n "$GITHUB_BASE_REF" ]; then
   BRANCH="origin/$GITHUB_BASE_REF"
 else
-  BRANCH="$(git symbolic-ref --short -q HEAD)"
+  BRANCH="@{upstream}"
 fi
 
 CLANG_TIDY=$(which clang-tidy)
@@ -17,7 +17,7 @@ if [ ! -e "$CLANG_TIDY" ]; then
   exit 1
 fi
 
-CLANG_DIR=$(dirname $(dirname $CLANG_TIDY))
+CLANG_DIR=$(dirname $(dirname $(readlink -f $CLANG_TIDY)))
 CLANG_TIDY_DIFF=$CLANG_DIR/share/clang/clang-tidy-diff.py
 if [ ! -e "$CLANG_TIDY_DIFF" ]; then
   echo "Failed to find clang-tidy-diff.py ($CLANG_TIDY_DIFF)"
