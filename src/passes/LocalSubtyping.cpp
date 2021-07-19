@@ -15,6 +15,7 @@
  */
 
 #include <ir/find_all.h>
+#include <ir/linear-execution.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm.h>
@@ -89,8 +90,8 @@ struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>>
         auto newType = Type::getLeastUpperBound(types);
         assert(newType != Type::none); // in valid wasm there must be a LUB
 
-        // Remove non-nullability, which can't be stored in a local.
-        if (newType.isRef() && !newType.isNullable()) {
+        // Remove non-nullability if we disallow that in locals.
+        if (!getModule()->features.hasGCNNLocals() && newType.isNonNullable()) {
           newType = Type(newType.getHeapType(), Nullable);
           // Note that the old type must have been nullable as well, as non-
           // nullable types cannot be locals, which means that we will not have

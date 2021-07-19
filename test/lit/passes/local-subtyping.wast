@@ -3,7 +3,9 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (import "out" "i32" (func $i32 (result i32)))
   (import "out" "i32" (func $i32 (result i32)))
+  ;; CHECK:      (import "out" "i64" (func $i64 (result i64)))
   (import "out" "i64" (func $i64 (result i64)))
 
   ;; refinalization can find a more specific type, where the declared type was
