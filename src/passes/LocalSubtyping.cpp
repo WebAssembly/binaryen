@@ -22,7 +22,8 @@
 
 namespace wasm {
 
-struct LocalSubtyping : public WalkerPass<LinearExecutionWalker<LocalSubtyping>> {
+struct LocalSubtyping
+  : public WalkerPass<LinearExecutionWalker<LocalSubtyping>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() { return new LocalSubtyping(); }
