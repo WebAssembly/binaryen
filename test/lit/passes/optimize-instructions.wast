@@ -2733,11 +2733,7 @@
   )
   ;; CHECK:      (func $sext-24-shr_u-wrap-extend (result i32)
   ;; CHECK-NEXT:  (i32.shr_u
-  ;; CHECK-NEXT:   (i32.wrap_i64
-  ;; CHECK-NEXT:    (i64.extend_i32_s
-  ;; CHECK-NEXT:     (i32.const -1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const -1)
   ;; CHECK-NEXT:   (i32.const 25)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
