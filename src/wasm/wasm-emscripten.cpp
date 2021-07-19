@@ -148,7 +148,7 @@ private:
             Fatal() << "Cannot get offset of passive segment initialized "
                        "multiple times";
           }
-          offsets[curr->segment] = dest->value.geti32();
+          offsets[curr->segment] = dest->value.getInteger();
         }
       } searcher(passiveOffsets);
       searcher.walkModule(&wasm);
@@ -514,7 +514,7 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     if (!seg.offset->is<Const>()) {
       Fatal() << "separating relocatable segments not implemented";
     }
-    size_t offset = seg.offset->cast<Const>()->value.geti32();
+    size_t offset = seg.offset->cast<Const>()->value.getInteger();
     offset -= base;
     size_t fill = offset - lastEnd;
     if (fill > 0) {
