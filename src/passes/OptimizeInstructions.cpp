@@ -839,8 +839,8 @@ struct OptimizeInstructions
           if (matches(curr,
                       unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
             inner->op = ExtendS32Int64;
-            inner->value = x;
             inner->type = Type::i64;
+            inner->value = x;
             return replaceCurrent(inner);
           }
         }
