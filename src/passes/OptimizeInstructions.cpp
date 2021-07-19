@@ -818,8 +818,10 @@ struct OptimizeInstructions
         Expression* x;
         // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
         // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
-        if (matches(curr, unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
-            matches(curr, unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
+        if (matches(curr,
+                    unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
+            matches(curr,
+                    unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
           return replaceCurrent(x);
         }
 
@@ -834,7 +836,8 @@ struct OptimizeInstructions
 
         if (getModule()->features.hasSignExt()) {
           // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
-          if (matches(curr, unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
+          if (matches(curr,
+                      unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
             inner->op = ExtendS32Int64;
             inner->value = x;
             return replaceCurrent(inner);
