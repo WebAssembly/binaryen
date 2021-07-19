@@ -840,6 +840,7 @@ struct OptimizeInstructions
                       unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
             inner->op = ExtendS32Int64;
             inner->value = x;
+            inner->type = Type::i64;
             return replaceCurrent(inner);
           }
         }
