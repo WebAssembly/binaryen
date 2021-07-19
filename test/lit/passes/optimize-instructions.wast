@@ -2707,11 +2707,7 @@
   ;; CHECK-NEXT:  (i32.shr_s
   ;; CHECK-NEXT:   (i32.shl
   ;; CHECK-NEXT:    (i32.shr_u
-  ;; CHECK-NEXT:     (i32.wrap_i64
-  ;; CHECK-NEXT:      (i64.extend_i32_s
-  ;; CHECK-NEXT:       (i32.const -1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const -1)
   ;; CHECK-NEXT:     (i32.const 24)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 24)
