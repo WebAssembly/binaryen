@@ -1030,7 +1030,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                       .hasSideEffects();
                   list[0] = old;
                   if (canReorder && !hasSideEffects &&
-                     canEmitSelectWithArms(br->value, curr)) {
+                      canEmitSelectWithArms(br->value, curr)) {
                     ExpressionManipulator::nop(list[0]);
                     replaceCurrent(
                       builder.makeSelect(br->condition, br->value, curr));
