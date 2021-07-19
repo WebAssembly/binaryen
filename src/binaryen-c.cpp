@@ -185,7 +185,7 @@ BinaryenExpressionId BinaryenInvalidId(void) {
     return Expression::Id::CLASS_TO_VISIT##Id;                                 \
   }
 
-#include "wasm-delegations.h"
+#include "wasm-delegations.def"
 
 // External kinds
 
@@ -201,8 +201,8 @@ BinaryenExternalKind BinaryenExternalMemory(void) {
 BinaryenExternalKind BinaryenExternalGlobal(void) {
   return static_cast<BinaryenExternalKind>(ExternalKind::Global);
 }
-BinaryenExternalKind BinaryenExternalEvent(void) {
-  return static_cast<BinaryenExternalKind>(ExternalKind::Event);
+BinaryenExternalKind BinaryenExternalTag(void) {
+  return static_cast<BinaryenExternalKind>(ExternalKind::Tag);
 }
 
 // Features
@@ -1287,8 +1287,8 @@ BinaryenExpressionRef BinaryenRefEq(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenExpressionRef body,
-                                  const char** catchEvents,
-                                  BinaryenIndex numCatchEvents,
+                                  const char** catchTags,
+                                  BinaryenIndex numCatchTags,
                                   BinaryenExpressionRef* catchBodies,
                                   BinaryenIndex numCatchBodies,
                                   const char* delegateTarget) {
@@ -1297,8 +1297,8 @@ BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
     ret->name = name;
   }
   ret->body = (Expression*)body;
-  for (BinaryenIndex i = 0; i < numCatchEvents; i++) {
-    ret->catchEvents.push_back(catchEvents[i]);
+  for (BinaryenIndex i = 0; i < numCatchTags; i++) {
+    ret->catchTags.push_back(catchTags[i]);
   }
   for (BinaryenIndex i = 0; i < numCatchBodies; i++) {
     ret->catchBodies.push_back((Expression*)catchBodies[i]);
@@ -1311,7 +1311,7 @@ BinaryenExpressionRef BinaryenTry(BinaryenModuleRef module,
 }
 
 BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
-                                    const char* event,
+                                    const char* tag,
                                     BinaryenExpressionRef* operands,
                                     BinaryenIndex numOperands) {
   std::vector<Expression*> args;
@@ -1319,7 +1319,7 @@ BinaryenExpressionRef BinaryenThrow(BinaryenModuleRef module,
     args.push_back((Expression*)operands[i]);
   }
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeThrow(event, args));
+    Builder(*(Module*)module).makeThrow(tag, args));
 }
 
 BinaryenExpressionRef BinaryenRethrow(BinaryenModuleRef module,
@@ -2668,6 +2668,81 @@ void BinaryenSIMDLoadSetPtr(BinaryenExpressionRef expr,
   assert(ptrExpr);
   static_cast<SIMDLoad*>(expression)->ptr = (Expression*)ptrExpr;
 }
+// SIMDLoadStoreLane
+BinaryenOp BinaryenSIMDLoadStoreLaneGetOp(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->op;
+}
+void BinaryenSIMDLoadStoreLaneSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->op = SIMDLoadStoreLaneOp(op);
+}
+uint32_t BinaryenSIMDLoadStoreLaneGetOffset(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->offset;
+}
+void BinaryenSIMDLoadStoreLaneSetOffset(BinaryenExpressionRef expr,
+                                        uint32_t offset) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->offset = offset;
+}
+uint32_t BinaryenSIMDLoadStoreLaneGetAlign(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->align;
+}
+void BinaryenSIMDLoadStoreLaneSetAlign(BinaryenExpressionRef expr,
+                                       uint32_t align) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->align = align;
+}
+uint8_t BinaryenSIMDLoadStoreLaneGetIndex(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->index;
+}
+void BinaryenSIMDLoadStoreLaneSetIndex(BinaryenExpressionRef expr,
+                                       uint8_t index) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  static_cast<SIMDLoadStoreLane*>(expression)->index = index;
+}
+BinaryenExpressionRef
+BinaryenSIMDLoadStoreLaneGetPtr(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->ptr;
+}
+void BinaryenSIMDLoadStoreLaneSetPtr(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef ptrExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  assert(ptrExpr);
+  static_cast<SIMDLoadStoreLane*>(expression)->ptr = (Expression*)ptrExpr;
+}
+BinaryenExpressionRef
+BinaryenSIMDLoadStoreLaneGetVec(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->vec;
+}
+void BinaryenSIMDLoadStoreLaneSetVec(BinaryenExpressionRef expr,
+                                     BinaryenExpressionRef vecExpr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  assert(vecExpr);
+  static_cast<SIMDLoadStoreLane*>(expression)->vec = (Expression*)vecExpr;
+}
+bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr) {
+  auto* expression = (Expression*)expr;
+  assert(expression->is<SIMDLoadStoreLane>());
+  return static_cast<SIMDLoadStoreLane*>(expression)->isStore();
+}
 // MemoryInit
 uint32_t BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -2904,55 +2979,55 @@ void BinaryenTrySetBody(BinaryenExpressionRef expr,
   assert(bodyExpr);
   static_cast<Try*>(expression)->body = (Expression*)bodyExpr;
 }
-BinaryenIndex BinaryenTryGetNumCatchEvents(BinaryenExpressionRef expr) {
+BinaryenIndex BinaryenTryGetNumCatchTags(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->catchEvents.size();
+  return static_cast<Try*>(expression)->catchTags.size();
 }
 BinaryenIndex BinaryenTryGetNumCatchBodies(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
   return static_cast<Try*>(expression)->catchBodies.size();
 }
-const char* BinaryenTryGetCatchEventAt(BinaryenExpressionRef expr,
-                                       BinaryenIndex index) {
+const char* BinaryenTryGetCatchTagAt(BinaryenExpressionRef expr,
+                                     BinaryenIndex index) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(index < static_cast<Try*>(expression)->catchEvents.size());
-  return static_cast<Try*>(expression)->catchEvents[index].c_str();
+  assert(index < static_cast<Try*>(expression)->catchTags.size());
+  return static_cast<Try*>(expression)->catchTags[index].c_str();
 }
-void BinaryenTrySetCatchEventAt(BinaryenExpressionRef expr,
-                                BinaryenIndex index,
-                                const char* catchEvent) {
+void BinaryenTrySetCatchTagAt(BinaryenExpressionRef expr,
+                              BinaryenIndex index,
+                              const char* catchTag) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(index < static_cast<Try*>(expression)->catchEvents.size());
-  assert(catchEvent);
-  static_cast<Try*>(expression)->catchEvents[index] = catchEvent;
+  assert(index < static_cast<Try*>(expression)->catchTags.size());
+  assert(catchTag);
+  static_cast<Try*>(expression)->catchTags[index] = catchTag;
 }
-BinaryenIndex BinaryenTryAppendCatchEvent(BinaryenExpressionRef expr,
-                                          const char* catchEvent) {
+BinaryenIndex BinaryenTryAppendCatchTag(BinaryenExpressionRef expr,
+                                        const char* catchTag) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(catchEvent);
-  auto& list = static_cast<Try*>(expression)->catchEvents;
+  assert(catchTag);
+  auto& list = static_cast<Try*>(expression)->catchTags;
   auto index = list.size();
-  list.push_back(catchEvent);
+  list.push_back(catchTag);
   return index;
 }
-void BinaryenTryInsertCatchEventAt(BinaryenExpressionRef expr,
-                                   BinaryenIndex index,
-                                   const char* catchEvent) {
+void BinaryenTryInsertCatchTagAt(BinaryenExpressionRef expr,
+                                 BinaryenIndex index,
+                                 const char* catchTag) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  assert(catchEvent);
-  static_cast<Try*>(expression)->catchEvents.insertAt(index, catchEvent);
+  assert(catchTag);
+  static_cast<Try*>(expression)->catchTags.insertAt(index, catchTag);
 }
-const char* BinaryenTryRemoveCatchEventAt(BinaryenExpressionRef expr,
-                                          BinaryenIndex index) {
+const char* BinaryenTryRemoveCatchTagAt(BinaryenExpressionRef expr,
+                                        BinaryenIndex index) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Try>());
-  return static_cast<Try*>(expression)->catchEvents.removeAt(index).c_str();
+  return static_cast<Try*>(expression)->catchTags.removeAt(index).c_str();
 }
 BinaryenExpressionRef BinaryenTryGetCatchBodyAt(BinaryenExpressionRef expr,
                                                 BinaryenIndex index) {
@@ -3017,15 +3092,15 @@ bool BinaryenTryIsDelegate(BinaryenExpressionRef expr) {
   return static_cast<Try*>(expression)->isDelegate();
 }
 // Throw
-const char* BinaryenThrowGetEvent(BinaryenExpressionRef expr) {
+const char* BinaryenThrowGetTag(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Throw>());
-  return static_cast<Throw*>(expression)->event.c_str();
+  return static_cast<Throw*>(expression)->tag.c_str();
 }
-void BinaryenThrowSetEvent(BinaryenExpressionRef expr, const char* eventName) {
+void BinaryenThrowSetTag(BinaryenExpressionRef expr, const char* tagName) {
   auto* expression = (Expression*)expr;
   assert(expression->is<Throw>());
-  static_cast<Throw*>(expression)->event = eventName;
+  static_cast<Throw*>(expression)->tag = tagName;
 }
 BinaryenIndex BinaryenThrowGetNumOperands(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -3205,7 +3280,8 @@ BinaryenFunctionRef BinaryenAddFunction(BinaryenModuleRef module,
                                         BinaryenExpressionRef body) {
   auto* ret = new Function;
   ret->setExplicitName(name);
-  ret->sig = Signature(Type(params), Type(results));
+  // TODO: Take a HeapType rather than params and results.
+  ret->type = Signature(Type(params), Type(results));
   for (BinaryenIndex i = 0; i < numVarTypes; i++) {
     ret->vars.push_back(Type(varTypes[i]));
   }
@@ -3273,26 +3349,24 @@ BinaryenGlobalRef BinaryenGetGlobalByIndex(BinaryenModuleRef module,
   return globals[index].get();
 }
 
-// Events
+// Tags
 
-BinaryenEventRef BinaryenAddEvent(BinaryenModuleRef module,
-                                  const char* name,
-                                  uint32_t attribute,
-                                  BinaryenType params,
-                                  BinaryenType results) {
-  auto* ret = new Event();
+BinaryenTagRef BinaryenAddTag(BinaryenModuleRef module,
+                              const char* name,
+                              BinaryenType params,
+                              BinaryenType results) {
+  auto* ret = new Tag();
   ret->setExplicitName(name);
-  ret->attribute = attribute;
   ret->sig = Signature(Type(params), Type(results));
-  ((Module*)module)->addEvent(ret);
+  ((Module*)module)->addTag(ret);
   return ret;
 }
 
-BinaryenEventRef BinaryenGetEvent(BinaryenModuleRef module, const char* name) {
-  return ((Module*)module)->getEventOrNull(name);
+BinaryenTagRef BinaryenGetTag(BinaryenModuleRef module, const char* name) {
+  return ((Module*)module)->getTagOrNull(name);
 }
-void BinaryenRemoveEvent(BinaryenModuleRef module, const char* name) {
-  ((Module*)module)->removeEvent(name);
+void BinaryenRemoveTag(BinaryenModuleRef module, const char* name) {
+  ((Module*)module)->removeTag(name);
 }
 
 // Imports
@@ -3307,7 +3381,8 @@ void BinaryenAddFunctionImport(BinaryenModuleRef module,
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
-  ret->sig = Signature(Type(params), Type(results));
+  // TODO: Take a HeapType rather than params and results.
+  ret->type = Signature(Type(params), Type(results));
   ((Module*)module)->addFunction(ret);
 }
 void BinaryenAddTableImport(BinaryenModuleRef module,
@@ -3344,19 +3419,18 @@ void BinaryenAddGlobalImport(BinaryenModuleRef module,
   ret->mutable_ = mutable_;
   ((Module*)module)->addGlobal(ret);
 }
-void BinaryenAddEventImport(BinaryenModuleRef module,
-                            const char* internalName,
-                            const char* externalModuleName,
-                            const char* externalBaseName,
-                            uint32_t attribute,
-                            BinaryenType params,
-                            BinaryenType results) {
-  auto* ret = new Event();
+void BinaryenAddTagImport(BinaryenModuleRef module,
+                          const char* internalName,
+                          const char* externalModuleName,
+                          const char* externalBaseName,
+                          BinaryenType params,
+                          BinaryenType results) {
+  auto* ret = new Tag();
   ret->name = internalName;
   ret->module = externalModuleName;
   ret->base = externalBaseName;
   ret->sig = Signature(Type(params), Type(results));
-  ((Module*)module)->addEvent(ret);
+  ((Module*)module)->addTag(ret);
 }
 
 // Exports
@@ -3406,13 +3480,13 @@ BinaryenExportRef BinaryenAddGlobalExport(BinaryenModuleRef module,
   ((Module*)module)->addExport(ret);
   return ret;
 }
-BinaryenExportRef BinaryenAddEventExport(BinaryenModuleRef module,
-                                         const char* internalName,
-                                         const char* externalName) {
+BinaryenExportRef BinaryenAddTagExport(BinaryenModuleRef module,
+                                       const char* internalName,
+                                       const char* externalName) {
   auto* ret = new Export();
   ret->value = internalName;
   ret->name = externalName;
-  ret->kind = ExternalKind::Event;
+  ret->kind = ExternalKind::Tag;
   ((Module*)module)->addExport(ret);
   return ret;
 }
@@ -3475,7 +3549,7 @@ BinaryenAddActiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -3492,7 +3566,7 @@ BinaryenAddPassiveElementSegment(BinaryenModuleRef module,
       Fatal() << "invalid function '" << funcNames[i] << "'.";
     }
     segment->data.push_back(
-      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->sig));
+      Builder(*(Module*)module).makeRefFunc(funcNames[i], func->type));
   }
   return ((Module*)module)->addElementSegment(std::move(segment));
 }
@@ -3881,7 +3955,11 @@ BinaryenModuleAllocateAndWrite(BinaryenModuleRef module,
 
 char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module) {
   std::stringstream ss;
+  bool colors = Colors::isEnabled();
+
+  Colors::setEnabled(false); // do not use colors for writing
   ss << *(Module*)module;
+  Colors::setEnabled(colors); // restore colors state
 
   const std::string out = ss.str();
   const int len = out.length() + 1;
@@ -3896,7 +3974,8 @@ BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
   buffer.resize(inputSize);
   std::copy_n(input, inputSize, buffer.begin());
   try {
-    WasmBinaryBuilder parser(*wasm, buffer);
+    // TODO: allow providing features in the C API
+    WasmBinaryBuilder parser(*wasm, FeatureSet::MVP, buffer);
     parser.read();
   } catch (ParseException& p) {
     p.dump(std::cerr);
@@ -3930,14 +4009,16 @@ const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
 // ========== Function Operations ==========
 //
 
+// TODO: add BinaryenFunctionGetType
+
 const char* BinaryenFunctionGetName(BinaryenFunctionRef func) {
   return ((Function*)func)->name.c_str();
 }
 BinaryenType BinaryenFunctionGetParams(BinaryenFunctionRef func) {
-  return ((Function*)func)->sig.params.getID();
+  return ((Function*)func)->getParams().getID();
 }
 BinaryenType BinaryenFunctionGetResults(BinaryenFunctionRef func) {
-  return ((Function*)func)->sig.results.getID();
+  return ((Function*)func)->getResults().getID();
 }
 BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func) {
   return ((Function*)func)->vars.size();
@@ -4067,21 +4148,18 @@ BinaryenExpressionRef BinaryenGlobalGetInitExpr(BinaryenGlobalRef global) {
 }
 
 //
-// =========== Event operations ===========
+// =========== Tag operations ===========
 //
 
-const char* BinaryenEventGetName(BinaryenEventRef event) {
-  return ((Event*)event)->name.c_str();
+const char* BinaryenTagGetName(BinaryenTagRef tag) {
+  return ((Tag*)tag)->name.c_str();
 }
-uint32_t BinaryenEventGetAttribute(BinaryenEventRef event) {
-  return ((Event*)event)->attribute;
-}
-BinaryenType BinaryenEventGetParams(BinaryenEventRef event) {
-  return ((Event*)event)->sig.params.getID();
+BinaryenType BinaryenTagGetParams(BinaryenTagRef tag) {
+  return ((Tag*)tag)->sig.params.getID();
 }
 
-BinaryenType BinaryenEventGetResults(BinaryenEventRef event) {
-  return ((Event*)event)->sig.results.getID();
+BinaryenType BinaryenTagGetResults(BinaryenTagRef tag) {
+  return ((Tag*)tag)->sig.results.getID();
 }
 
 //
@@ -4112,10 +4190,10 @@ const char* BinaryenGlobalImportGetModule(BinaryenGlobalRef import) {
     return "";
   }
 }
-const char* BinaryenEventImportGetModule(BinaryenEventRef import) {
-  auto* event = (Event*)import;
-  if (event->imported()) {
-    return event->module.c_str();
+const char* BinaryenTagImportGetModule(BinaryenTagRef import) {
+  auto* tag = (Tag*)import;
+  if (tag->imported()) {
+    return tag->module.c_str();
   } else {
     return "";
   }
@@ -4144,10 +4222,10 @@ const char* BinaryenGlobalImportGetBase(BinaryenGlobalRef import) {
     return "";
   }
 }
-const char* BinaryenEventImportGetBase(BinaryenEventRef import) {
-  auto* event = (Event*)import;
-  if (event->imported()) {
-    return event->base.c_str();
+const char* BinaryenTagImportGetBase(BinaryenTagRef import) {
+  auto* tag = (Tag*)import;
+  if (tag->imported()) {
+    return tag->base.c_str();
   } else {
     return "";
   }

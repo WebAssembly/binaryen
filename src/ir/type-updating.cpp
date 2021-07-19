@@ -29,9 +29,12 @@ bool canHandleAsLocal(Type type) {
 
 void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Check if this is an issue.
+  if (wasm.features.hasGCNNLocals()) {
+    return;
+  }
   bool hasNonNullable = false;
   for (auto type : func->vars) {
-    if (type.isRef() && !type.isNullable()) {
+    if (type.isNonNullable()) {
       hasNonNullable = true;
       break;
     }
@@ -49,7 +52,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
       continue;
     }
     auto type = func->getLocalType(get->index);
-    if (type.isRef() && !type.isNullable()) {
+    if (type.isNonNullable()) {
       // The get should now return a nullable value, and a ref.as_non_null
       // fixes that up.
       get->type = Type(type.getHeapType(), Nullable);
@@ -71,7 +74,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
       continue;
     }
     auto type = func->getLocalType(set->index);
-    if (type.isRef() && !type.isNullable()) {
+    if (type.isNonNullable()) {
       set->type = Type(type.getHeapType(), Nullable);
       *setp = builder.makeRefAs(RefAsNonNull, set);
     }
@@ -80,7 +83,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Rewrite the types of the function's vars (which we can do now, after we
   // are done using them to know which local.gets etc to fix).
   for (auto& type : func->vars) {
-    if (type.isRef() && !type.isNullable()) {
+    if (type.isNonNullable()) {
       type = Type(type.getHeapType(), Nullable);
     }
   }

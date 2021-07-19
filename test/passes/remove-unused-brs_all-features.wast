@@ -107,6 +107,15 @@
     (i31.new (i32.const 1337))
    )
   )
+  (call $log (i32.const 8))
+  (drop
+   (block $non-null (result (ref func))
+    ;; a non-null reference is not null, and the br is always taken
+    (br_on_non_null $non-null (ref.func $br_on-to-br))
+    (call $log (i32.const 9))
+    (ref.func $br_on-to-br)
+   )
+  )
  )
 
  ;; a br_on of the obviously incorrect kind can just flow out the value as the

@@ -322,7 +322,7 @@ struct CtorEvalExternalInterface : EvallingModuleInstance::ExternalInterface {
           // if this is one of our functions, we can call it; if it was
           // imported, fail
           auto* func = wasm->getFunction(name);
-          if (func->sig != sig) {
+          if (func->getSig() != sig) {
             throw FailToEvalException(
               std::string("callTable signature mismatch: ") + name.str);
           }
@@ -549,6 +549,7 @@ int main(int argc, const char* argv[]) {
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
+  options.applyFeatures(wasm);
 
   {
     if (options.debug) {
@@ -562,8 +563,6 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in parsing input";
     }
   }
-
-  options.applyFeatures(wasm);
 
   if (!WasmValidator().validate(wasm)) {
     std::cout << wasm << '\n';

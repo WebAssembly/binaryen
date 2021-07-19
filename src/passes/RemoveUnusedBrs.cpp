@@ -97,6 +97,12 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   return total >= TOO_MUCH;
 }
 
+static bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
+  // A select only allows a single value in its arms in the spec:
+  // https://webassembly.github.io/spec/core/valid/instructions.html#xref-syntax-instructions-syntax-instr-parametric-mathsf-select-t-ast
+  return ifTrue->type.isSingle() && ifFalse->type.isSingle();
+}
+
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
@@ -389,10 +395,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     // First, check for a possible null which would prevent all other
     // optimizations.
-    // (Note: if the spec had BrOnNonNull, instead of BrOnNull, then we could
-    // replace a br_on_func whose input is (ref null func) with br_on_non_null,
-    // as only the null check would be needed. But as things are, we cannot do
-    // such a thing.)
+    // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
+    // input is (ref null func) with br_on_non_null (as only the null check
+    // would be needed).
     auto refType = curr->ref->type;
     if (refType.isNullable()) {
       return;
@@ -402,6 +407,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // This cannot be null, so the br is never taken, and the non-null value
       // flows through.
       replaceCurrent(curr->ref);
+      anotherCycle = true;
+      return;
+    }
+    if (curr->op == BrOnNonNull) {
+      // This cannot be null, so the br is always taken.
+      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
       anotherCycle = true;
       return;
     }
@@ -1018,7 +1029,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                     EffectAnalyzer(passOptions, features, curr)
                       .hasSideEffects();
                   list[0] = old;
-                  if (canReorder && !hasSideEffects) {
+                  if (canReorder && !hasSideEffects &&
+                      canEmitSelectWithArms(br->value, curr)) {
                     ExpressionManipulator::nop(list[0]);
                     replaceCurrent(
                       builder.makeSelect(br->condition, br->value, curr));
@@ -1039,8 +1051,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       // Convert an if into a select, if possible and beneficial to do so.
       Select* selectify(If* iff) {
-        if (!iff->ifFalse || !iff->ifTrue->type.isSingle() ||
-            !iff->ifFalse->type.isSingle()) {
+        // Only an if-else can be turned into a select.
+        if (!iff->ifFalse) {
+          return nullptr;
+        }
+        if (!canEmitSelectWithArms(iff->ifTrue, iff->ifFalse)) {
           return nullptr;
         }
         if (iff->condition->type == Type::unreachable) {

@@ -1,5 +1,4 @@
 global
- [events]       : 0       
  [exports]      : 0       
  [funcs]        : 3       
  [globals]      : 1       
@@ -7,6 +6,7 @@ global
  [memory-data]  : 9       
  [table-data]   : 3       
  [tables]       : 1       
+ [tags]         : 0       
  [total]        : 6       
  Const          : 3       
  RefFunc        : 3       
@@ -92,22 +92,22 @@ func: ifs
  )
 )
 global
- [events]       : 0       
  [exports]      : 0       
  [funcs]        : 0       
  [globals]      : 0       
  [imports]      : 0       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
 (module
 )
 global
- [events]       : 0       
  [exports]      : 2       
  [funcs]        : 3       
  [globals]      : 0       
  [imports]      : 1       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
 func: func_a
  [binary-bytes] : 16      
@@ -178,12 +178,12 @@ export: b (func_b)
  )
 )
 global
- [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 1       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
 func: func_a
  [binary-bytes] : 12      
@@ -211,12 +211,12 @@ start: func_a
  )
 )
 global
- [events]       : 0       
  [exports]      : 0       
  [funcs]        : 1       
  [globals]      : 0       
  [imports]      : 1       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 0       
 func: func_a
  [binary-bytes] : 12      
@@ -240,12 +240,12 @@ start: func_a
  )
 )
 global
- [events]       : 0       
  [exports]      : 1       
  [funcs]        : 1       
  [globals]      : 1       
  [imports]      : 1       
  [tables]       : 0       
+ [tags]         : 0       
  [total]        : 1       
  GlobalGet      : 1       
 func: 0

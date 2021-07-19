@@ -1064,6 +1064,11 @@ struct OptimizeInstructions
 
   void visitArrayLen(ArrayLen* curr) { skipNonNullCast(curr->ref); }
 
+  void visitArrayCopy(ArrayCopy* curr) {
+    skipNonNullCast(curr->destRef);
+    skipNonNullCast(curr->srcRef);
+  }
+
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -1425,6 +1430,7 @@ private:
 
   Expression* optimizeSelect(Select* curr) {
     using namespace Match;
+    using namespace Abstract;
     Builder builder(*getModule());
     curr->condition = optimizeBoolean(curr->condition);
     {
@@ -1474,6 +1480,29 @@ private:
           c = builder.makeUnary(EqZInt32, builder.makeUnary(EqZInt32, c));
         }
         return curr->type == Type::i64 ? builder.makeUnary(ExtendUInt32, c) : c;
+      }
+    }
+    {
+      // Simplify x < 0 ? -1 : 1 or x >= 0 ? 1 : -1 to
+      // i32(x) >> 31 | 1
+      // i64(x) >> 63 | 1
+      Binary* bin;
+      if (matches(
+            curr,
+            select(ival(-1), ival(1), binary(&bin, LtS, any(), ival(0)))) ||
+          matches(
+            curr,
+            select(ival(1), ival(-1), binary(&bin, GeS, any(), ival(0))))) {
+        auto c = bin->right->cast<Const>();
+        auto type = curr->ifTrue->type;
+        if (type == c->type) {
+          bin->type = type;
+          bin->op = Abstract::getBinary(type, ShrS);
+          c->value = Literal::makeFromInt32(type.getByteSize() * 8 - 1, type);
+          curr->ifTrue->cast<Const>()->value = Literal::makeOne(type);
+          return builder.makeBinary(
+            Abstract::getBinary(type, Or), bin, curr->ifTrue);
+        }
       }
     }
     {

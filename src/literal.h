@@ -31,9 +31,7 @@ namespace wasm {
 
 class Literals;
 struct GCData;
-// Subclass the vector type so that this is not easily confused with a vector of
-// types (which could be confusing on the Literal constructor).
-struct RttSupers : std::vector<Type> {};
+struct RttSupers;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -61,6 +59,9 @@ class Literal {
     // would do, but it is simple.)
     // The unique_ptr here is to avoid increasing the size of the union as well
     // as the Literal class itself.
+    // To support the experimental RttFreshSub instruction, we not only store
+    // the type, but also a reference to an allocation.
+    // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -569,6 +570,7 @@ public:
   Literal extMulHighUI32x4(const Literal& other) const;
   Literal absI64x2() const;
   Literal negI64x2() const;
+  Literal bitmaskI64x2() const;
   Literal allTrueI64x2() const;
   Literal shlI64x2(const Literal& other) const;
   Literal shrSI64x2(const Literal& other) const;
@@ -642,6 +644,7 @@ private:
   Literal subSatUI8(const Literal& other) const;
   Literal subSatSI16(const Literal& other) const;
   Literal subSatUI16(const Literal& other) const;
+  Literal q15MulrSatSI16(const Literal& other) const;
   Literal minInt(const Literal& other) const;
   Literal maxInt(const Literal& other) const;
   Literal minUInt(const Literal& other) const;
@@ -683,6 +686,28 @@ struct GCData {
   Literals values;
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
+
+struct RttSuper {
+  // The type of the super.
+  Type type;
+  // A shared allocation, used to implement rtt.fresh_sub. This is null for a
+  // normal sub, and for a fresh one we allocate a value here, which can then be
+  // used to differentiate rtts. (The allocation is shared so that when copying
+  // an rtt we remain equal.)
+  // TODO: Remove or optimize this when the spec stabilizes.
+  std::shared_ptr<size_t> freshPtr;
+
+  RttSuper(Type type) : type(type) {}
+
+  void makeFresh() { freshPtr = std::make_shared<size_t>(); }
+
+  bool operator==(const RttSuper& other) const {
+    return type == other.type && freshPtr == other.freshPtr;
+  }
+  bool operator!=(const RttSuper& other) const { return !(*this == other); }
+};
+
+struct RttSupers : std::vector<RttSuper> {};
 
 } // namespace wasm
 
@@ -743,7 +768,8 @@ template<> struct hash<wasm::Literal> {
       const auto& supers = a.getRttSupers();
       wasm::rehash(digest, supers.size());
       for (auto super : supers) {
-        wasm::rehash(digest, super.getID());
+        wasm::rehash(digest, super.type.getID());
+        wasm::rehash(digest, uintptr_t(super.freshPtr.get()));
       }
       return digest;
     }
@@ -759,39 +785,7 @@ template<> struct hash<wasm::Literals> {
     return digest;
   }
 };
-template<> struct less<wasm::Literal> {
-  bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
-    if (a.type < b.type) {
-      return true;
-    }
-    if (b.type < a.type) {
-      return false;
-    }
-    TODO_SINGLE_COMPOUND(a.type);
-    switch (a.type.getBasic()) {
-      case wasm::Type::i32:
-        return a.geti32() < b.geti32();
-      case wasm::Type::f32:
-        return a.reinterpreti32() < b.reinterpreti32();
-      case wasm::Type::i64:
-        return a.geti64() < b.geti64();
-      case wasm::Type::f64:
-        return a.reinterpreti64() < b.reinterpreti64();
-      case wasm::Type::v128:
-        return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
-      case wasm::Type::funcref:
-      case wasm::Type::externref:
-      case wasm::Type::anyref:
-      case wasm::Type::eqref:
-      case wasm::Type::i31ref:
-      case wasm::Type::dataref:
-      case wasm::Type::none:
-      case wasm::Type::unreachable:
-        return false;
-    }
-    WASM_UNREACHABLE("unexpected type");
-  }
-};
+
 } // namespace std
 
 #endif // wasm_literal_h

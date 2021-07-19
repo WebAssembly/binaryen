@@ -20,10 +20,13 @@
 #include "ir/module-splitting.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "pass.h"
 #include "support/file.h"
 #include "support/name.h"
+#include "support/path.h"
 #include "support/utilities.h"
 #include "tool-options.h"
+#include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-type.h"
@@ -46,10 +49,22 @@ std::set<Name> parseNameList(const std::string& list) {
 }
 
 struct WasmSplitOptions : ToolOptions {
+  enum class Mode : unsigned {
+    Split,
+    Instrument,
+    MergeProfiles,
+  };
+  Mode mode = Mode::Split;
+  constexpr static size_t NumModes =
+    static_cast<unsigned>(Mode::MergeProfiles) + 1;
+
   bool verbose = false;
   bool emitBinary = true;
+  bool symbolMap = false;
+  bool placeholderMap = false;
 
-  bool instrument = false;
+  // TODO: Remove this. See the comment in wasm-binary.h.
+  bool emitModuleNames = false;
 
   std::string profileFile;
   std::string profileExport = DEFAULT_PROFILE_EXPORT;
@@ -57,7 +72,7 @@ struct WasmSplitOptions : ToolOptions {
   std::set<Name> keepFuncs;
   std::set<Name> splitFuncs;
 
-  std::string input;
+  std::vector<std::string> inputFiles;
   std::string output;
   std::string primaryOutput;
   std::string secondaryOutput;
@@ -71,7 +86,22 @@ struct WasmSplitOptions : ToolOptions {
   // Figure out a more elegant solution for that use case and remove this.
   int initialTableSize = -1;
 
+  // The options that are valid for each mode.
+  std::array<std::unordered_set<std::string>, NumModes> validOptions;
+  std::vector<std::string> usedOptions;
+
   WasmSplitOptions();
+  WasmSplitOptions& add(const std::string& longName,
+                        const std::string& shortName,
+                        const std::string& description,
+                        std::vector<Mode>&& modes,
+                        Arguments arguments,
+                        const Action& action);
+  WasmSplitOptions& add(const std::string& longName,
+                        const std::string& shortName,
+                        const std::string& description,
+                        Arguments arguments,
+                        const Action& action);
   bool validate();
   void parse(int argc, const char* argv[]);
 };
@@ -79,35 +109,42 @@ struct WasmSplitOptions : ToolOptions {
 WasmSplitOptions::WasmSplitOptions()
   : ToolOptions("wasm-split",
                 "Split a module into a primary module and a secondary "
-                "module or instrument a module to gather a profile that "
-                "can inform future splitting.") {
+                "module, or instrument a module to gather a profile that "
+                "can inform future splitting, or manage such profiles. Options "
+                "that are only accepted in particular modes are marked with "
+                "the accepted \"[<modes>]\" in their descriptions.") {
   (*this)
-    .add("--instrument",
+    .add("--split",
          "",
-         "Instrument the module to generate a profile that can be used to "
-         "guide splitting",
+         "Split an input module into two output modules. The default mode.",
          Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { instrument = true; })
+         [&](Options* o, const std::string& arugment) { mode = Mode::Split; })
+    .add(
+      "--instrument",
+      "",
+      "Instrument an input module to allow it to generate a profile that can"
+      " be used to guide splitting.",
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { mode = Mode::Instrument; })
+    .add("--merge-profiles",
+         "",
+         "Merge multiple profiles for the same module into a single profile.",
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) {
+           mode = Mode::MergeProfiles;
+         })
     .add(
       "--profile",
       "",
-      "The profile to use to guide splitting. May not be used with "
-      "--instrument.",
+      "The profile to use to guide splitting.",
+      {Mode::Split},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { profileFile = argument; })
-    .add("--profile-export",
-         "",
-         "The export name of the function the embedder calls to write the "
-         "profile into memory. Defaults to `__write_profile`. Must be used "
-         "with --instrument.",
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           profileExport = argument;
-         })
     .add("--keep-funcs",
          "",
          "Comma-separated list of functions to keep in the primary module, "
          "regardless of any profile.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            keepFuncs = parseNameList(argument);
@@ -117,33 +154,45 @@ WasmSplitOptions::WasmSplitOptions()
          "Comma-separated list of functions to split into the secondary "
          "module, regardless of any profile. If there is no profile, then "
          "this defaults to all functions defined in the module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            splitFuncs = parseNameList(argument);
          })
-    .add("--output",
-         "-o",
-         "Output file. Only usable with --instrument.",
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) { output = argument; })
     .add("--primary-output",
          "-o1",
-         "Output file for the primary module. Not usable with --instrument.",
+         "Output file for the primary module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            primaryOutput = argument;
          })
     .add("--secondary-output",
          "-o2",
-         "Output file for the secondary module. Not usable with --instrument.",
+         "Output file for the secondary module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            secondaryOutput = argument;
          })
+    .add("--symbolmap",
+         "",
+         "Write a symbol map file for each of the output modules.",
+         {Mode::Split},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { symbolMap = true; })
+    .add(
+      "--placeholdermap",
+      "",
+      "Write a file mapping placeholder indices to the function names.",
+      {Mode::Split},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { placeholderMap = true; })
     .add("--import-namespace",
          "",
          "The namespace from which to import objects from the primary "
          "module into the secondary module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            importNamespace = argument;
@@ -152,6 +201,7 @@ WasmSplitOptions::WasmSplitOptions()
          "",
          "The namespace from which to import placeholder functions into "
          "the primary module.",
+         {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            placeholderNamespace = argument;
@@ -161,8 +211,59 @@ WasmSplitOptions::WasmSplitOptions()
       "",
       "An identifying prefix to prepend to new export names created "
       "by module splitting.",
+      {Mode::Split},
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { exportPrefix = argument; })
+    .add("--profile-export",
+         "",
+         "The export name of the function the embedder calls to write the "
+         "profile into memory. Defaults to `__write_profile`.",
+         {Mode::Instrument},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           profileExport = argument;
+         })
+    .add(
+      "--emit-module-names",
+      "",
+      "Emit module names, even if not emitting the rest of the names section. "
+      "Can help differentiate the modules in stack traces. This option will be "
+      "removed once simpler ways of naming modules are widely available. See "
+      "https://bugs.chromium.org/p/v8/issues/detail?id=11808.",
+      {Mode::Split, Mode::Instrument},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& arguments) { emitModuleNames = true; })
+    .add("--initial-table",
+         "",
+         "A hack to ensure the split and instrumented modules have the same "
+         "table size when using Emscripten's SPLIT_MODULE mode with dynamic "
+         "linking. TODO: Figure out a more elegant solution for that use "
+         "case and remove this.",
+         {Mode::Split, Mode::Instrument},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) {
+           initialTableSize = std::stoi(argument);
+         })
+    .add("--emit-text",
+         "-S",
+         "Emit text instead of binary for the output file or files.",
+         {Mode::Split, Mode::Instrument},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& argument) { emitBinary = false; })
+    .add("--debuginfo",
+         "-g",
+         "Emit names section in wasm binary (or full debuginfo in wast)",
+         {Mode::Split, Mode::Instrument},
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) {
+           passOptions.debugInfo = true;
+         })
+    .add("--output",
+         "-o",
+         "Output file.",
+         {Mode::Instrument, Mode::MergeProfiles},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { output = argument; })
     .add("--verbose",
          "-v",
          "Verbose output mode. Prints the functions that will be kept "
@@ -172,32 +273,69 @@ WasmSplitOptions::WasmSplitOptions()
            verbose = true;
            quiet = false;
          })
-    .add("--emit-text",
-         "-S",
-         "Emit text instead of binary for the output file or files.",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& argument) { emitBinary = false; })
-    .add("--debuginfo",
-         "-g",
-         "Emit names section in wasm binary (or full debuginfo in wast)",
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) {
-           passOptions.debugInfo = true;
-         })
-    .add("--initial-table",
-         "",
-         "A hack to ensure the split and instrumented modules have the same "
-         "table size when using Emscripten's SPLIT_MODULE mode with dynamic "
-         "linking. TODO: Figure out a more elegant solution for that use "
-         "case and remove this.",
-         Options::Arguments::One,
-         [&](Options* o, const std::string& argument) {
-           initialTableSize = std::stoi(argument);
-         })
-    .add_positional(
-      "INFILE",
-      Options::Arguments::One,
-      [&](Options* o, const std::string& argument) { input = argument; });
+    .add_positional("INFILES",
+                    Options::Arguments::N,
+                    [&](Options* o, const std::string& argument) {
+                      inputFiles.push_back(argument);
+                    });
+}
+
+std::ostream& operator<<(std::ostream& o, WasmSplitOptions::Mode& mode) {
+  switch (mode) {
+    case WasmSplitOptions::Mode::Split:
+      o << "split";
+      break;
+    case WasmSplitOptions::Mode::Instrument:
+      o << "instrument";
+      break;
+    case WasmSplitOptions::Mode::MergeProfiles:
+      o << "merge-profiles";
+      break;
+  }
+  return o;
+}
+
+WasmSplitOptions& WasmSplitOptions::add(const std::string& longName,
+                                        const std::string& shortName,
+                                        const std::string& description,
+                                        std::vector<Mode>&& modes,
+                                        Arguments arguments,
+                                        const Action& action) {
+  // Insert the valid modes at the beginning of the description.
+  std::stringstream desc;
+  if (modes.size()) {
+    desc << '[';
+    std::string sep = "";
+    for (Mode m : modes) {
+      validOptions[static_cast<unsigned>(m)].insert(longName);
+      desc << sep << m;
+      sep = ", ";
+    }
+    desc << "] ";
+  }
+  desc << description;
+  ToolOptions::add(
+    longName,
+    shortName,
+    desc.str(),
+    arguments,
+    [&, action, longName](Options* o, const std::string& argument) {
+      usedOptions.push_back(longName);
+      action(o, argument);
+    });
+  return *this;
+}
+
+WasmSplitOptions& WasmSplitOptions::add(const std::string& longName,
+                                        const std::string& shortName,
+                                        const std::string& description,
+                                        Arguments arguments,
+                                        const Action& action) {
+  // Add an option valid in all modes.
+  for (unsigned i = 0; i < NumModes; ++i) {
+    validOptions[i].insert(longName);
+  }
+  return add(longName, shortName, description, {}, arguments, action);
 }
 
 bool WasmSplitOptions::validate() {
@@ -207,46 +345,42 @@ bool WasmSplitOptions::validate() {
     valid = false;
   };
 
-  if (!input.size()) {
+  // Validate the positional arguments.
+  if (inputFiles.size() == 0) {
     fail("no input file");
   }
-  if (instrument) {
-    using Opt = std::pair<const std::string&, const std::string>;
-    for (auto& opt : {Opt{profileFile, "--profile"},
-                      Opt{primaryOutput, "primary output"},
-                      Opt{secondaryOutput, "secondary output"},
-                      Opt{importNamespace, "--import-namespace"},
-                      Opt{placeholderNamespace, "--placeholder-namespace"},
-                      Opt{exportPrefix, "--export-prefix"}}) {
-      if (opt.first.size()) {
-        fail(opt.second + " cannot be used with --instrument");
+  switch (mode) {
+    case Mode::Split:
+    case Mode::Instrument:
+      if (inputFiles.size() > 1) {
+        fail("Cannot have more than one input file.");
       }
-    }
-    if (keepFuncs.size()) {
-      fail("--keep-funcs cannot be used with --instrument");
-    }
-    if (splitFuncs.size()) {
-      fail("--split-funcs cannot be used with --instrument");
-    }
-  } else {
-    if (output.size()) {
-      fail(
-        "must provide separate primary and secondary output with -o1 and -o2");
-    }
-    if (profileExport != DEFAULT_PROFILE_EXPORT) {
-      fail("--profile-export must be used with --instrument");
+      break;
+    case Mode::MergeProfiles:
+      // Any number >= 1 allowed.
+      break;
+  }
+
+  // Validate that all used options are allowed in the current mode.
+  for (std::string& opt : usedOptions) {
+    if (!validOptions[static_cast<unsigned>(mode)].count(opt)) {
+      std::stringstream msg;
+      msg << "Option " << opt << " cannot be used in " << mode << " mode.";
+      fail(msg.str());
     }
   }
 
-  std::vector<Name> impossible;
-  std::set_intersection(keepFuncs.begin(),
-                        keepFuncs.end(),
-                        splitFuncs.begin(),
-                        splitFuncs.end(),
-                        std::inserter(impossible, impossible.end()));
-  for (auto& func : impossible) {
-    fail(std::string("Cannot both keep and split out function ") +
-         func.c_str());
+  if (mode == Mode::Split) {
+    std::vector<Name> impossible;
+    std::set_intersection(keepFuncs.begin(),
+                          keepFuncs.end(),
+                          splitFuncs.begin(),
+                          splitFuncs.end(),
+                          std::inserter(impossible, impossible.end()));
+    for (auto& func : impossible) {
+      fail(std::string("Cannot both keep and split out function ") +
+           func.c_str());
+    }
   }
 
   return valid;
@@ -262,10 +396,11 @@ void WasmSplitOptions::parse(int argc, const char* argv[]) {
 }
 
 void parseInput(Module& wasm, const WasmSplitOptions& options) {
+  options.applyFeatures(wasm);
   ModuleReader reader;
   reader.setProfile(options.profile);
   try {
-    reader.read(options.input, wasm);
+    reader.read(options.inputFiles[0], wasm);
   } catch (ParseException& p) {
     p.dump(std::cerr);
     std::cerr << '\n';
@@ -274,7 +409,10 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
     Fatal() << "error building module, std::bad_alloc (possibly invalid "
                "request for silly amounts of memory)";
   }
-  options.applyFeatures(wasm);
+
+  if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
+    Fatal() << "error validating input";
+  }
 }
 
 // Add a global monotonic counter and a timestamp global for each function, code
@@ -489,33 +627,49 @@ void adjustTableSize(Module& wasm, int initialSize) {
   table->initial = initialSize;
 }
 
-void instrumentModule(Module& wasm, const WasmSplitOptions& options) {
+void writeModule(Module& wasm,
+                 std::string filename,
+                 const WasmSplitOptions& options) {
+  ModuleWriter writer;
+  writer.setBinary(options.emitBinary);
+  writer.setDebugInfo(options.passOptions.debugInfo);
+  if (options.emitModuleNames) {
+    writer.setEmitModuleName(true);
+  }
+  writer.write(wasm, filename);
+}
+
+void instrumentModule(const WasmSplitOptions& options) {
+  Module wasm;
+  parseInput(wasm, options);
+
   // Check that the profile export name is not already taken
   if (wasm.getExportOrNull(options.profileExport) != nullptr) {
     Fatal() << "error: Export " << options.profileExport << " already exists.";
   }
 
-  uint64_t moduleHash = hashFile(options.input);
+  uint64_t moduleHash = hashFile(options.inputFiles[0]);
   PassRunner runner(&wasm, options.passOptions);
   Instrumenter(options.profileExport, moduleHash).run(&runner, &wasm);
 
   adjustTableSize(wasm, options.initialTableSize);
 
   // Write the output modules
-  ModuleWriter writer;
-  writer.setBinary(options.emitBinary);
-  writer.setDebugInfo(options.passOptions.debugInfo);
-  writer.write(wasm, options.output);
+  writeModule(wasm, options.output, options);
 }
 
+struct ProfileData {
+  uint64_t hash;
+  std::vector<size_t> timestamps;
+};
+
 // See "wasm-split profile format" above for more information.
-std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
-  auto profileData =
-    read_file<std::vector<char>>(options.profileFile, Flags::Binary);
+ProfileData readProfile(const std::string& file) {
+  auto profileData = read_file<std::vector<char>>(file, Flags::Binary);
   size_t i = 0;
   auto readi32 = [&]() {
     if (i + 4 > profileData.size()) {
-      Fatal() << "Unexpected end of profile data";
+      Fatal() << "Unexpected end of profile data in " << file;
     }
     uint32_t i32 = 0;
     i32 |= uint32_t(uint8_t(profileData[i++]));
@@ -525,39 +679,61 @@ std::set<Name> readProfile(Module& wasm, const WasmSplitOptions& options) {
     return i32;
   };
 
-  // Read and compare the 8-byte module hash.
-  uint64_t expected = readi32();
-  expected |= uint64_t(readi32()) << 32;
-  if (expected != hashFile(options.input)) {
-    Fatal() << "error: checksum in profile does not match module checksum. "
-            << "The split module must be the original module that was "
-            << "instrumented to generate the profile.";
+  uint64_t hash = readi32();
+  hash |= uint64_t(readi32()) << 32;
+
+  std::vector<size_t> timestamps;
+  while (i < profileData.size()) {
+    timestamps.push_back(readi32());
   }
 
-  std::set<Name> keptFuncs;
-  ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-    uint32_t timestamp = readi32();
-    // TODO: provide an option to set the timestamp threshold. For now, kee the
-    // function if the profile shows it being run at all.
-    if (timestamp > 0) {
-      keptFuncs.insert(func->name);
-    }
-  });
-
-  if (i != profileData.size()) {
-    // TODO: Handle concatenated profile data.
-    Fatal() << "Unexpected extra profile data";
-  }
-
-  return keptFuncs;
+  return {hash, timestamps};
 }
 
-void splitModule(Module& wasm, const WasmSplitOptions& options) {
+void writeSymbolMap(Module& wasm, std::string filename) {
+  PassOptions options;
+  options.arguments["symbolmap"] = filename;
+  PassRunner runner(&wasm, options);
+  runner.add("symbolmap");
+  runner.run();
+}
+
+void writePlaceholderMap(const std::map<size_t, Name> placeholderMap,
+                         std::string filename) {
+  Output output(filename, Flags::Text);
+  auto& o = output.getStream();
+  for (auto pair : placeholderMap) {
+    o << pair.first << ':' << pair.second << '\n';
+  }
+}
+
+void splitModule(const WasmSplitOptions& options) {
+  Module wasm;
+  parseInput(wasm, options);
+
   std::set<Name> keepFuncs;
 
   if (options.profileFile.size()) {
-    // Use the profile to initialize `keepFuncs`
-    keepFuncs = readProfile(wasm, options);
+    // Use the profile to initialize `keepFuncs`.
+    uint64_t hash = hashFile(options.inputFiles[0]);
+    ProfileData profile = readProfile(options.profileFile);
+    if (profile.hash != hash) {
+      Fatal() << "error: checksum in profile does not match module checksum. "
+              << "The split module must be the original module that was "
+              << "instrumented to generate the profile.";
+    }
+    size_t i = 0;
+    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
+      if (i >= profile.timestamps.size()) {
+        Fatal() << "Unexpected end of profile data";
+      }
+      if (profile.timestamps[i++] > 0) {
+        keepFuncs.insert(func->name);
+      }
+    });
+    if (i != profile.timestamps.size()) {
+      Fatal() << "Unexpected extra profile data";
+    }
   }
 
   // Add in the functions specified with --keep-funcs
@@ -635,18 +811,106 @@ void splitModule(Module& wasm, const WasmSplitOptions& options) {
   if (options.exportPrefix.size()) {
     config.newExportPrefix = options.exportPrefix;
   }
-  std::unique_ptr<Module> secondary =
-    ModuleSplitting::splitFunctions(wasm, config);
+  config.minimizeNewExportNames = !options.passOptions.debugInfo;
+  auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
+  auto& secondary = splitResults.secondary;
 
   adjustTableSize(wasm, options.initialTableSize);
   adjustTableSize(*secondary, options.initialTableSize);
 
-  // Write the output modules
-  ModuleWriter writer;
-  writer.setBinary(options.emitBinary);
-  writer.setDebugInfo(options.passOptions.debugInfo);
-  writer.write(wasm, options.primaryOutput);
-  writer.write(*secondary, options.secondaryOutput);
+  if (options.symbolMap) {
+    writeSymbolMap(wasm, options.primaryOutput + ".symbols");
+    writeSymbolMap(*secondary, options.secondaryOutput + ".symbols");
+  }
+
+  if (options.placeholderMap) {
+    writePlaceholderMap(splitResults.placeholderMap,
+                        options.primaryOutput + ".placeholders");
+  }
+
+  // Set the names of the split modules. This can help differentiate them in
+  // stack traces.
+  if (options.emitModuleNames) {
+    if (!wasm.name) {
+      wasm.name = Path::getBaseName(options.primaryOutput);
+    }
+    secondary->name = Path::getBaseName(options.secondaryOutput);
+  }
+
+  // write the output modules
+  writeModule(wasm, options.primaryOutput, options);
+  writeModule(*secondary, options.secondaryOutput, options);
+}
+
+void mergeProfiles(const WasmSplitOptions& options) {
+  // Read the initial profile. We will merge other profiles into this one.
+  ProfileData data = readProfile(options.inputFiles[0]);
+
+  // In verbose mode, we want to find profiles that don't contribute to the
+  // merged profile. To do that, keep track of how many profiles each function
+  // appears in. If any profile contains only functions that appear in multiple
+  // profiles, it could be dropped.
+  std::vector<size_t> numProfiles;
+  if (options.verbose) {
+    numProfiles.resize(data.timestamps.size());
+    for (size_t t = 0; t < data.timestamps.size(); ++t) {
+      if (data.timestamps[t]) {
+        numProfiles[t] = 1;
+      }
+    }
+  }
+
+  // Read all the other profiles, taking the minimum nonzero timestamp for each
+  // function.
+  for (size_t i = 1; i < options.inputFiles.size(); ++i) {
+    ProfileData newData = readProfile(options.inputFiles[i]);
+    if (newData.hash != data.hash) {
+      Fatal() << "Checksum in profile " << options.inputFiles[i]
+              << " does not match hash in profile " << options.inputFiles[0];
+    }
+    if (newData.timestamps.size() != data.timestamps.size()) {
+      Fatal() << "Profile " << options.inputFiles[i]
+              << " incompatible with profile " << options.inputFiles[0];
+    }
+    for (size_t t = 0; t < data.timestamps.size(); ++t) {
+      if (data.timestamps[t] && newData.timestamps[t]) {
+        data.timestamps[t] =
+          std::min(data.timestamps[t], newData.timestamps[t]);
+      } else if (newData.timestamps[t]) {
+        data.timestamps[t] = newData.timestamps[t];
+      }
+      if (options.verbose && newData.timestamps[t]) {
+        ++numProfiles[t];
+      }
+    }
+  }
+
+  // Check for useless profiles.
+  if (options.verbose) {
+    for (const auto& file : options.inputFiles) {
+      bool useless = true;
+      ProfileData newData = readProfile(file);
+      for (size_t t = 0; t < newData.timestamps.size(); ++t) {
+        if (newData.timestamps[t] && numProfiles[t] == 1) {
+          useless = false;
+          break;
+        }
+      }
+      if (useless) {
+        std::cout << "Profile " << file
+                  << " only includes functions included in other profiles.\n";
+      }
+    }
+  }
+
+  // Write the combined profile.
+  BufferWithRandomAccess buffer;
+  buffer << data.hash;
+  for (size_t t = 0; t < data.timestamps.size(); ++t) {
+    buffer << uint32_t(data.timestamps[t]);
+  }
+  Output out(options.output, Flags::Binary);
+  buffer.writeTo(out.getStream());
 }
 
 } // anonymous namespace
@@ -659,16 +923,15 @@ int main(int argc, const char* argv[]) {
     Fatal() << "Invalid command line arguments";
   }
 
-  Module wasm;
-  parseInput(wasm, options);
-
-  if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
-    Fatal() << "error validating input";
-  }
-
-  if (options.instrument) {
-    instrumentModule(wasm, options);
-  } else {
-    splitModule(wasm, options);
+  switch (options.mode) {
+    case WasmSplitOptions::Mode::Split:
+      splitModule(options);
+      break;
+    case WasmSplitOptions::Mode::Instrument:
+      instrumentModule(options);
+      break;
+    case WasmSplitOptions::Mode::MergeProfiles:
+      mergeProfiles(options);
+      break;
   }
 }

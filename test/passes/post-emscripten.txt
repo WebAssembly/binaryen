@@ -1,14 +1,11 @@
 (module
  (type $i32_f32_=>_none (func (param i32 f32)))
- (type $none_=>_none (func))
  (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
+ (type $none_=>_none (func))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
  (memory $0 256 256)
  (table $0 7 7 funcref)
- (elem (i32.const 0) $f1 $exc $other_safe $other_unsafe $deep_safe $deep_unsafe)
- (func $f1
-  (nop)
- )
+ (elem (i32.const 1) $exc $other_safe $other_unsafe $deep_safe $deep_unsafe)
  (func $exc
   (call $other_safe
    (i32.const 42)
@@ -31,6 +28,16 @@
     (i32.const 1)
     (i32.const 1)
    )
+   (i32.const 42)
+   (f32.const 3.141590118408203)
+  )
+  (call $invoke_vif
+   (i32.const 0)
+   (i32.const 42)
+   (f32.const 3.141590118408203)
+  )
+  (call $invoke_vif
+   (i32.const 1337)
    (i32.const 42)
    (f32.const 3.141590118408203)
   )
@@ -61,8 +68,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $i32_i32_f32_=>_none (func (param i32 i32 f32)))
+ (type $none_=>_none (func))
  (type $i32_f32_=>_none (func (param i32 f32)))
  (import "env" "glob" (global $glob i32))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))

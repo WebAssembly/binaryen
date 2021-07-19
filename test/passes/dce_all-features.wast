@@ -734,77 +734,7 @@
  )
 )
 
-;; Exception handling instruction support
-;; If either try body or catch body is reachable, the whole try construct is
-;; reachable
 (module
-  (func $foo)
-  (event $e (attr 0))
-
-  (func $try_unreachable
-    (try
-      (do
-        (unreachable)
-      )
-      (catch_all)
-    )
-    (call $foo) ;; shouldn't be dce'd
-  )
-
-  (func $catch_unreachable
-    (try
-      (do)
-      (catch_all
-        (unreachable)
-      )
-    )
-    (call $foo) ;; shouldn't be dce'd
-  )
-
-  (func $both_unreachable
-    (try
-      (do
-        (unreachable)
-      )
-      (catch_all
-        (unreachable)
-      )
-    )
-    (call $foo) ;; should be dce'd
-  )
-
-  (func $throw
-    ;; All these wrapping expressions before 'throw' will be dce'd
-    (drop
-      (block $label$0 (result externref)
-        (if
-          (i32.clz
-            (block $label$1 (result i32)
-              (throw $e)
-            )
-          )
-          (nop)
-        )
-        (ref.null extern)
-      )
-    )
-  )
-
-  (func $rethrow
-    (try $l0
-      (do)
-      (catch $e
-        (drop
-          ;; This i32.add will be dce'd
-          (i32.add
-            (i32.const 0)
-            (rethrow $l0)
-          )
-        )
-      )
-    )
-  )
-
   (func $unnecessary-concrete-block (result i32)
     (block $foo (result i32) ;; unnecessary type
       (nop)
@@ -859,6 +789,21 @@
          (br $out) ;; when this is removed as dead, the block becomes unreachable
        )
      )
+    )
+  )
+)
+(module
+  (func $foo (result (ref any))
+    (block $label$1 (result (ref any))
+      ;; this break has an unreachable input, and so it does not have a heap type
+      ;; there, and no heap type to send on the branch. this tests we do not hit
+      ;; the assertion in getHeapType() if we call that.
+      (br_on_non_null $label$1
+        (block (result anyref)
+          (unreachable)
+        )
+      )
+      (unreachable)
     )
   )
 )

@@ -355,13 +355,13 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
   void visitFunction(Function* curr) {
     auto* optimized =
-      optimize(curr->body, curr->sig.results != Type::none, true);
+      optimize(curr->body, curr->getResults() != Type::none, true);
     if (optimized) {
       curr->body = optimized;
     } else {
       ExpressionManipulator::nop(curr->body);
     }
-    if (curr->sig.results == Type::none &&
+    if (curr->getResults() == Type::none &&
         !EffectAnalyzer(getPassOptions(), getModule()->features, curr->body)
            .hasSideEffects()) {
       ExpressionManipulator::nop(curr->body);

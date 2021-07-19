@@ -153,7 +153,7 @@ void ReFinalize::visitBrOn(BrOn* curr) {
   if (curr->type == Type::unreachable) {
     replaceUntaken(curr->ref, nullptr);
   } else {
-    updateBreakValueType(curr->name, curr->getCastType());
+    updateBreakValueType(curr->name, curr->getSentType());
   }
 }
 void ReFinalize::visitRttCanon(RttCanon* curr) { curr->finalize(); }
@@ -165,12 +165,13 @@ void ReFinalize::visitArrayNew(ArrayNew* curr) { curr->finalize(); }
 void ReFinalize::visitArrayGet(ArrayGet* curr) { curr->finalize(); }
 void ReFinalize::visitArraySet(ArraySet* curr) { curr->finalize(); }
 void ReFinalize::visitArrayLen(ArrayLen* curr) { curr->finalize(); }
+void ReFinalize::visitArrayCopy(ArrayCopy* curr) { curr->finalize(); }
 void ReFinalize::visitRefAs(RefAs* curr) { curr->finalize(); }
 
 void ReFinalize::visitFunction(Function* curr) {
   // we may have changed the body from unreachable to none, which might be bad
   // if the function has a return value
-  if (curr->sig.results != Type::none && curr->body->type == Type::none) {
+  if (curr->getResults() != Type::none && curr->body->type == Type::none) {
     Builder builder(*getModule());
     curr->body = builder.blockify(curr->body, builder.makeUnreachable());
   }
@@ -183,7 +184,7 @@ void ReFinalize::visitElementSegment(ElementSegment* curr) {
   WASM_UNREACHABLE("unimp");
 }
 void ReFinalize::visitMemory(Memory* curr) { WASM_UNREACHABLE("unimp"); }
-void ReFinalize::visitEvent(Event* curr) { WASM_UNREACHABLE("unimp"); }
+void ReFinalize::visitTag(Tag* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitModule(Module* curr) { WASM_UNREACHABLE("unimp"); }
 
 void ReFinalize::updateBreakValueType(Name name, Type type) {

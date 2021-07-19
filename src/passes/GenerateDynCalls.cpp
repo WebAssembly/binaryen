@@ -28,6 +28,7 @@
 #include "ir/import-utils.h"
 #include "pass.h"
 #include "support/debug.h"
+#include "support/insert_ordered.h"
 #include "wasm-builder.h"
 
 #define DEBUG_TYPE "generate-dyncalls"
@@ -39,8 +40,8 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
 
   void doWalkModule(Module* wasm) {
     PostWalker<GenerateDynCalls>::doWalkModule(wasm);
-    for (auto& sig : invokeSigs) {
-      generateDynCallThunk(sig);
+    for (auto& type : invokeTypes) {
+      generateDynCallThunk(type);
     }
   }
 
@@ -60,7 +61,7 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
       std::vector<Name> tableSegmentData;
       ElementUtils::iterElementSegmentFunctionNames(
         it->get(), [&](Name name, Index) {
-          generateDynCallThunk(wasm->getFunction(name)->sig);
+          generateDynCallThunk(wasm->getFunction(name)->type);
         });
     }
   }
@@ -69,19 +70,19 @@ struct GenerateDynCalls : public WalkerPass<PostWalker<GenerateDynCalls>> {
     // Generate dynCalls for invokes
     if (func->imported() && func->module == ENV &&
         func->base.startsWith("invoke_")) {
-      Signature sig = func->sig;
+      Signature sig = func->type.getSignature();
       // The first parameter is a pointer to the original function that's called
       // by the invoke, so skip it
       std::vector<Type> newParams(sig.params.begin() + 1, sig.params.end());
-      invokeSigs.insert(Signature(Type(newParams), sig.results));
+      invokeTypes.insert(Signature(Type(newParams), sig.results));
     }
   }
 
-  void generateDynCallThunk(Signature sig);
+  void generateDynCallThunk(HeapType funcType);
 
   bool onlyI64;
-  // The set of all invokes' signatures
-  std::set<Signature> invokeSigs;
+  // The set of all invokes' signature types.
+  InsertOrderedSet<HeapType> invokeTypes;
 };
 
 static bool hasI64(Signature sig) {
@@ -115,7 +116,8 @@ static void exportFunction(Module& wasm, Name name, bool must_export) {
   wasm.addExport(exp);
 }
 
-void GenerateDynCalls::generateDynCallThunk(Signature sig) {
+void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
+  Signature sig = funcType.getSignature();
   if (onlyI64 && !hasI64(sig)) {
     return;
   }
@@ -126,13 +128,17 @@ void GenerateDynCalls::generateDynCallThunk(Signature sig) {
   if (wasm->getFunctionOrNull(name) || wasm->getExportOrNull(name)) {
     return; // module already contains this dyncall
   }
-  std::vector<NameType> params;
-  params.emplace_back("fptr", Type::i32); // function pointer param
+  std::vector<NameType> namedParams;
+  std::vector<Type> params;
+  namedParams.emplace_back("fptr", Type::i32); // function pointer param
+  params.push_back(Type::i32);
   int p = 0;
   for (const auto& param : sig.params) {
-    params.emplace_back(std::to_string(p++), param);
+    namedParams.emplace_back(std::to_string(p++), param);
+    params.push_back(param);
   }
-  auto f = builder.makeFunction(name, std::move(params), sig.results, {});
+  auto f = builder.makeFunction(
+    name, std::move(namedParams), Signature(Type(params), sig.results), {});
   Expression* fptr = builder.makeLocalGet(0, Type::i32);
   std::vector<Expression*> args;
   Index i = 0;

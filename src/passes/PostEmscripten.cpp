@@ -108,20 +108,32 @@ struct PostEmscripten : public Pass {
 
       void visitCall(Call* curr) {
         auto* target = getModule()->getFunction(curr->target);
-        if (isInvoke(target)) {
-          // The first operand is the function pointer index, which must be
-          // constant if we are to optimize it statically.
-          if (auto* index = curr->operands[0]->dynCast<Const>()) {
-            auto actualTarget = flatTable.names.at(index->value.geti32());
-            if (!map[getModule()->getFunction(actualTarget)].canThrow) {
-              // This invoke cannot throw! Make it a direct call.
-              curr->target = actualTarget;
-              for (Index i = 0; i < curr->operands.size() - 1; i++) {
-                curr->operands[i] = curr->operands[i + 1];
-              }
-              curr->operands.resize(curr->operands.size() - 1);
-            }
+        if (!isInvoke(target)) {
+          return;
+        }
+        // The first operand is the function pointer index, which must be
+        // constant if we are to optimize it statically.
+        if (auto* index = curr->operands[0]->dynCast<Const>()) {
+          size_t indexValue = index->value.geti32();
+          if (indexValue >= flatTable.names.size()) {
+            // UB can lead to indirect calls to invalid pointers.
+            return;
           }
+          auto actualTarget = flatTable.names[indexValue];
+          if (actualTarget.isNull()) {
+            // UB can lead to an indirect call of 0 or an index in which there
+            // is no function name.
+            return;
+          }
+          if (map[getModule()->getFunction(actualTarget)].canThrow) {
+            return;
+          }
+          // This invoke cannot throw! Make it a direct call.
+          curr->target = actualTarget;
+          for (Index i = 0; i < curr->operands.size() - 1; i++) {
+            curr->operands[i] = curr->operands[i + 1];
+          }
+          curr->operands.resize(curr->operands.size() - 1);
         }
       }
     };

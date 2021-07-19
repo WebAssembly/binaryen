@@ -3,9 +3,9 @@
  (type $1 (func))
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $ii (func (param i32 i32)))
+ (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
  (type $f32_i64_=>_none (func (param f32 i64)))
  (type $f32_i64_=>_i32 (func (param f32 i64) (result i32)))
- (type $i64_i64_=>_i64 (func (param i64 i64) (result i64)))
  (global $x (mut i32) (i32.const 0))
  (memory $0 10)
  (table $0 1 1 funcref)
@@ -540,64 +540,8 @@
  )
 )
 (module
- (type $none_=>_none (func))
  (type $none_=>_i32 (func (result i32)))
- (event $e (attr 0) (param))
- (func $foo
-  (nop)
- )
- (func $try_unreachable
-  (try $try
-   (do
-    (unreachable)
-   )
-   (catch_all
-    (nop)
-   )
-  )
-  (call $foo)
- )
- (func $catch_unreachable
-  (try $try
-   (do
-    (nop)
-   )
-   (catch_all
-    (unreachable)
-   )
-  )
-  (call $foo)
- )
- (func $both_unreachable
-  (try $try
-   (do
-    (unreachable)
-   )
-   (catch_all
-    (unreachable)
-   )
-  )
- )
- (func $throw
-  (block $label$0
-   (block $label$1
-    (throw $e)
-   )
-  )
- )
- (func $rethrow
-  (try $l0
-   (do
-    (nop)
-   )
-   (catch $e
-    (drop
-     (i32.const 0)
-    )
-    (rethrow $l0)
-   )
-  )
- )
+ (type $none_=>_none (func))
  (func $unnecessary-concrete-block (result i32)
   (block $foo
    (nop)
@@ -645,5 +589,11 @@
     (unreachable)
    )
   )
+ )
+)
+(module
+ (type $none_=>_ref|any| (func (result (ref any))))
+ (func $foo (result (ref any))
+  (unreachable)
  )
 )

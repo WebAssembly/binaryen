@@ -34,7 +34,7 @@ Literal::Literal(Type type) : type(type) {
     // i31ref is special in that it is non-nullable, so we construct with zero
     i32 = 0;
   } else {
-    assert(type != Type::unreachable && (!type.isRef() || type.isNullable()));
+    assert(type != Type::unreachable && !type.isNonNullable());
     if (isData()) {
       new (&gcData) std::shared_ptr<GCData>();
     } else if (type.isRtt()) {
@@ -520,8 +520,11 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
     }
   } else if (literal.type.isRtt()) {
     o << "[rtt ";
-    for (Type super : literal.getRttSupers()) {
-      o << super << " :> ";
+    for (auto& super : literal.getRttSupers()) {
+      o << super.type << " :> ";
+      if (super.freshPtr) {
+        o << " (fresh)";
+      }
     }
     o << literal.type << ']';
   } else {
@@ -1065,6 +1068,14 @@ Literal Literal::subSatSI16(const Literal& other) const {
 }
 Literal Literal::subSatUI16(const Literal& other) const {
   return Literal(sub_sat_u<uint16_t>(geti32(), other.geti32()));
+}
+
+Literal Literal::q15MulrSatSI16(const Literal& other) const {
+  int64_t value =
+    (int64_t(geti32()) * int64_t(other.geti32()) + 0x4000LL) >> 15LL;
+  int64_t lower = std::numeric_limits<int16_t>::min();
+  int64_t upper = std::numeric_limits<int16_t>::max();
+  return Literal(int16_t(std::min(std::max(value, lower), upper)));
 }
 
 Literal Literal::mul(const Literal& other) const {
@@ -1865,6 +1876,16 @@ Literal Literal::bitmaskI32x4() const {
 Literal Literal::allTrueI64x2() const {
   return all_true<2, &Literal::getLanesI64x2>(*this);
 }
+Literal Literal::bitmaskI64x2() const {
+  uint32_t result = 0;
+  LaneArray<2> lanes = getLanesI64x2();
+  for (size_t i = 0; i < 2; ++i) {
+    if (lanes[i].geti64() & (1ll << 63)) {
+      result = result | (1 << i);
+    }
+  }
+  return Literal(result);
+}
 
 template<int Lanes,
          LaneArray<Lanes> (Literal::*IntoLanes)() const,
@@ -2188,7 +2209,8 @@ Literal Literal::avgrUI16x8(const Literal& other) const {
   return binary<8, &Literal::getLanesUI16x8, &Literal::avgrUInt>(*this, other);
 }
 Literal Literal::q15MulrSatSI16x8(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement Q15 rounding, saturating multiplication");
+  return binary<8, &Literal::getLanesSI16x8, &Literal::q15MulrSatSI16>(*this,
+                                                                       other);
 }
 Literal Literal::addI32x4(const Literal& other) const {
   return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);
@@ -2436,7 +2458,7 @@ bool Literal::isSubRtt(const Literal& other) const {
   // we have the same amount of supers, and must be completely identical to
   // other.
   if (otherSupers.size() < supers.size()) {
-    return other.type == supers[otherSupers.size()];
+    return other.type == supers[otherSupers.size()].type;
   } else {
     return other.type == type;
   }

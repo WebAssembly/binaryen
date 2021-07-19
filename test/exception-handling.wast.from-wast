@@ -3,10 +3,10 @@
  (type $i32_=>_none (func (param i32)))
  (type $i64_=>_none (func (param i64)))
  (type $i32_i64_=>_none (func (param i32 i64)))
- (event $e-i32 (attr 0) (param i32))
- (event $e-i64 (attr 0) (param i64))
- (event $e-i32-i64 (attr 0) (param i32 i64))
- (event $e-empty (attr 0) (param))
+ (tag $e-i32 (param i32))
+ (tag $e-i64 (param i64))
+ (tag $e-i32-i64 (param i32 i64))
+ (tag $e-empty (param))
  (func $foo
   (nop)
  )
@@ -170,6 +170,13 @@
     )
    )
   )
+  (try $try10
+   (do
+    (throw $e-i32
+     (i32.const 0)
+    )
+   )
+  )
  )
  (func $delegate-test
   (try $l0
@@ -180,7 +187,7 @@
      )
      (delegate $l0)
     )
-    (try $try10
+    (try $try11
      (do
       (call $foo)
      )
@@ -191,24 +198,24 @@
     (nop)
    )
   )
-  (block $l014
-   (try $l011
+  (block $l015
+   (try $l012
     (do
-     (try $try12
-      (do
-       (br_if $l014
-        (i32.const 1)
-       )
-      )
-      (delegate $l011)
-     )
      (try $try13
       (do
-       (br_if $l014
+       (br_if $l015
         (i32.const 1)
        )
       )
-      (delegate $l011)
+      (delegate $l012)
+     )
+     (try $try14
+      (do
+       (br_if $l015
+        (i32.const 1)
+       )
+      )
+      (delegate $l012)
      )
     )
     (catch_all
@@ -216,18 +223,18 @@
     )
    )
   )
-  (try $l015
+  (try $l016
    (do
-    (try $try16
+    (try $try17
      (do
       (call $foo)
      )
-     (delegate $l015)
+     (delegate $l016)
     )
    )
    (delegate 0)
   )
-  (try $try17
+  (try $try18
    (do
     (nop)
    )
@@ -251,8 +258,8 @@
     (rethrow $l0)
    )
   )
-  (block $l019
-   (try $l018
+  (block $l020
+   (try $l019
     (do
      (call $foo)
     )
@@ -260,14 +267,14 @@
      (drop
       (pop i32)
      )
-     (rethrow $l018)
+     (rethrow $l019)
     )
     (catch_all
-     (br $l019)
+     (br $l020)
     )
    )
   )
-  (try $l020
+  (try $l021
    (do
     (call $foo)
    )
@@ -280,20 +287,20 @@
       (drop
        (pop i32)
       )
-      (rethrow $l020)
+      (rethrow $l021)
      )
      (catch_all
-      (rethrow $l020)
+      (rethrow $l021)
      )
     )
    )
   )
-  (try $l021
+  (try $l022
    (do
     (call $foo)
    )
    (catch_all
-    (try $try22
+    (try $try23
      (do
       (call $foo)
      )
@@ -302,25 +309,25 @@
        (pop i32)
       )
       (block $b0
-       (rethrow $l021)
+       (rethrow $l022)
       )
      )
      (catch_all
       (block $b1
-       (rethrow $l021)
+       (rethrow $l022)
       )
      )
     )
    )
   )
-  (try $l023
+  (try $l024
    (do
     (call $foo)
    )
    (catch_all
-    (try $try24
+    (try $try25
      (do
-      (rethrow $l023)
+      (rethrow $l024)
      )
      (catch_all
       (nop)
@@ -328,14 +335,14 @@
     )
    )
   )
-  (try $l025
+  (try $l026
    (do
     (call $foo)
    )
    (catch_all
-    (try $try26
+    (try $try27
      (do
-      (rethrow $l025)
+      (rethrow $l026)
      )
      (catch_all
       (nop)

@@ -1207,6 +1207,68 @@ console.log("# SIMDLoad");
   module.dispose();
 })();
 
+console.log("# SIMDLoadStoreLane");
+(function testSIMDLoadStoreLane() {
+  const module = new binaryen.Module();
+
+  var op = binaryen.Operations.Load8LaneVec128;
+  var offset = 16;
+  var index = 1;
+  var align = 1;
+  var ptr = module.i32.const(1);
+  var vec = module.v128.const([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]);
+  const theSIMDLoadStoreLane = binaryen.SIMDLoadStoreLane(module.v128.load8_lane(offset, align, index, ptr, vec));
+  assert(theSIMDLoadStoreLane instanceof binaryen.SIMDLoadStoreLane);
+  assert(theSIMDLoadStoreLane instanceof binaryen.Expression);
+  assert(theSIMDLoadStoreLane.op === op);
+  assert(theSIMDLoadStoreLane.offset === offset);
+  assert(theSIMDLoadStoreLane.align === align);
+  assert(theSIMDLoadStoreLane.index === index);
+  assert(theSIMDLoadStoreLane.ptr === ptr);
+  assert(theSIMDLoadStoreLane.vec === vec);
+  assert(theSIMDLoadStoreLane.type === binaryen.v128);
+  assert(theSIMDLoadStoreLane.store === false);
+
+  theSIMDLoadStoreLane.op = op = binaryen.Operations.Load16LaneVec128;
+  assert(theSIMDLoadStoreLane.op === op);
+  theSIMDLoadStoreLane.offset = offset = 32;
+  assert(theSIMDLoadStoreLane.offset === offset);
+  theSIMDLoadStoreLane.align = align = 2;
+  assert(theSIMDLoadStoreLane.align === align);
+  theSIMDLoadStoreLane.index = index = 2;
+  assert(theSIMDLoadStoreLane.index === index);
+  theSIMDLoadStoreLane.ptr = ptr = module.i32.const(2);
+  assert(theSIMDLoadStoreLane.ptr === ptr);
+  theSIMDLoadStoreLane.vec = vec = module.v128.const([1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]);
+  assert(theSIMDLoadStoreLane.vec === vec);
+  theSIMDLoadStoreLane.type = binaryen.f64;
+  theSIMDLoadStoreLane.finalize();
+  assert(theSIMDLoadStoreLane.type === binaryen.v128);
+
+  console.log(theSIMDLoadStoreLane.toText());
+  assert(
+    theSIMDLoadStoreLane.toText()
+    ==
+    "(v128.load16_lane offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
+  );
+
+  theSIMDLoadStoreLane.op = op = binaryen.Operations.Store16LaneVec128;
+  assert(theSIMDLoadStoreLane.op === op);
+  theSIMDLoadStoreLane.type = binaryen.f64;
+  assert(theSIMDLoadStoreLane.store === true);
+  theSIMDLoadStoreLane.finalize();
+  assert(theSIMDLoadStoreLane.type === binaryen.none);
+
+  console.log(theSIMDLoadStoreLane.toText());
+  assert(
+    theSIMDLoadStoreLane.toText()
+    ==
+    "(v128.store16_lane offset=32 2\n (i32.const 2)\n (v128.const i32x4 0x01010101 0x01010101 0x01010101 0x01010101)\n)\n"
+  );
+
+  module.dispose();
+})();
+
 console.log("# MemoryInit");
 (function testMemoryInit() {
   const module = new binaryen.Module();
@@ -1503,22 +1565,22 @@ console.log("# RefEq");
 console.log("# Try");
 (function testTry() {
   const module = new binaryen.Module();
-  module.addEvent("event1", 0, binaryen.none, binaryen.none);
-  module.addEvent("event2", 0, binaryen.none, binaryen.none);
-  module.addEvent("event3", 0, binaryen.none, binaryen.none);
+  module.addTag("tag1", 0, binaryen.none, binaryen.none);
+  module.addTag("tag2", 0, binaryen.none, binaryen.none);
+  module.addTag("tag3", 0, binaryen.none, binaryen.none);
 
   var body = module.i32.const(1);
   var catchBodies = [
     module.i32.const(2),
     module.i32.const(3)
   ];
-  const theTry = binaryen.Try(module.try('', body, ["event1"], catchBodies, ''));
+  const theTry = binaryen.Try(module.try('', body, ["tag1"], catchBodies, ''));
   assert(theTry instanceof binaryen.Try);
   assert(theTry instanceof binaryen.Expression);
   assert(theTry.body === body);
   assertDeepEqual(theTry.catchBodies, catchBodies);
   assert(theTry.type === binaryen.i32);
-  assert(theTry.getNumCatchEvents() == 1);
+  assert(theTry.getNumCatchTags() == 1);
   assert(theTry.getNumCatchBodies() == 2);
   assert(theTry.hasCatchAll() == 1);
   console.log(theTry.toText());
@@ -1534,31 +1596,31 @@ console.log("# Try");
   assertDeepEqual(theTry.getCatchBodies(), catchBodies);
   console.log(theTry.toText());
 
-  theTry.insertCatchEventAt(1, "event2");
+  theTry.insertCatchTagAt(1, "tag2");
   theTry.insertCatchBodyAt(0, module.i32.const(6));
-  assert(theTry.getNumCatchEvents() == 2);
+  assert(theTry.getNumCatchTags() == 2);
   assert(theTry.getNumCatchBodies() == 2);
   assert(theTry.hasCatchAll() == 0);
   console.log(theTry.toText());
 
-  assert(theTry.removeCatchEventAt(1) == "event2");
+  assert(theTry.removeCatchTagAt(1) == "tag2");
   theTry.removeCatchBodyAt(1);
-  assert(theTry.getNumCatchEvents() == 1);
+  assert(theTry.getNumCatchTags() == 1);
   assert(theTry.getNumCatchBodies() == 1);
   console.log(theTry.toText());
 
-  theTry.appendCatchEvent("event3");
+  theTry.appendCatchTag("tag3");
   theTry.appendCatchBody(module.drop(module.i32.const(7)));
-  assert(theTry.getCatchEventAt(0) == "event1");
-  assert(theTry.getCatchEventAt(1) == "event3");
-  theTry.setCatchEvents(["event2", "event3"]);
-  assertDeepEqual(theTry.getCatchEvents(), ["event2", "event3"]);
+  assert(theTry.getCatchTagAt(0) == "tag1");
+  assert(theTry.getCatchTagAt(1) == "tag3");
+  theTry.setCatchTags(["tag2", "tag3"]);
+  assertDeepEqual(theTry.getCatchTags(), ["tag2", "tag3"]);
   theTry.setCatchBodies([module.i32.const(8), module.i32.const(9)]);
-  assert(theTry.getCatchEventAt(0) == "event2");
-  assert(theTry.getCatchEventAt(1) == "event3");
-  theTry.setCatchEventAt(1, "event1");
+  assert(theTry.getCatchTagAt(0) == "tag2");
+  assert(theTry.getCatchTagAt(1) == "tag3");
+  theTry.setCatchTagAt(1, "tag1");
   theTry.setCatchBodyAt(1, module.i32.const(10));
-  assert(theTry.getCatchEventAt(1) == "event1");
+  assert(theTry.getCatchTagAt(1) == "tag1");
   console.log(theTry.toText());
 
   theTry.type = binaryen.f64;
@@ -1581,20 +1643,20 @@ console.log("# Throw");
 (function testThrow() {
   const module = new binaryen.Module();
 
-  var event = "foo";
+  var tag = "foo";
   var operands = [
     module.i32.const(1),
     module.i32.const(2)
   ];
-  const theThrow = binaryen.Throw(module.throw(event, operands));
+  const theThrow = binaryen.Throw(module.throw(tag, operands));
   assert(theThrow instanceof binaryen.Throw);
   assert(theThrow instanceof binaryen.Expression);
-  assert(theThrow.event === event);
+  assert(theThrow.tag === tag);
   assertDeepEqual(theThrow.operands, operands);
   assert(theThrow.type === binaryen.unreachable);
 
-  theThrow.event = "bar";
-  assert(theThrow.event === "bar");
+  theThrow.tag = "bar";
+  assert(theThrow.tag === "bar");
   theThrow.operands = operands = [
     module.i32.const(3), // set
     module.i32.const(4), // set

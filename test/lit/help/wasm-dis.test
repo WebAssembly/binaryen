@@ -1,0 +1,25 @@
+;; RUN: wasm-dis --help | filecheck %s
+
+;; CHECK:      wasm-dis INFILE
+;; CHECK-NEXT:
+;; CHECK-NEXT: Un-assemble a .wasm (WebAssembly binary format) into a .wat (WebAssembly text
+;; CHECK-NEXT: format)
+;; CHECK-NEXT:
+
+;; Skip standard tool options
+
+;; CHECK:        --no-validation,-n                   Disables validation, assumes inputs are
+;; CHECK-NEXT:                                        correct
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
+;; CHECK-NEXT:                                        passes being run. Must be in the form
+;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --nominal                            Use the prototype nominal type system
+;; CHECK-NEXT:                                        instead of the normal equirecursive type
+;; CHECK-NEXT:                                        system.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --source-map,-sm                     Consume source map from the specified
+;; CHECK-NEXT:                                        file to add location information

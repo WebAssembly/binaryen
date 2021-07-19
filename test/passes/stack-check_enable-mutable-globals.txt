@@ -1,6 +1,6 @@
 (module
- (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (import "env" "__stack_pointer" (global $sp (mut i32)))
  (global $__stack_base (mut i32) (i32.const 0))
  (global $__stack_limit (mut i32) (i32.const 0))
@@ -40,8 +40,8 @@
  )
 )
 (module
- (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_i32 (func (result i32)))
+ (type $i32_i32_=>_none (func (param i32 i32)))
  (import "env" "__stack_pointer" (global $sp (mut i32)))
  (global $__stack_base (mut i32) (i32.const 0))
  (global $__stack_limit (mut i32) (i32.const 0))

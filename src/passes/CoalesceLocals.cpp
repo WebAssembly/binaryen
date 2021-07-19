@@ -34,7 +34,6 @@
 #include "pass.h"
 #include "support/learning.h"
 #include "support/permutations.h"
-#include "wasm-builder.h"
 #include "wasm.h"
 #ifdef CFG_PROFILE
 #include "support/timing.h"
