@@ -74,7 +74,7 @@ namespace {
 // their equivalence. Basic LocalGraph just looks at locals, while this class
 // goes further and looks at the structure of the expression, taking into
 // account fallthrough values and other factors, in order to handle common
-// cases of obviously-equivalent things. To achieve that, it needs to know the
+// cases of obviously-identical things. To achieve that, it needs to know the
 // pass options and features used, which we avoid adding to the basic
 // LocalGraph.
 struct ComparingLocalGraph : public LocalGraph {
@@ -86,12 +86,10 @@ struct ComparingLocalGraph : public LocalGraph {
                       FeatureSet features)
     : LocalGraph(func), passOptions(passOptions), features(features) {}
 
-  // Check whether the values of two expressions are definitely identical. This
-  // is important for stores and loads that receive an input (like GC data),
-  // since we need to see that the pointer input is equivalent before we can
-  // tell if two stores overlap.
+  // Check whether the values of two expressions will definitely be equal at
+  // runtime.
   // TODO: move to LocalGraph if we find more users?
-  bool equivalent(Expression* a, Expression* b) {
+  bool equalValues(Expression* a, Expression* b) {
     a = Properties::getFallthrough(a, passOptions, features);
     b = Properties::getFallthrough(b, passOptions, features);
     if (auto* aGet = a->dynCast<LocalGet>()) {
@@ -511,7 +509,7 @@ struct MemoryLogic : public ComparingLogic {
       return load->bytes == store->bytes &&
              load->bytes == load->type.getByteSize() &&
              load->offset == store->offset &&
-             localGraph.equivalent(load->ptr, store->ptr);
+             localGraph.equalValues(load->ptr, store->ptr);
     }
     return false;
   }
@@ -533,7 +531,7 @@ struct MemoryLogic : public ComparingLogic {
       //       yet is a store of 1 byte that is trampled by a store of 2 bytes.)
       return otherStore->bytes == store->bytes &&
              otherStore->offset == store->offset &&
-             localGraph.equivalent(otherStore->ptr, store->ptr);
+             localGraph.equalValues(otherStore->ptr, store->ptr);
     }
     return false;
   }
@@ -573,9 +571,9 @@ struct GCLogic : public ComparingLogic {
       auto* store = store_->cast<StructSet>();
 
       // Note that we do not need to check the type: we check that the
-      // reference is equivalent, and if it is then the types must be compatible
+      // reference is identical, and if it is then the types must be compatible
       // in addition to them pointing to the same memory.
-      return localGraph.equivalent(load->ref, store->ref) &&
+      return localGraph.equalValues(load->ref, store->ref) &&
              load->index == store->index;
     }
     return false;
@@ -588,7 +586,7 @@ struct GCLogic : public ComparingLogic {
       auto* store = store_->cast<StructSet>();
 
       // See note in isLoadFrom about typing.
-      return localGraph.equivalent(otherStore->ref, store->ref) &&
+      return localGraph.equalValues(otherStore->ref, store->ref) &&
              otherStore->index == store->index;
     }
     return false;
