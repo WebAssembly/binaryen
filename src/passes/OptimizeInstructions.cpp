@@ -406,6 +406,31 @@ struct OptimizeInstructions
         }
       }
       {
+        if (getModule()->features.hasSignExt()) {
+          Const *c1, *c2;
+          Expression* x;
+          // i64(x) << 56 >> 56   ==>   i64.extend8_s(x)
+          // i64(x) << 48 >> 48   ==>   i64.extend16_s(x)
+          // i64(x) << 32 >> 32   ==>   i64.extend32_s(x)
+          if (matches(curr,
+                      binary(ShrSInt64,
+                             binary(ShlInt64, any(&x), i64(&c1)),
+                             i64(&c2))) &&
+              c1->value.geti64() == c2->value.geti64()) {
+            switch (64 - Bits::getEffectiveShifts(c1)) {
+              case 8:
+                return replaceCurrent(builder.makeUnary(ExtendS8Int64, x));
+              case 16:
+                return replaceCurrent(builder.makeUnary(ExtendS16Int64, x));
+              case 32:
+                return replaceCurrent(builder.makeUnary(ExtendS32Int64, x));
+              default:
+                break;
+            }
+          }
+        }
+      }
+      {
         // unsigned(x) >= 0   =>   i32(1)
         Const* c;
         Expression* x;
@@ -791,8 +816,8 @@ struct OptimizeInstructions
       {
         Unary* inner;
         Expression* x;
-        // i32.wrap_i64(i64.extend_s_i32(x))  =>  x
-        // i32.wrap_i64(i64.extend_u_i32(x))  =>  x
+        // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
+        // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
         if (matches(curr, unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
             matches(curr, unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
           return replaceCurrent(x);
@@ -807,9 +832,8 @@ struct OptimizeInstructions
           return replaceCurrent(inner);
         }
 
-        // if sign-extension enabled:
-        // i64.extend_s_i32(i32.wrap_i64(x))  =>  i64.extend32_s(x)
         if (getModule()->features.hasSignExt()) {
+          // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
           if (matches(curr, unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
             inner->op = ExtendS32Int64;
             inner->value = x;

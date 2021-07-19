@@ -11256,6 +11256,21 @@
       )
     )
   )
+  ;; i32.wrap_i64(i64.extend_i32_s(x))  ==>  x
+  ;; i32.wrap_i64(i64.extend_i32_u(x))  ==>  x
+
+  ;; CHECK:      (func $sign-and-zero-extention-elimination (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $sign-and-zero-extention-elimination (param $x i32)
+    (drop (i32.wrap_i64 (i64.extend_i32_s (local.get $x))))
+    (drop (i32.wrap_i64 (i64.extend_i32_u (local.get $x))))
+  )
   ;; CHECK:      (func $optimize-shifts (param $x i32) (param $y i32) (param $z i64) (param $w i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
