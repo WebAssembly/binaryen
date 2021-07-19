@@ -288,4 +288,51 @@
       (call $get-i32)
     )
   )
+
+  ;; CHECK:      (func $restructure-select-no-multivalue
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result i32 i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (tuple.make
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (call $restructure-br_if
+  ;; CHECK-NEXT:        (i32.const 2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (tuple.make
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:     (i32.const 5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-select-no-multivalue
+    (drop
+      (block $block (result i32 i32)
+        (drop
+          (br_if $block
+            (tuple.make
+              (i32.const 1)
+              ;; Add a side effect to prevent us turning $block into a
+              ;; restructured if - instead, we will try a restructured select.
+              ;; But, selects cannot return multiple values in the spec, so we
+              ;; can do nothing here.
+              (call $restructure-br_if
+                (i32.const 2)
+              )
+            )
+            (i32.const 3)
+          )
+        )
+        (tuple.make
+          (i32.const 4)
+          (i32.const 5)
+        )
+      )
+    )
+  )
 )
