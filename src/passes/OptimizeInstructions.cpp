@@ -774,11 +774,8 @@ struct OptimizeInstructions
           inner->type = Type::i32;
           return replaceCurrent(inner);
         }
-      }
-      {
+
         // eqz((signed)x % C_pot)  =>  eqz(x & (abs(C_pot) - 1))
-        Const* c;
-        Binary* inner;
         if (matches(curr, unary(EqZ, binary(&inner, RemS, any(), ival(&c)))) &&
             (c->value.isSignedMin() ||
              Bits::isPowerOf2(c->value.abs().getInteger()))) {
@@ -792,15 +789,32 @@ struct OptimizeInstructions
         }
       }
       {
-        // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
-        //   where maxBits(x) <= 32
         Unary* inner;
         Expression* x;
+        // i32.wrap_i64(i64.extend_s_i32(x))  =>  x
+        // i32.wrap_i64(i64.extend_u_i32(x))  =>  x
+        if (matches(curr, unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
+            matches(curr, unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
+          return replaceCurrent(x);
+        }
+
+        // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
+        //   where maxBits(x) <= 32
         if (matches(curr, unary(EqZInt32, unary(&inner, WrapInt64, any(&x)))) &&
             Bits::getMaxBits(x, this) <= 32) {
           inner->op = EqZInt64;
           inner->value = x;
           return replaceCurrent(inner);
+        }
+
+        // if sign-extension enabled:
+        // i64.extend_s_i32(i32.wrap_i64(x))  =>  i64.extend32_s(x)
+        if (getModule()->features.hasSignExt()) {
+          if (matches(curr, unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
+            inner->op = ExtendS32Int64;
+            inner->value = x;
+            return replaceCurrent(inner);
+          }
         }
       }
     }
