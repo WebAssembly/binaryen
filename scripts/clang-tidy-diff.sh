@@ -17,7 +17,12 @@ if [ ! -e "$CLANG_TIDY" ]; then
   exit 1
 fi
 
-CLANG_DIR=$(dirname $(dirname $(readlink -f $CLANG_TIDY)))
+# This needs for FreeBSD and Darwin which doesn't support readlink -f command
+function realpath() {
+  python -c "import os,sys; print(os.path.realpath(sys.argv[1]))" $1;
+}
+
+CLANG_DIR=$(dirname $(dirname $(realpath $CLANG_TIDY)))
 CLANG_TIDY_DIFF=$CLANG_DIR/share/clang/clang-tidy-diff.py
 if [ ! -e "$CLANG_TIDY_DIFF" ]; then
   echo "Failed to find clang-tidy-diff.py ($CLANG_TIDY_DIFF)"
