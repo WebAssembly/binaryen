@@ -55,7 +55,7 @@ struct Address {
     return *this;
   }
   operator address64_t() const { return addr; }
-  Address& operator++() {
+  Address& operator++(int) {
     ++addr;
     return *this;
   }
@@ -157,23 +157,23 @@ enum UnaryOp {
 
   // SIMD arithmetic
   NotVec128,
+  AnyTrueVec128,
   AbsVecI8x16,
   NegVecI8x16,
-  AnyTrueVecI8x16,
   AllTrueVecI8x16,
   BitmaskVecI8x16,
   PopcntVecI8x16,
   AbsVecI16x8,
   NegVecI16x8,
-  AnyTrueVecI16x8,
   AllTrueVecI16x8,
   BitmaskVecI16x8,
   AbsVecI32x4,
   NegVecI32x4,
-  AnyTrueVecI32x4,
   AllTrueVecI32x4,
   BitmaskVecI32x4,
+  AbsVecI64x2,
   NegVecI64x2,
+  AllTrueVecI64x2,
   BitmaskVecI64x2,
   AbsVecF32x4,
   NegVecF32x4,
@@ -197,24 +197,20 @@ enum UnaryOp {
   // SIMD conversions
   TruncSatSVecF32x4ToVecI32x4,
   TruncSatUVecF32x4ToVecI32x4,
-  TruncSatSVecF64x2ToVecI64x2,
-  TruncSatUVecF64x2ToVecI64x2,
   ConvertSVecI32x4ToVecF32x4,
   ConvertUVecI32x4ToVecF32x4,
-  ConvertSVecI64x2ToVecF64x2,
-  ConvertUVecI64x2ToVecF64x2,
-  WidenLowSVecI8x16ToVecI16x8,
-  WidenHighSVecI8x16ToVecI16x8,
-  WidenLowUVecI8x16ToVecI16x8,
-  WidenHighUVecI8x16ToVecI16x8,
-  WidenLowSVecI16x8ToVecI32x4,
-  WidenHighSVecI16x8ToVecI32x4,
-  WidenLowUVecI16x8ToVecI32x4,
-  WidenHighUVecI16x8ToVecI32x4,
-  WidenLowSVecI32x4ToVecI64x2,
-  WidenHighSVecI32x4ToVecI64x2,
-  WidenLowUVecI32x4ToVecI64x2,
-  WidenHighUVecI32x4ToVecI64x2,
+  ExtendLowSVecI8x16ToVecI16x8,
+  ExtendHighSVecI8x16ToVecI16x8,
+  ExtendLowUVecI8x16ToVecI16x8,
+  ExtendHighUVecI8x16ToVecI16x8,
+  ExtendLowSVecI16x8ToVecI32x4,
+  ExtendHighSVecI16x8ToVecI32x4,
+  ExtendLowUVecI16x8ToVecI32x4,
+  ExtendHighUVecI16x8ToVecI32x4,
+  ExtendLowSVecI32x4ToVecI64x2,
+  ExtendHighSVecI32x4ToVecI64x2,
+  ExtendLowUVecI32x4ToVecI64x2,
+  ExtendHighUVecI32x4ToVecI64x2,
 
   ConvertLowSVecI32x4ToVecF64x2,
   ConvertLowUVecI32x4ToVecF64x2,
@@ -367,6 +363,11 @@ enum BinaryOp {
   GeSVecI32x4,
   GeUVecI32x4,
   EqVecI64x2,
+  NeVecI64x2,
+  LtSVecI64x2,
+  GtSVecI64x2,
+  LeSVecI64x2,
+  GeSVecI64x2,
   EqVecF32x4,
   NeVecF32x4,
   LtVecF32x4,
@@ -391,7 +392,6 @@ enum BinaryOp {
   SubVecI8x16,
   SubSatSVecI8x16,
   SubSatUVecI8x16,
-  MulVecI8x16,
   MinSVecI8x16,
   MinUVecI8x16,
   MaxSVecI8x16,
@@ -500,51 +500,33 @@ enum SIMDShiftOp {
 };
 
 enum SIMDLoadOp {
-  LoadSplatVec8x16,
-  LoadSplatVec16x8,
-  LoadSplatVec32x4,
-  LoadSplatVec64x2,
-  LoadExtSVec8x8ToVecI16x8,
-  LoadExtUVec8x8ToVecI16x8,
-  LoadExtSVec16x4ToVecI32x4,
-  LoadExtUVec16x4ToVecI32x4,
-  LoadExtSVec32x2ToVecI64x2,
-  LoadExtUVec32x2ToVecI64x2,
-  Load32Zero,
-  Load64Zero,
+  Load8SplatVec128,
+  Load16SplatVec128,
+  Load32SplatVec128,
+  Load64SplatVec128,
+  Load8x8SVec128,
+  Load8x8UVec128,
+  Load16x4SVec128,
+  Load16x4UVec128,
+  Load32x2SVec128,
+  Load32x2UVec128,
+  Load32ZeroVec128,
+  Load64ZeroVec128,
 };
 
 enum SIMDLoadStoreLaneOp {
-  LoadLaneVec8x16,
-  LoadLaneVec16x8,
-  LoadLaneVec32x4,
-  LoadLaneVec64x2,
-  StoreLaneVec8x16,
-  StoreLaneVec16x8,
-  StoreLaneVec32x4,
-  StoreLaneVec64x2,
+  Load8LaneVec128,
+  Load16LaneVec128,
+  Load32LaneVec128,
+  Load64LaneVec128,
+  Store8LaneVec128,
+  Store16LaneVec128,
+  Store32LaneVec128,
+  Store64LaneVec128,
 };
 
 enum SIMDTernaryOp {
   Bitselect,
-  QFMAF32x4,
-  QFMSF32x4,
-  QFMAF64x2,
-  QFMSF64x2,
-  SignSelectVec8x16,
-  SignSelectVec16x8,
-  SignSelectVec32x4,
-  SignSelectVec64x2
-};
-
-enum SIMDWidenOp {
-  WidenSVecI8x16ToVecI32x4,
-  WidenUVecI8x16ToVecI32x4,
-};
-
-enum PrefetchOp {
-  PrefetchTemporal,
-  PrefetchNontemporal,
 };
 
 enum RefIsOp {
@@ -563,10 +545,15 @@ enum RefAsOp {
 
 enum BrOnOp {
   BrOnNull,
+  BrOnNonNull,
   BrOnCast,
+  BrOnCastFail,
   BrOnFunc,
+  BrOnNonFunc,
   BrOnData,
+  BrOnNonData,
   BrOnI31,
+  BrOnNonI31,
 };
 
 //
@@ -616,7 +603,6 @@ public:
     MemorySizeId,
     MemoryGrowId,
     NopId,
-    PrefetchId,
     UnreachableId,
     AtomicRMWId,
     AtomicCmpxchgId,
@@ -630,7 +616,6 @@ public:
     SIMDShiftId,
     SIMDLoadId,
     SIMDLoadStoreLaneId,
-    SIMDWidenId,
     MemoryInitId,
     DataDropId,
     MemoryCopyId,
@@ -660,6 +645,7 @@ public:
     ArrayGetId,
     ArraySetId,
     ArrayLenId,
+    ArrayCopyId,
     RefAsId,
     NumExpressionIds
   };
@@ -1079,30 +1065,6 @@ public:
   void finalize();
 };
 
-class SIMDWiden : public SpecificExpression<Expression::SIMDWidenId> {
-public:
-  SIMDWiden() = default;
-  SIMDWiden(MixedArena& allocator) {}
-
-  SIMDWidenOp op;
-  uint8_t index;
-  Expression* vec;
-
-  void finalize();
-};
-
-class Prefetch : public SpecificExpression<Expression::PrefetchId> {
-public:
-  Prefetch() = default;
-  Prefetch(MixedArena& allocator) : Prefetch() {}
-
-  PrefetchOp op;
-  Address offset;
-  Address align;
-  Expression* ptr;
-  void finalize();
-};
-
 class MemoryInit : public SpecificExpression<Expression::MemoryInitId> {
 public:
   MemoryInit() = default;
@@ -1304,16 +1266,16 @@ public:
 
 class Try : public SpecificExpression<Expression::TryId> {
 public:
-  Try(MixedArena& allocator) : catchEvents(allocator), catchBodies(allocator) {}
+  Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
 
   Name name; // label that can only be targeted by 'delegate's
   Expression* body;
-  ArenaVector<Name> catchEvents;
+  ArenaVector<Name> catchTags;
   ExpressionList catchBodies;
   Name delegateTarget; // target try's label
 
   bool hasCatchAll() const {
-    return catchBodies.size() - catchEvents.size() == 1;
+    return catchBodies.size() - catchTags.size() == 1;
   }
   bool isCatch() const { return !catchBodies.empty(); }
   bool isDelegate() const { return delegateTarget.is(); }
@@ -1325,7 +1287,7 @@ class Throw : public SpecificExpression<Expression::ThrowId> {
 public:
   Throw(MixedArena& allocator) : operands(allocator) {}
 
-  Name event;
+  Name tag;
   ExpressionList operands;
 
   void finalize();
@@ -1417,7 +1379,7 @@ public:
   Name name;
   Expression* ref;
 
-  // BrOnCast has an rtt that is used in the cast.
+  // BrOnCast* has an rtt that is used in the cast.
   Expression* rtt;
 
   // TODO: BrOnNull also has an optional extra value in the spec, which we do
@@ -1428,7 +1390,8 @@ public:
 
   void finalize();
 
-  Type getCastType();
+  // Returns the type sent on the branch, if it is taken.
+  Type getSentType();
 };
 
 class RttCanon : public SpecificExpression<Expression::RttCanonId> {
@@ -1443,6 +1406,11 @@ public:
   RttSub(MixedArena& allocator) {}
 
   Expression* parent;
+
+  // rtt.fresh_sub is like rtt.sub, but never caching or canonicalizing (i.e.,
+  // it always returns a fresh RTT, non-identical to any other RTT in the
+  // system).
+  bool fresh = false;
 
   void finalize();
 };
@@ -1489,12 +1457,12 @@ class ArrayNew : public SpecificExpression<Expression::ArrayNewId> {
 public:
   ArrayNew(MixedArena& allocator) {}
 
-  Expression* rtt;
-  Expression* size;
   // If set, then the initial value is assigned to all entries in the array. If
   // not set, this is array.new_with_default and the default of the type is
   // used.
   Expression* init = nullptr;
+  Expression* size;
+  Expression* rtt;
 
   bool isWithDefault() { return !init; }
 
@@ -1529,6 +1497,19 @@ public:
   ArrayLen(MixedArena& allocator) {}
 
   Expression* ref;
+
+  void finalize();
+};
+
+class ArrayCopy : public SpecificExpression<Expression::ArrayCopyId> {
+public:
+  ArrayCopy(MixedArena& allocator) {}
+
+  Expression* destRef;
+  Expression* destIndex;
+  Expression* srcRef;
+  Expression* srcIndex;
+  Expression* length;
 
   void finalize();
 };
@@ -1628,7 +1609,7 @@ using StackIR = std::vector<StackInst*>;
 
 class Function : public Importable {
 public:
-  Signature sig; // parameters and return value
+  HeapType type = HeapType(Signature()); // parameters and return value
   IRProfile profile = IRProfile::Normal;
   std::vector<Type> vars; // non-param locals
 
@@ -1677,6 +1658,12 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
+  Signature getSig() { return type.getSignature(); }
+  Type getParams() { return getSig().params; }
+  Type getResults() { return getSig().results; }
+  void setParams(Type params) { type = Signature(params, getResults()); }
+  void setResults(Type results) { type = Signature(getParams(), results); }
+
   size_t getNumParams();
   size_t getNumVars();
   size_t getNumLocals();
@@ -1705,7 +1692,7 @@ enum class ExternalKind {
   Table = 1,
   Memory = 2,
   Global = 3,
-  Event = 4,
+  Tag = 4,
   Invalid = -1
 };
 
@@ -1722,13 +1709,17 @@ class ElementSegment : public Named {
 public:
   Name table;
   Expression* offset;
+  Type type = Type::funcref;
   std::vector<Expression*> data;
 
   ElementSegment() = default;
-  ElementSegment(Name table, Expression* offset)
-    : table(table), offset(offset) {}
-  ElementSegment(Name table, Expression* offset, std::vector<Expression*>& init)
-    : table(table), offset(offset) {
+  ElementSegment(Name table, Expression* offset, Type type = Type::funcref)
+    : table(table), offset(offset), type(type) {}
+  ElementSegment(Name table,
+                 Expression* offset,
+                 Type type,
+                 std::vector<Expression*>& init)
+    : table(table), offset(offset), type(type) {
     data.swap(init);
   }
 };
@@ -1742,6 +1733,7 @@ public:
 
   Address initial = 0;
   Address max = kMaxSize;
+  Type type = Type::funcref;
 
   bool hasMax() { return max != kUnlimitedSize; }
   void clear() {
@@ -1815,13 +1807,8 @@ public:
   bool mutable_ = false;
 };
 
-// Kinds of event attributes.
-enum WasmEventAttribute : unsigned { WASM_EVENT_ATTRIBUTE_EXCEPTION = 0x0 };
-
-class Event : public Importable {
+class Tag : public Importable {
 public:
-  // Kind of event. Currently only WASM_EVENT_ATTRIBUTE_EXCEPTION is possible.
-  uint32_t attribute = WASM_EVENT_ATTRIBUTE_EXCEPTION;
   Signature sig;
 };
 
@@ -1847,7 +1834,7 @@ public:
   std::vector<std::unique_ptr<Export>> exports;
   std::vector<std::unique_ptr<Function>> functions;
   std::vector<std::unique_ptr<Global>> globals;
-  std::vector<std::unique_ptr<Event>> events;
+  std::vector<std::unique_ptr<Tag>> tags;
   std::vector<std::unique_ptr<ElementSegment>> elementSegments;
   std::vector<std::unique_ptr<Table>> tables;
 
@@ -1893,7 +1880,7 @@ private:
   std::unordered_map<Name, Table*> tablesMap;
   std::unordered_map<Name, ElementSegment*> elementSegmentsMap;
   std::unordered_map<Name, Global*> globalsMap;
-  std::unordered_map<Name, Event*> eventsMap;
+  std::unordered_map<Name, Tag*> tagsMap;
 
 public:
   Module() = default;
@@ -1903,26 +1890,26 @@ public:
   Table* getTable(Name name);
   ElementSegment* getElementSegment(Name name);
   Global* getGlobal(Name name);
-  Event* getEvent(Name name);
+  Tag* getTag(Name name);
 
   Export* getExportOrNull(Name name);
   Table* getTableOrNull(Name name);
   ElementSegment* getElementSegmentOrNull(Name name);
   Function* getFunctionOrNull(Name name);
   Global* getGlobalOrNull(Name name);
-  Event* getEventOrNull(Name name);
+  Tag* getTagOrNull(Name name);
 
   Export* addExport(Export* curr);
   Function* addFunction(Function* curr);
   Global* addGlobal(Global* curr);
-  Event* addEvent(Event* curr);
+  Tag* addTag(Tag* curr);
 
   Export* addExport(std::unique_ptr<Export>&& curr);
   Function* addFunction(std::unique_ptr<Function>&& curr);
   Table* addTable(std::unique_ptr<Table>&& curr);
   ElementSegment* addElementSegment(std::unique_ptr<ElementSegment>&& curr);
   Global* addGlobal(std::unique_ptr<Global>&& curr);
-  Event* addEvent(std::unique_ptr<Event>&& curr);
+  Tag* addTag(std::unique_ptr<Tag>&& curr);
 
   void addStart(const Name& s);
 
@@ -1931,14 +1918,14 @@ public:
   void removeTable(Name name);
   void removeElementSegment(Name name);
   void removeGlobal(Name name);
-  void removeEvent(Name name);
+  void removeTag(Name name);
 
   void removeExports(std::function<bool(Export*)> pred);
   void removeFunctions(std::function<bool(Function*)> pred);
   void removeTables(std::function<bool(Table*)> pred);
   void removeElementSegments(std::function<bool(ElementSegment*)> pred);
   void removeGlobals(std::function<bool(Global*)> pred);
-  void removeEvents(std::function<bool(Event*)> pred);
+  void removeTags(std::function<bool(Tag*)> pred);
 
   void updateMaps();
 

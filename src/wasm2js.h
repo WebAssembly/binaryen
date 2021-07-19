@@ -630,6 +630,10 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
   // emit assignments separately for each index.
   Ref theArray = ValueBuilder::makeArray();
   for (auto& table : wasm->tables) {
+    if (!table->type.isFunction()) {
+      Fatal() << "wasm2js doesn't support non-function tables\n";
+    }
+
     if (!table->imported()) {
       TableUtils::FlatTable flat(*wasm, *table);
       if (flat.valid) {
@@ -765,7 +769,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
           ValueBuilder::makeName(fromName(export_->value, NameScope::Top)));
         break;
       }
-      case ExternalKind::Event:
+      case ExternalKind::Tag:
       case ExternalKind::Invalid:
         Fatal() << "unsupported export type: " << export_->name << "\n";
     }
@@ -1988,8 +1992,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
 
     Ref visitNop(Nop* curr) { return ValueBuilder::makeToplevel(); }
-    Ref visitPrefetch(Prefetch* curr) { return ValueBuilder::makeToplevel(); }
-
     Ref visitUnreachable(Unreachable* curr) {
       return ValueBuilder::makeCall(ABORT_FUNC);
     }
@@ -2124,10 +2126,6 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitSIMDWiden(SIMDWiden* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
     Ref visitMemoryInit(MemoryInit* curr) {
       ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::MEMORY_INIT);
       return ValueBuilder::makeCall(ABI::wasm2js::MEMORY_INIT,
@@ -2252,6 +2250,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitArrayLen(ArrayLen* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitArrayCopy(ArrayCopy* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }

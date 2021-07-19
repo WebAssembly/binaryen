@@ -3,11 +3,18 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $parent (struct (field i32)))
   (type $parent (struct (field i32)))
+  ;; CHECK:      (type $child (struct (field i32) (field f64)))
   (type $child  (struct (field i32) (field f64)))
+  ;; CHECK:      (type $other (struct (field i64) (field f32)))
   (type $other  (struct (field i64) (field f32)))
 
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $foo)
+
 
   ;; CHECK:      (func $ref-cast-iit (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $child-rtt (rtt $child)) (param $other-rtt (rtt $other))
   ;; CHECK-NEXT:  (drop
@@ -133,6 +140,24 @@
       (ref.cast
         (unreachable)
         (local.get $parent-rtt)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq-ref-cast (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-ref-cast (param $x eqref)
+    ;; we can look through a ref.cast if we ignore traps
+    (drop
+      (ref.eq
+        (local.get $x)
+        (ref.cast
+          (local.get $x)
+          (rtt.canon $parent)
+        )
       )
     )
   )

@@ -1,7 +1,7 @@
 # Version set according the the cmake versions available in Ubuntu/Bionic:
 # https://packages.ubuntu.com/bionic/cmake
 cmake_minimum_required(VERSION 3.10.2)
-project(binaryen LANGUAGES C CXX VERSION 100)
+project(binaryen LANGUAGES C CXX VERSION 101)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
@@ -334,7 +334,7 @@ if(NOT (BUILD_STATIC_LIB AND BYN_INSTALL_TOOLS_ONLY))
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR})
 endif()
 if(NOT BYN_INSTALL_TOOLS_ONLY)
-  install(FILES src/binaryen-c.h src/wasm-delegations.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+  install(FILES src/binaryen-c.h src/wasm-delegations.def DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
 endif()
 
 function(binaryen_add_executable name sources)

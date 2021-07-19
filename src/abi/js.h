@@ -18,6 +18,7 @@
 #define wasm_abi_abi_h
 
 #include "asmjs/shared-constants.h"
+#include "wasm-builder.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -64,9 +65,7 @@ inline void ensureHelpers(Module* wasm,
     if (specific.is() && name != specific) {
       return;
     }
-    auto func = make_unique<Function>();
-    func->name = name;
-    func->sig = Signature(params, results);
+    auto func = Builder::makeFunction(name, Signature(params, results), {});
     func->module = ENV;
     func->base = name;
     wasm->addFunction(std::move(func));

@@ -21,13 +21,13 @@
 //
 // Ensures each type has a name. This can be useful for debugging.
 //
-// TODO: keep existing useful (short-enough) names, and just replace ones that
-//       are bothersome
-//
 
 using namespace std;
 
 namespace wasm {
+
+// An arbitrary limit, above which we rename types.
+static const size_t NameLenLimit = 20;
 
 struct NameTypes : public Pass {
   void run(PassRunner* runner, Module* module) override {
@@ -36,10 +36,14 @@ struct NameTypes : public Pass {
     std::unordered_map<HeapType, Index> typeIndices;
     ModuleUtils::collectHeapTypes(*module, types, typeIndices);
 
-    // Ensure simple names.
+    // Ensure simple names. If a name already exists, and is short enough, keep
+    // it.
     size_t i = 0;
     for (auto& type : types) {
-      module->typeNames[type].name = "type$" + std::to_string(i++);
+      if (module->typeNames.count(type) == 0 ||
+          module->typeNames[type].name.size() >= NameLenLimit) {
+        module->typeNames[type].name = "type$" + std::to_string(i++);
+      }
     }
   }
 };

@@ -82,6 +82,7 @@ function initializeConstants() {
     'SIMDTernary',
     'SIMDShift',
     'SIMDLoad',
+    'SIMDLoadStoreLane',
     'MemoryInit',
     'DataDrop',
     'MemoryCopy',
@@ -121,7 +122,7 @@ function initializeConstants() {
     'Table',
     'Memory',
     'Global',
-    'Event'
+    'Tag'
   ].forEach(name => {
     Module['ExternalKinds'][name] = Module['External' + name] = Module['_BinaryenExternal' + name]();
   });
@@ -341,6 +342,12 @@ function initializeConstants() {
     'LeUVecI32x4',
     'GeSVecI32x4',
     'GeUVecI32x4',
+    'EqVecI64x2',
+    'NeVecI64x2',
+    'LtSVecI64x2',
+    'GtSVecI64x2',
+    'LeSVecI64x2',
+    'GeSVecI64x2',
     'EqVecF32x4',
     'NeVecF32x4',
     'LtVecF32x4',
@@ -359,9 +366,10 @@ function initializeConstants() {
     'XorVec128',
     'AndNotVec128',
     'BitselectVec128',
+    'AnyTrueVec128',
+    'PopcntVecI8x16',
     'AbsVecI8x16',
     'NegVecI8x16',
-    'AnyTrueVecI8x16',
     'AllTrueVecI8x16',
     'BitmaskVecI8x16',
     'ShlVecI8x16',
@@ -373,7 +381,6 @@ function initializeConstants() {
     'SubVecI8x16',
     'SubSatSVecI8x16',
     'SubSatUVecI8x16',
-    'MulVecI8x16',
     'MinSVecI8x16',
     'MinUVecI8x16',
     'MaxSVecI8x16',
@@ -381,7 +388,6 @@ function initializeConstants() {
     'AvgrUVecI8x16',
     'AbsVecI16x8',
     'NegVecI16x8',
-    'AnyTrueVecI16x8',
     'AllTrueVecI16x8',
     'BitmaskVecI16x8',
     'ShlVecI16x8',
@@ -399,10 +405,18 @@ function initializeConstants() {
     'MaxSVecI16x8',
     'MaxUVecI16x8',
     'AvgrUVecI16x8',
+    'Q15MulrSatSVecI16x8',
+    'ExtMulLowSVecI16x8',
+    'ExtMulHighSVecI16x8',
+    'ExtMulLowUVecI16x8',
+    'ExtMulHighUVecI16x8',
     'DotSVecI16x8ToVecI32x4',
+    'ExtMulLowSVecI32x4',
+    'ExtMulHighSVecI32x4',
+    'ExtMulLowUVecI32x4',
+    'ExtMulHighUVecI32x4',
     'AbsVecI32x4',
     'NegVecI32x4',
-    'AnyTrueVecI32x4',
     'AllTrueVecI32x4',
     'BitmaskVecI32x4',
     'ShlVecI32x4',
@@ -415,18 +429,23 @@ function initializeConstants() {
     'MinUVecI32x4',
     'MaxSVecI32x4',
     'MaxUVecI32x4',
+    'AbsVecI64x2',
     'NegVecI64x2',
+    'AllTrueVecI64x2',
+    'BitmaskVecI64x2',
     'ShlVecI64x2',
     'ShrSVecI64x2',
     'ShrUVecI64x2',
     'AddVecI64x2',
     'SubVecI64x2',
     'MulVecI64x2',
+    'ExtMulLowSVecI64x2',
+    'ExtMulHighSVecI64x2',
+    'ExtMulLowUVecI64x2',
+    'ExtMulHighUVecI64x2',
     'AbsVecF32x4',
     'NegVecF32x4',
     'SqrtVecF32x4',
-    'QFMAVecF32x4',
-    'QFMSVecF32x4',
     'AddVecF32x4',
     'SubVecF32x4',
     'MulVecF32x4',
@@ -442,8 +461,6 @@ function initializeConstants() {
     'AbsVecF64x2',
     'NegVecF64x2',
     'SqrtVecF64x2',
-    'QFMAVecF64x2',
-    'QFMSVecF64x2',
     'AddVecF64x2',
     'SubVecF64x2',
     'MulVecF64x2',
@@ -456,36 +473,56 @@ function initializeConstants() {
     'FloorVecF64x2',
     'TruncVecF64x2',
     'NearestVecF64x2',
+    'ExtAddPairwiseSVecI8x16ToI16x8',
+    'ExtAddPairwiseUVecI8x16ToI16x8',
+    'ExtAddPairwiseSVecI16x8ToI32x4',
+    'ExtAddPairwiseUVecI16x8ToI32x4',
     'TruncSatSVecF32x4ToVecI32x4',
     'TruncSatUVecF32x4ToVecI32x4',
-    'TruncSatSVecF64x2ToVecI64x2',
-    'TruncSatUVecF64x2ToVecI64x2',
     'ConvertSVecI32x4ToVecF32x4',
     'ConvertUVecI32x4ToVecF32x4',
-    'ConvertSVecI64x2ToVecF64x2',
-    'ConvertUVecI64x2ToVecF64x2',
-    'LoadSplatVec8x16',
-    'LoadSplatVec16x8',
-    'LoadSplatVec32x4',
-    'LoadSplatVec64x2',
-    'LoadExtSVec8x8ToVecI16x8',
-    'LoadExtUVec8x8ToVecI16x8',
-    'LoadExtSVec16x4ToVecI32x4',
-    'LoadExtUVec16x4ToVecI32x4',
-    'LoadExtSVec32x2ToVecI64x2',
-    'LoadExtUVec32x2ToVecI64x2',
+    'Load8SplatVec128',
+    'Load16SplatVec128',
+    'Load32SplatVec128',
+    'Load64SplatVec128',
+    'Load8x8SVec128',
+    'Load8x8UVec128',
+    'Load16x4SVec128',
+    'Load16x4UVec128',
+    'Load32x2SVec128',
+    'Load32x2UVec128',
+    'Load32ZeroVec128',
+    'Load64ZeroVec128',
+    'Load8LaneVec128',
+    'Load16LaneVec128',
+    'Load32LaneVec128',
+    'Load64LaneVec128',
+    'Store8LaneVec128',
+    'Store16LaneVec128',
+    'Store32LaneVec128',
+    'Store64LaneVec128',
     'NarrowSVecI16x8ToVecI8x16',
     'NarrowUVecI16x8ToVecI8x16',
     'NarrowSVecI32x4ToVecI16x8',
     'NarrowUVecI32x4ToVecI16x8',
-    'WidenLowSVecI8x16ToVecI16x8',
-    'WidenHighSVecI8x16ToVecI16x8',
-    'WidenLowUVecI8x16ToVecI16x8',
-    'WidenHighUVecI8x16ToVecI16x8',
-    'WidenLowSVecI16x8ToVecI32x4',
-    'WidenHighSVecI16x8ToVecI32x4',
-    'WidenLowUVecI16x8ToVecI32x4',
-    'WidenHighUVecI16x8ToVecI32x4',
+    'ExtendLowSVecI8x16ToVecI16x8',
+    'ExtendHighSVecI8x16ToVecI16x8',
+    'ExtendLowUVecI8x16ToVecI16x8',
+    'ExtendHighUVecI8x16ToVecI16x8',
+    'ExtendLowSVecI16x8ToVecI32x4',
+    'ExtendHighSVecI16x8ToVecI32x4',
+    'ExtendLowUVecI16x8ToVecI32x4',
+    'ExtendHighUVecI16x8ToVecI32x4',
+    'ExtendLowSVecI32x4ToVecI64x2',
+    'ExtendHighSVecI32x4ToVecI64x2',
+    'ExtendLowUVecI32x4ToVecI64x2',
+    'ExtendHighUVecI32x4ToVecI64x2',
+    'ConvertLowSVecI32x4ToVecF64x2',
+    'ConvertLowUVecI32x4ToVecF64x2',
+    'TruncSatZeroSVecF64x2ToVecI32x4',
+    'TruncSatZeroUVecF64x2ToVecI32x4',
+    'DemoteZeroVecF64x2ToVecF32x4',
+    'PromoteLowVecF32x4ToVecF64x2',
     'SwizzleVec8x16',
     'RefIsNull',
     'RefIsFunc',
@@ -1434,6 +1471,66 @@ function wrapModule(module, self = {}) {
     'load'(offset, align, ptr) {
       return Module['_BinaryenLoad'](module, 16, false, offset, align, Module['v128'], ptr);
     },
+    'load8_splat'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load8SplatVec128'], offset, align, ptr);
+    },
+    'load16_splat'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load16SplatVec128'], offset, align, ptr);
+    },
+    'load32_splat'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32SplatVec128'], offset, align, ptr);
+    },
+    'load64_splat'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load64SplatVec128'], offset, align, ptr);
+    },
+    'load8x8_s'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load8x8SVec128'], offset, align, ptr);
+    },
+    'load8x8_u'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load8x8UVec128'], offset, align, ptr);
+    },
+    'load16x4_s'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load16x4SVec128'], offset, align, ptr);
+    },
+    'load16x4_u'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load16x4UVec128'], offset, align, ptr);
+    },
+    'load32x2_s'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32x2SVec128'], offset, align, ptr);
+    },
+    'load32x2_u'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32x2UVec128'], offset, align, ptr);
+    },
+    'load32_zero'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load32ZeroVec128'], offset, align, ptr);
+    },
+    'load64_zero'(offset, align, ptr) {
+      return Module['_BinaryenSIMDLoad'](module, Module['Load64ZeroVec128'], offset, align, ptr);
+    },
+    'load8_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load8LaneVec128'], offset, align, index, ptr, vec);
+    },
+    'load16_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load16LaneVec128'], offset, align, index, ptr, vec);
+    },
+    'load32_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load32LaneVec128'], offset, align, index, ptr, vec);
+    },
+    'load64_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Load64LaneVec128'], offset, align, index, ptr, vec);
+    },
+    'store8_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store8LaneVec128'], offset, align, index, ptr, vec);
+    },
+    'store16_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store16LaneVec128'], offset, align, index, ptr, vec);
+    },
+    'store32_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store32LaneVec128'], offset, align, index, ptr, vec);
+    },
+    'store64_lane'(offset, align, index, ptr, vec) {
+      return Module['_BinaryenSIMDLoadStoreLane'](module, Module['Store64LaneVec128'], offset, align, index, ptr, vec);
+    },
     'store'(offset, align, ptr, value) {
       return Module['_BinaryenStore'](module, 16, offset, align, ptr, value, Module['v128']);
     },
@@ -1446,6 +1543,9 @@ function wrapModule(module, self = {}) {
     },
     'not'(value) {
       return Module['_BinaryenUnary'](module, Module['NotVec128'], value);
+    },
+    'any_true'(value) {
+      return Module['_BinaryenUnary'](module, Module['AnyTrueVec128'], value);
     },
     'and'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AndVec128'], left, right);
@@ -1468,6 +1568,12 @@ function wrapModule(module, self = {}) {
   };
 
   self['i8x16'] = {
+    'shuffle'(left, right, mask) {
+      return preserveStack(() => Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask)));
+    },
+    'swizzle'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['SwizzleVec8x16'], left, right);
+    },
     'splat'(value) {
       return Module['_BinaryenUnary'](module, Module['SplatVecI8x16'], value);
     },
@@ -1516,14 +1622,14 @@ function wrapModule(module, self = {}) {
     'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI8x16'], value);
     },
-    'any_true'(value) {
-      return Module['_BinaryenUnary'](module, Module['AnyTrueVecI8x16'], value);
-    },
     'all_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI8x16'], value);
     },
     'bitmask'(value) {
       return Module['_BinaryenUnary'](module, Module['BitmaskVecI8x16'], value);
+    },
+    'popcnt'(value) {
+      return Module['_BinaryenUnary'](module, Module['PopcntVecI8x16'], value);
     },
     'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI8x16'], vec, shift);
@@ -1551,9 +1657,6 @@ function wrapModule(module, self = {}) {
     },
     'sub_saturate_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['SubSatUVecI8x16'], left, right);
-    },
-    'mul'(left, right) {
-      return Module['_BinaryenBinary'](module, Module['MulVecI8x16'], left, right);
     },
     'min_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MinSVecI8x16'], left, right);
@@ -1627,9 +1730,6 @@ function wrapModule(module, self = {}) {
     'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI16x8'], value);
     },
-    'any_true'(value) {
-      return Module['_BinaryenUnary'](module, Module['AnyTrueVecI16x8'], value);
-    },
     'all_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI16x8'], value);
     },
@@ -1681,29 +1781,44 @@ function wrapModule(module, self = {}) {
     'avgr_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AvgrUVecI16x8'], left, right);
     },
+    'q15mulr_sat_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['Q15MulrSatSVecI16x8'], left, right);
+    },
+    'extmul_low_i8x16_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulLowSVecI16x8'], left, right);
+    },
+    'extmul_high_i8x16_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulHighSVecI16x8'], left, right);
+    },
+    'extmul_low_i8x16_u'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulLowUVecI16x8'], left, right);
+    },
+    'extmul_high_i8x16_u'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulHighUVecI16x8'], left, right);
+    },
+    'extadd_pairwise_i8x16_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtAddPairwiseSVecI8x16ToI16x8'], value);
+    },
+    'extadd_pairwise_i8x16_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtAddPairwiseUVecI8x16ToI16x8'], value);
+    },
     'narrow_i32x4_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowSVecI32x4ToVecI16x8'], left, right);
     },
     'narrow_i32x4_u'(left, right) {
       return Module['_BinaryenBinary'](module, Module['NarrowUVecI32x4ToVecI16x8'], left, right);
     },
-    'widen_low_i8x16_s'(value) {
-      return Module['_BinaryenUnary'](module, Module['WidenLowSVecI8x16ToVecI16x8'], value);
+    'extend_low_i8x16_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendLowSVecI8x16ToVecI16x8'], value);
     },
-    'widen_high_i8x16_s'(value) {
-      return Module['_BinaryenUnary'](module, Module['WidenHighSVecI8x16ToVecI16x8'], value);
+    'extend_high_i8x16_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendHighSVecI8x16ToVecI16x8'], value);
     },
-    'widen_low_i8x16_u'(value) {
-      return Module['_BinaryenUnary'](module, Module['WidenLowUVecI8x16ToVecI16x8'], value);
+    'extend_low_i8x16_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendLowUVecI8x16ToVecI16x8'], value);
     },
-    'widen_high_i8x16_u'(value) {
-      return Module['_BinaryenUnary'](module, Module['WidenHighUVecI8x16ToVecI16x8'], value);
-    },
-    'load8x8_s'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec8x8ToVecI16x8'], offset, align, ptr);
-    },
-    'load8x8_u'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec8x8ToVecI16x8'], offset, align, ptr);
+    'extend_high_i8x16_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendHighUVecI8x16ToVecI16x8'], value);
     },
   };
 
@@ -1753,9 +1868,6 @@ function wrapModule(module, self = {}) {
     'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI32x4'], value);
     },
-    'any_true'(value) {
-      return Module['_BinaryenUnary'](module, Module['AnyTrueVecI32x4'], value);
-    },
     'all_true'(value) {
       return Module['_BinaryenUnary'](module, Module['AllTrueVecI32x4'], value);
     },
@@ -1795,29 +1907,47 @@ function wrapModule(module, self = {}) {
     'dot_i16x8_s'(left, right) {
       return Module['_BinaryenBinary'](module, Module['DotSVecI16x8ToVecI32x4'], left, right);
     },
+    'extmul_low_i16x8_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulLowSVecI32x4'], left, right);
+    },
+    'extmul_high_i16x8_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulHighSVecI32x4'], left, right);
+    },
+    'extmul_low_i16x8_u'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulLowUVecI32x4'], left, right);
+    },
+    'extmul_high_i16x8_u'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulHighUVecI32x4'], left, right);
+    },
+    'extadd_pairwise_i16x8_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtAddPairwiseSVecI16x8ToI32x4'], value);
+    },
+    'extadd_pairwise_i16x8_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtAddPairwiseUVecI16x8ToI32x4'], value);
+    },
     'trunc_sat_f32x4_s'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatSVecF32x4ToVecI32x4'], value);
     },
     'trunc_sat_f32x4_u'(value) {
       return Module['_BinaryenUnary'](module, Module['TruncSatUVecF32x4ToVecI32x4'], value);
     },
-    'widen_low_i16x8_s'(value) {
-      return Module['_BinaryenUnary'](module, Module['WidenLowSVecI16x8ToVecI32x4'], value);
+    'extend_low_i16x8_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendLowSVecI16x8ToVecI32x4'], value);
     },
-    'widen_high_i16x8_s'(value) {
-      return Module['_BinaryenUnary'](module, Module['WidenHighSVecI16x8ToVecI32x4'], value);
+    'extend_high_i16x8_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendHighSVecI16x8ToVecI32x4'], value);
     },
-    'widen_low_i16x8_u'(value) {
-      return Module['_BinaryenUnary'](module, Module['WidenLowUVecI16x8ToVecI32x4'], value);
+    'extend_low_i16x8_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendLowUVecI16x8ToVecI32x4'], value);
     },
-    'widen_high_i16x8_u'(value) {
-      return Module['_BinaryenUnary'](module, Module['WidenHighUVecI16x8ToVecI32x4'], value);
+    'extend_high_i16x8_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendHighUVecI16x8ToVecI32x4'], value);
     },
-    'load16x4_s'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec16x4ToVecI32x4'], offset, align, ptr);
+    'trunc_sat_f64x2_s_zero'(value) {
+      return Module['_BinaryenUnary'](module, Module['TruncSatZeroSVecF64x2ToVecI32x4'], value);
     },
-    'load16x4_u'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec16x4ToVecI32x4'], offset, align, ptr);
+    'trunc_sat_f64x2_u_zero'(value) {
+      return Module['_BinaryenUnary'](module, Module['TruncSatZeroUVecF64x2ToVecI32x4'], value);
     },
   };
 
@@ -1831,8 +1961,35 @@ function wrapModule(module, self = {}) {
     'replace_lane'(vec, index, value) {
       return Module['_BinaryenSIMDReplace'](module, Module['ReplaceLaneVecI64x2'], vec, index, value);
     },
+    'eq'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['EqVecI64x2'], left, right);
+    },
+    'ne'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['NeVecI64x2'], left, right);
+    },
+    'lt_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['LtSVecI64x2'], left, right);
+    },
+    'gt_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['GtSVecI64x2'], left, right);
+    },
+    'le_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['LeSVecI64x2'], left, right);
+    },
+    'ge_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['GeSVecI64x2'], left, right);
+    },
+    'abs'(value) {
+      return Module['_BinaryenUnary'](module, Module['AbsVecI64x2'], value);
+    },
     'neg'(value) {
       return Module['_BinaryenUnary'](module, Module['NegVecI64x2'], value);
+    },
+    'all_true'(value) {
+      return Module['_BinaryenUnary'](module, Module['AllTrueVecI64x2'], value);
+    },
+    'bitmask'(value) {
+      return Module['_BinaryenUnary'](module, Module['BitmaskVecI64x2'], value);
     },
     'shl'(vec, shift) {
       return Module['_BinaryenSIMDShift'](module, Module['ShlVecI64x2'], vec, shift);
@@ -1852,17 +2009,29 @@ function wrapModule(module, self = {}) {
     'mul'(left, right) {
       return Module['_BinaryenBinary'](module, Module['MulVecI64x2'], left, right);
     },
-    'trunc_sat_f64x2_s'(value) {
-      return Module['_BinaryenUnary'](module, Module['TruncSatSVecF64x2ToVecI64x2'], value);
+    'extmul_low_i32x4_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulLowSVecI64x2'], left, right);
     },
-    'trunc_sat_f64x2_u'(value) {
-      return Module['_BinaryenUnary'](module, Module['TruncSatUVecF64x2ToVecI64x2'], value);
+    'extmul_high_i32x4_s'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulHighSVecI64x2'], left, right);
     },
-    'load32x2_s'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtSVec32x2ToVecI64x2'], offset, align, ptr);
+    'extmul_low_i32x4_u'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulLowUVecI64x2'], left, right);
     },
-    'load32x2_u'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadExtUVec32x2ToVecI64x2'], offset, align, ptr);
+    'extmul_high_i32x4_u'(left, right) {
+      return Module['_BinaryenBinary'](module, Module['ExtMulHighUVecI64x2'], left, right);
+    },
+    'extend_low_i32x4_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendLowSVecI32x4ToVecI64x2'], value);
+    },
+    'extend_high_i32x4_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendHighSVecI32x4ToVecI64x2'], value);
+    },
+    'extend_low_i32x4_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendLowUVecI32x4ToVecI64x2'], value);
+    },
+    'extend_high_i32x4_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ExtendHighUVecI32x4ToVecI64x2'], value);
     },
   };
 
@@ -1902,12 +2071,6 @@ function wrapModule(module, self = {}) {
     },
     'sqrt'(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtVecF32x4'], value);
-    },
-    'qfma'(a, b, c) {
-      return Module['_BinaryenSIMDTernary'](module, Module['QFMAVecF32x4'], a, b, c);
-    },
-    'qfms'(a, b, c) {
-      return Module['_BinaryenSIMDTernary'](module, Module['QFMSVecF32x4'], a, b, c);
     },
     'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecF32x4'], left, right);
@@ -1951,6 +2114,9 @@ function wrapModule(module, self = {}) {
     'convert_i32x4_u'(value) {
       return Module['_BinaryenUnary'](module, Module['ConvertUVecI32x4ToVecF32x4'], value);
     },
+    'demote_f64x2_zero'(value) {
+      return Module['_BinaryenUnary'](module, Module['DemoteZeroVecF64x2ToVecF32x4'], value);
+    },
   };
 
   self['f64x2'] = {
@@ -1990,12 +2156,6 @@ function wrapModule(module, self = {}) {
     'sqrt'(value) {
       return Module['_BinaryenUnary'](module, Module['SqrtVecF64x2'], value);
     },
-    'qfma'(a, b, c) {
-      return Module['_BinaryenSIMDTernary'](module, Module['QFMAVecF64x2'], a, b, c);
-    },
-    'qfms'(a, b, c) {
-      return Module['_BinaryenSIMDTernary'](module, Module['QFMSVecF64x2'], a, b, c);
-    },
     'add'(left, right) {
       return Module['_BinaryenBinary'](module, Module['AddVecF64x2'], left, right);
     },
@@ -2032,41 +2192,14 @@ function wrapModule(module, self = {}) {
     'nearest'(value) {
       return Module['_BinaryenUnary'](module, Module['NearestVecF64x2'], value);
     },
-    'convert_i64x2_s'(value) {
-      return Module['_BinaryenUnary'](module, Module['ConvertSVecI64x2ToVecF64x2'], value);
+    'convert_low_i32x4_s'(value) {
+      return Module['_BinaryenUnary'](module, Module['ConvertLowSVecI32x4ToVecF64x2'], value);
     },
-    'convert_i64x2_u'(value) {
-      return Module['_BinaryenUnary'](module, Module['ConvertUVecI64x2ToVecF64x2'], value);
+    'convert_low_i32x4_u'(value) {
+      return Module['_BinaryenUnary'](module, Module['ConvertLowUVecI32x4ToVecF64x2'], value);
     },
-  };
-
-  self['v8x16'] = {
-    'shuffle'(left, right, mask) {
-      return preserveStack(() => Module['_BinaryenSIMDShuffle'](module, left, right, i8sToStack(mask)));
-    },
-    'swizzle'(left, right) {
-      return Module['_BinaryenBinary'](module, Module['SwizzleVec8x16'], left, right);
-    },
-    'load_splat'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec8x16'], offset, align, ptr);
-    },
-  };
-
-  self['v16x8'] = {
-    'load_splat'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec16x8'], offset, align, ptr);
-    },
-  };
-
-  self['v32x4'] = {
-    'load_splat'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec32x4'], offset, align, ptr);
-    },
-  };
-
-  self['v64x2'] = {
-    'load_splat'(offset, align, ptr) {
-      return Module['_BinaryenSIMDLoad'](module, Module['LoadSplatVec64x2'], offset, align, ptr);
+    'promote_low_f32x4'(value) {
+      return Module['_BinaryenUnary'](module, Module['PromoteLowVecF32x4ToVecF64x2'], value);
     },
   };
 
@@ -2164,12 +2297,12 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['try'] = function(name, body, catchEvents, catchBodies, delegateTarget) {
+  self['try'] = function(name, body, catchTags, catchBodies, delegateTarget) {
     return preserveStack(() =>
-      Module['_BinaryenTry'](module, name ? strToStack(name) : 0, body, i32sToStack(catchEvents.map(strToStack)), catchEvents.length, i32sToStack(catchBodies), catchBodies.length, delegateTarget ? strToStack(delegateTarget) : 0));
+      Module['_BinaryenTry'](module, name ? strToStack(name) : 0, body, i32sToStack(catchTags.map(strToStack)), catchTags.length, i32sToStack(catchBodies), catchBodies.length, delegateTarget ? strToStack(delegateTarget) : 0));
   };
-  self['throw'] = function(event_, operands) {
-    return preserveStack(() => Module['_BinaryenThrow'](module, strToStack(event_), i32sToStack(operands), operands.length));
+  self['throw'] = function(tag, operands) {
+    return preserveStack(() => Module['_BinaryenThrow'](module, strToStack(tag), i32sToStack(operands), operands.length));
   };
   self['rethrow'] = function(target) {
     return Module['_BinaryenRethrow'](module, strToStack(target));
@@ -2263,14 +2396,14 @@ function wrapModule(module, self = {}) {
   self['removeElementSegment'] = function(name) {
     return preserveStack(() => Module['_BinaryenRemoveElementSegment'](module, strToStack(name)));
   };
-  self['addEvent'] = function(name, attribute, params, results) {
-    return preserveStack(() => Module['_BinaryenAddEvent'](module, strToStack(name), attribute, params, results));
+  self['addTag'] = function(name, params, results) {
+    return preserveStack(() => Module['_BinaryenAddTag'](module, strToStack(name), params, results));
   };
-  self['getEvent'] = function(name) {
-    return preserveStack(() => Module['_BinaryenGetEvent'](module, strToStack(name)));
+  self['getTag'] = function(name) {
+    return preserveStack(() => Module['_BinaryenGetTag'](module, strToStack(name)));
   };
-  self['removeEvent'] = function(name) {
-    return preserveStack(() => Module['_BinaryenRemoveEvent'](module, strToStack(name)));
+  self['removeTag'] = function(name) {
+    return preserveStack(() => Module['_BinaryenRemoveTag'](module, strToStack(name)));
   };
   self['addFunctionImport'] = function(internalName, externalModuleName, externalBaseName, params, results) {
     return preserveStack(() =>
@@ -2292,9 +2425,9 @@ function wrapModule(module, self = {}) {
       Module['_BinaryenAddGlobalImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), globalType, mutable)
     );
   };
-  self['addEventImport'] = function(internalName, externalModuleName, externalBaseName, attribute, params, results) {
+  self['addTagImport'] = function(internalName, externalModuleName, externalBaseName, params, results) {
     return preserveStack(() =>
-      Module['_BinaryenAddEventImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), attribute, params, results)
+      Module['_BinaryenAddTagImport'](module, strToStack(internalName), strToStack(externalModuleName), strToStack(externalBaseName), params, results)
     );
   };
   self['addExport'] = // deprecated
@@ -2310,8 +2443,8 @@ function wrapModule(module, self = {}) {
   self['addGlobalExport'] = function(internalName, externalName) {
     return preserveStack(() => Module['_BinaryenAddGlobalExport'](module, strToStack(internalName), strToStack(externalName)));
   };
-  self['addEventExport'] = function(internalName, externalName) {
-    return preserveStack(() => Module['_BinaryenAddEventExport'](module, strToStack(internalName), strToStack(externalName)));
+  self['addTagExport'] = function(internalName, externalName) {
+    return preserveStack(() => Module['_BinaryenAddTagExport'](module, strToStack(internalName), strToStack(externalName)));
   };
   self['removeExport'] = function(externalName) {
     return preserveStack(() => Module['_BinaryenRemoveExport'](module, strToStack(externalName)));
@@ -2866,6 +2999,17 @@ Module['getExpressionInfo'] = function(expr) {
         'align': Module['_BinaryenSIMDLoadGetAlign'](expr),
         'ptr': Module['_BinaryenSIMDLoadGetPtr'](expr)
       };
+    case Module['SIMDLoadStoreLaneId']:
+      return {
+        'id': id,
+        'type': type,
+        'op': Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr),
+        'offset': Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expr),
+        'align': Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expr),
+        'index': Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expr),
+        'ptr': Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expr),
+        'vec': Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr)
+      };
     case Module['MemoryInitId']:
       return {
         'id': id,
@@ -2931,7 +3075,7 @@ Module['getExpressionInfo'] = function(expr) {
         'type': type,
         'name': UTF8ToString(Module['_BinaryenTryGetName'](expr)),
         'body': Module['_BinaryenTryGetBody'](expr),
-        'catchEvents': getAllNested(expr, Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTryGetCatchEventAt']),
+        'catchTags': getAllNested(expr, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']),
         'catchBodies': getAllNested(expr, Module['_BinaryenTryGetNumCatchBodies'], Module['_BinaryenTryGetCatchBodyAt']),
         'hasCatchAll': Module['_BinaryenTryHasCatchAll'](expr),
         'delegateTarget': UTF8ToString(Module['_BinaryenTryGetDelegateTarget'](expr)),
@@ -2941,7 +3085,7 @@ Module['getExpressionInfo'] = function(expr) {
       return {
         'id': id,
         'type': type,
-        'event': UTF8ToString(Module['_BinaryenThrowGetEvent'](expr)),
+        'tag': UTF8ToString(Module['_BinaryenThrowGetTag'](expr)),
         'operands': getAllNested(expr, Module['_BinaryenThrowGetNumOperands'], Module['_BinaryenThrowGetOperandAt'])
       };
     case Module['RethrowId']:
@@ -3062,15 +3206,14 @@ Module['getElementSegmentInfo'] = function(segment) {
   }
 }
 
-// Obtains information about a 'Event'
-Module['getEventInfo'] = function(event_) {
+// Obtains information about a 'Tag'
+Module['getTagInfo'] = function(tag) {
   return {
-    'name': UTF8ToString(Module['_BinaryenEventGetName'](event_)),
-    'module': UTF8ToString(Module['_BinaryenEventImportGetModule'](event_)),
-    'base': UTF8ToString(Module['_BinaryenEventImportGetBase'](event_)),
-    'attribute': Module['_BinaryenEventGetAttribute'](event_),
-    'params': Module['_BinaryenEventGetParams'](event_),
-    'results': Module['_BinaryenEventGetResults'](event_)
+    'name': UTF8ToString(Module['_BinaryenTagGetName'](tag)),
+    'module': UTF8ToString(Module['_BinaryenTagImportGetModule'](tag)),
+    'base': UTF8ToString(Module['_BinaryenTagImportGetBase'](tag)),
+    'params': Module['_BinaryenTagGetParams'](tag),
+    'results': Module['_BinaryenTagGetResults'](tag)
   };
 };
 
@@ -4111,6 +4254,48 @@ Module['SIMDLoad'] = makeExpressionWrapper({
   }
 });
 
+Module['SIMDLoadStoreLane'] = makeExpressionWrapper({
+  'getOp'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetOp'](expr);
+  },
+  'setOp'(expr, op) {
+    Module['_BinaryenSIMDLoadStoreLaneSetOp'](expr, op);
+  },
+  'getOffset'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetOffset'](expr);
+  },
+  'setOffset'(expr, offset) {
+    Module['_BinaryenSIMDLoadStoreLaneSetOffset'](expr, offset);
+  },
+  'getAlign'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetAlign'](expr);
+  },
+  'setAlign'(expr, align) {
+    Module['_BinaryenSIMDLoadStoreLaneSetAlign'](expr, align);
+  },
+  'getIndex'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetIndex'](expr);
+  },
+  'setIndex'(expr, align) {
+    Module['_BinaryenSIMDLoadStoreLaneSetIndex'](expr, align);
+  },
+  'getPtr'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetPtr'](expr);
+  },
+  'setPtr'(expr, ptrExpr) {
+    Module['_BinaryenSIMDLoadStoreLaneSetPtr'](expr, ptrExpr);
+  },
+  'getVec'(expr) {
+    return Module['_BinaryenSIMDLoadStoreLaneGetVec'](expr);
+  },
+  'setVec'(expr, ptrExpr) {
+    Module['_BinaryenSIMDLoadStoreLaneSetVec'](expr, ptrExpr);
+  },
+  'isStore'(expr) {
+    return Boolean(Module['_BinaryenSIMDLoadStoreLaneIsStore'](expr));
+  }
+});
+
 Module['MemoryInit'] = makeExpressionWrapper({
   'getSegment'(expr) {
     return Module['_BinaryenMemoryInitGetSegment'](expr);
@@ -4257,31 +4442,31 @@ Module['Try'] = makeExpressionWrapper({
   'setBody'(expr, bodyExpr) {
     Module['_BinaryenTrySetBody'](expr, bodyExpr);
   },
-  'getNumCatchEvents'(expr) {
-    return Module['_BinaryenTryGetNumCatchEvents'](expr);
+  'getNumCatchTags'(expr) {
+    return Module['_BinaryenTryGetNumCatchTags'](expr);
   },
-  'getCatchEvents'(expr) {
-    return getAllNested(expr, Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTryGetCatchEventAt']).map(p => UTF8ToString(p));
+  'getCatchTags'(expr) {
+    return getAllNested(expr, Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTryGetCatchTagAt']).map(p => UTF8ToString(p));
   },
-  'setCatchEvents'(expr, catchEvents) {
+  'setCatchTags'(expr, catchTags) {
     preserveStack(() => {
-      setAllNested(expr, catchEvents.map(strToStack), Module['_BinaryenTryGetNumCatchEvents'], Module['_BinaryenTrySetCatchEventAt'], Module['_BinaryenTryAppendCatchEvent'], Module['_BinaryenTryRemoveCatchEventAt']);
+      setAllNested(expr, catchTags.map(strToStack), Module['_BinaryenTryGetNumCatchTags'], Module['_BinaryenTrySetCatchTagAt'], Module['_BinaryenTryAppendCatchTag'], Module['_BinaryenTryRemoveCatchTagAt']);
     });
   },
-  'getCatchEventAt'(expr, index) {
-    return UTF8ToString(Module['_BinaryenTryGetCatchEventAt'](expr, index));
+  'getCatchTagAt'(expr, index) {
+    return UTF8ToString(Module['_BinaryenTryGetCatchTagAt'](expr, index));
   },
-  'setCatchEventAt'(expr, index, catchEvent) {
-    preserveStack(() => { Module['_BinaryenTrySetCatchEventAt'](expr, index, strToStack(catchEvent)) });
+  'setCatchTagAt'(expr, index, catchTag) {
+    preserveStack(() => { Module['_BinaryenTrySetCatchTagAt'](expr, index, strToStack(catchTag)) });
   },
-  'appendCatchEvent'(expr, catchEvent) {
-    preserveStack(() => Module['_BinaryenTryAppendCatchEvent'](expr, strToStack(catchEvent)));
+  'appendCatchTag'(expr, catchTag) {
+    preserveStack(() => Module['_BinaryenTryAppendCatchTag'](expr, strToStack(catchTag)));
   },
-  'insertCatchEventAt'(expr, index, catchEvent) {
-    preserveStack(() => { Module['_BinaryenTryInsertCatchEventAt'](expr, index, strToStack(catchEvent)) });
+  'insertCatchTagAt'(expr, index, catchTag) {
+    preserveStack(() => { Module['_BinaryenTryInsertCatchTagAt'](expr, index, strToStack(catchTag)) });
   },
-  'removeCatchEventAt'(expr, index) {
-    return UTF8ToString(Module['_BinaryenTryRemoveCatchEventAt'](expr, index));
+  'removeCatchTagAt'(expr, index) {
+    return UTF8ToString(Module['_BinaryenTryRemoveCatchTagAt'](expr, index));
   },
   'getNumCatchBodies'(expr) {
     return Module['_BinaryenTryGetNumCatchBodies'](expr);
@@ -4323,11 +4508,11 @@ Module['Try'] = makeExpressionWrapper({
 });
 
 Module['Throw'] = makeExpressionWrapper({
-  'getEvent'(expr) {
-    return UTF8ToString(Module['_BinaryenThrowGetEvent'](expr));
+  'getTag'(expr) {
+    return UTF8ToString(Module['_BinaryenThrowGetTag'](expr));
   },
-  'setEvent'(expr, eventName) {
-    preserveStack(() => { Module['_BinaryenThrowSetEvent'](expr, strToStack(eventName)) });
+  'setTag'(expr, tagName) {
+    preserveStack(() => { Module['_BinaryenThrowSetTag'](expr, strToStack(tagName)) });
   },
   'getNumOperands'(expr) {
     return Module['_BinaryenThrowGetNumOperands'](expr);

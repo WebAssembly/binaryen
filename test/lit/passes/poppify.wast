@@ -3,7 +3,8 @@
 ;; RUN: wasm-opt %s --poppify --no-validation -all -S -o - | filecheck %s
 
 (module
-  (event $e (attr 0) (param i32))
+  ;; CHECK:      (tag $e (param i32))
+  (tag $e (param i32))
 
   ;; CHECK:      (func $id (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local.get $x)

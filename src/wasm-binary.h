@@ -326,7 +326,7 @@ enum Section {
   Code = 10,
   Data = 11,
   DataCount = 12,
-  Event = 13
+  Tag = 13
 };
 
 // A passive segment is a segment that will not be automatically copied into a
@@ -380,9 +380,12 @@ enum EncodedType {
   rtt = -0x18,     // 0x68
   dataref = -0x19, // 0x67
   // func_type form
-  Func = -0x20,   // 0x60
-  Struct = -0x21, // 0x5f
-  Array = -0x22,  // 0x5e
+  Func = -0x20,            // 0x60
+  Struct = -0x21,          // 0x5f
+  Array = -0x22,           // 0x5e
+  FuncExtending = -0x23,   // 0x5d
+  StructExtending = -0x24, // 0x5c
+  ArrayExtending = -0x25,  // 0x5b
   // block_type
   Empty = -0x40 // 0x40
 };
@@ -735,21 +738,21 @@ enum ASTNodes {
   // SIMD opcodes
 
   V128Load = 0x00,
-  I16x8LoadExtSVec8x8 = 0x01,
-  I16x8LoadExtUVec8x8 = 0x02,
-  I32x4LoadExtSVec16x4 = 0x03,
-  I32x4LoadExtUVec16x4 = 0x04,
-  I64x2LoadExtSVec32x2 = 0x05,
-  I64x2LoadExtUVec32x2 = 0x06,
-  V8x16LoadSplat = 0x07,
-  V16x8LoadSplat = 0x08,
-  V32x4LoadSplat = 0x09,
-  V64x2LoadSplat = 0x0a,
+  V128Load8x8S = 0x01,
+  V128Load8x8U = 0x02,
+  V128Load16x4S = 0x03,
+  V128Load16x4U = 0x04,
+  V128Load32x2S = 0x05,
+  V128Load32x2U = 0x06,
+  V128Load8Splat = 0x07,
+  V128Load16Splat = 0x08,
+  V128Load32Splat = 0x09,
+  V128Load64Splat = 0x0a,
   V128Store = 0x0b,
 
   V128Const = 0x0c,
-  V8x16Shuffle = 0x0d,
-  V8x16Swizzle = 0x0e,
+  I8x16Shuffle = 0x0d,
+  I8x16Swizzle = 0x0e,
 
   I8x16Splat = 0x0f,
   I16x8Splat = 0x10,
@@ -803,7 +806,6 @@ enum ASTNodes {
   I32x4LeU = 0x3e,
   I32x4GeS = 0x3f,
   I32x4GeU = 0x40,
-  I64x2Eq = 0xc0,
   F32x4Eq = 0x41,
   F32x4Ne = 0x42,
   F32x4Lt = 0x43,
@@ -819,32 +821,37 @@ enum ASTNodes {
 
   V128Not = 0x4d,
   V128And = 0x4e,
-  V128AndNot = 0x4f,
+  V128Andnot = 0x4f,
   V128Or = 0x50,
   V128Xor = 0x51,
   V128Bitselect = 0x52,
+  V128AnyTrue = 0x53,
 
-  V8x16SignSelect = 0x7d,
-  V16x8SignSelect = 0x7e,
-  V32x4SignSelect = 0x7f,
-  V64x2SignSelect = 0x94,
+  V128Load8Lane = 0x54,
+  V128Load16Lane = 0x55,
+  V128Load32Lane = 0x56,
+  V128Load64Lane = 0x57,
+  V128Store8Lane = 0x58,
+  V128Store16Lane = 0x59,
+  V128Store32Lane = 0x5a,
+  V128Store64Lane = 0x5b,
+  V128Load32Zero = 0x5c,
+  V128Load64Zero = 0x5d,
 
-  V128Load8Lane = 0x58,
-  V128Load16Lane = 0x59,
-  V128Load32Lane = 0x5a,
-  V128Load64Lane = 0x5b,
-  V128Store8Lane = 0x5c,
-  V128Store16Lane = 0x5d,
-  V128Store32Lane = 0x5e,
-  V128Store64Lane = 0x5f,
+  F32x4DemoteF64x2Zero = 0x5e,
+  F64x2PromoteLowF32x4 = 0x5f,
 
   I8x16Abs = 0x60,
   I8x16Neg = 0x61,
-  I8x16AnyTrue = 0x62,
+  I8x16Popcnt = 0x62,
   I8x16AllTrue = 0x63,
   I8x16Bitmask = 0x64,
-  I8x16NarrowSI16x8 = 0x65,
-  I8x16NarrowUI16x8 = 0x66,
+  I8x16NarrowI16x8S = 0x65,
+  I8x16NarrowI16x8U = 0x66,
+  F32x4Ceil = 0x67,
+  F32x4Floor = 0x68,
+  F32x4Trunc = 0x69,
+  F32x4Nearest = 0x6a,
   I8x16Shl = 0x6b,
   I8x16ShrS = 0x6c,
   I8x16ShrU = 0x6d,
@@ -854,26 +861,30 @@ enum ASTNodes {
   I8x16Sub = 0x71,
   I8x16SubSatS = 0x72,
   I8x16SubSatU = 0x73,
-  I8x16Mul = 0x75,
+  F64x2Ceil = 0x74,
+  F64x2Floor = 0x75,
   I8x16MinS = 0x76,
   I8x16MinU = 0x77,
   I8x16MaxS = 0x78,
   I8x16MaxU = 0x79,
+  F64x2Trunc = 0x7a,
   I8x16AvgrU = 0x7b,
-
-  I8x16Popcnt = 0x7c,
+  I16x8ExtaddPairwiseI8x16S = 0x7c,
+  I16x8ExtaddPairwiseI8x16U = 0x7d,
+  I32x4ExtaddPairwiseI16x8S = 0x7e,
+  I32x4ExtaddPairwiseI16x8U = 0x7f,
 
   I16x8Abs = 0x80,
   I16x8Neg = 0x81,
-  I16x8AnyTrue = 0x82,
+  I16x8Q15mulrSatS = 0x82,
   I16x8AllTrue = 0x83,
   I16x8Bitmask = 0x84,
-  I16x8NarrowSI32x4 = 0x85,
-  I16x8NarrowUI32x4 = 0x86,
-  I16x8WidenLowSI8x16 = 0x87,
-  I16x8WidenHighSI8x16 = 0x88,
-  I16x8WidenLowUI8x16 = 0x89,
-  I16x8WidenHighUI8x16 = 0x8a,
+  I16x8NarrowI32x4S = 0x85,
+  I16x8NarrowI32x4U = 0x86,
+  I16x8ExtendLowI8x16S = 0x87,
+  I16x8ExtendHighI8x16S = 0x88,
+  I16x8ExtendLowI8x16U = 0x89,
+  I16x8ExtendHighI8x16U = 0x8a,
   I16x8Shl = 0x8b,
   I16x8ShrS = 0x8c,
   I16x8ShrU = 0x8d,
@@ -883,50 +894,88 @@ enum ASTNodes {
   I16x8Sub = 0x91,
   I16x8SubSatS = 0x92,
   I16x8SubSatU = 0x93,
+  F64x2Nearest = 0x94,
   I16x8Mul = 0x95,
   I16x8MinS = 0x96,
   I16x8MinU = 0x97,
   I16x8MaxS = 0x98,
   I16x8MaxU = 0x99,
+  // 0x9a unused
   I16x8AvgrU = 0x9b,
-  I16x8Q15MulrSatS = 0x9c,
+  I16x8ExtmulLowI8x16S = 0x9c,
+  I16x8ExtmulHighI8x16S = 0x9d,
+  I16x8ExtmulLowI8x16U = 0x9e,
+  I16x8ExtmulHighI8x16U = 0x9f,
 
   I32x4Abs = 0xa0,
   I32x4Neg = 0xa1,
-  I32x4AnyTrue = 0xa2,
+  // 0xa2 unused
   I32x4AllTrue = 0xa3,
   I32x4Bitmask = 0xa4,
-  I32x4WidenLowSI16x8 = 0xa7,
-  I32x4WidenHighSI16x8 = 0xa8,
-  I32x4WidenLowUI16x8 = 0xa9,
-  I32x4WidenHighUI16x8 = 0xaa,
+  // 0xa5 unused
+  // 0xa6 unused
+  I32x4ExtendLowI16x8S = 0xa7,
+  I32x4ExtendHighI16x8S = 0xa8,
+  I32x4ExtendLowI16x8U = 0xa9,
+  I32x4ExtendHighI16x8U = 0xaa,
   I32x4Shl = 0xab,
   I32x4ShrS = 0xac,
   I32x4ShrU = 0xad,
   I32x4Add = 0xae,
+  // 0xaf unused
+  // 0xb0 unused
   I32x4Sub = 0xb1,
+  // 0xb2 unused
+  // 0xb3 unused
+  // 0xb4 unused
   I32x4Mul = 0xb5,
   I32x4MinS = 0xb6,
   I32x4MinU = 0xb7,
   I32x4MaxS = 0xb8,
   I32x4MaxU = 0xb9,
-  I32x4DotSVecI16x8 = 0xba,
+  I32x4DotI16x8S = 0xba,
+  // 0xbb unused
+  I32x4ExtmulLowI16x8S = 0xbc,
+  I32x4ExtmulHighI16x8S = 0xbd,
+  I32x4ExtmulLowI16x8U = 0xbe,
+  I32x4ExtmulHighI16x8U = 0xbf,
 
-  I64x2Bitmask = 0xc4,
-  I64x2WidenLowSI32x4 = 0xc7,
-  I64x2WidenHighSI32x4 = 0xc8,
-  I64x2WidenLowUI32x4 = 0xc9,
-  I64x2WidenHighUI32x4 = 0xca,
+  I64x2Abs = 0xc0,
   I64x2Neg = 0xc1,
+  // 0xc2 unused
+  I64x2AllTrue = 0xc3,
+  I64x2Bitmask = 0xc4,
+  // 0xc5 unused
+  // 0xc6 unused
+  I64x2ExtendLowI32x4S = 0xc7,
+  I64x2ExtendHighI32x4S = 0xc8,
+  I64x2ExtendLowI32x4U = 0xc9,
+  I64x2ExtendHighI32x4U = 0xca,
   I64x2Shl = 0xcb,
   I64x2ShrS = 0xcc,
   I64x2ShrU = 0xcd,
   I64x2Add = 0xce,
+  // 0xcf unused
+  // 0xd0 unused
   I64x2Sub = 0xd1,
+  // 0xd2 unused
+  // 0xd3 unused
+  // 0xd4 unused
   I64x2Mul = 0xd5,
+  I64x2Eq = 0xd6,
+  I64x2Ne = 0xd7,
+  I64x2LtS = 0xd8,
+  I64x2GtS = 0xd9,
+  I64x2LeS = 0xda,
+  I64x2GeS = 0xdb,
+  I64x2ExtmulLowI32x4S = 0xdc,
+  I64x2ExtmulHighI32x4S = 0xdd,
+  I64x2ExtmulLowI32x4U = 0xde,
+  I64x2ExtmulHighI32x4U = 0xdf,
 
   F32x4Abs = 0xe0,
   F32x4Neg = 0xe1,
+  // 0xe2 unused
   F32x4Sqrt = 0xe3,
   F32x4Add = 0xe4,
   F32x4Sub = 0xe5,
@@ -934,20 +983,12 @@ enum ASTNodes {
   F32x4Div = 0xe7,
   F32x4Min = 0xe8,
   F32x4Max = 0xe9,
-  F32x4PMin = 0xea,
-  F32x4PMax = 0xeb,
-
-  F32x4Ceil = 0xd8,
-  F32x4Floor = 0xd9,
-  F32x4Trunc = 0xda,
-  F32x4Nearest = 0xdb,
-  F64x2Ceil = 0xdc,
-  F64x2Floor = 0xdd,
-  F64x2Trunc = 0xde,
-  F64x2Nearest = 0xdf,
+  F32x4Pmin = 0xea,
+  F32x4Pmax = 0xeb,
 
   F64x2Abs = 0xec,
   F64x2Neg = 0xed,
+  // 0xee unused
   F64x2Sqrt = 0xef,
   F64x2Add = 0xf0,
   F64x2Sub = 0xf1,
@@ -955,59 +996,17 @@ enum ASTNodes {
   F64x2Div = 0xf3,
   F64x2Min = 0xf4,
   F64x2Max = 0xf5,
-  F64x2PMin = 0xf6,
-  F64x2PMax = 0xf7,
+  F64x2Pmin = 0xf6,
+  F64x2Pmax = 0xf7,
 
-  I16x8ExtAddPairWiseSI8x16 = 0xc2,
-  I16x8ExtAddPairWiseUI8x16 = 0xc3,
-  I32x4ExtAddPairWiseSI16x8 = 0xa5,
-  I32x4ExtAddPairWiseUI16x8 = 0xa6,
-
-  I32x4TruncSatSF32x4 = 0xf8,
-  I32x4TruncSatUF32x4 = 0xf9,
-  F32x4ConvertSI32x4 = 0xfa,
-  F32x4ConvertUI32x4 = 0xfb,
-
-  V128Load32Zero = 0xfc,
-  V128Load64Zero = 0xfd,
-
-  F32x4QFMA = 0xb4,
-  F32x4QFMS = 0xd4,
-  F64x2QFMA = 0xfe,
-  F64x2QFMS = 0xff,
-
-  I64x2TruncSatSF64x2 = 0x0100,
-  I64x2TruncSatUF64x2 = 0x0101,
-  F64x2ConvertSI64x2 = 0x0102,
-  F64x2ConvertUI64x2 = 0x0103,
-
-  I16x8ExtMulLowSI8x16 = 0x9a,
-  I16x8ExtMulHighSI8x16 = 0x9d,
-  I16x8ExtMulLowUI8x16 = 0x9e,
-  I16x8ExtMulHighUI8x16 = 0x9f,
-  I32x4ExtMulLowSI16x8 = 0xbb,
-  I32x4ExtMulHighSI16x8 = 0xbd,
-  I32x4ExtMulLowUI16x8 = 0xbe,
-  I32x4ExtMulHighUI16x8 = 0xbf,
-  I64x2ExtMulLowSI32x4 = 0xd2,
-  I64x2ExtMulHighSI32x4 = 0xd3,
-  I64x2ExtMulLowUI32x4 = 0xd6,
-  I64x2ExtMulHighUI32x4 = 0xd7,
-
-  F64x2ConvertLowSI32x4 = 0x53,
-  F64x2ConvertLowUI32x4 = 0x54,
-  I32x4TruncSatZeroSF64x2 = 0x55,
-  I32x4TruncSatZeroUF64x2 = 0x56,
-  F32x4DemoteZeroF64x2 = 0x57,
-  F64x2PromoteLowF32x4 = 0x69,
-
-  I32x4WidenSI8x16 = 0x67,
-  I32x4WidenUI8x16 = 0x68,
-
-  // prefetch opcodes
-
-  PrefetchT = 0xc5,
-  PrefetchNT = 0xc6,
+  I32x4TruncSatF32x4S = 0xf8,
+  I32x4TruncSatF32x4U = 0xf9,
+  F32x4ConvertI32x4S = 0xfa,
+  F32x4ConvertI32x4U = 0xfb,
+  I32x4TruncSatF64x2SZero = 0xfc,
+  I32x4TruncSatF64x2UZero = 0xfd,
+  F64x2ConvertLowI32x4S = 0xfe,
+  F64x2ConvertLowI32x4U = 0xff,
 
   // bulk memory opcodes
 
@@ -1023,6 +1022,7 @@ enum ASTNodes {
   RefFunc = 0xd2,
   RefAsNonNull = 0xd3,
   BrOnNull = 0xd4,
+  BrOnNonNull = 0xd6,
 
   // exception handling opcodes
 
@@ -1055,14 +1055,17 @@ enum ASTNodes {
   ArrayGetU = 0x15,
   ArraySet = 0x16,
   ArrayLen = 0x17,
+  ArrayCopy = 0x18,
   I31New = 0x20,
   I31GetS = 0x21,
   I31GetU = 0x22,
   RttCanon = 0x30,
   RttSub = 0x31,
+  RttFreshSub = 0x32,
   RefTest = 0x40,
   RefCast = 0x41,
   BrOnCast = 0x42,
+  BrOnCastFail = 0x43,
   RefIsFunc = 0x50,
   RefIsData = 0x51,
   RefIsI31 = 0x52,
@@ -1072,6 +1075,9 @@ enum ASTNodes {
   BrOnFunc = 0x60,
   BrOnData = 0x61,
   BrOnI31 = 0x62,
+  BrOnNonFunc = 0x63,
+  BrOnNonData = 0x64,
+  BrOnNonI31 = 0x65,
 };
 
 enum MemoryAccess {
@@ -1103,7 +1109,7 @@ class WasmBinaryWriter {
   // just use them directly).
   struct BinaryIndexes {
     std::unordered_map<Name, Index> functionIndexes;
-    std::unordered_map<Name, Index> eventIndexes;
+    std::unordered_map<Name, Index> tagIndexes;
     std::unordered_map<Name, Index> globalIndexes;
     std::unordered_map<Name, Index> tableIndexes;
     std::unordered_map<Name, Index> elemIndexes;
@@ -1126,7 +1132,7 @@ class WasmBinaryWriter {
         }
       };
       addIndexes(wasm.functions, functionIndexes);
-      addIndexes(wasm.events, eventIndexes);
+      addIndexes(wasm.tags, tagIndexes);
       addIndexes(wasm.tables, tableIndexes);
 
       for (auto& curr : wasm.elementSegments) {
@@ -1174,7 +1180,11 @@ public:
     std::vector<Entry> functionBodies;
   } tableOfContents;
 
-  void setNamesSection(bool set) { debugInfo = set; }
+  void setNamesSection(bool set) {
+    debugInfo = set;
+    emitModuleName = set;
+  }
+  void setEmitModuleName(bool set) { emitModuleName = set; }
   void setSourceMap(std::ostream* set, std::string url) {
     sourceMap = set;
     sourceMapUrl = url;
@@ -1202,12 +1212,12 @@ public:
   void writeExports();
   void writeDataCount();
   void writeDataSegments();
-  void writeEvents();
+  void writeTags();
 
   uint32_t getFunctionIndex(Name name) const;
   uint32_t getTableIndex(Name name) const;
   uint32_t getGlobalIndex(Name name) const;
-  uint32_t getEventIndex(Name name) const;
+  uint32_t getTagIndex(Name name) const;
   uint32_t getTypeIndex(HeapType type) const;
 
   void writeTableDeclarations();
@@ -1269,6 +1279,13 @@ private:
   std::vector<HeapType> types;
 
   bool debugInfo = true;
+
+  // TODO: Remove `emitModuleName` in the future once there are better ways to
+  // ensure modules have meaningful names in stack traces.For example, using
+  // ObjectURLs works in FireFox, but not Chrome. See
+  // https://bugs.chromium.org/p/v8/issues/detail?id=11808.
+  bool emitModuleName = true;
+
   std::ostream* sourceMap = nullptr;
   std::string sourceMapUrl;
   std::string symbolMap;
@@ -1321,9 +1338,9 @@ class WasmBinaryBuilder {
   std::vector<HeapType> types;
 
 public:
-  WasmBinaryBuilder(Module& wasm, const std::vector<char>& input)
-    : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
-      nextDebugLocation(0, {0, 0, 0}), debugLocation() {}
+  WasmBinaryBuilder(Module& wasm,
+                    FeatureSet features,
+                    const std::vector<char>& input);
 
   void setDebugInfo(bool value) { debugInfo = value; }
   void setDWARF(bool value) { DWARF = value; }
@@ -1376,7 +1393,7 @@ public:
   Name getFunctionName(Index index);
   Name getTableName(Index index);
   Name getGlobalName(Index index);
-  Name getEventName(Index index);
+  Name getTagName(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,
@@ -1385,12 +1402,16 @@ public:
                           Address defaultIfNoMax);
   void readImports();
 
-  // The signatures of each function, given in the function section
-  std::vector<Signature> functionSignatures;
+  // The signatures of each function, including imported functions, given in the
+  // import and function sections. Store HeapTypes instead of Signatures because
+  // reconstructing the HeapTypes from the Signatures is expensive.
+  std::vector<HeapType> functionTypes;
 
   void readFunctionSignatures();
-  Signature getSignatureByFunctionIndex(Index index);
+  HeapType getTypeByIndex(Index index);
+  HeapType getTypeByFunctionIndex(Index index);
   Signature getSignatureByTypeIndex(Index index);
+  Signature getSignatureByFunctionIndex(Index index);
 
   size_t nextLabel;
 
@@ -1534,7 +1555,7 @@ public:
   void readTableDeclarations();
   void readElementSegments();
 
-  void readEvents();
+  void readTags();
 
   static Name escape(Name name);
   void readNames(size_t);
@@ -1595,8 +1616,6 @@ public:
   bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
   bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDWiden(Expression*& out, uint32_t code);
-  bool maybeVisitPrefetch(Expression*& out, uint32_t code);
   bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
   bool maybeVisitDataDrop(Expression*& out, uint32_t code);
   bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
@@ -1615,6 +1634,7 @@ public:
   bool maybeVisitArrayGet(Expression*& out, uint32_t code);
   bool maybeVisitArraySet(Expression*& out, uint32_t code);
   bool maybeVisitArrayLen(Expression*& out, uint32_t code);
+  bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

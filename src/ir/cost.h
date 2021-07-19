@@ -172,23 +172,23 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case SplatVecF32x4:
       case SplatVecF64x2:
       case NotVec128:
+      case AnyTrueVec128:
       case AbsVecI8x16:
       case NegVecI8x16:
-      case AnyTrueVecI8x16:
       case AllTrueVecI8x16:
       case BitmaskVecI8x16:
       case PopcntVecI8x16:
       case AbsVecI16x8:
       case NegVecI16x8:
-      case AnyTrueVecI16x8:
       case AllTrueVecI16x8:
       case BitmaskVecI16x8:
       case AbsVecI32x4:
       case NegVecI32x4:
-      case AnyTrueVecI32x4:
       case AllTrueVecI32x4:
       case BitmaskVecI32x4:
+      case AbsVecI64x2:
       case NegVecI64x2:
+      case AllTrueVecI64x2:
       case BitmaskVecI64x2:
       case AbsVecF32x4:
       case NegVecF32x4:
@@ -210,24 +210,20 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case ExtAddPairwiseUVecI16x8ToI32x4:
       case TruncSatSVecF32x4ToVecI32x4:
       case TruncSatUVecF32x4ToVecI32x4:
-      case TruncSatSVecF64x2ToVecI64x2:
-      case TruncSatUVecF64x2ToVecI64x2:
       case ConvertSVecI32x4ToVecF32x4:
       case ConvertUVecI32x4ToVecF32x4:
-      case ConvertSVecI64x2ToVecF64x2:
-      case ConvertUVecI64x2ToVecF64x2:
-      case WidenLowSVecI8x16ToVecI16x8:
-      case WidenHighSVecI8x16ToVecI16x8:
-      case WidenLowUVecI8x16ToVecI16x8:
-      case WidenHighUVecI8x16ToVecI16x8:
-      case WidenLowSVecI16x8ToVecI32x4:
-      case WidenHighSVecI16x8ToVecI32x4:
-      case WidenLowUVecI16x8ToVecI32x4:
-      case WidenHighUVecI16x8ToVecI32x4:
-      case WidenLowSVecI32x4ToVecI64x2:
-      case WidenHighSVecI32x4ToVecI64x2:
-      case WidenLowUVecI32x4ToVecI64x2:
-      case WidenHighUVecI32x4ToVecI64x2:
+      case ExtendLowSVecI8x16ToVecI16x8:
+      case ExtendHighSVecI8x16ToVecI16x8:
+      case ExtendLowUVecI8x16ToVecI16x8:
+      case ExtendHighUVecI8x16ToVecI16x8:
+      case ExtendLowSVecI16x8ToVecI32x4:
+      case ExtendHighSVecI16x8ToVecI32x4:
+      case ExtendLowUVecI16x8ToVecI32x4:
+      case ExtendHighUVecI16x8ToVecI32x4:
+      case ExtendLowSVecI32x4ToVecI64x2:
+      case ExtendHighSVecI32x4ToVecI64x2:
+      case ExtendLowUVecI32x4ToVecI64x2:
+      case ExtendHighUVecI32x4ToVecI64x2:
       case ConvertLowSVecI32x4ToVecF64x2:
       case ConvertLowUVecI32x4ToVecF64x2:
       case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -377,6 +373,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case GeSVecI32x4:
       case GeUVecI32x4:
       case EqVecI64x2:
+      case NeVecI64x2:
+      case LtSVecI64x2:
+      case LeSVecI64x2:
+      case GtSVecI64x2:
+      case GeSVecI64x2:
       case EqVecF32x4:
       case NeVecF32x4:
       case LtVecF32x4:
@@ -399,11 +400,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
       case SubVecI8x16:
       case SubSatSVecI8x16:
       case SubSatUVecI8x16:
-        ret = 1;
-        break;
-      case MulVecI8x16:
-        ret = 2;
-        break;
       case MinSVecI8x16:
       case MinUVecI8x16:
       case MaxSVecI8x16:
@@ -505,6 +501,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
   }
   Index visitMemoryCopy(MemoryCopy* curr) {
+    // TODO when the size is a constant, estimate the time based on that
     return 6 + visit(curr->dest) + visit(curr->source) + visit(curr->size);
   }
   Index visitMemoryFill(MemoryFill* curr) {
@@ -522,17 +519,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
     Index ret = 0;
     switch (curr->op) {
       case Bitselect:
-      case SignSelectVec8x16:
-      case SignSelectVec16x8:
-      case SignSelectVec32x4:
-      case SignSelectVec64x2:
         ret = 1;
-        break;
-      case QFMAF32x4:
-      case QFMSF32x4:
-      case QFMAF64x2:
-      case QFMSF64x2:
-        ret = 2;
         break;
     }
     return ret + visit(curr->a) + visit(curr->b) + visit(curr->c);
@@ -540,11 +527,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitSIMDShift(SIMDShift* curr) {
     return 1 + visit(curr->vec) + visit(curr->shift);
   }
-  Index visitSIMDWiden(SIMDWiden* curr) { return 1 + visit(curr->vec); }
   Index visitSIMDShuffle(SIMDShuffle* curr) {
     return 1 + visit(curr->left) + visit(curr->right);
   }
-  Index visitPrefetch(Prefetch* curr) { return 0 + visit(curr->ptr); }
   Index visitRefNull(RefNull* curr) { return 1; }
   Index visitRefIs(RefIs* curr) { return 1 + visit(curr->value); }
   Index visitRefFunc(RefFunc* curr) { return 1; }
@@ -626,6 +611,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   }
   Index visitArrayLen(ArrayLen* curr) {
     return 1 + nullCheckCost(curr->ref) + visit(curr->ref);
+  }
+  Index visitArrayCopy(ArrayCopy* curr) {
+    // Similar to MemoryCopy.
+    return 6 + visit(curr->destRef) + visit(curr->destIndex) +
+           visit(curr->srcRef) + visit(curr->srcIndex) + visit(curr->length);
   }
   Index visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
 

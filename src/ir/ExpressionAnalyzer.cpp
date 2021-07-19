@@ -60,7 +60,7 @@ bool ExpressionAnalyzer::isResultUsed(ExpressionStack& stack, Function* func) {
     }
   }
   // The value might be used, so it depends on if the function returns
-  return func->sig.results != Type::none;
+  return func->getResults() != Type::none;
 }
 
 // Checks if a value is dropped.
@@ -230,7 +230,7 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
     }                                                                          \
   }
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
 
       return true;
     }
@@ -322,7 +322,7 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) visitScopeName(cast->name);
 
-#include "wasm-delegations-fields.h"
+#include "wasm-delegations-fields.def"
     }
 
     void noteScopeName(Name curr) {

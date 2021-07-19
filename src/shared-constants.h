@@ -21,7 +21,6 @@
 
 namespace wasm {
 
-extern Name WASM_CALL_CTORS;
 extern Name MEMORY_BASE;
 extern Name TABLE_BASE;
 extern Name STACK_POINTER;
@@ -66,8 +65,7 @@ extern Name SPECTEST;
 extern Name PRINT;
 extern Name EXIT;
 extern Name SHARED;
-extern Name EVENT;
-extern Name ATTR;
+extern Name TAG;
 
 } // namespace wasm
 

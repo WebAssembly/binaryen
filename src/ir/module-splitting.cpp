@@ -18,7 +18,7 @@
 //
 //   1. Create the new secondary module.
 //
-//   2. Export globals, events, tables, and memories from the primary module and
+//   2. Export globals, tags, tables, and memories from the primary module and
 //      import them in the secondary module.
 //
 //   3. Move the deferred functions from the primary to the secondary module.
@@ -54,8 +54,8 @@
 // ref.func instructions, they will have to be modified to use a similar layer
 // of indirection.
 //
-// The code as currently written makes a few assumptions about the module that
-// is being split:
+// The code as currently written makes a couple assumptions about the module
+// that is being split:
 //
 //   1. It assumes that mutable-globals is allowed. This could be worked around
 //      by introducing wrapper functions for globals and rewriting secondary
@@ -66,11 +66,6 @@
 //      is exactly one segment that may have a non-constant offset. It also
 //      assumes that all segments are active segments (although Binaryen does
 //      not yet support passive table segments anyway).
-//
-//   3. It assumes that each function appears in the table at most once. This
-//      isn't necessarily true in general or even for LLVM output after function
-//      deduplication. Relaxing this assumption would just require slightly more
-//      complex code, so it is a good candidate for a follow up PR.
 
 #include "ir/module-splitting.h"
 #include "ir/element-utils.h"
@@ -103,12 +98,6 @@ template<class F> void forEachElement(Module& module, F f) {
   });
 }
 
-static RefFunc* makeRefFunc(Module& wasm, Function* func) {
-  // FIXME: make the type NonNullable when we support it!
-  return Builder(wasm).makeRefFunc(func->name,
-                                   Type(HeapType(func->sig), Nullable));
-}
-
 struct TableSlotManager {
   struct Slot {
     Name tableName;
@@ -130,9 +119,10 @@ struct TableSlotManager {
   TableSlotManager(Module& module);
 
   Table* makeTable();
+  ElementSegment* makeElementSegment();
 
   // Returns the table index for `func`, allocating a new index if necessary.
-  Slot getSlot(RefFunc* entry);
+  Slot getSlot(Name func, HeapType type);
   void addSlot(Name func, Slot slot);
 };
 
@@ -149,19 +139,22 @@ Expression* TableSlotManager::Slot::makeExpr(Module& module) {
 }
 
 void TableSlotManager::addSlot(Name func, Slot slot) {
-  auto it = funcIndices.insert(std::make_pair(func, slot));
-  WASM_UNUSED(it);
-  assert(it.second && "Function already has multiple table slots");
+  // Ignore functions that already have slots.
+  funcIndices.insert({func, slot});
 }
 
 TableSlotManager::TableSlotManager(Module& module) : module(module) {
   // TODO: Reject or handle passive element segments
-
-  if (module.tables.empty()) {
+  auto it = std::find_if(module.tables.begin(),
+                         module.tables.end(),
+                         [&](std::unique_ptr<Table>& table) {
+                           return table->type == Type::funcref;
+                         });
+  if (it == module.tables.end()) {
     return;
   }
 
-  activeTable = module.tables.front().get();
+  activeTable = it->get();
   ModuleUtils::iterTableSegments(
     module, activeTable->name, [&](ElementSegment* segment) {
       activeTableSegments.push_back(segment);
@@ -172,6 +165,7 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
   // append new items at constant offsets after all existing items at constant
   // offsets.
   if (activeTableSegments.size() == 1 &&
+      activeTableSegments[0]->type == Type::funcref &&
       !activeTableSegments[0]->offset->is<Const>()) {
     assert(activeTableSegments[0]->offset->is<GlobalGet>() &&
            "Unexpected initializer instruction");
@@ -204,11 +198,19 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
 }
 
 Table* TableSlotManager::makeTable() {
-  return module.addTable(Builder::makeTable(Name::fromInt(0)));
+  return module.addTable(
+    Builder::makeTable(Names::getValidTableName(module, Name::fromInt(0))));
 }
 
-TableSlotManager::Slot TableSlotManager::getSlot(RefFunc* entry) {
-  auto slotIt = funcIndices.find(entry->func);
+ElementSegment* TableSlotManager::makeElementSegment() {
+  return module.addElementSegment(Builder::makeElementSegment(
+    Names::getValidElementSegmentName(module, Name::fromInt(0)),
+    activeTable->name,
+    Builder(module).makeConst(int32_t(0))));
+}
+
+TableSlotManager::Slot TableSlotManager::getSlot(Name func, HeapType type) {
+  auto slotIt = funcIndices.find(func);
   if (slotIt != funcIndices.end()) {
     return slotIt->second;
   }
@@ -220,27 +222,30 @@ TableSlotManager::Slot TableSlotManager::getSlot(RefFunc* entry) {
       activeBase = {activeTable->name, "", 0};
     }
 
+    // None of the existing segments should refer to the active table
     assert(std::all_of(module.elementSegments.begin(),
                        module.elementSegments.end(),
                        [&](std::unique_ptr<ElementSegment>& segment) {
                          return segment->table != activeTable->name;
                        }));
-    auto segment = std::make_unique<ElementSegment>(
-      activeTable->name, Builder(module).makeConst(int32_t(0)));
-    segment->setName(Name::fromInt(0), false);
-    activeSegment = segment.get();
-    module.addElementSegment(std::move(segment));
+
+    activeSegment = makeElementSegment();
   }
 
   Slot newSlot = {activeBase.tableName,
                   activeBase.global,
                   activeBase.index + Index(activeSegment->data.size())};
 
-  activeSegment->data.push_back(entry);
+  Builder builder(module);
+  activeSegment->data.push_back(builder.makeRefFunc(func, type));
 
-  addSlot(entry->func, newSlot);
+  addSlot(func, newSlot);
   if (activeTable->initial <= newSlot.index) {
     activeTable->initial = newSlot.index + 1;
+    // TODO: handle the active table not being the dylink table (#3823)
+    if (module.dylinkSection) {
+      module.dylinkSection->tableSize = activeTable->initial;
+    }
   }
   if (activeTable->max <= newSlot.index) {
     activeTable->max = newSlot.index + 1;
@@ -261,9 +266,14 @@ struct ModuleSplitter {
 
   TableSlotManager tableManager;
 
+  Names::MinifiedNameGenerator minified;
+
   // Map from internal function names to (one of) their corresponding export
   // names.
   std::map<Name, Name> exportedPrimaryFuncs;
+
+  // Map placeholder indices to the names of the functions they replace.
+  std::map<size_t, Name> placeholderMap;
 
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
@@ -339,8 +349,14 @@ void ModuleSplitter::exportImportFunction(Name funcName) {
   if (exportIt != exportedPrimaryFuncs.end()) {
     exportName = exportIt->second;
   } else {
-    exportName = Names::getValidExportName(
-      primary, config.newExportPrefix + funcName.c_str());
+    if (config.minimizeNewExportNames) {
+      do {
+        exportName = config.newExportPrefix + minified.getName();
+      } while (primary.getExportOrNull(exportName) != nullptr);
+    } else {
+      exportName = Names::getValidExportName(
+        primary, config.newExportPrefix + funcName.c_str());
+    }
     primary.addExport(
       Builder::makeExport(exportName, funcName, ExternalKind::Function));
     exportedPrimaryFuncs[funcName] = exportName;
@@ -349,7 +365,7 @@ void ModuleSplitter::exportImportFunction(Name funcName) {
   // module.
   if (secondary.getFunctionOrNull(funcName) == nullptr) {
     auto func =
-      Builder::makeFunction(funcName, primary.getFunction(funcName)->sig, {});
+      Builder::makeFunction(funcName, primary.getFunction(funcName)->type, {});
     func->module = config.importNamespace;
     func->base = exportName;
     secondary.addFunction(std::move(func));
@@ -382,18 +398,16 @@ void ModuleSplitter::thunkExportedSecondaryFunctions() {
       // We've already created a thunk for this function
       continue;
     }
-    auto func = std::make_unique<Function>();
-    func->name = secondaryFunc;
-    func->sig = secondary.getFunction(secondaryFunc)->sig;
+    auto* func = primary.addFunction(Builder::makeFunction(
+      secondaryFunc, secondary.getFunction(secondaryFunc)->type, {}));
     std::vector<Expression*> args;
-    for (size_t i = 0, size = func->sig.params.size(); i < size; ++i) {
-      args.push_back(builder.makeLocalGet(i, func->sig.params[i]));
+    Type params = func->getParams();
+    for (size_t i = 0, size = params.size(); i < size; ++i) {
+      args.push_back(builder.makeLocalGet(i, params[i]));
     }
-
-    auto tableSlot = tableManager.getSlot(makeRefFunc(primary, func.get()));
+    auto tableSlot = tableManager.getSlot(secondaryFunc, func->type);
     func->body = builder.makeCallIndirect(
-      tableSlot.tableName, tableSlot.makeExpr(primary), args, func->sig);
-    primary.addFunction(std::move(func));
+      tableSlot.tableName, tableSlot.makeExpr(primary), args, func->getSig());
   }
 }
 
@@ -411,14 +425,13 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
       if (!parent.secondaryFuncs.count(curr->target)) {
         return;
       }
-      auto func = parent.secondary.getFunction(curr->target);
-      auto tableSlot =
-        parent.tableManager.getSlot(makeRefFunc(parent.primary, func));
+      auto* func = parent.secondary.getFunction(curr->target);
+      auto tableSlot = parent.tableManager.getSlot(curr->target, func->type);
       replaceCurrent(
         builder.makeCallIndirect(tableSlot.tableName,
                                  tableSlot.makeExpr(parent.primary),
                                  curr->operands,
-                                 func->sig,
+                                 func->getSig(),
                                  curr->isReturn));
     }
     void visitRefFunc(RefFunc* curr) {
@@ -474,6 +487,7 @@ void ModuleSplitter::setupTablePatching() {
   // `importNamespace`.`index`.
   forEachElement(primary, [&](Name, Name, Index index, Name& elem) {
     if (secondaryFuncs.count(elem)) {
+      placeholderMap[index] = elem;
       auto* secondaryFunc = secondary.getFunction(elem);
       replacedElems[index] = secondaryFunc;
       auto placeholder = std::make_unique<Function>();
@@ -483,7 +497,7 @@ void ModuleSplitter::setupTablePatching() {
         primary,
         std::string("placeholder_") + std::string(placeholder->base.c_str()));
       placeholder->hasExplicitName = false;
-      placeholder->sig = secondaryFunc->sig;
+      placeholder->type = secondaryFunc->type;
       elem = placeholder->name;
       primary.addFunction(std::move(placeholder));
     }
@@ -521,7 +535,9 @@ void ModuleSplitter::setupTablePatching() {
          ++i) {
       if (replacement->first == i) {
         // primarySeg->data[i] is a placeholder, so use the secondary function.
-        secondaryElems.push_back(makeRefFunc(secondary, replacement->second));
+        auto* func = replacement->second;
+        auto* ref = Builder(secondary).makeRefFunc(func->name, func->type);
+        secondaryElems.push_back(ref);
         ++replacement;
       } else if (auto* get = primarySeg->data[i]->dynCast<RefFunc>()) {
         exportImportFunction(get->func);
@@ -533,7 +549,7 @@ void ModuleSplitter::setupTablePatching() {
 
     auto offset = ExpressionManipulator::copy(primarySeg->offset, secondary);
     auto secondarySeg = std::make_unique<ElementSegment>(
-      secondaryTable->name, offset, secondaryElems);
+      secondaryTable->name, offset, secondaryTable->type, secondaryElems);
     secondarySeg->setName(primarySeg->name, primarySeg->hasExplicitName);
     secondary.addElementSegment(std::move(secondarySeg));
     return;
@@ -545,10 +561,11 @@ void ModuleSplitter::setupTablePatching() {
   std::vector<Expression*> currData;
   auto finishSegment = [&]() {
     auto* offset = Builder(secondary).makeConst(int32_t(currBase));
-    auto secondarySeg =
-      std::make_unique<ElementSegment>(secondaryTable->name, offset, currData);
-    secondarySeg->setName(Name::fromInt(secondary.elementSegments.size()),
-                          false);
+    auto secondarySeg = std::make_unique<ElementSegment>(
+      secondaryTable->name, offset, secondaryTable->type, currData);
+    Name name = Names::getValidElementSegmentName(
+      secondary, Name::fromInt(secondary.elementSegments.size()));
+    secondarySeg->setName(name, false);
     secondary.addElementSegment(std::move(secondarySeg));
   };
   for (auto curr = replacedElems.begin(); curr != replacedElems.end(); ++curr) {
@@ -557,7 +574,8 @@ void ModuleSplitter::setupTablePatching() {
       currBase = curr->first;
       currData.clear();
     }
-    currData.push_back(makeRefFunc(secondary, curr->second));
+    auto* func = curr->second;
+    currData.push_back(Builder(secondary).makeRefFunc(func->name, func->type));
   }
   if (currData.size()) {
     finishSegment();
@@ -631,19 +649,19 @@ void ModuleSplitter::shareImportableItems() {
     secondary.addGlobal(std::move(secondaryGlobal));
   }
 
-  for (auto& event : primary.events) {
-    auto secondaryEvent = std::make_unique<Event>();
-    secondaryEvent->attribute = event->attribute;
-    secondaryEvent->sig = event->sig;
-    makeImportExport(*event, *secondaryEvent, "event", ExternalKind::Event);
-    secondary.addEvent(std::move(secondaryEvent));
+  for (auto& tag : primary.tags) {
+    auto secondaryTag = std::make_unique<Tag>();
+    secondaryTag->sig = tag->sig;
+    makeImportExport(*tag, *secondaryTag, "tag", ExternalKind::Tag);
+    secondary.addTag(std::move(secondaryTag));
   }
 }
 
 } // anonymous namespace
 
-std::unique_ptr<Module> splitFunctions(Module& primary, const Config& config) {
-  return std::move(ModuleSplitter(primary, config).secondaryPtr);
+Results splitFunctions(Module& primary, const Config& config) {
+  ModuleSplitter split(primary, config);
+  return {std::move(split.secondaryPtr), std::move(split.placeholderMap)};
 }
 
 } // namespace ModuleSplitting

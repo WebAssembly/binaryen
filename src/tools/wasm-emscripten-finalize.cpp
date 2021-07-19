@@ -209,6 +209,7 @@ int main(int argc, const char* argv[]) {
   auto writeOutput = outfile.size() > 0 || !emitBinary;
 
   Module wasm;
+  options.applyFeatures(wasm);
   ModuleReader reader;
   // If we are not writing output then we definitely don't need to read debug
   // info, as it does not affect the metadata we will emit. (However, if we
@@ -238,8 +239,6 @@ int main(int argc, const char* argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source map";
   }
-
-  options.applyFeatures(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << &wasm);
@@ -297,15 +296,6 @@ int main(int argc, const char* argv[]) {
   }
 
   passRunner.run();
-
-  if (sideModule) {
-    BYN_TRACE("finalizing as side module\n");
-    // The emscripten PIC ABI still expects a function named
-    // __post_instantiate to be exported by side module.
-    if (auto* e = wasm.getExportOrNull(WASM_CALL_CTORS)) {
-      e->name = "__post_instantiate";
-    }
-  }
 
   BYN_TRACE("generated metadata\n");
   // Substantial changes to the wasm are done, enough to create the metadata.

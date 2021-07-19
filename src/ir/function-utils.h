@@ -28,13 +28,13 @@ namespace FunctionUtils {
 // everything but their name (which can't be the same, in the same
 // module!) - same params, vars, body, result, etc.
 inline bool equal(Function* left, Function* right) {
-  if (left->sig != right->sig) {
+  if (left->type != right->type) {
     return false;
   }
   if (left->getNumVars() != right->getNumVars()) {
     return false;
   }
-  for (Index i = left->sig.params.size(); i < left->getNumLocals(); i++) {
+  for (Index i = left->getParams().size(); i < left->getNumLocals(); i++) {
     if (left->getLocalType(i) != right->getLocalType(i)) {
       return false;
     }

@@ -4,7 +4,9 @@
 
 
 (module
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
   (type $none_=>_i32 (func (result i32)))
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
   (type $i32_=>_none (func (param i32)))
 
   ;; Regression test in which we need to calculate a proper LUB.
@@ -23,6 +25,313 @@
       )
       (return
         (ref.null $i32_=>_none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:   (block $x (result i32)
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 200)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 300)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if (param $x i32) (result i32)
+    ;; this block+br_if can be turned into an if.
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (i32.const 100)
+          (local.get $x)
+        )
+      )
+      (drop (i32.const 200))
+      (i32.const 300)
+    )
+  )
+
+  ;; CHECK:      (func $nothing
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $nothing)
+
+
+  ;; CHECK:      (func $restructure-br_if-condition-reorderable (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (call $nothing)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:   (block $x (result i32)
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 200)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 300)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-condition-reorderable (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (i32.const 100)
+          ;; the condition has side effects, but can be reordered with the value
+          (block (result i32)
+            (call $nothing)
+            (local.get $x)
+          )
+        )
+      )
+      (drop (i32.const 200))
+      (i32.const 300)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-effectful (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (block $block (result i32)
+  ;; CHECK-NEXT:    (call $nothing)
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block $x (result i32)
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 200)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 300)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block $block0 (result i32)
+  ;; CHECK-NEXT:    (call $nothing)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-effectful (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          ;; the value has side effects, but we can use a select instead
+          ;; of an if, which keeps the value first
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          ;; the condition has side effects too, but can be be reordered
+          ;; to the end of the block
+          (block (result i32)
+            (call $nothing)
+            (local.get $x)
+          )
+        )
+      )
+      (drop (i32.const 200))
+      (i32.const 300)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-1 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $x
+  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block $block1 (result i32)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (i32.const 300)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-effectful-corner-case-1 (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          (block (result i32)
+            (call $nothing)
+            (local.get $x)
+          )
+        )
+      )
+      ;; the condition cannot be reordered with this
+      (call $nothing)
+      (i32.const 300)
+    )
+  )
+
+  ;; CHECK:      (func $get-i32 (result i32)
+  ;; CHECK-NEXT:  (i32.const 400)
+  ;; CHECK-NEXT: )
+  (func $get-i32 (result i32)
+    (i32.const 400)
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-2 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $x
+  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block $block2 (result i32)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 300)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $get-i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-effectful-corner-case-2 (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          (block (result i32)
+            (call $nothing)
+            (local.get $x)
+          )
+        )
+      )
+      (drop (i32.const 300))
+      ;; the condition cannot be reordered with this
+      (call $get-i32)
+    )
+  )
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-3 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $x
+  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $nothing)
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-effectful-corner-case-3 (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          ;; we can't do an if because of effects here
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          (local.get $x)
+        )
+      )
+      ;; and we can't do a select because of effects here
+      (call $nothing)
+      (i32.const 100)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-br_if-value-effectful-corner-case-4 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (block $x (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $x
+  ;; CHECK-NEXT:     (block $block (result i32)
+  ;; CHECK-NEXT:      (call $nothing)
+  ;; CHECK-NEXT:      (i32.const 100)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 300)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $get-i32)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-br_if-value-effectful-corner-case-4 (param $x i32) (result i32)
+    (block $x (result i32)
+      (drop
+        (br_if $x
+          ;; we can't do an if because of effects here
+          (block (result i32)
+            (call $nothing)
+            (i32.const 100)
+          )
+          (local.get $x)
+        )
+      )
+      (drop (i32.const 300))
+      ;; and we can't do a select because of effects here
+      (call $get-i32)
+    )
+  )
+
+  ;; CHECK:      (func $restructure-select-no-multivalue
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result i32 i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $block
+  ;; CHECK-NEXT:      (tuple.make
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (call $restructure-br_if
+  ;; CHECK-NEXT:        (i32.const 2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (tuple.make
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:     (i32.const 5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $restructure-select-no-multivalue
+    (drop
+      (block $block (result i32 i32)
+        (drop
+          (br_if $block
+            (tuple.make
+              (i32.const 1)
+              ;; Add a side effect to prevent us turning $block into a
+              ;; restructured if - instead, we will try a restructured select.
+              ;; But, selects cannot return multiple values in the spec, so we
+              ;; can do nothing here.
+              (call $restructure-br_if
+                (i32.const 2)
+              )
+            )
+            (i32.const 3)
+          )
+        )
+        (tuple.make
+          (i32.const 4)
+          (i32.const 5)
+        )
       )
     )
   )

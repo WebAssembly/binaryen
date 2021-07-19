@@ -31,9 +31,7 @@ namespace wasm {
 
 class Literals;
 struct GCData;
-// Subclass the vector type so that this is not easily confused with a vector of
-// types (which could be confusing on the Literal constructor).
-struct RttSupers : std::vector<Type> {};
+struct RttSupers;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -61,6 +59,9 @@ class Literal {
     // would do, but it is simple.)
     // The unique_ptr here is to avoid increasing the size of the union as well
     // as the Literal class itself.
+    // To support the experimental RttFreshSub instruction, we not only store
+    // the type, but also a reference to an allocation.
+    // See struct RttSuper below for more details.
     std::unique_ptr<RttSupers> rttSupers;
     // TODO: Literals of type `externref` can only be `null` currently but we
     // will need to represent extern values eventually, to
@@ -482,6 +483,11 @@ public:
   Literal geSI32x4(const Literal& other) const;
   Literal geUI32x4(const Literal& other) const;
   Literal eqI64x2(const Literal& other) const;
+  Literal neI64x2(const Literal& other) const;
+  Literal ltSI64x2(const Literal& other) const;
+  Literal gtSI64x2(const Literal& other) const;
+  Literal leSI64x2(const Literal& other) const;
+  Literal geSI64x2(const Literal& other) const;
   Literal eqF32x4(const Literal& other) const;
   Literal neF32x4(const Literal& other) const;
   Literal ltF32x4(const Literal& other) const;
@@ -498,10 +504,10 @@ public:
   Literal andV128(const Literal& other) const;
   Literal orV128(const Literal& other) const;
   Literal xorV128(const Literal& other) const;
+  Literal anyTrueV128() const;
   Literal bitselectV128(const Literal& left, const Literal& right) const;
   Literal absI8x16() const;
   Literal negI8x16() const;
-  Literal anyTrueI8x16() const;
   Literal allTrueI8x16() const;
   Literal bitmaskI8x16() const;
   Literal shlI8x16(const Literal& other) const;
@@ -513,7 +519,6 @@ public:
   Literal subI8x16(const Literal& other) const;
   Literal subSaturateSI8x16(const Literal& other) const;
   Literal subSaturateUI8x16(const Literal& other) const;
-  Literal mulI8x16(const Literal& other) const;
   Literal minSI8x16(const Literal& other) const;
   Literal minUI8x16(const Literal& other) const;
   Literal maxSI8x16(const Literal& other) const;
@@ -522,7 +527,6 @@ public:
   Literal popcntI8x16() const;
   Literal absI16x8() const;
   Literal negI16x8() const;
-  Literal anyTrueI16x8() const;
   Literal allTrueI16x8() const;
   Literal bitmaskI16x8() const;
   Literal shlI16x8(const Literal& other) const;
@@ -547,7 +551,6 @@ public:
   Literal extMulHighUI16x8(const Literal& other) const;
   Literal absI32x4() const;
   Literal negI32x4() const;
-  Literal anyTrueI32x4() const;
   Literal allTrueI32x4() const;
   Literal bitmaskI32x4() const;
   Literal shlI32x4(const Literal& other) const;
@@ -565,7 +568,10 @@ public:
   Literal extMulHighSI32x4(const Literal& other) const;
   Literal extMulLowUI32x4(const Literal& other) const;
   Literal extMulHighUI32x4(const Literal& other) const;
+  Literal absI64x2() const;
   Literal negI64x2() const;
+  Literal bitmaskI64x2() const;
+  Literal allTrueI64x2() const;
   Literal shlI64x2(const Literal& other) const;
   Literal shrSI64x2(const Literal& other) const;
   Literal shrUI64x2(const Literal& other) const;
@@ -608,24 +614,20 @@ public:
   Literal nearestF64x2() const;
   Literal truncSatToSI32x4() const;
   Literal truncSatToUI32x4() const;
-  Literal truncSatToSI64x2() const;
-  Literal truncSatToUI64x2() const;
   Literal convertSToF32x4() const;
   Literal convertUToF32x4() const;
-  Literal convertSToF64x2() const;
-  Literal convertUToF64x2() const;
   Literal narrowSToVecI8x16(const Literal& other) const;
   Literal narrowUToVecI8x16(const Literal& other) const;
   Literal narrowSToVecI16x8(const Literal& other) const;
   Literal narrowUToVecI16x8(const Literal& other) const;
-  Literal widenLowSToVecI16x8() const;
-  Literal widenHighSToVecI16x8() const;
-  Literal widenLowUToVecI16x8() const;
-  Literal widenHighUToVecI16x8() const;
-  Literal widenLowSToVecI32x4() const;
-  Literal widenHighSToVecI32x4() const;
-  Literal widenLowUToVecI32x4() const;
-  Literal widenHighUToVecI32x4() const;
+  Literal extendLowSToVecI16x8() const;
+  Literal extendHighSToVecI16x8() const;
+  Literal extendLowUToVecI16x8() const;
+  Literal extendHighUToVecI16x8() const;
+  Literal extendLowSToVecI32x4() const;
+  Literal extendHighSToVecI32x4() const;
+  Literal extendLowUToVecI32x4() const;
+  Literal extendHighUToVecI32x4() const;
   Literal swizzleVec8x16(const Literal& other) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
@@ -642,6 +644,7 @@ private:
   Literal subSatUI8(const Literal& other) const;
   Literal subSatSI16(const Literal& other) const;
   Literal subSatUI16(const Literal& other) const;
+  Literal q15MulrSatSI16(const Literal& other) const;
   Literal minInt(const Literal& other) const;
   Literal maxInt(const Literal& other) const;
   Literal minUInt(const Literal& other) const;
@@ -683,6 +686,28 @@ struct GCData {
   Literals values;
   GCData(Literal rtt, Literals values) : rtt(rtt), values(values) {}
 };
+
+struct RttSuper {
+  // The type of the super.
+  Type type;
+  // A shared allocation, used to implement rtt.fresh_sub. This is null for a
+  // normal sub, and for a fresh one we allocate a value here, which can then be
+  // used to differentiate rtts. (The allocation is shared so that when copying
+  // an rtt we remain equal.)
+  // TODO: Remove or optimize this when the spec stabilizes.
+  std::shared_ptr<size_t> freshPtr;
+
+  RttSuper(Type type) : type(type) {}
+
+  void makeFresh() { freshPtr = std::make_shared<size_t>(); }
+
+  bool operator==(const RttSuper& other) const {
+    return type == other.type && freshPtr == other.freshPtr;
+  }
+  bool operator!=(const RttSuper& other) const { return !(*this == other); }
+};
+
+struct RttSupers : std::vector<RttSuper> {};
 
 } // namespace wasm
 
@@ -743,7 +768,8 @@ template<> struct hash<wasm::Literal> {
       const auto& supers = a.getRttSupers();
       wasm::rehash(digest, supers.size());
       for (auto super : supers) {
-        wasm::rehash(digest, super.getID());
+        wasm::rehash(digest, super.type.getID());
+        wasm::rehash(digest, uintptr_t(super.freshPtr.get()));
       }
       return digest;
     }
@@ -759,39 +785,7 @@ template<> struct hash<wasm::Literals> {
     return digest;
   }
 };
-template<> struct less<wasm::Literal> {
-  bool operator()(const wasm::Literal& a, const wasm::Literal& b) const {
-    if (a.type < b.type) {
-      return true;
-    }
-    if (b.type < a.type) {
-      return false;
-    }
-    TODO_SINGLE_COMPOUND(a.type);
-    switch (a.type.getBasic()) {
-      case wasm::Type::i32:
-        return a.geti32() < b.geti32();
-      case wasm::Type::f32:
-        return a.reinterpreti32() < b.reinterpreti32();
-      case wasm::Type::i64:
-        return a.geti64() < b.geti64();
-      case wasm::Type::f64:
-        return a.reinterpreti64() < b.reinterpreti64();
-      case wasm::Type::v128:
-        return memcmp(a.getv128Ptr(), b.getv128Ptr(), 16) < 0;
-      case wasm::Type::funcref:
-      case wasm::Type::externref:
-      case wasm::Type::anyref:
-      case wasm::Type::eqref:
-      case wasm::Type::i31ref:
-      case wasm::Type::dataref:
-      case wasm::Type::none:
-      case wasm::Type::unreachable:
-        return false;
-    }
-    WASM_UNREACHABLE("unexpected type");
-  }
-};
+
 } // namespace std
 
 #endif // wasm_literal_h

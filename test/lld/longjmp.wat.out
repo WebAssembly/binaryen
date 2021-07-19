@@ -1,13 +1,13 @@
 (module
- (type $i32_=>_none (func (param i32)))
+ (type $none_=>_i32 (func (result i32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (type $none_=>_i32 (func (result i32)))
- (type $none_=>_none (func))
+ (type $i32_=>_none (func (param i32)))
  (type $i32_=>_i32 (func (param i32) (result i32)))
- (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
- (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
  (type $i32_i32_i32_i32_=>_i32 (func (param i32 i32 i32 i32) (result i32)))
+ (type $i32_i32_i32_=>_i32 (func (param i32 i32 i32) (result i32)))
+ (type $none_=>_none (func))
+ (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  (import "env" "malloc" (func $fimport$0 (param i32) (result i32)))
  (import "env" "saveSetjmp" (func $fimport$1 (param i32 i32 i32 i32) (result i32)))
  (import "env" "getTempRet0" (func $fimport$2 (result i32)))
@@ -16,10 +16,10 @@
  (import "env" "testSetjmp" (func $fimport$5 (param i32 i32 i32) (result i32)))
  (import "env" "setTempRet0" (func $fimport$6 (param i32)))
  (import "env" "free" (func $fimport$7 (param i32)))
+ (global $global$0 (mut i32) (i32.const 66112))
  (memory $0 2)
  (table $0 2 2 funcref)
  (elem (i32.const 1) $fimport$3)
- (global $global$0 (mut i32) (i32.const 66112))
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $0))
  (export "main" (func $2))
@@ -151,7 +151,7 @@
     "setTempRet0",
     "free"
   ],
-  "externs": [
+  "globalImports": [
   ],
   "exports": [
     "__wasm_call_ctors",

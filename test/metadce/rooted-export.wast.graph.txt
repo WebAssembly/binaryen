@@ -5,9 +5,9 @@
     "export": "wasm_func_b"
   },
   {
-    "name": "rooted-export-event",
+    "name": "rooted-export-tag",
     "root": true,
-    "export": "wasm_event_b"
+    "export": "wasm_tag_b"
   }
 ]
 

@@ -742,7 +742,7 @@ private:
       mergeable.pop_back();
     }
     // ensure the replacement has the same type, so the outside is not surprised
-    outer->finalize(getFunction()->sig.results);
+    outer->finalize(getFunction()->getResults());
     getFunction()->body = outer;
     return true;
   }

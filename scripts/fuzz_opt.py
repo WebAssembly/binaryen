@@ -36,7 +36,6 @@ assert sys.version_info.major == 3, 'requires Python 3!'
 # parameters
 
 # feature options that are always passed to the tools.
-# * multivalue: https://github.com/WebAssembly/binaryen/issues/2770
 CONSTANT_FEATURE_OPTS = ['--all-features']
 
 INPUT_SIZE_MIN = 1024
@@ -116,6 +115,21 @@ def randomize_feature_opts():
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     print('randomized feature opts:', ' '.join(FEATURE_OPTS))
+
+
+ALL_FEATURE_OPTS = ['--all-features', '-all', '--mvp-features', '-mvp']
+
+
+def update_feature_opts(wasm):
+    global FEATURE_OPTS
+    # we will re-compute the features; leave all other things as they are
+    EXTRA = [x for x in FEATURE_OPTS if not x.startswith('--enable') and
+             not x.startswith('--disable') and x not in ALL_FEATURE_OPTS]
+    FEATURE_OPTS = run([in_bin('wasm-opt'), wasm] + FEATURE_OPTS + ['--print-features']).strip().split('\n')
+    # filter out '', which can happen if no features are enabled
+    FEATURE_OPTS = [x for x in FEATURE_OPTS if x]
+    print(FEATURE_OPTS, EXTRA)
+    FEATURE_OPTS += EXTRA
 
 
 def randomize_fuzz_settings():
@@ -213,8 +227,27 @@ def pick_initial_contents():
         '--disable-exception-handling',
         # has not been fuzzed in general yet
         '--disable-memory64',
-        # has not been fuzzed in general yet
-        '--disable-gc',
+        # avoid multivalue for now due to bad interactions with gc rtts in
+        # stacky code. for example, this fails to roundtrip as the tuple code
+        # ends up creating stacky binary code that needs to spill rtts to locals,
+        # which is not allowed:
+        #
+        # (module
+        #  (type $other (struct))
+        #  (func $foo (result (rtt $other))
+        #   (select
+        #    (rtt.canon $other)
+        #    (rtt.canon $other)
+        #    (tuple.extract 1
+        #     (tuple.make
+        #      (i32.const 0)
+        #      (i32.const 0)
+        #     )
+        #    )
+        #   )
+        #  )
+        # )
+        '--disable-multivalue',
         # DWARF is incompatible with multivalue atm; it's more important to
         # fuzz multivalue since we aren't actually fuzzing DWARF here
         '--strip-dwarf',
@@ -222,7 +255,22 @@ def pick_initial_contents():
 
     # the given wasm may not work with the chosen feature opts. for example, if
     # we pick atomics.wast but want to run with --disable-atomics, then we'd
-    # error. test the wasm.
+    # error, so we need to test the wasm. first, make sure it doesn't have a
+    # features section, as that would enable a feature that we might want to
+    # be disabled, and our test would not error as we want it to.
+    if test_name.endswith('.wasm'):
+        temp_test_name = 'initial.wasm'
+        try:
+            run([in_bin('wasm-opt'), test_name, '-all', '--strip-target-features',
+                 '-o', temp_test_name])
+        except Exception:
+            # the input can be invalid if e.g. it is raw data that is used with
+            # -ttf as fuzzer input
+            print('(initial contents are not valid wasm, ignoring)')
+            return
+        test_name = temp_test_name
+
+    # next, test the wasm.
     try:
         run([in_bin('wasm-opt'), test_name] + FEATURE_OPTS,
             stderr=subprocess.PIPE,
@@ -240,6 +288,9 @@ IGNORE = '[binaryen-fuzzer-ignore]'
 # Traps are reported as [trap REASON]
 TRAP_PREFIX = '[trap '
 
+# Host limits are reported as [host limit REASON]
+HOST_LIMIT_PREFIX = '[host limit '
+
 # --fuzz-exec reports calls as [fuzz-exec] calling foo
 FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
@@ -254,12 +305,28 @@ def compare(x, y, context):
         ))
 
 
+# converts a possibly-signed integer to an unsigned integer
+def unsign(x, bits):
+    return x & ((1 << bits) - 1)
+
+
 # numbers are "close enough" if they just differ in printing, as different
 # vms may print at different precision levels and verbosity
 def numbers_are_close_enough(x, y):
     # handle nan comparisons like -nan:0x7ffff0 vs NaN, ignoring the bits
     if 'nan' in x.lower() and 'nan' in y.lower():
         return True
+    # if one input is a pair, then it is in fact a 64-bit integer that is
+    # reported as two 32-bit chunks. convert such 'low high' pairs into a 64-bit
+    # integer for comparison to the other value
+    if ' ' in x or ' ' in y:
+        def to_64_bit(a):
+            if ' ' not in a:
+                return unsign(int(a), bits=64)
+            low, high = a.split(' ')
+            return unsign(int(low), 32) + (1 << 32) * unsign(int(high), 32)
+
+        return to_64_bit(x) == to_64_bit(y)
     # float() on the strings will handle many minor differences, like
     # float('1.0') == float('1') , float('inf') == float('Infinity'), etc.
     try:
@@ -349,17 +416,31 @@ def fix_spec_output(out):
 
 
 def run_vm(cmd):
-    # ignore some vm assertions, if bugs have already been filed
-    known_issues = [
-        'local count too large',    # ignore this; can be caused by flatten, ssa, etc. passes
-    ]
-    try:
-        return run(cmd)
-    except subprocess.CalledProcessError:
-        output = run_unchecked(cmd)
+    def filter_known_issues(output):
+        known_issues = [
+            # can be caused by flatten, ssa, etc. passes
+            'local count too large',
+            # https://github.com/WebAssembly/binaryen/issues/3767
+            # note that this text is a little too broad, but the problem is rare
+            # enough that it's unlikely to hide an unrelated issue
+            'found br_if of type',
+            # all host limitations are arbitrary and may differ between VMs and also
+            # be affected by optimizations, so ignore them.
+            HOST_LIMIT_PREFIX,
+        ]
         for issue in known_issues:
             if issue in output:
                 return IGNORE
+        return output
+
+    try:
+        # some known issues do not cause the entire process to fail
+        return filter_known_issues(run(cmd))
+    except subprocess.CalledProcessError:
+        # other known issues do make it fail, so re-run without checking for
+        # success and see if we should ignore it
+        if filter_known_issues(run_unchecked(cmd)) == IGNORE:
+            return IGNORE
         raise
 
 
@@ -395,6 +476,10 @@ def run_d8_js(js, args=[], liftoff=True):
 
 def run_d8_wasm(wasm, liftoff=True):
     return run_d8_js(in_binaryen('scripts', 'fuzz_shell.js'), [wasm], liftoff=liftoff)
+
+
+def all_disallowed(features):
+    return not any(('--enable-' + x) in FEATURE_OPTS for x in features)
 
 
 class TestCaseHandler:
@@ -512,7 +597,7 @@ class CompareVMs(TestCaseHandler):
                 if random.random() < 0.5:
                     return False
                 # wasm2c doesn't support most features
-                return all([x in FEATURE_OPTS for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
+                return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc'])
 
             def run(self, wasm):
                 run([in_bin('wasm-opt'), wasm, '--emit-wasm2c-wrapper=main.c'] + FEATURE_OPTS)
@@ -545,6 +630,7 @@ class CompareVMs(TestCaseHandler):
                                os.path.join(self.wasm2c_dir, 'wasm-rt-impl.c'),
                                '-I' + self.wasm2c_dir,
                                '-lm',
+                               '-s', 'ENVIRONMENT=shell',
                                '-s', 'ALLOW_MEMORY_GROWTH']
                 # disable the signal handler: emcc looks like unix, but wasm has
                 # no signals
@@ -576,8 +662,12 @@ class CompareVMs(TestCaseHandler):
                 # NaNs can differ from wasm VMs
                 return not NANS
 
-        self.vms = [BinaryenInterpreter(), D8(), D8Liftoff(), D8TurboFan(),
-                    Wasm2C(), Wasm2C2Wasm()]
+        self.vms = [BinaryenInterpreter(),
+                    D8(),
+                    D8Liftoff(),
+                    D8TurboFan(),
+                    Wasm2C(),
+                    Wasm2C2Wasm()]
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         before = self.run_vms(before_wasm)
@@ -611,7 +701,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-simd', '--disable-reference-types', '--disable-exception-handling', '--disable-multivalue', '--disable-gc']])
+        return all_disallowed(['simd', 'exception-handling', 'multivalue'])
 
 
 # Check for determinism - the same command must have the same output.
@@ -749,7 +839,7 @@ class Wasm2JS(TestCaseHandler):
         # specifically for growth here
         if INITIAL_CONTENTS:
             return False
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-threads', '--disable-bulk-memory', '--disable-nontrapping-float-to-int', '--disable-tail-call', '--disable-sign-ext', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
+        return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc'])
 
 
 class Asyncify(TestCaseHandler):
@@ -803,7 +893,7 @@ class Asyncify(TestCaseHandler):
         compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all([x in feature_opts for x in ['--disable-exception-handling', '--disable-simd', '--disable-tail-call', '--disable-reference-types', '--disable-multivalue', '--disable-gc']])
+        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc'])
 
 
 # Check that the text format round-trips without error.
@@ -811,7 +901,11 @@ class RoundtripText(TestCaseHandler):
     frequency = 0.05
 
     def handle(self, wasm):
-        run([in_bin('wasm-dis'), wasm, '-o', 'a.wast'])
+        # use name-types because in wasm GC we can end up truncating the default
+        # names which are very long, causing names to collide and the wast to be
+        # invalid
+        # FIXME: run name-types by default during load?
+        run([in_bin('wasm-opt'), wasm, '--name-types', '-S', '-o', 'a.wast'] + FEATURE_OPTS)
         run([in_bin('wasm-opt'), 'a.wast'] + FEATURE_OPTS)
 
 
@@ -869,6 +963,7 @@ def test_one(random_input, given_wasm):
     wasm_size = os.stat('a.wasm').st_size
     bytes = wasm_size
     print('pre wasm size:', wasm_size)
+    update_feature_opts('a.wasm')
 
     # create a second wasm for handlers that want to look at pairs.
     generate_command = [in_bin('wasm-opt'), 'a.wasm', '-o', 'b.wasm'] + opts + FUZZ_OPTS + FEATURE_OPTS
@@ -944,6 +1039,8 @@ opt_choices = [
     ["--inlining"],
     ["--inlining-optimizing"],
     ["--flatten", "--local-cse"],
+    ["--heap2local"],
+    ["--remove-unused-names", "--heap2local"],
     ["--generate-stack-ir"],
     ["--licm"],
     ["--memory-packing"],
@@ -985,11 +1082,14 @@ def randomize_opt_flags():
             if has_flatten:
                 print('avoiding multiple --flatten in a single command, due to exponential overhead')
                 continue
-            if '--disable-exception-handling' not in FEATURE_OPTS:
+            if '--enable-exception-handling' in FEATURE_OPTS:
                 print('avoiding --flatten due to exception catching which does not support it yet')
                 continue
-            if '--disable-multivalue' not in FEATURE_OPTS and '--disable-reference-types' not in FEATURE_OPTS:
+            if '--enable-multivalue' in FEATURE_OPTS and '--enable-reference-types' in FEATURE_OPTS:
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
+                continue
+            if '--gc' not in FEATURE_OPTS:
+                print('avoiding --flatten due to GC not supporting it (spilling of RTTs)')
                 continue
             if INITIAL_CONTENTS and os.path.getsize(INITIAL_CONTENTS) > 2000:
                 print('avoiding --flatten due using a large amount of initial contents, which may blow up')
@@ -1010,6 +1110,17 @@ def randomize_opt_flags():
             ret += ['--optimize-level=' + str(random.randint(0, 3))]
         if random.random() < 0.5:
             ret += ['--shrink-level=' + str(random.randint(0, 3))]
+    # possibly converge. don't do this very often as it can be slow.
+    if random.random() < 0.05:
+        ret += ['--converge']
+    # possibly inline all the things as much as possible. inlining that much may
+    # be realistic in some cases (on GC benchmarks it is very helpful), but
+    # also, inlining so much allows other optimizations to kick in, which
+    # increases coverage
+    # (the specific number here doesn't matter, but it is far higher than the
+    # wasm limitation on function body size which is 128K)
+    if random.random() < 0.5:
+        ret += ['-fimfs=99999999']
     assert ret.count('--flatten') <= 1
     return ret
 

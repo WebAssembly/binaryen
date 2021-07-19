@@ -316,9 +316,8 @@ void test_core() {
     BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref());
   BinaryenExpressionRef i31refExpr = BinaryenI31New(module, makeInt32(module, 1));
 
-  // Events
-  BinaryenAddEvent(
-    module, "a-event", 0, BinaryenTypeInt32(), BinaryenTypeNone());
+  // Tags
+  BinaryenAddTag(module, "a-tag", BinaryenTypeInt32(), BinaryenTypeNone());
 
   BinaryenAddTable(module, "tab", 0, 100);
 
@@ -326,21 +325,21 @@ void test_core() {
 
   // (try
   //   (do
-  //     (throw $a-event (i32.const 0))
+  //     (throw $a-tag (i32.const 0))
   //   )
-  //   (catch $a-event
+  //   (catch $a-tag
   //     (drop (i32 pop))
   //   )
   //   (catch_all)
   // )
   BinaryenExpressionRef tryBody = BinaryenThrow(
-    module, "a-event", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1);
+    module, "a-tag", (BinaryenExpressionRef[]){makeInt32(module, 0)}, 1);
   BinaryenExpressionRef catchBody =
     BinaryenDrop(module, BinaryenPop(module, BinaryenTypeInt32()));
   BinaryenExpressionRef catchAllBody = BinaryenNop(module);
-  const char* catchEvents[] = {"a-event"};
+  const char* catchTags[] = {"a-tag"};
   BinaryenExpressionRef catchBodies[] = {catchBody, catchAllBody};
-  const char* emptyCatchEvents[] = {};
+  const char* emptyCatchTags[] = {};
   BinaryenExpressionRef emptyCatchBodies[] = {};
   BinaryenExpressionRef nopCatchBody[] = {BinaryenNop(module)};
 
@@ -403,22 +402,24 @@ void test_core() {
     makeUnary(module, BinaryenSplatVecF32x4(), f32),
     makeUnary(module, BinaryenSplatVecF64x2(), f64),
     makeUnary(module, BinaryenNotVec128(), v128),
+    makeUnary(module, BinaryenAnyTrueVec128(), v128),
+    makeUnary(module, BinaryenPopcntVecI8x16(), v128),
     makeUnary(module, BinaryenAbsVecI8x16(), v128),
     makeUnary(module, BinaryenNegVecI8x16(), v128),
-    makeUnary(module, BinaryenAnyTrueVecI8x16(), v128),
     makeUnary(module, BinaryenAllTrueVecI8x16(), v128),
     makeUnary(module, BinaryenBitmaskVecI8x16(), v128),
     makeUnary(module, BinaryenAbsVecI16x8(), v128),
     makeUnary(module, BinaryenNegVecI16x8(), v128),
-    makeUnary(module, BinaryenAnyTrueVecI16x8(), v128),
     makeUnary(module, BinaryenAllTrueVecI16x8(), v128),
     makeUnary(module, BinaryenBitmaskVecI16x8(), v128),
     makeUnary(module, BinaryenAbsVecI32x4(), v128),
     makeUnary(module, BinaryenNegVecI32x4(), v128),
-    makeUnary(module, BinaryenAnyTrueVecI32x4(), v128),
     makeUnary(module, BinaryenAllTrueVecI32x4(), v128),
     makeUnary(module, BinaryenBitmaskVecI32x4(), v128),
+    makeUnary(module, BinaryenAbsVecI64x2(), v128),
     makeUnary(module, BinaryenNegVecI64x2(), v128),
+    makeUnary(module, BinaryenAllTrueVecI64x2(), v128),
+    makeUnary(module, BinaryenBitmaskVecI64x2(), v128),
     makeUnary(module, BinaryenAbsVecF32x4(), v128),
     makeUnary(module, BinaryenNegVecF32x4(), v128),
     makeUnary(module, BinaryenSqrtVecF32x4(), v128),
@@ -427,20 +428,26 @@ void test_core() {
     makeUnary(module, BinaryenSqrtVecF64x2(), v128),
     makeUnary(module, BinaryenTruncSatSVecF32x4ToVecI32x4(), v128),
     makeUnary(module, BinaryenTruncSatUVecF32x4ToVecI32x4(), v128),
-    makeUnary(module, BinaryenTruncSatSVecF64x2ToVecI64x2(), v128),
-    makeUnary(module, BinaryenTruncSatUVecF64x2ToVecI64x2(), v128),
     makeUnary(module, BinaryenConvertSVecI32x4ToVecF32x4(), v128),
     makeUnary(module, BinaryenConvertUVecI32x4ToVecF32x4(), v128),
-    makeUnary(module, BinaryenConvertSVecI64x2ToVecF64x2(), v128),
-    makeUnary(module, BinaryenConvertUVecI64x2ToVecF64x2(), v128),
-    makeUnary(module, BinaryenWidenLowSVecI8x16ToVecI16x8(), v128),
-    makeUnary(module, BinaryenWidenHighSVecI8x16ToVecI16x8(), v128),
-    makeUnary(module, BinaryenWidenLowUVecI8x16ToVecI16x8(), v128),
-    makeUnary(module, BinaryenWidenHighUVecI8x16ToVecI16x8(), v128),
-    makeUnary(module, BinaryenWidenLowSVecI16x8ToVecI32x4(), v128),
-    makeUnary(module, BinaryenWidenHighSVecI16x8ToVecI32x4(), v128),
-    makeUnary(module, BinaryenWidenLowUVecI16x8ToVecI32x4(), v128),
-    makeUnary(module, BinaryenWidenHighUVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendLowSVecI8x16ToVecI16x8(), v128),
+    makeUnary(module, BinaryenExtendHighSVecI8x16ToVecI16x8(), v128),
+    makeUnary(module, BinaryenExtendLowUVecI8x16ToVecI16x8(), v128),
+    makeUnary(module, BinaryenExtendHighUVecI8x16ToVecI16x8(), v128),
+    makeUnary(module, BinaryenExtendLowSVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendHighSVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendLowUVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendHighUVecI16x8ToVecI32x4(), v128),
+    makeUnary(module, BinaryenExtendLowSVecI32x4ToVecI64x2(), v128),
+    makeUnary(module, BinaryenExtendHighSVecI32x4ToVecI64x2(), v128),
+    makeUnary(module, BinaryenExtendLowUVecI32x4ToVecI64x2(), v128),
+    makeUnary(module, BinaryenExtendHighUVecI32x4ToVecI64x2(), v128),
+    makeUnary(module, BinaryenConvertLowSVecI32x4ToVecF64x2(), v128),
+    makeUnary(module, BinaryenConvertLowUVecI32x4ToVecF64x2(), v128),
+    makeUnary(module, BinaryenTruncSatZeroSVecF64x2ToVecI32x4(), v128),
+    makeUnary(module, BinaryenTruncSatZeroUVecF64x2ToVecI32x4(), v128),
+    makeUnary(module, BinaryenDemoteZeroVecF64x2ToVecF32x4(), v128),
+    makeUnary(module, BinaryenPromoteLowVecF32x4ToVecF64x2(), v128),
     // Binary
     makeBinary(module, BinaryenAddInt32(), i32),
     makeBinary(module, BinaryenSubFloat64(), f64),
@@ -504,6 +511,12 @@ void test_core() {
     makeBinary(module, BinaryenLeUVecI32x4(), v128),
     makeBinary(module, BinaryenGeSVecI32x4(), v128),
     makeBinary(module, BinaryenGeUVecI32x4(), v128),
+    makeBinary(module, BinaryenEqVecI64x2(), v128),
+    makeBinary(module, BinaryenNeVecI64x2(), v128),
+    makeBinary(module, BinaryenLtSVecI64x2(), v128),
+    makeBinary(module, BinaryenGtSVecI64x2(), v128),
+    makeBinary(module, BinaryenLeSVecI64x2(), v128),
+    makeBinary(module, BinaryenGeSVecI64x2(), v128),
     makeBinary(module, BinaryenEqVecF32x4(), v128),
     makeBinary(module, BinaryenNeVecF32x4(), v128),
     makeBinary(module, BinaryenLtVecF32x4(), v128),
@@ -526,7 +539,6 @@ void test_core() {
     makeBinary(module, BinaryenSubVecI8x16(), v128),
     makeBinary(module, BinaryenSubSatSVecI8x16(), v128),
     makeBinary(module, BinaryenSubSatUVecI8x16(), v128),
-    makeBinary(module, BinaryenMulVecI8x16(), v128),
     makeBinary(module, BinaryenMinSVecI8x16(), v128),
     makeBinary(module, BinaryenMinUVecI8x16(), v128),
     makeBinary(module, BinaryenMaxSVecI8x16(), v128),
@@ -544,12 +556,21 @@ void test_core() {
     makeBinary(module, BinaryenMaxSVecI16x8(), v128),
     makeBinary(module, BinaryenMaxUVecI16x8(), v128),
     makeBinary(module, BinaryenAvgrUVecI16x8(), v128),
+    makeBinary(module, BinaryenQ15MulrSatSVecI16x8(), v128),
+    makeBinary(module, BinaryenExtMulLowSVecI16x8(), v128),
+    makeBinary(module, BinaryenExtMulHighSVecI16x8(), v128),
+    makeBinary(module, BinaryenExtMulLowUVecI16x8(), v128),
+    makeBinary(module, BinaryenExtMulHighUVecI16x8(), v128),
     makeBinary(module, BinaryenAddVecI32x4(), v128),
     makeBinary(module, BinaryenSubVecI32x4(), v128),
     makeBinary(module, BinaryenMulVecI32x4(), v128),
     makeBinary(module, BinaryenAddVecI64x2(), v128),
     makeBinary(module, BinaryenSubVecI64x2(), v128),
     makeBinary(module, BinaryenMulVecI64x2(), v128),
+    makeBinary(module, BinaryenExtMulLowSVecI64x2(), v128),
+    makeBinary(module, BinaryenExtMulHighSVecI64x2(), v128),
+    makeBinary(module, BinaryenExtMulLowUVecI64x2(), v128),
+    makeBinary(module, BinaryenExtMulHighUVecI64x2(), v128),
     makeBinary(module, BinaryenAddVecF32x4(), v128),
     makeBinary(module, BinaryenSubVecF32x4(), v128),
     makeBinary(module, BinaryenMulVecF32x4(), v128),
@@ -558,6 +579,10 @@ void test_core() {
     makeBinary(module, BinaryenMaxSVecI32x4(), v128),
     makeBinary(module, BinaryenMaxUVecI32x4(), v128),
     makeBinary(module, BinaryenDotSVecI16x8ToVecI32x4(), v128),
+    makeBinary(module, BinaryenExtMulLowSVecI32x4(), v128),
+    makeBinary(module, BinaryenExtMulHighSVecI32x4(), v128),
+    makeBinary(module, BinaryenExtMulLowUVecI32x4(), v128),
+    makeBinary(module, BinaryenExtMulHighUVecI32x4(), v128),
     makeBinary(module, BinaryenDivVecF32x4(), v128),
     makeBinary(module, BinaryenMinVecF32x4(), v128),
     makeBinary(module, BinaryenMaxVecF32x4(), v128),
@@ -579,6 +604,10 @@ void test_core() {
     makeUnary(module, BinaryenFloorVecF64x2(), v128),
     makeUnary(module, BinaryenTruncVecF64x2(), v128),
     makeUnary(module, BinaryenNearestVecF64x2(), v128),
+    makeUnary(module, BinaryenExtAddPairwiseSVecI8x16ToI16x8(), v128),
+    makeUnary(module, BinaryenExtAddPairwiseUVecI8x16ToI16x8(), v128),
+    makeUnary(module, BinaryenExtAddPairwiseSVecI16x8ToI32x4(), v128),
+    makeUnary(module, BinaryenExtAddPairwiseUVecI16x8ToI32x4(), v128),
     makeBinary(module, BinaryenNarrowSVecI16x8ToVecI8x16(), v128),
     makeBinary(module, BinaryenNarrowUVecI16x8ToVecI8x16(), v128),
     makeBinary(module, BinaryenNarrowSVecI32x4ToVecI16x8(), v128),
@@ -614,44 +643,90 @@ void test_core() {
     makeSIMDShift(module, BinaryenShrUVecI64x2()),
     // SIMD load
     BinaryenSIMDLoad(
-      module, BinaryenLoadSplatVec8x16(), 0, 1, makeInt32(module, 128)),
+      module, BinaryenLoad8SplatVec128(), 0, 1, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoadSplatVec16x8(), 16, 1, makeInt32(module, 128)),
+      module, BinaryenLoad16SplatVec128(), 16, 1, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoadSplatVec32x4(), 16, 4, makeInt32(module, 128)),
+      module, BinaryenLoad32SplatVec128(), 16, 4, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoadSplatVec64x2(), 0, 4, makeInt32(module, 128)),
+      module, BinaryenLoad64SplatVec128(), 0, 4, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoadExtSVec8x8ToVecI16x8(), 0, 8, makeInt32(module, 128)),
+      module, BinaryenLoad8x8SVec128(), 0, 8, makeInt32(module, 128)),
     BinaryenSIMDLoad(
-      module, BinaryenLoadExtUVec8x8ToVecI16x8(), 0, 8, makeInt32(module, 128)),
-    BinaryenSIMDLoad(module,
-                     BinaryenLoadExtSVec16x4ToVecI32x4(),
-                     0,
-                     8,
-                     makeInt32(module, 128)),
-    BinaryenSIMDLoad(module,
-                     BinaryenLoadExtUVec16x4ToVecI32x4(),
-                     0,
-                     8,
-                     makeInt32(module, 128)),
-    BinaryenSIMDLoad(module,
-                     BinaryenLoadExtSVec32x2ToVecI64x2(),
-                     0,
-                     8,
-                     makeInt32(module, 128)),
-    BinaryenSIMDLoad(module,
-                     BinaryenLoadExtUVec32x2ToVecI64x2(),
-                     0,
-                     8,
-                     makeInt32(module, 128)),
+      module, BinaryenLoad8x8UVec128(), 0, 8, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoad16x4SVec128(), 0, 8, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoad16x4UVec128(), 0, 8, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoad32x2SVec128(), 0, 8, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoad32x2UVec128(), 0, 8, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoad32ZeroVec128(), 0, 4, makeInt32(module, 128)),
+    BinaryenSIMDLoad(
+      module, BinaryenLoad64ZeroVec128(), 0, 8, makeInt32(module, 128)),
+    // SIMD load/store lane
+    BinaryenSIMDLoadStoreLane(module,
+                              BinaryenLoad8LaneVec128(),
+                              0,
+                              1,
+                              0,
+                              makeInt32(module, 128),
+                              makeVec128(module, v128_bytes)),
+    BinaryenSIMDLoadStoreLane(module,
+                              BinaryenLoad16LaneVec128(),
+                              0,
+                              2,
+                              0,
+                              makeInt32(module, 128),
+                              makeVec128(module, v128_bytes)),
+    BinaryenSIMDLoadStoreLane(module,
+                              BinaryenLoad32LaneVec128(),
+                              0,
+                              4,
+                              0,
+                              makeInt32(module, 128),
+                              makeVec128(module, v128_bytes)),
+    BinaryenSIMDLoadStoreLane(module,
+                              BinaryenLoad64LaneVec128(),
+                              0,
+                              8,
+                              0,
+                              makeInt32(module, 128),
+                              makeVec128(module, v128_bytes)),
+
+    BinaryenSIMDLoadStoreLane(module,
+                              BinaryenStore8LaneVec128(),
+                              0,
+                              1,
+                              0,
+                              makeInt32(module, 128),
+                              makeVec128(module, v128_bytes)),
+    BinaryenSIMDLoadStoreLane(module,
+                              BinaryenStore16LaneVec128(),
+                              0,
+                              2,
+                              0,
+                              makeInt32(module, 128),
+                              makeVec128(module, v128_bytes)),
+    BinaryenSIMDLoadStoreLane(module,
+                              BinaryenStore32LaneVec128(),
+                              0,
+                              4,
+                              0,
+                              makeInt32(module, 128),
+                              makeVec128(module, v128_bytes)),
+    BinaryenSIMDLoadStoreLane(module,
+                              BinaryenStore64LaneVec128(),
+                              0,
+                              8,
+                              0,
+                              makeInt32(module, 128),
+                              makeVec128(module, v128_bytes)),
     // Other SIMD
     makeSIMDShuffle(module),
     makeSIMDTernary(module, BinaryenBitselectVec128()),
-    makeSIMDTernary(module, BinaryenQFMAVecF32x4()),
-    makeSIMDTernary(module, BinaryenQFMSVecF32x4()),
-    makeSIMDTernary(module, BinaryenQFMAVecF64x2()),
-    makeSIMDTernary(module, BinaryenQFMSVecF64x2()),
     // Bulk memory
     makeMemoryInit(module),
     makeDataDrop(module),
@@ -753,12 +828,12 @@ void test_core() {
                   BinaryenRefAsI31(),
                   BinaryenRefNull(module, BinaryenTypeAnyref())),
     // Exception handling
-    BinaryenTry(module, NULL, tryBody, catchEvents, 1, catchBodies, 2, NULL),
+    BinaryenTry(module, NULL, tryBody, catchTags, 1, catchBodies, 2, NULL),
     // (try $try_outer
     //   (do
     //     (try
     //       (do
-    //         (throw $a-event (i32.const 0))
+    //         (throw $a-tag (i32.const 0))
     //       )
     //       (delegate $try_outer)
     //     )
@@ -770,12 +845,12 @@ void test_core() {
                 BinaryenTry(module,
                             NULL,
                             tryBody,
-                            emptyCatchEvents,
+                            emptyCatchTags,
                             0,
                             emptyCatchBodies,
                             0,
                             "try_outer"),
-                emptyCatchEvents,
+                emptyCatchTags,
                 0,
                 nopCatchBody,
                 1,

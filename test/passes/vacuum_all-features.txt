@@ -6,8 +6,8 @@
  (type $4 (func (param i32 f64 i32 i32)))
  (type $none_=>_f64 (func (result f64)))
  (import "env" "int" (func $int (result i32)))
- (memory $0 256 256)
  (global $Int i32 (i32.const 0))
+ (memory $0 256 256)
  (func $b
   (nop)
  )
@@ -322,8 +322,8 @@
 (module
  (type $i32_=>_i32 (func (param i32) (result i32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
- (memory $0 1 1)
  (global $global$1 (mut i32) (i32.const 0))
+ (memory $0 1 1)
  (export "compress" (func $3))
  (func $_deflate (param $0 i32) (result i32)
   (call $_deflate
@@ -432,60 +432,6 @@
     )
    )
   )
- )
-)
-(module
- (type $none_=>_none (func))
- (type $i32_=>_none (func (param i32)))
- (event $e (attr 0) (param i32))
- (event $e2 (attr 0) (param i32))
- (func $try-test
-  (nop)
- )
- (func $inner-try-catch_all-test
-  (local $0 i32)
-  (try $try0
-   (do
-    (throw $e
-     (i32.const 0)
-    )
-   )
-   (catch_all
-    (local.set $0
-     (i32.const 1)
-    )
-   )
-  )
- )
- (func $inner-try-catch-test
-  (local $0 i32)
-  (try $try
-   (do
-    (try $try1
-     (do
-      (throw $e2
-       (i32.const 0)
-      )
-     )
-     (catch $e
-      (drop
-       (pop i32)
-      )
-      (local.set $0
-       (i32.const 1)
-      )
-     )
-    )
-   )
-   (catch $e
-    (drop
-     (pop i32)
-    )
-   )
-  )
- )
- (func $br-in-catch
-  (unreachable)
  )
 )
 (module

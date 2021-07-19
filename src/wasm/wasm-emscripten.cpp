@@ -33,10 +33,7 @@
 
 namespace wasm {
 
-cashew::IString EM_ASM_PREFIX("emscripten_asm_const");
 cashew::IString EM_JS_PREFIX("__em_js__");
-
-static Name STACK_INIT("stack$init");
 
 void addExportedFunction(Module& wasm, Function* function) {
   wasm.addFunction(function);
@@ -151,7 +148,7 @@ private:
             Fatal() << "Cannot get offset of passive segment initialized "
                        "multiple times";
           }
-          offsets[curr->segment] = dest->value.geti32();
+          offsets[curr->segment] = dest->value.getInteger();
         }
       } searcher(passiveOffsets);
       searcher.walkModule(&wasm);
@@ -426,12 +423,10 @@ std::string EmscriptenGlueGenerator::generateEmscriptenMetadata() {
   });
   meta << "\n  ],\n";
 
-  meta << "  \"externs\": [";
+  meta << "  \"globalImports\": [";
   commaFirst = true;
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* import) {
-    if (!(import->module == ENV && import->name == STACK_INIT)) {
-      meta << nextElement() << "\"_" << import->base.str << '"';
-    }
+    meta << nextElement() << '"' << import->base.str << '"';
   });
   meta << "\n  ],\n";
 
@@ -519,7 +514,7 @@ void EmscriptenGlueGenerator::separateDataSegments(Output* outfile,
     if (!seg.offset->is<Const>()) {
       Fatal() << "separating relocatable segments not implemented";
     }
-    size_t offset = seg.offset->cast<Const>()->value.geti32();
+    size_t offset = seg.offset->cast<Const>()->value.getInteger();
     offset -= base;
     size_t fill = offset - lastEnd;
     if (fill > 0) {

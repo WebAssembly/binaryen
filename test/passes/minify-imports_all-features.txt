@@ -1128,7 +1128,7 @@ longname3488 => L9
 longname1490 => LA
 longname4946 => LAa
 longname1544 => LB
-eventname1 => LBa
+tagname1 => LBa
 longname1598 => LC
 longname1652 => LD
 longname1706 => LE
@@ -10008,11 +10008,11 @@ longname4880 => zza
  (import "env" "JBa" (func $internal4998))
  (import "env" "KBa" (func $internal4999))
  (import "other" "anything" (func $internalInfinity))
- (import "env" "LBa" (event $eventname1 (attr 0) (param i32)))
- (event $event1 (attr 0) (param i32 i32))
+ (import "env" "LBa" (tag $tagname1 (param i32)))
+ (tag $tag1 (param i32 i32))
  (export "foo1" (func $foo1))
  (export "foo2" (func $foo2))
- (export "event1" (event $event1))
+ (export "tag1" (tag $tag1))
  (func $foo1
   (nop)
  )

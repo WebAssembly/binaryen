@@ -6,6 +6,7 @@
 #include <ir/cost.h>
 #include <ir/effects.h>
 #include <pass.h>
+#include <support/unique_deferring_queue.h>
 #include <wasm.h>
 
 using namespace wasm;
@@ -537,6 +538,56 @@ void test_bits() {
   c0.value = Literal(int64_t(-1));
   assert_equal(getMaxBits(&u), 32);
 
+  u.type = Type::i32;
+  c0.type = Type::i32;
+
+  u.op = ExtendS8Int32;
+  c0.value = Literal(int8_t(0));
+  assert_equal(getMaxBits(&u), 0);
+  c0.value = Literal(int8_t(127));
+  assert_equal(getMaxBits(&u), 7);
+  c0.value = Literal(int8_t(128));
+  assert_equal(getMaxBits(&u), 32);
+
+  u.op = ExtendS16Int32;
+  c0.value = Literal(int16_t(0));
+  assert_equal(getMaxBits(&u), 0);
+  c0.value = Literal(int16_t(0x7FFF));
+  assert_equal(getMaxBits(&u), 15);
+  c0.value = Literal(int16_t(0x8000));
+  assert_equal(getMaxBits(&u), 32);
+
+  u.type = Type::i64;
+  c0.type = Type::i32;
+
+  u.op = ExtendS8Int64;
+  c0.value = Literal(int8_t(0));
+  assert_equal(getMaxBits(&u), 0);
+  c0.value = Literal(int8_t(127));
+  assert_equal(getMaxBits(&u), 7);
+  c0.value = Literal(int8_t(128));
+  assert_equal(getMaxBits(&u), 64);
+
+  u.op = ExtendS16Int64;
+  c0.value = Literal(int16_t(0));
+  assert_equal(getMaxBits(&u), 0);
+  c0.value = Literal(int16_t(0x7FFF));
+  assert_equal(getMaxBits(&u), 15);
+  c0.value = Literal(int16_t(0x8000));
+  assert_equal(getMaxBits(&u), 64);
+
+  u.type = Type::i64;
+  c0.type = Type::i64;
+
+  u.op = ExtendS32Int64;
+  c0.value = Literal(int64_t(0));
+  assert_equal(getMaxBits(&u), 0);
+  c0.value = Literal(int64_t(0x7FFFFFFFLL));
+  assert_equal(getMaxBits(&u), 31);
+  c0.value = Literal(int64_t(0xFFFFFFFFLL));
+  assert_equal(getMaxBits(&u), 64);
+  c0.value = Literal(int64_t(-1LL));
+  assert_equal(getMaxBits(&u), 64);
 }
 
 void test_cost() {
@@ -581,12 +632,49 @@ void test_field() {
                4);
 }
 
+void test_queue() {
+  {
+    UniqueDeferredQueue<int> queue;
+    queue.push(1);
+    queue.push(2);
+    queue.push(3);
+    queue.push(2);
+    // first in was 1
+    assert_equal(queue.pop(), 1);
+    // next in was 2, but it was added later, so we defer to then, and get the 3
+    assert_equal(queue.pop(), 3);
+    assert_equal(queue.pop(), 2);
+    assert_equal(queue.empty(), true);
+  }
+  {
+    UniqueDeferredQueue<int> queue;
+    queue.push(1);
+    queue.push(2);
+    assert_equal(queue.pop(), 1);
+    // clearing clears the queue
+    queue.clear();
+    assert_equal(queue.empty(), true);
+  }
+  {
+    UniqueNonrepeatingDeferredQueue<int> queue;
+    queue.push(1);
+    assert_equal(queue.pop(), 1);
+    queue.push(1);
+    // We never repeat values in this queue, so the last push of 1 is ignored.
+    assert_equal(queue.empty(), true);
+    // But new values work.
+    queue.push(2);
+    assert_equal(queue.pop(), 2);
+  }
+}
+
 int main() {
   test_bits();
   test_cost();
   test_effects();
   test_literals();
   test_field();
+  test_queue();
 
   if (failsCount > 0) {
     abort();

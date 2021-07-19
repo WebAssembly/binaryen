@@ -1,8 +1,8 @@
 (module
-  (event $e-v (attr 0))
-  (event $e-i32 (attr 0) (param i32))
-  (event $e-f32 (attr 0) (param f32))
-  (event $e-i32-f32 (attr 0) (param i32 f32))
+  (tag $e-v)
+  (tag $e-i32 (param i32))
+  (tag $e-f32 (param f32))
+  (tag $e-i32-f32 (param i32 f32))
 
   (func $throw_single_value (export "throw_single_value")
     (throw $e-i32 (i32.const 5))
@@ -246,22 +246,22 @@
 
 (assert_invalid
   (module
-    (event $e-i32 (attr 0) (param i32))
+    (tag $e-i32 (param i32))
     (func $f0
       (throw $e-i32 (f32.const 0))
     )
   )
-  "event param types must match"
+  "tag param types must match"
 )
 
 (assert_invalid
   (module
-    (event $e-i32 (attr 0) (param i32 f32))
+    (tag $e-i32 (param i32 f32))
     (func $f0
       (throw $e-i32 (f32.const 0))
     )
   )
-  "event's param numbers must match"
+  "tag's param numbers must match"
 )
 
 (assert_invalid

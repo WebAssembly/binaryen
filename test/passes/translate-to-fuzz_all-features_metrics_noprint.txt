@@ -1,5 +1,4 @@
 total
- [events]       : 2       
  [exports]      : 7       
  [funcs]        : 6       
  [globals]      : 6       
@@ -7,6 +6,7 @@ total
  [memory-data]  : 22      
  [table-data]   : 0       
  [tables]       : 1       
+ [tags]         : 2       
  [total]        : 764     
  [vars]         : 29      
  AtomicFence    : 2       

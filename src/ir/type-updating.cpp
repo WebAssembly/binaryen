@@ -21,11 +21,20 @@ namespace wasm {
 
 namespace TypeUpdating {
 
-void handleNonNullableLocals(Function* func, Module& wasm) {
+bool canHandleAsLocal(Type type) {
+  // Defaultable types are always ok. For non-nullable types, we can handle them
+  // using defaultable ones + ref.as_non_nulls.
+  return type.isDefaultable() || type.isRef();
+}
+
+void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Check if this is an issue.
+  if (wasm.features.hasGCNNLocals()) {
+    return;
+  }
   bool hasNonNullable = false;
   for (auto type : func->vars) {
-    if (type.isRef() && !type.isNullable()) {
+    if (type.isNonNullable()) {
       hasNonNullable = true;
       break;
     }
@@ -33,6 +42,7 @@ void handleNonNullableLocals(Function* func, Module& wasm) {
   if (!hasNonNullable) {
     return;
   }
+
   // Rewrite the local.gets.
   Builder builder(wasm);
   for (auto** getp : FindAllPointers<LocalGet>(func->body).list) {
@@ -42,7 +52,7 @@ void handleNonNullableLocals(Function* func, Module& wasm) {
       continue;
     }
     auto type = func->getLocalType(get->index);
-    if (type.isRef() && !type.isNullable()) {
+    if (type.isNonNullable()) {
       // The get should now return a nullable value, and a ref.as_non_null
       // fixes that up.
       get->type = Type(type.getHeapType(), Nullable);
@@ -50,10 +60,30 @@ void handleNonNullableLocals(Function* func, Module& wasm) {
     }
   }
 
+  // Update tees, whose type must match the local (if the wasm spec changes for
+  // the type to be that of the value, then this can be removed).
+  for (auto** setp : FindAllPointers<LocalSet>(func->body).list) {
+    auto* set = (*setp)->cast<LocalSet>();
+    if (!func->isVar(set->index)) {
+      // We do not need to process params, which can legally be non-nullable.
+      continue;
+    }
+    // Non-tees do not change, and unreachable tees can be ignored here as their
+    // type is unreachable anyhow.
+    if (!set->isTee() || set->type == Type::unreachable) {
+      continue;
+    }
+    auto type = func->getLocalType(set->index);
+    if (type.isNonNullable()) {
+      set->type = Type(type.getHeapType(), Nullable);
+      *setp = builder.makeRefAs(RefAsNonNull, set);
+    }
+  }
+
   // Rewrite the types of the function's vars (which we can do now, after we
-  // are done using them to know which local.gets to fix).
+  // are done using them to know which local.gets etc to fix).
   for (auto& type : func->vars) {
-    if (type.isRef() && !type.isNullable()) {
+    if (type.isNonNullable()) {
       type = Type(type.getHeapType(), Nullable);
     }
   }

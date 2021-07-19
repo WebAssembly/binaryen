@@ -112,7 +112,7 @@ private:
     // TODO: we can do this a lot faster, as we just care about linear
     //       control flow.
     LocalGraph localGraph(func);
-    localGraph.computeInfluences();
+    localGraph.computeSetInfluences();
     // We maintain a stack of relevant values. This contains:
     //  * a null for each actual value that the value stack would have
     //  * an index of each LocalSet that *could* be on the value

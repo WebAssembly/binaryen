@@ -373,17 +373,23 @@ struct DAE : public Pass {
           // Great, it's not used. Check if none of the calls has a param with
           // side effects, as that would prevent us removing them (flattening
           // should have been done earlier).
-          bool canRemove =
+          bool callParamsAreValid =
             std::none_of(calls.begin(), calls.end(), [&](Call* call) {
               auto* operand = call->operands[i];
               return EffectAnalyzer(runner->options, module->features, operand)
                 .hasSideEffects();
             });
-          if (canRemove) {
+          // The type must be valid for us to handle as a local (since we
+          // replace the parameter with a local).
+          // TODO: if there are no references at all, we can avoid creating a
+          //       local
+          bool typeIsValid =
+            TypeUpdating::canHandleAsLocal(func->getLocalType(i));
+          if (callParamsAreValid && typeIsValid) {
             // Wonderful, nothing stands in our way! Do it.
             // TODO: parallelize this?
             removeParameter(func, i, calls);
-            TypeUpdating::handleNonNullableLocals(func, *module);
+            TypeUpdating::handleNonDefaultableLocals(func, *module);
             changed.insert(func);
           }
         }
@@ -399,7 +405,7 @@ struct DAE : public Pass {
     // once to remove a param, once to drop the return value).
     if (changed.empty()) {
       for (auto& func : module->functions) {
-        if (func->sig.results == Type::none) {
+        if (func->getResults() == Type::none) {
           continue;
         }
         auto name = func->name;
@@ -445,10 +451,11 @@ private:
     // Remove the parameter from the function. We must add a new local
     // for uses of the parameter, but cannot make it use the same index
     // (in general).
-    std::vector<Type> params(func->sig.params.begin(), func->sig.params.end());
+    auto paramsType = func->getParams();
+    std::vector<Type> params(paramsType.begin(), paramsType.end());
     auto type = params[i];
     params.erase(params.begin() + i);
-    func->sig.params = Type(params);
+    func->setParams(Type(params));
     Index newIndex = Builder::addVar(func, type);
     // Update local operations.
     struct LocalUpdater : public PostWalker<LocalUpdater> {
@@ -476,7 +483,7 @@ private:
 
   void
   removeReturnValue(Function* func, std::vector<Call*>& calls, Module* module) {
-    func->sig.results = Type::none;
+    func->setResults(Type::none);
     Builder builder(*module);
     // Remove any return values.
     struct ReturnUpdater : public PostWalker<ReturnUpdater> {
