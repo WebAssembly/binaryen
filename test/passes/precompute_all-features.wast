@@ -329,13 +329,6 @@
     (i32.const 0)
    )
   )
-  (func $no-simd-precompute_2 (result v128)
-   (i32x4.extadd_pairwise_i16x8_s
-    (i32x4.splat
-     (i32.const 0)
-    )
-   )
-  )
   (func $no-simd-precompute-if (result v128)
    (return
     (i32x4.splat
