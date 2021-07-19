@@ -8,7 +8,7 @@ if [ -n "$1" ]; then
 elif [ -n "$GITHUB_BASE_REF" ]; then
   BRANCH="origin/$GITHUB_BASE_REF"
 else
-  BRANCH="@{upstream}"
+  BRANCH=""
 fi
 
 MERGE_BASE=$(git merge-base $BRANCH HEAD)
