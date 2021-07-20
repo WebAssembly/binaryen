@@ -4,13 +4,19 @@
 ;; RUN: wasm-opt %s -all --remove-unused-names --ldse -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $A (struct (field (mut i32))))
  (type $A (struct (field (mut i32))))
+ ;; CHECK:      (type $C (struct (field (mut i32)) (field (mut i32))))
+
+ ;; CHECK:      (type $B (struct (field (mut f64))))
  (type $B (struct (field (mut f64))))
  (type $C (struct (field (mut i32)) (field (mut i32))))
 
  (memory shared 10)
 
+ ;; CHECK:      (global $global$0 (mut i32) (i32.const 0))
  (global $global$0 (mut i32) (i32.const 0))
+ ;; CHECK:      (global $global$1 (mut i32) (i32.const 0))
  (global $global$1 (mut i32) (i32.const 0))
 
  ;; CHECK:      (func $simple-param (param $x (ref $A))
@@ -129,14 +135,6 @@
  ;; CHECK-NEXT:  (block $func (result (ref $A))
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $x)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (i32.const 10)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br_on_cast $func
  ;; CHECK-NEXT:      (local.get $x)
  ;; CHECK-NEXT:      (rtt.canon $A)
@@ -157,19 +155,14 @@
   (local $x (ref null $A))
   (block $func (result (ref $A))
    (struct.set $A 0
-    (local.get $x)
-    (i32.const 10)
-   )
-   (struct.set $A 0
     ;; the reference can be seen to fall through this, proving the store is
-    ;; dead (due to the one after it) and kills the former one.
+    ;; dead (due to the one after it).
     (br_on_cast $func
      (local.get $x)
      (rtt.canon $A)
     )
     (i32.const 20)
    )
-   ;; the last store escapes to the outside, and cannot be modified
    (struct.set $A 0
     (local.get $x)
     (i32.const 30)
@@ -549,6 +542,9 @@
   )
  )
 
+ ;; CHECK:      (func $foo
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
  (func $foo)
 
  ;; CHECK:      (func $call (param $x (ref $A))
