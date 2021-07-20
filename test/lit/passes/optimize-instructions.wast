@@ -12425,23 +12425,37 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i64.store
-  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:   (i32.const 16)
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f32.store
-  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:   (i32.const 24)
   ;; CHECK-NEXT:   (local.get $z)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f64.store
-  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:   (i32.const 32)
   ;; CHECK-NEXT:   (local.get $w)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store8
+  ;; CHECK-NEXT:   (i32.const 40)
+  ;; CHECK-NEXT:   (i32.reinterpret_f32
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i64.store32
+  ;; CHECK-NEXT:   (i32.const 44)
+  ;; CHECK-NEXT:   (i64.reinterpret_f64
+  ;; CHECK-NEXT:    (local.get $w)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simplify_store_and_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
     (f32.store (i32.const 8) (f32.reinterpret_i32 (local.get $x)))
-    (f64.store (i32.const 8) (f64.reinterpret_i64 (local.get $y)))
-    (i32.store (i32.const 8) (i32.reinterpret_f32 (local.get $z)))
-    (i64.store (i32.const 8) (i64.reinterpret_f64 (local.get $w)))
+    (f64.store (i32.const 16) (f64.reinterpret_i64 (local.get $y)))
+    (i32.store (i32.const 24) (i32.reinterpret_f32 (local.get $z)))
+    (i64.store (i32.const 32) (i64.reinterpret_f64 (local.get $w)))
+    (i32.store8 (i32.const 40) (i32.reinterpret_f32 (local.get $z)))  ;; skip
+    (i64.store32 (i32.const 44) (i64.reinterpret_f64 (local.get $w))) ;; skip
   )
 
   ;; i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
