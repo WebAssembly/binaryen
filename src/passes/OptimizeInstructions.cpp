@@ -990,13 +990,14 @@ struct OptimizeInstructions
         // instead of wrapping to 32, just store some of the bits in the i64
         curr->valueType = Type::i64;
         curr->value = unary->value;
-      }
-      // f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
-      // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
-      // i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
-      // i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
-      if (unary->op == ReinterpretInt32 || unary->op == ReinterpretInt64 ||
-          unary->op == ReinterpretFloat32 || unary->op == ReinterpretFloat64) {
+      } else if (unary->op == ReinterpretInt32 ||
+                 unary->op == ReinterpretInt64 ||
+                 unary->op == ReinterpretFloat32 ||
+                 unary->op == ReinterpretFloat64) {
+        // f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
+        // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
+        // i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
+        // i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
         curr->type = unary->value->type;
         curr->value = unary->value;
       }
