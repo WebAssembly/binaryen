@@ -316,7 +316,7 @@ struct LowerGCCode
   LowerGCCode(LoweringInfo* loweringInfo) : loweringInfo(loweringInfo) {}
 
   // visitExpression() performs generic fixups that are needed in all classes.
-  // When a specific visitor is defined, they must also call this one, and
+  // When a specific visitor is defined, they must also call this one
   // before doing any changes.
   void visitExpression(Expression* curr) {
     auto type = curr->type;
@@ -343,7 +343,7 @@ struct LowerGCCode
     visitExpression(curr);
 
     // A null is simply a zero.
-    replaceCurrent(LiteralUtils::makeZero(lower(curr->type), *getModule()));
+    replaceCurrent(LiteralUtils::makeZero(curr->type, *getModule()));
   }
 
   void visitRefEq(RefEq* curr) {
