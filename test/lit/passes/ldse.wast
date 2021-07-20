@@ -912,6 +912,7 @@
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $no-basic-blocks
+  ;; Check we don't crash on a function with no basic blocks at all.
   (unreachable)
  )
 
@@ -1020,7 +1021,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-wrong-const
+ ;; CHECK:      (func $memory-different-const
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1030,7 +1031,7 @@
  ;; CHECK-NEXT:   (i32.const 40)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-wrong-const
+ (func $memory-different-const
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1041,7 +1042,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-wrong-offset
+ ;; CHECK:      (func $memory-different-offset
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1051,7 +1052,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-wrong-offset
+ (func $memory-different-offset
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1062,7 +1063,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-wrong-size
+ ;; CHECK:      (func $memory-different-size
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1072,7 +1073,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-wrong-size
+ (func $memory-different-size
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1145,7 +1146,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-wrong-offset
+ ;; CHECK:      (func $memory-load-different-offset
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1160,7 +1161,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-load-wrong-offset
+ (func $memory-load-different-offset
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1176,7 +1177,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-wrong-ptr
+ ;; CHECK:      (func $memory-load-different-ptr
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1191,7 +1192,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-load-wrong-ptr
+ (func $memory-load-different-ptr
   (i32.store
    (i32.const 10)
    (i32.const 20)
@@ -1209,7 +1210,7 @@
   )
  )
 
- ;; CHECK:      (func $memory-load-wrong-bytes
+ ;; CHECK:      (func $memory-load-different-bytes
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 10)
  ;; CHECK-NEXT:   (i32.const 20)
@@ -1224,7 +1225,7 @@
  ;; CHECK-NEXT:   (i32.const 30)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $memory-load-wrong-bytes
+ (func $memory-load-different-bytes
   (i32.store
    (i32.const 10)
    (i32.const 20)
