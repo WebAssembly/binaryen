@@ -824,7 +824,10 @@ struct OptimizeInstructions
                     unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
           return replaceCurrent(x);
         }
-
+      }
+      {
+        Unary* inner;
+        Expression* x;
         // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
         //   where maxBits(x) <= 32
         if (matches(curr, unary(EqZInt32, unary(&inner, WrapInt64, any(&x)))) &&
@@ -833,7 +836,10 @@ struct OptimizeInstructions
           inner->value = x;
           return replaceCurrent(inner);
         }
-
+      }
+      {
+        Unary* inner;
+        Expression* x;
         if (getModule()->features.hasSignExt()) {
           // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
           if (matches(curr,
