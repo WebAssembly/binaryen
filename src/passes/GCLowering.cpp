@@ -168,7 +168,7 @@ public:
   }
 
   // Null-check a pointer.
-  Expression* makePointerNullCheck(Expression* a) {
+  Expression* makePointerIsNull(Expression* a) {
     if (wasm.memory.is64()) {
       return makeUnary(EqZInt64, a);
     }
@@ -180,7 +180,7 @@ public:
   Expression* makeTrapOnNullParam(Index param,
                                   Expression* otherwise = nullptr) {
     return makeIf(
-      makePointerNullCheck(makeLocalGet(param, wasm.memory.indexType)),
+      makePointerIsNull(makeLocalGet(param, wasm.memory.indexType)),
       makeUnreachable(),
       otherwise);
   }
