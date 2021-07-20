@@ -12408,7 +12408,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f32.reinterpret_i32
-  ;; CHECK-NEXT:    (f32.load8_s
+  ;; CHECK-NEXT:    (i32.load8_s
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
