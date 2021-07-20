@@ -812,7 +812,7 @@ struct OptimizeInstructions
       // f64.reinterpret_i64(i64.reinterpret_f64(x))  =>  x
       if (auto* inner = curr->value->dynCast<Unary>()) {
         if (Abstract::hasAnyReinterpret(inner->op)) {
-          if (inner->type == curr->type) {
+          if (inner->value->type == curr->type) {
             return replaceCurrent(inner->value);
           }
         }
@@ -992,7 +992,6 @@ struct OptimizeInstructions
         // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
         // i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
         // i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
-        curr->type = unary->value->type;
         curr->valueType = unary->value->type;
         curr->value = unary->value;
       }
