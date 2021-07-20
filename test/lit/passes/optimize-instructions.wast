@@ -11248,6 +11248,7 @@
       )
     )
   )
+
   ;; i32.wrap_i64(i64.extend_i32_s(x))  ==>  x
   ;; i32.wrap_i64(i64.extend_i32_u(x))  ==>  x
 
