@@ -46,7 +46,9 @@
 //   +-----------------------------------------------------------------------+
 //   | u32    | What (RttKind) - func, data, i31, extern                     |
 //   | u32    | Size of the list of types. This is the same as the           |
-//   |        |   size of RttSupers in literal.h                             |
+//   |        |   list RttSupers in literal.h, except that it contains all   |
+//   |        |   the types, including the last (RttSupers stores the last   |
+//   |        |   on the "type" field of the Literal, to avoid duplication). |
 //   | ptr*   | List of types. Each is a pointer to the rtt.canon for the    |
 //   |        |   type. In an rtt.canon, this points to the object itself,   |
 //   |        |   that is, we will have ptr => [kind, 1, ptr]. An rtt.sub    |
