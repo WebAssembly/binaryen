@@ -12419,44 +12419,29 @@
   ;; i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
   ;; i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
 
-  ;; CHECK:      (func $simplify_store_and_reinterpret_i32 (param $x i32)
+  ;; CHECK:      (func $simplify_store_and_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.const 8)
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $simplify_store_and_reinterpret_i32 (param $x i32)
-    (f32.store (i32.const 8) (f32.reinterpret_i32 (local.get $x)))
-  )
-
-  ;; CHECK:      (func $simplify_store_and_reinterpret_i64 (param $x i64)
   ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i32.const 8)
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $simplify_store_and_reinterpret_i64 (param $x i64)
-    (f64.store (i32.const 8) (f64.reinterpret_i64 (local.get $x)))
-  )
-
-  ;; CHECK:      (func $simplify_store_and_reinterpret_f32 (param $x f32)
   ;; CHECK-NEXT:  (f32.store
   ;; CHECK-NEXT:   (i32.const 8)
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $z)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $simplify_store_and_reinterpret_f32 (param $x f32)
-    (i32.store (i32.const 8) (i32.reinterpret_f32 (local.get $x)))
-  )
-
-  ;; CHECK:      (func $simplify_store_and_reinterpret_f64 (param $x f64)
   ;; CHECK-NEXT:  (f64.store
   ;; CHECK-NEXT:   (i32.const 8)
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $w)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $simplify_store_and_reinterpret_f64 (param $x f64)
-    (i64.store (i32.const 8) (i64.reinterpret_f64 (local.get $x)))
+  (func $simplify_store_and_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+    (f32.store (i32.const 8) (f32.reinterpret_i32 (local.get $x)))
+    (f64.store (i32.const 8) (f64.reinterpret_i64 (local.get $y)))
+    (i32.store (i32.const 8) (i32.reinterpret_f32 (local.get $z)))
+    (i64.store (i32.const 8) (i64.reinterpret_f64 (local.get $w)))
   )
 
   ;; i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
