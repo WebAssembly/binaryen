@@ -12380,10 +12380,10 @@
     )
   )
 
-  ;; f32.reinterpret_i32(i32.load(x))  =>  f32.load
-  ;; f64.reinterpret_i64(i64.load(x))  =>  f64.load
-  ;; i32.reinterpret_f32(f32.load(x))  =>  i32.load
-  ;; i64.reinterpret_f64(f64.load(x))  =>  i64.load
+  ;; f32.reinterpret_i32(i32.load(x))  =>  f32.load(x)
+  ;; f64.reinterpret_i64(i64.load(x))  =>  f64.load(x)
+  ;; i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
+  ;; i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
 
   ;; CHECK:      (func $simplify_reinterpret_and_load (param $x i32)
   ;; CHECK-NEXT:  (drop
@@ -12414,10 +12414,10 @@
     (drop (i64.reinterpret_f64 (f64.load (local.get $x))))
   )
 
-  ;; f32.store(f32.reinterpret_i32(x))  =>  i32.store
-  ;; f64.store(f64.reinterpret_i64(x))  =>  i64.store
-  ;; i32.store(i32.reinterpret_f32(x))  =>  f32.store
-  ;; i64.store(i64.reinterpret_f64(x))  =>  f64.store
+  ;; f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
+  ;; f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
+  ;; i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
+  ;; i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
 
   ;; CHECK:      (func $simplify_store_and_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   ;; CHECK-NEXT:  (drop
