@@ -992,6 +992,33 @@ struct OptimizeInstructions
         curr->valueType = Type::i64;
         curr->value = unary->value;
       }
+      // f32.store(f32.reinterpret_i32(x))  =>  i32.load
+      // f64.store(f64.reinterpret_i64(x))  =>  i64.load
+      // i32.store(i32.reinterpret_f32(x))  =>  f32.load
+      // i64.store(i64.reinterpret_f64(x))  =>  f64.load
+      if (unary->op == ReinterpretInt32 || unary->op == ReinterpretInt64 ||
+          unary->op == ReinterpretFloat32 || unary->op == ReinterpretFloat64) {
+        switch (unary->type.getBasic()) {
+          case Type::i32:
+            curr->type = Type::f32;
+            curr->value = unary->value;
+            break;
+          case Type::i64:
+            curr->type = Type::f64;
+            curr->value = unary->value;
+            break;
+          case Type::f32:
+            curr->type = Type::i32;
+            curr->value = unary->value;
+            break;
+          case Type::f64:
+            curr->type = Type::i64;
+            curr->value = unary->value;
+            break;
+          default:
+            break;
+        }
+      }
     }
   }
 
