@@ -54,8 +54,11 @@ class StackIROptimizer {
   FeatureSet features;
 
 public:
-  StackIROptimizer(Function* func, PassOptions& passOptions, FeatureSet features)
-    : func(func), passOptions(passOptions), insts(*func->stackIR.get()), features(features) {
+  StackIROptimizer(Function* func,
+                   PassOptions& passOptions,
+                   FeatureSet features)
+    : func(func), passOptions(passOptions), insts(*func->stackIR.get()),
+      features(features) {
     assert(func->stackIR);
   }
 
