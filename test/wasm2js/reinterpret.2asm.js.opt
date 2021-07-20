@@ -21,14 +21,6 @@
     f64ScratchView[0] = value;
   }
       
-  function wasm2js_scratch_store_f32(value) {
-    f32ScratchView[2] = value;
-  }
-      
-  function wasm2js_scratch_load_f32() {
-    return f32ScratchView[2];
-  }
-      
 function asmFunc(env) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
@@ -45,7 +37,7 @@ function asmFunc(env) {
  var infinity = Infinity;
  function $1($0) {
   $0 = $0 | 0;
-  return ((wasm2js_scratch_store_f32((wasm2js_scratch_store_i32(2, $0), wasm2js_scratch_load_f32())), wasm2js_scratch_load_i32(2)) | 0) == ($0 | 0) | 0;
+  return 1;
  }
  
  function legalstub$2($0, $1_1) {
