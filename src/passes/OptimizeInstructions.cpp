@@ -416,7 +416,7 @@ struct OptimizeInstructions
                       binary(ShrSInt64,
                              binary(ShlInt64, any(&x), i64(&c1)),
                              i64(&c2))) &&
-              c1->value.geti64() == c2->value.geti64()) {
+              Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
             switch (64 - Bits::getEffectiveShifts(c1)) {
               case 8:
                 return replaceCurrent(builder.makeUnary(ExtendS8Int64, x));
