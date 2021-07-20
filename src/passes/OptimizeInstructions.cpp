@@ -825,22 +825,8 @@ struct OptimizeInstructions
       // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
       // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
       if (auto* load = curr->value->dynCast<Load>()) {
-        switch (load->type.getBasic()) {
-          case Type::i32:
-            load->type = Type::f32;
-            return replaceCurrent(load);
-          case Type::i64:
-            load->type = Type::f64;
-            return replaceCurrent(load);
-          case Type::f32:
-            load->type = Type::i32;
-            return replaceCurrent(load);
-          case Type::f64:
-            load->type = Type::i64;
-            return replaceCurrent(load);
-          default:
-            break;
-        }
+        load->type = curr->type;
+        return replaceCurrent(load);
       }
     }
 
@@ -1011,26 +997,8 @@ struct OptimizeInstructions
       // i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
       if (unary->op == ReinterpretInt32 || unary->op == ReinterpretInt64 ||
           unary->op == ReinterpretFloat32 || unary->op == ReinterpretFloat64) {
-        switch (unary->type.getBasic()) {
-          case Type::i32:
-            curr->type = Type::f32;
-            curr->value = unary->value;
-            break;
-          case Type::i64:
-            curr->type = Type::f64;
-            curr->value = unary->value;
-            break;
-          case Type::f32:
-            curr->type = Type::i32;
-            curr->value = unary->value;
-            break;
-          case Type::f64:
-            curr->type = Type::i64;
-            curr->value = unary->value;
-            break;
-          default:
-            break;
-        }
+        curr->type = unary->value->type;
+        curr->value = unary->value;
       }
     }
   }
