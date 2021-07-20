@@ -799,8 +799,11 @@ struct OptimizeInstructions
           inner->type = Type::i32;
           return replaceCurrent(inner);
         }
-
+      }
+      {
         // eqz((signed)x % C_pot)  =>  eqz(x & (abs(C_pot) - 1))
+        Const* c;
+        Binary* inner;
         if (matches(curr, unary(EqZ, binary(&inner, RemS, any(), ival(&c)))) &&
             (c->value.isSignedMin() ||
              Bits::isPowerOf2(c->value.abs().getInteger()))) {
