@@ -817,10 +817,10 @@ struct OptimizeInstructions
         }
       }
       {
-        Unary* inner;
-        Expression* x;
         // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
         // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
+        Unary* inner;
+        Expression* x;
         if (matches(curr,
                     unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
             matches(curr,
@@ -829,10 +829,10 @@ struct OptimizeInstructions
         }
       }
       {
-        Unary* inner;
-        Expression* x;
         // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
         //   where maxBits(x) <= 32
+        Unary* inner;
+        Expression* x;
         if (matches(curr, unary(EqZInt32, unary(&inner, WrapInt64, any(&x)))) &&
             Bits::getMaxBits(x, this) <= 32) {
           inner->op = EqZInt64;
