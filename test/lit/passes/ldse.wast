@@ -342,7 +342,7 @@
    (i32.const 10)
   )
   ;; the second store cannot alias the first because their types differ, and
-  ;; so the second store does not interfer in seeing that the first is trampled
+  ;; so the second store does not interfere in seeing that the first is trampled
   ;; (even though the index is identical, 0)
   (struct.set $B 0
    (local.get $y)
