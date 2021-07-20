@@ -992,6 +992,7 @@ struct OptimizeInstructions
         // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
         // i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
         // i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
+        curr->type = unary->value->type;
         curr->valueType = unary->value->type;
         curr->value = unary->value;
       }
