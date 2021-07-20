@@ -805,12 +805,25 @@ struct OptimizeInstructions
       }
     }
 
-    // f32.reinterpret_i32(i32.load(x))  =>  f32.load(x)
-    // f64.reinterpret_i64(i64.load(x))  =>  f64.load(x)
-    // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
-    // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
     if (curr->op == ReinterpretInt32 || curr->op == ReinterpretInt64 ||
         curr->op == ReinterpretFloat32 || curr->op == ReinterpretFloat64) {
+      // i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
+      // i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
+      // f32.reinterpret_i32(i32.reinterpret_f32(x))  =>  x
+      // f64.reinterpret_i64(i64.reinterpret_f64(x))  =>  x
+      if (auto* inner = curr->value->dynCast<Unary>()) {
+        if (inner->op == ReinterpretInt32 || inner->op == ReinterpretInt64 ||
+            inner->op == ReinterpretFloat32 ||
+            inner->op == ReinterpretFloat64) {
+          if (inner->type == curr->type) {
+            return replaceCurrent(inner->value);
+          }
+        }
+      }
+      // f32.reinterpret_i32(i32.load(x))  =>  f32.load(x)
+      // f64.reinterpret_i64(i64.load(x))  =>  f64.load(x)
+      // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
+      // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
       if (auto* load = curr->value->dynCast<Load>()) {
         switch (load->type.getBasic()) {
           case Type::i32:
