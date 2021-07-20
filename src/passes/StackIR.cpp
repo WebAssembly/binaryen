@@ -71,7 +71,7 @@ public:
     }
     // Removing unneeded blocks is dangerous with GC, as if we do this:
     //
-    //   (block
+    //   (call
     //     (rtt)
     //     (block
     //       (nop)
@@ -79,7 +79,7 @@ public:
     //     )
     //   )
     // === remove inner block ==>
-    //   (block
+    //   (call
     //     (rtt)
     //     (nop)
     //     (i32)
@@ -87,7 +87,7 @@ public:
     //
     // Then we end up with a nop that forces us to emit this during load:
     //
-    //   (block
+    //   (call
     //     (block
     //       (local.set
     //         (rtt)
