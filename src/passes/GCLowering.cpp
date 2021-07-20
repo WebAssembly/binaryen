@@ -253,7 +253,7 @@ Signature lowerSig(Signature sig, Module& wasm) {
 }
 
 // The layout of a struct in linear memory.
-struct Layout {
+struct StructLayout {
   // The total size of the struct.
   Address size;
   // The offsets of fields. Note that the first field's offset will not be 0
@@ -261,11 +261,11 @@ struct Layout {
   SmallVector<Address, 4> fieldOffsets;
 };
 
-using Layouts = std::unordered_map<HeapType, Layout>;
+using StructLayouts = std::unordered_map<HeapType, StructLayout>;
 
 // Information we need as we lower an entire module.
 struct LoweringInfo {
-  Layouts layouts;
+  StructLayouts layouts;
 
   // The name of the malloc function, and where it should start allocating at.
   Name malloc;
@@ -818,7 +818,7 @@ private:
 
   // Compute the layout of a specific heap type.
   void computeLayout(HeapType type) {
-    Layout& layout = loweringInfo.layouts[type];
+    StructLayout& layout = loweringInfo.layouts[type];
 
     // A pointer to the RTT takes up the first bytes in the struct, so fields
     // start afterwards.
