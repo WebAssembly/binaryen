@@ -77,18 +77,13 @@ class PointerBuilder : public Builder {
 public:
   PointerBuilder(Module& wasm) : Builder(wasm) {}
 
-  // Makes a simple load that is aligned, of the full size, and unsigned.
+  // Makes a simple load that is aligned and of the full size.
   Expression*
-  makeSimpleUnsignedLoad(Expression* ptr, Type type, Address offset = 0) {
+  makeSimpleLoad(Expression* ptr, Type type, Address offset = 0) {
     auto size = type.getByteSize();
+    // The sign does not matter as the load is of the full size; set false for
+    // unsigned.
     return makeLoad(size, false, offset, size, ptr, type);
-  }
-
-  // Makes a simple load that is aligned, of the full size, and signed.
-  Expression*
-  makeSimpleSignedLoad(Expression* ptr, Type type, Address offset = 0) {
-    auto size = type.getByteSize();
-    return makeLoad(size, true, offset, size, ptr, type);
   }
 
   // Makes a simple store that is aligned and of the full size.
@@ -115,7 +110,7 @@ public:
 
   // Load a pointer from memory.
   Expression* makePointerLoad(Expression* ptr, Address offset = 0) {
-    return makeSimpleUnsignedLoad(ptr, wasm.memory.indexType, offset);
+    return makeSimpleLoad(ptr, wasm.memory.indexType, offset);
   }
 
   // Store a pointer to memory.
@@ -1155,7 +1150,7 @@ private:
       Signature({{loweringInfo.pointerType}, Type::i32}),
       {},
       builder.makeTrapOnNullParam(0,
-                                  builder.makeSimpleUnsignedLoad(
+                                  builder.makeSimpleLoad(
                                     builder.makePointerGet(0), Type::i32, 4))));
   }
 
@@ -1193,7 +1188,7 @@ private:
         builder.makeCallIndirect(
           loweringInfo.tableName,
           // Load the function pointer from the reference
-          builder.makeSimpleUnsignedLoad(
+          builder.makeSimpleLoad(
             builder.makeLocalGet(refParam, Type::i32), Type::i32, 4),
           args,
           Signature(Type(loweredParams), Type(loweredResults))))));
@@ -1415,12 +1410,12 @@ private:
   // Given a pointer to an RTT, load its kind.
   Expression* getRttKind(Expression* ptr) {
     // The RTT kind is the very first field in an RTT
-    return PointerBuilder(*module).makeSimpleUnsignedLoad(ptr, Type::i32);
+    return PointerBuilder(*module).makeSimpleLoad(ptr, Type::i32);
   }
 
   Expression* getRttSize(Expression* ptr) {
     // The RTT size is the second field in an RTT, after the kind.
-    return PointerBuilder(*module).makeSimpleUnsignedLoad(ptr, Type::i32, 4);
+    return PointerBuilder(*module).makeSimpleLoad(ptr, Type::i32, 4);
   }
 
   // Certain things require us to scan the actual usage of heap types in order
