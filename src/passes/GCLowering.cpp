@@ -303,7 +303,7 @@ struct LowerGCCode
       PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>> {
   bool isFunctionParallel() override { return true; }
 
-  LoweringInfo* loweringInfo;
+  LoweringInfo* const loweringInfo;
 
   using Parent =
     WalkerPass<PostWalker<LowerGCCode, UnifiedExpressionVisitor<LowerGCCode>>>;
