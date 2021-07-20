@@ -597,23 +597,29 @@ struct GCLogic : public ComparingLogic {
 
   // Check whether two GC operations may alias memory.
   template<typename U, typename V> bool mayAlias(U* u, V* v) {
+    // If one of the inputs is unreachable, it does not execute, and so there
+    // cannot be aliasing.
+    auto uType = u->ref->type;
+    auto vType = v->ref->type;
+    if (uType == Type::unreachable || vType == Type::unreachable) {
+      return false;
+    }
+
     // If the index does not match, no aliasing is possible.
     if (u->index != v->index) {
       return false;
     }
 
-    // Even if the index is identical, aliasing still may be impossible if the
-    // types are not compatible. To check that, find the least upper bound
-    // (which always exists - the empty struct if nothing else), and then see if
-    // the index is included in that upper bound. If it is, then the types are
-    // compatible enough to alias memory.
-    auto lub = Type::getLeastUpperBound(u->ref->type, v->ref->type);
-    if (u->index >= lub.getHeapType().getStruct().fields.size()) {
-      return false;
-    }
-
-    // We don't know, so assume they can alias.
-    return true;
+    // Even if the index is identical, aliasing still may be impossible. For
+    // aliasing to occur, the same data must be pointed to by both references,
+    // which means the actual data is a subtype of both the present types. For
+    // that to be possible, one of the present heap types must be a subtype of
+    // the other (note that we check heap types, in order to ignore
+    // nullability).
+    auto uHeapType = uType.getHeapType();
+    auto vHeapType = vType.getHeapType();
+    return HeapType::isSubType(uHeapType, vHeapType) ||
+           HeapType::isSubType(vHeapType, uHeapType);
   }
 
   bool mayInteractWith(Expression* curr,

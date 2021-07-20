@@ -409,7 +409,8 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the types are compatible, so these may alias
+  ;; C is a subtype of A, so we can have aliasing between this store and both
+  ;; the previous and the subsequent store, and nothing can be optimized.
   (struct.set $C 0
    (local.get $y)
    (i32.const 20)
@@ -470,8 +471,11 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the types are compatible, so these may alias. also the second ref is
-  ;; nullable, but we should not be affected by that.
+  ;; As in $compatible-types, C is a subtype of A, so we can have aliasing
+  ;; between this store and both the previous and the subsequent store, and
+  ;; nothing can be optimized. In addition, $y is nullable while $x is not,
+  ;; which should not confuse us - the heap types matter, that is, the
+  ;; nullability is irrelevant.
   (struct.set $C 0
    (local.get $y)
    (i32.const 20)
@@ -500,8 +504,7 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the types are compatible, so these may alias. also the first ref is
-  ;; nullable, but we should not be affected by that.
+  ;; As $compatible-types-nullability-1 , but nullability is reversed.
   (struct.set $C 0
    (local.get $y)
    (i32.const 20)
@@ -530,8 +533,7 @@
    (local.get $x)
    (i32.const 10)
   )
-  ;; the types are compatible, so these may alias. also both refs are
-  ;; nullable, but we should not be affected by that.
+  ;; As $compatible-types-nullability-1 , but all refs are nullable.
   (struct.set $C 0
    (local.get $y)
    (i32.const 20)
