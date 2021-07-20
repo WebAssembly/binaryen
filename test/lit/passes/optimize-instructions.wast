@@ -12379,4 +12379,38 @@
       )
     )
   )
+
+  ;; f32.reinterpret_i32(i32.load(x))  =>  f32.load
+  ;; f64.reinterpret_i64(i64.load(x))  =>  f64.load
+  ;; i32.reinterpret_f32(f32.load(x))  =>  i32.load
+  ;; i64.reinterpret_f64(f64.load(x))  =>  i64.load
+
+  ;; CHECK:      (func $simplify_reinterpret_and_load (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simplify_reinterpret_and_load (param $x i32)
+    (drop (f32.reinterpret_i32 (i32.load (local.get $x))))
+    (drop (f64.reinterpret_i64 (i64.load (local.get $x))))
+    (drop (i32.reinterpret_f32 (f32.load (local.get $x))))
+    (drop (i64.reinterpret_f64 (f64.load (local.get $x))))
+  )
 )

@@ -805,6 +805,32 @@ struct OptimizeInstructions
       }
     }
 
+    // f32.reinterpret_i32(i32.load(x))  =>  f32.load
+    // f64.reinterpret_i64(i64.load(x))  =>  f64.load
+    // i32.reinterpret_f32(f32.load(x))  =>  i32.load
+    // i64.reinterpret_f64(f64.load(x))  =>  i64.load
+    if (curr->op == ReinterpretInt32 || curr->op == ReinterpretInt64 ||
+        curr->op == ReinterpretFloat32 || curr->op == ReinterpretFloat64) {
+      if (auto* load = curr->value->dynCast<Load>()) {
+        switch (load->type.getBasic()) {
+          case Type::i32:
+            load->type = Type::f32;
+            return replaceCurrent(load);
+          case Type::i64:
+            load->type = Type::f64;
+            return replaceCurrent(load);
+          case Type::f32:
+            load->type = Type::i32;
+            return replaceCurrent(load);
+          case Type::f64:
+            load->type = Type::i64;
+            return replaceCurrent(load);
+          default:
+            break;
+        }
+      }
+    }
+
     if (curr->op == EqZInt32) {
       if (auto* inner = curr->value->dynCast<Binary>()) {
         // Try to invert a relational operation using De Morgan's law
