@@ -67,6 +67,11 @@ inline bool hasAnyShift(BinaryOp op) {
          op == RotRInt64;
 }
 
+inline bool hasAnyReinterpret(UnaryOp op) {
+  return op == ReinterpretInt32 || op == ReinterpretInt64 ||
+         op == ReinterpretFloat32 || op == ReinterpretFloat64;
+}
+
 // Provide a wasm type and an abstract op and get the concrete one. For example,
 // you can provide i32 and Add and receive the specific opcode for a 32-bit
 // addition, AddInt32. If the op does not exist, it returns Invalid.
