@@ -175,7 +175,7 @@ struct Logic {
   // the store's written data.
   //
   // This is only called if isLoadFrom() returns false, as we assume there is no
-  // single instruction that can do both.
+  // single instruction of interest to us that can do both.
   bool isTrample(Expression* curr,
                  const ShallowEffectAnalyzer& currEffects,
                  Expression* store) {
@@ -540,6 +540,9 @@ struct MemoryLogic : public ComparingLogic {
                        const ShallowEffectAnalyzer& currEffects,
                        Expression* store) {
     // Anything we did not identify so far is dangerous.
+    //
+    // Among other things, this includes compare-and-swap, which does both a
+    // read and a write, which our infrastructure is not build to optimize.
     return currEffects.readsMemory || currEffects.writesMemory;
   }
 
