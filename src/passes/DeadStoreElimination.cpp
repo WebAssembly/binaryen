@@ -144,7 +144,7 @@ struct Logic {
     //       function
     // TODO: if we add an "ignore after trap mode" (to assume nothing happens
     //       after a trap) then we could stop assuming any trap can lead to
-    //       access of global data, likely greatly reducing the numer of
+    //       access of global data, likely greatly reducing the number of
     //       barriers.
     return currEffects.calls || currEffects.throws || currEffects.trap ||
            currEffects.branchesOut;
@@ -200,7 +200,7 @@ struct Logic {
   //============================================================================
 
   // Given a store that is not needed, get drops of its children to replace it
-  // with. This effectively removes the store without removes its children.
+  // with. This effectively removes the store without removing its children.
   Expression* replaceStoreWithDrops(Expression* store, Builder& builder) {
     WASM_UNREACHABLE("unimp");
   };
@@ -295,7 +295,7 @@ struct DeadStoreCFG
     //
     // TODO: Optimize. This is a pretty naive way to flow the values, but it
     //       should be reasonable assuming most stores are quickly seen as
-    //       having possible interactions (e.g., when we encounte a barrier),
+    //       having possible interactions (e.g., when we encounter a barrier),
     //       and so most flows are halted very quickly.
 
     for (auto& block : this->basicBlocks) {
