@@ -12426,8 +12426,8 @@
     (drop (f64.reinterpret_i64 (i64.load (local.get $x))))
     (drop (i32.reinterpret_f32 (f32.load (local.get $x))))
     (drop (i64.reinterpret_f64 (f64.load (local.get $x))))
-    (drop (f32.reinterpret_i32 (i32.load8_s (local.get $x))))  ;; skip
-    (drop (f64.reinterpret_i64 (i64.load32_u (local.get $x)))) ;; skip
+    (drop (f32.reinterpret_i32 (i32.load8_s (local.get $x))))     ;; skip
+    (drop (f64.reinterpret_i64 (i64.load32_u (local.get $x))))    ;; skip
   )
 
   ;; f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
@@ -12470,8 +12470,8 @@
     (f64.store (i32.const 16) (f64.reinterpret_i64 (local.get $y)))
     (i32.store (i32.const 24) (i32.reinterpret_f32 (local.get $z)))
     (i64.store (i32.const 32) (i64.reinterpret_f64 (local.get $w)))
-    (i32.store8 (i32.const 40) (i32.reinterpret_f32 (local.get $z)))  ;; skip
-    (i64.store32 (i32.const 44) (i64.reinterpret_f64 (local.get $w))) ;; skip
+    (i32.store8 (i32.const 40) (i32.reinterpret_f32 (local.get $z)))       ;; skip
+    (i64.store32 (i32.const 44) (i64.reinterpret_f64 (local.get $w)))      ;; skip
   )
 
   ;; i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
