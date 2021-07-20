@@ -822,8 +822,10 @@ struct OptimizeInstructions
       // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
       // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
       if (auto* load = curr->value->dynCast<Load>()) {
-        load->type = curr->type;
-        return replaceCurrent(load);
+        if (load->bytes * 8 == Properties::getBits(curr->type)) {
+          load->type = curr->type;
+          return replaceCurrent(load);
+        }
       }
     }
 

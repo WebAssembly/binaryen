@@ -12406,12 +12406,28 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.reinterpret_i32
+  ;; CHECK-NEXT:    (f32.load8_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.reinterpret_i64
+  ;; CHECK-NEXT:    (i64.load32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simplify_reinterpret_and_load (param $x i32)
     (drop (f32.reinterpret_i32 (i32.load (local.get $x))))
     (drop (f64.reinterpret_i64 (i64.load (local.get $x))))
     (drop (i32.reinterpret_f32 (f32.load (local.get $x))))
     (drop (i64.reinterpret_f64 (f64.load (local.get $x))))
+    (drop (f32.reinterpret_i32 (i32.load8_s (local.get $x))))  ;; skip
+    (drop (f64.reinterpret_i64 (i64.load32_u (local.get $x)))) ;; skip
   )
 
   ;; f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
