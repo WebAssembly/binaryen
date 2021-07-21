@@ -846,10 +846,9 @@ struct OptimizeInstructions
         //
         // i64.extend_i32_u(i32.wrap_i64(x))  =>  x
         //   where maxBits(x) <= 32
-        Unary* inner;
         Expression* x;
         UnaryOp unaryOp;
-        if (matches(curr, unary(&unaryOp, unary(&inner, WrapInt64, any(&x))))) {
+        if (matches(curr, unary(&unaryOp, unary(WrapInt64, any(&x))))) {
           if (unaryOp == ExtendSInt32 || unaryOp == ExtendUInt32) {
             auto maxBits = Bits::getMaxBits(x, this);
             if ((unaryOp == ExtendSInt32 && maxBits <= 31) ||
