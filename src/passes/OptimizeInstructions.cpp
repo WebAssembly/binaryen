@@ -856,6 +856,30 @@ struct OptimizeInstructions
       }
     }
 
+    if (Abstract::hasAnyReinterpret(curr->op)) {
+      // i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
+      // i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
+      // f32.reinterpret_i32(i32.reinterpret_f32(x))  =>  x
+      // f64.reinterpret_i64(i64.reinterpret_f64(x))  =>  x
+      if (auto* inner = curr->value->dynCast<Unary>()) {
+        if (Abstract::hasAnyReinterpret(inner->op)) {
+          if (inner->value->type == curr->type) {
+            return replaceCurrent(inner->value);
+          }
+        }
+      }
+      // f32.reinterpret_i32(i32.load(x))  =>  f32.load(x)
+      // f64.reinterpret_i64(i64.load(x))  =>  f64.load(x)
+      // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
+      // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
+      if (auto* load = curr->value->dynCast<Load>()) {
+        if (!load->isAtomic && load->bytes == curr->type.getByteSize()) {
+          load->type = curr->type;
+          return replaceCurrent(load);
+        }
+      }
+    }
+
     if (curr->op == EqZInt32) {
       if (auto* inner = curr->value->dynCast<Binary>()) {
         // Try to invert a relational operation using De Morgan's law
@@ -1015,6 +1039,14 @@ struct OptimizeInstructions
       if (unary->op == WrapInt64) {
         // instead of wrapping to 32, just store some of the bits in the i64
         curr->valueType = Type::i64;
+        curr->value = unary->value;
+      } else if (!curr->isAtomic && Abstract::hasAnyReinterpret(unary->op) &&
+                 curr->bytes == curr->valueType.getByteSize()) {
+        // f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
+        // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
+        // i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
+        // i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
+        curr->valueType = unary->value->type;
         curr->value = unary->value;
       }
     }

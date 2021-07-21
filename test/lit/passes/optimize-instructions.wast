@@ -12387,4 +12387,124 @@
       )
     )
   )
+
+  ;; f32.reinterpret_i32(i32.load(x))  =>  f32.load(x)
+  ;; f64.reinterpret_i64(i64.load(x))  =>  f64.load(x)
+  ;; i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
+  ;; i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
+
+  ;; CHECK:      (func $simplify_reinterpret_and_load (param $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.load
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.reinterpret_i32
+  ;; CHECK-NEXT:    (i32.load8_s
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.reinterpret_i64
+  ;; CHECK-NEXT:    (i64.load32_u
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simplify_reinterpret_and_load (param $x i32)
+    (drop (f32.reinterpret_i32 (i32.load (local.get $x))))
+    (drop (f64.reinterpret_i64 (i64.load (local.get $x))))
+    (drop (i32.reinterpret_f32 (f32.load (local.get $x))))
+    (drop (i64.reinterpret_f64 (f64.load (local.get $x))))
+    (drop (f32.reinterpret_i32 (i32.load8_s (local.get $x))))     ;; skip
+    (drop (f64.reinterpret_i64 (i64.load32_u (local.get $x))))    ;; skip
+  )
+
+  ;; f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
+  ;; f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
+  ;; i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
+  ;; i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
+
+  ;; CHECK:      (func $simplify_store_and_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+  ;; CHECK-NEXT:  (i32.store
+  ;; CHECK-NEXT:   (i32.const 8)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i64.store
+  ;; CHECK-NEXT:   (i32.const 16)
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (f32.store
+  ;; CHECK-NEXT:   (i32.const 24)
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (f64.store
+  ;; CHECK-NEXT:   (i32.const 32)
+  ;; CHECK-NEXT:   (local.get $w)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.store8
+  ;; CHECK-NEXT:   (i32.const 40)
+  ;; CHECK-NEXT:   (i32.reinterpret_f32
+  ;; CHECK-NEXT:    (local.get $z)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i64.store32
+  ;; CHECK-NEXT:   (i32.const 44)
+  ;; CHECK-NEXT:   (i64.reinterpret_f64
+  ;; CHECK-NEXT:    (local.get $w)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $simplify_store_and_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+    (f32.store (i32.const 8) (f32.reinterpret_i32 (local.get $x)))
+    (f64.store (i32.const 16) (f64.reinterpret_i64 (local.get $y)))
+    (i32.store (i32.const 24) (i32.reinterpret_f32 (local.get $z)))
+    (i64.store (i32.const 32) (i64.reinterpret_f64 (local.get $w)))
+    (i32.store8 (i32.const 40) (i32.reinterpret_f32 (local.get $z)))       ;; skip
+    (i64.store32 (i32.const 44) (i64.reinterpret_f64 (local.get $w)))      ;; skip
+  )
+
+  ;; i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
+  ;; i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
+  ;; f32.reinterpret_i32(i32.reinterpret_f32(x))  =>  x
+  ;; f64.reinterpret_i64(i64.reinterpret_f64(x))  =>  x
+
+  ;; CHECK:      (func $eliminate_reinterpret_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $z)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $w)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $eliminate_reinterpret_reinterpret (param $x i32) (param $y i64) (param $z f32) (param $w f64)
+    (drop (i32.reinterpret_f32 (f32.reinterpret_i32 (local.get $x))))
+    (drop (i64.reinterpret_f64 (f64.reinterpret_i64 (local.get $y))))
+    (drop (f32.reinterpret_i32 (i32.reinterpret_f32 (local.get $z))))
+    (drop (f64.reinterpret_i64 (i64.reinterpret_f64 (local.get $w))))
+  )
 )
