@@ -26,24 +26,6 @@ namespace wasm {
 
 namespace Properties {
 
-inline int getBits(const Type& type) {
-  if (type.isBasic() && type.isNumber()) {
-    switch (type.getBasic()) {
-      case Type::i32:
-      case Type::f32:
-        return 32;
-      case Type::i64:
-      case Type::f64:
-        return 64;
-      case Type::v128:
-        return 128;
-      default:
-        break;
-    }
-  }
-  return -1;
-}
-
 inline bool emitsBoolean(Expression* curr) {
   if (auto* unary = curr->dynCast<Unary>()) {
     return unary->isRelational();
