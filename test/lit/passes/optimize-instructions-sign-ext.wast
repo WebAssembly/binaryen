@@ -63,15 +63,13 @@
     (drop (i64.extend_i32_s (i32.wrap_i64 (local.get $x))))
   )
 
-  ;; i64.extend_i32_u(i32.wrap_i64(x))  =>  i64.extend32_s(x) where maxBits(x) <= 31
+  ;; i64.extend_i32_u(i32.wrap_i64(x))  =>  x where maxBits(x) <= 31
 
   ;; CHECK:      (func $i64-zero-special-extention (param $x i64)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.extend32_s
-  ;; CHECK-NEXT:    (i64.and
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (i64.const 2147483647)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 2147483647)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
