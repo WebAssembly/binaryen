@@ -65,7 +65,13 @@
 
   ;; i64.extend_i32_u(i32.wrap_i64(x))  =>  x where maxBits(x) <= 31
 
-  ;; CHECK:      (func $i64-zero-special-extention (param $x i64)
+  ;; CHECK:      (func $i64-zero-sign-special-extentions (param $x i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.and
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i64.const 2147483647)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.and
   ;; CHECK-NEXT:    (local.get $x)
@@ -80,8 +86,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $i64-zero-special-extention (param $x i64)
+  (func $i64-zero-sign-special-extentions (param $x i64)
     (drop (i64.extend_i32_u (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x000000007FFFFFFF)))))
+    (drop (i64.extend_i32_s (i32.wrap_i64 (i64.and (local.get $x) (i64.const 0x000000007FFFFFFF)))))
     (drop (i64.extend_i32_u (i32.wrap_i64 (local.get $x)))) ;; skip
   )
 )
