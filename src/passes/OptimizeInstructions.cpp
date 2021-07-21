@@ -841,12 +841,19 @@ struct OptimizeInstructions
         }
       }
       {
-        Unary* inner;
-        Expression* x;
         if (getModule()->features.hasSignExt()) {
           // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
+          // or
+          // i64.extend_i32_u(i32.wrap_i64(x))  =>  i64.extend32_s(x)
+          //    where maxBits(x) <= 31
+          Unary* inner;
+          Expression* x;
           if (matches(curr,
-                      unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
+                      unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x)))) ||
+              (matches(
+                 curr,
+                 unary(ExtendUInt32, unary(&inner, WrapInt64, any(&x)))) &&
+               Bits::getMaxBits(x, this) <= 31)) {
             inner->op = ExtendS32Int64;
             inner->type = Type::i64;
             inner->value = x;
