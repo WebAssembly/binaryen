@@ -845,7 +845,7 @@ struct OptimizeInstructions
           // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
           // or
           // i64.extend_i32_u(i32.wrap_i64(x))  =>  i64.extend32_s(x)
-          //    where maxBits(x) <= 31
+          //   where maxBits(x) <= 31
           Unary* inner;
           Expression* x;
           if (matches(curr,
