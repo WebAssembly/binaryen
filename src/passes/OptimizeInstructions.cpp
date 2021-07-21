@@ -841,29 +841,34 @@ struct OptimizeInstructions
         }
       }
       {
-        if (getModule()->features.hasSignExt()) {
-          Unary* inner;
-          Expression* x;
-          // i64.extend_i32_u(i32.wrap_i64(x))  =>  x
-          // i64.extend_i32_s(i32.wrap_i64(x))  =>  x
-          //   where maxBits(x) <= 31
-          if ((matches(
-                 curr,
-                 unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x)))) ||
-               matches(
-                 curr,
-                 unary(ExtendUInt32, unary(&inner, WrapInt64, any(&x))))) &&
-              Bits::getMaxBits(x, this) <= 31) {
-            return replaceCurrent(x);
+        // i64.extend_i32_s(i32.wrap_i64(x))  =>  x
+        //   where maxBits(x) <= 31
+        //
+        // i64.extend_i32_u(i32.wrap_i64(x))  =>  x
+        //   where maxBits(x) <= 32
+        Unary* inner;
+        Expression* x;
+        UnaryOp unaryOp;
+        if (matches(curr, unary(&unaryOp, unary(&inner, WrapInt64, any(&x))))) {
+          if (unaryOp == ExtendSInt32 || unaryOp == ExtendUInt32) {
+            auto maxBits = Bits::getMaxBits(x, this);
+            if ((unaryOp == ExtendSInt32 && maxBits <= 31) ||
+                (unaryOp == ExtendUInt32 && maxBits <= 32)) {
+              return replaceCurrent(x);
+            }
           }
-          // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
-          if (matches(curr,
-                      unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
-            inner->op = ExtendS32Int64;
-            inner->type = Type::i64;
-            inner->value = x;
-            return replaceCurrent(inner);
-          }
+        }
+      }
+      if (getModule()->features.hasSignExt()) {
+        // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
+        Unary* inner;
+        Expression* x;
+        if (matches(curr,
+                    unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
+          inner->op = ExtendS32Int64;
+          inner->type = Type::i64;
+          inner->value = x;
+          return replaceCurrent(inner);
         }
       }
     }
