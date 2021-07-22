@@ -10534,6 +10534,60 @@
   ;; CHECK-NEXT:    (local.get $Y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_u
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.le_u
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.le_s
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.ge_s
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i32.sub
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $optimize-relationals-specials (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
     (drop (i32.le_s (local.get $x) (i32.sub (local.get $y) (i32.const 1))))
@@ -10544,6 +10598,13 @@
 
     (drop (i32.le_s (i32.add (local.get $x) (i32.const 1)) (local.get $y)))
     (drop (i64.ge_s (local.get $X) (i64.add (local.get $Y) (i64.const 1))))
+
+    (drop (i32.le_u (local.get $x) (i32.sub (local.get $y) (i32.const 1)))) ;; skip
+    (drop (i32.ge_u (i32.sub (local.get $x) (i32.const 1)) (local.get $y))) ;; skip
+    (drop (i32.le_s (local.get $x) (i32.sub (local.get $y) (i32.const 2)))) ;; skip
+    (drop (i32.ge_s (i32.sub (local.get $x) (i32.const 2)) (local.get $y))) ;; skip
+    (drop (i32.ge_s (local.get $x) (i32.sub (local.get $y) (i32.const 1)))) ;; skip
+    (drop (i32.le_s (i32.sub (local.get $x) (i32.const 1)) (local.get $y))) ;; skip
   )
 
   ;; CHECK:      (func $unsigned-context (param $x i32) (param $y i64)
