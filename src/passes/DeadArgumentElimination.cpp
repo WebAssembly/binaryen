@@ -307,18 +307,22 @@ struct DAE : public Pass {
         allDroppedCalls[pair.first] = pair.second;
       }
     }
-    // We now have a mapping of all call sites for each function. Check which
-    // are always passed the same constant for a particular argument.
+    // We now have a mapping of all call sites for each function, and can look
+    // for optimization opportunities.
     for (auto& pair : allCalls) {
       auto name = pair.first;
-      // We can only optimize if we see all the calls and can modify
-      // them.
+      // We can only optimize if we see all the calls and can modify them.
       if (infoMap[name].hasUnseenCalls) {
         continue;
       }
       auto& calls = pair.second;
       auto* func = module->getFunction(name);
       auto numParams = func->getNumParams();
+      // Refine argument types before doing anything else. This does not
+      // affect whether an argument is used or not, it just refines the type
+      // where possible.
+      refineArgumentTypes(func, calls, module);
+      // Check if all calls pass the same constant for a particular argument.
       for (Index i = 0; i < numParams; i++) {
         Literal value;
         for (auto* call : calls) {
@@ -514,6 +518,51 @@ private:
         call->type = Type::none;
       }
     }
+  }
+
+  // Given a function and all the calls to it, see if we can refine the type of
+  // its arguments. If we only pass in a subtype, we may as well refine the type
+  // to that.
+  //
+  // This assumes that the function has no calls aside from |calls|, that is, it
+  // is not exported or called from the table or by reference.
+  void refineArgumentTypes(Function* func, const std::vector<Call*>& calls, Module* module) {
+    if (!module->features.hasGC()) {
+      return;
+    }
+    auto numParams = func->getNumParams();
+    std::vector<Type> newParamTypes;
+    newParamTypes.reserve(numParams);
+    for (Index i = 0; i < numParams; i++) {
+      auto originalType = func->getLocalType(i);
+      if (!type.isReference()) {
+        newParamTypes.push_back(originalType);
+        continue;
+      }
+      Type refinedType = Type::unreachable;
+      for (auto* call : calls) {
+        auto* operand = call->operands[i];
+        refinedType = Type::getLeastUpperBound(refinedType, operand->type);
+        if (refinedType == originalType) {
+          // We failed to refine to anything more specific.
+          return;
+        }
+      }
+      // Nothing is sent here at all; leave such optimizations to DCE.
+      if (refinedType == Type::unreachable) {
+        return;
+      }
+      newParamTypes.push_back(refinedType);
+    }
+    // Check if we are able to optimize here.
+    auto newParams = Type(newParamTypes);
+    if (newParams == func->getParams()) {
+      return;
+    }
+
+    // In terms of parameters, we can do this. However, we must also check
+    // local operations in the body, as the fu
+    func->setParams(newParams);
   }
 };
 
