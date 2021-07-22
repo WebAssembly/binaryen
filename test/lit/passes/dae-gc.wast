@@ -211,6 +211,47 @@
   (local.set $y (ref.null ${i32}))
  )
 
-;;ullability
-;; an i32 param that does not interfere
+ ;; CHECK:      (func $call-various-params-null
+ ;; CHECK-NEXT:  (call $various-params-null
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (ref.null ${i32})
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $various-params-null
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (ref.null ${i32})
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (ref.null ${i32})
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-various-params-null
+  ;; The first argument gets non-null values, allowing us to refine it. The
+  ;; second gets only one.
+  (call $various-params-null
+   (ref.as_non_null (ref.null ${i32}))
+   (ref.null ${i32})
+  )
+  (call $various-params-null
+   (ref.as_non_null (ref.null ${i32}))
+   (ref.as_non_null (ref.null ${i32}))
+  )
+ )
+ ;; This function is called in ways that allow us to make the first parameter
+ ;; non-nullable.
+ ;; CHECK:      (func $various-params-null (param $x (ref ${i32})) (param $y (ref null ${i32}))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $various-params-null (param $x (ref null ${})) (param $y (ref null ${}))
+  ;; "Use" the locals to avoid other optimizations kicking in.
+  (drop (local.get $x))
+  (drop (local.get $y))
+ )
 )
