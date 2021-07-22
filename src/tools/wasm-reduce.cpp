@@ -890,9 +890,10 @@ struct Reducer
       if (names.size() == 0) {
         continue;
       }
-      // Try to remove functions, and if that fails, try to at least empty out
-      // their bodies.
-      justReduced = tryToRemoveFunctions(names) || tryToEmptyFunctions(names);
+      // Try to remove functions and/or empty them. Note that
+      // tryToRemoveFunctions() will reload the module if it fails, which means
+      // function names may change - for that reason, run it second.
+      justReduced = tryToEmptyFunctions(names) || tryToRemoveFunctions(names);
       if (justReduced) {
         noteReduction(names.size());
         i += skip;
