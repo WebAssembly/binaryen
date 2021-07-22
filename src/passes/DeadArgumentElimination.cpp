@@ -548,7 +548,6 @@ private:
         refinedType = Type::getLeastUpperBound(refinedType, operand->type);
         if (refinedType == originalType) {
           // We failed to refine this parameter to anything more specific.
-          refinedType = originalType;
           break;
         }
       }
@@ -586,7 +585,10 @@ private:
     // We can do this! Update the types, including the types of gets.
     func->setParams(newParams);
     for (auto* get : FindAll<LocalGet>(func->body).list) {
-      get->type = func->getLocalType(get->index);
+      auto index = get->index;
+      if (func->isParam(index)) {
+        get->type = func->getLocalType(index);
+      }
     }
   }
 };
