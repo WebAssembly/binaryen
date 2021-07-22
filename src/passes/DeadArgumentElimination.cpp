@@ -571,7 +571,8 @@ private:
     // to, then those types must be taken into account as well.
     for (auto* set : FindAll<LocalSet>(func->body).list) {
       auto index = set->index;
-      if (func->isParam(index) && !Type::isSubType(set->value->type, newParamTypes[index])) {
+      if (func->isParam(index) &&
+          !Type::isSubType(set->value->type, newParamTypes[index])) {
         // TODO: we could still optimize here, by creating a new local.
         newParamTypes[index] = func->getLocalType(index);
       }
