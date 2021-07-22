@@ -97,12 +97,6 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   return total >= TOO_MUCH;
 }
 
-static bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
-  // A select only allows a single value in its arms in the spec:
-  // https://webassembly.github.io/spec/core/valid/instructions.html#xref-syntax-instructions-syntax-instr-parametric-mathsf-select-t-ast
-  return ifTrue->type.isSingle() && ifFalse->type.isSingle();
-}
-
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
@@ -1030,7 +1024,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                       .hasSideEffects();
                   list[0] = old;
                   if (canReorder && !hasSideEffects &&
-                      canEmitSelectWithArms(br->value, curr)) {
+                      Properties::canEmitSelectWithArms(br->value, curr)) {
                     ExpressionManipulator::nop(list[0]);
                     replaceCurrent(
                       builder.makeSelect(br->condition, br->value, curr));
@@ -1055,7 +1049,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (!iff->ifFalse) {
           return nullptr;
         }
-        if (!canEmitSelectWithArms(iff->ifTrue, iff->ifFalse)) {
+        if (!Properties::canEmitSelectWithArms(iff->ifTrue, iff->ifFalse)) {
           return nullptr;
         }
         if (iff->condition->type == Type::unreachable) {
