@@ -12,7 +12,6 @@
  ;; CHECK:      (type ${f64} (struct (field f64)))
  (type ${f64} (struct (field f64)))
  (type ${i32_i64} (struct (field i32) (field i64)))
- (type ${i32_any} (struct (field i32) (field anyref)))
 
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (call $bar)
