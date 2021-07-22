@@ -40,6 +40,7 @@
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "ir/element-utils.h"
+#include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
 #include "pass.h"
@@ -535,7 +536,7 @@ private:
     newParamTypes.reserve(numParams);
     for (Index i = 0; i < numParams; i++) {
       auto originalType = func->getLocalType(i);
-      if (!type.isReference()) {
+      if (!originalType.isRef()) {
         newParamTypes.push_back(originalType);
         continue;
       }
@@ -561,8 +562,20 @@ private:
     }
 
     // In terms of parameters, we can do this. However, we must also check
-    // local operations in the body, as the fu
+    // local operations in the body, as if the parameter is reused and written
+    // to, then those types must be taken into account as well.
+    for (auto* set : FindAll<LocalSet>(func->body).list) {
+      if (!Type::isSubType(set->value->type, newParamTypes[set->index])) {
+        // TODO: we could still optimize here, by creating a new local.
+        return;
+      }
+    }
+
+    // We can do this! Update the types, including the types of gets.
     func->setParams(newParams);
+    for (auto* get : FindAll<LocalGet>(func->body).list) {
+      get->type = func->getLocalType(get->index);
+    }
   }
 };
 
