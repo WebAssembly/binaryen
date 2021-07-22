@@ -15,10 +15,8 @@
  */
 
 //
-// Optimizes call arguments in a whole-program manner, removing ones
-// that are not used (dead).
-//
-// Specifically, this does these things:
+// Optimizes call arguments in a whole-program manner. In particular, this
+// removes ones that are not used (dead), but it also does more things:
 //
 //  * Find functions for whom an argument is always passed the same
 //    constant. If so, we can just set that local to that constant
@@ -28,6 +26,8 @@
 //    the previous point was true for an argument, then the second
 //    must as well.)
 //  * Find return values ("return arguments" ;) that are never used.
+//  * Refine the types of arguments, that is make the argument type more
+//    specific if all the passed values allow that.
 //
 // This pass does not depend on flattening, but it may be more effective,
 // as then call arguments never have side effects (which we need to
