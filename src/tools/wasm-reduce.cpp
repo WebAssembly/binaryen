@@ -1075,7 +1075,7 @@ struct Reducer
     if (WasmValidator().validate(
           *module, WasmValidator::Globally | WasmValidator::Quiet) &&
         writeAndTestReduction()) {
-      std::cerr << "|      removed " << names.size() << " functions\n";
+      std::cerr << "|        removed " << names.size() << " functions\n";
       return true;
     } else {
       loadWorking(); // restore it from orbit
@@ -1383,8 +1383,8 @@ int main(int argc, const char* argv[]) {
         // stop
         stopping = true;
       } else {
-        // just try to remove all we can and finish up
-        factor = 1;
+        // decrease the factor quickly
+        factor = (factor + 1) / 2; // stable on 1
       }
     }
     lastPostPassesSize = newSize;
