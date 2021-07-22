@@ -187,7 +187,7 @@
  ;; This function is called in ways that *do* allow us to alter the types of
  ;; its parameters (see last function), however, we reuse the parameters by
  ;; writing to them, which causes problems in one case.
- ;; CHECK:      (func $various-params-set (param $x (ref null ${})) (param $y (ref null ${}))
+ ;; CHECK:      (func $various-params-set (param $x (ref null ${})) (param $y (ref null ${i32}))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
@@ -197,7 +197,7 @@
  ;; CHECK-NEXT:  (local.set $x
  ;; CHECK-NEXT:   (ref.null ${})
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $x
+ ;; CHECK-NEXT:  (local.set $y
  ;; CHECK-NEXT:   (ref.null ${i32})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

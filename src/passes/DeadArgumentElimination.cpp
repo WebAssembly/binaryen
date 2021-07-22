@@ -545,19 +545,22 @@ private:
         auto* operand = call->operands[i];
         refinedType = Type::getLeastUpperBound(refinedType, operand->type);
         if (refinedType == originalType) {
-          // We failed to refine to anything more specific.
-          return;
+          // We failed to refine this parameter to anything more specific.
+          refinedType = originalType;
+          break;
         }
       }
+
       // Nothing is sent here at all; leave such optimizations to DCE.
       if (refinedType == Type::unreachable) {
         return;
       }
       newParamTypes.push_back(refinedType);
     }
-    // Check if we are able to optimize here.
-    auto newParams = Type(newParamTypes);
-    if (newParams == func->getParams()) {
+
+    // Check if we are able to optimize here before we do the work to scan the
+    // function body.
+    if (Type(newParamTypes) == func->getParams()) {
       return;
     }
 
@@ -567,8 +570,13 @@ private:
     for (auto* set : FindAll<LocalSet>(func->body).list) {
       if (!Type::isSubType(set->value->type, newParamTypes[set->index])) {
         // TODO: we could still optimize here, by creating a new local.
-        return;
+        newParamTypes[set->index] = func->getLocalType(set->index);
       }
+    }
+
+    auto newParams = Type(newParamTypes);
+    if (newParams == func->getParams()) {
+      return;
     }
 
     // We can do this! Update the types, including the types of gets.
