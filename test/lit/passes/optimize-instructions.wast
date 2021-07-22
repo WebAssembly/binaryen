@@ -10489,6 +10489,63 @@
       (i32.const 0)
     ))
   )
+
+  ;; i32(x) <= i32(y) - 1  =>  i32(x) < i32(y)
+  ;; i32(x) - 1 >= i32(y)  =>  i32(x) > i32(y)
+  ;; i64(x) <= i64(y) - 1  =>  i64(x) < i64(y)
+  ;; i64(x) - 1 >= i64(y)  =>  i64(x) > i64(y)
+  ;; i32(x) + 1 <= i64(y)  =>  i64(x) < i64(y)
+  ;; i64(x) >= i64(y) + 1  =>  i64(x) > i64(y)
+
+  ;; CHECK:      (func $optimize-relationals-specials (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.gt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.lt_s
+  ;; CHECK-NEXT:    (local.get $X)
+  ;; CHECK-NEXT:    (local.get $Y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.gt_s
+  ;; CHECK-NEXT:    (local.get $X)
+  ;; CHECK-NEXT:    (local.get $Y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.gt_s
+  ;; CHECK-NEXT:    (local.get $X)
+  ;; CHECK-NEXT:    (local.get $Y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-relationals-specials (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
+    (drop (i32.le_s (local.get $x) (i32.sub (local.get $y) (i32.const 1))))
+    (drop (i32.ge_s (i32.sub (local.get $x) (i32.const 1)) (local.get $y)))
+
+    (drop (i64.le_s (local.get $X) (i64.sub (local.get $Y) (i64.const 1))))
+    (drop (i64.ge_s (i64.sub (local.get $X) (i64.const 1)) (local.get $Y)))
+
+    (drop (i32.le_s (i32.add (local.get $x) (i32.const 1)) (local.get $y)))
+    (drop (i64.ge_s (local.get $X) (i64.add (local.get $Y) (i64.const 1))))
+  )
+
   ;; CHECK:      (func $unsigned-context (param $x i32) (param $y i64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.div_u

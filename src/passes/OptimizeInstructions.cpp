@@ -341,6 +341,50 @@ struct OptimizeInstructions
         }
       }
       {
+        // signed(x <= y - 1)  =>  signed(x < y)
+        Binary* bin;
+        Expression* y;
+        if (matches(curr,
+                    binary(&bin, LeS, any(), binary(Add, any(&y), ival(-1))))) {
+          bin->op = Abstract::getBinary(y->type, LtS);
+          bin->right = y;
+          return replaceCurrent(bin);
+        }
+      }
+      {
+        // signed(x + 1 <= y)  =>  signed(x < y)
+        Binary* bin;
+        Expression* x;
+        if (matches(curr,
+                    binary(&bin, LeS, binary(Add, any(&x), ival(1)), any()))) {
+          bin->op = Abstract::getBinary(x->type, LtS);
+          bin->left = x;
+          return replaceCurrent(bin);
+        }
+      }
+      {
+        Binary* bin;
+        Expression* x;
+        // signed(x - 1 >= y)  =>  signed(x > y)
+        if (matches(curr,
+                    binary(&bin, GeS, binary(Add, any(&x), ival(-1)), any()))) {
+          bin->op = Abstract::getBinary(x->type, GtS);
+          bin->left = x;
+          return replaceCurrent(bin);
+        }
+      }
+      {
+        // signed(x >= y + 1)  =>  signed(x > y)
+        Binary* bin;
+        Expression* y;
+        if (matches(curr,
+                    binary(&bin, GeS, any(), binary(Add, any(&y), ival(1))))) {
+          bin->op = Abstract::getBinary(y->type, GtS);
+          bin->right = y;
+          return replaceCurrent(bin);
+        }
+      }
+      {
         // try de-morgan's AND law,
         //  (eqz X) and (eqz Y) === eqz (X or Y)
         // Note that the OR and XOR laws do not work here, as these
