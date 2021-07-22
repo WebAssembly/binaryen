@@ -127,7 +127,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-various-params-yes
-  ;; The first argument gets {i32} and {i32}; the second {i32} and {i32_i64;
+  ;; The first argument gets {i32} and {i32}; the second {i32} and {i32_i64};
   ;; both of those pairs can be optimized to {i32}.
   ;; There is also an i32 in the middle, which should not confuse us.
   (call $various-params-yes
