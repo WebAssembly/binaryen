@@ -242,16 +242,26 @@
  ;; This function is called in ways that allow us to make the first parameter
  ;; non-nullable.
  ;; CHECK:      (func $various-params-null (param $x (ref ${i32})) (param $y (ref null ${i32}))
+ ;; CHECK-NEXT:  (local $temp i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $various-params-null (param $x (ref null ${})) (param $y (ref null ${}))
+  (local $temp i32)
   ;; "Use" the locals to avoid other optimizations kicking in.
   (drop (local.get $x))
   (drop (local.get $y))
+  ;; Use a local in this function as well, which should be ignored by this pass
+  ;; (when we scan and update all local.gets and sets, we should only do so on
+  ;; parameters, and not vars - and we can crash if we scan/update things we
+  ;; should not).
+  (local.set $temp (local.get $temp))
  )
 )

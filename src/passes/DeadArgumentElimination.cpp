@@ -570,9 +570,10 @@ private:
     // local operations in the body, as if the parameter is reused and written
     // to, then those types must be taken into account as well.
     for (auto* set : FindAll<LocalSet>(func->body).list) {
-      if (!Type::isSubType(set->value->type, newParamTypes[set->index])) {
+      auto index = set->index;
+      if (func->isParam(index) && !Type::isSubType(set->value->type, newParamTypes[index])) {
         // TODO: we could still optimize here, by creating a new local.
-        newParamTypes[set->index] = func->getLocalType(set->index);
+        newParamTypes[index] = func->getLocalType(index);
       }
     }
 
