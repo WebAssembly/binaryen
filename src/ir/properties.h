@@ -328,6 +328,12 @@ inline bool isResultFallthrough(Expression* curr) {
          curr->is<Break>();
 }
 
+inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
+  // A select only allows a single value in its arms in the spec:
+  // https://webassembly.github.io/spec/core/valid/instructions.html#xref-syntax-instructions-syntax-instr-parametric-mathsf-select-t-ast
+  return ifTrue->type.isSingle() && ifFalse->type.isSingle();
+}
+
 } // namespace Properties
 
 } // namespace wasm

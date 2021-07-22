@@ -3037,7 +3037,12 @@ private:
                                                        curr->ifTrue)
                                    .hasSideEffects();
 
-            if (validTypes && validEffects) {
+            // In addition, check for specific limitations of select.
+            bool validChildren =
+              !std::is_same<T, Select>::value ||
+              Properties::canEmitSelectWithArms(ifTrueChild, ifFalseChild);
+
+            if (validTypes && validEffects && validChildren) {
               // Replace ifTrue with its child.
               curr->ifTrue = ifTrueChild;
               // Relace ifFalse with its child, and reuse that node outside.
