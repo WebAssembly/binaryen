@@ -10492,12 +10492,9 @@
 
   ;; i32(x) <= i32(y) - 1  =>  i32(x) < i32(y)
   ;; i32(x) - 1 >= i32(y)  =>  i32(x) > i32(y)
-  ;; i64(x) <= i64(y) - 1  =>  i64(x) < i64(y)
-  ;; i64(x) - 1 >= i64(y)  =>  i64(x) > i64(y)
-  ;; i32(x) + 1 <= i64(y)  =>  i64(x) < i64(y)
-  ;; i64(x) >= i64(y) + 1  =>  i64(x) > i64(y)
+  ;; i32(x) + 1 <= i32(y)  =>  i32(x) < i32(y)
 
-  ;; CHECK:      (func $optimize-relationals-specials (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
+  ;; CHECK:      (func $optimize-relationals-specials-32 (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.lt_s
   ;; CHECK-NEXT:    (local.get $x)
@@ -10511,29 +10508,49 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.lt_s
-  ;; CHECK-NEXT:    (local.get $X)
-  ;; CHECK-NEXT:    (local.get $Y)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i64.gt_s
-  ;; CHECK-NEXT:    (local.get $X)
-  ;; CHECK-NEXT:    (local.get $Y)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.lt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-relationals-specials-32 (param $x i32) (param $y i32)
+    (drop (i32.le_s (local.get $x) (i32.sub (local.get $y) (i32.const 1))))
+    (drop (i32.ge_s (i32.sub (local.get $x) (i32.const 1)) (local.get $y)))
+    (drop (i32.le_s (i32.add (local.get $x) (i32.const 1)) (local.get $y)))
+  )
+
+  ;; i64(x) <= i64(y) - 1  =>  i64(x) < i64(y)
+  ;; i64(x) - 1 >= i64(y)  =>  i64(x) > i64(y)
+  ;; i64(x) >= i64(y) + 1  =>  i64(x) > i64(y)
+
+  ;; CHECK:      (func $optimize-relationals-specials-64 (param $x i64) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.lt_s
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i64.gt_s
-  ;; CHECK-NEXT:    (local.get $X)
-  ;; CHECK-NEXT:    (local.get $Y)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.gt_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-relationals-specials-64 (param $x i64) (param $y i64)
+    (drop (i64.le_s (local.get $x) (i64.sub (local.get $y) (i64.const 1))))
+    (drop (i64.ge_s (i64.sub (local.get $x) (i64.const 1)) (local.get $y)))
+    (drop (i64.ge_s (local.get $x) (i64.add (local.get $y) (i64.const 1))))
+  )
+
+  ;; CHECK:      (func $no-optimize-relationals-specials (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.ge_u
   ;; CHECK-NEXT:    (i32.sub
@@ -10589,16 +10606,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $optimize-relationals-specials (param $x i32) (param $y i32) (param $X i64) (param $Y i64)
-    (drop (i32.le_s (local.get $x) (i32.sub (local.get $y) (i32.const 1))))
-    (drop (i32.ge_s (i32.sub (local.get $x) (i32.const 1)) (local.get $y)))
-
-    (drop (i64.le_s (local.get $X) (i64.sub (local.get $Y) (i64.const 1))))
-    (drop (i64.ge_s (i64.sub (local.get $X) (i64.const 1)) (local.get $Y)))
-
-    (drop (i32.le_s (i32.add (local.get $x) (i32.const 1)) (local.get $y)))
-    (drop (i64.ge_s (local.get $X) (i64.add (local.get $Y) (i64.const 1))))
-
+  (func $no-optimize-relationals-specials (param $x i32) (param $y i32)
     (drop (i32.le_u (local.get $x) (i32.sub (local.get $y) (i32.const 1)))) ;; skip
     (drop (i32.ge_u (i32.sub (local.get $x) (i32.const 1)) (local.get $y))) ;; skip
     (drop (i32.le_s (local.get $x) (i32.sub (local.get $y) (i32.const 2)))) ;; skip
