@@ -841,17 +841,33 @@ struct OptimizeInstructions
         }
       }
       {
+        // i64.extend_i32_s(i32.wrap_i64(x))  =>  x
+        //   where maxBits(x) <= 31
+        //
+        // i64.extend_i32_u(i32.wrap_i64(x))  =>  x
+        //   where maxBits(x) <= 32
+        Expression* x;
+        UnaryOp unaryOp;
+        if (matches(curr, unary(&unaryOp, unary(WrapInt64, any(&x))))) {
+          if (unaryOp == ExtendSInt32 || unaryOp == ExtendUInt32) {
+            auto maxBits = Bits::getMaxBits(x, this);
+            if ((unaryOp == ExtendSInt32 && maxBits <= 31) ||
+                (unaryOp == ExtendUInt32 && maxBits <= 32)) {
+              return replaceCurrent(x);
+            }
+          }
+        }
+      }
+      if (getModule()->features.hasSignExt()) {
+        // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
         Unary* inner;
         Expression* x;
-        if (getModule()->features.hasSignExt()) {
-          // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
-          if (matches(curr,
-                      unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
-            inner->op = ExtendS32Int64;
-            inner->type = Type::i64;
-            inner->value = x;
-            return replaceCurrent(inner);
-          }
+        if (matches(curr,
+                    unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
+          inner->op = ExtendS32Int64;
+          inner->type = Type::i64;
+          inner->value = x;
+          return replaceCurrent(inner);
         }
       }
     }
