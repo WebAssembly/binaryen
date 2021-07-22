@@ -527,7 +527,9 @@ private:
   //
   // This assumes that the function has no calls aside from |calls|, that is, it
   // is not exported or called from the table or by reference.
-  void refineArgumentTypes(Function* func, const std::vector<Call*>& calls, Module* module) {
+  void refineArgumentTypes(Function* func,
+                           const std::vector<Call*>& calls,
+                           Module* module) {
     if (!module->features.hasGC()) {
       return;
     }
