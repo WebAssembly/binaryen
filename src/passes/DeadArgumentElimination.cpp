@@ -43,6 +43,7 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -308,6 +309,9 @@ struct DAE : public Pass {
         allDroppedCalls[pair.first] = pair.second;
       }
     }
+    // If we refine return types then we will need to do more type updating
+    // at the end.
+    bool refinedReturnTypes = false;
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (auto& pair : allCalls) {
@@ -323,6 +327,9 @@ struct DAE : public Pass {
       // affect whether an argument is used or not, it just refines the type
       // where possible.
       refineArgumentTypes(func, calls, module);
+      // Refine return types as well.
+      refinedReturnTypes = refinedReturnTypes ||
+                           refineReturnTypes(func, calls, module);
       // Check if all calls pass the same constant for a particular argument.
       for (Index i = 0; i < numParams; i++) {
         Literal value;
@@ -356,6 +363,12 @@ struct DAE : public Pass {
           infoMap[name].unusedParams.insert(i);
         }
       }
+    }
+    if (refinedReturnTypes) {
+      // Changing a call expression's return type can propagate out to its
+      // parents, and so we must refinalize.
+      // TODO: We could track in which functions we actually make changes.
+      ReFinalize().run(runner, module);
     }
     // Track which functions we changed, and optimize them later if necessary.
     std::unordered_set<Function*> changed;
@@ -590,6 +603,63 @@ private:
         get->type = func->getLocalType(index);
       }
     }
+  }
+
+  // See if the types returned from a function allow us to define a more refined
+  // return type for it. If so, we can update it and all calls going to it.
+  //
+  // This assumes that the function has no calls aside from |calls|, that is, it
+  // is not exported or called from the table or by reference. Exports should be
+  // fine, as should indirect calls in principle, but VMs will need to support
+  // function subtyping in indirect calls. TODO: relax this when possible
+  //
+  // Returns whether we optimized.
+  bool refineReturnTypes(Function* func,
+                         const std::vector<Call*>& calls,
+                         Module* module) {
+    if (!module->features.hasGC()) {
+      return false;
+    }
+    Type originalType = func->getResults();
+    if (!originalType.isRef()) {
+      // Nothing to refine.
+      return false;
+    }
+
+    Type refinedType = func->body->type;
+
+    // We fail to refine if we end up with the same type as before, or if the
+    // refined type is unreachable, which means nothing actually returns.
+    // TODO: In the unreachable case, we can propagate that to the outside, and
+    //       not just for GC.
+    auto failed = [&]() {
+      return refinedType == originalType || refinedType == Type::unreachable;
+    };
+
+    // Start with the type of the body, and then process the returns to find
+    // the lub. Check if we've already failed, which can save us from scanning
+    // the/ function body.
+    if (failed()) {
+      return false;
+    }
+
+    // Scan the body and look at the returns.
+    for (auto* ret : FindAll<Return>(func->body).list) {
+      refinedType = Type::getLeastUpperBound(refinedType, ret->value->type);
+      if (failed()) {
+        return false;
+      }
+    }
+    assert(!failed());
+
+    // Success, update the type, and the calls.
+    func->setResults(refinedType);
+    for (auto* call : calls) {
+      if (call->type != Type::unreachable) {
+        call->type = refinedType;
+      }
+    }
+    return true;
   }
 };
 
