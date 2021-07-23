@@ -2362,7 +2362,7 @@ Literal extend(const Literal& vec) {
   LaneArray<Lanes* 2> lanes = (vec.*IntoLanes)();
   LaneArray<Lanes> result;
   for (size_t i = 0; i < Lanes; ++i) {
-    result[i] = lanes[(Side == LaneOrder::Low) ? i : i + Lanes];
+    result[i] = Literal(lanes[(Side == LaneOrder::Low) ? i : i + Lanes]);
   }
   return Literal(result);
 }
