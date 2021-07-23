@@ -3,25 +3,31 @@
 ;; RUN:   | filecheck %s
 
 (module
+  ;; CHECK:      (type $struct (struct ))
+
   ;; CHECK:      (import "out" "i32" (func $i32 (result i32)))
   (import "out" "i32" (func $i32 (result i32)))
 
-  ;; CHECK:      (func $simple-local-but-not-param (param $x anyref)
-  ;; CHECK-NEXT:  (local $y (ref null $none_=>_i32))
-  ;; CHECK-NEXT:  (local $unused anyref)
+  (type $struct (struct))
+
+  ;; CHECK:      (func $non-nullable
+  ;; CHECK-NEXT:  (local $x (ref $struct))
+  ;; CHECK-NEXT:  (local $y (ref $none_=>_i32))
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (ref.func $i32)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (ref.func $i32)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $non-nullable
-    (local $x (ref null data))
+    (local $x (ref null $struct))
     (local $y anyref)
     ;; x is assigned a value that is non-nullable.
     (local.set $x
-      (ref.as_non_null (ref.null data))
+      (ref.as_non_null (ref.null $struct))
     )
     ;; x is assigned a value that is non-nullable, and also allows a more
     ;; specific heap type.
