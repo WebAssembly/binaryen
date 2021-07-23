@@ -562,9 +562,13 @@ public:
       case ExtendHighUVecI16x8ToVecI32x4:
         return value.extendHighUToVecI32x4();
       case ExtendLowSVecI32x4ToVecI64x2:
+        return value.extendLowSToVecI64x2();
       case ExtendHighSVecI32x4ToVecI64x2:
+        return value.extendHighSToVecI64x2();
       case ExtendLowUVecI32x4ToVecI64x2:
+        return value.extendLowUToVecI64x2();
       case ExtendHighUVecI32x4ToVecI64x2:
+        return value.extendHighUToVecI64x2();
       case ConvertLowSVecI32x4ToVecF64x2:
       case ConvertLowUVecI32x4ToVecF64x2:
       case TruncSatZeroSVecF64x2ToVecI32x4:

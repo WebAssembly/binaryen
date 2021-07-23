@@ -628,6 +628,10 @@ public:
   Literal extendHighSToVecI32x4() const;
   Literal extendLowUToVecI32x4() const;
   Literal extendHighUToVecI32x4() const;
+  Literal extendLowSToVecI64x2() const;
+  Literal extendHighSToVecI64x2() const;
+  Literal extendLowUToVecI64x2() const;
+  Literal extendHighUToVecI64x2() const;
   Literal swizzleVec8x16(const Literal& other) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
