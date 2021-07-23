@@ -328,8 +328,8 @@ struct DAE : public Pass {
       // where possible.
       refineArgumentTypes(func, calls, module);
       // Refine return types as well.
-      refinedReturnTypes = refinedReturnTypes ||
-                           refineReturnTypes(func, calls, module);
+      refinedReturnTypes =
+        refinedReturnTypes || refineReturnTypes(func, calls, module);
       // Check if all calls pass the same constant for a particular argument.
       for (Index i = 0; i < numParams; i++) {
         Literal value;
