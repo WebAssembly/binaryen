@@ -12,6 +12,8 @@
  ;; CHECK:      (type ${f64} (struct (field f64)))
  (type ${f64} (struct (field f64)))
  (type ${i32_i64} (struct (field i32) (field i64)))
+ ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
+ (type ${i32_f32} (struct (field i32) (field f32)))
 
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (call $bar)
@@ -262,5 +264,33 @@
   ;; parameters, and not vars - and we can crash if we scan/update things we
   ;; should not).
   (local.set $temp (local.get $temp))
+ )
+
+ ;; CHECK:      (func $call-various-params-middle
+ ;; CHECK-NEXT:  (call $various-params-middle
+ ;; CHECK-NEXT:   (ref.null ${i32_i64})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $various-params-middle
+ ;; CHECK-NEXT:   (ref.null ${i32_f32})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-various-params-middle
+  ;; The argument gets {i32_i64} and {i32_f32}. This allows us to refine from
+  ;; {} to {i32}, a type "in the middle".
+  (call $various-params-middle
+   (ref.null ${i32_i64})
+  )
+  (call $various-params-middle
+   (ref.null ${i32_f32})
+  )
+ )
+ ;; CHECK:      (func $various-params-middle (param $x (ref null ${i32}))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $various-params-middle (param $x (ref null ${}))
+  ;; "Use" the local to avoid other optimizations kicking in.
+  (drop (local.get $x))
  )
 )
