@@ -49,6 +49,10 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
   }
 
   void doWalkFunction(Function* func) {
+    if (!getModule()->features.hasGC()) {
+      return;
+    }
+
     auto varBase = func->getVarIndexBase();
     auto numLocals = func->getNumLocals();
 
