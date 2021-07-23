@@ -4,11 +4,10 @@
 
 (module
   ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct))
 
   ;; CHECK:      (import "out" "i32" (func $i32 (result i32)))
   (import "out" "i32" (func $i32 (result i32)))
-
-  (type $struct (struct))
 
   ;; CHECK:      (func $non-nullable
   ;; CHECK-NEXT:  (local $x (ref $struct))
