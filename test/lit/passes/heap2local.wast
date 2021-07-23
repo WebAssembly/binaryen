@@ -318,7 +318,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (i32.const 1)
@@ -361,7 +361,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -404,11 +404,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (ref.null $struct.A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -480,13 +480,13 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $struct.A))
   ;; CHECK-NEXT:    (block (result (ref null $struct.A))
-  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -609,11 +609,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (ref.null $struct.A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
@@ -654,12 +654,12 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (ref.null $struct.A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
@@ -667,7 +667,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $ref-2)
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
@@ -719,12 +719,12 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
@@ -773,7 +773,7 @@
   ;; CHECK-NEXT:     (call $send-ref
   ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $2)
@@ -945,7 +945,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref null $struct.recursive))
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (ref.null $struct.recursive)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
@@ -1102,7 +1102,7 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (block (result i32)
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.get $2)
   ;; CHECK-NEXT:    )
@@ -1112,14 +1112,14 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result f64)
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:       (ref.null $struct.A)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $3
   ;; CHECK-NEXT:      (f64.const 42)
@@ -1129,13 +1129,13 @@
   ;; CHECK-NEXT:   (loop $inner
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:      (ref.null $struct.A)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (local.set $2
   ;; CHECK-NEXT:      (i32.add
   ;; CHECK-NEXT:       (block (result i32)
   ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (local.get $ref)
+  ;; CHECK-NEXT:         (ref.null $struct.A)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (local.get $2)
   ;; CHECK-NEXT:       )
@@ -1152,7 +1152,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:       (ref.null $struct.A)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
@@ -1160,7 +1160,7 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result f64)
   ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $ref)
+  ;; CHECK-NEXT:       (ref.null $struct.A)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $3)
   ;; CHECK-NEXT:     )
@@ -1340,7 +1340,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
@@ -1362,7 +1362,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
@@ -1432,7 +1432,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $ref1)
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
@@ -1440,7 +1440,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $ref2)
+  ;; CHECK-NEXT:     (ref.null $struct.A)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $4)
   ;; CHECK-NEXT:   )
@@ -1580,7 +1580,7 @@
   ;; CHECK-NEXT:    (block $block (result (ref null $struct.A))
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (br_if $block
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (ref.null $struct.A)
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -1790,7 +1790,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (i32.const 1)
@@ -1845,11 +1845,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (ref.null $struct.A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:    (ref.null $struct.A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )

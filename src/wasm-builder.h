@@ -618,6 +618,11 @@ public:
     ret->finalize();
     return ret;
   }
+  RefNull* makeRefNull(HeapType type) {
+    auto* ret = wasm.allocator.alloc<RefNull>();
+    ret->finalize(Type(type, Nullable));
+    return ret;
+  }
   RefNull* makeRefNull(Type type) {
     auto* ret = wasm.allocator.alloc<RefNull>();
     ret->finalize(type);

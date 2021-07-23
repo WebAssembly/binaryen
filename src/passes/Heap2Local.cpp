@@ -297,17 +297,33 @@ struct Heap2LocalOptimizer {
 
       // We don't need any sets of the reference to any of the locals it
       // originally was written to.
-      //
-      // Note that after we remove the sets, other passes can easily remove the
-      // gets, and so we do not bother to do anything for them. (Also, in
-      // general it is not trivial to replace the gets - we'd need something of
-      // the same type, but the type might be a non-nullable reference type in
-      // the case of a parameter, and in the future maybe of some locals.)
       if (curr->isTee()) {
         replaceCurrent(curr->value);
       } else {
         replaceCurrent(builder.makeDrop(curr->value));
       }
+    }
+
+    void visitLocalGet(LocalGet* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // Uses of this get will drop it, so the value does not matter. Replace it
+      // with something else, which avoids issues with non-nullability (when
+      // non-nullable locals are enabled), which could happen like this:
+      //
+      //   (local $x (ref $foo))
+      //   (local.set $x ..)
+      //   (.. (local.get $x))
+      //
+      // If we remove the set but not the get then the get would appear to read
+      // the default value of a non-nullable local, which is not allowed.
+      //
+      // For simplicity, replace the get with a null. We anyhow have null types
+      // in the places where our allocation was earlier, see notes on
+      // visitBlock, and so using a null here adds no extra complexity.
+      replaceCurrent(builder.makeRefNull(curr->type.getHeapType()));
     }
 
     void visitBreak(Break* curr) {
@@ -390,8 +406,7 @@ struct Heap2LocalOptimizer {
       // Replace the allocation with a null reference. This changes the type
       // from non-nullable to nullable, but as we optimize away the code that
       // the allocation reaches, we will handle that.
-      contents.push_back(
-        builder.makeRefNull(Type(allocation->type.getHeapType(), Nullable)));
+      contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
       replaceCurrent(builder.makeBlock(contents));
     }
 
@@ -533,8 +548,10 @@ struct Heap2LocalOptimizer {
       }
 
       // If we got to here, then we can continue to hope that we can optimize
-      // this allocation. Mark the parent as reached by it, and continue.
+      // this allocation. Mark the parent and child as reached by it, and
+      // continue.
       rewriter.reached.insert(parent);
+      rewriter.reached.insert(child);
     }
 
     // We finished the loop over the flows. Do the final checks.
