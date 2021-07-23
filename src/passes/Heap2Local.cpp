@@ -532,8 +532,6 @@ struct Heap2LocalOptimizer {
             flows.push({get, parents.getParent(get)});
           }
         }
-      } else if (child->is<LocalGet>()) {
-        rewriter.reached.insert(child);
       }
 
       // If the parent may send us on a branch, we will need to look at the flow
@@ -543,8 +541,10 @@ struct Heap2LocalOptimizer {
       }
 
       // If we got to here, then we can continue to hope that we can optimize
-      // this allocation. Mark the parent as reached by it, and continue.
+      // this allocation. Mark the parent and child as reached by it, and
+      // continue.
       rewriter.reached.insert(parent);
+      rewriter.reached.insert(child);
     }
 
     // We finished the loop over the flows. Do the final checks.
