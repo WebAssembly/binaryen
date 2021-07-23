@@ -2352,66 +2352,41 @@ Literal Literal::narrowUToVecI16x8(const Literal& other) const {
 
 enum class LaneOrder { Low, High };
 
-template<size_t Lanes,
-         typename LaneT,
-         Literal (*IntoLane)(const Literal&),
-         LaneOrder Side>
+template<size_t Lanes, typename LaneFrom, typename LaneTo, LaneOrder Side>
 Literal extend(const Literal& vec) {
-  LaneArray<Lanes* 2> lanes = getLanes<LaneT, Lanes * 2>(vec);
+  LaneArray<Lanes* 2> lanes = getLanes<LaneFrom, Lanes * 2>(vec);
   LaneArray<Lanes> result;
   for (size_t i = 0; i < Lanes; ++i) {
-    result[i] = (*IntoLane)(lanes[(Side == LaneOrder::Low) ? i : i + Lanes]);
+    result[i] =
+      Literal((LaneTo)(LaneFrom)lanes[(Side == LaneOrder::Low) ? i : i + Lanes]
+                .geti32());
   }
   return Literal(result);
 }
 
-Literal extendToS16(const Literal& val) {
-  return Literal((int16_t)(int8_t)val.geti32());
-}
-
-Literal extendToU16(const Literal& val) {
-  return Literal((uint16_t)(uint8_t)val.geti32());
-}
-
-Literal extendToS32(const Literal& val) {
-  return Literal((int32_t)(int16_t)val.geti32());
-}
-
-Literal extendToU32(const Literal& val) {
-  return Literal((uint32_t)(uint16_t)val.geti32());
-}
-
-Literal extendToS64(const Literal& val) {
-  return Literal((int64_t)val.geti32());
-}
-
-Literal extendToU64(const Literal& val) {
-  return Literal((uint64_t)val.geti32());
-}
-
 Literal Literal::extendLowSToVecI16x8() const {
-  return extend<8, int8_t, &extendToS16, LaneOrder::Low>(*this);
+  return extend<8, int8_t, int16_t, LaneOrder::Low>(*this);
 }
 Literal Literal::extendHighSToVecI16x8() const {
-  return extend<8, int8_t, &extendToS16, LaneOrder::High>(*this);
+  return extend<8, int8_t, int16_t, LaneOrder::High>(*this);
 }
 Literal Literal::extendLowUToVecI16x8() const {
-  return extend<8, uint8_t, &extendToU16, LaneOrder::Low>(*this);
+  return extend<8, uint8_t, uint16_t, LaneOrder::Low>(*this);
 }
 Literal Literal::extendHighUToVecI16x8() const {
-  return extend<8, uint8_t, &extendToU16, LaneOrder::High>(*this);
+  return extend<8, uint8_t, uint16_t, LaneOrder::High>(*this);
 }
 Literal Literal::extendLowSToVecI32x4() const {
-  return extend<4, int16_t, &extendToS32, LaneOrder::Low>(*this);
+  return extend<4, int16_t, int32_t, LaneOrder::Low>(*this);
 }
 Literal Literal::extendHighSToVecI32x4() const {
-  return extend<4, int16_t, &extendToS32, LaneOrder::High>(*this);
+  return extend<4, int16_t, int32_t, LaneOrder::High>(*this);
 }
 Literal Literal::extendLowUToVecI32x4() const {
-  return extend<4, uint16_t, &extendToU32, LaneOrder::Low>(*this);
+  return extend<4, uint16_t, uint32_t, LaneOrder::Low>(*this);
 }
 Literal Literal::extendHighUToVecI32x4() const {
-  return extend<4, uint16_t, &extendToU32, LaneOrder::High>(*this);
+  return extend<4, uint16_t, uint32_t, LaneOrder::High>(*this);
 }
 
 Literal Literal::extMulLowSI16x8(const Literal& other) const {
