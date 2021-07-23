@@ -14,6 +14,14 @@
  * limitations under the License.
  */
 
+//
+// Refines the types of locals where possible. That is, if a local is assigned
+// types that are more specific than the local's declared type, refine the
+// declared type. This can then potentially unlock optimizations later when the
+// local is used, as we have more type info. (However, it may also increase code
+// size in theory, if we end up declaring more types - TODO investigate.)
+//
+
 #include <ir/find_all.h>
 #include <ir/linear-execution.h>
 #include <ir/utils.h>
@@ -28,8 +36,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
   Pass* create() override { return new LocalSubtyping(); }
 
   // Shared code to find all sets or gets for each local index. Returns a vector
-  // that maps
-  //   local index => vector of LocalGet*|LocalSet* expressions
+  // that maps local indexes => vector of LocalGet*|LocalSet* expressions.
   template<typename T>
   std::vector<std::vector<T*>> getLocalOperations(Function* func) {
     std::vector<std::vector<T*>> ret;
@@ -83,6 +90,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           types.insert(set->value->type);
         }
         if (types.empty()) {
+          // Nothing is assigned to this local (other opts will remove it).
           continue;
         }
 
@@ -94,11 +102,11 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         if (!getModule()->features.hasGCNNLocals() && newType.isNonNullable()) {
           newType = Type(newType.getHeapType(), Nullable);
           // Note that the old type must have been nullable as well, as non-
-          // nullable types cannot be locals, which means that we will not have
-          // to do any extra work to handle non-nullability if we update the
-          // type: we are just updating the heap type, and leaving the type
-          // nullable as it was.
-          assert(oldType.isRef() && oldType.isNullable());
+          // nullable types cannot be locals without that feature being enabled,
+          // which means that we will not have to do any extra work to handle
+          // non-nullability if we update the type: we are just updating the
+          // heap type, and leaving the type nullable as it was.
+          assert(oldType.isNullable());
         }
 
         if (newType != oldType) {
