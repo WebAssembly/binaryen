@@ -22,11 +22,10 @@
 
 namespace wasm {
 
-struct LocalSubtyping
-  : public WalkerPass<LinearExecutionWalker<LocalSubtyping>> {
+struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() { return new LocalSubtyping(); }
+  Pass* create() override { return new LocalSubtyping(); }
 
   // Shared code to find all sets or gets for each local index. Returns a vector
   // that maps
@@ -113,8 +112,8 @@ struct LocalSubtyping
             get->type = newType;
           }
 
-          // NB: the tee code will not be needed if the type of tees becomes
-          //     that of their value.
+          // NB: These tee updates will not be needed if the type of tees
+          //     becomes that of their value, in the spec.
           for (auto* set : setsForLocal[i]) {
             if (set->isTee() && set->type != Type::unreachable) {
               set->type = newType;
