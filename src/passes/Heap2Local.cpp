@@ -310,11 +310,19 @@ struct Heap2LocalOptimizer {
       }
 
       // Uses of this get will drop it, so the value does not matter. Replace it
-      // with something else, which avoids issues with non-nullability.
-      // Specifically, if the local type is non-nullable, then we remove some of
-      // the sets to that local, but if we leave the gets then we'd appear to be
-      // reading from a non-nullable local without writing to it first, which is
-      // invalid.
+      // with something else, which avoids issues with non-nullability (when
+      // non-nullable locals are enabled), which could happen like this:
+      //
+      //   (local $x (ref $foo))
+      //   (local.set $x ..)
+      //   (.. (local.get $x))
+      //
+      // If we remove the set but not the get then the get would appear to read
+      // the default value of a non-nullable local, which is not allowed.
+      //
+      // For simplicity, replace the get with a null. We anyhow have null types
+      // in the places where our allocation was earlier, see notes on
+      // visitBlock, and so using a null here adds no extra complexity.
       replaceCurrent(builder.makeRefNull(curr->type.getHeapType()));
     }
 
@@ -399,7 +407,7 @@ struct Heap2LocalOptimizer {
       // from non-nullable to nullable, but as we optimize away the code that
       // the allocation reaches, we will handle that.
       contents.push_back(
-        builder.makeRefNull(Type(allocation->type.getHeapType(), Nullable)));
+        builder.makeRefNull(allocation->type.getHeapType()));
       replaceCurrent(builder.makeBlock(contents));
     }
 
