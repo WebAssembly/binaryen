@@ -2381,6 +2381,14 @@ Literal extendToU32(const Literal& val) {
   return Literal((uint32_t)(uint16_t)val.geti32());
 }
 
+Literal extendToS64(const Literal& val) {
+  return Literal((int64_t)val.geti32());
+}
+
+Literal extendToU64(const Literal& val) {
+  return Literal((uint64_t)val.geti32());
+}
+
 Literal Literal::extendLowSToVecI16x8() const {
   return extend<8, int8_t, &extendToS16, LaneOrder::Low>(*this);
 }
