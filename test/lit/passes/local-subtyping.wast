@@ -214,7 +214,8 @@
   ;; CHECK-NEXT: )
   (func $nondefaultable
     (local $x (anyref anyref))
-    ;; A tuple
+    ;; This tuple is assigned non-nullable values, which means the subtype is
+    ;; nondefaultable, and we must not apply it.
     (local.set $x
       (tuple.make
         (ref.func $i32)

@@ -107,10 +107,10 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           if (!getModule()->features.hasGCNNLocals()) {
             newType = Type(newType.getHeapType(), Nullable);
             // Note that the old type must have been nullable as well, as non-
-            // nullable types cannot be locals without that feature being enabled,
-            // which means that we will not have to do any extra work to handle
-            // non-nullability if we update the type: we are just updating the
-            // heap type, and leaving the type nullable as it was.
+            // nullable types cannot be locals without that feature being
+            // enabled, which means that we will not have to do any extra work
+            // to handle non-nullability if we update the type: we are just
+            // updating the heap type, and leaving the type nullable as it was.
             assert(oldType.isNullable());
           }
         } else if (!newType.isDefaultable()) {
