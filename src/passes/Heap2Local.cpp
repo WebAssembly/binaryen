@@ -297,17 +297,25 @@ struct Heap2LocalOptimizer {
 
       // We don't need any sets of the reference to any of the locals it
       // originally was written to.
-      //
-      // Note that after we remove the sets, other passes can easily remove the
-      // gets, and so we do not bother to do anything for them. (Also, in
-      // general it is not trivial to replace the gets - we'd need something of
-      // the same type, but the type might be a non-nullable reference type in
-      // the case of a parameter, and in the future maybe of some locals.)
       if (curr->isTee()) {
         replaceCurrent(curr->value);
       } else {
         replaceCurrent(builder.makeDrop(curr->value));
       }
+    }
+
+    void visitLocalGet(LocalGet* curr) {
+      if (!reached.count(curr)) {
+        return;
+      }
+
+      // Uses of this get will drop it, so the value does not matter. Replace it
+      // with something else, which avoids issues with non-nullability.
+      // Specifically, if the local type is non-nullable, then we remove some of
+      // the sets to that local, but if we leave the gets then we'd appear to be
+      // reading from a non-nullable local without writing to it first, which is
+      // invalid.
+      replaceCurrent(builder.makeRefNull(curr->type.getHeapType()));
     }
 
     void visitBreak(Break* curr) {
@@ -524,6 +532,8 @@ struct Heap2LocalOptimizer {
             flows.push({get, parents.getParent(get)});
           }
         }
+      } else if (child->is<LocalGet>()) {
+        rewriter.reached.insert(child);
       }
 
       // If the parent may send us on a branch, we will need to look at the flow

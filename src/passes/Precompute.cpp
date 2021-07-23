@@ -350,8 +350,10 @@ private:
           Literals curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
-              curr =
-                Literal::makeZeros(getFunction()->getLocalType(get->index));
+              auto localType = getFunction()->getLocalType(get->index);
+              assert(!localType.isNonNullable() &&
+                     "Non-nullable locals must not use the default value");
+              curr = Literal::makeZeros(localType);
             } else {
               // it's a param, so it's hopeless
               values = {};
