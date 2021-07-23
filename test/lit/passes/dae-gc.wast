@@ -197,7 +197,7 @@
  ;; CHECK-NEXT:   (ref.null ${})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $y
- ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:   (ref.null ${i32_i64})
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $various-params-set (param $x (ref null ${})) (param $y (ref null ${}))
@@ -207,7 +207,7 @@
   ;; Write to $x in a way that prevents us making the type more specific.
   (local.set $x (ref.null ${}))
   ;; Write to $y in a way that still allows us to make the type more specific.
-  (local.set $y (ref.null ${i32}))
+  (local.set $y (ref.null ${i32_i64}))
  )
 
  ;; CHECK:      (func $call-various-params-null
