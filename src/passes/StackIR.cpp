@@ -51,10 +51,14 @@ class StackIROptimizer {
   Function* func;
   PassOptions& passOptions;
   StackIR& insts;
+  FeatureSet features;
 
 public:
-  StackIROptimizer(Function* func, PassOptions& passOptions)
-    : func(func), passOptions(passOptions), insts(*func->stackIR.get()) {
+  StackIROptimizer(Function* func,
+                   PassOptions& passOptions,
+                   FeatureSet features)
+    : func(func), passOptions(passOptions), insts(*func->stackIR.get()),
+      features(features) {
     assert(func->stackIR);
   }
 
@@ -65,7 +69,39 @@ public:
     if (passOptions.optimizeLevel >= 3 || passOptions.shrinkLevel >= 1) {
       local2Stack();
     }
-    removeUnneededBlocks();
+    // Removing unneeded blocks is dangerous with GC, as if we do this:
+    //
+    //   (call
+    //     (rtt)
+    //     (block
+    //       (nop)
+    //       (i32)
+    //     )
+    //   )
+    // === remove inner block ==>
+    //   (call
+    //     (rtt)
+    //     (nop)
+    //     (i32)
+    //   )
+    //
+    // Then we end up with a nop that forces us to emit this during load:
+    //
+    //   (call
+    //     (block
+    //       (local.set
+    //         (rtt)
+    //       )
+    //       (nop)
+    //       (local.get)
+    //     )
+    //     (i32)
+    //   )
+    //
+    // However, that is not valid as an rtt cannot be set to a local.
+    if (!features.hasGC()) {
+      removeUnneededBlocks();
+    }
     dce();
   }
 
@@ -340,7 +376,7 @@ struct OptimizeStackIR : public WalkerPass<PostWalker<OptimizeStackIR>> {
     if (!func->stackIR) {
       return;
     }
-    StackIROptimizer(func, getPassOptions()).run();
+    StackIROptimizer(func, getPassOptions(), getModule()->features).run();
   }
 };
 

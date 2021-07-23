@@ -406,6 +406,31 @@ struct OptimizeInstructions
         }
       }
       {
+        if (getModule()->features.hasSignExt()) {
+          Const *c1, *c2;
+          Expression* x;
+          // i64(x) << 56 >> 56   ==>   i64.extend8_s(x)
+          // i64(x) << 48 >> 48   ==>   i64.extend16_s(x)
+          // i64(x) << 32 >> 32   ==>   i64.extend32_s(x)
+          if (matches(curr,
+                      binary(ShrSInt64,
+                             binary(ShlInt64, any(&x), i64(&c1)),
+                             i64(&c2))) &&
+              Bits::getEffectiveShifts(c1) == Bits::getEffectiveShifts(c2)) {
+            switch (64 - Bits::getEffectiveShifts(c1)) {
+              case 8:
+                return replaceCurrent(builder.makeUnary(ExtendS8Int64, x));
+              case 16:
+                return replaceCurrent(builder.makeUnary(ExtendS16Int64, x));
+              case 32:
+                return replaceCurrent(builder.makeUnary(ExtendS32Int64, x));
+              default:
+                break;
+            }
+          }
+        }
+      }
+      {
         // unsigned(x) >= 0   =>   i32(1)
         Const* c;
         Expression* x;
@@ -792,6 +817,18 @@ struct OptimizeInstructions
         }
       }
       {
+        // i32.wrap_i64(i64.extend_i32_s(x))  =>  x
+        // i32.wrap_i64(i64.extend_i32_u(x))  =>  x
+        Unary* inner;
+        Expression* x;
+        if (matches(curr,
+                    unary(WrapInt64, unary(&inner, ExtendSInt32, any(&x)))) ||
+            matches(curr,
+                    unary(WrapInt64, unary(&inner, ExtendUInt32, any(&x))))) {
+          return replaceCurrent(x);
+        }
+      }
+      {
         // i32.eqz(i32.wrap_i64(x))  =>  i64.eqz(x)
         //   where maxBits(x) <= 32
         Unary* inner;
@@ -801,6 +838,60 @@ struct OptimizeInstructions
           inner->op = EqZInt64;
           inner->value = x;
           return replaceCurrent(inner);
+        }
+      }
+      {
+        // i64.extend_i32_s(i32.wrap_i64(x))  =>  x
+        //   where maxBits(x) <= 31
+        //
+        // i64.extend_i32_u(i32.wrap_i64(x))  =>  x
+        //   where maxBits(x) <= 32
+        Expression* x;
+        UnaryOp unaryOp;
+        if (matches(curr, unary(&unaryOp, unary(WrapInt64, any(&x))))) {
+          if (unaryOp == ExtendSInt32 || unaryOp == ExtendUInt32) {
+            auto maxBits = Bits::getMaxBits(x, this);
+            if ((unaryOp == ExtendSInt32 && maxBits <= 31) ||
+                (unaryOp == ExtendUInt32 && maxBits <= 32)) {
+              return replaceCurrent(x);
+            }
+          }
+        }
+      }
+      if (getModule()->features.hasSignExt()) {
+        // i64.extend_i32_s(i32.wrap_i64(x))  =>  i64.extend32_s(x)
+        Unary* inner;
+        Expression* x;
+        if (matches(curr,
+                    unary(ExtendSInt32, unary(&inner, WrapInt64, any(&x))))) {
+          inner->op = ExtendS32Int64;
+          inner->type = Type::i64;
+          inner->value = x;
+          return replaceCurrent(inner);
+        }
+      }
+    }
+
+    if (Abstract::hasAnyReinterpret(curr->op)) {
+      // i32.reinterpret_f32(f32.reinterpret_i32(x))  =>  x
+      // i64.reinterpret_f64(f64.reinterpret_i64(x))  =>  x
+      // f32.reinterpret_i32(i32.reinterpret_f32(x))  =>  x
+      // f64.reinterpret_i64(i64.reinterpret_f64(x))  =>  x
+      if (auto* inner = curr->value->dynCast<Unary>()) {
+        if (Abstract::hasAnyReinterpret(inner->op)) {
+          if (inner->value->type == curr->type) {
+            return replaceCurrent(inner->value);
+          }
+        }
+      }
+      // f32.reinterpret_i32(i32.load(x))  =>  f32.load(x)
+      // f64.reinterpret_i64(i64.load(x))  =>  f64.load(x)
+      // i32.reinterpret_f32(f32.load(x))  =>  i32.load(x)
+      // i64.reinterpret_f64(f64.load(x))  =>  i64.load(x)
+      if (auto* load = curr->value->dynCast<Load>()) {
+        if (!load->isAtomic && load->bytes == curr->type.getByteSize()) {
+          load->type = curr->type;
+          return replaceCurrent(load);
         }
       }
     }
@@ -964,6 +1055,14 @@ struct OptimizeInstructions
       if (unary->op == WrapInt64) {
         // instead of wrapping to 32, just store some of the bits in the i64
         curr->valueType = Type::i64;
+        curr->value = unary->value;
+      } else if (!curr->isAtomic && Abstract::hasAnyReinterpret(unary->op) &&
+                 curr->bytes == curr->valueType.getByteSize()) {
+        // f32.store(y, f32.reinterpret_i32(x))  =>  i32.store(y, x)
+        // f64.store(y, f64.reinterpret_i64(x))  =>  i64.store(y, x)
+        // i32.store(y, i32.reinterpret_f32(x))  =>  f32.store(y, x)
+        // i64.store(y, i64.reinterpret_f64(x))  =>  f64.store(y, x)
+        curr->valueType = unary->value->type;
         curr->value = unary->value;
       }
     }
@@ -2954,7 +3053,12 @@ private:
                                                        curr->ifTrue)
                                    .hasSideEffects();
 
-            if (validTypes && validEffects) {
+            // In addition, check for specific limitations of select.
+            bool validChildren =
+              !std::is_same<T, Select>::value ||
+              Properties::canEmitSelectWithArms(ifTrueChild, ifFalseChild);
+
+            if (validTypes && validEffects && validChildren) {
               // Replace ifTrue with its child.
               curr->ifTrue = ifTrueChild;
               // Relace ifFalse with its child, and reuse that node outside.
