@@ -9,7 +9,7 @@
   (import "out" "i64" (func $i64 (result i64)))
 
   ;; Refinalization can find a more specific type, where the declared type was
-  ;; no the optimal LUB.
+  ;; not the optimal LUB.
   ;; CHECK:      (func $refinalize (param $x i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref func))
