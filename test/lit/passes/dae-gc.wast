@@ -9,10 +9,11 @@
  (type ${i32} (struct (field i32)))
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
 
+ ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
+
  ;; CHECK:      (type ${f64} (struct (field f64)))
  (type ${f64} (struct (field f64)))
  (type ${i32_i64} (struct (field i32) (field i64)))
- ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
  (type ${i32_f32} (struct (field i32) (field f32)))
 
  ;; CHECK:      (func $foo
@@ -486,5 +487,31 @@
   )
   ;; The refined return value is limited by this value.
   (ref.null data)
+ )
+
+ ;; CHECK:      (func $refine-return-many-middle (result (ref null ${i32}))
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-many-middle)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null ${i32_i64})
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null ${i32_f32})
+ ;; CHECK-NEXT: )
+ (func $refine-return-many-middle (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-many-middle))
+
+  ;; Return two different struct types, with an LUB that is not equal to either
+  ;; of them.
+  (if
+   (i32.const 1)
+   (return (ref.null ${i32_i64}))
+  )
+  (ref.null ${i32_f32})
  )
 )
