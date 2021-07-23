@@ -2364,8 +2364,7 @@ Literal extend(const Literal& vec) {
   return Literal(result);
 }
 
-template<LaneOrder Side>
-Literal extendToVecSI64x2(const Literal& vec) {
+template<LaneOrder Side> Literal extendToVecSI64x2(const Literal& vec) {
   LaneArray<4> lanes = vec.getLanesI32x4();
   LaneArray<2> result;
   for (size_t i = 0; i < 2; ++i) {
