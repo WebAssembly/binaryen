@@ -3020,7 +3020,7 @@ private:
         }
         case Load32LaneVec128:
         case Store32LaneVec128: {
-          std::array<Literal, 4> lanes = vec.getLanesI32x4();
+          std::array<Literal, 4> lanes = vec.getLanesSI32x4();
           if (curr->isLoad()) {
             lanes[curr->index] =
               Literal(inst->externalInterface->load32u(addr));
