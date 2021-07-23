@@ -784,7 +784,6 @@ struct Reducer
     // try to reduce to first function. first, shrink segment elements.
     // while we are shrinking successfully, keep going exponentially.
     bool justShrank = false;
-    bool shrank = false;
 
     auto& data = segment->data;
     // when we succeed, try to shrink by more and more, similar to bisection
@@ -793,48 +792,52 @@ struct Reducer
       if (justShrank || shouldTryToReduce(bonus)) {
         auto save = data;
         for (size_t j = 0; j < skip; j++) {
-          if (!data.empty()) {
+          if (data.empty()) {
+            break;
+          } else {
             data.pop_back();
           }
         }
         justShrank = writeAndTestReduction();
         if (justShrank) {
-          std::cerr << "|      shrank segment (skip: " << skip << ")\n";
-          shrank = true;
+          std::cerr << "|      shrank segment from " << save.size() << " => "
+                    << data.size() << " (skip: " << skip << ")\n";
           noteReduction();
           skip = std::min(size_t(factor), 2 * skip);
         } else {
-          data = save;
-          break;
+          data = std::move(save);
+          return false;
         }
       }
     }
 
-    return shrank;
+    return true;
   }
 
   void shrinkElementSegments() {
     std::cerr << "|    try to simplify elem segments\n";
-    Expression* first = nullptr;
+
+    // First, shrink segment elements.
+    bool shrank = false;
+    for (auto& segment : module->elementSegments) {
+      shrank = shrank || shrinkByReduction(segment.get(), 1);
+    }
+
+    // Second, try to replace elements with a "zero".
     auto it =
       std::find_if_not(module->elementSegments.begin(),
                        module->elementSegments.end(),
                        [&](auto& segment) { return segment->data.empty(); });
 
+    Expression* first = nullptr;
     if (it != module->elementSegments.end()) {
       first = it->get()->data[0];
     }
     if (first == nullptr) {
-      // The elements are all empty, nothing to shrink
+      // The elements are all empty, nothing left to do.
       return;
     }
 
-    // try to reduce to first function. first, shrink segment elements.
-    // while we are shrinking successfully, keep going exponentially.
-    bool shrank = false;
-    for (auto& segment : module->elementSegments) {
-      shrank = shrinkByReduction(segment.get(), 100);
-    }
     // the "opposite" of shrinking: copy a 'zero' element
     for (auto& segment : module->elementSegments) {
       reduceByZeroing(
@@ -853,7 +856,7 @@ struct Reducer
             return f->func == e->func;
           }
         },
-        100,
+        1,
         shrank);
     }
   }

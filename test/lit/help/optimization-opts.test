@@ -292,6 +292,9 @@
 ;; CHECK-NEXT:   --local-cse                                   common subexpression elimination
 ;; CHECK-NEXT:                                                 inside basic blocks
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --local-subtyping                             apply more specific subtypes to
+;; CHECK-NEXT:                                                 locals where possible 
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --log-execution                               instrument the build with
 ;; CHECK-NEXT:                                                 logging of where execution goes
 ;; CHECK-NEXT:
