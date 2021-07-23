@@ -617,11 +617,10 @@ private:
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
                          Module* module) {
-std::cout << "ree " << func->name << '\n';
     if (!module->features.hasGC()) {
       return false;
     }
-std::cout << "ree1\n";
+
     Type originalType = func->getResults();
     if (!originalType.isRef()) {
       // Nothing to refine.
@@ -638,33 +637,26 @@ std::cout << "ree1\n";
     ReFinalize().walkFunctionInModule(func, module);
 
     Type refinedType = func->body->type;
-std::cout << "ree2 " << originalType << " : " << refinedType << "\n";
-
-    // We fail to refine if we end up with the same type as before, or if the
-    // refined type is unreachable, which means nothing actually returns.
-    // TODO: In the unreachable case, we can propagate that to the outside, and
-    //       not just for GC.
-    auto failed = [&]() {
-      return refinedType == originalType || refinedType == Type::unreachable;
-    };
-
-    // Start with the type of the body, and then process the returns to find
-    // the lub. Check if we've already failed, which can save us from scanning
-    // the function body.
-    if (failed()) {
+    if (refinedType == originalType) {
       return false;
     }
-
-std::cout << "ree5\n";
 
     // Scan the body and look at the returns.
     for (auto* ret : FindAll<Return>(func->body).list) {
       refinedType = Type::getLeastUpperBound(refinedType, ret->value->type);
-      if (failed()) {
+      if (refinedType == originalType) {
         return false;
       }
     }
-    assert(!failed());
+    assert(refinedType != originalType);
+
+    // If the refined type is unreachable then nothing actually returns from
+    // this function.
+    // TODO: In the unreachable case, we can propagate that to the outside, and
+    //       not just for GC.
+    if (refinedType == Type::unreachable) {
+      return false;
+    }
 
     // Success, update the type, and the calls.
     func->setResults(refinedType);
@@ -673,7 +665,6 @@ std::cout << "ree5\n";
         call->type = refinedType;
       }
     }
-std::cout << "ree10\n";
     return true;
   }
 };
