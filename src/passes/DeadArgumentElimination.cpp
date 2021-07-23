@@ -328,8 +328,9 @@ struct DAE : public Pass {
       // where possible.
       refineArgumentTypes(func, calls, module);
       // Refine return types as well.
-      refinedReturnTypes =
-        refinedReturnTypes || refineReturnTypes(func, calls, module);
+      if (refineReturnTypes(func, calls, module)) {
+        refinedReturnTypes = true;
+      }
       // Check if all calls pass the same constant for a particular argument.
       for (Index i = 0; i < numParams; i++) {
         Literal value;
@@ -628,7 +629,7 @@ private:
     }
 
     // Before we do anything, we must refinalize the function, because otherwise
-    // its body will contain a block with a forced type,
+    // its body may contain a block with a forced type,
     //
     // (func (result X)
     //  (block (result X)
@@ -652,13 +653,12 @@ private:
 
     // If the refined type is unreachable then nothing actually returns from
     // this function.
-    // TODO: In the unreachable case, we can propagate that to the outside, and
-    //       not just for GC.
+    // TODO: We can propagate that to the outside, and not just for GC.
     if (refinedType == Type::unreachable) {
       return false;
     }
 
-    // Success, update the type, and the calls.
+    // Success. Update the type, and the calls.
     func->setResults(refinedType);
     for (auto* call : calls) {
       if (call->type != Type::unreachable) {
