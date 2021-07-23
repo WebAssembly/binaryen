@@ -153,7 +153,7 @@
   )
  )
  (func $2 (; has Stack IR ;)
-  (local $0 anyref)
+  (local $0 (ref null $extendedstruct))
   (call $log
    (i32.const 1)
   )
@@ -247,7 +247,7 @@
   (unreachable)
  )
  (func $4 (; has Stack IR ;)
-  (local $0 anyref)
+  (local $0 (ref null $struct))
   (local.set $0
    (struct.new_default_with_rtt $struct
     (rtt.canon $struct)
@@ -272,7 +272,7 @@
   )
  )
  (func $5 (; has Stack IR ;)
-  (local $0 anyref)
+  (local $0 (ref null $extendedstruct))
   (local.set $0
    (struct.new_default_with_rtt $extendedstruct
     (rtt.canon $extendedstruct)
