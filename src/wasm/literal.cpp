@@ -1625,17 +1625,14 @@ LaneArray<8> Literal::getLanesSI16x8() const {
 LaneArray<8> Literal::getLanesUI16x8() const {
   return getLanes<uint16_t, 8>(*this);
 }
-LaneArray<4> Literal::getLanesSI32x4() const {
+LaneArray<4> Literal::getLanesI32x4() const {
   return getLanes<int32_t, 4>(*this);
-}
-LaneArray<4> Literal::getLanesUI32x4() const {
-  return getLanes<uint32_t, 4>(*this);
 }
 LaneArray<2> Literal::getLanesI64x2() const {
   return getLanes<int64_t, 2>(*this);
 }
 LaneArray<4> Literal::getLanesF32x4() const {
-  auto lanes = getLanesSI32x4();
+  auto lanes = getLanesI32x4();
   for (size_t i = 0; i < lanes.size(); ++i) {
     lanes[i] = lanes[i].castToF32();
   }
@@ -1687,7 +1684,7 @@ Literal Literal::extractLaneUI16x8(uint8_t index) const {
   return getLanesUI16x8().at(index);
 }
 Literal Literal::extractLaneI32x4(uint8_t index) const {
-  return getLanesSI32x4().at(index);
+  return getLanesI32x4().at(index);
 }
 Literal Literal::extractLaneI64x2(uint8_t index) const {
   return getLanesI64x2().at(index);
@@ -1715,7 +1712,7 @@ Literal Literal::replaceLaneI16x8(const Literal& other, uint8_t index) const {
   return replace<8, &Literal::getLanesUI16x8>(*this, other, index);
 }
 Literal Literal::replaceLaneI32x4(const Literal& other, uint8_t index) const {
-  return replace<4, &Literal::getLanesSI32x4>(*this, other, index);
+  return replace<4, &Literal::getLanesI32x4>(*this, other, index);
 }
 Literal Literal::replaceLaneI64x2(const Literal& other, uint8_t index) const {
   return replace<2, &Literal::getLanesI64x2>(*this, other, index);
@@ -1750,7 +1747,7 @@ Literal Literal::absI16x8() const {
   return unary<8, &Literal::getLanesSI16x8, &Literal::abs>(*this);
 }
 Literal Literal::absI32x4() const {
-  return unary<4, &Literal::getLanesSI32x4, &Literal::abs>(*this);
+  return unary<4, &Literal::getLanesI32x4, &Literal::abs>(*this);
 }
 Literal Literal::absI64x2() const {
   return unary<2, &Literal::getLanesI64x2, &Literal::abs>(*this);
@@ -1765,7 +1762,7 @@ Literal Literal::negI16x8() const {
   return unary<8, &Literal::getLanesUI16x8, &Literal::neg>(*this);
 }
 Literal Literal::negI32x4() const {
-  return unary<4, &Literal::getLanesSI32x4, &Literal::neg>(*this);
+  return unary<4, &Literal::getLanesI32x4, &Literal::neg>(*this);
 }
 Literal Literal::negI64x2() const {
   return unary<2, &Literal::getLanesI64x2, &Literal::neg>(*this);
@@ -1819,14 +1816,14 @@ Literal Literal::truncSatToUI32x4() const {
   return unary<4, &Literal::getLanesF32x4, &Literal::truncSatToUI32>(*this);
 }
 Literal Literal::convertSToF32x4() const {
-  return unary<4, &Literal::getLanesSI32x4, &Literal::convertSIToF32>(*this);
+  return unary<4, &Literal::getLanesI32x4, &Literal::convertSIToF32>(*this);
 }
 Literal Literal::convertUToF32x4() const {
-  return unary<4, &Literal::getLanesUI32x4, &Literal::convertUIToF32>(*this);
+  return unary<4, &Literal::getLanesI32x4, &Literal::convertUIToF32>(*this);
 }
 
 Literal Literal::anyTrueV128() const {
-  auto lanes = getLanesSI32x4();
+  auto lanes = getLanesI32x4();
   for (size_t i = 0; i < 4; ++i) {
     if (lanes[i].geti32() != 0) {
       return Literal(int32_t(1));
@@ -1871,10 +1868,10 @@ Literal Literal::bitmaskI16x8() const {
   return bitmask<8, &Literal::getLanesSI16x8>(*this);
 }
 Literal Literal::allTrueI32x4() const {
-  return all_true<4, &Literal::getLanesSI32x4>(*this);
+  return all_true<4, &Literal::getLanesI32x4>(*this);
 }
 Literal Literal::bitmaskI32x4() const {
-  return bitmask<4, &Literal::getLanesSI32x4>(*this);
+  return bitmask<4, &Literal::getLanesI32x4>(*this);
 }
 Literal Literal::allTrueI64x2() const {
   return all_true<2, &Literal::getLanesI64x2>(*this);
@@ -1923,13 +1920,13 @@ Literal Literal::shrUI16x8(const Literal& other) const {
   return shift<8, &Literal::getLanesUI16x8, &Literal::shrU>(*this, other);
 }
 Literal Literal::shlI32x4(const Literal& other) const {
-  return shift<4, &Literal::getLanesSI32x4, &Literal::shl>(*this, other);
+  return shift<4, &Literal::getLanesI32x4, &Literal::shl>(*this, other);
 }
 Literal Literal::shrSI32x4(const Literal& other) const {
-  return shift<4, &Literal::getLanesSI32x4, &Literal::shrS>(*this, other);
+  return shift<4, &Literal::getLanesI32x4, &Literal::shrS>(*this, other);
 }
 Literal Literal::shrUI32x4(const Literal& other) const {
-  return shift<4, &Literal::getLanesUI32x4, &Literal::shrU>(*this, other);
+  return shift<4, &Literal::getLanesI32x4, &Literal::shrU>(*this, other);
 }
 Literal Literal::shlI64x2(const Literal& other) const {
   return shift<2, &Literal::getLanesI64x2, &Literal::shl>(*this, other);
@@ -2017,34 +2014,34 @@ Literal Literal::geUI16x8(const Literal& other) const {
   return compare<8, &Literal::getLanesUI16x8, &Literal::geU>(*this, other);
 }
 Literal Literal::eqI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesSI32x4, &Literal::eq>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::eq>(*this, other);
 }
 Literal Literal::neI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesSI32x4, &Literal::ne>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::ne>(*this, other);
 }
 Literal Literal::ltSI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesSI32x4, &Literal::ltS>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::ltS>(*this, other);
 }
 Literal Literal::ltUI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesUI32x4, &Literal::ltU>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::ltU>(*this, other);
 }
 Literal Literal::gtSI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesSI32x4, &Literal::gtS>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::gtS>(*this, other);
 }
 Literal Literal::gtUI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesUI32x4, &Literal::gtU>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::gtU>(*this, other);
 }
 Literal Literal::leSI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesSI32x4, &Literal::leS>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::leS>(*this, other);
 }
 Literal Literal::leUI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesUI32x4, &Literal::leU>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::leU>(*this, other);
 }
 Literal Literal::geSI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesSI32x4, &Literal::geS>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::geS>(*this, other);
 }
 Literal Literal::geUI32x4(const Literal& other) const {
-  return compare<4, &Literal::getLanesUI32x4, &Literal::geU>(*this, other);
+  return compare<4, &Literal::getLanesI32x4, &Literal::geU>(*this, other);
 }
 Literal Literal::eqI64x2(const Literal& other) const {
   return compare<2, &Literal::getLanesI64x2, &Literal::eq, int64_t>(*this,
@@ -2126,13 +2123,13 @@ static Literal binary(const Literal& val, const Literal& other) {
 }
 
 Literal Literal::andV128(const Literal& other) const {
-  return binary<4, &Literal::getLanesSI32x4, &Literal::and_>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::and_>(*this, other);
 }
 Literal Literal::orV128(const Literal& other) const {
-  return binary<4, &Literal::getLanesSI32x4, &Literal::or_>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::or_>(*this, other);
 }
 Literal Literal::xorV128(const Literal& other) const {
-  return binary<4, &Literal::getLanesSI32x4, &Literal::xor_>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::xor_>(*this, other);
 }
 Literal Literal::addI8x16(const Literal& other) const {
   return binary<16, &Literal::getLanesUI8x16, &Literal::add>(*this, other);
@@ -2216,25 +2213,25 @@ Literal Literal::q15MulrSatSI16x8(const Literal& other) const {
                                                                        other);
 }
 Literal Literal::addI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesSI32x4, &Literal::add>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::add>(*this, other);
 }
 Literal Literal::subI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesSI32x4, &Literal::sub>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::sub>(*this, other);
 }
 Literal Literal::mulI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesSI32x4, &Literal::mul>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::mul>(*this, other);
 }
 Literal Literal::minSI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesSI32x4, &Literal::minInt>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::minInt>(*this, other);
 }
 Literal Literal::minUI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesUI32x4, &Literal::minUInt>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::minUInt>(*this, other);
 }
 Literal Literal::maxSI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesSI32x4, &Literal::maxInt>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::maxInt>(*this, other);
 }
 Literal Literal::maxUI32x4(const Literal& other) const {
-  return binary<4, &Literal::getLanesUI32x4, &Literal::maxUInt>(*this, other);
+  return binary<4, &Literal::getLanesI32x4, &Literal::maxUInt>(*this, other);
 }
 Literal Literal::addI64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesI64x2, &Literal::add>(*this, other);
@@ -2347,10 +2344,10 @@ Literal Literal::narrowUToVecI8x16(const Literal& other) const {
   return narrow<16, uint8_t, &Literal::getLanesSI16x8>(*this, other);
 }
 Literal Literal::narrowSToVecI16x8(const Literal& other) const {
-  return narrow<8, int16_t, &Literal::getLanesSI32x4>(*this, other);
+  return narrow<8, int16_t, &Literal::getLanesI32x4>(*this, other);
 }
 Literal Literal::narrowUToVecI16x8(const Literal& other) const {
-  return narrow<8, uint16_t, &Literal::getLanesUI32x4>(*this, other);
+  return narrow<8, uint16_t, &Literal::getLanesI32x4>(*this, other);
 }
 
 enum class LaneOrder { Low, High };
@@ -2404,16 +2401,16 @@ Literal Literal::extendHighUToVecI32x4() const {
   return extend<4, &Literal::getLanesUI16x8, LaneOrder::High>(*this);
 }
 Literal Literal::extendLowSToVecI64x2() const {
-  return extendSI64<2, &Literal::getLanesSI32x4, LaneOrder::Low>(*this);
+  return extendSI64<2, &Literal::getLanesI32x4, LaneOrder::Low>(*this);
 }
 Literal Literal::extendHighSToVecI64x2() const {
-  return extendSI64<2, &Literal::getLanesSI32x4, LaneOrder::High>(*this);
+  return extendSI64<2, &Literal::getLanesI32x4, LaneOrder::High>(*this);
 }
 Literal Literal::extendLowUToVecI64x2() const {
-  return extend<2, &Literal::getLanesUI32x4, LaneOrder::Low>(*this);
+  return extend<2, &Literal::getLanesI32x4, LaneOrder::Low>(*this);
 }
 Literal Literal::extendHighUToVecI64x2() const {
-  return extend<2, &Literal::getLanesUI32x4, LaneOrder::High>(*this);
+  return extend<2, &Literal::getLanesI32x4, LaneOrder::High>(*this);
 }
 
 Literal Literal::extMulLowSI16x8(const Literal& other) const {
