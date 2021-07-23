@@ -2362,7 +2362,19 @@ Literal extend(const Literal& vec) {
   LaneArray<Lanes* 2> lanes = (vec.*IntoLanes)();
   LaneArray<Lanes> result;
   for (size_t i = 0; i < Lanes; ++i) {
-    result[i] = Literal(lanes[(Side == LaneOrder::Low) ? i : i + Lanes]);
+    result[i] = lanes[(Side == LaneOrder::Low) ? i : i + Lanes];
+  }
+  return Literal(result);
+}
+
+template<size_t Lanes,
+         LaneArray<Lanes * 2> (Literal::*IntoLanes)() const,
+         LaneOrder Side>
+Literal extendSI64(const Literal& vec) {
+  LaneArray<Lanes* 2> lanes = (vec.*IntoLanes)();
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes; ++i) {
+    result[i] = lanes[(Side == LaneOrder::Low) ? i : i + Lanes].extendToSI64();
   }
   return Literal(result);
 }
@@ -2392,10 +2404,10 @@ Literal Literal::extendHighUToVecI32x4() const {
   return extend<4, &Literal::getLanesUI16x8, LaneOrder::High>(*this);
 }
 Literal Literal::extendLowSToVecI64x2() const {
-  return extend<2, &Literal::getLanesSI32x4, LaneOrder::Low>(*this);
+  return extendSI64<2, &Literal::getLanesSI32x4, LaneOrder::Low>(*this);
 }
 Literal Literal::extendHighSToVecI64x2() const {
-  return extend<2, &Literal::getLanesSI32x4, LaneOrder::High>(*this);
+  return extendSI64<2, &Literal::getLanesSI32x4, LaneOrder::High>(*this);
 }
 Literal Literal::extendLowUToVecI64x2() const {
   return extend<2, &Literal::getLanesUI32x4, LaneOrder::Low>(*this);
