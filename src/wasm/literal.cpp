@@ -2357,9 +2357,8 @@ Literal extend(const Literal& vec) {
   LaneArray<Lanes* 2> lanes = getLanes<LaneFrom, Lanes * 2>(vec);
   LaneArray<Lanes> result;
   for (size_t i = 0; i < Lanes; ++i) {
-    result[i] =
-      Literal((LaneTo)(LaneFrom)lanes[(Side == LaneOrder::Low) ? i : i + Lanes]
-                .geti32());
+    size_t idx = (Side == LaneOrder::Low) ? i : i + Lanes;
+    result[i] = Literal((LaneTo)(LaneFrom)lanes[idx].geti32());
   }
   return Literal(result);
 }
