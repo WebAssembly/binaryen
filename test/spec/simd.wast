@@ -833,35 +833,6 @@
 )
 
 (assert_return
-  (invoke "i64x2.extmul_low_i32x4_s"
-    (v128.const i32x4 1073741823 -2147483648 0 0)
-    (v128.const i32x4 1073741824          -1 0 0)
-  )
-  (v128.const i64x2 1152921503533105152 2147483648)
-)
-(assert_return
-  (invoke "i64x2.extmul_high_i32x4_s"
-    (v128.const i32x4 0 0 -1073741825 4294967295)
-    (v128.const i32x4 0 0 -1073741824 4294967295)
-  )
-  (v128.const i64x2 1152921505680588800 1)
-)
-(assert_return
-  (invoke "i64x2.extmul_low_i32x4_u"
-    (v128.const i32x4 -1 -1073741825 0 0)
-    (v128.const i32x4 -1 -1073741824 0 0)
-  )
-  (v128.const i64x2 -8589934591 -8070450535469154304)
-)
-(assert_return
-  (invoke "i64x2.extmul_high_i32x4_u"
-    (v128.const i32x4 0 0 -2147483648 4294967295)
-    (v128.const i32x4 0 0          -1 4294967295)
-  )
-  (v128.const i64x2 9223372034707292160 -8589934591)
-)
-
-(assert_return
   (invoke "i32x4.extmul_low_i16x8_s"
     (v128.const i16x8  1 16384 -32766 65535 0 0 0 0)
     (v128.const i16x8 -1 16384     -1    -1 0 0 0 0)
@@ -888,6 +859,35 @@
     (v128.const i16x8 0 0 0 0 16384 -16384     -1 65535)
   )
   (v128.const i32x4 268419072 -1878999040 2147450880 -131071)
+)
+
+(assert_return
+  (invoke "i64x2.extmul_low_i32x4_s"
+    (v128.const i32x4 1073741823 -2147483648 0 0)
+    (v128.const i32x4 1073741824          -1 0 0)
+  )
+  (v128.const i64x2 1152921503533105152 2147483648)
+)
+(assert_return
+  (invoke "i64x2.extmul_high_i32x4_s"
+    (v128.const i32x4 0 0 -1073741825 4294967295)
+    (v128.const i32x4 0 0 -1073741824 4294967295)
+  )
+  (v128.const i64x2 1152921505680588800 1)
+)
+(assert_return
+  (invoke "i64x2.extmul_low_i32x4_u"
+    (v128.const i32x4 -1 -1073741825 0 0)
+    (v128.const i32x4 -1 -1073741824 0 0)
+  )
+  (v128.const i64x2 -8589934591 -8070450535469154304)
+)
+(assert_return
+  (invoke "i64x2.extmul_high_i32x4_u"
+    (v128.const i32x4 0 0 -2147483648 4294967295)
+    (v128.const i32x4 0 0          -1 4294967295)
+  )
+  (v128.const i64x2 9223372034707292160 -8589934591)
 )
 
 ;; i32x4 arithmetic
