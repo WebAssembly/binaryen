@@ -152,7 +152,18 @@
  (func (export "i16x8.max_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.max_u (local.get $0) (local.get $1)))
  (func (export "i16x8.avgr_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.avgr_u (local.get $0) (local.get $1)))
  (func (export "i16x8.q15mulr_sat_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.q15mulr_sat_s (local.get $0) (local.get $1)))
- ;; TODO: extending multiplications
+ (func (export "i16x8.extmul_low_i8x16_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.extmul_low_i8x16_s (local.get $0) (local.get $1)))
+ (func (export "i16x8.extmul_high_i8x16_s") (param $0 v128) (param $1 v128) (result v128) (i16x8.extmul_high_i8x16_s (local.get $0) (local.get $1)))
+ (func (export "i16x8.extmul_low_i8x16_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.extmul_low_i8x16_u (local.get $0) (local.get $1)))
+ (func (export "i16x8.extmul_high_i8x16_u") (param $0 v128) (param $1 v128) (result v128) (i16x8.extmul_high_i8x16_u (local.get $0) (local.get $1)))
+ (func (export "i32x4.extmul_low_i16x8_s") (param $0 v128) (param $1 v128) (result v128) (i32x4.extmul_low_i16x8_s (local.get $0) (local.get $1)))
+ (func (export "i32x4.extmul_high_i16x8_s") (param $0 v128) (param $1 v128) (result v128) (i32x4.extmul_high_i16x8_s (local.get $0) (local.get $1)))
+ (func (export "i32x4.extmul_low_i16x8_u") (param $0 v128) (param $1 v128) (result v128) (i32x4.extmul_low_i16x8_u (local.get $0) (local.get $1)))
+ (func (export "i32x4.extmul_high_i16x8_u") (param $0 v128) (param $1 v128) (result v128) (i32x4.extmul_high_i16x8_u (local.get $0) (local.get $1)))
+ (func (export "i64x2.extmul_low_i32x4_s") (param $0 v128) (param $1 v128) (result v128) (i64x2.extmul_low_i32x4_s (local.get $0) (local.get $1)))
+ (func (export "i64x2.extmul_high_i32x4_s") (param $0 v128) (param $1 v128) (result v128) (i64x2.extmul_high_i32x4_s (local.get $0) (local.get $1)))
+ (func (export "i64x2.extmul_low_i32x4_u") (param $0 v128) (param $1 v128) (result v128) (i64x2.extmul_low_i32x4_u (local.get $0) (local.get $1)))
+ (func (export "i64x2.extmul_high_i32x4_u") (param $0 v128) (param $1 v128) (result v128) (i64x2.extmul_high_i32x4_u (local.get $0) (local.get $1)))
  (func (export "i32x4.abs") (param $0 v128) (result v128) (i32x4.abs (local.get $0)))
  (func (export "i32x4.neg") (param $0 v128) (result v128) (i32x4.neg (local.get $0)))
  (func (export "i32x4.all_true") (param $0 v128) (result i32) (i32x4.all_true (local.get $0)))
@@ -789,6 +800,21 @@
     (v128.const i16x8 -1 -16384     1 -32768 -32768     1 -16384     -1)
   )
   (v128.const i16x8 0 8192 1 1 32767 0 8193 1)
+)
+
+(assert_return
+  (invoke "i32x4.extmul_low_i16x8_s"
+    (v128.const i16x8  1 16384 -32766 65535 0 0 0 0)
+    (v128.const i16x8 -1 16384     -1    -1 0 0 0 0)
+  )
+  (v128.const i32x4 -1 268435456 32766 1)
+)
+(assert_return
+  (invoke "i32x4.extmul_high_i16x8_s"
+    (v128.const i16x8 0 0 0 0 16383 32768 -32766  65535)
+    (v128.const i16x8 0 0 0 0 16384     1     -1 -32768)
+  )
+  (v128.const i32x4 268419072 -32768 32766 32768)
 )
 
 ;; i32x4 arithmetic
