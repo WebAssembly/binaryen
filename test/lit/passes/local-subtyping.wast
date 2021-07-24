@@ -202,4 +202,25 @@
       )
     )
   )
+
+  ;; CHECK:      (func $nondefaultable
+  ;; CHECK-NEXT:  (local $x (anyref anyref))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:    (ref.func $i32)
+  ;; CHECK-NEXT:    (ref.func $i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nondefaultable
+    (local $x (anyref anyref))
+    ;; This tuple is assigned non-nullable values, which means the subtype is
+    ;; nondefaultable, and we must not apply it.
+    (local.set $x
+      (tuple.make
+        (ref.func $i32)
+        (ref.func $i32)
+      )
+    )
+  )
 )
