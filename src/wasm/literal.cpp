@@ -1809,6 +1809,31 @@ Literal Literal::truncF64x2() const {
 Literal Literal::nearestF64x2() const {
   return unary<2, &Literal::getLanesF64x2, &Literal::nearbyint>(*this);
 }
+
+template<int Lanes, typename LaneFrom, typename LaneTo>
+static Literal extAddPairwise(const Literal& vec) {
+  LaneArray<Lanes* 2> lanes = getLanes<LaneFrom, Lanes * 2>(vec);
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes; i++) {
+    result[i] = Literal((LaneTo)(LaneFrom)lanes[i * 2 + 0].geti32() +
+                        (LaneTo)(LaneFrom)lanes[i * 2 + 1].geti32());
+  }
+  return Literal(lanes);
+}
+
+Literal Literal::extAddPairwiseSToI16x8() const {
+  return extAddPairwise<8, int8_t, int16_t>(*this);
+}
+Literal Literal::extAddPairwiseUToI16x8() const {
+  return extAddPairwise<8, uint8_t, int16_t>(*this);
+}
+Literal Literal::extAddPairwiseSToI32x4() const {
+  return extAddPairwise<4, int16_t, int32_t>(*this);
+}
+Literal Literal::extAddPairwiseUToI32x4() const {
+  return extAddPairwise<4, uint16_t, uint32_t>(*this);
+}
+
 Literal Literal::truncSatToSI32x4() const {
   return unary<4, &Literal::getLanesF32x4, &Literal::truncSatToSI32>(*this);
 }
