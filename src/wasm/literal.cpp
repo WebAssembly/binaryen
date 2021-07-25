@@ -1818,7 +1818,7 @@ static Literal extAddPairwise(const Literal& vec) {
     result[i] = Literal((LaneTo)(LaneFrom)lanes[i * 2 + 0].geti32() +
                         (LaneTo)(LaneFrom)lanes[i * 2 + 1].geti32());
   }
-  return Literal(lanes);
+  return Literal(result);
 }
 
 Literal Literal::extAddPairwiseSToI16x8() const {
