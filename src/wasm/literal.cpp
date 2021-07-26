@@ -2475,10 +2475,10 @@ Literal Literal::extMulHighUI64x2(const Literal& other) const {
   return extMul<2, uint32_t, uint64_t, LaneOrder::High>(*this, other);
 }
 
-Literal Literal::convertLowSToVecF64x2() const {
+Literal Literal::convertLowSToF64x2() const {
   return extend<2, int32_t, double, LaneOrder::Low>(*this);
 }
-Literal Literal::convertLowUToVecF64x2() const {
+Literal Literal::convertLowUToF64x2() const {
   return extend<2, uint32_t, double, LaneOrder::Low>(*this);
 }
 
@@ -2497,17 +2497,17 @@ static Literal unary_zero(const Literal& val) {
   return Literal(result);
 }
 
-Literal Literal::truncSatZeroSToVecI32x4() const {
+Literal Literal::truncSatZeroSToI32x4() const {
   return unary_zero<4, &Literal::getLanesF64x2, &Literal::truncSatToSI32>(
     *this);
 }
-Literal Literal::truncSatZeroUToVecI32x4() const {
+Literal Literal::truncSatZeroUToI32x4() const {
   return unary_zero<4, &Literal::getLanesF64x2, &Literal::truncSatToUI32>(
     *this);
 }
 
-Literal Literal::demoteZeroToVecF32x4() const { WASM_UNREACHABLE("TODO:"); }
-Literal Literal::promoteLowToVecF64x2() const { WASM_UNREACHABLE("TODO:"); }
+Literal Literal::demoteZeroToF32x4() const { WASM_UNREACHABLE("TODO:"); }
+Literal Literal::promoteLowToF64x2() const { WASM_UNREACHABLE("TODO:"); }
 
 Literal Literal::swizzleVec8x16(const Literal& other) const {
   auto lanes = getLanesUI8x16();
