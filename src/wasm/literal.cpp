@@ -2391,7 +2391,7 @@ Literal extend(const Literal& vec) {
 template<LaneOrder Side> Literal extendF32(const Literal& vec) {
   LaneArray<4> lanes = vec.getLanesF32x4();
   LaneArray<2> result;
-  for (size_t i = 0; i < 4; ++i) {
+  for (size_t i = 0; i < 2; ++i) {
     size_t idx = (Side == LaneOrder::Low) ? i : i + 2;
     result[i] = Literal((double)(float)lanes[idx].getf32());
   }
