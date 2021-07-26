@@ -399,7 +399,6 @@ public:
         return value.extendS16();
       case ExtendS32Int64:
         return value.extendS32();
-
       case NegFloat32:
       case NegFloat64:
         return value.neg();

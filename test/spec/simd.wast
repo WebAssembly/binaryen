@@ -256,6 +256,8 @@
  (func (export "i8x16.swizzle") (param $0 v128) (param $1 v128) (result v128) (i8x16.swizzle (local.get $0) (local.get $1)))
  (func (export "f64x2.convert_low_i32x4_s") (param $0 v128) (result v128) (f64x2.convert_low_i32x4_s (local.get $0)))
  (func (export "f64x2.convert_low_i32x4_u") (param $0 v128) (result v128) (f64x2.convert_low_i32x4_u (local.get $0)))
+ (func (export "i32x4.trunc_sat_f64x2_s_zero") (param $0 v128) (result v128) (i32x4.trunc_sat_f64x2_s_zero (local.get $0)))
+ (func (export "i32x4.trunc_sat_f64x2_u_zero") (param $0 v128) (result v128) (i32x4.trunc_sat_f64x2_u_zero (local.get $0)))
 )
 ;; TODO: Additional f64x2 conversions if specified
 
@@ -1128,3 +1130,5 @@
 
 (assert_return (invoke "f64x2.convert_low_i32x4_s" (v128.const i32x4 1 -2147483648 0 0)) (v128.const f64x2 1.0 -2147483648))
 (assert_return (invoke "f64x2.convert_low_i32x4_u" (v128.const i32x4 -2147483648 0xffffffff 0 0)) (v128.const f64x2 2147483648 4294967295.0))
+(assert_return (invoke "i32x4.trunc_sat_f64x2_s_zero" (v128.const f64x2 -inf 4294967296.0)) (v128.const i32x4 -2147483648 2147483647 0 0))
+(assert_return (invoke "i32x4.trunc_sat_f64x2_u_zero" (v128.const f64x2 -inf 4294967296.0)) (v128.const i32x4 0 4294967295 0 0))

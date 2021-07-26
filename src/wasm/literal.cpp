@@ -2483,24 +2483,27 @@ Literal Literal::convertLowUToVecF64x2() const {
 }
 
 template<int Lanes,
-         LaneArray<Lanes> (Literal::*IntoLanes)() const,
+         LaneArray<Lanes / 2> (Literal::*IntoLanes)() const,
          Literal (Literal::*UnaryOp)(void) const>
 static Literal unary_zero(const Literal& val) {
-  LaneArray<Lanes> lanes = (val.*IntoLanes)();
-  for (size_t i = 0; i < Lanes; ++i) {
-    lanes[i] = (lanes[i].*UnaryOp)();
+  LaneArray<Lanes / 2> lanes = (val.*IntoLanes)();
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes / 2; ++i) {
+    result[i] = (lanes[i].*UnaryOp)();
   }
-  for (size_t i = Lanes; i < Lanes; ++i) {
-    lanes[i] = Literal::makeZero(lanes[0].type);
+  for (size_t i = Lanes / 2; i < Lanes; ++i) {
+    result[i] = Literal::makeZero(lanes[0].type);
   }
-  return Literal(lanes);
+  return Literal(result);
 }
 
 Literal Literal::truncSatZeroSToVecI32x4() const {
-  return unary_zero<2, &Literal::getLanesF64x2, &Literal::truncSatToSI32>(*this);
+  return unary_zero<4, &Literal::getLanesF64x2, &Literal::truncSatToSI32>(
+    *this);
 }
 Literal Literal::truncSatZeroUToVecI32x4() const {
-  return unary_zero<2, &Literal::getLanesF64x2, &Literal::truncSatToUI32>(*this);
+  return unary_zero<4, &Literal::getLanesF64x2, &Literal::truncSatToUI32>(
+    *this);
 }
 
 Literal Literal::demoteZeroToVecF32x4() const { WASM_UNREACHABLE("TODO:"); }
