@@ -351,8 +351,10 @@ private:
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {
               auto localType = getFunction()->getLocalType(get->index);
-              assert(!localType.isNonNullable() &&
-                     "Non-nullable locals must not use the default value");
+              if (localType.isNonNullable()) {
+                Fatal() << "Non-nullable locals accessing the default value in "
+                        << getFunction()->name << " (" << get->index << ')';
+              }
               curr = Literal::makeZeros(localType);
             } else {
               // it's a param, so it's hopeless

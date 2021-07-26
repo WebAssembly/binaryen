@@ -24,6 +24,7 @@
 
 #include <ir/find_all.h>
 #include <ir/linear-execution.h>
+#include <ir/local-graph.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <wasm.h>
@@ -35,29 +36,55 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
 
   Pass* create() override { return new LocalSubtyping(); }
 
-  // Shared code to find all sets or gets for each local index. Returns a vector
-  // that maps local indexes => vector of LocalGet*|LocalSet* expressions.
-  template<typename T>
-  std::vector<std::vector<T*>> getLocalOperations(Function* func) {
-    std::vector<std::vector<T*>> ret;
-    ret.resize(func->getNumLocals());
-    FindAll<T> operations(func->body);
-    for (auto* operation : operations.list) {
-      ret[operation->index].push_back(operation);
-    }
-    return ret;
-  }
-
   void doWalkFunction(Function* func) {
     if (!getModule()->features.hasGC()) {
       return;
     }
 
-    auto varBase = func->getVarIndexBase();
     auto numLocals = func->getNumLocals();
 
-    auto setsForLocal = getLocalOperations<LocalSet>(func);
-    auto getsForLocal = getLocalOperations<LocalGet>(func);
+    // Compute the local graph. We need is to get the list of gets and sets for
+    // for each local, so that we can do the analysis, and also we need to know
+    // when the default value of a local is used. If the default is actually
+    // used then we cannot change that type, as then we might end up with a null
+    // of a different type - that may technically be valid, but it can be
+    // confusing, and errors in the fuzzer. Furthermore, with non-nullable
+    // locals we can get a worse error, where if we change the local type to
+    // non-nullable then we'd be accessing the default, which is not allowed.
+    //
+    // TODO: Optimize this, as LocalGraph computes more than we need, and on
+    //       more locals than we need.
+    LocalGraph localGraph(func);
+
+    // For each local index, we compute all the the sets and gets.
+    std::vector<std::vector<LocalSet*>> setsForLocal(numLocals);
+    std::vector<std::vector<LocalGet*>> getsForLocal(numLocals);
+
+    for (auto& kv : localGraph.locations) {
+      auto* curr = kv.first;
+      if (auto* set = curr->dynCast<LocalSet>()) {
+        setsForLocal[set->index].push_back(set);
+      } else {
+        auto* get = curr->cast<LocalGet>();
+        getsForLocal[get->index].push_back(get);
+      }
+    }
+
+    // Find which vars use the default value.
+    std::unordered_set<Index> usesDefault;
+
+    for (auto& kv : localGraph.getSetses) {
+      auto* get = kv.first;
+      auto& sets = kv.second;
+      auto index = get->index;
+      if (func->isVar(index) && std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
+        return set == nullptr;
+      })) {
+        usesDefault.insert(index);
+      }
+    }
+
+    auto varBase = func->getVarIndexBase();
 
     // Keep iterating while we find things to change. There can be chains like
     // X -> Y -> Z where one change enables more. Note that we are O(N^2) on
@@ -84,6 +111,11 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // type.
 
       for (Index i = varBase; i < numLocals; i++) {
+        // See explanation above.
+        if (usesDefault.count(i)) {
+          continue;
+        }
+
         // Find all the types assigned to the var, and compute the optimal LUB.
         // Note that we do not need to take into account the initial value of
         // zero or null that locals have: that value has the type of the local,

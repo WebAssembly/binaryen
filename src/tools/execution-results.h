@@ -145,7 +145,8 @@ struct ExecutionResults {
 
   bool areEqual(Literal a, Literal b) {
     if (a.type != b.type) {
-      std::cout << "types not identical! " << a << " != " << b << '\n';
+      std::cout << "types not identical! " << a.type << " != " << b.type
+                << '\n';
       return false;
     }
     if (a.type.isRef()) {
