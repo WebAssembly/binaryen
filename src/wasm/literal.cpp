@@ -2388,6 +2388,16 @@ Literal extend(const Literal& vec) {
   return Literal(result);
 }
 
+template<LaneOrder Side> Literal extendF32(const Literal& vec) {
+  LaneArray<4> lanes = vec.getLanesF32x4();
+  LaneArray<2> result;
+  for (size_t i = 0; i < 4; ++i) {
+    size_t idx = (Side == LaneOrder::Low) ? i : i + 2;
+    result[i] = Literal((double)(float)lanes[idx].getf32());
+  }
+  return Literal(result);
+}
+
 Literal Literal::extendLowSToVecI16x8() const {
   return extend<8, int8_t, int16_t, LaneOrder::Low>(*this);
 }
@@ -2510,7 +2520,7 @@ Literal Literal::demoteZeroToF32x4() const {
   return unary_zero<4, &Literal::getLanesF64x2, &Literal::demote>(*this);
 }
 Literal Literal::promoteLowToF64x2() const {
-  return extend<2, float, double, LaneOrder::Low>(*this);
+  return extendF32<LaneOrder::Low>(*this);
 }
 
 Literal Literal::swizzleVec8x16(const Literal& other) const {
