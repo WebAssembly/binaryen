@@ -615,6 +615,10 @@ private:
   // function subtyping in indirect calls. TODO: relax this when possible
   //
   // Returns whether we optimized.
+  //
+  // TODO: We may be missing a global optimum here, as if a function calls
+  //       itself and returns that value, then we would not do any change here,
+  //       as one of the return values is exactly what it already is.
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
                          Module* module) {
