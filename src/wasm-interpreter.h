@@ -566,12 +566,17 @@ public:
       case ExtendLowUVecI32x4ToVecI64x2:
       case ExtendHighUVecI32x4ToVecI64x2:
       case ConvertLowSVecI32x4ToVecF64x2:
+        return value.convertLowSToVecF64x2();
       case ConvertLowUVecI32x4ToVecF64x2:
+        return value.convertLowUToVecF64x2();
       case TruncSatZeroSVecF64x2ToVecI32x4:
+        return value.truncSatZeroSToVecI32x4();
       case TruncSatZeroUVecF64x2ToVecI32x4:
+        return value.truncSatZeroUToVecI32x4();
       case DemoteZeroVecF64x2ToVecF32x4:
+        return value.demoteZeroToVecF32x4();
       case PromoteLowVecF32x4ToVecF64x2:
-        WASM_UNREACHABLE("unimp");
+        return value.promoteLowToVecF64x2();
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
     }

@@ -2425,6 +2425,27 @@ Literal Literal::extMulHighUI64x2(const Literal& other) const {
   WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
 }
 
+Literal Literal::convertLowSToVecF64x2() const {
+  return extend<2, int32_t, double, LaneOrder::Low>(*this);
+}
+Literal Literal::convertLowUToVecF64x2() const {
+  return extend<2, uint32_t, double, LaneOrder::Low>(*this);
+}
+
+Literal Literal::truncSatZeroSToVecI32x4() const {
+  WASM_UNREACHABLE("TODO:");
+}
+Literal Literal::truncSatZeroUToVecI32x4() const {
+  WASM_UNREACHABLE("TODO:");
+}
+
+Literal Literal::demoteZeroToVecF32x4() const {
+  WASM_UNREACHABLE("TODO:");
+}
+Literal Literal::promoteLowToVecF64x2() const {
+  WASM_UNREACHABLE("TODO:");
+}
+
 Literal Literal::swizzleVec8x16(const Literal& other) const {
   auto lanes = getLanesUI8x16();
   auto indices = other.getLanesUI8x16();

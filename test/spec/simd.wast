@@ -240,6 +240,8 @@
  (func (export "v128.load32_zero") (param $0 i32) (result v128) (v128.load32_zero (local.get $0)))
  (func (export "v128.load64_zero") (param $0 i32) (result v128) (v128.load64_zero (local.get $0)))
  (func (export "i8x16.swizzle") (param $0 v128) (param $1 v128) (result v128) (i8x16.swizzle (local.get $0) (local.get $1)))
+ (func (export "f64x2.convert_low_i32x4_s") (param $0 v128) (result v128) (f64x2.convert_low_i32x4_s (local.get $0)))
+ (func (export "f64x2.convert_low_i32x4_u") (param $0 v128) (result v128) (f64x2.convert_low_i32x4_u (local.get $0)))
 )
 ;; TODO: Additional f64x2 conversions if specified
 
@@ -992,3 +994,6 @@
   )
   (v128.const i8x16 0xf0 0xf4 0xf8 0xfc 0x00 0x00 0x00 0x00 0x00 0x00 0xff 0xfd 0xfc 0xf8 0xf4 0xf0)
 )
+
+(assert_return (invoke "f64x2.convert_low_i32x4_s" (v128.const i32x4 1 -2147483648 0 0)) (v128.const f64x2 1.0 -2147483648))
+(assert_return (invoke "f64x2.convert_low_i32x4_u" (v128.const i32x4 -2147483648 0xffffffff 0 0)) (v128.const f64x2 2147483648 4294967295.0))
