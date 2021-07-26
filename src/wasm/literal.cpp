@@ -1821,16 +1821,16 @@ static Literal extAddPairwise(const Literal& vec) {
   return Literal(result);
 }
 
-Literal Literal::extAddPairwiseSToI16x8() const {
+Literal Literal::extAddPairwiseToSI16x8() const {
   return extAddPairwise<8, int8_t, int16_t>(*this);
 }
-Literal Literal::extAddPairwiseUToI16x8() const {
+Literal Literal::extAddPairwiseToUI16x8() const {
   return extAddPairwise<8, uint8_t, int16_t>(*this);
 }
-Literal Literal::extAddPairwiseSToI32x4() const {
+Literal Literal::extAddPairwiseToSI32x4() const {
   return extAddPairwise<4, int16_t, int32_t>(*this);
 }
-Literal Literal::extAddPairwiseUToI32x4() const {
+Literal Literal::extAddPairwiseToUI32x4() const {
   return extAddPairwise<4, uint16_t, uint32_t>(*this);
 }
 

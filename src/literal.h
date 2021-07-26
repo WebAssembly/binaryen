@@ -612,10 +612,10 @@ public:
   Literal floorF64x2() const;
   Literal truncF64x2() const;
   Literal nearestF64x2() const;
-  Literal extAddPairwiseSToI16x8() const;
-  Literal extAddPairwiseUToI16x8() const;
-  Literal extAddPairwiseSToI32x4() const;
-  Literal extAddPairwiseUToI32x4() const;
+  Literal extAddPairwiseToSI16x8() const;
+  Literal extAddPairwiseToUI16x8() const;
+  Literal extAddPairwiseToSI32x4() const;
+  Literal extAddPairwiseToUI32x4() const;
   Literal truncSatToSI32x4() const;
   Literal truncSatToUI32x4() const;
   Literal convertSToF32x4() const;

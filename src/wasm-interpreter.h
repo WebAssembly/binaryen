@@ -530,13 +530,13 @@ public:
       case NearestVecF64x2:
         return value.nearestF64x2();
       case ExtAddPairwiseSVecI8x16ToI16x8:
-        return value.extAddPairwiseSToI16x8();
+        return value.extAddPairwiseToSI16x8();
       case ExtAddPairwiseUVecI8x16ToI16x8:
-        return value.extAddPairwiseUToI16x8();
+        return value.extAddPairwiseToUI16x8();
       case ExtAddPairwiseSVecI16x8ToI32x4:
-        return value.extAddPairwiseSToI32x4();
+        return value.extAddPairwiseToSI32x4();
       case ExtAddPairwiseUVecI16x8ToI32x4:
-        return value.extAddPairwiseUToI32x4();
+        return value.extAddPairwiseToSI32x4();
       case TruncSatSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
