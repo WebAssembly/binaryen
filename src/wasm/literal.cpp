@@ -2400,41 +2400,54 @@ Literal Literal::extendHighUToVecI64x2() const {
   return extend<2, uint32_t, uint64_t, LaneOrder::High>(*this);
 }
 
+template<size_t Lanes, typename LaneFrom, typename LaneTo, LaneOrder Side>
+Literal extMul(const Literal& a, const Literal& b) {
+  LaneArray<Lanes* 2> lhs = getLanes<LaneFrom, Lanes * 2>(a);
+  LaneArray<Lanes* 2> rhs = getLanes<LaneFrom, Lanes * 2>(b);
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes; ++i) {
+    size_t idx = (Side == LaneOrder::Low) ? i : i + Lanes;
+    result[i] = Literal((LaneTo)(LaneFrom)lhs[idx].geti32() *
+                        (LaneTo)(LaneFrom)rhs[idx].geti32());
+  }
+  return Literal(result);
+}
+
 Literal Literal::extMulLowSI16x8(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<8, int8_t, int16_t, LaneOrder::Low>(*this, other);
 }
 Literal Literal::extMulHighSI16x8(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<8, int8_t, int16_t, LaneOrder::High>(*this, other);
 }
 Literal Literal::extMulLowUI16x8(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<8, uint8_t, uint16_t, LaneOrder::Low>(*this, other);
 }
 Literal Literal::extMulHighUI16x8(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<8, uint8_t, uint16_t, LaneOrder::High>(*this, other);
 }
 Literal Literal::extMulLowSI32x4(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<4, int16_t, int32_t, LaneOrder::Low>(*this, other);
 }
 Literal Literal::extMulHighSI32x4(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<4, int16_t, int32_t, LaneOrder::High>(*this, other);
 }
 Literal Literal::extMulLowUI32x4(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<4, uint16_t, uint32_t, LaneOrder::Low>(*this, other);
 }
 Literal Literal::extMulHighUI32x4(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<4, uint16_t, uint32_t, LaneOrder::High>(*this, other);
 }
 Literal Literal::extMulLowSI64x2(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<2, int32_t, int64_t, LaneOrder::Low>(*this, other);
 }
 Literal Literal::extMulHighSI64x2(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<2, int32_t, int64_t, LaneOrder::High>(*this, other);
 }
 Literal Literal::extMulLowUI64x2(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<2, uint32_t, uint64_t, LaneOrder::Low>(*this, other);
 }
 Literal Literal::extMulHighUI64x2(const Literal& other) const {
-  WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
+  return extMul<2, uint32_t, uint64_t, LaneOrder::High>(*this, other);
 }
 
 Literal Literal::swizzleVec8x16(const Literal& other) const {
