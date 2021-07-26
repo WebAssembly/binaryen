@@ -2506,7 +2506,9 @@ Literal Literal::truncSatZeroUToI32x4() const {
     *this);
 }
 
-Literal Literal::demoteZeroToF32x4() const { WASM_UNREACHABLE("TODO:"); }
+Literal Literal::demoteZeroToF32x4() const {
+  return unary_zero<4, &Literal::getLanesF64x2, &Literal::demote>(*this);
+}
 Literal Literal::promoteLowToF64x2() const { WASM_UNREACHABLE("TODO:"); }
 
 Literal Literal::swizzleVec8x16(const Literal& other) const {

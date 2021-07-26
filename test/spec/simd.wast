@@ -258,6 +258,7 @@
  (func (export "f64x2.convert_low_i32x4_u") (param $0 v128) (result v128) (f64x2.convert_low_i32x4_u (local.get $0)))
  (func (export "i32x4.trunc_sat_f64x2_s_zero") (param $0 v128) (result v128) (i32x4.trunc_sat_f64x2_s_zero (local.get $0)))
  (func (export "i32x4.trunc_sat_f64x2_u_zero") (param $0 v128) (result v128) (i32x4.trunc_sat_f64x2_u_zero (local.get $0)))
+ (func (export "f32x4.demote_f64x2_zero") (param $0 v128) (result v128) (f32x4.demote_f64x2_zero (local.get $0)))
 )
 ;; TODO: Additional f64x2 conversions if specified
 
@@ -1132,3 +1133,9 @@
 (assert_return (invoke "f64x2.convert_low_i32x4_u" (v128.const i32x4 -2147483648 0xffffffff 0 0)) (v128.const f64x2 2147483648 4294967295.0))
 (assert_return (invoke "i32x4.trunc_sat_f64x2_s_zero" (v128.const f64x2 -inf 4294967296.0)) (v128.const i32x4 -2147483648 2147483647 0 0))
 (assert_return (invoke "i32x4.trunc_sat_f64x2_u_zero" (v128.const f64x2 -inf 4294967296.0)) (v128.const i32x4 0 4294967295 0 0))
+(assert_return
+  (invoke "f32x4.demote_f64x2_zero"
+    (v128.const f64x2 0x1.fffffe0000000p-127 -0x1.6972b30cfb562p+1)
+  )
+  (v128.const f32x4 0x1p-126 -0x1.6972b4p+1 0 0)
+)
