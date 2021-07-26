@@ -57,7 +57,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $uses-default (param $i i32)
-    (local $x (ref null $struct))
+    (local $x (ref null any))
     (if
       (local.get $i)
       ;; The only set to this local uses a non-nullable type.
@@ -66,8 +66,8 @@
       )
     )
     (drop
-      ;; This get may use the null value, and so we should not alter the
-      ;; type of the local to be non-nullable
+      ;; This get may use the null value, so we can refine the heap type but not
+      ;; alter nullability.
       (local.get $x)
     )
   )

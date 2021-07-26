@@ -225,7 +225,7 @@
   )
 
   ;; CHECK:      (func $uses-default (param $i i32)
-  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (local $x (ref null $i32_=>_none))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $i)
   ;; CHECK-NEXT:   (local.set $x
@@ -244,8 +244,8 @@
       (local.set $x (ref.func $uses-default))
     )
     (drop
-      ;; This get may use the default value, and so we should not alter the
-      ;; type of the local.
+      ;; This get may use the default value, but it is ok to have a null of a
+      ;; more refined type in the local.
       (local.get $x)
     )
   )

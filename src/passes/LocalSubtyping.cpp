@@ -44,12 +44,9 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     auto numLocals = func->getNumLocals();
 
     // Compute the local graph. We need to get the list of gets and sets for
-    // each local, so that we can do the analysis, and also we need to know
-    // when the default value of a local is used. If the default is actually
-    // used then we cannot change that type, as then we might end up with a null
-    // of a different type - while all nulls compare equally, it can be
-    // confusing (and errors in the fuzzer). Furthermore, with non-nullable
-    // locals we can get invalid code where if we change the local type to
+    // each local, so that we can do the analysis. For non-nullable locals, we
+    // also need to know when the default value of a local is used: if so then
+    // we cannot change that type, as if we change the local type to
     // non-nullable then we'd be accessing the default, which is not allowed.
     //
     // TODO: Optimize this, as LocalGraph computes more than we need, and on
@@ -70,18 +67,25 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       }
     }
 
-    // Find which vars use the default value.
+    // Find which vars use the default value, if we allow non-nullable locals.
+    //
+    // If that feature is not enabled, then we can safely assume that the
+    // default is never used - the default would be a null value, and the type
+    // of the null does not really matter as all nulls compare equally, so we do
+    // not need to worry.
     std::unordered_set<Index> usesDefault;
 
-    for (auto& kv : localGraph.getSetses) {
-      auto* get = kv.first;
-      auto& sets = kv.second;
-      auto index = get->index;
-      if (func->isVar(index) &&
-          std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
-            return set == nullptr;
-          })) {
-        usesDefault.insert(index);
+    if (getModule()->features.hasGCNNLocals()) {
+      for (auto& kv : localGraph.getSetses) {
+        auto* get = kv.first;
+        auto& sets = kv.second;
+        auto index = get->index;
+        if (func->isVar(index) &&
+            std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
+              return set == nullptr;
+            })) {
+          usesDefault.insert(index);
+        }
       }
     }
 
@@ -112,16 +116,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       // type.
 
       for (Index i = varBase; i < numLocals; i++) {
-        // See explanation above.
-        if (usesDefault.count(i)) {
-          continue;
-        }
-
         // Find all the types assigned to the var, and compute the optimal LUB.
-        // Note that we do not need to take into account the initial value of
-        // zero or null that locals have: that value has the type of the local,
-        // which is a supertype of all the assigned values anyhow. It will never
-        // be able to tell us of a more specific subtype that is possible.
         std::unordered_set<Type> types;
         for (auto* set : setsForLocal[i]) {
           types.insert(set->value->type);
@@ -137,14 +132,11 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
 
         // Remove non-nullability if we disallow that in locals.
         if (newType.isNonNullable()) {
-          if (!getModule()->features.hasGCNNLocals()) {
+          // As mentioned earlier, even if we allow non-nullability, there may
+          // be a problem if the default value - a null - is used. In that case,
+          // remove non-nullability as well.
+          if (!getModule()->features.hasGCNNLocals() || usesDefault.count(i)) {
             newType = Type(newType.getHeapType(), Nullable);
-            // Note that the old type must have been nullable as well, as non-
-            // nullable types cannot be locals without that feature being
-            // enabled, which means that we will not have to do any extra work
-            // to handle non-nullability if we update the type: we are just
-            // updating the heap type, and leaving the type nullable as it was.
-            assert(oldType.isNullable());
           }
         } else if (!newType.isDefaultable()) {
           // Aside from the case we just handled of allowed non-nullability, we
