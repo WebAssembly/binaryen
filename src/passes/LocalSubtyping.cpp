@@ -43,7 +43,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
 
     auto numLocals = func->getNumLocals();
 
-    // Compute the local graph. We need is to get the list of gets and sets for
+    // Compute the local graph. We need to get the list of gets and sets for
     // for each local, so that we can do the analysis, and also we need to know
     // when the default value of a local is used. If the default is actually
     // used then we cannot change that type, as then we might end up with a null
