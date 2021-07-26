@@ -9,10 +9,11 @@
  (type ${i32} (struct (field i32)))
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
 
+ ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
+
  ;; CHECK:      (type ${f64} (struct (field f64)))
  (type ${f64} (struct (field f64)))
  (type ${i32_i64} (struct (field i32) (field i64)))
- ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
  (type ${i32_f32} (struct (field i32) (field f32)))
 
  ;; CHECK:      (func $foo
@@ -292,5 +293,252 @@
  (func $various-params-middle (param $x (ref null ${}))
   ;; "Use" the local to avoid other optimizations kicking in.
   (drop (local.get $x))
+ )
+
+ ;; We cannot refine the return type if nothing is actually returned.
+ ;; CHECK:      (func $refine-return-no-return (result anyref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-no-return)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $refine-return-no-return (result anyref)
+  ;; Call this function, so that we attempt to optimize it. Note that we do not
+  ;; just drop the result, as that would cause the drop optimizations to kick
+  ;; in.
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-no-return))
+
+  (unreachable)
+ )
+
+ ;; We cannot refine the return type if it is already the best it can be.
+ ;; CHECK:      (func $refine-return-no-refining (result anyref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-no-refining)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null any)
+ ;; CHECK-NEXT: )
+ (func $refine-return-no-refining (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-no-refining))
+
+  (ref.null any)
+ )
+
+ ;; Refine the return type based on the value flowing out.
+ ;; CHECK:      (func $refine-return-flow (result funcref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-flow)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null func)
+ ;; CHECK-NEXT: )
+ (func $refine-return-flow (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-flow))
+
+  (ref.null func)
+ )
+ ;; CHECK:      (func $call-refine-return-flow (result funcref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $call-refine-return-flow)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if (result funcref)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (call $refine-return-flow)
+ ;; CHECK-NEXT:   (call $refine-return-flow)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-refine-return-flow (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $call-refine-return-flow))
+
+  ;; After refining the return value of the above function, refinalize will
+  ;; update types here, which will lead to updating the if, and then the entire
+  ;; function's return value.
+  (if (result anyref)
+   (i32.const 1)
+   (call $refine-return-flow)
+   (call $refine-return-flow)
+  )
+ )
+
+ ;; Refine the return type based on a return.
+ ;; CHECK:      (func $refine-return-return (result funcref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-return)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (ref.null func)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $refine-return-return (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-return))
+
+  (return (ref.null func))
+ )
+
+ ;; Refine the return type based on multiple values.
+ ;; CHECK:      (func $refine-return-many (result funcref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-many)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null func)
+ ;; CHECK-NEXT: )
+ (func $refine-return-many (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-many))
+
+  (if
+   (i32.const 1)
+   (return (ref.null func))
+  )
+  (if
+   (i32.const 2)
+   (return (ref.null func))
+  )
+  (ref.null func)
+ )
+
+ ;; CHECK:      (func $refine-return-many-blocked (result anyref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-many-blocked)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null data)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null func)
+ ;; CHECK-NEXT: )
+ (func $refine-return-many-blocked (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-many-blocked))
+
+  (if
+   (i32.const 1)
+   (return (ref.null func))
+  )
+  (if
+   (i32.const 2)
+   ;; The refined return value is blocked by this return.
+   (return (ref.null data))
+  )
+  (ref.null func)
+ )
+
+ ;; CHECK:      (func $refine-return-many-blocked-2 (result anyref)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-many-blocked-2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null func)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null data)
+ ;; CHECK-NEXT: )
+ (func $refine-return-many-blocked-2 (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-many-blocked-2))
+
+  (if
+   (i32.const 1)
+   (return (ref.null func))
+  )
+  (if
+   (i32.const 2)
+   (return (ref.null func))
+  )
+  ;; The refined return value is blocked by this value.
+  (ref.null data)
+ )
+
+ ;; CHECK:      (func $refine-return-many-middle (result (ref null ${i32}))
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (call $refine-return-many-middle)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null ${i32_i64})
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (ref.null ${i32_f32})
+ ;; CHECK-NEXT: )
+ (func $refine-return-many-middle (result anyref)
+  (local $temp anyref)
+  (local.set $temp (call $refine-return-many-middle))
+
+  ;; Return two different struct types, with an LUB that is not equal to either
+  ;; of them.
+  (if
+   (i32.const 1)
+   (return (ref.null ${i32_i64}))
+  )
+  (ref.null ${i32_f32})
+ )
+
+ ;; We can refine the return types of tuples.
+ ;; CHECK:      (func $refine-return-tuple (result funcref i32)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (tuple.extract 0
+ ;; CHECK-NEXT:    (call $refine-return-tuple)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (tuple.make
+ ;; CHECK-NEXT:   (ref.null func)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $refine-return-tuple (result anyref i32)
+  (local $temp anyref)
+  (local.set $temp
+   (tuple.extract 0
+    (call $refine-return-tuple)
+   )
+  )
+
+  (tuple.make
+   (ref.null func)
+   (i32.const 1)
+  )
  )
 )

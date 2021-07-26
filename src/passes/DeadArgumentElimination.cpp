@@ -43,6 +43,7 @@
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "passes/opt-utils.h"
 #include "support/sorted_vector.h"
@@ -308,6 +309,9 @@ struct DAE : public Pass {
         allDroppedCalls[pair.first] = pair.second;
       }
     }
+    // If we refine return types then we will need to do more type updating
+    // at the end.
+    bool refinedReturnTypes = false;
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (auto& pair : allCalls) {
@@ -323,6 +327,10 @@ struct DAE : public Pass {
       // affect whether an argument is used or not, it just refines the type
       // where possible.
       refineArgumentTypes(func, calls, module);
+      // Refine return types as well.
+      if (refineReturnTypes(func, calls, module)) {
+        refinedReturnTypes = true;
+      }
       // Check if all calls pass the same constant for a particular argument.
       for (Index i = 0; i < numParams; i++) {
         Literal value;
@@ -356,6 +364,12 @@ struct DAE : public Pass {
           infoMap[name].unusedParams.insert(i);
         }
       }
+    }
+    if (refinedReturnTypes) {
+      // Changing a call expression's return type can propagate out to its
+      // parents, and so we must refinalize.
+      // TODO: We could track in which functions we actually make changes.
+      ReFinalize().run(runner, module);
     }
     // Track which functions we changed, and optimize them later if necessary.
     std::unordered_set<Function*> changed;
@@ -444,7 +458,7 @@ struct DAE : public Pass {
     if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, runner);
     }
-    return !changed.empty();
+    return !changed.empty() || refinedReturnTypes;
   }
 
 private:
@@ -590,6 +604,74 @@ private:
         get->type = func->getLocalType(index);
       }
     }
+  }
+
+  // See if the types returned from a function allow us to define a more refined
+  // return type for it. If so, we can update it and all calls going to it.
+  //
+  // This assumes that the function has no calls aside from |calls|, that is, it
+  // is not exported or called from the table or by reference. Exports should be
+  // fine, as should indirect calls in principle, but VMs will need to support
+  // function subtyping in indirect calls. TODO: relax this when possible
+  //
+  // Returns whether we optimized.
+  //
+  // TODO: We may be missing a global optimum here, as e.g. if a function calls
+  //       itself and returns that value, then we would not do any change here,
+  //       as one of the return values is exactly what it already is. Similar
+  //       unoptimality can happen with multiple functions, more local code in
+  //       the middle, etc.
+  bool refineReturnTypes(Function* func,
+                         const std::vector<Call*>& calls,
+                         Module* module) {
+    if (!module->features.hasGC()) {
+      return false;
+    }
+
+    Type originalType = func->getResults();
+    if (!originalType.hasRef()) {
+      // Nothing to refine.
+      return false;
+    }
+
+    // Before we do anything, we must refinalize the function, because otherwise
+    // its body may contain a block with a forced type,
+    //
+    // (func (result X)
+    //  (block (result X)
+    //   (..content with more specific type Y..)
+    //  )
+    ReFinalize().walkFunctionInModule(func, module);
+
+    Type refinedType = func->body->type;
+    if (refinedType == originalType) {
+      return false;
+    }
+
+    // Scan the body and look at the returns.
+    for (auto* ret : FindAll<Return>(func->body).list) {
+      refinedType = Type::getLeastUpperBound(refinedType, ret->value->type);
+      if (refinedType == originalType) {
+        return false;
+      }
+    }
+    assert(refinedType != originalType);
+
+    // If the refined type is unreachable then nothing actually returns from
+    // this function.
+    // TODO: We can propagate that to the outside, and not just for GC.
+    if (refinedType == Type::unreachable) {
+      return false;
+    }
+
+    // Success. Update the type, and the calls.
+    func->setResults(refinedType);
+    for (auto* call : calls) {
+      if (call->type != Type::unreachable) {
+        call->type = refinedType;
+      }
+    }
+    return true;
   }
 };
 
