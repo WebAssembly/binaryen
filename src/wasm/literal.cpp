@@ -2509,7 +2509,9 @@ Literal Literal::truncSatZeroUToI32x4() const {
 Literal Literal::demoteZeroToF32x4() const {
   return unary_zero<4, &Literal::getLanesF64x2, &Literal::demote>(*this);
 }
-Literal Literal::promoteLowToF64x2() const { WASM_UNREACHABLE("TODO:"); }
+Literal Literal::promoteLowToF64x2() const {
+  return extend<2, float, double, LaneOrder::Low>(*this);
+}
 
 Literal Literal::swizzleVec8x16(const Literal& other) const {
   auto lanes = getLanesUI8x16();
