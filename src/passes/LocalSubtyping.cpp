@@ -44,19 +44,19 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     auto numLocals = func->getNumLocals();
 
     // Compute the local graph. We need to get the list of gets and sets for
-    // for each local, so that we can do the analysis, and also we need to know
+    // each local, so that we can do the analysis, and also we need to know
     // when the default value of a local is used. If the default is actually
     // used then we cannot change that type, as then we might end up with a null
-    // of a different type - that may technically be valid, but it can be
-    // confusing, and errors in the fuzzer. Furthermore, with non-nullable
-    // locals we can get a worse error, where if we change the local type to
+    // of a different type - while all nulls compare equally, it can be
+    // confusing (and errors in the fuzzer). Furthermore, with non-nullable
+    // locals we can get invalid code where if we change the local type to
     // non-nullable then we'd be accessing the default, which is not allowed.
     //
     // TODO: Optimize this, as LocalGraph computes more than we need, and on
     //       more locals than we need.
     LocalGraph localGraph(func);
 
-    // For each local index, we compute all the the sets and gets.
+    // For each local index, compute all the the sets and gets.
     std::vector<std::vector<LocalSet*>> setsForLocal(numLocals);
     std::vector<std::vector<LocalGet*>> getsForLocal(numLocals);
 
