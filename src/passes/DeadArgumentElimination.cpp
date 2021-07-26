@@ -623,7 +623,7 @@ private:
     }
 
     Type originalType = func->getResults();
-    if (!originalType.isRef()) {
+    if (!originalType.hasRef()) {
       // Nothing to refine.
       return false;
     }

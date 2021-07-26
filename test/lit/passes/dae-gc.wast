@@ -419,10 +419,10 @@
   (ref.null func)
  )
 
- ;; CHECK:      (func $refine-return-many-partial (result anyref)
+ ;; CHECK:      (func $refine-return-many-blocked (result anyref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $refine-return-many-partial)
+ ;; CHECK-NEXT:   (call $refine-return-many-blocked)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
@@ -438,9 +438,9 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.null func)
  ;; CHECK-NEXT: )
- (func $refine-return-many-partial (result anyref)
+ (func $refine-return-many-blocked (result anyref)
   (local $temp anyref)
-  (local.set $temp (call $refine-return-many-partial))
+  (local.set $temp (call $refine-return-many-blocked))
 
   (if
    (i32.const 1)
@@ -448,16 +448,16 @@
   )
   (if
    (i32.const 2)
-   ;; The refined return value is limited by this return.
+   ;; The refined return value is blocked by this return.
    (return (ref.null data))
   )
   (ref.null func)
  )
 
- ;; CHECK:      (func $refine-return-many-partial-2 (result anyref)
+ ;; CHECK:      (func $refine-return-many-blocked-2 (result anyref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (call $refine-return-many-partial-2)
+ ;; CHECK-NEXT:   (call $refine-return-many-blocked-2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
@@ -473,9 +473,9 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (ref.null data)
  ;; CHECK-NEXT: )
- (func $refine-return-many-partial-2 (result anyref)
+ (func $refine-return-many-blocked-2 (result anyref)
   (local $temp anyref)
-  (local.set $temp (call $refine-return-many-partial-2))
+  (local.set $temp (call $refine-return-many-blocked-2))
 
   (if
    (i32.const 1)
@@ -485,7 +485,7 @@
    (i32.const 2)
    (return (ref.null func))
   )
-  ;; The refined return value is limited by this value.
+  ;; The refined return value is blocked by this value.
   (ref.null data)
  )
 
@@ -513,5 +513,32 @@
    (return (ref.null ${i32_i64}))
   )
   (ref.null ${i32_f32})
+ )
+
+ ;; We can refine the return types of tuples.
+ ;; CHECK:      (func $refine-return-tuple (result funcref i32)
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (tuple.extract 0
+ ;; CHECK-NEXT:    (call $refine-return-tuple)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (tuple.make
+ ;; CHECK-NEXT:   (ref.null func)
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $refine-return-tuple (result anyref i32)
+  (local $temp anyref)
+  (local.set $temp
+   (tuple.extract 0
+    (call $refine-return-tuple)
+   )
+  )
+
+  (tuple.make
+   (ref.null func)
+   (i32.const 1)
+  )
  )
 )
