@@ -541,4 +541,21 @@
    (i32.const 1)
   )
  )
+
+ ;; This function does a return call of the one after it. The one after it
+ ;; returns a ref.func of this one. They both begin by returning a funcref; if
+ ;; we refine the return type of the latter (which ref.func allows us to do)
+ ;; then the return type would not match, and we would get a validation error.
+ ;; CHECK:      (func $do-return-call (result funcref)
+ ;; CHECK-NEXT:  (return_call $return-ref-func)
+ ;; CHECK-NEXT: )
+ (func $do-return-call (result funcref)
+  (return_call $return-ref-func)
+ )
+ ;; CHECK:      (func $return-ref-func (result funcref)
+ ;; CHECK-NEXT:  (ref.func $do-return-call)
+ ;; CHECK-NEXT: )
+ (func $return-ref-func (result funcref)
+  (ref.func $do-return-call)
+ )
 )
