@@ -77,9 +77,10 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
       auto* get = kv.first;
       auto& sets = kv.second;
       auto index = get->index;
-      if (func->isVar(index) && std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
-        return set == nullptr;
-      })) {
+      if (func->isVar(index) &&
+          std::any_of(sets.begin(), sets.end(), [&](LocalSet* set) {
+            return set == nullptr;
+          })) {
         usesDefault.insert(index);
       }
     }
