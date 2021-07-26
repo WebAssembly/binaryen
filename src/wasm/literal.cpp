@@ -2387,6 +2387,18 @@ Literal Literal::extendLowUToVecI32x4() const {
 Literal Literal::extendHighUToVecI32x4() const {
   return extend<4, uint16_t, uint32_t, LaneOrder::High>(*this);
 }
+Literal Literal::extendLowSToVecI64x2() const {
+  return extend<2, int32_t, int64_t, LaneOrder::Low>(*this);
+}
+Literal Literal::extendHighSToVecI64x2() const {
+  return extend<2, int32_t, int64_t, LaneOrder::High>(*this);
+}
+Literal Literal::extendLowUToVecI64x2() const {
+  return extend<2, uint32_t, uint64_t, LaneOrder::Low>(*this);
+}
+Literal Literal::extendHighUToVecI64x2() const {
+  return extend<2, uint32_t, uint64_t, LaneOrder::High>(*this);
+}
 
 Literal Literal::extMulLowSI16x8(const Literal& other) const {
   WASM_UNREACHABLE("TODO: implement SIMD extending multiplications");
