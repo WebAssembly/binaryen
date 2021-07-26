@@ -565,7 +565,7 @@ public:
       case ExtendHighSVecI32x4ToVecI64x2:
       case ExtendLowUVecI32x4ToVecI64x2:
       case ExtendHighUVecI32x4ToVecI64x2:
-        WASM_UNREACHABLE("invalid unary op");
+        WASM_UNREACHABLE("unimp");
       case ConvertLowSVecI32x4ToVecF64x2:
         return value.convertLowSToVecF64x2();
       case ConvertLowUVecI32x4ToVecF64x2:
