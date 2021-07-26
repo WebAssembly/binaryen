@@ -352,7 +352,7 @@ private:
             if (getFunction()->isVar(get->index)) {
               auto localType = getFunction()->getLocalType(get->index);
               if (localType.isNonNullable()) {
-                Fatal() << "Non-nullable locals accessing the default value in "
+                Fatal() << "Non-nullable local accessing the default value in "
                         << getFunction()->name << " (" << get->index << ')';
               }
               curr = Literal::makeZeros(localType);
