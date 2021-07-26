@@ -616,9 +616,11 @@ private:
   //
   // Returns whether we optimized.
   //
-  // TODO: We may be missing a global optimum here, as if a function calls
+  // TODO: We may be missing a global optimum here, as e.g. if a function calls
   //       itself and returns that value, then we would not do any change here,
-  //       as one of the return values is exactly what it already is.
+  //       as one of the return values is exactly what it already is. Similar
+  //       unoptimality can happen with multiple functions, more local code in
+  //       the middle, etc.
   bool refineReturnTypes(Function* func,
                          const std::vector<Call*>& calls,
                          Module* module) {
