@@ -217,7 +217,10 @@
  (func (export "f64x2.floor") (param $0 v128) (result v128) (f64x2.floor (local.get $0)))
  (func (export "f64x2.trunc") (param $0 v128) (result v128) (f64x2.trunc (local.get $0)))
  (func (export "f64x2.nearest") (param $0 v128) (result v128) (f64x2.nearest (local.get $0)))
- ;; TODO: Extending pairwise adds once they have interpreter support
+ (func (export "i16x8.extadd_pairwise_i8x16_s") (param v128) (result v128) (i16x8.extadd_pairwise_i8x16_s (local.get 0)))
+ (func (export "i16x8.extadd_pairwise_i8x16_u") (param v128) (result v128) (i16x8.extadd_pairwise_i8x16_u (local.get 0)))
+ (func (export "i32x4.extadd_pairwise_i16x8_s") (param v128) (result v128) (i32x4.extadd_pairwise_i16x8_s (local.get 0)))
+ (func (export "i32x4.extadd_pairwise_i16x8_u") (param v128) (result v128) (i32x4.extadd_pairwise_i16x8_u (local.get 0)))
  (func (export "i32x4.trunc_sat_f32x4_s") (param $0 v128) (result v128) (i32x4.trunc_sat_f32x4_s (local.get $0)))
  (func (export "i32x4.trunc_sat_f32x4_u") (param $0 v128) (result v128) (i32x4.trunc_sat_f32x4_u (local.get $0)))
  (func (export "f32x4.convert_i32x4_s") (param $0 v128) (result v128) (f32x4.convert_i32x4_s (local.get $0)))
@@ -1014,6 +1017,31 @@
 (assert_return (invoke "f64x2.nearest" (v128.const f64x2 0.5 -0.5)) (v128.const f64x2 0 -0))
 (assert_return (invoke "f64x2.nearest" (v128.const f64x2 1.5 -1.5)) (v128.const f64x2 2 -2))
 (assert_return (invoke "f64x2.nearest" (v128.const f64x2 4.2 -4.2)) (v128.const f64x2 4 -4))
+
+(assert_return
+  (invoke "i16x8.extadd_pairwise_i8x16_s"
+    (v128.const i8x16 -1 -1 -127 -127 -128 -128 127 127 255 255 1 1 0 0 126 126)
+  )
+  (v128.const i16x8 -2 -254 -256 254 -2 2 0 252)
+)
+(assert_return
+  (invoke "i16x8.extadd_pairwise_i8x16_u"
+    (v128.const i8x16 0 0 1 1 -1 -1 126 126 -127 -127 -128 -128 127 127 255 255)
+  )
+  (v128.const i16x8 0 2 510 252 258 256 254 510)
+)
+(assert_return
+  (invoke "i32x4.extadd_pairwise_i16x8_s"
+    (v128.const i16x8 32766 32766 -32767 -32767 65535 65535 -1 -1)
+  )
+  (v128.const i32x4 65532 -65534 -2 -2)
+)
+(assert_return
+  (invoke "i32x4.extadd_pairwise_i16x8_u"
+    (v128.const i16x8 -1 -1 -32767 -32767 -32768 -32768 65535 65535)
+  )
+  (v128.const i32x4 131070 65538 65536 131070)
+)
 
 ;; conversions
 (assert_return (invoke "i32x4.trunc_sat_f32x4_s" (v128.const f32x4 42 nan infinity -infinity)) (v128.const i32x4 42 0 2147483647 -2147483648))
