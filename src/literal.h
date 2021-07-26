@@ -612,6 +612,10 @@ public:
   Literal floorF64x2() const;
   Literal truncF64x2() const;
   Literal nearestF64x2() const;
+  Literal extAddPairwiseToSI16x8() const;
+  Literal extAddPairwiseToUI16x8() const;
+  Literal extAddPairwiseToSI32x4() const;
+  Literal extAddPairwiseToUI32x4() const;
   Literal truncSatToSI32x4() const;
   Literal truncSatToUI32x4() const;
   Literal convertSToF32x4() const;
@@ -628,6 +632,10 @@ public:
   Literal extendHighSToVecI32x4() const;
   Literal extendLowUToVecI32x4() const;
   Literal extendHighUToVecI32x4() const;
+  Literal extendLowSToVecI64x2() const;
+  Literal extendHighSToVecI64x2() const;
+  Literal extendLowUToVecI64x2() const;
+  Literal extendHighUToVecI64x2() const;
   Literal convertLowSToVecF64x2() const;
   Literal convertLowUToVecF64x2() const;
   Literal truncSatZeroSToVecI32x4() const;

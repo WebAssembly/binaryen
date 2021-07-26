@@ -530,13 +530,13 @@ public:
       case NearestVecF64x2:
         return value.nearestF64x2();
       case ExtAddPairwiseSVecI8x16ToI16x8:
-        WASM_UNREACHABLE("unimp");
+        return value.extAddPairwiseToSI16x8();
       case ExtAddPairwiseUVecI8x16ToI16x8:
-        WASM_UNREACHABLE("unimp");
+        return value.extAddPairwiseToUI16x8();
       case ExtAddPairwiseSVecI16x8ToI32x4:
-        WASM_UNREACHABLE("unimp");
+        return value.extAddPairwiseToSI32x4();
       case ExtAddPairwiseUVecI16x8ToI32x4:
-        WASM_UNREACHABLE("unimp");
+        return value.extAddPairwiseToUI32x4();
       case TruncSatSVecF32x4ToVecI32x4:
         return value.truncSatToSI32x4();
       case TruncSatUVecF32x4ToVecI32x4:
@@ -562,10 +562,13 @@ public:
       case ExtendHighUVecI16x8ToVecI32x4:
         return value.extendHighUToVecI32x4();
       case ExtendLowSVecI32x4ToVecI64x2:
+        return value.extendLowSToVecI64x2();
       case ExtendHighSVecI32x4ToVecI64x2:
+        return value.extendHighSToVecI64x2();
       case ExtendLowUVecI32x4ToVecI64x2:
+        return value.extendLowUToVecI64x2();
       case ExtendHighUVecI32x4ToVecI64x2:
-        WASM_UNREACHABLE("unimp");
+        return value.extendHighUToVecI64x2();
       case ConvertLowSVecI32x4ToVecF64x2:
         return value.convertLowSToVecF64x2();
       case ConvertLowUVecI32x4ToVecF64x2:
