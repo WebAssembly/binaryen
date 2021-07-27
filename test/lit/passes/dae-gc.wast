@@ -213,6 +213,42 @@
   (local.set $y (ref.null ${i32_i64}))
  )
 
+ ;; CHECK:      (func $call-various-params-tee
+ ;; CHECK-NEXT:  (call $various-params-tee
+ ;; CHECK-NEXT:   (ref.null ${i32})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $call-various-params-tee
+  ;; The argument gets {i32}, which allows us to refine.
+  (call $various-params-tee
+   (ref.null ${i32})
+  )
+ )
+ ;; CHECK:      (func $various-params-tee (param $x (ref null ${i32}))
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref null ${i32}))
+ ;; CHECK-NEXT:    (local.tee $x
+ ;; CHECK-NEXT:     (ref.null ${i32_i64})
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $various-params-tee (param $x (ref null ${}))
+  ;; "Use" the locals to avoid other optimizations kicking in.
+  (drop (local.get $x))
+  ;; Write to $x in a way that allows us to make the type more specific. We
+  ;; must also update the type of the tee (if we do not, a validation error
+  ;; would occur), and that will also cause the block's type to update as well.
+  (drop
+   (block (result (ref null ${}))
+    (local.tee $x (ref.null ${i32_i64}))
+   )
+  )
+ )
+
  ;; CHECK:      (func $call-various-params-null
  ;; CHECK-NEXT:  (call $various-params-null
  ;; CHECK-NEXT:   (ref.as_non_null

@@ -588,7 +588,8 @@ private:
     // In terms of parameters, we can do this. However, we must also check
     // local operations in the body, as if the parameter is reused and written
     // to, then those types must be taken into account as well.
-    for (auto* set : FindAll<LocalSet>(func->body).list) {
+    FindAll<LocalSet> sets(func->body);
+    for (auto* set : sets.list) {
       auto index = set->index;
       if (func->isParam(index) &&
           !Type::isSubType(set->value->type, newParamTypes[index])) {
@@ -602,7 +603,7 @@ private:
       return;
     }
 
-    // We can do this! Update the types, including the types of gets.
+    // We can do this! Update the types, including the types of gets and tees.
     func->setParams(newParams);
     for (auto* get : FindAll<LocalGet>(func->body).list) {
       auto index = get->index;
@@ -610,6 +611,16 @@ private:
         get->type = func->getLocalType(index);
       }
     }
+    for (auto* set : sets.list) {
+      auto index = set->index;
+      if (func->isParam(index) && set->isTee()) {
+        set->type = func->getLocalType(index);
+        set->finalize();
+      }
+    }
+
+    // Propagate the new get and set types outwards.
+    ReFinalize().walkFunctionInModule(func, module);
   }
 
   // See if the types returned from a function allow us to define a more refined

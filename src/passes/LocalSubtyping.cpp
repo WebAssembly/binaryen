@@ -134,8 +134,9 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           // NB: These tee updates will not be needed if the type of tees
           //     becomes that of their value, in the spec.
           for (auto* set : setsForLocal[i]) {
-            if (set->isTee() && set->type != Type::unreachable) {
+            if (set->isTee()) {
               set->type = newType;
+              set->finalize();
             }
           }
         }
