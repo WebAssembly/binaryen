@@ -335,8 +335,7 @@ struct DAE : public Pass {
       //
       // TODO: Try to optimize in a more holistic manner, see the TODO in
       //       refineReturnTypes() about missing a global optimum.
-      if (!tailCallees.count(name) &&
-          !infoMap[name].hasTailCalls &&
+      if (!tailCallees.count(name) && !infoMap[name].hasTailCalls &&
           refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
       }
