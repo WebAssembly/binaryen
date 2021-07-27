@@ -996,13 +996,13 @@ public:
         return left.pmaxF64x2(right);
 
       case NarrowSVecI16x8ToVecI8x16:
-        return left.narrowSToVecI8x16(right);
+        return left.narrowSToI8x16(right);
       case NarrowUVecI16x8ToVecI8x16:
-        return left.narrowUToVecI8x16(right);
+        return left.narrowUToI8x16(right);
       case NarrowSVecI32x4ToVecI16x8:
-        return left.narrowSToVecI16x8(right);
+        return left.narrowSToI16x8(right);
       case NarrowUVecI32x4ToVecI16x8:
-        return left.narrowUToVecI16x8(right);
+        return left.narrowUToI16x8(right);
 
       case SwizzleVec8x16:
         return left.swizzle8x16(right);
