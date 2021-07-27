@@ -602,6 +602,7 @@
  ;; CHECK-NEXT: )
  (func $tail-call-caller
   (drop
+   ;; Call the tail-calling function so that we try to optimize its return type.
    (call $tail-caller)
   )
  )
