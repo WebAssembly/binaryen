@@ -4,6 +4,9 @@
 (module
  ;; CHECK:      (type ${i32} (struct (field i32)))
 
+ ;; CHECK:      (type $return_funcref (func (result funcref)))
+ (type $return_funcref (func (result funcref)))
+
  ;; CHECK:      (type ${} (struct ))
  (type ${} (struct))
  (type ${i32} (struct (field i32)))
@@ -15,6 +18,8 @@
  (type ${f64} (struct (field f64)))
  (type ${i32_i64} (struct (field i32) (field i64)))
  (type ${i32_f32} (struct (field i32) (field f32)))
+
+ (table 1 1 funcref)
 
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (call $bar)
@@ -598,6 +603,44 @@
  (func $tail-call-caller
   (drop
    (call $tail-caller)
+  )
+ )
+
+ ;; As above, but with an indirect tail call.
+ ;; CHECK:      (func $tail-callee-indirect (result funcref)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $tail-callee-indirect (result funcref)
+  (unreachable)
+ )
+ ;; CHECK:      (func $tail-caller-indirect (result funcref)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.func $tail-callee-indirect)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return_call_indirect $0 (type $return_funcref)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-caller-indirect (result funcref)
+  (if
+   (i32.const 0)
+   (return
+    (ref.func $tail-callee-indirect)
+   )
+  )
+  (return_call_indirect (type $return_funcref) (i32.const 0))
+ )
+ ;; CHECK:      (func $tail-call-caller-indirect
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $tail-caller-indirect)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-call-caller-indirect
+  (drop
+   (call $tail-caller-indirect)
   )
  )
 )
