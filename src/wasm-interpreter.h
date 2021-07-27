@@ -546,29 +546,29 @@ public:
       case ConvertUVecI32x4ToVecF32x4:
         return value.convertUToF32x4();
       case ExtendLowSVecI8x16ToVecI16x8:
-        return value.extendLowSToVecI16x8();
+        return value.extendLowSToI16x8();
       case ExtendHighSVecI8x16ToVecI16x8:
-        return value.extendHighSToVecI16x8();
+        return value.extendHighSToI16x8();
       case ExtendLowUVecI8x16ToVecI16x8:
-        return value.extendLowUToVecI16x8();
+        return value.extendLowUToI16x8();
       case ExtendHighUVecI8x16ToVecI16x8:
-        return value.extendHighUToVecI16x8();
+        return value.extendHighUToI16x8();
       case ExtendLowSVecI16x8ToVecI32x4:
-        return value.extendLowSToVecI32x4();
+        return value.extendLowSToI32x4();
       case ExtendHighSVecI16x8ToVecI32x4:
-        return value.extendHighSToVecI32x4();
+        return value.extendHighSToI32x4();
       case ExtendLowUVecI16x8ToVecI32x4:
-        return value.extendLowUToVecI32x4();
+        return value.extendLowUToI32x4();
       case ExtendHighUVecI16x8ToVecI32x4:
-        return value.extendHighUToVecI32x4();
+        return value.extendHighUToI32x4();
       case ExtendLowSVecI32x4ToVecI64x2:
-        return value.extendLowSToVecI64x2();
+        return value.extendLowSToI64x2();
       case ExtendHighSVecI32x4ToVecI64x2:
-        return value.extendHighSToVecI64x2();
+        return value.extendHighSToI64x2();
       case ExtendLowUVecI32x4ToVecI64x2:
-        return value.extendLowUToVecI64x2();
+        return value.extendLowUToI64x2();
       case ExtendHighUVecI32x4ToVecI64x2:
-        return value.extendHighUToVecI64x2();
+        return value.extendHighUToI64x2();
       case ConvertLowSVecI32x4ToVecF64x2:
       case ConvertLowUVecI32x4ToVecF64x2:
       case TruncSatZeroSVecF64x2ToVecI32x4:
@@ -996,16 +996,16 @@ public:
         return left.pmaxF64x2(right);
 
       case NarrowSVecI16x8ToVecI8x16:
-        return left.narrowSToVecI8x16(right);
+        return left.narrowSToI8x16(right);
       case NarrowUVecI16x8ToVecI8x16:
-        return left.narrowUToVecI8x16(right);
+        return left.narrowUToI8x16(right);
       case NarrowSVecI32x4ToVecI16x8:
-        return left.narrowSToVecI16x8(right);
+        return left.narrowSToI16x8(right);
       case NarrowUVecI32x4ToVecI16x8:
-        return left.narrowUToVecI16x8(right);
+        return left.narrowUToI16x8(right);
 
       case SwizzleVec8x16:
-        return left.swizzleVec8x16(right);
+        return left.swizzleI8x16(right);
 
       case InvalidBinary:
         WASM_UNREACHABLE("invalid binary op");

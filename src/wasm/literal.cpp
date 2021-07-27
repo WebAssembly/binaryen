@@ -2362,16 +2362,16 @@ Literal narrow(const Literal& low, const Literal& high) {
   return Literal(result);
 }
 
-Literal Literal::narrowSToVecI8x16(const Literal& other) const {
+Literal Literal::narrowSToI8x16(const Literal& other) const {
   return narrow<16, int8_t, &Literal::getLanesSI16x8>(*this, other);
 }
-Literal Literal::narrowUToVecI8x16(const Literal& other) const {
+Literal Literal::narrowUToI8x16(const Literal& other) const {
   return narrow<16, uint8_t, &Literal::getLanesSI16x8>(*this, other);
 }
-Literal Literal::narrowSToVecI16x8(const Literal& other) const {
+Literal Literal::narrowSToI16x8(const Literal& other) const {
   return narrow<8, int16_t, &Literal::getLanesI32x4>(*this, other);
 }
-Literal Literal::narrowUToVecI16x8(const Literal& other) const {
+Literal Literal::narrowUToI16x8(const Literal& other) const {
   return narrow<8, uint16_t, &Literal::getLanesI32x4>(*this, other);
 }
 
@@ -2388,40 +2388,40 @@ Literal extend(const Literal& vec) {
   return Literal(result);
 }
 
-Literal Literal::extendLowSToVecI16x8() const {
+Literal Literal::extendLowSToI16x8() const {
   return extend<8, int8_t, int16_t, LaneOrder::Low>(*this);
 }
-Literal Literal::extendHighSToVecI16x8() const {
+Literal Literal::extendHighSToI16x8() const {
   return extend<8, int8_t, int16_t, LaneOrder::High>(*this);
 }
-Literal Literal::extendLowUToVecI16x8() const {
+Literal Literal::extendLowUToI16x8() const {
   return extend<8, uint8_t, uint16_t, LaneOrder::Low>(*this);
 }
-Literal Literal::extendHighUToVecI16x8() const {
+Literal Literal::extendHighUToI16x8() const {
   return extend<8, uint8_t, uint16_t, LaneOrder::High>(*this);
 }
-Literal Literal::extendLowSToVecI32x4() const {
+Literal Literal::extendLowSToI32x4() const {
   return extend<4, int16_t, int32_t, LaneOrder::Low>(*this);
 }
-Literal Literal::extendHighSToVecI32x4() const {
+Literal Literal::extendHighSToI32x4() const {
   return extend<4, int16_t, int32_t, LaneOrder::High>(*this);
 }
-Literal Literal::extendLowUToVecI32x4() const {
+Literal Literal::extendLowUToI32x4() const {
   return extend<4, uint16_t, uint32_t, LaneOrder::Low>(*this);
 }
-Literal Literal::extendHighUToVecI32x4() const {
+Literal Literal::extendHighUToI32x4() const {
   return extend<4, uint16_t, uint32_t, LaneOrder::High>(*this);
 }
-Literal Literal::extendLowSToVecI64x2() const {
+Literal Literal::extendLowSToI64x2() const {
   return extend<2, int32_t, int64_t, LaneOrder::Low>(*this);
 }
-Literal Literal::extendHighSToVecI64x2() const {
+Literal Literal::extendHighSToI64x2() const {
   return extend<2, int32_t, int64_t, LaneOrder::High>(*this);
 }
-Literal Literal::extendLowUToVecI64x2() const {
+Literal Literal::extendLowUToI64x2() const {
   return extend<2, uint32_t, uint64_t, LaneOrder::Low>(*this);
 }
-Literal Literal::extendHighUToVecI64x2() const {
+Literal Literal::extendHighUToI64x2() const {
   return extend<2, uint32_t, uint64_t, LaneOrder::High>(*this);
 }
 
@@ -2475,7 +2475,7 @@ Literal Literal::extMulHighUI64x2(const Literal& other) const {
   return extMul<2, uint32_t, uint64_t, LaneOrder::High>(*this, other);
 }
 
-Literal Literal::swizzleVec8x16(const Literal& other) const {
+Literal Literal::swizzleI8x16(const Literal& other) const {
   auto lanes = getLanesUI8x16();
   auto indices = other.getLanesUI8x16();
   LaneArray<16> result;

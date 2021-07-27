@@ -620,23 +620,23 @@ public:
   Literal truncSatToUI32x4() const;
   Literal convertSToF32x4() const;
   Literal convertUToF32x4() const;
-  Literal narrowSToVecI8x16(const Literal& other) const;
-  Literal narrowUToVecI8x16(const Literal& other) const;
-  Literal narrowSToVecI16x8(const Literal& other) const;
-  Literal narrowUToVecI16x8(const Literal& other) const;
-  Literal extendLowSToVecI16x8() const;
-  Literal extendHighSToVecI16x8() const;
-  Literal extendLowUToVecI16x8() const;
-  Literal extendHighUToVecI16x8() const;
-  Literal extendLowSToVecI32x4() const;
-  Literal extendHighSToVecI32x4() const;
-  Literal extendLowUToVecI32x4() const;
-  Literal extendHighUToVecI32x4() const;
-  Literal extendLowSToVecI64x2() const;
-  Literal extendHighSToVecI64x2() const;
-  Literal extendLowUToVecI64x2() const;
-  Literal extendHighUToVecI64x2() const;
-  Literal swizzleVec8x16(const Literal& other) const;
+  Literal narrowSToI8x16(const Literal& other) const;
+  Literal narrowUToI8x16(const Literal& other) const;
+  Literal narrowSToI16x8(const Literal& other) const;
+  Literal narrowUToI16x8(const Literal& other) const;
+  Literal extendLowSToI16x8() const;
+  Literal extendHighSToI16x8() const;
+  Literal extendLowUToI16x8() const;
+  Literal extendHighUToI16x8() const;
+  Literal extendLowSToI32x4() const;
+  Literal extendHighSToI32x4() const;
+  Literal extendLowUToI32x4() const;
+  Literal extendHighUToI32x4() const;
+  Literal extendLowSToI64x2() const;
+  Literal extendHighSToI64x2() const;
+  Literal extendLowUToI64x2() const;
+  Literal extendHighUToI64x2() const;
+  Literal swizzleI8x16(const Literal& other) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
   // with this object's RTT can be successfuly cast using the other RTT
