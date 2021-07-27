@@ -665,12 +665,6 @@ private:
     }
     assert(refinedType != originalType);
 
-    // The body is unreachable, and there are no returns, so this function
-    // never exits, and there is nothing to optimize.
-    if (refinedType == Type::unreachable) {
-      return false;
-    }
-
     // If the refined type is unreachable then nothing actually returns from
     // this function.
     // TODO: We can propagate that to the outside, and not just for GC.
