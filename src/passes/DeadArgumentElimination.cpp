@@ -663,6 +663,26 @@ private:
     }
     assert(refinedType != originalType);
 
+    // The body is unreachable, and there are no returns, so this function
+    // never exits, and there is nothing to optimize.
+    if (refinedType == Type::unreachable) {
+      return false;
+    }
+
+    // The returns allow us to refine the type. However, if there are tail calls
+    // in this function, they limit our ability to change the return type (as it
+    // must exactly match the type returned from the tail calls).
+    for (auto* call : FindAll<Call>(func->body).list) {
+      if (call->isReturn) {
+        return false;
+      }
+    }
+    for (auto* call : FindAll<CallIndirect>(func->body).list) {
+      if (call->isReturn) {
+        return false;
+      }
+    }
+
     // If the refined type is unreachable then nothing actually returns from
     // this function.
     // TODO: We can propagate that to the outside, and not just for GC.

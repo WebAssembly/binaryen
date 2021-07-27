@@ -558,4 +558,46 @@
  (func $return-ref-func (result funcref)
   (ref.func $do-return-call)
  )
+
+ ;; If a function has a return_call*, then we cannot optimize as the type
+ ;; returned there must be exactly the same as that of the called function.
+ ;; CHECK:      (func $tail-callee (result funcref)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $tail-callee (result funcref)
+  (unreachable)
+ )
+ ;; CHECK:      (func $tail-caller (result funcref)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.func $tail-callee)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return_call $tail-callee)
+ ;; CHECK-NEXT: )
+ (func $tail-caller (result funcref)
+  (if
+   (i32.const 0)
+   ;; This return appears to allow a refined return type for this function.
+   (return
+    (ref.func $tail-callee)
+   )
+  )
+  ;; But the presence of a return call prevents optimization. Note that we must
+  ;; call a different function than this one to see the actual problem, as if
+  ;; we just call ourselves, the return type would still match after we update
+  ;; it.
+  (return_call $tail-callee)
+ )
+ ;; CHECK:      (func $tail-call-caller
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $tail-caller)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-call-caller
+  (drop
+   (call $tail-caller)
+  )
+ )
 )
