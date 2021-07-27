@@ -330,11 +330,14 @@ struct DAE : public Pass {
       // Refine return types as well, if we can. We cannot do so if this
       // function is tail-called, because then the return type must match that
       // of the function doing a tail call of it - we cannot change just one of
-      // them.
+      // them. Likewise, if this function has a tail call, we cannot alter its
+      // return type because it must still match that of what we tail call.
       //
       // TODO: Try to optimize in a more holistic manner, see the TODO in
       //       refineReturnTypes() about missing a global optimum.
-      if (!tailCallees.count(name) && refineReturnTypes(func, calls, module)) {
+      if (!tailCallees.count(name) &&
+          !infoMap[name].hasTailCalls &&
+          refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
       }
       // Check if all calls pass the same constant for a particular argument.
@@ -667,20 +670,6 @@ private:
     // never exits, and there is nothing to optimize.
     if (refinedType == Type::unreachable) {
       return false;
-    }
-
-    // The returns allow us to refine the type. However, if there are tail calls
-    // in this function, they limit our ability to change the return type (as it
-    // must exactly match the type returned from the tail calls).
-    for (auto* call : FindAll<Call>(func->body).list) {
-      if (call->isReturn) {
-        return false;
-      }
-    }
-    for (auto* call : FindAll<CallIndirect>(func->body).list) {
-      if (call->isReturn) {
-        return false;
-      }
     }
 
     // If the refined type is unreachable then nothing actually returns from
