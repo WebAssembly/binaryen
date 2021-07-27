@@ -2159,7 +2159,7 @@ Expression* SExpressionWasmBuilder::makePop(Element& s) {
   auto ret = allocator.alloc<Pop>();
   std::vector<Type> types;
   for (size_t i = 1; i < s.size(); ++i) {
-    types.push_back(stringToType(s[i]->str()));
+    types.push_back(elementToType(*s[i]));
   }
   ret->type = Type(types);
   ret->finalize();

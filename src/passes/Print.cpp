@@ -1860,8 +1860,8 @@ struct PrintExpressionContents
   void visitPop(Pop* curr) {
     prepareColor(o) << "pop";
     for (auto type : curr->type) {
-      assert(type.isBasic() && "TODO: print and parse compound types");
-      o << " " << type;
+      o << ' ';
+      printType(o, type, wasm);
     }
     restoreNormalColor(o);
   }
