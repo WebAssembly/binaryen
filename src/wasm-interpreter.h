@@ -1005,7 +1005,7 @@ public:
         return left.narrowUToI16x8(right);
 
       case SwizzleVec8x16:
-        return left.swizzle8x16(right);
+        return left.swizzleI8x16(right);
 
       case InvalidBinary:
         WASM_UNREACHABLE("invalid binary op");

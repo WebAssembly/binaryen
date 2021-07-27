@@ -2475,7 +2475,7 @@ Literal Literal::extMulHighUI64x2(const Literal& other) const {
   return extMul<2, uint32_t, uint64_t, LaneOrder::High>(*this, other);
 }
 
-Literal Literal::swizzle8x16(const Literal& other) const {
+Literal Literal::swizzleI8x16(const Literal& other) const {
   auto lanes = getLanesUI8x16();
   auto indices = other.getLanesUI8x16();
   LaneArray<16> result;

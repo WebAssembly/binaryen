@@ -636,7 +636,7 @@ public:
   Literal extendHighSToI64x2() const;
   Literal extendLowUToI64x2() const;
   Literal extendHighUToI64x2() const;
-  Literal swizzle8x16(const Literal& other) const;
+  Literal swizzleI8x16(const Literal& other) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
   // with this object's RTT can be successfuly cast using the other RTT
