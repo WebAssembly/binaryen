@@ -209,6 +209,10 @@ function asmFunc(env) {
   abort();
  }
  
+ function is_power_of_2($0) {
+  $0 = $0 | 0;
+  return !(!$0 | ($0 | 0 & ($0 - 1 | 0)) | 0) | 0;
+ }
  // EMSCRIPTEN_END_FUNCS
 ;
  bufferView = HEAPU8;
@@ -221,13 +225,14 @@ function asmFunc(env) {
  }
  
  return {
-  "main": main, 
-  "other": other, 
-  "__growWasmMemory": __growWasmMemory, 
-  "exported": exported, 
-  "sub_zero": sub_zero, 
-  "select": select, 
-  "bools": bools
+  "main": main,
+  "other": other,
+  "__growWasmMemory": __growWasmMemory,
+  "exported": exported,
+  "sub_zero": sub_zero,
+  "select": select,
+  "bools": bools,
+  "is_power_of_2": is_power_of_2
  };
 }
 
