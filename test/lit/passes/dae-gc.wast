@@ -627,7 +627,7 @@
  ;; CHECK-NEXT:  (return_call $tail-callee)
  ;; CHECK-NEXT: )
  (func $tail-caller-no (result anyref)
-  ;; This function's return type cannot be defined because of another return
+  ;; This function's return type cannot be refined because of another return
   ;; whose type prevents it.
   (if (i32.const 1)
    (return (ref.null any))
