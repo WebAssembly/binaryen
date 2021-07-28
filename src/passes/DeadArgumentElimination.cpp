@@ -327,14 +327,8 @@ struct DAE : public Pass {
       // affect whether an argument is used or not, it just refines the type
       // where possible.
       refineArgumentTypes(func, calls, module);
-      // Refine return types as well, if we can. We cannot do so if this
-      // function is tail-called, because then the return type must match that
-      // of the function doing a tail call of it - we cannot change just one of
-      // them.
-      //
-      // TODO: Try to optimize in a more holistic manner, see the TODO in
-      //       refineReturnTypes() about missing a global optimum.
-      if (!tailCallees.count(name) && refineReturnTypes(func, calls, module)) {
+      // Refine return types as well.
+      if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
       }
       // Check if all calls pass the same constant for a particular argument.
