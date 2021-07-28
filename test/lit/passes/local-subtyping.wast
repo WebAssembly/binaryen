@@ -223,4 +223,30 @@
       )
     )
   )
+
+  ;; CHECK:      (func $uses-default (param $i i32)
+  ;; CHECK-NEXT:  (local $x (ref null $i32_=>_none))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $i)
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (ref.func $uses-default)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses-default (param $i i32)
+    (local $x anyref)
+    (if
+      (local.get $i)
+      ;; The only set to this local uses a more specific type than anyref.
+      (local.set $x (ref.func $uses-default))
+    )
+    (drop
+      ;; This get may use the default value, but it is ok to have a null of a
+      ;; more refined type in the local.
+      (local.get $x)
+    )
+  )
 )

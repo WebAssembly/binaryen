@@ -144,7 +144,9 @@ struct ExecutionResults {
   }
 
   bool areEqual(Literal a, Literal b) {
-    if (a.type != b.type) {
+    // We allow nulls to have different types (as they compare equal regardless)
+    // but anything else must have an identical type.
+    if (a.type != b.type && !(a.isNull() && b.isNull())) {
       std::cout << "types not identical! " << a << " != " << b << '\n';
       return false;
     }

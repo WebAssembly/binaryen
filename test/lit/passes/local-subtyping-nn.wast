@@ -20,6 +20,9 @@
   ;; CHECK-NEXT:  (local.set $y
   ;; CHECK-NEXT:   (ref.func $i32)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $non-nullable
     (local $x (ref null $struct))
@@ -28,10 +31,44 @@
     (local.set $x
       (ref.as_non_null (ref.null $struct))
     )
-    ;; x is assigned a value that is non-nullable, and also allows a more
+    ;; y is assigned a value that is non-nullable, and also allows a more
     ;; specific heap type.
     (local.set $y
       (ref.func $i32)
+    )
+    ;; Verify that the presence of a get does not alter things.
+    (drop
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $uses-default (param $i i32)
+  ;; CHECK-NEXT:  (local $x (ref null $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $i)
+  ;; CHECK-NEXT:   (local.set $x
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses-default (param $i i32)
+    (local $x (ref null any))
+    (if
+      (local.get $i)
+      ;; The only set to this local uses a non-nullable type.
+      (local.set $x
+        (ref.as_non_null (ref.null $struct))
+      )
+    )
+    (drop
+      ;; This get may use the null value, so we can refine the heap type but not
+      ;; alter nullability.
+      (local.get $x)
     )
   )
 )
