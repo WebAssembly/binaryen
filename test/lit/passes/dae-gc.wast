@@ -588,7 +588,7 @@
  (func $do-return-call (result funcref)
   (return_call $return-ref-func)
  )
- ;; CHECK:      (func $return-ref-func (result funcref)
+ ;; CHECK:      (func $return-ref-func (result (ref $none_=>_funcref))
  ;; CHECK-NEXT:  (ref.func $do-return-call)
  ;; CHECK-NEXT: )
  (func $return-ref-func (result funcref)
