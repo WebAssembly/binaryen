@@ -210,6 +210,20 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   void visitBinary(Binary* curr) {
     Name name;
     switch (curr->op) {
+      case EqInt32:
+      case EqInt64:
+        // Rewrite popcnt(x) == 1   ==>   !!x & !(x & (x - 1))
+        if (auto* rhs = curr->right->dynCast<Const>()) {
+          if (auto* lhs = curr->left->dynCast<Unary>()) {
+            if ((lhs->op == PopcntInt32 || lhs->op == PopcntInt64) &&
+                rhs->value.getInteger() == 1LL) {
+              rewritePopcntEqualOne(curr);
+              return;
+            }
+          }
+        }
+        break;
+
       case CopySignFloat32:
       case CopySignFloat64:
         rewriteCopysign(curr);
@@ -288,6 +302,44 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         builder->makeBinary(bitAnd,
                             builder->makeUnary(float2int, curr->right),
                             builder->makeConst(signBit)))));
+  }
+
+  void rewritePopcntEqualOne(Binary* curr) {
+    // popcnt(x) == 1   ==>   !!x & !(x & (x - 1))
+    Unary* lhs = curr->right->cast<Unary>();
+    Expression* x = lhs->value;
+    BinaryOp andOp, subOp;
+    UnaryOp eqzOp;
+    Literal litOne;
+
+    switch (lhs->op) {
+      case PopcntInt32:
+        eqzOp = EqZInt32;
+        andOp = AndInt32;
+        subOp = SubInt32;
+        litOne = Literal::makeOne(Type::i32);
+        break;
+
+      case PopcntInt64:
+        eqzOp = EqZInt64;
+        andOp = AndInt64;
+        subOp = SubInt64;
+        litOne = Literal::makeOne(Type::i64);
+        break;
+
+      default:
+        return;
+    }
+
+    replaceCurrent(builder->makeBinary(
+      andOp,
+      builder->makeUnary(eqzOp, builder->makeUnary(eqzOp, x)),
+      builder->makeUnary(
+        eqzOp,
+        builder->makeBinary(
+          andOp,
+          x,
+          builder->makeBinary(subOp, x, builder->makeConst(litOne))))));
   }
 
   void visitUnary(Unary* curr) {
