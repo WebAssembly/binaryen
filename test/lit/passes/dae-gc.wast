@@ -603,29 +603,53 @@
  )
 
  ;; Show that we can optimize the return type of a function that does a tail
- ;; call. The first function here is the one that is called; the second is the
- ;; one whose return type we can refine; the third calls the second to get us
- ;; to optimize the second.
+ ;; call.
  ;; CHECK:      (func $tail-callee (result (ref ${}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tail-callee (result (ref ${}))
   (unreachable)
  )
- ;; CHECK:      (func $tail-caller (result (ref ${}))
+ ;; CHECK:      (func $tail-caller-yes (result (ref ${}))
  ;; CHECK-NEXT:  (return_call $tail-callee)
  ;; CHECK-NEXT: )
- (func $tail-caller (result anyref)
+ (func $tail-caller-yes (result anyref)
+  ;; This function's return type can be refined because of this call, whose
+  ;; target's return type is more specific than anyref.
+  (return_call $tail-callee)
+ )
+ ;; CHECK:      (func $tail-caller-no (result anyref)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return_call $tail-callee)
+ ;; CHECK-NEXT: )
+ (func $tail-caller-no (result anyref)
+  ;; This function's return type cannot be defined because of another return
+  ;; whose type prevents it.
+  (if (i32.const 1)
+   (return (ref.null any))
+  )
   (return_call $tail-callee)
  )
  ;; CHECK:      (func $tail-call-caller
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call $tail-caller)
+ ;; CHECK-NEXT:   (call $tail-caller-yes)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $tail-caller-no)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $tail-call-caller
+  ;; Call the functions to cause optimization to happen.
   (drop
-   (call $tail-caller)
+   (call $tail-caller-yes)
+  )
+  (drop
+   (call $tail-caller-no)
   )
  )
 
