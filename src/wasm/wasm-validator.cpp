@@ -460,9 +460,9 @@ private:
                     Type(Type::unreachable),
                     curr,
                     "return_call* should have unreachable type");
-      shouldBeEqual(
-        getFunction()->getResults(),
+      shouldBeSubType(
         sig.results,
+        getFunction()->getResults(),
         curr,
         "return_call* callee return type must match caller return type");
     } else {
@@ -798,9 +798,11 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   if (curr->target->type != Type::unreachable) {
     auto* table = getModule()->getTableOrNull(curr->table);
     shouldBeTrue(!!table, curr, "call-indirect table must exist");
-    shouldBeTrue(table->type.isFunction(),
-                 curr,
-                 "call-indirect table must be of function type.");
+    if (table) {
+      shouldBeTrue(table->type.isFunction(),
+                   curr,
+                   "call-indirect table must be of function type.");
+    }
   }
 
   validateCallParamsAndResult(curr, curr->sig);
