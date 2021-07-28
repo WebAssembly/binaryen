@@ -3,18 +3,25 @@
 
 (module
  ;; CHECK:      (type ${i32} (struct (field i32)))
+ (type ${i32} (struct (field i32)))
 
  ;; CHECK:      (type ${} (struct ))
  (type ${} (struct))
- (type ${i32} (struct (field i32)))
+
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
+ (type ${i32_i64} (struct (field i32) (field i64)))
+
+ ;; CHECK:      (type $return_{} (func (result (ref ${}))))
 
  ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
+ (type ${i32_f32} (struct (field i32) (field f32)))
+
+ (type $return_{} (func (result (ref ${}))))
 
  ;; CHECK:      (type ${f64} (struct (field f64)))
  (type ${f64} (struct (field f64)))
- (type ${i32_i64} (struct (field i32) (field i64)))
- (type ${i32_f32} (struct (field i32) (field f32)))
+
+ (table 1 1 funcref)
 
  ;; CHECK:      (func $foo
  ;; CHECK-NEXT:  (call $bar)
@@ -593,5 +600,58 @@
  ;; CHECK-NEXT: )
  (func $return-ref-func (result funcref)
   (ref.func $do-return-call)
+ )
+
+ ;; Show that we can optimize the return type of a function that does a tail
+ ;; call. The first function here is the one that is called; the second is the
+ ;; one whose return type we can refine; the third calls the second to get us
+ ;; to optimize the second.
+ ;; CHECK:      (func $tail-callee (result (ref ${}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $tail-callee (result (ref ${}))
+  (unreachable)
+ )
+ ;; CHECK:      (func $tail-caller (result (ref ${}))
+ ;; CHECK-NEXT:  (return_call $tail-callee)
+ ;; CHECK-NEXT: )
+ (func $tail-caller (result anyref)
+  (return_call $tail-callee)
+ )
+ ;; CHECK:      (func $tail-call-caller
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $tail-caller)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-call-caller
+  (drop
+   (call $tail-caller)
+  )
+ )
+
+ ;; As above, but with an indirect tail call.
+ ;; CHECK:      (func $tail-callee-indirect (result (ref ${}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $tail-callee-indirect (result (ref ${}))
+  (unreachable)
+ )
+ ;; CHECK:      (func $tail-caller-indirect (result (ref ${}))
+ ;; CHECK-NEXT:  (return_call_indirect $0 (type $return_{})
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-caller-indirect (result anyref)
+  (return_call_indirect (type $return_{}) (i32.const 0))
+ )
+ ;; CHECK:      (func $tail-call-caller-indirect
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $tail-caller-indirect)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-call-caller-indirect
+  (drop
+   (call $tail-caller-indirect)
+  )
  )
 )
