@@ -213,8 +213,8 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       case EqInt32:
       case EqInt64:
         // Rewrite popcnt(x) == 1   ==>   !!x & !(x & (x - 1))
-        if (auto* rhs = curr->right->dynCast<Const>()) {
-          if (auto* lhs = curr->left->dynCast<Unary>()) {
+        if (auto* lhs = curr->left->dynCast<Unary>()) {
+          if (auto* rhs = curr->right->dynCast<Const>()) {
             if ((lhs->op == PopcntInt32 || lhs->op == PopcntInt64) &&
                 rhs->value.getInteger() == 1LL) {
               rewritePopcntEqualOne(curr);
@@ -222,7 +222,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
             }
           }
         }
-        break;
+        return;
 
       case CopySignFloat32:
       case CopySignFloat64:
