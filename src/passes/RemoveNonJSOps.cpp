@@ -306,7 +306,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
   void rewritePopcntEqualOne(Binary* curr) {
     // popcnt(x) == 1   ==>   !!x & !(x & (x - 1))
-    Unary* lhs = curr->right->cast<Unary>();
+    Unary* lhs = curr->left->cast<Unary>();
     Expression* x = lhs->value;
     BinaryOp andOp, subOp;
     UnaryOp eqzOp;
