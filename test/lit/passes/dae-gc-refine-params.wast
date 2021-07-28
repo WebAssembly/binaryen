@@ -11,12 +11,11 @@
  ;; CHECK:      (type ${i32_i64} (struct (field i32) (field i64)))
  (type ${i32_i64} (struct (field i32) (field i64)))
 
+ ;; CHECK:      (type ${f64} (struct (field f64)))
+ (type ${f64} (struct (field f64)))
 
  ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
  (type ${i32_f32} (struct (field i32) (field f32)))
-
- ;; CHECK:      (type ${f64} (struct (field f64)))
- (type ${f64} (struct (field f64)))
 
  ;; CHECK:      (func $call-various-params-no
  ;; CHECK-NEXT:  (call $various-params-no
