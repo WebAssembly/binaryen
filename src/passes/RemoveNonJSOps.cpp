@@ -212,7 +212,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     switch (curr->op) {
       case EqInt32:
       case EqInt64:
-        // Rewrite popcnt(x) == 1   ==>   !!x & !(x & (x - 1))
+        // Rewrite popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
         if (auto* lhs = curr->left->dynCast<Unary>()) {
           if (auto* rhs = curr->right->dynCast<Const>()) {
             if ((lhs->op == PopcntInt32 || lhs->op == PopcntInt64) &&
@@ -305,16 +305,17 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   }
 
   void rewritePopcntEqualOne(Binary* curr) {
-    // popcnt(x) == 1   ==>   !!x & !(x & (x - 1))
+    // popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
     Unary* lhs = curr->left->cast<Unary>();
     Expression* x = lhs->value;
-    BinaryOp andOp, subOp;
+    BinaryOp orOp, andOp, subOp;
     UnaryOp eqzOp;
     Literal litOne;
 
     switch (lhs->op) {
       case PopcntInt32:
         eqzOp = EqZInt32;
+        orOp = OrInt32;
         andOp = AndInt32;
         subOp = SubInt32;
         litOne = Literal::makeOne(Type::i32);
@@ -322,6 +323,7 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
       case PopcntInt64:
         eqzOp = EqZInt64;
+        orOp = OrInt64;
         andOp = AndInt64;
         subOp = SubInt64;
         litOne = Literal::makeOne(Type::i64);
@@ -331,11 +333,11 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         return;
     }
 
-    replaceCurrent(builder->makeBinary(
-      andOp,
-      builder->makeUnary(eqzOp, builder->makeUnary(eqzOp, x)),
-      builder->makeUnary(
-        eqzOp,
+    replaceCurrent(builder->makeUnary(
+      eqzOp,
+      builder->makeBinary(
+        orOp,
+        builder->makeUnary(eqzOp, x),
         builder->makeBinary(
           andOp,
           x,
