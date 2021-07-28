@@ -2388,6 +2388,16 @@ Literal extend(const Literal& vec) {
   return Literal(result);
 }
 
+template<LaneOrder Side> Literal extendF32(const Literal& vec) {
+  LaneArray<4> lanes = vec.getLanesF32x4();
+  LaneArray<2> result;
+  for (size_t i = 0; i < 2; ++i) {
+    size_t idx = (Side == LaneOrder::Low) ? i : i + 2;
+    result[i] = Literal((double)lanes[idx].getf32());
+  }
+  return Literal(result);
+}
+
 Literal Literal::extendLowSToI16x8() const {
   return extend<8, int8_t, int16_t, LaneOrder::Low>(*this);
 }
@@ -2473,6 +2483,44 @@ Literal Literal::extMulLowUI64x2(const Literal& other) const {
 }
 Literal Literal::extMulHighUI64x2(const Literal& other) const {
   return extMul<2, uint32_t, uint64_t, LaneOrder::High>(*this, other);
+}
+
+Literal Literal::convertLowSToF64x2() const {
+  return extend<2, int32_t, double, LaneOrder::Low>(*this);
+}
+Literal Literal::convertLowUToF64x2() const {
+  return extend<2, uint32_t, double, LaneOrder::Low>(*this);
+}
+
+template<int Lanes,
+         LaneArray<Lanes / 2> (Literal::*IntoLanes)() const,
+         Literal (Literal::*UnaryOp)(void) const>
+static Literal unary_zero(const Literal& val) {
+  LaneArray<Lanes / 2> lanes = (val.*IntoLanes)();
+  LaneArray<Lanes> result;
+  for (size_t i = 0; i < Lanes / 2; ++i) {
+    result[i] = (lanes[i].*UnaryOp)();
+  }
+  for (size_t i = Lanes / 2; i < Lanes; ++i) {
+    result[i] = Literal::makeZero(lanes[0].type);
+  }
+  return Literal(result);
+}
+
+Literal Literal::truncSatZeroSToI32x4() const {
+  return unary_zero<4, &Literal::getLanesF64x2, &Literal::truncSatToSI32>(
+    *this);
+}
+Literal Literal::truncSatZeroUToI32x4() const {
+  return unary_zero<4, &Literal::getLanesF64x2, &Literal::truncSatToUI32>(
+    *this);
+}
+
+Literal Literal::demoteZeroToF32x4() const {
+  return unary_zero<4, &Literal::getLanesF64x2, &Literal::demote>(*this);
+}
+Literal Literal::promoteLowToF64x2() const {
+  return extendF32<LaneOrder::Low>(*this);
 }
 
 Literal Literal::swizzleI8x16(const Literal& other) const {

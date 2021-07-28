@@ -636,6 +636,12 @@ public:
   Literal extendHighSToI64x2() const;
   Literal extendLowUToI64x2() const;
   Literal extendHighUToI64x2() const;
+  Literal convertLowSToF64x2() const;
+  Literal convertLowUToF64x2() const;
+  Literal truncSatZeroSToI32x4() const;
+  Literal truncSatZeroUToI32x4() const;
+  Literal demoteZeroToF32x4() const;
+  Literal promoteLowToF64x2() const;
   Literal swizzleI8x16(const Literal& other) const;
 
   // Checks if an RTT value is a sub-rtt of another, that is, whether GC data
