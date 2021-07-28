@@ -12,11 +12,10 @@
  (type ${i32_i64} (struct (field i32) (field i64)))
 
  ;; CHECK:      (type $return_{} (func (result (ref ${}))))
+ (type $return_{} (func (result (ref ${}))))
 
  ;; CHECK:      (type ${i32_f32} (struct (field i32) (field f32)))
  (type ${i32_f32} (struct (field i32) (field f32)))
-
- (type $return_{} (func (result (ref ${}))))
 
  ;; CHECK:      (type ${f64} (struct (field f64)))
  (type ${f64} (struct (field f64)))
