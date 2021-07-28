@@ -672,7 +672,8 @@ private:
       }
     }
     for (auto* call : FindAll<Call>(func->body).list) {
-      if (call->isReturn && !processReturnType(module->getFunction(call->target)->getResults())) {
+      if (call->isReturn &&
+          !processReturnType(module->getFunction(call->target)->getResults())) {
         return false;
       }
     }
