@@ -660,9 +660,25 @@ private:
     }
 
     // Scan the body and look at the returns.
+    auto processReturnType = [&](Type type) {
+      refinedType = Type::getLeastUpperBound(refinedType, type);
+      // Return whether we still look ok to do the optimization. If this is
+      // false then we can stop here.
+      return refinedType != originalType;
+    };
     for (auto* ret : FindAll<Return>(func->body).list) {
-      refinedType = Type::getLeastUpperBound(refinedType, ret->value->type);
-      if (refinedType == originalType) {
+      if (!processReturnType(ret->value->type)) {
+        return false;
+      }
+    }
+    for (auto* call : FindAll<Call>(func->body).list) {
+      if (call->isReturn &&
+          !processReturnType(module->getFunction(call->target)->getResults())) {
+        return false;
+      }
+    }
+    for (auto* call : FindAll<CallIndirect>(func->body).list) {
+      if (call->isReturn && !processReturnType(call->sig.results)) {
         return false;
       }
     }
