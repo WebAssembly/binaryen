@@ -1,9 +1,5 @@
 (module
  (memory 1)
- (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
-   (f64.copysign (local.get $0) (local.get $1)))
- (func $copysign32 (param $0 f32) (param $1 f32) (result f32)
-   (f32.copysign (local.get $0) (local.get $1)))
 
  (func $rotl32 (param $0 i32) (param $1 i32) (result i32)
    (i32.rotl (local.get $0) (local.get $1)))
