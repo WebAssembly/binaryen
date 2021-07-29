@@ -1172,7 +1172,10 @@ struct OptimizeInstructions
     if (curr->type == Type::unreachable) {
       return;
     }
-    if (getPassOptions().ignoreImplicitTraps) {
+
+    auto passOptions = getPassOptions();
+
+    if (passOptions.ignoreImplicitTraps) {
       // A ref.cast traps when the RTTs do not line up, which can be of one of
       // two sorts of issues:
       //  1. The value being cast is not even a subtype of the cast type. In
@@ -1200,6 +1203,28 @@ struct OptimizeInstructions
         Builder builder(*getModule());
         replaceCurrent(
           builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
+        return;
+      }
+    }
+
+    auto features = getModule()->features;
+
+    // Repeated identical ref.cast operations are unnecessary, if using the
+    // exact same rtt - the result will be the same. Find the immediate child
+    // cast, if there is one, and see if it is identical.
+    auto* ref = curr->ref;
+    while (!ref->is<RefCast>()) {
+      auto* last = ref;
+      ref = Properties::getImmediateFallthrough(ref, passOptions, features);
+      if (ref == last) {
+        break;
+      }
+    }
+    if (auto* child = ref->dynCast<RefCast>()) {
+      // Check if the casts are identical.
+      if (ExpressionAnalyzer::equal(curr->rtt, child->rtt) &&
+          !EffectAnalyzer(passOptions, features, curr->rtt).hasSideEffects()) {
+        replaceCurrent(curr->ref);
         return;
       }
     }
@@ -1345,7 +1370,7 @@ private:
   bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
     // First, check for side effects. If there are any, then we can't even
     // assume things like local.get's of the same index being identical.
-    PassOptions passOptions = getPassOptions();
+    auto passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, getModule()->features, left)
           .hasSideEffects() ||
         EffectAnalyzer(passOptions, getModule()->features, right)
