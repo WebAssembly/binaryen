@@ -24,18 +24,9 @@
 namespace wasm {
 
 struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
-  std::unique_ptr<Builder> builder;
-
-  bool isFunctionParallel() override { return false; }
+  bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new PreJSRewriterPass; }
-
-  void doWalkFunction(Function* func) {
-    if (!builder) {
-      builder = make_unique<Builder>(*getModule());
-    }
-    super::doWalkFunction(func);
-  }
 
   void visitBinary(Binary* curr) {
     switch (curr->op) {
@@ -63,9 +54,17 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
   }
 
   void rewriteCopysign(Binary* curr) {
+    // copysign(x, y)  =>
+    //    (reinterpret(x) & ~SignMask) |
+    //    (reinterpret(y) &  SignMask)
+    //
+    // where SignMask <- 1 << 31, when i32
+    //       SignMask <- 1 << 63, when i64
+
     Literal signBit, otherBits;
     UnaryOp int2float, float2int;
     BinaryOp bitAnd, bitOr;
+
     switch (curr->op) {
       case CopySignFloat32:
         float2int = ReinterpretFloat32;
@@ -89,16 +88,17 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         return;
     }
 
-    replaceCurrent(builder->makeUnary(
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeUnary(
       int2float,
-      builder->makeBinary(
+      builder.makeBinary(
         bitOr,
-        builder->makeBinary(bitAnd,
-                            builder->makeUnary(float2int, curr->left),
-                            builder->makeConst(otherBits)),
-        builder->makeBinary(bitAnd,
-                            builder->makeUnary(float2int, curr->right),
-                            builder->makeConst(signBit)))));
+        builder.makeBinary(bitAnd,
+                           builder.makeUnary(float2int, curr->left),
+                           builder.makeConst(otherBits)),
+        builder.makeBinary(bitAnd,
+                           builder.makeUnary(float2int, curr->right),
+                           builder.makeConst(signBit)))));
   }
 
   void rewritePopcntEqualOne(Binary* curr) {
@@ -131,17 +131,19 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
 
     Type type = lhs->value->type;
     Localizer temp(lhs->value, getFunction(), getModule());
-    replaceCurrent(builder->makeUnary(
+    Builder builder(*getModule());
+
+    replaceCurrent(builder.makeUnary(
       eqzOp,
-      builder->makeBinary(
+      builder.makeBinary(
         orOp,
-        builder->makeUnary(eqzOp, builder->makeLocalGet(temp.index, type)),
-        builder->makeBinary(
+        builder.makeUnary(eqzOp, builder.makeLocalGet(temp.index, type)),
+        builder.makeBinary(
           andOp,
-          builder->makeLocalGet(temp.index, type),
-          builder->makeBinary(subOp,
-                              builder->makeLocalGet(temp.index, type),
-                              builder->makeConst(litOne))))));
+          builder.makeLocalGet(temp.index, type),
+          builder.makeBinary(subOp,
+                             builder.makeLocalGet(temp.index, type),
+                             builder.makeConst(litOne))))));
   }
 };
 
