@@ -63,7 +63,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
     if (!builder) {
       builder = make_unique<Builder>(*getModule());
     }
-    PostWalker<PreJSRewriterPass>::doWalkFunction(func);
+    WalkerPass<PostWalker<PreJSRewriterPass>>::doWalkFunction(func);
   }
 
   void visitBinary(Binary* curr) {
