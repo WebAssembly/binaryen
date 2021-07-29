@@ -980,6 +980,29 @@
       )
     )
   )
+  ;; CHECK:      (func $ref-cast-cubed (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-cubed (param $x eqref)
+    ;; Three and more also work.
+    (drop
+      (ref.cast
+        (ref.cast
+          (ref.cast
+            (local.get $x)
+            (rtt.canon $struct)
+          )
+          (rtt.canon $struct)
+        )
+        (rtt.canon $struct)
+      )
+    )
+  )
   ;; CHECK:      (func $ref-cast-squared-no-different (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast

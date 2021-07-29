@@ -1212,6 +1212,7 @@ struct OptimizeInstructions
     // Repeated identical ref.cast operations are unnecessary, if using the
     // exact same rtt - the result will be the same. Find the immediate child
     // cast, if there is one, and see if it is identical.
+    // TODO: Look even further through incompatible casts?
     auto* ref = curr->ref;
     while (!ref->is<RefCast>()) {
       auto* last = ref;
