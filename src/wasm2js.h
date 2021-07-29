@@ -343,7 +343,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     runner.add("legalize-js-interface");
     // Before lowering non-JS operations we can rewrite some instructions which
     // may simplify next passes
-    runner.add("pre-js-rewriter");
+    runner.add("pre-js-rewrite");
     // First up remove as many non-JS operations we can, including things like
     // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
     // This may inject intrinsics which use i64 so it needs to be run before the
