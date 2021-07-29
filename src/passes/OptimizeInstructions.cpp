@@ -1216,6 +1216,9 @@ struct OptimizeInstructions
     auto* ref = curr->ref;
     while (!ref->is<RefCast>()) {
       auto* last = ref;
+      // RefCast falls through the value, so instead of calling getFallthrough()
+      // to look through all fallthroughs, we must iterate manually. Keep going
+      // until we reach either the end of things falling-through, or a cast.
       ref = Properties::getImmediateFallthrough(ref, passOptions, features);
       if (ref == last) {
         break;
