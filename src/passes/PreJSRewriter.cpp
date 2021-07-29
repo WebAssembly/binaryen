@@ -63,8 +63,8 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         int2float = ReinterpretInt32;
         bitAnd = AndInt32;
         bitOr = OrInt32;
-        signBit = Literal(1U << 31);
-        otherBits = Literal(~(1U << 31));
+        signBit = Literal(uint32_t(1U << 31));
+        otherBits = Literal(~uint32_t(1U << 31));
         break;
 
       case CopySignFloat64:
@@ -72,8 +72,8 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         int2float = ReinterpretInt64;
         bitAnd = AndInt64;
         bitOr = OrInt64;
-        signBit = Literal(1ULL << 63);
-        otherBits = Literal(~(1ULL << 63));
+        signBit = Literal(uint64_t(1ULL << 63));
+        otherBits = Literal(~uint64_t(1ULL << 63));
         break;
 
       default:
