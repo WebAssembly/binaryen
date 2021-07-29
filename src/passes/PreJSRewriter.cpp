@@ -129,7 +129,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         return;
     }
 
-    Type type = lhs->type;
+    Type type = lhs->value->type;
     Localizer temp(lhs->value, getFunction(), getModule());
     replaceCurrent(builder->makeUnary(
       eqzOp,
