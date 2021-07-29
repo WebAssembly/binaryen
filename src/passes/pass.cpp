@@ -250,6 +250,9 @@ void PassRegistry::registerPasses() {
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
+  registerPass("pre-js-rewriter",
+               "early rewrites of the instruction combinations for js",
+               createPreJSRewriterPass);
   registerPass("precompute",
                "computes compile-time evaluatable expressions",
                createPrecomputePass);
@@ -257,9 +260,6 @@ void PassRegistry::registerPasses() {
                "computes compile-time evaluatable expressions and propagates "
                "them through locals",
                createPrecomputePropagatePass);
-  registerPass("pre-js-rewriter",
-               "early rewrites of the instruction combinations for js",
-               createPreJSRewriterPass);
   registerPass("print", "print in s-expression format", createPrinterPass);
   registerPass("print-minified",
                "print in minified s-expression format",

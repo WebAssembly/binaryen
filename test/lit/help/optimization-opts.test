@@ -361,15 +361,15 @@
 ;; CHECK-NEXT:   --post-emscripten                             miscellaneous optimizations for
 ;; CHECK-NEXT:                                                 Emscripten-generated code
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --pre-js-rewriter                             early rewrites of the 
+;; CHECK-NEXT:                                                 instruction combinations for js
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --precompute                                  computes compile-time
 ;; CHECK-NEXT:                                                 evaluatable expressions
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --precompute-propagate                        computes compile-time
 ;; CHECK-NEXT:                                                 evaluatable expressions and
 ;; CHECK-NEXT:                                                 propagates them through locals
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --pre-js-rewriter                             early rewrites of the 
-;; CHECK-NEXT:                                                 instruction combinations for js
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print                                       print in s-expression format
 ;; CHECK-NEXT:
