@@ -83,7 +83,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
       // Rewrite popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
       Expression* x;
       if (matches(curr, binary(Eq, unary(Popcnt, any(&x)), ival(1)))) {
-        rewritePopcntEqualOne(curr);
+        rewritePopcntEqualOne(x);
       }
     }
 
@@ -140,15 +140,15 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
                            builder.makeConst(signBit)))));
   }
 
-  void rewritePopcntEqualOne(Binary* curr) {
+  void rewritePopcntEqualOne(Expression* expr) {
     // popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
-    Unary* lhs = curr->left->cast<Unary>();
     BinaryOp orOp, andOp, subOp;
     UnaryOp eqzOp;
     Literal litOne;
+    Type type = expr->type;
 
-    switch (lhs->op) {
-      case PopcntInt32:
+    switch (type.getBasic()) {
+      case Type::i32:
         eqzOp = EqZInt32;
         orOp = OrInt32;
         andOp = AndInt32;
@@ -156,7 +156,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         litOne = Literal::makeOne(Type::i32);
         break;
 
-      case PopcntInt64:
+      case Type::i64:
         eqzOp = EqZInt64;
         orOp = OrInt64;
         andOp = AndInt64;
@@ -168,8 +168,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         return;
     }
 
-    Type type = lhs->value->type;
-    Localizer temp(lhs->value, getFunction(), getModule());
+    Localizer temp(expr, getFunction(), getModule());
     Builder builder(*getModule());
 
     replaceCurrent(builder.makeUnary(
