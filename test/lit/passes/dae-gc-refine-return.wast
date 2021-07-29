@@ -415,6 +415,14 @@
   )
   (return_call_ref (ref.null $return_{}))
  )
+ (func $tail-caller-call_ref-unreachable (result anyref)
+  (if (i32.const 1)
+   (return (ref.null any))
+  )
+  ;; An unreachable means there is no function signature to even look at. We
+  ;; should not hit an assertion on such things.
+  (return_call_ref (unreachable))
+ )
  ;; CHECK:      (func $tail-call-caller-call_ref
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $tail-caller-call_ref-yes)
@@ -429,6 +437,9 @@
   )
   (drop
    (call $tail-caller-call_ref-no)
+  )
+  (drop
+   (call $tail-caller-call_ref-unreachable)
   )
  )
 )
