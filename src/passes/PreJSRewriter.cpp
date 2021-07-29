@@ -37,7 +37,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
   bool inReplaceCurrent = false;
 
   void replaceCurrent(Expression* rep) {
-    WalkerPass<PostWalker<PreJSRewriterPass>>::replaceCurrent(rep);
+    super::replaceCurrent(rep);
     // We may be able to apply multiple patterns as one may open opportunities
     // for others. NB: patterns must not have cycles
 
@@ -63,7 +63,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
     if (!builder) {
       builder = make_unique<Builder>(*getModule());
     }
-    WalkerPass<PostWalker<PreJSRewriterPass>>::doWalkFunction(func);
+    super::doWalkFunction(func);
   }
 
   void visitBinary(Binary* curr) {
