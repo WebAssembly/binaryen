@@ -382,4 +382,53 @@
    (call $tail-caller-indirect-no)
   )
  )
+
+ ;; As above, but with a tail call by function reference.
+ ;; CHECK:      (func $tail-callee-call_ref (result (ref ${}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $tail-callee-call_ref (result (ref ${}))
+  (unreachable)
+ )
+ ;; CHECK:      (func $tail-caller-call_ref-yes (result (ref ${}))
+ ;; CHECK-NEXT:  (return_call_ref
+ ;; CHECK-NEXT:   (ref.null $return_{})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-caller-call_ref-yes (result anyref)
+  (return_call_ref (ref.null $return_{}))
+ )
+ ;; CHECK:      (func $tail-caller-call_ref-no (result anyref)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (ref.null any)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (return_call_ref
+ ;; CHECK-NEXT:   (ref.null $return_{})
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-caller-call_ref-no (result anyref)
+  (if (i32.const 1)
+   (return (ref.null any))
+  )
+  (return_call_ref (ref.null $return_{}))
+ )
+ ;; CHECK:      (func $tail-call-caller-call_ref
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $tail-caller-call_ref-yes)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (call $tail-caller-call_ref-no)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tail-call-caller-call_ref
+  (drop
+   (call $tail-caller-call_ref-yes)
+  )
+  (drop
+   (call $tail-caller-call_ref-no)
+  )
+ )
 )
