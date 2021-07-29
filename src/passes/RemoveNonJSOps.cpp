@@ -210,25 +210,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
   void visitBinary(Binary* curr) {
     Name name;
     switch (curr->op) {
-      case EqInt32:
-      case EqInt64:
-        // Rewrite popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
-        if (auto* lhs = curr->left->dynCast<Unary>()) {
-          if (auto* rhs = curr->right->dynCast<Const>()) {
-            if ((lhs->op == PopcntInt32 || lhs->op == PopcntInt64) &&
-                rhs->value.getInteger() == 1LL) {
-              rewritePopcntEqualOne(curr);
-              return;
-            }
-          }
-        }
-        return;
-
-      case CopySignFloat32:
-      case CopySignFloat64:
-        rewriteCopysign(curr);
-        return;
-
       case RotLInt32:
         name = WASM_ROTL32;
         break;
@@ -263,85 +244,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     neededIntrinsics.insert(name);
     replaceCurrent(
       builder->makeCall(name, {curr->left, curr->right}, curr->type));
-  }
-
-  void rewriteCopysign(Binary* curr) {
-    Literal signBit, otherBits;
-    UnaryOp int2float, float2int;
-    BinaryOp bitAnd, bitOr;
-    switch (curr->op) {
-      case CopySignFloat32:
-        float2int = ReinterpretFloat32;
-        int2float = ReinterpretInt32;
-        bitAnd = AndInt32;
-        bitOr = OrInt32;
-        signBit = Literal(uint32_t(1 << 31));
-        otherBits = Literal(uint32_t(1 << 31) - 1);
-        break;
-
-      case CopySignFloat64:
-        float2int = ReinterpretFloat64;
-        int2float = ReinterpretInt64;
-        bitAnd = AndInt64;
-        bitOr = OrInt64;
-        signBit = Literal(uint64_t(1) << 63);
-        otherBits = Literal((uint64_t(1) << 63) - 1);
-        break;
-
-      default:
-        return;
-    }
-
-    replaceCurrent(builder->makeUnary(
-      int2float,
-      builder->makeBinary(
-        bitOr,
-        builder->makeBinary(bitAnd,
-                            builder->makeUnary(float2int, curr->left),
-                            builder->makeConst(otherBits)),
-        builder->makeBinary(bitAnd,
-                            builder->makeUnary(float2int, curr->right),
-                            builder->makeConst(signBit)))));
-  }
-
-  void rewritePopcntEqualOne(Binary* curr) {
-    // popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
-    Unary* lhs = curr->left->cast<Unary>();
-    Expression* x = lhs->value;
-    BinaryOp orOp, andOp, subOp;
-    UnaryOp eqzOp;
-    Literal litOne;
-
-    switch (lhs->op) {
-      case PopcntInt32:
-        eqzOp = EqZInt32;
-        orOp = OrInt32;
-        andOp = AndInt32;
-        subOp = SubInt32;
-        litOne = Literal::makeOne(Type::i32);
-        break;
-
-      case PopcntInt64:
-        eqzOp = EqZInt64;
-        orOp = OrInt64;
-        andOp = AndInt64;
-        subOp = SubInt64;
-        litOne = Literal::makeOne(Type::i64);
-        break;
-
-      default:
-        return;
-    }
-
-    replaceCurrent(builder->makeUnary(
-      eqzOp,
-      builder->makeBinary(
-        orOp,
-        builder->makeUnary(eqzOp, x),
-        builder->makeBinary(
-          andOp,
-          x,
-          builder->makeBinary(subOp, x, builder->makeConst(litOne))))));
   }
 
   void visitUnary(Unary* curr) {

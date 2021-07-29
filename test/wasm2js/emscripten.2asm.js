@@ -209,9 +209,9 @@ function asmFunc(env) {
   abort();
  }
  
- function is_power_of_2($0) {
-  $0 = $0 | 0;
-  return !(!$0 | ($0 | 0 & ($0 - 1 | 0)) | 0) | 0;
+ function is_power_of_2(x) {
+  x = x | 0;
+  return !(!x | (x | 0 & (x - 1 | 0)) | 0) | 0;
  }
  // EMSCRIPTEN_END_FUNCS
 ;

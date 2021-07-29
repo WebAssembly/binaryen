@@ -55,6 +55,7 @@ set(passes_SOURCES
   Poppify.cpp
   PostEmscripten.cpp
   Precompute.cpp
+  PreJSRewriter.cpp
   Print.cpp
   PrintCallGraph.cpp
   PrintFeatures.cpp
