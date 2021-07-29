@@ -29,36 +29,6 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
 
   Pass* create() override { return new PreJSRewriterPass; }
 
-  // Set to true when one of the visitors makes a change (either replacing the
-  // node or modifying it).
-  bool changed;
-
-  // Used to avoid recursion in replaceCurrent, see below.
-  bool inReplaceCurrent = false;
-
-  void replaceCurrent(Expression* rep) {
-    super::replaceCurrent(rep);
-    // We may be able to apply multiple patterns as one may open opportunities
-    // for others. NB: patterns must not have cycles
-
-    // To avoid recursion, this uses the following pattern: the initial call to
-    // this method comes from one of the visit*() methods. We then loop in here,
-    // and if we are called again we set |changed| instead of recursing, so that
-    // we can loop on that value.
-    if (inReplaceCurrent) {
-      // We are in the loop below so just note a change and return to there.
-      changed = true;
-      return;
-    }
-    // Loop on further changes.
-    inReplaceCurrent = true;
-    do {
-      changed = false;
-      visit(getCurrent());
-    } while (changed);
-    inReplaceCurrent = false;
-  }
-
   void doWalkFunction(Function* func) {
     if (!builder) {
       builder = make_unique<Builder>(*getModule());
@@ -133,7 +103,6 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
   void rewritePopcntEqualOne(Binary* curr) {
     // popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
     Unary* lhs = curr->left->cast<Unary>();
-    Expression* x = lhs->value;
     BinaryOp orOp, andOp, subOp;
     UnaryOp eqzOp;
     Literal litOne;
@@ -163,11 +132,12 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
       eqzOp,
       builder->makeBinary(
         orOp,
-        builder->makeUnary(eqzOp, x),
-        builder->makeBinary(
-          andOp,
-          x,
-          builder->makeBinary(subOp, x, builder->makeConst(litOne))))));
+        builder->makeUnary(eqzOp, lhs->value),
+        builder->makeBinary(andOp,
+                            lhs->value,
+                            builder->makeBinary(subOp,
+                                                lhs->value,
+                                                builder->makeConst(litOne))))));
   }
 };
 
