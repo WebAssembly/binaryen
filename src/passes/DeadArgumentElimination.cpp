@@ -682,6 +682,17 @@ private:
         return false;
       }
     }
+    for (auto* call : FindAll<CallRef>(func->body).list) {
+      if (call->isReturn) {
+        auto targetType = call->target->type;
+        if (targetType == Type::unreachable) {
+          continue;
+        }
+        if (!processReturnType(targetType.getHeapType().getSignature().results)) {
+          return false;
+        }
+      }
+    }
     assert(refinedType != originalType);
 
     // If the refined type is unreachable then nothing actually returns from
