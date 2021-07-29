@@ -4,14 +4,6 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field $i8 (mut i8)) (field $i16 (mut i16)) (field $i32 (mut i32)) (field $i64 (mut i64))))
-
-  ;; CHECK:      (type $array (array (mut i8)))
-
-  ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
-  (import "env" "get-i32" (func $get-i32 (result i32)))
-
-  (type $empty (struct))
-
   (type $struct (struct
     (field $i8  (mut i8))
     (field $i16 (mut i16))
@@ -19,7 +11,14 @@
     (field $i64 (mut i64))
   ))
 
+  ;; CHECK:      (type $empty (struct ))
+  (type $empty (struct))
+
+  ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
+
+  ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
+  (import "env" "get-i32" (func $get-i32 (result i32)))
 
   ;; These functions test if an `if` with subtyped arms is correctly folded
   ;; 1. if its `ifTrue` and `ifFalse` arms are identical (can fold)
@@ -935,5 +934,127 @@
         )
       )
     )
+  )
+
+  ;; CHECK:      (func $ref-cast-squared (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-squared (param $x eqref)
+    ;; Identical ref.casts can be folded together.
+    (drop
+      (ref.cast
+        (ref.cast
+          (local.get $x)
+          (rtt.canon $struct)
+        )
+        (rtt.canon $struct)
+      )
+    )
+  )
+  ;; CHECK:      (func $ref-cast-squared-fallthrough (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (rtt.canon $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-squared-fallthrough (param $x eqref)
+    ;; A fallthrough in the middle does not prevent this optimization.
+    (drop
+      (ref.cast
+        (local.tee $x
+          (ref.cast
+            (local.get $x)
+            (rtt.canon $struct)
+          )
+        )
+        (rtt.canon $struct)
+      )
+    )
+  )
+  ;; CHECK:      (func $ref-cast-cubed (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-cubed (param $x eqref)
+    ;; Three and more also work.
+    (drop
+      (ref.cast
+        (ref.cast
+          (ref.cast
+            (local.get $x)
+            (rtt.canon $struct)
+          )
+          (rtt.canon $struct)
+        )
+        (rtt.canon $struct)
+      )
+    )
+  )
+  ;; CHECK:      (func $ref-cast-squared-different (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (rtt.canon $empty)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-squared-different (param $x eqref)
+    ;; Different casts cannot be folded.
+    (drop
+      (ref.cast
+        (ref.cast
+          (local.get $x)
+          (rtt.canon $empty)
+        )
+        (rtt.canon $struct)
+      )
+    )
+  )
+  ;; CHECK:      (func $ref-cast-squared-effects (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.cast
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:     (call $get-rtt)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $get-rtt)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-cast-squared-effects (param $x eqref)
+    ;; The rtts are equal but have side effects, preventing optimization.
+    (drop
+      (ref.cast
+        (ref.cast
+          (local.get $x)
+          (call $get-rtt)
+        )
+        (call $get-rtt)
+      )
+    )
+  )
+
+  ;; Helper function for above.
+  ;; CHECK:      (func $get-rtt (result (rtt $empty))
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $get-rtt (result (rtt $empty))
+    (unreachable)
   )
 )
