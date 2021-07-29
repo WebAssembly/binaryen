@@ -1003,7 +1003,7 @@
       )
     )
   )
-  ;; CHECK:      (func $ref-cast-squared-no-different (param $x eqref)
+  ;; CHECK:      (func $ref-cast-squared-different (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
   ;; CHECK-NEXT:    (ref.cast
@@ -1014,7 +1014,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref-cast-squared-no-different (param $x eqref)
+  (func $ref-cast-squared-different (param $x eqref)
     ;; Different casts cannot be folded.
     (drop
       (ref.cast
@@ -1026,7 +1026,7 @@
       )
     )
   )
-  ;; CHECK:      (func $ref-cast-squared-no-effects (param $x eqref)
+  ;; CHECK:      (func $ref-cast-squared-effects (param $x eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast
   ;; CHECK-NEXT:    (ref.cast
@@ -1037,7 +1037,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref-cast-squared-no-effects (param $x eqref)
+  (func $ref-cast-squared-effects (param $x eqref)
     ;; The rtts are equal but have side effects, preventing optimization.
     (drop
       (ref.cast
