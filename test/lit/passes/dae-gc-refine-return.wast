@@ -416,9 +416,7 @@
   (return_call_ref (ref.null $return_{}))
  )
  ;; CHECK:      (func $tail-caller-call_ref-unreachable
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tail-caller-call_ref-unreachable (result anyref)
   ;; An unreachable means there is no function signature to even look at. We
