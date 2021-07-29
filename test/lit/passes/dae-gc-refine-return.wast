@@ -416,23 +416,11 @@
   (return_call_ref (ref.null $return_{}))
  )
  ;; CHECK:      (func $tail-caller-call_ref-unreachable
- ;; CHECK-NEXT:  (if
- ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (ref.null any)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (return)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $tail-caller-call_ref-unreachable (result anyref)
-  (if (i32.const 1)
-   (return (ref.null any))
-  )
   ;; An unreachable means there is no function signature to even look at. We
   ;; should not hit an assertion on such things.
   ;; (Note that other DAE optimizations will apply here and remove the return
