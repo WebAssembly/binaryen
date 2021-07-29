@@ -17,8 +17,9 @@
 #include <pass.h>
 #include <wasm.h>
 
-#include "ir/literal-utils.h"
 #include "wasm-builder.h"
+#include <ir/literal-utils.h>
+#include <ir/localize.h>
 
 namespace wasm {
 
@@ -128,16 +129,19 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         return;
     }
 
+    Type type = lhs->type;
+    Localizer temp(lhs->value, getFunction(), getModule());
     replaceCurrent(builder->makeUnary(
       eqzOp,
       builder->makeBinary(
         orOp,
-        builder->makeUnary(eqzOp, lhs->value),
-        builder->makeBinary(andOp,
-                            lhs->value,
-                            builder->makeBinary(subOp,
-                                                lhs->value,
-                                                builder->makeConst(litOne))))));
+        builder->makeUnary(eqzOp, builder->makeLocalGet(temp.index, type)),
+        builder->makeBinary(
+          andOp,
+          builder->makeLocalGet(temp.index, type),
+          builder->makeBinary(subOp,
+                              builder->makeLocalGet(temp.index, type),
+                              builder->makeConst(litOne))))));
   }
 };
 
