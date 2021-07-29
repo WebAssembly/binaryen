@@ -368,6 +368,9 @@
 ;; CHECK-NEXT:                                                 evaluatable expressions and
 ;; CHECK-NEXT:                                                 propagates them through locals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --pre-js-rewriter                             early rewrites of the 
+;; CHECK-NEXT:                                                 instruction combinations for js
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print                                       print in s-expression format
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-call-graph                            print call graph
