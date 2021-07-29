@@ -209,11 +209,6 @@ function asmFunc(env) {
   abort();
  }
  
- function is_power_of_2(x) {
-  x = x | 0;
-  return !(!x | (x & (x - 1 | 0) | 0) | 0) | 0;
- }
- 
  // EMSCRIPTEN_END_FUNCS
 ;
  bufferView = HEAPU8;
@@ -232,8 +227,7 @@ function asmFunc(env) {
   "exported": exported, 
   "sub_zero": sub_zero, 
   "select": select, 
-  "bools": bools, 
-  "is_power_of_2": is_power_of_2
+  "bools": bools
  };
 }
 
