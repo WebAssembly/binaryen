@@ -29,13 +29,6 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
 
   Pass* create() override { return new PreJSRewriterPass; }
 
-  void doWalkModule(Module* module) {
-    if (!builder) {
-      builder = make_unique<Builder>(*module);
-    }
-    PostWalker<PreJSRewriterPass>::doWalkModule(module);
-  }
-
   void doWalkFunction(Function* func) {
     if (!builder) {
       builder = make_unique<Builder>(*getModule());
