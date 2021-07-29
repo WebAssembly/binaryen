@@ -30,6 +30,52 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
 
   Pass* create() override { return new PreJSRewriterPass; }
 
+  void visitLoad(Load* curr) {
+    if (curr->align == 0 || curr->align >= curr->bytes) {
+      return;
+    }
+
+    // Switch unaligned loads of floats to unaligned loads of integers (which we
+    // can actually implement) and then use reinterpretation to get the float
+    // back out.
+    switch (curr->type.getBasic()) {
+      case Type::f32:
+        curr->type = Type::i32;
+        replaceCurrent(Builder(*getModule()).makeUnary(ReinterpretInt32, curr));
+        break;
+      case Type::f64:
+        curr->type = Type::i64;
+        replaceCurrent(Builder(*getModule()).makeUnary(ReinterpretInt64, curr));
+        break;
+      default:
+        break;
+    }
+  }
+
+  void visitStore(Store* curr) {
+    if (curr->align == 0 || curr->align >= curr->bytes) {
+      return;
+    }
+
+    // Switch unaligned stores of floats to unaligned stores of integers (which
+    // we can actually implement) and then use reinterpretation to store the
+    // right value.
+    switch (curr->valueType.getBasic()) {
+      case Type::f32:
+        curr->valueType = Type::i32;
+        curr->value =
+          Builder(*getModule()).makeUnary(ReinterpretFloat32, curr->value);
+        break;
+      case Type::f64:
+        curr->valueType = Type::i64;
+        curr->value =
+          Builder(*getModule()).makeUnary(ReinterpretFloat64, curr->value);
+        break;
+      default:
+        break;
+    }
+  }
+
   void visitBinary(Binary* curr) {
     using namespace Abstract;
     using namespace Match;
