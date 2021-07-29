@@ -23,18 +23,9 @@
 namespace wasm {
 
 struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
-  std::unique_ptr<Builder> builder;
-
   bool isFunctionParallel() override { return false; }
 
   Pass* create() override { return new PreJSRewriterPass; }
-
-  void doWalkFunction(Function* func) {
-    if (!builder) {
-      builder = make_unique<Builder>(*getModule());
-    }
-    PostWalker<PreJSRewriterPass>::doWalkFunction(func);
-  }
 
   void visitBinary(Binary* curr) {
     switch (curr->op) {
@@ -88,16 +79,17 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         return;
     }
 
-    replaceCurrent(builder->makeUnary(
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeUnary(
       int2float,
-      builder->makeBinary(
+      builder.makeBinary(
         bitOr,
-        builder->makeBinary(bitAnd,
-                            builder->makeUnary(float2int, curr->left),
-                            builder->makeConst(otherBits)),
-        builder->makeBinary(bitAnd,
-                            builder->makeUnary(float2int, curr->right),
-                            builder->makeConst(signBit)))));
+        builder.makeBinary(bitAnd,
+                           builder.makeUnary(float2int, curr->left),
+                           builder.makeConst(otherBits)),
+        builder.makeBinary(bitAnd,
+                           builder.makeUnary(float2int, curr->right),
+                           builder.makeConst(signBit)))));
   }
 
   void rewritePopcntEqualOne(Binary* curr) {
@@ -129,15 +121,14 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         return;
     }
 
-    replaceCurrent(builder->makeUnary(
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeUnary(
       eqzOp,
-      builder->makeBinary(
+      builder.makeBinary(
         orOp,
-        builder->makeUnary(eqzOp, x),
-        builder->makeBinary(
-          andOp,
-          x,
-          builder->makeBinary(subOp, x, builder->makeConst(litOne))))));
+        builder.makeUnary(eqzOp, x),
+        builder.makeBinary(
+          andOp, x, builder.makeBinary(subOp, x, builder.makeConst(litOne))))));
   }
 };
 
