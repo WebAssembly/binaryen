@@ -24,6 +24,7 @@
 //  * Apply the constant values of immutable globals.
 //  * Apply the constant values of previous global.sets, in a linear
 //    execution trace.
+//  * Remove writes to globals that are never read from.
 //
 // Some globals may not have uses after these changes, which we leave
 // to other passes to optimize.
