@@ -421,8 +421,6 @@
  (func $tail-caller-call_ref-unreachable (result anyref)
   ;; An unreachable means there is no function signature to even look at. We
   ;; should not hit an assertion on such things.
-  ;; (Note that other DAE optimizations will apply here and remove the return
-  ;; value entirely in the result, together with the drop in the caller below.)
   (return_call_ref (unreachable))
  )
  ;; CHECK:      (func $tail-call-caller-call_ref
