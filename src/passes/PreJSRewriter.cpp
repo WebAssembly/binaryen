@@ -18,8 +18,10 @@
 #include <wasm.h>
 
 #include "wasm-builder.h"
+#include <ir/abstract.h>
 #include <ir/literal-utils.h>
 #include <ir/localize.h>
+#include <ir/match.h>
 
 namespace wasm {
 
@@ -29,34 +31,24 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
   Pass* create() override { return new PreJSRewriterPass; }
 
   void visitBinary(Binary* curr) {
-    switch (curr->op) {
-      case EqInt32:
-      case EqInt64:
-        // Rewrite popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
-        if (auto* lhs = curr->left->dynCast<Unary>()) {
-          if (auto* rhs = curr->right->dynCast<Const>()) {
-            if ((lhs->op == PopcntInt32 || lhs->op == PopcntInt64) &&
-                rhs->value.getInteger() == 1LL) {
-              rewritePopcntEqualOne(curr);
-            }
-          }
-        }
-        break;
+    using namespace Abstract;
+    using namespace Match;
+    {
+      // Rewrite popcnt(x) == 1   ==>   !(!x | (x & (x - 1))
+      Expression* x;
+      if (matches(curr, binary(Eq, unary(Popcnt, any(&x)), ival(1)))) {
+        rewritePopcntEqualOne(curr);
+      }
+    }
 
-      case CopySignFloat32:
-      case CopySignFloat64:
-        rewriteCopysign(curr);
-        break;
-
-      default:
-        break;
+    if (curr->op == CopySignFloat32 || curr->op == CopySignFloat64) {
+      rewriteCopysign(curr);
     }
   }
 
   void rewriteCopysign(Binary* curr) {
     // copysign(x, y)  =>
-    //    (reinterpret(x) & ~SignMask) |
-    //    (reinterpret(y) &  SignMask)
+    //    (reinterpret(x) & ~SignMask) | (reinterpret(y) & SignMask)
     //
     // where SignMask <- 1 << 31, when i32
     //       SignMask <- 1 << 63, when i64
@@ -71,8 +63,8 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         int2float = ReinterpretInt32;
         bitAnd = AndInt32;
         bitOr = OrInt32;
-        signBit = Literal(uint32_t(1 << 31));
-        otherBits = Literal(uint32_t(1 << 31) - 1);
+        signBit = Literal(1U << 31);
+        otherBits = Literal(~(1U << 31));
         break;
 
       case CopySignFloat64:
@@ -80,8 +72,8 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         int2float = ReinterpretInt64;
         bitAnd = AndInt64;
         bitOr = OrInt64;
-        signBit = Literal(uint64_t(1) << 63);
-        otherBits = Literal((uint64_t(1) << 63) - 1);
+        signBit = Literal(1ULL << 63);
+        otherBits = Literal(~(1ULL << 63));
         break;
 
       default:
@@ -89,6 +81,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
     }
 
     Builder builder(*getModule());
+
     replaceCurrent(builder.makeUnary(
       int2float,
       builder.makeBinary(
