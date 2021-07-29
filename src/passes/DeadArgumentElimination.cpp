@@ -688,7 +688,8 @@ private:
         if (targetType == Type::unreachable) {
           continue;
         }
-        if (!processReturnType(targetType.getHeapType().getSignature().results)) {
+        if (!processReturnType(
+              targetType.getHeapType().getSignature().results)) {
           return false;
         }
       }
