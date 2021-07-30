@@ -93,11 +93,16 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
   }
 
   void rewriteCopysign(Binary* curr) {
-    // copysign(x, y)  =>
-    //    (reinterpret(x) & ~SignMask) | (reinterpret(y) & SignMask)
+
+    // i32.copysign(x, y)   =>   f32.reinterpret(
+    //   (i32.reinterpret(x) & ~(1 << 31)) |
+    //   (i32.reinterpret(y) &  (1 << 31)
+    // )
     //
-    // where SignMask <- 1 << 31, when i32
-    //       SignMask <- 1 << 63, when i64
+    // i64.copysign(x, y)   =>   f64.reinterpret(
+    //   (i64.reinterpret(x) & ~(1 << 63)) |
+    //   (i64.reinterpret(y) &  (1 << 63)
+    // )
 
     Literal signBit, otherBits;
     UnaryOp int2float, float2int;
