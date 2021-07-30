@@ -18,6 +18,7 @@
 #define wasm_ir_localizer_h
 
 #include <wasm-builder.h>
+#include <wasm-traversal.h>
 
 namespace wasm {
 
@@ -38,6 +39,11 @@ struct Localizer {
       index = Builder::addVar(func, expr->type);
       expr = Builder(*wasm).makeLocalTee(index, expr, expr->type);
     }
+  }
+
+  template<typename SubType, typename VisitorType>
+  Localizer(Expression* input, Walker<SubType, VisitorType>* walker) {
+    Localizer(input, walker->getFunction(), walker->getModule());
   }
 };
 
