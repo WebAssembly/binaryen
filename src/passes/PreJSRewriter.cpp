@@ -171,7 +171,7 @@ struct PreJSRewriterPass : public WalkerPass<PostWalker<PreJSRewriterPass>> {
         return;
     }
 
-    Localizer temp(expr, this);
+    Localizer temp(expr, getFunction(), getModule());
     Builder builder(*getModule());
 
     replaceCurrent(builder.makeBinary(
