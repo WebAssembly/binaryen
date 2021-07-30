@@ -3,6 +3,7 @@
 ;; Check that pops of GC types work correctly.
 
 ;; RUN: wasm-opt -all %s -S -o - | filecheck %s
+;; RUN: wasm-opt -all --nominal %s -S -o - | filecheck %s
 
 (module
   ;; CHECK:      (type $A (struct (field (mut i32))))

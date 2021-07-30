@@ -2,6 +2,7 @@
 ;; Test that types can be used before they are defined
 
 ;; RUN: wasm-opt %s -all -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --nominal -S -o - | filecheck %s
 
 (module
   ;; CHECK:      (type $func (func))
