@@ -570,8 +570,9 @@ inline void collectHeapTypes(Module& wasm,
       if (!counts.count(super)) {
         newTypes.insert(super);
         // We should unconditionally count supertypes, but while the type system
-        // is in flux, skip counting them to keep the type ordering in test
-        // outputs more similar.
+        // is in flux, skip counting them to keep the type orderings in nominal
+        // test outputs more similar to the orderings in the equirecursive
+        // outputs.
         counts.note(super);
       }
     }
