@@ -42,11 +42,12 @@ struct ValueInfo {
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
-    if (value.type == Type::unreachable) {
+    if (!hasNoted()) {
       // This is the first value.
       value = curr;
       return;
     }
+
     // This is a subsequent value. Check if it is different from all previous
     // ones.
     if (value != curr) {
@@ -58,6 +59,22 @@ struct ValueInfo {
   // fail to find a single constant value here.
   void noteVariable() {
     value.type = Type::none;
+  }
+
+  // Combine the information in a given ValueInfo to this one. This is the same
+  // as if we have called note*() on us with all the history of calls to that
+  // other object.
+  void combine(const ValueInfo& other) {
+    if (!other.hasNoted()) {
+      return;
+    }
+    if (!hasNoted()) {
+      *this = other;
+      return;
+    }
+    if (!other.isConstant() || getConstantValue() != other.getConstantValue()) {
+      noteVariable();
+    }
   }
 
   // Check if all the values are identical and constant.
@@ -76,10 +93,26 @@ private:
   // we mark this as type none to indicate failure. Otherwise, a concrete type
   // indicates we have seen one value so far.
   Literal value = Literal(Type::unreachable);
+
+  bool hasNoted() {
+    return value.type == Type::unreachable;
+  }
 };
 
-// Map of (type, field index) to data about the written values there.
-using FieldValueInfo = std::unordered_map<std::pair<HeapType, Index>, ValueInfo>;
+// Map of types to a vector of infos, one for each field.
+struct FieldValueInfo : public std::unordered_map<HeapType, std::vector<ValueInfo>> {
+  // When we access an item, if it does not already exist, create it with a
+  // vector of the right length.
+  std::vector<ValueInfo>& operator[](HeapType type) {
+    auto iter = find(type);
+    if (iter != end()) {
+      return iter->second;
+    }
+    auto& ret = (*this)[type];
+    ret.resize(type.getStruct().fields.size());
+    return ret;
+  }
+};
 
 // Map of function to their field value infos. We compute those in parallel.
 using FunctionFieldValueInfo = std::unordered_map<Function*, FieldValueInfo>;
@@ -102,7 +135,7 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
     auto& infos = getInfos();
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
-      auto& info = infos[{heapType, i}];
+      auto& info = infos[heapType][i];
       if (curr->isWithDefault()) {
         info.note(Literal::makeZero(type));
       } else {
@@ -112,18 +145,18 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
   }
 
   void visitStructSet(StructSet* curr) {
-    auto& infos = ;
+    auto& infos = getInfos();
     auto type = curr->ref->type;
     if (type == Type::unreachable) {
       return;
     }
     auto heapType = type.getHeapType();
     auto& field = heapType.getStruct().fields[curr->index];
-    noteExpression(curr->value, getInfos()[{heapType, i}]);
+    noteExpression(curr->value, getInfos()[heapType][i]);
   }
 
 private:
-  const std::unordered_map<Name, TableUtils::FlatTable>* functionInfos;
+  const FunctionFieldValueInfo* functionInfos;
 
   FieldValueInfo& getInfos() {
     return (*functionInfos)[getFunction()];
@@ -141,34 +174,28 @@ private:
 
 struct ConstantFieldPropagation : public Pass {
   void run(PassRunner* runner, Module* module) override {
-    std::unordered_map<Name, TableUtils::FlatTable> validTables;
+    // Find and analyze all writes inside each function.
+    FunctionFieldValueInfo functionInfos;
+    for (auto& func : module->functions) {
+      // Initialize the data for each function, so that we can operate on this
+      // structure in parallel without modifying it.
+      functionInfos[func.get()];
+    }
+    FunctionScanner(functionInfos).run(runner, module);
 
-    for (auto& table : module->tables) {
-      if (!table->imported()) {
-        bool canOptimizeCallIndirect = true;
-
-        for (auto& ex : module->exports) {
-          if (ex->kind == ExternalKind::Table && ex->value == table->name) {
-            canOptimizeCallIndirect = false;
-          }
-        }
-
-        if (canOptimizeCallIndirect) {
-          TableUtils::FlatTable flatTable(*module, *table);
-          if (flatTable.valid) {
-            validTables.emplace(table->name, flatTable);
-          }
+    // Combine the data from the functions.
+    FieldValueInfo combinedInfos;
+    for (auto& kv : functionInfos) {
+      FieldValueInfo& infos = kv.second;
+      for (auto& kv : infos) {
+        auto type = kv.first;
+        auto& vec = kv.second;
+        auto combinedInfo = combinedInfos[type];
+        for (Index i = 0; i < vec.size(); i++) {
+          combinedInfo[i].combine(vec[i]);
         }
       }
     }
-
-    // Without typed function references, all we can do is optimize table
-    // accesses, so if we can't do that, stop.
-    if (validTables.empty() && !module->features.hasTypedFunctionReferences()) {
-      return;
-    }
-    // The table exists and is constant, so this is possible.
-    FunctionScanner(validTables).run(runner, module);
   }
 };
 
