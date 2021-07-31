@@ -117,13 +117,14 @@ struct FieldValueInfo : public std::unordered_map<HeapType, std::vector<ValueInf
 // Map of function to their field value infos. We compute those in parallel.
 using FunctionFieldValueInfo = std::unordered_map<Function*, FieldValueInfo>;
 
+// Scan each function to find all its writes to struct fields.
 struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
   bool isFunctionParallel() override { return true; }
 
   Pass* create() override { return new FunctionScanner(functionInfos); }
 
   FunctionScanner(
-    const std::unordered_map<Name, TableUtils::FlatTable>* functionInfos)
+    FunctionFieldValueInfo* functionInfos)
     : functionInfos(functionInfos) {}
 
   void visitStructNew(StructNew* curr) {
@@ -145,14 +146,12 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
   }
 
   void visitStructSet(StructSet* curr) {
-    auto& infos = getInfos();
     auto type = curr->ref->type;
     if (type == Type::unreachable) {
       return;
     }
     auto heapType = type.getHeapType();
-    auto& field = heapType.getStruct().fields[curr->index];
-    noteExpression(curr->value, getInfos()[heapType][i]);
+    noteExpression(curr->value, getInfos()[heapType][curr->index]);
   }
 
 private:
@@ -172,6 +171,49 @@ private:
   }
 };
 
+// Optimize struct gets based on what we've learned about writes.
+struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
+  bool isFunctionParallel() override { return true; }
+
+  Pass* create() override { return new FunctionOptimizer(infos); }
+
+  FunctionOptimizer(
+    FieldValueInfo* infos)
+    : infos(infos) {}
+
+  void visitStructGet(StructGet* curr) {
+    auto type = curr->ref->type;
+    if (type == Type::unreachable) {
+      return;
+    }
+    // Find the info for this field, and see if all writes to it were constant.
+    auto& info = (*infos)[type.getHeapType()][curr->index];
+    if (!info.isConstant()) {
+      return;
+    }
+
+    // We can do this! Replace the get with a throw on a null reference (as the
+    // get would have done so), plus the constant value. (Leave it to further
+    // optimizations to get rid of the ref.)
+    Builder builder(*getModule());
+    replaceCurrent(
+      builder.makeSequence(
+        builder.makeDrop(
+          builder.makeRefAs(
+            RefAsNonNull,
+            curr->ref
+          )
+        ),
+        builder.makeConstantExpression(info.getConstantValue())
+      )
+    );
+  }
+
+private:
+  const FieldValueInfo* infos;
+
+};
+
 struct ConstantFieldPropagation : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // Find and analyze all writes inside each function.
@@ -181,7 +223,7 @@ struct ConstantFieldPropagation : public Pass {
       // structure in parallel without modifying it.
       functionInfos[func.get()];
     }
-    FunctionScanner(functionInfos).run(runner, module);
+    FunctionScanner(&functionInfos).run(runner, module);
 
     // Combine the data from the functions.
     FieldValueInfo combinedInfos;
@@ -196,6 +238,19 @@ struct ConstantFieldPropagation : public Pass {
         }
       }
     }
+
+    // Handle subtyping: If we see a write to type T of field F, then that might
+    // actually write to any subtype that also has field F, or any supertype.
+    // TODO: assert nominal!
+    // TODO: do this part
+
+    // TODO: avoid running the last part if we cannot optimize anything
+
+    // Optimize.
+    FunctionOptimizer(&combinedInfos).run(runner, module);
+
+    // TODO: Actually remove the field from the type, where possible? That might
+    //       be best in another pass.
   }
 };
 
