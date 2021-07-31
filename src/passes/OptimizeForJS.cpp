@@ -25,10 +25,10 @@
 
 namespace wasm {
 
-struct PreJSOptimizePass : public WalkerPass<PostWalker<PreJSOptimizePass>> {
+struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new PreJSOptimizePass; }
+  Pass* create() override { return new OptimizeForJSPass; }
 
   void visitBinary(Binary* curr) {
     using namespace Abstract;
@@ -87,6 +87,6 @@ struct PreJSOptimizePass : public WalkerPass<PostWalker<PreJSOptimizePass>> {
   }
 };
 
-Pass* createPreJSOptimizePass() { return new PreJSOptimizePass(); }
+Pass* createOptimizeForJSPass() { return new OptimizeForJSPass(); }
 
 } // namespace wasm

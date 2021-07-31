@@ -350,6 +350,9 @@
 ;; CHECK-NEXT:   --optimize-instructions                       optimizes instruction
 ;; CHECK-NEXT:                                                 combinations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-for-js                             early optimize of the 
+;; CHECK-NEXT:                                                 instruction combinations for js
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-stack-ir                           optimize Stack IR
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their
@@ -360,9 +363,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --post-emscripten                             miscellaneous optimizations for
 ;; CHECK-NEXT:                                                 Emscripten-generated code
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --pre-js-optimize                             early optimize of the 
-;; CHECK-NEXT:                                                 instruction combinations for js
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --precompute                                  computes compile-time
 ;; CHECK-NEXT:                                                 evaluatable expressions

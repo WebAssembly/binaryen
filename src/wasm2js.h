@@ -344,7 +344,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // Before lowering non-JS operations we can optimize some instructions which
     // may simplify next passes
     if (options.optimizeLevel > 0) {
-      runner.add("pre-js-optimize");
+      runner.add("optimize-for-js");
     }
     // First up remove as many non-JS operations we can, including things like
     // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
