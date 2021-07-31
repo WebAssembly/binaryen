@@ -572,7 +572,7 @@ inline void collectHeapTypes(Module& wasm,
         // We should unconditionally count supertypes, but while the type system
         // is in flux, skip counting them to keep the type orderings in nominal
         // test outputs more similar to the orderings in the equirecursive
-        // outputs.
+        // outputs. FIXME
         counts.note(super);
       }
     }
