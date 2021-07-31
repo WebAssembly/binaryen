@@ -2429,27 +2429,28 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     visitExpression(curr);
   }
   // Module-level visitors
-  void handleSignature(Signature curr, Name name = Name()) {
+  void handleSignature(HeapType curr, Name name = Name()) {
+    Signature sig = curr.getSignature();
     o << "(func";
     if (name.is()) {
       o << " $" << name;
     }
-    if (curr.params.size() > 0) {
+    if (sig.params.size() > 0) {
       o << maybeSpace;
       o << "(param ";
       auto sep = "";
-      for (auto type : curr.params) {
+      for (auto type : sig.params) {
         o << sep;
         printType(o, type, currModule);
         sep = " ";
       }
       o << ')';
     }
-    if (curr.results.size() > 0) {
+    if (sig.results.size() > 0) {
       o << maybeSpace;
       o << "(result ";
       auto sep = "";
-      for (auto type : curr.results) {
+      for (auto type : sig.results) {
         o << sep;
         printType(o, type, currModule);
         sep = " ";
@@ -2477,19 +2478,18 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       o << ')';
     }
   }
-  void handleArray(const Array& curr) {
+  void handleArray(HeapType curr) {
     o << "(array ";
-    handleFieldBody(curr.element);
+    handleFieldBody(curr.getArray().element);
     o << ')';
   }
-  void handleStruct(const Struct& curr) {
-    auto type = HeapType(curr);
-    const auto& fields = curr.fields;
+  void handleStruct(HeapType curr) {
+    const auto& fields = curr.getStruct().fields;
     o << "(struct ";
     auto sep = "";
     for (Index i = 0; i < fields.size(); i++) {
       o << sep << "(field ";
-      processFieldName(currModule, type, i, [&](Name name) {
+      processFieldName(currModule, curr, i, [&](Name name) {
         if (name.is()) {
           o << '$' << name << ' ';
         }
@@ -2502,11 +2502,11 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   }
   void handleHeapType(HeapType type, Module* module) {
     if (type.isSignature()) {
-      handleSignature(type.getSignature());
+      handleSignature(type);
     } else if (type.isArray()) {
-      handleArray(type.getArray());
+      handleArray(type);
     } else if (type.isStruct()) {
-      handleStruct(type.getStruct());
+      handleStruct(type);
     } else {
       o << type;
     }
