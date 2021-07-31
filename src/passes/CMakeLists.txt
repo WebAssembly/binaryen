@@ -15,6 +15,7 @@ set(passes_SOURCES
   CoalesceLocals.cpp
   CodePushing.cpp
   CodeFolding.cpp
+  ConstantFieldPropagation.cpp
   ConstHoisting.cpp
   DataFlowOpts.cpp
   DeadArgumentElimination.cpp

@@ -64,7 +64,7 @@ inline bool canInitializeGlobal(const Expression* curr) {
   }
   return Properties::isSingleConstantExpression(curr) ||
          curr->is<GlobalGet>() || curr->is<RttCanon>() || curr->is<RttSub>() ||
-         curr->is<StructNew>();
+         curr->is<StructNew>() || curr->is<ArrayNew>() || curr->is<I31New>();
 }
 
 } // namespace GlobalUtils
