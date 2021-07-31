@@ -27,7 +27,7 @@
 //        wasm GC programs we need to check for type escaping.
 //
 
-#include "ir/utils.h"
+#include "ir/properties.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
@@ -41,111 +41,101 @@ namespace {
 struct ValueInfo {
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
-  void note(Expression* curr) {
-    if (!value) {
+  void note(Literal curr) {
+    if (value.type == Type::unreachable) {
       // This is the first value.
       value = curr;
       return;
     }
     // This is a subsequent value. Check if it is different from all previous
     // ones.
-    if (!ExpressionAnalyzer::equal(curr, value)) {
-      value = &NoSingleValue;
+    if (value != curr) {
+      noteVariable();
     }
   }
 
-  // Check if all the values are identical.
-  bool allValuesIdentical() {
-    return value && value != &NoSingleValue;
+  // Notes a value that is variable - unknown at compile time. This means we
+  // fail to find a single constant value here.
+  void noteVariable() {
+    value.type = Type::none;
+  }
+
+  // Check if all the values are identical and constant.
+  bool isConstant() {
+    return value.type.isConcrete();
+  }
+
+  Literal getConstantValue() {
+    assert(isConstant());
+    return value;
   }
 
 private:
-  // Start by noting that we have seen no written value at all, indicated by
-  // nullptr. If a exactly one constant value is written, we point to one of
-  // the (identical) instances of it here. If more than a single constant value is written, we will
-  // point to Multiple.
-  Expression* value = nullptr;
-
-  static Nop NoSingleValue;
-
+  // The one value we have seen, if there is one. Initialized to have type
+  // unreachable to indicate nothing has been seen yet. When values conflict,
+  // we mark this as type none to indicate failure. Otherwise, a concrete type
+  // indicates we have seen one value so far.
+  Literal value = Literal(Type::unreachable);
 };
 
 // Map of (type, field index) to data about the written values there.
 using FieldValueInfo = std::unordered_map<std::pair<HeapType, Index>, ValueInfo>;
 
-struct FindWrites : public WalkerPass<PostWalker<FunctionConstantFieldPropagationr>> {
+// Map of function to their field value infos. We compute those in parallel.
+using FunctionFieldValueInfo = std::unordered_map<Function*, FieldValueInfo>;
+
+struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionConstantFieldPropagationr(tables); }
+  Pass* create() override { return new FunctionScanner(functionInfos); }
 
-  FunctionConstantFieldPropagationr(
-    const std::unordered_map<Name, TableUtils::FlatTable>& tables)
-    : tables(tables) {}
+  FunctionScanner(
+    const std::unordered_map<Name, TableUtils::FlatTable>* functionInfos)
+    : functionInfos(functionInfos) {}
 
-  void visitCallIndirect(CallIndirect* curr) {
-    auto it = tables.find(curr->table);
-    if (it == tables.end()) {
+  void visitStructNew(StructNew* curr) {
+    auto type = curr->rtt->type;
+    if (type == Type::unreachable) {
       return;
     }
-
-    auto& flatTable = it->second;
-
-    if (auto* c = curr->target->dynCast<Const>()) {
-      Index index = c->value.geti32();
-      // If the index is invalid, or the type is wrong, we can
-      // emit an unreachable here, since in Binaryen it is ok to
-      // reorder/replace traps when optimizing (but never to
-      // remove them, at least not by default).
-      if (index >= flatTable.names.size()) {
-        replaceWithUnreachable(curr);
-        return;
+    auto heapType = type.getHeapType();
+    auto& infos = getInfos();
+    auto& fields = heapType.getStruct().fields;
+    for (Index i = 0; i < fields.size(); i++) {
+      auto& info = infos[{heapType, i}];
+      if (curr->isWithDefault()) {
+        info.note(Literal::makeZero(type));
+      } else {
+        noteExpression(expr, info);
       }
-      auto name = flatTable.names[index];
-      if (!name.is()) {
-        replaceWithUnreachable(curr);
-        return;
-      }
-      auto* func = getModule()->getFunction(name);
-      if (curr->sig != func->getSig()) {
-        replaceWithUnreachable(curr);
-        return;
-      }
-      // Everything looks good!
-      replaceCurrent(
-        Builder(*getModule())
-          .makeCall(name, curr->operands, curr->type, curr->isReturn));
     }
   }
 
-  void visitCallRef(CallRef* curr) {
-    if (auto* ref = curr->target->dynCast<RefFunc>()) {
-      // We know the target!
-      replaceCurrent(
-        Builder(*getModule())
-          .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+  void visitStructSet(StructSet* curr) {
+    auto& infos = ;
+    auto type = curr->ref->type;
+    if (type == Type::unreachable) {
+      return;
     }
-  }
-
-  void doWalkFunction(Function* func) {
-    WalkerPass<PostWalker<FunctionConstantFieldPropagationr>>::doWalkFunction(func);
-    if (changedTypes) {
-      ReFinalize().walkFunctionInModule(func, getModule());
-    }
+    auto heapType = type.getHeapType();
+    auto& field = heapType.getStruct().fields[curr->index];
+    noteExpression(curr->value, getInfos()[{heapType, i}]);
   }
 
 private:
-  const std::unordered_map<Name, TableUtils::FlatTable> tables;
+  const std::unordered_map<Name, TableUtils::FlatTable>* functionInfos;
 
-  bool changedTypes = false;
+  FieldValueInfo& getInfos() {
+    return (*functionInfos)[getFunction()];
+  }
 
-  void replaceWithUnreachable(CallIndirect* call) {
-    Builder builder(*getModule());
-    for (auto*& operand : call->operands) {
-      operand = builder.makeDrop(operand);
+  void noteExpression(Expression* expr, ValueInfo& info) {
+    auto* expr = curr->operands[i];
+    if (!Properties::isConstantExpression(expr)) {
+      info.noteVariable();
+    } else {
+      info.note(Properties::getLiteral(expr));
     }
-    replaceCurrent(builder.makeSequence(builder.makeBlock(call->operands),
-                                        builder.makeUnreachable()));
-    changedTypes = true;
   }
 };
 
@@ -178,7 +168,7 @@ struct ConstantFieldPropagation : public Pass {
       return;
     }
     // The table exists and is constant, so this is possible.
-    FunctionConstantFieldPropagationr(validTables).run(runner, module);
+    FunctionScanner(validTables).run(runner, module);
   }
 };
 

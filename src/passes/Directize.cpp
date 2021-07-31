@@ -39,12 +39,12 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   Pass* create() override { return new FunctionDirectizer(tables); }
 
   FunctionDirectizer(
-    const std::unordered_map<Name, TableUtils::FlatTable>& tables)
+    const std::unordered_map<Name, TableUtils::FlatTable>* tables)
     : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
-    auto it = tables.find(curr->table);
-    if (it == tables.end()) {
+    auto it = tables->find(curr->table);
+    if (it == tables->end()) {
       return;
     }
 
@@ -94,7 +94,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  const std::unordered_map<Name, TableUtils::FlatTable> tables;
+  const std::unordered_map<Name, TableUtils::FlatTable>* tables;
 
   bool changedTypes = false;
 
