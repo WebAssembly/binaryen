@@ -57,9 +57,7 @@ struct ValueInfo {
 
   // Notes a value that is variable - unknown at compile time. This means we
   // fail to find a single constant value here.
-  void noteVariable() {
-    value.type = Type::none;
-  }
+  void noteVariable() { value.type = Type::none; }
 
   // Combine the information in a given ValueInfo to this one. This is the same
   // as if we have called note*() on us with all the history of calls to that
@@ -78,9 +76,7 @@ struct ValueInfo {
   }
 
   // Check if all the values are identical and constant.
-  bool isConstant() {
-    return value.type.isConcrete();
-  }
+  bool isConstant() { return value.type.isConcrete(); }
 
   Literal getConstantValue() {
     assert(isConstant());
@@ -94,13 +90,12 @@ private:
   // indicates we have seen one value so far.
   Literal value = Literal(Type::unreachable);
 
-  bool hasNoted() {
-    return value.type == Type::unreachable;
-  }
+  bool hasNoted() { return value.type == Type::unreachable; }
 };
 
 // Map of types to a vector of infos, one for each field.
-struct FieldValueInfo : public std::unordered_map<HeapType, std::vector<ValueInfo>> {
+struct FieldValueInfo
+  : public std::unordered_map<HeapType, std::vector<ValueInfo>> {
   // When we access an item, if it does not already exist, create it with a
   // vector of the right length.
   std::vector<ValueInfo>& operator[](HeapType type) {
@@ -123,8 +118,7 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
 
   Pass* create() override { return new FunctionScanner(functionInfos); }
 
-  FunctionScanner(
-    FunctionFieldValueInfo* functionInfos)
+  FunctionScanner(FunctionFieldValueInfo* functionInfos)
     : functionInfos(functionInfos) {}
 
   void visitStructNew(StructNew* curr) {
@@ -157,9 +151,7 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
 private:
   const FunctionFieldValueInfo* functionInfos;
 
-  FieldValueInfo& getInfos() {
-    return (*functionInfos)[getFunction()];
-  }
+  FieldValueInfo& getInfos() { return (*functionInfos)[getFunction()]; }
 
   void noteExpression(Expression* expr, ValueInfo& info) {
     auto* expr = curr->operands[i];
@@ -177,9 +169,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   Pass* create() override { return new FunctionOptimizer(infos); }
 
-  FunctionOptimizer(
-    FieldValueInfo* infos)
-    : infos(infos) {}
+  FunctionOptimizer(FieldValueInfo* infos) : infos(infos) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
@@ -196,22 +186,13 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // get would have done so), plus the constant value. (Leave it to further
     // optimizations to get rid of the ref.)
     Builder builder(*getModule());
-    replaceCurrent(
-      builder.makeSequence(
-        builder.makeDrop(
-          builder.makeRefAs(
-            RefAsNonNull,
-            curr->ref
-          )
-        ),
-        builder.makeConstantExpression(info.getConstantValue())
-      )
-    );
+    replaceCurrent(builder.makeSequence(
+      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+      builder.makeConstantExpression(info.getConstantValue())));
   }
 
 private:
   const FieldValueInfo* infos;
-
 };
 
 struct ConstantFieldPropagation : public Pass {
@@ -256,6 +237,8 @@ struct ConstantFieldPropagation : public Pass {
 
 } // anonymous namespace
 
-Pass* createConstantFieldPropagationPass() { return new ConstantFieldPropagation(); }
+Pass* createConstantFieldPropagationPass() {
+  return new ConstantFieldPropagation();
+}
 
 } // namespace wasm
