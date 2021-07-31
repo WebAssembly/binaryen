@@ -361,7 +361,7 @@
 ;; CHECK-NEXT:   --post-emscripten                             miscellaneous optimizations for
 ;; CHECK-NEXT:                                                 Emscripten-generated code
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --pre-js-rewrite                              early rewrites of the 
+;; CHECK-NEXT:   --pre-js-optimize                             early optimize of the 
 ;; CHECK-NEXT:                                                 instruction combinations for js
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --precompute                                  computes compile-time

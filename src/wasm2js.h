@@ -341,9 +341,11 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
     // TODO: only legalize if necessary - emscripten would already do so, and
     //       likely other toolchains. but spec test suite needs that.
     runner.add("legalize-js-interface");
-    // Before lowering non-JS operations we can rewrite some instructions which
+    // Before lowering non-JS operations we can optimize some instructions which
     // may simplify next passes
-    runner.add("pre-js-rewrite");
+    if (options.optimizeLevel > 0) {
+      runner.add("pre-js-optimize");
+    }
     // First up remove as many non-JS operations we can, including things like
     // 64-bit integer multiplication/division, `f32.nearest` instructions, etc.
     // This may inject intrinsics which use i64 so it needs to be run before the

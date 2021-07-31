@@ -163,9 +163,58 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
     PostWalker<RemoveNonJSOpsPass>::doWalkFunction(func);
   }
 
+  void visitLoad(Load* curr) {
+    if (curr->align == 0 || curr->align >= curr->bytes) {
+      return;
+    }
+
+    // Switch unaligned loads of floats to unaligned loads of integers (which we
+    // can actually implement) and then use reinterpretation to get the float
+    // back out.
+    switch (curr->type.getBasic()) {
+      case Type::f32:
+        curr->type = Type::i32;
+        replaceCurrent(builder->makeUnary(ReinterpretInt32, curr));
+        break;
+      case Type::f64:
+        curr->type = Type::i64;
+        replaceCurrent(builder->makeUnary(ReinterpretInt64, curr));
+        break;
+      default:
+        break;
+    }
+  }
+
+  void visitStore(Store* curr) {
+    if (curr->align == 0 || curr->align >= curr->bytes) {
+      return;
+    }
+
+    // Switch unaligned stores of floats to unaligned stores of integers (which
+    // we can actually implement) and then use reinterpretation to store the
+    // right value.
+    switch (curr->valueType.getBasic()) {
+      case Type::f32:
+        curr->valueType = Type::i32;
+        curr->value = builder->makeUnary(ReinterpretFloat32, curr->value);
+        break;
+      case Type::f64:
+        curr->valueType = Type::i64;
+        curr->value = builder->makeUnary(ReinterpretFloat64, curr->value);
+        break;
+      default:
+        break;
+    }
+  }
+
   void visitBinary(Binary* curr) {
     Name name;
     switch (curr->op) {
+      case CopySignFloat32:
+      case CopySignFloat64:
+        rewriteCopysign(curr);
+        return;
+
       case RotLInt32:
         name = WASM_ROTL32;
         break;
@@ -235,6 +284,57 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
 
   void visitGlobalGet(GlobalGet* curr) {
     neededImportedGlobals.insert(std::make_pair(curr->name, curr->type));
+  }
+
+  void rewriteCopysign(Binary* curr) {
+
+    // i32.copysign(x, y)   =>   f32.reinterpret(
+    //   (i32.reinterpret(x) & ~(1 << 31)) |
+    //   (i32.reinterpret(y) &  (1 << 31)
+    // )
+    //
+    // i64.copysign(x, y)   =>   f64.reinterpret(
+    //   (i64.reinterpret(x) & ~(1 << 63)) |
+    //   (i64.reinterpret(y) &  (1 << 63)
+    // )
+
+    Literal signBit, otherBits;
+    UnaryOp int2float, float2int;
+    BinaryOp bitAnd, bitOr;
+
+    switch (curr->op) {
+      case CopySignFloat32:
+        float2int = ReinterpretFloat32;
+        int2float = ReinterpretInt32;
+        bitAnd = AndInt32;
+        bitOr = OrInt32;
+        signBit = Literal(uint32_t(1U << 31));
+        otherBits = Literal(~uint32_t(1U << 31));
+        break;
+
+      case CopySignFloat64:
+        float2int = ReinterpretFloat64;
+        int2float = ReinterpretInt64;
+        bitAnd = AndInt64;
+        bitOr = OrInt64;
+        signBit = Literal(uint64_t(1ULL << 63));
+        otherBits = Literal(~uint64_t(1ULL << 63));
+        break;
+
+      default:
+        return;
+    }
+
+    replaceCurrent(builder->makeUnary(
+      int2float,
+      builder->makeBinary(
+        bitOr,
+        builder->makeBinary(bitAnd,
+                            builder->makeUnary(float2int, curr->left),
+                            builder->makeConst(otherBits)),
+        builder->makeBinary(bitAnd,
+                            builder->makeUnary(float2int, curr->right),
+                            builder->makeConst(signBit)))));
   }
 };
 

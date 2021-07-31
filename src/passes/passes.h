@@ -87,7 +87,7 @@ Pass* createPoppifyPass();
 Pass* createPostEmscriptenPass();
 Pass* createPrecomputePass();
 Pass* createPrecomputePropagatePass();
-Pass* createPreJSRewriterPass();
+Pass* createPreJSOptimizePass();
 Pass* createPrinterPass();
 Pass* createPrintCallGraphPass();
 Pass* createPrintFeaturesPass();

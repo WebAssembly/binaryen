@@ -250,9 +250,9 @@ void PassRegistry::registerPasses() {
   registerPass("post-emscripten",
                "miscellaneous optimizations for Emscripten-generated code",
                createPostEmscriptenPass);
-  registerPass("pre-js-rewrite",
-               "early rewrites of the instruction combinations for js",
-               createPreJSRewriterPass);
+  registerPass("pre-js-optimize",
+               "early optimize of the instruction combinations for js",
+               createPreJSOptimizePass);
   registerPass("precompute",
                "computes compile-time evaluatable expressions",
                createPrecomputePass);

@@ -3,54 +3,6 @@
 ;; RUN:  | filecheck %s
 
 (module
- ;; CHECK:      (func $copysign32 (param $0 f32) (param $1 f32) (result f32)
- ;; CHECK-NEXT:  (f32.reinterpret_i32
- ;; CHECK-NEXT:   (i32.or
- ;; CHECK-NEXT:    (i32.and
- ;; CHECK-NEXT:     (i32.reinterpret_f32
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 2147483647)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (i32.and
- ;; CHECK-NEXT:     (i32.reinterpret_f32
- ;; CHECK-NEXT:      (local.get $1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const -2147483648)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $copysign32 (param $0 f32) (param $1 f32) (result f32)
-  (f32.copysign
-   (local.get $0)
-   (local.get $1)
-  )
- )
- ;; CHECK:      (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
- ;; CHECK-NEXT:  (f64.reinterpret_i64
- ;; CHECK-NEXT:   (i64.or
- ;; CHECK-NEXT:    (i64.and
- ;; CHECK-NEXT:     (i64.reinterpret_f64
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i64.const 9223372036854775807)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (i64.and
- ;; CHECK-NEXT:     (i64.reinterpret_f64
- ;; CHECK-NEXT:      (local.get $1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i64.const -9223372036854775808)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
-  (f64.copysign
-   (local.get $0)
-   (local.get $1)
-  )
- )
  ;; CHECK:      (func $is-power-of-2_32 (param $x i32) (result i32)
  ;; CHECK-NEXT:  (i32.and
  ;; CHECK-NEXT:   (i32.eqz

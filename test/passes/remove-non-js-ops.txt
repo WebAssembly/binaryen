@@ -5,6 +5,8 @@
  (type $f64_=>_f64 (func (param f64) (result f64)))
  (type $f32_=>_f32 (func (param f32) (result f32)))
  (type $i32_i32_i32_=>_none (func (param i32 i32 i32)))
+ (type $f64_f64_=>_f64 (func (param f64 f64) (result f64)))
+ (type $f32_f32_=>_f32 (func (param f32 f32) (result f32)))
  (type $i32_i32_=>_none (func (param i32 i32)))
  (type $none_=>_f32 (func (result f32)))
  (type $f32_=>_none (func (param f32)))
@@ -30,6 +32,42 @@
  (import "env" "wasm2js_get_stashed_bits" (func $wasm2js_get_stashed_bits (result i32)))
  (global $__wasm-intrinsics-temp-i64 (mut i64) (i64.const 0))
  (memory $0 1)
+ (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
+  (f64.reinterpret_i64
+   (i64.or
+    (i64.and
+     (i64.reinterpret_f64
+      (local.get $0)
+     )
+     (i64.const 9223372036854775807)
+    )
+    (i64.and
+     (i64.reinterpret_f64
+      (local.get $1)
+     )
+     (i64.const -9223372036854775808)
+    )
+   )
+  )
+ )
+ (func $copysign32 (param $0 f32) (param $1 f32) (result f32)
+  (f32.reinterpret_i32
+   (i32.or
+    (i32.and
+     (i32.reinterpret_f32
+      (local.get $0)
+     )
+     (i32.const 2147483647)
+    )
+    (i32.and
+     (i32.reinterpret_f32
+      (local.get $1)
+     )
+     (i32.const -2147483648)
+    )
+   )
+  )
+ )
  (func $rotl32 (param $0 i32) (param $1 i32) (result i32)
   (call $__wasm_rotl_i32
    (local.get $0)
