@@ -4,22 +4,13 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $default-created (struct (field i64)))
-
-  ;; CHECK:      (type $value-created (struct (field f32)))
-
-  ;; CHECK:      (type $never-created (struct (field i32)))
-  (type $never-created (struct i32))
-
-  (type $default-created (struct i64))
-
-  (type $value-created (struct f32))
-
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
   ;; CHECK:      (func $impossible-get
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $never-created)
+  ;; CHECK-NEXT:     (ref.null $struct)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -29,76 +20,88 @@
     (drop
       ;; This type is never created, so a get is impossible, and we will emit a
       ;; trap.
-      (struct.get $never-created 0
-        (ref.null $never-created)
+      (struct.get $struct 0
+        (ref.null $struct)
       )
     )
   )
+)
 
-  ;; CHECK:      (func $default-created
+(module
+  ;; CHECK:      (type $struct (struct (field i64)))
+  (type $struct (struct i64))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $struct
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default_with_rtt $default-created
-  ;; CHECK-NEXT:    (rtt.canon $default-created)
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
+  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i64)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $default-created)
+  ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $default-created
+  (func $struct
     ;; The only place this type is created is with a default value.
     ;; (Note that the allocated reference is dropped here; this pass only looks
     ;; for a creation at all.)
     (drop
-      (struct.new_default_with_rtt $default-created
-        (rtt.canon $default-created)
+      (struct.new_default_with_rtt $struct
+        (rtt.canon $struct)
       )
     )
     (drop
-      (struct.get $default-created 0
-        (ref.null $default-created)
+      (struct.get $struct 0
+        (ref.null $struct)
       )
     )
   )
+)
 
-  ;; CHECK:      (func $value-created
+(module
+  ;; CHECK:      (type $struct (struct (field f32)))
+  (type $struct (struct f32))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $struct
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $value-created
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
   ;; CHECK-NEXT:    (f32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $value-created)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result f32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $value-created)
+  ;; CHECK-NEXT:      (ref.null $struct)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $value-created
+  (func $struct
     ;; The only place this type is created is with a value value.
     ;; (Note that the allocated reference is dropped here; this pass only looks
     ;; for a creation at all.)
     (drop
-      (struct.new_with_rtt $value-created
+      (struct.new_with_rtt $struct
         (f32.const 42)
-        (rtt.canon $value-created)
+        (rtt.canon $struct)
       )
     )
     (drop
-      (struct.get $value-created 0
-        (ref.null $value-created)
+      (struct.get $struct 0
+        (ref.null $struct)
       )
     )
   )
