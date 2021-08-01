@@ -29,6 +29,7 @@
 
 #include "ir/properties.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -36,6 +37,27 @@
 namespace wasm {
 
 namespace {
+
+// Represents a graph of nominal types. A nominal type knows who its supertype
+// is, if there is one; this class provides the list of immedaite subtypes for a
+// type.
+struct TypeGraph {
+  // Add a type to the graph.
+  void note(HeapType type) {
+    HeapType super;
+    if (type.getSuperType(super)) {
+      typeSubTypes[super].insert(type);
+    }
+  }
+
+  const std::unordered_set<HeapType>& getSubTypes(HeapType type) {
+    return typeSubTypes[type];
+  }
+
+private:
+  // Maps a type to its subtypes.
+  std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
+};
 
 // Represents data about the values written.
 struct ValueInfo {
@@ -62,17 +84,24 @@ struct ValueInfo {
   // Combine the information in a given ValueInfo to this one. This is the same
   // as if we have called note*() on us with all the history of calls to that
   // other object.
-  void combine(const ValueInfo& other) {
+  //
+  // Returns whether we changed anything.
+  bool combine(const ValueInfo& other) {
     if (!other.hasNoted()) {
-      return;
+      return false;
     }
     if (!hasNoted()) {
       *this = other;
-      return;
+      return other.hasNoted();
+    }
+    if (!isConstant()) {
+      return false;
     }
     if (!other.isConstant() || getConstantValue() != other.getConstantValue()) {
       noteVariable();
+      return true;
     }
+    return false;
   }
 
   // Check if all the values are identical and constant.
@@ -219,14 +248,36 @@ struct ConstantFieldPropagation : public Pass {
       }
     }
 
-    // Handle subtyping: If we see a write to type T of field F, then that might
-    // actually write to any subtype that also has field F, or any supertype.
+    // Handle subtyping: If we see a write to type T of field F, then the object
+    // at runtime might be of type T, or any subtype of T. We need to propagate
+    // the writes we have seen accordingly.
     // TODO: assert nominal!
-    // TODO: do this part
-
-    // TODO: avoid running the last part if we cannot optimize anything
+    // TODO: cycles are impossible with nominal supertypes, right? (even when
+    //       not adding a field?)
+    TypeGraph typeGraph;
+    UniqueDeferredQueue<HeapType> work;
+    for (auto& kv : combinedInfos) {
+      auto type = kv.first;
+      typeGraph.note(type);
+      work.push(type);
+    }
+    while (!work.empty()) {
+      auto type = work.pop();
+      auto& infos = combinedInfos[type];
+      auto& subTypes = typeGraph.getSubTypes(type);
+      auto& fields = type.getStruct().fields;
+      for (auto subType : subTypes) {
+        auto& subInfos = combinedInfos[subType];
+        for (Index i = 0; i < fields.size(); i++) {
+          if (subInfos[i].combine(infos[i])) {
+            work.push(subType);
+          }
+        }
+      }
+    }
 
     // Optimize.
+    // TODO: Skip this if we cannot optimize anything
     FunctionOptimizer(&combinedInfos).run(runner, module);
 
     // TODO: Actually remove the field from the type, where possible? That might
