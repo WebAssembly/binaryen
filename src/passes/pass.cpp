@@ -102,6 +102,9 @@ void PassRegistry::registerPasses() {
   registerPass("const-hoisting",
                "hoist repeated constants to a local",
                createConstHoistingPass);
+  registerPass("cfp",
+               "propagate constant struct field values",
+               createConstantFieldPropagationPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("dealign",

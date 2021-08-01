@@ -64,7 +64,8 @@ struct ValueInfo {
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
-    if (!hasNoted()) {
+    noted = true;
+    if (!noted) {
       // This is the first value.
       value = curr;
       return;
@@ -79,7 +80,10 @@ struct ValueInfo {
 
   // Notes a value that is variable - unknown at compile time. This means we
   // fail to find a single constant value here.
-  void noteVariable() { value = Literal(Type::none); }
+  void noteVariable() {
+    noted = true;
+    value = Literal(Type::none);
+  }
 
   // Combine the information in a given ValueInfo to this one. This is the same
   // as if we have called note*() on us with all the history of calls to that
@@ -87,12 +91,12 @@ struct ValueInfo {
   //
   // Returns whether we changed anything.
   bool combine(const ValueInfo& other) {
-    if (!other.hasNoted()) {
+    if (!other.noted) {
       return false;
     }
-    if (!hasNoted()) {
+    if (!noted) {
       *this = other;
-      return other.hasNoted();
+      return other.noted;
     }
     if (!isConstant()) {
       return false;
@@ -112,14 +116,19 @@ struct ValueInfo {
     return value;
   }
 
+  bool hasWrites() const {
+    return noted;
+  }
+
 private:
+  // Whether we have noted any values at all.
+  bool noted = false;
+
   // The one value we have seen, if there is one. Initialized to have type
   // unreachable to indicate nothing has been seen yet. When values conflict,
   // we mark this as type none to indicate failure. Otherwise, a concrete type
   // indicates we have seen one value so far.
-  Literal value = Literal(Type::unreachable);
-
-  bool hasNoted() const { return value.type == Type::unreachable; }
+  Literal value;
 };
 
 // Map of types to a vector of infos, one for each field.
@@ -132,7 +141,7 @@ struct FieldValueInfo
     if (iter != end()) {
       return iter->second;
     }
-    auto& ret = (*this)[type];
+    auto& ret = std::unordered_map<HeapType, std::vector<ValueInfo>>::operator[](type);
     ret.resize(type.getStruct().fields.size());
     return ret;
   }
@@ -204,8 +213,25 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     if (type == Type::unreachable) {
       return;
     }
-    // Find the info for this field, and see if all writes to it were constant.
+
+    // Find the info for this field, and see if we can optimize.
     auto& info = (*infos)[type.getHeapType()][curr->index];
+
+    Builder builder(*getModule());
+
+    if (!info.hasWrites()) {
+      // This field is never written at all. That means that we do not even
+      // construct any data of this type, and so it is a logic error to reach
+      // this location in the code. (Unless we are not in a closed-world
+      // situation, which we assume we are not in.) Replace this get with a
+      // trap. Note that we do not need to care about the nullability of the
+      // reference, as if it should have trapped, we are replacing it with
+      // another trap, which we allow to reorder.
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeUnreachable()));
+    }
+
     if (!info.isConstant()) {
       return;
     }
@@ -213,7 +239,6 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // We can do this! Replace the get with a throw on a null reference (as the
     // get would have done so), plus the constant value. (Leave it to further
     // optimizations to get rid of the ref.)
-    Builder builder(*getModule());
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
       builder.makeConstantExpression(info.getConstantValue())));
