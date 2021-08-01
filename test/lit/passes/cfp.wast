@@ -107,6 +107,40 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $struct (struct (field f32)))
+  (type $struct (struct f32))
+  ;; CHECK:      (type $f32_=>_none (func (param f32)))
+
+  ;; CHECK:      (func $test (param $f f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (local.get $f)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $f f32)
+    ;; The value given is not a constant, and so we cannot optimize.
+    (drop
+      (struct.new_with_rtt $struct
+        (local.get $f)
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
 ;; Create in one function, get in another. The 10 should be forwarded to the
 ;; get.
 (module
