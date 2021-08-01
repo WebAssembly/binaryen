@@ -491,13 +491,14 @@
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  ;; CHECK:      (type $substruct (struct (field i32)) (extends $struct))
-  (type $substruct (struct i32) (extends $struct))
+  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
   ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
   ;; CHECK-NEXT:    (rtt.canon $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -506,17 +507,20 @@
     (drop
       (struct.new_with_rtt $substruct
         (i32.const 10)
+        (f64.const 3.14159)
         (rtt.canon $substruct)
       )
     )
   )
   ;; CHECK:      (func $get
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $struct)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

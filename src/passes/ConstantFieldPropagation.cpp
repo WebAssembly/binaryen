@@ -328,10 +328,12 @@ combinedInfos.dump(std::cout);
 
     // Handle subtyping: If we see a write to type T of field F, then the object
     // at runtime might be of type T, or any subtype of T. We need to propagate
-    // the writes we have seen accordingly.
+    // the writes we have seen to all the subtypes of T.
     // TODO: assert nominal!
     // TODO: cycles are impossible with nominal supertypes, right? (even when
     //       not adding a field?)
+    // TODO: We only need to propagate struct.sets, and not values in creation,
+    //       as we know the precise type when creating.
     TypeGraph typeGraph;
     UniqueDeferredQueue<HeapType> work;
     for (auto& kv : combinedInfos) {
@@ -349,6 +351,30 @@ combinedInfos.dump(std::cout);
         for (Index i = 0; i < fields.size(); i++) {
           if (subInfos[i].combine(infos[i])) {
             work.push(subType);
+          }
+        }
+      }
+    }
+
+    // Prepare the data for assisting the optimization of struct.gets. When we
+    // see a struct.get of type T, the actual instance might be of a subtype,
+    // and so we should check not just T but all subtypes. To make that fast,
+    // propagate writes in the other direction, that is, from each T to its
+    // supertype.
+    for (auto& kv : combinedInfos) {
+      auto type = kv.first;
+      work.push(type);
+    }
+    while (!work.empty()) {
+      auto type = work.pop();
+      HeapType superType;
+      if (type.getSuperType(superType)) {
+        auto& infos = combinedInfos[type];
+        auto& superInfos = combinedInfos[superType];
+        auto& superFields = superType.getStruct().fields;
+        for (Index i = 0; i < superFields.size(); i++) {
+          if (superInfos[i].combine(infos[i])) {
+            work.push(superType);
           }
         }
       }
