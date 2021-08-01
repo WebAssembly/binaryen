@@ -2,31 +2,62 @@
 ;; RUN: wasm-opt %s --cfp -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (type $never-created (struct (field i32)))
   (type $never-created (struct i32))
 
-  (type $super-struct (struct i32))
+  ;; CHECK:      (type $default-created (struct (field i32)))
+  (type $default-created (struct i32))
 
-  (type $sub-struct (struct i32 i64) (extends $super-struct))
+  ;;  (type $sub-struct (struct i32 i64) (extends $struct))
 
-  ;; CHECK:      (func $get
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $impossible-get
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $never-created)
+  ;; CHECK-NEXT:     (ref.null $default-created)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $get
+  (func $impossible-get
     (drop
       ;; This type is never created, so a get is impossible, and we will emit a
       ;; trap.
       (struct.get $never-created 0
         (ref.null $never-created)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $single-set
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $default-created
+  ;; CHECK-NEXT:    (rtt.canon $default-created)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $default-created)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $single-set
+    ;; The only place this type is created is with a default value.
+    ;; (Note that the allocated reference is dropped here; this pass only looks
+    ;; for a creation at all.)
+    (drop
+      (struct.new_default_with_rtt $default-created
+        (rtt.canon $default-created)
+      )
+    )
+    (drop
+      (struct.get $default-created 0
+        (ref.null $default-created)
       )
     )
   )
