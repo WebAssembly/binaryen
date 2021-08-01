@@ -391,3 +391,50 @@
   )
 )
 
+;; Test for unreachable creations, sets, and gets.
+(module
+  (type $struct (struct (mut i32)))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.new_with_rtt $struct
+        (i32.const 10)
+        (unreachable)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (unreachable)
+      )
+    )
+    (struct.set $struct 0
+      (unreachable)
+      (i32.const 20)
+    )
+  )
+)
+

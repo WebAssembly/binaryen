@@ -1933,6 +1933,10 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
   }
   void visitStructNew(StructNew* curr) {
+    if (curr->rtt->type == Type::unreachable) {
+      printUnreachableReplacement();
+      return;
+    }
     printMedium(o, "struct.new_");
     if (curr->isWithDefault()) {
       o << "default_";

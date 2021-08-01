@@ -188,7 +188,7 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
     : functionInfos(functionInfos) {}
 
   void visitStructNew(StructNew* curr) {
-    auto type = curr->rtt->type;
+    auto type = curr->type;
     if (type == Type::unreachable) {
       return;
     }
