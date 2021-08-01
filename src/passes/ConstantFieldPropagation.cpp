@@ -57,7 +57,7 @@ struct ValueInfo {
 
   // Notes a value that is variable - unknown at compile time. This means we
   // fail to find a single constant value here.
-  void noteVariable() { value.type = Type::none; }
+  void noteVariable() { value = Literal(Type::none); }
 
   // Combine the information in a given ValueInfo to this one. This is the same
   // as if we have called note*() on us with all the history of calls to that
@@ -76,9 +76,9 @@ struct ValueInfo {
   }
 
   // Check if all the values are identical and constant.
-  bool isConstant() { return value.type.isConcrete(); }
+  bool isConstant() const { return value.type.isConcrete(); }
 
-  Literal getConstantValue() {
+  Literal getConstantValue() const {
     assert(isConstant());
     return value;
   }
@@ -90,7 +90,7 @@ private:
   // indicates we have seen one value so far.
   Literal value = Literal(Type::unreachable);
 
-  bool hasNoted() { return value.type == Type::unreachable; }
+  bool hasNoted() const { return value.type == Type::unreachable; }
 };
 
 // Map of types to a vector of infos, one for each field.
@@ -134,7 +134,7 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
       if (curr->isWithDefault()) {
         info.note(Literal::makeZero(type));
       } else {
-        noteExpression(expr, info);
+        noteExpression(curr->operands[i], info);
       }
     }
   }
@@ -149,12 +149,11 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
   }
 
 private:
-  const FunctionFieldValueInfo* functionInfos;
+  FunctionFieldValueInfo* functionInfos;
 
   FieldValueInfo& getInfos() { return (*functionInfos)[getFunction()]; }
 
   void noteExpression(Expression* expr, ValueInfo& info) {
-    auto* expr = curr->operands[i];
     if (!Properties::isConstantExpression(expr)) {
       info.noteVariable();
     } else {
@@ -192,7 +191,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
 private:
-  const FieldValueInfo* infos;
+  FieldValueInfo* infos;
 };
 
 struct ConstantFieldPropagation : public Pass {

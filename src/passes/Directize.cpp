@@ -39,7 +39,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   Pass* create() override { return new FunctionDirectizer(tables); }
 
   FunctionDirectizer(
-    const std::unordered_map<Name, TableUtils::FlatTable>* tables)
+    std::unordered_map<Name, TableUtils::FlatTable>* tables)
     : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
@@ -94,7 +94,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  const std::unordered_map<Name, TableUtils::FlatTable>* tables;
+  std::unordered_map<Name, TableUtils::FlatTable>* tables;
 
   bool changedTypes = false;
 
@@ -138,7 +138,7 @@ struct Directize : public Pass {
       return;
     }
     // The table exists and is constant, so this is possible.
-    FunctionDirectizer(validTables).run(runner, module);
+    FunctionDirectizer(&validTables).run(runner, module);
   }
 };
 
