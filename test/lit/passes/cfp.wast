@@ -2,20 +2,20 @@
 ;; RUN: wasm-opt %s --cfp -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $default-created (struct (field i64)))
+
+  ;; CHECK:      (type $never-created (struct (field i32)))
   (type $never-created (struct i32))
 
-  ;; CHECK:      (type $default-created (struct (field i32)))
-  (type $default-created (struct i32))
-
-  ;;  (type $sub-struct (struct i32 i64) (extends $struct))
-
-  ;; CHECK:      (type $none_=>_none (func))
+  (type $default-created (struct i64))
 
   ;; CHECK:      (func $impossible-get
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $default-created)
+  ;; CHECK-NEXT:     (ref.null $never-created)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -38,11 +38,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i64)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $default-created)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $default-created)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

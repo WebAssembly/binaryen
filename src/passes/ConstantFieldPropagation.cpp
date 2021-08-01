@@ -64,10 +64,11 @@ struct ValueInfo {
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
-    noted = true;
     if (!noted) {
       // This is the first value.
+std::cout << "a3\n";
       value = curr;
+      noted = true;
       return;
     }
 
@@ -81,8 +82,8 @@ struct ValueInfo {
   // Notes a value that is variable - unknown at compile time. This means we
   // fail to find a single constant value here.
   void noteVariable() {
-    noted = true;
     value = Literal(Type::none);
+    noted = true;
   }
 
   // Combine the information in a given ValueInfo to this one. This is the same
@@ -120,6 +121,18 @@ struct ValueInfo {
     return noted;
   }
 
+  void dump(std::ostream& o) {
+    o << '[';
+    if (!hasWrites()) {
+      o << "unwritten";
+    } else if (!isConstant()) {
+      o << "variable";
+    } else {
+      o << value;
+    }
+    o << ']';
+  }
+
 private:
   // Whether we have noted any values at all.
   bool noted = false;
@@ -141,9 +154,24 @@ struct FieldValueInfo
     if (iter != end()) {
       return iter->second;
     }
+std::cout << "alloc\n";
     auto& ret = std::unordered_map<HeapType, std::vector<ValueInfo>>::operator[](type);
     ret.resize(type.getStruct().fields.size());
     return ret;
+  }
+
+  void dump(std::ostream& o) {
+    o << "dump " << this << '\n';
+    for (auto& kv : (*this)) {
+      auto type = kv.first;
+      auto& vec = kv.second;
+      o << "dump " << type << " " << &vec << ' ';
+      for (auto x : vec) {
+        x.dump(o);
+        o << " ";
+      };
+      o << '\n';
+    }
   }
 };
 
@@ -164,13 +192,15 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
     if (type == Type::unreachable) {
       return;
     }
+std::cout << "a1\n";
     auto heapType = type.getHeapType();
     auto& infos = getInfos();
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
       auto& info = infos[heapType][i];
       if (curr->isWithDefault()) {
-        info.note(Literal::makeZero(type));
+std::cout << "a2 " << heapType << "\n";
+        info.note(Literal::makeZero(fields[i].type));
       } else {
         noteExpression(curr->operands[i], info);
       }
@@ -209,6 +239,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   FunctionOptimizer(FieldValueInfo* infos) : infos(infos) {}
 
   void visitStructGet(StructGet* curr) {
+std::cout << "b1\n";
     auto type = curr->ref->type;
     if (type == Type::unreachable) {
       return;
@@ -216,10 +247,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
     // Find the info for this field, and see if we can optimize.
     auto& info = (*infos)[type.getHeapType()][curr->index];
+std::cout << "b2 " << type.getHeapType() << " : ";
+info.dump(std::cout);
+std::cout << "\n";
+infos->dump(std::cout);
 
     Builder builder(*getModule());
 
     if (!info.hasWrites()) {
+std::cout << "b3\n";
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
       // this location in the code. (Unless we are not in a closed-world
@@ -233,6 +269,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     }
 
     if (!info.isConstant()) {
+std::cout << "b4\n";
       return;
     }
 
@@ -262,16 +299,28 @@ struct ConstantFieldPropagation : public Pass {
     // Combine the data from the functions.
     FieldValueInfo combinedInfos;
     for (auto& kv : functionInfos) {
+std::cout << "c1\n";
       FieldValueInfo& infos = kv.second;
       for (auto& kv : infos) {
         auto type = kv.first;
-        auto& vec = kv.second;
-        auto combinedInfo = combinedInfos[type];
-        for (Index i = 0; i < vec.size(); i++) {
-          combinedInfo[i].combine(vec[i]);
+std::cout << "c2 " << type << "\n";
+        auto& info = kv.second;
+        auto& combinedInfo = combinedInfos[type];
+        for (Index i = 0; i < info.size(); i++) {
+          combinedInfo[i].combine(info[i]);
+std::cout << "c3 ";
+info[i].dump(std::cout);
+std::cout << " => ";
+combinedInfo[i].dump(std::cout);
+std::cout << " at " << &combinedInfo << " : " << &combinedInfo[i] << "\n";
+std::cout << "now combined\n";
+combinedInfos.dump(std::cout);
         }
       }
     }
+
+std::cout << "final combined\n";
+combinedInfos.dump(std::cout);
 
     // Handle subtyping: If we see a write to type T of field F, then the object
     // at runtime might be of type T, or any subtype of T. We need to propagate
