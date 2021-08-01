@@ -143,17 +143,28 @@ private:
   Literal value;
 };
 
+// A vector of ValueInfos. One such vector will be used per type. We always
+// assume that the vectors are pre-initialized to the right length before
+// accessing any data, which this class enforces using assertions, and which is
+// implemented in FieldValueInfo.
+struct ValueInfoVec : public std::vector<ValueInfo> {
+  ValueInfo& operator[](size_t index) {
+    assert(index < size());
+    return std::vector<ValueInfo>::operator[](index);
+  }
+};
+
 // Map of types to a vector of infos, one for each field.
 struct FieldValueInfo
-  : public std::unordered_map<HeapType, std::vector<ValueInfo>> {
+  : public std::unordered_map<HeapType, ValueInfoVec> {
   // When we access an item, if it does not already exist, create it with a
   // vector of the right length.
-  std::vector<ValueInfo>& operator[](HeapType type) {
+  ValueInfoVec& operator[](HeapType type) {
     auto iter = find(type);
     if (iter != end()) {
       return iter->second;
     }
-    auto& ret = std::unordered_map<HeapType, std::vector<ValueInfo>>::operator[](type);
+    auto& ret = std::unordered_map<HeapType, ValueInfoVec>::operator[](type);
     ret.resize(type.getStruct().fields.size());
     return ret;
   }
@@ -244,22 +255,37 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    // Find the info for this field, and see if we can optimize.
-    auto& info = (*infos)[type.getHeapType()][curr->index];
-
     Builder builder(*getModule());
 
-    if (!info.hasWrites()) {
-      // This field is never written at all. That means that we do not even
-      // construct any data of this type, and so it is a logic error to reach
-      // this location in the code. (Unless we are not in a closed-world
-      // situation, which we assume we are not in.) Replace this get with a
-      // trap. Note that we do not need to care about the nullability of the
-      // reference, as if it should have trapped, we are replacing it with
-      // another trap, which we allow to reorder.
+    // Replace this get with a
+    // trap. Note that we do not need to care about the nullability of the
+    // reference, as if it should have trapped, we are replacing it with
+    // another trap, which we allow to reorder.
+    //
+    // This is called when the field is never written at all. That means that we do not even
+    // construct any data of this type, and so it is a logic error to reach
+    // this location in the code. (Unless we are not in a closed-world
+    // situation, which we assume we are not in.)
+    auto replaceWithTrap = [&]() {
       replaceCurrent(builder.makeSequence(
         builder.makeDrop(curr->ref),
         builder.makeUnreachable()));
+    };
+
+    // Find the info for this field, and see if we can optimize.
+    auto iter = infos->find(type.getHeapType());
+    if (iter == infos->end()) {
+      // We have no information on this type at all. That means it cannot be
+      // created or have writes to it.
+      return replaceWithTrap();
+    }
+
+    auto& info = iter->second[curr->index];
+
+    if (!info.hasWrites()) {
+      // This is similar to the above case, but where we have some information
+      // for the type. This can happen if it has sub/super-types.
+      return replaceWithTrap();
     }
 
     if (!info.isConstant()) {
