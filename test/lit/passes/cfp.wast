@@ -248,3 +248,59 @@
   )
 )
 
+;; As the last testcase, but the values happen to coincide, so we can optimize
+;; the get into a constant.
+(module
+  ;; CHECK:      (type $struct (struct (field (mut f32))))
+  (type $struct (struct (mut f32)))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (f32.const 42)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct
+        (f32.const 42)
+        (rtt.canon $struct)
+      )
+    )
+  )
+  ;; CHECK:      (func $set
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (f32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set
+    (struct.set $struct 0
+      (ref.null $struct)
+      (f32.const 42) ;; The last testcase had 1337 here.
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
