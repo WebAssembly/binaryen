@@ -32,7 +32,7 @@
   (type $struct (struct i64))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (func $struct
+  ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
   ;; CHECK-NEXT:    (rtt.canon $struct)
@@ -49,7 +49,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $struct
+  (func $test
     ;; The only place this type is created is with a default value.
     ;; (Note that the allocated reference is dropped here; this pass only looks
     ;; for a creation at all.)
@@ -71,7 +71,7 @@
   (type $struct (struct f32))
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (func $struct
+  ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_with_rtt $struct
   ;; CHECK-NEXT:    (f32.const 42)
@@ -89,7 +89,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $struct
+  (func $test
     ;; The only place this type is created is with a value value.
     ;; (Note that the allocated reference is dropped here; this pass only looks
     ;; for a creation at all.)
@@ -150,3 +150,101 @@
     )
   )
 )
+
+;; Different values assigned in the same function, in different constructions,
+;; so the struct.get must be retained as it is .
+(module
+  ;; CHECK:      (type $struct (struct (field f32)))
+  (type $struct (struct f32))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (f32.const 42)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (f32.const 1337)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.new_with_rtt $struct
+        (f32.const 42)
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $struct
+        (f32.const 1337)
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
+;; Different values assigned in different functions, and one is a struct.set.
+(module
+  ;; CHECK:      (type $struct (struct (field (mut f32))))
+  (type $struct (struct (mut f32)))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (f32.const 42)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct
+        (f32.const 42)
+        (rtt.canon $struct)
+      )
+    )
+  )
+  ;; CHECK:      (func $set
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (f32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set
+    (struct.set $struct 0
+      (ref.null $struct)
+      (f32.const 1337)
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
