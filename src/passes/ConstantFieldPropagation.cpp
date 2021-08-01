@@ -188,12 +188,12 @@ struct FieldValueInfo
 using FunctionFieldValueInfo = std::unordered_map<Function*, FieldValueInfo>;
 
 // Scan each function to find all its writes to struct fields.
-struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
+struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionScanner(functionInfos); }
+  Pass* create() override { return new Scanner(functionInfos); }
 
-  FunctionScanner(FunctionFieldValueInfo* functionInfos)
+  Scanner(FunctionFieldValueInfo* functionInfos)
     : functionInfos(functionInfos) {}
 
   void visitStructNew(StructNew* curr) {
@@ -221,6 +221,17 @@ struct FunctionScanner : public WalkerPass<PostWalker<FunctionScanner>> {
     }
     auto heapType = type.getHeapType();
     noteExpression(curr->value, getInfos()[heapType][curr->index]);
+  }
+
+  void visitStructGet(StructGet* curr) {
+    auto type = curr->ref->type;
+    if (type == Type::unreachable) {
+      return;
+    }
+
+    // Ensure the heap type is noted, so that later we can assume all heap types
+    // are represented in the map.
+    getInfos()[type.getHeapType()];
   }
 
 private:
@@ -255,37 +266,24 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
+    // Find the info for this field, and see if we can optimize.
+    // Note that the heap type must already be in the map here, as we operate on
+    // it in parallel, hence at().
+    auto& info = infos->at(type.getHeapType())[curr->index];
+
     Builder builder(*getModule());
 
-    // Replace this get with a
-    // trap. Note that we do not need to care about the nullability of the
-    // reference, as if it should have trapped, we are replacing it with
-    // another trap, which we allow to reorder.
-    //
-    // This is called when the field is never written at all. That means that we do not even
-    // construct any data of this type, and so it is a logic error to reach
-    // this location in the code. (Unless we are not in a closed-world
-    // situation, which we assume we are not in.)
-    auto replaceWithTrap = [&]() {
+    if (!info.hasWrites()) {
+      // This field is never written at all. That means that we do not even
+      // construct any data of this type, and so it is a logic error to reach
+      // this location in the code. (Unless we are not in a closed-world
+      // situation, which we assume we are not in.) Replace this get with a
+      // trap. Note that we do not need to care about the nullability of the
+      // reference, as if it should have trapped, we are replacing it with
+      // another trap, which we allow to reorder.
       replaceCurrent(builder.makeSequence(
         builder.makeDrop(curr->ref),
         builder.makeUnreachable()));
-    };
-
-    // Find the info for this field, and see if we can optimize.
-    auto iter = infos->find(type.getHeapType());
-    if (iter == infos->end()) {
-      // We have no information on this type at all. That means it cannot be
-      // created or have writes to it.
-      return replaceWithTrap();
-    }
-
-    auto& info = iter->second[curr->index];
-
-    if (!info.hasWrites()) {
-      // This is similar to the above case, but where we have some information
-      // for the type. This can happen if it has sub/super-types.
-      return replaceWithTrap();
     }
 
     if (!info.isConstant()) {
@@ -313,7 +311,9 @@ struct ConstantFieldPropagation : public Pass {
       // structure in parallel without modifying it.
       functionInfos[func.get()];
     }
-    FunctionScanner(&functionInfos).run(runner, module);
+    Scanner scanner(&functionInfos);
+    scanner.run(runner, module);
+    scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
     FieldValueInfo combinedInfos;
