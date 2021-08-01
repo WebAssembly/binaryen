@@ -18,8 +18,8 @@
   ;; CHECK-NEXT: )
   (func $impossible-get
     (drop
-      ;; This type is never created, so a get is impossible, and we will emit a
-      ;; trap.
+      ;; This type is never created, so a get is impossible, and we will trap
+      ;; anyhow. So we can turn this into an unreachable.
       (struct.get $struct 0
         (ref.null $struct)
       )
@@ -438,3 +438,47 @@
   )
 )
 
+;; Subtyping: Create a supertype and get a subtype. As we never create a
+;;            subtype, the get must trap anyhow, and can be an unreachable.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+  ;; CHECK:      (type $substruct (struct (field i32)) (extends $struct))
+  (type $substruct (struct i32) (extends $struct))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct
+        (i32.const 10)
+        (rtt.canon $struct)
+      )
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $substruct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    (drop
+      (struct.get $substruct 0
+        (ref.null $substruct)
+      )
+    )
+  )
+)

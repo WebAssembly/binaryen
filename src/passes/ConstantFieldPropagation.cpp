@@ -231,6 +231,10 @@ private:
 };
 
 // Optimize struct gets based on what we've learned about writes.
+//
+// TODO Aside from writes, we could use information like whether any struct of
+//      this type has even been created (to handle the case of struct.sets but
+//      no struct.news.
 struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   bool isFunctionParallel() override { return true; }
 
