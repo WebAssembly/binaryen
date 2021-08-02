@@ -251,41 +251,6 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
       builder->makeCall(name, {curr->left, curr->right}, curr->type));
   }
 
-  void visitUnary(Unary* curr) {
-    Name functionCall;
-    switch (curr->op) {
-      case NearestFloat32:
-        functionCall = WASM_NEAREST_F32;
-        break;
-      case NearestFloat64:
-        functionCall = WASM_NEAREST_F64;
-        break;
-
-      case PopcntInt64:
-        functionCall = WASM_POPCNT64;
-        break;
-      case PopcntInt32:
-        functionCall = WASM_POPCNT32;
-        break;
-
-      case CtzInt64:
-        functionCall = WASM_CTZ64;
-        break;
-      case CtzInt32:
-        functionCall = WASM_CTZ32;
-        break;
-
-      default:
-        return;
-    }
-    neededIntrinsics.insert(functionCall);
-    replaceCurrent(builder->makeCall(functionCall, {curr->value}, curr->type));
-  }
-
-  void visitGlobalGet(GlobalGet* curr) {
-    neededImportedGlobals.insert(std::make_pair(curr->name, curr->type));
-  }
-
   void rewriteCopysign(Binary* curr) {
 
     // i32.copysign(x, y)   =>   f32.reinterpret(
@@ -335,6 +300,41 @@ struct RemoveNonJSOpsPass : public WalkerPass<PostWalker<RemoveNonJSOpsPass>> {
         builder->makeBinary(bitAnd,
                             builder->makeUnary(float2int, curr->right),
                             builder->makeConst(signBit)))));
+  }
+
+  void visitUnary(Unary* curr) {
+    Name functionCall;
+    switch (curr->op) {
+      case NearestFloat32:
+        functionCall = WASM_NEAREST_F32;
+        break;
+      case NearestFloat64:
+        functionCall = WASM_NEAREST_F64;
+        break;
+
+      case PopcntInt64:
+        functionCall = WASM_POPCNT64;
+        break;
+      case PopcntInt32:
+        functionCall = WASM_POPCNT32;
+        break;
+
+      case CtzInt64:
+        functionCall = WASM_CTZ64;
+        break;
+      case CtzInt32:
+        functionCall = WASM_CTZ32;
+        break;
+
+      default:
+        return;
+    }
+    neededIntrinsics.insert(functionCall);
+    replaceCurrent(builder->makeCall(functionCall, {curr->value}, curr->type));
+  }
+
+  void visitGlobalGet(GlobalGet* curr) {
+    neededImportedGlobals.insert(std::make_pair(curr->name, curr->type));
   }
 };
 
