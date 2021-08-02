@@ -517,9 +517,9 @@
   )
 )
 
-;; Subtyping: Create a subtype and get a supertype. The get may be of a subtype
-;;            instance was passed into a reference to the supertype. As in this
-;;            case it is the only write, we can optimize it.
+;; Subtyping: Create a subtype and get a supertype. We never create a supertype,
+;;            so the reference must be null in the get, and we will trap anyhow,
+;;            and so it is ok to optimize this.
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -539,6 +539,67 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
+    (drop
+      (struct.new_with_rtt $substruct
+        (i32.const 10)
+        (f64.const 3.14159)
+        (rtt.canon $substruct)
+      )
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
+;; Subtyping: Create both a subtype and a supertype, with identical constants
+;;            for the shared field, and get the supertype.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  (type $substruct (struct i32 f64) (extends $struct))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (rtt.canon $substruct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct
+        (i32.const 10)
+        (rtt.canon $struct)
+      )
+    )
     (drop
       (struct.new_with_rtt $substruct
         (i32.const 10)
