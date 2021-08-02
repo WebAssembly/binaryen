@@ -92,9 +92,9 @@ struct PossibleConstantValues {
     noted = true;
   }
 
-  // Combine the information in a given PossibleConstantValues to this one. This is the same
-  // as if we have called note*() on us with all the history of calls to that
-  // other object.
+  // Combine the information in a given PossibleConstantValues to this one. This
+  // is the same as if we have called note*() on us with all the history of
+  // calls to that other object.
   //
   // Returns whether we changed anything.
   bool combine(const PossibleConstantValues& other) {
@@ -123,9 +123,7 @@ struct PossibleConstantValues {
     return value;
   }
 
-  bool hasWrites() const {
-    return noted;
-  }
+  bool hasWrites() const { return noted; }
 
   void dump(std::ostream& o) {
     o << '[';
@@ -150,11 +148,11 @@ private:
   Literal value;
 };
 
-// A vector of PossibleConstantValues. One such vector will be used per struct type,
-// where each element in the vector represents a field. We always
-// assume that the vectors are pre-initialized to the right length before
-// accessing any data, which this class enforces using assertions, and which is
-// implemented in StructValuesMap.
+// A vector of PossibleConstantValues. One such vector will be used per struct
+// type, where each element in the vector represents a field. We always assume
+// that the vectors are pre-initialized to the right length before accessing any
+// data, which this class enforces using assertions, and which is implemented in
+// StructValuesMap.
 struct StructValues : public std::vector<PossibleConstantValues> {
   PossibleConstantValues& operator[](size_t index) {
     assert(index < size());
@@ -165,8 +163,7 @@ struct StructValues : public std::vector<PossibleConstantValues> {
 // Map of types to information about the values its fields can take. Concretely,
 // this mapes a type to a StructValues which has one element per
 // field.
-struct StructValuesMap
-  : public std::unordered_map<HeapType, StructValues> {
+struct StructValuesMap : public std::unordered_map<HeapType, StructValues> {
   // When we access an item, if it does not already exist, create it with a
   // vector of the right length.
   StructValues& operator[](HeapType type) {
@@ -291,9 +288,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       // trap. Note that we do not need to care about the nullability of the
       // reference, as if it should have trapped, we are replacing it with
       // another trap, which we allow to reorder.
-      replaceCurrent(builder.makeSequence(
-        builder.makeDrop(curr->ref),
-        builder.makeUnreachable()));
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeUnreachable()));
     }
 
     if (!info.isConstant()) {

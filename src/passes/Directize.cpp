@@ -38,8 +38,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
 
   Pass* create() override { return new FunctionDirectizer(tables); }
 
-  FunctionDirectizer(
-    std::unordered_map<Name, TableUtils::FlatTable>* tables)
+  FunctionDirectizer(std::unordered_map<Name, TableUtils::FlatTable>* tables)
     : tables(tables) {}
 
   void visitCallIndirect(CallIndirect* curr) {
