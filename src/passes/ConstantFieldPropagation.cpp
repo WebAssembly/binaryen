@@ -211,6 +211,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     if (type == Type::unreachable) {
       return;
     }
+
+    // Note writes to all the fields of the struct.
     auto heapType = type.getHeapType();
     auto& infos = getInfos();
     auto& fields = heapType.getStruct().fields;
@@ -229,6 +231,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     if (type == Type::unreachable) {
       return;
     }
+
+    // Note a write to this field of the struct.
     auto heapType = type.getHeapType();
     noteExpression(curr->value, getInfos()[heapType][curr->index]);
   }
@@ -238,6 +242,7 @@ private:
 
   StructValuesMap& getInfos() { return (*functionInfos)[getFunction()]; }
 
+  // Note a value, checking whether it is a constant or not.
   void noteExpression(Expression* expr, PossibleConstantValues& info) {
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
@@ -251,7 +256,7 @@ private:
 //
 // TODO Aside from writes, we could use information like whether any struct of
 //      this type has even been created (to handle the case of struct.sets but
-//      no struct.news.
+//      no struct.news).
 struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   bool isFunctionParallel() override { return true; }
 
@@ -268,7 +273,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     Builder builder(*getModule());
 
     // Find the info for this field, and see if we can optimize. First, see if
-    // there is any information for this heap type at all.
+    // there is any information for this heap type at all. If there isn't, it is
+    // as if nothing was ever noted for that field.
     PossibleConstantValues info;
     assert(!info.hasNoted());
     auto iter = infos->find(type.getHeapType());
@@ -306,8 +312,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
   void doWalkFunction(Function* func) {
-    // If we changed any types, we need to update parents.
     WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
+
+    // If we changed any types, we need to update parents.
     if (changedTypes) {
       ReFinalize().walkFunctionInModule(func, getModule());
     }
@@ -346,14 +353,10 @@ struct ConstantFieldPropagation : public Pass {
       }
     }
 
-    // Handle subtyping: If we see a write to type T of field F, then the object
-    // at runtime might be of type T, or any subtype of T. We need to propagate
-    // the writes we have seen to all the subtypes of T.
+    // Handle subtyping.
     // TODO: assert nominal!
     // TODO: cycles are impossible with nominal supertypes, right? (even when
     //       not adding a field?)
-    // TODO: We only need to propagate struct.sets, and not values in creation,
-    //       as we know the precise type when creating.
     TypeGraph typeGraph;
     UniqueDeferredQueue<HeapType> work;
     for (auto& kv : combinedInfos) {
@@ -364,8 +367,14 @@ struct ConstantFieldPropagation : public Pass {
     while (!work.empty()) {
       auto type = work.pop();
       auto& infos = combinedInfos[type];
-      auto& subTypes = typeGraph.getSubTypes(type);
       auto& fields = type.getStruct().fields;
+
+      // If we see a set to type T of field F, then the object at runtime might
+      // be of type T, or any subtype of T. We need to propagate the writes we
+      // have seen to all the subtypes of T.
+      // TODO: We only need to propagate struct.sets this way, and not
+      //       struct.news.
+      auto& subTypes = typeGraph.getSubTypes(type);
       for (auto subType : subTypes) {
         auto& subInfos = combinedInfos[subType];
         for (Index i = 0; i < fields.size(); i++) {
@@ -374,19 +383,11 @@ struct ConstantFieldPropagation : public Pass {
           }
         }
       }
-    }
 
-    // Prepare the data for assisting the optimization of struct.gets. When we
-    // see a struct.get of type T, the actual instance might be of a subtype,
-    // and so we should check not just T but all subtypes. To make that fast,
-    // propagate writes in the other direction, that is, from each T to its
-    // supertype.
-    for (auto& kv : combinedInfos) {
-      auto type = kv.first;
-      work.push(type);
-    }
-    while (!work.empty()) {
-      auto type = work.pop();
+      // We will use this data structure for optimizing struct.gets: given a
+      // struct.get of type T, we need to know if the field was written to. The
+      // value at runtime could be a subtype of T, and so we also propagate in
+      // the other direction, where the field exists.
       HeapType superType;
       if (type.getSuperType(superType)) {
         auto& infos = combinedInfos[type];
