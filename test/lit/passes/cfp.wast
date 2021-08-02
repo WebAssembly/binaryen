@@ -629,6 +629,62 @@
   )
 )
 
+;; Subtyping: Create both a subtype and a supertype, with different constants
+;;            for the shared field, preventing optimization.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  (type $substruct (struct i32 f64) (extends $struct))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (rtt.canon $substruct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct
+        (i32.const 10)
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $substruct
+        (i32.const 20)
+        (f64.const 3.14159)
+        (rtt.canon $substruct)
+      )
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
 ;; Test for a struct with multiple fields, some of which are constant and hence
 ;; optimizable, and some not. Also test that some have the same type.
 (module
