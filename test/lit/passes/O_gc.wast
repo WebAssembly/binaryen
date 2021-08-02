@@ -2,21 +2,21 @@
 
 ;; RUN: wasm-opt %s -O --all-features -S -o - | filecheck %s
 ;; RUN: wasm-opt %s -O --all-features --nominal -S -o - | filecheck %s
-;; RUN: wasm-opt %s -O --all-features --ignore-implicit-traps -S -o - | filecheck %s --check-prefix=TRAPS
-;; RUN: wasm-opt %s -O --all-features --ignore-implicit-traps --nominal -S -o - | filecheck %s --check-prefix=TRAPS
+;; RUN: wasm-opt %s -O --all-features --ignore-implicit-traps -S -o - | filecheck %s --check-prefix=IGNORE-TRAPS
+;; RUN: wasm-opt %s -O --all-features --ignore-implicit-traps --nominal -S -o - | filecheck %s --check-prefix=IGNORE-TRAPS
 
 ;; Test that we can run GC types through the optimizer
 (module
   ;; CHECK:      (type $struct.A (struct (field i32)))
-  ;; TRAPS:      (type $ref?|$struct.A|_=>_none (func (param (ref null $struct.A))))
+  ;; IGNORE-TRAPS:      (type $ref?|$struct.A|_=>_none (func (param (ref null $struct.A))))
 
-  ;; TRAPS:      (type $struct.A (struct (field i32)))
+  ;; IGNORE-TRAPS:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
 
   ;; CHECK:      (type $ref?|$struct.A|_=>_none (func (param (ref null $struct.A))))
 
   ;; CHECK:      (export "foo" (func $foo))
-  ;; TRAPS:      (export "foo" (func $foo))
+  ;; IGNORE-TRAPS:      (export "foo" (func $foo))
   (export "foo" (func $foo))
 
   ;; CHECK:      (func $foo (; has Stack IR ;) (param $0 (ref null $struct.A))
@@ -26,9 +26,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  ;; TRAPS:      (func $foo (; has Stack IR ;) (param $0 (ref null $struct.A))
-  ;; TRAPS-NEXT:  (nop)
-  ;; TRAPS-NEXT: )
+  ;; IGNORE-TRAPS:      (func $foo (; has Stack IR ;) (param $0 (ref null $struct.A))
+  ;; IGNORE-TRAPS-NEXT:  (nop)
+  ;; IGNORE-TRAPS-NEXT: )
   (func $foo (param $x (ref null $struct.A))
     ;; get a struct reference
     (drop
