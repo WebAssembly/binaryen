@@ -19,7 +19,8 @@
   (func $impossible-get
     (drop
       ;; This type is never created, so a get is impossible, and we will trap
-      ;; anyhow. So we can turn this into an unreachable.
+      ;; anyhow. So we can turn this into an unreachable (plus a drop of the
+      ;; reference).
       (struct.get $struct 0
         (ref.null $struct)
       )
@@ -50,9 +51,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; The only place this type is created is with a default value.
-    ;; (Note that the allocated reference is dropped here; this pass only looks
-    ;; for a creation at all.)
+    ;; The only place this type is created is with a default value, and so we
+    ;; can optimize the later get into a constant (plus a drop of the ref).
+    ;;
+    ;; (Note that the allocated reference is dropped here, so it is not actually
+    ;; used anywhere, but this pass does not attempt to trace the paths of
+    ;; references escaping and being stored etc. - it just thinks at the type
+    ;; level.)
     (drop
       (struct.new_default_with_rtt $struct
         (rtt.canon $struct)
@@ -90,9 +95,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    ;; The only place this type is created is with a value value.
-    ;; (Note that the allocated reference is dropped here; this pass only looks
-    ;; for a creation at all.)
+    ;; The only place this type is created is with a constant value, and so we
+    ;; can optimize the later get into a constant (plus a drop of the ref).
     (drop
       (struct.new_with_rtt $struct
         (f32.const 42)
@@ -231,8 +235,8 @@
   )
 )
 
-;; Different values assigned in the same function, in different constructions,
-;; so the struct.get must be retained as it is .
+;; Different values assigned in the same function, in different struct.news,
+;; so we cannot optimize the struct.get away.
 (module
   ;; CHECK:      (type $struct (struct (field f32)))
   (type $struct (struct f32))
@@ -473,7 +477,9 @@
 )
 
 ;; Subtyping: Create a supertype and get a subtype. As we never create a
-;;            subtype, the get must trap anyhow, and can be an unreachable.
+;;            subtype, the get must trap anyhow (the reference it receives can
+;;            only by null in this closed world) and we can optimize this get
+;;            into an unreachable.
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -517,9 +523,9 @@
   )
 )
 
-;; Subtyping: Create a subtype and get a supertype. We never create a supertype,
-;;            so the reference must be null in the get, and we will trap anyhow,
-;;            and so it is ok to optimize this.
+;; Subtyping: Create a subtype and get a supertype. The get must receive a
+;;            reference to the subtype (we never create a supertype) and so we
+;;            can optimize.
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -776,7 +782,7 @@
   (func $create
     (drop
       (struct.new_with_rtt $struct
-        (i32.eqz (i32.const 10)) ;; not a constant
+        (i32.eqz (i32.const 10)) ;; not a constant (as far as this pass knows)
         (f64.const 3.14159)
         (i32.const 20)
         (f64.abs (f64.const 2.71828)) ;; not a constant
