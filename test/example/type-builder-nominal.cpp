@@ -323,6 +323,20 @@ void test_subtypes() {
   }
 
   {
+    // Subtype declarations, but still no subtypes
+    std::vector<HeapType> built;
+    {
+      TypeBuilder builder(3);
+      builder[0].subTypeOf(builder[1]);
+      builder[0] = Struct{};
+      builder[1] = Struct{};
+      builder[2] = Struct{};
+      built = builder.build();
+    }
+    assert(LUB(built[0], built[2]) == HeapType::data);
+  }
+
+  {
     // Subtyping of identical types
     std::vector<HeapType> built;
     {
