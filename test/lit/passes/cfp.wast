@@ -630,7 +630,8 @@
 )
 
 ;; Subtyping: Create both a subtype and a supertype, with different constants
-;;            for the shared field, preventing optimization.
+;;            for the shared field, preventing optimization, as a get of the
+;;            supertype may receive an instance of the subtype.
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
@@ -680,6 +681,69 @@
     (drop
       (struct.get $struct 0
         (ref.null $struct)
+      )
+    )
+  )
+)
+
+;; Subtyping: Create both a subtype and a supertype, with different constants
+;;            for the shared field, but get from the subtype, which indicates
+;;            we must not be confused by the supertype, and can optimize.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+  (type $substruct (struct i32 f64) (extends $struct))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $substruct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (rtt.canon $substruct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct
+        (i32.const 10)
+        (rtt.canon $struct)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $substruct
+        (i32.const 20)
+        (f64.const 3.14159)
+        (rtt.canon $substruct)
+      )
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $substruct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    (drop
+      (struct.get $substruct 0
+        (ref.null $substruct)
       )
     )
   )
