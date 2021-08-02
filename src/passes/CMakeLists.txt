@@ -52,6 +52,7 @@ set(passes_SOURCES
   NoExitRuntime.cpp
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
+  OptimizeForJS.cpp
   PickLoadSigns.cpp
   Poppify.cpp
   PostEmscripten.cpp

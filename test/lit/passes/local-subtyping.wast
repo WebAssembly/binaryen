@@ -249,4 +249,39 @@
       (local.get $x)
     )
   )
+
+  ;; CHECK:      (func $unreachables (result funcref)
+  ;; CHECK-NEXT:  (local $temp (ref null $none_=>_funcref))
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (ref.func $unreachables)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $block (result (ref null $none_=>_funcref))
+  ;; CHECK-NEXT:    (local.tee $temp
+  ;; CHECK-NEXT:     (ref.func $unreachables)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $temp)
+  ;; CHECK-NEXT: )
+  (func $unreachables (result funcref)
+    (local $temp funcref)
+    ;; Set a value that allows us to refine the local's type.
+    (local.set $temp
+      (ref.func $unreachables)
+    )
+    (unreachable)
+    ;; A tee that is not reachable. We must still update its type, and the
+    ;; parents.
+    (drop
+      (block (result funcref)
+        (local.tee $temp
+          (ref.func $unreachables)
+        )
+      )
+    )
+    ;; A get that is not reachable. We must still update its type.
+    (local.get $temp)
+  )
 )

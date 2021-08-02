@@ -102,6 +102,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
     // TODO: handle cycles of X -> Y -> X etc.
 
     bool more;
+    bool optimized = false;
 
     do {
       more = false;
@@ -150,6 +151,7 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           assert(Type::isSubType(newType, oldType));
           func->vars[i - varBase] = newType;
           more = true;
+          optimized = true;
 
           // Update gets and tees.
           for (auto* get : getsForLocal[i]) {
@@ -167,6 +169,24 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         }
       }
     } while (more);
+
+    // If we ever optimized, then we also need to do a final pass to update any
+    // unreachable gets and tees. They are not seen or updated in the above
+    // analysis, but must be fixed up for validation to work.
+    if (optimized) {
+      for (auto* get : FindAll<LocalGet>(func->body).list) {
+        get->type = func->getLocalType(get->index);
+      }
+      for (auto* set : FindAll<LocalSet>(func->body).list) {
+        if (set->isTee()) {
+          set->type = func->getLocalType(set->index);
+          set->finalize();
+        }
+      }
+
+      // Also update their parents.
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
   }
 };
 

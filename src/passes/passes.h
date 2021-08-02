@@ -80,6 +80,7 @@ Pass* createNoExitRuntimePass();
 Pass* createOptimizeAddedConstantsPass();
 Pass* createOptimizeAddedConstantsPropagatePass();
 Pass* createOptimizeInstructionsPass();
+Pass* createOptimizeForJSPass();
 Pass* createOptimizeStackIRPass();
 Pass* createPickLoadSignsPass();
 Pass* createModAsyncifyAlwaysOnlyUnwindPass();
