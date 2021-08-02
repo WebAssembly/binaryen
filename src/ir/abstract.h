@@ -29,6 +29,7 @@ enum Op {
   // Unary
   Abs,
   Neg,
+  Popcnt,
   // Binary
   Add,
   Sub,
@@ -81,6 +82,8 @@ inline UnaryOp getUnary(Type type, Op op) {
       switch (op) {
         case EqZ:
           return EqZInt32;
+        case Popcnt:
+          return PopcntInt32;
         default:
           return InvalidUnary;
       }
@@ -90,6 +93,8 @@ inline UnaryOp getUnary(Type type, Op op) {
       switch (op) {
         case EqZ:
           return EqZInt64;
+        case Popcnt:
+          return PopcntInt64;
         default:
           return InvalidUnary;
       }
