@@ -59,8 +59,15 @@ private:
   std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
 };
 
-// Represents data about the values written.
-struct ValueInfo {
+// Represents data about what constant values are possible in a particular
+// place. There may be no values, or one, or many, or if a non-constant value is
+// possible, then all we can say is that the value is "unknown" - it can be
+// anything.
+//
+// Currently this just looks for a single constant value, and even two constant
+// values are treated as unknown. It may be worth optimizing more than that.
+// TODO look into that
+struct PossibleConstantValues {
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
@@ -74,23 +81,23 @@ struct ValueInfo {
     // This is a subsequent value. Check if it is different from all previous
     // ones.
     if (value != curr) {
-      noteVariable();
+      noteUnknown();
     }
   }
 
-  // Notes a value that is variable - unknown at compile time. This means we
-  // fail to find a single constant value here.
-  void noteVariable() {
+  // Notes a value that is unknown - it can be anything. We have failed to
+  // identify a constant value here.
+  void noteUnknown() {
     value = Literal(Type::none);
     noted = true;
   }
 
-  // Combine the information in a given ValueInfo to this one. This is the same
+  // Combine the information in a given PossibleConstantValues to this one. This is the same
   // as if we have called note*() on us with all the history of calls to that
   // other object.
   //
   // Returns whether we changed anything.
-  bool combine(const ValueInfo& other) {
+  bool combine(const PossibleConstantValues& other) {
     if (!other.noted) {
       return false;
     }
@@ -102,7 +109,7 @@ struct ValueInfo {
       return false;
     }
     if (!other.isConstant() || getConstantValue() != other.getConstantValue()) {
-      noteVariable();
+      noteUnknown();
       return true;
     }
     return false;
@@ -125,7 +132,7 @@ struct ValueInfo {
     if (!hasWrites()) {
       o << "unwritten";
     } else if (!isConstant()) {
-      o << "variable";
+      o << "unknown";
     } else {
       o << value;
     }
@@ -143,28 +150,31 @@ private:
   Literal value;
 };
 
-// A vector of ValueInfos. One such vector will be used per type. We always
+// A vector of PossibleConstantValues. One such vector will be used per struct type,
+// where each element in the vector represents a field. We always
 // assume that the vectors are pre-initialized to the right length before
 // accessing any data, which this class enforces using assertions, and which is
-// implemented in FieldValueInfo.
-struct ValueInfoVec : public std::vector<ValueInfo> {
-  ValueInfo& operator[](size_t index) {
+// implemented in StructValuesMap.
+struct StructValues : public std::vector<PossibleConstantValues> {
+  PossibleConstantValues& operator[](size_t index) {
     assert(index < size());
-    return std::vector<ValueInfo>::operator[](index);
+    return std::vector<PossibleConstantValues>::operator[](index);
   }
 };
 
-// Map of types to a vector of infos, one for each field.
-struct FieldValueInfo
-  : public std::unordered_map<HeapType, ValueInfoVec> {
+// Map of types to information about the values its fields can take. Concretely,
+// this mapes a type to a StructValues which has one element per
+// field.
+struct StructValuesMap
+  : public std::unordered_map<HeapType, StructValues> {
   // When we access an item, if it does not already exist, create it with a
   // vector of the right length.
-  ValueInfoVec& operator[](HeapType type) {
+  StructValues& operator[](HeapType type) {
     auto iter = find(type);
     if (iter != end()) {
       return iter->second;
     }
-    auto& ret = std::unordered_map<HeapType, ValueInfoVec>::operator[](type);
+    auto& ret = std::unordered_map<HeapType, StructValues>::operator[](type);
     ret.resize(type.getStruct().fields.size());
     return ret;
   }
@@ -185,7 +195,7 @@ struct FieldValueInfo
 };
 
 // Map of function to their field value infos. We compute those in parallel.
-using FunctionFieldValueInfo = std::unordered_map<Function*, FieldValueInfo>;
+using FunctionStructValuesMap = std::unordered_map<Function*, StructValuesMap>;
 
 // Scan each function to find all its writes to struct fields.
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
@@ -193,7 +203,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
   Pass* create() override { return new Scanner(functionInfos); }
 
-  Scanner(FunctionFieldValueInfo* functionInfos)
+  Scanner(FunctionStructValuesMap* functionInfos)
     : functionInfos(functionInfos) {}
 
   void visitStructNew(StructNew* curr) {
@@ -235,13 +245,13 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   }
 
 private:
-  FunctionFieldValueInfo* functionInfos;
+  FunctionStructValuesMap* functionInfos;
 
-  FieldValueInfo& getInfos() { return (*functionInfos)[getFunction()]; }
+  StructValuesMap& getInfos() { return (*functionInfos)[getFunction()]; }
 
-  void noteExpression(Expression* expr, ValueInfo& info) {
+  void noteExpression(Expression* expr, PossibleConstantValues& info) {
     if (!Properties::isConstantExpression(expr)) {
-      info.noteVariable();
+      info.noteUnknown();
     } else {
       info.note(Properties::getLiteral(expr));
     }
@@ -258,7 +268,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   Pass* create() override { return new FunctionOptimizer(infos); }
 
-  FunctionOptimizer(FieldValueInfo* infos) : infos(infos) {}
+  FunctionOptimizer(StructValuesMap* infos) : infos(infos) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
@@ -299,13 +309,13 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
 private:
-  FieldValueInfo* infos;
+  StructValuesMap* infos;
 };
 
 struct ConstantFieldPropagation : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // Find and analyze all writes inside each function.
-    FunctionFieldValueInfo functionInfos;
+    FunctionStructValuesMap functionInfos;
     for (auto& func : module->functions) {
       // Initialize the data for each function, so that we can operate on this
       // structure in parallel without modifying it.
@@ -316,9 +326,9 @@ struct ConstantFieldPropagation : public Pass {
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
-    FieldValueInfo combinedInfos;
+    StructValuesMap combinedInfos;
     for (auto& kv : functionInfos) {
-      FieldValueInfo& infos = kv.second;
+      StructValuesMap& infos = kv.second;
       for (auto& kv : infos) {
         auto type = kv.first;
         auto& info = kv.second;
