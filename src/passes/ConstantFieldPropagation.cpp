@@ -161,12 +161,12 @@ struct StructValues : public std::vector<PossibleConstantValues> {
   }
 };
 
-// Map of types to information about the values its fields can take. Concretely,
-// this mapes a type to a StructValues which has one element per
+// Map of types to information about the values their fields can take.
+// Concretely, this maps a type to a StructValues which has one element per
 // field.
 struct StructValuesMap : public std::unordered_map<HeapType, StructValues> {
   // When we access an item, if it does not already exist, create it with a
-  // vector of the right length.
+  // vector of the right length for that type.
   StructValues& operator[](HeapType type) {
     auto iter = find(type);
     if (iter != end()) {
@@ -192,10 +192,13 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues> {
   }
 };
 
-// Map of function to their field value infos. We compute those in parallel.
+// Map of functions to their field value infos. We compute those in parallel,
+// then later we will merge them all.
 using FunctionStructValuesMap = std::unordered_map<Function*, StructValuesMap>;
 
-// Scan each function to find all its writes to struct fields.
+//  waka
+
+// Scan each function to note all its writes to struct fields.
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
@@ -231,17 +234,6 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     noteExpression(curr->value, getInfos()[heapType][curr->index]);
   }
 
-  void visitStructGet(StructGet* curr) {
-    auto type = curr->ref->type;
-    if (type == Type::unreachable) {
-      return;
-    }
-
-    // Ensure the heap type is noted, so that later we can assume all heap types
-    // are represented in the map.
-    getInfos()[type.getHeapType()];
-  }
-
 private:
   FunctionStructValuesMap* functionInfos;
 
@@ -274,12 +266,16 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    // Find the info for this field, and see if we can optimize.
-    // Note that the heap type must already be in the map here, as we operate on
-    // it in parallel, hence at().
-    auto& info = infos->at(type.getHeapType())[curr->index];
-
     Builder builder(*getModule());
+
+    // Find the info for this field, and see if we can optimize. First, see if
+    // there is any information for this heap type at all.
+    PossibleConstantValues info;
+    auto iter = infos->find(type.getHeapType());
+    if (iter != infos->end()) {
+      // There is information on this type, fetch it.
+      info = iter->second[curr->index];
+    }
 
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even

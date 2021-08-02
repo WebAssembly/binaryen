@@ -503,13 +503,11 @@
   )
   ;; CHECK:      (func $get
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $substruct)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null $substruct)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
