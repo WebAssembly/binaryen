@@ -347,6 +347,9 @@
 ;; CHECK-NEXT:                                                 load/store offsets, propagating
 ;; CHECK-NEXT:                                                 them across locals too
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-for-js                             early optimize of the 
+;; CHECK-NEXT:                                                 instruction combinations for js
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-instructions                       optimizes instruction
 ;; CHECK-NEXT:                                                 combinations
 ;; CHECK-NEXT:
