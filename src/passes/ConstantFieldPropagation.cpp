@@ -271,12 +271,12 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // Find the info for this field, and see if we can optimize. First, see if
     // there is any information for this heap type at all.
     PossibleConstantValues info;
+    assert(!info.hasNoted());
     auto iter = infos->find(type.getHeapType());
     if (iter != infos->end()) {
       // There is information on this type, fetch it.
       info = iter->second[curr->index];
     }
-
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
@@ -284,11 +284,13 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       // situation, which we assume we are not in.) Replace this get with a
       // trap. Note that we do not need to care about the nullability of the
       // reference, as if it should have trapped, we are replacing it with
-      // another trap, which we allow to reorder.
+      // another trap, which we allow to reorder (but we do need to care about
+      // side effects in the reference, so keep it around).
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeUnreachable()));
     }
 
+    // If the value is not a constant, then it is unknown and we must give up.
     if (!info.isConstant()) {
       return;
     }

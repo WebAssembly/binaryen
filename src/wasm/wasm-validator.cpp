@@ -2424,6 +2424,11 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
+  if (!shouldBeTrue(curr->ref->type != Type::unreachable,
+                    curr,
+                    "Reachable ArrayGet must have a reachable reference")) {
+    return;
+  }
   const auto& element = curr->ref->type.getHeapType().getArray().element;
   // If the type is not packed, it must be marked internally as unsigned, by
   // convention.
