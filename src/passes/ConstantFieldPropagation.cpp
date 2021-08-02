@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 WebAssembly Community Group participants
+ * Copyright 2021 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,8 @@
 // Find struct fields that are always written to with a constant value, and
 // replace gets of them with that value.
 //
-// For example, if we have a vtable type T, and we always create it with one of
-// the fields containing a ref.func of the same function F, and there is no
+// For example, if we have a vtable of type T, and we always create it with one
+// of the fields containing a ref.func of the same function F, and there is no
 // write to that field of a different value (even using a subtype of T), then
 // anywhere we see a get of that field we can place a ref.func of F.
 //
