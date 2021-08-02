@@ -500,11 +500,13 @@
   )
   ;; CHECK:      (func $get
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $substruct)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $substruct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -523,9 +525,10 @@
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
   (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (func $create

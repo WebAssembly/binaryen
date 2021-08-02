@@ -65,8 +65,7 @@ private:
 // anything.
 //
 // Currently this just looks for a single constant value, and even two constant
-// values are treated as unknown. It may be worth optimizing more than that.
-// TODO look into that
+// values are treated as unknown. It may be worth optimizing more than that TODO
 struct PossibleConstantValues {
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
@@ -80,7 +79,7 @@ struct PossibleConstantValues {
 
     // This is a subsequent value. Check if it is different from all previous
     // ones.
-    if (value != curr) {
+    if (curr != value) {
       noteUnknown();
     }
   }
@@ -116,18 +115,20 @@ struct PossibleConstantValues {
   }
 
   // Check if all the values are identical and constant.
-  bool isConstant() const { return value.type.isConcrete(); }
+  bool isConstant() const { return noted && value.type.isConcrete(); }
 
+  // Returns the single constant value.
   Literal getConstantValue() const {
     assert(isConstant());
     return value;
   }
 
-  bool hasWrites() const { return noted; }
+  // Returns whether we have ever noted a value.
+  bool hasNoted() const { return noted; }
 
   void dump(std::ostream& o) {
     o << '[';
-    if (!hasWrites()) {
+    if (!hasNoted()) {
       o << "unwritten";
     } else if (!isConstant()) {
       o << "unknown";
@@ -141,10 +142,10 @@ private:
   // Whether we have noted any values at all.
   bool noted = false;
 
-  // The one value we have seen, if there is one. Initialized to have type
-  // unreachable to indicate nothing has been seen yet. When values conflict,
-  // we mark this as type none to indicate failure. Otherwise, a concrete type
-  // indicates we have seen one value so far.
+  // The one value we have seen, if there is one. If we realize there is no
+  // single constant value here, we make this have a non-concrete (impossible)
+  // type to indicate that. Otherwise, a concrete type indicates we have a
+  // constant value.
   Literal value;
 };
 
@@ -280,7 +281,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
     Builder builder(*getModule());
 
-    if (!info.hasWrites()) {
+    if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
       // this location in the code. (Unless we are not in a closed-world
