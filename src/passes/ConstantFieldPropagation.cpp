@@ -28,6 +28,7 @@
 //
 
 #include "ir/properties.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
@@ -196,8 +197,6 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues> {
 // then later we will merge them all.
 using FunctionStructValuesMap = std::unordered_map<Function*, StructValuesMap>;
 
-//  waka
-
 // Scan each function to note all its writes to struct fields.
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
@@ -288,6 +287,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       // side effects in the reference, so keep it around).
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeUnreachable()));
+      changedTypes = true;
+      return;
     }
 
     // If the value is not a constant, then it is unknown and we must give up.
@@ -301,10 +302,21 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
       builder.makeConstantExpression(info.getConstantValue())));
+    changedTypes = true;
+  }
+
+  void doWalkFunction(Function* func) {
+    // If we changed any types, we need to update parents.
+    WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
+    if (changedTypes) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
   }
 
 private:
   StructValuesMap* infos;
+
+  bool changedTypes = false;
 };
 
 struct ConstantFieldPropagation : public Pass {
