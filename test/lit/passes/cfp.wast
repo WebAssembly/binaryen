@@ -473,7 +473,10 @@
 )
 
 ;; Subtyping: Create a supertype and get a subtype. As we never create a
-;;            subtype, the get must trap anyhow, and can be an unreachable.
+;;            subtype, there is really no possible way to call struct.get on
+;;            that type, and so really the reference must be null and we will
+;;            trap - but, it is still safe to optimize that value to a constant,
+;;            since the constant will never be reached.
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
