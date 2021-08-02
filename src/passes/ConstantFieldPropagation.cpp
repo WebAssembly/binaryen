@@ -39,27 +39,6 @@ namespace wasm {
 
 namespace {
 
-// Represents a graph of nominal types. A nominal type knows who its supertype
-// is, if there is one; this class provides the list of immedaite subtypes for a
-// type.
-struct TypeGraph {
-  // Add a type to the graph.
-  void note(HeapType type) {
-    HeapType super;
-    if (type.getSuperType(super)) {
-      typeSubTypes[super].insert(type);
-    }
-  }
-
-  const std::unordered_set<HeapType>& getSubTypes(HeapType type) {
-    return typeSubTypes[type];
-  }
-
-private:
-  // Maps a type to its subtypes.
-  std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
-};
-
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
 // possible, then all we can say is that the value is "unknown" - it can be
@@ -353,44 +332,37 @@ struct ConstantFieldPropagation : public Pass {
       }
     }
 
-    // Handle subtyping.
+    // Handle subtyping. |combinedInfo| so far contains data that represents
+    // each struct.new and struct.set's operation on the struct type used in
+    // that instruction. That is, if we do a struct.set to type T, the value was
+    // noted for type T. But our actual goal is to answer questions about
+    // struct.gets. Specifically, when later we see:
+    //
+    //  (struct.get $A x (REF-1))
+    //
+    // Then we want to find all struct.sets
+    //
+    //  (struct.set $B x (REF-2) (..value..))
+    //
+    // where $B is a subtype of $A, because at runtime the value REF-1 might not
+    // only be of type $A but also any subtype of $A. To make the lookup
+    // efficient when we see the get, we propagate information about sets to
+    // their supers, recursively, so long as the super still has that field.
+    // (Note that this also handles the case of REF-2 being a subtype of $B.)
+    //
     // TODO: assert nominal!
     // TODO: cycles are impossible with nominal supertypes, right? (even when
     //       not adding a field?)
-    TypeGraph typeGraph;
     UniqueDeferredQueue<HeapType> work;
     for (auto& kv : combinedInfos) {
       auto type = kv.first;
-      typeGraph.note(type);
       work.push(type);
     }
     while (!work.empty()) {
       auto type = work.pop();
       auto& infos = combinedInfos[type];
-      auto& fields = type.getStruct().fields;
-
-      // If we see a set to type T of field F, then the object at runtime might
-      // be of type T, or any subtype of T. We need to propagate the writes we
-      // have seen to all the subtypes of T.
-      // TODO: We only need to propagate struct.sets this way, and not
-      //       struct.news.
-      auto& subTypes = typeGraph.getSubTypes(type);
-      for (auto subType : subTypes) {
-        auto& subInfos = combinedInfos[subType];
-        for (Index i = 0; i < fields.size(); i++) {
-          if (subInfos[i].combine(infos[i])) {
-            work.push(subType);
-          }
-        }
-      }
-
-      // We will use this data structure for optimizing struct.gets: given a
-      // struct.get of type T, we need to know if the field was written to. The
-      // value at runtime could be a subtype of T, and so we also propagate in
-      // the other direction, where the field exists.
       HeapType superType;
       if (type.getSuperType(superType)) {
-        auto& infos = combinedInfos[type];
         auto& superInfos = combinedInfos[superType];
         auto& superFields = superType.getStruct().fields;
         for (Index i = 0; i < superFields.size(); i++) {
