@@ -1512,7 +1512,7 @@ HeapType TypeBounder::lub(HeapType a, HeapType b) {
         }
         currA = nextA;
       }
-      if (currB) {
+      if (nextB) {
         if (!seen.insert(nextB).second) {
           return HeapType(uintptr_t(nextB));
         }
