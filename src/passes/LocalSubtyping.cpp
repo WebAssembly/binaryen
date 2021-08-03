@@ -206,9 +206,8 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           // (We cannot just ignore the bad value, as it may contain a break to
           // a target that is necessary for validation.)
           Builder builder(*getModule());
-          set->value =
-            builder.makeSequence(builder.makeDrop(set->value),
-                                 builder.makeUnreachable());
+          set->value = builder.makeSequence(builder.makeDrop(set->value),
+                                            builder.makeUnreachable());
         }
       }
 
