@@ -44,30 +44,11 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
   void rewritePopcntEqualOne(Expression* expr) {
     // popcnt(x) == 1   ==>   !!x & !(x & (x - 1))
-    BinaryOp andOp, subOp;
-    UnaryOp eqzOp;
-    Literal litOne;
+    using namespace Abstract;
+
     Type type = expr->type;
 
-    switch (type.getBasic()) {
-      case Type::i32:
-        eqzOp = EqZInt32;
-        andOp = AndInt32;
-        subOp = SubInt32;
-        litOne = Literal::makeOne(Type::i32);
-        break;
-
-      case Type::i64:
-        eqzOp = EqZInt64;
-        andOp = AndInt64;
-        subOp = SubInt64;
-        litOne = Literal::makeOne(Type::i64);
-        break;
-
-      default:
-        return;
-    }
-
+    UnaryOp eqzOp = getUnary(type, EqZ);
     Localizer temp(expr, getFunction(), getModule());
     Builder builder(*getModule());
 
@@ -79,11 +60,12 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       builder.makeUnary(
         eqzOp,
         builder.makeBinary(
-          andOp,
+          getBinary(type, And),
           builder.makeLocalGet(temp.index, type),
-          builder.makeBinary(subOp,
-                             builder.makeLocalGet(temp.index, type),
-                             builder.makeConst(litOne))))));
+          builder.makeBinary(
+            getBinary(type, Sub),
+            builder.makeLocalGet(temp.index, type),
+            builder.makeConst(Literal::makeOne(type.getBasic())))))));
   }
 };
 
