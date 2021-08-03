@@ -530,10 +530,10 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -699,10 +699,10 @@
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
+  (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
-  (type $substruct (struct i32 f64) (extends $struct))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -759,15 +759,15 @@
 ;; supertype but all the way as needed.
 (module
   ;; CHECK:      (type $struct3 (struct (field i32) (field f64) (field anyref)) (extends $struct2))
+  (type $struct3 (struct i32 f64 anyref) (extends $struct2))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct2 (struct (field i32) (field f64)) (extends $struct1))
+  (type $struct2 (struct i32 f64) (extends $struct1))
 
   ;; CHECK:      (type $struct1 (struct (field i32)))
   (type $struct1 (struct i32))
-  (type $struct2 (struct i32 f64) (extends $struct1))
-  (type $struct3 (struct i32 f64 anyref) (extends $struct2))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -897,12 +897,12 @@
 ;; type.
 (module
   ;; CHECK:      (type $struct3 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref)) (extends $struct2))
+  (type $struct3 (struct i32 i32 f64 f64 anyref anyref) (extends $struct2))
 
   ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
   (type $struct1 (struct i32 i32))
   ;; CHECK:      (type $struct2 (struct (field i32) (field i32) (field f64) (field f64)) (extends $struct1))
   (type $struct2 (struct i32 i32 f64 f64) (extends $struct1))
-  (type $struct3 (struct i32 i32 f64 f64 anyref anyref) (extends $struct2))
 
   ;; CHECK:      (type $none_=>_none (func))
 
