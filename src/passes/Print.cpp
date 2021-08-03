@@ -1932,7 +1932,26 @@ struct PrintExpressionContents
     }
     TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
   }
+
+  // If we cannot print a valid unreachable instruction (say, a struct.get,
+  // where if the ref is unreachable, we don't know what heap type to print),
+  // then print the children in a block, which is good enough as this
+  // instruction is never reached anyhow.
+  //
+  // This function checks if the input is in fact unreachable, and if so, begins
+  // to emit a replacement for it and returns true.
+  bool printUnreachableReplacement(Expression* curr) {
+    if (curr->type == Type::unreachable) {
+      printMedium(o, "block");
+      return true;
+    }
+    return false;
+  }
+
   void visitStructNew(StructNew* curr) {
+    if (printUnreachableReplacement(curr->rtt)) {
+      return;
+    }
     printMedium(o, "struct.new_");
     if (curr->isWithDefault()) {
       o << "default_";
@@ -1940,13 +1959,7 @@ struct PrintExpressionContents
     o << "with_rtt ";
     TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
   }
-  void printUnreachableReplacement() {
-    // If we cannot print a valid unreachable instruction (say, a struct.get,
-    // where if the ref is unreachable, we don't know what heap type to print),
-    // then print the children in a block, which is good enough as this
-    // instruction is never reached anyhow.
-    printMedium(o, "block");
-  }
+
   void printFieldName(HeapType type, Index index) {
     processFieldName(wasm, type, index, [&](Name name) {
       if (name.is()) {
@@ -1957,8 +1970,7 @@ struct PrintExpressionContents
     });
   }
   void visitStructGet(StructGet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      printUnreachableReplacement();
+    if (printUnreachableReplacement(curr->ref)) {
       return;
     }
     auto heapType = curr->ref->type.getHeapType();
@@ -1977,8 +1989,7 @@ struct PrintExpressionContents
     printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      printUnreachableReplacement();
+    if (printUnreachableReplacement(curr->ref)) {
       return;
     }
     printMedium(o, "struct.set ");
@@ -1996,8 +2007,7 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
   }
   void visitArrayGet(ArrayGet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      printUnreachableReplacement();
+    if (printUnreachableReplacement(curr->ref)) {
       return;
     }
     const auto& element = curr->ref->type.getHeapType().getArray().element;
@@ -2013,21 +2023,22 @@ struct PrintExpressionContents
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
-    if (curr->ref->type == Type::unreachable) {
-      printUnreachableReplacement();
+    if (printUnreachableReplacement(curr->ref)) {
       return;
     }
     printMedium(o, "array.set ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) {
+    if (printUnreachableReplacement(curr->ref)) {
+      return;
+    }
     printMedium(o, "array.len ");
     TypeNamePrinter(o, wasm).print(curr->ref->type.getHeapType());
   }
   void visitArrayCopy(ArrayCopy* curr) {
-    if (curr->srcRef->type == Type::unreachable ||
-        curr->destRef->type == Type::unreachable) {
-      printUnreachableReplacement();
+    if (printUnreachableReplacement(curr->srcRef) ||
+        printUnreachableReplacement(curr->destRef)) {
       return;
     }
     printMedium(o, "array.copy ");

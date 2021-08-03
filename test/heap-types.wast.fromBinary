@@ -1,8 +1,8 @@
 (module
  (type $struct.A (struct (field i32) (field f32) (field $named f64)))
+ (type $none_=>_none (func))
  (type $struct.B (struct (field i8) (field (mut i16)) (field (ref $struct.A)) (field (mut (ref $struct.A)))))
  (type $vector (array (mut f64)))
- (type $none_=>_none (func))
  (type $grandchild (struct (field i32) (field i64)))
  (type $matrix (array (mut (ref null $vector))))
  (type $struct.C (struct (field $named-mut (mut f32))))
@@ -406,6 +406,12 @@
   (drop
    (i32.const 2)
   )
+  (unreachable)
+ )
+ (func $unreachables-array-6
+  (unreachable)
+ )
+ (func $unreachables-7
   (unreachable)
  )
  (func $array-copy (param $x (ref $vector)) (param $y (ref null $vector))
