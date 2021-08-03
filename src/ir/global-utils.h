@@ -20,6 +20,7 @@
 #include <algorithm>
 #include <vector>
 
+#include "ir/iteration.h"
 #include "ir/module-utils.h"
 #include "literal.h"
 #include "wasm.h"
@@ -53,7 +54,7 @@ getGlobalInitializedToImport(Module& wasm, Name module, Name base) {
   return ret;
 }
 
-inline bool canInitializeGlobal(const Expression* curr) {
+inline bool canInitializeGlobal(Expression* curr) {
   if (auto* tuple = curr->dynCast<TupleMake>()) {
     for (auto* op : tuple->operands) {
       if (!canInitializeGlobal(op)) {
@@ -62,9 +63,17 @@ inline bool canInitializeGlobal(const Expression* curr) {
     }
     return true;
   }
-  return Properties::isSingleConstantExpression(curr) ||
-         curr->is<GlobalGet>() || curr->is<RttCanon>() || curr->is<RttSub>() ||
-         curr->is<StructNew>() || curr->is<ArrayNew>() || curr->is<I31New>();
+  if (Properties::isSingleConstantExpression(curr) || curr->is<GlobalGet>() ||
+      curr->is<RttCanon>() || curr->is<RttSub>() || curr->is<StructNew>() ||
+      curr->is<ArrayNew>() || curr->is<I31New>()) {
+    for (auto* child : ChildIterator(curr)) {
+      if (!canInitializeGlobal(child)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
 }
 
 } // namespace GlobalUtils
