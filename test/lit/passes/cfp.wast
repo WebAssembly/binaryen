@@ -895,7 +895,6 @@
 ;; an even field, but gets of the subtype and sub-sub-type can always be
 ;; optimized, even the even ones, as a reference there cannot be to the first
 ;; type.
-
 (module
   ;; CHECK:      (type $struct3 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref)) (extends $struct2))
 
@@ -1121,6 +1120,106 @@
     )
     (drop
       (struct.get $struct3 5
+        (ref.null $struct3)
+      )
+    )
+  )
+)
+
+;; Multi-level subtyping with a different value in the middle of the chain. As
+;; a result, only a get of the sub-most type can be optimized.
+(module
+  ;; CHECK:      (type $struct1 (struct (field i32)))
+  (type $struct1 (struct i32))
+  ;; CHECK:      (type $struct2 (struct (field i32) (field f64)) (extends $struct1))
+  (type $struct2 (struct i32 f64) (extends $struct1))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $struct3 (struct (field i32) (field f64) (field anyref)) (extends $struct2))
+  (type $struct3 (struct i32 f64 anyref) (extends $struct2))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct1
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (rtt.canon $struct1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct2
+  ;; CHECK-NEXT:    (i32.const 9999)
+  ;; CHECK-NEXT:    (f64.const 0)
+  ;; CHECK-NEXT:    (rtt.canon $struct2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (f64.const 0)
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (rtt.canon $struct3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct1
+        (i32.const 10)
+        (rtt.canon $struct1)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $struct2
+        (i32.const 9999) ;; use a different value here
+        (f64.const 0)
+        (rtt.canon $struct2)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $struct3
+        (i32.const 10)
+        (f64.const 0)
+        (ref.null any)
+        (rtt.canon $struct3)
+      )
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct1 0
+  ;; CHECK-NEXT:    (ref.null $struct1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct2 0
+  ;; CHECK-NEXT:    (ref.null $struct2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    ;; Get field 0 in all the types.
+    (drop
+      (struct.get $struct1 0
+        (ref.null $struct1)
+      )
+    )
+    (drop
+      (struct.get $struct2 0
+        (ref.null $struct2)
+      )
+    )
+    (drop
+      (struct.get $struct3 0
         (ref.null $struct3)
       )
     )
