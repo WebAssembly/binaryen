@@ -356,6 +356,20 @@
       (unreachable)
     )
   )
+  (func $unreachables-array-6
+    (drop
+      (array.len $vector
+        (unreachable)
+      )
+    )
+  )
+  (func $unreachables-7
+    (drop
+      (struct.new_default_with_rtt $struct.A
+        (unreachable)
+      )
+    )
+  )
   (func $array-copy (param $x (ref $vector)) (param $y (ref null $vector))
     (array.copy $vector $vector
       (local.get $x)

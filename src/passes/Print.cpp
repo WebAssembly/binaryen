@@ -1932,17 +1932,6 @@ struct PrintExpressionContents
     }
     TypeNamePrinter(o, wasm).print(curr->type.getRtt().heapType);
   }
-  void visitStructNew(StructNew* curr) {
-    if (printUnreachableReplacement(curr->rtt)) {
-      return;
-    }
-    printMedium(o, "struct.new_");
-    if (curr->isWithDefault()) {
-      o << "default_";
-    }
-    o << "with_rtt ";
-    TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
-  }
 
   // If we cannot print a valid unreachable instruction (say, a struct.get,
   // where if the ref is unreachable, we don't know what heap type to print),
@@ -1957,6 +1946,18 @@ struct PrintExpressionContents
       return true;
     }
     return false;
+  }
+
+  void visitStructNew(StructNew* curr) {
+    if (printUnreachableReplacement(curr->rtt)) {
+      return;
+    }
+    printMedium(o, "struct.new_");
+    if (curr->isWithDefault()) {
+      o << "default_";
+    }
+    o << "with_rtt ";
+    TypeNamePrinter(o, wasm).print(curr->rtt->type.getHeapType());
   }
 
   void printFieldName(HeapType type, Index index) {
