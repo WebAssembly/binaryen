@@ -44,9 +44,11 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
   void rewritePopcntEqualOne(Expression* expr) {
     // popcnt(x) == 1   ==>   !!x & !(x & (x - 1))
+    using namespace Abstract;
+
     Type type = expr->type;
 
-    UnaryOp eqzOp = Abstract::getUnary(type, Abstract::EqZ);
+    UnaryOp eqzOp = getUnary(type, EqZ);
     Localizer temp(expr, getFunction(), getModule());
     Builder builder(*getModule());
 
@@ -58,10 +60,10 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       builder.makeUnary(
         eqzOp,
         builder.makeBinary(
-          Abstract::getBinary(type, Abstract::And),
+          getBinary(type, And),
           builder.makeLocalGet(temp.index, type),
           builder.makeBinary(
-            Abstract::getBinary(type, Abstract::Sub),
+            getBinary(type, Sub),
             builder.makeLocalGet(temp.index, type),
             builder.makeConst(Literal::makeOne(type.getBasic())))))));
   }
