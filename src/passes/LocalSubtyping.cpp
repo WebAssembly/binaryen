@@ -200,15 +200,15 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           //
           //  (set (block
           //   (drop (bad-value))
-          //   (get)
+          //   (unreachable)
           //  ))
           //
-          // A get of the same local will definitely have the proper type for
-          // IR to validate.
+          // (We cannot just ignore the bad value, as it may contain a break to
+          // a target that is necessary for validation.)
           Builder builder(*getModule());
           set->value =
             builder.makeSequence(builder.makeDrop(set->value),
-                                 builder.makeLocalGet(set->index, newType));
+                                 builder.makeUnreachable());
         }
       }
 

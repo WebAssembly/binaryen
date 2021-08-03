@@ -293,20 +293,20 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $temp
-  ;; CHECK-NEXT:    (block (result (ref null $none_=>_i32))
+  ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (ref.null func)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $temp)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $temp
-  ;; CHECK-NEXT:   (block (result (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local.tee $temp
+  ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.null func)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
