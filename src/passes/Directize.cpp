@@ -94,7 +94,7 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
   }
 
 private:
-  const std::unordered_map<Name, TableUtils::FlatTable> tables;
+  const std::unordered_map<Name, TableUtils::FlatTable>& tables;
 
   bool changedTypes = false;
 
