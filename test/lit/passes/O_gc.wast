@@ -7,13 +7,13 @@
 
 ;; Test that we can run GC types through the optimizer
 (module
+  ;; CHECK:      (type $ref?|$struct.A|_=>_none (func (param (ref null $struct.A))))
+
   ;; CHECK:      (type $struct.A (struct (field i32)))
   ;; IGNORE-TRAPS:      (type $ref?|$struct.A|_=>_none (func (param (ref null $struct.A))))
 
   ;; IGNORE-TRAPS:      (type $struct.A (struct (field i32)))
   (type $struct.A (struct i32))
-
-  ;; CHECK:      (type $ref?|$struct.A|_=>_none (func (param (ref null $struct.A))))
 
   ;; CHECK:      (export "foo" (func $foo))
   ;; IGNORE-TRAPS:      (export "foo" (func $foo))
@@ -21,8 +21,11 @@
 
   ;; CHECK:      (func $foo (; has Stack IR ;) (param $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct.A 0
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
