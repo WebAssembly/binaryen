@@ -63,9 +63,9 @@ inline bool canInitializeGlobal(Expression* curr) {
     }
     return true;
   }
-  if (Properties::isSingleConstantExpression(curr) ||
-      curr->is<GlobalGet>() || curr->is<RttCanon>() || curr->is<RttSub>() ||
-      curr->is<StructNew>() || curr->is<ArrayNew>() || curr->is<I31New>()) {
+  if (Properties::isSingleConstantExpression(curr) || curr->is<GlobalGet>() ||
+      curr->is<RttCanon>() || curr->is<RttSub>() || curr->is<StructNew>() ||
+      curr->is<ArrayNew>() || curr->is<I31New>()) {
     for (auto* child : ChildIterator(curr)) {
       if (!canInitializeGlobal(child)) {
         return false;
