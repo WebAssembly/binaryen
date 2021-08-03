@@ -755,6 +755,378 @@
   )
 )
 
+;; Multi-level subtyping, check that we propagate not just to the immediate
+;; supertype but all the way as needed.
+(module
+  ;; CHECK:      (type $struct3 (struct (field i32) (field f64) (field anyref)) (extends $struct2))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $struct2 (struct (field i32) (field f64)) (extends $struct1))
+
+  ;; CHECK:      (type $struct1 (struct (field i32)))
+  (type $struct1 (struct i32))
+  (type $struct2 (struct i32 f64) (extends $struct1))
+  (type $struct3 (struct i32 f64 anyref) (extends $struct2))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (rtt.canon $struct3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct3
+        (i32.const 20)
+        (f64.const 3.14159)
+        (ref.null any)
+        (rtt.canon $struct3)
+      )
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    ;; Get field 0 from the $struct1. This can be optimized to a constant
+    ;; since we only ever created an instance of struct3 with a constant there.
+    (drop
+      (struct.get $struct1 0
+        (ref.null $struct1)
+      )
+    )
+    ;; Get both fields of $struct2.
+    (drop
+      (struct.get $struct2 0
+        (ref.null $struct2)
+      )
+    )
+    (drop
+      (struct.get $struct2 1
+        (ref.null $struct2)
+      )
+    )
+    ;; Get all 3 fields of $struct3
+    (drop
+      (struct.get $struct3 0
+        (ref.null $struct3)
+      )
+    )
+    (drop
+      (struct.get $struct3 1
+        (ref.null $struct3)
+      )
+    )
+    (drop
+      (struct.get $struct3 2
+        (ref.null $struct3)
+      )
+    )
+  )
+)
+
+;; Multi-level subtyping with conflicts. The even-numbered fields will get
+;; different values in the sub-most type. Create the top and bottom types, but
+;; not the middle one. As a result, gets of the first type cannot optimize
+;; an even field, but gets of the subtype and sub-sub-type can always be
+;; optimized, even the even ones, as a reference there cannot be to the first
+;; type.
+
+(module
+  ;; CHECK:      (type $struct3 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref)) (extends $struct2))
+
+  ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
+  (type $struct1 (struct i32 i32))
+  ;; CHECK:      (type $struct2 (struct (field i32) (field i32) (field f64) (field f64)) (extends $struct1))
+  (type $struct2 (struct i32 i32 f64 f64) (extends $struct1))
+  (type $struct3 (struct i32 i32 f64 f64 anyref anyref) (extends $struct2))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct1
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (rtt.canon $struct1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct3
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 999)
+  ;; CHECK-NEXT:    (f64.const 2.71828)
+  ;; CHECK-NEXT:    (f64.const 9.9999999)
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rtt.canon $struct3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $struct1
+        (i32.const 10)
+        (i32.const 20)
+        (rtt.canon $struct1)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $struct3
+        (i32.const 10)
+        (i32.const 999) ;; use a different value here
+        (f64.const 2.71828)
+        (f64.const 9.9999999)
+        (ref.null any)
+        (ref.as_non_null (ref.null any)) ;; use a non-constant value here, which
+                                         ;; can never be optimized.
+        (rtt.canon $struct3)
+      )
+    )
+  )
+  ;; CHECK:      (func $get
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct1 1
+  ;; CHECK-NEXT:    (ref.null $struct1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 2.71828)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 9.9999999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 2.71828)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 9.9999999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct3 5
+  ;; CHECK-NEXT:    (ref.null $struct3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get
+    ;; Get all the fields of all the structs.
+    (drop
+      (struct.get $struct1 0
+        (ref.null $struct1)
+      )
+    )
+    (drop
+      (struct.get $struct1 1
+        (ref.null $struct1)
+      )
+    )
+    (drop
+      (struct.get $struct2 0
+        (ref.null $struct2)
+      )
+    )
+    (drop
+      (struct.get $struct2 1
+        (ref.null $struct2)
+      )
+    )
+    (drop
+      (struct.get $struct2 2
+        (ref.null $struct2)
+      )
+    )
+    (drop
+      (struct.get $struct2 3
+        (ref.null $struct2)
+      )
+    )
+    (drop
+      (struct.get $struct3 0
+        (ref.null $struct3)
+      )
+    )
+    (drop
+      (struct.get $struct3 1
+        (ref.null $struct3)
+      )
+    )
+    (drop
+      (struct.get $struct3 2
+        (ref.null $struct3)
+      )
+    )
+    (drop
+      (struct.get $struct3 3
+        (ref.null $struct3)
+      )
+    )
+    (drop
+      (struct.get $struct3 4
+        (ref.null $struct3)
+      )
+    )
+    (drop
+      (struct.get $struct3 5
+        (ref.null $struct3)
+      )
+    )
+  )
+)
+
 ;; Test for a struct with multiple fields, some of which are constant and hence
 ;; optimizable, and some not. Also test that some have the same type.
 (module
