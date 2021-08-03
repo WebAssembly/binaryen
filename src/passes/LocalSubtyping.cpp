@@ -27,8 +27,8 @@
 #include <ir/local-graph.h>
 #include <ir/utils.h>
 #include <pass.h>
-#include <wasm.h>
 #include <wasm-builder.h>
+#include <wasm.h>
 
 namespace wasm {
 
@@ -187,18 +187,18 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
 
         // If this set was not processed earlier - that is, if it is in
         // unreachable code - then it may have an incompatible type. That is,
-        // If we saw a reachable tee that writes type A, and this tee writes
+        // If we saw a reachable set that writes type A, and this set writes
         // type B, we may have specialized the local type to A, but the value
-        // of type B in this unreachable tee is no longer valid to write to
+        // of type B in this unreachable set is no longer valid to write to
         // that local. In such a case we must do additional work.
         if (!Type::isSubType(set->value->type, newType)) {
           // The type is incompatible. To fix this, replace
           //
-          //  (tee (bad-value))
+          //  (set (bad-value))
           //
           // with
           //
-          //  (tee (block
+          //  (set (block
           //   (drop (bad-value))
           //   (get)
           //  ))
@@ -206,10 +206,9 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
           // A get of the same local will definitely have the proper type for
           // IR to validate.
           Builder builder(*getModule());
-          set->value = builder.makeSequence(
-            builder.makeDrop(set->value),
-            builder.makeLocalGet(set->index, newType)
-          );
+          set->value =
+            builder.makeSequence(builder.makeDrop(set->value),
+                                 builder.makeLocalGet(set->index, newType));
         }
       }
 
