@@ -508,7 +508,8 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("dae-optimizing");
   }
-  if (options.optimizeLevel >= 2 && wasm->features.hasGC()) {
+  if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
+      options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("cfp");
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {

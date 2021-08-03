@@ -310,6 +310,10 @@ private:
 
 struct ConstantFieldPropagation : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    if (getTypeSystem() != TypeSystem::Nominal) {
+      Fatal() << "ConstantFieldPropagation requires nominal typing";
+    }
+
     // Find and analyze all writes inside each function.
     FunctionStructValuesMap functionInfos;
     for (auto& func : module->functions) {
