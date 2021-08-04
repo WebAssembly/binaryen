@@ -182,7 +182,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
   Pass* create() override { return new Scanner(functionInfos); }
 
-  Scanner(FunctionStructValuesMap* functionInfos)
+  Scanner(FunctionStructValuesMap& functionInfos)
     : functionInfos(functionInfos) {}
 
   void visitStructNew(StructNew* curr) {
@@ -193,14 +193,14 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
     // Note writes to all the fields of the struct.
     auto heapType = type.getHeapType();
-    auto& infos = getInfos();
+    auto& values = getStructValues(heapType);
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
-      auto& info = infos[heapType][i];
+      auto& fieldValues = values[i];
       if (curr->isWithDefault()) {
-        info.note(Literal::makeZero(fields[i].type));
+        fieldValues.note(Literal::makeZero(fields[i].type));
       } else {
-        noteExpression(curr->operands[i], info);
+        noteExpression(curr->operands[i], fieldValues);
       }
     }
   }
@@ -213,14 +213,15 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
     // Note a write to this field of the struct.
     auto heapType = type.getHeapType();
-    noteExpression(curr->value, getInfos()[heapType][curr->index]);
+    noteExpression(curr->value, getStructValues(heapType)[curr->index]);
   }
 
 private:
-  FunctionStructValuesMap* functionInfos;
+  FunctionStructValuesMap& functionInfos;
 
-  StructValuesMap& getInfos() { return (*functionInfos)[getFunction()]; }
+  StructValues& getStructValues(HeapType type) { return functionInfos[getFunction()][type]; }
 
+//TODO: info=>values, possiblecalues = value
   // Note a value, checking whether it is a constant or not.
   void noteExpression(Expression* expr, PossibleConstantValues& info) {
     if (!Properties::isConstantExpression(expr)) {
@@ -241,7 +242,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
   Pass* create() override { return new FunctionOptimizer(infos); }
 
-  FunctionOptimizer(StructValuesMap* infos) : infos(infos) {}
+  FunctionOptimizer(StructValuesMap& infos) : infos(infos) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
@@ -256,8 +257,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // as if nothing was ever noted for that field.
     PossibleConstantValues info;
     assert(!info.hasNoted());
-    auto iter = infos->find(type.getHeapType());
-    if (iter != infos->end()) {
+    auto iter = infos.find(type.getHeapType());
+    if (iter != infos.end()) {
       // There is information on this type, fetch it.
       info = iter->second[curr->index];
     }
@@ -300,7 +301,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
 private:
-  StructValuesMap* infos;
+  StructValuesMap& infos;
 
   bool changedTypes = false;
 };
@@ -318,7 +319,7 @@ struct ConstantFieldPropagation : public Pass {
       // structure in parallel without modifying it.
       functionInfos[func.get()];
     }
-    Scanner scanner(&functionInfos);
+    Scanner scanner(functionInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
@@ -377,7 +378,7 @@ struct ConstantFieldPropagation : public Pass {
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(&combinedInfos).run(runner, module);
+    FunctionOptimizer(combinedInfos).run(runner, module);
 
     // TODO: Actually remove the field from the type, where possible? That might
     //       be best in another pass.
