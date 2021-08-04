@@ -43,40 +43,6 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
   void doWalkModule(Module* module) {
     super::doWalkModule(module);
 
-    // neededIntrinsics.insert(WASM_I64_MUL_HIGH);
-
-    // if (neededIntrinsics.size() == 0) {
-    //   return;
-    // }
-
-    // Module intrinsicsModule;
-    // std::string input(IntrinsicsModuleWast);
-    // SExpressionParser parser(const_cast<char*>(input.c_str()));
-    // Element& root = *parser.root;
-    // SExpressionWasmBuilder builder(
-    //   intrinsicsModule, *root[0], IRProfile::Normal);
-
-    // std::set<Name> neededFunctions;
-
-    // while (neededIntrinsics.size() > 0) {
-    //   for (auto& name : neededIntrinsics) {
-    //     addNeededFunctions(intrinsicsModule, name, neededFunctions);
-    //   }
-    //   neededIntrinsics.clear();
-    //   // Link in everything that wasn't already linked in. After we've done the
-    //   // copy we then walk the function to rewrite any non-js operations it has
-    //   // as well.
-    //   for (auto& name : neededFunctions) {
-    //     auto* func = module->getFunctionOrNull(name);
-    //     if (!func) {
-    //       func = ModuleUtils::copyFunction(intrinsicsModule.getFunction(name),
-    //                                        *module);
-    //     }
-    //     doWalkFunction(func);
-    //   }
-    //   neededFunctions.clear();
-    // }
-
     Name name = WASM_I64_MUL_HIGH;
     Module intrinsicsModule;
     std::string input(IntrinsicsModuleWast);
@@ -88,9 +54,6 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     auto* func =
       ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
     doWalkFunction(func);
-
-    // auto* func = intrinsicsModule.getFunction(name);
-    // module->addFunction(std::move(func));
   }
 
   void visitBinary(Binary* curr) {

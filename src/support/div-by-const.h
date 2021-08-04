@@ -14,8 +14,7 @@ namespace wasm {
 // The magic numbers for division via multiplication, see Warren's "Hacker's
 // Delight", chapter 10. The template parameter must be one of the unsigned
 // integral types.
-template <class T>
-struct MagicNumbersForDivision {
+template<class T> struct MagicNumbersForDivision {
   MagicNumbersForDivision(T m, unsigned s, bool a)
     : multiplier(m), shift(s), add(a) {}
   bool operator==(const MagicNumbersForDivision& rhs) const {

@@ -44,7 +44,6 @@ template<class T> MagicNumbersForDivision<T> signedDivisionByConstant(T d) {
   return MagicNumbersForDivision<T>(neg ? (0 - mul) : mul, p - bits, false);
 }
 
-
 template<class T>
 MagicNumbersForDivision<T> unsignedDivisionByConstant(T d,
                                                       unsigned leading_zeros) {
@@ -101,6 +100,7 @@ template MagicNumbersForDivision<uint64_t> signedDivisionByConstant(uint64_t d);
 
 template MagicNumbersForDivision<uint32_t>
 unsignedDivisionByConstant(uint32_t d, unsigned leading_zeros);
+
 template MagicNumbersForDivision<uint64_t>
 unsignedDivisionByConstant(uint64_t d, unsigned leading_zeros);
 
