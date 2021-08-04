@@ -224,6 +224,7 @@ private:
 //TODO: info=>values, possiblecalues = value
   // Note a value, checking whether it is a constant or not.
   void noteExpression(Expression* expr, PossibleConstantValues& info) {
+    expr = Properties::getFallthrough(expr, getPassOptions(), getModule()->features);
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
     } else {
