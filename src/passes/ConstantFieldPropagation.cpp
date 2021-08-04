@@ -218,12 +218,15 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 private:
   FunctionStructValuesMap& functionInfos;
 
-  StructValues& getStructValues(HeapType type) { return functionInfos[getFunction()][type]; }
+  StructValues& getStructValues(HeapType type) {
+    return functionInfos[getFunction()][type];
+  }
 
-//TODO: info=>values, possiblecalues = value
+  // TODO: info=>values, possiblecalues = value
   // Note a value, checking whether it is a constant or not.
   void noteExpression(Expression* expr, PossibleConstantValues& info) {
-    expr = Properties::getFallthrough(expr, getPassOptions(), getModule()->features);
+    expr =
+      Properties::getFallthrough(expr, getPassOptions(), getModule()->features);
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
     } else {
