@@ -159,10 +159,12 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       return;
     }
 
-    const unsigned shift = Bits::countLeadingZeroes(divisor);
-    divisor >>= shift;
-    dividend = builder.makeBinary(
-      ShrUInt64, dividend, builder.makeConst(uint64_t(shift)));
+    const unsigned shift = Bits::countTrailingZeroes(divisor);
+    if (shift) {
+      divisor >>= shift;
+      dividend = builder.makeBinary(
+        ShrUInt64, dividend, builder.makeConst(uint64_t(shift)));
+    }
 
     const auto payload = unsignedDivisionByConstant(divisor, shift);
 

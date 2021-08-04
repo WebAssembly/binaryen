@@ -51,4 +51,10 @@
    (i64.const 1)
   )
  )
+ (func $div-unsigned-by7-i64 (param $x i64) (result i64)
+  (i64.div_u
+   (local.get $x)
+   (i64.const 7)
+  )
+ )
 )
