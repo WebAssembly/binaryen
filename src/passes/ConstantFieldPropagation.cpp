@@ -274,7 +274,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       // side effects in the reference, so keep it around).
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeUnreachable()));
-      changedTypes = true;
+      changed = true;
       return;
     }
 
@@ -283,20 +283,22 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    // We can do this! Replace the get with a throw on a null reference (as the
-    // get would have done so), plus the constant value. (Leave it to further
-    // optimizations to get rid of the ref.)
+    // We can do this! Replace the get with a trap on a null reference using a
+    // ref.as_non_null (we need to trap as the get would have done so), plus the
+    // constant value. (Leave it to further optimizations to get rid of the
+    // ref.)
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
       builder.makeConstantExpression(info.getConstantValue())));
-    changedTypes = true;
+    changed = true;
   }
 
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
 
-    // If we changed any types, we need to update parents.
-    if (changedTypes) {
+    // If we changed anything, we need to update parent types as types may have
+    // changed.
+    if (changed) {
       ReFinalize().walkFunctionInModule(func, getModule());
     }
   }
@@ -304,7 +306,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 private:
   StructValuesMap& infos;
 
-  bool changedTypes = false;
+  bool changed = false;
 };
 
 struct ConstantFieldPropagation : public Pass {
@@ -331,9 +333,8 @@ struct ConstantFieldPropagation : public Pass {
       for (auto& kv : infos) {
         auto type = kv.first;
         auto& info = kv.second;
-        auto& combinedInfo = combinedInfos[type];
         for (Index i = 0; i < info.size(); i++) {
-          combinedInfo[i].combine(info[i]);
+          combinedInfos[type][i].combine(info[i]);
         }
       }
     }
@@ -356,7 +357,7 @@ struct ConstantFieldPropagation : public Pass {
     // their supers, recursively, so long as the super still has that field.
     // (Note that this also handles the case of REF-2 being a subtype of $B.)
     //
-    // TODO: Are cycles possible with nominal supertypes?
+    // TODO: A topological sort could avoid repeated work here.
     UniqueDeferredQueue<HeapType> work;
     for (auto& kv : combinedInfos) {
       auto type = kv.first;
