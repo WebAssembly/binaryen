@@ -90,6 +90,7 @@ extern cashew::IString WASM_FETCH_HIGH_BITS;
 extern cashew::IString INT64_TO_32_HIGH_BITS;
 extern cashew::IString WASM_NEAREST_F32;
 extern cashew::IString WASM_NEAREST_F64;
+extern cashew::IString WASM_I64_MUL_HIGH;
 extern cashew::IString WASM_I64_MUL;
 extern cashew::IString WASM_I64_SDIV;
 extern cashew::IString WASM_I64_UDIV;

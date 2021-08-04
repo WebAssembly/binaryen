@@ -5,6 +5,7 @@ set(support_SOURCES
   colors.cpp
   command-line.cpp
   debug.cpp
+  div-by-const.cpp
   file.cpp
   path.cpp
   safe_integer.cpp

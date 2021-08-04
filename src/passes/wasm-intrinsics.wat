@@ -26,6 +26,7 @@
  (export "__wasm_i64_srem" (func $__wasm_i64_srem))
  (export "__wasm_i64_urem" (func $__wasm_i64_urem))
  (export "__wasm_i64_mul" (func $__wasm_i64_mul))
+ (export "__wasm_i64_mulh" (func $__wasm_i64_mulh))
  (export "__wasm_ctz_i32" (func $__wasm_ctz_i32))
  (export "__wasm_ctz_i64" (func $__wasm_ctz_i64))
  (export "__wasm_rotl_i32" (func $__wasm_rotl_i32))
@@ -140,6 +141,41 @@
   (call $_ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE
    (local.get $var$0)
    (local.get $var$1)
+  )
+ )
+ (func $__wasm_i64_mulh (; 5 ;) (type $0) (param $var$0 i64) (param $var$1 i64) (result i64)
+  (local $var$2 i64)
+  (local $var$3 i64)
+  (local.set $var$0
+   (i64.add
+    (i64.mul
+     (local.tee $var$2 (i64.and (local.get $var$1) (i64.const 4294967295)))
+     (local.tee $var$3 (i64.shr_u (local.get $var$0) (i64.const 32)))
+    )
+    (i64.shr_u
+     (i64.mul
+      (local.get $var$2)
+      (local.tee $var$2 (i64.and (local.get $var$0) (i64.const 4294967295)))
+     )
+     (i64.const 32)
+    )
+   )
+  )
+  (i64.add
+   (i64.add
+    (i64.mul
+     (local.get $var$3)
+     (local.tee $var$1 (i64.shr_u (local.get $var$1) (i64.const 32)))
+    )
+    (i64.shr_u (local.get $var$0) (i64.const 32))
+   )
+   (i64.shr_u
+    (i64.add
+     (i64.mul (local.get $var$1) (local.get $2))
+     (i64.and (local.get $var$0) (i64.const 4294967295))
+    )
+    (i64.const 32)
+   )
   )
  )
  ;; lowering of the i32.ctz instruction, counting the number of zeros in $var$0
