@@ -85,7 +85,8 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     SExpressionWasmBuilder builder(
       intrinsicsModule, *root[0], IRProfile::Normal);
 
-    auto* func = ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
+    auto* func =
+      ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
     doWalkFunction(func);
 
     // auto* func = intrinsicsModule.getFunction(name);
