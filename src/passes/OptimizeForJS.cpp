@@ -131,6 +131,10 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
   }
 
   void rewriteDivByConstU64(Expression* dividend, uint64_t divisor) {
+
+    // skip power of two divisors
+    if (Bits::isPowerOf2(divisor)) return;
+
     Builder builder(*getModule());
 
     if (divisor == 0) {
