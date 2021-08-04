@@ -34,7 +34,7 @@
 namespace wasm {
 
 struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
-  std::unordered_set<Name> neededIntrinsics;
+  bool requireMulhIntrinsic;
 
   bool isFunctionParallel() override { return false; }
 
@@ -43,17 +43,20 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
   void doWalkModule(Module* module) {
     super::doWalkModule(module);
 
-    Name name = WASM_I64_MUL_HIGH;
-    Module intrinsicsModule;
-    std::string input(IntrinsicsModuleWast);
-    SExpressionParser parser(const_cast<char*>(input.c_str()));
-    Element& root = *parser.root;
-    SExpressionWasmBuilder builder(
-      intrinsicsModule, *root[0], IRProfile::Normal);
+    if (requireMulhIntrinsic) {
+      Name name = WASM_I64_MUL_HIGH;
+      Module intrinsicsModule;
+      std::string input(IntrinsicsModuleWast);
+      SExpressionParser parser(const_cast<char*>(input.c_str()));
+      Element& root = *parser.root;
+      SExpressionWasmBuilder builder(
+        intrinsicsModule, *root[0], IRProfile::Normal);
 
-    auto* func =
-      ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
-    doWalkFunction(func);
+      auto* func =
+        ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
+      doWalkFunction(func);
+      requireMulhIntrinsic = false;
+    }
   }
 
   void visitBinary(Binary* curr) {
@@ -72,6 +75,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       Const* c;
       Expression* x;
       if (matches(curr, binary(DivU, any(&x), i64(&c)))) {
+        requireMulhIntrinsic = true;
         rewriteDivByConstU64(x, (uint64_t)c->value.geti64());
       }
     }
@@ -81,6 +85,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       Const* c;
       Expression* x;
       if (matches(curr, binary(DivS, any(&x), i64(&c)))) {
+        requireMulhIntrinsic = true;
         rewriteDivByConstS64(x, c->value.geti64());
       }
     }
@@ -90,6 +95,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       Const* c;
       Expression* x;
       if (matches(curr, binary(RemU, any(&x), i64(&c)))) {
+        // requireMulhIntrinsic = true;
         rewriteRemByConstU64(x, (uint64_t)c->value.geti64());
       }
     }
@@ -99,6 +105,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       Const* c;
       Expression* x;
       if (matches(curr, binary(RemS, any(&x), i64(&c)))) {
+        // requireMulhIntrinsic = true;
         rewriteRemByConstS64(x, c->value.geti64());
       }
     }
@@ -157,15 +164,13 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
     Type type = dividend->type;
 
-    Name mul64HighName = WASM_I64_MUL_HIGH;
-    neededIntrinsics.insert(name);
-
     // quotient = mulh(dividend, M')
     Index tempIndex = Builder::addVar(getFunction(), type);
     Expression* quotient = builder.makeLocalTee(
       tempIndex,
-      builder.makeCall(
-        mul64HighName, {dividend, builder.makeConst(payload.multiplier)}, type),
+      builder.makeCall(WASM_I64_MUL_HIGH,
+                       {dividend, builder.makeConst(payload.multiplier)},
+                       type),
       type);
 
     if (payload.add) {
@@ -242,12 +247,9 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
     const auto payload = signedDivisionByConstant(uint64_t(divisor));
 
-    Name mul64HighName = WASM_I64_MUL_HIGH;
-    neededIntrinsics.insert(name);
-
     // quotient = mulh(dividend, M')
     Expression* quotient =
-      builder.makeCall(mul64HighName,
+      builder.makeCall(WASM_I64_MUL_HIGH,
                        {dividend, builder.makeConst(payload.multiplier)},
                        dividend->type);
 
@@ -301,22 +303,6 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     // assert(divisor != std::numeric_limits<int64_t>::min());
 
     // TODO:
-  }
-
-  void addNeededFunctions(Module& m, Name name, std::set<Name>& needed) {
-    if (needed.count(name)) {
-      return;
-    }
-    needed.insert(name);
-
-    auto function = m.getFunction(name);
-    FindAll<Call> calls(function->body);
-    for (auto* call : calls.list) {
-      auto* called = m.getFunction(call->target);
-      if (!called->imported()) {
-        this->addNeededFunctions(m, call->target, needed);
-      }
-    }
   }
 };
 
