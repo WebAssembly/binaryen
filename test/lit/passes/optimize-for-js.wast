@@ -52,6 +52,7 @@
   )
  )
  ;; CHECK:      (func $div-unsigned-by7-i64 (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (local $1 i64)
  ;; CHECK-NEXT:  (if (result i64)
  ;; CHECK-NEXT:   (i64.eqz
  ;; CHECK-NEXT:    (i64.shr_u
@@ -72,17 +73,16 @@
  ;; CHECK-NEXT:     (i64.shr_u
  ;; CHECK-NEXT:      (i64.sub
  ;; CHECK-NEXT:       (local.get $x)
- ;; CHECK-NEXT:       (call $__wasm_i64_mulh
- ;; CHECK-NEXT:        (local.get $x)
- ;; CHECK-NEXT:        (i64.const 2635249153387078803)
+ ;; CHECK-NEXT:       (local.tee $1
+ ;; CHECK-NEXT:        (call $__wasm_i64_mulh
+ ;; CHECK-NEXT:         (local.get $x)
+ ;; CHECK-NEXT:         (i64.const 2635249153387078803)
+ ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (i64.const 1)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (call $__wasm_i64_mulh
- ;; CHECK-NEXT:      (local.get $x)
- ;; CHECK-NEXT:      (i64.const 2635249153387078803)
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i64.const 2)
  ;; CHECK-NEXT:   )

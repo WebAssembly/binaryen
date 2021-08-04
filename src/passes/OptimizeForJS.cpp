@@ -186,14 +186,18 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
     const auto payload = unsignedDivisionByConstant(divisor, shift);
 
+    Type type = dividend->type;
+
     Name mul64HighName = WASM_I64_MUL_HIGH;
     neededIntrinsics.insert(name);
 
     // quotient = mulh(dividend, M')
-    Expression* quotient =
-      builder.makeCall(mul64HighName,
-                       {dividend, builder.makeConst(payload.multiplier)},
-                       dividend->type);
+    Index tempIndex = Builder::addVar(getFunction(), type);
+    Expression* quotient = builder.makeLocalTee(
+      tempIndex,
+      builder.makeCall(
+        mul64HighName, {dividend, builder.makeConst(payload.multiplier)}, type),
+      type);
 
     if (payload.add) {
       // t1 = dividend - quotient
@@ -207,7 +211,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
           builder.makeBinary(ShrUInt64,
                              builder.makeBinary(SubInt64, dividend, quotient),
                              builder.makeConst(uint64_t(1))),
-          quotient),
+          builder.makeLocalGet(tempIndex, type)),
         builder.makeConst(uint64_t(payload.shift - 1)));
     } else {
       // res = quot >> shift
