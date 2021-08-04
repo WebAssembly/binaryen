@@ -44,17 +44,13 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     super::doWalkModule(module);
 
     if (requireMulhIntrinsic) {
-      Name name = WASM_I64_MUL_HIGH;
-      Module intrinsicsModule;
+      Module intrinsics;
       std::string input(IntrinsicsModuleWast);
       SExpressionParser parser(const_cast<char*>(input.c_str()));
       Element& root = *parser.root;
-      SExpressionWasmBuilder builder(
-        intrinsicsModule, *root[0], IRProfile::Normal);
-
-      auto* func =
-        ModuleUtils::copyFunction(intrinsicsModule.getFunction(name), *module);
-      doWalkFunction(func);
+      SExpressionWasmBuilder builder(intrinsics, *root[0], IRProfile::Normal);
+      auto* func = intrinsics.getFunction(WASM_I64_MUL_HIGH);
+      doWalkFunction(ModuleUtils::copyFunction(func, *module));
       requireMulhIntrinsic = false;
     }
   }
