@@ -27,6 +27,7 @@
 //        wasm GC programs we need to check for type escaping.
 //
 
+#include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -38,6 +39,36 @@
 namespace wasm {
 
 namespace {
+
+// A nominal type always knows who its supertype is, if there is one; this class
+// provides the list of immediate subtypes.
+struct SubTypes {
+  SubTypes(Module& wasm) {
+    std::vector<HeapType> types;
+    std::unordered_map<HeapType, Index> typeIndices;
+    ModuleUtils::collectHeapTypes(wasm, types, typeIndices);
+    for (auto type : types) {
+      note(type);
+    }
+  }
+
+  const std::unordered_set<HeapType>& getSubTypes(HeapType type) {
+    return typeSubTypes[type];
+  }
+
+private:
+  // Add a type to the graph.
+  void note(HeapType type) {
+    HeapType super;
+    if (type.getSuperType(super)) {
+      typeSubTypes[super].insert(type);
+    }
+  }
+
+private:
+  // Maps a type to its subtypes.
+  std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
+};
 
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
@@ -264,6 +295,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       // There is information on this type, fetch it.
       info = iter->second[curr->index];
     }
+
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
@@ -348,17 +380,25 @@ struct ConstantFieldPropagation : public Pass {
     //
     //  (struct.get $A x (REF-1))
     //
-    // Then we want to find all struct.sets
+    // Then we want to be aware of all the relevant struct.sets, that is, the
+    // sets that can write data that this get reads. Given a set
     //
     //  (struct.set $B x (REF-2) (..value..))
     //
-    // where $B is a subtype of $A, because at runtime the value REF-1 might not
-    // only be of type $A but also any subtype of $A. To make the lookup
-    // efficient when we see the get, we propagate information about sets to
-    // their supers, recursively, so long as the super still has that field.
-    // (Note that this also handles the case of REF-2 being a subtype of $B.)
+    // then
     //
-    // TODO: A topological sort could avoid repeated work here.
+    //  1. If $B is a subtype of $A, it is relevant: the actual value might be
+    //     of type $B (or even more specific), and cast to $A before it reaches
+    //     the get.
+    //  2. If $B is a supertype of $A that still has the field x then it may
+    //     also be relevant: the actual value might be of type $A (or even more
+    //     specific), and cast to $B before it reaches the set.
+    //
+    // Therefore to make lookups for gets efficient, we propagate information
+    // in both directions as just described.
+    //
+    // TODO: A topological sort could avoid repeated work here perhaps.
+    SubTypes subTypes(*module);
     UniqueDeferredQueue<HeapType> work;
     for (auto& kv : combinedInfos) {
       auto type = kv.first;
@@ -367,6 +407,8 @@ struct ConstantFieldPropagation : public Pass {
     while (!work.empty()) {
       auto type = work.pop();
       auto& infos = combinedInfos[type];
+
+      // Propagate shared fields to the supertype.
       HeapType superType;
       if (type.getSuperType(superType)) {
         auto& superInfos = combinedInfos[superType];
@@ -374,6 +416,17 @@ struct ConstantFieldPropagation : public Pass {
         for (Index i = 0; i < superFields.size(); i++) {
           if (superInfos[i].combine(infos[i])) {
             work.push(superType);
+          }
+        }
+      }
+
+      // Propagate shared fields to the subtypes.
+      auto numFields = type.getStruct().fields.size();
+      for (auto subType : subTypes.getSubTypes(type)) {
+        auto& subInfos = combinedInfos[subType];
+        for (Index i = 0; i < numFields; i++) {
+          if (subInfos[i].combine(infos[i])) {
+            work.push(subType);
           }
         }
       }

@@ -553,8 +553,9 @@
 
 ;; Subtyping: Create a supertype and get a subtype. As we never create a
 ;;            subtype, the get must trap anyhow (the reference it receives can
-;;            only by null in this closed world) and we can optimize this get
-;;            into an unreachable.
+;;            only by null in this closed world). Since the only possible writes
+;;            to the field are of the value 10, we will optimize to that. (But
+;;            as it will trap anyhow, that doesn't really matter.)
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -581,11 +582,13 @@
   )
   ;; CHECK:      (func $get
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null $substruct)
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $substruct)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -768,13 +771,16 @@
 )
 
 ;; Subtyping: Create both a subtype and a supertype, with different constants
-;;            for the shared field, but get from the subtype, which indicates
-;;            we must not be confused by the supertype, and can optimize.
+;;            for the shared field, but get from the subtype. As the field is
+;;            shared between the types, we cannot optimize here: we model the
+;;            struct.new as a set, and if there is a set of the supertype, then
+;;            it might be to a reference of the subtype.
+;;            TODO: model new and set separately
 (module
-  ;; CHECK:      (type $none_=>_none (func))
-
   ;; CHECK:      (type $substruct (struct (field i32) (field f64)) (extends $struct))
   (type $substruct (struct i32 f64) (extends $struct))
+
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
@@ -811,13 +817,8 @@
   )
   ;; CHECK:      (func $get
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $substruct)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   (struct.get $substruct 0
+  ;; CHECK-NEXT:    (ref.null $substruct)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -966,19 +967,21 @@
 
 ;; Multi-level subtyping with conflicts. The even-numbered fields will get
 ;; different values in the sub-most type. Create the top and bottom types, but
-;; not the middle one. As a result, gets of the first type cannot optimize
-;; an even field, but gets of the subtype and sub-sub-type can always be
-;; optimized, even the even ones, as a reference there cannot be to the first
-;; type.
+;; not the middle one. Any field which receives more than one value, no matter
+;; where, cannot be optimized, which leaves the odd fields as optimizable, as
+;; well as fields only present in the sub-most class anyhow (if they have a
+;; constant value in the single construction there).
+;; (See notes earlier on the limitations of our modeling new and set in the same
+;; way.)
 (module
   ;; CHECK:      (type $struct3 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref)) (extends $struct2))
   (type $struct3 (struct i32 i32 f64 f64 anyref anyref) (extends $struct2))
 
-  ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
-  (type $struct1 (struct i32 i32))
-
   ;; CHECK:      (type $struct2 (struct (field i32) (field i32) (field f64) (field f64)) (extends $struct1))
   (type $struct2 (struct i32 i32 f64 f64) (extends $struct1))
+
+  ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
+  (type $struct1 (struct i32 i32))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
@@ -1052,13 +1055,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 999)
+  ;; CHECK-NEXT:   (struct.get $struct2 1
+  ;; CHECK-NEXT:    (ref.null $struct2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1092,13 +1090,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 999)
+  ;; CHECK-NEXT:   (struct.get $struct3 1
+  ;; CHECK-NEXT:    (ref.null $struct3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1202,17 +1195,18 @@
   )
 )
 
-;; Multi-level subtyping with a different value in the middle of the chain. As
-;; a result, only a get of the sub-most type can be optimized.
+;; Multi-level subtyping with a different value in the middle of the chain. We
+;; cannot optimize any of these (for the very last field in the subtype, if we
+;; modeled new separately from set then we could, as mentioned earlier).
 (module
   ;; CHECK:      (type $struct1 (struct (field i32)))
   (type $struct1 (struct i32))
   ;; CHECK:      (type $struct2 (struct (field i32) (field f64)) (extends $struct1))
   (type $struct2 (struct i32 f64) (extends $struct1))
-  ;; CHECK:      (type $none_=>_none (func))
-
   ;; CHECK:      (type $struct3 (struct (field i32) (field f64) (field anyref)) (extends $struct2))
   (type $struct3 (struct i32 f64 anyref) (extends $struct2))
+
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (func $create
   ;; CHECK-NEXT:  (drop
@@ -1272,13 +1266,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $struct3)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   (struct.get $struct3 0
+  ;; CHECK-NEXT:    (ref.null $struct3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1420,6 +1409,69 @@
     (drop
       (struct.get $struct 4
         (ref.null $struct)
+      )
+    )
+  )
+)
+
+;; Never create A, but have a set to its field. A subtype B has no creates nor
+;; sets, and the final subtype C has a create and a get. The set to A should
+;; apply to it, preventing optimization.
+(module
+  ;; CHECK:      (type $C (struct (field (mut i32))) (extends $B))
+  (type $C (struct (mut i32)) (extends $B))
+
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (mut i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
+
+  ;; CHECK:      (type $ref|$C|_=>_none (func (param (ref $C))))
+
+  ;; CHECK:      (type $B (struct (field (mut i32))) (extends $A))
+  (type $B (struct (mut i32)) (extends $A))
+
+  ;; CHECK:      (func $create
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $C
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (rtt.canon $C)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new_with_rtt $C
+        (i32.const 10)
+        (rtt.canon $C)
+      )
+    )
+  )
+  ;; CHECK:      (func $set (param $a (ref $A))
+  ;; CHECK-NEXT:  (struct.set $A 0
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set (param $a (ref $A))
+    (struct.set $A 0
+      (local.get $a)
+      (i32.const 20)
+    )
+  )
+  ;; CHECK:      (func $get (param $c (ref $C))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 0
+  ;; CHECK-NEXT:    (local.get $c)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $c (ref $C))
+    (drop
+      (struct.get $C 0
+        (local.get $c)
       )
     )
   )
