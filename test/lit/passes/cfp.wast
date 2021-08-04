@@ -976,6 +976,7 @@
 
   ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
   (type $struct1 (struct i32 i32))
+
   ;; CHECK:      (type $struct2 (struct (field i32) (field i32) (field f64) (field f64)) (extends $struct1))
   (type $struct2 (struct i32 i32 f64 f64) (extends $struct1))
 
