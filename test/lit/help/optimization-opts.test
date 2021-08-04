@@ -182,6 +182,9 @@
 ;; CHECK-NEXT:   --avoid-reinterprets                          Tries to avoid reinterpret
 ;; CHECK-NEXT:                                                 operations via more loads
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --cfp                                         propagate constant struct field
+;; CHECK-NEXT:                                                 values
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals                             reduce # of locals by coalescing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals-learning                    reduce # of locals by coalescing
