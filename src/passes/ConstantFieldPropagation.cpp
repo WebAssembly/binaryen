@@ -47,12 +47,9 @@ namespace {
 // Currently this just looks for a single constant value, and even two constant
 // values are treated as unknown. It may be worth optimizing more than that TODO
 struct PossibleConstantValues {
-  std::unordered_set<Literal> values;
-
   // Note a written value as we see it, and update our internal knowledge based
   // on it and all previous values noted.
   void note(Literal curr) {
-    values.insert(curr);
     if (!noted) {
       // This is the first value.
       value = curr;
@@ -364,10 +361,6 @@ struct ConstantFieldPropagation : public Pass {
     for (auto& kv : combinedInfos) {
       auto type = kv.first;
       work.push(type);
-      auto& fields = type.getStruct().fields;
-      for (Index i = 0; i < fields.size(); i++) {
-        std::cout << "f" << i << " : " << kv.second[i].values.size() << '\n';
-      }
     }
     while (!work.empty()) {
       auto type = work.pop();
