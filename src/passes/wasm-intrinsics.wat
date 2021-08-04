@@ -171,7 +171,7 @@
    )
    (i64.shr_u
     (i64.add
-     (i64.mul (local.get $var$1) (local.get $2))
+     (i64.mul (local.get $var$1) (local.get $var$2))
      (i64.and (local.get $var$0) (i64.const 4294967295))
     )
     (i64.const 32)
