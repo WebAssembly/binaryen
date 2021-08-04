@@ -354,9 +354,7 @@ struct ConstantFieldPropagation : public Pass {
     // their supers, recursively, so long as the super still has that field.
     // (Note that this also handles the case of REF-2 being a subtype of $B.)
     //
-    // TODO: assert nominal!
-    // TODO: cycles are impossible with nominal supertypes, right? (even when
-    //       not adding a field?)
+    // TODO: Are cycles possible with nominal supertypes?
     UniqueDeferredQueue<HeapType> work;
     for (auto& kv : combinedInfos) {
       auto type = kv.first;
