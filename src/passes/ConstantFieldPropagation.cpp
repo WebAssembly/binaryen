@@ -148,13 +148,12 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues> {
   // When we access an item, if it does not already exist, create it with a
   // vector of the right length for that type.
   StructValues& operator[](HeapType type) {
-    auto iter = find(type);
-    if (iter != end()) {
-      return iter->second;
+    auto inserted = insert({type, {}});
+    auto& values = inserted.first->second;
+    if (inserted.second) {
+      values.resize(type.getStruct().fields.size());
     }
-    auto& ret = std::unordered_map<HeapType, StructValues>::operator[](type);
-    ret.resize(type.getStruct().fields.size());
-    return ret;
+    return values;
   }
 
   void dump(std::ostream& o) {
@@ -266,7 +265,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
       // construct any data of this type, and so it is a logic error to reach
-      // this location in the code. (Unless we are not in a closed-world
+      // this location in the code. (Unless we are in an open-world
       // situation, which we assume we are not in.) Replace this get with a
       // trap. Note that we do not need to care about the nullability of the
       // reference, as if it should have trapped, we are replacing it with
