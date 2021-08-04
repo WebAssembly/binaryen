@@ -298,13 +298,15 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
   }
 
   void rewriteRemByConstU64(Expression* dividend, uint64_t divisor) {
-    assert(divisor != 0);
+    // assert(divisor != 0);
+
     // TODO:
   }
 
   void rewriteRemByConstS64(Expression* dividend, int64_t divisor) {
-    assert(divisor != 0);
-    assert(divisor != std::numeric_limits<int64_t>::min());
+    // assert(divisor != 0);
+    // assert(divisor != std::numeric_limits<int64_t>::min());
+
     // TODO:
   }
 
