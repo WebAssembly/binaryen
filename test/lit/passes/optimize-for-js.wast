@@ -515,7 +515,7 @@
   )
  )
 
- ;; CHECK:      (func $div-signed-by-const-side-effect-i64_skip (result i64)
+ ;; CHECK:      (func $div-signed-by-const-side-effect-i64 (result i64)
  ;; CHECK-NEXT:  (local $0 i64)
  ;; CHECK-NEXT:  (if (result i64)
  ;; CHECK-NEXT:   (i64.eqz
@@ -552,7 +552,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $div-signed-by-const-side-effect-i64_skip (result i64)
+ (func $div-signed-by-const-side-effect-i64 (result i64)
   (i64.div_s
    (call_indirect $0 (type $none_=>_i64)
     (i32.const 26)
