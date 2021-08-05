@@ -292,7 +292,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // Note that we check the type here to avoid removing unreachable code - we
     // leave that for DCE.
     if (curr->type == Type::none &&
-        !EffectAnalyzer(getPassOptions(), getModule()->features, curr).hasUnremovableSideEffects()) {
+        !EffectAnalyzer(getPassOptions(),
+                        getModule()->features,
+                        curr).hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr);
       return;
     }

@@ -1118,7 +1118,7 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
-    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
+    if (areConsecutiveInputsEqualAndRemovable(curr->left, curr->right)) {
       replaceCurrent(
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
     }
@@ -1371,14 +1371,13 @@ private:
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
-  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+  //
+  // This also checks that the inputs are removable.
+  bool areConsecutiveInputsEqualAndRemovable(Expression* left, Expression* right) {
     // First, check for side effects. If there are any, then we can't even
-    // assume things like local.get's of the same index being identical.
-    //
-    // Note that we can ignore traps here because these are two consecutive
-    // inputs: if one traps, we'd never reach the parent of them both, which
-    // means it does not matter if they are equal or not.
-    // XXX ehhh
+    // assume things like local.get's of the same index being identical. (It is
+    // also ok to have side effects here, if we can remove them, as we are also
+    // checking if we can remove the two inputs anyhow.)
     auto passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, getModule()->features, left)
           .hasUnremovableSideEffects() ||
@@ -2638,7 +2637,7 @@ private:
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
     PassOptions options = getPassOptions();
 
-    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
+    if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
       if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
         // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
         Builder builder(*getModule());
@@ -2655,7 +2654,7 @@ private:
 
       switch (bytes) {
         case 0: {
-          if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
+          if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
             // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
             return builder.makeBlock({builder.makeDrop(memCopy->dest),
                                       builder.makeDrop(memCopy->source)});
