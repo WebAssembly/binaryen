@@ -65,7 +65,6 @@ private:
     }
   }
 
-private:
   // Maps a type to its subtypes.
   std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
 };
@@ -388,8 +387,7 @@ struct ConstantFieldPropagation : public Pass {
     // then
     //
     //  1. If $B is a subtype of $A, it is relevant: the actual value might be
-    //     of type $B (or even more specific), and cast to $A before it reaches
-    //     the get.
+    //     of type $B (or even more specific).
     //  2. If $B is a supertype of $A that still has the field x then it may
     //     also be relevant: the actual value might be of type $A (or even more
     //     specific), and cast to $B before it reaches the set.
