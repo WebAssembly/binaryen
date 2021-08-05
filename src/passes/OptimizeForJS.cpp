@@ -133,7 +133,8 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
   void rewriteDivByConstU64(Expression* dividend, uint64_t divisor) {
     // skip if divisor is power of two or negative value
-    // also skip if dividend is const
+    // also skip if dividend is const. All this handled by optimize
+    // instructions pass.
     if (Bits::isPowerOf2(divisor) || int64_t(divisor) < 0LL ||
         dividend->is<Const>()) {
       return;
