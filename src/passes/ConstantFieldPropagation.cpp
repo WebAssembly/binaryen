@@ -65,7 +65,6 @@ private:
     }
   }
 
-private:
   // Maps a type to its subtypes.
   std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
 };
