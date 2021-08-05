@@ -160,10 +160,10 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
     if (shift) {
       shiftedDivisor >>= shift;
-      shiftedDividend = builder.makeBinary(
-        ShrUInt64,
-        builder.makeLocalGet(tempIndex, type),
-        builder.makeConst(uint64_t(shift)));
+      shiftedDividend =
+        builder.makeBinary(ShrUInt64,
+                           builder.makeLocalGet(tempIndex, type),
+                           builder.makeConst(uint64_t(shift)));
     } else {
       shiftedDividend = builder.makeLocalGet(tempIndex, type);
     }
