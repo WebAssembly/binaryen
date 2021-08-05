@@ -3,16 +3,22 @@
 ;; RUN:   | filecheck %s
 ;; RUN: wasm-opt %s --optimize-instructions --ignore-implicit-traps --enable-reference-types --enable-gc --nominal -S -o - \
 ;; RUN:   | filecheck %s --check-prefix NOMNL
+;; Also test trapsNeverHappen (with nominal; no need for both type system modes).
+;; RUN: wasm-opt %s --optimize-instructions --traps-never-happen --enable-reference-types --enable-gc --nominal -S -o - \
+;; RUN:   | filecheck %s --check-prefix TNHNL
 
 (module
   ;; CHECK:      (type $parent (struct (field i32)))
   ;; NOMNL:      (type $parent (struct (field i32)))
+  ;; TNHNL:      (type $parent (struct (field i32)))
   (type $parent (struct (field i32)))
   ;; CHECK:      (type $child (struct (field i32) (field f64)))
   ;; NOMNL:      (type $child (struct (field i32) (field f64)) (extends $parent))
+  ;; TNHNL:      (type $child (struct (field i32) (field f64)) (extends $parent))
   (type $child  (struct (field i32) (field f64)) (extends $parent))
   ;; CHECK:      (type $other (struct (field i64) (field f32)))
   ;; NOMNL:      (type $other (struct (field i64) (field f32)))
+  ;; TNHNL:      (type $other (struct (field i64) (field f32)))
   (type $other  (struct (field i64) (field f32)))
 
   ;; CHECK:      (func $foo
@@ -21,6 +27,9 @@
   ;; NOMNL:      (func $foo
   ;; NOMNL-NEXT:  (nop)
   ;; NOMNL-NEXT: )
+  ;; TNHNL:      (func $foo
+  ;; TNHNL-NEXT:  (nop)
+  ;; TNHNL-NEXT: )
   (func $foo)
 
 
@@ -84,6 +93,36 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
+  ;; TNHNL:      (func $ref-cast-iit (param $parent (ref $parent)) (param $child (ref $child)) (param $other (ref $other)) (param $parent-rtt (rtt $parent)) (param $child-rtt (rtt $child)) (param $other-rtt (rtt $other))
+  ;; TNHNL-NEXT:  (drop
+  ;; TNHNL-NEXT:   (block (result (ref $parent))
+  ;; TNHNL-NEXT:    (drop
+  ;; TNHNL-NEXT:     (local.get $parent-rtt)
+  ;; TNHNL-NEXT:    )
+  ;; TNHNL-NEXT:    (local.get $parent)
+  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:  )
+  ;; TNHNL-NEXT:  (drop
+  ;; TNHNL-NEXT:   (block (result (ref $child))
+  ;; TNHNL-NEXT:    (drop
+  ;; TNHNL-NEXT:     (local.get $parent-rtt)
+  ;; TNHNL-NEXT:    )
+  ;; TNHNL-NEXT:    (local.get $child)
+  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:  )
+  ;; TNHNL-NEXT:  (drop
+  ;; TNHNL-NEXT:   (ref.cast
+  ;; TNHNL-NEXT:    (local.get $parent)
+  ;; TNHNL-NEXT:    (local.get $child-rtt)
+  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:  )
+  ;; TNHNL-NEXT:  (drop
+  ;; TNHNL-NEXT:   (ref.cast
+  ;; TNHNL-NEXT:    (local.get $child)
+  ;; TNHNL-NEXT:    (local.get $other-rtt)
+  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:  )
+  ;; TNHNL-NEXT: )
   (func $ref-cast-iit
     (param $parent (ref $parent))
     (param $child (ref $child))
@@ -175,6 +214,32 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
+  ;; TNHNL:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
+  ;; TNHNL-NEXT:  (drop
+  ;; TNHNL-NEXT:   (ref.cast
+  ;; TNHNL-NEXT:    (block $block (result (ref $parent))
+  ;; TNHNL-NEXT:     (call $foo)
+  ;; TNHNL-NEXT:     (local.get $parent)
+  ;; TNHNL-NEXT:    )
+  ;; TNHNL-NEXT:    (block $block0 (result (rtt $parent))
+  ;; TNHNL-NEXT:     (call $foo)
+  ;; TNHNL-NEXT:     (local.get $parent-rtt)
+  ;; TNHNL-NEXT:    )
+  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:  )
+  ;; TNHNL-NEXT:  (drop
+  ;; TNHNL-NEXT:   (ref.cast
+  ;; TNHNL-NEXT:    (local.get $parent)
+  ;; TNHNL-NEXT:    (unreachable)
+  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:  )
+  ;; TNHNL-NEXT:  (drop
+  ;; TNHNL-NEXT:   (ref.cast
+  ;; TNHNL-NEXT:    (unreachable)
+  ;; TNHNL-NEXT:    (local.get $parent-rtt)
+  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:  )
+  ;; TNHNL-NEXT: )
   (func $ref-cast-iit-bad
     (param $parent (ref $parent))
     (param $parent-rtt (rtt $parent))
@@ -218,6 +283,17 @@
   ;; NOMNL-NEXT:   (i32.const 1)
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
+  ;; TNHNL:      (func $ref-eq-ref-cast (param $x eqref)
+  ;; TNHNL-NEXT:  (drop
+  ;; TNHNL-NEXT:   (ref.eq
+  ;; TNHNL-NEXT:    (local.get $x)
+  ;; TNHNL-NEXT:    (ref.cast
+  ;; TNHNL-NEXT:     (local.get $x)
+  ;; TNHNL-NEXT:     (rtt.canon $parent)
+  ;; TNHNL-NEXT:    )
+  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:  )
+  ;; TNHNL-NEXT: )
   (func $ref-eq-ref-cast (param $x eqref)
     ;; we can look through a ref.cast if we ignore traps
     (drop

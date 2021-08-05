@@ -143,10 +143,14 @@ public:
     return globalsRead.size() || readsMemory || readsHeap || isAtomic || calls;
   }
 
-  bool hasSideEffects() const {
+  bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
-           trap || throws || transfersControlFlow();
+           throws || transfersControlFlow();
   }
+  bool hasSideEffects() const {
+    return trap || hasNonTrapSideEffects();
+  }
+
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
            accessesGlobal();

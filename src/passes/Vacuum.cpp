@@ -281,13 +281,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       return;
     }
 
-    // In trapsNeverHappen mode, a drop of a possible trap can be ignored, as we
-    // assume it will not trap. (Unless it has other side effects.)
-    //
-    // TODO: A complete CFG analysis, removing all code that definitely
-    //       reaches a trap, *even if* it has side effects.
-    if (getPassOptions().trapsNeverHappen &&
-        onlySideEffectIsPossibleTrap(curr->value)) {
+    // If the value has no side effects, or at least ones we know are not
+    // relevant, remove it.
+    if (noImportantSideEffects(curr->value)) {
       ExpressionManipulator::nop(curr);
       return;
     }
@@ -379,16 +375,23 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     }
   }
 
-  bool onlySideEffectIsPossibleTrap(Expression* curr) {
+  bool noImportantSideEffects(Expression* curr) {
+    // In trapsNeverHappen mode, a drop of a possible trap can be ignored, as we
+    // assume it will not trap. (Unless it has other side effects.)
+    //
+    // TODO: A complete CFG analysis, removing all code that definitely
+    //       reaches a trap, *even if* it has side effects.
+    if (!getPassOptions().trapsNeverHappen) {
+      return false;
+    }
+
     if (curr->type == Type::unreachable) {
       // This is dead code - leave that to DCE.
       return false;
     }
 
-    // Find the effects, and ignore a trap if there is one.
-    EffectAnalyzer effects(getPassOptions(), getModule()->features, curr);
-    effects.trap = false;
-    return !effects.hasSideEffects();
+    // Find the effects, ignoring a trap if there is one.
+    return EffectAnalyzer(getPassOptions(), getModule()->features, curr).hasNonTrapSideEffects();
   }
 };
 

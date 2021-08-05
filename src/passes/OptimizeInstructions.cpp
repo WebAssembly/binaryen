@@ -1374,13 +1374,19 @@ private:
   bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
     // First, check for side effects. If there are any, then we can't even
     // assume things like local.get's of the same index being identical.
+    //
+    // Note that we can ignore traps here because these are two consecutive
+    // inputs: if one traps, we'd never reach the parent of them both, which
+    // means it does not matter if they are equal or not.
+    // XXX ehhh
     auto passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, getModule()->features, left)
-          .hasSideEffects() ||
+          .hasNonTrapSideEffects() ||
         EffectAnalyzer(passOptions, getModule()->features, right)
-          .hasSideEffects()) {
+          .hasNonTrapSideEffects()) {
       return false;
     }
+
     // Ignore extraneous things and compare them structurally.
     left = Properties::getFallthrough(left, passOptions, getModule()->features);
     right =
@@ -1388,6 +1394,7 @@ private:
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
+
     // Reference equality also needs to check for allocation, which is *not* a
     // side effect, but which results in different references:
     // repeatedly calling (struct.new $foo)'s output will return different
