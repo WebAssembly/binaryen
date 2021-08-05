@@ -315,7 +315,8 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       EqZInt64,
       builder.makeBinary(ShrUInt64, dividend, builder.makeConst(uint64_t(32))));
 
-    if (divisor <= (int64_t)std::numeric_limits<uint32_t>::max()) {
+    if ((uint64_t)std::abs(divisor) <=
+        (uint64_t)std::numeric_limits<uint32_t>::max()) {
       // i64(i32(dividend) / i32(C))
       quotient32 = builder.makeUnary(
         ExtendSInt32,
