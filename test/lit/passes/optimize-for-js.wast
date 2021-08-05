@@ -31,6 +31,35 @@
    (i32.const 1)
   )
  )
+ ;; CHECK:      (func $is-power-of-2_expr_32 (param $x i64) (result i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (i32.and
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (i32.eqz
+ ;; CHECK-NEXT:     (local.tee $1
+ ;; CHECK-NEXT:      (i32.wrap_i64
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (i32.and
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:     (i32.sub
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $is-power-of-2_expr_32 (param $x i64) (result i32)
+  (i32.eq
+   (i32.popcnt (i32.wrap_i64 (local.get $x)))
+   (i32.const 1)
+  )
+ )
  ;; CHECK:      (func $is-power-of-2_64 (param $x i64) (result i32)
  ;; CHECK-NEXT:  (i32.and
  ;; CHECK-NEXT:   (i32.eqz

@@ -41,6 +41,8 @@ enum class TypeSystem {
 // created. The default system is equirecursive.
 void setTypeSystem(TypeSystem system);
 
+TypeSystem getTypeSystem();
+
 // The types defined in this file. All of them are small and typically passed by
 // value except for `Tuple` and `Struct`, which may own an unbounded amount of
 // data.

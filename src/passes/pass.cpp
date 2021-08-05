@@ -102,6 +102,9 @@ void PassRegistry::registerPasses() {
   registerPass("const-hoisting",
                "hoist repeated constants to a local",
                createConstHoistingPass);
+  registerPass("cfp",
+               "propagate constant struct field values",
+               createConstantFieldPropagationPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("dealign",
@@ -499,6 +502,10 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   addIfNoDWARFIssues("duplicate-function-elimination");
   addIfNoDWARFIssues("memory-packing");
+  if (wasm->features.hasGC() && getTypeSystem() == TypeSystem::Nominal &&
+      options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("cfp");
+  }
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
