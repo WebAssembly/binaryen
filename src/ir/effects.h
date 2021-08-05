@@ -160,15 +160,18 @@ public:
   // by optimizations. In general, you should call hasSideEffects, and only call
   // this method if you are certain that it is a place that would not perform an
   // unsafe transformation with a trap. Specifically, if a pass calls this
-  // and gets the result that there are no unremoveable side effects, then it
+  // and gets the result that there are no unremovable side effects, then it
   // must either
   //
-  //  1. Remove that side effect, so it no longer exists.
-  //  2. Keep it exactly where it is, so that no behavior changes.
+  //  1. Remove any side effects present, if any, so they no longer exists.
+  //  2. Keep the code exactly where it is.
   //
-  // If instead of 1&2 a pass kept the side effect and also reordered it with
-  // other code then that could be bad, as the side effect might have been
-  // behind a condition that avoids it occurring.
+  // If instead of 1&2 a pass kept the side effect and also reordered the code
+  // with other things, then that could be bad, as the side effect might have
+  // been behind a condition that avoids it occurring.
+  //
+  // TODO: Go through the optimizer and use this in all places that do not move
+  //       code around.
   bool hasUnremovableSideEffects() const {
     return hasNonTrapSideEffects() || (trap && !trapsNeverHappen);
   }
