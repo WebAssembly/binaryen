@@ -149,18 +149,17 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       return;
     }
 
-    Type type = dividend->type;
-
-    Localizer temp(dividend, getFunction(), getModule());
-    Index tempIndex = temp.index;
-
     const unsigned shift = Bits::countTrailingZeroes(divisor);
+
     if (shift) {
       divisor >>= shift;
-      temp.expr = builder.makeBinary(ShrUInt64,
-                                     builder.makeLocalGet(tempIndex, type),
-                                     builder.makeConst(uint64_t(shift)));
+      dividend = builder.makeBinary(
+        ShrUInt64, dividend, builder.makeConst(uint64_t(shift)));
     }
+
+    Type type = dividend->type;
+    Localizer temp(dividend, getFunction(), getModule());
+    Index tempIndex = temp.index;
 
     const auto payload = unsignedDivisionByConstant(divisor, shift);
 
