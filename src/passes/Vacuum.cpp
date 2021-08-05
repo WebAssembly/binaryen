@@ -253,10 +253,24 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
       }
     } else {
-      // no else
-      if (curr->ifTrue->is<Nop>()) {
-        // no nothing
+      // This is an if without an else.
+
+      // If the body is empty, we do not need it.
+      bool removeBody = curr->ifTrue->is<Nop>();
+
+      // In trapsNeverHappen mode, conditional code with a possible trap can be
+      // ignored, as we assume it will not trap. (Unless it has other side
+      // effects.)
+      // TODO: A complete CFG analysis, removing all code that definitely
+      //       reaches a trap, *even if* it has side effects.
+      if (getPassOptions().trapsNeverHappen &&
+          onlySideEffectIsPossibleTrap(curr->ifTrue)) {
+        removeBody = true;
+      }
+
+      if (removeBody) {
         replaceCurrent(Builder(*getModule()).makeDrop(curr->condition));
+        return;
       }
     }
   }
@@ -281,6 +295,15 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       replaceCurrent(set);
       return;
     }
+
+    // In trapsNeverHappen mode, a drop of a possible trap can be ignored, as we
+    // assume it will not trap. (Unless it has other side effects.)
+    if (getPassOptions().trapsNeverHappen &&
+        onlySideEffectIsPossibleTrap(curr->value)) {
+      ExpressionManipulator::nop(curr);
+      return;
+    }
+
     // if we are dropping a block's return value, we might be able to remove it
     // entirely
     if (auto* block = curr->value->dynCast<Block>()) {
@@ -366,6 +389,18 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
            .hasSideEffects()) {
       ExpressionManipulator::nop(curr->body);
     }
+  }
+
+  bool onlySideEffectIsPossibleTrap(Expression* curr) {
+    if (curr->type == type::unreachable) {
+      // This is dead code - leave that to DCE.
+      return false;
+    }
+
+    // Find the effects, and ignore a trap if there is one.
+    EffectAnalyzer effects(getPassOptions(), getModule()->features, curr);
+    effects.trap = false;
+    return !effects.hasSideEffects();
   }
 };
 
