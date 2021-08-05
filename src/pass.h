@@ -102,8 +102,8 @@ struct PassOptions {
   // Optimize assuming a trap will never happen at runtime. This is similar to
   // ignoreImplicitTraps, but different:
   //
-  //  * ignoreImplicitTraps simply ignores the side effect of trapping. It then
-  //    does everything under that assumption.
+  //  * ignoreImplicitTraps simply ignores the side effect of trapping when it
+  //    computes side effects, and then passes work with that data.
   //  * trapsNeverHappen assumes that if an instruction with a possible trap is
   //    reached, then it does not trap, and an (unreachable) - that always
   //    traps - is never reached.
@@ -118,15 +118,14 @@ struct PassOptions {
   // unconditionally. trapsNeverHappen, on the other hand, does not ignore the
   // side effect of the trap; instead, it will potentially remove the trapping
   // instruction, if it can - it is always safe to remove a trap in this mode,
-  // as the traps are assumed to not happen.
+  // as the traps are assumed to not happen. Where it cannot remove the side
+  // effect, it will at least not move code around.
   //
   // A consequence of this difference is that code that puts a possible trap
-  // behind a condition is unsafe in ignoreImplicitTraps (it might reorder the
-  // trap to before the condition, since it ignores the trap, and when run
-  // unconditionally it might now trap, if the condition verified it was safe to
-  // run). That is not an issue in trapsNeverHappen, which is safe on production
-  // code where traps are either fatal errors or assertions, and it is assumed
-  // neither of those can happen (and so it is undefined behavior if they do).
+  // behind a condition is unsafe in ignoreImplicitTraps, but safe in
+  // trapsNeverHappen. In general, trapsNeverHappen is safe on production code
+  // where traps are either fatal errors or assertions, and it is assumed
+  // neither of those can happen (and it is undefined behavior if they do).
   //
   // TODO: deprecate and remove ignoreImplicitTraps.
   bool trapsNeverHappen = false;
