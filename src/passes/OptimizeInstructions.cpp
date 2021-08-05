@@ -1175,7 +1175,7 @@ struct OptimizeInstructions
 
     auto passOptions = getPassOptions();
 
-    if (passOptions.ignoreImplicitTraps) {
+    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
       // A ref.cast traps when the RTTs do not line up, which can be of one of
       // two sorts of issues:
       //  1. The value being cast is not even a subtype of the cast type. In
@@ -1186,7 +1186,7 @@ struct OptimizeInstructions
       //     fit. That indicates a difference between RTT subtyping and static
       //     subtyping. That is, the type may be right but the chain of rtt.subs
       //     is not.
-      // If we ignore implicit traps then we would like to assume that neither
+      // If we ignore a possible trap then we would like to assume that neither
       // of those two situations can happen. However, we still cannot do
       // anything if point 1 is a problem, that is, if the value is not a
       // subtype of the cast type, as we can't remove the cast in that case -
@@ -2631,7 +2631,7 @@ private:
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
     PassOptions options = getPassOptions();
 
-    if (options.ignoreImplicitTraps) {
+    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
       if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
         // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
         Builder builder(*getModule());
@@ -2648,7 +2648,7 @@ private:
 
       switch (bytes) {
         case 0: {
-          if (options.ignoreImplicitTraps) {
+          if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
             // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
             return builder.makeBlock({builder.makeDrop(memCopy->dest),
                                       builder.makeDrop(memCopy->source)});
