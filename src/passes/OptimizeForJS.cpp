@@ -54,9 +54,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
     replaceCurrent(builder.makeBinary(
       AndInt32,
-      builder.makeUnary(
-        EqZInt32,
-        builder.makeUnary(eqzOp, builder.makeLocalGet(temp.index, type))),
+      builder.makeUnary(EqZInt32, builder.makeUnary(eqzOp, temp.expr)),
       builder.makeUnary(
         eqzOp,
         builder.makeBinary(
