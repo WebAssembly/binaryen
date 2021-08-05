@@ -916,7 +916,8 @@ testcase_handlers = [
     CheckDeterminism(),
     Wasm2JS(),
     Asyncify(),
-    RoundtripText()
+    # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
+    # RoundtripText()
 ]
 
 
