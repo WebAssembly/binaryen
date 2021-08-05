@@ -181,7 +181,7 @@ struct OptimizationOptions : public ToolOptions {
            })
       .add("--traps-never-happen",
            "-tnh",
-           "Optimize under the helpful assumption that no traps is reached at "
+           "Optimize under the helpful assumption that no trap is reached at "
            "runtime (from load, div/mod, etc.)",
            Options::Arguments::Zero,
            [this](Options*, const std::string&) {
