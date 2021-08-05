@@ -294,6 +294,7 @@
   ;; TNHNL-NEXT:   )
   ;; TNHNL-NEXT:  )
   ;; TNHNL-NEXT: )
+  ;; XXX
   (func $ref-eq-ref-cast (param $x eqref)
     ;; we can look through a ref.cast if we ignore traps
     (drop
