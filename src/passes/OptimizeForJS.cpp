@@ -269,9 +269,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
       // x < 0
       Expression* cond =
-        builder.makeBinary(LtSInt64,
-                           builder.makeLocalGet(tempIndex, type),
-                           builder.makeConst(int64_t(0)));
+        builder.makeBinary(LtSInt64, temp.expr, builder.makeConst(int64_t(0)));
       Expression* ifTrue =
         builder.makeBinary(AddInt64,
                            builder.makeLocalGet(tempIndex, type),
