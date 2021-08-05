@@ -253,24 +253,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
       }
     } else {
-      // This is an if without an else.
-
-      // If the body is empty, we do not need it.
-      bool removeBody = curr->ifTrue->is<Nop>();
-
-      // In trapsNeverHappen mode, conditional code with a possible trap can be
-      // ignored, as we assume it will not trap. (Unless it has other side
-      // effects.)
-      // TODO: A complete CFG analysis, removing all code that definitely
-      //       reaches a trap, *even if* it has side effects.
-      if (getPassOptions().trapsNeverHappen &&
-          onlySideEffectIsPossibleTrap(curr->ifTrue)) {
-        removeBody = true;
-      }
-
-      if (removeBody) {
+      // This is an if without an else. If the body is empty, we do not need it.
+      if (curr->ifTrue->is<Nop>()) {
         replaceCurrent(Builder(*getModule()).makeDrop(curr->condition));
-        return;
       }
     }
   }
@@ -298,6 +283,9 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
 
     // In trapsNeverHappen mode, a drop of a possible trap can be ignored, as we
     // assume it will not trap. (Unless it has other side effects.)
+    //
+    // TODO: A complete CFG analysis, removing all code that definitely
+    //       reaches a trap, *even if* it has side effects.
     if (getPassOptions().trapsNeverHappen &&
         onlySideEffectIsPossibleTrap(curr->value)) {
       ExpressionManipulator::nop(curr);
@@ -392,7 +380,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   bool onlySideEffectIsPossibleTrap(Expression* curr) {
-    if (curr->type == type::unreachable) {
+    if (curr->type == Type::unreachable) {
       // This is dead code - leave that to DCE.
       return false;
     }
