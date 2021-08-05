@@ -1381,9 +1381,9 @@ private:
     // XXX ehhh
     auto passOptions = getPassOptions();
     if (EffectAnalyzer(passOptions, getModule()->features, left)
-          .hasNonTrapSideEffects() ||
+          .hasUnremovableSideEffects() ||
         EffectAnalyzer(passOptions, getModule()->features, right)
-          .hasNonTrapSideEffects()) {
+          .hasUnremovableSideEffects()) {
       return false;
     }
 

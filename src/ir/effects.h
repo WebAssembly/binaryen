@@ -30,6 +30,7 @@ public:
                  FeatureSet features,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      trapsNeverHappen(passOptions.trapsNeverHappen),
       debugInfo(passOptions.debugInfo), features(features) {
     if (ast) {
       walk(ast);
@@ -37,6 +38,7 @@ public:
   }
 
   bool ignoreImplicitTraps;
+  bool trapsNeverHappen;
   bool debugInfo;
   FeatureSet features;
 
@@ -147,8 +149,30 @@ public:
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
            throws || transfersControlFlow();
   }
+
   bool hasSideEffects() const {
     return trap || hasNonTrapSideEffects();
+  }
+
+  // Check if there are side effects, and they are of a kind that cannot be
+  // removed by optimization passes.
+  //
+  // The difference between this and hasSideEffects is subtle, and only related
+  // to trapsNeverHappen - if trapsNeverHappen then any trap we see is removable
+  // by optimizations. In general, you should call hasSideEffects, and only call
+  // this method if you are certain that it is a place that would not perform an
+  // unsafe transformation with a trap. Specifically, if a pass calls this
+  // and gets the result that there are no unremoveable side effects, then it
+  // must either
+  //
+  //  1. Remove that side effect, so it no longer exists.
+  //  2. Keep it exactly where it is, so that no behavior changes.
+  //
+  // If instead of 1&2 a pass kept the side effect and also reordered it with
+  // other code then that could be bad, as the side effect might have been
+  // behind a condition that avoids it occurring.
+  bool hasUnremovableSideEffects() const {
+    return hasNonTrapSideEffects() || (trap && !trapsNeverHappen);
   }
 
   bool hasAnything() const {
