@@ -386,14 +386,22 @@ struct ConstantFieldPropagation : public Pass {
     //
     // then
     //
-    //  1. If $B is a subtype of $A, it is relevant: the actual value might be
-    //     of type $B (or even more specific).
+    //  1. If $B is a subtype of $A, it is relevant: the get might read from a
+    //     struct of type $B (i.e., REF-1 and REF-2 might be identical, and both
+    //     be a struct of type $B).
     //  2. If $B is a supertype of $A that still has the field x then it may
-    //     also be relevant: the actual value might be of type $A (or even more
-    //     specific), and cast to $B before it reaches the set.
+    //     also be relevant: since $A is a subtype of $B, the set may write to a
+    //     struct of type $A (and again, REF-1 and REF-2 may be identical).
     //
-    // Therefore to make lookups for gets efficient, we propagate information
-    // in both directions as just described.
+    // Thus, if either $A <: $B or $B <: $A then we must consider the get and
+    // set to be relevant to each other. To make our later lookups for gets
+    // efficient, we therefore propagate information about the possible values
+    // in each field to both subtypes and supertypes.
+    //
+    // TODO: Model struct.new separately from struct.set. With new we actually
+    //       do know the specific type being written to, which means a get is
+    //       only relevant for a new if the get is of a subtype. That means we
+    //       only need to propagate values from new to subtypes.
     //
     // TODO: A topological sort could avoid repeated work here perhaps.
     SubTypes subTypes(*module);
