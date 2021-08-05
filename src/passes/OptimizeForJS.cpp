@@ -266,7 +266,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       Expression* ifTrue =
         builder.makeBinary(AddInt64,
                            builder.makeLocalGet(temp.index, dividend->type),
-                           builder.makeConst(absoluteDivisor - 1LL));
+                           builder.makeConst(int64_t(absoluteDivisor - 1LL)));
       Expression* ifFalse = builder.makeLocalGet(temp.index, dividend->type);
 
       Expression* quotient = builder.makeBinary(
