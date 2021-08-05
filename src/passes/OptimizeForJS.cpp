@@ -119,9 +119,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
     replaceCurrent(builder.makeBinary(
       AndInt32,
-      builder.makeUnary(
-        EqZInt32,
-        builder.makeUnary(eqzOp, temp.expr)),
+      builder.makeUnary(EqZInt32, builder.makeUnary(eqzOp, temp.expr)),
       builder.makeUnary(
         eqzOp,
         builder.makeBinary(
@@ -167,9 +165,11 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     const auto payload = unsignedDivisionByConstant(divisor, shift);
 
     // quotient = mulh(dividend, M')
-    Expression* quotient = builder.makeCall(WASM_I64_MUL_HIGH,
-      {builder.makeLocalGet(tempIndex, type), builder.makeConst(payload.multiplier)},
-      type);
+    Expression* quotient =
+      builder.makeCall(WASM_I64_MUL_HIGH,
+                       {builder.makeLocalGet(tempIndex, type),
+                        builder.makeConst(payload.multiplier)},
+                       type);
 
     if (payload.add) {
       // t1 = dividend - quotient
@@ -203,9 +203,8 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     Expression* quotient32;
     Expression* cond = builder.makeUnary(
       EqZInt64,
-      builder.makeBinary(ShrUInt64,
-                         temp.expr,
-                         builder.makeConst(uint64_t(32))));
+      builder.makeBinary(
+        ShrUInt64, temp.expr, builder.makeConst(uint64_t(32))));
 
     if (divisor <= (uint64_t)std::numeric_limits<uint32_t>::max()) {
       // i64(i32(dividend) / i32(C))
@@ -298,7 +297,8 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     // quotient = mulh(dividend, M')
     Expression* quotient =
       builder.makeCall(WASM_I64_MUL_HIGH,
-                       {builder.makeLocalGet(tempIndex, type), builder.makeConst(payload.multiplier)},
+                       {builder.makeLocalGet(tempIndex, type),
+                        builder.makeConst(payload.multiplier)},
                        type);
 
     if (divisor > 0 && int64_t(payload.multiplier) < 0) {
@@ -327,7 +327,8 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     Expression* quotient32;
     Expression* cond = builder.makeUnary(
       EqZInt64,
-      builder.makeBinary(ShrUInt64, temp.expr, builder.makeConst(uint64_t(32))));
+      builder.makeBinary(
+        ShrUInt64, temp.expr, builder.makeConst(uint64_t(32))));
 
     if ((uint64_t)std::abs(divisor) <=
         (uint64_t)std::numeric_limits<uint32_t>::max()) {
