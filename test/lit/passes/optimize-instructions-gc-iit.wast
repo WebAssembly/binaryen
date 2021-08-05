@@ -285,16 +285,9 @@
   ;; NOMNL-NEXT: )
   ;; TNHNL:      (func $ref-eq-ref-cast (param $x eqref)
   ;; TNHNL-NEXT:  (drop
-  ;; TNHNL-NEXT:   (ref.eq
-  ;; TNHNL-NEXT:    (local.get $x)
-  ;; TNHNL-NEXT:    (ref.cast
-  ;; TNHNL-NEXT:     (local.get $x)
-  ;; TNHNL-NEXT:     (rtt.canon $parent)
-  ;; TNHNL-NEXT:    )
-  ;; TNHNL-NEXT:   )
+  ;; TNHNL-NEXT:   (i32.const 1)
   ;; TNHNL-NEXT:  )
   ;; TNHNL-NEXT: )
-  ;; XXX
   (func $ref-eq-ref-cast (param $x eqref)
     ;; we can look through a ref.cast if we ignore traps
     (drop
