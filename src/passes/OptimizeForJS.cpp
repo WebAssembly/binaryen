@@ -85,26 +85,26 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
         rewriteDivByConstS64(x, c->value.geti64());
       }
     }
-    {
-      // i64(x) % C   ==>   mulh(x, M') >> S'
-      //   where M' and S' are magic constants
-      Const* c;
-      Expression* x;
-      if (matches(curr, binary(RemU, any(&x), i64(&c)))) {
-        // requireMulhIntrinsic = true;
-        rewriteRemByConstU64(x, (uint64_t)c->value.geti64());
-      }
-    }
-    {
-      // i64(x) % C   ==>   mulh(x, M') >> S'
-      //   where M' and S' are magic constants
-      Const* c;
-      Expression* x;
-      if (matches(curr, binary(RemS, any(&x), i64(&c)))) {
-        // requireMulhIntrinsic = true;
-        rewriteRemByConstS64(x, c->value.geti64());
-      }
-    }
+    // {
+    //   // i64(x) % C   ==>   mulh(x, M') >> S'
+    //   //   where M' and S' are magic constants
+    //   Const* c;
+    //   Expression* x;
+    //   if (matches(curr, binary(RemU, any(&x), i64(&c)))) {
+    //     // requireMulhIntrinsic = true;
+    //     rewriteRemByConstU64(x, (uint64_t)c->value.geti64());
+    //   }
+    // }
+    // {
+    //   // i64(x) % C   ==>   mulh(x, M') >> S'
+    //   //   where M' and S' are magic constants
+    //   Const* c;
+    //   Expression* x;
+    //   if (matches(curr, binary(RemS, any(&x), i64(&c)))) {
+    //     // requireMulhIntrinsic = true;
+    //     rewriteRemByConstS64(x, c->value.geti64());
+    //   }
+    // }
   }
 
   void rewritePopcntEqualOne(Expression* expr) {
@@ -329,19 +329,6 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     }
 
     replaceCurrent(builder.makeIf(cond, quotient32, quotient));
-  }
-
-  void rewriteRemByConstU64(Expression* dividend, uint64_t divisor) {
-    // assert(divisor != 0);
-
-    // TODO:
-  }
-
-  void rewriteRemByConstS64(Expression* dividend, int64_t divisor) {
-    // assert(divisor != 0);
-    // assert(divisor != std::numeric_limits<int64_t>::min());
-
-    // TODO:
   }
 };
 
