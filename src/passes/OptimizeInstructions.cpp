@@ -1373,7 +1373,8 @@ private:
   // at a time, and its inputs).
   //
   // This also checks that the inputs are removable.
-  bool areConsecutiveInputsEqualAndRemovable(Expression* left, Expression* right) {
+  bool areConsecutiveInputsEqualAndRemovable(Expression* left,
+                                             Expression* right) {
     // First, check for side effects. If there are any, then we can't even
     // assume things like local.get's of the same index being identical. (It is
     // also ok to have side effects here, if we can remove them, as we are also

@@ -150,9 +150,7 @@ public:
            throws || transfersControlFlow();
   }
 
-  bool hasSideEffects() const {
-    return trap || hasNonTrapSideEffects();
-  }
+  bool hasSideEffects() const { return trap || hasNonTrapSideEffects(); }
 
   // Check if there are side effects, and they are of a kind that cannot be
   // removed by optimization passes.
