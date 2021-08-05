@@ -249,25 +249,29 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       return;
     }
 
-    if (Bits::isPowerOf2(std::abs(divisor))) {
+    Localizer temp(dividend, getFunction(), getModule());
+    Type type = dividend->type;
+    Index tempIndex = temp.index;
+
+    int64_t absoluteDivisor = std::abs(divisor);
+
+    if (Bits::isPowerOf2(absoluteDivisor)) {
       // dividend / +C_pot   ->
       //   +((x < 0 ? (x + (C_pot - 1)) : x) >> ctz(abs(C_pot)))
       //
       // dividend / -C_pot   ->
       //   -((x < 0 ? (x + (C_pot - 1)) : x) >> ctz(abs(C_pot)))
-      Localizer temp(dividend, getFunction(), getModule());
-      int64_t absoluteDivisor = std::abs(divisor);
 
       // x < 0
       Expression* cond =
         builder.makeBinary(LtSInt64,
-                           builder.makeLocalGet(temp.index, dividend->type),
+                           builder.makeLocalGet(tempIndex, type),
                            builder.makeConst(int64_t(0)));
       Expression* ifTrue =
         builder.makeBinary(AddInt64,
-                           builder.makeLocalGet(temp.index, dividend->type),
+                           builder.makeLocalGet(tempIndex, type),
                            builder.makeConst(int64_t(absoluteDivisor - 1LL)));
-      Expression* ifFalse = builder.makeLocalGet(temp.index, dividend->type);
+      Expression* ifFalse = builder.makeLocalGet(tempIndex, type);
 
       Expression* quotient = builder.makeBinary(
         ShrSInt64,
@@ -284,10 +288,6 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     }
 
     const auto payload = signedDivisionByConstant(uint64_t(divisor));
-
-    Type type = dividend->type;
-    Localizer temp(dividend, getFunction(), getModule());
-    Index tempIndex = temp.index;
 
     // quotient = mulh(dividend, M')
     Expression* quotient =
