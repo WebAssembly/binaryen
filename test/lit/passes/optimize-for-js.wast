@@ -3,6 +3,10 @@
 ;; RUN:  | filecheck %s
 
 (module
+ ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+ (type $none_=>_i64 (func (result i64)))
+ ;; CHECK:      (table $0 103 103 funcref)
+ (table $0 103 103 funcref)
  ;; CHECK:      (func $is-power-of-2_32 (param $x i32) (result i32)
  ;; CHECK-NEXT:  (i32.and
  ;; CHECK-NEXT:   (i32.eqz
@@ -508,6 +512,52 @@
   (i64.div_s
    (local.get $x)
    (i64.const -9223372036854775808)
+  )
+ )
+
+ ;; CHECK:      (func $div-signed-by-const-side-effect-i64_skip (result i64)
+ ;; CHECK-NEXT:  (local $0 i64)
+ ;; CHECK-NEXT:  (if (result i64)
+ ;; CHECK-NEXT:   (i64.eqz
+ ;; CHECK-NEXT:    (i64.shr_u
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (i64.const 32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i64.extend_i32_s
+ ;; CHECK-NEXT:    (i32.div_s
+ ;; CHECK-NEXT:     (i32.wrap_i64
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const -117)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i64.add
+ ;; CHECK-NEXT:    (i64.shr_s
+ ;; CHECK-NEXT:     (i64.sub
+ ;; CHECK-NEXT:      (call $__wasm_i64_mulh
+ ;; CHECK-NEXT:       (call_indirect $0 (type $none_=>_i64)
+ ;; CHECK-NEXT:        (i32.const 26)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (i64.const 8356217400911164407)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i64.const 6)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i64.shr_u
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (i64.const 63)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-signed-by-const-side-effect-i64_skip (result i64)
+  (i64.div_s
+   (call_indirect $0 (type $none_=>_i64)
+    (i32.const 26)
+   )
+   (i64.const -117)
   )
  )
 )

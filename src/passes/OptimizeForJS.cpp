@@ -285,23 +285,31 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
     const auto payload = signedDivisionByConstant(uint64_t(divisor));
 
+    Type type = dividend->type;
+    Localizer temp(dividend, getFunction(), getModule());
+    Index tempIndex = temp.index;
+
     // quotient = mulh(dividend, M')
     Expression* quotient =
       builder.makeCall(WASM_I64_MUL_HIGH,
                        {dividend, builder.makeConst(payload.multiplier)},
-                       dividend->type);
+                       type);
 
     if (divisor > 0 && int64_t(payload.multiplier) < 0) {
-      quotient = builder.makeBinary(AddInt64, quotient, dividend);
+      quotient = builder.makeBinary(
+        AddInt64, quotient, builder.makeLocalGet(tempIndex, type));
     } else if (divisor < 0 && int64_t(payload.multiplier) > 0) {
-      quotient = builder.makeBinary(SubInt64, quotient, dividend);
+      quotient = builder.makeBinary(
+        SubInt64, quotient, builder.makeLocalGet(tempIndex, type));
     }
 
     quotient = builder.makeBinary(
       AddInt64,
       builder.makeBinary(
         ShrSInt64, quotient, builder.makeConst(int64_t(payload.shift))),
-      builder.makeBinary(ShrUInt64, dividend, builder.makeConst(int64_t(63))));
+      builder.makeBinary(ShrUInt64,
+                         builder.makeLocalGet(tempIndex, type),
+                         builder.makeConst(int64_t(63))));
 
     // use following control flow logic:
     //
@@ -313,16 +321,19 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     Expression* quotient32;
     Expression* cond = builder.makeUnary(
       EqZInt64,
-      builder.makeBinary(ShrUInt64, dividend, builder.makeConst(uint64_t(32))));
+      builder.makeBinary(ShrUInt64,
+                         builder.makeLocalGet(tempIndex, type),
+                         builder.makeConst(uint64_t(32))));
 
     if ((uint64_t)std::abs(divisor) <=
         (uint64_t)std::numeric_limits<uint32_t>::max()) {
       // i64(i32(dividend) / i32(C))
       quotient32 = builder.makeUnary(
         ExtendSInt32,
-        builder.makeBinary(DivSInt32,
-                           builder.makeUnary(WrapInt64, dividend),
-                           builder.makeConst(int32_t(divisor))));
+        builder.makeBinary(
+          DivSInt32,
+          builder.makeUnary(WrapInt64, builder.makeLocalGet(tempIndex, type)),
+          builder.makeConst(int32_t(divisor))));
     } else {
       // i32(dividend) / C, where C > 2 ** 32   ->   0
       quotient32 = builder.makeConst(int64_t(0));
