@@ -253,6 +253,46 @@
    (i64.const -32)
   )
  )
+ ;; CHECK:      (func $div-unsigned-zero-by-const (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (local $y i64)
+ ;; CHECK-NEXT:  (local $2 i64)
+ ;; CHECK-NEXT:  (local $3 i64)
+ ;; CHECK-NEXT:  (if (result i64)
+ ;; CHECK-NEXT:   (i64.eqz
+ ;; CHECK-NEXT:    (i64.shr_u
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:     (i64.const 32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i64.extend_i32_u
+ ;; CHECK-NEXT:    (i32.div_u
+ ;; CHECK-NEXT:     (i32.wrap_i64
+ ;; CHECK-NEXT:      (local.get $2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 2147483647)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i64.shr_u
+ ;; CHECK-NEXT:    (local.tee $3
+ ;; CHECK-NEXT:     (call $__wasm_i64_mulh
+ ;; CHECK-NEXT:      (i64.shr_u
+ ;; CHECK-NEXT:       (local.get $y)
+ ;; CHECK-NEXT:       (i64.const 1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i64.const -9223372032559808509)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i64.const 30)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-unsigned-zero-by-const (param $x i64) (result i64)
+  (local $y i64)
+  (i64.div_u
+   (local.get $y)
+   (i64.const 4294967294)
+  )
+ )
 
  ;; Signed div by const
 
