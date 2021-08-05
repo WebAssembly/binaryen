@@ -51,6 +51,9 @@
    (i64.const 1)
   )
  )
+
+ ;; Unsigned div by const
+
  ;; CHECK:      (func $div-unsigned-by0-i64 (param $x i64) (result i64)
  ;; CHECK-NEXT:  (i64.const 0)
  ;; CHECK-NEXT: )
@@ -208,6 +211,89 @@
   (i64.div_u
    (local.get $x)
    (i64.const 4294967296)
+  )
+ )
+ ;; CHECK:      (func $div-unsigned-by-1-i64-skip_POT (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (i64.div_u
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i64.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-unsigned-by-1-i64-skip_POT (param $x i64) (result i64)
+  (i64.div_u
+   (local.get $x)
+   (i64.const 1)
+  )
+ )
+
+ ;; Signed div by const
+
+ ;; CHECK:      (func $div-signed-by0-i64 (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (i64.const 0)
+ ;; CHECK-NEXT: )
+ (func $div-signed-by0-i64 (param $x i64) (result i64)
+  (i64.div_s
+   (local.get $x)
+   (i64.const 0)
+  )
+ )
+ ;; CHECK:      (func $div-signed-by-minus-1-i64 (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (i64.sub
+ ;; CHECK-NEXT:   (i64.const 0)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-signed-by-minus-1-i64 (param $x i64) (result i64)
+  (i64.div_s
+   (local.get $x)
+   (i64.const -1)
+  )
+ )
+ ;; CHECK:      (func $div-signed-by-minus-2-i64 (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (i64.sub
+ ;; CHECK-NEXT:   (i64.const 0)
+ ;; CHECK-NEXT:   (i64.shr_s
+ ;; CHECK-NEXT:    (select
+ ;; CHECK-NEXT:     (i64.add
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:      (i64.const -3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (i64.lt_s
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:      (i64.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i64.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-signed-by-minus-2-i64 (param $x i64) (result i64)
+  (i64.div_s
+   (local.get $x)
+   (i64.const -2)
+  )
+ )
+ ;; CHECK:      (func $div-signed-by-2-i64 (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (i64.shr_s
+ ;; CHECK-NEXT:   (select
+ ;; CHECK-NEXT:    (i64.add
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (i64.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:    (i64.lt_s
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:     (i64.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i64.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-signed-by-2-i64 (param $x i64) (result i64)
+  (i64.div_s
+   (local.get $x)
+   (i64.const 2)
   )
  )
 )

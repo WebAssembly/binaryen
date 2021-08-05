@@ -218,8 +218,10 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
 
   void rewriteDivByConstS64(Expression* dividend, int64_t divisor) {
     // This case should never happen in view of the fact that
-    // previous optimizations rewrite such case.
-    assert(divisor != std::numeric_limits<int64_t>::min());
+    // previous optimizations usually rewrite such case.
+    if (divisor == std::numeric_limits<int64_t>::min()) {
+      return;
+    }
 
     Builder builder(*getModule());
 
@@ -231,6 +233,12 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       return;
     }
 
+    if (divisor == 1LL) {
+      // dividend / 1   ->   dividend
+      replaceCurrent(dividend);
+      return;
+    }
+
     if (divisor == -1LL) {
       // dividend / -1   ->   0 - dividend
       //
@@ -238,6 +246,40 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       // but valid in JavaScript (0 - i64.min ->  i64.min).
       replaceCurrent(
         builder.makeBinary(SubInt64, builder.makeConst(uint64_t(0)), dividend));
+      return;
+    }
+
+    if (Bits::isPowerOf2(std::abs(divisor))) {
+      // dividend / +C_pot   ->
+      //   +((x < 0 ? (x + (C_pot - 1)) : x) >> ctz(abs(C_pot)))
+      //
+      // dividend / -C_pot   ->
+      //   -((x < 0 ? (x + (C_pot - 1)) : x) >> ctz(abs(C_pot)))
+      Localizer temp(dividend, getFunction(), getModule());
+
+      // x < 0
+      Expression* cond =
+        builder.makeBinary(LtSInt64,
+                           builder.makeLocalGet(temp.index, dividend->type),
+                           builder.makeConst(int64_t(0)));
+      Expression* ifTrue =
+        builder.makeBinary(AddInt64,
+                           builder.makeLocalGet(temp.index, dividend->type),
+                           builder.makeConst(int64_t(divisor - 1LL)));
+      Expression* ifFalse = builder.makeLocalGet(temp.index, dividend->type);
+
+      Expression* quotient =
+        builder.makeBinary(ShrSInt64,
+                           builder.makeSelect(cond, ifTrue, ifFalse),
+                           builder.makeConst(int64_t(
+                             Bits::countTrailingZeroes(std::abs(divisor)))));
+
+      if (divisor < 0) {
+        quotient =
+          builder.makeBinary(SubInt64, builder.makeConst(int64_t(0)), quotient);
+      }
+
+      replaceCurrent(quotient);
       return;
     }
 
