@@ -223,19 +223,19 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       return;
     }
 
+    if (divisor == 1LL) {
+      // dividend / 1   ->   dividend
+      replaceCurrent(dividend);
+      return;
+    }
+
     Builder builder(*getModule());
 
-    if (divisor == 0) {
+    if (divisor == 0LL) {
       // dividend / 0   ->   0
       //
       // This valid case in JavaScript
       replaceCurrent(builder.makeConst(uint64_t(0)));
-      return;
-    }
-
-    if (divisor == 1LL) {
-      // dividend / 1   ->   dividend
-      replaceCurrent(dividend);
       return;
     }
 
