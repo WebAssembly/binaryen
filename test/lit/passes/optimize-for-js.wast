@@ -229,6 +229,18 @@
    (i64.const 1)
   )
  )
+ ;; CHECK:      (func $div-unsigned-by-minus-32-skip (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (i64.div_u
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i64.const -32)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-unsigned-by-minus-32-skip (param $x i64) (result i64)
+  (i64.div_u
+   (local.get $x)
+   (i64.const -32)
+  )
+ )
 
  ;; Signed div by const
 
