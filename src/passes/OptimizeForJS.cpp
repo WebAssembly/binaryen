@@ -256,6 +256,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       // dividend / -C_pot   ->
       //   -((x < 0 ? (x + (C_pot - 1)) : x) >> ctz(abs(C_pot)))
       Localizer temp(dividend, getFunction(), getModule());
+      int64_t absoluteDivisor = std::abs(divisor);
 
       // x < 0
       Expression* cond =
@@ -265,14 +266,13 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       Expression* ifTrue =
         builder.makeBinary(AddInt64,
                            builder.makeLocalGet(temp.index, dividend->type),
-                           builder.makeConst(int64_t(divisor - 1LL)));
+                           builder.makeConst(absoluteDivisor - 1LL));
       Expression* ifFalse = builder.makeLocalGet(temp.index, dividend->type);
 
-      Expression* quotient =
-        builder.makeBinary(ShrSInt64,
-                           builder.makeSelect(cond, ifTrue, ifFalse),
-                           builder.makeConst(int64_t(
-                             Bits::countTrailingZeroes(std::abs(divisor)))));
+      Expression* quotient = builder.makeBinary(
+        ShrSInt64,
+        builder.makeSelect(cond, ifTrue, ifFalse),
+        builder.makeConst(int64_t(Bits::countTrailingZeroes(absoluteDivisor))));
 
       if (divisor < 0) {
         quotient =

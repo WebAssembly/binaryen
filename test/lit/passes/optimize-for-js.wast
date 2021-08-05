@@ -256,7 +256,7 @@
  ;; CHECK-NEXT:    (select
  ;; CHECK-NEXT:     (i64.add
  ;; CHECK-NEXT:      (local.get $x)
- ;; CHECK-NEXT:      (i64.const -3)
+ ;; CHECK-NEXT:      (i64.const 1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (local.get $x)
  ;; CHECK-NEXT:     (i64.lt_s
