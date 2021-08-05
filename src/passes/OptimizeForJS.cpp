@@ -121,7 +121,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       AndInt32,
       builder.makeUnary(
         EqZInt32,
-        builder.makeUnary(eqzOp, builder.makeLocalGet(temp.index, type))),
+        builder.makeUnary(eqzOp, temp.expr)),
       builder.makeUnary(
         eqzOp,
         builder.makeBinary(
@@ -151,27 +151,24 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       return;
     }
 
+    Type type = dividend->type;
+
+    Localizer temp(dividend, getFunction(), getModule());
+    Index tempIndex = temp.index;
+
     const unsigned shift = Bits::countTrailingZeroes(divisor);
     if (shift) {
       divisor >>= shift;
-      dividend = builder.makeBinary(
-        ShrUInt64, dividend, builder.makeConst(uint64_t(shift)));
+      temp.expr = builder.makeBinary(ShrUInt64,
+                                     builder.makeLocalGet(tempIndex, type),
+                                     builder.makeConst(uint64_t(shift)));
     }
 
     const auto payload = unsignedDivisionByConstant(divisor, shift);
 
-    Type type = dividend->type;
-
-    Localizer temp1(dividend, getFunction(), getModule());
-    Index tempIndex1 = temp1.index;
-
     // quotient = mulh(dividend, M')
-    Index tempIndex2 = Builder::addVar(getFunction(), type);
-    Expression* quotient = builder.makeLocalTee(
-      tempIndex2,
-      builder.makeCall(WASM_I64_MUL_HIGH,
-                       {dividend, builder.makeConst(payload.multiplier)},
-                       type),
+    Expression* quotient = builder.makeCall(WASM_I64_MUL_HIGH,
+      {builder.makeLocalGet(tempIndex, type), builder.makeConst(payload.multiplier)},
       type);
 
     if (payload.add) {
@@ -186,9 +183,9 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
           builder.makeBinary(
             ShrUInt64,
             builder.makeBinary(
-              SubInt64, builder.makeLocalGet(tempIndex1, type), quotient),
+              SubInt64, builder.makeLocalGet(tempIndex, type), quotient),
             builder.makeConst(uint64_t(1))),
-          builder.makeLocalGet(tempIndex2, type)),
+          builder.makeLocalGet(tempIndex, type)),
         builder.makeConst(uint64_t(payload.shift - 1)));
     } else {
       // res = quot >> shift
@@ -207,7 +204,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     Expression* cond = builder.makeUnary(
       EqZInt64,
       builder.makeBinary(ShrUInt64,
-                         builder.makeLocalGet(tempIndex1, type),
+                         temp.expr,
                          builder.makeConst(uint64_t(32))));
 
     if (divisor <= (uint64_t)std::numeric_limits<uint32_t>::max()) {
@@ -216,7 +213,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
         ExtendUInt32,
         builder.makeBinary(
           DivUInt32,
-          builder.makeUnary(WrapInt64, builder.makeLocalGet(tempIndex1, type)),
+          builder.makeUnary(WrapInt64, builder.makeLocalGet(tempIndex, type)),
           builder.makeConst(uint32_t(divisor))));
     } else {
       // i32(dividend) / C, where C > 2 ** 32   ->   0
@@ -301,7 +298,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     // quotient = mulh(dividend, M')
     Expression* quotient =
       builder.makeCall(WASM_I64_MUL_HIGH,
-                       {dividend, builder.makeConst(payload.multiplier)},
+                       {builder.makeLocalGet(tempIndex, type), builder.makeConst(payload.multiplier)},
                        type);
 
     if (divisor > 0 && int64_t(payload.multiplier) < 0) {
@@ -330,9 +327,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     Expression* quotient32;
     Expression* cond = builder.makeUnary(
       EqZInt64,
-      builder.makeBinary(ShrUInt64,
-                         builder.makeLocalGet(tempIndex, type),
-                         builder.makeConst(uint64_t(32))));
+      builder.makeBinary(ShrUInt64, temp.expr, builder.makeConst(uint64_t(32))));
 
     if ((uint64_t)std::abs(divisor) <=
         (uint64_t)std::numeric_limits<uint32_t>::max()) {
