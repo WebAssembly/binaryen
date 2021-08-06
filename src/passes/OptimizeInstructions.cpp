@@ -1131,12 +1131,14 @@ struct OptimizeInstructions
       return;
     }
 
+    auto features = getModule()->features;
+
     // It is possible the target is not a function reference, but we can infer
     // the fallthrough value there. It takes more work to optimize this case,
     // but it is pretty important to allow a call_ref to become a fast direct
     // call, so make the effort.
     if (auto* ref = Properties::getFallthrough(
-                      curr->target, getPassOptions(), getModule()->features)
+                      curr->target, getPassOptions(), features)
                       ->dynCast<RefFunc>()) {
       // Check if the fallthrough make sense. We may have cast it to a different
       // type, which would be a problem - we'd be replacing a call_ref to one
@@ -1184,9 +1186,8 @@ struct OptimizeInstructions
         // We cannot create a local, so we must give up.
         return;
       }
-      lastOperandType = lastOperandType;
       Index tempLocal = builder.addVar(
-        getFunction(), TypeUpdating::getValidLocalType(lastOperandType));
+        getFunction(), TypeUpdating::getValidLocalType(lastOperandType, features));
       auto* set = builder.makeLocalSet(tempLocal, lastOperand);
       auto* drop = builder.makeDrop(curr->target);
       auto* get = TypeUpdating::fixLocalGet(
@@ -1194,7 +1195,6 @@ struct OptimizeInstructions
       curr->operands.back() = builder.makeBlock({set, drop, get});
       replaceCurrent(builder.makeCall(
         ref->func, curr->operands, curr->type, curr->isReturn));
-      // Non-nullabiility
     }
   }
 

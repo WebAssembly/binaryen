@@ -91,7 +91,7 @@ Type getValidLocalType(Type type, FeatureSet features) {
 }
 
 Expression* fixLocalGet(LocalGet* get, Module& wasm) {
-  if (get->type.isNonNullable() && !features.hasGCNNLocals()) {
+  if (get->type.isNonNullable() && !wasm.features.hasGCNNLocals()) {
     // The get should now return a nullable value, and a ref.as_non_null
     // fixes that up.
     get->type = getValidLocalType(get->type, wasm.features);
