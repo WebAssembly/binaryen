@@ -14,9 +14,12 @@
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
 
+ ;; CHECK:      (type $data_=>_none (func (param dataref)))
+ (type $data_=>_none (func (param (ref data))))
+
  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
- ;; CHECK:      (elem declare func $fallthrough-no-params $foo $return-nothing)
+ ;; CHECK:      (elem declare func $fallthrough-no-params $fallthrough-non-nullable $foo $return-nothing)
 
  ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
@@ -102,6 +105,39 @@
   )
  )
 
+ ;; CHECK:      (func $fallthrough-non-nullable (param $x dataref)
+ ;; CHECK-NEXT:  (local $1 (ref null data))
+ ;; CHECK-NEXT:  (call $fallthrough-non-nullable
+ ;; CHECK-NEXT:   (block (result dataref)
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (local.get $x)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result (ref $data_=>_none))
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:      (ref.func $fallthrough-non-nullable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $fallthrough-non-nullable (param $x (ref data))
+  ;; A fallthrough appears here, and in addition the last operand is non-
+  ;; nullable, which means we must be careful when we create a temp local for
+  ;; it: the local should be nullable, and gets of it should use a
+  ;; ref.as_non_null so that we validate.
+  (call_ref
+   (local.get $x)
+   (block (result (ref $data_=>_none))
+    (nop)
+    (ref.func $fallthrough-non-nullable)
+   )
+  )
+ )
+
  ;; CHECK:      (func $fallthrough-bad-type (result i32)
  ;; CHECK-NEXT:  (call_ref
  ;; CHECK-NEXT:   (ref.cast
@@ -129,8 +165,6 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $return-nothing)
-
-   ;; Add a non-nullable last param!
 
  ;; CHECK:      (func $fallthrough-unreachable
  ;; CHECK-NEXT:  (call_ref
