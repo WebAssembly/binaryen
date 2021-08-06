@@ -761,4 +761,16 @@
    (i64.const -85)
   )
  )
+ ;; CHECK:      (func $div-signed-min-i64_skip (param $x i64) (result i64)
+ ;; CHECK-NEXT:  (i64.div_s
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:   (i64.const -9223372036854775808)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-signed-min-i64_skip (param $x i64) (result i64)
+  (i64.div_s
+   (local.get $x)
+   (i64.const 0x8000000000000000)
+  )
+ )
 )
