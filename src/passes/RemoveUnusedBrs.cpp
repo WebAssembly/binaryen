@@ -703,7 +703,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     optimizer.setModule(getModule());
     optimizer.doWalkFunction(func);
-    return optimizer.worked;
+
+    // If we removed any BrOn instructions, that might affect the reachability
+    // of the things they used to break to, so update types.
+    if (optimizer.worked) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      return true;
+    }
+    return false;
   }
 
   void doWalkFunction(Function* func) {
