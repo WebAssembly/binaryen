@@ -1122,6 +1122,56 @@ struct OptimizeInstructions
       replaceCurrent(
         Builder(*getModule())
           .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+      return;
+    }
+
+    // It is possible the target is not a function reference, but we can infer
+    // the fallthrough value there. It takes more work to optimize this case,
+    // but it is pretty important to allow a call_ref to become a fast direct
+    // call, so make the effort.
+    if (auto* ref = Properties::getFallthrough(curr->target, getPassOptions(), getModule()->features)->dynCast<RefFunc>()) {
+      Builder builder(*getModule());
+      if (curr->operands.empty()) {
+        // No operands, so this is simple and there is nothing to reorder: just
+        // emit:
+        //
+        // (block
+        //  (drop curr->target)
+        //  (call ref.func-from-curr->target)
+        // )
+        replaceCurrent(
+          builder.makeSequence(
+            builder.makeDrop(curr->target),
+            builder
+            .makeCall(ref->func, {}, curr->type, curr->isReturn)));
+        return;
+      }
+
+      // In the presence of operands, we must execute the code in curr->target
+      // after the last operand and before the call happens. Interpose at the
+      // last operand:
+      //
+      // (call ref.func-from-curr->target)
+      //  (operand1)
+      //  (..)
+      //  (operandN-1)
+      //  (block
+      //   (local.set $temp (operandN))
+      //   (drop curr->target)
+      //   (local.get $temp)
+      //  )
+      // )
+      auto* lastOperand = curr->operands.back();
+      auto lastOperandType = lastOperand->type;
+      Index tempLocal = builder.addVar(getFunction(), lastOperandType);
+      curr->operands.back() =
+        builder.makeBlock({
+            builder.makeLocalSet(tempLocal, lastOperand),
+            builder.makeDrop(curr->target),
+            builder.makeLocalGet(tempLocal, lastOperandType)
+        });
+      replaceCurrent(builder.makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+      // Non-nullabiility
     }
   }
 
