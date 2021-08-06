@@ -219,9 +219,12 @@ using FunctionStructValuesMap = std::unordered_map<Function*, StructValuesMap>;
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new Scanner(functionNewInfos, functionSetInfos); }
+  Pass* create() override {
+    return new Scanner(functionNewInfos, functionSetInfos);
+  }
 
-  Scanner(FunctionStructValuesMap& functionNewInfos, FunctionStructValuesMap& functionSetInfos)
+  Scanner(FunctionStructValuesMap& functionNewInfos,
+          FunctionStructValuesMap& functionSetInfos)
     : functionNewInfos(functionNewInfos), functionSetInfos(functionSetInfos) {}
 
   void visitStructNew(StructNew* curr) {
@@ -421,7 +424,8 @@ struct ConstantFieldPropagation : public Pass {
 
     SubTypes subTypes(*module);
 
-    auto propagate = [&subTypes](StructValuesMap& combinedInfos, bool toSubTypes) {
+    auto propagate = [&subTypes](StructValuesMap& combinedInfos,
+                                 bool toSubTypes) {
       UniqueDeferredQueue<HeapType> work;
       for (auto& kv : combinedInfos) {
         auto type = kv.first;
