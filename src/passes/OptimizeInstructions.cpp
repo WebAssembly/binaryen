@@ -1135,7 +1135,9 @@ struct OptimizeInstructions
     // the fallthrough value there. It takes more work to optimize this case,
     // but it is pretty important to allow a call_ref to become a fast direct
     // call, so make the effort.
-    if (auto* ref = Properties::getFallthrough(curr->target, getPassOptions(), getModule()->features)->dynCast<RefFunc>()) {
+    if (auto* ref = Properties::getFallthrough(
+                      curr->target, getPassOptions(), getModule()->features)
+                      ->dynCast<RefFunc>()) {
       // Check if the fallthrough make sense. We may have cast it to a different
       // type, which would be a problem - we'd be replacing a call_ref to one
       // type with a direct call to a function of another type. That would trap
@@ -1152,11 +1154,9 @@ struct OptimizeInstructions
         //  (drop curr->target)
         //  (call ref.func-from-curr->target)
         // )
-        replaceCurrent(
-          builder.makeSequence(
-            builder.makeDrop(curr->target),
-            builder
-            .makeCall(ref->func, {}, curr->type, curr->isReturn)));
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->target),
+          builder.makeCall(ref->func, {}, curr->type, curr->isReturn)));
         return;
       }
 
@@ -1185,17 +1185,15 @@ struct OptimizeInstructions
         return;
       }
       lastOperandType = lastOperandType;
-      Index tempLocal = builder.addVar(getFunction(), TypeUpdating::getValidLocalType(lastOperandType));
+      Index tempLocal = builder.addVar(
+        getFunction(), TypeUpdating::getValidLocalType(lastOperandType));
       auto* set = builder.makeLocalSet(tempLocal, lastOperand);
       auto* drop = builder.makeDrop(curr->target);
-      auto* get = TypeUpdating::fixLocalGet(builder.makeLocalGet(tempLocal, lastOperandType), *getModule());
-      curr->operands.back() =
-        builder.makeBlock({
-            set,
-            drop,
-            get
-        });
-      replaceCurrent(builder.makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+      auto* get = TypeUpdating::fixLocalGet(
+        builder.makeLocalGet(tempLocal, lastOperandType), *getModule());
+      curr->operands.back() = builder.makeBlock({set, drop, get});
+      replaceCurrent(builder.makeCall(
+        ref->func, curr->operands, curr->type, curr->isReturn));
       // Non-nullabiility
     }
   }
