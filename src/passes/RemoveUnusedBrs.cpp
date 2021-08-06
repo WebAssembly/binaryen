@@ -677,7 +677,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         if (curr->op == BrOnNonNull) {
           // This cannot be null, so the br is always taken.
-          replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          replaceCurrent(
+            Builder(*getModule()).makeBreak(curr->name, curr->ref));
           worked = true;
           return;
         }
@@ -688,7 +689,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (result == GCTypeUtils::Success) {
           // The type is what we are looking for, so we can switch from BrOn to
           // a simple br which is always taken.
-          replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          replaceCurrent(
+            Builder(*getModule()).makeBreak(curr->name, curr->ref));
           worked = true;
         } else if (result == GCTypeUtils::Failure) {
           // The type is not what we are looking for, so the branch is never
