@@ -1117,6 +1117,11 @@ struct OptimizeInstructions
   }
 
   void visitCallRef(CallRef* curr) {
+    if (curr->target->type == Type::unreachable) {
+      // The call_ref is not reached; leave this for DCE.
+      return;
+    }
+
     if (auto* ref = curr->target->dynCast<RefFunc>()) {
       // We know the target!
       replaceCurrent(
@@ -1130,6 +1135,13 @@ struct OptimizeInstructions
     // but it is pretty important to allow a call_ref to become a fast direct
     // call, so make the effort.
     if (auto* ref = Properties::getFallthrough(curr->target, getPassOptions(), getModule()->features)->dynCast<RefFunc>()) {
+      // Check if the fallthrough make sense. We may have cast it to a different
+      // type, which would be a problem - we'd be replacing a call_ref to one
+      // type with a direct call to a function of another type. That would trap
+      // at runtime; be careful not to emit invalid IR here.
+      if (curr->target->type.getHeapType() != ref->type.getHeapType()) {
+        return;
+      }
       Builder builder(*getModule());
       if (curr->operands.empty()) {
         // No operands, so this is simple and there is nothing to reorder: just
@@ -1163,6 +1175,10 @@ struct OptimizeInstructions
       // )
       auto* lastOperand = curr->operands.back();
       auto lastOperandType = lastOperand->type;
+      if (lastOperandType == Type::unreachable) {
+        // The call_ref is not reached; leave this for DCE.
+        return;
+      }
       Index tempLocal = builder.addVar(getFunction(), lastOperandType);
       curr->operands.back() =
         builder.makeBlock({
