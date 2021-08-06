@@ -34,6 +34,7 @@
 #include <ir/manipulation.h>
 #include <ir/match.h>
 #include <ir/properties.h>
+#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/threads.h>
@@ -1179,12 +1180,20 @@ struct OptimizeInstructions
         // The call_ref is not reached; leave this for DCE.
         return;
       }
-      Index tempLocal = builder.addVar(getFunction(), lastOperandType);
+      if (!TypeUpdating::canHandleAsLocal(lastOperandType)) {
+        // We cannot create a local, so we must give up.
+        return;
+      }
+      lastOperandType = lastOperandType;
+      Index tempLocal = builder.addVar(getFunction(), TypeUpdating::getValidLocalType(lastOperandType));
+      auto* set = builder.makeLocalSet(tempLocal, lastOperand);
+      auto* drop = builder.makeDrop(curr->target);
+      auto* get = TypeUpdating::fixLocalGet(builder.makeLocalGet(tempLocal, lastOperandType), *getModule());
       curr->operands.back() =
         builder.makeBlock({
-            builder.makeLocalSet(tempLocal, lastOperand),
-            builder.makeDrop(curr->target),
-            builder.makeLocalGet(tempLocal, lastOperandType)
+            set,
+            drop,
+            get
         });
       replaceCurrent(builder.makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
       // Non-nullabiility
