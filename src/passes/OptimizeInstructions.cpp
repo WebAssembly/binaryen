@@ -1116,6 +1116,15 @@ struct OptimizeInstructions
     }
   }
 
+  void visitCallRef(CallRef* curr) {
+    if (auto* ref = curr->target->dynCast<RefFunc>()) {
+      // We know the target!
+      replaceCurrent(
+        Builder(*getModule())
+          .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+    }
+  }
+
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
     if (areConsecutiveInputsEqual(curr->left, curr->right)) {

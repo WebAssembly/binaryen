@@ -77,15 +77,6 @@ struct FunctionDirectizer : public WalkerPass<PostWalker<FunctionDirectizer>> {
     }
   }
 
-  void visitCallRef(CallRef* curr) {
-    if (auto* ref = curr->target->dynCast<RefFunc>()) {
-      // We know the target!
-      replaceCurrent(
-        Builder(*getModule())
-          .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
-    }
-  }
-
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionDirectizer>>::doWalkFunction(func);
     if (changedTypes) {
