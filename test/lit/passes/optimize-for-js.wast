@@ -665,6 +665,36 @@
    (i64.const -117)
   )
  )
+ ;; CHECK:      (func $div-signed-by-minus-4-i64 (param $x i32) (result i64)
+ ;; CHECK-NEXT:  (local $1 i64)
+ ;; CHECK-NEXT:  (i64.sub
+ ;; CHECK-NEXT:   (i64.const 0)
+ ;; CHECK-NEXT:   (i64.shr_s
+ ;; CHECK-NEXT:    (select
+ ;; CHECK-NEXT:     (i64.add
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (i64.const 3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:     (i64.lt_s
+ ;; CHECK-NEXT:      (local.tee $1
+ ;; CHECK-NEXT:       (i64.extend_i32_s
+ ;; CHECK-NEXT:        (local.get $x)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i64.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $div-signed-by-minus-4-i64 (param $x i32) (result i64)
+  (i64.div_s
+   (i64.extend_i32_s (local.get $x))
+   (i64.const -4)
+  )
+ )
  ;; CHECK:      (func $div-signed-by-minus-9223372036854775808-i64_skip (param $x i64) (result i64)
  ;; CHECK-NEXT:  (i64.div_s
  ;; CHECK-NEXT:   (local.get $x)
