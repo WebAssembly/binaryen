@@ -16,8 +16,17 @@
   ;; CHECK:      (type $empty (struct ))
   (type $empty (struct))
 
+  ;; CHECK:      (type $B (struct (field i32) (field i32)) (extends $A))
+  (type $B (struct (field i32) (field i32)) (extends $A))
+
+  ;; CHECK:      (type $C (struct (field i32) (field i32)) (extends $A))
+  (type $C (struct (field i32) (field i32)) (extends $A))
+
   ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
+
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -1058,5 +1067,34 @@
   ;; CHECK-NEXT: )
   (func $get-rtt (result (rtt $empty))
     (unreachable)
+  )
+
+  ;; CHECK:      (func $hoist-LUB-danger (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.get $C 1
+  ;; CHECK-NEXT:    (ref.null $C)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $hoist-LUB-danger (param $x i32) (result i32)
+   ;; In nominal typing, if we hoist the struct.get out of the if, then the if
+   ;; will have a new type, $A, but $A does not have field "1" which would be an
+   ;; error. We disallow subtyping for this reason ( and also in structural
+   ;; typing even though atm there might not be a concrete risk there (but
+   ;; future instructions might introduce such things), so we should not
+   ;; optimize anything here.
+   (if (result i32)
+    (local.get $x)
+    (struct.get $B 1
+     (ref.null $B)
+    )
+    (struct.get $C 1
+     (ref.null $C)
+    )
+   )
   )
 )
