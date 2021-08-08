@@ -274,7 +274,8 @@ struct SimplifyGlobals : public Pass {
     runner = runner_;
     module = module_;
 
-    while (iteration()) {}
+    while (iteration()) {
+    }
   }
 
   bool iteration() {
