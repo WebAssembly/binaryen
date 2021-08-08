@@ -95,7 +95,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     }
 
     // See if reading a specific global is the only effect the condition has.
-    EffectAnalyzer condition(getPassOptions(), getModule()->features, curr->condition);
+    EffectAnalyzer condition(
+      getPassOptions(), getModule()->features, curr->condition);
 
     if (condition.globalsRead.size() != 1) {
       return;
@@ -109,7 +110,8 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
     // See if writing the same global is the only effect the body has. (Note
     // that we don't need to care about the case where the body has no effects
     // at all - other pass would handle that trivial situation.)
-    EffectAnalyzer ifTrue(getPassOptions(), getModule()->features, curr->ifTrue);
+    EffectAnalyzer ifTrue(
+      getPassOptions(), getModule()->features, curr->ifTrue);
     if (ifTrue.globalsWritten.size() != 1) {
       return;
     }
@@ -329,7 +331,8 @@ struct SimplifyGlobals : public Pass {
       bool onlyReadOnlyToWrite = (info.read == info.readOnlyToWrite);
       assert(!onlyReadOnlyToWrite || info.written >= info.readOnlyToWrite);
 
-      if (!info.imported && !info.exported && (!info.read || onlyReadOnlyToWrite)) {
+      if (!info.imported && !info.exported &&
+          (!info.read || onlyReadOnlyToWrite)) {
         unnecessaryGlobals.insert(global->name);
 
         // We can now mark this global as immutable, and un-written, since we
