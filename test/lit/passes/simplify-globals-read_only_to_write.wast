@@ -180,3 +180,61 @@
     )
   )
 )
+;; Nested patterns work as well, in a single run of the pass.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $a i32 (i32.const 0))
+  (global $a (mut i32) (i32.const 0))
+  ;; CHECK:      (global $b i32 (i32.const 0))
+  (global $b (mut i32) (i32.const 0))
+  ;; CHECK:      (global $c i32 (i32.const 0))
+  (global $c (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $foo
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (block $block1
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (block $block3
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo
+    (if
+      (global.get $a)
+      (block
+        (global.set $a (i32.const 1))
+        (if
+          (global.get $b)
+          (block
+            (if
+              (global.get $c)
+              (block
+                (global.set $c (i32.const 2))
+              )
+            )
+            (global.set $b (i32.const 3))
+          )
+        )
+      )
+    )
+  )
+)
