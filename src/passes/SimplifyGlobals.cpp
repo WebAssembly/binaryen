@@ -50,10 +50,25 @@ namespace wasm {
 namespace {
 
 struct GlobalInfo {
+  // Whether the global is imported and exported.
   bool imported = false;
   bool exported = false;
-  std::atomic<bool> written;
-  std::atomic<bool> read;
+
+  // How many times the global is written and read.
+  std::atomic<Index> written{0};
+  std::atomic<Index> read{0};
+
+  // How many times the global is "read, but only to write", that is, is used in
+  // this pattern:
+  //
+  //   if (global == X) { global = Y }
+  //
+  // where X and Y have no side effects. If all we have are such reads only to
+  // write then the global is really not necessary, even though there are both
+  // reads and writes of it. This pattern can show up in global initialization
+  // code, where in the block alongside "global = Y" there was some useful code,
+  // but the optimizer managed to remove it.
+  std::atomic<Index> readOnlyToWrite{0};
 };
 
 using GlobalInfoMap = std::map<Name, GlobalInfo>;
@@ -65,9 +80,51 @@ struct GlobalUseScanner : public WalkerPass<PostWalker<GlobalUseScanner>> {
 
   GlobalUseScanner* create() override { return new GlobalUseScanner(infos); }
 
-  void visitGlobalSet(GlobalSet* curr) { (*infos)[curr->name].written = true; }
+  void visitGlobalSet(GlobalSet* curr) { (*infos)[curr->name].written++; }
 
-  void visitGlobalGet(GlobalGet* curr) { (*infos)[curr->name].read = true; }
+  void visitGlobalGet(GlobalGet* curr) { (*infos)[curr->name].read++; }
+
+  void visitIf(If* curr) {
+    // We are looking for
+    //
+    //   if (global == X) { global = Y }
+    //
+    // Ignore an if-else, which cannot be that.
+    if (curr->ifFalse) {
+      return;
+    }
+
+    // See if reading a specific global is the only effect the condition has.
+    EffectAnalyzer condition(getPassOptions(), getModule()->features, curr->condition);
+
+    if (condition.globalsRead.size() != 1) {
+      return;
+    }
+    auto global = *condition.globalsRead.begin();
+    condition.globalsRead.clear();
+    if (condition.hasAnything()) {
+      return;
+    }
+
+    // See if writing the same global is the only effect the body has. (Note
+    // that we don't need to care about the case where the body has no effects
+    // at all - other pass would handle that trivial situation.)
+    EffectAnalyzer ifTrue(getPassOptions(), getModule()->features, curr->ifTrue);
+    if (ifTrue.globalsWritten.size() != 1) {
+      return;
+    }
+    auto writtenGlobal = *ifTrue.globalsWritten.begin();
+    if (writtenGlobal != global) {
+      return;
+    }
+    ifTrue.globalsWritten.clear();
+    if (ifTrue.hasAnything()) {
+      return;
+    }
+
+    // This is exactly the pattern we sought!
+    (*infos)[global].readOnlyToWrite++;
+  }
 
 private:
   GlobalInfoMap* infos;
@@ -217,7 +274,7 @@ struct SimplifyGlobals : public Pass {
 
     analyze();
 
-    removeWritesToUnreadGlobals();
+    removeUnneededOperations();
 
     preferEarlierImports();
 
@@ -250,21 +307,43 @@ struct SimplifyGlobals : public Pass {
     }
   }
 
-  void removeWritesToUnreadGlobals() {
-    // Globals that are not exports and not read from can be eliminated
-    // (even if they are written to).
-    NameSet unreadGlobals;
+  void removeUnneededOperations() {
+    // Globals that are not exports and not read from are unnecessary (even if
+    // they are written to). Likewise, globals that are only read from in order
+    // to write to themselves are unnecessary. First, find such globals.
+    NameSet unnecessaryGlobals;
     for (auto& global : module->globals) {
       auto& info = map[global->name];
-      if (!info.imported && !info.exported && !info.read) {
-        unreadGlobals.insert(global->name);
+
+      // We only ever read-only-to-write if all of our reads are done in places
+      // we identified as read-only-to-write. That is, we have eliminated the
+      // possibility of any other uses. (Technically, each read-to-write
+      // location might have more than one read since we did not count them, but
+      // only verified there was one read or more; but this is good enough as
+      // the common case has exactly one.)
+      //
+      // Note that there might be more writes, if there are additional writes
+      // besides those in the read-only-to-write locations. But we can ignore
+      // those, as whatever they write will not be read in order to do anything
+      // of value.
+      bool onlyReadOnlyToWrite = (info.read == info.readOnlyToWrite);
+      assert(!onlyReadOnlyToWrite || info.written >= info.readOnlyToWrite);
+
+      if (!info.imported && !info.exported && (!info.read || onlyReadOnlyToWrite)) {
+        unnecessaryGlobals.insert(global->name);
+
         // We can now mark this global as immutable, and un-written, since we
-        // are about to remove all the `.set` operations on it.
+        // are about to remove all the operations on it.
         global->mutable_ = false;
-        info.written = false;
+        info.written = 0;
       }
     }
-    GlobalSetRemover(&unreadGlobals, optimize).run(runner, module);
+
+    // Remove all the sets on the unnecessary globals. Later optimizations can
+    // then see that since the global has no writes, it is a constant, which
+    // will lead to removal of gets, and after removing them, the global itself
+    // will be removed as well.
+    GlobalSetRemover(&unnecessaryGlobals, optimize).run(runner, module);
   }
 
   void preferEarlierImports() {
