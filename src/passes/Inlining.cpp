@@ -48,7 +48,6 @@ namespace wasm {
 struct FunctionInfo {
   std::atomic<Index> refs;
   Index size;
-  bool hasCalls;
   bool hasLoops;
   bool hasTryDelegate;
   bool usedGlobally; // in a table or export
@@ -57,7 +56,6 @@ struct FunctionInfo {
   FunctionInfo() {
     refs = 0;
     size = 0;
-    hasCalls = false;
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
@@ -91,12 +89,7 @@ struct FunctionInfo {
     }
     // More than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size. First, check if it has calls. In that case it is not
-    // likely to speed us up, and also if we want to inline such
-    // functions we would need to be careful to avoid infinite recursion.
-    if (hasCalls) {
-      return false;
-    }
+    // about size.
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
            (!hasLoops || options.inlining.allowFunctionsWithLoops);
   }
@@ -123,8 +116,6 @@ struct FunctionInfoScanner
     // can't add a new element in parallel
     assert(infos->count(curr->target) > 0);
     (*infos)[curr->target].refs++;
-    // having a call
-    (*infos)[getFunction()->name].hasCalls = true;
   }
 
   void visitTry(Try* curr) {
@@ -338,8 +329,6 @@ struct Inlining : public Pass {
   Index iterationNumber;
 
   void run(PassRunner* runner, Module* module) override {
-    Index numFunctions = module->functions.size();
-
     // No point to do more iterations than the number of functions, as it means
     // we are infinitely recursing (which should be very rare in practice, but
     // it is possible that a recursive call can look like it is worth inlining).
@@ -356,16 +345,19 @@ struct Inlining : public Pass {
 
     const size_t MaxIterationsForFunc = 5;
 
-    while (iterationNumber <= numFunctions) {
+    while (iterationNumber <= module->functions.size()) {
 #ifdef INLINING_DEBUG
       std::cout << "inlining loop iter " << iterationNumber
-                << " (numFunctions: " << numFunctions << ")\n";
+                << " (numFunctions: " << module->functions.size() << ")\n";
 #endif
       calculateInfos(module);
 
+      iterationNumber++;
       std::unordered_set<Function*> inlinedInto;
       iteration(runner, module, inlinedInto);
-      iterationNumber++;
+      if (inlinedInto.empty()) {
+        return;
+      }
 
       for (auto* func : inlinedInto) {
         if (++iterationsInlinedInto[func] >= MaxIterationsForFunc) {
@@ -397,7 +389,7 @@ struct Inlining : public Pass {
     }
   }
 
-  void iteration(PassRunner* runner, Module* module, std::unordered_set<Function*> inlinedInto) {
+  void iteration(PassRunner* runner, Module* module, std::unordered_set<Function*>& inlinedInto) {
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {

@@ -220,5 +220,15 @@
     (drop (call $no-loops-but-one-use-but-exported))
     (drop (call $no-loops-but-one-use-but-tabled))
   )
+
+  ;; Limit how much recursive inlining we perform to around 5 iterations.
+  (func $recursive-inlining (param $x i32) (result i32)
+    (i32.add
+      (local.get $x)
+      (call $recursive-inlining
+        (local.get $x)
+      )
+    )
+  )
 )
 
