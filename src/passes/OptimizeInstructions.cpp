@@ -1118,9 +1118,7 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Canonicalize to the pattern of a null on the right-hand side, if there is
-    // one. This makes pattern matching simpler. Also, it may end up compressing
-    // slightly better (by increasing the chance for repeating the same patterns
-    // as much as possible).
+    // one. This makes pattern matching simpler.
     if (curr->left->is<RefNull>()) {
       std::swap(curr->left, curr->right);
     }
