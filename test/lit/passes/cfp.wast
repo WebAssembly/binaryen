@@ -890,11 +890,10 @@
 ;; As above, but add a set of $struct. The set prevents the optimization.
 (module
   ;; CHECK:      (type $struct (struct (field (mut i32))))
+  (type $struct (struct (mut i32)))
 
   ;; CHECK:      (type $substruct (struct (field (mut i32)) (field f64)) (extends $struct))
   (type $substruct (struct (mut i32) f64) (extends $struct))
-
-  (type $struct (struct (mut i32)))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -1094,11 +1093,10 @@
   (type $struct3 (struct i32 i32 f64 f64 anyref anyref) (extends $struct2))
 
   ;; CHECK:      (type $struct1 (struct (field i32) (field i32)))
+  (type $struct1 (struct i32 i32))
 
   ;; CHECK:      (type $struct2 (struct (field i32) (field i32) (field f64) (field f64)) (extends $struct1))
   (type $struct2 (struct i32 i32 f64 f64) (extends $struct1))
-
-  (type $struct1 (struct i32 i32))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
@@ -1426,10 +1424,11 @@
 ;; but also a set. That prevents all optimizations.
 (module
   ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field f64)) (extends $struct1))
+  (type $struct2 (struct (mut i32) f64) (extends $struct1))
 
   ;; CHECK:      (type $struct1 (struct (field (mut i32))))
   (type $struct1 (struct (mut i32)))
-  (type $struct2 (struct (mut i32) f64) (extends $struct1))
+
   ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field f64) (field anyref)) (extends $struct2))
   (type $struct3 (struct (mut i32) f64 anyref) (extends $struct2))
 
