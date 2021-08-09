@@ -355,9 +355,10 @@ struct Inlining : public Pass {
     // to inline many times into a function within an iteration, as e.g. that
     // helps the case of many calls of a small getter. However, if we only do
     // more inlining in separate iterations then it is likely the new content
-    // that was inlined that is inlined into, which means it is probably
-    // recursion. To some extent that can help, but like loop unrolling it loses
-    // its benefit quickly, so set a limit.
+    // that was inlined that is being inlined into - that is, we add some new
+    // content, and it contains a call, and we inline into that, perhaps
+    // recursively. To some extent that can help, but like loop unrolling it
+    // loses its benefit quickly, so set a limit here.
     std::unordered_map<Function*, Index> iterationsInlinedInto;
 
     const size_t MaxIterationsForFunc = 5;
