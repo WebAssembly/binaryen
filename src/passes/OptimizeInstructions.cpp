@@ -1137,9 +1137,9 @@ struct OptimizeInstructions
     // the fallthrough value there. It takes more work to optimize this case,
     // but it is pretty important to allow a call_ref to become a fast direct
     // call, so make the effort.
-    if (auto* ref = Properties::getFallthrough(
-                      curr->target, getPassOptions(), features)
-                      ->dynCast<RefFunc>()) {
+    if (auto* ref =
+          Properties::getFallthrough(curr->target, getPassOptions(), features)
+            ->dynCast<RefFunc>()) {
       // Check if the fallthrough make sense. We may have cast it to a different
       // type, which would be a problem - we'd be replacing a call_ref to one
       // type with a direct call to a function of another type. That would trap
@@ -1187,7 +1187,8 @@ struct OptimizeInstructions
         return;
       }
       Index tempLocal = builder.addVar(
-        getFunction(), TypeUpdating::getValidLocalType(lastOperandType, features));
+        getFunction(),
+        TypeUpdating::getValidLocalType(lastOperandType, features));
       auto* set = builder.makeLocalSet(tempLocal, lastOperand);
       auto* drop = builder.makeDrop(curr->target);
       auto* get = TypeUpdating::fixLocalGet(
