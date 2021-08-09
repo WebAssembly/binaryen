@@ -51,13 +51,7 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
       // We do not need to process params, which can legally be non-nullable.
       continue;
     }
-    auto type = func->getLocalType(get->index);
-    if (type.isNonNullable()) {
-      // The get should now return a nullable value, and a ref.as_non_null
-      // fixes that up.
-      get->type = Type(type.getHeapType(), Nullable);
-      *getp = builder.makeRefAs(RefAsNonNull, get);
-    }
+    *getp = fixLocalGet(get, wasm);
   }
 
   // Update tees, whose type must match the local (if the wasm spec changes for
@@ -83,10 +77,26 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
   // Rewrite the types of the function's vars (which we can do now, after we
   // are done using them to know which local.gets etc to fix).
   for (auto& type : func->vars) {
-    if (type.isNonNullable()) {
-      type = Type(type.getHeapType(), Nullable);
-    }
+    type = getValidLocalType(type, wasm.features);
   }
+}
+
+Type getValidLocalType(Type type, FeatureSet features) {
+  assert(canHandleAsLocal(type));
+  if (type.isNonNullable() && !features.hasGCNNLocals()) {
+    type = Type(type.getHeapType(), Nullable);
+  }
+  return type;
+}
+
+Expression* fixLocalGet(LocalGet* get, Module& wasm) {
+  if (get->type.isNonNullable() && !wasm.features.hasGCNNLocals()) {
+    // The get should now return a nullable value, and a ref.as_non_null
+    // fixes that up.
+    get->type = getValidLocalType(get->type, wasm.features);
+    return Builder(wasm).makeRefAs(RefAsNonNull, get);
+  }
+  return get;
 }
 
 } // namespace TypeUpdating
