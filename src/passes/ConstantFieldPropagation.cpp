@@ -169,6 +169,11 @@ struct StructValues : public std::vector<PossibleConstantValues> {
     assert(index < size());
     return std::vector<PossibleConstantValues>::operator[](index);
   }
+
+  const PossibleConstantValues& operator[](size_t index) const {
+    assert(index < size());
+    return std::vector<PossibleConstantValues>::operator[](index);
+  }
 };
 
 // Map of types to information about the values their fields can take.
@@ -206,13 +211,21 @@ struct StructValuesMap : public std::unordered_map<HeapType, StructValues> {
 using FunctionStructValuesMap = std::unordered_map<Function*, StructValuesMap>;
 
 // Scan each function to note all its writes to struct fields.
+//
+// We track information from struct.new and struct.set separately, because in
+// struct.new we know more about the type - we know the actual exact type being
+// written to, and not just that it is of a subtype of the instruction's type,
+// which helps later.
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new Scanner(functionInfos); }
+  Pass* create() override {
+    return new Scanner(functionNewInfos, functionSetInfos);
+  }
 
-  Scanner(FunctionStructValuesMap& functionInfos)
-    : functionInfos(functionInfos) {}
+  Scanner(FunctionStructValuesMap& functionNewInfos,
+          FunctionStructValuesMap& functionSetInfos)
+    : functionNewInfos(functionNewInfos), functionSetInfos(functionSetInfos) {}
 
   void visitStructNew(StructNew* curr) {
     auto type = curr->type;
@@ -222,7 +235,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
     // Note writes to all the fields of the struct.
     auto heapType = type.getHeapType();
-    auto& values = getStructValues(heapType);
+    auto& values = functionNewInfos[getFunction()][heapType];
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
       auto& fieldValues = values[i];
@@ -242,15 +255,13 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
     // Note a write to this field of the struct.
     auto heapType = type.getHeapType();
-    noteExpression(curr->value, getStructValues(heapType)[curr->index]);
+    auto& values = functionSetInfos[getFunction()][heapType];
+    noteExpression(curr->value, values[curr->index]);
   }
 
 private:
-  FunctionStructValuesMap& functionInfos;
-
-  StructValues& getStructValues(HeapType type) {
-    return functionInfos[getFunction()][type];
-  }
+  FunctionStructValuesMap& functionNewInfos;
+  FunctionStructValuesMap& functionSetInfos;
 
   // Note a value, checking whether it is a constant or not.
   void noteExpression(Expression* expr, PossibleConstantValues& info) {
@@ -348,28 +359,34 @@ struct ConstantFieldPropagation : public Pass {
     }
 
     // Find and analyze all writes inside each function.
-    FunctionStructValuesMap functionInfos;
+    FunctionStructValuesMap functionNewInfos, functionSetInfos;
     for (auto& func : module->functions) {
       // Initialize the data for each function, so that we can operate on this
       // structure in parallel without modifying it.
-      functionInfos[func.get()];
+      functionNewInfos[func.get()];
+      functionSetInfos[func.get()];
     }
-    Scanner scanner(functionInfos);
+    Scanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
-    StructValuesMap combinedInfos;
-    for (auto& kv : functionInfos) {
-      StructValuesMap& infos = kv.second;
-      for (auto& kv : infos) {
-        auto type = kv.first;
-        auto& info = kv.second;
-        for (Index i = 0; i < info.size(); i++) {
-          combinedInfos[type][i].combine(info[i]);
+    auto combine = [](const FunctionStructValuesMap& functionInfos,
+                      StructValuesMap& combinedInfos) {
+      for (auto& kv : functionInfos) {
+        const StructValuesMap& infos = kv.second;
+        for (auto& kv : infos) {
+          auto type = kv.first;
+          auto& info = kv.second;
+          for (Index i = 0; i < info.size(); i++) {
+            combinedInfos[type][i].combine(info[i]);
+          }
         }
       }
-    }
+    };
+    StructValuesMap combinedNewInfos, combinedSetInfos;
+    combine(functionNewInfos, combinedNewInfos);
+    combine(functionSetInfos, combinedSetInfos);
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
@@ -398,43 +415,63 @@ struct ConstantFieldPropagation : public Pass {
     // efficient, we therefore propagate information about the possible values
     // in each field to both subtypes and supertypes.
     //
-    // TODO: Model struct.new separately from struct.set. With new we actually
-    //       do know the specific type being written to, which means a get is
-    //       only relevant for a new if the get is of a subtype. That means we
-    //       only need to propagate values from new to subtypes.
+    // struct.new on the other hand knows exactly what type is being written to,
+    // and so given a get of $A and a new of $B, the new is relevant for the get
+    // iff $A is a subtype of $B, so we only need to propagate in one direction
+    // there, to supertypes.
     //
     // TODO: A topological sort could avoid repeated work here perhaps.
-    SubTypes subTypes(*module);
-    UniqueDeferredQueue<HeapType> work;
-    for (auto& kv : combinedInfos) {
-      auto type = kv.first;
-      work.push(type);
-    }
-    while (!work.empty()) {
-      auto type = work.pop();
-      auto& infos = combinedInfos[type];
 
-      // Propagate shared fields to the supertype.
-      HeapType superType;
-      if (type.getSuperType(superType)) {
-        auto& superInfos = combinedInfos[superType];
-        auto& superFields = superType.getStruct().fields;
-        for (Index i = 0; i < superFields.size(); i++) {
-          if (superInfos[i].combine(infos[i])) {
-            work.push(superType);
+    SubTypes subTypes(*module);
+
+    auto propagate = [&subTypes](StructValuesMap& combinedInfos,
+                                 bool toSubTypes) {
+      UniqueDeferredQueue<HeapType> work;
+      for (auto& kv : combinedInfos) {
+        auto type = kv.first;
+        work.push(type);
+      }
+      while (!work.empty()) {
+        auto type = work.pop();
+        auto& infos = combinedInfos[type];
+
+        // Propagate shared fields to the supertype.
+        HeapType superType;
+        if (type.getSuperType(superType)) {
+          auto& superInfos = combinedInfos[superType];
+          auto& superFields = superType.getStruct().fields;
+          for (Index i = 0; i < superFields.size(); i++) {
+            if (superInfos[i].combine(infos[i])) {
+              work.push(superType);
+            }
+          }
+        }
+
+        if (toSubTypes) {
+          // Propagate shared fields to the subtypes.
+          auto numFields = type.getStruct().fields.size();
+          for (auto subType : subTypes.getSubTypes(type)) {
+            auto& subInfos = combinedInfos[subType];
+            for (Index i = 0; i < numFields; i++) {
+              if (subInfos[i].combine(infos[i])) {
+                work.push(subType);
+              }
+            }
           }
         }
       }
+    };
+    propagate(combinedNewInfos, false);
+    propagate(combinedSetInfos, true);
 
-      // Propagate shared fields to the subtypes.
-      auto numFields = type.getStruct().fields.size();
-      for (auto subType : subTypes.getSubTypes(type)) {
-        auto& subInfos = combinedInfos[subType];
-        for (Index i = 0; i < numFields; i++) {
-          if (subInfos[i].combine(infos[i])) {
-            work.push(subType);
-          }
-        }
+    // Combine both sources of information to the final information that gets
+    // care about.
+    StructValuesMap combinedInfos = std::move(combinedNewInfos);
+    for (auto& kv : combinedSetInfos) {
+      auto type = kv.first;
+      auto& info = kv.second;
+      for (Index i = 0; i < info.size(); i++) {
+        combinedInfos[type][i].combine(info[i]);
       }
     }
 
