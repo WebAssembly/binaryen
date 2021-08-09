@@ -1117,6 +1117,13 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    // Identical references compare equal.
+    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
+      replaceCurrent(
+        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
+      return;
+    }
+
     // Canonicalize to the pattern of a null on the right-hand side, if there is
     // one. This makes pattern matching simpler.
     if (curr->left->is<RefNull>()) {
@@ -1126,13 +1133,6 @@ struct OptimizeInstructions
     // RefEq of a value to Null can be replaced with RefIsNull.
     if (curr->right->is<RefNull>()) {
       replaceCurrent(Builder(*getModule()).makeRefIs(RefIsNull, curr->left));
-      return;
-    }
-
-    // Identical references compare equal.
-    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
-      replaceCurrent(
-        Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
     }
   }
 
