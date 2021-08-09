@@ -135,10 +135,6 @@ struct FunctionInfoScanner
   //       else than it can be a big speedup, so we do want to inline code that
   //       has such indirect calls.
 
-  void visitCallRef(CallRef* curr) {
-    (*infos)[getFunction()->name].hasCalls = true;
-  }
-
   void visitTry(Try* curr) {
     if (curr->isDelegate()) {
       (*infos)[getFunction()->name].hasTryDelegate = true;
@@ -367,8 +363,11 @@ struct Inlining : public Pass {
     const size_t MaxIterationsForFunc = 5;
 
     while (iterationNumber <= module->functions.size()) {
+#ifdef INLINING_DEBUG
       std::cout << "inlining loop iter " << iterationNumber
                 << " (numFunctions: " << module->functions.size() << ")\n";
+#endif
+
       calculateInfos(module);
 
       iterationNumber++;
@@ -378,12 +377,9 @@ struct Inlining : public Pass {
         return;
       }
 
+#ifdef INLINING_DEBUG
       std::cout << "  inlined into " << inlinedInto.size() << " funcs.\n";
-      if (inlinedInto.size() < 6) {
-        for (auto* func : inlinedInto) {
-          std::cout << "    " << func->name << '\n';
-        }
-      }
+#endif
 
       for (auto* func : inlinedInto) {
         if (++iterationsInlinedInto[func] >= MaxIterationsForFunc) {

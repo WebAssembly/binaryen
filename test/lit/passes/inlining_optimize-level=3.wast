@@ -229,23 +229,10 @@
 
   ;; Limit how much recursive inlining we perform to around 5 iterations.
   ;; CHECK:      (func $recursive-inlining-1 (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$recursive-inlining-2 (result i32)
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (i32.add
-  ;; CHECK-NEXT:      (local.get $1)
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (call $recursive-inlining-1
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (call $recursive-inlining-2
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -259,147 +246,10 @@
   )
 
   ;; CHECK:      (func $recursive-inlining-2 (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (local $4 i32)
-  ;; CHECK-NEXT:  (local $5 i32)
-  ;; CHECK-NEXT:  (local $6 i32)
-  ;; CHECK-NEXT:  (local $7 i32)
-  ;; CHECK-NEXT:  (local $8 i32)
-  ;; CHECK-NEXT:  (local $9 i32)
-  ;; CHECK-NEXT:  (local $10 i32)
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (block $__inlined_func$recursive-inlining-1 (result i32)
-  ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $x)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $2
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.add
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:       (block (result i32)
-  ;; CHECK-NEXT:        (block $__inlined_func$recursive-inlining-2 (result i32)
-  ;; CHECK-NEXT:         (local.set $2
-  ;; CHECK-NEXT:          (local.get $1)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (i32.add
-  ;; CHECK-NEXT:          (local.get $2)
-  ;; CHECK-NEXT:          (block (result i32)
-  ;; CHECK-NEXT:           (block (result i32)
-  ;; CHECK-NEXT:            (block $__inlined_func$recursive-inlining-10 (result i32)
-  ;; CHECK-NEXT:             (local.set $3
-  ;; CHECK-NEXT:              (local.get $2)
-  ;; CHECK-NEXT:             )
-  ;; CHECK-NEXT:             (local.set $4
-  ;; CHECK-NEXT:              (i32.const 0)
-  ;; CHECK-NEXT:             )
-  ;; CHECK-NEXT:             (i32.add
-  ;; CHECK-NEXT:              (local.get $3)
-  ;; CHECK-NEXT:              (block (result i32)
-  ;; CHECK-NEXT:               (block $__inlined_func$recursive-inlining-21 (result i32)
-  ;; CHECK-NEXT:                (local.set $4
-  ;; CHECK-NEXT:                 (local.get $3)
-  ;; CHECK-NEXT:                )
-  ;; CHECK-NEXT:                (i32.add
-  ;; CHECK-NEXT:                 (local.get $4)
-  ;; CHECK-NEXT:                 (block (result i32)
-  ;; CHECK-NEXT:                  (block (result i32)
-  ;; CHECK-NEXT:                   (block $__inlined_func$recursive-inlining-11 (result i32)
-  ;; CHECK-NEXT:                    (local.set $5
-  ;; CHECK-NEXT:                     (local.get $4)
-  ;; CHECK-NEXT:                    )
-  ;; CHECK-NEXT:                    (local.set $6
-  ;; CHECK-NEXT:                     (i32.const 0)
-  ;; CHECK-NEXT:                    )
-  ;; CHECK-NEXT:                    (i32.add
-  ;; CHECK-NEXT:                     (local.get $5)
-  ;; CHECK-NEXT:                     (block (result i32)
-  ;; CHECK-NEXT:                      (block $__inlined_func$recursive-inlining-22 (result i32)
-  ;; CHECK-NEXT:                       (local.set $6
-  ;; CHECK-NEXT:                        (local.get $5)
-  ;; CHECK-NEXT:                       )
-  ;; CHECK-NEXT:                       (i32.add
-  ;; CHECK-NEXT:                        (local.get $6)
-  ;; CHECK-NEXT:                        (block (result i32)
-  ;; CHECK-NEXT:                         (block (result i32)
-  ;; CHECK-NEXT:                          (block $__inlined_func$recursive-inlining-12 (result i32)
-  ;; CHECK-NEXT:                           (local.set $7
-  ;; CHECK-NEXT:                            (local.get $6)
-  ;; CHECK-NEXT:                           )
-  ;; CHECK-NEXT:                           (local.set $8
-  ;; CHECK-NEXT:                            (i32.const 0)
-  ;; CHECK-NEXT:                           )
-  ;; CHECK-NEXT:                           (i32.add
-  ;; CHECK-NEXT:                            (local.get $7)
-  ;; CHECK-NEXT:                            (block (result i32)
-  ;; CHECK-NEXT:                             (block $__inlined_func$recursive-inlining-23 (result i32)
-  ;; CHECK-NEXT:                              (local.set $8
-  ;; CHECK-NEXT:                               (local.get $7)
-  ;; CHECK-NEXT:                              )
-  ;; CHECK-NEXT:                              (i32.add
-  ;; CHECK-NEXT:                               (local.get $8)
-  ;; CHECK-NEXT:                               (block (result i32)
-  ;; CHECK-NEXT:                                (block (result i32)
-  ;; CHECK-NEXT:                                 (block $__inlined_func$recursive-inlining-13 (result i32)
-  ;; CHECK-NEXT:                                  (local.set $9
-  ;; CHECK-NEXT:                                   (local.get $8)
-  ;; CHECK-NEXT:                                  )
-  ;; CHECK-NEXT:                                  (local.set $10
-  ;; CHECK-NEXT:                                   (i32.const 0)
-  ;; CHECK-NEXT:                                  )
-  ;; CHECK-NEXT:                                  (i32.add
-  ;; CHECK-NEXT:                                   (local.get $9)
-  ;; CHECK-NEXT:                                   (block (result i32)
-  ;; CHECK-NEXT:                                    (block $__inlined_func$recursive-inlining-24 (result i32)
-  ;; CHECK-NEXT:                                     (local.set $10
-  ;; CHECK-NEXT:                                      (local.get $9)
-  ;; CHECK-NEXT:                                     )
-  ;; CHECK-NEXT:                                     (i32.add
-  ;; CHECK-NEXT:                                      (local.get $10)
-  ;; CHECK-NEXT:                                      (block (result i32)
-  ;; CHECK-NEXT:                                       (call $recursive-inlining-1
-  ;; CHECK-NEXT:                                        (local.get $10)
-  ;; CHECK-NEXT:                                       )
-  ;; CHECK-NEXT:                                      )
-  ;; CHECK-NEXT:                                     )
-  ;; CHECK-NEXT:                                    )
-  ;; CHECK-NEXT:                                   )
-  ;; CHECK-NEXT:                                  )
-  ;; CHECK-NEXT:                                 )
-  ;; CHECK-NEXT:                                )
-  ;; CHECK-NEXT:                               )
-  ;; CHECK-NEXT:                              )
-  ;; CHECK-NEXT:                             )
-  ;; CHECK-NEXT:                            )
-  ;; CHECK-NEXT:                           )
-  ;; CHECK-NEXT:                          )
-  ;; CHECK-NEXT:                         )
-  ;; CHECK-NEXT:                        )
-  ;; CHECK-NEXT:                       )
-  ;; CHECK-NEXT:                      )
-  ;; CHECK-NEXT:                     )
-  ;; CHECK-NEXT:                    )
-  ;; CHECK-NEXT:                   )
-  ;; CHECK-NEXT:                  )
-  ;; CHECK-NEXT:                 )
-  ;; CHECK-NEXT:                )
-  ;; CHECK-NEXT:               )
-  ;; CHECK-NEXT:              )
-  ;; CHECK-NEXT:             )
-  ;; CHECK-NEXT:            )
-  ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (call $recursive-inlining-1
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
