@@ -1117,6 +1117,18 @@ struct OptimizeInstructions
   }
 
   void visitRefEq(RefEq* curr) {
+    // Canonicalize nulls to make the next pattern simpler (and also it may
+    // compress better).
+    if (curr->left->is<RefNull>()) {
+      std::swap(curr->left, curr->right);
+    }
+
+    // RefEq of a value to Null can be replaced with RefIsNull.
+    if (curr->right->is<RefNull>()) {
+      replaceCurrent(Builder(*getModule()).makeRefIs(RefIsNull, curr->left));
+      return;
+    }
+
     // Identical references compare equal.
     if (areConsecutiveInputsEqual(curr->left, curr->right)) {
       replaceCurrent(

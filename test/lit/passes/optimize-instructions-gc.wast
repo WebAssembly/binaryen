@@ -1059,4 +1059,32 @@
   (func $get-rtt (result (rtt $empty))
     (unreachable)
   )
+
+  ;; CHECK:      (func $ref-eq-null (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-null (param $x eqref)
+    ;; Equality to null can be done with ref.is_null.
+    (drop
+      (ref.eq
+        (local.get $x)
+        (ref.null eq)
+      )
+    )
+    (drop
+      (ref.eq
+        (local.get $x)
+        (ref.null eq)
+      )
+    )
+  )
 )
