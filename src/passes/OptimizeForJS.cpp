@@ -51,7 +51,6 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
       SExpressionWasmBuilder builder(intrinsics, *root[0], IRProfile::Normal);
       auto* func = intrinsics.getFunction(WASM_I64_MUL_HIGH);
       doWalkFunction(ModuleUtils::copyFunction(func, *module));
-      requireMulhIntrinsic = false;
     }
   }
 
@@ -85,6 +84,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
         rewriteDivByConstS64(x, c->value.geti64());
       }
     }
+    // TODO: implement same approach for reminders
     // {
     //   // i64(x) % C   ==>   mulh(x, M') >> S'
     //   //   where M' and S' are magic constants
