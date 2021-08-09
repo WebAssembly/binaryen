@@ -48,6 +48,7 @@ namespace wasm {
 struct FunctionInfo {
   std::atomic<Index> refs;
   Index size;
+  bool hasCalls;
   bool hasLoops;
   bool hasTryDelegate;
   bool usedGlobally; // in a table or export
@@ -56,6 +57,7 @@ struct FunctionInfo {
   FunctionInfo() {
     refs = 0;
     size = 0;
+    hasCalls = false;
     hasLoops = false;
     hasTryDelegate = false;
     usedGlobally = false;
@@ -89,7 +91,12 @@ struct FunctionInfo {
     }
     // More than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size.
+    // about size. First, check if it has calls. In that case it is not
+    // likely to speed us up, and also if we want to inline such
+    // functions we would need to be careful to avoid infinite recursion.
+    if (hasCalls) {
+      return false;
+    }
     return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
            (!hasLoops || options.inlining.allowFunctionsWithLoops);
   }
@@ -116,6 +123,20 @@ struct FunctionInfoScanner
     // can't add a new element in parallel
     assert(infos->count(curr->target) > 0);
     (*infos)[curr->target].refs++;
+    // having a call
+    (*infos)[getFunction()->name].hasCalls = true;
+  }
+
+  // N.B.: CallIndirect and CallRef are intentionally omitted here, as we only
+  //       note direct calls. Direct calls can lead to infinite recursion
+  //       which we need to avoid, while indirect ones may in theory be
+  //       optimized to direct calls later, but we take that risk - which is
+  //       worthwhile as if we do manage to turn an indirect call into something
+  //       else than it can be a big speedup, so we do want to inline code that
+  //       has such indirect calls.
+
+  void visitCallRef(CallRef* curr) {
+    (*infos)[getFunction()->name].hasCalls = true;
   }
 
   void visitTry(Try* curr) {
@@ -341,14 +362,13 @@ struct Inlining : public Pass {
     // that was inlined that is inlined into, which means it is probably
     // recursion. To some extent that can help, but like loop unrolling it loses
     // its benefit quickly, so set a limit.
-    const size_t MaxIterationsForFunc = 5;
     std::unordered_map<Function*, Index> iterationsInlinedInto;
 
+    const size_t MaxIterationsForFunc = 5;
+
     while (iterationNumber <= module->functions.size()) {
-#ifdef INLINING_DEBUG
       std::cout << "inlining loop iter " << iterationNumber
                 << " (numFunctions: " << module->functions.size() << ")\n";
-#endif
       calculateInfos(module);
 
       iterationNumber++;
@@ -356,6 +376,13 @@ struct Inlining : public Pass {
       iteration(runner, module, inlinedInto);
       if (inlinedInto.empty()) {
         return;
+      }
+
+      std::cout << "  inlined into " << inlinedInto.size() << " funcs.\n";
+      if (inlinedInto.size() < 6) {
+        for (auto* func : inlinedInto) {
+          std::cout << "    " << func->name << '\n';
+        }
       }
 
       for (auto* func : inlinedInto) {
@@ -388,9 +415,7 @@ struct Inlining : public Pass {
     }
   }
 
-  void iteration(PassRunner* runner,
-                 Module* module,
-                 std::unordered_set<Function*>& inlinedInto) {
+  void iteration(PassRunner* runner, Module* module, std::unordered_set<Function*>& inlinedInto) {
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
