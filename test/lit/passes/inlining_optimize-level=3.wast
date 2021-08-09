@@ -4,9 +4,9 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
-
   ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -24,6 +24,10 @@
   ;; CHECK:      (export "A" (func $recursive-inlining-1))
 
   ;; CHECK:      (export "B" (func $recursive-inlining-2))
+
+  ;; CHECK:      (export "BA" (func $b-recursive-inlining-1))
+
+  ;; CHECK:      (export "BB" (func $b-recursive-inlining-2))
 
   ;; CHECK:      (func $yes (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
@@ -227,38 +231,102 @@
     (drop (call $no-loops-but-one-use-but-tabled))
   )
 
-  ;; Limit how much recursive inlining we perform to around 5 iterations.
+  ;; Two functions that each call each other. (Exported, so that they are not
+  ;; removed after inlining.) We should only perform a limited amount of
+  ;; inlining here - a little might help, but like loop unrolling it loses its
+  ;; benefit quickly. Specifically here we will see the infinite recursion after
+  ;; one inlining, and stop.
+
   ;; CHECK:      (func $recursive-inlining-1 (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (call $recursive-inlining-2
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block $__inlined_func$recursive-inlining-2 (result i32)
+  ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (call $recursive-inlining-1
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $recursive-inlining-1 (export "A") (param $x i32) (result i32)
-    (i32.add
+    (call $recursive-inlining-2
       (local.get $x)
-      (call $recursive-inlining-2
-        (local.get $x)
-      )
     )
   )
 
   ;; CHECK:      (func $recursive-inlining-2 (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:  (call $recursive-inlining-1
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (call $recursive-inlining-1
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $recursive-inlining-2 (export "B") (param $x i32) (result i32)
-    (i32.add
+    (call $recursive-inlining-1
       (local.get $x)
-      (call $recursive-inlining-1
-        (local.get $x)
-      )
+    )
+  )
+
+  ;; As above, but both call the second. The first will inline the second
+  ;; several times before hitting the limit (of around 5).
+
+  ;; CHECK:      (func $b-recursive-inlining-1 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (block $__inlined_func$b-recursive-inlining-2 (result i32)
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$b-recursive-inlining-20 (result i32)
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (block $__inlined_func$b-recursive-inlining-21 (result i32)
+  ;; CHECK-NEXT:       (local.set $3
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (block $__inlined_func$b-recursive-inlining-22 (result i32)
+  ;; CHECK-NEXT:         (local.set $4
+  ;; CHECK-NEXT:          (local.get $3)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (block (result i32)
+  ;; CHECK-NEXT:          (block $__inlined_func$b-recursive-inlining-23 (result i32)
+  ;; CHECK-NEXT:           (local.set $5
+  ;; CHECK-NEXT:            (local.get $4)
+  ;; CHECK-NEXT:           )
+  ;; CHECK-NEXT:           (call $b-recursive-inlining-2
+  ;; CHECK-NEXT:            (local.get $5)
+  ;; CHECK-NEXT:           )
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b-recursive-inlining-1 (export "BA") (param $x i32) (result i32)
+    (call $b-recursive-inlining-2
+      (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $b-recursive-inlining-2 (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (call $b-recursive-inlining-2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $b-recursive-inlining-2 (export "BB") (param $x i32) (result i32)
+    (call $b-recursive-inlining-2
+      (local.get $x)
     )
   )
 )
