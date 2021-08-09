@@ -51,7 +51,6 @@ void handleNonDefaultableLocals(Function* func, Module& wasm) {
       // We do not need to process params, which can legally be non-nullable.
       continue;
     }
-    get->type = func->getLocalType(get->index);
     *getp = fixLocalGet(get, wasm);
   }
 
