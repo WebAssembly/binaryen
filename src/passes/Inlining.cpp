@@ -132,7 +132,7 @@ struct FunctionInfoScanner
   //       which we need to avoid, while indirect ones may in theory be
   //       optimized to direct calls later, but we take that risk - which is
   //       worthwhile as if we do manage to turn an indirect call into something
-  //       else than it can be a big speedup, so we do want to inline code that
+  //       else then it can be a big speedup, so we do want to inline code that
   //       has such indirect calls.
 
   void visitTry(Try* curr) {
