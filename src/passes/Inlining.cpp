@@ -388,7 +388,9 @@ struct Inlining : public Pass {
     }
   }
 
-  void iteration(PassRunner* runner, Module* module, std::unordered_set<Function*>& inlinedInto) {
+  void iteration(PassRunner* runner,
+                 Module* module,
+                 std::unordered_set<Function*>& inlinedInto) {
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
