@@ -1082,8 +1082,8 @@
     )
     (drop
       (ref.eq
-        (local.get $x)
         (ref.null eq)
+        (local.get $x)
       )
     )
   )
