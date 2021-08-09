@@ -343,13 +343,13 @@ struct Inlining : public Pass {
   // the information for each function. recomputed in each iteraction
   NameInfoMap infos;
 
-  Index iterationNumber;
-
   void run(PassRunner* runner, Module* module) override {
     // No point to do more iterations than the number of functions, as it means
     // we are infinitely recursing (which should be very rare in practice, but
     // it is possible that a recursive call can look like it is worth inlining).
-    iterationNumber = 0;
+    Index iterationNumber = 0;
+
+    auto numOriginalFunctions = module->functions.size();
 
     // Track in how many iterations a function was inlined into. We are willing
     // to inline many times into a function within an iteration, as e.g. that
@@ -363,7 +363,7 @@ struct Inlining : public Pass {
 
     const size_t MaxIterationsForFunc = 5;
 
-    while (iterationNumber <= module->functions.size()) {
+    while (iterationNumber <= numOriginalFunctions) {
 #ifdef INLINING_DEBUG
       std::cout << "inlining loop iter " << iterationNumber
                 << " (numFunctions: " << module->functions.size() << ")\n";
