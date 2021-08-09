@@ -341,9 +341,8 @@ struct Inlining : public Pass {
     // that was inlined that is inlined into, which means it is probably
     // recursion. To some extent that can help, but like loop unrolling it loses
     // its benefit quickly, so set a limit.
-    std::unordered_map<Function*, Index> iterationsInlinedInto;
-
     const size_t MaxIterationsForFunc = 5;
+    std::unordered_map<Function*, Index> iterationsInlinedInto;
 
     while (iterationNumber <= module->functions.size()) {
 #ifdef INLINING_DEBUG
