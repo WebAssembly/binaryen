@@ -51,4 +51,35 @@
    )
   )
  )
+
+ ;; CHECK:      (func $br_on-if (param $0 dataref)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (select (result dataref)
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br_on-if (param $0 (ref data))
+  (block $label
+   (drop
+    ;; This br is never taken, as the input is non-nullable, so we can remove
+    ;; it. When we do so, we replace it with the if. We should not rescan that
+    ;; if, which has already been walked, as that would hit an assertion.
+    ;;
+    (br_on_null $label
+     ;; This if can also be turned into a select, separately from the above
+     ;; (that is not specifically intended to be tested here).
+     (if (result (ref data))
+      (i32.const 0)
+      (local.get $0)
+      (local.get $0)
+     )
+    )
+   )
+  )
+ )
 )
