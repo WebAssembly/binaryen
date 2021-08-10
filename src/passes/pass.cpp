@@ -423,7 +423,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
     addIfNoDWARFIssues("flatten");
-    addIfNoDWARFIssues("local-cse");
+    // TODO: add rereloop etc. here
   }
   addIfNoDWARFIssues("dce");
   addIfNoDWARFIssues("remove-unused-names");

@@ -185,7 +185,7 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
       // requesting replacement. And then when we see the second A, all it needs
       // to update is the second B.
       for (auto* child : ChildIterator(curr)) {
-        if (!isRelevant(child)) {
+        if (!infos.count(child)) {
           continue;
         }
         auto& childInfo = infos[child];
@@ -200,9 +200,7 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
 
   // Only some values are relevant to be optimized.
   bool isRelevant(Expression* value) {
-    // TODO: cache this function's results?
-
-    if (value->is<LocalGet>()) {
+    if (value->is<LocalGet>() || value->is<LocalSet>()) {
       return false; // trivial, this is what we optimize to!
     }
     if (!value->type.isConcrete()) {
@@ -241,7 +239,13 @@ struct Applier : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<
       return;
     }
     auto& info = iter->second;
-    assert(!info.requests && info.original);
+
+    // An expression cannot both be requested to be copied to a local, and also
+    // have some other expression it is a repeat of - if it is a repeat, then
+    // anything that requests to be copied from it should have requested from
+    // the the original of this expression.
+    assert(!(info.requests && info.original));
+
     if (info.requests) {
       // We have requests for this value. Add a local and tee the value to
       // there.

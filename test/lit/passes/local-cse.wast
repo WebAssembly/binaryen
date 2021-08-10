@@ -4,7 +4,25 @@
 ;; RUN: foreach %s %t wasm-opt --local-cse -S -o - | filecheck %s
 
 (module
- ;; testcase from AssemblyScript
+ ;; A simple repeated add that we can optimize to avoid doing the add twice.
+ (func $repeated-add
+  (drop
+   (i32.add
+    (i32.const 10)
+    (i32.const 20)
+   )
+  )
+  (drop
+   (i32.add
+    (i32.const 10)
+    (i32.const 20)
+   )
+  )
+ )
+
+ ;; Real-world testcase from AssemblyScript, containing multiple nested things
+ ;; that can be optimized. The inputs to the add (the xors) are identical, and
+ ;; we can avoid repeating them.
  (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (i32.xor
