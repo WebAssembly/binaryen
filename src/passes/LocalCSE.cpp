@@ -325,6 +325,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   Pass* create() override { return new LocalCSE(); }
 
   void doWalkFunction(Function* func) {
+    // TODO: do we need iterations here?
+
     Scanner scanner(getPassOptions());
     scanner.walkFunctionInModule(func, getModule());
 
