@@ -137,9 +137,9 @@ struct Info {
 };
 
 struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
-  const PassOptions& options;
+  PassOptions options;
 
-  Scanner(const PassOptions options) : options(options) {}
+  Scanner(PassOptions options) : options(options) {}
 
   // The data about hashed expressions in the current basic block.
   HashedExprs hashedExprs;
@@ -148,12 +148,8 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
   std::unordered_map<Expression*, Info> infos;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
-    self->clear();
-  }
-
-  void clear() {
-    hashedExprs.clear();
-    infos.clear();
+    self->hashedExprs.clear();
+    self->infos.clear();
   }
 
   void visitExpression(Expression* curr) {
@@ -225,7 +221,7 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
   }
 };
 
-struct Applier : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<Applier>> {
+struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
   const Scanner& scanner;
 
   Applier(const Scanner& scanner) : scanner(scanner) {}
@@ -238,7 +234,7 @@ struct Applier : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<
     if (iter == scanner.infos.end()) {
       return;
     }
-    auto& info = iter->second;
+    const auto& info = iter->second;
 
     // An expression cannot both be requested to be copied to a local, and also
     // have some other expression it is a repeat of - if it is a repeat, then
