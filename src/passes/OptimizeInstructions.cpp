@@ -774,7 +774,7 @@ struct OptimizeInstructions
   }
 
   void visitUnary(Unary* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
@@ -952,7 +952,7 @@ struct OptimizeInstructions
   }
 
   void visitSelect(Select* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     if (auto* ret = optimizeSelect(curr)) {
@@ -962,7 +962,7 @@ struct OptimizeInstructions
   }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     // optimize out a set of a get
@@ -1020,7 +1020,7 @@ struct OptimizeInstructions
     // if the local is nullable (which it must be until some form of let is
     // added). The reordering allows the ref.as to be potentially optimized
     // further based on where the value flows to.
-    if (curr->isTee()) {
+    if (LLVM_UNLIKELY(curr->isTee())) {
       if (auto* as = curr->value->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull &&
             getFunction()->getLocalType(curr->index).isNullable()) {
@@ -1041,14 +1041,14 @@ struct OptimizeInstructions
   }
 
   void visitLoad(Load* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     optimizeMemoryAccess(curr->ptr, curr->offset);
   }
 
   void visitStore(Store* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     optimizeMemoryAccess(curr->ptr, curr->offset);
@@ -1109,7 +1109,7 @@ struct OptimizeInstructions
   }
 
   void visitMemoryCopy(MemoryCopy* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     assert(getModule()->features.hasBulkMemory());
@@ -1119,7 +1119,7 @@ struct OptimizeInstructions
   }
 
   void visitCallRef(CallRef* curr) {
-    if (curr->target->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->target->type == Type::unreachable)) {
       // The call_ref is not reached; leave this for DCE.
       return;
     }
@@ -1179,7 +1179,7 @@ struct OptimizeInstructions
       // )
       auto* lastOperand = curr->operands.back();
       auto lastOperandType = lastOperand->type;
-      if (lastOperandType == Type::unreachable) {
+      if (LLVM_UNLIKELY(lastOperandType == Type::unreachable)) {
         // The call_ref is not reached; leave this for DCE.
         return;
       }
@@ -1265,7 +1265,7 @@ struct OptimizeInstructions
   }
 
   void visitRefCast(RefCast* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
@@ -1360,7 +1360,7 @@ struct OptimizeInstructions
   }
 
   void visitRefIs(RefIs* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
@@ -1423,7 +1423,7 @@ struct OptimizeInstructions
   }
 
   void visitRefAs(RefAs* curr) {
-    if (curr->type == Type::unreachable) {
+    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
