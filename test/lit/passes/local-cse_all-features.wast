@@ -375,114 +375,114 @@
 )
 
 (module
- ;; CHECK:      (type $A (struct (field i32)))
- (type $A (struct (field i32)))
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
 
- ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
+  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
- ;; CHECK:      (func $GC (param $ref (ref $A))
- ;; CHECK-NEXT:  (local $1 i32)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.tee $1
- ;; CHECK-NEXT:    (struct.get $A 0
- ;; CHECK-NEXT:     (local.get $ref)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $1)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (local.get $1)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $GC (param $ref (ref $A))
-  ;; Repeated loads from a struct can be optimized.
-  ;;
-  ;; Note that these struct.gets cannot trap as the reference is non-nullable,
-  ;; so there are no side effects here, and we can optimize.
-  (drop
-   (struct.get $A 0
-    (local.get $ref)
-   )
+  ;; CHECK:      (func $GC (param $ref (ref $A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $GC (param $ref (ref $A))
+    ;; Repeated loads from a struct can be optimized.
+    ;;
+    ;; Note that these struct.gets cannot trap as the reference is non-nullable,
+    ;; so there are no side effects here, and we can optimize.
+    (drop
+      (struct.get $A 0
+        (local.get $ref)
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (local.get $ref)
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (local.get $ref)
+      )
+    )
   )
-  (drop
-   (struct.get $A 0
-    (local.get $ref)
-   )
-  )
-  (drop
-   (struct.get $A 0
-    (local.get $ref)
-   )
-  )
- )
 )
 
 (module
- ;; Real-world testcase from AssemblyScript, containing multiple nested things
- ;; that can be optimized. The inputs to the add (the xors) are identical, and
- ;; we can avoid repeating them.
- ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+  ;; Real-world testcase from AssemblyScript, containing multiple nested things
+  ;; that can be optimized. The inputs to the add (the xors) are identical, and
+  ;; we can avoid repeating them.
+  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
 
- ;; CHECK:      (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
- ;; CHECK-NEXT:  (local $2 i32)
- ;; CHECK-NEXT:  (i32.add
- ;; CHECK-NEXT:   (local.tee $2
- ;; CHECK-NEXT:    (i32.xor
- ;; CHECK-NEXT:     (i32.shr_s
- ;; CHECK-NEXT:      (i32.shl
- ;; CHECK-NEXT:       (local.get $0)
- ;; CHECK-NEXT:       (i32.const 16)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (i32.const 16)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.shr_s
- ;; CHECK-NEXT:      (i32.shl
- ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:       (i32.const 16)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (i32.const 16)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $2)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
-  (i32.add
-   (i32.xor
-    (i32.shr_s
-     (i32.shl
-      (local.get $0)
-      (i32.const 16)
-     )
-     (i32.const 16)
+  ;; CHECK:      (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:    (i32.xor
+  ;; CHECK-NEXT:     (i32.shr_s
+  ;; CHECK-NEXT:      (i32.shl
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (i32.const 16)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 16)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.shr_s
+  ;; CHECK-NEXT:      (i32.shl
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (i32.const 16)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 16)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
+    (i32.add
+      (i32.xor
+        (i32.shr_s
+          (i32.shl
+            (local.get $0)
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+        (i32.shr_s
+          (i32.shl
+            (local.get $1)
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+      )
+      (i32.xor
+        (i32.shr_s
+          (i32.shl
+            (local.get $0)
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+        (i32.shr_s
+          (i32.shl
+            (local.get $1)
+            (i32.const 16)
+          )
+          (i32.const 16)
+        )
+      )
     )
-    (i32.shr_s
-     (i32.shl
-      (local.get $1)
-      (i32.const 16)
-     )
-     (i32.const 16)
-    )
-   )
-   (i32.xor
-    (i32.shr_s
-     (i32.shl
-      (local.get $0)
-      (i32.const 16)
-     )
-     (i32.const 16)
-    )
-    (i32.shr_s
-     (i32.shl
-      (local.get $1)
-      (i32.const 16)
-     )
-     (i32.const 16)
-    )
-   )
   )
- )
 )
