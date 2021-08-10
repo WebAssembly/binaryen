@@ -281,7 +281,7 @@ struct OptimizeInstructions
       return;
     }
 
-    if (shouldCanonicalize(curr)) {
+    if (LLVM_UNLIKELY(shouldCanonicalize(curr))) {
       canonicalize(curr);
     }
 
