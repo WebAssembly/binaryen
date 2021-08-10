@@ -235,7 +235,7 @@
   ;; after inlining.) We should only perform a limited amount of inlining here -
   ;; a little might help, but like loop unrolling it loses its benefit quickly.
   ;; Specifically here we will see the infinite recursion after one inlining,
-  ;; and stop.
+  ;; and stop (since we do not inline a method into itself).
 
   ;; CHECK:      (func $recursive-inlining-1 (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $1 i32)
