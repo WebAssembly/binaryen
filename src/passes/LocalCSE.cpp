@@ -17,19 +17,55 @@
 //
 // Local CSE
 //
-// This requires --flatten to be run before in order to be effective,
-// and preserves flatness. The reason flatness is required is that
-// this pass assumes everything is stored in a local, and all it does
-// is alter local.sets to do local.gets of an existing value when
-// possible, replacing a recomputing of that value. That design means that
-// if there are block and if return values, nested expressions not stored
-// to a local, etc., then it can't operate on them (and will just not
-// do anything for them).
+// This finds common sub-expressions and saves them to a local to avoid
+// recomputing them. It runs in each basic block separately, and uses a simple
+// algorithm:
 //
-// In each linear area of execution,
-//  * track each relevant (big enough) expression
-//  * if already seen, write to a local if not already, and reuse
-//  * invalidate the list as we see effects
+//  * Scan: Hash each expression and see if it repeats later. If it does, note
+//          that both on the first appearance (whose value we will save) and on
+//          the expression itself (who we want to replace with a local.get).
+//          After doing so, scan the children and remove any such notes from
+//          them (as if we will reuse the parent, we don't need to do anything
+//          for the child, see below).
+//
+//  * Apply: Go through the basic block again, this time adding a tee on an
+//           expression whose value we want to use later, and replacing the
+//           uses with gets.
+//
+// For example:
+//
+//   (something
+//     (i32.eqz
+//       (A)
+//     )
+//     (i32.eqz
+//       (B)
+//     )
+//   )
+//
+// Assuming A does not have side effects that interfere, this will happen:
+//
+//  1. Scan A and add it to the hash map of things we have seen.
+//  2. Scan the eqz, and do the same for it.
+//  3. Scan the second A. Increment the first A's reuse counter, and mark the
+//     second A and intended to be replaced.
+//  4. Scan the second eqz, and do the same for it. Then also scan its children,
+//     in this case A, and decrement the first A's reuse counter, and unmark the
+//     second A's note that it is intended to be replaced.
+//  5. Run through the block again, adding a tee and replacing the second eqz,
+//     resulting in:
+//
+//   (something
+//     (local.tee $temp
+//       (i32.eqz
+//         (A)
+//       )
+//     )
+//     (local.get $temp)
+//   )
+//
+// Note how the scanning of children avoids us adding a local for A: when we
+// reuse the parent, we don't need to also try to reuse the child.
 //
 // TODO: global, inter-block gvn etc.
 //
@@ -49,6 +85,80 @@
 #include <wasm.h>
 
 namespace wasm {
+
+namespace {
+
+// An expression with a cached hash value
+struct HashedExpression {
+  Expression* expr;
+  size_t digest;
+
+  HashedExpression(Expression* expr) : expr(expr) {
+    if (expr) {
+      digest = ExpressionAnalyzer::hash(expr);
+    } else {
+      digest = hash(0);
+    }
+  }
+
+  HashedExpression(const HashedExpression& other)
+    : expr(other.expr), digest(other.digest) {}
+};
+
+struct HEHasher {
+  size_t operator()(const HashedExpression hashed) const {
+    return hashed.digest;
+  }
+};
+
+struct HEComparer {
+  bool operator()(const HashedExpression a, const HashedExpression b) const {
+    if (a.digest != b.digest) {
+      return false;
+    }
+    return ExpressionAnalyzer::equal(a.expr, b.expr);
+  }
+};
+
+struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>> {
+  // Maps hashed expressions to those relevant expressions. That is, all
+  // expressions that are equivalent (same hash, and also compare equal) will
+  // be in a vector for the corresponding entry in this map.
+  using HashedExprs = std::unordered_map<HashedExpression, std::vector<Expression*>, HEHasher, HEComparer> {};
+
+  // The data about hashed expressions in the current basic block.
+  HashedExprs hashedExprs;
+
+  struct Info {
+    // The number of other expressions that would like to reuse this value.
+    Index requests = 0;
+    // Whether this is a repeat, that is, something we would like to replace
+    // with a local.get of the first time the value appeared. If this is a
+    // repeat then we have incremented the original's |requests|.
+    bool repeat = false;
+  };
+
+  // The information about expressions in the current basic block.
+  std::unordered_map<Expression*, Info> infos;
+
+  static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
+    self->clear();
+  }
+
+  void clear() {
+    hashedExprs.clear();
+    infos.clear();
+  }
+
+  void visitExpression(Expression* curr) {
+    // TODO: Do shallow hashing so that we can add child hashes to parents, to
+    // avoid quadratic time FIXME
+    auto hash = ExpressionAnalyzer::hash(curr);
+    auto& vec = hashedExprs
+  }
+};
+
+} // anonymous namespace
 
 struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   bool isFunctionParallel() override { return true; }
