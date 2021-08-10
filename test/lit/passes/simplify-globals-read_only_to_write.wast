@@ -9,7 +9,7 @@
 
   ;; CHECK:      (global $global i32 (i32.const 0))
   (global $global (mut i32) (i32.const 0))
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (drop
@@ -17,13 +17,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo
+  (func $simple
     (if
       (global.get $global)
       (global.set $global (i32.const 1))
     )
   )
-  ;; CHECK:      (func $bar
+  ;; CHECK:      (func $more-with-no-side-effects
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.const 0)
@@ -36,7 +36,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $bar
+  (func $more-with-no-side-effects
     (if
       ;; Also test for other operations in the condition, with no effects.
       (i32.eqz
@@ -49,12 +49,12 @@
       )
     )
   )
-  ;; CHECK:      (func $baz
+  ;; CHECK:      (func $additional-set
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $baz
+  (func $additional-set
     ;; An additional set does not prevent this optimization: the value written
     ;; will never be read in a way that matters.
     (global.set $global (i32.const 2))
@@ -66,7 +66,7 @@
 
   ;; CHECK:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $additional-read
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:   (global.set $global
@@ -77,7 +77,7 @@
   ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo
+  (func $additional-read
     (if
       (global.get $global)
       (global.set $global (i32.const 1))
@@ -93,7 +93,7 @@
 
   ;; CHECK:      (global $global (mut i32) (i32.const 0))
   (global $global (mut i32) (i32.const 0))
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $if-else
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:   (global.set $global
@@ -102,7 +102,7 @@
   ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo
+  (func $if-else
     (if
       (global.get $global)
       (global.set $global (i32.const 1))
@@ -118,7 +118,7 @@
   (global $global (mut i32) (i32.const 0))
   ;; CHECK:      (global $other (mut i32) (i32.const 0))
   (global $other (mut i32) (i32.const 0))
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $side-effects-in-condition
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (block $block (result i32)
   ;; CHECK-NEXT:    (global.set $other
@@ -134,7 +134,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo
+  (func $side-effects-in-condition
     (if
       (block (result i32)
         (global.set $other (i32.const 2))
@@ -153,7 +153,7 @@
   (global $global (mut i32) (i32.const 0))
   ;; CHECK:      (global $other (mut i32) (i32.const 0))
   (global $other (mut i32) (i32.const 0))
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $side-effects-in-body
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:   (block $block
@@ -169,7 +169,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo
+  (func $side-effects-in-body
     (if
       (global.get $global)
       (block
@@ -191,7 +191,7 @@
   ;; CHECK:      (global $c i32 (i32.const 0))
   (global $c (mut i32) (i32.const 0))
 
-  ;; CHECK:      (func $foo
+  ;; CHECK:      (func $nested
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (block $block
@@ -217,7 +217,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $foo
+  (func $nested
     (if
       (global.get $a)
       (block
