@@ -122,7 +122,10 @@ struct HEComparer {
 // Maps hashed expressions to those relevant expressions. That is, all
 // expressions that are equivalent (same hash, and also compare equal) will
 // be in a vector for the corresponding entry in this map.
-using HashedExprs = std::unordered_map<HashedExpression, std::vector<Expression*>, HEHasher, HEComparer>;
+using HashedExprs = std::unordered_map<HashedExpression,
+                                       std::vector<Expression*>,
+                                       HEHasher,
+                                       HEComparer>;
 
 // Information about an expression.
 struct Info {
@@ -136,7 +139,8 @@ struct Info {
   Expression* original = nullptr;
 };
 
-struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+struct Scanner
+  : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
   PassOptions options;
 
   Scanner(PassOptions options) : options(options) {}
@@ -212,7 +216,8 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
     }
     // TODO: this recomputes effects for duplicates.
     // TODO: we can ignore a trap here. It is ok to trap twice.
-    auto iter = blockEffects.emplace(curr, EffectAnalyzer(options, getModule()->features, curr));
+    auto iter = blockEffects.emplace(
+      curr, EffectAnalyzer(options, getModule()->features, curr));
     if (iter.first->second.hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
@@ -285,12 +290,15 @@ struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
     if (info.requests) {
       // We have requests for this value. Add a local and tee the value to
       // there.
-      Index local = exprLocals[curr] = Builder::addVar(getFunction(), curr->type);
-      replaceCurrent(Builder(*getModule()).makeLocalTee(local, curr, curr->type));
+      Index local = exprLocals[curr] =
+        Builder::addVar(getFunction(), curr->type);
+      replaceCurrent(
+        Builder(*getModule()).makeLocalTee(local, curr, curr->type));
     } else if (info.original) {
       // This is a repeat of an original value. Get the value from the local.
       assert(exprLocals.count(info.original));
-      replaceCurrent(Builder(*getModule()).makeLocalGet(exprLocals[info.original], curr->type));
+      replaceCurrent(Builder(*getModule())
+                       .makeLocalGet(exprLocals[info.original], curr->type));
     }
   }
 };
