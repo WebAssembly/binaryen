@@ -21,17 +21,17 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
@@ -44,7 +44,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:   (local.tee $3
   ;; CHECK-NEXT:    (i32.add
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:     (local.get $y)
@@ -52,20 +52,20 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $basics)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 100)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $basics
@@ -273,12 +273,15 @@
   ;; CHECK-NEXT:  (local $var$1 i32)
   ;; CHECK-NEXT:  (local $var$2 i32)
   ;; CHECK-NEXT:  (local $var$3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (block $label$0 (result i32)
   ;; CHECK-NEXT:   (i32.store
   ;; CHECK-NEXT:    (local.tee $var$2
-  ;; CHECK-NEXT:     (i32.add
-  ;; CHECK-NEXT:      (local.get $var$1)
-  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     (local.tee $4
+  ;; CHECK-NEXT:      (i32.add
+  ;; CHECK-NEXT:       (local.get $var$1)
+  ;; CHECK-NEXT:       (i32.const 4)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.and
@@ -295,10 +298,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.store
   ;; CHECK-NEXT:    (local.tee $var$1
-  ;; CHECK-NEXT:     (i32.add
-  ;; CHECK-NEXT:      (local.get $var$1)
-  ;; CHECK-NEXT:      (i32.const 4)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.or
   ;; CHECK-NEXT:     (i32.load
@@ -489,14 +489,17 @@
  ;; CHECK:      (export "func_6" (func $2))
  (export "func_6" (func $2))
  ;; CHECK:      (func $0 (param $var$0 i64) (param $var$1 f32) (param $var$2 i32)
+ ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (block $label$1 (result i32)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br_if $label$1
- ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:      (local.tee $3
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (br_if $label$1
  ;; CHECK-NEXT:       (i32.const 128)
- ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:       (local.get $3)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -679,12 +682,15 @@
 
  ;; CHECK:      (func $test
  ;; CHECK-NEXT:  (local $0 anyref)
+ ;; CHECK-NEXT:  (local $1 funcref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $label$1 (result funcref)
  ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (ref.null func)
+ ;; CHECK-NEXT:     (local.tee $1
+ ;; CHECK-NEXT:      (ref.null func)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null func)
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
