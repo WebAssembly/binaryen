@@ -161,7 +161,7 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
   void visitExpression(Expression* curr) {
     checkInvalidations(curr);
 
-    if (isRelevant(curr)) {
+    if (!isRelevant(curr)) {
       return;
     }
 
@@ -204,12 +204,14 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
 
   // Only some values are relevant to be optimized.
   bool isRelevant(Expression* curr) {
-    if (curr->is<LocalGet>() || curr->is<LocalSet>()) {
-      return false; // trivial, this is what we optimize to!
+    if (curr->is<LocalGet>() || curr->is<LocalSet>() || curr->is<Const>()) {
+      return false; // trivial
     }
     if (!curr->type.isConcrete()) {
       return false; // don't bother with unreachable etc.
     }
+    // TODO: this recomputes effects for duplicates.
+    // TODO: we can ignore a trap here. It is ok to trap twice.
     auto iter = blockEffects.emplace(curr, EffectAnalyzer(options, getModule()->features, curr));
     if (iter.first->second.hasSideEffects()) {
       return false; // we can't combine things with side effects
@@ -247,7 +249,8 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
     std::vector<HashedExpression> invalidated;
     for (auto& kv : blockExprs) {
       auto& key = kv.first;
-      if (effects.invalidates(blockEffects.at(key.expr))) {
+      auto iter = blockEffects.find(key.expr);
+      if (iter != blockEffects.end() && effects.invalidates(iter->second)) {
         invalidated.push_back(key);
       }
     }

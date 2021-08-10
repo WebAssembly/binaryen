@@ -44,29 +44,26 @@
  ;; we can avoid repeating them.
  ;; CHECK:      (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
  ;; CHECK-NEXT:  (local $2 i32)
- ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (i32.add
- ;; CHECK-NEXT:   (local.tee $3
+ ;; CHECK-NEXT:   (local.tee $2
  ;; CHECK-NEXT:    (i32.xor
  ;; CHECK-NEXT:     (i32.shr_s
  ;; CHECK-NEXT:      (i32.shl
  ;; CHECK-NEXT:       (local.get $0)
- ;; CHECK-NEXT:       (local.tee $2
- ;; CHECK-NEXT:        (i32.const 16)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (i32.const 16)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.get $2)
+ ;; CHECK-NEXT:      (i32.const 16)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (i32.shr_s
  ;; CHECK-NEXT:      (i32.shl
  ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:       (local.get $2)
+ ;; CHECK-NEXT:       (i32.const 16)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.get $2)
+ ;; CHECK-NEXT:      (i32.const 16)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (local.get $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
