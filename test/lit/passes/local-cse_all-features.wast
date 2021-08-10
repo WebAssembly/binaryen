@@ -419,14 +419,21 @@
   )
 
   ;; CHECK:      (func $non-nullable-value (param $ref (ref $A))
+  ;; CHECK-NEXT:  (local $1 (ref null $A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.tee $1
+  ;; CHECK-NEXT:     (select (result (ref $A))
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:      (local.get $ref)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -434,13 +441,17 @@
     ;; The value that is repeated is non-nullable, which we must do some fixups
     ;; for after creating a local of that type.
     (drop
-      (block (result (ref $A))
+      (select (result (ref $A))
         (local.get $ref)
+        (local.get $ref)
+        (i32.const 1)
       )
     )
     (drop
-      (block (result (ref $A))
+      (select (result (ref $A))
         (local.get $ref)
+        (local.get $ref)
+        (i32.const 1)
       )
     )
   )

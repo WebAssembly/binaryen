@@ -85,9 +85,10 @@
 
 #include <ir/cost.h>
 #include <ir/effects.h>
-#include <ir/hashed.h>
 #include <ir/iteration.h>
 #include <ir/linear-execution.h>
+#include <ir/type-updating.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm-traversal.h>
@@ -222,7 +223,10 @@ struct Scanner
       return false; // trivial
     }
     if (!curr->type.isConcrete()) {
-      return false; // don't bother with unreachable etc.
+      return false; // don't bother with none or unreachable etc.
+    }
+    if (!TypeUpdating::canHandleAsLocal(curr->type)) {
+      return false;
     }
     // TODO: this recomputes effects for duplicates.
     // TODO: we can ignore a trap here. It is ok to trap twice.
@@ -333,7 +337,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     Applier applier(scanner);
     applier.walkFunctionInModule(func, getModule());
 
-    // Non-nullable fixups FIXME TODO
+    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
 };
 
