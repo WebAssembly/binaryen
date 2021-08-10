@@ -224,6 +224,10 @@ struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>>
 };
 
 struct Apply : public LinearExecutionWalker<Apply, UnifiedExpressionVisitor<Apply>> {
+  const Scan& scan;
+
+  Apply(const Scan& scan) : scan(scan) {}
+
   // Maps expressions that we save to locals to the local index for them.
   std::unordered_map<Expression*, Index> exprLocals;
 
@@ -258,6 +262,13 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   Pass* create() override { return new LocalCSE(); }
 
+  void doWalkFunction(Function* func) override {
+    Scan scan;
+    scan.walkFunctionInModule(func, getModule());
+
+    Apply apply(scan);
+    apply.walkFunctionInModule(func, getModule());
+  }
 };
 
 Pass* createLocalCSEPass() { return new LocalCSE(); }
