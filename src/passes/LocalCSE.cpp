@@ -148,6 +148,9 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
   std::unordered_map<Expression*, Info> infos;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
+    // We are starting a new basic block. Forget all the currently-hashed
+    // expressions, as we no longer want to make connections to anything from
+    // another block.
     self->hashedExprs.clear();
   }
 
