@@ -228,7 +228,6 @@ struct Scanner
     // TODO: we can ignore a trap here. It is ok to trap twice.
     auto iter = blockEffects.emplace(
       curr, EffectAnalyzer(options, getModule()->features, curr));
-
     if (iter.first->second.hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
