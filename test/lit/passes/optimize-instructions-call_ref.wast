@@ -154,7 +154,7 @@
   ;; in a way that is bad: the actual target function has a different return
   ;; type than the cast type. The cast will fail at runtime, and we should not
   ;; emit non-validating code here, which would happen if we replace the
-  ;; call_ref that returns an i32 with a call that returns nothing.
+  ;; call_ref that returns nothing with a call that returns an i32.
   (call_ref
    (ref.cast
     (ref.func $return-nothing)
@@ -201,4 +201,3 @@
   )
  )
 )
-
