@@ -494,28 +494,3 @@
   )
  )
 )
-;; call_ref
-(module
- ;; CHECK:      (type $i32_i32_=>_none (func (param i32 i32)))
-
- ;; CHECK:      (func $foo (param $0 i32) (param $1 i32)
- ;; CHECK-NEXT:  (unreachable)
- ;; CHECK-NEXT: )
- (func $foo (param i32) (param i32)
-  (unreachable)
- )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
- ;; CHECK-NEXT:  (call $foo
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (local.get $y)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $bar (param $x i32) (param $y i32)
-  (call_ref
-   (local.get $x)
-   (local.get $y)
-   (ref.func $foo)
-  )
- )
-)
-
