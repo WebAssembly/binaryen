@@ -122,12 +122,13 @@ struct HEComparer {
 // Maps hashed expressions to those relevant expressions. That is, all
 // expressions that are equivalent (same hash, and also compare equal) will
 // be in a vector for the corresponding entry in this map.
-using HashedExprs = std::unordered_map<HashedExpression, std::vector<Expression*>, HEHasher, HEComparer> {};
+using HashedExprs = std::unordered_map<HashedExpression, std::vector<Expression*>, HEHasher, HEComparer>;
 
 // Information about an expression.
 struct Info {
   // The number of other expressions that would like to reuse this value.
   Index requests = 0;
+
   // If this is a repeat value, that is, something we would like to replace
   // with a local.get of the original value (the first time this value
   // appeared) then we point to that original value here. In that case we have
@@ -135,14 +136,18 @@ struct Info {
   Expression* original = nullptr;
 };
 
-struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>> {
+struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
+  const PassOptions& options;
+
+  Scanner(const PassOptions options) : options(options) {}
+
   // The data about hashed expressions in the current basic block.
   HashedExprs hashedExprs;
 
   // The information about expressions in the current basic block.
   std::unordered_map<Expression*, Info> infos;
 
-  static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
+  static void doNoteNonLinear(Scanner* self, Expression** currp) {
     self->clear();
   }
 
@@ -165,7 +170,7 @@ struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>>
       // This is a repeat expression. Mark it as such, and add a request for the
       // original appearance of the value.
       auto* original = vec[0];
-      infos.original = original;
+      info.original = original;
       infos[original].requests++;
 
       // Remove any requests from the expression's children, as we will replace
@@ -185,8 +190,8 @@ struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>>
         }
         auto& childInfo = infos[child];
         if (childInfo.original) {
-          assert(infos[childOriginal] > 0);
-          infos[childOriginal]--;
+          assert(infos[childInfo.original].requests > 0);
+          infos[childInfo.original].requests--;
           childInfo.original = nullptr;
         }
       }
@@ -203,11 +208,10 @@ struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>>
     if (!value->type.isConcrete()) {
       return false; // don't bother with unreachable etc.
     }
-    if (EffectAnalyzer(getPassOptions(), getModule()->features, value)
+    if (EffectAnalyzer(options, getModule()->features, value)
           .hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
-    auto& options = getPassRunner()->options;
     // If the size is at least 3, then if we have two of them we have 6,
     // and so adding one set+two gets and removing one of the items itself
     // is not detrimental, and may be beneficial.
@@ -223,17 +227,17 @@ struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>>
   }
 };
 
-struct Apply : public LinearExecutionWalker<Apply, UnifiedExpressionVisitor<Apply>> {
-  const Scan& scan;
+struct Applier : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<Applier>> {
+  const Scanner& scanner;
 
-  Apply(const Scan& scan) : scan(scan) {}
+  Applier(const Scanner& scanner) : scanner(scanner) {}
 
   // Maps expressions that we save to locals to the local index for them.
   std::unordered_map<Expression*, Index> exprLocals;
 
   void visitExpression(Expression* curr) {
-    auto iter = scan.infos.find(curr);
-    if (iter == scan.infos.end()) {
+    auto iter = scanner.infos.find(curr);
+    if (iter == scanner.infos.end()) {
       return;
     }
     auto& info = iter->second;
@@ -241,8 +245,8 @@ struct Apply : public LinearExecutionWalker<Apply, UnifiedExpressionVisitor<Appl
     if (info.requests) {
       // We have requests for this value. Add a local and tee the value to
       // there.
-      auto* local = exprLocals[curr] = Builder::addVar(curr->type, getFunction());
-      replaceCurrent(Builder(*getModule()).makeLocalTee(local, curr));
+      Index local = exprLocals[curr] = Builder::addVar(getFunction(), curr->type);
+      replaceCurrent(Builder(*getModule()).makeLocalTee(local, curr, curr->type));
     } else if (info.original) {
       // This is a repeat of an original value. Get the value from the local.
       assert(exprLocals.count(info.original));
@@ -262,12 +266,14 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
   Pass* create() override { return new LocalCSE(); }
 
-  void doWalkFunction(Function* func) override {
-    Scan scan;
-    scan.walkFunctionInModule(func, getModule());
+  void doWalkFunction(Function* func) {
+    Scanner scanner(getPassOptions());
+    scanner.walkFunctionInModule(func, getModule());
 
-    Apply apply(scan);
-    apply.walkFunctionInModule(func, getModule());
+    Applier applier(scanner);
+    applier.walkFunctionInModule(func, getModule());
+
+    // Non-nullable fixups FIXME TODO
   }
 };
 
