@@ -4,7 +4,26 @@
 ;; RUN: foreach %s %t wasm-opt --local-cse -S -o - | filecheck %s
 
 (module
+
  ;; A simple repeated add that we can optimize to avoid doing the add twice.
+ ;; CHECK:      (type $none_=>_none (func))
+
+ ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
+
+ ;; CHECK:      (func $repeated-add
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.tee $0
+ ;; CHECK-NEXT:    (i32.add
+ ;; CHECK-NEXT:     (i32.const 10)
+ ;; CHECK-NEXT:     (i32.const 20)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $repeated-add
   (drop
    (i32.add
@@ -23,6 +42,33 @@
  ;; Real-world testcase from AssemblyScript, containing multiple nested things
  ;; that can be optimized. The inputs to the add (the xors) are identical, and
  ;; we can avoid repeating them.
+ ;; CHECK:      (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (i32.add
+ ;; CHECK-NEXT:   (local.tee $3
+ ;; CHECK-NEXT:    (i32.xor
+ ;; CHECK-NEXT:     (i32.shr_s
+ ;; CHECK-NEXT:      (i32.shl
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:       (local.tee $2
+ ;; CHECK-NEXT:        (i32.const 16)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.shr_s
+ ;; CHECK-NEXT:      (i32.shl
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:       (local.get $2)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $div16_internal (param $0 i32) (param $1 i32) (result i32)
   (i32.add
    (i32.xor

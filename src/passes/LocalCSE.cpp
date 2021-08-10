@@ -149,7 +149,6 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     self->hashedExprs.clear();
-    self->infos.clear();
   }
 
   void visitExpression(Expression* curr) {
@@ -272,6 +271,8 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
     Applier applier(scanner);
     applier.walkFunctionInModule(func, getModule());
+
+    // FIXME TODO invalidations!!!1
 
     // Non-nullable fixups FIXME TODO
   }
