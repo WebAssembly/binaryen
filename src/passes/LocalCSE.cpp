@@ -73,11 +73,10 @@
 #include <algorithm>
 #include <memory>
 
-#include "ir/flat.h"
 #include <ir/cost.h>
 #include <ir/effects.h>
-#include <ir/equivalent_sets.h>
 #include <ir/hashed.h>
+#include <ir/iteration.h>
 #include <ir/linear-execution.h>
 #include <pass.h>
 #include <wasm-builder.h>
@@ -120,23 +119,25 @@ struct HEComparer {
   }
 };
 
-struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>> {
-  // Maps hashed expressions to those relevant expressions. That is, all
-  // expressions that are equivalent (same hash, and also compare equal) will
-  // be in a vector for the corresponding entry in this map.
-  using HashedExprs = std::unordered_map<HashedExpression, std::vector<Expression*>, HEHasher, HEComparer> {};
+// Maps hashed expressions to those relevant expressions. That is, all
+// expressions that are equivalent (same hash, and also compare equal) will
+// be in a vector for the corresponding entry in this map.
+using HashedExprs = std::unordered_map<HashedExpression, std::vector<Expression*>, HEHasher, HEComparer> {};
 
+// Information about an expression.
+struct Info {
+  // The number of other expressions that would like to reuse this value.
+  Index requests = 0;
+  // If this is a repeat value, that is, something we would like to replace
+  // with a local.get of the original value (the first time this value
+  // appeared) then we point to that original value here. In that case we have
+  // incremented the original's |requests|.
+  Expression* original = nullptr;
+};
+
+struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>> {
   // The data about hashed expressions in the current basic block.
   HashedExprs hashedExprs;
-
-  struct Info {
-    // The number of other expressions that would like to reuse this value.
-    Index requests = 0;
-    // Whether this is a repeat, that is, something we would like to replace
-    // with a local.get of the first time the value appeared. If this is a
-    // repeat then we have incremented the original's |requests|.
-    bool repeat = false;
-  };
 
   // The information about expressions in the current basic block.
   std::unordered_map<Expression*, Info> infos;
@@ -151,210 +152,51 @@ struct Scan : public LinearExecutionWalker<Scan, UnifiedExpressionVisitor<Scan>>
   }
 
   void visitExpression(Expression* curr) {
+    if (!isRelevant(curr)) {
+      return;
+    }
+
     // TODO: Do shallow hashing so that we can add child hashes to parents, to
     // avoid quadratic time FIXME
-    auto hash = ExpressionAnalyzer::hash(curr);
-    auto& vec = hashedExprs
-  }
-};
+    auto& vec = hashedExprs[curr];
+    vec.push_back(curr);
+    auto& info = infos[curr];
+    if (vec.size() > 1) {
+      // This is a repeat expression. Mark it as such, and add a request for the
+      // original appearance of the value.
+      auto* original = vec[0];
+      infos.original = original;
+      infos[original].requests++;
 
-} // anonymous namespace
-
-struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
-  bool isFunctionParallel() override { return true; }
-
-  // CSE adds and reuses locals.
-  // FIXME DWARF updating does not handle local changes yet.
-  bool invalidatesDWARF() override { return true; }
-
-  Pass* create() override { return new LocalCSE(); }
-
-  struct Usable {
-    HashedExpression hashed;
-    Type localType;
-    Usable(HashedExpression hashed, Type localType)
-      : hashed(hashed), localType(localType) {}
-  };
-
-  struct UsableHasher {
-    size_t operator()(const Usable value) const {
-      auto digest = value.hashed.digest;
-      wasm::rehash(digest, value.localType.getID());
-      return digest;
-    }
-  };
-
-  struct UsableComparer {
-    bool operator()(const Usable a, const Usable b) const {
-      if (a.hashed.digest != b.hashed.digest || a.localType != b.localType) {
-        return false;
-      }
-      return ExpressionAnalyzer::equal(a.hashed.expr, b.hashed.expr);
-    }
-  };
-
-  // information for an expression we can reuse
-  struct UsableInfo {
-    Expression* value; // the value we can reuse
-    Index index; // the local we are assigned to, local.get that to reuse us
-    EffectAnalyzer effects;
-
-    UsableInfo(Expression* value,
-               Index index,
-               PassOptions& passOptions,
-               FeatureSet features)
-      : value(value), index(index), effects(passOptions, features, value) {}
-  };
-
-  // a list of usables in a linear execution trace
-  class Usables
-    : public std::
-        unordered_map<Usable, UsableInfo, UsableHasher, UsableComparer> {};
-
-  // locals in current linear execution trace, which we try to sink
-  Usables usables;
-
-  // We track locals containing the same value - the value is what matters, not
-  // the index.
-  EquivalentSets equivalences;
-
-  bool anotherPass;
-
-  void doWalkFunction(Function* func) {
-    Flat::verifyFlatness(func);
-    anotherPass = true;
-    // we may need multiple rounds
-    while (anotherPass) {
-      anotherPass = false;
-      clear();
-      super::doWalkFunction(func);
-    }
-  }
-
-  static void doNoteNonLinear(LocalCSE* self, Expression** currp) {
-    self->clear();
-  }
-
-  void clear() {
-    usables.clear();
-    equivalences.clear();
-  }
-
-  // Checks invalidations due to a set of effects. Also optionally receive
-  // an expression that was just post-visited, and that also needs to be
-  // taken into account.
-  void checkInvalidations(EffectAnalyzer& effects, Expression* curr = nullptr) {
-    // TODO: this is O(bad)
-    std::vector<Usable> invalidated;
-    for (auto& sinkable : usables) {
-      // Check invalidations of the values we may want to use.
-      if (effects.invalidates(sinkable.second.effects)) {
-        invalidated.push_back(sinkable.first);
-      }
-    }
-    if (curr) {
-      // If we are a set, we have more to check: each of the usable
-      // values was from a set, and we did not consider the set in
-      // the loop above - just the values. So here we must check that
-      // sets do not interfere. (Note that due to flattening we
-      // have no risk of tees etc.)
-      if (auto* set = curr->dynCast<LocalSet>()) {
-        for (auto& sinkable : usables) {
-          // Check if the index is the same. Make sure to ignore
-          // our own value, which we may have just added!
-          if (sinkable.second.index == set->index &&
-              sinkable.second.value != set->value) {
-            invalidated.push_back(sinkable.first);
-          }
+      // Remove any requests from the expression's children, as we will replace
+      // the entire thing (see explanation earlier). Note that we just need to
+      // go over our direct children, as grandchildren etc. have already been
+      // processed. That is, if we have
+      //
+      //  (A (B (C))
+      //  (A (B (C))
+      //
+      // Then when we see the second B we will mark the second C as no longer
+      // requesting replacement. And then when we see the second A, all it needs
+      // to update is the second B.
+      for (auto* child : ChildIterator(curr)) {
+        if (!isRelevant(child)) {
+          continue;
+        }
+        auto& childInfo = infos[child];
+        if (childInfo.original) {
+          assert(infos[childOriginal] > 0);
+          infos[childOriginal]--;
+          childInfo.original = nullptr;
         }
       }
     }
-    for (auto index : invalidated) {
-      usables.erase(index);
-    }
   }
 
-  std::vector<Expression*> expressionStack;
-
-  static void visitPre(LocalCSE* self, Expression** currp) {
-    // pre operations
-    Expression* curr = *currp;
-
-    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
-    if (effects.checkPre(curr)) {
-      self->checkInvalidations(effects);
-    }
-
-    self->expressionStack.push_back(curr);
-  }
-
-  static void visitPost(LocalCSE* self, Expression** currp) {
-    auto* curr = *currp;
-
-    // main operations
-    self->handle(curr);
-
-    // post operations
-
-    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
-    if (effects.checkPost(curr)) {
-      self->checkInvalidations(effects, curr);
-    }
-
-    self->expressionStack.pop_back();
-  }
-
-  // override scan to add a pre and a post check task to all nodes
-  static void scan(LocalCSE* self, Expression** currp) {
-    self->pushTask(visitPost, currp);
-
-    super::scan(self, currp);
-
-    self->pushTask(visitPre, currp);
-  }
-
-  void handle(Expression* curr) {
-    if (auto* set = curr->dynCast<LocalSet>()) {
-      // Calculate equivalences
-      auto* func = getFunction();
-      equivalences.reset(set->index);
-      if (auto* get = set->value->dynCast<LocalGet>()) {
-        if (func->getLocalType(set->index) == func->getLocalType(get->index)) {
-          equivalences.add(set->index, get->index);
-        }
-      }
-      // consider the value
-      auto* value = set->value;
-      if (isRelevant(value)) {
-        Usable usable(value, func->getLocalType(set->index));
-        auto iter = usables.find(usable);
-        if (iter != usables.end()) {
-          // already exists in the table, this is good to reuse
-          auto& info = iter->second;
-          Type localType = func->getLocalType(info.index);
-          set->value =
-            Builder(*getModule()).makeLocalGet(info.index, localType);
-          anotherPass = true;
-        } else {
-          // not in table, add this, maybe we can help others later
-          usables.emplace(std::make_pair(
-            usable,
-            UsableInfo(
-              value, set->index, getPassOptions(), getModule()->features)));
-        }
-      }
-    } else if (auto* get = curr->dynCast<LocalGet>()) {
-      if (auto* set = equivalences.getEquivalents(get->index)) {
-        // Canonicalize to the lowest index. This lets hashing and comparisons
-        // "just work".
-        get->index = *std::min_element(set->begin(), set->end());
-      }
-    }
-  }
-
-  // A relevant value is a non-trivial one, something we may want to reuse
-  // and are able to.
+  // Only some values are relevant to be optimized.
   bool isRelevant(Expression* value) {
+    // TODO: cache this function's results?
+
     if (value->is<LocalGet>()) {
       return false; // trivial, this is what we optimize to!
     }
@@ -379,6 +221,43 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     }
     return false;
   }
+};
+
+struct Apply : public LinearExecutionWalker<Apply, UnifiedExpressionVisitor<Apply>> {
+  // Maps expressions that we save to locals to the local index for them.
+  std::unordered_map<Expression*, Index> exprLocals;
+
+  void visitExpression(Expression* curr) {
+    auto iter = scan.infos.find(curr);
+    if (iter == scan.infos.end()) {
+      return;
+    }
+    auto& info = iter->second;
+    assert(!info.requests && info.original);
+    if (info.requests) {
+      // We have requests for this value. Add a local and tee the value to
+      // there.
+      auto* local = exprLocals[curr] = Builder::addVar(curr->type, getFunction());
+      replaceCurrent(Builder(*getModule()).makeLocalTee(local, curr));
+    } else if (info.original) {
+      // This is a repeat of an original value. Get the value from the local.
+      assert(exprLocals.count(info.original));
+      replaceCurrent(Builder(*getModule()).makeLocalGet(exprLocals[info.original], curr->type));
+    }
+  }
+};
+
+} // anonymous namespace
+
+struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
+  bool isFunctionParallel() override { return true; }
+
+  // CSE adds and reuses locals.
+  // FIXME DWARF updating does not handle local changes yet.
+  bool invalidatesDWARF() override { return true; }
+
+  Pass* create() override { return new LocalCSE(); }
+
 };
 
 Pass* createLocalCSEPass() { return new LocalCSE(); }
