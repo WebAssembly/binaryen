@@ -22,7 +22,7 @@
 
 === optimized, zeroFilledMemory=true ===
 (module
- (memory $0 1)
- (data (i32.const 1024) "\00")
+ (import "env" "memory" (memory $0 1))
  (export "memory" (memory $0))
 )
+
