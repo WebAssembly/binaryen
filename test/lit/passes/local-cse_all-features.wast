@@ -706,3 +706,45 @@
   )
  )
 )
+
+(module
+ ;; CHECK:      (type $A (struct (field i32)))
+ (type $A (struct (field i32)))
+
+ ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
+
+ ;; CHECK:      (func $GC (param $ref (ref $A))
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.tee $1
+ ;; CHECK-NEXT:    (struct.get $A 0
+ ;; CHECK-NEXT:     (local.get $ref)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $GC (param $ref (ref $A))
+  ;; Repeated loads from a struct can be optimized.
+  (drop
+   (struct.get $A 0
+    (local.get $ref)
+   )
+  )
+  (drop
+   (struct.get $A 0
+    (local.get $ref)
+   )
+  )
+  (drop
+   (struct.get $A 0
+    (local.get $ref)
+   )
+  )
+ )
+)
