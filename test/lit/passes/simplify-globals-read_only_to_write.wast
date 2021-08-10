@@ -55,7 +55,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $baz
-    ;; An addition set does not prevent this optimization: the value written
+    ;; An additional set does not prevent this optimization: the value written
     ;; will never be read in a way that matters.
     (global.set $global (i32.const 2))
   )
