@@ -71,7 +71,10 @@
   (call_ref
    ;; Write to $x before the block, and write to it in the block; we should not
    ;; reorder these things as the side effects could alter what value appears
-   ;; in the get of $x.
+   ;; in the get of $x. (There is a risk of reordering here if we naively moved
+   ;; the call target (the block) to before the first parameter (the tee).
+   ;; Instead, we append it after the second param (the get) which keeps the
+   ;; ordering as it was.)
    (local.tee $x
     (i32.const 1)
    )
