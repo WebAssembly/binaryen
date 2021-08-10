@@ -36,6 +36,7 @@
 #include <ir/properties.h>
 #include <ir/type-updating.h>
 #include <ir/utils.h>
+#include <llvm/Support/Compiler.h>
 #include <pass.h>
 #include <support/threads.h>
 #include <wasm.h>
@@ -1510,18 +1511,20 @@ private:
       std::swap(binary->left, binary->right);
     };
     auto maybeSwap = [&]() {
-      if (canReorder(binary->left, binary->right)) {
+      if (LLVM_UNLIKELY(canReorder(binary->left, binary->right))) {
         swap();
       }
     };
     // Prefer a const on the right.
-    if (binary->left->is<Const>() && !binary->right->is<Const>()) {
+    if (LLVM_UNLIKELY(binary->left->is<Const>() &&
+                      !binary->right->is<Const>())) {
       return swap();
     }
     if (auto* c = binary->right->dynCast<Const>()) {
       // x - C  ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
-      if (binary->op == Abstract::getBinary(c->type, Abstract::Sub)) {
+      if (LLVM_UNLIKELY(binary->op ==
+                        Abstract::getBinary(c->type, Abstract::Sub))) {
         c->value = c->value.neg();
         binary->op = Abstract::getBinary(c->type, Abstract::Add);
       }
@@ -1533,7 +1536,7 @@ private:
     }
     // Sort by the node id type, if different.
     if (binary->left->_id != binary->right->_id) {
-      if (binary->left->_id > binary->right->_id) {
+      if (LLVM_UNLIKELY(binary->left->_id > binary->right->_id)) {
         return maybeSwap();
       }
       return;
@@ -1541,19 +1544,19 @@ private:
     // If the children have the same node id, we have to go deeper.
     if (auto* left = binary->left->dynCast<Unary>()) {
       auto* right = binary->right->cast<Unary>();
-      if (left->op > right->op) {
+      if (LLVM_UNLIKELY(left->op > right->op)) {
         return maybeSwap();
       }
     }
     if (auto* left = binary->left->dynCast<Binary>()) {
       auto* right = binary->right->cast<Binary>();
-      if (left->op > right->op) {
+      if (LLVM_UNLIKELY(left->op > right->op)) {
         return maybeSwap();
       }
     }
     if (auto* left = binary->left->dynCast<LocalGet>()) {
       auto* right = binary->right->cast<LocalGet>();
-      if (left->index > right->index) {
+      if (LLVM_UNLIKELY(left->index > right->index)) {
         return maybeSwap();
       }
     }
@@ -3009,8 +3012,9 @@ private:
   }
 
   bool shouldCanonicalize(Binary* binary) {
-    if ((binary->op == SubInt32 || binary->op == SubInt64) &&
-        binary->right->is<Const>() && !binary->left->is<Const>()) {
+    if (LLVM_UNLIKELY((binary->op == SubInt32 || binary->op == SubInt64) &&
+                      binary->right->is<Const>() &&
+                      !binary->left->is<Const>())) {
       return true;
     }
     if (Properties::isSymmetric(binary) || binary->isRelational()) {
@@ -3025,7 +3029,8 @@ private:
         // We don't care about the RHS because right now we only know if
         // an expression is non-NaN if it is constant, but if the RHS is
         // constant, then this expression is already canonicalized.
-        if (auto* c = binary->left->dynCast<Const>()) {
+        if (LLVM_UNLIKELY(binary->left->is<Const>())) {
+          auto* c = binary->left->cast<Const>();
           return !c->value.isNaN();
         }
         return false;
