@@ -2284,6 +2284,13 @@ BINARYEN_API bool BinaryenGetLowMemoryUnused(void);
 // when optimizing. Applies to all modules, globally.
 BINARYEN_API void BinaryenSetLowMemoryUnused(bool on);
 
+// Gets whether that an imported memory will be zero-initialized speculation.
+BINARYEN_API bool BinaryenGetZeroFilledMemory(void);
+
+// Enables or disables whether that an imported memory will be
+// zero-initialized speculation.
+BINARYEN_API void BinaryenSetZeroFilledMemory(bool on);
+
 // Gets whether fast math optimizations are enabled, ignoring for example
 // corner cases of floating-point math like NaN changes.
 // Applies to all modules, globally.
