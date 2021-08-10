@@ -231,11 +231,11 @@
     (drop (call $no-loops-but-one-use-but-tabled))
   )
 
-  ;; Two functions that each call each other. (Exported, so that they are not
-  ;; removed after inlining.) We should only perform a limited amount of
-  ;; inlining here - a little might help, but like loop unrolling it loses its
-  ;; benefit quickly. Specifically here we will see the infinite recursion after
-  ;; one inlining, and stop.
+  ;; Two functions that call each other. (Exported, so that they are not removed
+  ;; after inlining.) We should only perform a limited amount of inlining here -
+  ;; a little might help, but like loop unrolling it loses its benefit quickly.
+  ;; Specifically here we will see the infinite recursion after one inlining,
+  ;; and stop.
 
   ;; CHECK:      (func $recursive-inlining-1 (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $1 i32)
