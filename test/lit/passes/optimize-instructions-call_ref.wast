@@ -27,13 +27,13 @@
  (func $foo (param i32) (param i32)
   (unreachable)
  )
- ;; CHECK:      (func $bar (param $x i32) (param $y i32)
+ ;; CHECK:      (func $call_ref-to-direct (param $x i32) (param $y i32)
  ;; CHECK-NEXT:  (call $foo
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $bar (param $x i32) (param $y i32)
+ (func $call_ref-to-direct (param $x i32) (param $y i32)
   ;; This call_ref should become a direct call.
   (call_ref
    (local.get $x)
