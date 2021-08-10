@@ -1059,4 +1059,45 @@
   (func $get-rtt (result (rtt $empty))
     (unreachable)
   )
+
+  ;; CHECK:      (func $ref-eq-null (param $x eqref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-null (param $x eqref)
+    ;; Equality to null can be done with ref.is_null.
+    (drop
+      (ref.eq
+        (local.get $x)
+        (ref.null eq)
+      )
+    )
+    (drop
+      (ref.eq
+        (ref.null eq)
+        (local.get $x)
+      )
+    )
+    ;; Also check that we turn a comparison of two nulls into 1, using the rule
+    ;; for comparing the same thing to itself (i.e., that we run that rule first
+    ;; and not the check for one of them being null, which would require more
+    ;; work afterwards).
+    (drop
+      (ref.eq
+        (ref.null eq)
+        (ref.null eq)
+      )
+    )
+  )
 )
