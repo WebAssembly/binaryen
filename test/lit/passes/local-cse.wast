@@ -5,7 +5,6 @@
 
 (module
 
- ;; A simple repeated add that we can optimize to avoid doing the add twice.
  ;; CHECK:      (type $none_=>_none (func))
 
  ;; CHECK:      (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
@@ -25,6 +24,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $repeated-add
+  ;; A simple repeated add that we can optimize to avoid doing the add twice.
   (drop
    (i32.add
     (i32.const 10)

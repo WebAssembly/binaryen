@@ -67,6 +67,16 @@
 // Note how the scanning of children avoids us adding a local for A: when we
 // reuse the parent, we don't need to also try to reuse the child.
 //
+// This pass only finds entire expression trees, and not parts of them, so we
+// will not optimize this:
+//
+//  (A (B (C (D1))))
+//  (A (B (C (D2))))
+//
+// The innermost child is different, so the trees are not identical. However,
+// running flatten before running this pass would allow those to be optimized as
+// well.
+//
 // TODO: global, inter-block gvn etc.
 //
 
@@ -320,8 +330,6 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 
     Applier applier(scanner);
     applier.walkFunctionInModule(func, getModule());
-
-    // FIXME TODO invalidations!!!1
 
     // Non-nullable fixups FIXME TODO
   }
