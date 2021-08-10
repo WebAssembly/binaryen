@@ -731,6 +731,9 @@
  ;; CHECK-NEXT: )
  (func $GC (param $ref (ref $A))
   ;; Repeated loads from a struct can be optimized.
+  ;;
+  ;; Note that these struct.gets cannot trap as the reference is non-nullable,
+  ;; so there are no side effects here, and we can optimize.
   (drop
    (struct.get $A 0
     (local.get $ref)
