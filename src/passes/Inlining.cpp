@@ -127,6 +127,14 @@ struct FunctionInfoScanner
     (*infos)[getFunction()->name].hasCalls = true;
   }
 
+  // N.B.: CallIndirect and CallRef are intentionally omitted here, as we only
+  //       note direct calls. Direct calls can lead to infinite recursion
+  //       which we need to avoid, while indirect ones may in theory be
+  //       optimized to direct calls later, but we take that risk - which is
+  //       worthwhile as if we do manage to turn an indirect call into something
+  //       else then it can be a big speedup, so we do want to inline code that
+  //       has such indirect calls.
+
   void visitTry(Try* curr) {
     if (curr->isDelegate()) {
       (*infos)[getFunction()->name].hasTryDelegate = true;
@@ -335,26 +343,51 @@ struct Inlining : public Pass {
   // the information for each function. recomputed in each iteraction
   NameInfoMap infos;
 
-  Index iterationNumber;
-
   void run(PassRunner* runner, Module* module) override {
-    Index numFunctions = module->functions.size();
-    // keep going while we inline, to handle nesting. TODO: optimize
-    iterationNumber = 0;
-    // no point to do more iterations than the number of functions, as
-    // it means we infinitely recursing (which should
-    // be very rare in practice, but it is possible that a recursive call
-    // can look like it is worth inlining)
-    while (iterationNumber <= numFunctions) {
+    // No point to do more iterations than the number of functions, as it means
+    // we are infinitely recursing (which should be very rare in practice, but
+    // it is possible that a recursive call can look like it is worth inlining).
+    Index iterationNumber = 0;
+
+    auto numOriginalFunctions = module->functions.size();
+
+    // Track in how many iterations a function was inlined into. We are willing
+    // to inline many times into a function within an iteration, as e.g. that
+    // helps the case of many calls of a small getter. However, if we only do
+    // more inlining in separate iterations then it is likely code that was the
+    // result of previous inlinings that is now being inlined into. That is, an
+    // old inlining added a call to somewhere, and now we are inlining into that
+    // call. This is typically recursion, which to some extent can help, but
+    // then like loop unrolling it loses its benefit quickly, so set a limit
+    // here.
+    std::unordered_map<Function*, Index> iterationsInlinedInto;
+
+    const size_t MaxIterationsForFunc = 5;
+
+    while (iterationNumber <= numOriginalFunctions) {
 #ifdef INLINING_DEBUG
       std::cout << "inlining loop iter " << iterationNumber
-                << " (numFunctions: " << numFunctions << ")\n";
+                << " (numFunctions: " << module->functions.size() << ")\n";
 #endif
+
       calculateInfos(module);
-      if (!iteration(runner, module)) {
+
+      iterationNumber++;
+      std::unordered_set<Function*> inlinedInto;
+      iteration(runner, module, inlinedInto);
+      if (inlinedInto.empty()) {
         return;
       }
-      iterationNumber++;
+
+#ifdef INLINING_DEBUG
+      std::cout << "  inlined into " << inlinedInto.size() << " funcs.\n";
+#endif
+
+      for (auto* func : inlinedInto) {
+        if (++iterationsInlinedInto[func] >= MaxIterationsForFunc) {
+          return;
+        }
+      }
     }
   }
 
@@ -380,7 +413,9 @@ struct Inlining : public Pass {
     }
   }
 
-  bool iteration(PassRunner* runner, Module* module) {
+  void iteration(PassRunner* runner,
+                 Module* module,
+                 std::unordered_set<Function*>& inlinedInto) {
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
@@ -389,7 +424,7 @@ struct Inlining : public Pass {
       }
     });
     if (state.worthInlining.size() == 0) {
-      return false;
+      return;
     }
     // fill in actionsForFunction, as we operate on it in parallel (each
     // function to its own entry)
@@ -401,7 +436,6 @@ struct Inlining : public Pass {
     // perform inlinings TODO: parallelize
     std::unordered_map<Name, Index> inlinedUses; // how many uses we inlined
     // which functions were inlined into
-    std::unordered_set<Function*> inlinedInto;
     for (auto& func : module->functions) {
       // if we've inlined a function, don't inline into it in this iteration,
       // avoid risk of races
@@ -446,8 +480,6 @@ struct Inlining : public Pass {
       return inlinedUses.count(name) && inlinedUses[name] == info.refs &&
              !info.usedGlobally;
     });
-    // return whether we did any work
-    return inlinedUses.size() > 0;
   }
 
   // Checks if the combined size of the code after inlining is under the
