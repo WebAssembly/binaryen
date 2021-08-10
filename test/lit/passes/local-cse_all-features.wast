@@ -330,84 +330,14 @@
 )
 
 (module
- ;; CHECK:      (type $none_=>_none (func))
-
- ;; CHECK:      (global $glob (mut i32) (i32.const 1))
- (global $glob (mut i32) (i32.const 1))
- ;; CHECK:      (func $global
- ;; CHECK-NEXT:  (local $x i32)
- ;; CHECK-NEXT:  (local $y i32)
- ;; CHECK-NEXT:  (local $2 i32)
- ;; CHECK-NEXT:  (local.set $x
- ;; CHECK-NEXT:   (local.tee $2
- ;; CHECK-NEXT:    (global.get $glob)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $y
- ;; CHECK-NEXT:   (local.get $2)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $y
- ;; CHECK-NEXT:   (local.get $2)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $global
-  (local $x i32)
-  (local $y i32)
-  (local.set $x (global.get $glob))
-  (local.set $y (global.get $glob))
-  (local.set $y (global.get $glob))
- )
-)
-
-(module
- ;; After --flatten, there will be a series of chain copies between multiple
- ;; locals, but some of the locals will be funcref type and others anyref
- ;; type. We cannot make locals of different types a common subexpression.
- ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
-
- ;; CHECK:      (type $none_=>_none (func))
-
- ;; CHECK:      (func $subtype-test (result anyref)
- ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT:  (loop $label$1 (result funcref)
- ;; CHECK-NEXT:   (ref.null func)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $subtype-test (result anyref)
-  (nop)
-  (loop $label$1 (result funcref)
-   (ref.null func)
+  (global $glob (mut i32) (i32.const 1))
+  (func $global
+    (local $x i32)
+    (local $y i32)
+    (local.set $x (global.get $glob))
+    (local.set $y (global.get $glob))
+    (local.set $y (global.get $glob))
   )
- )
-
- ;; CHECK:      (func $test
- ;; CHECK-NEXT:  (local $0 anyref)
- ;; CHECK-NEXT:  (local $1 funcref)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $label$1 (result funcref)
- ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (local.tee $1
- ;; CHECK-NEXT:      (ref.null func)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $test
-  (local $0 anyref)
-  (drop
-   (block $label$1 (result funcref)
-    (local.set $0
-     (ref.null func)
-    )
-    ;; After --flatten, this will be assigned to a local of funcref type. After
-    ;; --local-cse, even if we set (ref.null func) to local $0 above, this
-    ;; should not be replaced with $0, because it is of type anyref.
-    (ref.null func)
-   )
-  )
- )
 )
 
 (module
