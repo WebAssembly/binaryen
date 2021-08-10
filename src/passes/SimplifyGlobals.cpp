@@ -25,6 +25,8 @@
 //  * Apply the constant values of previous global.sets, in a linear
 //    execution trace.
 //  * Remove writes to globals that are never read from.
+//  * Remove writes to globals that are only read from in order to write (see
+//    below, "readOnlyToWrite").
 //
 // Some globals may not have uses after these changes, which we leave
 // to other passes to optimize.
@@ -65,9 +67,20 @@ struct GlobalInfo {
   //
   // where X and Y have no side effects. If all we have are such reads only to
   // write then the global is really not necessary, even though there are both
-  // reads and writes of it. This pattern can show up in global initialization
-  // code, where in the block alongside "global = Y" there was some useful code,
-  // but the optimizer managed to remove it.
+  // reads and writes of it.
+  //
+  // This pattern can show up in global initialization code, where in the block
+  // alongside "global = Y" there was some useful code, but the optimizer
+  // managed to remove it. For example,
+  //
+  //   if (global == 0) { global = 1; sideEffect(); }
+  //
+  // If the global's initial value is the default 0, and there are no other uses
+  // of this global, then this code will run sideEffect() the very first time we
+  // reach here. We therefore need to keep this global and its reads and writes.
+  // However, if sideEffect() were removed, then we read the global only to
+  // write it - and nothing else - and so we can optimize away that global
+  // entirely.
   std::atomic<Index> readOnlyToWrite{0};
 };
 
@@ -357,7 +370,10 @@ struct SimplifyGlobals : public Pass {
       // those, as whatever they write will not be read in order to do anything
       // of value.
       bool onlyReadOnlyToWrite = (info.read == info.readOnlyToWrite);
-      assert(!onlyReadOnlyToWrite || info.written >= info.readOnlyToWrite);
+
+      // There is at least one write in each read-only-to-write location, unless
+      // our logic is wrong somewhere.
+      assert(info.written >= info.readOnlyToWrite);
 
       if (!info.read || onlyReadOnlyToWrite) {
         unnecessaryGlobals.insert(global->name);
