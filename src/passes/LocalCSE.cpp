@@ -141,35 +141,41 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
 
   Scanner(PassOptions options) : options(options) {}
 
-  // The data about hashed expressions in the current basic block.
-  HashedExprs hashedExprs;
+  // Currently hashed expressions in the current basic block, in their
+  // equivalence classes.
+  HashedExprs blockExprs;
 
-  // The information about expressions in the current basic block.
-  std::unordered_map<Expression*, Info> infos;
+  // The effects of hashed expressions
+  std::unordered_map<Expression*, EffectAnalyzer> blockEffects;
+
+  // Information about repetition of expressions in the current basic block.
+  std::unordered_map<Expression*, Info> blockInfos;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
     // expressions, as we no longer want to make connections to anything from
     // another block.
-    self->hashedExprs.clear();
+    self->blockExprs.clear();
   }
 
   void visitExpression(Expression* curr) {
-    if (!isRelevant(curr)) {
+    checkInvalidations();
+
+    if (isRelevant(curr)) {
       return;
     }
 
     // TODO: Do shallow hashing so that we can add child hashes to parents, to
     // avoid quadratic time FIXME
-    auto& vec = hashedExprs[curr];
+    auto& vec = blockExprs[curr];
     vec.push_back(curr);
-    auto& info = infos[curr];
+    auto& info = blockInfos[curr];
     if (vec.size() > 1) {
       // This is a repeat expression. Mark it as such, and add a request for the
       // original appearance of the value.
       auto* original = vec[0];
       info.original = original;
-      infos[original].requests++;
+      blockInfos[original].requests++;
 
       // Remove any requests from the expression's children, as we will replace
       // the entire thing (see explanation earlier). Note that we just need to
@@ -183,13 +189,13 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
       // requesting replacement. And then when we see the second A, all it needs
       // to update is the second B.
       for (auto* child : ChildIterator(curr)) {
-        if (!infos.count(child)) {
+        if (!blockInfos.count(child)) {
           continue;
         }
-        auto& childInfo = infos[child];
+        auto& childInfo = blockInfos[child];
         if (childInfo.original) {
-          assert(infos[childInfo.original].requests > 0);
-          infos[childInfo.original].requests--;
+          assert(blockInfos[childInfo.original].requests > 0);
+          blockInfos[childInfo.original].requests--;
           childInfo.original = nullptr;
         }
       }
@@ -197,29 +203,58 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
   }
 
   // Only some values are relevant to be optimized.
-  bool isRelevant(Expression* value) {
-    if (value->is<LocalGet>() || value->is<LocalSet>()) {
+  bool isRelevant(Expression* curr) {
+    if (curr->is<LocalGet>() || curr->is<LocalSet>()) {
       return false; // trivial, this is what we optimize to!
     }
-    if (!value->type.isConcrete()) {
+    if (!curr->type.isConcrete()) {
       return false; // don't bother with unreachable etc.
     }
-    if (EffectAnalyzer(options, getModule()->features, value)
-          .hasSideEffects()) {
+    auto& effects = blockEffects.emplace(curr, options, getModule()->features, curr);
+    if (effects.hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
     // If the size is at least 3, then if we have two of them we have 6,
     // and so adding one set+two gets and removing one of the items itself
     // is not detrimental, and may be beneficial.
-    if (options.shrinkLevel > 0 && Measurer::measure(value) >= 3) {
+    if (options.shrinkLevel > 0 && Measurer::measure(curr) >= 3) {
       return true;
     }
     // If we focus on speed, any reduction in cost is beneficial, as the
     // cost of a get is essentially free.
-    if (options.shrinkLevel == 0 && CostAnalyzer(value).cost > 0) {
+    if (options.shrinkLevel == 0 && CostAnalyzer(curr).cost > 0) {
       return true;
     }
     return false;
+  }
+
+  // Given the current expression, see what it invalidates of the currently-
+  // hashed expressions. For example, if the current expression writes to memory
+  // then anything that reads from memory cannot be moved around it, and that
+  // means we cannot optimize away repeated expressions:
+  //
+  //  x = load(a);
+  //  store(..)
+  //  y = load(a);
+  //
+  // Even though the load looks identical, the store means we may load a
+  // different value, so invalidate the first load.
+  void checkInvalidations(Expression* curr) {
+    // TODO: Like SimplifyExpressions this is O(bad), but seems ok in practice..
+    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
+    effects.visit(curr);
+
+    std::vector<HashedExpression> invalidated;
+    for (auto& kv : hashedExpressions) {
+      auto& key = kv.first;
+      if (effects.invalidates(blockEffects[key.expr])) {
+        invalidated.push_back(key);
+      }
+    }
+
+    for (const auto& key : invalidated) {
+      hashedExpressions.erase(key);
+    }
   }
 };
 
@@ -232,8 +267,8 @@ struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
   std::unordered_map<Expression*, Index> exprLocals;
 
   void visitExpression(Expression* curr) {
-    auto iter = scanner.infos.find(curr);
-    if (iter == scanner.infos.end()) {
+    auto iter = scanner.blockInfos.find(curr);
+    if (iter == scanner.blockInfos.end()) {
       return;
     }
     const auto& info = iter->second;
