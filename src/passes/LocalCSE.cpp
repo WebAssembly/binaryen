@@ -159,7 +159,7 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
   }
 
   void visitExpression(Expression* curr) {
-    checkInvalidations();
+    checkInvalidations(curr);
 
     if (isRelevant(curr)) {
       return;
@@ -210,8 +210,8 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
     if (!curr->type.isConcrete()) {
       return false; // don't bother with unreachable etc.
     }
-    auto& effects = blockEffects.emplace(curr, options, getModule()->features, curr);
-    if (effects.hasSideEffects()) {
+    auto iter = blockEffects.emplace(curr, EffectAnalyzer(options, getModule()->features, curr));
+    if (iter.first->second.hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
     // If the size is at least 3, then if we have two of them we have 6,
@@ -241,19 +241,19 @@ struct Scanner : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<
   // different value, so invalidate the first load.
   void checkInvalidations(Expression* curr) {
     // TODO: Like SimplifyExpressions this is O(bad), but seems ok in practice..
-    EffectAnalyzer effects(self->getPassOptions(), self->getModule()->features);
+    EffectAnalyzer effects(options, getModule()->features);
     effects.visit(curr);
 
     std::vector<HashedExpression> invalidated;
-    for (auto& kv : hashedExpressions) {
+    for (auto& kv : blockExprs) {
       auto& key = kv.first;
-      if (effects.invalidates(blockEffects[key.expr])) {
+      if (effects.invalidates(blockEffects.at(key.expr))) {
         invalidated.push_back(key);
       }
     }
 
     for (const auto& key : invalidated) {
-      hashedExpressions.erase(key);
+      blockExprs.erase(key);
     }
   }
 };
