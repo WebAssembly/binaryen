@@ -74,6 +74,7 @@
   (func $basics
     (local $x i32)
     (local $y i32)
+    ;; These two adds can be optimized.
     (drop
       (i32.add (i32.const 1) (i32.const 2))
     )
@@ -81,9 +82,14 @@
       (i32.add (i32.const 1) (i32.const 2))
     )
     (if (i32.const 0) (nop))
-    (drop ;; we can't do this yet, non-linear
+    ;; This add is after an if, which means we are no longer in the same basic
+    ;; block - which means we cannot optimize it with the previous identical
+    ;; adds.
+    (drop
       (i32.add (i32.const 1) (i32.const 2))
     )
+    ;; More adds with different contents than the previous, but all three are
+    ;; identical.
     (drop
       (i32.add (local.get $x) (local.get $y))
     )
@@ -93,12 +99,15 @@
     (drop
       (i32.add (local.get $x) (local.get $y))
     )
-    (call $basics) ;; side effects, but no matter for our locals
+    ;; Calls have side effects, but that is not a problem for these adds which
+    ;; only use locals, so we can optimize the add after the call.
+    (call $basics)
     (drop
       (i32.add (local.get $x) (local.get $y))
     )
+    ;; Modify $x, which means we cannot optimize the add after the set.
     (local.set $x (i32.const 100))
-    (drop ;; x was changed!
+    (drop
       (i32.add (local.get $x) (local.get $y))
     )
   )
