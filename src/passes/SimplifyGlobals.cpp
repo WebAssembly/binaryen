@@ -345,7 +345,7 @@ struct SimplifyGlobals : public Pass {
         continue;
       }
 
-      // We only ever read-only-to-write if all of our reads are done in places
+      // We only ever optimize read-only-to-write if all of our reads are done in places
       // we identified as read-only-to-write. That is, we have eliminated the
       // possibility of any other uses. (Technically, each read-to-write
       // location might have more than one read since we did not count them, but
