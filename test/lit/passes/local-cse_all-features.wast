@@ -353,6 +353,24 @@
     )
     (local.get $temp)
   )
+
+  (func $switch-children (param $x i32) (result i32)
+    (block $label$1 (result i32)
+      ;; We can optimize the two children of this switch. This test verifies
+      ;; that we do so properly and do not hit an assertion involving the
+      ;; ordering of the switch's children, which was incorrect in the past.
+      (br_table $label$1 $label$1
+        (i32.and
+          (local.get $x)
+          (i32.const 3)
+        )
+        (i32.and
+          (local.get $x)
+          (i32.const 3)
+        )
+      )
+    )
+  )
 )
 
 (module

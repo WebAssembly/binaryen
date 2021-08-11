@@ -12,10 +12,12 @@ using namespace wasm;
   assert(ExpressionAnalyzer::hash(&left) != ExpressionAnalyzer::hash(&right));
 
 #define assertShallowEqual(left, right)                                        \
-  assert(ExpressionAnalyzer::shallowHash(&left) == ExpressionAnalyzer::shallowHash(&right));
+  assert(ExpressionAnalyzer::shallowHash(&left) ==                             \
+         ExpressionAnalyzer::shallowHash(&right));
 
 #define assertShallowNotEqual(left, right)                                     \
-  assert(ExpressionAnalyzer::shallowHash(&left) != ExpressionAnalyzer::shallowHash(&right));
+  assert(ExpressionAnalyzer::shallowHash(&left) !=                             \
+         ExpressionAnalyzer::shallowHash(&right));
 
 int main() {
   {
