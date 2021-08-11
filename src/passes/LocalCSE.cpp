@@ -169,6 +169,9 @@ struct RequestInfo {
   Expression* original = nullptr;
 };
 
+// A map of expressions to their request info.
+using RequestInfoMap = std::unordered_map<Expression*, RequestInfo>;
+
 struct Scanner
   : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
   PassOptions options;
@@ -181,15 +184,15 @@ struct Scanner
   // Currently active hashed expressions in the current basic block.
   HashedExprs blockExprs;
 
-  // Request info in the current basic block.
-  std::unordered_map<Expression*, RequestInfo> blockInfos;
+  // Request info for all expressions.
+  RequestInfoMap requestInfos;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
     // expressions, as we no longer want to make connections to anything from
     // another block.
-    self->blockExprs.clear(); // TODO: rename "activeExprs?"
-    // Note that we do not clear blockInfos - that is information we will use
+    self->blockExprs.clear();
+    // Note that we do not clear requestInfos - that is information we will use
     // later in the Applier class. That is, we've cleared all the active
     // information, leaving the things we need later.
   }
@@ -203,13 +206,13 @@ struct Scanner
 
     auto& vec = blockExprs[HashedExpression(curr, hash)];
     vec.push_back(curr);
-    auto& info = blockInfos[curr];
+    auto& info = requestInfos[curr];
     if (vec.size() > 1) {
       // This is a repeat expression. Mark it as such, and add a request for the
       // original appearance of the value.
       auto* original = vec[0];
       info.original = original;
-      blockInfos[original].requests++;
+      requestInfos[original].requests++;
 
       // Remove any requests from the expression's children, as we will replace
       // the entire thing (see explanation earlier). Note that we just need to
@@ -223,13 +226,13 @@ struct Scanner
       // requesting replacement. And then when we see the second A, all it needs
       // to update is the second B.
       for (auto* child : ChildIterator(curr)) {
-        if (!blockInfos.count(child)) {
+        if (!requestInfos.count(child)) {
           continue;
         }
-        auto& childInfo = blockInfos[child];
+        auto& childInfo = requestInfos[child];
         if (childInfo.original) {
-          assert(blockInfos[childInfo.original].requests > 0);
-          blockInfos[childInfo.original].requests--;
+          assert(requestInfos[childInfo.original].requests > 0);
+          requestInfos[childInfo.original].requests--;
           childInfo.original = nullptr;
         }
       }
@@ -292,10 +295,10 @@ struct Scanner
 struct Checker
   : public LinearExecutionWalker<Checker, UnifiedExpressionVisitor<Checker>> {
   PassOptions options;
-  Scanner& scanner; // TODO: just the infos? and also in Applier
+  RequestInfoMap& requestInfos;
 
-  Checker(PassOptions options, Scanner& scanner)
-    : options(options), scanner(scanner) {}
+  Checker(PassOptions options, RequestInfoMap requestInfos)
+    : options(options), requestInfos(requestInfos) {}
 
   struct ActiveOriginalInfo {
     // How many of the requests remain to be seen.
@@ -329,7 +332,7 @@ struct Checker
       for (auto* original : invalidated) {
         // Remove all requests after this expression, as we cannot optimize to
         // them.
-        scanner.blockInfos[original].requests -=
+        requestInfos[original].requests -=
           activeOriginals.at(original).requestsLeft;
 
         activeOriginals.erase(original);
@@ -339,8 +342,8 @@ struct Checker
     assert(!activeOriginals.count(curr));
 
     // Check if the current expression is an original or requests from one.
-    auto iter = scanner.blockInfos.find(curr);
-    if (iter != scanner.blockInfos.end()) {
+    auto iter = requestInfos.find(curr);
+    if (iter != requestInfos.end()) {
       auto& info = iter->second;
 
       // An expression cannot both be requested to be copied to a local, and
@@ -358,7 +361,7 @@ struct Checker
         // different result each time, we cannot optimize away repeats.
         if (effects.hasSideEffects() || !Properties::isObservablyDeterministic(
                                           curr, getModule()->features)) {
-          scanner.blockInfos[curr].requests = 0;
+          requestInfos[curr].requests = 0;
         } else {
           activeOriginals.emplace(
             curr, ActiveOriginalInfo{info.requests, std::move(effects)});
@@ -396,16 +399,16 @@ struct Checker
 // only valid ones), and stop optimizing when none remain.
 struct Applier
   : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<Applier>> {
-  Scanner& scanner;
+  RequestInfoMap requestInfos;
 
-  Applier(Scanner& scanner) : scanner(scanner) {}
+  Applier(  RequestInfoMap requestInfos) : requestInfos(requestInfos) {}
 
   // Maps expressions that we save to locals to the local index for them.
   std::unordered_map<Expression*, Index> exprLocals;
 
   void visitExpression(Expression* curr) {
-    auto iter = scanner.blockInfos.find(curr);
-    if (iter == scanner.blockInfos.end()) {
+    auto iter = requestInfos.find(curr);
+    if (iter == requestInfos.end()) {
       return;
     }
 
@@ -420,7 +423,7 @@ struct Applier
       replaceCurrent(
         Builder(*getModule()).makeLocalTee(local, curr, curr->type));
     } else if (info.original) {
-      auto& originalInfo = scanner.blockInfos.at(info.original);
+      auto& originalInfo = requestInfos.at(info.original);
       if (originalInfo.requests) {
         // This is a valid request of an original value. Get the value from the
         // local.
@@ -454,10 +457,10 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
     Scanner scanner(options);
     scanner.walkFunctionInModule(func, getModule());
 
-    Checker checker(options, scanner);
+    Checker checker(options, scanner.requestInfos);
     checker.walkFunctionInModule(func, getModule());
 
-    Applier applier(scanner);
+    Applier applier(scanner.requestInfos);
     applier.walkFunctionInModule(func, getModule());
 
     TypeUpdating::handleNonDefaultableLocals(func, *getModule());
