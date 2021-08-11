@@ -1510,7 +1510,7 @@ private:
       std::swap(binary->left, binary->right);
     };
     auto maybeSwap = [&]() {
-      if (WASM_UNLIKELY(canReorder(binary->left, binary->right))) {
+      if (canReorder(binary->left, binary->right)) {
         swap();
       }
     };
@@ -1530,7 +1530,8 @@ private:
       return;
     }
     // Prefer a get on the right.
-    if (binary->left->is<LocalGet>() && !binary->right->is<LocalGet>()) {
+    if (WASM_UNLIKELY(binary->left->is<LocalGet>() &&
+                      !binary->right->is<LocalGet>())) {
       return maybeSwap();
     }
     // Sort by the node id type, if different.
