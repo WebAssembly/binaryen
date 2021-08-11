@@ -445,3 +445,29 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
 Pass* createLocalCSEPass() { return new LocalCSE(); }
 
 } // namespace wasm
+
+/*
+   (global.set $com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode.itable
+-   (array.new_default_with_rtt $itable
+-    (i32.const 1)
+-    (rtt.canon $itable)
++   (ref.as_non_null
++    (local.get $10)
+    )
+   )
+   (array.set $itable
+    (global.get $com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode.itable)
+    (i32.const 0)
+    (struct.new_with_rtt $com.google.i18n.identifiers.LanguageCode.LanguageCodeSupplier.vtable
+-    (ref.func $m_get__com_google_i18n_identifiers_LanguageCode@com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode)
++    (ref.as_non_null
++     (local.get $11)
++    )
+     (rtt.canon $com.google.i18n.identifiers.LanguageCode.LanguageCodeSupplier.vtable)
+    )
+   )
+   
+   
+1. optimizing RefFunc like that - seems pointless? Why is it happening? RefFunc should be size 1 and 0 work...
+2. More importanly, array.new has "creation" side effects. Same as in Precompute, that issue there... fix it once and for alls
+*/
