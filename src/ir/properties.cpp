@@ -30,21 +30,11 @@ bool isObservablyDeterministic(Expression* curr, FeatureSet features) {
 
   struct Scanner : public PostWalker<Scanner> {
     bool deterministic = true;
-    void visitCall(Call* curr) {
-      deterministic = false;
-    }
-    void visitCallIndirect(CallIndirect* curr) {
-      deterministic = false;
-    }
-    void visitCallRef(CallRef* curr) {
-      deterministic = false;
-    }
-    void visitStructNew(StructNew* curr) {
-      deterministic = false;
-    }
-    void visitArrayNew(ArrayNew* curr) {
-      deterministic = false;
-    }
+    void visitCall(Call* curr) { deterministic = false; }
+    void visitCallIndirect(CallIndirect* curr) { deterministic = false; }
+    void visitCallRef(CallRef* curr) { deterministic = false; }
+    void visitStructNew(StructNew* curr) { deterministic = false; }
+    void visitArrayNew(ArrayNew* curr) { deterministic = false; }
   } scanner;
   scanner.walk(curr);
   return scanner.deterministic;
