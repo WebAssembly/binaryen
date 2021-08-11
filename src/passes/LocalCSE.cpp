@@ -151,7 +151,7 @@ struct HEComparer {
 // expressions that are equivalent (same hash, and also compare equal) will
 // be in a vector for the corresponding entry in this map.
 using HashedExprs = std::unordered_map<HashedExpression,
-                                       std::vector<Expression*>,
+                                       SmallVector<Expression*, 1>,
                                        HEHasher,
                                        HEComparer>;
 
@@ -178,11 +178,11 @@ struct Scanner
 
   Scanner(PassOptions options) : options(options) {}
 
-  // Hash values of all the expressions we've encountered.
-  std::unordered_map<Expression*, size_t> hashes;
-
   // Currently active hashed expressions in the current basic block.
   HashedExprs activeExprs;
+
+  // Hash values of all active expressions.
+  std::unordered_map<Expression*, size_t> activeHashes;
 
   // Request info for all expressions.
   RequestInfoMap requestInfos;
@@ -192,14 +192,31 @@ struct Scanner
     // expressions, as we no longer want to make connections to anything from
     // another block.
     self->activeExprs.clear();
+    self->activeHashes.clear();
     // Note that we do not clear requestInfos - that is information we will use
     // later in the Applier class. That is, we've cleared all the active
     // information, leaving the things we need later.
   }
 
   void visitExpression(Expression* curr) {
-    auto hash = computeHash(curr);
+    // Compute the hash, using the pre-computed hashes of the children, which
+    // are saved. This allows us to hash everything in linear time.
+    //
+    // Note that we must compute the hash first, as we need it even for things
+    // that are not isRelevant() (if they are the children of a relevant thing).
+    auto hash = ExpressionAnalyzer::shallowHash(curr);
+    for (auto* child : ChildIterator(curr)) {
+      auto iter = activeHashes.find(child);
+      if (iter == activeHashes.end()) {
+        // The child was in another block, so this expression cannot be
+        // optimized.
+        return;
+      }
+      hash_combine(hash, iter->second);
+    }
+    activeHashes[curr] = hash;
 
+    // Check if this is something relevent for optimization.
     if (!isRelevant(curr)) {
       return;
     }
@@ -237,17 +254,6 @@ struct Scanner
         }
       }
     }
-  }
-
-  // Compute the hash, using the pre-computed hashes of the children, which are
-  // saved. This allows us to hash everything in linear time.
-  size_t computeHash(Expression* curr) {
-    auto hash = ExpressionAnalyzer::shallowHash(curr);
-    for (auto* child : ChildIterator(curr)) {
-      assert(hashes.count(child));
-      hash_combine(hash, hashes[child]);
-    }
-    return hashes[curr] = hash;
   }
 
   // Only some values are relevant to be optimized.
