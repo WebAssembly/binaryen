@@ -13,7 +13,7 @@
 
   ;; CHECK:      (memory $0 100 100)
 
-  ;; CHECK:      (elem declare func $ref.func)
+  ;; CHECK:      (elem declare func $calls $ref.func)
 
   ;; CHECK:      (func $basics
   ;; CHECK-NEXT:  (local $x i32)
@@ -301,6 +301,18 @@
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (ref.func $calls)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (ref.func $calls)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 20)
   ;; CHECK-NEXT: )
   (func $calls (param $x i32) (result i32)
@@ -310,6 +322,12 @@
     )
     (drop
       (call $calls (i32.const 10))
+    )
+    (drop
+      (call_ref (i32.const 10) (ref.func $calls))
+    )
+    (drop
+      (call_ref (i32.const 10) (ref.func $calls))
     )
     (i32.const 20)
   )
@@ -541,37 +559,30 @@
   )
 
   ;; CHECK:      (func $creations
-  ;; CHECK-NEXT:  (local $0 (ref null $A))
-  ;; CHECK-NEXT:  (local $1 (ref null $B))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.tee $0
-  ;; CHECK-NEXT:     (struct.new_with_rtt $A
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (rtt.canon $A)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.new_with_rtt $A
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (rtt.canon $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (struct.new_with_rtt $A
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (rtt.canon $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.tee $1
-  ;; CHECK-NEXT:     (array.new_with_rtt $B
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (rtt.canon $B)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (array.new_with_rtt $B
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (rtt.canon $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   (array.new_with_rtt $B
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (rtt.canon $B)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
