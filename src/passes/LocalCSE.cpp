@@ -182,6 +182,8 @@ struct Scanner
   void visitExpression(Expression* curr) {
     auto hash = computeHash(curr);
 
+    computeEffects(curr);
+
     checkInvalidations(curr);
 
     if (!isRelevant(curr)) {
@@ -223,7 +225,8 @@ struct Scanner
     }
   }
 
-  // This allows us to hash everything in linear time.
+  // Compute the hash, using the pre-computed hashes of the children, which are
+  // saved. This allows us to hash everything in linear time.
   size_t computeHash(Expression* curr) {
     auto hash = ExpressionAnalyzer::shallowHash(curr);
     for (auto* child : ChildIterator(curr)) {
@@ -232,6 +235,21 @@ struct Scanner
     }
     return hashes[curr] = hash;
   }
+
+  // Similar to hashing, we save the effects of children to make this
+  // computation linear.
+  void computeEffects(Expression* curr) {
+    EffectAnalyzer effects(options, getModule()->features);
+    effects.
+    // XXX see checkInvalidations - do we need to save both the shallow and the
+    // deep effectses..?
+
+    // TODO: this recomputes effects for duplicates.
+    auto iter = blockEffects.emplace(
+      curr, );
+    if (iter.first->second.hasSideEffects()) {
+      return false; // we can't combine things with side effects
+    }
 
   // Only some values are relevant to be optimized.
   bool isRelevant(Expression* curr) {
@@ -244,11 +262,7 @@ struct Scanner
     if (!TypeUpdating::canHandleAsLocal(curr->type)) {
       return false;
     }
-    // TODO: this recomputes effects for duplicates.
-    // TODO: we can ignore a trap here. It is ok to trap twice.
-    auto iter = blockEffects.emplace(
-      curr, EffectAnalyzer(options, getModule()->features, curr));
-    if (iter.first->second.hasSideEffects()) {
+    if (effects[curr].hasSideEffects()) {
       return false; // we can't combine things with side effects
     }
     // If the size is at least 3, then if we have two of them we have 6,
