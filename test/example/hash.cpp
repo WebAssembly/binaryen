@@ -69,14 +69,15 @@ int main() {
     assertNotEqual(dx, dy);
   }
   {
-    // Nested different child, checked shallowly.
+    // Nested different child, checked shallowly (so we ignore the difference,
+    // and return equal).
     Drop dx, dy;
     Const x, y;
     x.set(Literal(int32_t(10)));
     y.set(Literal(int32_t(11)));
     dx.value = &x;
     dy.value = &y;
-    assertShallowNotEqual(dx, dy);
+    assertShallowEqual(dx, dy);
   }
   MixedArena arena;
   {

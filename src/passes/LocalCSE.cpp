@@ -271,6 +271,7 @@ struct Scanner
   // different value, so invalidate the first load.
   void checkInvalidations(Expression* curr) {
     // TODO: Like SimplifyExpressions this is O(bad), but seems ok in practice..
+    // TODO: put a limit on how many active expressions?
     EffectAnalyzer effects(options, getModule()->features);
     effects.visit(curr);
 
