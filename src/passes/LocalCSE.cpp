@@ -200,10 +200,13 @@ struct Scanner
       return;
     }
 
+if (getFunction()->name == "245") std::cout << "scnrel 245 visit1 " << hash << "\n" << *curr << '\n';
+
     auto& vec = blockExprs[HashedExpression(curr, hash)];
     vec.push_back(curr);
     auto& info = blockInfos[curr];
     if (vec.size() > 1) {
+if (getFunction()->name == "245") std::cout << "scnrel 245 visit2\n";
       // This is a repeat expression. Mark it as such, and add a request for the
       // original appearance of the value.
       auto* original = vec[0];
@@ -222,11 +225,13 @@ struct Scanner
       // requesting replacement. And then when we see the second A, all it needs
       // to update is the second B.
       for (auto* child : ChildIterator(curr)) {
+if (getFunction()->name == "245") std::cout << "scnrel 245 visit3\n";
         if (!blockInfos.count(child)) {
           continue;
         }
         auto& childInfo = blockInfos[child];
         if (childInfo.original) {
+if (getFunction()->name == "245") std::cout << "scnrel 245 visit4\n";
           assert(blockInfos[childInfo.original].requests > 0);
           blockInfos[childInfo.original].requests--;
           childInfo.original = nullptr;
@@ -396,6 +401,7 @@ struct Applier
   std::unordered_map<Expression*, Index> exprLocals;
 
   void visitExpression(Expression* curr) {
+if (getFunction()->name == "245") std::cout << "app 245 visit1\n";
     //std::cout << "Apply " << curr << " : " << *curr << '\n';
     auto iter = scanner.blockInfos.find(curr);
     if (iter == scanner.blockInfos.end()) {
@@ -405,6 +411,7 @@ struct Applier
     const auto& info = iter->second;
 
     assert(!(info.requests && info.original));
+if (getFunction()->name == "245") std::cout << "app 245 visit2, requests: " << info.requests << " : " << (!!info.original) << "\n" << *curr << "\n";
 
     if (info.requests) {
       //std::cout << "  1\n";
@@ -414,10 +421,13 @@ struct Applier
         Builder::addVar(getFunction(), curr->type);
       replaceCurrent(
         Builder(*getModule()).makeLocalTee(local, curr, curr->type));
+if (getFunction()->name == "245") std::cout << "app 245 visit3\n";
     } else if (info.original) {
+if (getFunction()->name == "245") std::cout << "app 245 visit4\n";
       //std::cout << "  2\n";
       auto& originalInfo = scanner.blockInfos.at(info.original);
       if (originalInfo.requests) {
+if (getFunction()->name == "245") std::cout << "app 245 visit5\n";
         // This is a valid request of an original value. Get the value from the
         // local.
         assert(exprLocals.count(info.original));
@@ -437,7 +447,7 @@ struct Applier
 } // anonymous namespace
 
 struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
-  bool isFunctionParallel() override { return true; }
+//  bool isFunctionParallel() override { return true; }
 
   // FIXME DWARF updating does not handle local changes yet.
   bool invalidatesDWARF() override { return true; }
