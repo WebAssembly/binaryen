@@ -11,6 +11,12 @@ using namespace wasm;
 #define assertNotEqual(left, right)                                            \
   assert(ExpressionAnalyzer::hash(&left) != ExpressionAnalyzer::hash(&right));
 
+#define assertShallowEqual(left, right)                                        \
+  assert(ExpressionAnalyzer::shallowHash(&left) == ExpressionAnalyzer::shallowHash(&right));
+
+#define assertShallowNotEqual(left, right)                                     \
+  assert(ExpressionAnalyzer::shallowHash(&left) != ExpressionAnalyzer::shallowHash(&right));
+
 int main() {
   {
     Const x, y;
@@ -33,7 +39,7 @@ int main() {
     assertNotEqual(x, y);
   }
   {
-    // Nested child.
+    // Nested identical child.
     Drop dx, dy;
     Const x, y;
     x.set(Literal(int32_t(10)));
@@ -43,7 +49,17 @@ int main() {
     assertEqual(dx, dy);
   }
   {
-    // Nested child.
+    // Nested identical child, checked shallowly.
+    Drop dx, dy;
+    Const x, y;
+    x.set(Literal(int32_t(10)));
+    y.set(Literal(int32_t(10)));
+    dx.value = &x;
+    dy.value = &y;
+    assertShallowEqual(dx, dy);
+  }
+  {
+    // Nested different child.
     Drop dx, dy;
     Const x, y;
     x.set(Literal(int32_t(10)));
@@ -51,6 +67,16 @@ int main() {
     dx.value = &x;
     dy.value = &y;
     assertNotEqual(dx, dy);
+  }
+  {
+    // Nested different child, checked shallowly.
+    Drop dx, dy;
+    Const x, y;
+    x.set(Literal(int32_t(10)));
+    y.set(Literal(int32_t(11)));
+    dx.value = &x;
+    dy.value = &y;
+    assertShallowNotEqual(dx, dy);
   }
   MixedArena arena;
   {
