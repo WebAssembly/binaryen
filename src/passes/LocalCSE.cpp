@@ -315,10 +315,10 @@ struct Checker
       for (auto* original : invalidated) {
         // Remove all requests after this expression, as we cannot optimize to
         // them.
-        scanner.blockInfos[original].requests = activeOriginals.at(original).requestsLeft;
+        scanner.blockInfos[original].requests -= activeOriginals.at(original).requestsLeft;
 
         activeOriginals.erase(original);
-//std::cout << "invalidat " << original << '\n';
+//std::cout << "invalidat " << original << " down to " << scanner.blockInfos[original].requests << '\n';
       }
     }
 
