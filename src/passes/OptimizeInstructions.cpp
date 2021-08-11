@@ -36,7 +36,6 @@
 #include <ir/properties.h>
 #include <ir/type-updating.h>
 #include <ir/utils.h>
-#include <llvm/Support/Compiler.h>
 #include <pass.h>
 #include <support/threads.h>
 #include <wasm.h>
@@ -277,11 +276,11 @@ struct OptimizeInstructions
     // If this contains dead code, don't bother trying to optimize it, the type
     // might change (if might not be unreachable if just one arm is, for
     // example). This optimization pass focuses on actually executing code.
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
-    if (LLVM_UNLIKELY(shouldCanonicalize(curr))) {
+    if (WASM_UNLIKELY(shouldCanonicalize(curr))) {
       canonicalize(curr);
     }
 
@@ -774,7 +773,7 @@ struct OptimizeInstructions
   }
 
   void visitUnary(Unary* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
@@ -952,7 +951,7 @@ struct OptimizeInstructions
   }
 
   void visitSelect(Select* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     if (auto* ret = optimizeSelect(curr)) {
@@ -962,7 +961,7 @@ struct OptimizeInstructions
   }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     // optimize out a set of a get
@@ -1020,7 +1019,7 @@ struct OptimizeInstructions
     // if the local is nullable (which it must be until some form of let is
     // added). The reordering allows the ref.as to be potentially optimized
     // further based on where the value flows to.
-    if (LLVM_UNLIKELY(curr->isTee())) {
+    if (WASM_UNLIKELY(curr->isTee())) {
       if (auto* as = curr->value->dynCast<RefAs>()) {
         if (as->op == RefAsNonNull &&
             getFunction()->getLocalType(curr->index).isNullable()) {
@@ -1041,14 +1040,14 @@ struct OptimizeInstructions
   }
 
   void visitLoad(Load* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     optimizeMemoryAccess(curr->ptr, curr->offset);
   }
 
   void visitStore(Store* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     optimizeMemoryAccess(curr->ptr, curr->offset);
@@ -1109,7 +1108,7 @@ struct OptimizeInstructions
   }
 
   void visitMemoryCopy(MemoryCopy* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
     assert(getModule()->features.hasBulkMemory());
@@ -1119,7 +1118,7 @@ struct OptimizeInstructions
   }
 
   void visitCallRef(CallRef* curr) {
-    if (LLVM_UNLIKELY(curr->target->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->target->type == Type::unreachable)) {
       // The call_ref is not reached; leave this for DCE.
       return;
     }
@@ -1179,7 +1178,7 @@ struct OptimizeInstructions
       // )
       auto* lastOperand = curr->operands.back();
       auto lastOperandType = lastOperand->type;
-      if (LLVM_UNLIKELY(lastOperandType == Type::unreachable)) {
+      if (WASM_UNLIKELY(lastOperandType == Type::unreachable)) {
         // The call_ref is not reached; leave this for DCE.
         return;
       }
@@ -1265,7 +1264,7 @@ struct OptimizeInstructions
   }
 
   void visitRefCast(RefCast* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
@@ -1360,7 +1359,7 @@ struct OptimizeInstructions
   }
 
   void visitRefIs(RefIs* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
@@ -1423,7 +1422,7 @@ struct OptimizeInstructions
   }
 
   void visitRefAs(RefAs* curr) {
-    if (LLVM_UNLIKELY(curr->type == Type::unreachable)) {
+    if (WASM_UNLIKELY(curr->type == Type::unreachable)) {
       return;
     }
 
@@ -1511,19 +1510,19 @@ private:
       std::swap(binary->left, binary->right);
     };
     auto maybeSwap = [&]() {
-      if (LLVM_UNLIKELY(canReorder(binary->left, binary->right))) {
+      if (WASM_UNLIKELY(canReorder(binary->left, binary->right))) {
         swap();
       }
     };
     // Prefer a const on the right.
-    if (LLVM_UNLIKELY(binary->left->is<Const>() &&
+    if (WASM_UNLIKELY(binary->left->is<Const>() &&
                       !binary->right->is<Const>())) {
       return swap();
     }
     if (auto* c = binary->right->dynCast<Const>()) {
       // x - C  ==>   x + (-C)
       // Prefer use addition if there is a constant on the right.
-      if (LLVM_UNLIKELY(binary->op ==
+      if (WASM_UNLIKELY(binary->op ==
                         Abstract::getBinary(c->type, Abstract::Sub))) {
         c->value = c->value.neg();
         binary->op = Abstract::getBinary(c->type, Abstract::Add);
@@ -1536,7 +1535,7 @@ private:
     }
     // Sort by the node id type, if different.
     if (binary->left->_id != binary->right->_id) {
-      if (LLVM_UNLIKELY(binary->left->_id > binary->right->_id)) {
+      if (WASM_UNLIKELY(binary->left->_id > binary->right->_id)) {
         return maybeSwap();
       }
       return;
@@ -1544,19 +1543,19 @@ private:
     // If the children have the same node id, we have to go deeper.
     if (auto* left = binary->left->dynCast<Unary>()) {
       auto* right = binary->right->cast<Unary>();
-      if (LLVM_UNLIKELY(left->op > right->op)) {
+      if (WASM_UNLIKELY(left->op > right->op)) {
         return maybeSwap();
       }
     }
     if (auto* left = binary->left->dynCast<Binary>()) {
       auto* right = binary->right->cast<Binary>();
-      if (LLVM_UNLIKELY(left->op > right->op)) {
+      if (WASM_UNLIKELY(left->op > right->op)) {
         return maybeSwap();
       }
     }
     if (auto* left = binary->left->dynCast<LocalGet>()) {
       auto* right = binary->right->cast<LocalGet>();
-      if (LLVM_UNLIKELY(left->index > right->index)) {
+      if (WASM_UNLIKELY(left->index > right->index)) {
         return maybeSwap();
       }
     }
@@ -3012,7 +3011,7 @@ private:
   }
 
   bool shouldCanonicalize(Binary* binary) {
-    if (LLVM_UNLIKELY((binary->op == SubInt32 || binary->op == SubInt64) &&
+    if (WASM_UNLIKELY((binary->op == SubInt32 || binary->op == SubInt64) &&
                       binary->right->is<Const>() &&
                       !binary->left->is<Const>())) {
       return true;
@@ -3029,7 +3028,7 @@ private:
         // We don't care about the RHS because right now we only know if
         // an expression is non-NaN if it is constant, but if the RHS is
         // constant, then this expression is already canonicalized.
-        if (LLVM_UNLIKELY(binary->left->is<Const>())) {
+        if (WASM_UNLIKELY(binary->left->is<Const>())) {
           auto* c = binary->left->cast<Const>();
           return !c->value.isNaN();
         }

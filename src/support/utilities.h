@@ -88,6 +88,14 @@ WASM_NORETURN void handle_unreachable(const char* msg = nullptr,
 #define WASM_UNREACHABLE(msg) wasm::handle_unreachable()
 #endif
 
+#if __has_builtin(__builtin_expect) || __GNUC__ >= 3
+#define WASM_LIKELY(expr) __builtin_expect(!!(expr), true)
+#define WASM_UNLIKELY(expr) __builtin_expect(!!(expr), false)
+#else
+#define WASM_LIKELY(expr) (expr)
+#define WASM_UNLIKELY(expr) (expr)
+#endif
+
 } // namespace wasm
 
 #endif // wasm_support_utilities_h
