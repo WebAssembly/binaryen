@@ -255,6 +255,10 @@ struct Scanner
     //   propagation.
     // * Ignore things we cannot put in a local, as then we can't do this
     //   optimization at all.
+    //
+    // More things matter here, like having side effects or not, but computing
+    // them is not cheap, so leave them for later, after we know if there
+    // actually are any requests for reuse of this value (which is rare).
     if (!curr->type.isConcrete() || curr->is<LocalGet>() ||
         curr->is<LocalSet>() || Properties::isConstantExpression(curr) ||
         !TypeUpdating::canHandleAsLocal(curr->type)) {
@@ -470,37 +474,3 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
 Pass* createLocalCSEPass() { return new LocalCSE(); }
 
 } // namespace wasm
-
-/*
-   (global.set
-$com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode.itable
--   (array.new_default_with_rtt $itable
--    (i32.const 1)
--    (rtt.canon $itable)
-+   (ref.as_non_null
-+    (local.get $10)
-    )
-   )
-   (array.set $itable
-    (global.get
-$com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode.itable)
-    (i32.const 0)
-    (struct.new_with_rtt
-$com.google.i18n.identifiers.LanguageCode.LanguageCodeSupplier.vtable
--    (ref.func
-$m_get__com_google_i18n_identifiers_LanguageCode@com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode)
-+    (ref.as_non_null
-+     (local.get $11)
-+    )
-     (rtt.canon
-$com.google.i18n.identifiers.LanguageCode.LanguageCodeSupplier.vtable)
-    )
-   )
-
-
-1. optimizing RefFunc like that - seems pointless? Why is it happening? Cost 1,
-so there... Propeties::isCOnstant? Or may is is there value in hoisting consts?
-more locals though is dubious
-2. More importanly, array.new has "creation" side effects. Same as in
-Precompute, that issue there... fix it once and for alls isPure()?
-*/

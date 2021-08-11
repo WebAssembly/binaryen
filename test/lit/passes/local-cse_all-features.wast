@@ -13,6 +13,8 @@
 
   ;; CHECK:      (memory $0 100 100)
 
+  ;; CHECK:      (elem declare func $ref.func)
+
   ;; CHECK:      (func $basics
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $y i32)
@@ -312,6 +314,14 @@
     (i32.const 20)
   )
 
+  ;; CHECK:      (func $ref.func
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $ref.func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.func $ref.func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $ref.func
     ;; RefFunc and other constants should be ignored - don't undo the effects
     ;; of constant propagation.
@@ -369,13 +379,13 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $label$1 (result i32)
   ;; CHECK-NEXT:   (br_table $label$1 $label$1
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:    (local.tee $1
   ;; CHECK-NEXT:     (i32.and
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:      (i32.const 3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -449,6 +459,11 @@
 
   ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
 
+  ;; CHECK:      (type $B (array (mut i32)))
+  (type $B (array (mut i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
   ;; CHECK:      (func $struct-gets (param $ref (ref $A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
@@ -521,6 +536,72 @@
         (local.get $ref)
         (local.get $ref)
         (i32.const 1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $creations
+  ;; CHECK-NEXT:  (local $0 (ref null $A))
+  ;; CHECK-NEXT:  (local $1 (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.tee $0
+  ;; CHECK-NEXT:     (struct.new_with_rtt $A
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (rtt.canon $A)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.tee $1
+  ;; CHECK-NEXT:     (array.new_with_rtt $B
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (rtt.canon $B)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $creations
+    ;; Allocating GC data has no side effects, but each allocation is unique
+    ;; and so we cannot replace separate allocations with a single one.
+    (drop
+      (struct.new_with_rtt $A
+        (i32.const 1)
+        (rtt.canon $A)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $A
+        (i32.const 1)
+        (rtt.canon $A)
+      )
+    )
+    (drop
+      (array.new_with_rtt $B
+        (i32.const 1)
+        (i32.const 1)
+        (rtt.canon $B)
+      )
+    )
+    (drop
+      (array.new_with_rtt $B
+        (i32.const 1)
+        (i32.const 1)
+        (rtt.canon $B)
       )
     )
   )
