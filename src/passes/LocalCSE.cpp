@@ -95,7 +95,10 @@
 // running flatten before running this pass would allow those to be optimized as
 // well.
 //
-// TODO: global, inter-block gvn etc.
+// TODO: Global, inter-block gvn etc. However, note that atm the cost of our
+//       adding new locals here is low because their lifetimes are all within a
+//       single basic block. A global optimization here could add long-lived
+//       locals with register allocation costs in the entire function.
 //
 
 #include <algorithm>
@@ -296,7 +299,7 @@ struct Checker
 
   void visitExpression(Expression* curr) {
 
-//std::cout << "chaker " << *curr << '\n';
+std::cout << "chaker " << curr << " : " << *curr << '\n';
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
@@ -318,7 +321,7 @@ struct Checker
         scanner.blockInfos[original].requests -= activeOriginals.at(original).requestsLeft;
 
         activeOriginals.erase(original);
-//std::cout << "invalidat " << original << " down to " << scanner.blockInfos[original].requests << '\n';
+std::cout << "invalidat " << original << " down to " << scanner.blockInfos[original].requests << '\n';
       }
     }
 
@@ -336,7 +339,7 @@ struct Checker
       assert(!(info.requests && info.original));
 
       if (info.requests > 0) {
-//std::cout << "init original " << curr << " to " << info.requests << '\n';
+std::cout << "init original " << curr << " to " << info.requests << '\n';
         EffectAnalyzer effects(options, getModule()->features, curr);
         if (effects.hasSideEffects()) {
           // We cannot optimize away repeats of something with side effects.
@@ -347,14 +350,14 @@ struct Checker
           });
         }
       } else if (info.original) {
-//std::cout << "request to an original " << info.original << '\n';
+std::cout << "request to an original " << info.original << '\n';
         // The original may have already been invalidated.
         auto iter = activeOriginals.find(info.original);
         if (iter != activeOriginals.end()) {
           // After visiting this expression, we have one less request for its
           // original, and perhaps none are left.
           auto& originalInfo = iter->second;
-//std::cout << "  original still kicking,  left: " << originalInfo.requestsLeft << '\n';
+std::cout << "  original still kicking,  left: " << originalInfo.requestsLeft << '\n';
           if (originalInfo.requestsLeft == 1) {
             activeOriginals.erase(info.original);
           } else {
@@ -379,7 +382,8 @@ struct Checker
 // Applies the optimization now that we know which requests are valid. We track
 // the number of remaining valid requests (after Checker decreased them to leave
 // only valid ones), and stop optimizing when none remain.
-struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
+struct Applier
+  : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<Applier>> {
   Scanner& scanner;
 
   Applier(Scanner& scanner) : scanner(scanner) {}
@@ -388,15 +392,18 @@ struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
   std::unordered_map<Expression*, Index> exprLocals;
 
   void visitExpression(Expression* curr) {
+std::cout << "Apply " << curr << " : " << *curr << '\n';
     auto iter = scanner.blockInfos.find(curr);
     if (iter == scanner.blockInfos.end()) {
       return;
     }
+std::cout << "  0\n";
     const auto& info = iter->second;
 
     assert(!(info.requests && info.original));
 
     if (info.requests) {
+std::cout << "  1\n";
       // We have requests for this value. Add a local and tee the value to
       // there.
       Index local = exprLocals[curr] =
@@ -404,6 +411,7 @@ struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
       replaceCurrent(
         Builder(*getModule()).makeLocalTee(local, curr, curr->type));
     } else if (info.original) {
+std::cout << "  2\n";
       auto& originalInfo = scanner.blockInfos.at(info.original);
       if (originalInfo.requests) {
         // This is a valid request of an original value. Get the value from the local.
@@ -414,11 +422,16 @@ struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
       }
     }
   }
+
+  static void doNoteNonLinear(Applier* self, Expression** currp) {
+    // Clear the state between blocks.
+    self->exprLocals.clear();
+  }
 };
 
 } // anonymous namespace
 
-struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
+struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
   bool isFunctionParallel() override { return true; }
 
   // FIXME DWARF updating does not handle local changes yet.
@@ -435,6 +448,7 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
     Checker checker(options, scanner);
     checker.walkFunctionInModule(func, getModule());
 
+std::cout << "waka " << *func->body << '\n';
     Applier applier(scanner);
     applier.walkFunctionInModule(func, getModule());
 
@@ -468,6 +482,9 @@ Pass* createLocalCSEPass() { return new LocalCSE(); }
    )
    
    
-1. optimizing RefFunc like that - seems pointless? Why is it happening? RefFunc should be size 1 and 0 work...
+1. optimizing RefFunc like that - seems pointless? Why is it happening? Cost 1, so there...
+    Propeties::isCOnstant?
+    Or may is is there value in hoisting consts? more locals though is dubious
 2. More importanly, array.new has "creation" side effects. Same as in Precompute, that issue there... fix it once and for alls
+    isPure()?
 */

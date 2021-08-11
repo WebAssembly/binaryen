@@ -799,8 +799,8 @@ public:
 
   ArenaVector<Name> targets;
   Name default_;
-  Expression* condition = nullptr;
   Expression* value = nullptr;
+  Expression* condition = nullptr;
 
   void finalize();
 };
