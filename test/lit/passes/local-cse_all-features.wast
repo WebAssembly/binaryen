@@ -102,13 +102,13 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $label$1 (result i32)
   ;; CHECK-NEXT:   (br_table $label$1 $label$1
-  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:    (local.tee $1
   ;; CHECK-NEXT:     (i32.and
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:      (i32.const 3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
