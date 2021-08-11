@@ -295,6 +295,8 @@ struct Checker
   std::unordered_map<Expression*, ActiveOriginalInfo> activeOriginals;
 
   void visitExpression(Expression* curr) {
+
+//std::cout << "chaker " << *curr << '\n';
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
@@ -316,6 +318,7 @@ struct Checker
         scanner.blockInfos[original].requests = activeOriginals.at(original).requestsLeft;
 
         activeOriginals.erase(original);
+//std::cout << "invalidat " << original << '\n';
       }
     }
 
@@ -333,17 +336,20 @@ struct Checker
       assert(!(info.requests && info.original));
 
       if (info.requests > 0) {
+//std::cout << "init original " << curr << " to " << info.requests << '\n';
         activeOriginals.emplace(curr, ActiveOriginalInfo{
           info.requests,
           EffectAnalyzer{options, getModule()->features, curr}
         });
       } else if (info.original) {
+//std::cout << "request to an original " << info.original << '\n';
         // The original may have already been invalidated.
         auto iter = activeOriginals.find(info.original);
         if (iter != activeOriginals.end()) {
           // After visiting this expression, we have one less request for its
           // original, and perhaps none are left.
-          auto originalInfo = iter->second;
+          auto& originalInfo = iter->second;
+//std::cout << "  original still kicking,  left: " << originalInfo.requestsLeft << '\n';
           if (originalInfo.requestsLeft == 1) {
             activeOriginals.erase(info.original);
           } else {
