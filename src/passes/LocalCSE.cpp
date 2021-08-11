@@ -248,26 +248,32 @@ struct Scanner
 
   // Only some values are relevant to be optimized.
   bool isRelevant(Expression* curr) {
-    if (curr->is<LocalGet>() || curr->is<LocalSet>() || curr->is<Const>()) {
-      return false; // trivial
-    }
-    if (!curr->type.isConcrete()) {
-      return false; // don't bother with none or unreachable etc.
-    }
-    if (!TypeUpdating::canHandleAsLocal(curr->type)) {
+    // * Ignore anything that is not a concrete type, as we are looking for
+    //   computed values to reuse, and so none and unreachable are irrelevant.
+    // * Ignore local.get and set, as those are the things we optimize to.
+    // * Ignore constants so that we don't undo the effects of constant
+    //   propagation.
+    // * Ignore things we cannot put in a local, as then we can't do this
+    //   optimization at all.
+    if (!curr->type.isConcrete() || curr->is<LocalGet>() ||
+        curr->is<LocalSet>() || Properties::isConstantExpression(curr) ||
+        !TypeUpdating::canHandleAsLocal(curr->type)) {
       return false;
     }
+
     // If the size is at least 3, then if we have two of them we have 6,
     // and so adding one set+two gets and removing one of the items itself
     // is not detrimental, and may be beneficial.
     if (options.shrinkLevel > 0 && Measurer::measure(curr) >= 3) {
       return true;
     }
+
     // If we focus on speed, any reduction in cost is beneficial, as the
     // cost of a get is essentially free.
     if (options.shrinkLevel == 0 && CostAnalyzer(curr).cost > 0) {
       return true;
     }
+
     return false;
   }
 };
