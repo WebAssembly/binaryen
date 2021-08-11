@@ -156,8 +156,8 @@ struct Scanner
 
   Scanner(PassOptions options) : options(options) {}
 
-  // Shallow hashes of all the expressions we've encountered.
-  std::unordered_map<Expression*, size_t> shallowHashes;
+  // Hash values of all the expressions we've encountered.
+  std::unordered_map<Expression*, size_t> hashes;
 
   // Currently active hashed expressions in the current basic block.
   HashedExprs blockExprs;
@@ -180,13 +180,15 @@ struct Scanner
   }
 
   void visitExpression(Expression* curr) {
+    auto hash = computeHash(curr);
+
     checkInvalidations(curr);
 
     if (!isRelevant(curr)) {
       return;
     }
 
-    auto& vec = blockExprs[HashedExpression(curr, computeHash(curr))];
+    auto& vec = blockExprs[HashedExpression(curr, hash)];
     vec.push_back(curr);
     auto& info = blockInfos[curr];
     if (vec.size() > 1) {
@@ -221,15 +223,14 @@ struct Scanner
     }
   }
 
-  // Compute the total hash of the current expression, and also save the shallow
-  // hash for its parent. That allows us to hash everything in linear time.
+  // This allows us to hash everything in linear time.
   size_t computeHash(Expression* curr) {
-    size_t hash = shallowHashes[curr] = ExpressionAnalyzer::shallowHash(curr);
+    auto hash = ExpressionAnalyzer::shallowHash(curr);
     for (auto* child : ChildIterator(curr)) {
-      assert(shallowHashes.count(child));
-      hash_combine(hash, shallowHashes[child]);
+      assert(hashes.count(child));
+      hash_combine(hash, hashes[child]);
     }
-    return hash;
+    return hashes[curr] = hash;
   }
 
   // Only some values are relevant to be optimized.
