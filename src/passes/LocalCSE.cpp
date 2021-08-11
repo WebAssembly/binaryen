@@ -124,7 +124,8 @@ struct HashedExpression {
   Expression* expr;
   size_t digest;
 
-  HashedExpression(Expression* expr, size_t digest) : expr(expr), digest(digest) {}
+  HashedExpression(Expression* expr, size_t digest)
+    : expr(expr), digest(digest) {}
 
   HashedExpression(const HashedExpression& other)
     : expr(other.expr), digest(other.digest) {}
@@ -282,7 +283,8 @@ struct Checker
   PassOptions options;
   Scanner& scanner; // TODO: just the infos? and also in Applier
 
-  Checker(PassOptions options, Scanner& scanner) : options(options), scanner(scanner) {}
+  Checker(PassOptions options, Scanner& scanner)
+    : options(options), scanner(scanner) {}
 
   struct ActiveOriginalInfo {
     // How many of the requests remain to be seen.
@@ -299,7 +301,7 @@ struct Checker
 
   void visitExpression(Expression* curr) {
 
-std::cout << "chaker " << curr << " : " << *curr << '\n';
+    std::cout << "chaker " << curr << " : " << *curr << '\n';
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
@@ -318,10 +320,12 @@ std::cout << "chaker " << curr << " : " << *curr << '\n';
       for (auto* original : invalidated) {
         // Remove all requests after this expression, as we cannot optimize to
         // them.
-        scanner.blockInfos[original].requests -= activeOriginals.at(original).requestsLeft;
+        scanner.blockInfos[original].requests -=
+          activeOriginals.at(original).requestsLeft;
 
         activeOriginals.erase(original);
-std::cout << "invalidat " << original << " down to " << scanner.blockInfos[original].requests << '\n';
+        std::cout << "invalidat " << original << " down to "
+                  << scanner.blockInfos[original].requests << '\n';
       }
     }
 
@@ -332,32 +336,33 @@ std::cout << "invalidat " << original << " down to " << scanner.blockInfos[origi
     if (iter != scanner.blockInfos.end()) {
       auto& info = iter->second;
 
-      // An expression cannot both be requested to be copied to a local, and also
-      // have some other expression it is a repeat of - if it is a repeat, then
-      // anything that requests to be copied from it should have requested from
-      // the the original of this expression.
+      // An expression cannot both be requested to be copied to a local, and
+      // also have some other expression it is a repeat of - if it is a repeat,
+      // then anything that requests to be copied from it should have requested
+      // from the the original of this expression.
       assert(!(info.requests && info.original));
 
       if (info.requests > 0) {
-std::cout << "init original " << curr << " to " << info.requests << '\n';
+        std::cout << "init original " << curr << " to " << info.requests
+                  << '\n';
         EffectAnalyzer effects(options, getModule()->features, curr);
         if (effects.hasSideEffects()) {
           // We cannot optimize away repeats of something with side effects.
           scanner.blockInfos[curr].requests = 0;
         } else {
-          activeOriginals.emplace(curr, ActiveOriginalInfo{
-            info.requests, std::move(effects)
-          });
+          activeOriginals.emplace(
+            curr, ActiveOriginalInfo{info.requests, std::move(effects)});
         }
       } else if (info.original) {
-std::cout << "request to an original " << info.original << '\n';
+        std::cout << "request to an original " << info.original << '\n';
         // The original may have already been invalidated.
         auto iter = activeOriginals.find(info.original);
         if (iter != activeOriginals.end()) {
           // After visiting this expression, we have one less request for its
           // original, and perhaps none are left.
           auto& originalInfo = iter->second;
-std::cout << "  original still kicking,  left: " << originalInfo.requestsLeft << '\n';
+          std::cout << "  original still kicking,  left: "
+                    << originalInfo.requestsLeft << '\n';
           if (originalInfo.requestsLeft == 1) {
             activeOriginals.erase(info.original);
           } else {
@@ -392,18 +397,18 @@ struct Applier
   std::unordered_map<Expression*, Index> exprLocals;
 
   void visitExpression(Expression* curr) {
-std::cout << "Apply " << curr << " : " << *curr << '\n';
+    std::cout << "Apply " << curr << " : " << *curr << '\n';
     auto iter = scanner.blockInfos.find(curr);
     if (iter == scanner.blockInfos.end()) {
       return;
     }
-std::cout << "  0\n";
+    std::cout << "  0\n";
     const auto& info = iter->second;
 
     assert(!(info.requests && info.original));
 
     if (info.requests) {
-std::cout << "  1\n";
+      std::cout << "  1\n";
       // We have requests for this value. Add a local and tee the value to
       // there.
       Index local = exprLocals[curr] =
@@ -411,10 +416,11 @@ std::cout << "  1\n";
       replaceCurrent(
         Builder(*getModule()).makeLocalTee(local, curr, curr->type));
     } else if (info.original) {
-std::cout << "  2\n";
+      std::cout << "  2\n";
       auto& originalInfo = scanner.blockInfos.at(info.original);
       if (originalInfo.requests) {
-        // This is a valid request of an original value. Get the value from the local.
+        // This is a valid request of an original value. Get the value from the
+        // local.
         assert(exprLocals.count(info.original));
         replaceCurrent(Builder(*getModule())
                          .makeLocalGet(exprLocals[info.original], curr->type));
@@ -448,7 +454,7 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
     Checker checker(options, scanner);
     checker.walkFunctionInModule(func, getModule());
 
-std::cout << "waka " << *func->body << '\n';
+    std::cout << "waka " << *func->body << '\n';
     Applier applier(scanner);
     applier.walkFunctionInModule(func, getModule());
 
@@ -461,7 +467,8 @@ Pass* createLocalCSEPass() { return new LocalCSE(); }
 } // namespace wasm
 
 /*
-   (global.set $com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode.itable
+   (global.set
+$com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode.itable
 -   (array.new_default_with_rtt $itable
 -    (i32.const 1)
 -    (rtt.canon $itable)
@@ -470,21 +477,25 @@ Pass* createLocalCSEPass() { return new LocalCSE(); }
     )
    )
    (array.set $itable
-    (global.get $com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode.itable)
+    (global.get
+$com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode.itable)
     (i32.const 0)
-    (struct.new_with_rtt $com.google.i18n.identifiers.LanguageCode.LanguageCodeSupplier.vtable
--    (ref.func $m_get__com_google_i18n_identifiers_LanguageCode@com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode)
+    (struct.new_with_rtt
+$com.google.i18n.identifiers.LanguageCode.LanguageCodeSupplier.vtable
+-    (ref.func
+$m_get__com_google_i18n_identifiers_LanguageCode@com.google.i18n.identifiers.LanguageCode.CachedIllFormedLanguageCode)
 +    (ref.as_non_null
 +     (local.get $11)
 +    )
-     (rtt.canon $com.google.i18n.identifiers.LanguageCode.LanguageCodeSupplier.vtable)
+     (rtt.canon
+$com.google.i18n.identifiers.LanguageCode.LanguageCodeSupplier.vtable)
     )
    )
-   
-   
-1. optimizing RefFunc like that - seems pointless? Why is it happening? Cost 1, so there...
-    Propeties::isCOnstant?
-    Or may is is there value in hoisting consts? more locals though is dubious
-2. More importanly, array.new has "creation" side effects. Same as in Precompute, that issue there... fix it once and for alls
-    isPure()?
+
+
+1. optimizing RefFunc like that - seems pointless? Why is it happening? Cost 1,
+so there... Propeties::isCOnstant? Or may is is there value in hoisting consts?
+more locals though is dubious
+2. More importanly, array.new has "creation" side effects. Same as in
+Precompute, that issue there... fix it once and for alls isPure()?
 */

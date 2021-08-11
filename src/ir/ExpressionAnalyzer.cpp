@@ -298,14 +298,15 @@ struct Hasher {
 
 // Create cast versions of it for later operations.
 #define DELEGATE_START(id)                                                     \
-auto* cast = curr->cast<id>();                                               \
-WASM_UNUSED(cast);
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
 
 // Handle each type of field, comparing it appropriately.
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
-#define DELEGATE_FIELD_CHILD(id, name) \
-if (visitChildren) stack.push_back(cast->name);
+#define DELEGATE_FIELD_CHILD(id, name)                                         \
+  if (visitChildren)                                                           \
+    stack.push_back(cast->name);
 
 #define HASH_FIELD(name) rehash(digest, cast->name);
 
