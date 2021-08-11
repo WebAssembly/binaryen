@@ -295,6 +295,8 @@ struct Checker
   std::unordered_map<Expression*, ActiveOriginalInfo> activeOriginals;
 
   void visitExpression(Expression* curr) {
+
+std::cout << "chaker " << *curr << '\n';
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
@@ -311,6 +313,10 @@ struct Checker
       }
 
       for (auto* original : invalidated) {
+        // Remove all requests after this expression, as we cannot optimize to
+        // them.
+        scanner.blockInfos[original].requests = activeOriginals.at(original).requestsLeft;
+
         activeOriginals.erase(original);
       }
     }
@@ -329,11 +335,13 @@ struct Checker
       assert(!(info.requests && info.original));
 
       if (info.requests > 0) {
+std::cout << "init original to " << info.requests << '\n';
         activeOriginals.emplace(curr, ActiveOriginalInfo{
           info.requests,
           EffectAnalyzer{options, getModule()->features, curr}
         });
       } else if (info.original) {
+std::cout << "request to an original " << *info.original << '\n';
         // After visiting this expression, we have one less request for its
         // original, and perhaps none are left.
         auto& originalInfo = activeOriginals.at(info.original);
@@ -357,10 +365,13 @@ struct Checker
   }
 };
 
+// Applies the optimization now that we know which requests are valid. We track
+// the number of remaining valid requests (after Checker decreased them to leave
+// only valid ones), and stop optimizing when none remain.
 struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
-  const Scanner& scanner;
+  Scanner& scanner;
 
-  Applier(const Scanner& scanner) : scanner(scanner) {}
+  Applier(Scanner& scanner) : scanner(scanner) {}
 
   // Maps expressions that we save to locals to the local index for them.
   std::unordered_map<Expression*, Index> exprLocals;
@@ -382,10 +393,14 @@ struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
       replaceCurrent(
         Builder(*getModule()).makeLocalTee(local, curr, curr->type));
     } else if (info.original) {
-      // This is a repeat of an original value. Get the value from the local.
-      assert(exprLocals.count(info.original));
-      replaceCurrent(Builder(*getModule())
-                       .makeLocalGet(exprLocals[info.original], curr->type));
+      auto& originalInfo = scanner.blockInfos.at(info.original);
+      if (originalInfo.requests) {
+        // This is a valid request of an original value. Get the value from the local.
+        assert(exprLocals.count(info.original));
+        replaceCurrent(Builder(*getModule())
+                         .makeLocalGet(exprLocals[info.original], curr->type));
+        originalInfo.requests--;
+      }
     }
   }
 };
