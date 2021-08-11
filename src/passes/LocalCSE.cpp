@@ -182,7 +182,7 @@ struct Scanner
   std::unordered_map<Expression*, size_t> hashes;
 
   // Currently active hashed expressions in the current basic block.
-  HashedExprs blockExprs;
+  HashedExprs activeExprs;
 
   // Request info for all expressions.
   RequestInfoMap requestInfos;
@@ -191,7 +191,7 @@ struct Scanner
     // We are starting a new basic block. Forget all the currently-hashed
     // expressions, as we no longer want to make connections to anything from
     // another block.
-    self->blockExprs.clear();
+    self->activeExprs.clear();
     // Note that we do not clear requestInfos - that is information we will use
     // later in the Applier class. That is, we've cleared all the active
     // information, leaving the things we need later.
@@ -204,7 +204,7 @@ struct Scanner
       return;
     }
 
-    auto& vec = blockExprs[HashedExpression(curr, hash)];
+    auto& vec = activeExprs[HashedExpression(curr, hash)];
     vec.push_back(curr);
     auto& info = requestInfos[curr];
     if (vec.size() > 1) {
