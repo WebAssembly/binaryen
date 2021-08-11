@@ -107,13 +107,7 @@ struct HashedExpression {
   Expression* expr;
   size_t digest;
 
-  HashedExpression(Expression* expr) : expr(expr) {
-    if (expr) {
-      digest = ExpressionAnalyzer::hash(expr);
-    } else {
-      digest = hash(0);
-    }
-  }
+  HashedExpression(Expression* expr, size_t digest) : expr(expr), digest(digest) {}
 
   HashedExpression(const HashedExpression& other)
     : expr(other.expr), digest(other.digest) {}
@@ -162,6 +156,9 @@ struct Scanner
 
   Scanner(PassOptions options) : options(options) {}
 
+  // Shallow hashes of all the expressions we've encountered.
+  std::unordered_map<Expression*, size_t> shallowHashes;
+
   // Currently active hashed expressions in the current basic block.
   HashedExprs blockExprs;
 
@@ -189,9 +186,7 @@ struct Scanner
       return;
     }
 
-    // TODO: Do shallow hashing so that we can add child hashes to parents, to
-    // avoid quadratic time FIXME
-    auto& vec = blockExprs[curr];
+    auto& vec = blockExprs[HashedExpression(curr, computeHash(curr))];
     vec.push_back(curr);
     auto& info = blockInfos[curr];
     if (vec.size() > 1) {
@@ -224,6 +219,17 @@ struct Scanner
         }
       }
     }
+  }
+
+  // Compute the total hash of the current expression, and also save the shallow
+  // hash for its parent. That allows us to hash everything in linear time.
+  size_t computeHash(Expression* curr) {
+    size_t hash = shallowHashes[curr] = ExpressionAnalyzer::shallowHash(curr);
+    for (auto* child : ChildIterator(curr)) {
+      assert(shallowHashes.count(child));
+      hash_combine(hash, shallowHashes[child]);
+    }
+    return hash;
   }
 
   // Only some values are relevant to be optimized.
