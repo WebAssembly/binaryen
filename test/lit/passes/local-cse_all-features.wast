@@ -312,6 +312,17 @@
     (i32.const 20)
   )
 
+  (func $ref.func
+    ;; RefFunc and other constants should be ignored - don't undo the effects
+    ;; of constant propagation.
+    (drop
+      (ref.func $ref.func)
+    )
+    (drop
+      (ref.func $ref.func)
+    )
+  )
+
   ;; CHECK:      (func $many-sets (result i64)
   ;; CHECK-NEXT:  (local $temp i64)
   ;; CHECK-NEXT:  (local $1 i64)
