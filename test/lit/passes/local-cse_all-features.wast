@@ -7,6 +7,8 @@
   (memory 100 100)
   ;; CHECK:      (type $none_=>_none (func))
 
+  ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
+
   ;; CHECK:      (type $none_=>_i64 (func (result i64)))
 
   ;; CHECK:      (memory $0 100 100)
@@ -284,6 +286,30 @@
     (drop
       (i32.load (i32.const 10))
     )
+  )
+
+  ;; CHECK:      (func $calls (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $calls
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $calls
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 20)
+  ;; CHECK-NEXT: )
+  (func $calls (param $x i32) (result i32)
+    ;; The side effects of calls prevent optimization.
+    (drop
+      (call $calls (i32.const 10))
+    )
+    (drop
+      (call $calls (i32.const 10))
+    )
+    (i32.const 20)
   )
 
   ;; CHECK:      (func $many-sets (result i64)

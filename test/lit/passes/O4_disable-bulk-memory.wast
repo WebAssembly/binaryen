@@ -2695,15 +2695,13 @@
  ;; CHECK-NEXT:  (local $9 f64)
  ;; CHECK-NEXT:  (local $10 f64)
  ;; CHECK-NEXT:  (call $assembly/index/NBodySystem#advance
- ;; CHECK-NEXT:   (local.tee $1
- ;; CHECK-NEXT:    (global.get $global$5)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (global.get $global$5)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $5
  ;; CHECK-NEXT:   (i32.load offset=4
  ;; CHECK-NEXT:    (local.tee $4
  ;; CHECK-NEXT:     (i32.load
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (global.get $global$5)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )

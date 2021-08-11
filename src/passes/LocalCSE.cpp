@@ -337,10 +337,15 @@ struct Checker
 
       if (info.requests > 0) {
 //std::cout << "init original " << curr << " to " << info.requests << '\n';
-        activeOriginals.emplace(curr, ActiveOriginalInfo{
-          info.requests,
-          EffectAnalyzer{options, getModule()->features, curr}
-        });
+        EffectAnalyzer effects(options, getModule()->features, curr);
+        if (effects.hasSideEffects()) {
+          // We cannot optimize away repeats of something with side effects.
+          scanner.blockInfos[curr].requests = 0;
+        } else {
+          activeOriginals.emplace(curr, ActiveOriginalInfo{
+            info.requests, std::move(effects)
+          });
+        }
       } else if (info.original) {
 //std::cout << "request to an original " << info.original << '\n';
         // The original may have already been invalidated.
