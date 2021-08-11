@@ -284,4 +284,53 @@
     ;; A get that is not reachable. We must still update its type.
     (local.get $temp)
   )
+
+  ;; CHECK:      (func $incompatible-sets (result i32)
+  ;; CHECK-NEXT:  (local $temp (ref null $none_=>_i32))
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (ref.func $incompatible-sets)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $temp
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null func)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.tee $temp
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $incompatible-sets (result i32)
+    (local $temp funcref)
+    ;; Set a value that allows us to specialize the local type.
+    (local.set $temp
+      (ref.func $incompatible-sets)
+    )
+    ;; Make all code unreachable from here.
+    (unreachable)
+    ;; In unreachable code, assign values that are not compatible with the more
+    ;; specific type we will optimize to. Those cannot be left as they are, and
+    ;; will be fixed up so that they validate. (All we need is validation, as
+    ;; their contents do not matter, given they are not reached.)
+    (drop
+      (local.tee $temp
+        (ref.null func)
+      )
+    )
+    (local.set $temp
+      (ref.null func)
+    )
+    (unreachable)
+  )
 )
