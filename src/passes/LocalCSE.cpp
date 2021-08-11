@@ -21,12 +21,14 @@
 // recomputing them. It runs in each basic block separately, and uses a simple
 // algorithm:
 //
-//  * Scan: Hash each expression and see if it repeats later. If it does, note
-//          that both on the first appearance (whose value we will save) and on
-//          the expression itself (who we want to replace with a local.get).
-//          After doing so, scan the children and remove any such notes from
-//          them (as if we will reuse the parent, we don't need to do anything
-//          for the child, see below).
+//  * Scan: Hash each expression and see if it repeats later.
+//          If it does:
+//            * Note that the original appearance is requested to be reused
+//              an additional time.
+//            * Note that the repeat appearance requests to be replaced.
+//            * Scan the children of the repeat and undo their requests to be
+//              replaced (as if we will reuse the parent, we don't need to do
+//              anything for the children, see below).
 //
 //  * Apply: Go through the basic block again, this time adding a tee on an
 //           expression whose value we want to use later, and replacing the
@@ -39,7 +41,7 @@
 //       (A)
 //     )
 //     (i32.eqz
-//       (B)
+//       (A)
 //     )
 //   )
 //
@@ -47,12 +49,14 @@
 //
 //  1. Scan A and add it to the hash map of things we have seen.
 //  2. Scan the eqz, and do the same for it.
-//  3. Scan the second A. Increment the first A's reuse counter, and mark the
-//     second A and intended to be replaced.
+//  3. Scan the second A. Increment the first A's requests counter, and mark the
+//     second A as intended to be replaced.
 //  4. Scan the second eqz, and do the same for it. Then also scan its children,
 //     in this case A, and decrement the first A's reuse counter, and unmark the
 //     second A's note that it is intended to be replaced.
-//  5. Run through the block again, adding a tee and replacing the second eqz,
+//  5. After that, the second eqz request to be replaced by the first, and there
+//     is no request on A.
+//  6. Run through the block again, adding a tee and replacing the second eqz,
 //     resulting in:
 //
 //   (something
@@ -98,7 +102,7 @@ namespace wasm {
 
 namespace {
 
-// An expression with a cached hash value
+// An expression with a cached hash value.
 struct HashedExpression {
   Expression* expr;
   size_t digest;
@@ -130,7 +134,7 @@ struct HEComparer {
   }
 };
 
-// Maps hashed expressions to those relevant expressions. That is, all
+// Maps hashed expressions to the list of expressions that match. That is, all
 // expressions that are equivalent (same hash, and also compare equal) will
 // be in a vector for the corresponding entry in this map.
 using HashedExprs = std::unordered_map<HashedExpression,
@@ -138,8 +142,10 @@ using HashedExprs = std::unordered_map<HashedExpression,
                                        HEHasher,
                                        HEComparer>;
 
-// Information about an expression.
-struct Info {
+// Request information about an expression: whether it requests to be replaced,
+// or it is an original expression whose value can be used to replace others
+// later.
+struct RequestInfo {
   // The number of other expressions that would like to reuse this value.
   Index requests = 0;
 
@@ -156,21 +162,24 @@ struct Scanner
 
   Scanner(PassOptions options) : options(options) {}
 
-  // Currently hashed expressions in the current basic block, in their
-  // equivalence classes.
+  // Currently active hashed expressions in the current basic block.
   HashedExprs blockExprs;
 
-  // The effects of hashed expressions
+  // The effects of hashed expressions.
   std::unordered_map<Expression*, EffectAnalyzer> blockEffects;
 
-  // Information about repetition of expressions in the current basic block.
-  std::unordered_map<Expression*, Info> blockInfos;
+  // Request info in the current basic block.
+  std::unordered_map<Expression*, RequestInfo> blockInfos;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
     // expressions, as we no longer want to make connections to anything from
     // another block.
     self->blockExprs.clear();
+    self->blockEffects.clear();
+    // Note that we do not clear blockInfos - that is information we will use
+    // later in the Applier class. That is, we've cleared all the active
+    // information, leaving the things we need later.
   }
 
   void visitExpression(Expression* curr) {
