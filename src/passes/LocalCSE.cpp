@@ -108,6 +108,7 @@
 #include <ir/effects.h>
 #include <ir/iteration.h>
 #include <ir/linear-execution.h>
+#include <ir/properties.h>
 #include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
@@ -357,8 +358,12 @@ struct Checker
         //std::cout << "init original " << curr << " to " << info.requests          << '\n';
         EffectAnalyzer effects(options, getModule()->features, curr);
         // We cannot optimize away repeats of something with side effects.
-        // We also cannot optimize away
-        if (effects.hasSideEffects()) {
+        //
+        // We also cannot optimize away something that is not observably-
+        // deterministic: even if it has no side effects, if it may return a
+        // different result each time, we cannot optimize away repeats.
+        if (effects.hasSideEffects() ||
+            !Properties::isObservablyDeterministic(curr, getModule()->features)) {
           scanner.blockInfos[curr].requests = 0;
         } else {
           activeOriginals.emplace(
