@@ -301,7 +301,7 @@ struct Checker
 
   void visitExpression(Expression* curr) {
 
-    std::cout << "chaker " << curr << " : " << *curr << '\n';
+    //std::cout << "chaker " << curr << " : " << *curr << '\n';
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
@@ -324,7 +324,7 @@ struct Checker
           activeOriginals.at(original).requestsLeft;
 
         activeOriginals.erase(original);
-        std::cout << "invalidat " << original << " down to "
+        //std::cout << "invalidat " << original << " down to "
                   << scanner.blockInfos[original].requests << '\n';
       }
     }
@@ -343,7 +343,7 @@ struct Checker
       assert(!(info.requests && info.original));
 
       if (info.requests > 0) {
-        std::cout << "init original " << curr << " to " << info.requests
+        //std::cout << "init original " << curr << " to " << info.requests
                   << '\n';
         EffectAnalyzer effects(options, getModule()->features, curr);
         if (effects.hasSideEffects()) {
@@ -354,14 +354,14 @@ struct Checker
             curr, ActiveOriginalInfo{info.requests, std::move(effects)});
         }
       } else if (info.original) {
-        std::cout << "request to an original " << info.original << '\n';
+        //std::cout << "request to an original " << info.original << '\n';
         // The original may have already been invalidated.
         auto iter = activeOriginals.find(info.original);
         if (iter != activeOriginals.end()) {
           // After visiting this expression, we have one less request for its
           // original, and perhaps none are left.
           auto& originalInfo = iter->second;
-          std::cout << "  original still kicking,  left: "
+          //std::cout << "  original still kicking,  left: "
                     << originalInfo.requestsLeft << '\n';
           if (originalInfo.requestsLeft == 1) {
             activeOriginals.erase(info.original);
@@ -397,18 +397,18 @@ struct Applier
   std::unordered_map<Expression*, Index> exprLocals;
 
   void visitExpression(Expression* curr) {
-    std::cout << "Apply " << curr << " : " << *curr << '\n';
+    //std::cout << "Apply " << curr << " : " << *curr << '\n';
     auto iter = scanner.blockInfos.find(curr);
     if (iter == scanner.blockInfos.end()) {
       return;
     }
-    std::cout << "  0\n";
+    //std::cout << "  0\n";
     const auto& info = iter->second;
 
     assert(!(info.requests && info.original));
 
     if (info.requests) {
-      std::cout << "  1\n";
+      //std::cout << "  1\n";
       // We have requests for this value. Add a local and tee the value to
       // there.
       Index local = exprLocals[curr] =
@@ -416,7 +416,7 @@ struct Applier
       replaceCurrent(
         Builder(*getModule()).makeLocalTee(local, curr, curr->type));
     } else if (info.original) {
-      std::cout << "  2\n";
+      //std::cout << "  2\n";
       auto& originalInfo = scanner.blockInfos.at(info.original);
       if (originalInfo.requests) {
         // This is a valid request of an original value. Get the value from the
@@ -454,7 +454,7 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
     Checker checker(options, scanner);
     checker.walkFunctionInModule(func, getModule());
 
-    std::cout << "waka " << *func->body << '\n';
+    //std::cout << "waka " << *func->body << '\n';
     Applier applier(scanner);
     applier.walkFunctionInModule(func, getModule());
 
