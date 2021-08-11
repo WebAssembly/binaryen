@@ -1504,13 +1504,13 @@ private:
     assert(shouldCanonicalize(binary));
     auto swap = [&]() {
       assert(canReorder(binary->left, binary->right));
-      if (binary->isRelational()) {
+      if (WASM_UNLIKELY(binary->isRelational())) {
         binary->op = reverseRelationalOp(binary->op);
       }
       std::swap(binary->left, binary->right);
     };
     auto maybeSwap = [&]() {
-      if (canReorder(binary->left, binary->right)) {
+      if (WASM_UNLIKELY(canReorder(binary->left, binary->right))) {
         swap();
       }
     };
@@ -1530,8 +1530,7 @@ private:
       return;
     }
     // Prefer a get on the right.
-    if (WASM_UNLIKELY(binary->left->is<LocalGet>() &&
-                      !binary->right->is<LocalGet>())) {
+    if (binary->left->is<LocalGet>() && !binary->right->is<LocalGet>()) {
       return maybeSwap();
     }
     // Sort by the node id type, if different.
