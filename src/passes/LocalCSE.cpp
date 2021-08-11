@@ -346,7 +346,13 @@ struct Checker
     }
   }
 
+  static void doNoteNonLinear(Checker* self, Expression** currp) {
+    // Between basic blocks there can be no active originals.
+    assert(self->activeOriginals.empty());
+  }
+
   void visitFunction(Function* curr) {
+    // At the end of the function there can be no active originals.
     assert(activeOriginals.empty());
   }
 };
