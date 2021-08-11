@@ -30,6 +30,11 @@
 //              replaced (as if we will reuse the parent, we don't need to do
 //              anything for the children, see below).
 //
+//  * Check: Check if effects prevent some of the requests from being done. For
+//           example, if the value is a load from memory, we cannot optimize
+//           around a store, as the value before the store might be different
+//           (see below).
+//
 //  * Apply: Go through the basic block again, this time adding a tee on an
 //           expression whose value we want to use later, and replacing the
 //           uses with gets.
@@ -70,6 +75,15 @@
 //
 // Note how the scanning of children avoids us adding a local for A: when we
 // reuse the parent, we don't need to also try to reuse the child.
+//
+// Effects must be considered carefully by the Checker phase. E.g.:
+//
+//  x = load(a);
+//  store(..)
+//  y = load(a);
+//
+// Even though the load looks identical, the store means we may load a
+// different value, so we will invalidate and not optimize here.
 //
 // This pass only finds entire expression trees, and not parts of them, so we
 // will not optimize this:
@@ -162,9 +176,6 @@ struct Scanner
   // Currently active hashed expressions in the current basic block.
   HashedExprs blockExprs;
 
-  // The effects of hashed expressions.
-  std::unordered_map<Expression*, EffectAnalyzer> blockEffects;
-
   // Request info in the current basic block.
   std::unordered_map<Expression*, RequestInfo> blockInfos;
 
@@ -172,8 +183,7 @@ struct Scanner
     // We are starting a new basic block. Forget all the currently-hashed
     // expressions, as we no longer want to make connections to anything from
     // another block.
-    self->blockExprs.clear();
-    self->blockEffects.clear();
+    self->blockExprs.clear(); // TODO: rename "activeExprs?"
     // Note that we do not clear blockInfos - that is information we will use
     // later in the Applier class. That is, we've cleared all the active
     // information, leaving the things we need later.
@@ -181,8 +191,6 @@ struct Scanner
 
   void visitExpression(Expression* curr) {
     auto hash = computeHash(curr);
-
-    computeEffects(curr);
 
     checkInvalidations(curr);
 
@@ -236,21 +244,6 @@ struct Scanner
     return hashes[curr] = hash;
   }
 
-  // Similar to hashing, we save the effects of children to make this
-  // computation linear.
-  void computeEffects(Expression* curr) {
-    EffectAnalyzer effects(options, getModule()->features);
-    effects.
-    // XXX see checkInvalidations - do we need to save both the shallow and the
-    // deep effectses..?
-
-    // TODO: this recomputes effects for duplicates.
-    auto iter = blockEffects.emplace(
-      curr, );
-    if (iter.first->second.hasSideEffects()) {
-      return false; // we can't combine things with side effects
-    }
-
   // Only some values are relevant to be optimized.
   bool isRelevant(Expression* curr) {
     if (curr->is<LocalGet>() || curr->is<LocalSet>() || curr->is<Const>()) {
@@ -261,9 +254,6 @@ struct Scanner
     }
     if (!TypeUpdating::canHandleAsLocal(curr->type)) {
       return false;
-    }
-    if (effects[curr].hasSideEffects()) {
-      return false; // we can't combine things with side effects
     }
     // If the size is at least 3, then if we have two of them we have 6,
     // and so adding one set+two gets and removing one of the items itself
@@ -278,35 +268,82 @@ struct Scanner
     }
     return false;
   }
+};
 
-  // Given the current expression, see what it invalidates of the currently-
-  // hashed expressions. For example, if the current expression writes to memory
-  // then anything that reads from memory cannot be moved around it, and that
-  // means we cannot optimize away repeated expressions:
-  //
-  //  x = load(a);
-  //  store(..)
-  //  y = load(a);
-  //
-  // Even though the load looks identical, the store means we may load a
-  // different value, so invalidate the first load.
-  void checkInvalidations(Expression* curr) {
-    // TODO: Like SimplifyExpressions this is O(bad), but seems ok in practice..
-    // TODO: put a limit on how many active expressions?
-    EffectAnalyzer effects(options, getModule()->features);
-    effects.visit(curr);
+// Check for invalidations due to effects. We do this after scanning as effect
+// computation is not cheap, and there are usually not many identical fragments
+// of code.
+//
+// This updates the RequestInfos of things it sees are invalidated, which will
+// make Applier ignore them.
+struct Checker
+  : public LinearExecutionWalker<Checker, UnifiedExpressionVisitor<Checker>> {
+  PassOptions options;
+  Scanner& scanner; // TODO: just the infos? and also in Applier
 
-    std::vector<HashedExpression> invalidated;
-    for (auto& kv : blockExprs) {
-      auto& key = kv.first;
-      auto iter = blockEffects.find(key.expr);
-      if (iter != blockEffects.end() && effects.invalidates(iter->second)) {
-        invalidated.push_back(key);
+  Checker(PassOptions options, Scanner& scanner) : options(options), scanner(scanner) {}
+
+  struct ActiveOriginalInfo {
+    // How many of the requests remain to be seen.
+    Index requestsLeft;
+
+    // The effects in the expression.
+    EffectAnalyzer effects;
+  };
+
+  // The currently relevant original expressions, that is, the ones that may be
+  // optimized in the current basic block. This maps each one to the number of
+  // requests for it, which allows us to know when it is no longer relevant.
+  std::unordered_map<Expression*, ActiveOriginalInfo> activeOriginals;
+
+  void visitExpression(Expression* curr) {
+    // Given the current expression, see what it invalidates of the currently-
+    // hashed expressions, if there are any.
+    if (!activeOriginals.empty()) {
+      EffectAnalyzer effects(options, getModule()->features);
+      effects.visit(curr);
+
+      std::vector<Expression*> invalidated;
+      for (auto& kv : activeOriginals) {
+        auto* original = kv.first;
+        auto& originalInfo = kv.second;
+        if (effects.invalidates(originalInfo.effects)) {
+          invalidated.push_back(original);
+        }
+      }
+
+      for (* original : invalidated) {
+        activeOriginals.erase(original);
       }
     }
 
-    for (const auto& key : invalidated) {
-      blockExprs.erase(key);
+    assert(!activeOriginals.count(curr));
+
+    // Check if the current expression is an original or requests from one.
+    auto iter = scanner.blockInfos.find(curr);
+    if (iter != scanner.blockInfos.end()) {
+      auto& info = iter->second;
+
+      // An expression cannot both be requested to be copied to a local, and also
+      // have some other expression it is a repeat of - if it is a repeat, then
+      // anything that requests to be copied from it should have requested from
+      // the the original of this expression.
+      assert(!(info.requests && info.original));
+
+      if (info.requests > 0) {
+        activeOriginals.emplace(curr, ActiveOriginalInfo{
+          info.requests,
+          EffectAnalyzer{options, getModule()->features, curr}
+        });
+      } else if (info.original) {
+        // After visiting this expression, we have one less request for its
+        // original, and perhaps none are left.
+        if (activeOriginals[info.original] == 1) {
+          activeOriginals.erase(info.original);
+        } else {
+          activeOriginals[info.original]--;
+        }
+      }
     }
   }
 };
@@ -326,10 +363,6 @@ struct Applier : public PostWalker<Applier, UnifiedExpressionVisitor<Applier>> {
     }
     const auto& info = iter->second;
 
-    // An expression cannot both be requested to be copied to a local, and also
-    // have some other expression it is a repeat of - if it is a repeat, then
-    // anything that requests to be copied from it should have requested from
-    // the the original of this expression.
     assert(!(info.requests && info.original));
 
     if (info.requests) {
@@ -361,6 +394,9 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   void doWalkFunction(Function* func) {
     Scanner scanner(getPassOptions());
     scanner.walkFunctionInModule(func, getModule());
+
+    Checker checker(scanner);
+    checker.walkFunctionInModule(func, getModule());
 
     Applier applier(scanner);
     applier.walkFunctionInModule(func, getModule());
