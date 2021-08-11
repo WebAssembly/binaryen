@@ -192,8 +192,6 @@ struct Scanner
   void visitExpression(Expression* curr) {
     auto hash = computeHash(curr);
 
-    checkInvalidations(curr);
-
     if (!isRelevant(curr)) {
       return;
     }
@@ -312,7 +310,7 @@ struct Checker
         }
       }
 
-      for (* original : invalidated) {
+      for (auto* original : invalidated) {
         activeOriginals.erase(original);
       }
     }
@@ -338,13 +336,18 @@ struct Checker
       } else if (info.original) {
         // After visiting this expression, we have one less request for its
         // original, and perhaps none are left.
-        if (activeOriginals[info.original] == 1) {
+        auto& originalInfo = activeOriginals.at(info.original);
+        if (originalInfo.requestsLeft == 1) {
           activeOriginals.erase(info.original);
         } else {
-          activeOriginals[info.original]--;
+          originalInfo.requestsLeft--;
         }
       }
     }
+  }
+
+  void visitFunction(Function* curr) {
+    assert(activeOriginals.empty());
   }
 };
 
@@ -392,10 +395,12 @@ struct LocalCSE : public WalkerPass<LinearExecutionWalker<LocalCSE>> {
   Pass* create() override { return new LocalCSE(); }
 
   void doWalkFunction(Function* func) {
-    Scanner scanner(getPassOptions());
+    auto options = getPassOptions();
+
+    Scanner scanner(options);
     scanner.walkFunctionInModule(func, getModule());
 
-    Checker checker(scanner);
+    Checker checker(options, scanner);
     checker.walkFunctionInModule(func, getModule());
 
     Applier applier(scanner);
