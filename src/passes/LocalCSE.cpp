@@ -308,6 +308,8 @@ struct Checker
       EffectAnalyzer effects(options, getModule()->features);
       effects.visit(curr);
 
+// Can order matter in these loops?
+
       std::vector<Expression*> invalidated;
       for (auto& kv : activeOriginals) {
         auto* original = kv.first;
