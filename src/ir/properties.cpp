@@ -25,7 +25,7 @@ bool isObservablyDeterministic(Expression* curr, FeatureSet features) {
   // Practically all wasm instructions are observably-deterministic. Exceptions
   // occur only in GC atm.
   if (!features.hasGC()) {
-    return false;
+    return true;
   }
 
   struct Scanner : public PostWalker<Scanner> {
