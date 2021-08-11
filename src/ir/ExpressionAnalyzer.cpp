@@ -305,8 +305,9 @@ struct Hasher {
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
 #define DELEGATE_FIELD_CHILD(id, name)                                         \
-  if (visitChildren)                                                           \
-    stack.push_back(cast->name);
+  if (visitChildren) {                                                         \
+    stack.push_back(cast->name);                                               \
+  }
 
 #define HASH_FIELD(name) rehash(digest, cast->name);
 
