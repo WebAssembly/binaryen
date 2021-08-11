@@ -324,8 +324,7 @@ struct Checker
           activeOriginals.at(original).requestsLeft;
 
         activeOriginals.erase(original);
-        //std::cout << "invalidat " << original << " down to "
-                  << scanner.blockInfos[original].requests << '\n';
+        //std::cout << "invalidat " << original << " down to " << scanner.blockInfos[original].requests << '\n';
       }
     }
 
@@ -343,8 +342,7 @@ struct Checker
       assert(!(info.requests && info.original));
 
       if (info.requests > 0) {
-        //std::cout << "init original " << curr << " to " << info.requests
-                  << '\n';
+        //std::cout << "init original " << curr << " to " << info.requests          << '\n';
         EffectAnalyzer effects(options, getModule()->features, curr);
         if (effects.hasSideEffects()) {
           // We cannot optimize away repeats of something with side effects.
@@ -361,8 +359,7 @@ struct Checker
           // After visiting this expression, we have one less request for its
           // original, and perhaps none are left.
           auto& originalInfo = iter->second;
-          //std::cout << "  original still kicking,  left: "
-                    << originalInfo.requestsLeft << '\n';
+          //std::cout << "  original still kicking,  left: "               << originalInfo.requestsLeft << '\n';
           if (originalInfo.requestsLeft == 1) {
             activeOriginals.erase(info.original);
           } else {
