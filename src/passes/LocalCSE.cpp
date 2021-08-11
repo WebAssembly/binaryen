@@ -297,7 +297,7 @@ struct Checker
   PassOptions options;
   RequestInfoMap& requestInfos;
 
-  Checker(PassOptions options, RequestInfoMap requestInfos)
+  Checker(PassOptions options, RequestInfoMap& requestInfos)
     : options(options), requestInfos(requestInfos) {}
 
   struct ActiveOriginalInfo {
@@ -401,7 +401,7 @@ struct Applier
   : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<Applier>> {
   RequestInfoMap requestInfos;
 
-  Applier(  RequestInfoMap requestInfos) : requestInfos(requestInfos) {}
+  Applier(RequestInfoMap& requestInfos) : requestInfos(requestInfos) {}
 
   // Maps expressions that we save to locals to the local index for them.
   std::unordered_map<Expression*, Index> exprLocals;
