@@ -3,6 +3,7 @@ set(ir_SOURCES
   ExpressionAnalyzer.cpp
   ExpressionManipulator.cpp
   names.cpp
+  properties.cpp
   LocalGraph.cpp
   ReFinalize.cpp
   stack-utils.cpp

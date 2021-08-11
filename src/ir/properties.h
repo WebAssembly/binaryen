@@ -335,6 +335,25 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
   return ifTrue->type.isSingle() && ifFalse->type.isSingle();
 }
 
+// A deterministic expression is one that can returns the same result for the
+// same inputs. An observably-deterministic one is deterministic given that
+// everything else observable in the world is the same before the instruction
+// runs, including global state in the wasm.
+//
+// The word "can" appears because of NaN nondeterminism, which we ignore here,
+// as it is a valid wasm implementation to have deterministic NaN behavior, and
+// so we can optimize under that assumption.
+//
+// A load from memory is observably-deterministic because, given that memory is
+// the same, the load will produce the same result. (The load may trap, but
+// it will always trap or not trap in a deterministic way.) An actually non-
+// observably-deterministic instruction is StructNew, as each allocation returns
+// a different object, which is observable (ref.eq, for example), and nothing in
+// observable state locally or globally explains that nondeterminism. Should
+// wasm some day add a "get current time" instruction, that would also not be
+// observably-deterministic.
+bool isObservablyDeterministic(Expression* curr, FeatureSet features);
+
 } // namespace Properties
 
 } // namespace wasm

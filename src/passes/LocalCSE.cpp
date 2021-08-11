@@ -356,8 +356,9 @@ struct Checker
       if (info.requests > 0) {
         //std::cout << "init original " << curr << " to " << info.requests          << '\n';
         EffectAnalyzer effects(options, getModule()->features, curr);
+        // We cannot optimize away repeats of something with side effects.
+        // We also cannot optimize away
         if (effects.hasSideEffects()) {
-          // We cannot optimize away repeats of something with side effects.
           scanner.blockInfos[curr].requests = 0;
         } else {
           activeOriginals.emplace(
