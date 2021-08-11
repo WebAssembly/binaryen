@@ -1848,7 +1848,7 @@ private:
       ZeroRemover(PassOptions& passOptions) : passOptions(passOptions) {}
 
       void visitBinary(Binary* curr) {
-        if (!curr->type.isInteger()) {
+        if (WASM_UNLIKELY(!curr->type.isInteger())) {
           return;
         }
         FeatureSet features = getModule()->features;
