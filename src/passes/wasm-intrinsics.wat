@@ -12,6 +12,28 @@
 ;;    i32, i32 => i32 instead of i64 => i64
 ;;  * Remove unnecessary memory import.
 ;;
+;;  * Add __wasm_i64_mulh which return high 64 bits of the product of two
+;;    64-bit integers. It uses for fast 64 bit divison by constant and
+;;    compiled from following AssemblyScript code:
+;;
+;;       export function __wasm_i64_mulh(u: u64, v: u64): u64 {
+;;         var u0 = u & 0xFFFFFFFF;
+;;         var v0 = v & 0xFFFFFFFF;
+;;
+;;         var u1 = u >> 32;
+;;         var v1 = v >> 32;
+;;
+;;         var l = u0 * v0;
+;;         var t = u1 * v0 + (l >> 32);
+;;         var w = u0 * v1 + (t & 0xFFFFFFFF);
+;;
+;;         t >>= 32;
+;;         w >>= 32;
+;;
+;;         return u1 * v1 + t + w;
+;;       }
+
+;;
 ;; [1]: https://gist.github.com/alexcrichton/e7ea67bcdd17ce4b6254e66f77165690
 
 (module
