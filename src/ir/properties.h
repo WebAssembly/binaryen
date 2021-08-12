@@ -335,24 +335,29 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
   return ifTrue->type.isSingle() && ifFalse->type.isSingle();
 }
 
-// A deterministic expression is one that can returns the same result for the
-// same inputs. An observably-deterministic one is deterministic given that
-// everything else observable in the world is the same before the instruction
-// runs, including global state in the wasm.
+// An intrinsically-nondeterministic expression is one can return different
+// results for the same inputs, and that difference is *not* explained by
+// observable global state (hence the cause of nondeterminism is "intrinsic", it
+// is internal and inherent in the expression).
 //
-// The word "can" appears because of NaN nondeterminism, which we ignore here,
-// as it is a valid wasm implementation to have deterministic NaN behavior, and
-// so we can optimize under that assumption.
+//  * Many things are nondeterministic but not *intrinsically* so. For example,
+//    a load can be called repeatedly and return different results, but it will
+//    only do so based on the state of memory. So a load is nondeterministic but
+//    not intrinsically nondeterministic.
+//  * Examples of intrinsically-nondeterministic instructions are GC
+//    allocations, as each returns something that we can observe is different
+//    (using ref.eq, by by writing to one and not seeing the result in the
+//    other), and there is no global state that the program can observe that
+//    explains that. A theoretical example is a "get current time" instruction,
+//    if wasm were to add one.
+//  * The word "can" appears in "can return the same result" because of NaN
+//    nondeterminism, which we ignore here. It is a valid wasm implementation to
+//    have deterministic NaN behavior, and we optimize under that assumption.
+//  * Note that calls are ignored here. In theory this concept could be defined
+//    either way for them, but it is simpler to ignore them. We only consider
+//    the behavior of the instructions provided here, and not external code.
 //
-// A load from memory is observably-deterministic because, given that memory is
-// the same, the load will produce the same result. (The load may trap, but
-// it will always trap or not trap in a deterministic way.) An actually non-
-// observably-deterministic instruction is StructNew, as each allocation returns
-// a different object, which is observable (ref.eq, for example), and nothing in
-// observable state locally or globally explains that nondeterminism. Should
-// wasm some day add a "get current time" instruction, that would also not be
-// observably-deterministic.
-bool isObservablyDeterministic(Expression* curr, FeatureSet features);
+bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features);
 
 } // namespace Properties
 

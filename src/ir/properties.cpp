@@ -21,26 +21,22 @@ namespace wasm {
 
 namespace Properties {
 
-bool isObservablyDeterministic(Expression* curr, FeatureSet features) {
-  // Practically all wasm instructions are observably-deterministic. Exceptions
-  // occur only in GC atm.
+bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features) {
+  // Practically no wasm instructions are i ntrinsically nondeterministic.
+  // Exceptions occur only in GC atm.
   if (!features.hasGC()) {
-    return true;
+    return false;
   }
 
   // Allocation of GC data is not observably-determinisic, as each allocation
-  // returns a different result. Also, anything that can reach such an
-  // instruction.
+  // returns a different result.
   struct Scanner : public PostWalker<Scanner> {
     bool deterministic = true;
-    void visitCall(Call* curr) { deterministic = false; }
-    void visitCallIndirect(CallIndirect* curr) { deterministic = false; }
-    void visitCallRef(CallRef* curr) { deterministic = false; }
     void visitStructNew(StructNew* curr) { deterministic = false; }
     void visitArrayNew(ArrayNew* curr) { deterministic = false; }
   } scanner;
   scanner.walk(curr);
-  return scanner.deterministic;
+  return !scanner.deterministic;
 }
 
 } // namespace Properties
