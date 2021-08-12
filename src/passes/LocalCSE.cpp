@@ -485,7 +485,8 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
 
     Scanner scanner(options);
     scanner.walkFunctionInModule(func, getModule());
-    if (!scanner.found) {
+    if (scanner.requestInfos.empty()) {
+      // We did not find any repeated expressions at all.
       return;
     }
 
