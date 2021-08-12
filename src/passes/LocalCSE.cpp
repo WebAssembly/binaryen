@@ -199,8 +199,8 @@ struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
     for (auto& kv : *this) {
       auto* curr = kv.first;
       auto& info = kv.second;
-      o << *curr << " has " << info.requests << " reqs, orig: "
-        << info.original << '\n';
+      o << *curr << " has " << info.requests << " reqs, orig: " << info.original
+        << '\n';
     }
   }
 };
@@ -212,7 +212,8 @@ struct Scanner
   // Request info for all expressions ever seen.
   RequestInfoMap& requestInfos;
 
-  Scanner(PassOptions options, RequestInfoMap& requestInfos) : options(options), requestInfos(requestInfos) {}
+  Scanner(PassOptions options, RequestInfoMap& requestInfos)
+    : options(options), requestInfos(requestInfos) {}
 
   // Currently active hashed expressions in the current basic block. If we see
   // an active expression before us that is identical to us, then it becomes our
@@ -494,8 +495,9 @@ struct Applier
         // This is a valid request of an original value. Get the value from the
         // local.
         assert(originalLocalMap.count(info.original));
-        replaceCurrent(Builder(*getModule())
-                         .makeLocalGet(originalLocalMap[info.original], curr->type));
+        replaceCurrent(
+          Builder(*getModule())
+            .makeLocalGet(originalLocalMap[info.original], curr->type));
         originalInfo.requests--;
       }
     }
