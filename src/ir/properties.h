@@ -335,28 +335,45 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
   return ifTrue->type.isSingle() && ifFalse->type.isSingle();
 }
 
-// An intrinsically-nondeterministic expression is one can return different
+// An intrinsically-nondeterministic expression is one that can return different
 // results for the same inputs, and that difference is *not* explained by
-// observable global state (hence the cause of nondeterminism is "intrinsic", it
-// is internal and inherent in the expression).
+// other expressions that interact with this one. Hence the cause of
+// nondeterminism can be said to be "intrinsic" - it is internal and inherent in
+// the expression.
 //
-//  * Many things are nondeterministic but not *intrinsically* so. For example,
-//    a load can be called repeatedly and return different results, but it will
-//    only do so based on the state of memory. So a load is nondeterministic but
-//    not intrinsically nondeterministic.
-//  * Examples of intrinsically-nondeterministic instructions are GC
-//    allocations, as each returns something that we can observe is different
-//    (using ref.eq, by by writing to one and not seeing the result in the
-//    other), and there is no global state that the program can observe before
-//    doing the allocation that explains that.
-//    * A theoretical example: a "get current time" instruction would be
-//      intrinsically-nondeterministic.
-//  * The word "can" appears in "can return the same result" because of NaN
-//    nondeterminism, which we ignore here. It is a valid wasm implementation to
-//    have deterministic NaN behavior, and we optimize under that assumption.
+// To see the issue more concretely, consider these:
+//
+//    x = load(100);
+//    ..
+//    y = load(100);
+//
+//  versus
+//
+//    x = struct.new();
+//    ..
+//    y = struct.new();
+//
+// Are x and y identical in both cases? For loads, we can look at the code
+// in ".." to see: if there are no possible stores to memory, then the
+// result is identical (and we have EffectAnalyzer for that). For the GC
+// allocations, though, it doesn't matter what is in "..": there is nothing
+// in the wasm that we can check to find out if the results are the same or
+// not. (In fact, in this case they are always not the same.) So the
+// nondeterminism is "intrinsic."
+//
+// Thus, loads are nondeterministic but not intrinsically so, whie GC
+// allocations are actual examples of intrinsically nondeterministic
+// instructions. If wasm were to add "get current time" or "get a random number"
+// instructions then those would also be intrinsically nondeterministic.
+//
+//  * The word "can" appears in "can return different results" in the definition
+//    at the top because of NaN nondeterminism, which we ignore here. It is a
+//    valid wasm implementation to have deterministic NaN behavior, and we
+//    optimize under that assumption.
 //  * Note that calls are ignored here. In theory this concept could be defined
 //    either way for them, but it is simpler to ignore them. We only consider
-//    the behavior of the instructions provided here, and not external code.
+//    the behavior of the expression provided here (including its chldren), and
+//    not external code.
 //
 bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features);
 
