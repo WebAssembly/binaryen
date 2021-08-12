@@ -213,7 +213,7 @@ function asmFunc(env) {
   var$1 = var$1 | 0;
   var var$2 = 0;
   var$2 = var$1 & 31 | 0;
-  var$1 = (0 - var$1 | 0) & 31 | 0;
+  var$1 = (-var$1 | 0) & 31 | 0;
   return ((-1 >>> var$2 | 0) & var$0 | 0) << var$2 | 0 | (((-1 << var$1 | 0) & var$0 | 0) >>> var$1 | 0) | 0 | 0;
  }
  
@@ -222,7 +222,7 @@ function asmFunc(env) {
   var$1 = var$1 | 0;
   var var$2 = 0;
   var$2 = var$1 & 31 | 0;
-  var$1 = (0 - var$1 | 0) & 31 | 0;
+  var$1 = (-var$1 | 0) & 31 | 0;
   return ((-1 << var$2 | 0) & var$0 | 0) >>> var$2 | 0 | (((-1 >>> var$1 | 0) & var$0 | 0) << var$1 | 0) | 0 | 0;
  }
  
