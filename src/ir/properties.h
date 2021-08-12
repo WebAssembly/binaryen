@@ -361,7 +361,7 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // not. (In fact, in this case they are always not the same.) So the
 // nondeterminism is "intrinsic."
 //
-// Thus, loads are nondeterministic but not intrinsically so, whie GC
+// Thus, loads are nondeterministic but not intrinsically so, while GC
 // allocations are actual examples of intrinsically nondeterministic
 // instructions. If wasm were to add "get current time" or "get a random number"
 // instructions then those would also be intrinsically nondeterministic.
