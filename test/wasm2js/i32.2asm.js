@@ -186,7 +186,7 @@ function asmFunc(env) {
  function __wasm_ctz_i32(var$0) {
   var$0 = var$0 | 0;
   if (var$0) {
-   return 31 - Math_clz32((var$0 + -1 | 0) ^ var$0) | 0 | 0
+   return 31 - Math_clz32((var$0 + -1 | 0) ^ var$0) | 0
   }
   return 32 | 0;
  }
@@ -214,7 +214,7 @@ function asmFunc(env) {
   var var$2 = 0;
   var$2 = var$1 & 31;
   var$1 = (-var$1 | 0) & 31;
-  return (-1 >>> var$2 & var$0) << var$2 | (-1 << var$1 & var$0) >>> var$1 | 0;
+  return (-1 >>> var$2 & var$0) << var$2 | (-1 << var$1 & var$0) >>> var$1;
  }
  
  function __wasm_rotr_i32(var$0, var$1) {
@@ -223,7 +223,7 @@ function asmFunc(env) {
   var var$2 = 0;
   var$2 = var$1 & 31;
   var$1 = (-var$1 | 0) & 31;
-  return (-1 << var$2 & var$0) >>> var$2 | (-1 >>> var$1 & var$0) << var$1 | 0;
+  return (-1 << var$2 & var$0) >>> var$2 | (-1 >>> var$1 & var$0) << var$1;
  }
  
  return {

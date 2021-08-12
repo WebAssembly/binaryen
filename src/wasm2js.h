@@ -2011,8 +2011,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         return ValueBuilder::makeReturn(Ref());
       }
       Ref val = visit(curr->value, EXPRESSION_RESULT);
+      // TODO: also avoid coercion if val is Math_fround
       bool needCoercion =
-        parent->options.optimizeLevel == 0 || standaloneFunction ||
+        (!(curr->value->is<Unary>() || curr->value->is<Binary>()) &&
+         (parent->options.optimizeLevel == 0 || standaloneFunction)) ||
         parent->functionsCallableFromOutside.count(func->name);
       if (needCoercion) {
         val = makeAsmCoercion(val, wasmToAsmType(curr->value->type));

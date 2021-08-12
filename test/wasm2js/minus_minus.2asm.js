@@ -14,7 +14,7 @@ function asmFunc(env) {
  var nan = NaN;
  var infinity = Infinity;
  function $0() {
-  return ~~- -7094.0 | 0;
+  return ~~- -7094.0;
  }
  
  function $1() {

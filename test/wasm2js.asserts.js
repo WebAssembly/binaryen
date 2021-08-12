@@ -76,7 +76,7 @@ function check1() {
 
 if (!check1()) throw 'assertion failed: ( assert_return ( invoke empty ) )';
 function check2() {
- return (retasmFunc0.add(1 | 0, 1 | 0) | 0 | 0) == (2 | 0) | 0;
+ return (retasmFunc0.add(1 | 0, 1 | 0) | 0 | 0) == (2 | 0);
 }
 
 if (!check2()) throw 'assertion failed: ( assert_return ( invoke add ( i32.const 1 ) ( i32.const 1 ) ) ( i32.const 2 ) )';
