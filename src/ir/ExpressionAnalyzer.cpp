@@ -250,47 +250,49 @@ bool ExpressionAnalyzer::flexibleEqual(Expression* left,
   return Comparer().compare(left, right, comparer);
 }
 
-// hash an expression, ignoring superficial details like specific internal names
-size_t ExpressionAnalyzer::hash(Expression* curr) {
-  struct Hasher {
-    size_t digest = wasm::hash(0);
+namespace {
 
-    Index internalCounter = 0;
-    // for each internal name, its unique id
-    std::map<Name, Index> internalNames;
-    ExpressionStack stack;
+struct Hasher {
+  bool visitChildren;
 
-    Hasher(Expression* curr) {
-      stack.push_back(curr);
-      // DELEGATE_CALLER_TARGET is a fake target used to denote delegating to
-      // the caller. Add it here to prevent the unknown name error.
-      noteScopeName(DELEGATE_CALLER_TARGET);
+  size_t digest = wasm::hash(0);
 
-      while (stack.size() > 0) {
-        curr = stack.back();
-        stack.pop_back();
-        if (!curr) {
-          // This was an optional child that was not present. Hash a 0 to
-          // represent that.
-          rehash(digest, 0);
-          continue;
-        }
-        rehash(digest, curr->_id);
-        // we often don't need to hash the type, as it is tied to other values
-        // we are hashing anyhow, but there are exceptions: for example, a
-        // local.get's type is determined by the function, so if we are
-        // hashing only expression fragments, then two from different
-        // functions may turn out the same even if the type differs. Likewise,
-        // if we hash between modules, then we need to take int account
-        // call_imports type, etc. The simplest thing is just to hash the
-        // type for all of them.
-        rehash(digest, curr->type.getID());
-        // Hash the contents of the expression.
-        hashExpression(curr);
+  Index internalCounter = 0;
+  // for each internal name, its unique id
+  std::map<Name, Index> internalNames;
+  ExpressionStack stack;
+
+  Hasher(Expression* curr, bool visitChildren) : visitChildren(visitChildren) {
+    stack.push_back(curr);
+    // DELEGATE_CALLER_TARGET is a fake target used to denote delegating to
+    // the caller. Add it here to prevent the unknown name error.
+    noteScopeName(DELEGATE_CALLER_TARGET);
+
+    while (stack.size() > 0) {
+      curr = stack.back();
+      stack.pop_back();
+      if (!curr) {
+        // This was an optional child that was not present. Hash a 0 to
+        // represent that.
+        rehash(digest, 0);
+        continue;
       }
+      rehash(digest, curr->_id);
+      // we often don't need to hash the type, as it is tied to other values
+      // we are hashing anyhow, but there are exceptions: for example, a
+      // local.get's type is determined by the function, so if we are
+      // hashing only expression fragments, then two from different
+      // functions may turn out the same even if the type differs. Likewise,
+      // if we hash between modules, then we need to take int account
+      // call_imports type, etc. The simplest thing is just to hash the
+      // type for all of them.
+      rehash(digest, curr->type.getID());
+      // Hash the contents of the expression.
+      hashExpression(curr);
     }
+  }
 
-    void hashExpression(Expression* curr) {
+  void hashExpression(Expression* curr) {
 
 #define DELEGATE_ID curr->_id
 
@@ -302,7 +304,10 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 // Handle each type of field, comparing it appropriately.
 #define DELEGATE_GET_FIELD(id, name) cast->name
 
-#define DELEGATE_FIELD_CHILD(id, name) stack.push_back(cast->name);
+#define DELEGATE_FIELD_CHILD(id, name)                                         \
+  if (visitChildren) {                                                         \
+    stack.push_back(cast->name);                                               \
+  }
 
 #define HASH_FIELD(name) rehash(digest, cast->name);
 
@@ -323,41 +328,48 @@ size_t ExpressionAnalyzer::hash(Expression* curr) {
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, name) visitScopeName(cast->name);
 
 #include "wasm-delegations-fields.def"
-    }
+  }
 
-    void noteScopeName(Name curr) {
-      if (curr.is()) {
-        internalNames[curr] = internalCounter++;
-      }
+  void noteScopeName(Name curr) {
+    if (curr.is()) {
+      internalNames[curr] = internalCounter++;
     }
-    void visitScopeName(Name curr) {
-      // We consider 3 cases here, and prefix a hash value of 0, 1, or 2 to
-      // maximally differentiate them.
+  }
+  void visitScopeName(Name curr) {
+    // We consider 3 cases here, and prefix a hash value of 0, 1, or 2 to
+    // maximally differentiate them.
 
-      // Try's delegate target can be null.
-      if (!curr.is()) {
-        rehash(digest, 0);
-        return;
-      }
-      // Names are relative, we give the same hash for
-      //   (block $x (br $x))
-      //   (block $y (br $y))
-      // But if the name is not known to us, hash the absolute one.
-      if (!internalNames.count(curr)) {
-        rehash(digest, 1);
-        // Perform the same hashing as a generic name.
-        visitNonScopeName(curr);
-        return;
-      }
-      rehash(digest, 2);
-      rehash(digest, internalNames[curr]);
+    // Try's delegate target can be null.
+    if (!curr.is()) {
+      rehash(digest, 0);
+      return;
     }
-    void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
-    void visitType(Type curr) { rehash(digest, curr.getID()); }
-    void visitAddress(Address curr) { rehash(digest, curr.addr); }
-  };
+    // Names are relative, we give the same hash for
+    //   (block $x (br $x))
+    //   (block $y (br $y))
+    // But if the name is not known to us, hash the absolute one.
+    if (!internalNames.count(curr)) {
+      rehash(digest, 1);
+      // Perform the same hashing as a generic name.
+      visitNonScopeName(curr);
+      return;
+    }
+    rehash(digest, 2);
+    rehash(digest, internalNames[curr]);
+  }
+  void visitNonScopeName(Name curr) { rehash(digest, uint64_t(curr.str)); }
+  void visitType(Type curr) { rehash(digest, curr.getID()); }
+  void visitAddress(Address curr) { rehash(digest, curr.addr); }
+};
 
-  return Hasher(curr).digest;
+} // anonymous namespace
+
+size_t ExpressionAnalyzer::hash(Expression* curr) {
+  return Hasher(curr, true).digest;
+}
+
+size_t ExpressionAnalyzer::shallowHash(Expression* curr) {
+  return Hasher(curr, false).digest;
 }
 
 } // namespace wasm
