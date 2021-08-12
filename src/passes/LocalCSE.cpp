@@ -436,19 +436,16 @@ struct Checker
   }
 };
 
-// waka
-
-// Applies the optimization now that we know which requests are valid. We track
-// the number of remaining valid requests (after Checker decreased them to leave
-// only valid ones), and stop optimizing when none remain.
+// Applies the optimization now that we know which requests are valid.
 struct Applier
   : public LinearExecutionWalker<Applier, UnifiedExpressionVisitor<Applier>> {
   RequestInfoMap requestInfos;
 
   Applier(RequestInfoMap& requestInfos) : requestInfos(requestInfos) {}
 
-  // Maps expressions that we save to locals to the local index for them.
-  std::unordered_map<Expression*, Index> exprLocals;
+  // Maps the original expressions that we save to locals to the local indexes
+  // for them.
+  std::unordered_map<Expression*, Index> originalLocalMap;
 
   void visitExpression(Expression* curr) {
     auto iter = requestInfos.find(curr);
@@ -457,12 +454,19 @@ struct Applier
     }
 
     const auto& info = iter->second;
+
+    // As above, one cannot both request and be requested.
     assert(!(info.requests && info.original));
+
+    // Also, if a requestInfo exists, we must either request or be requested -
+    // if we had requests and all were invalidated, we should have been
+    // removed, etc.
+    assert(info.requests || info.original);
 
     if (info.requests) {
       // We have requests for this value. Add a local and tee the value to
       // there.
-      Index local = exprLocals[curr] =
+      Index local = originalLocalMap[curr] =
         Builder::addVar(getFunction(), curr->type);
       replaceCurrent(
         Builder(*getModule()).makeLocalTee(local, curr, curr->type));
@@ -471,9 +475,9 @@ struct Applier
       if (originalInfo.requests) {
         // This is a valid request of an original value. Get the value from the
         // local.
-        assert(exprLocals.count(info.original));
+        assert(originalLocalMap.count(info.original));
         replaceCurrent(Builder(*getModule())
-                         .makeLocalGet(exprLocals[info.original], curr->type));
+                         .makeLocalGet(originalLocalMap[info.original], curr->type));
         originalInfo.requests--;
       }
     }
@@ -481,7 +485,7 @@ struct Applier
 
   static void doNoteNonLinear(Applier* self, Expression** currp) {
     // Clear the state between blocks.
-    self->exprLocals.clear();
+    self->originalLocalMap.clear();
   }
 };
 
