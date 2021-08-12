@@ -1766,11 +1766,26 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ret = ValueBuilder::makeBinary(left, PLUS, right);
               break;
             case SubInt32:
-              ret = ValueBuilder::makeBinary(left, MINUS, right);
+              if (left->isNumber() && left->getNumber() == 0) {
+                // special case
+                // 0 - x  =>  -x
+                ret = ValueBuilder::makeUnary(MINUS, right);
+              } else {
+                ret = ValueBuilder::makeBinary(left, MINUS, right);
+              }
               break;
             case MulInt32: {
               if (curr->type == Type::i32) {
-                // TODO: when one operand is a small int, emit a multiply
+                // We can avoid Math.imul call if RHS is small constant
+                //
+                //   `2 ** 53 - 1`   is maximum safe integer
+                // so
+                //   `2 ** (53 - 32) - 1  or  0x1FFFFF`   is maximum safe
+                // multiplicand
+                if (right->isNumber() && right->getNumber() <= 0x1FFFFF) {
+                  ret = ValueBuilder::makeBinary(left, MUL, right);
+                  break;
+                }
                 return ValueBuilder::makeCall(MATH_IMUL, left, right);
               } else {
                 return ValueBuilder::makeBinary(left, MUL, right);
@@ -1803,7 +1818,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ret = ValueBuilder::makeBinary(left, OR, right);
               break;
             case XorInt32:
-              ret = ValueBuilder::makeBinary(left, XOR, right);
+              if (right->isNumber() && right->getNumber() == -1) {
+                // special case
+                // x ^ -1  =>  ~x
+                ret = ValueBuilder::makeUnary(B_NOT, left);
+              } else {
+                ret = ValueBuilder::makeBinary(left, XOR, right);
+              }
               break;
             case ShlInt32:
               ret = ValueBuilder::makeBinary(left, LSHIFT, right);
