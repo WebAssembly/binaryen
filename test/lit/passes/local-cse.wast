@@ -309,4 +309,78 @@
     )
     (i32.const 10)
   )
+
+  ;; CHECK:      (func $many-sets (result i64)
+  ;; CHECK-NEXT:  (local $temp i64)
+  ;; CHECK-NEXT:  (local $1 i64)
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (i64.add
+  ;; CHECK-NEXT:     (i64.const 1)
+  ;; CHECK-NEXT:     (i64.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (i64.const 9999)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $temp)
+  ;; CHECK-NEXT: )
+  (func $many-sets (result i64)
+    (local $temp i64)
+    ;; Assign to $temp three times here. We can optimize the add regardless of
+    ;; that, and should not be confused by the sets themselves having effects
+    ;; that are in conflict (the value is what matters).
+    (local.set $temp
+      (i64.add
+        (i64.const 1)
+        (i64.const 2)
+      )
+    )
+    (local.set $temp
+      (i64.const 9999)
+    )
+    (local.set $temp
+      (i64.add
+        (i64.const 1)
+        (i64.const 2)
+      )
+    )
+    (local.get $temp)
+  )
+
+  ;; CHECK:      (func $switch-children (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block $label$1 (result i32)
+  ;; CHECK-NEXT:   (br_table $label$1 $label$1
+  ;; CHECK-NEXT:    (local.tee $1
+  ;; CHECK-NEXT:     (i32.and
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $switch-children (param $x i32) (result i32)
+    (block $label$1 (result i32)
+      ;; We can optimize the two children of this switch. This test verifies
+      ;; that we do so properly and do not hit an assertion involving the
+      ;; ordering of the switch's children, which was incorrect in the past.
+      (br_table $label$1 $label$1
+        (i32.and
+          (local.get $x)
+          (i32.const 3)
+        )
+        (i32.and
+          (local.get $x)
+          (i32.const 3)
+        )
+      )
+    )
+  )
 )
