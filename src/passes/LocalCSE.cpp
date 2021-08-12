@@ -189,7 +189,10 @@ struct Scanner
   : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
   PassOptions options;
 
-  Scanner(PassOptions options) : options(options) {}
+  // Request info for all expressions ever seen.
+  RequestInfoMap& requestInfos;
+
+  Scanner(PassOptions options, RequestInfoMap& requestInfos) : options(options), requestInfos(requestInfos) {}
 
   // Currently active hashed expressions in the current basic block. If we see
   // an active expression before us that is identical to us, then it becomes our
@@ -199,9 +202,6 @@ struct Scanner
   // Hash values of all active expressions. We store these so that we do not end
   // up recomputing hashes of children in an N^2 manner.
   std::unordered_map<Expression*, size_t> activeHashes;
-
-  // Request info for all expressions ever seen.
-  RequestInfoMap requestInfos;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
@@ -498,21 +498,23 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
   void doWalkFunction(Function* func) {
     auto options = getPassOptions();
 
-    Scanner scanner(options);
+    RequestInfoMap requestInfos;
+
+    Scanner scanner(options, requestInfos);
     scanner.walkFunctionInModule(func, getModule());
-    if (scanner.requestInfos.empty()) {
+    if (requestInfos.empty()) {
       // We did not find any repeated expressions at all.
       return;
     }
 
-    Checker checker(options, scanner.requestInfos);
+    Checker checker(options, requestInfos);
     checker.walkFunctionInModule(func, getModule());
-    if (scanner.requestInfos.empty()) {
+    if (requestInfos.empty()) {
       // No repeated expressions remain after checking for effects.
       return;
     }
 
-    Applier applier(scanner.requestInfos);
+    Applier applier(requestInfos);
     applier.walkFunctionInModule(func, getModule());
 
     TypeUpdating::handleNonDefaultableLocals(func, *getModule());
