@@ -180,6 +180,17 @@ struct RequestInfo {
   // If this is a repeat value, this points to the original. (And we have
   // incremented the original's |requests|.)
   Expression* original = nullptr;
+
+  void validate() const {
+    // An expression cannot both be requested and make requests. If we see A
+    // appear three times, both repeats must request from the very first.
+    assert(!(requests && original));
+
+    // When we encounter a requestInfo (after its initial creation) then it
+    // must either request or be requested - otherwise, it should not exist,
+    // as we remove unneeded things from our tracking.
+    assert(requests || original);
+  }
 };
 
 // A map of expressions to their request info.
@@ -402,11 +413,7 @@ struct Checker
       return;
     }
     auto& info = iter->second;
-
-    // An expression cannot both be an original and make requests (if it has an
-    // original, then everything should request from that, and not from things
-    // "in the middle").
-    assert(!(info.requests && info.original));
+    info.validate();
 
     if (info.requests > 0) {
       // This is an original. Compute its side effects, as we cannot optimize
@@ -473,14 +480,7 @@ struct Applier
     }
 
     const auto& info = iter->second;
-
-    // As above, one cannot both request and be requested.
-    assert(!(info.requests && info.original));
-
-    // Also, if a requestInfo exists, we must either request or be requested -
-    // if we had requests and all were invalidated, we should have been
-    // removed, etc.
-    assert(info.requests || info.original);
+    info.validate();
 
     if (info.requests) {
       // We have requests for this value. Add a local and tee the value to
