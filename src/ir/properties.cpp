@@ -22,14 +22,12 @@ namespace wasm {
 namespace Properties {
 
 bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features) {
-  // Practically no wasm instructions are i ntrinsically nondeterministic.
+  // Practically no wasm instructions are intrinsically nondeterministic.
   // Exceptions occur only in GC atm.
   if (!features.hasGC()) {
     return false;
   }
 
-  // Allocation of GC data is not observably-determinisic, as each allocation
-  // returns a different result.
   struct Scanner : public PostWalker<Scanner> {
     bool deterministic = true;
     void visitStructNew(StructNew* curr) { deterministic = false; }
