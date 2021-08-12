@@ -32,7 +32,6 @@
 ;;
 ;;         return u1 * v1 + t + w;
 ;;       }
-
 ;;
 ;; [1]: https://gist.github.com/alexcrichton/e7ea67bcdd17ce4b6254e66f77165690
 
