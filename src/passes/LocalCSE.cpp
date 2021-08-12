@@ -187,6 +187,10 @@ struct Scanner
   // Request info for all expressions.
   RequestInfoMap requestInfos;
 
+  // Set to true if we found any requests, that is, if there are things we may
+  // be able to optimize.
+  bool found = false;
+
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
     // expressions, as we no longer want to make connections to anything from
@@ -230,6 +234,7 @@ struct Scanner
       auto* original = vec[0];
       info.original = original;
       requestInfos[original].requests++;
+      found = true;
 
       // Remove any requests from the expression's children, as we will replace
       // the entire thing (see explanation earlier). Note that we just need to
@@ -462,6 +467,9 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
 
     Scanner scanner(options);
     scanner.walkFunctionInModule(func, getModule());
+    if (!scanner.found) {
+      return;
+    }
 
     Checker checker(options, scanner.requestInfos);
     checker.walkFunctionInModule(func, getModule());
