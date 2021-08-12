@@ -407,7 +407,6 @@ struct Checker
       }
     }
 
-    // Check if the current expression is an original or requests from one.
     auto iter = requestInfos.find(curr);
     if (iter == requestInfos.end()) {
       return;
