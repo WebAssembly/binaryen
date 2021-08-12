@@ -8,8 +8,6 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
-
   ;; CHECK:      (elem declare func $calls $ref.func)
 
   ;; CHECK:      (func $calls (param $x i32) (result i32)
