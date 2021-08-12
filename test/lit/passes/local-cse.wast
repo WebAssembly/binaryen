@@ -9,6 +9,8 @@
 
   ;; CHECK:      (type $i32_=>_i32 (func (param i32) (result i32)))
 
+  ;; CHECK:      (type $none_=>_i64 (func (result i64)))
+
   ;; CHECK:      (memory $0 100 100)
 
   ;; CHECK:      (func $basics
@@ -382,5 +384,50 @@
         )
       )
     )
+  )
+)
+
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $glob (mut i32) (i32.const 1))
+  (global $glob (mut i32) (i32.const 1))
+
+  ;; CHECK:      (global $other-glob (mut i32) (i32.const 1))
+  (global $other-glob (mut i32) (i32.const 1))
+
+  ;; CHECK:      (func $global
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (global.get $glob)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $other-glob
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $glob
+  ;; CHECK-NEXT:   (i32.const 200)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $glob)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $global
+    ;; We should optimize redundantglobal.get operations.
+    (drop (global.get $glob))
+    (drop (global.get $glob))
+    ;; We can do it past a write to another global
+    (global.set $other-glob (i32.const 100))
+    (drop (global.get $glob))
+    ;; But we can't do it past a write to our global.
+    (global.set $glob (i32.const 200))
+    (drop (global.get $glob))
   )
 )
