@@ -277,13 +277,21 @@ struct Scanner
           // created a requestInfo for it.
           continue;
         }
+
+        // Remove the child.
         auto& childInfo = requestInfos[child];
         auto* childOriginal = childInfo.original;
-        assert(childOriginal);
-        assert(requestInfos[childOriginal].requests > 0);
-        requestInfos[childOriginal].requests--;
         requestInfos.erase(child);
-        requestInfos.erase(childOriginal);
+
+        // Update the child's original, potentially erasing it too if no
+        // requests remain.
+        assert(childOriginal);
+        auto& childOriginalRequests = requestInfos[childOriginal].requests;
+        assert(childOriginalRequests > 0);
+        childOriginalRequests--;
+        if (childOriginalRequests == 0) {
+          requestInfos.erase(childOriginal);
+        }
       }
     }
   }
