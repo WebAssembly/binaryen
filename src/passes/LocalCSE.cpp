@@ -436,6 +436,8 @@ struct Checker
   }
 };
 
+// waka
+
 // Applies the optimization now that we know which requests are valid. We track
 // the number of remaining valid requests (after Checker decreased them to leave
 // only valid ones), and stop optimizing when none remain.
@@ -505,6 +507,10 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
 
     Checker checker(options, scanner.requestInfos);
     checker.walkFunctionInModule(func, getModule());
+    if (scanner.requestInfos.empty()) {
+      // No repeated expressions remain after checking for effects.
+      return;
+    }
 
     Applier applier(scanner.requestInfos);
     applier.walkFunctionInModule(func, getModule());
