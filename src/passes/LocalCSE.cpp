@@ -19,48 +19,61 @@
 //
 // This finds common sub-expressions and saves them to a local to avoid
 // recomputing them. It runs in each basic block separately, and uses a simple
-// algorithm:
+// algorithm, where we track "requests" to reuse a value. That is, if we see
+// an add operation appear twice, and the inputs must be identical in both
+// cases, then the second one requests to reuse the computed value from the
+// first. The first one to appear is the "original" expression that will remain
+// in the code; we will save it's value to a local, and get it from that local
+// later:
+//
+//  (i32.add (A) (B))
+//  (i32.add (A) (B))
+//
+//    =>
+//
+//  (local.tee $temp (i32.add (A) (B)))
+//  (local.get $temp)
+//
+// The algorithm used here is as follows:
 //
 //  * Scan: Hash each expression and see if it repeats later.
 //          If it does:
 //            * Note that the original appearance is requested to be reused
 //              an additional time.
-//            * Note that the repeat appearance requests to be replaced.
+//            * Link the first expression as the original appearance of the
+//              later one.
 //            * Scan the children of the repeat and undo their requests to be
 //              replaced (as if we will reuse the parent, we don't need to do
 //              anything for the children, see below).
 //
 //  * Check: Check if effects prevent some of the requests from being done. For
-//           example, if the value is a load from memory, we cannot optimize
-//           around a store, as the value before the store might be different
-//           (see below).
+//           example, if the value contains a load from memory, we cannot
+//           optimize around a store, as the value before the store might be
+//           different (see below).
 //
 //  * Apply: Go through the basic block again, this time adding a tee on an
 //           expression whose value we want to use later, and replacing the
 //           uses with gets.
 //
-// For example:
+// For example, here is what the algorithm would do on
 //
-//   (something
-//     (i32.eqz
-//       (A)
-//     )
-//     (i32.eqz
-//       (A)
-//     )
-//   )
+//  (i32.eqz (A))
+//  ..
+//  (i32.eqz (A))
 //
 // Assuming A does not have side effects that interfere, this will happen:
 //
 //  1. Scan A and add it to the hash map of things we have seen.
 //  2. Scan the eqz, and do the same for it.
 //  3. Scan the second A. Increment the first A's requests counter, and mark the
-//     second A as intended to be replaced.
-//  4. Scan the second eqz, and do the same for it. Then also scan its children,
-//     in this case A, and decrement the first A's reuse counter, and unmark the
-//     second A's note that it is intended to be replaced.
-//  5. After that, the second eqz request to be replaced by the first, and there
-//     is no request on A.
+//     second A as intended to be replaced by the original A.
+//  4. Scan the second eqz, and do similar things for it: increment the requests
+//     for the original eqz, and point to the original from the repeat.
+//     * Then also scan its children, in this case A, and decrement the first
+//       A's reuse counter, and unmark the second A's note that it is intended
+//       to be replaced.
+//  5. After that, the second eqz requests to be replaced by the first, and
+//     there is no request on A.
 //  6. Run through the block again, adding a tee and replacing the second eqz,
 //     resulting in:
 //
@@ -83,7 +96,7 @@
 //  y = load(a);
 //
 // Even though the load looks identical, the store means we may load a
-// different value, so we will invalidate and not optimize here.
+// different value, so we will invalidate the request to optimize here.
 //
 // This pass only finds entire expression trees, and not parts of them, so we
 // will not optimize this:
@@ -138,6 +151,8 @@ struct HEHasher {
   }
 };
 
+// A full equality check for HashedExpressions. The hash is used as a speedup,
+// but if it matches we still verify the contents are identical.
 struct HEComparer {
   bool operator()(const HashedExpression a, const HashedExpression b) const {
     if (a.digest != b.digest) {
@@ -162,10 +177,8 @@ struct RequestInfo {
   // The number of other expressions that would like to reuse this value.
   Index requests = 0;
 
-  // If this is a repeat value, that is, something we would like to replace
-  // with a local.get of the original value (the first time this value
-  // appeared) then we point to that original value here. In that case we have
-  // incremented the original's |requests|.
+  // If this is a repeat value, this points to the original. (And we have
+  // incremented the original's |requests|.)
   Expression* original = nullptr;
 };
 
@@ -178,18 +191,17 @@ struct Scanner
 
   Scanner(PassOptions options) : options(options) {}
 
-  // Currently active hashed expressions in the current basic block.
+  // Currently active hashed expressions in the current basic block. If we see
+  // an active expression before us that is identical to us, then it becomes our
+  // original expression that we request from.
   HashedExprs activeExprs;
 
-  // Hash values of all active expressions.
+  // Hash values of all active expressions. We store these so that we do not end
+  // up recomputing hashes of children in an N^2 manner.
   std::unordered_map<Expression*, size_t> activeHashes;
 
-  // Request info for all expressions.
+  // Request info for all expressions ever seen.
   RequestInfoMap requestInfos;
-
-  // Set to true if we found any requests, that is, if there are things we may
-  // be able to optimize.
-  bool found = false;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
@@ -227,14 +239,16 @@ struct Scanner
 
     auto& vec = activeExprs[HashedExpression(curr, hash)];
     vec.push_back(curr);
-    auto& info = requestInfos[curr];
     if (vec.size() > 1) {
-      // This is a repeat expression. Mark it as such, and add a request for the
-      // original appearance of the value.
+      // This is a repeat expression. Add a request for it.
+      auto& info = requestInfos[curr];
       auto* original = vec[0];
       info.original = original;
+
+      // Mark the request on the original. Note that this may create the
+      // requestInfo for it, if it is the first request (this avoids us creating
+      // requests eagerly).
       requestInfos[original].requests++;
-      found = true;
 
       // Remove any requests from the expression's children, as we will replace
       // the entire thing (see explanation earlier). Note that we just need to
@@ -249,14 +263,17 @@ struct Scanner
       // to update is the second B.
       for (auto* child : ChildIterator(curr)) {
         if (!requestInfos.count(child)) {
+          // The child never had a request. While it repeated (since the parent
+          // repeats), it was not relevant for the optimization so we never
+          // created requestInfo for it.
           continue;
         }
         auto& childInfo = requestInfos[child];
-        if (childInfo.original) {
-          assert(requestInfos[childInfo.original].requests > 0);
-          requestInfos[childInfo.original].requests--;
-          childInfo.original = nullptr;
-        }
+        assert(childInfo.original);
+        assert(requestInfos[childInfo.original].requests > 0);
+        requestInfos[childInfo.original].requests--;
+        childInfo.original = nullptr;
+//waka
       }
     }
   }
@@ -367,11 +384,12 @@ struct Checker
         EffectAnalyzer effects(options, getModule()->features, curr);
         // We cannot optimize away repeats of something with side effects.
         //
-        // We also cannot optimize away something that is not observably-
-        // deterministic: even if it has no side effects, if it may return a
+        // We also cannot optimize away something that is intrinsically
+        // nondeterministic: even if it has no side effects, if it may return a
         // different result each time, we cannot optimize away repeats.
-        if (effects.hasSideEffects() || !Properties::isObservablyDeterministic(
-                                          curr, getModule()->features)) {
+        if (effects.hasSideEffects() ||
+            Properties::isIntrinsicallyNondeterministic(curr,
+                                                        getModule()->features)) {
           requestInfos[curr].requests = 0;
         } else {
           activeOriginals.emplace(
