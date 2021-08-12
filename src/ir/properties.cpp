@@ -28,6 +28,9 @@ bool isObservablyDeterministic(Expression* curr, FeatureSet features) {
     return true;
   }
 
+  // Allocation of GC data is not observably-determinisic, as each allocation
+  // returns a different result. Also, anything that can reach such an
+  // instruction.
   struct Scanner : public PostWalker<Scanner> {
     bool deterministic = true;
     void visitCall(Call* curr) { deterministic = false; }
