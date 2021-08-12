@@ -115,10 +115,10 @@ function asmFunc(env) {
   if ((HEAPU8[144 >> 0] | 0) >>> 0 < 3 >>> 0) {
    bar()
   }
-  if ((bools(314159 | 0) | 0) >>> 7 | 0) {
+  if ((bools(314159 | 0) | 0) >>> 7) {
    bar()
   }
-  if ((bools(314159 | 0) | 0) >> 8 | 0) {
+  if ((bools(314159 | 0) | 0) >> 8) {
    bar()
   }
   if (~~Math_fround(getf32()) >>> 0) {
@@ -192,20 +192,20 @@ function asmFunc(env) {
  
  function bools(x) {
   x = x | 0;
-  bools((HEAPU8[0 >> 0] | 0) & 1 | 0 | 0) | 0;
-  bools((HEAP8[0 >> 0] | 0) & 1 | 0 | 0) | 0;
-  bools((HEAPU16[0 >> 1] | 0) & 1 | 0 | 0) | 0;
-  bools((HEAP16[0 >> 1] | 0) & 1 | 0 | 0) | 0;
-  bools((HEAP32[0 >> 2] | 0) & 1 | 0 | 0) | 0;
-  bools((HEAPU8[0 >> 0] | 0) & 2 | 0 | 0) | 0;
-  bools(x ^ 1 | 0 | 0) | 0;
-  if (x ^ 1 | 0) {
+  bools((HEAPU8[0 >> 0] | 0) & 1 | 0) | 0;
+  bools((HEAP8[0 >> 0] | 0) & 1 | 0) | 0;
+  bools((HEAPU16[0 >> 1] | 0) & 1 | 0) | 0;
+  bools((HEAP16[0 >> 1] | 0) & 1 | 0) | 0;
+  bools((HEAP32[0 >> 2] | 0) & 1 | 0) | 0;
+  bools((HEAPU8[0 >> 0] | 0) & 2 | 0) | 0;
+  bools(x ^ 1 | 0) | 0;
+  if (x ^ 1) {
    bools(2 | 0) | 0
   }
-  if (x ^ 2 | 0) {
+  if (x ^ 2) {
    bools(2 | 0) | 0
   }
-  bools(!(x ^ 1 | 0) | 0) | 0;
+  bools(!(x ^ 1) | 0) | 0;
   abort();
  }
  
