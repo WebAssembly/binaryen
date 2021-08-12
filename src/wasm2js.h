@@ -1814,11 +1814,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               break;
             case AndInt32:
               ret = ValueBuilder::makeBinary(left, AND, right);
-              if (curr->type == Type::i32) return ret;
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case OrInt32:
               ret = ValueBuilder::makeBinary(left, OR, right);
-              if (curr->type == Type::i32) return ret;
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case XorInt32:
               if (right->isNumber() && right->getNumber() == -1) {
@@ -1828,19 +1832,27 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               } else {
                 ret = ValueBuilder::makeBinary(left, XOR, right);
               }
-              if (curr->type == Type::i32) return ret;
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case ShlInt32:
               ret = ValueBuilder::makeBinary(left, LSHIFT, right);
-              if (curr->type == Type::i32) return ret;
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case ShrUInt32:
               ret = ValueBuilder::makeBinary(left, TRSHIFT, right);
-              if (curr->type == Type::i32) return ret;
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case ShrSInt32:
               ret = ValueBuilder::makeBinary(left, RSHIFT, right);
-              if (curr->type == Type::i32) return ret;
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case EqInt32: {
               return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
