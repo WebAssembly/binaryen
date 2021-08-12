@@ -1778,11 +1778,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               if (curr->type == Type::i32) {
                 // We can avoid Math.imul call if RHS is small constant
                 //
-                //   `2 ** 53 - 1`   is maximum safe integer
+                //   `2 ** 53 - 1`   is maximum safe integer in fp domain
                 // so
                 //   `2 ** (53 - 32) - 1  or  0x1FFFFF`   is maximum safe
                 // multiplicand
-                if (right->isNumber() && right->getNumber() <= 0x1FFFFF) {
+                if (right->isNumber() &&
+                    std::abs(right->getNumber()) <= (double)0x1FFFFF) {
                   ret = ValueBuilder::makeBinary(left, MUL, right);
                   break;
                 }
