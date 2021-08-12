@@ -28,6 +28,7 @@
   ;; CHECK-NEXT:  (i32.const 20)
   ;; CHECK-NEXT: )
   (func $calls (param $x i32) (result i32)
+    ;; The side effects of calls prevent optimization.
     (drop
       (call_ref (i32.const 10) (ref.func $calls))
     )
