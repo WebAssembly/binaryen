@@ -183,7 +183,16 @@ struct RequestInfo {
 };
 
 // A map of expressions to their request info.
-using RequestInfoMap = std::unordered_map<Expression*, RequestInfo>;
+struct RequestInfoMap : public std::unordered_map<Expression*, RequestInfo> {
+  void dump(std::ostream& o) {
+    for (auto& kv : *this) {
+      auto* curr = kv.first;
+      auto& info = kv.second;
+      o << *curr << " has " << info.requests << " reqs, orig: "
+        << info.original << '\n';
+    }
+  }
+};
 
 struct Scanner
   : public LinearExecutionWalker<Scanner, UnifiedExpressionVisitor<Scanner>> {
@@ -244,11 +253,13 @@ struct Scanner
       auto& info = requestInfos[curr];
       auto* original = vec[0];
       info.original = original;
+std::cout << "add info " << *curr << '\n';
 
       // Mark the request on the original. Note that this may create the
       // requestInfo for it, if it is the first request (this avoids us creating
       // requests eagerly).
       requestInfos[original].requests++;
+std::cout << "add orig info " << *original << '\n';
 
       // Remove any requests from the expression's children, as we will replace
       // the entire thing (see explanation earlier). Note that we just need to
@@ -265,14 +276,17 @@ struct Scanner
         if (!requestInfos.count(child)) {
           // The child never had a request. While it repeated (since the parent
           // repeats), it was not relevant for the optimization so we never
-          // created requestInfo for it.
+          // created a requestInfo for it.
           continue;
         }
         auto& childInfo = requestInfos[child];
-        assert(childInfo.original);
-        assert(requestInfos[childInfo.original].requests > 0);
-        requestInfos[childInfo.original].requests--;
-        childInfo.original = nullptr;
+        auto* childOriginal = childInfo.original;
+        assert(childOriginal);
+        assert(requestInfos[childOriginal].requests > 0);
+        requestInfos[childOriginal].requests--;
+        requestInfos.erase(child);
+        requestInfos.erase(childOriginal);
+std::cout << "erase " << *child << '\n';
       }
     }
   }
@@ -461,6 +475,7 @@ struct Applier
     // Also, if a requestInfo exists, we must either request or be requested -
     // if we had requests and all were invalidated, we should have been
     // removed, etc.
+    std::cout << *curr << '\n';
     assert(info.requests || info.original);
 
     if (info.requests) {
@@ -511,12 +526,18 @@ struct LocalCSE : public WalkerPass<PostWalker<LocalCSE>> {
       return;
     }
 
+std::cout << "a1\n";
+requestInfos.dump(std::cout);
+
     Checker checker(options, requestInfos);
     checker.walkFunctionInModule(func, getModule());
     if (requestInfos.empty()) {
       // No repeated expressions remain after checking for effects.
       return;
     }
+
+std::cout << "a2\n";
+requestInfos.dump(std::cout);
 
     Applier applier(requestInfos);
     applier.walkFunctionInModule(func, getModule());
