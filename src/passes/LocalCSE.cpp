@@ -253,7 +253,7 @@ struct Scanner
     }
     activeHashes[curr] = hash;
 
-    // Check if this is something relevent for optimization.
+    // Check if this is something relevant for optimization.
     if (!isRelevant(curr)) {
       return;
     }
