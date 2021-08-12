@@ -347,9 +347,10 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //  * Examples of intrinsically-nondeterministic instructions are GC
 //    allocations, as each returns something that we can observe is different
 //    (using ref.eq, by by writing to one and not seeing the result in the
-//    other), and there is no global state that the program can observe that
-//    explains that. A theoretical example is a "get current time" instruction,
-//    if wasm were to add one.
+//    other), and there is no global state that the program can observe before
+//    doing the allocation that explains that.
+//    * A theoretical example: a "get current time" instruction would be
+//      intrinsically-nondeterministic.
 //  * The word "can" appears in "can return the same result" because of NaN
 //    nondeterminism, which we ignore here. It is a valid wasm implementation to
 //    have deterministic NaN behavior, and we optimize under that assumption.
