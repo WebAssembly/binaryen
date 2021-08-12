@@ -273,7 +273,6 @@ struct Scanner
         assert(requestInfos[childInfo.original].requests > 0);
         requestInfos[childInfo.original].requests--;
         childInfo.original = nullptr;
-//waka
       }
     }
   }
@@ -329,7 +328,9 @@ struct Checker
     : options(options), requestInfos(requestInfos) {}
 
   struct ActiveOriginalInfo {
-    // How many of the requests remain to be seen.
+    // How many of the requests remain to be seen during our walk. When this
+    // reaches 0, we know that the original is no longer requested from later in
+    // the block.
     Index requestsLeft;
 
     // The effects in the expression.
@@ -337,11 +338,13 @@ struct Checker
   };
 
   // The currently relevant original expressions, that is, the ones that may be
-  // optimized in the current basic block. This maps each one to the number of
-  // requests for it, which allows us to know when it is no longer relevant.
+  // optimized in the current basic block.
   std::unordered_map<Expression*, ActiveOriginalInfo> activeOriginals;
 
   void visitExpression(Expression* curr) {
+    // This is the first time we encounter this expression.
+    assert(!activeOriginals.count(curr));
+
     // Given the current expression, see what it invalidates of the currently-
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
@@ -363,51 +366,61 @@ struct Checker
         requestInfos[original].requests -=
           activeOriginals.at(original).requestsLeft;
 
+        // If no requests remain at all (that is, there were no requests we
+        // could provide before we ran into this invalidation) then we do not
+        // need this original at all.
+        if (requestInfos[original].requests == 0) {
+          requestInfos.erase(original);
+        }
+
         activeOriginals.erase(original);
       }
     }
 
-    assert(!activeOriginals.count(curr));
-
     // Check if the current expression is an original or requests from one.
     auto iter = requestInfos.find(curr);
-    if (iter != requestInfos.end()) {
-      auto& info = iter->second;
+    if (iter == requestInfos.end()) {
+      return;
+    }
+    auto& info = iter->second;
 
-      // An expression cannot both be requested to be copied to a local, and
-      // also have some other expression it is a repeat of - if it is a repeat,
-      // then anything that requests to be copied from it should have requested
-      // from the the original of this expression.
-      assert(!(info.requests && info.original));
+    // An expression cannot both be an original and make requests (if it has an
+    // original, then everything should request from that, and not from things
+    // "in the middle").
+    assert(!(info.requests && info.original));
 
-      if (info.requests > 0) {
-        EffectAnalyzer effects(options, getModule()->features, curr);
-        // We cannot optimize away repeats of something with side effects.
-        //
-        // We also cannot optimize away something that is intrinsically
-        // nondeterministic: even if it has no side effects, if it may return a
-        // different result each time, we cannot optimize away repeats.
-        if (effects.hasSideEffects() ||
-            Properties::isIntrinsicallyNondeterministic(curr,
-                                                        getModule()->features)) {
-          requestInfos[curr].requests = 0;
-        } else {
-          activeOriginals.emplace(
-            curr, ActiveOriginalInfo{info.requests, std::move(effects)});
-        }
-      } else if (info.original) {
-        // The original may have already been invalidated.
-        auto iter = activeOriginals.find(info.original);
-        if (iter != activeOriginals.end()) {
-          // After visiting this expression, we have one less request for its
-          // original, and perhaps none are left.
-          auto& originalInfo = iter->second;
-          if (originalInfo.requestsLeft == 1) {
-            activeOriginals.erase(info.original);
-          } else {
-            originalInfo.requestsLeft--;
-          }
-        }
+    if (info.requests > 0) {
+      // This is an original. Compute its side effects, as we cannot optimize
+      // away repeated apperances if it has any.
+      EffectAnalyzer effects(options, getModule()->features, curr);
+
+      // We also cannot optimize away something that is intrinsically
+      // nondeterministic: even if it has no side effects, if it may return a
+      // different result each time, then we cannot optimize away repeats.
+      if (effects.hasSideEffects() ||
+          Properties::isIntrinsicallyNondeterministic(curr,
+                                                      getModule()->features)) {
+        requestInfos.erase(curr);
+      } else {
+        activeOriginals.emplace(
+          curr, ActiveOriginalInfo{info.requests, std::move(effects)});
+      }
+    } else if (info.original) {
+      // The original may have already been invalidated. If so, remove our info
+      // as well.
+      auto originalIter = activeOriginals.find(info.original);
+      if (originalIter == activeOriginals.end()) {
+        requestInfos.erase(iter);
+        return;
+      }
+
+      // After visiting this expression, we have one less request for its
+      // original, and perhaps none are left.
+      auto& originalInfo = originalIter->second;
+      if (originalInfo.requestsLeft == 1) {
+        activeOriginals.erase(info.original);
+      } else {
+        originalInfo.requestsLeft--;
       }
     }
   }
