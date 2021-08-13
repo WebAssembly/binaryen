@@ -238,11 +238,10 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     auto& values = functionNewInfos[getFunction()][heapType];
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
-      auto& fieldValues = values[i];
       if (curr->isWithDefault()) {
-        fieldValues.note(Literal::makeZero(fields[i].type));
+        values[i].note(Literal::makeZero(fields[i].type));
       } else {
-        noteExpression(curr->operands[i], fieldValues);
+        noteExpression(curr->operands[i], heapType, i, functionNewInfos);
       }
     }
   }
@@ -254,9 +253,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     }
 
     // Note a write to this field of the struct.
-    auto heapType = type.getHeapType();
-    auto& values = functionSetInfos[getFunction()][heapType];
-    noteExpression(curr->value, values[curr->index]);
+    noteExpression(curr->value, type.getHeapType(), curr->index, functionSetInfos);
   }
 
 private:
@@ -264,9 +261,20 @@ private:
   FunctionStructValuesMap& functionSetInfos;
 
   // Note a value, checking whether it is a constant or not.
-  void noteExpression(Expression* expr, PossibleConstantValues& info) {
+  void noteExpression(Expression* expr, HeapType type, Index index, FunctionStructValuesMap& valuesMap) {
     expr =
       Properties::getFallthrough(expr, getPassOptions(), getModule()->features);
+
+    // Ignore copies: when we set a value to a field from that same field, no
+    // new values are actually introduced.
+    if (auto* get = expr->dynCast<StructGet>()) {
+      if (get->index == index && get->ref->type != Type::unreachable &&
+          get->ref->type.getHeapType() == type) {
+        return;
+      }
+    }
+
+    auto& info = valuesMap[getFunction()][type][index];
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
     } else {
