@@ -414,7 +414,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -1131,7 +1131,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;

@@ -1766,7 +1766,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ret = ValueBuilder::makeBinary(left, PLUS, right);
               break;
             case SubInt32:
-              if (left->isNumber() && left->getNumber() == 0) {
+              if (parent->options.optimizeLevel != 0 && left->isNumber() &&
+                  left->getNumber() == 0) {
                 // special case
                 // 0 - x  =>  -x
                 ret = ValueBuilder::makeUnary(MINUS, right);
@@ -1782,7 +1783,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 // so
                 //   `2 ** (53 - 32) - 1  or  0x1FFFFF`   is maximum safe
                 // multiplicand
-                if (right->isNumber() &&
+                if (parent->options.optimizeLevel != 0 && right->isNumber() &&
                     std::abs(right->getNumber()) <= (double)0x1FFFFF) {
                   ret = ValueBuilder::makeBinary(left, MUL, right);
                   break;
@@ -1814,6 +1815,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               break;
             case AndInt32:
               ret = ValueBuilder::makeBinary(left, AND, right);
+              // All bitwise operations already implicitly coerced tp integer
+              // so we can skip the explicit coercing in case the result of i32.
               if (curr->type == Type::i32) {
                 return ret;
               }
@@ -1825,7 +1828,8 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               }
               break;
             case XorInt32:
-              if (right->isNumber() && right->getNumber() == -1) {
+              if (parent->options.optimizeLevel != 0 && right->isNumber() &&
+                  right->getNumber() == -1) {
                 // special case
                 // x ^ -1  =>  ~x
                 ret = ValueBuilder::makeUnary(B_NOT, left);

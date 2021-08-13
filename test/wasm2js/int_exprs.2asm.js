@@ -817,12 +817,12 @@ function asmFunc(env) {
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
-  return ((x | 0) / (6 | 0) | 0) * 6 | 0 | 0;
+  return Math_imul((x | 0) / (6 | 0) | 0, 6) | 0;
  }
  
  function $1(x) {
   x = x | 0;
-  return ((x >>> 0) / (6 >>> 0) | 0) * 6 | 0 | 0;
+  return Math_imul((x >>> 0) / (6 >>> 0) | 0, 6) | 0;
  }
  
  function $2(x, x$hi) {
@@ -1273,7 +1273,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -2011,7 +2011,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -2713,7 +2713,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -3059,12 +3059,12 @@ function asmFunc(env) {
  var i64toi32_i32$HIGH_BITS = 0;
  function $0(x) {
   x = x | 0;
-  return (x * 6 | 0 | 0) / (6 | 0) | 0 | 0;
+  return (Math_imul(x, 6) | 0) / (6 | 0) | 0 | 0;
  }
  
  function $1(x) {
   x = x | 0;
-  return ((x * 6 | 0) >>> 0) / (6 >>> 0) | 0 | 0;
+  return (Math_imul(x, 6) >>> 0) / (6 >>> 0) | 0 | 0;
  }
  
  function $2(x, x$hi) {
@@ -3515,7 +3515,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -4207,7 +4207,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -4843,7 +4843,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -5547,7 +5547,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -6269,7 +6269,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -6991,7 +6991,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -7713,7 +7713,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -8415,7 +8415,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -9119,7 +9119,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -9823,7 +9823,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;
@@ -10501,7 +10501,7 @@ function asmFunc(env) {
            break label$5
           }
           var$2 = (Math_clz32(var$3) + 33 | 0) - Math_clz32(var$2) | 0;
-          var$3 = -var$2 | 0;
+          var$3 = 0 - var$2 | 0;
           break label$3;
          }
          var$3 = 63 - var$2 | 0;

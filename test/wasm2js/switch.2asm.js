@@ -28,7 +28,7 @@ function asmFunc(env) {
     case 1:
     case 2:
     case 3:
-     j = -i | 0;
+     j = 0 - i | 0;
      break switch_;
     case 4:
      break switch_;
@@ -65,7 +65,7 @@ function asmFunc(env) {
     case 3:
      i64toi32_i32$2 = 0;
      i64toi32_i32$5 = (i64toi32_i32$2 >>> 0 < i >>> 0) + i$hi | 0;
-     i64toi32_i32$5 = -i64toi32_i32$5 | 0;
+     i64toi32_i32$5 = 0 - i64toi32_i32$5 | 0;
      $7 = i64toi32_i32$2 - i | 0;
      $7$hi = i64toi32_i32$5;
      break switch_;
