@@ -1307,7 +1307,7 @@ struct OptimizeInstructions
       } else if (ref->is<RefNull>()) {
         replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                           builder.makeDrop(curr->rtt),
-                                          builder.makeRefNull(ref->type)}));
+                                          builder.makeRefNull(curr->rtt->type.getHeapType())}));
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime to
