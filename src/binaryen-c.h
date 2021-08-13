@@ -2287,7 +2287,8 @@ BINARYEN_API void BinaryenSetLowMemoryUnused(bool on);
 // Gets whether to assume that an imported memory is zero-initialized.
 BINARYEN_API bool BinaryenGetZeroFilledMemory(void);
 
-// Enables or disables whether to assume that an imported memory is zero-initialized.
+// Enables or disables whether to assume that an imported memory is
+// zero-initialized.
 BINARYEN_API void BinaryenSetZeroFilledMemory(bool on);
 
 // Gets whether fast math optimizations are enabled, ignoring for example
