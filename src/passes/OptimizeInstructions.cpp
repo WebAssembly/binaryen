@@ -34,6 +34,7 @@
 #include <ir/manipulation.h>
 #include <ir/match.h>
 #include <ir/properties.h>
+#include <ir/reorderer.h>
 #include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
@@ -212,16 +213,27 @@ struct OptimizeInstructions
 
   bool fastMath;
 
+  bool refinalize = false;
+
   void doWalkFunction(Function* func) {
     fastMath = getPassOptions().fastMath;
-    // first, scan locals
+
+    // First, scan locals.
     {
       LocalScanner scanner(localInfo, getPassOptions());
       scanner.setModule(getModule());
       scanner.walkFunction(func);
     }
-    // main walk
+
+    // Main walk.
     super::doWalkFunction(func);
+
+    // If we need to update parent types, do so.
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+    }
+
+    // Final optimizations.
     {
       FinalOptimizer optimizer(getPassOptions());
       optimizer.walkFunction(func);
@@ -1268,36 +1280,54 @@ struct OptimizeInstructions
       return;
     }
 
+    Builder builder(*getModule());
     auto passOptions = getPassOptions();
 
+    // For the cast to be able to succeed, the value being cast must be a
+    // subtype of the desired type, as RTT subtyping is a subset of static
+    // subtyping. For example, trying to cast an array to a struct would be
+    // incompatible.
+    bool typesCompatible = HeapType::isSubType(curr->ref->type.getHeapType(),
+                                               curr->rtt->type.getHeapType());
+
+    if (!typesCompatible) {
+      // This cast cannot succeed. It will either trap if the input is not a
+      // null, or it will return null if it is.
+      auto ref = Properties::getFallthrough(curr->ref,
+                                            getPassOptions(),
+                                            getModule()->features);
+      if (ref->type.isNonNullable()) {
+        // Our type will now be unreachable; update the parents.
+        refinalize = true;
+        replaceCurrent(builder.makeBlock({
+          builder.makeDrop(curr->ref),
+          builder.makeDrop(curr->rtt),
+          builder.makeUnreachable()
+        }));
+        return;
+      } else if (ref->is<RefNull>()) {
+        replaceCurrent(builder.makeBlock({
+          builder.makeDrop(curr->ref),
+          builder.makeDrop(curr->rtt),
+          builder.makeRefNull(ref->type)
+        }));
+        return;
+      }
+      // Otherwise, we are not sure what it is, and need to wait for runtime to
+      // see if it is a null or not.
+    }
+
     if (passOptions.ignoreImplicitTraps) {
-      // A ref.cast traps when the RTTs do not line up, which can be of one of
-      // two sorts of issues:
-      //  1. The value being cast is not even a subtype of the cast type. In
-      //     that case the RTTs trivially cannot indicate subtyping, because
-      //     RTT subtyping is a subset of static subtyping. For example, maybe
-      //     we are trying to cast a {i32} struct to an [f64] array.
-      //  2. The value is a subtype of the cast type, but the RTTs still do not
-      //     fit. That indicates a difference between RTT subtyping and static
-      //     subtyping. That is, the type may be right but the chain of rtt.subs
-      //     is not.
-      // If we ignore implicit traps then we would like to assume that neither
-      // of those two situations can happen. However, we still cannot do
-      // anything if point 1 is a problem, that is, if the value is not a
-      // subtype of the cast type, as we can't remove the cast in that case -
-      // the wasm would not validate. But if the type *is* a subtype, then we
-      // can ignore a possible trap on 2 and remove it.
-      //
-      // We also do not do this if the arguments cannot be reordered. If we
-      // can't do that then we need to add a drop, at minimum (which may still
-      // be worthwhile, but depends on other optimizations kicking in, so it's
-      // not clearly worthwhile).
-      if (HeapType::isSubType(curr->ref->type.getHeapType(),
-                              curr->rtt->type.getHeapType()) &&
-          canReorder(curr->ref, curr->rtt)) {
-        Builder builder(*getModule());
+      // Aside from the issue of type incompatibility as mentioned above, the
+      // cast can trap if the types *are* compatible but it happens to be the
+      // case at runtime that the value is not of the desired subtype. If we
+      // do not consider such traps possible, we can ignore that. Note, though,
+      // that we cannot do this if the types are incompatible, as then the wasm
+      // would not validate.
+      if (typesCompatible) {
+        Reorderer reorderer(curr->ref, curr->rtt, getFunction(), getModule(), passOptions);
         replaceCurrent(
-          builder.makeSequence(builder.makeDrop(curr->rtt), curr->ref));
+          builder.makeSequence(builder.makeDrop(reorderer.second), reorderer.first));
         return;
       }
     }
@@ -1355,6 +1385,21 @@ struct OptimizeInstructions
         replaceCurrent(as);
         return;
       }
+    }
+  }
+
+  void visitRefTest(RefTest* curr) {
+    // See above in RefCast.
+    bool typesCompatible = HeapType::isSubType(curr->ref->type.getHeapType(),
+                                               curr->rtt->type.getHeapType());
+    if (!typesCompatible) {
+      // This test cannot succeed, and will definitely return 0.
+      Builder builder(*getModule());
+      replaceCurrent(builder.makeBlock({
+        builder.makeDrop(curr->ref),
+        builder.makeDrop(curr->rtt),
+        builder.makeConst(int32_t(0))
+      }));
     }
   }
 

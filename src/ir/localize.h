@@ -22,7 +22,10 @@
 namespace wasm {
 
 // Make an expression available in a local. If already in one, just
-// use that local, otherwise use a new local
+// use that local, otherwise use a new local.
+//
+// Note that if the local is reused, this assumes it is not modified in between
+// the set and the get, which the caller must ensure.
 
 struct Localizer {
   Index index;
