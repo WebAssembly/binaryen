@@ -253,7 +253,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     }
 
     // Note a write to this field of the struct.
-    noteExpression(curr->value, type.getHeapType(), curr->index, functionSetInfos);
+    noteExpression(
+      curr->value, type.getHeapType(), curr->index, functionSetInfos);
   }
 
 private:
@@ -261,7 +262,10 @@ private:
   FunctionStructValuesMap& functionSetInfos;
 
   // Note a value, checking whether it is a constant or not.
-  void noteExpression(Expression* expr, HeapType type, Index index, FunctionStructValuesMap& valuesMap) {
+  void noteExpression(Expression* expr,
+                      HeapType type,
+                      Index index,
+                      FunctionStructValuesMap& valuesMap) {
     expr =
       Properties::getFallthrough(expr, getPassOptions(), getModule()->features);
 
