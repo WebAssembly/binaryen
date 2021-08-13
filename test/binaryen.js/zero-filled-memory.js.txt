@@ -1,0 +1,28 @@
+=== input wast ===
+(module
+ (import "env" "memory" (memory $0 1))
+ (data (i32.const 1024) "\00\00\00\00")
+ (export "memory" (memory $0))
+)
+
+=== unoptimized ===
+(module
+ (import "env" "memory" (memory $0 1))
+ (data (i32.const 1024) "\00\00\00\00")
+ (export "memory" (memory $0))
+)
+
+=== optimized, zeroFilledMemory=false ===
+(module
+ (import "env" "memory" (memory $0 1))
+ (data (i32.const 1024) "\00\00\00\00")
+ (export "memory" (memory $0))
+)
+
+
+=== optimized, zeroFilledMemory=true ===
+(module
+ (import "env" "memory" (memory $0 1))
+ (export "memory" (memory $0))
+)
+
