@@ -34,6 +34,7 @@
 #include <ir/manipulation.h>
 #include <ir/match.h>
 #include <ir/properties.h>
+#include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
 #include <support/threads.h>
@@ -1116,11 +1117,105 @@ struct OptimizeInstructions
     }
   }
 
+  void visitCallRef(CallRef* curr) {
+    if (curr->target->type == Type::unreachable) {
+      // The call_ref is not reached; leave this for DCE.
+      return;
+    }
+
+    if (auto* ref = curr->target->dynCast<RefFunc>()) {
+      // We know the target!
+      replaceCurrent(
+        Builder(*getModule())
+          .makeCall(ref->func, curr->operands, curr->type, curr->isReturn));
+      return;
+    }
+
+    auto features = getModule()->features;
+
+    // It is possible the target is not a function reference, but we can infer
+    // the fallthrough value there. It takes more work to optimize this case,
+    // but it is pretty important to allow a call_ref to become a fast direct
+    // call, so make the effort.
+    if (auto* ref =
+          Properties::getFallthrough(curr->target, getPassOptions(), features)
+            ->dynCast<RefFunc>()) {
+      // Check if the fallthrough make sense. We may have cast it to a different
+      // type, which would be a problem - we'd be replacing a call_ref to one
+      // type with a direct call to a function of another type. That would trap
+      // at runtime; be careful not to emit invalid IR here.
+      if (curr->target->type.getHeapType() != ref->type.getHeapType()) {
+        return;
+      }
+      Builder builder(*getModule());
+      if (curr->operands.empty()) {
+        // No operands, so this is simple and there is nothing to reorder: just
+        // emit:
+        //
+        // (block
+        //  (drop curr->target)
+        //  (call ref.func-from-curr->target)
+        // )
+        replaceCurrent(builder.makeSequence(
+          builder.makeDrop(curr->target),
+          builder.makeCall(ref->func, {}, curr->type, curr->isReturn)));
+        return;
+      }
+
+      // In the presence of operands, we must execute the code in curr->target
+      // after the last operand and before the call happens. Interpose at the
+      // last operand:
+      //
+      // (call ref.func-from-curr->target)
+      //  (operand1)
+      //  (..)
+      //  (operandN-1)
+      //  (block
+      //   (local.set $temp (operandN))
+      //   (drop curr->target)
+      //   (local.get $temp)
+      //  )
+      // )
+      auto* lastOperand = curr->operands.back();
+      auto lastOperandType = lastOperand->type;
+      if (lastOperandType == Type::unreachable) {
+        // The call_ref is not reached; leave this for DCE.
+        return;
+      }
+      if (!TypeUpdating::canHandleAsLocal(lastOperandType)) {
+        // We cannot create a local, so we must give up.
+        return;
+      }
+      Index tempLocal = builder.addVar(
+        getFunction(),
+        TypeUpdating::getValidLocalType(lastOperandType, features));
+      auto* set = builder.makeLocalSet(tempLocal, lastOperand);
+      auto* drop = builder.makeDrop(curr->target);
+      auto* get = TypeUpdating::fixLocalGet(
+        builder.makeLocalGet(tempLocal, lastOperandType), *getModule());
+      curr->operands.back() = builder.makeBlock({set, drop, get});
+      replaceCurrent(builder.makeCall(
+        ref->func, curr->operands, curr->type, curr->isReturn));
+    }
+  }
+
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
     if (areConsecutiveInputsEqual(curr->left, curr->right)) {
       replaceCurrent(
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
+      return;
+    }
+
+    // Canonicalize to the pattern of a null on the right-hand side, if there is
+    // one. This makes pattern matching simpler.
+    if (curr->left->is<RefNull>()) {
+      std::swap(curr->left, curr->right);
+    }
+
+    // RefEq of a value to Null can be replaced with RefIsNull.
+    if (curr->right->is<RefNull>()) {
+      replaceCurrent(Builder(*getModule()).makeRefIs(RefIsNull, curr->left));
     }
   }
 

@@ -351,7 +351,9 @@
   (call $log
    (i32.const 2)
   )
-  (call $a-void-func)
+  (call $log
+   (i32.const 1337)
+  )
   (call $log
    (i32.const 3)
   )

@@ -27,6 +27,7 @@
 #include <ir/local-graph.h>
 #include <ir/utils.h>
 #include <pass.h>
+#include <wasm-builder.h>
 #include <wasm.h>
 
 namespace wasm {
@@ -178,9 +179,35 @@ struct LocalSubtyping : public WalkerPass<PostWalker<LocalSubtyping>> {
         get->type = func->getLocalType(get->index);
       }
       for (auto* set : FindAll<LocalSet>(func->body).list) {
+        auto newType = func->getLocalType(set->index);
         if (set->isTee()) {
-          set->type = func->getLocalType(set->index);
+          set->type = newType;
           set->finalize();
+        }
+
+        // If this set was not processed earlier - that is, if it is in
+        // unreachable code - then it may have an incompatible type. That is,
+        // If we saw a reachable set that writes type A, and this set writes
+        // type B, we may have specialized the local type to A, but the value
+        // of type B in this unreachable set is no longer valid to write to
+        // that local. In such a case we must do additional work.
+        if (!Type::isSubType(set->value->type, newType)) {
+          // The type is incompatible. To fix this, replace
+          //
+          //  (set (bad-value))
+          //
+          // with
+          //
+          //  (set (block
+          //   (drop (bad-value))
+          //   (unreachable)
+          //  ))
+          //
+          // (We cannot just ignore the bad value, as it may contain a break to
+          // a target that is necessary for validation.)
+          Builder builder(*getModule());
+          set->value = builder.makeSequence(builder.makeDrop(set->value),
+                                            builder.makeUnreachable());
         }
       }
 

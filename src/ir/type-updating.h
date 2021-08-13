@@ -317,6 +317,15 @@ bool canHandleAsLocal(Type type);
 // This may also handle other types of nondefaultable locals in the future.
 void handleNonDefaultableLocals(Function* func, Module& wasm);
 
+// Returns the type that a local should be, after handling of non-
+// defaultability.
+Type getValidLocalType(Type type, FeatureSet features);
+
+// Given a local.get, returns a proper replacement for it, taking into account
+// the extra work we need to do to handle non-defaultable values (e.g., add a
+// ref.as_non_null around it, if the local should be non-nullable but is not).
+Expression* fixLocalGet(LocalGet* get, Module& wasm);
+
 } // namespace TypeUpdating
 
 } // namespace wasm

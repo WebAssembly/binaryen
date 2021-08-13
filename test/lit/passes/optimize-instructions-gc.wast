@@ -1591,22 +1591,22 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   (func $hoist-LUB-danger (param $x i32) (result i32)
-   ;; In nominal typing, if we hoist the struct.get out of the if, then the if
-   ;; will have a new type, $A, but $A does not have field "1" which would be an
-   ;; error. We disallow subtyping for this reason.
-   ;;
-   ;; We also disallow subtyping in structural typing, even though atm there
-   ;; might not be a concrete risk there: future instructions might introduce
-   ;; such things, and it reduces the complexity of having differences with
-   ;; nominal typing.
-   (if (result i32)
-    (local.get $x)
-    (struct.get $B 1
-     (ref.null $B)
+    ;; In nominal typing, if we hoist the struct.get out of the if, then the if
+    ;; will have a new type, $A, but $A does not have field "1" which would be an
+    ;; error. We disallow subtyping for this reason.
+    ;;
+    ;; We also disallow subtyping in structural typing, even though atm there
+    ;; might not be a concrete risk there: future instructions might introduce
+    ;; such things, and it reduces the complexity of having differences with
+    ;; nominal typing.
+    (if (result i32)
+      (local.get $x)
+      (struct.get $B 1
+        (ref.null $B)
+      )
+      (struct.get $C 1
+        (ref.null $C)
+      )
     )
-    (struct.get $C 1
-     (ref.null $C)
-    )
-   )
   )
 )
