@@ -1295,24 +1295,19 @@ struct OptimizeInstructions
     if (!typesCompatible) {
       // This cast cannot succeed. It will either trap if the input is not a
       // null, or it will return null if it is.
-      auto ref = Properties::getFallthrough(curr->ref,
-                                            getPassOptions(),
-                                            getModule()->features);
+      auto ref = Properties::getFallthrough(
+        curr->ref, getPassOptions(), getModule()->features);
       if (ref->type.isNonNullable()) {
         // Our type will now be unreachable; update the parents.
         refinalize = true;
-        replaceCurrent(builder.makeBlock({
-          builder.makeDrop(curr->ref),
-          builder.makeDrop(curr->rtt),
-          builder.makeUnreachable()
-        }));
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->rtt),
+                                          builder.makeUnreachable()}));
         return;
       } else if (ref->is<RefNull>()) {
-        replaceCurrent(builder.makeBlock({
-          builder.makeDrop(curr->ref),
-          builder.makeDrop(curr->rtt),
-          builder.makeRefNull(ref->type)
-        }));
+        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                          builder.makeDrop(curr->rtt),
+                                          builder.makeRefNull(ref->type)}));
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime to
@@ -1327,9 +1322,10 @@ struct OptimizeInstructions
       // that we cannot do this if the types are incompatible, as then the wasm
       // would not validate.
       if (typesCompatible) {
-        Reorderer reorderer(curr->ref, curr->rtt, getFunction(), getModule(), passOptions);
-        replaceCurrent(
-          builder.makeSequence(builder.makeDrop(reorderer.second), reorderer.first));
+        Reorderer reorderer(
+          curr->ref, curr->rtt, getFunction(), getModule(), passOptions);
+        replaceCurrent(builder.makeSequence(builder.makeDrop(reorderer.second),
+                                            reorderer.first));
         return;
       }
     }
@@ -1397,11 +1393,9 @@ struct OptimizeInstructions
     if (!typesCompatible) {
       // This test cannot succeed, and will definitely return 0.
       Builder builder(*getModule());
-      replaceCurrent(builder.makeBlock({
-        builder.makeDrop(curr->ref),
-        builder.makeDrop(curr->rtt),
-        builder.makeConst(int32_t(0))
-      }));
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->rtt),
+                                        builder.makeConst(int32_t(0))}));
     }
   }
 

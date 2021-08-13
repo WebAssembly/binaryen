@@ -40,14 +40,16 @@ struct Reorderer {
   Expression* first;
   Expression* second;
 
-  Reorderer(Expression* firstInput, Expression* secondInput, Function* func, Module* wasm, const PassOptions& passOptions) {
+  Reorderer(Expression* firstInput,
+            Expression* secondInput,
+            Function* func,
+            Module* wasm,
+            const PassOptions& passOptions) {
     assert(firstInput->type.isConcrete());
     assert(secondInput->type.isConcrete());
 
-    if (EffectAnalyzer::canReorder(passOptions,
-                                   wasm->features,
-                                   firstInput,
-                                   secondInput)) {
+    if (EffectAnalyzer::canReorder(
+          passOptions, wasm->features, firstInput, secondInput)) {
       first = firstInput;
       second = secondInput;
       return;
@@ -56,10 +58,8 @@ struct Reorderer {
     auto type = firstInput->type;
     auto index = Builder::addVar(func, type);
     Builder builder(*wasm);
-    second = builder.makeSequence(
-      builder.makeLocalSet(index, firstInput),
-      secondInput
-    );
+    second = builder.makeSequence(builder.makeLocalSet(index, firstInput),
+                                  secondInput);
     first = builder.makeLocalGet(index, type);
   }
 };
