@@ -2284,7 +2284,7 @@ BINARYEN_API bool BinaryenGetLowMemoryUnused(void);
 // when optimizing. Applies to all modules, globally.
 BINARYEN_API void BinaryenSetLowMemoryUnused(bool on);
 
-// Gets whether that an imported memory will be zero-initialized speculation.
+// Gets whether to assume that an imported memory is zero-initialized.
 BINARYEN_API bool BinaryenGetZeroFilledMemory(void);
 
 // Enables or disables whether that an imported memory will be
