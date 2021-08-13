@@ -143,9 +143,14 @@
 
  ;; CHECK:      (func $fallthrough-bad-type (result i32)
  ;; CHECK-NEXT:  (call_ref
- ;; CHECK-NEXT:   (ref.cast
- ;; CHECK-NEXT:    (ref.func $return-nothing)
- ;; CHECK-NEXT:    (rtt.canon $none_=>_i32)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (ref.func $return-nothing)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (rtt.canon $none_=>_i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

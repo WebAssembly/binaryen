@@ -238,6 +238,8 @@ struct OptimizeInstructions
       FinalOptimizer optimizer(getPassOptions());
       optimizer.walkFunction(func);
     }
+
+    TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
 
   // Set to true when one of the visitors makes a change (either replacing the

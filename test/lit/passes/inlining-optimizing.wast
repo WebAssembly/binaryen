@@ -4,7 +4,6 @@
 (module
  ;; CHECK:      (type $none_=>_none (func))
  (type $none_=>_none (func))
- ;; CHECK:      (type $none_=>_i32 (func (result i32)))
  (type $none_=>_i32 (func (result i32)))
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (nop)
@@ -15,10 +14,7 @@
  ;; CHECK:      (func $1
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call_ref
- ;; CHECK-NEXT:    (ref.cast
- ;; CHECK-NEXT:     (ref.func $0)
- ;; CHECK-NEXT:     (rtt.canon $none_=>_i32)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
