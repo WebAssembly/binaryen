@@ -1815,8 +1815,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               break;
             case AndInt32:
               ret = ValueBuilder::makeBinary(left, AND, right);
-              // All bitwise operations already implicitly coerced tp integer
-              // so we can skip the explicit coercing in case the result of i32.
+              // All bitwise and shift operations already implicitly coerced
+              // to integer, so we can skip the explicit coercing in case when
+              // output type is i32.
               if (curr->type == Type::i32) {
                 return ret;
               }
