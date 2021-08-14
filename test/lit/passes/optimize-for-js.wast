@@ -3,6 +3,7 @@
 ;; RUN:  | filecheck %s
 
 (module
+ (memory 0)
  ;; CHECK:      (func $is-power-of-2_32 (param $x i32) (result i32)
  ;; CHECK-NEXT:  (i32.and
  ;; CHECK-NEXT:   (i32.eqz
@@ -79,5 +80,62 @@
    (i64.popcnt (local.get $x))
    (i64.const 1)
   )
+ )
+
+ ;; i64.store(ptr, C)   ->   f64.store(ptr, reinterpret<f64>(C))
+
+ ;; CHECK:      (func $store-const-zero (param $ptr i32)
+ ;; CHECK-NEXT:  (f64.store
+ ;; CHECK-NEXT:   (local.get $ptr)
+ ;; CHECK-NEXT:   (f64.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $store-const-zero (param $ptr i32)
+  (i64.store (local.get $ptr) (i64.const 0))
+ )
+ ;; CHECK:      (func $store-const-one (param $ptr i32)
+ ;; CHECK-NEXT:  (f64.store
+ ;; CHECK-NEXT:   (local.get $ptr)
+ ;; CHECK-NEXT:   (f64.const 5e-324)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $store-const-one (param $ptr i32)
+  (i64.store (local.get $ptr) (i64.const 1))
+ )
+ ;; CHECK:      (func $store-const-smin (param $ptr i32)
+ ;; CHECK-NEXT:  (f64.store
+ ;; CHECK-NEXT:   (local.get $ptr)
+ ;; CHECK-NEXT:   (f64.const -0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $store-const-smin (param $ptr i32)
+  (i64.store (local.get $ptr) (i64.const 0x8000000000000000))
+ )
+ ;; CHECK:      (func $store-unsafe-const-1_skip (param $ptr i32)
+ ;; CHECK-NEXT:  (i64.store
+ ;; CHECK-NEXT:   (local.get $ptr)
+ ;; CHECK-NEXT:   (i64.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $store-unsafe-const-1_skip (param $ptr i32)
+  (i64.store (local.get $ptr) (i64.const -1)) ;; will be NaN
+ )
+ ;; CHECK:      (func $store-unsafe-const-2_skip (param $ptr i32)
+ ;; CHECK-NEXT:  (i64.store
+ ;; CHECK-NEXT:   (local.get $ptr)
+ ;; CHECK-NEXT:   (i64.const -2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $store-unsafe-const-2_skip (param $ptr i32)
+  (i64.store (local.get $ptr) (i64.const -2))
+ )
+ ;; CHECK:      (func $store-non-const_skip (param $ptr i32) (param $x i64)
+ ;; CHECK-NEXT:  (i64.store
+ ;; CHECK-NEXT:   (local.get $ptr)
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $store-non-const_skip (param $ptr i32) (param $x i64)
+  (i64.store (local.get $ptr) (local.get $x))
  )
 )
