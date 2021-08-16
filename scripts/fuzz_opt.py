@@ -1039,7 +1039,7 @@ opt_choices = [
     # ["--fpcast-emu"], # removes indirect call failures as it makes them go through regardless of type
     ["--inlining"],
     ["--inlining-optimizing"],
-    ["--flatten", "simplify-locals-notee-nostructure", "--local-cse"],
+    ["--flatten", "--simplify-locals-notee-nostructure", "--local-cse"],
     ["--local-cse"],
     ["--heap2local"],
     ["--remove-unused-names", "--heap2local"],
