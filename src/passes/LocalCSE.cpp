@@ -328,6 +328,7 @@ struct Scanner
     // If the size is at least 3, then if we have two of them we have 6,
     // and so adding one set+one get and removing one of the items itself
     // is not detrimental, and may be beneficial.
+    // TODO: investigate size 2
     if (options.shrinkLevel > 0 && Measurer::measure(curr) >= 3) {
       return true;
     }

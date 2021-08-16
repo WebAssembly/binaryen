@@ -366,12 +366,15 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // instructions. If wasm were to add "get current time" or "get a random number"
 // instructions then those would also be intrinsically nondeterministic.
 //
-//  * The word "can" appears in "can return different results" in the definition
-//    at the top because of NaN nondeterminism, which we ignore here. It is a
-//    valid wasm implementation to have deterministic NaN behavior, and we
-//    optimize under that assumption.
+//  * Note that NaN nondeterminism is ignored here. Technically that allows e.g.
+//    an f32.add to be nondeterministic, but it is a valid wasm implementation
+//    to have deterministic NaN behavior, and we optimize under that assumption.
+//    So NaN nondeterminism does not cause anything to be intrinsically
+//    nondeterministic.
 //  * Note that calls are ignored here. In theory this concept could be defined
-//    either way for them, but it is simpler to ignore them. We only consider
+//    either way for them (that is, we could potentially define them as either
+//    intrinsically nondeterministic, or not, and each could make sense in its
+//    own way). It is simpler to ignore them here, which means we only consider
 //    the behavior of the expression provided here (including its chldren), and
 //    not external code.
 //
