@@ -381,52 +381,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     //       later down, see visitLocalSet.
   }
 
-  void visitBrOn(BrOn* curr) {
-    // Ignore unreachable BrOns which we cannot improve anyhow.
-    if (curr->type == Type::unreachable) {
-      return;
-    }
-
-    // First, check for a possible null which would prevent all other
-    // optimizations.
-    // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
-    // input is (ref null func) with br_on_non_null (as only the null check
-    // would be needed).
-    auto refType = curr->ref->type;
-    if (refType.isNullable()) {
-      return;
-    }
-
-    if (curr->op == BrOnNull) {
-      // This cannot be null, so the br is never taken, and the non-null value
-      // flows through.
-      replaceCurrent(curr->ref);
-      anotherCycle = true;
-      return;
-    }
-    if (curr->op == BrOnNonNull) {
-      // This cannot be null, so the br is always taken.
-      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
-      anotherCycle = true;
-      return;
-    }
-
-    // Check if the type is the kind we are checking for.
-    auto result = GCTypeUtils::evaluateKindCheck(curr);
-
-    if (result == GCTypeUtils::Success) {
-      // The type is what we are looking for, so we can switch from BrOn to a
-      // simple br which is always taken.
-      replaceCurrent(Builder(*getModule()).makeBreak(curr->name, curr->ref));
-      anotherCycle = true;
-    } else if (result == GCTypeUtils::Failure) {
-      // The type is not what we are looking for, so the branch is never taken,
-      // and the value just flows through.
-      replaceCurrent(curr->ref);
-      anotherCycle = true;
-    }
-  }
-
   // override scan to add a pre and a post check task to all nodes
   static void scan(RemoveUnusedBrs* self, Expression** currp) {
     self->pushTask(visitAny, currp);
@@ -688,6 +642,77 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     return false;
   }
 
+  // GC-specific optimizations. These are split out from the main code to keep
+  // things as simple as possible.
+  bool optimizeGC(Function* func) {
+    if (!getModule()->features.hasGC()) {
+      return false;
+    }
+
+    struct Optimizer : public PostWalker<Optimizer> {
+      bool worked = false;
+
+      void visitBrOn(BrOn* curr) {
+        // Ignore unreachable BrOns which we cannot improve anyhow.
+        if (curr->type == Type::unreachable) {
+          return;
+        }
+
+        // First, check for a possible null which would prevent all other
+        // optimizations.
+        // TODO: Look into using BrOnNonNull here, to replace a br_on_func whose
+        // input is (ref null func) with br_on_non_null (as only the null check
+        // would be needed).
+        auto refType = curr->ref->type;
+        if (refType.isNullable()) {
+          return;
+        }
+
+        if (curr->op == BrOnNull) {
+          // This cannot be null, so the br is never taken, and the non-null
+          // value flows through.
+          replaceCurrent(curr->ref);
+          worked = true;
+          return;
+        }
+        if (curr->op == BrOnNonNull) {
+          // This cannot be null, so the br is always taken.
+          replaceCurrent(
+            Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          worked = true;
+          return;
+        }
+
+        // Check if the type is the kind we are checking for.
+        auto result = GCTypeUtils::evaluateKindCheck(curr);
+
+        if (result == GCTypeUtils::Success) {
+          // The type is what we are looking for, so we can switch from BrOn to
+          // a simple br which is always taken.
+          replaceCurrent(
+            Builder(*getModule()).makeBreak(curr->name, curr->ref));
+          worked = true;
+        } else if (result == GCTypeUtils::Failure) {
+          // The type is not what we are looking for, so the branch is never
+          // taken, and the value just flows through.
+          replaceCurrent(curr->ref);
+          worked = true;
+        }
+      }
+    } optimizer;
+
+    optimizer.setModule(getModule());
+    optimizer.doWalkFunction(func);
+
+    // If we removed any BrOn instructions, that might affect the reachability
+    // of the things they used to break to, so update types.
+    if (optimizer.worked) {
+      ReFinalize().walkFunctionInModule(func, getModule());
+      return true;
+    }
+    return false;
+  }
+
   void doWalkFunction(Function* func) {
     // multiple cycles may be needed
     do {
@@ -720,8 +745,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       if (anotherCycle) {
         ReFinalize().walkFunctionInModule(func, getModule());
       }
-      // sink blocks
       if (sinkBlocks(func)) {
+        anotherCycle = true;
+      }
+      if (optimizeGC(func)) {
         anotherCycle = true;
       }
     } while (anotherCycle);

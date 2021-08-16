@@ -3303,6 +3303,16 @@ Module['setLowMemoryUnused'] = function(on) {
   Module['_BinaryenSetLowMemoryUnused'](on);
 };
 
+// Gets whether that an imported memory will be zero-initialized speculation.
+Module['getZeroFilledMemory'] = function() {
+  return Boolean(Module['_BinaryenGetZeroFilledMemory']());
+};
+
+// Enables or disables whether that an imported memory will be
+// zero-initialized speculation.
+Module['setZeroFilledMemory'] = function(on) {
+  Module['_BinaryenSetZeroFilledMemory'](on);
+};
 // Gets whether fast math optimizations are enabled, ignoring for example
 // corner cases of floating-point math like NaN changes.
 Module['getFastMath'] = function() {

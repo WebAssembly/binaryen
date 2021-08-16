@@ -799,8 +799,8 @@ public:
 
   ArenaVector<Name> targets;
   Name default_;
-  Expression* condition = nullptr;
   Expression* value = nullptr;
+  Expression* condition = nullptr;
 
   void finalize();
 };
@@ -876,7 +876,7 @@ public:
   Load(MixedArena& allocator) {}
 
   uint8_t bytes;
-  bool signed_;
+  bool signed_ = false;
   Address offset;
   Address align;
   bool isAtomic;
@@ -1335,7 +1335,7 @@ public:
   I31Get(MixedArena& allocator) {}
 
   Expression* i31;
-  bool signed_;
+  bool signed_ = false;
 
   void finalize();
 };
