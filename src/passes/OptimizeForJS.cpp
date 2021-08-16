@@ -67,8 +67,9 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
   }
 
   void visitStore(Store* curr) {
-    // i64.store(x, C)   ==>   f64.store(x, reinterpret<f64>(C)),
-    //    if reinterpret<f64>(C) != NaN
+    // i64.store(x, C)   ==>   f64.store(x, C'),
+    //    where C' <- reinterpret<f64>(C)
+    //    and C' != NaN && !is_subnormal(C')
     //
     // Regarding 0x8000000000000000. Closure Compiler preserve -0.0
     // so it should be safe but make sure your minifactor does not
@@ -76,7 +77,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     if (curr->valueType == Type::i64 && curr->bytes == 8) {
       if (auto* c = curr->value->dynCast<Const>()) {
         double value = c->value.reinterpretf64();
-        if (!std::isnan(value)) {
+        if (!std::isnan(value) && std::fpclassify(value) != FP_SUBNORMAL) {
           curr->valueType = Type::f64;
           c->set(Literal(value));
         }
