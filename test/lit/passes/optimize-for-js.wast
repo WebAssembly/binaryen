@@ -169,4 +169,13 @@
  (func $store-non-const_skip (param $ptr i32) (param $x i64)
   (i64.store (local.get $ptr) (local.get $x))
  )
+ ;; CHECK:      (func $store-non-8-bytes_skip (param $ptr i32)
+ ;; CHECK-NEXT:  (i64.store32
+ ;; CHECK-NEXT:   (local.get $ptr)
+ ;; CHECK-NEXT:   (i64.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $store-non-8-bytes_skip (param $ptr i32)
+  (i64.store32 (local.get $ptr) (i64.const 2))
+ )
 )
