@@ -73,7 +73,7 @@ struct OptimizeForJSPass : public WalkerPass<PostWalker<OptimizeForJSPass>> {
     // Regarding 0x8000000000000000. Closure Compiler preserve -0.0
     // so it should be safe but make sure your minifactor does not
     // turn -0.0 into +0.0.
-    if (curr->valueType == Type::i64) {
+    if (curr->valueType == Type::i64 && curr->bytes == 8) {
       if (auto* c = curr->value->dynCast<Const>()) {
         double value = c->value.reinterpretf64();
         if (!std::isnan(value)) {
