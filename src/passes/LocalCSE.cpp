@@ -77,14 +77,12 @@
 //  6. Run through the block again, adding a tee and replacing the second eqz,
 //     resulting in:
 //
-//   (something
-//     (local.tee $temp
-//       (i32.eqz
-//         (A)
-//       )
+//   (local.tee $temp
+//     (i32.eqz
+//       (A)
 //     )
-//     (local.get $temp)
 //   )
+//   (local.get $temp)
 //
 // Note how the scanning of children avoids us adding a local for A: when we
 // reuse the parent, we don't need to also try to reuse the child.
