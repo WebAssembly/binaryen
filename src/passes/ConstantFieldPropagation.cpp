@@ -271,6 +271,22 @@ private:
 
     // Ignore copies: when we set a value to a field from that same field, no
     // new values are actually introduced.
+    //
+    // Note that this is only sound by virtue of the overall analysis in this
+    // pass: the object read from may be of a subclass, and so subclass values
+    // may be actually written here. But as our analysis considers subclass
+    // values too (as it must) then that is safe. That is, if a subclass of $A
+    // adds a value X that can be loaded from (struct.get $A $b), then consider
+    // a copy
+    //
+    //   (struct.set $A $b (struct.get $A $b))
+    //
+    // Our analysis will figure out that X can appear in that copy's get, and so
+    // the copy itself does not add any information about values.
+    //
+    // TODO: This may be extensible to a copy from a subtype by the above
+    //       analysis (but this is already entering the realm of diminishing
+    //       returns).
     if (auto* get = expr->dynCast<StructGet>()) {
       if (get->index == index && get->ref->type != Type::unreachable &&
           get->ref->type.getHeapType() == type) {
