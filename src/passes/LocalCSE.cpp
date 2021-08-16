@@ -379,6 +379,8 @@ struct Checker
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
       EffectAnalyzer effects(options, getModule()->features);
+      // We only need to visit this node itself, as we have already visited its
+      // children by the time we get here.
       effects.visit(curr);
 
       std::vector<Expression*> invalidated;
