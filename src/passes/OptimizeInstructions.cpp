@@ -1483,17 +1483,10 @@ private:
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
-    // Reference equality also needs to check for allocation, which is *not* a
-    // side effect, but which results in different references:
-    // repeatedly calling (struct.new $foo)'s output will return different
-    // results (while i32.const etc. of course does not).
-    // Note that allocations may have appeared in the original inputs to this
-    // function, and skipped when we focused on what falls through; since there
-    // are no side effects, any allocations there cannot reach the fallthrough.
-    if (left->type.isRef()) {
-      if (FindAll<StructNew>(left).has() || FindAll<ArrayNew>(left).has()) {
-        return false;
-      }
+    // To be equal, they must also be know to return the same result
+    // deterministically.
+    if (!Properties::isIntrinsicallyNondeterministic(left)) {
+      return false;
     }
     return true;
   }
