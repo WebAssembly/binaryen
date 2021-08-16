@@ -1485,7 +1485,7 @@ private:
     }
     // To be equal, they must also be know to return the same result
     // deterministically.
-    if (!Properties::isIntrinsicallyNondeterministic(left)) {
+    if (Properties::isIntrinsicallyNondeterministic(left)) {
       return false;
     }
     return true;
