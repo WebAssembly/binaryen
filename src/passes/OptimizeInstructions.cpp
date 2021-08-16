@@ -3127,21 +3127,44 @@ private:
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
             // ifTrue and ifFalse's children will become the direct children of
-            // curr, and so there must be an LUB for curr to have a proper new
+            // curr, and so they must be compatible to allow for a proper new
             // type after the transformation.
             //
-            // An example where that does not happen is this:
+            // At minimum an LUB is required, as shown here:
             //
             //  (if
             //    (condition)
             //    (drop (i32.const 1))
             //    (drop (f64.const 2.0))
             //  )
+            //
+            // However, that may not be enough, as with nominal types we can
+            // have things like this:
+            //
+            //  (if
+            //    (condition)
+            //    (struct.get $A 1 (..))
+            //    (struct.get $B 1 (..))
+            //  )
+            //
+            // It is possible that the LUB of $A and $B does not contain field
+            // "1". With structural types this specific problem is not possible,
+            // and it appears to be the case that with the GC MVP there is no
+            // instruction that poses a problem, but in principle it can happen
+            // there as well, if we add an instruction that returns the number
+            // of fields in a type, for example. For that reason, and to avoid
+            // a difference between structural and nominal typing here, disallow
+            // subtyping in both. (Note: In that example, the problem only
+            // happens because the type is not part of the struct.get - we infer
+            // it from the reference. That is why after hoisting the struct.get
+            // out, and computing a new type for the if that is now the child of
+            // the single struct.get, we get a struct.get of a supertype. So in
+            // principle we could fix this by modifying the IR as well, but the
+            // problem is more general, so avoid that.)
             ChildIterator ifFalseChildren(curr->ifFalse);
             auto* ifTrueChild = *ifTrueChildren.begin();
             auto* ifFalseChild = *ifFalseChildren.begin();
-            bool validTypes =
-              Type::hasLeastUpperBound(ifTrueChild->type, ifFalseChild->type);
+            bool validTypes = ifTrueChild->type == ifFalseChild->type;
 
             // In addition, after we move code outside of curr then we need to
             // not change unreachability - if we did, we'd need to propagate

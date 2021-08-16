@@ -18,9 +18,20 @@
   ;; NOMNL:      (type $empty (struct ))
   (type $empty (struct))
 
+  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
+  ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
+  (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
+
+  ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
+  ;; NOMNL:      (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
+  (type $C (struct (field i32) (field i32) (field f64)) (extends $A))
+
   ;; CHECK:      (type $array (array (mut i8)))
   ;; NOMNL:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
+
+  ;; NOMNL:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
 
   ;; CHECK:      (import "env" "get-i32" (func $get-i32 (result i32)))
   ;; NOMNL:      (import "env" "get-i32" (func $get-i32 (result i32)))
@@ -1609,6 +1620,48 @@
       (ref.eq
         (ref.null eq)
         (ref.null eq)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $hoist-LUB-danger (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (if (result i32)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (ref.null $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (struct.get $C 1
+  ;; CHECK-NEXT:    (ref.null $C)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $hoist-LUB-danger (param $x i32) (result i32)
+  ;; NOMNL-NEXT:  (if (result i32)
+  ;; NOMNL-NEXT:   (local.get $x)
+  ;; NOMNL-NEXT:   (struct.get $B 1
+  ;; NOMNL-NEXT:    (ref.null $B)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:   (struct.get $C 1
+  ;; NOMNL-NEXT:    (ref.null $C)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $hoist-LUB-danger (param $x i32) (result i32)
+    ;; In nominal typing, if we hoist the struct.get out of the if, then the if
+    ;; will have a new type, $A, but $A does not have field "1" which would be an
+    ;; error. We disallow subtyping for this reason.
+    ;;
+    ;; We also disallow subtyping in structural typing, even though atm there
+    ;; might not be a concrete risk there: future instructions might introduce
+    ;; such things, and it reduces the complexity of having differences with
+    ;; nominal typing.
+    (if (result i32)
+      (local.get $x)
+      (struct.get $B 1
+        (ref.null $B)
+      )
+      (struct.get $C 1
+        (ref.null $C)
       )
     )
   )
