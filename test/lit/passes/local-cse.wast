@@ -420,7 +420,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $global
-    ;; We should optimize redundantglobal.get operations.
+    ;; We should optimize redundant global.get operations.
     (drop (global.get $glob))
     (drop (global.get $glob))
     ;; We can do it past a write to another global
