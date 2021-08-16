@@ -1470,22 +1470,23 @@ private:
     // First, check for side effects. If there are any, then we can't even
     // assume things like local.get's of the same index being identical.
     auto passOptions = getPassOptions();
-    if (EffectAnalyzer(passOptions, getModule()->features, left)
+    auto features = getModule()->features;
+    if (EffectAnalyzer(passOptions, features, left)
           .hasSideEffects() ||
-        EffectAnalyzer(passOptions, getModule()->features, right)
+        EffectAnalyzer(passOptions, features, right)
           .hasSideEffects()) {
       return false;
     }
     // Ignore extraneous things and compare them structurally.
-    left = Properties::getFallthrough(left, passOptions, getModule()->features);
+    left = Properties::getFallthrough(left, passOptions, features);
     right =
-      Properties::getFallthrough(right, passOptions, getModule()->features);
+      Properties::getFallthrough(right, passOptions, features);
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
     // To be equal, they must also be know to return the same result
     // deterministically.
-    if (Properties::isIntrinsicallyNondeterministic(left)) {
+    if (Properties::isIntrinsicallyNondeterministic(left, features)) {
       return false;
     }
     return true;
