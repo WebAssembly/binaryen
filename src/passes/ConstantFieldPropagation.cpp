@@ -238,11 +238,10 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     auto& values = functionNewInfos[getFunction()][heapType];
     auto& fields = heapType.getStruct().fields;
     for (Index i = 0; i < fields.size(); i++) {
-      auto& fieldValues = values[i];
       if (curr->isWithDefault()) {
-        fieldValues.note(Literal::makeZero(fields[i].type));
+        values[i].note(Literal::makeZero(fields[i].type));
       } else {
-        noteExpression(curr->operands[i], fieldValues);
+        noteExpression(curr->operands[i], heapType, i, functionNewInfos);
       }
     }
   }
@@ -254,9 +253,8 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     }
 
     // Note a write to this field of the struct.
-    auto heapType = type.getHeapType();
-    auto& values = functionSetInfos[getFunction()][heapType];
-    noteExpression(curr->value, values[curr->index]);
+    noteExpression(
+      curr->value, type.getHeapType(), curr->index, functionSetInfos);
   }
 
 private:
@@ -264,9 +262,39 @@ private:
   FunctionStructValuesMap& functionSetInfos;
 
   // Note a value, checking whether it is a constant or not.
-  void noteExpression(Expression* expr, PossibleConstantValues& info) {
+  void noteExpression(Expression* expr,
+                      HeapType type,
+                      Index index,
+                      FunctionStructValuesMap& valuesMap) {
     expr =
       Properties::getFallthrough(expr, getPassOptions(), getModule()->features);
+
+    // Ignore copies: when we set a value to a field from that same field, no
+    // new values are actually introduced.
+    //
+    // Note that this is only sound by virtue of the overall analysis in this
+    // pass: the object read from may be of a subclass, and so subclass values
+    // may be actually written here. But as our analysis considers subclass
+    // values too (as it must) then that is safe. That is, if a subclass of $A
+    // adds a value X that can be loaded from (struct.get $A $b), then consider
+    // a copy
+    //
+    //   (struct.set $A $b (struct.get $A $b))
+    //
+    // Our analysis will figure out that X can appear in that copy's get, and so
+    // the copy itself does not add any information about values.
+    //
+    // TODO: This may be extensible to a copy from a subtype by the above
+    //       analysis (but this is already entering the realm of diminishing
+    //       returns).
+    if (auto* get = expr->dynCast<StructGet>()) {
+      if (get->index == index && get->ref->type != Type::unreachable &&
+          get->ref->type.getHeapType() == type) {
+        return;
+      }
+    }
+
+    auto& info = valuesMap[getFunction()][type][index];
     if (!Properties::isConstantExpression(expr)) {
       info.noteUnknown();
     } else {
