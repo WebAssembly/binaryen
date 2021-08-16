@@ -1471,16 +1471,13 @@ private:
     // assume things like local.get's of the same index being identical.
     auto passOptions = getPassOptions();
     auto features = getModule()->features;
-    if (EffectAnalyzer(passOptions, features, left)
-          .hasSideEffects() ||
-        EffectAnalyzer(passOptions, features, right)
-          .hasSideEffects()) {
+    if (EffectAnalyzer(passOptions, features, left).hasSideEffects() ||
+        EffectAnalyzer(passOptions, features, right).hasSideEffects()) {
       return false;
     }
     // Ignore extraneous things and compare them structurally.
     left = Properties::getFallthrough(left, passOptions, features);
-    right =
-      Properties::getFallthrough(right, passOptions, features);
+    right = Properties::getFallthrough(right, passOptions, features);
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
