@@ -17,14 +17,13 @@
 
   ;; CHECK:      (func $basics (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $basics (export "localcse") (param $x i32) ($param $y i32) (result i32) ;; -O3 does localcse
@@ -41,9 +40,11 @@
   ;; CHECK:      (func $8 (; has Stack IR ;) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (result i32)
   ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (i32.add
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:    (local.tee $1
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (i32.const 4)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.and
@@ -55,10 +56,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (i32.add
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:     (i32.const 4)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.or
   ;; CHECK-NEXT:    (i32.load
