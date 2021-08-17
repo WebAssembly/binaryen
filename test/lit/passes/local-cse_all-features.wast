@@ -60,17 +60,15 @@
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
+  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
+
   ;; CHECK:      (type $B (array (mut i32)))
   (type $B (array (mut i32)))
 
 
-  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
-
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (type $ref?|$B|_ref|$A|_=>_none (func (param (ref null $B) (ref $A))))
 
   ;; CHECK:      (func $struct-gets-nullable (param $ref (ref null $A))
   ;; CHECK-NEXT:  (local $1 i32)
