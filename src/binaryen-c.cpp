@@ -4309,6 +4309,10 @@ BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::ImplicitTrap);
 }
+BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::TrapsNeverHappen);
+}
 BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::IsAtomic);

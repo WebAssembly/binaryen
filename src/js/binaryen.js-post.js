@@ -548,6 +548,7 @@ function initializeConstants() {
     'ReadsMemory',
     'WritesMemory',
     'ImplicitTrap',
+    'TrapsNeverHappen',
     'IsAtomic',
     'Throws',
     'DanglingPop',

@@ -256,6 +256,7 @@ public:
     writesHeap = writesHeap || other.writesHeap;
     trap = trap || other.trap;
     implicitTrap = implicitTrap || other.implicitTrap;
+    trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
     isAtomic = isAtomic || other.isAtomic;
     throws = throws || other.throws;
     danglingPop = danglingPop || other.danglingPop;
@@ -684,10 +685,11 @@ public:
     ReadsMemory = 1 << 6,
     WritesMemory = 1 << 7,
     ImplicitTrap = 1 << 8,
-    IsAtomic = 1 << 9,
-    Throws = 1 << 10,
-    DanglingPop = 1 << 11,
-    Any = (1 << 12) - 1
+    TrapsNeverHappen = 1 << 9,
+    IsAtomic = 1 << 10,
+    Throws = 1 << 11,
+    DanglingPop = 1 << 12,
+    Any = (1 << 13) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -717,6 +719,9 @@ public:
     }
     if (implicitTrap) {
       effects |= SideEffects::ImplicitTrap;
+    }
+    if (trapsNeverHappen) {
+      effects |= SideEffects::TrapsNeverHappen;
     }
     if (isAtomic) {
       effects |= SideEffects::IsAtomic;

@@ -8,6 +8,7 @@ console.log("SideEffects.WritesGlobal=" + binaryen.SideEffects.WritesGlobal);
 console.log("SideEffects.ReadsMemory=" + binaryen.SideEffects.ReadsMemory);
 console.log("SideEffects.WritesMemory=" + binaryen.SideEffects.WritesMemory);
 console.log("SideEffects.ImplicitTrap=" + binaryen.SideEffects.ImplicitTrap);
+console.log("SideEffects.TrapsNeverHappen=" + binaryen.SideEffects.TrapsNeverHappen);
 console.log("SideEffects.IsAtomic=" + binaryen.SideEffects.IsAtomic);
 console.log("SideEffects.Throws=" + binaryen.SideEffects.Throws);
 console.log("SideEffects.DanglingPop=" + binaryen.SideEffects.DanglingPop);
