@@ -98,6 +98,7 @@ struct PassOptions {
   // Tweak thresholds for the Inlining pass.
   InliningOptions inlining;
   // Optimize assuming things like div by 0, bad load/store, will not trap.
+  // This is deprecated in favor of trapsNeverHappen.
   bool ignoreImplicitTraps = false;
   // Optimize assuming a trap will never happen at runtime. This is similar to
   // ignoreImplicitTraps, but different:
