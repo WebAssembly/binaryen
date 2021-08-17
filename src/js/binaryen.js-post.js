@@ -548,10 +548,10 @@ function initializeConstants() {
     'ReadsMemory',
     'WritesMemory',
     'ImplicitTrap',
-    'TrapsNeverHappen',
     'IsAtomic',
     'Throws',
     'DanglingPop',
+    'TrapsNeverHappen',
     'Any'
   ].forEach(name => {
     Module['SideEffects'][name] = Module['_BinaryenSideEffect' + name]();

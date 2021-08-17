@@ -685,10 +685,10 @@ public:
     ReadsMemory = 1 << 6,
     WritesMemory = 1 << 7,
     ImplicitTrap = 1 << 8,
-    TrapsNeverHappen = 1 << 9,
-    IsAtomic = 1 << 10,
-    Throws = 1 << 11,
-    DanglingPop = 1 << 12,
+    IsAtomic = 1 << 9,
+    Throws = 1 << 10,
+    DanglingPop = 1 << 11,
+    TrapsNeverHappen = 1 << 12,
     Any = (1 << 13) - 1
   };
   uint32_t getSideEffects() const {
