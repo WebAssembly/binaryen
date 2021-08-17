@@ -65,7 +65,47 @@
   ;; CHECK:      (type $B (array (mut i32)))
   (type $B (array (mut i32)))
 
+
+  ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
+
   ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $struct-gets-nullable (param $ref (ref null $A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-gets-nullable (param $ref (ref null $A))
+    ;; Repeated loads from a struct can be optimized, even with a nullable
+    ;; reference: if we trap, it does not matter that we replaced the later
+    ;; expressions).
+    (drop
+      (struct.get $A 0
+        (local.get $ref)
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (local.get $ref)
+      )
+    )
+    (drop
+      (struct.get $A 0
+        (local.get $ref)
+      )
+    )
+  )
 
   ;; CHECK:      (func $struct-gets (param $ref (ref $A))
   ;; CHECK-NEXT:  (local $1 i32)
@@ -86,8 +126,8 @@
   (func $struct-gets (param $ref (ref $A))
     ;; Repeated loads from a struct can be optimized.
     ;;
-    ;; Note that these struct.gets cannot trap as the reference is non-nullable,
-    ;; so there are no side effects here, and we can optimize.
+    ;; A potential trap would not stop us (see previous testcase), but here
+    ;; there is also no trap possible anyhow, and we should optimize.
     (drop
       (struct.get $A 0
         (local.get $ref)
