@@ -128,8 +128,8 @@
   (func $struct-gets (param $ref (ref $A))
     ;; Repeated loads from a struct can be optimized.
     ;;
-    ;; Note that these struct.gets cannot trap as the reference is non-nullable,
-    ;; so this is "easier" than the previous testcase.
+    ;; A potential trap would not stop us (see previous testcase), but here
+    ;; there is also no trap possible anyhow, and we should optimize.
     (drop
       (struct.get $A 0
         (local.get $ref)
