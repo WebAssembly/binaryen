@@ -1201,7 +1201,7 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
-    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
+    if (areConsecutiveInputsEqualAndRemovable(curr->left, curr->right)) {
       replaceCurrent(
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
       return;
@@ -1270,7 +1270,7 @@ struct OptimizeInstructions
 
     auto passOptions = getPassOptions();
 
-    if (passOptions.ignoreImplicitTraps) {
+    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
       // A ref.cast traps when the RTTs do not line up, which can be of one of
       // two sorts of issues:
       //  1. The value being cast is not even a subtype of the cast type. In
@@ -1281,7 +1281,7 @@ struct OptimizeInstructions
       //     fit. That indicates a difference between RTT subtyping and static
       //     subtyping. That is, the type may be right but the chain of rtt.subs
       //     is not.
-      // If we ignore implicit traps then we would like to assume that neither
+      // If we ignore a possible trap then we would like to assume that neither
       // of those two situations can happen. However, we still cannot do
       // anything if point 1 is a problem, that is, if the value is not a
       // subtype of the cast type, as we can't remove the cast in that case -
@@ -1466,15 +1466,23 @@ private:
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
-  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+  //
+  // This also checks that the inputs are removable.
+  bool areConsecutiveInputsEqualAndRemovable(Expression* left,
+                                             Expression* right) {
     // First, check for side effects. If there are any, then we can't even
-    // assume things like local.get's of the same index being identical.
+    // assume things like local.get's of the same index being identical. (It is
+    // also ok to have side effects here, if we can remove them, as we are also
+    // checking if we can remove the two inputs anyhow.)
     auto passOptions = getPassOptions();
     auto features = getModule()->features;
-    if (EffectAnalyzer(passOptions, features, left).hasSideEffects() ||
-        EffectAnalyzer(passOptions, features, right).hasSideEffects()) {
+    if (EffectAnalyzer(passOptions, features, left)
+          .hasUnremovableSideEffects() ||
+        EffectAnalyzer(passOptions, features, right)
+          .hasUnremovableSideEffects()) {
       return false;
     }
+
     // Ignore extraneous things and compare them structurally.
     left = Properties::getFallthrough(left, passOptions, features);
     right = Properties::getFallthrough(right, passOptions, features);
@@ -2717,7 +2725,7 @@ private:
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
     PassOptions options = getPassOptions();
 
-    if (options.ignoreImplicitTraps) {
+    if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
       if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
         // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
         Builder builder(*getModule());
@@ -2734,7 +2742,7 @@ private:
 
       switch (bytes) {
         case 0: {
-          if (options.ignoreImplicitTraps) {
+          if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
             // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
             return builder.makeBlock({builder.makeDrop(memCopy->dest),
                                       builder.makeDrop(memCopy->source)});

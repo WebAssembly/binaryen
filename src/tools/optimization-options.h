@@ -179,6 +179,14 @@ struct OptimizationOptions : public ToolOptions {
            [this](Options*, const std::string&) {
              passOptions.ignoreImplicitTraps = true;
            })
+      .add("--traps-never-happen",
+           "-tnh",
+           "Optimize under the helpful assumption that no trap is reached at "
+           "runtime (from load, div/mod, etc.)",
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             passOptions.trapsNeverHappen = true;
+           })
       .add("--low-memory-unused",
            "-lmu",
            "Optimize under the helpful assumption that the low 1K of memory is "

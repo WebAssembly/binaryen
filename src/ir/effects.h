@@ -30,6 +30,7 @@ public:
                  FeatureSet features,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      trapsNeverHappen(passOptions.trapsNeverHappen),
       debugInfo(passOptions.debugInfo), features(features) {
     if (ast) {
       walk(ast);
@@ -37,6 +38,7 @@ public:
   }
 
   bool ignoreImplicitTraps;
+  bool trapsNeverHappen;
   bool debugInfo;
   FeatureSet features;
 
@@ -143,10 +145,37 @@ public:
     return globalsRead.size() || readsMemory || readsHeap || isAtomic || calls;
   }
 
-  bool hasSideEffects() const {
+  bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
-           trap || throws || transfersControlFlow();
+           throws || transfersControlFlow();
   }
+
+  bool hasSideEffects() const { return trap || hasNonTrapSideEffects(); }
+
+  // Check if there are side effects, and they are of a kind that cannot be
+  // removed by optimization passes.
+  //
+  // The difference between this and hasSideEffects is subtle, and only related
+  // to trapsNeverHappen - if trapsNeverHappen then any trap we see is removable
+  // by optimizations. In general, you should call hasSideEffects, and only call
+  // this method if you are certain that it is a place that would not perform an
+  // unsafe transformation with a trap. Specifically, if a pass calls this
+  // and gets the result that there are no unremovable side effects, then it
+  // must either
+  //
+  //  1. Remove any side effects present, if any, so they no longer exists.
+  //  2. Keep the code exactly where it is.
+  //
+  // If instead of 1&2 a pass kept the side effect and also reordered the code
+  // with other things, then that could be bad, as the side effect might have
+  // been behind a condition that avoids it occurring.
+  //
+  // TODO: Go through the optimizer and use this in all places that do not move
+  //       code around.
+  bool hasUnremovableSideEffects() const {
+    return hasNonTrapSideEffects() || (trap && !trapsNeverHappen);
+  }
+
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
            accessesGlobal();
