@@ -201,6 +201,55 @@
       )
     )
   )
+
+  ;; CHECK:      (func $structs-and-arrays-do-not-alias (param $array (ref null $B)) (param $struct (ref $A))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (array.set $B
+  ;; CHECK-NEXT:   (local.get $array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $B
+  ;; CHECK-NEXT:   (local.get $array)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $B
+  ;; CHECK-NEXT:   (local.get $array)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $structs-and-arrays-do-not-alias (param $array (ref null $B)) (param $struct (ref $A))
+    ;; ArraySets to consecutive elements, using some fixed StructGet value. This
+    ;; common pattern in j2cl can be optimized, as structs and arrays do not
+    ;; alias.
+    (array.set $B
+      (local.get $array)
+      (i32.const 0)
+      (struct.get $A 0
+        (local.get $struct)
+      )
+    )
+    (array.set $B
+      (local.get $array)
+      (i32.const 1)
+      (struct.get $A 0
+        (local.get $struct)
+      )
+    )
+    (array.set $B
+      (local.get $array)
+      (i32.const 2)
+      (struct.get $A 0
+        (local.get $struct)
+      )
+    )
+  )
 )
 
 (module
