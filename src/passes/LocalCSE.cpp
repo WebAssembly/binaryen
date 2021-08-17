@@ -104,7 +104,8 @@
 //
 // The innermost child is different, so the trees are not identical. However,
 // running flatten before running this pass would allow those to be optimized as
-// well.
+// well (we would also need to simplify locals somewhat to allow the locals to
+// be identified as identical, see pass.cpp).
 //
 // TODO: Global, inter-block gvn etc. However, note that atm the cost of our
 //       adding new locals here is low because their lifetimes are all within a
