@@ -1475,32 +1475,24 @@ private:
     // also ok to have side effects here, if we can remove them, as we are also
     // checking if we can remove the two inputs anyhow.)
     auto passOptions = getPassOptions();
-    if (EffectAnalyzer(passOptions, getModule()->features, left)
+    auto features = getModule()->features;
+    if (EffectAnalyzer(passOptions, features, left)
           .hasUnremovableSideEffects() ||
-        EffectAnalyzer(passOptions, getModule()->features, right)
+        EffectAnalyzer(passOptions, features, right)
           .hasUnremovableSideEffects()) {
       return false;
     }
 
     // Ignore extraneous things and compare them structurally.
-    left = Properties::getFallthrough(left, passOptions, getModule()->features);
-    right =
-      Properties::getFallthrough(right, passOptions, getModule()->features);
+    left = Properties::getFallthrough(left, passOptions, features);
+    right = Properties::getFallthrough(right, passOptions, features);
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
-
-    // Reference equality also needs to check for allocation, which is *not* a
-    // side effect, but which results in different references:
-    // repeatedly calling (struct.new $foo)'s output will return different
-    // results (while i32.const etc. of course does not).
-    // Note that allocations may have appeared in the original inputs to this
-    // function, and skipped when we focused on what falls through; since there
-    // are no side effects, any allocations there cannot reach the fallthrough.
-    if (left->type.isRef()) {
-      if (FindAll<StructNew>(left).has() || FindAll<ArrayNew>(left).has()) {
-        return false;
-      }
+    // To be equal, they must also be known to return the same result
+    // deterministically.
+    if (Properties::isIntrinsicallyNondeterministic(left, features)) {
+      return false;
     }
     return true;
   }

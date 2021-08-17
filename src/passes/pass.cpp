@@ -423,7 +423,13 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // that depend on flat IR
   if (options.optimizeLevel >= 4) {
     addIfNoDWARFIssues("flatten");
+    // LocalCSE is particularly useful after flatten (see comment in the pass
+    // itself), but we must simplify locals a little first (as flatten adds many
+    // new and redundant ones, which make things seem different if we do not
+    // run some amount of simplify-locals first).
+    addIfNoDWARFIssues("simplify-locals-notee-nostructure");
     addIfNoDWARFIssues("local-cse");
+    // TODO: add rereloop etc. here
   }
   addIfNoDWARFIssues("dce");
   addIfNoDWARFIssues("remove-unused-names");
