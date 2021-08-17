@@ -1481,7 +1481,7 @@ private:
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
-    // To be equal, they must also be know to return the same result
+    // To be equal, they must also be known to return the same result
     // deterministically.
     if (Properties::isIntrinsicallyNondeterministic(left, features)) {
       return false;
