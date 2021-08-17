@@ -11,4 +11,5 @@ SideEffects.ImplicitTrap=256
 SideEffects.IsAtomic=512
 SideEffects.Throws=1024
 SideEffects.DanglingPop=2048
-SideEffects.Any=4095
+SideEffects.TrapsNeverHappen=4096
+SideEffects.Any=8191
