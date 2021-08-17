@@ -141,11 +141,12 @@ public:
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return globalsWritten.size() || writesMemory || writesStruct || writesArray || isAtomic ||
-           calls;
+    return globalsWritten.size() || writesMemory || writesStruct ||
+           writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsStruct || readsArray || isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsStruct || readsArray ||
+           isAtomic || calls;
   }
 
   bool hasNonTrapSideEffects() const {
