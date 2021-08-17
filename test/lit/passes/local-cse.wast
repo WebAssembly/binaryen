@@ -266,20 +266,21 @@
   )
 
   ;; CHECK:      (func $loads
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.load
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.load
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.load
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $loads
-    ;; The possible trap on loads prevents optimization.
-    ;; TODO: optimize that too
+    ;; The possible trap on loads does not prevent optimization, since if we
+    ;; trap then it doesn't matter that we replaced the later expression.
     (drop
       (i32.load (i32.const 10))
     )

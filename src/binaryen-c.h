@@ -2620,6 +2620,7 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesGlobal(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
+BINARYEN_API BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectDanglingPop(void);

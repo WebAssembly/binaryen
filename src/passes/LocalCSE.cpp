@@ -422,6 +422,15 @@ struct Checker
       // away repeated apperances if it has any.
       EffectAnalyzer effects(options, getModule()->features, curr);
 
+      // We can ignore traps here, as we replace a repeating expression with a
+      // single appearance of it, a store to a local, and gets in the other
+      // locations, and so if the expression traps then the first appearance -
+      // that we keep around - would trap, and the others are never reached
+      // anyhow. (The other checks we perform here, including invalidation and
+      // determinism, will ensure that either all of the appearances trap, or
+      // none of them.)
+      effects.trap = false;
+
       // We also cannot optimize away something that is intrinsically
       // nondeterministic: even if it has no side effects, if it may return a
       // different result each time, then we cannot optimize away repeats.
