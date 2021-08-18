@@ -240,7 +240,7 @@ struct Scanner
     //
     // Note that we must compute the hash first, as we need it even for things
     // that are not isRelevant() (if they are the children of a relevant thing).
-    auto numChildren = getNumChildren(curr);
+    auto numChildren = Properties::getNumChildren(curr);
     auto hash = ExpressionAnalyzer::shallowHash(curr);
     for (Index i = 0; i < numChildren; i++) {
       if (activeHashes.empty()) {
