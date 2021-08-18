@@ -137,8 +137,8 @@ enum JsSign {
 
 extern JsSign detectSign(cashew::Ref node, cashew::IString minifiedFround);
 
-cashew::Ref makeAsmCoercedZero(JsType type);
-cashew::Ref makeAsmCoercion(cashew::Ref node, JsType type);
+cashew::Ref makeJsCoercedZero(JsType type);
+cashew::Ref makeJsCoercion(cashew::Ref node, JsType type);
 
 cashew::Ref makeSigning(cashew::Ref node, JsSign sign);
 

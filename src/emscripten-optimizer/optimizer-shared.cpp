@@ -250,7 +250,7 @@ JsSign detectSign(Ref node, IString minifiedFround) {
   abort(); // avoid warning
 }
 
-Ref makeAsmCoercedZero(JsType type) {
+Ref makeJsCoercedZero(JsType type) {
   switch (type) {
     case JS_INT:
       return ValueBuilder::makeNum(0);
@@ -325,7 +325,7 @@ Ref makeAsmCoercedZero(JsType type) {
   abort();
 }
 
-Ref makeAsmCoercion(Ref node, JsType type) {
+Ref makeJsCoercion(Ref node, JsType type) {
   switch (type) {
     case JS_INT:
       return ValueBuilder::makeBinary(node, OR, ValueBuilder::makeNum(0));
