@@ -361,11 +361,11 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // nondeterminism is "intrinsic" and it is because each call to struct.new
 // generates a new value.
 //
-// Thus, loads are nondeterministic but not generative so, while GC
-// allocations are generative. Note that "generative" need not mean "allocaiton"
-// as if wasm were to add "get current time" or "get a random number"
-// instructions then those would also be generative - generating a new current
-// time value or a new random number on each execution, respectively.
+// Thus, loads are nondeterministic but not generative, while GC allocations are
+// are in fact generative. Note that "generative" need not mean "allocation" as
+// if wasm were to add "get current time" or "get a random number" instructions
+// then those would also be generative - generating a new current time value or
+// a new random number on each execution, respectively.
 //
 //  * Note that NaN nondeterminism is ignored here. While e.g. f32.add is
 //    nondeterministic due to NaNs, it does not generate a new value each time -
