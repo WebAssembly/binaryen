@@ -219,9 +219,9 @@ struct Scanner
   // original expression that we request from.
   HashedExprs activeExprs;
 
-  // Hash values of all active expressions. We store these so that we do not end
-  // up recomputing hashes of children in an N^2 manner.
-  std::unordered_map<Expression*, size_t> activeHashes;
+  // Stack of hash values of all active expressions. We store these so that we
+  // do not end up recomputing hashes of children in an N^2 manner.
+  SmallVector<size_t, 10> activeHashes;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
@@ -240,17 +240,18 @@ struct Scanner
     //
     // Note that we must compute the hash first, as we need it even for things
     // that are not isRelevant() (if they are the children of a relevant thing).
+    auto numChildren = getNumChildren(curr);
     auto hash = ExpressionAnalyzer::shallowHash(curr);
-    for (auto* child : ChildIterator(curr)) {
-      auto iter = activeHashes.find(child);
-      if (iter == activeHashes.end()) {
+    for (Index i = 0; i < numChildren; i++) {
+      if (activeHashes.empty()) {
         // The child was in another block, so this expression cannot be
         // optimized.
         return;
       }
-      hash_combine(hash, iter->second);
+      hash_combine(hash, activeHashes.back());
+      activeHashes.pop_back();
     }
-    activeHashes[curr] = hash;
+    activeHashes.push_back(hash);
 
     // Check if this is something relevant for optimization.
     if (!isRelevant(curr)) {
