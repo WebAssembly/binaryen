@@ -19,13 +19,15 @@
 
 #include "simple_ast.h"
 
-extern cashew::IString JS_FLOAT_ZERO;
+using namespace cashew;
 
-extern cashew::IString SIMD_INT8X16_CHECK;
-extern cashew::IString SIMD_INT16X8_CHECK;
-extern cashew::IString SIMD_INT32X4_CHECK;
-extern cashew::IString SIMD_FLOAT32X4_CHECK;
-extern cashew::IString SIMD_FLOAT64X2_CHECK;
+extern IString JS_FLOAT_ZERO;
+
+extern IString SIMD_INT8X16_CHECK;
+extern IString SIMD_INT16X8_CHECK;
+extern IString SIMD_INT32X4_CHECK;
+extern IString SIMD_FLOAT32X4_CHECK;
+extern IString SIMD_FLOAT64X2_CHECK;
 
 enum JsType {
   JS_INT = 0,
@@ -48,8 +50,8 @@ enum JsSign {
   JS_NONSIGNED,
 };
 
-cashew::Ref makeJsCoercedZero(JsType type);
-cashew::Ref makeJsCoercion(cashew::Ref node, JsType type);
-cashew::Ref makeSigning(cashew::Ref node, JsSign sign);
+Ref makeJsCoercedZero(JsType type);
+Ref makeJsCoercion(Ref node, JsType type);
+Ref makeSigning(Ref node, JsSign sign);
 
 #endif // wasm_optimizer_h
