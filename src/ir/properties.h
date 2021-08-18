@@ -335,11 +335,10 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
   return ifTrue->type.isSingle() && ifFalse->type.isSingle();
 }
 
-// An intrinsically-nondeterministic expression is one that can return different
-// results for the same inputs, and that difference is *not* explained by
-// other expressions that interact with this one. Hence the cause of
-// nondeterminism can be said to be "intrinsic" - it is internal and inherent in
-// the expression.
+// A "generative" expression is one that can generate different results for the
+// same inputs, and that difference is *not* explained by other expressions that
+// interact with this one. This is an intrinsic/internal property of the
+// expression.
 //
 // To see the issue more concretely, consider these:
 //
@@ -359,26 +358,28 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // allocations, though, it doesn't matter what is in "..": there is nothing
 // in the wasm that we can check to find out if the results are the same or
 // not. (In fact, in this case they are always not the same.) So the
-// nondeterminism is "intrinsic."
+// nondeterminism is "intrinsic" and it is because each call to struct.new
+// generates a new value.
 //
-// Thus, loads are nondeterministic but not intrinsically so, while GC
-// allocations are actual examples of intrinsically nondeterministic
-// instructions. If wasm were to add "get current time" or "get a random number"
-// instructions then those would also be intrinsically nondeterministic.
+// Thus, loads are nondeterministic but not generative so, while GC
+// allocations are generative. Note that "generative" need not mean "allocaiton"
+// as if wasm were to add "get current time" or "get a random number"
+// instructions then those would also be generative - generating a new current
+// time value or a new random number on each execution, respectively.
 //
-//  * Note that NaN nondeterminism is ignored here. Technically that allows e.g.
-//    an f32.add to be nondeterministic, but it is a valid wasm implementation
-//    to have deterministic NaN behavior, and we optimize under that assumption.
-//    So NaN nondeterminism does not cause anything to be intrinsically
-//    nondeterministic.
+//  * Note that NaN nondeterminism is ignored here. While e.g. f32.add is
+//    nondeterministic due to NaNs, it does not generate a new value each time -
+//    on a single implementation it will return the same value all the time.
+//    And in any case, it is a valid wasm implementation to have deterministic
+//    NaN behavior, and we optimize under that assumption.
 //  * Note that calls are ignored here. In theory this concept could be defined
-//    either way for them (that is, we could potentially define them as either
-//    intrinsically nondeterministic, or not, and each could make sense in its
-//    own way). It is simpler to ignore them here, which means we only consider
-//    the behavior of the expression provided here (including its chldren), and
-//    not external code.
+//    either way for them - that is, we could potentially define them as
+//    generative, as they might contain such an instruction, or we could define
+//    this property as only looking at code in the current function. We choose
+//    the latter because calls are already handled best in other manners (using
+//    EffectAnalyzer).
 //
-bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features);
+bool isGenerative(Expression* curr, FeatureSet features);
 
 } // namespace Properties
 
