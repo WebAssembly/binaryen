@@ -18,7 +18,6 @@
 #define wasm_asm_v_wasm_h
 
 #include "emscripten-optimizer/optimizer.h"
-#include "mixed_arena.h"
 #include "wasm.h"
 
 namespace wasm {
