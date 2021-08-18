@@ -145,17 +145,13 @@ enum class NameScope {
 //
 // Wasm2JSBuilder - converts a WebAssembly module's functions into JS
 //
-// In general, JS (asm.js) => wasm is very straightforward, as can
-// be seen in asm2wasm.h. Just a single pass, plus a little
-// state bookkeeping (breakStack, etc.), and a few after-the
-// fact corrections for imports, etc. However, wasm => JS
-// is tricky because wasm has statements == expressions, or in
-// other words, things like `break` and `if` can show up
-// in places where JS can't handle them, like inside an
-// a loop's condition check. For that reason we use flat IR here.
+// Wasm-to-JS is tricky because wasm doesn't distinguish
+// statements and expressions, or in other words, things like `break` and `if`
+// can show up in places where JS can't handle them, like inside an a loop's
+// condition check. For that reason we use flat IR here.
 // We do optimize it later, to allow some nesting, but we avoid
-// non-JS-compatible nesting like block return values control
-// flow in an if condition, etc.
+// non-JS-compatible nesting like block return values control flow in an if
+// condition, etc.
 //
 
 class Wasm2JSBuilder {
@@ -618,7 +614,7 @@ void Wasm2JSBuilder::addGlobalImport(Ref ast, Global* import) {
   Ref value =
     ValueBuilder::makeDot(module, fromName(import->base, NameScope::Top));
   if (import->type == Type::i32) {
-    value = makeAsmCoercion(value, ASM_INT);
+    value = makeAsmCoercion(value, JS_INT);
   }
   ValueBuilder::appendToVar(
     theVar, fromName(import->name, NameScope::Top), value);
@@ -799,12 +795,12 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
         theValue = ValueBuilder::makeCall(
           MATH_FROUND,
           makeAsmCoercion(ValueBuilder::makeDouble(const_->value.getf32()),
-                          ASM_DOUBLE));
+                          JS_DOUBLE));
         break;
       }
       case Type::f64: {
         theValue = makeAsmCoercion(
-          ValueBuilder::makeDouble(const_->value.getf64()), ASM_DOUBLE);
+          ValueBuilder::makeDouble(const_->value.getf64()), JS_DOUBLE);
         break;
       }
       default: {
@@ -865,7 +861,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
         ValueBuilder::makeName(name),
         SET,
         makeAsmCoercion(ValueBuilder::makeName(name),
-                        wasmToAsmType(func->getLocalType(i))))));
+                        wasmToJsType(func->getLocalType(i))))));
     }
   }
   Ref theVar = ValueBuilder::makeVar();
@@ -878,7 +874,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
     ValueBuilder::appendToVar(
       theVar,
       fromName(func->getLocalNameOrGeneric(i), NameScope::Local),
-      makeAsmCoercedZero(wasmToAsmType(func->getLocalType(i))));
+      makeAsmCoercedZero(wasmToJsType(func->getLocalType(i))));
   }
   if (theVar[1]->size() == 0) {
     ret[3]->splice(theVarIndex, 1);
@@ -1191,7 +1187,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // nesting of a size that JS engines can't handle.
       Ref condition = visit(curr->condition, EXPRESSION_RESULT);
       Ref theSwitch =
-        ValueBuilder::makeSwitch(makeAsmCoercion(condition, ASM_INT));
+        ValueBuilder::makeSwitch(makeAsmCoercion(condition, JS_INT));
       // First, group the switch targets.
       std::map<Name, std::vector<Index>> targetIndexes;
       for (size_t i = 0; i < curr->targets.size(); i++) {
@@ -1281,12 +1277,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       for (auto operand : curr->operands) {
         auto value = visit(operand, EXPRESSION_RESULT);
         if (needCoercions) {
-          value = makeAsmCoercion(value, wasmToAsmType(operand->type));
+          value = makeAsmCoercion(value, wasmToJsType(operand->type));
         }
         theCall[2]->push_back(value);
       }
       if (needCoercions) {
-        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        theCall = makeAsmCoercion(theCall, wasmToJsType(curr->type));
       }
       return theCall;
     }
@@ -1316,7 +1312,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       // because FUNCTION_TABLE is just a normal JS object, not a typed array
       // or a mathematical operation (all of which coerce to a number for us).
       auto target = visit(curr->target, EXPRESSION_RESULT);
-      target = makeAsmCoercion(target, ASM_INT);
+      target = makeAsmCoercion(target, JS_INT);
       if (mustReorder) {
         Ref ret;
         ScopedTemp idx(Type::i32, parent, func);
@@ -1335,9 +1331,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
           IString temp = temps[i]->temp;
           auto& operand = curr->operands[i];
           theCall[2]->push_back(makeAsmCoercion(ValueBuilder::makeName(temp),
-                                                wasmToAsmType(operand->type)));
+                                                wasmToJsType(operand->type)));
         }
-        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        theCall = makeAsmCoercion(theCall, wasmToJsType(curr->type));
         sequenceAppend(ret, theCall);
         for (auto temp : temps) {
           delete temp;
@@ -1350,7 +1346,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         for (auto* operand : curr->operands) {
           theCall[2]->push_back(visit(operand, EXPRESSION_RESULT));
         }
-        theCall = makeAsmCoercion(theCall, wasmToAsmType(curr->type));
+        theCall = makeAsmCoercion(theCall, wasmToJsType(curr->type));
         return theCall;
       }
     }
@@ -1445,7 +1441,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       bool needCoercions =
         parent->options.optimizeLevel == 0 || standaloneFunction;
       if (needCoercions) {
-        ret = makeAsmCoercion(ret, wasmToAsmType(curr->type));
+        ret = makeAsmCoercion(ret, wasmToJsType(curr->type));
       }
       return ret;
     }
@@ -1691,10 +1687,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               break;
             case PromoteFloat32:
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
-                                     ASM_DOUBLE);
+                                     JS_DOUBLE);
             case DemoteFloat64:
               return makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT),
-                                     ASM_FLOAT);
+                                     JS_FLOAT);
             case ReinterpretInt32: {
               ABI::wasm2js::ensureHelpers(module,
                                           ABI::wasm2js::SCRATCH_STORE_I32);
@@ -1714,12 +1710,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
             // Coerce the integer to a float as emscripten does
             case ConvertSInt32ToFloat32:
               return makeAsmCoercion(
-                makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), ASM_INT),
-                ASM_FLOAT);
+                makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), JS_INT),
+                JS_FLOAT);
             case ConvertSInt32ToFloat64:
               return makeAsmCoercion(
-                makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), ASM_INT),
-                ASM_DOUBLE);
+                makeAsmCoercion(visit(curr->value, EXPRESSION_RESULT), JS_INT),
+                JS_DOUBLE);
 
             // Generate (expr >>> 0), followed by a coercion
             case ConvertUInt32ToFloat32:
@@ -1727,13 +1723,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                 ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
                                          TRSHIFT,
                                          ValueBuilder::makeInt(0)),
-                ASM_FLOAT);
+                JS_FLOAT);
             case ConvertUInt32ToFloat64:
               return makeAsmCoercion(
                 ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
                                          TRSHIFT,
                                          ValueBuilder::makeInt(0)),
-                ASM_DOUBLE);
+                JS_DOUBLE);
             // TODO: more complex unary conversions
             case NearestFloat32:
             case NearestFloat64:
@@ -1744,7 +1740,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               WASM_UNREACHABLE("unhandled unary float operator");
           }
           if (curr->type == Type::f32) { // doubles need much less coercing
-            return makeAsmCoercion(ret, ASM_FLOAT);
+            return makeAsmCoercion(ret, JS_FLOAT);
           }
           return ret;
         }
@@ -1777,24 +1773,24 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               }
             }
             case DivSInt32:
-              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
+              ret = ValueBuilder::makeBinary(makeSigning(left, JS_SIGNED),
                                              DIV,
-                                             makeSigning(right, ASM_SIGNED));
+                                             makeSigning(right, JS_SIGNED));
               break;
             case DivUInt32:
-              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED),
+              ret = ValueBuilder::makeBinary(makeSigning(left, JS_UNSIGNED),
                                              DIV,
-                                             makeSigning(right, ASM_UNSIGNED));
+                                             makeSigning(right, JS_UNSIGNED));
               break;
             case RemSInt32:
-              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
+              ret = ValueBuilder::makeBinary(makeSigning(left, JS_SIGNED),
                                              MOD,
-                                             makeSigning(right, ASM_SIGNED));
+                                             makeSigning(right, JS_SIGNED));
               break;
             case RemUInt32:
-              ret = ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED),
+              ret = ValueBuilder::makeBinary(makeSigning(left, JS_UNSIGNED),
                                              MOD,
-                                             makeSigning(right, ASM_UNSIGNED));
+                                             makeSigning(right, JS_UNSIGNED));
               break;
             case AndInt32:
               ret = ValueBuilder::makeBinary(left, AND, right);
@@ -1815,47 +1811,47 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ret = ValueBuilder::makeBinary(left, RSHIFT, right);
               break;
             case EqInt32: {
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_SIGNED),
                                               EQ,
-                                              makeSigning(right, ASM_SIGNED));
+                                              makeSigning(right, JS_SIGNED));
             }
             case NeInt32: {
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_SIGNED),
                                               NE,
-                                              makeSigning(right, ASM_SIGNED));
+                                              makeSigning(right, JS_SIGNED));
             }
             case LtSInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_SIGNED),
                                               LT,
-                                              makeSigning(right, ASM_SIGNED));
+                                              makeSigning(right, JS_SIGNED));
             case LtUInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_UNSIGNED),
                                               LT,
-                                              makeSigning(right, ASM_UNSIGNED));
+                                              makeSigning(right, JS_UNSIGNED));
             case LeSInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_SIGNED),
                                               LE,
-                                              makeSigning(right, ASM_SIGNED));
+                                              makeSigning(right, JS_SIGNED));
             case LeUInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_UNSIGNED),
                                               LE,
-                                              makeSigning(right, ASM_UNSIGNED));
+                                              makeSigning(right, JS_UNSIGNED));
             case GtSInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_SIGNED),
                                               GT,
-                                              makeSigning(right, ASM_SIGNED));
+                                              makeSigning(right, JS_SIGNED));
             case GtUInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_UNSIGNED),
                                               GT,
-                                              makeSigning(right, ASM_UNSIGNED));
+                                              makeSigning(right, JS_UNSIGNED));
             case GeSInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_SIGNED),
                                               GE,
-                                              makeSigning(right, ASM_SIGNED));
+                                              makeSigning(right, JS_SIGNED));
             case GeUInt32:
-              return ValueBuilder::makeBinary(makeSigning(left, ASM_UNSIGNED),
+              return ValueBuilder::makeBinary(makeSigning(left, JS_UNSIGNED),
                                               GE,
-                                              makeSigning(right, ASM_UNSIGNED));
+                                              makeSigning(right, JS_UNSIGNED));
             case EqFloat32:
             case EqFloat64:
               return ValueBuilder::makeBinary(left, EQ, right);
@@ -1915,13 +1911,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               Fatal() << "Unhandled binary float operator: ";
           }
           if (curr->type == Type::f32) {
-            return makeAsmCoercion(ret, ASM_FLOAT);
+            return makeAsmCoercion(ret, JS_FLOAT);
           }
           return ret;
         default:
           Fatal() << "Unhandled type in binary: " << curr;
       }
-      return makeAsmCoercion(ret, wasmToAsmType(curr->type));
+      return makeAsmCoercion(ret, wasmToJsType(curr->type));
     }
 
     Ref visitSelect(Select* curr) {
@@ -1975,7 +1971,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         parent->options.optimizeLevel == 0 || standaloneFunction ||
         parent->functionsCallableFromOutside.count(func->name);
       if (needCoercion) {
-        val = makeAsmCoercion(val, wasmToAsmType(curr->value->type));
+        val = makeAsmCoercion(val, wasmToJsType(curr->value->type));
       }
       return ValueBuilder::makeReturn(val);
     }
@@ -1990,7 +1986,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         return ValueBuilder::makeCall(
           WASM_MEMORY_GROW,
           makeAsmCoercion(visit(curr->delta, EXPRESSION_RESULT),
-                          wasmToAsmType(curr->delta->type)));
+                          wasmToJsType(curr->delta->type)));
       } else {
         return ValueBuilder::makeCall(ABORT_FUNC);
       }
@@ -2076,7 +2072,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       ValueBuilder::appendToCall(call, hap.ptr);
       ValueBuilder::appendToCall(call, expected);
       ValueBuilder::appendToCall(call, replacement);
-      return makeAsmCoercion(call, wasmToAsmType(curr->type));
+      return makeAsmCoercion(call, wasmToJsType(curr->type));
     }
 
     Ref visitAtomicWait(AtomicWait* curr) {
@@ -2273,7 +2269,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       if (offset) {
         ret = makeAsmCoercion(
           ValueBuilder::makeBinary(ret, PLUS, ValueBuilder::makeNum(offset)),
-          ASM_INT);
+          JS_INT);
       }
       return ret;
     }
@@ -2294,7 +2290,7 @@ void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
                                             IString("byteLength")),
                       DIV,
                       ValueBuilder::makeInt(Memory::kPageSize)),
-                    AsmType::ASM_INT)));
+                    JsType::JS_INT)));
   ast->push_back(memorySizeFunc);
 
   if (wasm->memory.max > wasm->memory.initial) {
@@ -2311,15 +2307,14 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
       ValueBuilder::makeName(IString("pagesToAdd")),
       SET,
       makeAsmCoercion(ValueBuilder::makeName(IString("pagesToAdd")),
-                      AsmType::ASM_INT))));
+                      JsType::JS_INT))));
 
   Ref oldPages = ValueBuilder::makeVar();
   memoryGrowFunc[3]->push_back(oldPages);
   ValueBuilder::appendToVar(
     oldPages,
     IString("oldPages"),
-    makeAsmCoercion(ValueBuilder::makeCall(WASM_MEMORY_SIZE),
-                    AsmType::ASM_INT));
+    makeAsmCoercion(ValueBuilder::makeCall(WASM_MEMORY_SIZE), JsType::JS_INT));
 
   Ref newPages = ValueBuilder::makeVar();
   memoryGrowFunc[3]->push_back(newPages);
@@ -2330,7 +2325,7 @@ void Wasm2JSBuilder::addMemoryGrowFunc(Ref ast, Module* wasm) {
       ValueBuilder::makeBinary(ValueBuilder::makeName(IString("oldPages")),
                                PLUS,
                                ValueBuilder::makeName(IString("pagesToAdd"))),
-      AsmType::ASM_INT));
+      JsType::JS_INT));
 
   Ref block = ValueBuilder::makeBlock();
   memoryGrowFunc[3]->push_back(ValueBuilder::makeIf(

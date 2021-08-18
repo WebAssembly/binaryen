@@ -21,7 +21,7 @@
 
 using namespace cashew;
 
-IString ASM_FLOAT_ZERO;
+IString JS_FLOAT_ZERO;
 
 IString SIMD_INT8X16_CHECK("SIMD_Int8x16_check");
 IString SIMD_INT16X8_CHECK("SIMD_Int16x8_check");
@@ -49,58 +49,58 @@ HeapInfo parseHeap(const char* name) {
   ret.unsign = name[4] == 'U';
   ret.floaty = name[4] == 'F';
   ret.bits = parseInt(name + (ret.unsign || ret.floaty ? 5 : 4));
-  ret.type = !ret.floaty ? ASM_INT : (ret.bits == 64 ? ASM_DOUBLE : ASM_FLOAT);
+  ret.type = !ret.floaty ? JS_INT : (ret.bits == 64 ? JS_DOUBLE : JS_FLOAT);
   return ret;
 }
 
-AsmType detectType(Ref node,
-                   AsmData* asmData,
-                   bool inVarDef,
-                   IString minifiedFround,
-                   bool allowI64) {
+JsType detectType(Ref node,
+                  JsData* jsData,
+                  bool inVarDef,
+                  IString minifiedFround,
+                  bool allowI64) {
   if (node->isString()) {
-    if (asmData) {
-      AsmType ret = asmData->getType(node->getCString());
-      if (ret != ASM_NONE) {
+    if (jsData) {
+      JsType ret = jsData->getType(node->getCString());
+      if (ret != JS_NONE) {
         return ret;
       }
     }
     if (!inVarDef) {
       if (node == INF || node == NaN) {
-        return ASM_DOUBLE;
+        return JS_DOUBLE;
       }
       if (node == TEMP_RET0) {
-        return ASM_INT;
+        return JS_INT;
       }
-      return ASM_NONE;
+      return JS_NONE;
     }
     // We are in a variable definition, where Math_fround(0) optimized into a
     // global constant becomes f0 = Math_fround(0)
-    if (ASM_FLOAT_ZERO.isNull()) {
-      ASM_FLOAT_ZERO = node->getIString();
+    if (JS_FLOAT_ZERO.isNull()) {
+      JS_FLOAT_ZERO = node->getIString();
     } else {
-      assert(node == ASM_FLOAT_ZERO);
+      assert(node == JS_FLOAT_ZERO);
     }
-    return ASM_FLOAT;
+    return JS_FLOAT;
   }
   if (node->isNumber()) {
     if (!wasm::isInteger(node->getNumber())) {
-      return ASM_DOUBLE;
+      return JS_DOUBLE;
     }
-    return ASM_INT;
+    return JS_INT;
   }
   switch (node[0]->getCString()[0]) {
     case 'u': {
       if (node[0] == UNARY_PREFIX) {
         switch (node[1]->getCString()[0]) {
           case '+':
-            return ASM_DOUBLE;
+            return JS_DOUBLE;
           case '-':
             return detectType(
-              node[2], asmData, inVarDef, minifiedFround, allowI64);
+              node[2], jsData, inVarDef, minifiedFround, allowI64);
           case '!':
           case '~':
-            return ASM_INT;
+            return JS_INT;
         }
         break;
       }
@@ -111,24 +111,24 @@ AsmType detectType(Ref node,
         if (node[1]->isString()) {
           IString name = node[1]->getIString();
           if (name == MATH_FROUND || name == minifiedFround) {
-            return ASM_FLOAT;
+            return JS_FLOAT;
           } else if (allowI64 && (name == INT64 || name == INT64_CONST)) {
-            return ASM_INT64;
+            return JS_INT64;
           } else if (name == SIMD_FLOAT32X4 || name == SIMD_FLOAT32X4_CHECK) {
-            return ASM_FLOAT32X4;
+            return JS_FLOAT32X4;
           } else if (name == SIMD_FLOAT64X2 || name == SIMD_FLOAT64X2_CHECK) {
-            return ASM_FLOAT64X2;
+            return JS_FLOAT64X2;
           } else if (name == SIMD_INT8X16 || name == SIMD_INT8X16_CHECK) {
-            return ASM_INT8X16;
+            return JS_INT8X16;
           } else if (name == SIMD_INT16X8 || name == SIMD_INT16X8_CHECK) {
-            return ASM_INT16X8;
+            return JS_INT16X8;
           } else if (name == SIMD_INT32X4 || name == SIMD_INT32X4_CHECK) {
-            return ASM_INT32X4;
+            return JS_INT32X4;
           }
         }
-        return ASM_NONE;
+        return JS_NONE;
       } else if (node[0] == CONDITIONAL) {
-        return detectType(node[2], asmData, inVarDef, minifiedFround, allowI64);
+        return detectType(node[2], jsData, inVarDef, minifiedFround, allowI64);
       }
       break;
     }
@@ -141,7 +141,7 @@ AsmType detectType(Ref node,
           case '/':
           case '%':
             return detectType(
-              node[2], asmData, inVarDef, minifiedFround, allowI64);
+              node[2], jsData, inVarDef, minifiedFround, allowI64);
           case '|':
           case '&':
           case '^':
@@ -149,7 +149,7 @@ AsmType detectType(Ref node,
           case '>': // handles <<, >>, >>=, <=, >=
           case '=':
           case '!': { // handles ==, !=
-            return ASM_INT;
+            return JS_INT;
           }
         }
       }
@@ -157,21 +157,21 @@ AsmType detectType(Ref node,
     }
     case 's': {
       if (node[0] == SEQ) {
-        return detectType(node[2], asmData, inVarDef, minifiedFround, allowI64);
+        return detectType(node[2], jsData, inVarDef, minifiedFround, allowI64);
       } else if (node[0] == SUB) {
         assert(node[1]->isString());
         HeapInfo info = parseHeap(node[1][1]->getCString());
         if (info.valid) {
-          return ASM_NONE;
+          return JS_NONE;
         }
-        return info.floaty ? ASM_DOUBLE : ASM_INT; // XXX ASM_FLOAT?
+        return info.floaty ? JS_DOUBLE : JS_INT; // XXX JS_FLOAT?
       }
       break;
     }
   }
   // dump("horrible", node);
   // assert(0);
-  return ASM_NONE;
+  return JS_NONE;
 }
 
 static void abort_on(Ref node) {
@@ -180,22 +180,22 @@ static void abort_on(Ref node) {
   abort();
 }
 
-AsmSign detectSign(Ref node, IString minifiedFround) {
+JsSign detectSign(Ref node, IString minifiedFround) {
   if (node->isString()) {
-    return ASM_FLEXIBLE;
+    return JS_FLEXIBLE;
   }
   if (node->isNumber()) {
     double value = node->getNumber();
     if (value < 0) {
-      return ASM_SIGNED;
+      return JS_SIGNED;
     }
     if (value > uint32_t(-1) || !wasm::isInteger(value)) {
-      return ASM_NONSIGNED;
+      return JS_NONSIGNED;
     }
     if (wasm::isSInteger32(value)) {
-      return ASM_FLEXIBLE;
+      return JS_FLEXIBLE;
     }
-    return ASM_UNSIGNED;
+    return JS_UNSIGNED;
   }
   IString type = node[0]->getIString();
   if (type == BINARY) {
@@ -203,7 +203,7 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
     switch (op.str[0]) {
       case '>': {
         if (op == TRSHIFT) {
-          return ASM_UNSIGNED;
+          return JS_UNSIGNED;
         }
         [[fallthrough]];
       }
@@ -213,14 +213,14 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
       case '<':
       case '=':
       case '!':
-        return ASM_SIGNED;
+        return JS_SIGNED;
       case '+':
       case '-':
-        return ASM_FLEXIBLE;
+        return JS_FLEXIBLE;
       case '*':
       case '/':
       case '%':
-        return ASM_NONSIGNED; // without a coercion, these are double
+        return JS_NONSIGNED; // without a coercion, these are double
       default:
         abort_on(node);
     }
@@ -228,11 +228,11 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
     IString op = node[1]->getIString();
     switch (op.str[0]) {
       case '-':
-        return ASM_FLEXIBLE;
+        return JS_FLEXIBLE;
       case '+':
-        return ASM_NONSIGNED; // XXX double
+        return JS_NONSIGNED; // XXX double
       case '~':
-        return ASM_SIGNED;
+        return JS_SIGNED;
       default:
         abort_on(node);
     }
@@ -241,7 +241,7 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
   } else if (type == CALL) {
     if (node[1]->isString() &&
         (node[1] == MATH_FROUND || node[1] == minifiedFround)) {
-      return ASM_NONSIGNED;
+      return JS_NONSIGNED;
     }
   } else if (type == SEQ) {
     return detectSign(node[2], minifiedFround);
@@ -250,23 +250,23 @@ AsmSign detectSign(Ref node, IString minifiedFround) {
   abort(); // avoid warning
 }
 
-Ref makeAsmCoercedZero(AsmType type) {
+Ref makeAsmCoercedZero(JsType type) {
   switch (type) {
-    case ASM_INT:
+    case JS_INT:
       return ValueBuilder::makeNum(0);
       break;
-    case ASM_DOUBLE:
+    case JS_DOUBLE:
       return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeNum(0));
       break;
-    case ASM_FLOAT: {
-      if (!ASM_FLOAT_ZERO.isNull()) {
-        return ValueBuilder::makeName(ASM_FLOAT_ZERO);
+    case JS_FLOAT: {
+      if (!JS_FLOAT_ZERO.isNull()) {
+        return ValueBuilder::makeName(JS_FLOAT_ZERO);
       } else {
         return ValueBuilder::makeCall(MATH_FROUND, ValueBuilder::makeNum(0));
       }
       break;
     }
-    case ASM_FLOAT32X4: {
+    case JS_FLOAT32X4: {
       return ValueBuilder::makeCall(SIMD_FLOAT32X4,
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
@@ -274,12 +274,12 @@ Ref makeAsmCoercedZero(AsmType type) {
                                     ValueBuilder::makeNum(0));
       break;
     }
-    case ASM_FLOAT64X2: {
+    case JS_FLOAT64X2: {
       return ValueBuilder::makeCall(
         SIMD_FLOAT64X2, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
       break;
     }
-    case ASM_INT8X16: {
+    case JS_INT8X16: {
       return ValueBuilder::makeCall(SIMD_INT8X16,
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
@@ -299,7 +299,7 @@ Ref makeAsmCoercedZero(AsmType type) {
                                     ValueBuilder::makeNum(0));
       break;
     }
-    case ASM_INT16X8: {
+    case JS_INT16X8: {
       return ValueBuilder::makeCall(SIMD_INT16X8,
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
@@ -311,7 +311,7 @@ Ref makeAsmCoercedZero(AsmType type) {
                                     ValueBuilder::makeNum(0));
       break;
     }
-    case ASM_INT32X4: {
+    case JS_INT32X4: {
       return ValueBuilder::makeCall(SIMD_INT32X4,
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
@@ -325,25 +325,25 @@ Ref makeAsmCoercedZero(AsmType type) {
   abort();
 }
 
-Ref makeAsmCoercion(Ref node, AsmType type) {
+Ref makeAsmCoercion(Ref node, JsType type) {
   switch (type) {
-    case ASM_INT:
+    case JS_INT:
       return ValueBuilder::makeBinary(node, OR, ValueBuilder::makeNum(0));
-    case ASM_DOUBLE:
+    case JS_DOUBLE:
       return ValueBuilder::makeUnary(PLUS, node);
-    case ASM_FLOAT:
+    case JS_FLOAT:
       return ValueBuilder::makeCall(MATH_FROUND, node);
-    case ASM_FLOAT32X4:
+    case JS_FLOAT32X4:
       return ValueBuilder::makeCall(SIMD_FLOAT32X4_CHECK, node);
-    case ASM_FLOAT64X2:
+    case JS_FLOAT64X2:
       return ValueBuilder::makeCall(SIMD_FLOAT64X2_CHECK, node);
-    case ASM_INT8X16:
+    case JS_INT8X16:
       return ValueBuilder::makeCall(SIMD_INT8X16_CHECK, node);
-    case ASM_INT16X8:
+    case JS_INT16X8:
       return ValueBuilder::makeCall(SIMD_INT16X8_CHECK, node);
-    case ASM_INT32X4:
+    case JS_INT32X4:
       return ValueBuilder::makeCall(SIMD_INT32X4_CHECK, node);
-    case ASM_NONE:
+    case JS_NONE:
     default:
       // non-validating code, emit nothing XXX this is dangerous, we should only
       // allow this when we know we are not validating
@@ -351,8 +351,8 @@ Ref makeAsmCoercion(Ref node, AsmType type) {
   }
 }
 
-Ref makeSigning(Ref node, AsmSign sign) {
-  assert(sign == ASM_SIGNED || sign == ASM_UNSIGNED);
+Ref makeSigning(Ref node, JsSign sign) {
+  assert(sign == JS_SIGNED || sign == JS_UNSIGNED);
   return ValueBuilder::makeBinary(
-    node, sign == ASM_SIGNED ? OR : TRSHIFT, ValueBuilder::makeNum(0));
+    node, sign == JS_SIGNED ? OR : TRSHIFT, ValueBuilder::makeNum(0));
 }

@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-AsmType wasmToAsmType(Type type);
+JsType wasmToJsType(Type type);
 
 char getSig(Type type);
 std::string getSig(Type results, Type params);

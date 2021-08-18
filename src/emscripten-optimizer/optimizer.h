@@ -25,32 +25,32 @@ extern cashew::Ref extraInfo;
 
 //
 
-enum AsmType {
-  ASM_INT = 0,
-  ASM_DOUBLE,
-  ASM_FLOAT,
-  ASM_FLOAT32X4,
-  ASM_FLOAT64X2,
-  ASM_INT8X16,
-  ASM_INT16X8,
-  ASM_INT32X4,
-  ASM_INT64, // non-asm.js
-  ASM_NONE   // number of types
+enum JsType {
+  JS_INT = 0,
+  JS_DOUBLE,
+  JS_FLOAT,
+  JS_FLOAT32X4,
+  JS_FLOAT64X2,
+  JS_INT8X16,
+  JS_INT16X8,
+  JS_INT32X4,
+  JS_INT64,
+  JS_NONE // number of types
 };
 
-struct AsmData;
+struct JsData;
 
-AsmType detectType(cashew::Ref node,
-                   AsmData* asmData = nullptr,
-                   bool inVarDef = false,
-                   cashew::IString minifiedFround = cashew::IString(),
-                   bool allowI64 = false);
+JsType detectType(cashew::Ref node,
+                  JsData* jsData = nullptr,
+                  bool inVarDef = false,
+                  cashew::IString minifiedFround = cashew::IString(),
+                  bool allowI64 = false);
 
-struct AsmData {
+struct JsData {
   struct Local {
     Local() = default;
-    Local(AsmType type, bool param) : type(type), param(param) {}
-    AsmType type;
+    Local(JsType type, bool param) : type(type), param(param) {}
+    JsType type;
     bool param; // false if a var
   };
   typedef std::unordered_map<cashew::IString, Local> Locals;
@@ -58,18 +58,18 @@ struct AsmData {
   Locals locals;
   std::vector<cashew::IString> params; // in order
   std::vector<cashew::IString> vars;   // in order
-  AsmType ret;
+  JsType ret;
 
   cashew::Ref func;
 
-  AsmType getType(const cashew::IString& name) {
+  JsType getType(const cashew::IString& name) {
     auto ret = locals.find(name);
     if (ret != locals.end()) {
       return ret->second.type;
     }
-    return ASM_NONE;
+    return JS_NONE;
   }
-  void setType(const cashew::IString& name, AsmType type) {
+  void setType(const cashew::IString& name, JsType type) {
     locals[name].type = type;
   }
 
@@ -82,18 +82,18 @@ struct AsmData {
   }
 
   // if you want to fill in the data yourself
-  AsmData() = default;
+  JsData() = default;
   // if you want to read data from f, and modify it as you go (parallel to
   // denormalize)
-  AsmData(cashew::Ref f);
+  JsData(cashew::Ref f);
 
   void denormalize();
 
-  void addParam(cashew::IString name, AsmType type) {
+  void addParam(cashew::IString name, JsType type) {
     locals[name] = Local(type, true);
     params.push_back(name);
   }
-  void addVar(cashew::IString name, AsmType type) {
+  void addVar(cashew::IString name, JsType type) {
     locals[name] = Local(type, false);
     vars.push_back(name);
   }
@@ -109,7 +109,7 @@ struct AsmData {
   }
 };
 
-extern cashew::IString ASM_FLOAT_ZERO;
+extern cashew::IString JS_FLOAT_ZERO;
 
 extern cashew::IString SIMD_INT8X16_CHECK;
 extern cashew::IString SIMD_INT16X8_CHECK;
@@ -122,24 +122,24 @@ int parseInt(const char* str);
 struct HeapInfo {
   bool valid, unsign, floaty;
   int bits;
-  AsmType type;
+  JsType type;
 };
 
 HeapInfo parseHeap(const char* name);
 
-enum AsmSign {
+enum JsSign {
   // small constants can be signed or unsigned, variables are also flexible
-  ASM_FLEXIBLE = 0,
-  ASM_SIGNED = 1,
-  ASM_UNSIGNED = 2,
-  ASM_NONSIGNED = 3,
+  JS_FLEXIBLE = 0,
+  JS_SIGNED = 1,
+  JS_UNSIGNED = 2,
+  JS_NONSIGNED = 3,
 };
 
-extern AsmSign detectSign(cashew::Ref node, cashew::IString minifiedFround);
+extern JsSign detectSign(cashew::Ref node, cashew::IString minifiedFround);
 
-cashew::Ref makeAsmCoercedZero(AsmType type);
-cashew::Ref makeAsmCoercion(cashew::Ref node, AsmType type);
+cashew::Ref makeAsmCoercedZero(JsType type);
+cashew::Ref makeAsmCoercion(cashew::Ref node, JsType type);
 
-cashew::Ref makeSigning(cashew::Ref node, AsmSign sign);
+cashew::Ref makeSigning(cashew::Ref node, JsSign sign);
 
 #endif // wasm_optimizer_h
