@@ -408,8 +408,13 @@ private:
       return info;
     }
 
-    // Sadly the type of the get was insufficient. If we work harder, we may be
-    // able to infer the precise type of the reference (and not just
+    // If there are no subtypes, then we have already done all we can do, and
+    // can learn nothing further that could help us.
+    if (optInfo.subTypes.getSubTypes(type).empty()) {
+      return info;
+    }
+
+    // Try to infer the precise type of the reference (and not just
     // "get->ref->type or any of its subtypes").
     auto result = inferPreciseType(get->ref);
     if (!result.success) {
@@ -417,12 +422,6 @@ private:
       return info;
     }
 
-    // If there are no subtypes, then we have already done all we can do, and
-    // can learn nothing further that could help us.
-    if (optInfo.subTypes.getSubTypes(type).empty()) {
-      return info;
-    }
-    
     return info;
   }
 
