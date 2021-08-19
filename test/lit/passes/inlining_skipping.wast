@@ -77,9 +77,9 @@
     )
   )
 
-  (func $if-else-caller (param $x i32)
-    (drop (call $if-else-value (local.get $x)))
-    (drop (call $if-else-value (local.get $x)))
+  (func $if-else-value-caller (param $x i32)
+    (drop (call $if-else-value-caller (local.get $x)))
+    (drop (call $if-else-value-caller (local.get $x)))
   )
 
   (func $if-unreachable (param $x i32) (result i32)
