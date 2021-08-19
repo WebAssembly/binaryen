@@ -106,11 +106,16 @@ struct FunctionInfo {
     if (size > options.inlining.flexibleInlineMaxSize) {
       return false;
     }
-    // More than one use, so we can't eliminate it after inlining,
-    // so only worth it if we really care about speed and don't care
-    // about size, and if we have reason to think we might get a speedup from
-    // avoiding the call overhead. To check that, first see if we potentially
-    // skip any heavy work - if so, it's worth inlining.
+    // More than one use, so we can't eliminate it after inlining, so we need to
+    // be careful here. First, this is only really worth it if we really care
+    // about speed and don't care about size (as we are risking code size
+    // increases here).
+    if (options.optimizeLevel < 3 || options.shrinkLevel > 0) {
+      return false;
+    }
+    // If there is heavy work, and it is *not* work we may skip, then even when
+    // optimizing for speed we want to be careful, as the call overhead may not
+    // really matter here. (But other benefits of inlining may apply, TODO)
     if (!maySkipHeavyWork) {
       // There is a call that may not be skipped, so even after inlining we'd
       // end up with call overhead here.
@@ -123,7 +128,9 @@ struct FunctionInfo {
         return false;
       }
     }
-    return options.optimizeLevel >= 3 && options.shrinkLevel == 0;
+    // The function looks reasonable lightweight, or it has heavy work but that
+    // work may be skipped, so this seems reasonable to inline.
+    return true;
   }
 };
 
