@@ -358,7 +358,7 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // allocations, though, it doesn't matter what is in "..": there is nothing
 // in the wasm that we can check to find out if the results are the same or
 // not. (In fact, in this case they are always not the same.) So the
-// nondeterminism is "intrinsic" and it is because each call to struct.new
+// generativity is intrinsic to the expression and it is because each call to struct.new
 // generates a new value.
 //
 // Thus, loads are nondeterministic but not generative, while GC allocations
