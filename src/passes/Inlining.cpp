@@ -72,8 +72,7 @@ struct FunctionInfo {
     // TODO). However, some functions may skip their heavy work, such as
     //
     // function foo(x) {
-    //   if (!x) return;
-    //   heavyWork();
+    //   if (x) heavyWork();
     // }
     //
     // That function *is* worth inlining, as the heavy work is conditional, and
