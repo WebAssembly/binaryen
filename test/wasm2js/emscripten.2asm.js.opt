@@ -120,7 +120,7 @@ function asmFunc(env) {
   if (HEAPU8[144] < 3) {
    bar()
   }
-  if (bools(314159) >>> 7 | 0) {
+  if (bools(314159) >>> 7) {
    bar()
   }
   if (bools(314159) >> 8) {

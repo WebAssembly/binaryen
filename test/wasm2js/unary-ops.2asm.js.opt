@@ -96,7 +96,7 @@ function asmFunc(env) {
     $0 = Math_clz32($1_1 ^ (($4 | 0) != -1 ? $5 : $6_1));
     $0 = ($0 | 0) == 32 ? $7_1 : $0;
     $1_1 = 63 - $0 | 0;
-    i64toi32_i32$HIGH_BITS = 0 - ($0 >>> 0 > 63) | 0;
+    i64toi32_i32$HIGH_BITS = -($0 >>> 0 > 63) | 0;
     break __inlined_func$__wasm_ctz_i64;
    }
    i64toi32_i32$HIGH_BITS = 0;

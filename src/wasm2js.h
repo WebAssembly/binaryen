@@ -1766,11 +1766,28 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               ret = ValueBuilder::makeBinary(left, PLUS, right);
               break;
             case SubInt32:
-              ret = ValueBuilder::makeBinary(left, MINUS, right);
+              if (parent->options.optimizeLevel != 0 && left->isNumber() &&
+                  left->getNumber() == 0) {
+                // special case
+                // 0 - x  =>  -x
+                ret = ValueBuilder::makeUnary(MINUS, right);
+              } else {
+                ret = ValueBuilder::makeBinary(left, MINUS, right);
+              }
               break;
             case MulInt32: {
               if (curr->type == Type::i32) {
-                // TODO: when one operand is a small int, emit a multiply
+                // We can avoid Math.imul call if RHS is small constant
+                //
+                //   `2 ** 53 - 1`   is maximum safe integer in fp domain
+                // so
+                //   `2 ** (53 - 32) - 1  or  0x1FFFFF`   is maximum safe
+                // multiplicand
+                if (parent->options.optimizeLevel != 0 && right->isNumber() &&
+                    std::abs(right->getNumber()) <= (double)0x1FFFFF) {
+                  ret = ValueBuilder::makeBinary(left, MUL, right);
+                  break;
+                }
                 return ValueBuilder::makeCall(MATH_IMUL, left, right);
               } else {
                 return ValueBuilder::makeBinary(left, MUL, right);
@@ -1798,21 +1815,49 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
               break;
             case AndInt32:
               ret = ValueBuilder::makeBinary(left, AND, right);
+              // All bitwise and shift operations already implicitly coerced
+              // to integer, so we can skip the explicit coercing in case when
+              // output type is i32.
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case OrInt32:
               ret = ValueBuilder::makeBinary(left, OR, right);
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case XorInt32:
-              ret = ValueBuilder::makeBinary(left, XOR, right);
+              if (parent->options.optimizeLevel != 0 && right->isNumber() &&
+                  right->getNumber() == -1) {
+                // special case
+                // x ^ -1  =>  ~x
+                ret = ValueBuilder::makeUnary(B_NOT, left);
+              } else {
+                ret = ValueBuilder::makeBinary(left, XOR, right);
+              }
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case ShlInt32:
               ret = ValueBuilder::makeBinary(left, LSHIFT, right);
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case ShrUInt32:
               ret = ValueBuilder::makeBinary(left, TRSHIFT, right);
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case ShrSInt32:
               ret = ValueBuilder::makeBinary(left, RSHIFT, right);
+              if (curr->type == Type::i32) {
+                return ret;
+              }
               break;
             case EqInt32: {
               return ValueBuilder::makeBinary(makeSigning(left, ASM_SIGNED),
@@ -1971,8 +2016,10 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
         return ValueBuilder::makeReturn(Ref());
       }
       Ref val = visit(curr->value, EXPRESSION_RESULT);
+      // TODO: also avoid coercion if val is Math_fround
       bool needCoercion =
-        parent->options.optimizeLevel == 0 || standaloneFunction ||
+        (!(curr->value->is<Unary>() || curr->value->is<Binary>()) &&
+         (parent->options.optimizeLevel == 0 || standaloneFunction)) ||
         parent->functionsCallableFromOutside.count(func->name);
       if (needCoercion) {
         val = makeAsmCoercion(val, wasmToAsmType(curr->value->type));
