@@ -304,6 +304,8 @@ private:
 };
 
 struct OptimizationInfo {
+  SubTypes subTypes;
+
   // Info that includes propagation to sub- and super-types. This is what we use
   // when we see a (struct.get) and are trying to see what possible data could
   // be accessed there. It includes all the possible values written by
@@ -320,6 +322,8 @@ struct OptimizationInfo {
   //       propagation. However, it may not be a problem as vtables are usually
   //       only written to by new anyhow, and not set.
   StructValuesMap preciseInfo;
+
+  OptimizationInfo(Module& wasm) : subTypes(wasm) {}
 };
 
 // Optimize struct gets based on what we've learned about writes.
@@ -392,6 +396,7 @@ private:
   PossibleConstantValues getInfo(StructGet* get) {
     auto type = get->ref->type;
 
+    // Find the possible values based on the type of the get.
     PossibleConstantValues info;
     assert(!info.hasNoted());
     auto iter = optInfo.generalInfo.find(type.getHeapType());
@@ -399,7 +404,15 @@ private:
       // There is information on this type, fetch it.
       info = iter->second[get->index];
     }
-    return info;
+    if (info.isConstant() || !info.hasNoted()) {
+      // We found enough information here; return it.
+      return info;
+    }
+
+    // Sadly the type of the get was insufficient. If we work harder, we may be
+    // able to infer the precise type of the reference (and not just
+    // "get->ref->type or any of its subtypes").
+    return info; // TODO
   }
 };
 
@@ -473,10 +486,11 @@ struct ConstantFieldPropagation : public Pass {
     //
     // TODO: A topological sort could avoid repeated work here perhaps.
 
-    SubTypes subTypes(*module);
+    // Compute the final information that we need.
+    OptimizationInfo optInfo(*module);
 
-    auto propagate = [&subTypes](StructValuesMap& combinedInfos,
-                                 bool toSubTypes) {
+    auto propagate = [&optInfo](StructValuesMap& combinedInfos,
+                                bool toSubTypes) {
       UniqueDeferredQueue<HeapType> work;
       for (auto& kv : combinedInfos) {
         auto type = kv.first;
@@ -501,7 +515,7 @@ struct ConstantFieldPropagation : public Pass {
         if (toSubTypes) {
           // Propagate shared fields to the subtypes.
           auto numFields = type.getStruct().fields.size();
-          for (auto subType : subTypes.getSubTypes(type)) {
+          for (auto subType : optInfo.subTypes.getSubTypes(type)) {
             auto& subInfos = combinedInfos[subType];
             for (Index i = 0; i < numFields; i++) {
               if (subInfos[i].combine(infos[i])) {
@@ -522,9 +536,6 @@ struct ConstantFieldPropagation : public Pass {
         }
       }
     };
-
-    // Compute the final information that we need.
-    OptimizationInfo optInfo;
 
     // Precise info takes the unpropagated news, and adds propagated sets (see
     // TODO earlier about the latter).
