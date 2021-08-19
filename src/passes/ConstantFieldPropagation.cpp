@@ -392,9 +392,6 @@ private:
   PossibleConstantValues getInfo(StructGet* get) {
     auto type = get->ref->type;
 
-    // Find the info for this field, and see if we can optimize. First, see if
-    // there is any information for this heap type at all. If there isn't, it is
-    // as if nothing was ever noted for that field.
     PossibleConstantValues info;
     assert(!info.hasNoted());
     auto iter = optInfo.generalInfo.find(type.getHeapType());
