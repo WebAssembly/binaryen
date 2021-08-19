@@ -341,7 +341,7 @@ bool Literal::operator==(const Literal& other) const {
   // The types must be identical, unless both are references - in that case,
   // nulls of different types *do* compare equal.
   if (type.isRef() && other.type.isRef() && (isNull() || other.isNull())) {
-    return isNull() == other.isNull();
+    return isNull() && other.isNull();
   }
   if (type != other.type) {
     return false;
