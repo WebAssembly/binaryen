@@ -339,8 +339,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   FunctionOptimizer(OptimizationInfo& optInfo) : optInfo(optInfo) {}
 
   void visitStructGet(StructGet* curr) {
-    auto type = curr->ref->type;
-    if (type == Type::unreachable) {
+    if (curr->ref->type == Type::unreachable) {
       return;
     }
 
@@ -394,12 +393,12 @@ private:
   bool changed = false;
 
   PossibleConstantValues getInfo(StructGet* get) {
-    auto type = get->ref->type;
+    auto type = get->ref->type.getHeapType();
 
     // Find the possible values based on the type of the get.
     PossibleConstantValues info;
     assert(!info.hasNoted());
-    auto iter = optInfo.generalInfo.find(type.getHeapType());
+    auto iter = optInfo.generalInfo.find(type);
     if (iter != optInfo.generalInfo.end()) {
       // There is information on this type, fetch it.
       info = iter->second[get->index];
@@ -412,7 +411,30 @@ private:
     // Sadly the type of the get was insufficient. If we work harder, we may be
     // able to infer the precise type of the reference (and not just
     // "get->ref->type or any of its subtypes").
-    return info; // TODO
+    auto result = inferPreciseType(get->ref);
+    if (!result.success) {
+      // We failed to infer anything here.
+      return info;
+    }
+
+    // If there are no subtypes, then we have already done all we can do, and
+    // can learn nothing further that could help us.
+    if (optInfo.subTypes.getSubTypes(type).empty()) {
+      return info;
+    }
+    
+    return info;
+  }
+
+  struct InferredResult {
+    HeapType type;
+    bool success = false;
+  };
+
+  // Attempts to infer the precise heap type returned by an expression. If it
+  // fails to do so it returns Type::none.
+  InferredResult inferPreciseType(Expression* curr) {
+    return {};
   }
 };
 
