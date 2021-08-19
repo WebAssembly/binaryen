@@ -30,6 +30,7 @@
 
 #include <atomic>
 
+#include "ir/cost.h"
 #include "ir/debug.h"
 #include "ir/element-utils.h"
 #include "ir/literal-utils.h"
@@ -53,6 +54,7 @@ struct FunctionInfo {
   bool hasTryDelegate;
   bool usedGlobally; // in a table or export
   bool uninlineable;
+  bool maySkipHeavyWork;
 
   FunctionInfo() {
     refs = 0;
@@ -62,6 +64,22 @@ struct FunctionInfo {
     hasTryDelegate = false;
     usedGlobally = false;
     uninlineable = false;
+
+    // Normally we do not inline functions that do heavy work, as if they run
+    // for a long time then getting rid of the call overhead to them has little
+    // benefit (an exception is where we can reduce the amount of work by using
+    // knowledge about the parameters passed to them - we should do more there
+    // TODO). However, some functions may skip their heavy work, such as
+    //
+    // function foo(x) {
+    //   if (!x) return;
+    //   heavyWork();
+    // }
+    //
+    // That function *is* worth inlining, as the heavy work is conditional, and
+    // if in practice it is avoided, then avoiding the call overhead there can
+    // be very useful.
+    maySkipHeavyWork = false;
   }
 
   // See pass.h for how defaults for these options were chosen.
@@ -91,14 +109,22 @@ struct FunctionInfo {
     }
     // More than one use, so we can't eliminate it after inlining,
     // so only worth it if we really care about speed and don't care
-    // about size. First, check if it has calls. In that case it is not
-    // likely to speed us up, and also if we want to inline such
-    // functions we would need to be careful to avoid infinite recursion.
-    if (hasCalls) {
-      return false;
+    // about size, and if we have reason to think we might get a speedup from
+    // avoiding the call overhead. To check that, first see if we potentially
+    // skip any heavy work - if so, it's worth inlining.
+    if (!maySkipHeavyWork) {
+      // There is a call that may not be skipped, so even after inlining we'd
+      // end up with call overhead here.
+      if (hasCalls) {
+        return false;
+      }
+      // An unavoidable loop may be allowed using a flag; otherwise, we assume
+      // a loop isn't worth inlining.
+      if (hasLoops && !options.inlining.allowFunctionsWithLoops) {
+        return false;
+      }
     }
-    return options.optimizeLevel >= 3 && options.shrinkLevel == 0 &&
-           (!hasLoops || options.inlining.allowFunctionsWithLoops);
+    return options.optimizeLevel >= 3 && options.shrinkLevel == 0;
   }
 };
 
@@ -158,10 +184,56 @@ struct FunctionInfoScanner
     }
 
     info.size = Measurer::measure(curr->body);
+
+    info.maySkipHeavyWork = maySkipHeavyWork(curr->body);
   }
 
 private:
   NameInfoMap* infos;
+
+  // Check if a function may avoid doing any heavy work at all.
+  bool maySkipHeavyWork(Expression* curr) {
+    Index avoidableWork = 0;
+    Index unavoidableWork = 0;
+
+    auto process = [&](Expression* child) {
+      if (auto* iff = child->dynCast<If>()) {
+        // The condition cannot be avoided.
+        unavoidableWork += CostAnalyzer(iff->condition).cost;
+
+        // Only one arm will be taken.
+        Index ifTrue = CostAnalyzer(iff->ifTrue).cost;
+        Index ifFalse = iff->ifFalse ? CostAnalyzer(iff->ifFalse).cost : 0;
+        avoidableWork += std::max(ifTrue, ifFalse);
+        unavoidableWork += std::min(ifTrue, ifFalse);
+        return;
+      }
+
+      // If this is not a node we can handle, just assume the cost is
+      // unavoidable. TODO: add more node types
+      unavoidableWork += CostAnalyzer(child).cost;
+    };
+
+    // Look into a block's children; otherwise, just scan the node.
+    if (auto* block = curr->dynCast<Block>()) {
+      for (auto* child : block->list) {
+        process(child);
+      }
+    } else {
+      process(curr);
+    }
+
+    // Limit the unavoidable work to really trivial things, like say one or two
+    // eqz, ref.is_null, etc. operations.
+    const Index MaxUnavoidable = 2;
+
+    // To count as avoiding heavy work, the avoidable work must be pretty
+    // significant - something like a call, throw, etc. This should be something
+    // like an order of magnitude higher than MaxUnavoidable.
+    const Index MinAvoidable = 20;
+
+    return unavoidableWork <= MaxUnavoidable && avoidableWork >= MinAvoidable;
+  }
 };
 
 struct InliningAction {

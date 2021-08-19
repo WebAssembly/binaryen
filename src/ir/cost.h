@@ -52,21 +52,21 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, Index> {
   Index visitCall(Call* curr) {
     // XXX this does not take into account if the call is to an import, which
     //     may be costlier in general
-    Index ret = 4;
+    Index ret = 25;
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
   Index visitCallIndirect(CallIndirect* curr) {
-    Index ret = 6 + visit(curr->target);
+    Index ret = 30 + visit(curr->target);
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
     return ret;
   }
   Index visitCallRef(CallRef* curr) {
-    Index ret = 5 + visit(curr->target);
+    Index ret = 28 + visit(curr->target);
     for (auto* child : curr->operands) {
       ret += visit(child);
     }
