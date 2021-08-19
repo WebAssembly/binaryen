@@ -128,8 +128,8 @@ struct FunctionInfo {
         return false;
       }
     }
-    // The function looks reasonable lightweight, or it has heavy work but that
-    // work may be skipped, so this seems reasonable to inline.
+    // The function looks reasonably lightweight, or it has heavy work but that
+    // work may be skipped, so this seems ok to inline.
     return true;
   }
 };
