@@ -7,6 +7,19 @@
 ;; potentially worth inlining.
 
 (module
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (import "outside" "work1" (func $outside-work))
+
+  ;; CHECK:      (import "outside" "work2" (func $outside-work-result (result i32)))
+
+  ;; CHECK:      (memory $0 1 1)
+
+  ;; CHECK:      (tag $exception (param i32))
   (tag $exception (param i32))
 
   (import "outside" "work1" (func $outside-work))
@@ -22,6 +35,32 @@
     )
   )
 
+  ;; CHECK:      (func $if-call-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-call
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (call $outside-work)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-call0
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:     (call $outside-work)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-call-caller (param $x i32)
     ;; Call more than once, to avoid us deciding to inline just because the
     ;; target has a single use.
@@ -37,6 +76,32 @@
     )
   )
 
+  ;; CHECK:      (func $if-fence-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-fence
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (atomic.fence)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-fence0
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:     (atomic.fence)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-fence-caller (param $x i32)
     (call $if-fence (local.get $x))
     (call $if-fence (local.get $x))
@@ -50,6 +115,36 @@
     )
   )
 
+  ;; CHECK:      (func $if-throw-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-throw
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (throw $exception
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-throw0
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:     (throw $exception
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-throw-caller (param $x i32)
     (call $if-throw (local.get $x))
     (call $if-throw (local.get $x))
@@ -64,6 +159,34 @@
     )
   )
 
+  ;; CHECK:      (func $if-else-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-else
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (call $outside-work)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-else0
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (call $outside-work)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-else-caller (param $x i32)
     (call $if-else (local.get $x))
     (call $if-else (local.get $x))
@@ -78,6 +201,38 @@
     )
   )
 
+  ;; CHECK:      (func $if-else-value-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$if-else-value (result i32)
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (call $outside-work-result)
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$if-else-value0 (result i32)
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:      (call $outside-work-result)
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-else-value-caller (param $x i32)
     (drop (call $if-else-value (local.get $x)))
     (drop (call $if-else-value (local.get $x)))
@@ -92,6 +247,46 @@
     (local.get $x)
   )
 
+  ;; CHECK:      (func $if-unreachable-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$if-unreachable (result i32)
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:       (throw $exception
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$if-unreachable0 (result i32)
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:       (throw $exception
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-unreachable-caller (param $x i32)
     (drop (call $if-unreachable (local.get $x)))
     (drop (call $if-unreachable (local.get $x)))
@@ -106,11 +301,58 @@
     )
   )
 
+  ;; CHECK:      (func $if-some-unavoidable-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-some-unavoidable
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $outside-work)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-some-unavoidable0
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $outside-work)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-some-unavoidable-caller (param $x i32)
     (call $if-some-unavoidable (local.get $x))
     (call $if-some-unavoidable (local.get $x))
   )
 
+  ;; CHECK:      (func $if-some-unavoidable-2 (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outside-work)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-some-unavoidable-2 (param $x i32)
     ;; Do a little work in the condition, and a little after the if, but the
     ;; total is not too much.
@@ -121,9 +363,50 @@
     (drop (i32.eqz (i32.const 0)))
   )
 
+  ;; CHECK:      (func $if-some-unavoidable-2-caller (param $x i32)
+  ;; CHECK-NEXT:  (call $if-some-unavoidable-2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $if-some-unavoidable-2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-some-unavoidable-2-caller (param $x i32)
     (call $if-some-unavoidable-2 (local.get $x))
     (call $if-some-unavoidable-2 (local.get $x))
+  )
+
+  ;; CHECK:      (func $if-too-much (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outside-work)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-too-much (param $x i32)
+    ;; Do too much work in the condition.
+    (if
+      (i32.eqz (i32.eqz (i32.eqz (local.get $x))))
+      (call $outside-work)
+    )
+  )
+
+  ;; CHECK:      (func $if-too-much-caller (param $x i32)
+  ;; CHECK-NEXT:  (call $if-too-much
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $if-too-much
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-too-much-caller (param $x i32)
+    (call $if-too-much (local.get $x))
+    (call $if-too-much (local.get $x))
   )
 
   (func $if-null (param $x anyref) (result anyref)
@@ -135,6 +418,50 @@
     (local.get $x)
   )
 
+  ;; CHECK:      (func $if-null-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 anyref)
+  ;; CHECK-NEXT:  (local $2 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$if-null (result anyref)
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (throw $exception
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$if-null0 (result anyref)
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (throw $exception
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $if-null-caller (param $x i32)
     (drop (call $if-null (ref.null any)))
     (drop (call $if-null (ref.null any)))
