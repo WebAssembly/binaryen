@@ -14,21 +14,20 @@
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (import "outside" "work1" (func $outside-work))
+  (import "outside" "work1" (func $outside-work))
 
   ;; CHECK:      (import "outside" "work2" (func $outside-work-result (result i32)))
+  (import "outside" "work2" (func $outside-work-result (result i32)))
+
+  (memory 1 1)
 
   ;; CHECK:      (memory $0 1 1)
 
   ;; CHECK:      (tag $exception (param i32))
   (tag $exception (param i32))
 
-  (import "outside" "work1" (func $outside-work))
-  (import "outside" "work2" (func $outside-work-result (result i32)))
-
-  (memory 1 1)
-
   (func $if-call (param $x i32)
-    ;; An avoidable call.
+    ;; An avoidable call. This should be inlined.
     (if
       (local.get $x)
       (call $outside-work)
@@ -389,7 +388,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-too-much (param $x i32)
-    ;; Do too much work in the condition.
+    ;; Do too much work in the condition. This should *not* be inlined.
     (if
       (i32.eqz (i32.eqz (i32.eqz (local.get $x))))
       (call $outside-work)
