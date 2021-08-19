@@ -9,7 +9,8 @@
 (module
   (tag $exception (param i32))
 
-  (import "outside" "work" (func $outside-work))
+  (import "outside" "work1" (func $outside-work))
+  (import "outside" "work2" (func $outside-work-result (result i32)))
 
   (memory 1 1)
 
@@ -72,14 +73,14 @@
     ;; As above, but with a result
     (if (result i32)
       (local.get $x)
-      (call $outside-work)
+      (call $outside-work-result)
       (local.get $x)
     )
   )
 
   (func $if-else-value-caller (param $x i32)
-    (drop (call $if-else-value-caller (local.get $x)))
-    (drop (call $if-else-value-caller (local.get $x)))
+    (drop (call $if-else-value (local.get $x)))
+    (drop (call $if-else-value (local.get $x)))
   )
 
   (func $if-unreachable (param $x i32) (result i32)
@@ -125,7 +126,7 @@
     (call $if-some-unavoidable-2 (local.get $x))
   )
 
-  (func $if-null (param $x anyref) (result anyref
+  (func $if-null (param $x anyref) (result anyref)
     ;; A "throw if null" function.
     (if
       (ref.is_null (local.get $x))
@@ -135,7 +136,7 @@
   )
 
   (func $if-null-caller (param $x i32)
-    (call $if-null (local.get $x))
-    (call $if-null (local.get $x))
+    (drop (call $if-null (ref.null any)))
+    (drop (call $if-null (ref.null any)))
   )
 )
