@@ -358,8 +358,8 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // allocations, though, it doesn't matter what is in "..": there is nothing
 // in the wasm that we can check to find out if the results are the same or
 // not. (In fact, in this case they are always not the same.) So the
-// generativity is intrinsic to the expression and it is because each call to struct.new
-// generates a new value.
+// generativity is "intrinsic" to the expression and it is because each call to
+// struct.new generates a new value.
 //
 // Thus, loads are nondeterministic but not generative, while GC allocations
 // are in fact generative. Note that "generative" need not mean "allocation" as
@@ -367,8 +367,9 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // then those would also be generative - generating a new current time value or
 // a new random number on each execution, respectively.
 //
-//  * Note that NaN nondeterminism is ignored here. It is a valid wasm implementation to have deterministic
-//    NaN behavior, and we optimize under that simplifying assumption.
+//  * Note that NaN nondeterminism is ignored here. It is a valid wasm
+//    implementation to have deterministic NaN behavior, and we optimize under
+//    that simplifying assumption.
 //  * Note that calls are ignored here. In theory this concept could be defined
 //    either way for them - that is, we could potentially define them as
 //    generative, as they might contain such an instruction, or we could define
