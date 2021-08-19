@@ -192,7 +192,7 @@
   )
 
   (func $if-else-value (param $x i32) (result i32)
-    ;; As above, but with a result
+    ;; As above, but with a result.
     (if (result i32)
       (local.get $x)
       (call $outside-work-result)
@@ -339,42 +339,6 @@
     (call $if-some-unavoidable (local.get $x))
   )
 
-  ;; CHECK:      (func $if-some-unavoidable-2 (param $x i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $outside-work)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $if-some-unavoidable-2 (param $x i32)
-    ;; Do a little work in the condition, and a little after the if, but the
-    ;; total is not too much.
-    (if
-      (i32.eqz (local.get $x))
-      (call $outside-work)
-    )
-    (drop (i32.eqz (i32.const 0)))
-  )
-
-  ;; CHECK:      (func $if-some-unavoidable-2-caller (param $x i32)
-  ;; CHECK-NEXT:  (call $if-some-unavoidable-2
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call $if-some-unavoidable-2
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $if-some-unavoidable-2-caller (param $x i32)
-    (call $if-some-unavoidable-2 (local.get $x))
-    (call $if-some-unavoidable-2 (local.get $x))
-  )
-
   ;; CHECK:      (func $if-too-much (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
@@ -406,6 +370,96 @@
   (func $if-too-much-caller (param $x i32)
     (call $if-too-much (local.get $x))
     (call $if-too-much (local.get $x))
+  )
+
+  (func $if-some-unavoidable-2 (param $x i32)
+    ;; Do a little work in the condition, and a little after the if, but the
+    ;; total is not too much.
+    (if
+      (i32.eqz (local.get $x))
+      (call $outside-work)
+    )
+    (drop (i32.const 0))
+  )
+
+  ;; CHECK:      (func $if-some-unavoidable-2-caller (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-some-unavoidable-2
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $outside-work)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$if-some-unavoidable-20
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (i32.eqz
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $outside-work)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-some-unavoidable-2-caller (param $x i32)
+    (call $if-some-unavoidable-2 (local.get $x))
+    (call $if-some-unavoidable-2 (local.get $x))
+  )
+
+  ;; CHECK:      (func $if-too-much-2 (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outside-work)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-too-much-2 (param $x i32)
+    ;; Do too much work after the if condition. This should *not* be inlined.
+    (if
+      (i32.eqz (local.get $x))
+      (call $outside-work)
+    )
+    (drop (i32.eqz (i32.const 0)))
+  )
+
+  ;; CHECK:      (func $if-too-much-2-caller (param $x i32)
+  ;; CHECK-NEXT:  (call $if-too-much-2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $if-too-much-2
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-too-much-2-caller (param $x i32)
+    (call $if-too-much-2 (local.get $x))
+    (call $if-too-much-2 (local.get $x))
   )
 
   (func $if-null (param $x anyref) (result anyref)
