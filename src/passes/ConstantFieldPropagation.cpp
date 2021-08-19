@@ -303,6 +303,25 @@ private:
   }
 };
 
+struct OptimizationInfo {
+  // Info that includes propagation to sub- and super-types. This is what we use
+  // when we see a (struct.get) and are trying to see what possible data could
+  // be accessed there. It includes all the possible values written by
+  // struct.new or struct.set both up and down the type tree.
+  StructValuesMap generalInfo;
+
+  // Info that is precise to the type, not including any propagation. If we know
+  // the precise type of a (struct.get), and that it cannot even be a subtype,
+  // then we use this. It includes all the possible values written by struct.new
+  // of this type itself and nothing more; it also includes propagated types
+  // from struct.set.
+  //
+  // TODO: Figure out which struct.sets set to the precise type, to avoid that
+  //       propagation. However, it may not be a problem as vtables are usually
+  //       only written to by new anyhow, and not set.
+  StructValuesMap preciseInfo;
+};
+
 // Optimize struct gets based on what we've learned about writes.
 //
 // TODO Aside from writes, we could use information like whether any struct of
@@ -311,9 +330,9 @@ private:
 struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   bool isFunctionParallel() override { return true; }
 
-  Pass* create() override { return new FunctionOptimizer(infos); }
+  Pass* create() override { return new FunctionOptimizer(optInfo); }
 
-  FunctionOptimizer(StructValuesMap& infos) : infos(infos) {}
+  FunctionOptimizer(OptimizationInfo& optInfo) : optInfo(optInfo) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
@@ -328,8 +347,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // as if nothing was ever noted for that field.
     PossibleConstantValues info;
     assert(!info.hasNoted());
-    auto iter = infos.find(type.getHeapType());
-    if (iter != infos.end()) {
+    auto iter = optInfo.generalInfo.find(type.getHeapType());
+    if (iter != optInfo.generalInfo.end()) {
       // There is information on this type, fetch it.
       info = iter->second[curr->index];
     }
@@ -375,7 +394,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   }
 
 private:
-  StructValuesMap& infos;
+  OptimizationInfo& optInfo;
 
   bool changed = false;
 };
@@ -489,23 +508,34 @@ struct ConstantFieldPropagation : public Pass {
         }
       }
     };
-    propagate(combinedNewInfos, false);
-    propagate(combinedSetInfos, true);
 
-    // Combine both sources of information to the final information that gets
-    // care about.
-    StructValuesMap combinedInfos = std::move(combinedNewInfos);
-    for (auto& kv : combinedSetInfos) {
-      auto type = kv.first;
-      auto& info = kv.second;
-      for (Index i = 0; i < info.size(); i++) {
-        combinedInfos[type][i].combine(info[i]);
+    auto mergeIn = [](StructValuesMap& target, const StructValuesMap& source) {
+      for (auto& kv : source) {
+        auto type = kv.first;
+        auto& info = kv.second;
+        for (Index i = 0; i < info.size(); i++) {
+          target[type][i].combine(info[i]);
+        }
       }
-    }
+    };
+
+    // Compute the final information that we need.
+    OptimizationInfo optInfo;
+
+    // Precise info takes the unpropagated news, and adds propagated sets (see
+    // TODO earlier about the latter).
+    propagate(combinedSetInfos, true);
+    optInfo.preciseInfo = combinedNewInfos;
+    mergeIn(optInfo.preciseInfo, combinedSetInfos);
+
+    // General info takes all the propagated info.
+    propagate(combinedNewInfos, false);
+    optInfo.generalInfo = std::move(combinedNewInfos);
+    mergeIn(optInfo.generalInfo, combinedSetInfos);
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(combinedInfos).run(runner, module);
+    FunctionOptimizer(optInfo).run(runner, module);
 
     // TODO: Actually remove the field from the type, where possible? That might
     //       be best in another pass.
