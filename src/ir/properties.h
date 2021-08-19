@@ -367,11 +367,8 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 // then those would also be generative - generating a new current time value or
 // a new random number on each execution, respectively.
 //
-//  * Note that NaN nondeterminism is ignored here. While e.g. f32.add is
-//    nondeterministic due to NaNs, it does not generate a new value each time -
-//    on a single implementation it will return the same value all the time.
-//    And in any case, it is a valid wasm implementation to have deterministic
-//    NaN behavior, and we optimize under that assumption.
+//  * Note that NaN nondeterminism is ignored here. It is a valid wasm implementation to have deterministic
+//    NaN behavior, and we optimize under that simplifying assumption.
 //  * Note that calls are ignored here. In theory this concept could be defined
 //    either way for them - that is, we could potentially define them as
 //    generative, as they might contain such an instruction, or we could define
