@@ -338,14 +338,17 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
+  // The types must be identical, unless both are references - in that case,
+  // nulls of different types *do* compare equal.
+  if (type.isRef() && other.type.isRef() && (isNull() || other.isNull())) {
+    return isNull() == other.isNull();
+  }
   if (type != other.type) {
     return false;
   }
   auto compareRef = [&]() {
     assert(type.isRef());
-    if (isNull() || other.isNull()) {
-      return isNull() == other.isNull();
-    }
+    // Note that we've already handled nulls earlier.
     if (type.isFunction()) {
       assert(func.is() && other.func.is());
       return func == other.func;
