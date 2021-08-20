@@ -1754,9 +1754,10 @@
     )
     (drop
       (ref.cast
-        ;; Even adding ref.as_non_null does not confuse us - we look through
-        ;; to the fallthrough value, which is in fact a null. So this will
-        ;; trap, but we can still optimize it.
+        ;; The fallthrough is null, but the node's child's type is non-nullable,
+        ;; so we can't optimize here.
+        ;; We do end up reordering in this case, which can lead to further work
+        ;; but at the moment that requires another run of the pass to do.
         (ref.as_non_null
           (ref.null $struct)
         )

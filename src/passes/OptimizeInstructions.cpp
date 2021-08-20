@@ -1311,6 +1311,8 @@ struct OptimizeInstructions
         // we optimized, so we checked for that - but, likely a trap will happen
         // anyhow before us, in that case, e.g. if the original value is
         //   (ref.as_non_null (.. a null ..)
+        // TODO: do this after the reordering of the cast with a
+        //       ref.as_non_null? that might make our child's type what we want.
         replaceCurrent(builder.makeBlock(
           {builder.makeDrop(curr->ref),
            builder.makeDrop(curr->rtt),
