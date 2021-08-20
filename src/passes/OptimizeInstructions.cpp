@@ -1319,8 +1319,8 @@ struct OptimizeInstructions
     // subtype of the desired type, as RTT subtyping is a subset of static
     // subtyping. For example, trying to cast an array to a struct would be
     // incompatible.
-    bool typesCompatible = canBeCastTo(curr->ref->type.getHeapType(),
-                                       curr->rtt->type.getHeapType());
+    bool typesCompatible =
+      canBeCastTo(curr->ref->type.getHeapType(), curr->rtt->type.getHeapType());
 
     if (!typesCompatible) {
       // This cast cannot succeed. It will either trap if the input is not a
