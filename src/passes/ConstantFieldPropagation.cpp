@@ -70,6 +70,8 @@ private:
   std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
 };
 
+// template of "PossibleThings"
+
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
 // possible, then all we can say is that the value is "unknown" - it can be
@@ -158,6 +160,11 @@ private:
   // type to indicate that. Otherwise, a concrete type indicates we have a
   // constant value.
   Literal value;
+};
+
+struct PossibleInfo {
+  PossibleThings<Literal> values;
+  PossibleThings<HeapType> types;
 };
 
 // A vector of PossibleConstantValues. One such vector will be used per struct
@@ -447,8 +454,8 @@ private:
       //   (struct.get $vtable.foo indexInVtable
       //     (struct.get $foo indexOfVtable ..)
       //
-      ..written types, not just constant values..
-      .. PossibleTypes .. - template over PossibleConstantValues?
+//      ..written types, not just constant values..
+  //    .. PossibleTypes .. - template over PossibleConstantValues?
     } else if (auto* get = curr->dynCast<LocalGet>()) {
       // This is a get of a local. See who writes to it.
       // TODO: only construct the graph for relevant types.
