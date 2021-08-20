@@ -760,6 +760,70 @@
   )
 )
 
+;; An unreachable set should not make us crash or misoptimize.
+(module
+  ;; CHECK:      (type $table.B (struct (field i32) (field f64)) (extends $table.A))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
+  (type $struct.A (struct (ref $table.A)))
+  ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
+
+  ;; CHECK:      (type $table.A (struct (field i32)))
+  (type $table.A (struct i32))
+
+  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
+  (type $table.B (struct i32 f64) (extends $table.A))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (local $a (ref null $struct.A))
+  ;; CHECK-NEXT:  (local.tee $a
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct.B
+  ;; CHECK-NEXT:    (struct.new_with_rtt $table.B
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (rtt.canon $table.B)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (rtt.canon $struct.B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $a (ref null $struct.A))
+    (local.set $a
+      (struct.new_with_rtt $struct.B
+        (struct.new_with_rtt $table.B
+          (unreachable)
+          (unreachable)
+          (rtt.canon $table.B)
+        )
+        (unreachable)
+        (rtt.canon $struct.B)
+      )
+    )
+    (drop
+      (struct.get $table.A 0
+        (struct.get $struct.A 0
+          (local.get $a)
+        )
+      )
+    )
+  )
+)
 
 
 
@@ -821,6 +885,7 @@
   )
 )
 
+;; CHECK:     (func (param anyref) (result i32))
 (module
   ;; A function type that receives |this| and returns an i32.
   ;; CHECK:      (type $func (func (param anyref) (result i32)))
