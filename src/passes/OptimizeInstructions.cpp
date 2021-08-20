@@ -1294,10 +1294,10 @@ struct OptimizeInstructions
     // would change the type, which can happen in e.g.
     //   (ref.cast (ref.as_non_null (.. (ref.null)
     if (fallthrough->is<RefNull>()) {
-      Expression* rep = builder.makeBlock(
-          {builder.makeDrop(curr->ref),
-           builder.makeDrop(curr->rtt),
-           builder.makeRefNull(curr->rtt->type.getHeapType())});
+      Expression* rep =
+        builder.makeBlock({builder.makeDrop(curr->ref),
+                           builder.makeDrop(curr->rtt),
+                           builder.makeRefNull(curr->rtt->type.getHeapType())});
       if (curr->ref->type.isNonNullable()) {
         // Avoid a type change by forcing to be non-nullable. In practice, this
         // would have trapped before we get here, so this is just for
