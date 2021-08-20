@@ -131,15 +131,25 @@
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (ref.cast
-  ;; NOMNL-TNH-NEXT:    (local.get $parent)
-  ;; NOMNL-TNH-NEXT:    (local.get $child-rtt)
+  ;; NOMNL-TNH-NEXT:   (block
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (local.get $parent)
+  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (local.get $child-rtt)
+  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:    (unreachable)
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (ref.cast
-  ;; NOMNL-TNH-NEXT:    (local.get $child)
-  ;; NOMNL-TNH-NEXT:    (local.get $other-rtt)
+  ;; NOMNL-TNH-NEXT:   (block
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (local.get $child)
+  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (local.get $other-rtt)
+  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:    (unreachable)
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT: )
@@ -255,15 +265,25 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT: )
   ;; NOMNL-TNH:      (func $ref-cast-iit-bad (param $parent (ref $parent)) (param $parent-rtt (rtt $parent))
+  ;; NOMNL-TNH-NEXT:  (local $2 (ref null $parent))
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (ref.cast
-  ;; NOMNL-TNH-NEXT:    (block $block (result (ref $parent))
-  ;; NOMNL-TNH-NEXT:     (call $foo)
-  ;; NOMNL-TNH-NEXT:     (local.get $parent)
+  ;; NOMNL-TNH-NEXT:   (block (result (ref $parent))
+  ;; NOMNL-TNH-NEXT:    (drop
+  ;; NOMNL-TNH-NEXT:     (block (result (rtt $parent))
+  ;; NOMNL-TNH-NEXT:      (local.set $2
+  ;; NOMNL-TNH-NEXT:       (block $block (result (ref $parent))
+  ;; NOMNL-TNH-NEXT:        (call $foo)
+  ;; NOMNL-TNH-NEXT:        (local.get $parent)
+  ;; NOMNL-TNH-NEXT:       )
+  ;; NOMNL-TNH-NEXT:      )
+  ;; NOMNL-TNH-NEXT:      (block $block0 (result (rtt $parent))
+  ;; NOMNL-TNH-NEXT:       (call $foo)
+  ;; NOMNL-TNH-NEXT:       (local.get $parent-rtt)
+  ;; NOMNL-TNH-NEXT:      )
+  ;; NOMNL-TNH-NEXT:     )
   ;; NOMNL-TNH-NEXT:    )
-  ;; NOMNL-TNH-NEXT:    (block $block0 (result (rtt $parent))
-  ;; NOMNL-TNH-NEXT:     (call $foo)
-  ;; NOMNL-TNH-NEXT:     (local.get $parent-rtt)
+  ;; NOMNL-TNH-NEXT:    (ref.as_non_null
+  ;; NOMNL-TNH-NEXT:     (local.get $2)
   ;; NOMNL-TNH-NEXT:    )
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
