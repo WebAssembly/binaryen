@@ -8,12 +8,12 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
-  (type $struct.A (struct (ref $table.A))
-  (type $table.A (struct (ref $A))
+  (type $struct.A (struct (ref $table.A)))
+  (type $table.A (struct (ref $A)))
   (type $A (struct i32))
 
-  (type $struct.B (struct (ref $table.B) f32 (extends $struct.A))
-  (type $table.B (struct (ref $B) f64 (extends $table.A))
+  (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
+  (type $table.B (struct (ref $B) f64) (extends $table.A))
   (type $B (struct i32 i64) (extends $A))
 
   (func $test
