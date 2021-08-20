@@ -435,7 +435,6 @@ private:
     //     down to a more specific set of possible types).
     //
     auto inference = inferType(get->ref);
-std::cout << "infered\n" << *get << " : "  << inference.kind << " : " << inference.type << '\n';
     if (inference.kind == InferredType::Failure) {
       return info;
     }
@@ -445,14 +444,11 @@ std::cout << "infered\n" << *get << " : "  << inference.kind << " : " << inferen
     if (inference.kind == InferredType::IncludeSubTypes &&
         inference.type == type) {
       // We failed to infer anything, or we failed to infer anything new.
-std::cout << "l0\n";
       return info;
     }
 
-std::cout << "l1\n";
     if (inference.kind == InferredType::Precise) {
       // We inferred a precise type.
-std::cout << "l2\n";
       return getInfo(optInfo.preciseInfo, inference.type, index);
     } else {
       // We do not have a precise type, as subtypes may be included, but we did
@@ -514,10 +510,8 @@ std::cout << "l2\n";
   // Attempts to infer something useful about the heap type returned by an
   // expression.
   InferredType inferType(Expression* curr) {
-std::cout << "iT1\n" << *curr << '\n';
     curr =
       Properties::getFallthrough(curr, getPassOptions(), getModule()->features);
-std::cout << "iT2\n" << *curr << '\n';
 
     if (auto* get = curr->dynCast<StructGet>()) {
       // This is another struct.get, so we need to infer its reference type too.
@@ -582,7 +576,6 @@ std::cout << "iT2\n" << *curr << '\n';
     }
 
     // We didn't manage to do any better than the declared type.
-std::cout << "fail on\n" << *curr << '\n';
     if (curr->type == Type::unreachable) {
       return InferredType();
     }
