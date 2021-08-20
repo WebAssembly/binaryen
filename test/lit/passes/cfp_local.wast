@@ -146,8 +146,8 @@
   )
 )
 
-;; As above, but $B does *not* have the same constant written to it everywhere.
-;; We must use local information for the field value as well.
+;; As above, but $B does *not* have the same constant written to it everywhere,
+;; so we must use local information for the field value as well.
 (module
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
@@ -403,7 +403,8 @@
   )
 )
 
-;; As before, but use a tee and have multiple gets.
+;; As before, but use a tee (which checks the fallthrough) and have multiple
+;; gets.
 (module
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
