@@ -284,7 +284,7 @@
     (param $parent (ref $parent))
     (param $parent-rtt (rtt $parent))
 
-    ;; ignore due to the inability to reorder
+    ;; optimizing this cast away requires reordering.
     (drop
       (ref.cast
         (block (result (ref $parent))
