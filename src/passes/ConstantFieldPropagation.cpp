@@ -419,33 +419,65 @@ private:
     }
 
     // If there are no subtypes, then we have already done all we can do, and
-    // can learn nothing further that could help us.
+    // can learn nothing further that could help us. Avoid doing hard work that
+    // will only fail.
     if (optInfo.subTypes.getSubTypes(type).empty()) {
       return info;
     }
 
-    // Try to infer the precise type of the reference (and not just
-    // "get->ref->type or any of its subtypes").
-    auto result = inferPreciseType(get->ref);
-    if (!result.success) {
-      // We failed to infer anything here.
+    // Try to infer more about the type of the reference. We hope to learn
+    // either that
+    //
+    //  1. It is of a specific precise type.
+    //  2. It is of some type or any of its subtypes, but that may still be
+    //     an improvement over the type we knew before (that is, we narrowed it
+    //     down to a more specific set of possible types).
+    //
+    auto inference = inferType(get->ref);
+    if (inference.kind == InferredType.Failure ||
+        (inference.kind == InferredType.IncludeSubTypes &&
+         inference.type == type)) {
+      // We failed to infer anything, or we failed to infer anything new.
       return info;
     }
 
-    // Use the precise info.
-    return getInfo(optInfo.preciseInfo, result.type, get->index);
+    if (inference.kind == InferredType.Precise) {
+      // We inferred a precise type.
+      return getInfo(optInfo.preciseInfo, inference.type, get->index);
+    } else {
+      // We do not have a precise type, as subtypes may be included, but we did
+      // at least find a more specific type than we knew earlier.
+      assert(inference.kind == InferredType.IncludeSubTypes);
+      return getInfo(optInfo.generalInfo, inference.type, get->index);
+    }
   }
 
-  struct InferredResult {
-    HeapType type;
-    bool success = false;
+  // An inference about a heap type.
+  struct InferredType {
+    enum Kind {
+      // We failed to infer anything.
+      Failure,
 
-    InferredResult() {}
-    InferredResult(HeapType type) : type(type), success(true) {}
+      // We inferred a precise type: the value must be of this type and nothing
+      // else.
+      Precise,
+
+      // We inferred that the value must be of this type, or any subtype.
+      IncludeSubTypes
+    } kind;
+
+    HeapType type;
+
+    InferredResult() : kind(Failure) {}
+    InferredResult(Kind kind, HeapType type) : kind(kind), type(type) {
+      // If a type was provided, this is not a failure to infer.
+      assert(kind != Failure);
+    }
   };
 
-  // Attempts to infer the precise heap type returned by an expression.
-  InferredResult inferPreciseType(Expression* curr) {
+  // Attempts to infer something useful about the heap type returned by an
+  // expression.
+  InferredResult inferType(Expression* curr) {
     if (auto* get = curr->dynCast<StructGet>()) {
       // This is another struct.get, so we need to infer its reference type too.
       // Nested gets are a common pattern when we load the vtable and then a
@@ -454,8 +486,10 @@ private:
       //   (struct.get $vtable.foo indexInVtable
       //     (struct.get $foo indexOfVtable ..)
       //
-      // TODO
-      WASM_UNUSED(get);
+      auto inference = inferType(curr->ref);
+      if (inference.kind != InferredResult::Failure) {
+        immutable
+      }
     } else if (auto* get = curr->dynCast<LocalGet>()) {
       // This is a get of a local. See who writes to it.
       // TODO: only construct the graph for relevant types.
@@ -463,27 +497,26 @@ private:
         localGraph = std::make_unique<LocalGraph>(getFunction());
       }
       auto& sets = localGraph->getSetses[get];
+      // TODO: support more than one set
       if (sets.size() == 1) {
         auto* set = *sets.begin();
-        if (!set) {
-          // This is a use of the default value, that is, a null is being
-          // written here. That means this get might trap, which we could try to
-          // benefit from, but it likely means this code is unoptimized. Use the
-          // local type, which likely means the inference fails.
-          return InferredResult(
-            getFunction()->getLocalType(set->index).getHeapType());
+        if (set) {
+          // We found the single value that writes here.
+          return inferType(set->value);
+        } else {
+          // If set is nullptr, that means this is a use of the default value,
+          // that is, a null. This means we can't infer anything new about the
+          // type. We could in principle infer that the operation will trap,
+          // though (but other optimizations should handle that).
         }
-        auto type = set->value->type;
-        if (type == Type::unreachable) {
-          // This set is never executed.
-          return InferredResult();
-        }
-
-        // Success!
-        return InferredResult(type.getHeapType());
       }
+    } else if (auto* set = curr->dynCast<StructNew>()) {
+      // We can infer a precise type here, as struct.new creates exactly that.
+      return InferredResult(InferredResult::Precise, curr->type.getHeapType());
     }
-    return InferredResult();
+
+    // We didn't manage to do any better than the declared type.
+    return InferredResult(InferredResult::IncludeSubTypes, curr->type);
   }
 };
 
