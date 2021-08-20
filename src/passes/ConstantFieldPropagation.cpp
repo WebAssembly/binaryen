@@ -580,6 +580,13 @@ private:
       }
 
       return structInference;
+    } else if (auto* get = curr->dynCast<GlobalGet>()) {
+      // If a global is immutable, we can use information about its value,
+      // including even a precise type since it likely is a struct.new.
+      auto* global = getModule()->getGlobal(get->name);
+      if (!global->mutable_) {
+        return inferType(global->init);
+      }
     }
 
     // We didn't manage to do any better than the declared type.
