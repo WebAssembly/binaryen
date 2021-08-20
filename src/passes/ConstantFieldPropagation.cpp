@@ -70,8 +70,6 @@ private:
   std::unordered_map<HeapType, std::unordered_set<HeapType>> typeSubTypes;
 };
 
-// template of "PossibleThings"
-
 // Represents data about what constant values are possible in a particular
 // place. There may be no values, or one, or many, or if a non-constant value is
 // possible, then all we can say is that the value is "unknown" - it can be
@@ -160,11 +158,6 @@ private:
   // type to indicate that. Otherwise, a concrete type indicates we have a
   // constant value.
   Literal value;
-};
-
-struct PossibleInfo {
-  PossibleThings<Literal> values;
-  PossibleThings<HeapType> types;
 };
 
 // A vector of PossibleConstantValues. One such vector will be used per struct
@@ -440,6 +433,7 @@ private:
     HeapType type;
     bool success = false;
 
+    InferredResult() {}
     InferredResult(HeapType type) : type(type), success(true) {}
   };
 
@@ -454,8 +448,8 @@ private:
       //   (struct.get $vtable.foo indexInVtable
       //     (struct.get $foo indexOfVtable ..)
       //
-//      ..written types, not just constant values..
-  //    .. PossibleTypes .. - template over PossibleConstantValues?
+      // TODO
+      WASM_UNUSED(get);
     } else if (auto* get = curr->dynCast<LocalGet>()) {
       // This is a get of a local. See who writes to it.
       // TODO: only construct the graph for relevant types.
@@ -463,29 +457,26 @@ private:
         localGraph = std::make_unique<LocalGraph>(getFunction());
       }
       auto& sets = localGraph->getSetses[get];
-      PossibleTypes types;
-      for (auto* set : sets) {
+      if (sets.size() == 1) {
+        auto* set = *sets.begin();
         if (!set) {
           // This is a use of the default value, that is, a null is being
           // written here. That means this get might trap, which we could try to
           // benefit from, but it likely means this code is unoptimized. Use the
           // local type, which likely means the inference fails.
-          return InferredResult(getFunction()->getLocalType(set->index));
+          return InferredResult(getFunction()->getLocalType(set->index).getHeapType());
         }
         auto type = set->value->type;
         if (type == Type::unreachable) {
           // This set is never executed.
-          continue;
+          return InferredResult();
         }
-        types.note(set->value->type);
-      }
-      if (types.isSingle()) {
+
         // Success!
-        return InferredResult(types.getSingle().getHeapType());
+        return InferredResult(type.getHeapType());
       }
-      return {};
     }
-    return {};
+    return InferredResult();
   }
 };
 
