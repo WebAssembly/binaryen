@@ -825,67 +825,8 @@
   )
 )
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-(module
-  ;; CHECK:      (type $parent (struct (field i32)))
-  (type $parent (struct i32))
-  (type $child (struct i32 i64) (extends $parent))
-  (type $grandchild (struct i32 i64 f32) (extends $child))
-
-  ;; CHECK:      (type $none_=>_none (func))
-
-  ;; CHECK:      (func $test
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_with_rtt $parent
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:    (rtt.canon $parent)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (ref.null $parent)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test
-    (drop
-      (struct.new_with_rtt $parent
-        (i32.const 42)
-        (rtt.canon $parent)
-      )
-    )
-    (drop
-      (struct.get $parent 0
-        (ref.null $parent)
-      )
-    )
-  )
-)
-
-;; CHECK:     (func (param anyref) (result i32))
+;; A "realistic" test with a proper vtable, method calls with |this| params,
+;; etc.
 (module
   ;; A function type that receives |this| and returns an i32.
   ;; CHECK:      (type $func (func (param anyref) (result i32)))
@@ -1033,9 +974,8 @@
     )
 
     ;; Call it a few times. We should be able to infer that the local contains
-    ;; exactly a parent instance and not its subtype, and so we can devirtualize
-    ;; the call and inline it. This depends on escape analysis (heap2local) to
-    ;; turn the struct values into locals.
+    ;; exactly a parent instance and not its subtype, and so we can replace the
+    ;; struct.get with parent.func.
     (i32.add
       (call_ref
         (local.get $x)
@@ -1116,7 +1056,8 @@
 
     ;; Call the method. As the local is of the parent, this seems like it could
     ;; call either the parent or the child func, but locally we know that only
-    ;; a child can be in this local.
+    ;; a child can be in this local, and we can replace the struct.gets with
+    ;; child.func.
     ;;
     ;; Call it twice to verify we can optimize more than a single call.
     (i32.add
