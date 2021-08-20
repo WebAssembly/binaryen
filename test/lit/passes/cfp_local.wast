@@ -873,7 +873,7 @@
   (func $test
     (local $a (ref null $struct.A))
     (drop
-      ;; This get uses the default value of the set.
+      ;; This get uses the default value of the local.
       (struct.get $table.A 0
         (struct.get $struct.A 0
           (local.get $a)
@@ -972,19 +972,9 @@
   ;; CHECK:      (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
   (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
 
-  ;; Keep a creation of the parent alive, so that we do not end up with no
-  ;; creations and a simpler problem to solve.
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (elem declare func $child.func $parent.func)
-
-  ;; CHECK:      (export "keepalive-parent" (func $keepalive-parent))
-
-  ;; CHECK:      (export "keepalive-child" (func $keepalive-child))
-
-  ;; CHECK:      (export "parent" (func $create-parent-call-parent))
-
-  ;; CHECK:      (export "child" (func $create-child-call-parent))
 
   ;; CHECK:      (func $keepalive-parent (result anyref)
   ;; CHECK-NEXT:  (struct.new_with_rtt $parent
@@ -995,7 +985,8 @@
   ;; CHECK-NEXT:   (rtt.canon $parent)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $keepalive-parent (export "keepalive-parent") (result anyref)
+  (func $keepalive-parent (result anyref)
+    ;; Add a creation of the parent to avoid this being too trivial.
     (struct.new_with_rtt $parent
       (struct.new_with_rtt $parent.vtable
         (ref.func $parent.func)
@@ -1005,7 +996,6 @@
     )
   )
 
-  ;; Same as above, but for the child.
   ;; CHECK:      (func $keepalive-child (result anyref)
   ;; CHECK-NEXT:  (struct.new_with_rtt $child
   ;; CHECK-NEXT:   (struct.new_with_rtt $child.vtable
@@ -1018,6 +1008,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $keepalive-child (export "keepalive-child") (result anyref)
+    ;; Same as above, but for the child.
     (struct.new_with_rtt $child
       (struct.new_with_rtt $child.vtable
         (ref.func $child.func)
