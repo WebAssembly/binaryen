@@ -396,17 +396,22 @@ private:
   // We may need local info. As this is expensive, generate it on demand.
   std::unique_ptr<LocalGraph> localGraph;
 
+  PossibleConstantValues getInfo(StructValuesMap& infos, HeapType type, Index index) {
+    PossibleConstantValues info;
+    assert(!info.hasNoted());
+    auto iter = infos.find(type);
+    if (iter != infos.end()) {
+      // There is information on this type, fetch it.
+      info = iter->second[index];
+    }
+    return info;
+  }
+
   PossibleConstantValues getInfo(StructGet* get) {
     auto type = get->ref->type.getHeapType();
 
     // Find the possible values based on the type of the get.
-    PossibleConstantValues info;
-    assert(!info.hasNoted());
-    auto iter = optInfo.generalInfo.find(type);
-    if (iter != optInfo.generalInfo.end()) {
-      // There is information on this type, fetch it.
-      info = iter->second[get->index];
-    }
+    auto info = getInfo(optInfo.generalInfo, type, get->index);
     if (info.isConstant() || !info.hasNoted()) {
       // We found enough information here; return it.
       return info;
@@ -426,7 +431,8 @@ private:
       return info;
     }
 
-    return info;
+    // Use the precise info.
+    return getInfo(optInfo.preciseInfo, type, get->index);
   }
 
   struct InferredResult {
@@ -437,8 +443,7 @@ private:
     InferredResult(HeapType type) : type(type), success(true) {}
   };
 
-  // Attempts to infer the precise heap type returned by an expression. If it
-  // fails to do so it returns Type::none.
+  // Attempts to infer the precise heap type returned by an expression.
   InferredResult inferPreciseType(Expression* curr) {
     if (auto* get = curr->dynCast<StructGet>()) {
       // This is another struct.get, so we need to infer its reference type too.
