@@ -262,6 +262,9 @@
     (i32.add
       (call_ref
         (local.get $x)
+        ;; Thought we do a get using the parent type here, we can see that the
+        ;; local contains a child type, and therefore will replace this with
+        ;; the child func.
         (struct.get $parent.vtable 0
           (local.get $v)
         )
