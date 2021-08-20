@@ -1717,9 +1717,16 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (ref.cast
-  ;; CHECK-NEXT:     (ref.null $struct)
-  ;; CHECK-NEXT:     (rtt.canon $array)
+  ;; CHECK-NEXT:    (block (result (ref null $array))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (ref.null $struct)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (rtt.canon $array)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null $array)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1738,9 +1745,16 @@
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (ref.as_non_null
-  ;; NOMNL-NEXT:    (ref.cast
-  ;; NOMNL-NEXT:     (ref.null $struct)
-  ;; NOMNL-NEXT:     (rtt.canon $array)
+  ;; NOMNL-NEXT:    (block (result (ref null $array))
+  ;; NOMNL-NEXT:     (drop
+  ;; NOMNL-NEXT:      (ref.as_non_null
+  ;; NOMNL-NEXT:       (ref.null $struct)
+  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (drop
+  ;; NOMNL-NEXT:      (rtt.canon $array)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:     (ref.null $array)
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
