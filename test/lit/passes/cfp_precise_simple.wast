@@ -211,7 +211,7 @@
   ;; CHECK-NEXT:       (local.get $v)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.func $parent.func)
+  ;; CHECK-NEXT:     (ref.func $child.func)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call_ref
@@ -222,7 +222,7 @@
   ;; CHECK-NEXT:       (local.get $v)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (ref.func $parent.func)
+  ;; CHECK-NEXT:     (ref.func $child.func)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

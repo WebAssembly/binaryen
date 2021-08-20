@@ -433,7 +433,7 @@ private:
     }
 
     // Use the precise info.
-    return getInfo(optInfo.preciseInfo, type, get->index);
+    return getInfo(optInfo.preciseInfo, result.type, get->index);
   }
 
   struct InferredResult {
