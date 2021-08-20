@@ -827,7 +827,6 @@
 
 ;; A "realistic" test with a proper vtable, method calls with |this| params,
 ;; etc.
-;; CHECK:     (func ((param anyref) (result i32)))
 (module
   ;; A function type that receives |this| and returns an i32.
   ;; CHECK:      (type $func (func (param anyref) (result i32)))
