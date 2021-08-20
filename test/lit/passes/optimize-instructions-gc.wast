@@ -16,14 +16,16 @@
 
   ;; CHECK:      (type $array (array (mut i8)))
 
+  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
+
   ;; CHECK:      (type $empty (struct ))
   ;; NOMNL:      (type $array (array (mut i8)))
+
+  ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
 
   ;; NOMNL:      (type $empty (struct ))
   (type $empty (struct))
 
-  ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
-  ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
   (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
 
   ;; CHECK:      (type $C (struct (field i32) (field i32) (field f64)))
@@ -32,6 +34,7 @@
 
   (type $array (array (mut i8)))
 
+  ;; CHECK:      (type $A (struct (field i32)))
   ;; NOMNL:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
@@ -1836,6 +1839,51 @@
       (ref.test
         (local.get $struct)
         (rtt.canon $array)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:    (rtt.canon $B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test
+  ;; CHECK-NEXT:    (local.get $B)
+  ;; CHECK-NEXT:    (rtt.canon $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:    (local.get $A)
+  ;; NOMNL-NEXT:    (rtt.canon $B)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (ref.test
+  ;; NOMNL-NEXT:    (local.get $B)
+  ;; NOMNL-NEXT:    (rtt.canon $A)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $subtype-compatible (param $A (ref null $A)) (param $B (ref null $B))
+    (drop
+      ;; B is a subtype of A, so this can work.
+      (ref.test
+        (local.get $A)
+        (rtt.canon $B)
+      )
+    )
+    (drop
+      ;; The other direction works too.
+      (ref.test
+        (local.get $B)
+        (rtt.canon $A)
       )
     )
   )

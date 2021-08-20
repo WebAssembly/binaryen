@@ -1277,6 +1277,10 @@ struct OptimizeInstructions
     skipNonNullCast(curr->srcRef);
   }
 
+  bool canBeCastTo(HeapType a, HeapType b) {
+    return HeapType::isSubType(a, b) || HeapType::isSubType(b, a);
+  }
+
   void visitRefCast(RefCast* curr) {
     if (curr->type == Type::unreachable) {
       return;
@@ -1315,8 +1319,8 @@ struct OptimizeInstructions
     // subtype of the desired type, as RTT subtyping is a subset of static
     // subtyping. For example, trying to cast an array to a struct would be
     // incompatible.
-    bool typesCompatible = HeapType::isSubType(curr->ref->type.getHeapType(),
-                                               curr->rtt->type.getHeapType());
+    bool typesCompatible = canBeCastTo(curr->ref->type.getHeapType(),
+                                       curr->rtt->type.getHeapType());
 
     if (!typesCompatible) {
       // This cast cannot succeed. It will either trap if the input is not a
@@ -1408,9 +1412,8 @@ struct OptimizeInstructions
 
   void visitRefTest(RefTest* curr) {
     // See above in RefCast.
-    bool typesCompatible = HeapType::isSubType(curr->ref->type.getHeapType(),
-                                               curr->rtt->type.getHeapType());
-    if (!typesCompatible) {
+    if (!canBeCastTo(curr->ref->type.getHeapType(),
+                     curr->rtt->type.getHeapType())) {
       // This test cannot succeed, and will definitely return 0.
       Builder builder(*getModule());
       replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
