@@ -1078,3 +1078,58 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $E (struct (field i64) (field i64) (field i64) (field (mut i64))) (extends $D))
+
+  ;; CHECK:      (type $D (struct (field i64) (field i64) (field i64) (field (mut i64))))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (mut i32)))
+  (type $D (struct i64 i64 i64 (mut i64)))
+  (type $E (struct i64 i64 i64 (mut i64)) (extends $D))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (struct.set $E 3
+  ;; CHECK-NEXT:   (ref.null $E)
+  ;; CHECK-NEXT:   (block $label$2 (result i64)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $D 3
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (ref.null $A)
+  ;; CHECK-NEXT:     (rtt.canon $D)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; Write to E.3 so that there is information there that prevents a trivial
+    ;; optimization from the field never being set.
+    (struct.set $E 3
+      (ref.null $E)
+      (block $label$2 (result i64)
+        (i64.const 1)
+      )
+    )
+    ;; Get D.3 from a ref.null of A, which does not have that field. The cast will
+    ;; fail at runtime; do not fail at compile time on an assert.
+    ;;
+    ;; Note that we must make D different from E, as we would halt early
+    ;; here if D had no subtypes - it is during the attempt to infer a more
+    ;; specific type (either D or E, and not "D or E") that we end up looking at
+    ;; field 3 of A, which does not exist.
+    (drop
+      (struct.get $D 3
+        (ref.cast
+          (ref.null $A)
+          (rtt.canon $D)
+        )
+      )
+    )
+  )
+)
