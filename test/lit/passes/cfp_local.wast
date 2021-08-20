@@ -561,7 +561,133 @@
     )
     (drop
       (struct.new_with_rtt $table.B
-        (i32.const 1) ;; This is the same as earlier.
+        (i32.const 1) ;; This is the same as earlier (see next testcase).
+        (f64.const 400)
+        (rtt.canon $table.B)
+      )
+    )
+  )
+)
+
+;; As before, but we write a different value in $support. That means that type
+;; info is not enough: we infer the precise type, but that type can have more
+;; than one value.
+;;
+;; We could handle this with more work, but that is not necessary for the case
+;; where each vtable type gets assigned the same values each time.
+(module
+  ;; CHECK:      (type $table.B (struct (field i32) (field f64)) (extends $table.A))
+
+  ;; CHECK:      (type $table.A (struct (field i32)))
+
+  ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
+  (type $struct.A (struct (ref $table.A)))
+
+  (type $table.B (struct i32 f64) (extends $table.A))
+
+  (type $table.A (struct i32))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
+  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (local $a (ref null $struct.A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $table.A 0
+  ;; CHECK-NEXT:    (struct.get $struct.A 0
+  ;; CHECK-NEXT:     (local.tee $a
+  ;; CHECK-NEXT:      (struct.new_with_rtt $struct.B
+  ;; CHECK-NEXT:       (struct.new_with_rtt $table.B
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:        (f64.const 2.71828)
+  ;; CHECK-NEXT:        (rtt.canon $table.B)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (f32.const 3.141590118408203)
+  ;; CHECK-NEXT:       (rtt.canon $struct.B)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $a (ref null $struct.A))
+    (drop
+      (struct.get $table.A 0
+        (struct.get $struct.A 0
+          (local.tee $a
+            (struct.new_with_rtt $struct.B
+              (struct.new_with_rtt $table.B
+                (i32.const 1)
+                (f64.const 2.71828)
+                (rtt.canon $table.B)
+              )
+              (f32.const 3.14159)
+              (rtt.canon $struct.B)
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $support
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null $table.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $table.A
+  ;; CHECK-NEXT:    (i32.const 300)
+  ;; CHECK-NEXT:    (rtt.canon $table.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct.B
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null $table.B)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f32.const 100)
+  ;; CHECK-NEXT:    (rtt.canon $struct.B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $table.B
+  ;; CHECK-NEXT:    (i32.const 9999)
+  ;; CHECK-NEXT:    (f64.const 400)
+  ;; CHECK-NEXT:    (rtt.canon $table.B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $support
+    (drop
+      (struct.new_with_rtt $struct.A
+        (ref.as_non_null (ref.null $table.A))
+        (rtt.canon $struct.A)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $table.A
+        (i32.const 300)
+        (rtt.canon $table.A)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $struct.B
+        (ref.as_non_null (ref.null $table.B))
+        (f32.const 100)
+        (rtt.canon $struct.B)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $table.B
+        (i32.const 9999) ;; This is different than before.
         (f64.const 400)
         (rtt.canon $table.B)
       )
