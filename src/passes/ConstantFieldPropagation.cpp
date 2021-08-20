@@ -346,9 +346,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
     Builder builder(*getModule());
 
-std::cout << "a1 " << curr << "\n";
     PossibleConstantValues info = getInfo(curr);
-std::cout << "a2\n";
 
     if (!info.hasNoted()) {
       // This field is never written at all. That means that we do not even
@@ -364,13 +362,11 @@ std::cout << "a2\n";
       changed = true;
       return;
     }
-std::cout << "a3\n";
 
     // If the value is not a constant, then it is unknown and we must give up.
     if (!info.isConstant()) {
       return;
     }
-std::cout << "a4\n";
 
     // We can do this! Replace the get with a trap on a null reference using a
     // ref.as_non_null (we need to trap as the get would have done so), plus the
@@ -380,13 +376,10 @@ std::cout << "a4\n";
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
       builder.makeConstantExpression(info.getConstantValue())));
     changed = true;
-std::cout << "a5\n";
   }
 
   void doWalkFunction(Function* func) {
-std::cout << "dWF1\n";
     WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
-std::cout << "dWF2\n";
 
     // If we changed anything, we need to update parent types as types may have
     // changed.
@@ -406,7 +399,6 @@ private:
   PossibleConstantValues
   getInfo(StructValuesMap& infos, HeapType type, Index index) {
     assert(index < type.getStruct().fields.size());
-std::cout << "b10 " << getModule()->typeNames[type].name << " : " << index << " : " << type.getStruct().fields.size() << "\n";
     PossibleConstantValues info;
     assert(!info.hasNoted());
     auto iter = infos.find(type);
@@ -418,18 +410,15 @@ std::cout << "b10 " << getModule()->typeNames[type].name << " : " << index << " 
   }
 
   PossibleConstantValues getInfo(StructGet* get) {
-std::cout << "b1\n";
     auto type = get->ref->type.getHeapType();
     auto index = get->index;
 
     // Find the possible values based on the type of the get.
     auto info = getInfo(optInfo.generalInfo, type, index);
-std::cout << "b2\n";
     if (info.isConstant() || !info.hasNoted()) {
       // We found enough information here; return it.
       return info;
     }
-std::cout << "b3 " << getModule()->typeNames[type].name << "\n";
 
     // If there are no subtypes, then we have already done all we can do, and
     // can learn nothing further that could help us. Avoid doing hard work that
@@ -437,7 +426,6 @@ std::cout << "b3 " << getModule()->typeNames[type].name << "\n";
     if (optInfo.subTypes.getSubTypes(type).empty()) {
       return info;
     }
-std::cout << "b4\n";
 
     // Try to infer more about the type of the reference. We hope to learn
     // either that
@@ -451,7 +439,6 @@ std::cout << "b4\n";
     if (inference.kind == InferredType::Failure) {
       return info;
     }
-std::cout << "b5\n";
 
     // TODO: use inference.hasField(index) here
 
@@ -460,14 +447,11 @@ std::cout << "b5\n";
       // We failed to infer anything, or we failed to infer anything new.
       return info;
     }
-std::cout << "b6\n";
 
     if (inference.kind == InferredType::Precise) {
-std::cout << "b7\n";
       // We inferred a precise type.
       return getInfo(optInfo.preciseInfo, inference.type, index);
     } else {
-std::cout << "b8\n";
       // We do not have a precise type, as subtypes may be included, but we did
       // at least find a more specific type than we knew earlier.
       assert(inference.kind == InferredType::IncludeSubTypes);
@@ -742,9 +726,7 @@ struct ConstantFieldPropagation : public Pass {
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-std::cout << "opt1\n";
     FunctionOptimizer(optInfo).run(runner, module);
-std::cout << "opt2\n";
 
     // TODO: Actually remove the field from the type, where possible? That might
     //       be best in another pass.
