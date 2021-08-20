@@ -396,7 +396,8 @@ private:
   // We may need local info. As this is expensive, generate it on demand.
   std::unique_ptr<LocalGraph> localGraph;
 
-  PossibleConstantValues getInfo(StructValuesMap& infos, HeapType type, Index index) {
+  PossibleConstantValues
+  getInfo(StructValuesMap& infos, HeapType type, Index index) {
     PossibleConstantValues info;
     assert(!info.hasNoted());
     auto iter = infos.find(type);
@@ -469,7 +470,8 @@ private:
           // written here. That means this get might trap, which we could try to
           // benefit from, but it likely means this code is unoptimized. Use the
           // local type, which likely means the inference fails.
-          return InferredResult(getFunction()->getLocalType(set->index).getHeapType());
+          return InferredResult(
+            getFunction()->getLocalType(set->index).getHeapType());
         }
         auto type = set->value->type;
         if (type == Type::unreachable) {
