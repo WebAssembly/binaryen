@@ -60,15 +60,17 @@
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct (field i32)))
 
-  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
-
   ;; CHECK:      (type $B (array (mut i32)))
   (type $B (array (mut i32)))
 
 
+  ;; CHECK:      (type $ref|$A|_=>_none (func (param (ref $A))))
+
   ;; CHECK:      (type $ref?|$A|_=>_none (func (param (ref null $A))))
 
   ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $ref?|$B|_ref|$A|_=>_none (func (param (ref null $B) (ref $A))))
 
   ;; CHECK:      (func $struct-gets-nullable (param $ref (ref null $A))
   ;; CHECK-NEXT:  (local $1 i32)
@@ -238,6 +240,55 @@
         (i32.const 1)
         (i32.const 1)
         (rtt.canon $B)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $structs-and-arrays-do-not-alias (param $array (ref null $B)) (param $struct (ref $A))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (array.set $B
+  ;; CHECK-NEXT:   (local.get $array)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:    (struct.get $A 0
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $B
+  ;; CHECK-NEXT:   (local.get $array)
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $B
+  ;; CHECK-NEXT:   (local.get $array)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $structs-and-arrays-do-not-alias (param $array (ref null $B)) (param $struct (ref $A))
+    ;; ArraySets to consecutive elements, using some fixed StructGet value. This
+    ;; common pattern in j2cl can be optimized, as structs and arrays do not
+    ;; alias.
+    (array.set $B
+      (local.get $array)
+      (i32.const 0)
+      (struct.get $A 0
+        (local.get $struct)
+      )
+    )
+    (array.set $B
+      (local.get $array)
+      (i32.const 1)
+      (struct.get $A 0
+        (local.get $struct)
+      )
+    )
+    (array.set $B
+      (local.get $array)
+      (i32.const 2)
+      (struct.get $A 0
+        (local.get $struct)
       )
     )
   )
