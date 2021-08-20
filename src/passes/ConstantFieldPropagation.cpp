@@ -434,20 +434,20 @@ private:
     //     down to a more specific set of possible types).
     //
     auto inference = inferType(get->ref);
-    if (inference.kind == InferredType.Failure ||
-        (inference.kind == InferredType.IncludeSubTypes &&
+    if (inference.kind == InferredType::Failure ||
+        (inference.kind == InferredType::IncludeSubTypes &&
          inference.type == type)) {
       // We failed to infer anything, or we failed to infer anything new.
       return info;
     }
 
-    if (inference.kind == InferredType.Precise) {
+    if (inference.kind == InferredType::Precise) {
       // We inferred a precise type.
       return getInfo(optInfo.preciseInfo, inference.type, get->index);
     } else {
       // We do not have a precise type, as subtypes may be included, but we did
       // at least find a more specific type than we knew earlier.
-      assert(inference.kind == InferredType.IncludeSubTypes);
+      assert(inference.kind == InferredType::IncludeSubTypes);
       return getInfo(optInfo.generalInfo, inference.type, get->index);
     }
   }
@@ -471,7 +471,7 @@ private:
     // We may also have been able to infer something about some of the fields.
     // If so, they are added to this map. (Failures to infer are not included
     // here.)
-    std::unordered_map<Index, InferredType> fields;
+    std::unordered_map<Index, std::shared_ptr<InferredType>> fields;
 
     InferredType() : kind(Failure) {}
     InferredType(Kind kind, HeapType type) : kind(kind), type(type) {
@@ -484,15 +484,16 @@ private:
         // Failure to infer is indicated by simply not having it in the map.
         return;
       }
-      fields[i] = inference;
+      fields[i] = std::make_shared<InferredType>(inference);
     }
 
-    InferredType getField(Index i) {
+    std::shared_ptr<InferredType> getField(Index i) {
       assert(kind != Failure);
-      if (fields.count(i)) {
-        return fields[i];
+      auto iter = fields.find(i);
+      if (iter != fields.end()) {
+        return iter->second;
       }
-      return InferredType();
+      return std::make_shared<InferredType>();
     }
   };
 
@@ -507,19 +508,19 @@ private:
       //   (struct.get $vtable.foo indexInVtable
       //     (struct.get $foo indexOfVtable ..)
       //
-      auto inference = inferType(curr->ref);
+      auto inference = inferType(get->ref);
       if (inference.kind != InferredType::Failure) {
         // We inferred something useful here. Check if we even managed to infer
         // the field itself.
         auto fieldInference = inference.getField(get->index);
-        if (fieldInference.kind != InferredType::Failure) {
-          return fieldInference;
+        if (fieldInference->kind != InferredType::Failure) {
+          return *fieldInference;
         }
 
         // Nothing about the field, but knowing more about the reference may
         // still be helpful: we can see what the field's type is for that type.
         auto& field = inference.type.getStruct().fields[get->index];
-        return InferredType(InferredType::IncludeSubTypes, field.type);
+        return InferredType(InferredType::IncludeSubTypes, field.type.getHeapType());
       }
     } else if (auto* get = curr->dynCast<LocalGet>()) {
       // This is a get of a local. See who writes to it.
@@ -549,11 +550,11 @@ private:
 
       // Immutable fields can be inferred as well, as they cannot change later
       // on.
-      auto& fields = inference.type.getStruct().fields;
+      auto& fields = set->type.getHeapType().getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         auto& field = fields[i];
         if (field.mutable_ == Immutable) {
-          structInference.setField(i, inferType(curr->operands[i]));
+          structInference.setField(i, inferType(set->operands[i]));
         }
       }
 
@@ -561,7 +562,10 @@ private:
     }
 
     // We didn't manage to do any better than the declared type.
-    return InferredType(InferredType::IncludeSubTypes, curr->type);
+    if (curr->type == Type::unreachable) {
+      return InferredType();
+    }
+    return InferredType(InferredType::IncludeSubTypes, curr->type.getHeapType());
   }
 };
 
