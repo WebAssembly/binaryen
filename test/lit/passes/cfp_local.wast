@@ -972,6 +972,8 @@
   ;; CHECK:      (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
   (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
 
+
+
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (elem declare func $child.func $parent.func)
@@ -1007,7 +1009,7 @@
   ;; CHECK-NEXT:   (rtt.canon $child)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $keepalive-child (export "keepalive-child") (result anyref)
+  (func $keepalive-child (result anyref)
     ;; Same as above, but for the child.
     (struct.new_with_rtt $child
       (struct.new_with_rtt $child.vtable
@@ -1074,7 +1076,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create-parent-call-parent (export "parent") (result i32)
+  (func $create-parent-call-parent (result i32)
     (local $x (ref null $parent))
 
     ;; Create a parent.
@@ -1153,7 +1155,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $create-child-call-parent (export "child") (result i32)
+  (func $create-child-call-parent (result i32)
     (local $x (ref null $parent))
 
     ;; Create a child instance, but save it to a parent local.
