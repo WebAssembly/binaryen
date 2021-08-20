@@ -5,14 +5,13 @@
 
 (module
   ;; A function type that receives |this| and returns an i32.
-  ;; CHECK:      (type $parent (struct (field (ref $parent.vtable))))
-
   ;; CHECK:      (type $parent.vtable (struct (field (ref $func))))
 
   ;; CHECK:      (type $func (func (param anyref) (result i32)))
   (type $func (func (param anyref) (result i32)))
 
   ;; A parent struct type, with a vtable.
+  ;; CHECK:      (type $parent (struct (field (ref $parent.vtable))))
   (type $parent (struct (field (ref $parent.vtable))))
   (type $parent.vtable (struct (field (ref $func))))
 
@@ -99,11 +98,17 @@
 
   ;; CHECK:      (func $create-parent-call-parent (result i32)
   ;; CHECK-NEXT:  (local $x (ref null $parent))
+  ;; CHECK-NEXT:  (local $v (ref null $parent.vtable))
+  ;; CHECK-NEXT:  (local.set $v
+  ;; CHECK-NEXT:   (struct.new_with_rtt $parent.vtable
+  ;; CHECK-NEXT:    (ref.func $parent.func)
+  ;; CHECK-NEXT:    (rtt.canon $parent.vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (struct.new_with_rtt $parent
-  ;; CHECK-NEXT:    (struct.new_with_rtt $parent.vtable
-  ;; CHECK-NEXT:     (ref.func $parent.func)
-  ;; CHECK-NEXT:     (rtt.canon $parent.vtable)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $v)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (rtt.canon $parent)
   ;; CHECK-NEXT:   )
@@ -112,17 +117,13 @@
   ;; CHECK-NEXT:   (call_ref
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (struct.get $parent.vtable 0
-  ;; CHECK-NEXT:     (struct.get $parent 0
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $v)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call_ref
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (struct.get $parent.vtable 0
-  ;; CHECK-NEXT:     (struct.get $parent 0
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $v)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -142,7 +143,9 @@
     ;; Create a parent.
     (local.set $x
       (struct.new_with_rtt $parent
-        (local.get $v)
+        (ref.as_non_null
+          (local.get $v)
+        )
         (rtt.canon $parent)
       )
     )
@@ -169,11 +172,20 @@
 
   ;; CHECK:      (func $create-child-call-parent (result i32)
   ;; CHECK-NEXT:  (local $x (ref null $parent))
+  ;; CHECK-NEXT:  (local $v (ref null $parent.vtable))
+  ;; CHECK-NEXT:  (local.set $v
+  ;; CHECK-NEXT:   (struct.new_with_rtt $child.vtable
+  ;; CHECK-NEXT:    (ref.func $child.func)
+  ;; CHECK-NEXT:    (ref.func $child.func)
+  ;; CHECK-NEXT:    (rtt.canon $child.vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (struct.new_with_rtt $child
-  ;; CHECK-NEXT:    (struct.new_with_rtt $child.vtable
-  ;; CHECK-NEXT:     (ref.func $child.func)
-  ;; CHECK-NEXT:     (ref.func $child.func)
+  ;; CHECK-NEXT:    (ref.cast
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $v)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (rtt.canon $child.vtable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 42)
@@ -184,17 +196,13 @@
   ;; CHECK-NEXT:   (call_ref
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (struct.get $parent.vtable 0
-  ;; CHECK-NEXT:     (struct.get $parent 0
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $v)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call_ref
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (struct.get $parent.vtable 0
-  ;; CHECK-NEXT:     (struct.get $parent 0
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $v)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -215,7 +223,12 @@
     ;; Create a child instance, but save it to a parent local.
     (local.set $x
       (struct.new_with_rtt $child
-        (local.get $v)
+        (ref.cast
+          (ref.as_non_null
+            (local.get $v)
+          )
+          (rtt.canon $child.vtable)
+        )
         (i32.const 42)
         (rtt.canon $child)
       )
