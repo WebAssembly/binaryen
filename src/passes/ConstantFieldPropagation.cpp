@@ -607,6 +607,10 @@ struct ConstantFieldPropagation : public Pass {
     }
     Scanner scanner(functionNewInfos, functionSetInfos);
     scanner.run(runner, module);
+
+    // Define the "null function" for global code.
+    functionNewInfos[nullptr];
+    functionSetInfos[nullptr];
     scanner.walkModuleCode(module);
 
     // Combine the data from the functions.
