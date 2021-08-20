@@ -1730,6 +1730,242 @@
   )
 )
 
+;; As before, but the vtables are in *mutable* globals, which prevents
+;; optimization.
+(module
+  ;; A function type that receives |this| and returns an i32.
+  ;; CHECK:      (type $parent (struct (field (ref $parent.vtable))))
+
+  ;; CHECK:      (type $func (func (param anyref) (result i32)))
+  (type $func (func (param anyref) (result i32)))
+
+  ;; A parent struct type, with a vtable.
+  (type $parent (struct (field (ref $parent.vtable))))
+
+  ;; CHECK:      (type $parent.vtable (struct (field (ref $func))))
+  (type $parent.vtable (struct (field (ref $func))))
+
+  ;; A child struct type that extends the parent. It adds a field to both the
+  ;; struct and its vtable.
+  ;; CHECK:      (type $child.vtable (struct (field (ref $func)) (field (ref $func))) (extends $parent.vtable))
+  (type $child.vtable (struct (field (ref $func)) (field (ref $func)))  (extends $parent.vtable))
+
+  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+
+  ;; CHECK:      (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
+  (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
+
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (global $parent.vtable (mut (ref $parent.vtable)) (struct.new_with_rtt $parent.vtable
+  ;; CHECK-NEXT:  (ref.func $parent.func)
+  ;; CHECK-NEXT:  (rtt.canon $parent.vtable)
+  ;; CHECK-NEXT: ))
+  (global $parent.vtable (mut (ref $parent.vtable))
+    (struct.new_with_rtt $parent.vtable
+      (ref.func $parent.func)
+      (rtt.canon $parent.vtable)
+    )
+  )
+  ;; CHECK:      (global $child.vtable (mut (ref $child.vtable)) (struct.new_with_rtt $child.vtable
+  ;; CHECK-NEXT:  (ref.func $child.func)
+  ;; CHECK-NEXT:  (ref.func $child.func)
+  ;; CHECK-NEXT:  (rtt.canon $child.vtable)
+  ;; CHECK-NEXT: ))
+  (global $child.vtable (mut (ref $child.vtable))
+    (struct.new_with_rtt $child.vtable
+      (ref.func $child.func)
+      (ref.func $child.func)
+      (rtt.canon $child.vtable)
+    )
+  )
+
+  ;; CHECK:      (elem declare func $child.func $parent.func)
+
+  ;; CHECK:      (func $keepalive-parent (result anyref)
+  ;; CHECK-NEXT:  (struct.new_with_rtt $parent
+  ;; CHECK-NEXT:   (struct.new_with_rtt $parent.vtable
+  ;; CHECK-NEXT:    (ref.func $parent.func)
+  ;; CHECK-NEXT:    (rtt.canon $parent.vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (rtt.canon $parent)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $keepalive-parent (result anyref)
+    (struct.new_with_rtt $parent
+      (struct.new_with_rtt $parent.vtable
+        (ref.func $parent.func)
+        (rtt.canon $parent.vtable)
+      )
+      (rtt.canon $parent)
+    )
+  )
+
+  ;; CHECK:      (func $keepalive-child (result anyref)
+  ;; CHECK-NEXT:  (struct.new_with_rtt $child
+  ;; CHECK-NEXT:   (struct.new_with_rtt $child.vtable
+  ;; CHECK-NEXT:    (ref.func $child.func)
+  ;; CHECK-NEXT:    (ref.func $child.func)
+  ;; CHECK-NEXT:    (rtt.canon $child.vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 9999)
+  ;; CHECK-NEXT:   (rtt.canon $child)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $keepalive-child (result anyref)
+    (struct.new_with_rtt $child
+      (struct.new_with_rtt $child.vtable
+        (ref.func $child.func)
+        (ref.func $child.func)
+        (rtt.canon $child.vtable)
+      )
+      (i32.const 9999)
+      (rtt.canon $child)
+    )
+  )
+
+  ;; CHECK:      (func $parent.func (param $this anyref) (result i32)
+  ;; CHECK-NEXT:  (i32.const 128)
+  ;; CHECK-NEXT: )
+  (func $parent.func (param $this anyref) (result i32)
+    (i32.const 128)
+  )
+
+  ;; CHECK:      (func $child.func (param $this anyref) (result i32)
+  ;; CHECK-NEXT:  (i32.const 4096)
+  ;; CHECK-NEXT: )
+  (func $child.func (param $this anyref) (result i32)
+    (i32.const 4096)
+  )
+
+  ;; CHECK:      (func $create-parent-call-parent (result i32)
+  ;; CHECK-NEXT:  (local $x (ref null $parent))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new_with_rtt $parent
+  ;; CHECK-NEXT:    (global.get $parent.vtable)
+  ;; CHECK-NEXT:    (rtt.canon $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (struct.get $parent.vtable 0
+  ;; CHECK-NEXT:     (struct.get $parent 0
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (struct.get $parent.vtable 0
+  ;; CHECK-NEXT:     (struct.get $parent 0
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create-parent-call-parent (result i32)
+    (local $x (ref null $parent))
+    (local.set $x
+      (struct.new_with_rtt $parent
+        ;; To be able to infer the precise type of the parent's vtable, we need
+        ;; to know what is in this global. As the globals are mutable, we
+        ;; fail to optimize here.
+        (global.get $parent.vtable)
+        (rtt.canon $parent)
+      )
+    )
+    (i32.add
+      (call_ref
+        (local.get $x)
+        (struct.get $parent.vtable 0
+          (struct.get $parent 0
+            (local.get $x)
+          )
+        )
+      )
+      (call_ref
+        (local.get $x)
+        (struct.get $parent.vtable 0
+          (struct.get $parent 0
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $create-child-call-parent (result i32)
+  ;; CHECK-NEXT:  (local $x (ref null $parent))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new_with_rtt $child
+  ;; CHECK-NEXT:    (global.get $child.vtable)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (rtt.canon $child)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (struct.get $parent 0
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $child.func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (struct.get $parent 0
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $child.func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create-child-call-parent (result i32)
+    (local $x (ref null $parent))
+    (local.set $x
+      (struct.new_with_rtt $child
+        (global.get $child.vtable)
+        (i32.const 42)
+        (rtt.canon $child)
+      )
+    )
+    ;; As above, we don't need global info for the child, so we do optimize
+    ;; here.
+    (i32.add
+      (call_ref
+        (local.get $x)
+        (struct.get $parent.vtable 0
+          (struct.get $parent 0
+            (local.get $x)
+          )
+        )
+      )
+      (call_ref
+        (local.get $x)
+        (struct.get $parent.vtable 0
+          (struct.get $parent 0
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+)
+
 (module
   ;; CHECK:      (type $E (struct (field i64) (field i64) (field i64) (field (mut i64))) (extends $D))
   (type $E (struct i64 i64 i64 (mut i64)) (extends $D))
