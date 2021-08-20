@@ -410,9 +410,10 @@ private:
 
   PossibleConstantValues getInfo(StructGet* get) {
     auto type = get->ref->type.getHeapType();
+    auto index = get->index;
 
     // Find the possible values based on the type of the get.
-    auto info = getInfo(optInfo.generalInfo, type, get->index);
+    auto info = getInfo(optInfo.generalInfo, type, index);
     if (info.isConstant() || !info.hasNoted()) {
       // We found enough information here; return it.
       return info;
@@ -434,21 +435,30 @@ private:
     //     down to a more specific set of possible types).
     //
     auto inference = inferType(get->ref);
-    if (inference.kind == InferredType::Failure ||
-        (inference.kind == InferredType::IncludeSubTypes &&
-         inference.type == type)) {
+std::cout << "infered\n" << *get << " : "  << inference.kind << " : " << inference.type << '\n';
+    if (inference.kind == InferredType::Failure) {
+      return;
+    }
+
+    // TODO: use inference.hasField(index) here
+
+    if (inference.kind == InferredType::IncludeSubTypes &&
+        inference.type == type) {
       // We failed to infer anything, or we failed to infer anything new.
+std::cout << "l0\n";
       return info;
     }
 
+std::cout << "l1\n";
     if (inference.kind == InferredType::Precise) {
       // We inferred a precise type.
-      return getInfo(optInfo.preciseInfo, inference.type, get->index);
+std::cout << "l2\n";
+      return getInfo(optInfo.preciseInfo, inference.type, index);
     } else {
       // We do not have a precise type, as subtypes may be included, but we did
       // at least find a more specific type than we knew earlier.
       assert(inference.kind == InferredType::IncludeSubTypes);
-      return getInfo(optInfo.generalInfo, inference.type, get->index);
+      return getInfo(optInfo.generalInfo, inference.type, index);
     }
   }
 
@@ -495,11 +505,20 @@ private:
       }
       return std::make_shared<InferredType>();
     }
+
+    bool hasField(Index i) {
+      return fields.count(i);
+    }
   };
 
   // Attempts to infer something useful about the heap type returned by an
   // expression.
   InferredType inferType(Expression* curr) {
+std::cout << "iT1\n" << *curr << '\n';
+    curr =
+      Properties::getFallthrough(curr, getPassOptions(), getModule()->features);
+std::cout << "iT2\n" << *curr << '\n';
+
     if (auto* get = curr->dynCast<StructGet>()) {
       // This is another struct.get, so we need to infer its reference type too.
       // Nested gets are a common pattern when we load the vtable and then a
@@ -563,6 +582,7 @@ private:
     }
 
     // We didn't manage to do any better than the declared type.
+std::cout << "fail on\n" << *curr << '\n';
     if (curr->type == Type::unreachable) {
       return InferredType();
     }

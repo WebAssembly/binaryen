@@ -283,15 +283,136 @@
   )
 )
 
-;; As before, but use a tee and have multiple gets.
+;; The struct.new is right on top of the struct.get.
 (module
+  ;; CHECK:      (type $table.B (struct (field i32) (field f64)) (extends $table.A))
+
+  ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
+
   ;; CHECK:      (type $table.A (struct (field i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
   (type $table.A (struct i32))
 
+  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
+  (type $table.B (struct i32 f64) (extends $table.A))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (local $a (ref null $struct.A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.get $struct.B 0
+  ;; CHECK-NEXT:       (struct.new_with_rtt $struct.B
+  ;; CHECK-NEXT:        (struct.new_with_rtt $table.B
+  ;; CHECK-NEXT:         (i32.const 1)
+  ;; CHECK-NEXT:         (f64.const 2.71828)
+  ;; CHECK-NEXT:         (rtt.canon $table.B)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (f32.const 3.141590118408203)
+  ;; CHECK-NEXT:        (rtt.canon $struct.B)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $a (ref null $struct.A))
+    ;; Create struct.B and store it to struct.A.
+    (drop
+      (struct.get $table.A 0
+        (struct.get $struct.A 0
+          (struct.new_with_rtt $struct.B
+            (struct.new_with_rtt $table.B
+              (i32.const 1) ;; This value should appear instead of the get.
+              (f64.const 2.71828)
+              (rtt.canon $table.B)
+            )
+            (f32.const 3.14159)
+            (rtt.canon $struct.B)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $support
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct.A
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null $table.A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rtt.canon $struct.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $table.A
+  ;; CHECK-NEXT:    (i32.const 300)
+  ;; CHECK-NEXT:    (rtt.canon $table.A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $struct.B
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (ref.null $table.B)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f32.const 100)
+  ;; CHECK-NEXT:    (rtt.canon $struct.B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_with_rtt $table.B
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (f64.const 400)
+  ;; CHECK-NEXT:    (rtt.canon $table.B)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $support
+    (drop
+      (struct.new_with_rtt $struct.A
+        (ref.as_non_null (ref.null $table.A))
+        (rtt.canon $struct.A)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $table.A
+        (i32.const 300)
+        (rtt.canon $table.A)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $struct.B
+        (ref.as_non_null (ref.null $table.B))
+        (f32.const 100)
+        (rtt.canon $struct.B)
+      )
+    )
+    (drop
+      (struct.new_with_rtt $table.B
+        (i32.const 1) ;; This is the same as earlier.
+        (f64.const 400)
+        (rtt.canon $table.B)
+      )
+    )
+  )
+)
+
+;; As before, but use a tee and have multiple gets.
+(module
+  ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
+  (type $struct.A (struct (ref $table.A)))
   ;; CHECK:      (type $table.B (struct (field i32) (field f64)) (extends $table.A))
+
+  ;; CHECK:      (type $table.A (struct (field i32)))
+  (type $table.A (struct i32))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -302,34 +423,49 @@
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $a (ref null $struct.A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $table.A 0
-  ;; CHECK-NEXT:    (struct.get $struct.A 0
-  ;; CHECK-NEXT:     (local.tee $a
-  ;; CHECK-NEXT:      (struct.new_with_rtt $struct.B
-  ;; CHECK-NEXT:       (struct.new_with_rtt $table.B
-  ;; CHECK-NEXT:        (i32.const 1)
-  ;; CHECK-NEXT:        (f64.const 2.71828)
-  ;; CHECK-NEXT:        (rtt.canon $table.B)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.get $struct.A 0
+  ;; CHECK-NEXT:       (local.tee $a
+  ;; CHECK-NEXT:        (struct.new_with_rtt $struct.B
+  ;; CHECK-NEXT:         (struct.new_with_rtt $table.B
+  ;; CHECK-NEXT:          (i32.const 1)
+  ;; CHECK-NEXT:          (f64.const 2.71828)
+  ;; CHECK-NEXT:          (rtt.canon $table.B)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (f32.const 3.141590118408203)
+  ;; CHECK-NEXT:         (rtt.canon $struct.B)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (f32.const 3.141590118408203)
-  ;; CHECK-NEXT:       (rtt.canon $struct.B)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $table.A 0
-  ;; CHECK-NEXT:    (struct.get $struct.A 0
-  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.get $struct.A 0
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $table.A 0
-  ;; CHECK-NEXT:    (struct.get $struct.A 0
-  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.get $struct.A 0
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -397,7 +533,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_with_rtt $table.B
-  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:    (f64.const 400)
   ;; CHECK-NEXT:    (rtt.canon $table.B)
   ;; CHECK-NEXT:   )
@@ -425,15 +561,13 @@
     )
     (drop
       (struct.new_with_rtt $table.B
-        (i32.const 3) ;; This is different from earlier.
+        (i32.const 1) ;; This is the same as earlier.
         (f64.const 400)
         (rtt.canon $table.B)
       )
     )
   )
 )
-
-
 
 (module
   ;; CHECK:      (type $parent (struct (field i32)))
@@ -476,6 +610,8 @@
   )
 )
 
+;; CHECK:     (func   ((param anyrefref.func )$parent.func )
+;; CHECK-NEXT:  (rtt.canon $(result {refi32))|)
 (module
   ;; A function type that receives |this| and returns an i32.
   ;; CHECK:      (type $func (func (param anyref) (result i32)))
