@@ -545,15 +545,15 @@ private:
       }
     } else if (auto* set = curr->dynCast<StructNew>()) {
       // We can infer a precise type here, as struct.new creates exactly that.
-      InferredType structInference(InferredType::Precise,
-                                   curr->type.getHeapType());
+      auto type = set->type.getHeapType();
+      InferredType structInference(InferredType::Precise, type);
 
       // Immutable fields can be inferred as well, as they cannot change later
       // on.
-      auto& fields = set->type.getHeapType().getStruct().fields;
+      auto& fields = type.getStruct().fields;
       for (Index i = 0; i < fields.size(); i++) {
         auto& field = fields[i];
-        if (field.mutable_ == Immutable) {
+        if (field.mutable_ == Immutable && field.type.isRef()) {
           structInference.setField(i, inferType(set->operands[i]));
         }
       }
