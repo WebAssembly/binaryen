@@ -520,7 +520,8 @@ private:
         // Nothing about the field, but knowing more about the reference may
         // still be helpful: we can see what the field's type is for that type.
         auto& field = inference.type.getStruct().fields[get->index];
-        return InferredType(InferredType::IncludeSubTypes, field.type.getHeapType());
+        return InferredType(InferredType::IncludeSubTypes,
+                            field.type.getHeapType());
       }
     } else if (auto* get = curr->dynCast<LocalGet>()) {
       // This is a get of a local. See who writes to it.
@@ -565,7 +566,8 @@ private:
     if (curr->type == Type::unreachable) {
       return InferredType();
     }
-    return InferredType(InferredType::IncludeSubTypes, curr->type.getHeapType());
+    return InferredType(InferredType::IncludeSubTypes,
+                        curr->type.getHeapType());
   }
 };
 
