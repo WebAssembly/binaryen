@@ -1305,9 +1305,10 @@ struct OptimizeInstructions
                                           builder.makeUnreachable()}));
         return;
       } else if (ref->is<RefNull>()) {
-        replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
-                                          builder.makeDrop(curr->rtt),
-                                          builder.makeRefNull(curr->rtt->type.getHeapType())}));
+        replaceCurrent(builder.makeBlock(
+          {builder.makeDrop(curr->ref),
+           builder.makeDrop(curr->rtt),
+           builder.makeRefNull(curr->rtt->type.getHeapType())}));
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime to
