@@ -503,9 +503,7 @@ private:
       return std::make_shared<InferredType>();
     }
 
-    bool hasField(Index i) {
-      return fields.count(i);
-    }
+    bool hasField(Index i) { return fields.count(i); }
   };
 
   // Attempts to infer something useful about the heap type returned by an
