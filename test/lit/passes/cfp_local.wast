@@ -972,8 +972,6 @@
   ;; CHECK:      (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
   (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
 
-
-
   ;; CHECK:      (type $none_=>_i32 (func (result i32)))
 
   ;; CHECK:      (elem declare func $child.func $parent.func)
@@ -1034,6 +1032,295 @@
   ;; CHECK-NEXT: )
   (func $child.func (param $this anyref) (result i32)
     (i32.const 4096)
+  )
+
+  ;; CHECK:      (func $create-parent-call-parent (result i32)
+  ;; CHECK-NEXT:  (local $x (ref null $parent))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new_with_rtt $parent
+  ;; CHECK-NEXT:    (struct.new_with_rtt $parent.vtable
+  ;; CHECK-NEXT:     (ref.func $parent.func)
+  ;; CHECK-NEXT:     (rtt.canon $parent.vtable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (rtt.canon $parent)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (struct.get $parent 0
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $parent.func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (struct.get $parent 0
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $parent.func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create-parent-call-parent (result i32)
+    (local $x (ref null $parent))
+
+    ;; Create a parent.
+    (local.set $x
+      (struct.new_with_rtt $parent
+        (struct.new_with_rtt $parent.vtable
+          (ref.func $parent.func)
+          (rtt.canon $parent.vtable)
+        )
+        (rtt.canon $parent)
+      )
+    )
+
+    ;; Call it a few times. We should be able to infer that the local contains
+    ;; exactly a parent instance and not its subtype, and so we can replace the
+    ;; struct.get with parent.func.
+    (i32.add
+      (call_ref
+        (local.get $x)
+        (struct.get $parent.vtable 0
+          (struct.get $parent 0
+            (local.get $x)
+          )
+        )
+      )
+      (call_ref
+        (local.get $x)
+        (struct.get $parent.vtable 0
+          (struct.get $parent 0
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $create-child-call-parent (result i32)
+  ;; CHECK-NEXT:  (local $x (ref null $parent))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new_with_rtt $child
+  ;; CHECK-NEXT:    (struct.new_with_rtt $child.vtable
+  ;; CHECK-NEXT:     (ref.func $child.func)
+  ;; CHECK-NEXT:     (ref.func $child.func)
+  ;; CHECK-NEXT:     (rtt.canon $child.vtable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (rtt.canon $child)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (struct.get $parent 0
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $child.func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call_ref
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (struct.get $parent 0
+  ;; CHECK-NEXT:        (local.get $x)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $child.func)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create-child-call-parent (result i32)
+    (local $x (ref null $parent))
+
+    ;; Create a child instance, but save it to a parent local.
+    (local.set $x
+      (struct.new_with_rtt $child
+        (struct.new_with_rtt $child.vtable
+          (ref.func $child.func)
+          (ref.func $child.func)
+          (rtt.canon $child.vtable)
+        )
+        (i32.const 42)
+        (rtt.canon $child)
+      )
+    )
+
+    ;; Call the method. As the local is of the parent, this seems like it could
+    ;; call either the parent or the child func, but locally we know that only
+    ;; a child can be in this local, and we can replace the struct.gets with
+    ;; child.func.
+    ;;
+    ;; Call it twice to verify we can optimize more than a single call.
+    (i32.add
+      (call_ref
+        (local.get $x)
+        (struct.get $parent.vtable 0
+          (struct.get $parent 0
+            (local.get $x)
+          )
+        )
+      )
+      (call_ref
+        (local.get $x)
+        (struct.get $parent.vtable 0
+          (struct.get $parent 0
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+)
+
+;; As above, but add a subtype below $child that should not confuse us.
+(module
+  ;; A function type that receives |this| and returns an i32.
+  ;; CHECK:      (type $func (func (param anyref) (result i32)))
+  (type $func (func (param anyref) (result i32)))
+
+  ;; A parent struct type, with a vtable.
+  ;; CHECK:      (type $parent (struct (field (ref $parent.vtable))))
+  (type $parent (struct (field (ref $parent.vtable))))
+
+  ;; CHECK:      (type $child.vtable (struct (field (ref $func)) (field (ref $func))) (extends $parent.vtable))
+
+  ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
+
+  ;; CHECK:      (type $parent.vtable (struct (field (ref $func))))
+  (type $parent.vtable (struct (field (ref $func))))
+
+  ;; A child struct type that extends the parent. It adds a field to both the
+  ;; struct and its vtable.
+  (type $child.vtable (struct (field (ref $func)) (field (ref $func)))  (extends $parent.vtable))
+
+  ;; CHECK:      (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
+  (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
+
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (type $grandchild.vtable (struct (field (ref $func)) (field (ref $func)) (field (ref $func))) (extends $child.vtable))
+
+  ;; CHECK:      (type $grandchild (struct (field (ref $child.vtable)) (field i32) (field f32)) (extends $child))
+  (type $grandchild (struct (field (ref $child.vtable)) (field i32) (field f32)) (extends $child))
+  (type $grandchild.vtable (struct (field (ref $func)) (field (ref $func)) (field (ref $func)))  (extends $child.vtable))
+
+  ;; CHECK:      (elem declare func $child.func $grandchild.func $parent.func)
+
+  ;; CHECK:      (func $keepalive-parent (result anyref)
+  ;; CHECK-NEXT:  (struct.new_with_rtt $parent
+  ;; CHECK-NEXT:   (struct.new_with_rtt $parent.vtable
+  ;; CHECK-NEXT:    (ref.func $parent.func)
+  ;; CHECK-NEXT:    (rtt.canon $parent.vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (rtt.canon $parent)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $keepalive-parent (result anyref)
+    ;; Add a creation of the parent to avoid this being too trivial.
+    (struct.new_with_rtt $parent
+      (struct.new_with_rtt $parent.vtable
+        (ref.func $parent.func)
+        (rtt.canon $parent.vtable)
+      )
+      (rtt.canon $parent)
+    )
+  )
+
+  ;; CHECK:      (func $keepalive-child (result anyref)
+  ;; CHECK-NEXT:  (struct.new_with_rtt $child
+  ;; CHECK-NEXT:   (struct.new_with_rtt $child.vtable
+  ;; CHECK-NEXT:    (ref.func $child.func)
+  ;; CHECK-NEXT:    (ref.func $child.func)
+  ;; CHECK-NEXT:    (rtt.canon $child.vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 9999)
+  ;; CHECK-NEXT:   (rtt.canon $child)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $keepalive-child (result anyref)
+    ;; Same as above, but for the child.
+    (struct.new_with_rtt $child
+      (struct.new_with_rtt $child.vtable
+        (ref.func $child.func)
+        (ref.func $child.func)
+        (rtt.canon $child.vtable)
+      )
+      (i32.const 9999)
+      (rtt.canon $child)
+    )
+  )
+
+  ;; CHECK:      (func $keepalive-grandchild (result anyref)
+  ;; CHECK-NEXT:  (struct.new_with_rtt $grandchild
+  ;; CHECK-NEXT:   (struct.new_with_rtt $grandchild.vtable
+  ;; CHECK-NEXT:    (ref.func $grandchild.func)
+  ;; CHECK-NEXT:    (ref.func $grandchild.func)
+  ;; CHECK-NEXT:    (ref.func $grandchild.func)
+  ;; CHECK-NEXT:    (rtt.canon $grandchild.vtable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 9999)
+  ;; CHECK-NEXT:   (f32.const 123.45600128173828)
+  ;; CHECK-NEXT:   (rtt.canon $grandchild)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $keepalive-grandchild (result anyref)
+    ;; Same as above, but for the grandgrandchild.
+    (struct.new_with_rtt $grandchild
+      (struct.new_with_rtt $grandchild.vtable
+        (ref.func $grandchild.func)
+        (ref.func $grandchild.func)
+        (ref.func $grandchild.func)
+        (rtt.canon $grandchild.vtable)
+      )
+      (i32.const 9999)
+      (f32.const 123.456)
+      (rtt.canon $grandchild)
+    )
+  )
+
+  ;; CHECK:      (func $parent.func (param $this anyref) (result i32)
+  ;; CHECK-NEXT:  (i32.const 128)
+  ;; CHECK-NEXT: )
+  (func $parent.func (param $this anyref) (result i32)
+    (i32.const 128)
+  )
+
+  ;; CHECK:      (func $child.func (param $this anyref) (result i32)
+  ;; CHECK-NEXT:  (i32.const 4096)
+  ;; CHECK-NEXT: )
+  (func $child.func (param $this anyref) (result i32)
+    (i32.const 4096)
+  )
+
+  ;; CHECK:      (func $grandchild.func (param $this anyref) (result i32)
+  ;; CHECK-NEXT:  (i32.const 99999)
+  ;; CHECK-NEXT: )
+  (func $grandchild.func (param $this anyref) (result i32)
+    (i32.const 99999)
   )
 
   ;; CHECK:      (func $create-parent-call-parent (result i32)
