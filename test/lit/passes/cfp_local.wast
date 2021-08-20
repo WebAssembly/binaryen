@@ -35,8 +35,16 @@
       )
     )
     (drop
-      (struct.get $parent 0
-        (ref.null $parent)
+      ;; While we get using the type struct.A, the local's actual value is a
+      ;; reference to a struct.B, which we can infer, and so forth down the
+      ;; chain til we can get a constant value at the end, as the type B always
+      ;; has the same constant written to it in the whole program
+      (struct.get $A 0
+        (struct.get $table.A 0
+          (struct.get $struct.A 0
+            (local.get $a)
+          )
+        )
       )
     )
   )
@@ -70,7 +78,7 @@
         (rtt.canon $table.B)
       )
       (struct.new_with_rtt $B
-        (i32.const 300)
+        (i32.const 1) ;; This is the same as earlier, see previous comment.
         (i64.const 400)
         (rtt.canon $B)
       )
