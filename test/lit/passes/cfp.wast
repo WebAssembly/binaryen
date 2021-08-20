@@ -1711,3 +1711,164 @@
     )
   )
 )
+
+;; Copies of a field to itself can be ignored. As a result, we can optimize both
+;; of the gets here.
+(module
+  ;; CHECK:      (type $struct (struct (field (mut i32))))
+  (type $struct (struct (mut i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.new_default_with_rtt $struct
+        (rtt.canon $struct)
+      )
+    )
+    ;; This copy does not actually introduce any new possible values, and so it
+    ;; remains true that the only possible value is the default.
+    (struct.set $struct 0
+      (ref.null $struct)
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
+;; Test of a near-copy, of a similar looking field (same index, and same field
+;; type) but in a different struct.
+(module
+  ;; CHECK:      (type $struct (struct (field (mut f32)) (field (mut i32))))
+  (type $struct (struct (mut f32) (mut i32)))
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $other (struct (field (mut f64)) (field (mut i32))))
+  (type $other (struct (mut f64) (mut i32)))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 1
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null $other)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 1
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.new_default_with_rtt $struct
+        (rtt.canon $struct)
+      )
+    )
+    ;; As this is not a copy, we cannot optimize struct.1's get lower down.
+    (struct.set $struct 1
+      (ref.null $struct)
+      (struct.get $other 1
+        (ref.null $other)
+      )
+    )
+    (drop
+      (struct.get $struct 1
+        (ref.null $struct)
+      )
+    )
+  )
+)
+
+;; Test of a near-copy, of a different index.
+(module
+  ;; CHECK:      (type $struct (struct (field (mut i32)) (field (mut i32))))
+  (type $struct (struct (mut i32) (mut i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default_with_rtt $struct
+  ;; CHECK-NEXT:    (rtt.canon $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (ref.null $struct)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (ref.null $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (drop
+      (struct.new_default_with_rtt $struct
+        (rtt.canon $struct)
+      )
+    )
+    ;; As this is not a copy, we cannot optimize struct.0's get lower down.
+    (struct.set $struct 0
+      (ref.null $struct)
+      (struct.get $struct 1
+        (ref.null $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (ref.null $struct)
+      )
+    )
+  )
+)

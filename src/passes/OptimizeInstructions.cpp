@@ -1215,7 +1215,7 @@ struct OptimizeInstructions
 
   void visitRefEq(RefEq* curr) {
     // Identical references compare equal.
-    if (areConsecutiveInputsEqual(curr->left, curr->right)) {
+    if (areConsecutiveInputsEqualAndRemovable(curr->left, curr->right)) {
       replaceCurrent(
         Builder(*getModule()).makeConst(Literal::makeOne(Type::i32)));
       return;
@@ -1314,7 +1314,7 @@ struct OptimizeInstructions
       // see if it is a null or not.
     }
 
-    if (passOptions.ignoreImplicitTraps) {
+    if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
       // Aside from the issue of type incompatibility as mentioned above, the
       // cast can trap if the types *are* compatible but it happens to be the
       // case at runtime that the value is not of the desired subtype. If we
@@ -1507,34 +1507,33 @@ private:
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
-  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+  //
+  // This also checks that the inputs are removable.
+  bool areConsecutiveInputsEqualAndRemovable(Expression* left,
+                                             Expression* right) {
     // First, check for side effects. If there are any, then we can't even
-    // assume things like local.get's of the same index being identical.
+    // assume things like local.get's of the same index being identical. (It is
+    // also ok to have side effects here, if we can remove them, as we are also
+    // checking if we can remove the two inputs anyhow.)
     auto passOptions = getPassOptions();
-    if (EffectAnalyzer(passOptions, getModule()->features, left)
-          .hasSideEffects() ||
-        EffectAnalyzer(passOptions, getModule()->features, right)
-          .hasSideEffects()) {
+    auto features = getModule()->features;
+    if (EffectAnalyzer(passOptions, features, left)
+          .hasUnremovableSideEffects() ||
+        EffectAnalyzer(passOptions, features, right)
+          .hasUnremovableSideEffects()) {
       return false;
     }
+
     // Ignore extraneous things and compare them structurally.
-    left = Properties::getFallthrough(left, passOptions, getModule()->features);
-    right =
-      Properties::getFallthrough(right, passOptions, getModule()->features);
+    left = Properties::getFallthrough(left, passOptions, features);
+    right = Properties::getFallthrough(right, passOptions, features);
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
     }
-    // Reference equality also needs to check for allocation, which is *not* a
-    // side effect, but which results in different references:
-    // repeatedly calling (struct.new $foo)'s output will return different
-    // results (while i32.const etc. of course does not).
-    // Note that allocations may have appeared in the original inputs to this
-    // function, and skipped when we focused on what falls through; since there
-    // are no side effects, any allocations there cannot reach the fallthrough.
-    if (left->type.isRef()) {
-      if (FindAll<StructNew>(left).has() || FindAll<ArrayNew>(left).has()) {
-        return false;
-      }
+    // To be equal, they must also be known to return the same result
+    // deterministically.
+    if (Properties::isIntrinsicallyNondeterministic(left, features)) {
+      return false;
     }
     return true;
   }
@@ -2767,7 +2766,7 @@ private:
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
     PassOptions options = getPassOptions();
 
-    if (options.ignoreImplicitTraps) {
+    if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
       if (ExpressionAnalyzer::equal(memCopy->dest, memCopy->source)) {
         // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
         Builder builder(*getModule());
@@ -2784,7 +2783,7 @@ private:
 
       switch (bytes) {
         case 0: {
-          if (options.ignoreImplicitTraps) {
+          if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
             // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
             return builder.makeBlock({builder.makeDrop(memCopy->dest),
                                       builder.makeDrop(memCopy->source)});
@@ -3168,21 +3167,44 @@ private:
           ChildIterator ifTrueChildren(curr->ifTrue);
           if (ifTrueChildren.children.size() == 1) {
             // ifTrue and ifFalse's children will become the direct children of
-            // curr, and so there must be an LUB for curr to have a proper new
+            // curr, and so they must be compatible to allow for a proper new
             // type after the transformation.
             //
-            // An example where that does not happen is this:
+            // At minimum an LUB is required, as shown here:
             //
             //  (if
             //    (condition)
             //    (drop (i32.const 1))
             //    (drop (f64.const 2.0))
             //  )
+            //
+            // However, that may not be enough, as with nominal types we can
+            // have things like this:
+            //
+            //  (if
+            //    (condition)
+            //    (struct.get $A 1 (..))
+            //    (struct.get $B 1 (..))
+            //  )
+            //
+            // It is possible that the LUB of $A and $B does not contain field
+            // "1". With structural types this specific problem is not possible,
+            // and it appears to be the case that with the GC MVP there is no
+            // instruction that poses a problem, but in principle it can happen
+            // there as well, if we add an instruction that returns the number
+            // of fields in a type, for example. For that reason, and to avoid
+            // a difference between structural and nominal typing here, disallow
+            // subtyping in both. (Note: In that example, the problem only
+            // happens because the type is not part of the struct.get - we infer
+            // it from the reference. That is why after hoisting the struct.get
+            // out, and computing a new type for the if that is now the child of
+            // the single struct.get, we get a struct.get of a supertype. So in
+            // principle we could fix this by modifying the IR as well, but the
+            // problem is more general, so avoid that.)
             ChildIterator ifFalseChildren(curr->ifFalse);
             auto* ifTrueChild = *ifTrueChildren.begin();
             auto* ifFalseChild = *ifFalseChildren.begin();
-            bool validTypes =
-              Type::hasLeastUpperBound(ifTrueChild->type, ifFalseChild->type);
+            bool validTypes = ifTrueChild->type == ifFalseChild->type;
 
             // In addition, after we move code outside of curr then we need to
             // not change unreachability - if we did, we'd need to propagate

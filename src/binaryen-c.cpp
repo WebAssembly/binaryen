@@ -3798,6 +3798,14 @@ void BinaryenSetLowMemoryUnused(bool on) {
   globalPassOptions.lowMemoryUnused = on != 0;
 }
 
+bool BinaryenGetZeroFilledMemory(void) {
+  return globalPassOptions.zeroFilledMemory;
+}
+
+void BinaryenSetZeroFilledMemory(bool on) {
+  globalPassOptions.zeroFilledMemory = on != 0;
+}
+
 bool BinaryenGetFastMath(void) { return globalPassOptions.fastMath; }
 
 void BinaryenSetFastMath(bool value) { globalPassOptions.fastMath = value; }
@@ -4300,6 +4308,10 @@ BinaryenSideEffects BinaryenSideEffectWritesMemory(void) {
 BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::ImplicitTrap);
+}
+BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void) {
+  return static_cast<BinaryenSideEffects>(
+    EffectAnalyzer::SideEffects::TrapsNeverHappen);
 }
 BinaryenSideEffects BinaryenSideEffectIsAtomic(void) {
   return static_cast<BinaryenSideEffects>(

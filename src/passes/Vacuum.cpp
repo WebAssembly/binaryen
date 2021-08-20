@@ -253,9 +253,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
       }
     } else {
-      // no else
+      // This is an if without an else. If the body is empty, we do not need it.
       if (curr->ifTrue->is<Nop>()) {
-        // no nothing
         replaceCurrent(Builder(*getModule()).makeDrop(curr->condition));
       }
     }
@@ -281,6 +280,24 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       replaceCurrent(set);
       return;
     }
+
+    // If the value has no side effects, or it has side effects we can remove,
+    // do so. This basically means that if noTrapsHappen is set then we can
+    // use that assumption (that no trap actually happens at runtime) and remove
+    // a trapping value.
+    //
+    // TODO: A complete CFG analysis for noTrapsHappen mode, removing all code
+    //       that definitely reaches a trap, *even if* it has side effects.
+    //
+    // Note that we check the type here to avoid removing unreachable code - we
+    // leave that for DCE.
+    if (curr->type == Type::none &&
+        !EffectAnalyzer(getPassOptions(), getModule()->features, curr)
+           .hasUnremovableSideEffects()) {
+      ExpressionManipulator::nop(curr);
+      return;
+    }
+
     // if we are dropping a block's return value, we might be able to remove it
     // entirely
     if (auto* block = curr->value->dynCast<Block>()) {

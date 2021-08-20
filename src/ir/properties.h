@@ -310,6 +310,41 @@ inline Expression* getFallthrough(Expression* curr,
   }
 }
 
+inline Index getNumChildren(Expression* curr) {
+  Index ret = 0;
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id)                                                     \
+  auto* cast = curr->cast<id>();                                               \
+  WASM_UNUSED(cast);
+
+#define DELEGATE_GET_FIELD(id, name) cast->name
+
+#define DELEGATE_FIELD_CHILD(id, name) ret++;
+
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, name)                                \
+  if (cast->name) {                                                            \
+    ret++;                                                                     \
+  }
+
+#define DELEGATE_FIELD_INT(id, name)
+#define DELEGATE_FIELD_INT_ARRAY(id, name)
+#define DELEGATE_FIELD_LITERAL(id, name)
+#define DELEGATE_FIELD_NAME(id, name)
+#define DELEGATE_FIELD_NAME_VECTOR(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, name)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, name)
+#define DELEGATE_FIELD_SIGNATURE(id, name)
+#define DELEGATE_FIELD_TYPE(id, name)
+#define DELEGATE_FIELD_ADDRESS(id, name)
+
+#include "wasm-delegations-fields.def"
+
+  return ret;
+}
+
 // Returns whether the resulting value here must fall through without being
 // modified. For example, a tee always does so. That is, this returns false if
 // and only if the return value may have some computation performed on it to
@@ -334,6 +369,51 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
   // https://webassembly.github.io/spec/core/valid/instructions.html#xref-syntax-instructions-syntax-instr-parametric-mathsf-select-t-ast
   return ifTrue->type.isSingle() && ifFalse->type.isSingle();
 }
+
+// An intrinsically-nondeterministic expression is one that can return different
+// results for the same inputs, and that difference is *not* explained by
+// other expressions that interact with this one. Hence the cause of
+// nondeterminism can be said to be "intrinsic" - it is internal and inherent in
+// the expression.
+//
+// To see the issue more concretely, consider these:
+//
+//    x = load(100);
+//    ..
+//    y = load(100);
+//
+//  versus
+//
+//    x = struct.new();
+//    ..
+//    y = struct.new();
+//
+// Are x and y identical in both cases? For loads, we can look at the code
+// in ".." to see: if there are no possible stores to memory, then the
+// result is identical (and we have EffectAnalyzer for that). For the GC
+// allocations, though, it doesn't matter what is in "..": there is nothing
+// in the wasm that we can check to find out if the results are the same or
+// not. (In fact, in this case they are always not the same.) So the
+// nondeterminism is "intrinsic."
+//
+// Thus, loads are nondeterministic but not intrinsically so, while GC
+// allocations are actual examples of intrinsically nondeterministic
+// instructions. If wasm were to add "get current time" or "get a random number"
+// instructions then those would also be intrinsically nondeterministic.
+//
+//  * Note that NaN nondeterminism is ignored here. Technically that allows e.g.
+//    an f32.add to be nondeterministic, but it is a valid wasm implementation
+//    to have deterministic NaN behavior, and we optimize under that assumption.
+//    So NaN nondeterminism does not cause anything to be intrinsically
+//    nondeterministic.
+//  * Note that calls are ignored here. In theory this concept could be defined
+//    either way for them (that is, we could potentially define them as either
+//    intrinsically nondeterministic, or not, and each could make sense in its
+//    own way). It is simpler to ignore them here, which means we only consider
+//    the behavior of the expression provided here (including its chldren), and
+//    not external code.
+//
+bool isIntrinsicallyNondeterministic(Expression* curr, FeatureSet features);
 
 } // namespace Properties
 

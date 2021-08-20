@@ -37,6 +37,7 @@
 #include "support/file.h"
 #include "support/path.h"
 #include "support/timing.h"
+#include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-io.h"
 #include "wasm-validator.h"
@@ -256,13 +257,14 @@ struct Reducer
       "-O4",
       "--flatten -Os",
       "--flatten -O3",
-      "--flatten --local-cse -Os",
+      "--flatten --simplify-locals-notee-nostructure --local-cse -Os",
       "--coalesce-locals --vacuum",
       "--dce",
       "--duplicate-function-elimination",
       "--inlining",
       "--inlining-optimizing",
       "--optimize-level=3 --inlining-optimizing",
+      "--local-cse",
       "--memory-packing",
       "--remove-unused-names --merge-blocks --vacuum",
       "--optimize-instructions",
@@ -1174,9 +1176,9 @@ int main(int argc, const char* argv[]) {
   std::string binDir = Path::getDirName(argv[0]);
   bool binary = true, deNan = false, verbose = false, debugInfo = false,
        force = false;
-  Options options("wasm-reduce",
-                  "Reduce a wasm file to a smaller one that has the same "
-                  "behavior on a given command");
+  ToolOptions options("wasm-reduce",
+                      "Reduce a wasm file to a smaller one that has the same "
+                      "behavior on a given command");
   options
     .add("--command",
          "-cmd",
@@ -1257,6 +1259,10 @@ int main(int argc, const char* argv[]) {
       Options::Arguments::One,
       [&](Options* o, const std::string& argument) { input = argument; });
   options.parse(argc, argv);
+
+  if (getTypeSystem() == TypeSystem::Nominal) {
+    extraFlags += " --nominal";
+  }
 
   if (test.size() == 0) {
     Fatal() << "test file not provided\n";

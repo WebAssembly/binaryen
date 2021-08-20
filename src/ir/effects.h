@@ -30,6 +30,7 @@ public:
                  FeatureSet features,
                  Expression* ast = nullptr)
     : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      trapsNeverHappen(passOptions.trapsNeverHappen),
       debugInfo(passOptions.debugInfo), features(features) {
     if (ast) {
       walk(ast);
@@ -37,6 +38,7 @@ public:
   }
 
   bool ignoreImplicitTraps;
+  bool trapsNeverHappen;
   bool debugInfo;
   FeatureSet features;
 
@@ -70,10 +72,12 @@ public:
   std::set<Name> globalsWritten;
   bool readsMemory = false;
   bool writesMemory = false;
-  // TODO: Type-based alias analysis. For example, writes to Arrays never
-  // interfere with reads from Structs.
-  bool readsHeap = false;
-  bool writesHeap = false;
+  // TODO: More specific type-based alias analysis, and not just at the
+  //       struct/array level.
+  bool readsStruct = false;
+  bool writesStruct = false;
+  bool readsArray = false;
+  bool writesArray = false;
   // A trap, either from an unreachable instruction, or from an implicit trap
   // that we do not ignore (see below).
   //
@@ -122,7 +126,8 @@ public:
     return globalsRead.size() + globalsWritten.size() > 0;
   }
   bool accessesMemory() const { return calls || readsMemory || writesMemory; }
-  bool accessesHeap() const { return calls || readsHeap || writesHeap; }
+  bool accessesStruct() const { return calls || readsStruct || writesStruct; }
+  bool accessesArray() const { return calls || readsArray || writesArray; }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
   // or a throw (if the throw is not known to be caught inside this expression;
@@ -136,17 +141,45 @@ public:
 
   // Changes something in globally-stored state.
   bool writesGlobalState() const {
-    return globalsWritten.size() || writesMemory || writesHeap || isAtomic ||
-           calls;
+    return globalsWritten.size() || writesMemory || writesStruct ||
+           writesArray || isAtomic || calls;
   }
   bool readsGlobalState() const {
-    return globalsRead.size() || readsMemory || readsHeap || isAtomic || calls;
+    return globalsRead.size() || readsMemory || readsStruct || readsArray ||
+           isAtomic || calls;
   }
 
-  bool hasSideEffects() const {
+  bool hasNonTrapSideEffects() const {
     return localsWritten.size() > 0 || danglingPop || writesGlobalState() ||
-           trap || throws || transfersControlFlow();
+           throws || transfersControlFlow();
   }
+
+  bool hasSideEffects() const { return trap || hasNonTrapSideEffects(); }
+
+  // Check if there are side effects, and they are of a kind that cannot be
+  // removed by optimization passes.
+  //
+  // The difference between this and hasSideEffects is subtle, and only related
+  // to trapsNeverHappen - if trapsNeverHappen then any trap we see is removable
+  // by optimizations. In general, you should call hasSideEffects, and only call
+  // this method if you are certain that it is a place that would not perform an
+  // unsafe transformation with a trap. Specifically, if a pass calls this
+  // and gets the result that there are no unremovable side effects, then it
+  // must either
+  //
+  //  1. Remove any side effects present, if any, so they no longer exists.
+  //  2. Keep the code exactly where it is.
+  //
+  // If instead of 1&2 a pass kept the side effect and also reordered the code
+  // with other things, then that could be bad, as the side effect might have
+  // been behind a condition that avoids it occurring.
+  //
+  // TODO: Go through the optimizer and use this in all places that do not move
+  //       code around.
+  bool hasUnremovableSideEffects() const {
+    return hasNonTrapSideEffects() || (trap && !trapsNeverHappen);
+  }
+
   bool hasAnything() const {
     return hasSideEffects() || accessesLocal() || readsMemory ||
            accessesGlobal();
@@ -162,8 +195,10 @@ public:
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
         ((other.writesMemory || other.calls) && accessesMemory()) ||
-        ((writesHeap || calls) && other.accessesHeap()) ||
-        ((other.writesHeap || other.calls) && accessesHeap()) ||
+        ((writesStruct || calls) && other.accessesStruct()) ||
+        ((other.writesStruct || other.calls) && accessesStruct()) ||
+        ((writesArray || calls) && other.accessesArray()) ||
+        ((other.writesArray || other.calls) && accessesArray()) ||
         (danglingPop || other.danglingPop)) {
       return true;
     }
@@ -223,10 +258,13 @@ public:
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
     writesMemory = writesMemory || other.writesMemory;
-    readsHeap = readsHeap || other.readsHeap;
-    writesHeap = writesHeap || other.writesHeap;
+    readsStruct = readsStruct || other.readsStruct;
+    writesStruct = writesStruct || other.writesStruct;
+    readsArray = readsArray || other.readsArray;
+    writesArray = writesArray || other.writesArray;
     trap = trap || other.trap;
     implicitTrap = implicitTrap || other.implicitTrap;
+    trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
     isAtomic = isAtomic || other.isAtomic;
     throws = throws || other.throws;
     danglingPop = danglingPop || other.danglingPop;
@@ -588,14 +626,14 @@ private:
     void visitRttSub(RttSub* curr) {}
     void visitStructNew(StructNew* curr) {}
     void visitStructGet(StructGet* curr) {
-      parent.readsHeap = true;
+      parent.readsStruct = true;
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
       }
     }
     void visitStructSet(StructSet* curr) {
-      parent.writesHeap = true;
+      parent.writesStruct = true;
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
         parent.implicitTrap = true;
@@ -603,12 +641,12 @@ private:
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayGet(ArrayGet* curr) {
-      parent.readsHeap = true;
+      parent.readsArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
     }
     void visitArraySet(ArraySet* curr) {
-      parent.writesHeap = true;
+      parent.writesArray = true;
       // traps when the arg is null or the index out of bounds
       parent.implicitTrap = true;
     }
@@ -658,7 +696,8 @@ public:
     IsAtomic = 1 << 9,
     Throws = 1 << 10,
     DanglingPop = 1 << 11,
-    Any = (1 << 12) - 1
+    TrapsNeverHappen = 1 << 12,
+    Any = (1 << 13) - 1
   };
   uint32_t getSideEffects() const {
     uint32_t effects = 0;
@@ -688,6 +727,9 @@ public:
     }
     if (implicitTrap) {
       effects |= SideEffects::ImplicitTrap;
+    }
+    if (trapsNeverHappen) {
+      effects |= SideEffects::TrapsNeverHappen;
     }
     if (isAtomic) {
       effects |= SideEffects::IsAtomic;
