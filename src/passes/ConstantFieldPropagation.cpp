@@ -437,7 +437,7 @@ private:
     auto inference = inferType(get->ref);
 std::cout << "infered\n" << *get << " : "  << inference.kind << " : " << inference.type << '\n';
     if (inference.kind == InferredType::Failure) {
-      return;
+      return info;
     }
 
     // TODO: use inference.hasField(index) here
