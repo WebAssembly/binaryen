@@ -5,12 +5,12 @@
 
 (module
   ;; A function type that receives |this| and returns an i32.
-  ;; CHECK:      (type $parent.vtable (struct (field (ref $func))))
-
   ;; CHECK:      (type $func (func (param anyref) (result i32)))
   (type $func (func (param anyref) (result i32)))
 
   ;; A parent struct type, with a vtable.
+  ;; CHECK:      (type $parent.vtable (struct (field (ref $func))))
+
   ;; CHECK:      (type $parent (struct (field (ref $parent.vtable))))
   (type $parent (struct (field (ref $parent.vtable))))
   (type $parent.vtable (struct (field (ref $func))))
@@ -116,14 +116,24 @@
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (call_ref
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (struct.get $parent.vtable 0
-  ;; CHECK-NEXT:     (local.get $v)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $v)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $parent.func)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call_ref
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (struct.get $parent.vtable 0
-  ;; CHECK-NEXT:     (local.get $v)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $v)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $parent.func)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -195,14 +205,24 @@
   ;; CHECK-NEXT:  (i32.add
   ;; CHECK-NEXT:   (call_ref
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (struct.get $parent.vtable 0
-  ;; CHECK-NEXT:     (local.get $v)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $v)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $parent.func)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call_ref
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (struct.get $parent.vtable 0
-  ;; CHECK-NEXT:     (local.get $v)
+  ;; CHECK-NEXT:    (block (result (ref $func))
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.as_non_null
+  ;; CHECK-NEXT:       (local.get $v)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.func $parent.func)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
