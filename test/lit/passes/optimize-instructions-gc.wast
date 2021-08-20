@@ -1790,4 +1790,40 @@
       )
     )
   )
+
+  ;; CHECK:      (func $incompatible-test (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (rtt.canon $array)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; NOMNL:      (func $incompatible-test (param $struct (ref null $struct))
+  ;; NOMNL-NEXT:  (drop
+  ;; NOMNL-NEXT:   (block (result i32)
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (local.get $struct)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (drop
+  ;; NOMNL-NEXT:     (rtt.canon $array)
+  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:    (i32.const 0)
+  ;; NOMNL-NEXT:   )
+  ;; NOMNL-NEXT:  )
+  ;; NOMNL-NEXT: )
+  (func $incompatible-test (param $struct (ref null $struct))
+    (drop
+      ;; This test will definitely fail, so we can turn it into 0.
+      (ref.test
+        (local.get $struct)
+        (rtt.canon $array)
+      )
+    )
+  )
 )
