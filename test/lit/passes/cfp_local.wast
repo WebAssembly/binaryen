@@ -720,6 +720,45 @@
   )
 )
 
+;; No set at all should not make us crash or misoptimize.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
+  (type $struct.A (struct (ref $table.A)))
+  ;; CHECK:      (type $table.A (struct (field i32)))
+  (type $table.A (struct i32))
+
+  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
+  (type $table.B (struct i32 f64) (extends $table.A))
+
+  ;; CHECK:      (func $test
+  ;; CHECK-NEXT:  (local $a (ref null $struct.A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $a)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $a (ref null $struct.A))
+    (drop
+      ;; This get uses the default value of the set.
+      (struct.get $table.A 0
+        (struct.get $struct.A 0
+          (local.get $a)
+        )
+      )
+    )
+  )
+)
 
 
 
