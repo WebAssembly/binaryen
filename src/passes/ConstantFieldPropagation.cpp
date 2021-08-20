@@ -468,16 +468,37 @@ private:
 
     HeapType type;
 
-    InferredResult() : kind(Failure) {}
-    InferredResult(Kind kind, HeapType type) : kind(kind), type(type) {
+    // We may also have been able to infer something about some of the fields.
+    // If so, they are added to this map. (Failures to infer are not included
+    // here.)
+    std::unordered_map<Index, InferredType> fields;
+
+    InferredType() : kind(Failure) {}
+    InferredType(Kind kind, HeapType type) : kind(kind), type(type) {
       // If a type was provided, this is not a failure to infer.
       assert(kind != Failure);
+    }
+
+    void setField(Index i, InferredType inference) {
+      if (inference.kind == Failure) {
+        // Failure to infer is indicated by simply not having it in the map.
+        return;
+      }
+      fields[i] = inference;
+    }
+
+    InferredType getField(Index i) {
+      assert(kind != Failure);
+      if (fields.count(i)) {
+        return fields[i];
+      }
+      return InferredType();
     }
   };
 
   // Attempts to infer something useful about the heap type returned by an
   // expression.
-  InferredResult inferType(Expression* curr) {
+  InferredType inferType(Expression* curr) {
     if (auto* get = curr->dynCast<StructGet>()) {
       // This is another struct.get, so we need to infer its reference type too.
       // Nested gets are a common pattern when we load the vtable and then a
@@ -487,11 +508,22 @@ private:
       //     (struct.get $foo indexOfVtable ..)
       //
       auto inference = inferType(curr->ref);
-      if (inference.kind != InferredResult::Failure) {
-        immutable
+      if (inference.kind != InferredType::Failure) {
+        // We inferred something useful here. Check if we even managed to infer
+        // the field itself.
+        auto fieldInference = inference.getField(get->index);
+        if (fieldInference.kind != InferredType::Failure) {
+          return fieldInference;
+        }
+
+        // Nothing about the field, but knowing more about the reference may
+        // still be helpful: we can see what the field's type is for that type.
+        auto& field = inference.type.getStruct().fields[get->index];
+        return InferredType(InferredType::IncludeSubTypes, field.type);
       }
     } else if (auto* get = curr->dynCast<LocalGet>()) {
       // This is a get of a local. See who writes to it.
+      // TODO: avoid possible iloops in unreachable code.
       // TODO: only construct the graph for relevant types.
       if (!localGraph) {
         localGraph = std::make_unique<LocalGraph>(getFunction());
@@ -512,11 +544,24 @@ private:
       }
     } else if (auto* set = curr->dynCast<StructNew>()) {
       // We can infer a precise type here, as struct.new creates exactly that.
-      return InferredResult(InferredResult::Precise, curr->type.getHeapType());
+      InferredType structInference(InferredType::Precise,
+                                   curr->type.getHeapType());
+
+      // Immutable fields can be inferred as well, as they cannot change later
+      // on.
+      auto& fields = inference.type.getStruct().fields;
+      for (Index i = 0; i < fields.size(); i++) {
+        auto& field = fields[i];
+        if (field.mutable_ == Immutable) {
+          structInference.setField(i, inferType(curr->operands[i]));
+        }
+      }
+
+      return structInference;
     }
 
     // We didn't manage to do any better than the declared type.
-    return InferredResult(InferredResult::IncludeSubTypes, curr->type);
+    return InferredType(InferredType::IncludeSubTypes, curr->type);
   }
 };
 
