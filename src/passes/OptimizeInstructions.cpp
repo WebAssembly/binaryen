@@ -1304,7 +1304,11 @@ struct OptimizeInstructions
                                           builder.makeDrop(curr->rtt),
                                           builder.makeUnreachable()}));
         return;
-      } else if (ref->is<RefNull>()) {
+      } else if (ref->type.isNullable() && ref->is<RefNull>()) {
+        // The type is nullable, and the value is a null, so we know the result
+        // here is null. (Note that if the type was non-nullable, then even
+        // through we know the value is null, we'd be changing the type if we
+        // optimized - but, likely a trap will happen anyhow before us.)
         replaceCurrent(builder.makeBlock(
           {builder.makeDrop(curr->ref),
            builder.makeDrop(curr->rtt),
