@@ -7,22 +7,23 @@
 (module
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
+
   ;; CHECK:      (type $table.B (struct (field (ref $B)) (field f64)) (extends $table.A))
+  (type $table.B (struct (ref $B) f64) (extends $table.A))
 
   ;; CHECK:      (type $table.A (struct (field (ref $A))))
   (type $table.A (struct (ref $A)))
+
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $B (struct (field i32) (field i64)) (extends $A))
+  (type $B (struct i32 i64) (extends $A))
 
   ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
+  (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
 
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct i32))
-
-  (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
-  (type $table.B (struct (ref $B) f64) (extends $table.A))
-  (type $B (struct i32 i64) (extends $A))
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $a (ref null $struct.A))
@@ -150,22 +151,22 @@
 (module
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
+
   ;; CHECK:      (type $table.B (struct (field (ref $B)) (field f64)) (extends $table.A))
+  (type $table.B (struct (ref $B) f64) (extends $table.A))
 
   ;; CHECK:      (type $table.A (struct (field (ref $A))))
   (type $table.A (struct (ref $A)))
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $B (struct (field i32) (field i64)) (extends $A))
+  (type $B (struct i32 i64) (extends $A))
 
   ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
+  (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
 
   ;; CHECK:      (type $A (struct (field i32)))
   (type $A (struct i32))
-
-  (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
-  (type $table.B (struct (ref $B) f64) (extends $table.A))
-  (type $B (struct i32 i64) (extends $A))
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $a (ref null $struct.A))
@@ -284,19 +285,18 @@
 ;; The struct.new is right on top of the struct.get.
 (module
   ;; CHECK:      (type $table.B (struct (field i32) (field f64)) (extends $table.A))
+  (type $table.B (struct i32 f64) (extends $table.A))
 
   ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
+  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
 
   ;; CHECK:      (type $table.A (struct (field i32)))
+  (type $table.A (struct i32))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
-  (type $table.A (struct i32))
-
-  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
-  (type $table.B (struct i32 f64) (extends $table.A))
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $a (ref null $struct.A))
@@ -407,7 +407,9 @@
 (module
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
+
   ;; CHECK:      (type $table.B (struct (field i32) (field f64)) (extends $table.A))
+  (type $table.B (struct i32 f64) (extends $table.A))
 
   ;; CHECK:      (type $table.A (struct (field i32)))
   (type $table.A (struct i32))
@@ -416,7 +418,6 @@
 
   ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
   (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
-  (type $table.B (struct i32 f64) (extends $table.A))
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $a (ref null $struct.A))
@@ -570,16 +571,16 @@
 ;; More than one set prevents us from optimizing.
 (module
   ;; CHECK:      (type $table.B (struct (field i32) (field f64)) (extends $table.A))
+  (type $table.B (struct i32 f64) (extends $table.A))
 
   ;; CHECK:      (type $table.A (struct (field i32)))
+  (type $table.A (struct i32))
 
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
-  (type $table.A (struct i32))
 
   ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
   (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
-  (type $table.B (struct i32 f64) (extends $table.A))
 
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -727,9 +728,6 @@
   ;; CHECK:      (type $table.A (struct (field i32)))
   (type $table.A (struct i32))
 
-  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
-  (type $table.B (struct i32 f64) (extends $table.A))
-
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $a (ref null $struct.A))
   ;; CHECK-NEXT:  (drop
@@ -761,18 +759,18 @@
 ;; An unreachable set should not make us crash or misoptimize.
 (module
   ;; CHECK:      (type $table.B (struct (field i32) (field f64)) (extends $table.A))
+  (type $table.B (struct i32 f64) (extends $table.A))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $struct.A (struct (field (ref $table.A))))
   (type $struct.A (struct (ref $table.A)))
+
   ;; CHECK:      (type $struct.B (struct (field (ref $table.B)) (field f32)) (extends $struct.A))
+  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
 
   ;; CHECK:      (type $table.A (struct (field i32)))
   (type $table.A (struct i32))
-
-  (type $struct.B (struct (ref $table.B) f32) (extends $struct.A))
-  (type $table.B (struct i32 f64) (extends $table.A))
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $a (ref null $struct.A))
@@ -833,18 +831,19 @@
   ;; A parent struct type, with a vtable.
   ;; CHECK:      (type $parent (struct (field (ref $parent.vtable))))
   (type $parent (struct (field (ref $parent.vtable))))
+
   ;; CHECK:      (type $parent.vtable (struct (field (ref $func))))
   (type $parent.vtable (struct (field (ref $func))))
 
   ;; A child struct type that extends the parent. It adds a field to both the
   ;; struct and its vtable.
   ;; CHECK:      (type $child.vtable (struct (field (ref $func)) (field (ref $func))) (extends $parent.vtable))
+  (type $child.vtable (struct (field (ref $func)) (field (ref $func)))  (extends $parent.vtable))
 
   ;; CHECK:      (type $none_=>_anyref (func (result anyref)))
 
   ;; CHECK:      (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
   (type $child (struct (field (ref $child.vtable)) (field i32)) (extends $parent))
-  (type $child.vtable (struct (field (ref $func)) (field (ref $func)))  (extends $parent.vtable))
 
   ;; Keep a creation of the parent alive, so that we do not end up with no
   ;; creations and a simpler problem to solve.
@@ -1081,15 +1080,15 @@
 
 (module
   ;; CHECK:      (type $E (struct (field i64) (field i64) (field i64) (field (mut i64))) (extends $D))
+  (type $E (struct i64 i64 i64 (mut i64)) (extends $D))
 
   ;; CHECK:      (type $D (struct (field i64) (field i64) (field i64) (field (mut i64))))
+  (type $D (struct i64 i64 i64 (mut i64)))
 
   ;; CHECK:      (type $none_=>_none (func))
 
   ;; CHECK:      (type $A (struct (field (mut i32))))
   (type $A (struct (mut i32)))
-  (type $D (struct i64 i64 i64 (mut i64)))
-  (type $E (struct i64 i64 i64 (mut i64)) (extends $D))
 
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (struct.set $E 3
