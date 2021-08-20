@@ -45,12 +45,6 @@
 
 namespace wasm {
 
-Name I32_EXPR = "i32.expr";
-Name I64_EXPR = "i64.expr";
-Name F32_EXPR = "f32.expr";
-Name F64_EXPR = "f64.expr";
-Name ANY_EXPR = "any.expr";
-
 // Useful information about locals
 struct LocalInfo {
   static const Index kUnknown = Index(-1);
