@@ -321,7 +321,7 @@ struct OptimizationInfo {
   //
   // TODO: Figure out which struct.sets set to the precise type, to avoid that
   //       propagation. However, it may not be a problem as vtables are usually
-  //       only written to by new anyhow, and not set.
+  //       only written to by new anyhow, and not set later.
   StructValuesMap preciseInfo;
 
   OptimizationInfo(Module& wasm) : subTypes(wasm) {}
@@ -437,6 +437,7 @@ private:
     //
     auto inference = inferType(get->ref);
     if (inference.kind == InferredType::Failure) {
+      // We failed to infer anything.
       return info;
     }
 
@@ -444,7 +445,7 @@ private:
 
     if (inference.kind == InferredType::IncludeSubTypes &&
         inference.type == type) {
-      // We failed to infer anything, or we failed to infer anything new.
+      // We failed to infer anything new.
       return info;
     }
 
