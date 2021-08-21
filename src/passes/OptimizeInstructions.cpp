@@ -1319,10 +1319,8 @@ struct OptimizeInstructions
     // subtype of the desired type, as RTT subtyping is a subset of static
     // subtyping. For example, trying to cast an array to a struct would be
     // incompatible.
-    bool typesCompatible =
-      canBeCastTo(curr->ref->type.getHeapType(), curr->rtt->type.getHeapType());
-
-    if (!typesCompatible) {
+    if (!canBeCastTo(curr->ref->type.getHeapType(),
+                     curr->rtt->type.getHeapType())) {
       // This cast cannot succeed. It will either trap if the input is not a
       // null, or it will return null if it is (and we have already handled the
       // case of null before).
@@ -1343,9 +1341,10 @@ struct OptimizeInstructions
       // cast can trap if the types *are* compatible but it happens to be the
       // case at runtime that the value is not of the desired subtype. If we
       // do not consider such traps possible, we can ignore that. Note, though,
-      // that we cannot do this if the types are incompatible, as then the wasm
-      // would not validate.
-      if (typesCompatible) {
+      // that we cannot do this if we cannot replace the current type with the
+      // reference's type.
+      if (HeapType::isSubType(curr->ref->type.getHeapType(),
+                              curr->rtt->type.getHeapType())) {
         Reorderer reorderer(
           curr->ref, curr->rtt, getFunction(), getModule(), passOptions);
         replaceCurrent(builder.makeSequence(builder.makeDrop(reorderer.second),

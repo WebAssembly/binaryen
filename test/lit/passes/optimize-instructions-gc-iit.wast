@@ -51,11 +51,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $parent))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $child-rtt)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (ref.cast
   ;; CHECK-NEXT:    (local.get $parent)
+  ;; CHECK-NEXT:    (local.get $child-rtt)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -88,11 +86,9 @@
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
-  ;; NOMNL-NEXT:   (block (result (ref $parent))
-  ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (local.get $child-rtt)
-  ;; NOMNL-NEXT:    )
+  ;; NOMNL-NEXT:   (ref.cast
   ;; NOMNL-NEXT:    (local.get $parent)
+  ;; NOMNL-NEXT:    (local.get $child-rtt)
   ;; NOMNL-NEXT:   )
   ;; NOMNL-NEXT:  )
   ;; NOMNL-NEXT:  (drop
@@ -125,11 +121,9 @@
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
-  ;; NOMNL-TNH-NEXT:   (block (result (ref $parent))
-  ;; NOMNL-TNH-NEXT:    (drop
-  ;; NOMNL-TNH-NEXT:     (local.get $child-rtt)
-  ;; NOMNL-TNH-NEXT:    )
+  ;; NOMNL-TNH-NEXT:   (ref.cast
   ;; NOMNL-TNH-NEXT:    (local.get $parent)
+  ;; NOMNL-TNH-NEXT:    (local.get $child-rtt)
   ;; NOMNL-TNH-NEXT:   )
   ;; NOMNL-TNH-NEXT:  )
   ;; NOMNL-TNH-NEXT:  (drop
