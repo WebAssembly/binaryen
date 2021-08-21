@@ -147,28 +147,31 @@
     (param $child-rtt (rtt $child))
     (param $other-rtt (rtt $other))
 
-    ;; a cast of parent to an rtt of parent: static subtyping matches.
+    ;; a cast of parent to an rtt of parent: assuming no traps as we do, we can
+    ;; optimize this as the new type will be valid.
     (drop
       (ref.cast
         (local.get $parent)
         (local.get $parent-rtt)
       )
     )
-    ;; a cast of child to a supertype: static subtyping matches.
+    ;; a cast of child to a supertype: again, we replace with a valid type.
     (drop
       (ref.cast
         (local.get $child)
         (local.get $parent-rtt)
       )
     )
-    ;; a cast of parent to a subtype: static subtyping does not match.
+    ;; a cast of parent to a subtype: we cannot replace the original heap type
+    ;; $child with one that is not equal or more specific, like $parent, so we
+    ;; cannot optimize here.
     (drop
       (ref.cast
         (local.get $parent)
         (local.get $child-rtt)
       )
     )
-    ;; a cast of child to an unrelated type: static subtyping does not match.
+    ;; a cast of child to an unrelated type: it will trap anyhow
     (drop
       (ref.cast
         (local.get $child)
