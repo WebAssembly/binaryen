@@ -5841,6 +5841,102 @@
      )
     )
   )
+  ;; CHECK:      (func $propagate-i32-sign-lhs (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-i32-sign-lhs (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (i32.sub
+        (i32.const 0)
+        (local.get $0)
+      )
+      (local.get $1)
+    )
+  )
+  ;; CHECK:      (func $propagate-i32-sign-rhs (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-i32-sign-rhs (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (local.get $0)
+      (i32.sub
+        (i32.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-i64-sign-lhs (param $0 i64) (param $1 i64) (result i64)
+  ;; CHECK-NEXT:  (i64.sub
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:   (i64.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-i64-sign-lhs (param $0 i64) (param $1 i64) (result i64)
+    (i64.mul
+      (i64.sub
+        (i64.const 0)
+        (local.get $0)
+      )
+      (local.get $1)
+    )
+  )
+  ;; CHECK:      (func $propagate-i64-sign-rhs (param $0 i64) (param $1 i64) (result i64)
+  ;; CHECK-NEXT:  (i64.sub
+  ;; CHECK-NEXT:   (i64.const 0)
+  ;; CHECK-NEXT:   (i64.mul
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-i64-sign-rhs (param $0 i64) (param $1 i64) (result i64)
+    (i64.mul
+      (local.get $0)
+      (i64.sub
+        (i64.const 0)
+        (local.get $1)
+      )
+    )
+  )
+  ;; CHECK:      (func $propagate-i32-sign-rhs-side (param $0 i32) (param $1 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (call $subzero4
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-i32-sign-rhs-side (param $0 i32) (param $1 i32) (result i32)
+    (i32.mul
+      (call $subzero4
+        (local.get $0)
+        (local.get $1)
+      )
+      (i32.sub
+        (i32.const 0)
+        (local.get $1)
+      )
+    )
+  )
   ;; CHECK:      (func $mul-32-power-2 (param $x i32) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $mul-32-power-2

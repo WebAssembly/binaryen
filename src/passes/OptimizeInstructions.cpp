@@ -365,6 +365,22 @@ struct OptimizeInstructions
         }
       }
       {
+        // -x * y   ==>   -(x * y)
+        // x * -y   ==>   -(x * y)
+        Expression *x, *y;
+        if (matches(curr,
+                    binary(Mul, binary(Sub, ival(0), any(&x)), any(&y))) ||
+            matches(curr,
+                    binary(Mul, any(&x), binary(Sub, ival(0), any(&y))))) {
+
+          Builder builder(*getModule());
+          return replaceCurrent(
+            builder.makeBinary(Abstract::getBinary(curr->type, Sub),
+                               builder.makeConst(Literal::makeZero(curr->type)),
+                               builder.makeBinary(curr->op, x, y)));
+        }
+      }
+      {
         // x <<>> (C & (31 | 63))   ==>   x <<>> C'
         // x <<>> (y & (31 | 63))   ==>   x <<>> y
         // x <<>> (y & (32 | 64))   ==>   x
