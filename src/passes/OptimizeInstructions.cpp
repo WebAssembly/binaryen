@@ -378,6 +378,20 @@ struct OptimizeInstructions
         }
       }
       {
+        // -x * C   ==>   x * -C, if isPowerOf2(C) != true
+        Const* c;
+        Binary* bin;
+        Expression* x;
+        if (matches(
+              curr,
+              binary(&bin, Mul, binary(Sub, ival(0), any(&x)), ival(&c)))) {
+          if (!Bits::isPowerOf2(c->value.getInteger())) {
+            c->value = c->value.neg();
+            bin->left = x;
+          }
+        }
+      }
+      {
         // -x * y   ==>   -(x * y)
         // x * -y   ==>   -(x * y)
         Expression *x, *y;
@@ -386,11 +400,13 @@ struct OptimizeInstructions
             matches(curr,
                     binary(Mul, any(&x), binary(Sub, ival(0), any(&y))))) {
 
-          Builder builder(*getModule());
-          return replaceCurrent(
-            builder.makeBinary(Abstract::getBinary(curr->type, Sub),
-                               builder.makeConst(Literal::makeZero(curr->type)),
-                               builder.makeBinary(curr->op, x, y)));
+          if (!x->is<Const>() && !y->is<Const>()) {
+            Builder builder(*getModule());
+            return replaceCurrent(builder.makeBinary(
+              Abstract::getBinary(curr->type, Sub),
+              builder.makeConst(Literal::makeZero(curr->type)),
+              builder.makeBinary(curr->op, x, y)));
+          }
         }
       }
       {
