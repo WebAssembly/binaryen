@@ -66,7 +66,7 @@ struct OptInfo {
 
   // Maps functions to whether they are run-once, by indicating the global that
   // they use for that purpose. An empty name means they are not once.
-  std::unordered_map<Name, std::atomic<bool>> onceFuncs;
+  std::unordered_map<Name, Name> onceFuncs;
 };
 
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
@@ -183,22 +183,30 @@ struct Optimizer
     // dominated by A.
     DomTree<Parent::BasicBlock> domTree(blocks);
 
-    // Perform the work using a stack. A work state includes which block we are
-    // in, and which "once" globals we have seen either here or in the blocks
-    // that dominate this one.
-    struct Work {
-      Index blockIndex;
-      // TODO: Clever use of std::move for this? But the size here will be
-      //       extremely small.
-      std::unordered_map<Name> onceGlobalsWritten;
-    };
-    UniqueDeferredQueue<ChildAndParent> queue;
+    // Perform the work by going through the blocks in reverse postorder and
+    // filling out which "once" globals have been written to.
+    auto numBlocks = blocks.size();
+    std::vector<std::unordered_map<Name>> onceGlobalsWrittenVec;
+    onceGlobalsWrittenVec.resize(numBlocks);
 
-    // The work begins at the entry block, with no information.
-    queue.push(Work{0, {}});
+    for (Index i = 0; i < blocks.size(); i++) {
+      // Note that we take a reference here, which is how the data we accumulate
+      // ends up stored for blocks we dominate to see later.
+      auto& onceGlobalsWritten = onceGlobalsWrittenVec[i];
 
-    while (!work.empty()) {
-      auto work = work.pop();
+      // Note information from our immediate dominator.
+      auto parent = domTree.parents[i];
+      if (parent == domTree.nonsense) {
+        // This is either the entry node, or an unreachable block.
+        if (i > 0) {
+          // We do not need to process unreachable blocks (leave that to DCE).
+          continue;
+        }
+      } else {
+        // This block has an immediate dominator, so we know that everything
+        // written to there can be assumed writte.
+        onceGlobalsWritten = onceGlobalsWrittenVec[parent];
+      }
 
       // Process the block's expressions.
       auto* block = blocks[work.blockIndex].get();
@@ -229,8 +237,6 @@ struct Optimizer
           work.onceGlobalsWritten.insert(globalName);
         }
       }
-
-      // Continue onwards to all dominated nodes.
     }
   }
 
@@ -240,217 +246,38 @@ private:
 
 } // anonymous namespace
 
-struct SimplifyGlobals : public Pass {
-  PassRunner* runner;
-  Module* module;
-
-  OptimizableMap map;
-  bool optimize;
-
-  SimplifyGlobals(bool optimize = false) : optimize(optimize) {}
-
+struct OnceReduction : public Pass {
   void run(PassRunner* runner_, Module* module_) override {
-    runner = runner_;
-    module = module_;
+    OptInfo optInfo;
 
-    while (iteration()) {
-    }
-  }
-
-  bool iteration() {
-    analyze();
-
-    // Removing unneeded writes can in some cases lead to more optimizations
-    // that we need an entire additional iteration to perform, see below.
-    bool more = removeUnneededWrites();
-
-    preferEarlierImports();
-
-    propagateConstantsToGlobals();
-
-    propagateConstantsToCode();
-
-    return more;
-  }
-
-  void analyze() {
-    map.clear();
-
-    // First, find out all the relevant info.
+    // Fill out the data so it can be processed in parallel.
     for (auto& global : module->globals) {
-      auto& info = map[global->name];
-      if (global->imported()) {
-        info.imported = true;
-      }
+      optInfo.onceGlobals[global->name] = false;
     }
-    for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Global) {
-        map[ex->value].exported = true;
-      }
+    for (auto& func : module->funcs) {
+      optInfo.onceFuncs[func->name] = Name();
     }
-    Scanner(&map).run(runner, module);
-    // We now know which are immutable in practice.
-    for (auto& global : module->globals) {
-      auto& info = map[global->name];
-      if (global->mutable_ && !info.imported && !info.exported &&
-          !info.written) {
-        global->mutable_ = false;
-      }
-    }
-  }
 
-  // Removes writes from globals that will never do anything useful with the
-  // written value anyhow. Returns whether an addition iteration is necessary.
-  bool removeUnneededWrites() {
-    bool more = false;
+    // Scan the module to find out which globals and functions are "once".
+    Scanner(optInfo).run(runner, module);
 
-    // Globals that are not exports and not read from are unnecessary (even if
-    // they are written to). Likewise, globals that are only read from in order
-    // to write to themselves are unnecessary. First, find such globals.
-    NameSet unnecessaryGlobals;
-    for (auto& global : module->globals) {
-      auto& info = map[global->name];
-
-      if (!info.written) {
-        // No writes occur here, so there is nothing for us to remove.
-        continue;
-      }
-
-      if (info.imported || info.exported) {
-        // If the global is observable from the outside, we can't do anythng
-        // here.
-        //
-        // TODO: optimize the case of an imported but immutable global, etc.
-        continue;
-      }
-
-      // We only ever optimize read-only-to-write if all of our reads are done
-      // in places we identified as read-only-to-write. That is, we have
-      // eliminated the possibility of any other uses. (Technically, each
-      // read-to-write location might have more than one read since we did not
-      // count them, but only verified there was one read or more; but this is
-      // good enough as the common case has exactly one.)
-      //
-      // Note that there might be more writes, if there are additional writes
-      // besides those in the read-only-to-write locations. But we can ignore
-      // those, as whatever they write will not be read in order to do anything
-      // of value.
-      bool onlyReadOnlyToWrite = (info.read == info.readOnlyToWrite);
-
-      // There is at least one write in each read-only-to-write location, unless
-      // our logic is wrong somewhere.
-      assert(info.written >= info.readOnlyToWrite);
-
-      if (!info.read || onlyReadOnlyToWrite) {
-        unnecessaryGlobals.insert(global->name);
-
-        // We can now mark this global as immutable, and un-written, since we
-        // are about to remove all the operations on it.
-        global->mutable_ = false;
-        info.written = 0;
-
-        // Nested old-read-to-write expressions require another full iteration
-        // to optimize, as we have:
-        //
-        //   if (a) {
-        //     a = 1;
-        //     if (b) {
-        //       b = 1;
-        //     }
-        //   }
-        //
-        // The first iteration can only optimize b, as the outer if's body has
-        // more effects than we understand. After finishing the first iteration,
-        // b will no longer exist, removing those effects.
-        if (onlyReadOnlyToWrite) {
-          more = true;
-        }
+    // Combine the information. We found which globals are "once", but we need
+    // to do more work for functions: so far we just noted which functions
+    // appear to be in the form of a "once" function, but their global must also
+    // have that property.
+    for (auto& kv : optInfo.onceFuncs) {
+      Name func = kv.first;
+      Name& onceGlobal = kv.second;
+      if (onceGlobal.is() && !optInfo.onceGlobals[onceGlobal]) {
+        onceGlobal = Name();
       }
     }
 
-    // Remove all the sets on the unnecessary globals. Later optimizations can
-    // then see that since the global has no writes, it is a constant, which
-    // will lead to removal of gets, and after removing them, the global itself
-    // will be removed as well.
-    GlobalSetRemover(&unnecessaryGlobals, optimize).run(runner, module);
-
-    return more;
-  }
-
-  void preferEarlierImports() {
-    // Optimize uses of immutable globals, prefer the earlier import when
-    // there is a copy.
-    NameNameMap copiedParentMap;
-    for (auto& global : module->globals) {
-      auto child = global->name;
-      if (!global->mutable_ && !global->imported()) {
-        if (auto* get = global->init->dynCast<GlobalGet>()) {
-          auto parent = get->name;
-          if (!module->getGlobal(get->name)->mutable_) {
-            copiedParentMap[child] = parent;
-          }
-        }
-      }
-    }
-    if (!copiedParentMap.empty()) {
-      // Go all the way back.
-      for (auto& global : module->globals) {
-        auto child = global->name;
-        if (copiedParentMap.count(child)) {
-          while (copiedParentMap.count(copiedParentMap[child])) {
-            copiedParentMap[child] = copiedParentMap[copiedParentMap[child]];
-          }
-        }
-      }
-      // Apply to the gets.
-      GlobalUseModifier(&copiedParentMap).run(runner, module);
-    }
-  }
-
-  // Constant propagation part 1: even an mutable global with a constant
-  // value can have that value propagated to another global that reads it,
-  // since we do know the value during startup, it can't be modified until
-  // code runs.
-  void propagateConstantsToGlobals() {
-    // Go over the list of globals in order, which is the order of
-    // initialization as well, tracking their constant values.
-    std::map<Name, Literals> constantGlobals;
-    for (auto& global : module->globals) {
-      if (!global->imported()) {
-        if (Properties::isConstantExpression(global->init)) {
-          constantGlobals[global->name] =
-            getLiteralsFromConstExpression(global->init);
-        } else if (auto* get = global->init->dynCast<GlobalGet>()) {
-          auto iter = constantGlobals.find(get->name);
-          if (iter != constantGlobals.end()) {
-            Builder builder(*module);
-            global->init = builder.makeConstantExpression(iter->second);
-          }
-        }
-      }
-    }
-  }
-
-  // Constant propagation part 2: apply the values of immutable globals
-  // with constant values to to global.gets in the code.
-  void propagateConstantsToCode() {
-    NameSet constantGlobals;
-    for (auto& global : module->globals) {
-      if (!global->mutable_ && !global->imported() &&
-          Properties::isConstantExpression(global->init)) {
-        constantGlobals.insert(global->name);
-      }
-    }
-    ConstantGlobalApplier(&constantGlobals, optimize).run(runner, module);
+    // Optimize using what we found. TODO: don't do this if we found nothing.
+    Optimizer(optInfo).run(runner, module);
   }
 };
 
-remove once from funcs whose global is not once.
-
-Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(false); }
-
-Pass* createSimplifyGlobalsOptimizingPass() {
-  return new SimplifyGlobals(true);
-}
+Pass* createOnceReductionPass() { return new OnceReduction(false); }
 
 } // namespace wasm

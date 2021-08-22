@@ -45,6 +45,10 @@ namespace wasm {
 template<typename BasicBlock> struct DomTree {
   std::vector<Index> parents;
 
+  // Use a nonsense value to indicate what has yet to be initialized or what is
+  // irrelevant.
+  static const Index nonsense = -1;
+
   DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks);
 };
 
@@ -80,9 +84,6 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   for (Index i = 0; i < numBlocks; i++) {
     blockIndices[blocks[i].get()] = i;
   }
-
-  // Use a nonsense value to indicate what has yet to be initialized.
-  const Index nonsense = -1;
 
   // Initialize the parents array. The entry starts with its own index, which is
   // used as a guard value in effect (we will never process it, and we will fix
