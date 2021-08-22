@@ -38,5 +38,14 @@ int main() {
     assert(domTree.parents.empty());
   }
 
+  // An CFG with just an entry.
+  {
+    CFG cfg;
+    cfg.add();
+    DomTree<BasicBlock> domTree(cfg);
+    assert(domTree.parents.size() == 1);
+    assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+  }
+
   std::cout << "success.\n";
 }
