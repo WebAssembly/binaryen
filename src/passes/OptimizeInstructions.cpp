@@ -2187,9 +2187,11 @@ private:
         matches(curr, binary(And, pure(&left), ival(0)))) {
       return right;
     }
-    // -x * C   ==>   x * -C,   if isPowerOf2(C) != true
+    // -x * C   ==>   x * -C,
+    //   when shrinkLevel == 0  or  C != C_pot
     if (matches(curr, binary(Mul, binary(Sub, ival(0), any(&left)), ival()))) {
-      if (!Bits::isPowerOf2(right->value.getInteger())) {
+      if (getPassOptions().shrinkLevel != 0 ||
+          !Bits::isPowerOf2(right->value.getInteger())) {
         right->value = right->value.neg();
         curr->left = left;
       }
