@@ -253,11 +253,17 @@ struct OnceReduction : public Pass {
   void run(PassRunner* runner, Module* module) override {
     OptInfo optInfo;
 
-    // Fill out the data so it can be processed in parallel.
+    // Fill out the initial data.
     for (auto& global : module->globals) {
-      optInfo.onceGlobals[global->name] = false;
+      // For a global to possible be "once", it must be initialized to 0.
+      // TODO: non-integer types?
+      optInfo.onceGlobals[global->name] = global->type.isInteger() &&
+                                          global->init->is<Const>() &&
+                                          global->init->cast<Const>()->value.getInteger() == 0;
     }
     for (auto& func : module->functions) {
+      // We'll look at functions when we can them. Fill in the map here so that
+      // it can be operated on in parallel.
       optInfo.onceFuncs[func->name] = Name();
     }
 
