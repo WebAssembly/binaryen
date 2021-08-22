@@ -68,7 +68,15 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   // internal details
 
-  std::vector<std::unique_ptr<BasicBlock>> basicBlocks; // all the blocks
+  // The list of basic blocks in the function.
+  //
+  // This is populated in reverse postorder, that is, a block appears after all
+  // those that dominate it. This is trivial to do given wasm's structured
+  // control flow: we simply create blocks only after the things that can reach
+  // them (the only nontrivial things are loops, but if the dominator was before
+  // the loop, then again, we would have created it before the loop body).
+  std::vector<std::unique_ptr<BasicBlock>> basicBlocks;
+
   // blocks that are the tops of loops, i.e., have backedges to them
   std::vector<BasicBlock*> loopTops;
 
