@@ -49,7 +49,7 @@ int main() {
     assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
   }
 
-  // entry -> A
+  // entry -> a.
   {
     CFG cfg;
     auto* entry = cfg.add();
@@ -60,6 +60,37 @@ int main() {
     assert(domTree.parents.size() == 2);
     assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
     assert(domTree.parents[1] == 0); // a is dominated by the entry.
+  }
+
+  // entry and a non-connected (unreachable) block.
+  {
+    CFG cfg;
+    auto* entry = cfg.add();
+    auto* a = cfg.add();
+
+    DomTree<BasicBlock> domTree(cfg);
+    assert(domTree.parents.size() == 2);
+    assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+    assert(domTree.parents[0] == Index(-1)); // unreachables have no parent.
+  }
+
+  // entry -> a -> b -> c.
+  {
+    CFG cfg;
+    auto* entry = cfg.add();
+    auto* a = cfg.add();
+    auto* b = cfg.add();
+    auto* c = cfg.add();
+    cfg.connect(entry, a);
+    cfg.connect(a, b);
+    cfg.connect(b, c);
+
+    DomTree<BasicBlock> domTree(cfg);
+    assert(domTree.parents.size() == 4);
+    assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+    assert(domTree.parents[1] == 0);
+    assert(domTree.parents[2] == 1);
+    assert(domTree.parents[3] == 2);
   }
 
   std::cout << "success.\n";
