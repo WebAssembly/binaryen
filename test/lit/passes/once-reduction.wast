@@ -296,3 +296,44 @@
   )
 )
 
+;; Corner case: the if has an else
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (import "env" "foo" (func $foo))
+  (import "env" "foo" (func $foo))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 42))
+  (global $once (mut i32) (i32.const 42))
+
+  ;; CHECK:      (func $once
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $foo)
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+      (call $foo)
+    )
+    (global.set $once (i32.const 1))
+    (call $foo)
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $once)
+    (call $once)
+  )
+)
+
