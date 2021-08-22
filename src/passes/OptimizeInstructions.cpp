@@ -365,6 +365,19 @@ struct OptimizeInstructions
         }
       }
       {
+        // -x * -y   ==>   x * y
+        Binary* bin;
+        Expression *x, *y;
+        if (matches(curr,
+                    binary(&bin,
+                           Mul,
+                           binary(Sub, ival(0), any(&x)),
+                           binary(Sub, ival(0), any(&y))))) {
+          bin->left = x;
+          bin->right = y;
+        }
+      }
+      {
         // -x * y   ==>   -(x * y)
         // x * -y   ==>   -(x * y)
         Expression *x, *y;
