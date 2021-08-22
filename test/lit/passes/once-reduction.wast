@@ -51,6 +51,9 @@
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $once
     (if
@@ -59,6 +62,7 @@
     )
     (global.set $once (i32.const 1))
     ;; Add some more content in the function.
+    (drop (i32.const 100))
   )
 
   ;; CHECK:      (func $caller-if-1
@@ -170,6 +174,21 @@
     )
     (call $once)
     (call $once)
+  )
+
+  ;; CHECK:      (func $caller-single
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $caller-single
+    ;; A short function with a single call.
+    (call $once)
+  )
+
+  ;; CHECK:      (func $caller-empty
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller-empty
+    ;; A tiny function with nothing at all.
   )
 )
 
