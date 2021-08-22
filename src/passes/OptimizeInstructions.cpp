@@ -365,51 +365,6 @@ struct OptimizeInstructions
         }
       }
       {
-        // -x * -y   ==>   x * y
-        Binary* bin;
-        Expression *x, *y;
-        if (matches(curr,
-                    binary(&bin,
-                           Mul,
-                           binary(Sub, ival(0), any(&x)),
-                           binary(Sub, ival(0), any(&y))))) {
-          bin->left = x;
-          bin->right = y;
-        }
-      }
-      {
-        // -x * C   ==>   x * -C, if isPowerOf2(C) != true
-        Const* c;
-        Binary* bin;
-        Expression* x;
-        if (matches(
-              curr,
-              binary(&bin, Mul, binary(Sub, ival(0), any(&x)), ival(&c)))) {
-          if (!Bits::isPowerOf2(c->value.getInteger())) {
-            c->value = c->value.neg();
-            bin->left = x;
-          }
-        }
-      }
-      {
-        // -x * y   ==>   -(x * y)
-        // x * -y   ==>   -(x * y)
-        Expression *x, *y;
-        if (matches(curr,
-                    binary(Mul, binary(Sub, ival(0), any(&x)), any(&y))) ||
-            matches(curr,
-                    binary(Mul, any(&x), binary(Sub, ival(0), any(&y))))) {
-
-          if (!x->is<Const>() && !y->is<Const>()) {
-            Builder builder(*getModule());
-            return replaceCurrent(builder.makeBinary(
-              Abstract::getBinary(curr->type, Sub),
-              builder.makeConst(Literal::makeZero(curr->type)),
-              builder.makeBinary(curr->op, x, y)));
-          }
-        }
-      }
-      {
         // x <<>> (C & (31 | 63))   ==>   x <<>> C'
         // x <<>> (y & (31 | 63))   ==>   x <<>> y
         // x <<>> (y & (32 | 64))   ==>   x
@@ -448,6 +403,37 @@ struct OptimizeInstructions
                (c->type == Type::i64 && (c->value.geti64() & 63LL) == 0LL)) &&
               !effects(y).hasSideEffects()) {
             return replaceCurrent(x);
+          }
+        }
+      }
+      {
+        // -x * -y   ==>   x * y
+        Binary* bin;
+        Expression *x, *y;
+        if (matches(curr,
+                    binary(&bin,
+                           Mul,
+                           binary(Sub, ival(0), any(&x)),
+                           binary(Sub, ival(0), any(&y))))) {
+          bin->left = x;
+          bin->right = y;
+        }
+      }
+      {
+        // -x * y   ==>   -(x * y)
+        // x * -y   ==>   -(x * y)
+        Expression *x, *y;
+        if (matches(curr,
+                    binary(Mul, binary(Sub, ival(0), any(&x)), any(&y))) ||
+            matches(curr,
+                    binary(Mul, any(&x), binary(Sub, ival(0), any(&y))))) {
+
+          if (!x->is<Const>() && !y->is<Const>()) {
+            Builder builder(*getModule());
+            return replaceCurrent(builder.makeBinary(
+              Abstract::getBinary(curr->type, Sub),
+              builder.makeConst(Literal::makeZero(curr->type)),
+              builder.makeBinary(curr->op, x, y)));
           }
         }
       }
@@ -2200,6 +2186,13 @@ private:
     if (matches(curr, binary(Mul, pure(&left), ival(0))) ||
         matches(curr, binary(And, pure(&left), ival(0)))) {
       return right;
+    }
+    // -x * C   ==>   x * -C,   if isPowerOf2(C) != true
+    if (matches(curr, binary(Mul, binary(Sub, ival(0), any(&left)), ival()))) {
+      if (!Bits::isPowerOf2(right->value.getInteger())) {
+        right->value = right->value.neg();
+        curr->left = left;
+      }
     }
     // x == 0   ==>   eqz x
     if (matches(curr, binary(Eq, any(&left), ival(0)))) {
