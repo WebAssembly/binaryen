@@ -188,13 +188,13 @@ struct Optimizer
   Optimizer* create() override { return new Optimizer(optInfo); }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (optInfo.onceGlobals[curr->name]) {
+    if (currBasicBlock && optInfo.onceGlobals[curr->name]) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
 
   void visitCall(Call* curr) {
-    if (optInfo.onceFuncs[curr->target].is()) {
+    if (currBasicBlock && optInfo.onceFuncs[curr->target].is()) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
