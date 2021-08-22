@@ -39,11 +39,11 @@ namespace wasm {
 //  parents[2] = the index of the immediate dominator of CFG.blocks[2]
 //  etc.
 //
-template<typename CFG>
+template<typename BasicBlock>
 struct DomTree {
   std::vector<Index> parents;
 
-  DomTree(CFG& cfg);
+  DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks);
 };
 
 } // namespace wasm

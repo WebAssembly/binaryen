@@ -18,8 +18,8 @@
 
 namespace wasm {
 
-template<typename CFG>
-DomTree::Domtree(CFG& cfg) {
+template<typename BasicBlock>
+DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   // Compute the dominator tree using the "engineered algorithm" in [1]. Minor
   // differences in notation from the source include:
   //
@@ -40,14 +40,13 @@ DomTree::Domtree(CFG& cfg) {
   //       http://www.hipersoft.rice.edu/grads/publications/dom14.pdf
 
   // If there are no blocks, we have nothing to do.
-  auto& blocks = cfg.blocks;
   Index numBlocks = blocks.size();
   if (numBlocks == 0) {
     return;
   }
 
   // Map basic blocks to their indices.
-  std::unordered_map<CFG::BasicBlock*, Index> blockIndices;
+  std::unordered_map<BasicBlock*, Index> blockIndices;
   for (Index i = 0; i < numBlocks; i++) {
     blockIndices[blocks[i].get()] = i;
   }
@@ -70,7 +69,7 @@ DomTree::Domtree(CFG& cfg) {
   bool changed = true;
   while (changed) {
     changed = false;
-    for (Index index = 1; i < numBlocks; i++) {
+    for (Index index = 1; index < numBlocks; index++) {
       // Loop over the predecessors. Our new parent is basically the
       // intersection of all of theirs: our immediate dominator must precede all
       // of them.
@@ -124,5 +123,3 @@ DomTree::Domtree(CFG& cfg) {
 }
 
 } // namespace wasm
-
-#endif // liveness_traversal_h
