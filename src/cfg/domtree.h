@@ -42,8 +42,7 @@ namespace wasm {
 //
 // The BasicBlock type is assumed to have a ".in" property which declares a
 // vector of pointers to the incoming blocks, that is, the predecessors.
-template<typename BasicBlock>
-struct DomTree {
+template<typename BasicBlock> struct DomTree {
   std::vector<Index> parents;
 
   DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks);
