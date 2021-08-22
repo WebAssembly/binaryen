@@ -92,15 +92,17 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   parents.resize(numBlocks);
   parents[0] = 0;
   for (Index i = 1; i < numBlocks; i++) {
-    parents[0] = nonsense;
+    parents[i] = nonsense;
   }
 
   // Loop over the (non-entry blocks in reverse postorder while there are
   // changes still happening.
   bool changed = true;
   while (changed) {
+std::cout << "iter\n";
     changed = false;
     for (Index index = 1; index < numBlocks; index++) {
+std::cout << "  index " << index << " : " << parents[index] << "\n";
       // Loop over the predecessors. Our new parent is basically the
       // intersection of all of theirs: our immediate dominator must precede all
       // of them.
@@ -108,13 +110,16 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
       Index newParent = nonsense;
       for (auto* pred : preds) {
         auto predIndex = blockIndices[pred];
+std::cout << "    predIndex " << predIndex << " : " << parents[predIndex] << "\n";
         if (parents[predIndex] == nonsense) {
+std::cout << "      not yet\n";
           // This pred has yet to be processed; we'll get to it in a later
           // cycle.
           continue;
         }
 
         if (newParent == nonsense) {
+std::cout << "      frist\n";
           // This is the first processed predecessor.
           newParent = predIndex;
           continue;
@@ -135,6 +140,7 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
           }
         }
         newParent = left;
+std::cout << "      newParent = " << newParent << "\n";
       }
 
       // We may have found a new value here.
@@ -142,8 +148,8 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
         parents[index] = newParent;
         changed = true;
 
-        // In reverse postorder every dominator must appear earlier.
-        assert(newParent < index);
+        // In reverse postorder the dominator cannot appear later.
+        assert(newParent <= index);
       }
     }
   }

@@ -34,6 +34,7 @@ int main() {
   // An empty CFG.
   {
     CFG cfg;
+
     DomTree<BasicBlock> domTree(cfg);
     assert(domTree.parents.empty());
   }
@@ -42,9 +43,23 @@ int main() {
   {
     CFG cfg;
     cfg.add();
+
     DomTree<BasicBlock> domTree(cfg);
     assert(domTree.parents.size() == 1);
     assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+  }
+
+  // entry -> A
+  {
+    CFG cfg;
+    auto* entry = cfg.add();
+    auto* a = cfg.add();
+    cfg.connect(entry, a);
+
+    DomTree<BasicBlock> domTree(cfg);
+    assert(domTree.parents.size() == 2);
+    assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+    assert(domTree.parents[1] == 0); // a is dominated by the entry.
   }
 
   std::cout << "success.\n";
