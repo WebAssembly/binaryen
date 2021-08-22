@@ -481,6 +481,20 @@
     (call $once)
     (global.set $once (i32.const 1337))
   )
+
+  ;; CHECK:      (func $caller-2
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1337)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller-2
+    ;; Reverse order of the above.
+    (global.set $once (i32.const 1337))
+    (call $once)
+    (call $once)
+  )
 )
 
 ;; It is ok to call the "once" function inside itself - as that call appears
