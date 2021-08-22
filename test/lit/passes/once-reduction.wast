@@ -296,7 +296,7 @@
   )
 )
 
-;; Corner case: the if has an else
+;; Corner case: The if has an else.
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -325,6 +325,42 @@
     )
     (global.set $once (i32.const 1))
     (call $foo)
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $once)
+    (call $once)
+  )
+)
+
+;; Corner case: different global names in the get and set
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once1 (mut i32) (i32.const 0))
+  (global $once1 (mut i32) (i32.const 0))
+  ;; CHECK:      (global $once2 (mut i32) (i32.const 0))
+  (global $once2 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once1)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once2
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once1)
+      (return)
+    )
+    (global.set $once2 (i32.const 1))
   )
 
   ;; CHECK:      (func $caller
