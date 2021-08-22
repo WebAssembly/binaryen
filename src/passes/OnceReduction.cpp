@@ -103,6 +103,9 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
   // Check if a function body is in the "once" pattern. Return the name of the
   // global if so, or an empty name otherwise.
+  //
+  // TODO: If the "once" function is inlined, this pattern can show up in random
+  //       places, and we can look for it there as well.
   Name getOnceGlobal(Expression* body) {
     // Look the pattern mentioned above:
     //

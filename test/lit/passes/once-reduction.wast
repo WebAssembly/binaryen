@@ -510,3 +510,42 @@
     (call $once)
   )
 )
+
+;; Corner case: Non-integer global, which we ignore.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut f64) (f64.const 0))
+  (global $once (mut f64) (f64.const 0))
+
+  ;; CHECK:      (func $once
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.trunc_f64_s
+  ;; CHECK-NEXT:    (global.get $once)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (f64.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      ;; We must cast this to an integer for the wasm to validate.
+      (i32.trunc_f64_s
+        (global.get $once)
+      )
+      (return)
+    )
+    (global.set $once (f64.const 1))
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $once)
+    (call $once)
+  )
+)
