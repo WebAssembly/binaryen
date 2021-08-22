@@ -624,3 +624,43 @@
     (call $once)
   )
 )
+
+;; Corner case: "Once" function has params.
+(module
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once (param $x i32)
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (call $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $once (i32.const 1))
+    (call $once (i32.const 1))
+  )
+)
