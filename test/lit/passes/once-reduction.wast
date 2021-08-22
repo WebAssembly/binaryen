@@ -550,7 +550,7 @@
   )
 )
 
-;; Corner case: Non-constant initial value
+;; Corner case: Non-constant initial value.
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -575,6 +575,44 @@
       (return)
     )
     (global.set $once (i32.const 1))
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $once)
+    (call $once)
+  )
+)
+
+;; Corner case: Non-constant later value.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.eqz (i32.eqz (i32.const 1))))
   )
 
   ;; CHECK:      (func $caller
