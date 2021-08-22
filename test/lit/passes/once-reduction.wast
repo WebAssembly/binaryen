@@ -746,3 +746,33 @@
     (call $once)
   )
 )
+
+;; Corner case: Once body is too short.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+    )
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $once)
+    (call $once)
+  )
+)
