@@ -96,13 +96,14 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
   void visitFunction(Function* curr) {
     // TODO: support params and results?
-    if (curr->getParams() != Type::none || curr->getResults() != Type::none ||
-        !isOnce(curr->body)) {
-      optInfo.onceFuncs[curr->name] = false;
+    if (curr->getParams() == Type::none && curr->getResults() == Type::none) {
+      optInfo.onceFuncs[curr->name] = getOnceGlobal(curr->body);
     }
   }
 
-  void isOnce(Expression* body) {
+  // Check if a function body is in the "once" pattern. Return the name of the
+  // global if so, or an empty name otherwise.
+  Name getOnceGlobal(Expression* body) {
     // Look the pattern mentioned above:
     //
     //  function foo() {
@@ -110,32 +111,32 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     //    foo$once = 1;
     //    ...
     //
-    auto* block = curr->body->dynCast<Block>();
+    auto* block = body->dynCast<Block>();
     if (!block) {
-      return false;
+      return Name();
     }
     auto& list = block->list;
     if (list.size() < 2) {
-      return false;
+      return Name();
     }
-    auto* iff = list[0]->dynCast<iff>();
+    auto* iff = list[0]->dynCast<If>();
     if (!iff) {
-      return false;
+      return Name();
     }
     auto* get = iff->condition->dynCast<GlobalGet>();
     if (!get) {
-      return false;
+      return Name();
     }
     if (!iff->ifTrue->is<Return>() || iff->ifFalse) {
-      return false;
+      return Name();
     }
     auto* set = list[1]->dynCast<GlobalSet>();
     // Note that we have already checked the set's value earlier, but we do need
     // it to not be unreachable (so it is actually set).
     if (!set || set->name != get->name || set->type == Type::unreachable) {
-      return false;
+      return Name();
     }
-    return true;
+    return get->name;
   }
 
 private:
@@ -158,14 +159,14 @@ struct Optimizer
 
   Optimizer* create() override { return new Optimizer(optInfo); }
 
-  void visitGlobalSet(visitGlobalSet* curr) {
-    if (optInfo.onceGlobals[curr->name].is()) {
+  void visitGlobalSet(GlobalSet* curr) {
+    if (optInfo.onceGlobals[curr->name]) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
 
   void visitCall(Call* curr) {
-    if (optInfo.onceFuncs[curr->name].is()) {
+    if (optInfo.onceFuncs[curr->target].is()) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
@@ -173,7 +174,8 @@ struct Optimizer
   void doWalkFunction(Function* curr) {
     using Parent = WalkerPass<CFGWalker<Optimizer,
                                 Visitor<Optimizer>,
-                                BlockInfo>;
+                                BlockInfo>>;
+
     // Walk the function, which optimizes some calls and which also builds the
     // CFG.
     Parent::doWalkFunction(curr);
@@ -181,15 +183,17 @@ struct Optimizer
     // Build a dominator tree, which then tells us what to remove: if a call
     // appears in block A, then we do not need to make any calls in any blocks
     // dominated by A.
-    DomTree<Parent::BasicBlock> domTree(blocks);
+    DomTree<Parent::BasicBlock> domTree(basicBlocks);
 
     // Perform the work by going through the blocks in reverse postorder and
     // filling out which "once" globals have been written to.
-    auto numBlocks = blocks.size();
-    std::vector<std::unordered_map<Name>> onceGlobalsWrittenVec;
+    auto numBlocks = basicBlocks.size();
+    std::vector<std::unordered_set<Name>> onceGlobalsWrittenVec;
     onceGlobalsWrittenVec.resize(numBlocks);
 
-    for (Index i = 0; i < blocks.size(); i++) {
+    for (Index i = 0; i < basicBlocks.size(); i++) {
+      auto* block = basicBlocks[i].get();
+
       // Note that we take a reference here, which is how the data we accumulate
       // ends up stored for blocks we dominate to see later.
       auto& onceGlobalsWritten = onceGlobalsWrittenVec[i];
@@ -209,7 +213,6 @@ struct Optimizer
       }
 
       // Process the block's expressions.
-      auto* block = blocks[work.blockIndex].get();
       auto& exprs = block->contents.exprs;
       for (auto* expr : exprs) {
         Name globalName;
@@ -219,13 +222,13 @@ struct Optimizer
           assert(set->value->is<Const>());
         } else if (auto* call = expr->dynCast<Call>()) {
           // The global used by the "once" func is written.
-          globalName = optInfo.onceFuncs[call->name];
-          assert(curr->operands.empty());
+          globalName = optInfo.onceFuncs[call->target];
+          assert(call->operands.empty());
         } else {
           WASM_UNREACHABLE("invalid expr");
         }
         assert(optInfo.onceGlobals[globalName]);
-        if (work.onceGlobalsWritten.count(globalName)) {
+        if (onceGlobalsWritten.count(globalName)) {
           // This global has already been written, so this expr is not needed,
           // regardless of whether it is a global.set or a call.
           //
@@ -234,7 +237,7 @@ struct Optimizer
           ExpressionManipulator::nop(expr);
         } else {
           // From here on, this global is set.
-          work.onceGlobalsWritten.insert(globalName);
+          onceGlobalsWritten.insert(globalName);
         }
       }
     }
@@ -247,14 +250,14 @@ private:
 } // anonymous namespace
 
 struct OnceReduction : public Pass {
-  void run(PassRunner* runner_, Module* module_) override {
+  void run(PassRunner* runner, Module* module) override {
     OptInfo optInfo;
 
     // Fill out the data so it can be processed in parallel.
     for (auto& global : module->globals) {
       optInfo.onceGlobals[global->name] = false;
     }
-    for (auto& func : module->funcs) {
+    for (auto& func : module->functions) {
       optInfo.onceFuncs[func->name] = Name();
     }
 
@@ -266,7 +269,6 @@ struct OnceReduction : public Pass {
     // appear to be in the form of a "once" function, but their global must also
     // have that property.
     for (auto& kv : optInfo.onceFuncs) {
-      Name func = kv.first;
       Name& onceGlobal = kv.second;
       if (onceGlobal.is() && !optInfo.onceGlobals[onceGlobal]) {
         onceGlobal = Name();
@@ -278,6 +280,6 @@ struct OnceReduction : public Pass {
   }
 };
 
-Pass* createOnceReductionPass() { return new OnceReduction(false); }
+Pass* createOnceReductionPass() { return new OnceReduction(); }
 
 } // namespace wasm
