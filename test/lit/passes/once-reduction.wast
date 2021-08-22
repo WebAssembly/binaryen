@@ -625,7 +625,7 @@
   )
 )
 
-;; Corner case: "Once" function has params.
+;; Corner case: "Once" function has a param.
 (module
   ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
@@ -662,5 +662,49 @@
   (func $caller
     (call $once (i32.const 1))
     (call $once (i32.const 1))
+  )
+)
+
+;; Corner case: "Once" function has a result.
+(module
+  ;; CHECK:      (type $none_=>_i32 (func (result i32)))
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 3)
+  ;; CHECK-NEXT: )
+  (func $once (result i32)
+    (if
+      (global.get $once)
+      (return (i32.const 2))
+    )
+    (global.set $once (i32.const 1))
+    (i32.const 3)
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $once)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $once)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (drop (call $once))
+    (drop (call $once))
   )
 )
