@@ -50,6 +50,7 @@ set(passes_SOURCES
   NameList.cpp
   NameTypes.cpp
   NoExitRuntime.cpp
+  OnceReduction.cpp
   OptimizeAddedConstants.cpp
   OptimizeInstructions.cpp
   OptimizeForJS.cpp

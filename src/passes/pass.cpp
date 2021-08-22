@@ -233,6 +233,9 @@ void PassRegistry::registerPasses() {
                "removes calls to atexit(), which is valid if the C runtime "
                "will never be exited",
                createNoExitRuntimePass);
+  registerPass("once-reduction",
+               "reduces calls to code that only runs once",
+               createOnceReductionPass);
   registerPass("optimize-added-constants",
                "optimizes added constants into load/store offsets",
                createOptimizeAddedConstantsPass);
