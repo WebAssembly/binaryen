@@ -98,8 +98,9 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   // Loop over the (non-entry blocks in reverse postorder while there are
   // changes still happening.
   bool changed = true;
+std::cout << "DomTree\n";
   while (changed) {
-std::cout << "iter\n";
+std::cout << " iter\n";
     changed = false;
     for (Index index = 1; index < numBlocks; index++) {
 std::cout << "  index " << index << " : " << parents[index] << "\n";

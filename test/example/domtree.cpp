@@ -6,15 +6,8 @@
 
 using namespace wasm;
 
-// Ids are useful for debugging.
-static Index nextId = 0;
-
 struct BasicBlock {
-  Index id;
-
   std::vector<BasicBlock*> in;
-
-  BasicBlock() : id(nextId++) {}
 
   void addPred(BasicBlock* pred) { in.push_back(pred); }
 };
@@ -58,7 +51,7 @@ int main() {
 
     DomTree<BasicBlock> domTree(cfg);
     assert(domTree.parents.size() == 2);
-    assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+    assert(domTree.parents[0] == Index(-1));
     assert(domTree.parents[1] == 0); // a is dominated by the entry.
   }
 
@@ -70,7 +63,7 @@ int main() {
 
     DomTree<BasicBlock> domTree(cfg);
     assert(domTree.parents.size() == 2);
-    assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+    assert(domTree.parents[0] == Index(-1));
     assert(domTree.parents[0] == Index(-1)); // unreachables have no parent.
   }
 
@@ -87,10 +80,37 @@ int main() {
 
     DomTree<BasicBlock> domTree(cfg);
     assert(domTree.parents.size() == 4);
-    assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+    assert(domTree.parents[0] == Index(-1));
     assert(domTree.parents[1] == 0);
     assert(domTree.parents[2] == 1);
     assert(domTree.parents[3] == 2);
+  }
+
+  //            b
+  //           / \
+  // entry -> a   d
+  //           \ /
+  //            c
+  {
+    CFG cfg;
+    auto* entry = cfg.add();
+    auto* a = cfg.add();
+    auto* b = cfg.add();
+    auto* c = cfg.add();
+    auto* d = cfg.add();
+    cfg.connect(entry, a);
+    cfg.connect(a, b);
+    cfg.connect(a, c);
+    cfg.connect(b, d);
+    cfg.connect(c, d);
+
+    DomTree<BasicBlock> domTree(cfg);
+    assert(domTree.parents.size() == 5);
+    assert(domTree.parents[0] == Index(-1));
+    assert(domTree.parents[1] == 0); // a
+    assert(domTree.parents[2] == 1); // b
+    assert(domTree.parents[3] == 1); // c
+    assert(domTree.parents[3] == 1); // d
   }
 
   std::cout << "success.\n";
