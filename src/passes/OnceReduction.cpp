@@ -264,6 +264,7 @@ struct OnceReduction : public Pass {
       // will never ever run, which we could optimize further. TODO
       // TODO: non-integer types?
       optInfo.onceGlobals[global->name] = global->type.isInteger() &&
+                                          !global->imported() &&
                                           global->init->is<Const>();
     }
     for (auto& func : module->functions) {
