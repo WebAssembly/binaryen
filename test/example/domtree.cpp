@@ -18,9 +18,7 @@ struct CFG : public std::vector<std::unique_ptr<BasicBlock>> {
     return back().get();
   }
 
-  void connect(BasicBlock* pred, BasicBlock* succ) {
-    succ->addPred(pred);
-  }
+  void connect(BasicBlock* pred, BasicBlock* succ) { succ->addPred(pred); }
 };
 
 int main() {
@@ -171,11 +169,11 @@ int main() {
     assert(domTree.parents.size() == 6);
     assert(domTree.parents[0] == Index(-1)); // b6;
     // Everything else is dominated only by the entry.
-    assert(domTree.parents[1] == 0);         // b5
-    assert(domTree.parents[2] == 0);         // b4
-    assert(domTree.parents[3] == 0);         // b3
-    assert(domTree.parents[4] == 0);         // b2
-    assert(domTree.parents[5] == 0);         // b1
+    assert(domTree.parents[1] == 0); // b5
+    assert(domTree.parents[2] == 0); // b4
+    assert(domTree.parents[3] == 0); // b3
+    assert(domTree.parents[4] == 0); // b2
+    assert(domTree.parents[5] == 0); // b1
   }
 
   std::cout << "success.\n";
