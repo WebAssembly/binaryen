@@ -40,7 +40,10 @@
 
 #include <atomic>
 
+#include "cfg/domtree.h"
+#include "ir/utils.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -69,9 +72,9 @@ struct OptInfo {
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   bool isFunctionParallel() override { return true; }
 
-  Scanner(OptInfo& map) : map(map) {}
+  Scanner(OptInfo& optInfo) : optInfo(optInfo) {}
 
-  Scanner* create() override { return new Scanner(map); }
+  Scanner* create() override { return new Scanner(optInfo); }
 
   void visitGlobalSet(GlobalSet* curr) {
     if (!curr->value->type.isInteger()) {
@@ -92,7 +95,9 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   }
 
   void visitFunction(Function* curr) {
-    if (curr->getResults() != Type::none || !isOnce(curr->body)) {
+    // TODO: support params and results?
+    if (curr->getParams() != Type::none || curr->getResults() != Type::none ||
+        !isOnce(curr->body)) {
       optInfo.onceFuncs[curr->name] = false;
     }
   }
@@ -137,131 +142,87 @@ private:
   OptInfo& optInfo;
 };
 
-using NameNameMap = std::map<Name, Name>;
-using NameSet = std::set<Name>;
-
-struct GlobalUseModifier : public WalkerPass<PostWalker<GlobalUseModifier>> {
-  bool isFunctionParallel() override { return true; }
-
-  GlobalUseModifier(NameNameMap* copiedParentMap)
-    : copiedParentMap(copiedParentMap) {}
-
-  GlobalUseModifier* create() override {
-    return new GlobalUseModifier(copiedParentMap);
-  }
-
-  void visitGlobalGet(GlobalGet* curr) {
-    auto iter = copiedParentMap->find(curr->name);
-    if (iter != copiedParentMap->end()) {
-      curr->name = iter->second;
-    }
-  }
-
-private:
-  NameNameMap* copiedParentMap;
+// Information in a basic block. We track relevant expressions which are calls
+// calls to "once" functions, and writes to "once" globals.
+struct BlockInfo {
+  std::vector<Expression*> exprs;
 };
 
-struct ConstantGlobalApplier
-  : public WalkerPass<
-      LinearExecutionWalker<ConstantGlobalApplier,
-                            UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
+struct Optimizer
+  : public WalkerPass<CFGWalker<Optimizer,
+                                Visitor<Optimizer>,
+                                BlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
-  ConstantGlobalApplier(NameSet* constantGlobals, bool optimize)
-    : constantGlobals(constantGlobals), optimize(optimize) {}
+  Optimizer(OptInfo& optInfo) : optInfo(optInfo) {}
 
-  ConstantGlobalApplier* create() override {
-    return new ConstantGlobalApplier(constantGlobals, optimize);
-  }
+  Optimizer* create() override { return new Optimizer(optInfo); }
 
-  void visitExpression(Expression* curr) {
-    if (auto* set = curr->dynCast<GlobalSet>()) {
-      if (Properties::isConstantExpression(set->value)) {
-        currConstantGlobals[set->name] =
-          getLiteralsFromConstExpression(set->value);
-      } else {
-        currConstantGlobals.erase(set->name);
-      }
-      return;
-    } else if (auto* get = curr->dynCast<GlobalGet>()) {
-      // Check if the global is known to be constant all the time.
-      if (constantGlobals->count(get->name)) {
-        auto* global = getModule()->getGlobal(get->name);
-        assert(Properties::isConstantExpression(global->init));
-        replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
-        replaced = true;
-        return;
-      }
-      // Check if the global has a known value in this linear trace.
-      auto iter = currConstantGlobals.find(get->name);
-      if (iter != currConstantGlobals.end()) {
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeConstantExpression(iter->second));
-        replaced = true;
-      }
-      return;
-    }
-    // Otherwise, invalidate if we need to.
-    EffectAnalyzer effects(getPassOptions(), getModule()->features);
-    effects.visit(curr);
-    assert(effects.globalsWritten.empty()); // handled above
-    if (effects.calls) {
-      currConstantGlobals.clear();
+  void visitGlobalSet(visitGlobalSet* curr) {
+    if (optInfo.onceGlobals[curr->name].is()) {
+      currBasicBlock->contents.exprs.push_back(curr);
     }
   }
 
-  static void doNoteNonLinear(ConstantGlobalApplier* self, Expression** currp) {
-    self->currConstantGlobals.clear();
+  void visitCall(Call* curr) {
+    if (optInfo.onceFuncs[curr->name].is()) {
+      currBasicBlock->contents.exprs.push_back(curr);
+    }
   }
 
-  void visitFunction(Function* curr) {
-    if (replaced && optimize) {
-      PassRunner runner(getModule(), getPassRunner()->options);
-      runner.setIsNested(true);
-      runner.addDefaultFunctionOptimizationPasses();
-      runner.runOnFunction(curr);
+  void doWalkFunction(Function* curr) {
+    using Parent = WalkerPass<CFGWalker<Optimizer,
+                                Visitor<Optimizer>,
+                                BlockInfo>;
+    // Walk the function, which optimizes some calls and which also builds the
+    // CFG.
+    Parent::doWalkFunction(curr);
+
+    // Build a dominator tree, which then tells us what to remove: if a call
+    // appears in block A, then we do not need to make any calls in any blocks
+    // dominated by A.
+    DomTree<Parent::BasicBlock> domTree(blocks);
+
+    // Perform the work using a stack. A work state includes which block we are
+    // in, and which "once" globals we have seen either here or in the blocks
+    // that dominate this one.
+    struct Work {
+      Index blockIndex;
+      // TODO: Clever use of std::move for this? But the size here will be
+      //       extremely small.
+      std::unordered_map<Name> onceGlobalsWritten;
+    };
+    UniqueDeferredQueue<ChildAndParent> queue;
+
+    // The work begins at the entry block, with no information.
+    queue.push(Work{0, {}});
+
+    while (!work.empty()) {
+      auto work = work.pop();
+
+      // Process the block.
+      auto* block = blocks[work.blockIndex].get();
+      auto& exprs = block->contents.exprs;
+      for (auto* expr : exprs) {
+        Name globalName;
+        if (auto* set = expr->dynCast<GlobalSet>()) {
+          // This global is written.
+          globalName = set->name;
+        } else if (auto* call = expr->dynCast<Call>()) {
+          // The global used by the "once" func is written.
+          globalName = optInfo.onceFuncs[call->name];
+        } else {
+          WASM_UNREACHABLE("invalid expr");
+        }
+        assert(optInfo.onceGlobals[globalName]);
+        if (work.onceGlobalsWritten.count(globalName)) {
+          // This global has already been written, so this set
+      }
     }
   }
 
 private:
-  NameSet* constantGlobals;
-  bool optimize;
-  bool replaced = false;
-
-  // The globals currently constant in the linear trace.
-  std::map<Name, Literals> currConstantGlobals;
-};
-
-struct GlobalSetRemover : public WalkerPass<PostWalker<GlobalSetRemover>> {
-  GlobalSetRemover(const NameSet* toRemove, bool optimize)
-    : toRemove(toRemove), optimize(optimize) {}
-
-  bool isFunctionParallel() override { return true; }
-
-  GlobalSetRemover* create() override {
-    return new GlobalSetRemover(toRemove, optimize);
-  }
-
-  void visitGlobalSet(GlobalSet* curr) {
-    if (toRemove->count(curr->name) != 0) {
-      replaceCurrent(Builder(*getModule()).makeDrop(curr->value));
-      removed = true;
-    }
-  }
-
-  void visitFunction(Function* curr) {
-    if (removed && optimize) {
-      PassRunner runner(getModule(), getPassRunner()->options);
-      runner.setIsNested(true);
-      runner.addDefaultFunctionOptimizationPasses();
-      runner.runOnFunction(curr);
-    }
-  }
-
-private:
-  const NameSet* toRemove;
-  bool optimize;
-  bool removed = false;
+  OptInfo& optInfo;
 };
 
 } // anonymous namespace
@@ -470,6 +431,8 @@ struct SimplifyGlobals : public Pass {
     ConstantGlobalApplier(&constantGlobals, optimize).run(runner, module);
   }
 };
+
+remove once from funcs whose global is not once.
 
 Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(false); }
 
