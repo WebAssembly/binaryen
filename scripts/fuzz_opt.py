@@ -1048,6 +1048,7 @@ opt_choices = [
     ["--memory-packing"],
     ["--merge-blocks"],
     ['--merge-locals'],
+    ['--once-reduction'],
     ["--optimize-instructions"],
     ["--optimize-stack-ir"],
     ["--generate-stack-ir", "--optimize-stack-ir"],
