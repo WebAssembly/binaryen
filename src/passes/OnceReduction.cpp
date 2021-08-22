@@ -76,6 +76,14 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
 
   Scanner* create() override { return new Scanner(optInfo); }
 
+  // All the globals we read from. Any read of a global prevents us from
+  // optimizing, unless it is the single read at the top of an "only" function.
+  std::unordered_map<Name, Index> readGlobals;
+
+  void visitGlobalGet(GlobalGet* curr) {
+    readGlobals[curr->name]++;
+  }
+
   void visitGlobalSet(GlobalSet* curr) {
     if (!curr->value->type.isInteger()) {
       // This is either a type we don't care about, or an unreachable set which
@@ -97,7 +105,24 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   void visitFunction(Function* curr) {
     // TODO: support params and results?
     if (curr->getParams() == Type::none && curr->getResults() == Type::none) {
+      auto global = getOnceGlobal(curr->body);
       optInfo.onceFuncs[curr->name] = getOnceGlobal(curr->body);
+
+      // We can ignore the get in the "once" pattern at the top of the function.
+      readGlobals[global]--;
+    }
+
+    for (auto& kv : readGlobals) {
+      auto global = kv.first;
+      auto count = kv.second;
+      if (count > 0) {
+        // This globals has reads we cannot reason about, so do not optimize it.
+        // Note that we may end up de-optimizing the very global that earlier
+        // above we saw as the "once" global of the function, but we will handle
+        // that later anyhow after we know enough about globals (which is only
+        // after we are done with all functions).
+        optInfo.onceGlobals[global] = false;
+      }
     }
   }
 
