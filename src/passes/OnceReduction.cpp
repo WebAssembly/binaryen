@@ -255,11 +255,13 @@ struct OnceReduction : public Pass {
 
     // Fill out the initial data.
     for (auto& global : module->globals) {
-      // For a global to possible be "once", it must be initialized to 0.
+      // For a global to possible be "once", it must be initialized to a
+      // constant. Note that we don't check that the constant is zero - that is
+      // fine for us to optimize, though it does indicate that the once function
+      // will never ever run, which we could optimize further. TODO
       // TODO: non-integer types?
       optInfo.onceGlobals[global->name] = global->type.isInteger() &&
-                                          global->init->is<Const>() &&
-                                          global->init->cast<Const>()->value.getInteger() == 0;
+                                          global->init->is<Const>();
     }
     for (auto& func : module->functions) {
       // We'll look at functions when we can them. Fill in the map here so that
