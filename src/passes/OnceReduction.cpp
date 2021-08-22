@@ -200,7 +200,7 @@ struct Optimizer
     while (!work.empty()) {
       auto work = work.pop();
 
-      // Process the block.
+      // Process the block's expressions.
       auto* block = blocks[work.blockIndex].get();
       auto& exprs = block->contents.exprs;
       for (auto* expr : exprs) {
@@ -208,16 +208,29 @@ struct Optimizer
         if (auto* set = expr->dynCast<GlobalSet>()) {
           // This global is written.
           globalName = set->name;
+          assert(set->value->is<Const>());
         } else if (auto* call = expr->dynCast<Call>()) {
           // The global used by the "once" func is written.
           globalName = optInfo.onceFuncs[call->name];
+          assert(curr->operands.empty());
         } else {
           WASM_UNREACHABLE("invalid expr");
         }
         assert(optInfo.onceGlobals[globalName]);
         if (work.onceGlobalsWritten.count(globalName)) {
-          // This global has already been written, so this set
+          // This global has already been written, so this expr is not needed,
+          // regardless of whether it is a global.set or a call.
+          //
+          // Note that assertions above verify that there are no children that
+          // we need to keep around, and so we can just nop the entire node.
+          ExpressionManipulator::nop(expr);
+        } else {
+          // From here on, this global is set.
+          work.onceGlobalsWritten.insert(globalName);
+        }
       }
+
+      // Continue onwards to all dominated nodes.
     }
   }
 
