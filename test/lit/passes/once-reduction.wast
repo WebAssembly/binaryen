@@ -809,3 +809,137 @@
     (call $once)
   )
 )
+
+;; Add a very long chain of control flow.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+  )
+
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (call $once)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (call $once)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (call $once)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (if
+      (i32.const 1)
+      (call $once)
+    )
+    (if
+      (i32.const 1)
+      (call $once)
+    )
+    (if
+      (i32.const 1)
+      (call $once)
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (call $once)
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (nop)
+      (nop)
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (nop)
+      (call $once)
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (call $once)
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (nop)
+      (call $once)
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (call $once)
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (call $once)
+    )
+    (call $once)
+    (call $once)
+  )
+)
