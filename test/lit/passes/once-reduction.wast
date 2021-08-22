@@ -483,3 +483,30 @@
   )
 )
 
+;; It is ok to call the "once" function inside itself - as that call appears
+;; behind a set of the global, the call is redundant and we optimize it away.
+(module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+  (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $once
+    (if
+      (global.get $once)
+      (return)
+    )
+    (global.set $once (i32.const 1))
+    (call $once)
+  )
+)
