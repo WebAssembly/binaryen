@@ -24,7 +24,9 @@
   ;; where it inlines, for efficiency). As part of the optimiziations, we will
   ;; try to precompute the cast here, which will try to look up $0. We should
   ;; not hit an assertion, rather we should skip precomputing it, the same as if
-  ;; we were optimizing $1 before $0 were added to the module.
+  ;; we were optimizing $1 before $0 were added to the module. (In fact, we will
+  ;; be able to see that the cast cannot succeed, and will optimize it into an
+  ;; unreachable.)
   (call $0)
   (drop
    (call_ref
