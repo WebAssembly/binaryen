@@ -1123,3 +1123,152 @@
     )
   )
 )
+
+(module
+  ;; Test a module with more than one global that we can optimize, and more than
+  ;; one that we cannot.
+
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (global $once1 (mut i32) (i32.const 0))
+  (global $once1 (mut i32) (i32.const 0))
+  ;; CHECK:      (global $many1 (mut i32) (i32.const 0))
+  (global $many1 (mut i32) (i32.const 0))
+  ;; CHECK:      (global $once2 (mut i32) (i32.const 0))
+  (global $once2 (mut i32) (i32.const 0))
+  ;; CHECK:      (global $many2 (mut i32) (i32.const 0))
+  (global $many2 (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $once1
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once1)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once1
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $many1)
+  ;; CHECK-NEXT:  (call $once2)
+  ;; CHECK-NEXT:  (call $many2)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $many1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $many2)
+  ;; CHECK-NEXT: )
+  (func $once1
+    (if
+      (global.get $once1)
+      (return)
+    )
+    (global.set $once1 (i32.const 1))
+    (call $once1)
+    (call $many1)
+    (call $once2)
+    (call $many2)
+    (call $once1)
+    (call $many1)
+    (call $once2)
+    (call $many2)
+  )
+
+  ;; CHECK:      (func $many1
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $many1)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $many1
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $many2)
+  ;; CHECK-NEXT:  (call $once1)
+  ;; CHECK-NEXT:  (call $many1)
+  ;; CHECK-NEXT:  (call $once2)
+  ;; CHECK-NEXT:  (call $many2)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $many1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $many1
+    (if
+      (global.get $many1)
+      (return)
+    )
+    (global.set $many1 (i32.const 0)) ;; prevent this global being "once"
+    (call $many2)
+    (call $once1)
+    (call $many1)
+    (call $once2)
+    (call $many2)
+    (call $once1)
+    (call $many1)
+    (call $once2)
+  )
+
+  ;; CHECK:      (func $once2
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once2)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once2
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $many2)
+  ;; CHECK-NEXT:  (call $once1)
+  ;; CHECK-NEXT:  (call $many1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $many2)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $many1)
+  ;; CHECK-NEXT: )
+  (func $once2
+    (if
+      (global.get $once2)
+      (return)
+    )
+    (global.set $once2 (i32.const 2))
+    (call $once2)
+    (call $many2)
+    (call $once1)
+    (call $many1)
+    (call $once2)
+    (call $many2)
+    (call $once1)
+    (call $many1)
+  )
+
+  ;; CHECK:      (func $many2
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $many2)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $many1
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $many1)
+  ;; CHECK-NEXT:  (call $once2)
+  ;; CHECK-NEXT:  (call $many2)
+  ;; CHECK-NEXT:  (call $once1)
+  ;; CHECK-NEXT:  (call $many1)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (call $many2)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $many2
+    (if
+      (global.get $many2)
+      (return)
+    )
+    (global.set $many1 (i32.const 0))
+    (call $many1)
+    (call $once2)
+    (call $many2)
+    (call $once1)
+    (call $many1)
+    (call $once2)
+    (call $many2)
+    (call $once1)
+  )
+)
+
