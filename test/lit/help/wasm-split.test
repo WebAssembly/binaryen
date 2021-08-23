@@ -36,13 +36,20 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --keep-funcs                         [split] Comma-separated list of functions
 ;; CHECK-NEXT:                                        to keep in the primary module, regardless
-;; CHECK-NEXT:                                        of any profile.
+;; CHECK-NEXT:                                        of any profile. You can also pass a file
+;; CHECK-NEXT:                                        with a list of functions separated by new
+;; CHECK-NEXT:                                        lines. To do this, prepend @ before
+;; CHECK-NEXT:                                        filename (--keep-funcs @myfile) 
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --split-funcs                        [split] Comma-separated list of functions
 ;; CHECK-NEXT:                                        to split into the secondary module,
 ;; CHECK-NEXT:                                        regardless of any profile. If there is no
 ;; CHECK-NEXT:                                        profile, then this defaults to all
-;; CHECK-NEXT:                                        functions defined in the module.
+;; CHECK-NEXT:                                        functions defined in the module. You can
+;; CHECK-NEXT:                                        also pass a file with a list of functions
+;; CHECK-NEXT:                                        separated by new lines. To do this,
+;; CHECK-NEXT:                                        prepend @ before filename (--split-funcs
+;; CHECK-NEXT:                                        @myfile) 
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
 ;; CHECK-NEXT:                                        module.
