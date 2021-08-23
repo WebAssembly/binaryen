@@ -80,9 +80,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   // optimizing, unless it is the single read at the top of an "only" function.
   std::unordered_map<Name, Index> readGlobals;
 
-  void visitGlobalGet(GlobalGet* curr) {
-    readGlobals[curr->name]++;
-  }
+  void visitGlobalGet(GlobalGet* curr) { readGlobals[curr->name]++; }
 
   void visitGlobalSet(GlobalSet* curr) {
     if (!curr->value->type.isInteger()) {
@@ -178,9 +176,7 @@ struct BlockInfo {
 };
 
 struct Optimizer
-  : public WalkerPass<CFGWalker<Optimizer,
-                                Visitor<Optimizer>,
-                                BlockInfo>> {
+  : public WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>> {
   bool isFunctionParallel() override { return true; }
 
   Optimizer(OptInfo& optInfo) : optInfo(optInfo) {}
@@ -200,9 +196,8 @@ struct Optimizer
   }
 
   void doWalkFunction(Function* curr) {
-    using Parent = WalkerPass<CFGWalker<Optimizer,
-                                Visitor<Optimizer>,
-                                BlockInfo>>;
+    using Parent =
+      WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>>;
 
     // Walk the function, which optimizes some calls and which also builds the
     // CFG.
