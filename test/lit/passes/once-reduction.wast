@@ -1064,10 +1064,26 @@
 ;; A test with a try-catch. This verifies that we emit their contents properly
 ;; in reverse postorder and do not hit any assertions.
 (module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+  ;; CHECK:      (global $once (mut i32) (i32.const 0))
+
+  ;; CHECK:      (tag $tag (param i32))
   (tag $tag (param i32))
 
   (global $once (mut i32) (i32.const 0))
 
+  ;; CHECK:      (func $once
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $once)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $once
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $once
     (if
       (global.get $once)
@@ -1076,6 +1092,21 @@
     (global.set $once (i32.const 1))
   )
 
+  ;; CHECK:      (func $try-catch
+  ;; CHECK-NEXT:  (try $label$5
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (call $once)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $try-catch
     (try $label$5
       (do
