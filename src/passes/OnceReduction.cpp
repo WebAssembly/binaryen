@@ -67,6 +67,11 @@ struct OptInfo {
   // Maps functions to whether they are run-once, by indicating the global that
   // they use for that purpose. An empty name means they are not once.
   std::unordered_map<Name, Name> onceFuncs;
+
+  // For each function, the "once" globals that are definitely set after calling
+  // it. If the function is "once" itself, that is included, but it also
+  // includes any other "once" functions we call, and so forth.
+  std::unordered_map<Name, std::unordered_set<Name>> onceGlobalsSetInFuncs;
 };
 
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
@@ -105,7 +110,9 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     if (curr->getParams() == Type::none && curr->getResults() == Type::none) {
       auto global = getOnceGlobal(curr->body);
       if (global.is()) {
+        // This is a "once" function.
         optInfo.onceFuncs.at(curr->name) = global;
+        optInfo.onceGlobalsSetInFuncs[curr->name].insert(global);
 
         // We can ignore the get in the "once" pattern at the top of the
         // function.
@@ -187,24 +194,24 @@ struct Optimizer
   Optimizer* create() override { return new Optimizer(optInfo); }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (currBasicBlock && optInfo.onceGlobals.at(curr->name)) {
+    if (currBasicBlock) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
 
   void visitCall(Call* curr) {
-    if (currBasicBlock && optInfo.onceFuncs.at(curr->target).is()) {
+    if (currBasicBlock) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
 
-  void doWalkFunction(Function* curr) {
+  void doWalkFunction(Function* func) {
     using Parent =
       WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>>;
 
     // Walk the function, which optimizes some calls and which also builds the
     // CFG.
-    Parent::doWalkFunction(curr);
+    Parent::doWalkFunction(func);
 
     // Build a dominator tree, which then tells us what to remove: if a call
     // appears in block A, then we do not need to make any calls in any blocks
@@ -214,6 +221,9 @@ struct Optimizer
     // Perform the work by going through the blocks in reverse postorder and
     // filling out which "once" globals have been written to.
     auto numBlocks = basicBlocks.size();
+    if (numBlocks == 0) {
+      return;
+    }
     std::vector<std::unordered_set<Name>> onceGlobalsWrittenVec;
     onceGlobalsWrittenVec.resize(numBlocks);
 
@@ -242,32 +252,56 @@ struct Optimizer
       // Process the block's expressions.
       auto& exprs = block->contents.exprs;
       for (auto* expr : exprs) {
-        Name globalName;
+        // Check if this is a "once" global or call to a "once" function, and
+        // optimize if so.
+        auto optimizeOnce = [&](Name globalName) {
+          assert(optInfo.onceGlobals.at(globalName));
+          if (onceGlobalsWritten.count(globalName)) {
+            // This global has already been written, so this expr is not needed,
+            // regardless of whether it is a global.set or a call.
+            //
+            // Note that assertions below verify that there are no children that
+            // we need to keep around, and so we can just nop the entire node.
+            ExpressionManipulator::nop(expr);
+          } else {
+            // From here on, this global is set.
+            onceGlobalsWritten.insert(globalName);
+          }
+        };
+
         if (auto* set = expr->dynCast<GlobalSet>()) {
-          // This global is written.
-          globalName = set->name;
-          assert(set->value->is<Const>());
+          if (optInfo.onceGlobals.at(set->name)) {
+            // This global is written.
+            assert(set->value->is<Const>());
+            optimizeOnce(set->name);
+          }
         } else if (auto* call = expr->dynCast<Call>()) {
-          // The global used by the "once" func is written.
-          globalName = optInfo.onceFuncs.at(call->target);
-          assert(call->operands.empty());
+          if (optInfo.onceFuncs.at(call->target).is()) {
+            // The global used by the "once" func is written.
+            assert(call->operands.empty());
+            optimizeOnce(optInfo.onceFuncs.at(call->target));
+            continue;
+          }
+
+          // This is not a call to a "once" func. However, we may have inferred
+          // that it definitely sets some "once" globals before it returns, and
+          // we can use that information.
+          for (auto globalName : optInfo.onceGlobalsSetInFuncs.at(func->name)) {
+            onceGlobalsWritten.insert(globalName);
+          }
         } else {
           WASM_UNREACHABLE("invalid expr");
         }
-        assert(optInfo.onceGlobals.at(globalName));
-        if (onceGlobalsWritten.count(globalName)) {
-          // This global has already been written, so this expr is not needed,
-          // regardless of whether it is a global.set or a call.
-          //
-          // Note that assertions above verify that there are no children that
-          // we need to keep around, and so we can just nop the entire node.
-          ExpressionManipulator::nop(expr);
-        } else {
-          // From here on, this global is set.
-          onceGlobalsWritten.insert(globalName);
-        }
       }
     }
+
+    // As a result of the above optimization, we know which "once" globals are
+    // definitely written in this function. Regardless of whether this is a
+    // "once" function itself, that set of globals can be used in further
+    // optimizations, as any call to this function must set those.
+    // TODO: Aside from the entry block, we could intersect all the exit blocks.
+    optInfo.onceGlobalsSetInFuncs[func->name] =
+      std::move(onceGlobalsWrittenVec[0]);
   }
 
 private:
@@ -295,6 +329,7 @@ struct OnceReduction : public Pass {
       // We'll look at functions when we can them. Fill in the map here so that
       // it can be operated on in parallel.
       optInfo.onceFuncs[func->name] = Name();
+      optInfo.onceGlobalsSetInFuncs[func->name];
     }
 
     // Scan the module to find out which globals and functions are "once".
