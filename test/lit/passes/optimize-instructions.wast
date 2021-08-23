@@ -5989,12 +5989,12 @@
     )
   )
   ;; CHECK:      (func $propagate-sign-for-mul-i32-lhs-const-pot (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (i32.shl
-  ;; CHECK-NEXT:   (i32.sub
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:  (i32.sub
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.mul
   ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $propagate-sign-for-mul-i32-lhs-const-pot (param $0 i32) (result i32)

@@ -417,6 +417,7 @@ struct OptimizeInstructions
                            binary(Sub, ival(0), any(&y))))) {
           bin->left = x;
           bin->right = y;
+          return replaceCurrent(curr);
         }
       }
       {
@@ -2187,13 +2188,21 @@ private:
         matches(curr, binary(And, pure(&left), ival(0)))) {
       return right;
     }
-    // -x * C   ==>   x * -C,
-    //   when shrinkLevel == 0  or  C != C_pot
-    if (matches(curr, binary(Mul, binary(Sub, ival(0), any(&left)), ival()))) {
+    // -x * C   ==>    x * -C,   if  shrinkLevel == 0  or  C != C_pot
+    // -x * C   ==>   -(x * C),  otherwise
+    Binary* inner;
+    if (matches(
+          curr,
+          binary(Mul, binary(&inner, Sub, ival(0), any(&left)), ival()))) {
       if (getPassOptions().shrinkLevel != 0 ||
           !Bits::isPowerOf2(right->value.getInteger())) {
         right->value = right->value.neg();
         curr->left = left;
+        return curr;
+      } else {
+        curr->left = left;
+        Const* zero = inner->left->cast<Const>();
+        return builder.makeBinary(inner->op, zero, curr);
       }
     }
     // x == 0   ==>   eqz x
