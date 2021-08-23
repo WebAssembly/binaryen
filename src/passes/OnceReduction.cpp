@@ -346,8 +346,27 @@ struct OnceReduction : public Pass {
       }
     }
 
-    // Optimize using what we found. TODO: don't do this if we found nothing.
-    Optimizer(optInfo).run(runner, module);
+    // Optimize using what we found. Keep iterating while we find things to
+    // optimize, which we estimate using a counter of the total number of once
+    // globals set by functions: as that increases, it means we are propagating
+    // useful information.
+    // TODO: don't do this if we found nothing.
+    Index lastOnceGlobalsSet = 0;
+    while (1) {
+      Optimizer(optInfo).run(runner, module);
+
+      Index currOnceGlobalsSet = 0;
+      for (auto& kv : optInfo.onceGlobalsSetInFuncs) {
+        auto& globals = kv.second;
+        currOnceGlobalsSet += globals.size();
+      }
+      assert(currOnceGlobalsSet >= lastOnceGlobalsSet);
+      if (currOnceGlobalsSet > lastOnceGlobalsSet) {
+        lastOnceGlobalsSet = currOnceGlobalsSet;
+        continue;
+      }
+      return;
+    }
   }
 };
 
