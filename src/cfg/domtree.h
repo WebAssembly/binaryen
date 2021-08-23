@@ -63,7 +63,7 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   //  * finger1, finger2 => left, right.
   //
   // Otherwise this is basically a direct implementation. You can ignore the
-  // comments here if you are alreayd familiar with the algorithm.
+  // comments here if you are already familiar with the algorithm.
   //
   // [1] Cooper, Keith D.; Harvey, Timothy J; Kennedy, Ken (2001). "A Simple,
   //       Fast Dominance Algorithm" (PDF).
