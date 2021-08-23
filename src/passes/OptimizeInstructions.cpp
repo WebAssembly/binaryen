@@ -1321,9 +1321,8 @@ struct OptimizeInstructions
     // incompatible.
     if (!canBeCastTo(curr->ref->type.getHeapType(),
                      curr->rtt->type.getHeapType())) {
-      // This cast cannot succeed. It will either trap if the input is not a
-      // null, or it will return null if it is (and we have already handled the
-      // case of null before).
+      // This cast cannot succeed. If the input is not a null, it will
+      // definitely trap.
       if (fallthrough->type.isNonNullable()) {
         // Our type will now be unreachable; update the parents.
         refinalize = true;
@@ -1333,7 +1332,8 @@ struct OptimizeInstructions
         return;
       }
       // Otherwise, we are not sure what it is, and need to wait for runtime to
-      // see if it is a null or not.
+      // see if it is a null or not. (We've already handled the case where we
+      // can see the value is definitely a null at compile time, earlier.)
     }
 
     if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
