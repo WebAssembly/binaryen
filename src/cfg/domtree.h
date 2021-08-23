@@ -94,7 +94,7 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
     parents[i] = nonsense;
   }
 
-  // Loop over the (non-entry blocks in reverse postorder while there are
+  // Loop over the (non-entry) blocks in reverse postorder while there are
   // changes still happening.
   bool changed = true;
   while (changed) {
