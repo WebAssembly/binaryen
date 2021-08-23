@@ -68,7 +68,15 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   // internal details
 
-  std::vector<std::unique_ptr<BasicBlock>> basicBlocks; // all the blocks
+  // The list of basic blocks in the function.
+  //
+  // This is populated in reverse postorder, that is, a block appears after all
+  // those that dominate it. This is trivial to do given wasm's structured
+  // control flow: we simply create blocks only after the things that can reach
+  // them (the only nontrivial things are loops, but if the dominator was before
+  // the loop, then again, we would have created it before the loop body).
+  std::vector<std::unique_ptr<BasicBlock>> basicBlocks;
+
   // blocks that are the tops of loops, i.e., have backedges to them
   std::vector<BasicBlock*> loopTops;
 
@@ -88,9 +96,12 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   // stack of the last blocks of try bodies
   std::vector<BasicBlock*> tryStack;
-  // stack of the first blocks of catches that throwing instructions should
-  // unwind to at any moment. Because there can be multiple catch blocks for a
-  // try, we maintain a vector of first blocks of catches.
+  // Stack of the blocks that can reach the first blocks of catches that
+  // throwing instructions should unwind to at any moment. That is, the topmost
+  // item in this vector relates to the current try-catch scope, and the vector
+  // there is a list of the items that can reach catch blocks (each item is
+  // assumed to be able to reach any of the catches, although that could be
+  // improved perhaps).
   std::vector<std::vector<BasicBlock*>> unwindCatchStack;
   // stack of 'Try' expressions corresponding to unwindCatchStack.
   std::vector<Expression*> unwindExprStack;
@@ -229,10 +240,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       return;
     }
 
-    // Exception thrown. Create a link to each catch within the innermost try.
-    for (auto* block : self->unwindCatchStack.back()) {
-      self->link(self->currBasicBlock, block);
-    }
+    // Exception thrown. Note outselves so that we will create a link to each
+    // catch within the innermost try when we get there.
+    self->unwindCatchStack.back().push_back(self->currBasicBlock);
+
     // If the innermost try does not have a catch_all clause, an exception
     // thrown can be caught by any of its outer catch block. And if that outer
     // try-catch also does not have a catch_all, this continues until we
@@ -262,9 +273,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
         break;
       }
-      for (auto* block : self->unwindCatchStack[i - 1]) {
-        self->link(self->currBasicBlock, block);
-      }
+      self->unwindCatchStack[i - 1].push_back(self->currBasicBlock);
     }
   }
 
@@ -279,19 +288,32 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doStartTry(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
-    auto* last = self->currBasicBlock;
     self->unwindCatchStack.emplace_back();
     self->unwindExprStack.push_back(curr);
-    for (Index i = 0; i < curr->catchBodies.size(); i++) {
-      // Create the catch body's first block
-      self->unwindCatchStack.back().push_back(self->startBasicBlock());
-    }
-    self->currBasicBlock = last; // reset to the current block
   }
 
   static void doStartCatches(SubType* self, Expression** currp) {
     self->tryStack.push_back(self->currBasicBlock); // last block of try body
-    self->processCatchStack.push_back(self->unwindCatchStack.back());
+
+    // Now that we are starting the catches, create the basic blocks that they
+    // begin with.
+    auto* last = self->currBasicBlock;
+    auto* tryy = (*currp)->dynCast<Try>();
+    self->processCatchStack.emplace_back();
+    auto& entries = self->processCatchStack.back();
+    for (Index i = 0; i < tryy->catchBodies.size(); i++) {
+      entries.push_back(self->startBasicBlock());
+    }
+    self->currBasicBlock = last; // reset to the current block
+
+    // Create links from things that reach those new basic blocks.
+    auto& preds = self->unwindCatchStack.back();
+    for (auto* pred : preds) {
+      for (Index i = 0; i < entries.size(); i++) {
+        self->link(pred, entries[i]);
+      }
+    }
+
     self->unwindCatchStack.pop_back();
     self->unwindExprStack.pop_back();
     self->catchIndexStack.push_back(0);
