@@ -99,9 +99,10 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
   // Stack of the blocks that can reach the first blocks of catches that
   // throwing instructions should unwind to at any moment. That is, the topmost
   // item in this vector relates to the current try-catch scope, and the vector
-  // there has one item for each catch that it has; each such item contains a
-  // vector of basic blocks that can reach the beginning of that catch.
-  std::vector<std::vector<std::vector<BasicBlock*>>> unwindCatchStack;
+  // there is a list of the items that can reach catch blocks (each item is
+  // assumed to be able to reach any of the catches, although that could be
+  // improved perhaps).
+  std::vector<std::vector<BasicBlock*>> unwindCatchStack;
   // stack of 'Try' expressions corresponding to unwindCatchStack.
   std::vector<Expression*> unwindExprStack;
   // A stack for each try, where each entry is a list of blocks, one for each
@@ -241,9 +242,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
     // Exception thrown. Note outselves so that we will create a link to each
     // catch within the innermost try when we get there.
-    for (auto& list : self->unwindCatchStack.back()) {
-      list.push_back(self->currBasicBlock);
-    }
+    self->unwindCatchStack.back().push_back(self->currBasicBlock);
+
     // If the innermost try does not have a catch_all clause, an exception
     // thrown can be caught by any of its outer catch block. And if that outer
     // try-catch also does not have a catch_all, this continues until we
@@ -273,9 +273,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
       if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
         break;
       }
-      for (auto& list : self->unwindCatchStack[i - 1]) {
-        list.push_back(self->currBasicBlock);
-      }
+      self->unwindCatchStack[i - 1].push_back(self->currBasicBlock);
     }
   }
 
@@ -310,8 +308,8 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
     // Create links from things that reach those new basic blocks.
     auto& preds = self->unwindCatchStack.back();
-    for (Index i = 0; i < entries.size(); i++) {
-      for (auto* pred : preds[i]) {
+    for (auto* pred : preds) {
+      for (Index i = 0; i < entries.size(); i++) {
         self->link(pred, entries[i]);
       }
     }
