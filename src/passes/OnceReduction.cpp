@@ -97,17 +97,20 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     }
 
     // This is not a constant, or it is zero - failure.
-    optInfo.onceGlobals[curr->name] = false;
+    optInfo.onceGlobals.at(curr->name) = false;
   }
 
   void visitFunction(Function* curr) {
     // TODO: support params and results?
     if (curr->getParams() == Type::none && curr->getResults() == Type::none) {
       auto global = getOnceGlobal(curr->body);
-      optInfo.onceFuncs[curr->name] = getOnceGlobal(curr->body);
+      if (global.is()) {
+        optInfo.onceFuncs.at(curr->name) = global;
 
-      // We can ignore the get in the "once" pattern at the top of the function.
-      readGlobals[global]--;
+        // We can ignore the get in the "once" pattern at the top of the
+        // function.
+        readGlobals[global]--;
+      }
     }
 
     for (auto& kv : readGlobals) {
@@ -119,7 +122,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
         // above we saw as the "once" global of the function, but we will handle
         // that later anyhow after we know enough about globals (which is only
         // after we are done with all functions).
-        optInfo.onceGlobals[global] = false;
+        optInfo.onceGlobals.at(global) = false;
       }
     }
   }
@@ -184,13 +187,13 @@ struct Optimizer
   Optimizer* create() override { return new Optimizer(optInfo); }
 
   void visitGlobalSet(GlobalSet* curr) {
-    if (currBasicBlock && optInfo.onceGlobals[curr->name]) {
+    if (currBasicBlock && optInfo.onceGlobals.at(curr->name)) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
 
   void visitCall(Call* curr) {
-    if (currBasicBlock && optInfo.onceFuncs[curr->target].is()) {
+    if (currBasicBlock && optInfo.onceFuncs.at(curr->target).is()) {
       currBasicBlock->contents.exprs.push_back(curr);
     }
   }
@@ -245,12 +248,12 @@ struct Optimizer
           assert(set->value->is<Const>());
         } else if (auto* call = expr->dynCast<Call>()) {
           // The global used by the "once" func is written.
-          globalName = optInfo.onceFuncs[call->target];
+          globalName = optInfo.onceFuncs.at(call->target);
           assert(call->operands.empty());
         } else {
           WASM_UNREACHABLE("invalid expr");
         }
-        assert(optInfo.onceGlobals[globalName]);
+        assert(optInfo.onceGlobals.at(globalName));
         if (onceGlobalsWritten.count(globalName)) {
           // This global has already been written, so this expr is not needed,
           // regardless of whether it is a global.set or a call.
