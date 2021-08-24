@@ -608,10 +608,8 @@ private:
   struct Condition {
     virtual ~Condition() {}
 
-    // Check if a function body matches the pattern of a condition that we
-    // represent. We receive a block which is the body of the function, and we
-    // can assume the first item in the block is an if.
-    virtual bool match(Block* body) = 0;
+    // Check if a function matches the pattern of a condition that we represent.
+    virtual bool match(Function* func) = 0;
 
     // Apply the inlining operation: We are given the call, and return a
     // replacement for the call that has the condition, and in an appropriate
@@ -626,6 +624,16 @@ private:
     //
     //  if (...) foo(...)
     virtual Expression* apply(Expression* call) = 0;
+
+    static bool isBlockStartingWithIf(Expression* curr) {
+      auto* block = curr->dynCast<Block>();
+      return block && block->list.empty() && !block->list[0]->is<If>();
+    }
+
+    static If* getIf(Expression* curr) {
+      assert(isBlockStartingWithIf(curr));
+      return curr->cast<Block>()->list[0]->cast<If>();
+    }
 
   protected:
     // Checks if an expression is very simple - something simple enough that we
@@ -657,8 +665,11 @@ private:
   //
   // TODO: support a return value
   struct ImmediateReturnCondition : public Condition {
-    bool match(Block* body) override {
-      return false;
+    bool match(Function* func) override {
+      assert(isBlockStartingWithIf(func->body));
+      auto* iff = getIf(func->body);
+      return isSimple(iff->condition) && !iff->ifFalse &&
+             func->getResults() == Type::none;
     }
 
     Expression* apply(Expression* call) override {
@@ -703,27 +714,25 @@ private:
   // Given a block that is the body of a function, try a particular condition to
   // see if it matches.
   template<typename T>
-  std::unique_ptr<Condition> tryCondition(Block* body) {
-    assert(!body->list.empty() && body->list[0]->is<If>());
-    if (T().match(body)) {
+  std::unique_ptr<Condition> tryCondition(Function* func) {
+    if (T().match(func)) {
       return std::make_unique<T>();
     }
     return nullptr;
   }
 
-  std::unique_ptr<Condition> tryAllConditions(Expression* curr) {
+  std::unique_ptr<Condition> tryAllConditions(Function* func) {
     // All the conditions require that the function body be a block, and have an
     // if as its first element.
-    auto* block = curr->dynCast<Block>();
-    if (!block || block->list.empty() || !block->list[0]->is<If>()) {
+    if (!Condition::isBlockStartingWithIf(func->body)) {
       return nullptr;
     }
 
     // Try them one by one.
-    if (auto ret = tryCondition<ImmediateReturnCondition>(block)) {
+    if (auto ret = tryCondition<ImmediateReturnCondition>(func)) {
       return ret;
     }
-    //if (auto ret = tryCondition<IfWorkCondition>(block)) {
+    //if (auto ret = tryCondition<IfWorkCondition>(func)) {
     //  return ret;
     //}
     return nullptr;
@@ -749,7 +758,7 @@ private:
         // If it's worth inlining, handle it that way, and not here.
         continue;
       }
-      auto condition = tryAllConditions(func->body);
+      auto condition = tryAllConditions(func.get());
       if (condition) {
         conditions[func->name] = std::move(condition);
       }
