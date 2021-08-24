@@ -657,10 +657,43 @@ private:
     //    ..lots and lots of other code..
     //  }
     //
-    // then given a call foo(..) we would return
+    // then given a call foo(...) we would return
     //
-    //  if (..) foo(..)
+    //  if (...) foo(...)
     virtual Expression* apply(Expression* call) = 0;
+
+  protected:
+    // Checks if an expression is very simple - something simple enough that we
+    // are willing to inline it in this optimization. This should basically have
+    // almost no cost at all to compute.
+    bool isSimple(Expression* expr) {
+      // global.get
+      // ref.is_null
+      // local.get
+    }
+  };
+
+  // Represents a function beginning with
+  //
+  //  if (A) return;
+  //
+  // where A is something very simple.
+  //
+  // TODO: support a return value
+  struct ImmediateReturnCondition : public Condition {
+  };
+
+  // Represents a function whose entire body looks like
+  //
+  //  if (A) {
+  //    ..heavy work..
+  //  }
+  //  return B; // optional, if there is a return value.
+  //
+  // where A and B are very simple.
+  //
+  // Should return values be a separate concern..?
+  struct IfReturnCondition : public Condition {
   };
 
   struct ConditionInliner
