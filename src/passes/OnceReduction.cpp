@@ -286,7 +286,7 @@ struct Optimizer
           // This is not a call to a "once" func. However, we may have inferred
           // that it definitely sets some "once" globals before it returns, and
           // we can use that information.
-          for (auto globalName : optInfo.onceGlobalsSetInFuncs.at(func->name)) {
+          for (auto globalName : optInfo.onceGlobalsSetInFuncs.at(call->target)) {
             onceGlobalsWritten.insert(globalName);
           }
         } else {
@@ -353,6 +353,7 @@ struct OnceReduction : public Pass {
     // TODO: don't do even one iteration if we found nothing.
     // TODO: limit # of iterations?
     Index lastOnceGlobalsSet = 0;
+std::cout << "start\n";
     while (1) {
       Optimizer(optInfo).run(runner, module);
 
@@ -361,6 +362,7 @@ struct OnceReduction : public Pass {
         auto& globals = kv.second;
         currOnceGlobalsSet += globals.size();
       }
+std::cout << "iter " << currOnceGlobalsSet << "\n";
       assert(currOnceGlobalsSet >= lastOnceGlobalsSet);
       if (currOnceGlobalsSet > lastOnceGlobalsSet) {
         lastOnceGlobalsSet = currOnceGlobalsSet;
