@@ -27,6 +27,9 @@
 // or if you intend to run a full set of optimizations anyhow on
 // everything later.
 //
+// In addition, additional passes exist for inlinig of the main() function
+// (InlineMain) and of conditions (InlineConditions).
+//
 
 #include <atomic>
 
@@ -158,6 +161,18 @@ struct FunctionInfoScanner
     }
 
     info.size = Measurer::measure(curr->body);
+  }
+
+  void visitExport(Export* curr) {
+    if (curr->kind == ExternalKind::Function) {
+      (*infos)[curr->value].usedGlobally = true;
+    }
+  }
+
+  void visitModule(Module* curr) {
+    if (module->start.is()) {
+      (*infos)[module->start].usedGlobally = true;
+    }
   }
 
 private:
@@ -401,16 +416,7 @@ struct Inlining : public Pass {
     PassRunner runner(module);
     FunctionInfoScanner scanner(&infos);
     scanner.run(&runner, module);
-    // fill in global uses
     scanner.walkModuleCode(module);
-    for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Function) {
-        infos[ex->value].usedGlobally = true;
-      }
-    }
-    if (module->start.is()) {
-      infos[module->start].usedGlobally = true;
-    }
   }
 
   void iteration(PassRunner* runner,
@@ -509,13 +515,18 @@ Pass* createInliningOptimizingPass() {
   return ret;
 }
 
-static const char* MAIN = "main";
-static const char* ORIGINAL_MAIN = "__original_main";
-
+//
+// InlineMain
+//
 // Inline __original_main into main, if they exist. This works around the odd
 // thing that clang/llvm currently do, where __original_main contains the user's
 // actual main (this is done as a workaround for main having two different
 // possible signatures).
+//
+
+static const char* MAIN = "main";
+static const char* ORIGINAL_MAIN = "__original_main";
+
 struct InlineMainPass : public Pass {
   void run(PassRunner* runner, Module* module) override {
     auto* main = module->getFunctionOrNull(MAIN);
@@ -544,5 +555,73 @@ struct InlineMainPass : public Pass {
 };
 
 Pass* createInlineMainPass() { return new InlineMainPass(); }
+
+//
+// InlineConditions
+//
+// A function may be too costly to inline, but it may be profitable to
+// *partially* inline it. The specific case optimized here are functions with a
+// condition,
+//
+//  function foo(x) {
+//    if (x) return;
+//    ..lots and lots of other code..
+//  }
+//
+// If the other code after the if is large enough or costly enough then we will
+// not inline the entire function. But it is useful to inline the condition.
+// Consider this caller:
+//
+//  function caller(x) {
+//    foo(0);
+//    foo(x);
+//  }
+//
+// If we inline the condition, we end up with this:
+//
+//  function caller(x {
+//    if (0) foo(0);
+//    if (x) foo(x);
+//  }
+//
+// Note that we just inlined the condition here, and did not modify foo()
+// itself (yet, see later). Just by copying the condition out of foo() we gain
+// two benefits:
+//
+//  * In the first call here the condition is zero, which means we can
+//    statically optimize out the call entirely.
+//  * Even if we can't do that, as in the second call, if at runtime we see the
+//    condition is false then we avoid the call. Calling just to check a cheap
+//    condition and immediately return is very costly, which this can avoid.
+//
+// The cost to doing this is an increase in code size. Another cost is that we
+// check the condition twice. We can reduce the second cost by seeing if the
+// called function has no unseen callers (no indirect calls, not exported), and
+// if so, we can remove the condition in the function.
+//
+
+struct InlineConditionsPass : public Pass {
+  void run(PassRunner* runner, Module* module) override {
+    NameInfoMap infos;
+    // fill in info, as we operate on it in parallel (each function to its own
+    // entry)
+    for (auto& func : module->functions) {
+      infos[func->name];
+    }
+    FunctionInfoScanner(&infos).run(runner, module);
+    scanner.walkModuleCode(module);
+  }
+
+  void iteration(PassRunner* runner,
+                 Module* module,
+                 std::unordered_set<Function*>& inlinedInto) {
+    // decide which to inline
+    InliningState state;
+
+
+  }
+};
+
+Pass* createInlineConditionsPass() { return new InlineConditionsPass(); }
 
 } // namespace wasm

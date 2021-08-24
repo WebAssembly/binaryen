@@ -53,6 +53,7 @@ Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateStackIRPass();
 Pass* createHeap2LocalPass();
 Pass* createI64ToI32LoweringPass();
+Pass* createInlineConditionsPass();
 Pass* createInlineMainPass();
 Pass* createInliningPass();
 Pass* createInliningOptimizingPass();
