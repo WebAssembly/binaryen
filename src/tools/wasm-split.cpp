@@ -39,13 +39,39 @@ namespace {
 
 const std::string DEFAULT_PROFILE_EXPORT("__write_profile");
 
-std::set<Name> parseNameList(const std::string& list) {
+std::set<Name> parseNameListFromLine(const std::string& line) {
   std::set<Name> names;
-  std::istringstream stream(list);
+  std::istringstream stream(line);
   for (std::string name; std::getline(stream, name, ',');) {
     names.insert(name);
   }
   return names;
+}
+
+std::set<Name> parseNameListFromFile(const std::string& filename) {
+  std::ifstream infile(filename);
+  if (!infile.is_open()) {
+    std::cerr << "Failed opening '" << filename << "'" << std::endl;
+    exit(EXIT_FAILURE);
+  }
+
+  std::set<Name> names;
+  std::string line;
+  while (std::getline(infile, line)) {
+    if (line.length() > 0) {
+      names.insert(line);
+    }
+  }
+
+  return names;
+}
+
+std::set<Name> parseNameList(const std::string& listOrFile) {
+  if (!listOrFile.empty() && listOrFile[0] == '@') {
+    return parseNameListFromFile(listOrFile.substr(1));
+  }
+
+  return parseNameListFromLine(listOrFile);
 }
 
 struct WasmSplitOptions : ToolOptions {
@@ -143,7 +169,10 @@ WasmSplitOptions::WasmSplitOptions()
     .add("--keep-funcs",
          "",
          "Comma-separated list of functions to keep in the primary module, "
-         "regardless of any profile.",
+         "regardless of any profile. "
+         "You can also pass a file with a list of functions separated by new "
+         "lines. "
+         "To do this, prepend @ before filename (--keep-funcs @myfile)",
          {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
@@ -153,7 +182,10 @@ WasmSplitOptions::WasmSplitOptions()
          "",
          "Comma-separated list of functions to split into the secondary "
          "module, regardless of any profile. If there is no profile, then "
-         "this defaults to all functions defined in the module.",
+         "this defaults to all functions defined in the module. "
+         "You can also pass a file with a list of functions separated by new "
+         "lines. "
+         "To do this, prepend @ before filename (--split-funcs @myfile)",
          {Mode::Split},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
