@@ -602,24 +602,89 @@ Pass* createInlineMainPass() { return new InlineMainPass(); }
 
 struct InlineConditionsPass : public Pass {
   void run(PassRunner* runner, Module* module) override {
+    // Scan the module.
     NameInfoMap infos;
-    // fill in info, as we operate on it in parallel (each function to its own
-    // entry)
     for (auto& func : module->functions) {
+      // Fill in the map so we can operate on it in parallel.
       infos[func->name];
     }
     FunctionInfoScanner(&infos).run(runner, module);
     scanner.walkModuleCode(module);
+
+    // Find functions with a condition.
+    // TODO: This could be done in parallel, but the first check here is so fast
+    //       it likely does not matter.
+    Conditions conditions;
+    for (auto& func : module->functions) {
+      if (infos[func->name].worthInlining) {
+        // If it's worth inlining, handle it that way, and not here.
+        continue;
+      }
+      auto condition = getCondition(func->body);
+      if (condition) {
+        conditions[func->name] = std::move(condition);
+      }
+    }
+    if (conditions.empty()) {
+      return;
+    }
+
+    // Apply the conditions to call sites.
+    ConditionInliner(&conditions).run(runner, module);
+
+    // TODO: Remove the condition in the called function when not used globally.
   }
 
-  void iteration(PassRunner* runner,
-                 Module* module,
-                 std::unordered_set<Function*>& inlinedInto) {
-    // decide which to inline
-    InliningState state;
+private:
+  using Conditions = std::unordered_map<Name, std::unique_ptr<Condition>>;
 
+  // Subclasses of this abstract class define particular conditions that we can
+  // inline out of functions. It is hard to be 100% general here, but we aim to
+  // cover common cases.
+  struct Condition {
+    virtual ~Condition() {}
 
-  }
+    // Check if a function body matches the pattern of a condition that we
+    // represent.
+    virtual bool check(Expression* body) = 0;
+
+    // Apply the inlining operation: We are given the call, and return a
+    // replacement for the call that has the condition, and in an appropriate
+    // place inside it has the call. For example, if we are the pattern
+    //
+    //  function foo(x) {
+    //    if (x) return;
+    //    ..lots and lots of other code..
+    //  }
+    //
+    // then given a call foo(..) we would return
+    //
+    //  if (..) foo(..)
+    virtual Expression* apply(Expression* call) = 0;
+  };
+
+  struct ConditionInliner
+    : public WalkerPass<PostWalker<ConditionInliner>> {
+    bool isFunctionParallel() override { return true; }
+
+    ConditionInliner(Conditions& conditions) : conditions(conditions) {}
+
+    ConditionInliner* create() override {
+      return new ConditionInliner(conditions);
+    }
+
+    void visitCall(Call* curr) {
+      auto iter = conditions.find(curr->target);
+      if (iter != conditions.end()) {
+        // The call target has a condition; apply it as a replacement for the
+        // call.
+        replaceCurrent(iter->second.apply(curr));
+      }
+    }
+
+  private:
+    Conditions& conditions;
+  };
 };
 
 Pass* createInlineConditionsPass() { return new InlineConditionsPass(); }
