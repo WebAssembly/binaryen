@@ -27,7 +27,7 @@ int main() {
     CFG cfg;
 
     DomTree<BasicBlock> domTree(cfg);
-    assert(domTree.parents.empty());
+    assert(domTree.iDoms.empty());
   }
 
   // An CFG with just an entry.
@@ -36,8 +36,8 @@ int main() {
     cfg.add();
 
     DomTree<BasicBlock> domTree(cfg);
-    assert(domTree.parents.size() == 1);
-    assert(domTree.parents[0] == Index(-1)); // the entry has no parent.
+    assert(domTree.iDoms.size() == 1);
+    assert(domTree.iDoms[0] == Index(-1)); // the entry has no parent.
   }
 
   // entry -> a.
@@ -48,9 +48,9 @@ int main() {
     cfg.connect(entry, a);
 
     DomTree<BasicBlock> domTree(cfg);
-    assert(domTree.parents.size() == 2);
-    assert(domTree.parents[0] == Index(-1));
-    assert(domTree.parents[1] == 0); // a is dominated by the entry.
+    assert(domTree.iDoms.size() == 2);
+    assert(domTree.iDoms[0] == Index(-1));
+    assert(domTree.iDoms[1] == 0); // a is dominated by the entry.
   }
 
   // entry and a non-connected (unreachable) block.
@@ -60,9 +60,9 @@ int main() {
     auto* a = cfg.add();
 
     DomTree<BasicBlock> domTree(cfg);
-    assert(domTree.parents.size() == 2);
-    assert(domTree.parents[0] == Index(-1));
-    assert(domTree.parents[1] == Index(-1)); // unreachables have no parent.
+    assert(domTree.iDoms.size() == 2);
+    assert(domTree.iDoms[0] == Index(-1));
+    assert(domTree.iDoms[1] == Index(-1)); // unreachables have no parent.
   }
 
   // entry -> a -> b -> c.
@@ -77,11 +77,11 @@ int main() {
     cfg.connect(b, c);
 
     DomTree<BasicBlock> domTree(cfg);
-    assert(domTree.parents.size() == 4);
-    assert(domTree.parents[0] == Index(-1));
-    assert(domTree.parents[1] == 0);
-    assert(domTree.parents[2] == 1);
-    assert(domTree.parents[3] == 2);
+    assert(domTree.iDoms.size() == 4);
+    assert(domTree.iDoms[0] == Index(-1));
+    assert(domTree.iDoms[1] == 0);
+    assert(domTree.iDoms[2] == 1);
+    assert(domTree.iDoms[3] == 2);
   }
 
   // An if:
@@ -104,12 +104,12 @@ int main() {
     cfg.connect(c, d);
 
     DomTree<BasicBlock> domTree(cfg);
-    assert(domTree.parents.size() == 5);
-    assert(domTree.parents[0] == Index(-1));
-    assert(domTree.parents[1] == 0); // a
-    assert(domTree.parents[2] == 1); // b
-    assert(domTree.parents[3] == 1); // c
-    assert(domTree.parents[4] == 1); // d is also dominated by a.
+    assert(domTree.iDoms.size() == 5);
+    assert(domTree.iDoms[0] == Index(-1));
+    assert(domTree.iDoms[1] == 0); // a
+    assert(domTree.iDoms[2] == 1); // b
+    assert(domTree.iDoms[3] == 1); // c
+    assert(domTree.iDoms[4] == 1); // d is also dominated by a.
   }
 
   // A loop:
@@ -132,12 +132,12 @@ int main() {
     cfg.connect(d, b);
 
     DomTree<BasicBlock> domTree(cfg);
-    assert(domTree.parents.size() == 5);
-    assert(domTree.parents[0] == Index(-1));
-    assert(domTree.parents[1] == 0); // a
-    assert(domTree.parents[2] == 1); // b, the loop entry, is dominated by a
-    assert(domTree.parents[3] == 2); // c, the loop "middle", is dominated by b
-    assert(domTree.parents[4] == 3); // d, the loop "end", is dominated by c
+    assert(domTree.iDoms.size() == 5);
+    assert(domTree.iDoms[0] == Index(-1));
+    assert(domTree.iDoms[1] == 0); // a
+    assert(domTree.iDoms[2] == 1); // b, the loop entry, is dominated by a
+    assert(domTree.iDoms[3] == 2); // c, the loop "middle", is dominated by b
+    assert(domTree.iDoms[4] == 3); // d, the loop "end", is dominated by c
   }
 
   // The example from figure 4 in [1]. Indexes are copied from there, plus a
@@ -166,14 +166,14 @@ int main() {
     cfg.connect(b1, b2);
 
     DomTree<BasicBlock> domTree(cfg);
-    assert(domTree.parents.size() == 6);
-    assert(domTree.parents[0] == Index(-1)); // b6;
+    assert(domTree.iDoms.size() == 6);
+    assert(domTree.iDoms[0] == Index(-1)); // b6;
     // Everything else is dominated only by the entry.
-    assert(domTree.parents[1] == 0); // b5
-    assert(domTree.parents[2] == 0); // b4
-    assert(domTree.parents[3] == 0); // b3
-    assert(domTree.parents[4] == 0); // b2
-    assert(domTree.parents[5] == 0); // b1
+    assert(domTree.iDoms[1] == 0); // b5
+    assert(domTree.iDoms[2] == 0); // b4
+    assert(domTree.iDoms[3] == 0); // b3
+    assert(domTree.iDoms[4] == 0); // b2
+    assert(domTree.iDoms[5] == 0); // b1
   }
 
   std::cout << "success.\n";

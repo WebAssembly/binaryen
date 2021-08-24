@@ -35,15 +35,15 @@ namespace wasm {
 // indexes, for each block giving the index of its parent (the immediate
 // dominator) in the tree, that is,
 //
-//  parents[0] = a nonsense value, as the entry node has no immediate dominator
-//  parents[1] = the index of the immediate dominator of CFG.blocks[1]
-//  parents[2] = the index of the immediate dominator of CFG.blocks[2]
+//  iDoms[0] = a nonsense value, as the entry node has no immediate dominator
+//  iDoms[1] = the index of the immediate dominator of CFG.blocks[1]
+//  iDoms[2] = the index of the immediate dominator of CFG.blocks[2]
 //  etc.
 //
 // The BasicBlock type is assumed to have a ".in" property which declares a
 // vector of pointers to the incoming blocks, that is, the predecessors.
 template<typename BasicBlock> struct DomTree {
-  std::vector<Index> parents;
+  std::vector<Index> iDoms;
 
   DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks);
 };
@@ -53,9 +53,9 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   // Compute the dominator tree using the "engineered algorithm" in [1]. Minor
   // differences in notation from the source include:
   //
-  //  * doms => parents. The final structure we emit is the vector of parents in
+  //  * doms => iDoms. The final structure we emit is the vector of parents in
   //    the dominator tree, and that is our public interface, so name it
-  //    explicitly.
+  //    explicitly as the immediate dominators.
   //  * Indexes are reversed. The paper uses postorder indexes, i.e., the entry
   //    node has the highest index, while we have a natural indexing since we
   //    traverse in reverse postorder anyhow (see cfg-traversal.h), that, is,
@@ -84,12 +84,12 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   // Use a nonsense value to indicate what has yet to be initialized.
   const Index nonsense = -1;
 
-  // Initialize the parents array. The entry starts with its own index, which is
+  // Initialize the iDoms array. The entry starts with its own index, which is
   // used as a guard value in effect (we will never process it, and we will fix
   // up this value at the very end). All other nodes start with a nonsense value
   // that indicates they have yet to be processed.
-  parents.resize(numBlocks, nonsense);
-  parents[0] = 0;
+  iDoms.resize(numBlocks, nonsense);
+  iDoms[0] = 0;
 
   // Loop over the (non-entry) blocks in reverse postorder while there are
   // changes still happening.
@@ -104,7 +104,7 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
       Index newParent = nonsense;
       for (auto* pred : preds) {
         auto predIndex = blockIndices[pred];
-        if (parents[predIndex] == nonsense) {
+        if (iDoms[predIndex] == nonsense) {
           // This pred has yet to be processed; we'll get to it in a later
           // cycle.
           continue;
@@ -124,18 +124,18 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
         auto right = predIndex;
         while (left != right) {
           while (left > right) {
-            left = parents[left];
+            left = iDoms[left];
           }
           while (right > left) {
-            right = parents[right];
+            right = iDoms[right];
           }
         }
         newParent = left;
       }
 
       // We may have found a new value here.
-      if (newParent != parents[index]) {
-        parents[index] = newParent;
+      if (newParent != iDoms[index]) {
+        iDoms[index] = newParent;
         changed = true;
 
         // In reverse postorder the dominator cannot appear later.
@@ -146,7 +146,7 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
 
   // Finish up. The entry node has no dominator; mark that with a nonsense value
   // which no one should use.
-  parents[0] = nonsense;
+  iDoms[0] = nonsense;
 }
 
 } // namespace wasm
