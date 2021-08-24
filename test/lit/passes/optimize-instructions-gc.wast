@@ -15,16 +15,14 @@
   ))
 
   ;; CHECK:      (type $array (array (mut i8)))
+  ;; NOMNL:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
   ;; CHECK:      (type $B (struct (field i32) (field i32) (field f32)))
+  ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
   (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
 
   ;; CHECK:      (type $empty (struct ))
-  ;; NOMNL:      (type $array (array (mut i8)))
-
-  ;; NOMNL:      (type $B (struct (field i32) (field i32) (field f32)) (extends $A))
-
   ;; NOMNL:      (type $empty (struct ))
   (type $empty (struct))
 
