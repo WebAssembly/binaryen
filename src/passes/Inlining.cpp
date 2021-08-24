@@ -609,8 +609,9 @@ private:
     virtual ~Condition() {}
 
     // Check if a function body matches the pattern of a condition that we
-    // represent.
-    virtual bool match(Expression* body) = 0;
+    // represent. We receive a block which is the body of the function, and we
+    // can assume the first item in the block is an if.
+    virtual bool match(Block* body) = 0;
 
     // Apply the inlining operation: We are given the call, and return a
     // replacement for the call that has the condition, and in an appropriate
@@ -656,6 +657,13 @@ private:
   //
   // TODO: support a return value
   struct ImmediateReturnCondition : public Condition {
+    bool match(Block* body) override {
+      return false;
+    }
+
+    Expression* apply(Expression* call) override {
+      abort();
+    }
   };
 
   // Represents a function whose entire body looks like
@@ -692,21 +700,32 @@ private:
     Conditions& conditions;
   };
 
+  // Given a block that is the body of a function, try a particular condition to
+  // see if it matches.
   template<typename T>
-  std::unique_ptr<Condition> tryCondition(Expression* curr) {
-    if (T().match(curr)) {
+  std::unique_ptr<Condition> tryCondition(Block* body) {
+    assert(!body->list.empty() && body->list[0]->is<If>());
+    if (T().match(body)) {
       return std::make_unique<T>();
     }
     return nullptr;
   }
 
   std::unique_ptr<Condition> tryAllConditions(Expression* curr) {
-    if (auto ret = tryCondition<ImmediateReturnCondition>(curr)) {
+    // All the conditions require that the function body be a block, and have an
+    // if as its first element.
+    auto* block = curr->dynCast<Block>();
+    if (!block || block->list.empty() || !block->list[0]->is<If>()) {
+      return nullptr;
+    }
+
+    // Try them one by one.
+    if (auto ret = tryCondition<ImmediateReturnCondition>(block)) {
       return ret;
     }
-    if (auto ret = tryCondition<IfWorkCondition>(curr)) {
-      return ret;
-    }
+    //if (auto ret = tryCondition<IfWorkCondition>(block)) {
+    //  return ret;
+    //}
     return nullptr;
   }
 
