@@ -345,6 +345,14 @@ struct OnceReduction : public Pass {
       }
     }
 
+    for (auto& func : module->functions) {
+      optInfo.onceGlobalsSetInFuncs[func->name];
+      auto global = optInfo.onceFuncs[func->name];
+      if (global.is()) {
+        optInfo.onceGlobalsSetInFuncs[func->name].insert(global);
+      }
+    }
+
     // Optimize using what we found. Keep iterating while we find things to
     // optimize, which we estimate using a counter of the total number of once
     // globals set by functions: as that increases, it means we are propagating
@@ -355,11 +363,7 @@ struct OnceReduction : public Pass {
 std::cout << "start\n";
     while (1) {
       for (auto& func : module->functions) {
-        optInfo.onceGlobalsSetInFuncs[func->name];
-        auto global = optInfo.onceFuncs[func->name];
-        if (global.is()) {
-          optInfo.onceGlobalsSetInFuncs[func->name].insert(global);
-        }
+        optInfo.newOnceGlobalsSetInFuncs[func->name];
       }
 
       Optimizer(optInfo).run(runner, module);
@@ -370,7 +374,6 @@ std::cout << "start\n";
       for (auto& kv : optInfo.onceGlobalsSetInFuncs) {
         auto& globals = kv.second;
         currOnceGlobalsSet += globals.size();
-std::cout << "see " << globals.size() << " in " << kv.first << " : " << *module->getFunction(kv.first)->body << '\n';
       }
 std::cout << "iter " << currOnceGlobalsSet << "\n";
       assert(currOnceGlobalsSet >= lastOnceGlobalsSet);
