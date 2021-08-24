@@ -96,14 +96,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   // stack of the last blocks of try bodies
   std::vector<BasicBlock*> tryStack;
-  // Stack of the blocks that can reach the first blocks of catches that
-  // throwing instructions should unwind to at any moment. That is, the topmost
-  // item in this vector relates to the current try-catch scope, and the vector
-  // there is a list of the items that can reach catch blocks (each item is
-  // assumed to be able to reach any of the catches, although that could be
-  // improved perhaps).
-  std::vector<std::vector<BasicBlock*>> unwindCatchStack;
-  // stack of 'Try' expressions corresponding to unwindCatchStack.
+  // Stack of the blocks that contain a throwing instruction, and therefore they
+  // can reach the first blocks of catches that throwing instructions should
+  // unwind to at any moment. That is, the topmost item in this vector relates
+  // to the current try-catch scope, and the vector there is a list of the items
+  // that can reach catch blocks (each item is assumed to be able to reach any
+  // of the catches, although that could be improved perhaps).
+  std::vector<std::vector<BasicBlock*>> throwingInstsStack;
+  // stack of 'Try' expressions corresponding to throwingInstsStack.
   std::vector<Expression*> unwindExprStack;
   // A stack for each try, where each entry is a list of blocks, one for each
   // catch, used during processing. We start by assigning the start blocks to
@@ -236,13 +236,13 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // basic block unless the instruction is within a try-catch, because the CFG
     // will have too many blocks that way, and if an exception is thrown, the
     // function will be exited anyway.
-    if (self->unwindCatchStack.empty()) {
+    if (self->throwingInstsStack.empty()) {
       return;
     }
 
     // Exception thrown. Note outselves so that we will create a link to each
     // catch within the innermost try when we get there.
-    self->unwindCatchStack.back().push_back(self->currBasicBlock);
+    self->throwingInstsStack.back().push_back(self->currBasicBlock);
 
     // If the innermost try does not have a catch_all clause, an exception
     // thrown can be caught by any of its outer catch block. And if that outer
@@ -269,17 +269,17 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // catch $e3
     //   ...
     // end
-    for (int i = self->unwindCatchStack.size() - 1; i > 0; i--) {
+    for (int i = self->throwingInstsStack.size() - 1; i > 0; i--) {
       if (self->unwindExprStack[i]->template cast<Try>()->hasCatchAll()) {
         break;
       }
-      self->unwindCatchStack[i - 1].push_back(self->currBasicBlock);
+      self->throwingInstsStack[i - 1].push_back(self->currBasicBlock);
     }
   }
 
   static void doEndCall(SubType* self, Expression** currp) {
     doEndThrowingInst(self, currp);
-    if (!self->unwindCatchStack.empty()) {
+    if (!self->throwingInstsStack.empty()) {
       // exception not thrown. link to the continuation BB
       auto* last = self->currBasicBlock;
       self->link(last, self->startBasicBlock());
@@ -288,7 +288,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
 
   static void doStartTry(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
-    self->unwindCatchStack.emplace_back();
+    self->throwingInstsStack.emplace_back();
     self->unwindExprStack.push_back(curr);
   }
 
@@ -307,14 +307,14 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     self->currBasicBlock = last; // reset to the current block
 
     // Create links from things that reach those new basic blocks.
-    auto& preds = self->unwindCatchStack.back();
+    auto& preds = self->throwingInstsStack.back();
     for (auto* pred : preds) {
       for (Index i = 0; i < entries.size(); i++) {
         self->link(pred, entries[i]);
       }
     }
 
-    self->unwindCatchStack.pop_back();
+    self->throwingInstsStack.pop_back();
     self->unwindExprStack.pop_back();
     self->catchIndexStack.push_back(0);
   }
@@ -430,7 +430,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     assert(ifStack.size() == 0);
     assert(loopStack.size() == 0);
     assert(tryStack.size() == 0);
-    assert(unwindCatchStack.size() == 0);
+    assert(throwingInstsStack.size() == 0);
     assert(unwindExprStack.size() == 0);
     assert(processCatchStack.size() == 0);
   }
