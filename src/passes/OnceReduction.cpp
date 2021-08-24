@@ -72,7 +72,7 @@ struct OptInfo {
   // it. If the function is "once" itself, that is included, but it also
   // includes any other "once" functions we call, and so forth.
   std::unordered_map<Name, std::unordered_set<Name>> onceGlobalsSetInFuncs,
-                                                     newOnceGlobalsSetInFuncs;
+    newOnceGlobalsSetInFuncs;
 };
 
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
@@ -286,7 +286,8 @@ struct Optimizer
           // This is not a call to a "once" func. However, we may have inferred
           // that it definitely sets some "once" globals before it returns, and
           // we can use that information.
-          for (auto globalName : optInfo.onceGlobalsSetInFuncs.at(call->target)) {
+          for (auto globalName :
+               optInfo.onceGlobalsSetInFuncs.at(call->target)) {
             onceGlobalsWritten.insert(globalName);
           }
         } else {
@@ -373,7 +374,8 @@ struct OnceReduction : public Pass {
 
       Optimizer(optInfo).run(runner, module);
 
-      optInfo.onceGlobalsSetInFuncs = std::move(optInfo.newOnceGlobalsSetInFuncs);
+      optInfo.onceGlobalsSetInFuncs =
+        std::move(optInfo.newOnceGlobalsSetInFuncs);
 
       // Count how many once globals are set, and see if we have any more work
       // to do.
