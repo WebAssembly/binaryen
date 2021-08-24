@@ -184,18 +184,16 @@
   ;; CHECK-NEXT:  (local $2 (ref null $parent))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $parent))
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (block $block (result (ref $parent))
+  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:      (local.get $parent)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (rtt $parent))
-  ;; CHECK-NEXT:      (local.set $2
-  ;; CHECK-NEXT:       (block $block (result (ref $parent))
-  ;; CHECK-NEXT:        (call $foo)
-  ;; CHECK-NEXT:        (local.get $parent)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (block $block0 (result (rtt $parent))
-  ;; CHECK-NEXT:       (call $foo)
-  ;; CHECK-NEXT:       (local.get $parent-rtt)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (block $block0 (result (rtt $parent))
+  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:      (local.get $parent-rtt)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.as_non_null
@@ -220,18 +218,16 @@
   ;; NOMNL-NEXT:  (local $2 (ref null $parent))
   ;; NOMNL-NEXT:  (drop
   ;; NOMNL-NEXT:   (block (result (ref $parent))
+  ;; NOMNL-NEXT:    (local.set $2
+  ;; NOMNL-NEXT:     (block $block (result (ref $parent))
+  ;; NOMNL-NEXT:      (call $foo)
+  ;; NOMNL-NEXT:      (local.get $parent)
+  ;; NOMNL-NEXT:     )
+  ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (drop
-  ;; NOMNL-NEXT:     (block (result (rtt $parent))
-  ;; NOMNL-NEXT:      (local.set $2
-  ;; NOMNL-NEXT:       (block $block (result (ref $parent))
-  ;; NOMNL-NEXT:        (call $foo)
-  ;; NOMNL-NEXT:        (local.get $parent)
-  ;; NOMNL-NEXT:       )
-  ;; NOMNL-NEXT:      )
-  ;; NOMNL-NEXT:      (block $block0 (result (rtt $parent))
-  ;; NOMNL-NEXT:       (call $foo)
-  ;; NOMNL-NEXT:       (local.get $parent-rtt)
-  ;; NOMNL-NEXT:      )
+  ;; NOMNL-NEXT:     (block $block0 (result (rtt $parent))
+  ;; NOMNL-NEXT:      (call $foo)
+  ;; NOMNL-NEXT:      (local.get $parent-rtt)
   ;; NOMNL-NEXT:     )
   ;; NOMNL-NEXT:    )
   ;; NOMNL-NEXT:    (ref.as_non_null
@@ -256,18 +252,16 @@
   ;; NOMNL-TNH-NEXT:  (local $2 (ref null $parent))
   ;; NOMNL-TNH-NEXT:  (drop
   ;; NOMNL-TNH-NEXT:   (block (result (ref $parent))
+  ;; NOMNL-TNH-NEXT:    (local.set $2
+  ;; NOMNL-TNH-NEXT:     (block $block (result (ref $parent))
+  ;; NOMNL-TNH-NEXT:      (call $foo)
+  ;; NOMNL-TNH-NEXT:      (local.get $parent)
+  ;; NOMNL-TNH-NEXT:     )
+  ;; NOMNL-TNH-NEXT:    )
   ;; NOMNL-TNH-NEXT:    (drop
-  ;; NOMNL-TNH-NEXT:     (block (result (rtt $parent))
-  ;; NOMNL-TNH-NEXT:      (local.set $2
-  ;; NOMNL-TNH-NEXT:       (block $block (result (ref $parent))
-  ;; NOMNL-TNH-NEXT:        (call $foo)
-  ;; NOMNL-TNH-NEXT:        (local.get $parent)
-  ;; NOMNL-TNH-NEXT:       )
-  ;; NOMNL-TNH-NEXT:      )
-  ;; NOMNL-TNH-NEXT:      (block $block0 (result (rtt $parent))
-  ;; NOMNL-TNH-NEXT:       (call $foo)
-  ;; NOMNL-TNH-NEXT:       (local.get $parent-rtt)
-  ;; NOMNL-TNH-NEXT:      )
+  ;; NOMNL-TNH-NEXT:     (block $block0 (result (rtt $parent))
+  ;; NOMNL-TNH-NEXT:      (call $foo)
+  ;; NOMNL-TNH-NEXT:      (local.get $parent-rtt)
   ;; NOMNL-TNH-NEXT:     )
   ;; NOMNL-TNH-NEXT:    )
   ;; NOMNL-TNH-NEXT:    (ref.as_non_null
