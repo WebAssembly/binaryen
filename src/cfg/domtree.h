@@ -20,6 +20,8 @@
 // block x has a single immediate dominator, the one closest to it, which forms
 // a tree structure.
 //
+// This assumes the input is reducible.
+//
 
 #ifndef domtree_h
 #define domtree_h
@@ -61,9 +63,10 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   //    traverse in reverse postorder anyhow (see cfg-traversal.h), that, is,
   //    the entry has the lowest index.
   //  * finger1, finger2 => left, right.
+  //  * We assume the input is reducible, since wasm and Binaryen IR have that
+  //    property. This simplifies some things, see below.
   //
-  // Otherwise this is basically a direct implementation. You can ignore the
-  // comments here if you are already familiar with the algorithm.
+  // Otherwise this is basically a direct implementation.
   //
   // [1] Cooper, Keith D.; Harvey, Timothy J; Kennedy, Ken (2001). "A Simple,
   //       Fast Dominance Algorithm" (PDF).
@@ -91,11 +94,11 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   iDoms.resize(numBlocks, nonsense);
   iDoms[0] = 0;
 
-  // Loop over the (non-entry) blocks in reverse postorder while there are
-  // changes still happening.
-  bool changed = true;
-  while (changed) {
-    changed = false;
+  // Process the (non-entry) blocks in reverse postorder, computing the
+  // immediate dominators as we go. This returns whether we made any changes,
+  // which is used in an assertion later down.
+  auto processBlocks = [&]() {
+    bool changed = false;
     for (Index index = 1; index < numBlocks; index++) {
       // Loop over the predecessors. Our new parent is basically the
       // intersection of all of theirs: our immediate dominator must precede all
@@ -104,11 +107,16 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
       Index newParent = nonsense;
       for (auto* pred : preds) {
         auto predIndex = blockIndices[pred];
-        if (iDoms[predIndex] == nonsense) {
-          // This pred has yet to be processed; we'll get to it in a later
-          // cycle.
+
+        // In a reducible graph, we only need to care about the predecessors
+        // that appear before us in the reverse postorder numbering. The only
+        // predecessor that can appear *after* us is a loop backedge, but that
+        // will never dominate the loop - the loop is dominated by its single
+        // entry (since it is reducible, it has just one entry).
+        if (predIndex > index) {
           continue;
         }
+        assert(iDoms[predIndex] != nonsense);
 
         if (newParent == nonsense) {
           // This is the first processed predecessor.
@@ -142,7 +150,15 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
         assert(newParent <= index);
       }
     }
-  }
+
+    return changed;
+  };
+
+  processBlocks();
+
+  // We must have finished all the work in a single traversal, since our input
+  // is reducible.
+  assert(!processBlocks());
 
   // Finish up. The entry node has no dominator; mark that with a nonsense value
   // which no one should use.
