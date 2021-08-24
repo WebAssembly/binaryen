@@ -1331,4 +1331,21 @@
     (call $once)
     (call $once)
   )
+
+  ;; CHECK:      (func $bad-A
+  ;; CHECK-NEXT:  (call $bad-B)
+  ;; CHECK-NEXT:  (call $once)
+  ;; CHECK-NEXT: )
+  (func $bad-A
+    ;; Call a function that does *not* do anything useful. We should not remove
+    ;; the second call here.
+    (call $bad-B)
+    (call $once)
+  )
+
+  ;; CHECK:      (func $bad-B
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $bad-B
+  )
 )

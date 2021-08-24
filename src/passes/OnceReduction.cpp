@@ -71,7 +71,8 @@ struct OptInfo {
   // For each function, the "once" globals that are definitely set after calling
   // it. If the function is "once" itself, that is included, but it also
   // includes any other "once" functions we call, and so forth.
-  std::unordered_map<Name, std::unordered_set<Name>> onceGlobalsSetInFuncs;
+  std::unordered_map<Name, std::unordered_set<Name>> onceGlobalsSetInFuncs,
+                                                     newOnceGlobalsSetInFuncs;
 };
 
 struct Scanner : public WalkerPass<PostWalker<Scanner>> {
@@ -112,7 +113,6 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
       if (global.is()) {
         // This is a "once" function.
         optInfo.onceFuncs.at(curr->name) = global;
-        optInfo.onceGlobalsSetInFuncs[curr->name].insert(global);
 
         // We can ignore the get in the "once" pattern at the top of the
         // function.
@@ -300,7 +300,7 @@ struct Optimizer
     // "once" function itself, that set of globals can be used in further
     // optimizations, as any call to this function must set those.
     // TODO: Aside from the entry block, we could intersect all the exit blocks.
-    optInfo.onceGlobalsSetInFuncs[func->name] =
+    optInfo.newOnceGlobalsSetInFuncs[func->name] =
       std::move(onceGlobalsWrittenVec[0]);
   }
 
@@ -329,7 +329,6 @@ struct OnceReduction : public Pass {
       // We'll look at functions when we can them. Fill in the map here so that
       // it can be operated on in parallel.
       optInfo.onceFuncs[func->name] = Name();
-      optInfo.onceGlobalsSetInFuncs[func->name];
     }
 
     // Scan the module to find out which globals and functions are "once".
@@ -355,12 +354,23 @@ struct OnceReduction : public Pass {
     Index lastOnceGlobalsSet = 0;
 std::cout << "start\n";
     while (1) {
+      for (auto& func : module->functions) {
+        optInfo.onceGlobalsSetInFuncs[func->name];
+        auto global = optInfo.onceFuncs[func->name];
+        if (global.is()) {
+          optInfo.onceGlobalsSetInFuncs[func->name].insert(global);
+        }
+      }
+
       Optimizer(optInfo).run(runner, module);
+
+      optInfo.onceGlobalsSetInFuncs = std::move(optInfo.newOnceGlobalsSetInFuncs);
 
       Index currOnceGlobalsSet = 0;
       for (auto& kv : optInfo.onceGlobalsSetInFuncs) {
         auto& globals = kv.second;
         currOnceGlobalsSet += globals.size();
+std::cout << "see " << globals.size() << " in " << kv.first << " : " << *module->getFunction(kv.first)->body << '\n';
       }
 std::cout << "iter " << currOnceGlobalsSet << "\n";
       assert(currOnceGlobalsSet >= lastOnceGlobalsSet);
