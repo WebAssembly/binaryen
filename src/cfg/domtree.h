@@ -20,6 +20,8 @@
 // block x has a single immediate dominator, the one closest to it, which forms
 // a tree structure.
 //
+// This assumes the input is reducible.
+//
 
 #ifndef domtree_h
 #define domtree_h
@@ -35,15 +37,15 @@ namespace wasm {
 // indexes, for each block giving the index of its parent (the immediate
 // dominator) in the tree, that is,
 //
-//  parents[0] = a nonsense value, as the entry node has no immediate dominator
-//  parents[1] = the index of the immediate dominator of CFG.blocks[1]
-//  parents[2] = the index of the immediate dominator of CFG.blocks[2]
+//  iDoms[0] = a nonsense value, as the entry node has no immediate dominator
+//  iDoms[1] = the index of the immediate dominator of CFG.blocks[1]
+//  iDoms[2] = the index of the immediate dominator of CFG.blocks[2]
 //  etc.
 //
 // The BasicBlock type is assumed to have a ".in" property which declares a
 // vector of pointers to the incoming blocks, that is, the predecessors.
 template<typename BasicBlock> struct DomTree {
-  std::vector<Index> parents;
+  std::vector<Index> iDoms;
 
   // Use a nonsense value to indicate what has yet to be initialized or what is
   // irrelevant.
@@ -57,17 +59,18 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   // Compute the dominator tree using the "engineered algorithm" in [1]. Minor
   // differences in notation from the source include:
   //
-  //  * doms => parents. The final structure we emit is the vector of parents in
+  //  * doms => iDoms. The final structure we emit is the vector of parents in
   //    the dominator tree, and that is our public interface, so name it
-  //    explicitly.
+  //    explicitly as the immediate dominators.
   //  * Indexes are reversed. The paper uses postorder indexes, i.e., the entry
   //    node has the highest index, while we have a natural indexing since we
   //    traverse in reverse postorder anyhow (see cfg-traversal.h), that, is,
   //    the entry has the lowest index.
   //  * finger1, finger2 => left, right.
+  //  * We assume the input is reducible, since wasm and Binaryen IR have that
+  //    property. This simplifies some things, see below.
   //
-  // Otherwise this is basically a direct implementation. You can ignore the
-  // comments here if you are alreayd familiar with the algorithm.
+  // Otherwise this is basically a direct implementation.
   //
   // [1] Cooper, Keith D.; Harvey, Timothy J; Kennedy, Ken (2001). "A Simple,
   //       Fast Dominance Algorithm" (PDF).
@@ -85,21 +88,21 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
     blockIndices[blocks[i].get()] = i;
   }
 
-  // Initialize the parents array. The entry starts with its own index, which is
+  // Use a nonsense value to indicate what has yet to be initialized.
+  const Index nonsense = -1;
+
+  // Initialize the iDoms array. The entry starts with its own index, which is
   // used as a guard value in effect (we will never process it, and we will fix
   // up this value at the very end). All other nodes start with a nonsense value
   // that indicates they have yet to be processed.
-  parents.resize(numBlocks);
-  parents[0] = 0;
-  for (Index i = 1; i < numBlocks; i++) {
-    parents[i] = nonsense;
-  }
+  iDoms.resize(numBlocks, nonsense);
+  iDoms[0] = 0;
 
-  // Loop over the (non-entry blocks in reverse postorder while there are
-  // changes still happening.
-  bool changed = true;
-  while (changed) {
-    changed = false;
+  // Process the (non-entry) blocks in reverse postorder, computing the
+  // immediate dominators as we go. This returns whether we made any changes,
+  // which is used in an assertion later down.
+  auto processBlocks = [&]() {
+    bool changed = false;
     for (Index index = 1; index < numBlocks; index++) {
       // Loop over the predecessors. Our new parent is basically the
       // intersection of all of theirs: our immediate dominator must precede all
@@ -108,11 +111,16 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
       Index newParent = nonsense;
       for (auto* pred : preds) {
         auto predIndex = blockIndices[pred];
-        if (parents[predIndex] == nonsense) {
-          // This pred has yet to be processed; we'll get to it in a later
-          // cycle.
+
+        // In a reducible graph, we only need to care about the predecessors
+        // that appear before us in the reverse postorder numbering. The only
+        // predecessor that can appear *after* us is a loop backedge, but that
+        // will never dominate the loop - the loop is dominated by its single
+        // entry (since it is reducible, it has just one entry).
+        if (predIndex > index) {
           continue;
         }
+        assert(iDoms[predIndex] != nonsense);
 
         if (newParent == nonsense) {
           // This is the first processed predecessor.
@@ -128,29 +136,39 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
         auto right = predIndex;
         while (left != right) {
           while (left > right) {
-            left = parents[left];
+            left = iDoms[left];
           }
           while (right > left) {
-            right = parents[right];
+            right = iDoms[right];
           }
         }
         newParent = left;
       }
 
-      // We may have found a new value here.
-      if (newParent != parents[index]) {
-        parents[index] = newParent;
+      // Check if we found a new value here, and apply it. (We will normally
+      // always find a new value in the single pass that we run, but we also
+      // assert lower down that running another pass causes no further changes.)
+      if (newParent != iDoms[index]) {
+        iDoms[index] = newParent;
         changed = true;
 
         // In reverse postorder the dominator cannot appear later.
         assert(newParent <= index);
       }
     }
-  }
+
+    return changed;
+  };
+
+  processBlocks();
+
+  // We must have finished all the work in a single traversal, since our input
+  // is reducible.
+  assert(!processBlocks());
 
   // Finish up. The entry node has no dominator; mark that with a nonsense value
   // which no one should use.
-  parents[0] = nonsense;
+  iDoms[0] = nonsense;
 }
 
 } // namespace wasm
