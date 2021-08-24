@@ -88,11 +88,8 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
   // used as a guard value in effect (we will never process it, and we will fix
   // up this value at the very end). All other nodes start with a nonsense value
   // that indicates they have yet to be processed.
-  parents.resize(numBlocks);
+  parents.resize(numBlocks, nonsense);
   parents[0] = 0;
-  for (Index i = 1; i < numBlocks; i++) {
-    parents[i] = nonsense;
-  }
 
   // Loop over the (non-entry) blocks in reverse postorder while there are
   // changes still happening.
