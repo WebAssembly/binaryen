@@ -345,6 +345,17 @@ struct OnceReduction : public Pass {
       }
     }
 
+    // Optimize using what we found. Keep iterating while we find things to
+    // optimize, which we estimate using a counter of the total number of once
+    // globals set by functions: as that increases, it means we are propagating
+    // useful information.
+    // TODO: don't do even one iteration if we found nothing.
+    // TODO: limit # of iterations?
+    Index lastOnceGlobalsSet = 0;
+
+    // First, initialize onceGlobalsSetInFuncs for the first iteration, by
+    // ensuring each item is present, and adding the "once" global for "once"
+    // funcs.
     for (auto& func : module->functions) {
       optInfo.onceGlobalsSetInFuncs[func->name];
       auto global = optInfo.onceFuncs[func->name];
@@ -353,15 +364,9 @@ struct OnceReduction : public Pass {
       }
     }
 
-    // Optimize using what we found. Keep iterating while we find things to
-    // optimize, which we estimate using a counter of the total number of once
-    // globals set by functions: as that increases, it means we are propagating
-    // useful information.
-    // TODO: don't do even one iteration if we found nothing.
-    // TODO: limit # of iterations?
-    Index lastOnceGlobalsSet = 0;
-std::cout << "start\n";
     while (1) {
+      // Initialize all the items in the new data structure that will be
+      // populated.
       for (auto& func : module->functions) {
         optInfo.newOnceGlobalsSetInFuncs[func->name];
       }
@@ -370,12 +375,13 @@ std::cout << "start\n";
 
       optInfo.onceGlobalsSetInFuncs = std::move(optInfo.newOnceGlobalsSetInFuncs);
 
+      // Count how many once globals are set, and see if we have any more work
+      // to do.
       Index currOnceGlobalsSet = 0;
       for (auto& kv : optInfo.onceGlobalsSetInFuncs) {
         auto& globals = kv.second;
         currOnceGlobalsSet += globals.size();
       }
-std::cout << "iter " << currOnceGlobalsSet << "\n";
       assert(currOnceGlobalsSet >= lastOnceGlobalsSet);
       if (currOnceGlobalsSet > lastOnceGlobalsSet) {
         lastOnceGlobalsSet = currOnceGlobalsSet;
