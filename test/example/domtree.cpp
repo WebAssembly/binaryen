@@ -62,7 +62,7 @@ int main() {
     DomTree<BasicBlock> domTree(cfg);
     assert(domTree.parents.size() == 2);
     assert(domTree.parents[0] == Index(-1));
-    assert(domTree.parents[0] == Index(-1)); // unreachables have no parent.
+    assert(domTree.parents[1] == Index(-1)); // unreachables have no parent.
   }
 
   // entry -> a -> b -> c.
