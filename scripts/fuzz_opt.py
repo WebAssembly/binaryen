@@ -300,7 +300,7 @@ def compare(x, y, context, diffonly=False):
     if x != y and x != IGNORE and y != IGNORE:
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
         if diffonly:
-            raise Exception(context + " diff:\n\n%s" % (message))
+            raise Exception(context + "\nDiff:\n\n%s" % (message))
         else:
             raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
                 x, y,
@@ -723,7 +723,7 @@ class CheckDeterminism(TestCaseHandler):
             run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'])
             t1 = open('b1.wat', 'r').read()
             t2 = open('b2.wat', 'r').read()
-            compare(t1, t2, 'Output must be deterministic.\n', True)
+            compare(t1, t2, 'Output must be deterministic.', True)
 
 
 class Wasm2JS(TestCaseHandler):
