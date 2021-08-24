@@ -723,7 +723,7 @@ class CheckDeterminism(TestCaseHandler):
             run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'])
             t1 = open('b1.wat', 'r').read()
             t2 = open('b2.wat', 'r').read()
-            compare(t1, t2, 'Output must be deterministic.', True)
+            compare(t1, t2, 'Output must be deterministic.', diffonly=True)
 
 
 class Wasm2JS(TestCaseHandler):
