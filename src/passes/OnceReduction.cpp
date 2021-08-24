@@ -350,7 +350,8 @@ struct OnceReduction : public Pass {
     // optimize, which we estimate using a counter of the total number of once
     // globals set by functions: as that increases, it means we are propagating
     // useful information.
-    // TODO: don't do this if we found nothing.
+    // TODO: don't do even one iteration if we found nothing.
+    // TODO: limit # of iterations?
     Index lastOnceGlobalsSet = 0;
     while (1) {
       Optimizer(optInfo).run(runner, module);

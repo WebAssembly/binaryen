@@ -1272,6 +1272,9 @@
   )
 )
 
+;; Test for propagation of information about called functions: if A->B->C->D
+;; and D calls some "once" functions, then A can infer that it's call to B does
+;; so.
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
@@ -1295,11 +1298,36 @@
     (global.set $once (i32.const 1))
   )
 
-  ;; CHECK:      (func $caller
+  ;; CHECK:      (func $A
+  ;; CHECK-NEXT:  (call $B)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $A
+    ;; We can infer that calling B calls C and then D, and D calls this "once"
+    ;; function, so we can remove the call after it
+    (call $B)
+    (call $once)
+  )
+
+  ;; CHECK:      (func $B
+  ;; CHECK-NEXT:  (call $C)
+  ;; CHECK-NEXT: )
+  (func $B
+    (call $C)
+  )
+
+  ;; CHECK:      (func $C
+  ;; CHECK-NEXT:  (call $D)
+  ;; CHECK-NEXT: )
+  (func $C
+    (call $D)
+  )
+
+  ;; CHECK:      (func $D
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $caller
+  (func $D
     (call $once)
     (call $once)
   )
