@@ -33,8 +33,8 @@
 #include <ir/load-utils.h>
 #include <ir/manipulation.h>
 #include <ir/match.h>
+#include <ir/ordering.h>
 #include <ir/properties.h>
-#include <ir/reorderer.h>
 #include <ir/type-updating.h>
 #include <ir/utils.h>
 #include <pass.h>
@@ -239,6 +239,8 @@ struct OptimizeInstructions
       optimizer.walkFunction(func);
     }
 
+    // Some patterns create locals (like when we use getResultOfFirst), which we
+    // may need to fix up.
     TypeUpdating::handleNonDefaultableLocals(func, *getModule());
   }
 
@@ -1298,6 +1300,9 @@ struct OptimizeInstructions
     // would change the type, which can happen in e.g.
     //   (ref.cast (ref.as_non_null (.. (ref.null)
     if (fallthrough->is<RefNull>()) {
+      // Replace the expression with drops of the inputs, and a null. Note that
+      // we provide a null of the type the outside expects - that of the rtt,
+      // which is what was cast to.
       Expression* rep =
         builder.makeBlock({builder.makeDrop(curr->ref),
                            builder.makeDrop(curr->rtt),
@@ -1345,10 +1350,11 @@ struct OptimizeInstructions
       // reference's type.
       if (HeapType::isSubType(curr->ref->type.getHeapType(),
                               curr->rtt->type.getHeapType())) {
-        Reorderer reorderer(
-          curr->ref, curr->rtt, getFunction(), getModule(), passOptions);
-        replaceCurrent(builder.makeSequence(builder.makeDrop(reorderer.second),
-                                            reorderer.first));
+        replaceCurrent(
+          getResultOfFirst(
+            curr->ref, builder.makeDrop(curr->rtt), getFunction(), getModule(), passOptions
+          )
+        );
         return;
       }
     }
