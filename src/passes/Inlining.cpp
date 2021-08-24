@@ -170,8 +170,8 @@ struct FunctionInfoScanner
   }
 
   void visitModule(Module* curr) {
-    if (module->start.is()) {
-      (*infos)[module->start].usedGlobally = true;
+    if (curr->start.is()) {
+      (*infos)[curr->start].usedGlobally = true;
     }
   }
 
@@ -601,43 +601,7 @@ Pass* createInlineMainPass() { return new InlineMainPass(); }
 //
 
 struct InlineConditionsPass : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    // Scan the module.
-    NameInfoMap infos;
-    for (auto& func : module->functions) {
-      // Fill in the map so we can operate on it in parallel.
-      infos[func->name];
-    }
-    FunctionInfoScanner(&infos).run(runner, module);
-    scanner.walkModuleCode(module);
-
-    // Find functions with a condition.
-    // TODO: This could be done in parallel, but the first check here is so fast
-    //       it likely does not matter.
-    Conditions conditions;
-    for (auto& func : module->functions) {
-      if (infos[func->name].worthInlining) {
-        // If it's worth inlining, handle it that way, and not here.
-        continue;
-      }
-      auto condition = getCondition(func->body);
-      if (condition) {
-        conditions[func->name] = std::move(condition);
-      }
-    }
-    if (conditions.empty()) {
-      return;
-    }
-
-    // Apply the conditions to call sites.
-    ConditionInliner(&conditions).run(runner, module);
-
-    // TODO: Remove the condition in the called function when not used globally.
-  }
-
 private:
-  using Conditions = std::unordered_map<Name, std::unique_ptr<Condition>>;
-
   // Subclasses of this abstract class define particular conditions that we can
   // inline out of functions. It is hard to be 100% general here, but we aim to
   // cover common cases.
@@ -646,7 +610,7 @@ private:
 
     // Check if a function body matches the pattern of a condition that we
     // represent.
-    virtual bool check(Expression* body) = 0;
+    virtual bool match(Expression* body) = 0;
 
     // Apply the inlining operation: We are given the call, and return a
     // replacement for the call that has the condition, and in an appropriate
@@ -664,14 +628,25 @@ private:
 
   protected:
     // Checks if an expression is very simple - something simple enough that we
-    // are willing to inline it in this optimization. This should basically have
+    // are willing to inline it in this optimization. This should basically take
     // almost no cost at all to compute.
-    bool isSimple(Expression* expr) {
-      // global.get
-      // ref.is_null
-      // local.get
+    bool isSimple(Expression* curr) {
+      // For now, support local and global gets, and unary operations.
+      // TODO: Generalize? Use costs.h?
+      if (curr->is<GlobalGet>() || curr->is<LocalGet>()) {
+        return true;
+      }
+      if (auto* unary = curr->dynCast<Unary>()) {
+        return isSimple(unary->value);
+      }
+      if (auto* is = curr->dynCast<RefIs>()) {
+        return isSimple(is->value);
+      }
+      return false;
     }
   };
+
+  using Conditions = std::unordered_map<Name, std::unique_ptr<Condition>>;
 
   // Represents a function beginning with
   //
@@ -688,12 +663,10 @@ private:
   //  if (A) {
   //    ..heavy work..
   //  }
-  //  return B; // optional, if there is a return value.
+  //  B; // optional, a value flowing out if there is a return value.
   //
-  // where A and B are very simple.
-  //
-  // Should return values be a separate concern..?
-  struct IfReturnCondition : public Condition {
+  // where A and B are very simple. The body of the if must be unreachable.
+  struct IfWorkCondition : public Condition {
   };
 
   struct ConditionInliner
@@ -711,13 +684,66 @@ private:
       if (iter != conditions.end()) {
         // The call target has a condition; apply it as a replacement for the
         // call.
-        replaceCurrent(iter->second.apply(curr));
+        replaceCurrent(iter->second->apply(curr));
       }
     }
 
   private:
     Conditions& conditions;
   };
+
+  template<typename T>
+  std::unique_ptr<Condition> tryCondition(Expression* curr) {
+    if (T().match(curr)) {
+      return std::make_unique<T>();
+    }
+    return nullptr;
+  }
+
+  std::unique_ptr<Condition> tryAllConditions(Expression* curr) {
+    if (auto ret = tryCondition<ImmediateReturnCondition>(curr)) {
+      return ret;
+    }
+    if (auto ret = tryCondition<IfWorkCondition>(curr)) {
+      return ret;
+    }
+    return nullptr;
+  }
+
+  void run(PassRunner* runner, Module* module) override {
+    // Scan the module.
+    NameInfoMap infos;
+    for (auto& func : module->functions) {
+      // Fill in the map so we can operate on it in parallel.
+      infos[func->name];
+    }
+    FunctionInfoScanner scanner(&infos);
+    scanner.run(runner, module);
+    scanner.walkModuleCode(module);
+
+    // Find functions with a condition.
+    // TODO: This could be done in parallel, but the first check here is so fast
+    //       it likely does not matter.
+    Conditions conditions;
+    for (auto& func : module->functions) {
+      if (infos[func->name].worthInlining(runner->options)) {
+        // If it's worth inlining, handle it that way, and not here.
+        continue;
+      }
+      auto condition = tryAllConditions(func->body);
+      if (condition) {
+        conditions[func->name] = std::move(condition);
+      }
+    }
+    if (conditions.empty()) {
+      return;
+    }
+
+    // Apply the conditions to call sites.
+    ConditionInliner(conditions).run(runner, module);
+
+    // TODO: Remove the condition in the called function when not used globally.
+  }
 };
 
 Pass* createInlineConditionsPass() { return new InlineConditionsPass(); }
