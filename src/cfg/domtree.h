@@ -120,7 +120,13 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
         if (predIndex > index) {
           continue;
         }
-        assert(iDoms[predIndex] != nonsense);
+
+        // All of our predecessors must have been processed. The only exception
+        // is if they are unreachable from the entry, in which case, so are we,
+        // and both nodes will remain unprocessed forever.
+        if (iDoms[predIndex] == nonsense) {
+          continue;
+        }
 
         if (newParent == nonsense) {
           // This is the first processed predecessor.
