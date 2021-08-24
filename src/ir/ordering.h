@@ -43,18 +43,15 @@ Expression* getResultOfFirst(Expression* first,
 
   Builder builder(*wasm);
 
-  if (EffectAnalyzer::canReorder(
-        passOptions, wasm->features, first, second)) {
+  if (EffectAnalyzer::canReorder(passOptions, wasm->features, first, second)) {
     return builder.makeSequence(second, first);
   }
 
   auto type = first->type;
   auto index = Builder::addVar(func, type);
-  return builder.makeBlock({
-    builder.makeLocalSet(index, first),
-    second,
-    builder.makeLocalGet(index, type)
-  });
+  return builder.makeBlock({builder.makeLocalSet(index, first),
+                            second,
+                            builder.makeLocalGet(index, type)});
 }
 
 } // namespace wasm

@@ -1350,11 +1350,11 @@ struct OptimizeInstructions
       // reference's type.
       if (HeapType::isSubType(curr->ref->type.getHeapType(),
                               curr->rtt->type.getHeapType())) {
-        replaceCurrent(
-          getResultOfFirst(
-            curr->ref, builder.makeDrop(curr->rtt), getFunction(), getModule(), passOptions
-          )
-        );
+        replaceCurrent(getResultOfFirst(curr->ref,
+                                        builder.makeDrop(curr->rtt),
+                                        getFunction(),
+                                        getModule(),
+                                        passOptions));
         return;
       }
     }
