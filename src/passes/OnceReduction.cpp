@@ -236,7 +236,7 @@ struct Optimizer
 
       // Note information from our immediate dominator.
       // TODO: we could also intersect information from all of our preds.
-      auto parent = domTree.parents[i];
+      auto parent = domTree.iDoms[i];
       if (parent == domTree.nonsense) {
         // This is either the entry node, or an unreachable block.
         if (i > 0) {
