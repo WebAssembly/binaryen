@@ -141,7 +141,9 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
         newParent = left;
       }
 
-      // We may have found a new value here.
+      // Check if we found a new value here, and apply it. (We will normally
+      // always find a new value in the single pass that we run, but we also
+      // assert lower down that running another pass causes no further changes.)
       if (newParent != iDoms[index]) {
         iDoms[index] = newParent;
         changed = true;
