@@ -298,7 +298,7 @@ struct CFGWalker : public ControlFlowWalker<SubType, VisitorType> {
     // Now that we are starting the catches, create the basic blocks that they
     // begin with.
     auto* last = self->currBasicBlock;
-    auto* tryy = (*currp)->dynCast<Try>();
+    auto* tryy = (*currp)->cast<Try>();
     self->processCatchStack.emplace_back();
     auto& entries = self->processCatchStack.back();
     for (Index i = 0; i < tryy->catchBodies.size(); i++) {
