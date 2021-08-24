@@ -498,7 +498,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitDrop(Drop* curr) { return visit(curr->value); }
   CostType visitReturn(Return* curr) { return maybeVisit(curr->value); }
   CostType visitMemorySize(MemorySize* curr) { return 1; }
-  CostType visitMemoryGrow(MemoryGrow* curr) { return 100 + visit(curr->delta); }
+  CostType visitMemoryGrow(MemoryGrow* curr) {
+    return 100 + visit(curr->delta);
+  }
   CostType visitMemoryInit(MemoryInit* curr) {
     return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
   }
