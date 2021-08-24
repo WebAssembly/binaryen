@@ -140,5 +140,24 @@ int main() {
     assert(domTree.iDoms[4] == 3); // d, the loop "end", is dominated by c
   }
 
+  // Subsequent blocks after an unreachable one.
+  //
+  // entry   a -> b
+  //
+  // (a is unreachable, and b is reached by a, but in unreachable code)
+  {
+    CFG cfg;
+    auto* entry = cfg.add();
+    auto* a = cfg.add();
+    auto* b = cfg.add();
+    cfg.connect(a, b);
+
+    DomTree<BasicBlock> domTree(cfg);
+    assert(domTree.iDoms.size() == 3);
+    assert(domTree.iDoms[0] == Index(-1));
+    assert(domTree.iDoms[1] == Index(-1)); // a
+    assert(domTree.iDoms[2] == Index(-1)); // b
+  }
+
   std::cout << "success.\n";
 }
