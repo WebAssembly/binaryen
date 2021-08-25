@@ -143,18 +143,24 @@
 
  ;; CHECK:      (func $fallthrough-bad-type (result i32)
  ;; CHECK-NEXT:  (call_ref
- ;; CHECK-NEXT:   (ref.cast
- ;; CHECK-NEXT:    (ref.func $return-nothing)
- ;; CHECK-NEXT:    (rtt.canon $none_=>_i32)
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (ref.func $return-nothing)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (rtt.canon $none_=>_i32)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $fallthrough-bad-type (result i32)
   ;; A fallthrough appears here, and we cast the function type to something else
   ;; in a way that is bad: the actual target function has a different return
-  ;; type than the cast type. The cast will fail at runtime, and we should not
+  ;; type than the cast type. The cast will definitely fail, and we should not
   ;; emit non-validating code here, which would happen if we replace the
-  ;; call_ref that returns nothing with a call that returns an i32.
+  ;; call_ref that returns nothing with a call that returns an i32. In fact, we
+  ;; end up optimizing the cast into an unreachable.
   (call_ref
    (ref.cast
     (ref.func $return-nothing)
