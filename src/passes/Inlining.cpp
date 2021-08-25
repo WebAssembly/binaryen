@@ -653,6 +653,32 @@ private:
       }
       return false;
     }
+
+    // Given a call from which we inlined a little bit of code, and the copies
+    // of that code, fix up local.gets. For example, if this is the function:
+    //
+    //  function foo(x, y, z) {
+    //    if (y) return;
+    //  }
+    //
+    // and if this is the call:
+    //
+    //  foo(a + 1, b + 2, c + 3)
+    //
+    // and if after the naive copy of the functions contents to its call, we now
+    // have this:
+    //
+    //  if (y) foo(a + 1, b + 2, c + 3)
+    //
+    // Then we need to update the y on the outside there, to something like
+    // this:
+    //
+    //  if (t = b + 2) foo(a + 1, t, c + 3)
+    //
+    // And we must take into account side effects and so forth.
+    void handleCopiedLocalGets(Call* call, const std::vector<Expression*>& copies) {
+      waka
+    }
   };
 
   using Conditions = std::unordered_map<Name, std::unique_ptr<Condition>>;
@@ -673,7 +699,16 @@ private:
     }
 
     Expression* apply(Expression* call) override {
-      abort();
+      // Given call(..), generate
+      //
+      //  if (A) call(..)
+      auto* func = getModule()->getFunction(call->target);
+      auto* iff = getIf(func->body);
+      auto *copiedIf = ExpressionManipulator::copy(iff, *getModule());
+      copiedIf->ifTrue = call;
+      assert(copiedIf->type == call->type && call->type == Type::none);
+      handleCopiedLocalGets(call, {copiedIf->condition});
+      return copiedIf;
     }
   };
 
@@ -699,6 +734,12 @@ private:
     }
 
     void visitCall(Call* curr) {
+      // Avoid unreachable calls which would require type updating on the
+      // outside. TODO: return_call
+      if (call->type == Type::unreachable) {
+        return;
+      }
+
       auto iter = conditions.find(curr->target);
       if (iter != conditions.end()) {
         // The call target has a condition; apply it as a replacement for the
