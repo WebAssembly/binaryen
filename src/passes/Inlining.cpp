@@ -675,7 +675,7 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>()) {
-      auto newName = func->name + "$byn-heavy";
+      auto newName = func->name.str + std::string("$byn-heavy");
       if (module->getFunctionOrNull(newName)) {
         // In the unlikely event that this name already exists, it likely
         // indicates we are repeating previous work somehow.
@@ -685,18 +685,21 @@ private:
       // TODO: we could avoid some of the copying here
       auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
 
-      // The original function now calls the outlined heavy work.
+      // The original function now only has the if, which will call the outlined
+      // heavy work.
       std::vector<Expression*> args;
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
       iff->ifTrue = builder.makeCall(newName, args, Type::none);
+      func->body = iff;
 
       // The outlined heavy work no longer needs the initial if.
       // TODO: If we handle the case with indirect calls and other global uses
       //       then we could not do this, as those calls would skip the first
       //       function with the condition that calls the heavy work.
-      ExpressionManipulator::nop(heavyWork->body->cast<Block>()->list[0]);
+      auto& newList = heavyWork->body->cast<Block>()->list;
+      newList.erase(newList.begin());
     };
 
     // Represents a function whose entire body looks like
@@ -712,7 +715,7 @@ private:
 
   static bool isBlockStartingWithIf(Expression* curr) {
     auto* block = curr->dynCast<Block>();
-    return block && block->list.empty() && !block->list[0]->is<If>();
+    return block && !block->list.empty() && block->list[0]->is<If>();
   }
 
   static If* getIf(Expression* curr) {
@@ -737,6 +740,9 @@ private:
     }
     if (auto* is = curr->dynCast<RefIs>()) {
       return isSimple(is->value);
+    }
+    if (auto* as = curr->dynCast<RefAs>()) {
+      return isSimple(as->value);
     }
     return false;
   }
