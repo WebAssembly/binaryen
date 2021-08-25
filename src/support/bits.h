@@ -93,6 +93,16 @@ template<typename T, typename U> inline static T rotateRight(T val, U count) {
   return (value >> count) | (value << (-count & mask));
 }
 
+template<typename T> inline static T gcd(T a, T b) {
+  T c;
+  while (b) {
+    c = b;
+    b = a % b;
+    a = c;
+  }
+  return a;
+}
+
 uint32_t log2(uint32_t v);
 uint32_t pow2(uint32_t v);
 

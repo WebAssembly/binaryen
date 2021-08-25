@@ -2252,6 +2252,33 @@ private:
         return curr;
       }
     }
+    {
+      // only for signed division:
+      // x * C1 / C2  ==>  x * C1' / C2',
+      //   where C1' <- C1 / gcd(C1, C2)
+      //         C2' <- C2 / gcd(C1, C2)
+      Binary* inner;
+      Const *c1, *c2;
+      if (matches(
+            curr,
+            binary(DivS, binary(&inner, Mul, any(), ival(&c1)), ival(&c2)))) {
+        auto gcd =
+          Literal(Bits::gcd(c1->value.getInteger(), c2->value.getInteger()));
+        c1->value = c1->value.divS(gcd);
+        c2->value = c2->value.divS(gcd);
+        if (c1->value.getInteger() == 1LL) {
+          // x * 1 / C2'  ==>  x / C2'
+          inner->op = curr->cast<Binary>()->op;
+          inner->right = c2;
+          return inner;
+        }
+        if (c2->value.getInteger() == 1LL) {
+          // x * C1' / 1  ==>  x * C1'
+          return inner;
+        }
+        return curr;
+      }
+    }
     // i32(bool(x)) == 1  ==>  i32(bool(x))
     // i32(bool(x)) != 0  ==>  i32(bool(x))
     // i32(bool(x)) & 1   ==>  i32(bool(x))

@@ -7440,6 +7440,139 @@
       )
     )
   )
+  ;; CHECK:      (func $muldiv-by-consts-gcd (param $x i32) (param $y i64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.shl
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.div_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.mul
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.div_s
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.const -2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.div_u
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.shl
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i64.div_s
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (i64.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $muldiv-by-consts-gcd (param $x i32) (param $y i64)
+    (drop
+      (i32.div_s
+        (i32.mul
+          (local.get $x)
+          (i32.const 200)
+        )
+        (i32.const 100)
+      )
+    )
+    (drop
+      (i32.div_s
+        (i32.mul
+          (local.get $x)
+          (i32.const 45)
+        )
+        (i32.const 90)
+      )
+    )
+    (drop
+      (i32.div_s
+        (i32.mul
+          (local.get $x)
+          (i32.const -4)
+        )
+        (i32.const 2)
+      )
+    )
+    (drop
+      (i32.div_s
+        (i32.mul
+          (local.get $x)
+          (i32.const -2)
+        )
+        (i32.const 4)
+      )
+    )
+    (drop
+      (i32.div_s
+        (i32.mul
+          (local.get $x)
+          (i32.const 5)
+        )
+        (i32.const 5)
+      )
+    )
+    (drop
+      (i32.div_s
+        (i32.mul
+          (local.get $x)
+          (i32.const -4)
+        )
+        (i32.const -4)
+      )
+    )
+    (drop
+      (i32.div_s
+        (i32.mul
+          (local.get $x)
+          (i32.const 0)
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (i64.div_s
+        (i64.mul
+          (local.get $y)
+          (i64.const 200)
+        )
+        (i64.const 100)
+      )
+    )
+    (drop
+      (i64.div_s
+        (i64.mul
+          (local.get $y)
+          (i64.const 45)
+        )
+        (i64.const 90)
+      )
+    )
+  )
   ;; CHECK:      (func $negatives-are-sometimes-better (param $x i32) (param $y i64) (param $z f32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.sub
