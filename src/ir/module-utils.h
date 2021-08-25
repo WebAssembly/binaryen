@@ -30,9 +30,13 @@ namespace wasm {
 
 namespace ModuleUtils {
 
-inline Function* copyFunction(Function* func, Module& out) {
+// Copies a function into a module. If newName is provided it is used as the
+// name of the function (otherwise the original name is copied).
+inline Function* copyFunction(Function* func,
+                              Module& out,
+                              Name newName=Name()) {
   auto* ret = new Function();
-  ret->name = func->name;
+  ret->name = newName.is() ? newName : func->name;
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;

@@ -27,8 +27,9 @@
 // or if you intend to run a full set of optimizations anyhow on
 // everything later.
 //
-// In addition, additional passes exist for inlinig of the main() function
-// (InlineMain) and of conditions (InlineConditions).
+// In addition, additional passes exist for inliningof the main() function
+// (InlineMain) and of preprocessing before inlining to allow more of it
+// (Outlining4Inlining).
 //
 
 #include <atomic>
@@ -557,7 +558,7 @@ struct InlineMainPass : public Pass {
 Pass* createInlineMainPass() { return new InlineMainPass(); }
 
 //
-// InlineConditions
+// Outlining4Inlining
 //
 // A function may be too costly to inline, but it may be profitable to
 // *partially* inline it. The specific case optimized here are functions with a
@@ -599,186 +600,24 @@ Pass* createInlineMainPass() { return new InlineMainPass(); }
 // called function has no unseen callers (no indirect calls, not exported), and
 // if so, we can remove the condition in the function.
 //
+// Instead of inlining the condition, we take the simpler approach of outlining
+// the rest of the code. That is, given foo() above, we transform it to this:
+//
+//  function foo(x) {
+//    if (x) return;
+//    foo$heavy(x);
+//  }
+//
+// And we create a new function
+//
+//  function foo$heavy(x) {
+//    ..lots and lots of other code..
+//  }
+//
+// We then depend on the modified foo() being inlined, at which point we return
+// to the result mentioned earlier.
 
-struct InlineConditionsPass : public Pass {
-private:
-  // Subclasses of this abstract class define particular conditions that we can
-  // inline out of functions. It is hard to be 100% general here, but we aim to
-  // cover common cases.
-  struct Condition {
-    virtual ~Condition() {}
-
-    // Check if a function matches the pattern of a condition that we represent.
-    virtual bool match(Function* func) = 0;
-
-    // Apply the inlining operation: We are given the call, and return a
-    // replacement for the call that has the condition, and in an appropriate
-    // place inside it has the call. For example, if we are the pattern
-    //
-    //  function foo(x) {
-    //    if (x) return;
-    //    ..lots and lots of other code..
-    //  }
-    //
-    // then given a call foo(...) we would return
-    //
-    //  if (...) foo(...)
-    virtual Expression* apply(Expression* call) = 0;
-
-    static bool isBlockStartingWithIf(Expression* curr) {
-      auto* block = curr->dynCast<Block>();
-      return block && block->list.empty() && !block->list[0]->is<If>();
-    }
-
-    static If* getIf(Expression* curr) {
-      assert(isBlockStartingWithIf(curr));
-      return curr->cast<Block>()->list[0]->cast<If>();
-    }
-
-  protected:
-    // Checks if an expression is very simple - something simple enough that we
-    // are willing to inline it in this optimization. This should basically take
-    // almost no cost at all to compute.
-    bool isSimple(Expression* curr) {
-      // For now, support local and global gets, and unary operations.
-      // TODO: Generalize? Use costs.h?
-      if (curr->is<GlobalGet>() || curr->is<LocalGet>()) {
-        return true;
-      }
-      if (auto* unary = curr->dynCast<Unary>()) {
-        return isSimple(unary->value);
-      }
-      if (auto* is = curr->dynCast<RefIs>()) {
-        return isSimple(is->value);
-      }
-      return false;
-    }
-
-    // Given a call from which we inlined a little bit of code, and the copies
-    // of that code, fix up local.gets. For example, if this is the function:
-    //
-    //  function foo(x, y, z) {
-    //    if (y) return;
-    //  }
-    //
-    // and if this is the call:
-    //
-    //  foo(a + 1, b + 2, c + 3)
-    //
-    // and if after the naive copy of the functions contents to its call, we now
-    // have this:
-    //
-    //  if (y) foo(a + 1, b + 2, c + 3)
-    //
-    // Then we need to update the y on the outside there, to something like
-    // this:
-    //
-    //  if (t = b + 2) foo(a + 1, t, c + 3)
-    //
-    // And we must take into account side effects and so forth.
-    void handleCopiedLocalGets(Call* call, const std::vector<Expression*>& copies) {
-      waka
-    }
-  };
-
-  using Conditions = std::unordered_map<Name, std::unique_ptr<Condition>>;
-
-  // Represents a function beginning with
-  //
-  //  if (A) return;
-  //
-  // where A is something very simple.
-  //
-  // TODO: support a return value
-  struct ImmediateReturnCondition : public Condition {
-    bool match(Function* func) override {
-      assert(isBlockStartingWithIf(func->body));
-      auto* iff = getIf(func->body);
-      return isSimple(iff->condition) && !iff->ifFalse &&
-             func->getResults() == Type::none;
-    }
-
-    Expression* apply(Expression* call) override {
-      // Given call(..), generate
-      //
-      //  if (A) call(..)
-      auto* func = getModule()->getFunction(call->target);
-      auto* iff = getIf(func->body);
-      auto *copiedIf = ExpressionManipulator::copy(iff, *getModule());
-      copiedIf->ifTrue = call;
-      assert(copiedIf->type == call->type && call->type == Type::none);
-      handleCopiedLocalGets(call, {copiedIf->condition});
-      return copiedIf;
-    }
-  };
-
-  // Represents a function whose entire body looks like
-  //
-  //  if (A) {
-  //    ..heavy work..
-  //  }
-  //  B; // optional, a value flowing out if there is a return value.
-  //
-  // where A and B are very simple. The body of the if must be unreachable.
-  struct IfWorkCondition : public Condition {
-  };
-
-  struct ConditionInliner
-    : public WalkerPass<PostWalker<ConditionInliner>> {
-    bool isFunctionParallel() override { return true; }
-
-    ConditionInliner(Conditions& conditions) : conditions(conditions) {}
-
-    ConditionInliner* create() override {
-      return new ConditionInliner(conditions);
-    }
-
-    void visitCall(Call* curr) {
-      // Avoid unreachable calls which would require type updating on the
-      // outside. TODO: return_call
-      if (call->type == Type::unreachable) {
-        return;
-      }
-
-      auto iter = conditions.find(curr->target);
-      if (iter != conditions.end()) {
-        // The call target has a condition; apply it as a replacement for the
-        // call.
-        replaceCurrent(iter->second->apply(curr));
-      }
-    }
-
-  private:
-    Conditions& conditions;
-  };
-
-  // Given a block that is the body of a function, try a particular condition to
-  // see if it matches.
-  template<typename T>
-  std::unique_ptr<Condition> tryCondition(Function* func) {
-    if (T().match(func)) {
-      return std::make_unique<T>();
-    }
-    return nullptr;
-  }
-
-  std::unique_ptr<Condition> tryAllConditions(Function* func) {
-    // All the conditions require that the function body be a block, and have an
-    // if as its first element.
-    if (!Condition::isBlockStartingWithIf(func->body)) {
-      return nullptr;
-    }
-
-    // Try them one by one.
-    if (auto ret = tryCondition<ImmediateReturnCondition>(func)) {
-      return ret;
-    }
-    //if (auto ret = tryCondition<IfWorkCondition>(func)) {
-    //  return ret;
-    //}
-    return nullptr;
-  }
-
+struct Outlining4InliningPass : public Pass {
   void run(PassRunner* runner, Module* module) override {
     // Scan the module.
     NameInfoMap infos;
@@ -790,31 +629,119 @@ private:
     scanner.run(runner, module);
     scanner.walkModuleCode(module);
 
-    // Find functions with a condition.
-    // TODO: This could be done in parallel, but the first check here is so fast
-    //       it likely does not matter.
-    Conditions conditions;
-    for (auto& func : module->functions) {
-      if (infos[func->name].worthInlining(runner->options)) {
-        // If it's worth inlining, handle it that way, and not here.
+    // Find functions that can benefit from outlining.
+    // TODO: This could be done in parallel, but the checks here are very fast.
+    for (auto& kv : infos) {
+      Name name = kv.first;
+      auto& info = kv.second;
+      if (info.worthInlining(runner->options)) {
+        // If it's worth inlining, handle it that way - outlining is not needed.
         continue;
       }
-      auto condition = tryAllConditions(func.get());
-      if (condition) {
-        conditions[func->name] = std::move(condition);
+      if (info.usedGlobally) {
+        // TODO: Also optimize with global uses (where the tradeoffs are less
+        //       obvious).
+        continue;
       }
+      maybeOutline(module->getFunction(name), module);
     }
-    if (conditions.empty()) {
+  }
+
+private:
+  void maybeOutline(Function* func, Module* module) {
+    auto* body = func->body;
+
+    // All the patterns we look for atm start with an if at the very top of the
+    // function. If that if conditionalizes almost all the work in the function,
+    // then it seems promising to inling that if's condition (by outlining the
+    // heavy work, as mentioned earlier).
+    if (!isBlockStartingWithIf(body)) {
+      return;
+    }
+    auto* iff = getIf(body);
+
+    // If the condition is not very simple, the benefits of this optimization
+    // are not obvious.
+    if (!isSimple(iff->condition)) {
       return;
     }
 
-    // Apply the conditions to call sites.
-    ConditionInliner(conditions).run(runner, module);
+    Builder builder(*module);
 
-    // TODO: Remove the condition in the called function when not used globally.
+    // Check if the function begins with
+    //
+    //  if (simple) return;
+    //
+    // TODO: support a return value
+    if (!iff->ifFalse && func->getResults() == Type::none &&
+        iff->ifTrue->is<Return>()) {
+      auto newName = func->name + "$byn-heavy";
+      if (module->getFunctionOrNull(newName)) {
+        // In the unlikely event that this name already exists, it likely
+        // indicates we are repeating previous work somehow.
+        return;
+      }
+
+      // TODO: we could avoid some of the copying here
+      auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
+
+      // The original function now calls the outlined heavy work.
+      std::vector<Expression*> args;
+      for (Index i = 0; i < func->getNumParams(); i++) {
+        args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
+      }
+      iff->ifTrue = builder.makeCall(newName, args, Type::none);
+
+      // The outlined heavy work no longer needs the initial if.
+      // TODO: If we handle the case with indirect calls and other global uses
+      //       then we could not do this, as those calls would skip the first
+      //       function with the condition that calls the heavy work.
+      ExpressionManipulator::nop(heavyWork->body->cast<Block>()->list[0]);
+    };
+
+    // Represents a function whose entire body looks like
+    //
+    //  if (A) {
+    //    ..heavy work..
+    //  }
+    //  B; // optional, a value flowing out if there is a return value.
+    //
+    // where A and B are very simple. The body of the if must be unreachable.
+    // TODO
+  }
+
+  static bool isBlockStartingWithIf(Expression* curr) {
+    auto* block = curr->dynCast<Block>();
+    return block && block->list.empty() && !block->list[0]->is<If>();
+  }
+
+  static If* getIf(Expression* curr) {
+    assert(isBlockStartingWithIf(curr));
+    return curr->cast<Block>()->list[0]->cast<If>();
+  }
+
+  // Checks if an expression is very simple - something simple enough that we
+  // are willing to inline it in this optimization. This should basically take
+  // almost no cost at all to compute.
+  bool isSimple(Expression* curr) {
+    // For now, support local and global gets, and unary operations.
+    // TODO: Generalize? Use costs.h?
+    if (curr->type == Type::unreachable) {
+      return false;
+    }
+    if (curr->is<GlobalGet>() || curr->is<LocalGet>()) {
+      return true;
+    }
+    if (auto* unary = curr->dynCast<Unary>()) {
+      return isSimple(unary->value);
+    }
+    if (auto* is = curr->dynCast<RefIs>()) {
+      return isSimple(is->value);
+    }
+    return false;
   }
 };
 
-Pass* createInlineConditionsPass() { return new InlineConditionsPass(); }
+Pass* createOutlining4InliningPass() { return new Outlining4InliningPass(); }
 
 } // namespace wasm

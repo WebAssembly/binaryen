@@ -157,10 +157,6 @@ void PassRegistry::registerPasses() {
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
-    "inline-conditions",
-    "inline conditions out of functions",
-    createInlineConditionsPass);
-  registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
                "inline functions (you probably want inlining-optimizing)",
@@ -247,6 +243,11 @@ void PassRegistry::registerPasses() {
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
+  registerPass(
+    "outlining-4-inlining",
+    "outline heavy code out of a function so that useful parts of it can be "
+    "inlined",
+    createOutlining4InliningPass);
   registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
   registerPass("pick-load-signs",
@@ -525,11 +526,11 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("dae-optimizing");
   }
+  if (options.optimizeLevel >= 3) {
+    addIfNoDWARFIssues("outlining-4-inlining");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("inlining-optimizing");
-  }
-  if (options.optimizeLevel >= 3) {
-    addIfNoDWARFIssues("inline-conditions");
   }
   // Optimizations show more functions as duplicate, so run this here in Post.
   addIfNoDWARFIssues("duplicate-function-elimination");
