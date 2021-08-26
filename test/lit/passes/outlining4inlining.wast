@@ -7,9 +7,9 @@
 
   ;; CHECK:      (type $none_=>_none (func))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
-
   ;; CHECK:      (type $anyref_=>_anyref (func (param anyref) (result anyref)))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
   ;; CHECK:      (import "out" "func" (func $import))
   (import "out" "func" (func $import))
@@ -322,7 +322,7 @@
   ;; CHECK-NEXT:  (local.get $x)
   ;; CHECK-NEXT: )
   (func $error-if-null (param $x anyref) (result anyref)
-    ;; A "as non null" function: if the input is null, issue an error somehow
+    ;; A "as non null" function: If the input is null, issue an error somehow
     ;; (here, by calling an import, but could also be a throwing of an
     ;; exception). If not null, return the value.
     (if
@@ -334,6 +334,33 @@
         (unreachable)
       )
     )
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $too-many (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $too-many (param $x anyref) (result anyref)
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (block
+        (call $import)
+        (unreachable)
+      )
+    )
+    (nop) ;; An extra operation here prevents us from identifying the pattern.
     (local.get $x)
   )
 )
