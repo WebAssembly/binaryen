@@ -247,6 +247,28 @@
       (br $l)
     )
   )
+
+  ;; CHECK:      (func $if-non-return (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $l
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (br $l)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-non-return (param $x i32)
+    ;; Something other than a return in the if body prevents us from outlining.
+    (if
+      (local.get $x)
+      (unreachable)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
 )
 
 ;; CHECK:      (func $condition-ref.is$byn-outline (param $x anyref)
