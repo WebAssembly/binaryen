@@ -165,7 +165,7 @@ def randomize_fuzz_settings():
 
 
 IMPORTANT_INITIAL_CONTENTS = [
-    os.path.join('lit', 'passes', 'outlining4inlining.wast'),
+    os.path.join('lit', 'passes', 'inlining_splitting.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
