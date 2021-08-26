@@ -363,6 +363,51 @@
     (nop) ;; An extra operation here prevents us from identifying the pattern.
     (local.get $x)
   )
+
+  ;; CHECK:      (func $tail-not-simple (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $tail-not-simple (param $x anyref) (result anyref)
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (block
+        (call $import)
+        (unreachable)
+      )
+    )
+    (unreachable) ;; This prevents us from optimizing
+  )
+
+  ;; CHECK:      (func $reachable-if-body (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $reachable-if-body (param $x anyref) (result anyref)
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      ;; The if body is not unreachable, which prevents the optimization.
+      (call $import)
+    )
+    (local.get $x)
+  )
 )
 
 ;; CHECK:      (func $error-if-null$byn-outline-B (param $x anyref) (result anyref)
