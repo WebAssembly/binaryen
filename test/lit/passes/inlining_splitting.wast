@@ -24,16 +24,6 @@
   ;;
   ;;   if (simple) return;
 
-  ;; CHECK:      (func $maybe-work-hard (param $x i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $maybe-work-hard$byn-outline-A
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $maybe-work-hard (param $x i32)
     ;; A function that does a quick check before any heavy work. We can outline
     ;; the heavy work, so that the condition can be inlined.
@@ -47,15 +37,85 @@
     )
   )
 
+  ;; CHECK:      (func $caller
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$maybe-work-hard
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $maybe-work-hard$byn-outline-A
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$maybe-work-hard0
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $maybe-work-hard$byn-outline-A
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$maybe-work-hard1
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $maybe-work-hard$byn-outline-A
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    ;; Call the above function to verify that we can in fact inline it after
+    ;; splitting. We should see each of these three calls replaced by inlined
+    ;; code performing the if from $maybe-work-hard, and depending on that
+    ;; result they each call the outlined code that must *not* be inlined.
+    (call $maybe-work-hard (i32.const 1))
+    (call $maybe-work-hard (i32.const 2))
+    (call $maybe-work-hard (i32.const 3))
+  )
+
   ;; CHECK:      (func $condition-eqz (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.eqz
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $condition-eqz$byn-outline-A
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (block $__inlined_func$condition-eqz$byn-outline-A
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (loop $l
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:      (br $l)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $__inlined_func$condition-eqz$byn-outline-A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -79,7 +139,15 @@
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (global.get $glob)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $condition-global$byn-outline-A)
+  ;; CHECK-NEXT:   (block $__inlined_func$condition-global$byn-outline-A
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (loop $l
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:      (br $l)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $__inlined_func$condition-global$byn-outline-A)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $condition-global
@@ -95,14 +163,24 @@
   )
 
   ;; CHECK:      (func $condition-ref.is (param $x anyref)
+  ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (ref.is_null
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $condition-ref.is$byn-outline-A
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (block $__inlined_func$condition-ref.is$byn-outline-A
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (loop $l
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:      (br $l)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $__inlined_func$condition-ref.is$byn-outline-A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -285,12 +363,22 @@
   )
 
   ;; CHECK:      (func $colliding-name (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $colliding-name$byn-outline-A_0
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (block $__inlined_func$colliding-name$byn-outline-A_0
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (loop $l
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:      (br $l)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $__inlined_func$colliding-name$byn-outline-A_0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -324,7 +412,7 @@
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (call $error-if-null$byn-outline-B
+  ;; CHECK-NEXT:    (call $error-if-null$byn-outline-B_0
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -427,37 +515,207 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $condition-eqz$byn-outline-A (param $x i32)
-;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br $l)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $condition-global$byn-outline-A
-;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br $l)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $condition-ref.is$byn-outline-A (param $x anyref)
-;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br $l)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $colliding-name$byn-outline-A_0 (param $x i32)
-;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br $l)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $error-if-null$byn-outline-B (param $x anyref) (result anyref)
-;; CHECK-NEXT:  (block $block
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (unreachable)
+;; CHECK:      (func $error-if-null$byn-outline-B_0 (param $x anyref) (result anyref)
+;; CHECK-NEXT:  (local $1 anyref)
+;; CHECK-NEXT:  (local $2 anyref)
+;; CHECK-NEXT:  (local $3 anyref)
+;; CHECK-NEXT:  (local $4 anyref)
+;; CHECK-NEXT:  (local $5 anyref)
+;; CHECK-NEXT:  (local $6 anyref)
+;; CHECK-NEXT:  (local $7 anyref)
+;; CHECK-NEXT:  (local $8 anyref)
+;; CHECK-NEXT:  (local $9 anyref)
+;; CHECK-NEXT:  (return
+;; CHECK-NEXT:   (block (result anyref)
+;; CHECK-NEXT:    (block $__inlined_func$error-if-null$byn-outline-B (result anyref)
+;; CHECK-NEXT:     (local.set $1
+;; CHECK-NEXT:      (local.get $x)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.set $2
+;; CHECK-NEXT:      (ref.null any)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.set $3
+;; CHECK-NEXT:      (ref.null any)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.set $4
+;; CHECK-NEXT:      (ref.null any)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.set $5
+;; CHECK-NEXT:      (ref.null any)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.set $6
+;; CHECK-NEXT:      (ref.null any)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.set $7
+;; CHECK-NEXT:      (ref.null any)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.set $8
+;; CHECK-NEXT:      (ref.null any)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (local.set $9
+;; CHECK-NEXT:      (ref.null any)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (br $__inlined_func$error-if-null$byn-outline-B
+;; CHECK-NEXT:      (block (result anyref)
+;; CHECK-NEXT:       (block $__inlined_func$error-if-null$byn-outline-B_0 (result anyref)
+;; CHECK-NEXT:        (local.set $2
+;; CHECK-NEXT:         (local.get $1)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:        (local.set $3
+;; CHECK-NEXT:         (ref.null any)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:        (local.set $4
+;; CHECK-NEXT:         (ref.null any)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:        (local.set $5
+;; CHECK-NEXT:         (ref.null any)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:        (local.set $6
+;; CHECK-NEXT:         (ref.null any)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:        (local.set $7
+;; CHECK-NEXT:         (ref.null any)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:        (local.set $8
+;; CHECK-NEXT:         (ref.null any)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:        (local.set $9
+;; CHECK-NEXT:         (ref.null any)
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:        (br $__inlined_func$error-if-null$byn-outline-B_0
+;; CHECK-NEXT:         (block (result anyref)
+;; CHECK-NEXT:          (block $__inlined_func$error-if-null$byn-outline-B0 (result anyref)
+;; CHECK-NEXT:           (local.set $3
+;; CHECK-NEXT:            (local.get $2)
+;; CHECK-NEXT:           )
+;; CHECK-NEXT:           (local.set $4
+;; CHECK-NEXT:            (ref.null any)
+;; CHECK-NEXT:           )
+;; CHECK-NEXT:           (local.set $5
+;; CHECK-NEXT:            (ref.null any)
+;; CHECK-NEXT:           )
+;; CHECK-NEXT:           (local.set $6
+;; CHECK-NEXT:            (ref.null any)
+;; CHECK-NEXT:           )
+;; CHECK-NEXT:           (local.set $7
+;; CHECK-NEXT:            (ref.null any)
+;; CHECK-NEXT:           )
+;; CHECK-NEXT:           (local.set $8
+;; CHECK-NEXT:            (ref.null any)
+;; CHECK-NEXT:           )
+;; CHECK-NEXT:           (local.set $9
+;; CHECK-NEXT:            (ref.null any)
+;; CHECK-NEXT:           )
+;; CHECK-NEXT:           (br $__inlined_func$error-if-null$byn-outline-B0
+;; CHECK-NEXT:            (block (result anyref)
+;; CHECK-NEXT:             (block $__inlined_func$error-if-null$byn-outline-B_00 (result anyref)
+;; CHECK-NEXT:              (local.set $4
+;; CHECK-NEXT:               (local.get $3)
+;; CHECK-NEXT:              )
+;; CHECK-NEXT:              (local.set $5
+;; CHECK-NEXT:               (ref.null any)
+;; CHECK-NEXT:              )
+;; CHECK-NEXT:              (local.set $6
+;; CHECK-NEXT:               (ref.null any)
+;; CHECK-NEXT:              )
+;; CHECK-NEXT:              (local.set $7
+;; CHECK-NEXT:               (ref.null any)
+;; CHECK-NEXT:              )
+;; CHECK-NEXT:              (local.set $8
+;; CHECK-NEXT:               (ref.null any)
+;; CHECK-NEXT:              )
+;; CHECK-NEXT:              (local.set $9
+;; CHECK-NEXT:               (ref.null any)
+;; CHECK-NEXT:              )
+;; CHECK-NEXT:              (br $__inlined_func$error-if-null$byn-outline-B_00
+;; CHECK-NEXT:               (block (result anyref)
+;; CHECK-NEXT:                (block $__inlined_func$error-if-null$byn-outline-B01 (result anyref)
+;; CHECK-NEXT:                 (local.set $5
+;; CHECK-NEXT:                  (local.get $4)
+;; CHECK-NEXT:                 )
+;; CHECK-NEXT:                 (local.set $6
+;; CHECK-NEXT:                  (ref.null any)
+;; CHECK-NEXT:                 )
+;; CHECK-NEXT:                 (local.set $7
+;; CHECK-NEXT:                  (ref.null any)
+;; CHECK-NEXT:                 )
+;; CHECK-NEXT:                 (local.set $8
+;; CHECK-NEXT:                  (ref.null any)
+;; CHECK-NEXT:                 )
+;; CHECK-NEXT:                 (local.set $9
+;; CHECK-NEXT:                  (ref.null any)
+;; CHECK-NEXT:                 )
+;; CHECK-NEXT:                 (br $__inlined_func$error-if-null$byn-outline-B01
+;; CHECK-NEXT:                  (block (result anyref)
+;; CHECK-NEXT:                   (block $__inlined_func$error-if-null$byn-outline-B_001 (result anyref)
+;; CHECK-NEXT:                    (local.set $6
+;; CHECK-NEXT:                     (local.get $5)
+;; CHECK-NEXT:                    )
+;; CHECK-NEXT:                    (local.set $7
+;; CHECK-NEXT:                     (ref.null any)
+;; CHECK-NEXT:                    )
+;; CHECK-NEXT:                    (local.set $8
+;; CHECK-NEXT:                     (ref.null any)
+;; CHECK-NEXT:                    )
+;; CHECK-NEXT:                    (local.set $9
+;; CHECK-NEXT:                     (ref.null any)
+;; CHECK-NEXT:                    )
+;; CHECK-NEXT:                    (br $__inlined_func$error-if-null$byn-outline-B_001
+;; CHECK-NEXT:                     (block (result anyref)
+;; CHECK-NEXT:                      (block $__inlined_func$error-if-null$byn-outline-B012 (result anyref)
+;; CHECK-NEXT:                       (local.set $7
+;; CHECK-NEXT:                        (local.get $6)
+;; CHECK-NEXT:                       )
+;; CHECK-NEXT:                       (local.set $8
+;; CHECK-NEXT:                        (ref.null any)
+;; CHECK-NEXT:                       )
+;; CHECK-NEXT:                       (local.set $9
+;; CHECK-NEXT:                        (ref.null any)
+;; CHECK-NEXT:                       )
+;; CHECK-NEXT:                       (br $__inlined_func$error-if-null$byn-outline-B012
+;; CHECK-NEXT:                        (block (result anyref)
+;; CHECK-NEXT:                         (block $__inlined_func$error-if-null$byn-outline-B_0012 (result anyref)
+;; CHECK-NEXT:                          (local.set $8
+;; CHECK-NEXT:                           (local.get $7)
+;; CHECK-NEXT:                          )
+;; CHECK-NEXT:                          (local.set $9
+;; CHECK-NEXT:                           (ref.null any)
+;; CHECK-NEXT:                          )
+;; CHECK-NEXT:                          (br $__inlined_func$error-if-null$byn-outline-B_0012
+;; CHECK-NEXT:                           (block (result anyref)
+;; CHECK-NEXT:                            (block $__inlined_func$error-if-null$byn-outline-B0123 (result anyref)
+;; CHECK-NEXT:                             (local.set $9
+;; CHECK-NEXT:                              (local.get $8)
+;; CHECK-NEXT:                             )
+;; CHECK-NEXT:                             (block $block
+;; CHECK-NEXT:                              (call $import)
+;; CHECK-NEXT:                              (unreachable)
+;; CHECK-NEXT:                             )
+;; CHECK-NEXT:                            )
+;; CHECK-NEXT:                           )
+;; CHECK-NEXT:                          )
+;; CHECK-NEXT:                         )
+;; CHECK-NEXT:                        )
+;; CHECK-NEXT:                       )
+;; CHECK-NEXT:                      )
+;; CHECK-NEXT:                     )
+;; CHECK-NEXT:                    )
+;; CHECK-NEXT:                   )
+;; CHECK-NEXT:                  )
+;; CHECK-NEXT:                 )
+;; CHECK-NEXT:                )
+;; CHECK-NEXT:               )
+;; CHECK-NEXT:              )
+;; CHECK-NEXT:             )
+;; CHECK-NEXT:            )
+;; CHECK-NEXT:           )
+;; CHECK-NEXT:          )
+;; CHECK-NEXT:         )
+;; CHECK-NEXT:        )
+;; CHECK-NEXT:       )
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

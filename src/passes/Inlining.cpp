@@ -606,20 +606,33 @@ private:
     return false;
   }
 
-  void updateInfos(Function* inlineable, Function* outlined) {
+  void updateInfos(Function* inlineableFunc, Function* outlinedFunc) {
+    auto& inlineable = infos[inlineableFunc->name];
+    auto& outlined = infos[outlinedFunc->name];
+
     // Copy the info from the original function, that is now the inlineable
     // function, into the outline one. Almost all the code went into there, and
     // we can ignore the minor removal of an if and a little simple code.
-    infos[outlined->name] = infos[inlineable->name];
+    outlined = inlineable;
 
     // Reset the inlineable function's info. This makes it inlineable. Note that
     // it still has a call, but we purposefully do not set hasCalls, because
     // that would inhibit inlining, but our goal is to actually inline these.
-    infos[inlineable->name].clear();
+    inlineable.clear();
+
+    // The only field whose info we need to update is the number of references
+    // to original function, which has not changed.
+    inlineable.refs.store(outlined.refs.load());
+
+    // The outlined function has just one reference - the inlineable function -
+    // which we can update now. Also mark it as uninlineable, as otherwise
+    // having a single reference would suggest otherwise.
+    outlined.refs = 1;
+    outlined.uninlineable = true;
 
     // Verify that the proper function is inlineable, and not the other.
-    assert(infos[inlineable->name].worthInlining(options));
-    assert(!infos[outlined->name].worthInlining(options));
+    assert(inlineable.worthInlining(options));
+    assert(!outlined.worthInlining(options));
   }
 };
 
