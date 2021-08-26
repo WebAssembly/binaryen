@@ -164,15 +164,15 @@ struct FunctionInfoScanner
     info.size = Measurer::measure(curr->body);
   }
 
-  void visitExport(Export* curr) {
-    if (curr->kind == ExternalKind::Function) {
-      (*infos)[curr->value].usedGlobally = true;
+  void scanGlobally(PassRunner* runner, Module* module) {
+    walkModuleCode(module);
+    for (auto& ex : module->exports) {
+      if (ex->kind == ExternalKind::Function) {
+        (*infos)[ex->value].usedGlobally = true;
+      }
     }
-  }
-
-  void visitModule(Module* curr) {
-    if (curr->start.is()) {
-      (*infos)[curr->start].usedGlobally = true;
+    if (module->start.is()) {
+      (*infos)[module->start].usedGlobally = true;
     }
   }
 
@@ -417,7 +417,7 @@ struct Inlining : public Pass {
     PassRunner runner(module);
     FunctionInfoScanner scanner(&infos);
     scanner.run(&runner, module);
-    scanner.walkModuleCode(module);
+    scanner.scanGlobally(&runner, module);
   }
 
   void iteration(PassRunner* runner,
@@ -627,7 +627,7 @@ struct Outlining4InliningPass : public Pass {
     }
     FunctionInfoScanner scanner(&infos);
     scanner.run(runner, module);
-    scanner.walkModuleCode(module);
+    scanner.scanGlobally(runner, module);
 
     // Find functions that can benefit from outlining.
     // TODO: This could be done in parallel, but the checks here are very fast.
