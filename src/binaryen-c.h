@@ -2156,7 +2156,8 @@ BINARYEN_REF(Table);
 BINARYEN_API BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                                const char* table,
                                                BinaryenIndex initial,
-                                               BinaryenIndex maximum);
+                                               BinaryenIndex maximum,
+                                               Type::BasicType type);
 BINARYEN_API void BinaryenRemoveTable(BinaryenModuleRef module,
                                       const char* table);
 BINARYEN_API BinaryenIndex BinaryenGetNumTables(BinaryenModuleRef module);
