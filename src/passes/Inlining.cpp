@@ -27,10 +27,6 @@
 // or if you intend to run a full set of optimizations anyhow on
 // everything later.
 //
-// In addition, additional passes exist for inliningof the main() function
-// (InlineMain) and of preprocessing before inlining to allow more of it
-// (Outlining4Inlining).
-//
 
 #include <atomic>
 
@@ -349,6 +345,290 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   return block;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//
+// Function splitting.
+//
+// A function may be too costly to inline, but it may be profitable to
+// *partially* inline it. The specific case optimized here are functions with a
+// condition,
+//
+//  function foo(x) {
+//    if (x) return;
+//    ..lots and lots of other code..
+//  }
+//
+// If the other code after the if is large enough or costly enough then we will
+// not inline the entire function. But it is useful to inline the condition.
+// Consider this caller:
+//
+//  function caller(x) {
+//    foo(0);
+//    foo(x);
+//  }
+//
+// If we inline the condition, we end up with this:
+//
+//  function caller(x {
+//    if (0) foo(0);
+//    if (x) foo(x);
+//  }
+//
+// Note that we just inlined the condition here, and did not modify foo()
+// itself (yet, see later). Just by copying the condition out of foo() we gain
+// two benefits:
+//
+//  * In the first call here the condition is zero, which means we can
+//    statically optimize out the call entirely.
+//  * Even if we can't do that, as in the second call, if at runtime we see the
+//    condition is false then we avoid the call. Calling just to check a cheap
+//    condition and immediately return is very costly, which this can avoid.
+//
+// The cost to doing this is an increase in code size. Another cost is that we
+// check the condition twice. We can reduce the second cost by seeing if the
+// called function has no unseen callers (no indirect calls, not exported), and
+// if so, we can remove the condition in the function.
+//
+// Instead of inlining the condition, we take the simpler approach of outlining
+// the rest of the code. By splitting the function into an easily-inlineable
+// part, and a separate "heavy" part, we can achieve our goal by letting
+// normal inlining run on the easily-inlineable piece. That is, given foo()
+// above, we transform it to this:
+//
+//  function foo(x) {
+//    if (x) return;
+//    foo$heavy(x);
+//  }
+//
+// And we create a new function
+//
+//  function foo$heavy(x) {
+//    ..lots and lots of other code..
+//  }
+//
+// We then depend on the modified foo() being inlined, at which point we return
+// to the result mentioned earlier.
+
+struct FunctionSplitter {
+  Module* module;
+  PassOptions& options;
+  NameInfoMap& infos;
+
+  // Receive the module and the info about function inlineability. We will
+  // update that info if/when we split.
+  FunctionSplitter(Module* module, PassOptions& options, NameInfoMap& infos) : module(module), options(options), infos(infos) {}
+
+  void run() {
+    // Find functions that might benefit from outlining.
+    // TODO: This could be done in parallel, but the checks here are very fast.
+    std::vector<Function*> possibleFuncs;
+    for (auto& func : module->functions) {
+      auto& info = infos[func->name];
+      if (info.worthInlining(runner->options)) {
+        // If it's worth inlining, handle it that way - outlining is not needed.
+        continue;
+      }
+      if (info.usedGlobally) {
+        // TODO: Also optimize with global uses (where the tradeoffs are less
+        //       obvious).
+        continue;
+      }
+      possibleFuncs.push_back(func.get());
+    }
+
+    // Process the functions and split those that we can.
+    // Note: this loop is separate from the one above it as we add more
+    // functions as we go, so we should not iterate on module->functions while
+    // doing so.
+    for (auto* func : possibleFuncs) {
+      maybeSplit(func, module);
+    }
+  }
+
+private:
+  void maybeSplit(Function* func, Module* module) {
+    auto* body = func->body;
+
+    // All the patterns we look for atm start with an if at the very top of the
+    // function. If that if conditionalizes almost all the work in the function,
+    // then it seems promising to inling that if's condition (by outlining the
+    // heavy work, as mentioned earlier).
+    if (!isBlockStartingWithIf(body)) {
+      return;
+    }
+    auto* iff = getIf(body);
+
+    // If the condition is not very simple, the benefits of this optimization
+    // are not obvious.
+    if (!isSimple(iff->condition)) {
+      return;
+    }
+
+    Builder builder(*module);
+
+    // Pattern A: Check if the function begins with
+    //
+    //  if (simple) return;
+    //
+    // TODO: support a return value
+    if (!iff->ifFalse && func->getResults() == Type::none &&
+        iff->ifTrue->is<Return>()) {
+      auto newName = Names::getValidFunctionName(
+        *module, func->name.str + std::string("$byn-outline-A"));
+
+      // TODO: we could avoid some of the copying here
+      auto* outlinedFunc = ModuleUtils::copyFunction(func, *module, newName);
+
+      // The original function now only has the if, which will call the outlined
+      // heavy work with a flipped condition.
+      std::vector<Expression*> args;
+      for (Index i = 0; i < func->getNumParams(); i++) {
+        args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
+      }
+      iff->condition = builder.makeUnary(EqZInt32, iff->condition);
+      iff->ifTrue = builder.makeCall(newName, args, Type::none);
+      func->body = iff;
+
+      // The outlined heavy work no longer needs the initial if.
+      // TODO: If we handle the case with indirect calls and other global uses
+      //       then we could not do this, as those calls would skip the first
+      //       function with the condition that calls the heavy work.
+      auto& newList = outlinedFunc->body->cast<Block>()->list;
+      newList.erase(newList.begin());
+
+      updateInfos(func, outlinedFunc);
+
+      return;
+    }
+
+    auto& list = body->cast<Block>()->list;
+
+    // Pattern B: Represents a function whose entire body looks like
+    //
+    //  if (A) {
+    //    ..heavy work..
+    //  }
+    //  B; // a value flowing out, if there is a return value
+    //
+    // where A and B are very simple. The body of the if must be unreachable.
+    if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
+        list.size() == 2 && isSimple(list[1])) {
+      auto newName = Names::getValidFunctionName(
+        *module, func->name.str + std::string("$byn-outline-B"));
+
+      // TODO: we could avoid some of the copying here
+      auto* outlinedFunc = ModuleUtils::copyFunction(func, *module, newName);
+
+      // The original function now only has the if, which will call the outlined
+      // heavy work, plus the content after the if.
+      std::vector<Expression*> args; // TODO helper
+      for (Index i = 0; i < func->getNumParams(); i++) {
+        args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
+      }
+      iff->ifTrue =
+        builder.makeReturn(builder.makeCall(newName, args, func->getResults()));
+
+      // The outlined function just contains the heavy work.
+      // TODO: see comment in the pattern above
+      outlinedFunc->body = getIf(outlinedFunc->body)->ifTrue;
+
+      updateInfos(func, outlinedFunc);
+
+      return;
+    }
+  }
+
+  static bool isBlockStartingWithIf(Expression* curr) {
+    auto* block = curr->dynCast<Block>();
+    return block && !block->list.empty() && block->list[0]->is<If>();
+  }
+
+  static If* getIf(Expression* curr) {
+    assert(isBlockStartingWithIf(curr));
+    return curr->cast<Block>()->list[0]->cast<If>();
+  }
+
+  // Checks if an expression is very simple - something simple enough that we
+  // are willing to inline it in this optimization. This should basically take
+  // almost no cost at all to compute.
+  bool isSimple(Expression* curr) {
+    // For now, support local and global gets, and unary operations.
+    // TODO: Generalize? Use costs.h?
+    if (curr->type == Type::unreachable) {
+      return false;
+    }
+    if (curr->is<GlobalGet>() || curr->is<LocalGet>()) {
+      return true;
+    }
+    if (auto* unary = curr->dynCast<Unary>()) {
+      return isSimple(unary->value);
+    }
+    if (auto* is = curr->dynCast<RefIs>()) {
+      return isSimple(is->value);
+    }
+    return false;
+  }
+
+  void updateInfo(Function* inlineable, Function* outlined) {
+    // Copy the info from the original function, that is now the inlineable
+    // function, into the outline one. Almost all the code went into there, and
+    // we can ignore the minor removal of an if and a little simple code.
+    infos[outlined->name] = infos[inlineable->name];
+
+    // Reset the inlineable function's info. This makes it inlineable. Note that
+    // it still has a call, but we purposefully do not set hasCalls, because
+    // that would inhibit inlining, but our goal is to actually inline these.
+    infos[inlineable->name] = FunctionInfo();
+
+    // Verify that the proper function is inlineable, and not the other.
+    assert(infos[inlineable->name].worthInlining(options));
+    assert(!infos[outlined->name].worthInlining(options));
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 struct Inlining : public Pass {
   // This pass changes locals and parameters.
   // FIXME DWARF updating does not handle local changes yet.
@@ -557,222 +837,5 @@ struct InlineMainPass : public Pass {
 };
 
 Pass* createInlineMainPass() { return new InlineMainPass(); }
-
-//
-// Outlining4Inlining
-//
-// A function may be too costly to inline, but it may be profitable to
-// *partially* inline it. The specific case optimized here are functions with a
-// condition,
-//
-//  function foo(x) {
-//    if (x) return;
-//    ..lots and lots of other code..
-//  }
-//
-// If the other code after the if is large enough or costly enough then we will
-// not inline the entire function. But it is useful to inline the condition.
-// Consider this caller:
-//
-//  function caller(x) {
-//    foo(0);
-//    foo(x);
-//  }
-//
-// If we inline the condition, we end up with this:
-//
-//  function caller(x {
-//    if (0) foo(0);
-//    if (x) foo(x);
-//  }
-//
-// Note that we just inlined the condition here, and did not modify foo()
-// itself (yet, see later). Just by copying the condition out of foo() we gain
-// two benefits:
-//
-//  * In the first call here the condition is zero, which means we can
-//    statically optimize out the call entirely.
-//  * Even if we can't do that, as in the second call, if at runtime we see the
-//    condition is false then we avoid the call. Calling just to check a cheap
-//    condition and immediately return is very costly, which this can avoid.
-//
-// The cost to doing this is an increase in code size. Another cost is that we
-// check the condition twice. We can reduce the second cost by seeing if the
-// called function has no unseen callers (no indirect calls, not exported), and
-// if so, we can remove the condition in the function.
-//
-// Instead of inlining the condition, we take the simpler approach of outlining
-// the rest of the code. That is, given foo() above, we transform it to this:
-//
-//  function foo(x) {
-//    if (x) return;
-//    foo$heavy(x);
-//  }
-//
-// And we create a new function
-//
-//  function foo$heavy(x) {
-//    ..lots and lots of other code..
-//  }
-//
-// We then depend on the modified foo() being inlined, at which point we return
-// to the result mentioned earlier.
-
-struct Outlining4InliningPass : public Pass {
-  void run(PassRunner* runner, Module* module) override {
-    // Scan the module.
-    NameInfoMap infos;
-    for (auto& func : module->functions) {
-      // Fill in the map so we can operate on it in parallel.
-      infos[func->name];
-    }
-    FunctionInfoScanner scanner(&infos);
-    scanner.run(runner, module);
-    scanner.scanGlobally(runner, module);
-
-    // Find functions that might benefit from outlining.
-    // TODO: This could be done in parallel, but the checks here are very fast.
-    std::vector<Function*> possibleFuncs;
-    for (auto& func : module->functions) {
-      auto& info = infos[func->name];
-      if (info.worthInlining(runner->options)) {
-        // If it's worth inlining, handle it that way - outlining is not needed.
-        continue;
-      }
-      if (info.usedGlobally) {
-        // TODO: Also optimize with global uses (where the tradeoffs are less
-        //       obvious).
-        continue;
-      }
-      possibleFuncs.push_back(func.get());
-    }
-
-    // Process the functions and outline those that we can.
-    // Note: this loop is separate from the one above it as we add more
-    // functions as we go, so we should not iterate on module->functions while
-    // doing so.
-    for (auto* func : possibleFuncs) {
-      maybeOutline(func, module);
-    }
-  }
-
-private:
-  void maybeOutline(Function* func, Module* module) {
-    auto* body = func->body;
-
-    // All the patterns we look for atm start with an if at the very top of the
-    // function. If that if conditionalizes almost all the work in the function,
-    // then it seems promising to inling that if's condition (by outlining the
-    // heavy work, as mentioned earlier).
-    if (!isBlockStartingWithIf(body)) {
-      return;
-    }
-    auto* iff = getIf(body);
-
-    // If the condition is not very simple, the benefits of this optimization
-    // are not obvious.
-    if (!isSimple(iff->condition)) {
-      return;
-    }
-
-    Builder builder(*module);
-
-    // Pattern A: Check if the function begins with
-    //
-    //  if (simple) return;
-    //
-    // TODO: support a return value
-    if (!iff->ifFalse && func->getResults() == Type::none &&
-        iff->ifTrue->is<Return>()) {
-      auto newName = Names::getValidFunctionName(
-        *module, func->name.str + std::string("$byn-outline-A"));
-
-      // TODO: we could avoid some of the copying here
-      auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
-
-      // The original function now only has the if, which will call the outlined
-      // heavy work with a flipped condition.
-      std::vector<Expression*> args;
-      for (Index i = 0; i < func->getNumParams(); i++) {
-        args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
-      }
-      iff->condition = builder.makeUnary(EqZInt32, iff->condition);
-      iff->ifTrue = builder.makeCall(newName, args, Type::none);
-      func->body = iff;
-
-      // The outlined heavy work no longer needs the initial if.
-      // TODO: If we handle the case with indirect calls and other global uses
-      //       then we could not do this, as those calls would skip the first
-      //       function with the condition that calls the heavy work.
-      auto& newList = heavyWork->body->cast<Block>()->list;
-      newList.erase(newList.begin());
-    }
-
-    auto& list = body->cast<Block>()->list;
-
-    // Pattern B: Represents a function whose entire body looks like
-    //
-    //  if (A) {
-    //    ..heavy work..
-    //  }
-    //  B; // a value flowing out, if there is a return value
-    //
-    // where A and B are very simple. The body of the if must be unreachable.
-    if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
-        list.size() == 2 && isSimple(list[1])) {
-      auto newName = Names::getValidFunctionName(
-        *module, func->name.str + std::string("$byn-outline-B"));
-
-      // TODO: we could avoid some of the copying here
-      auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
-
-      // The original function now only has the if, which will call the outlined
-      // heavy work, plus the content after the if.
-      std::vector<Expression*> args; // TODO helper
-      for (Index i = 0; i < func->getNumParams(); i++) {
-        args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
-      }
-      iff->ifTrue =
-        builder.makeReturn(builder.makeCall(newName, args, func->getResults()));
-
-      // The outlined function just contains the heavy work.
-      // TODO: see comment in the pattern above
-      heavyWork->body = getIf(heavyWork->body)->ifTrue;
-    }
-  }
-
-  static bool isBlockStartingWithIf(Expression* curr) {
-    auto* block = curr->dynCast<Block>();
-    return block && !block->list.empty() && block->list[0]->is<If>();
-  }
-
-  static If* getIf(Expression* curr) {
-    assert(isBlockStartingWithIf(curr));
-    return curr->cast<Block>()->list[0]->cast<If>();
-  }
-
-  // Checks if an expression is very simple - something simple enough that we
-  // are willing to inline it in this optimization. This should basically take
-  // almost no cost at all to compute.
-  bool isSimple(Expression* curr) {
-    // For now, support local and global gets, and unary operations.
-    // TODO: Generalize? Use costs.h?
-    if (curr->type == Type::unreachable) {
-      return false;
-    }
-    if (curr->is<GlobalGet>() || curr->is<LocalGet>()) {
-      return true;
-    }
-    if (auto* unary = curr->dynCast<Unary>()) {
-      return isSimple(unary->value);
-    }
-    if (auto* is = curr->dynCast<RefIs>()) {
-      return isSimple(is->value);
-    }
-    return false;
-  }
-};
-
-Pass* createOutlining4InliningPass() { return new Outlining4InliningPass(); }
 
 } // namespace wasm

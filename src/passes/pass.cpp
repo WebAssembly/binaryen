@@ -244,11 +244,6 @@ void PassRegistry::registerPasses() {
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
   registerPass(
-    "outlining-4-inlining",
-    "outline heavy code out of a function so that useful parts of it can be "
-    "inlined",
-    createOutlining4InliningPass);
-  registerPass(
     "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
   registerPass("pick-load-signs",
                "pick load signs based on their uses",
@@ -525,9 +520,6 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("dae-optimizing");
-  }
-  if (options.optimizeLevel >= 3) {
-    addIfNoDWARFIssues("outlining-4-inlining");
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("inlining-optimizing");
