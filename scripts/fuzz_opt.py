@@ -165,8 +165,7 @@ def randomize_fuzz_settings():
 
 
 IMPORTANT_INITIAL_CONTENTS = [
-    os.path.join('lit', 'passes', 'optimize-instructions.wast'),
-    os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
+    os.path.join('lit', 'passes', 'outlining-4-inlining.wast'),
 ]
 IMPORTANT_INITIAL_CONTENTS = [os.path.join(shared.get_test_dir('.'), t) for t in IMPORTANT_INITIAL_CONTENTS]
 
@@ -1050,6 +1049,7 @@ opt_choices = [
     ['--merge-locals'],
     ["--optimize-instructions"],
     ["--optimize-stack-ir"],
+    ["--outlining-4-inlining"],
     ["--generate-stack-ir", "--optimize-stack-ir"],
     ["--pick-load-signs"],
     ["--precompute"],
