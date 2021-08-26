@@ -3515,7 +3515,11 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   BinaryenIndex maximum,
                                   BinaryenType tableType) {
   Type type = Type(tableType);
-  if (type != Type::funcref || type != Type::externref) {
+  bool validType = type == Type::funcref;
+  if (((Module*)module)->features.hasReferenceTypes()) {
+    validType = validType || type == Type::externref;
+  }
+  if (!validType) {
     Fatal() << "invalid table type.";
   }
   auto table = Builder::makeTable(name, type, initial, maximum);
