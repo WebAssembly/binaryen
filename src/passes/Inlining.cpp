@@ -675,7 +675,7 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>()) {
-      auto newName = func->name.str + std::string("$byn-heavy");
+      auto newName = func->name.str + std::string("$byn-outline");
       if (module->getFunctionOrNull(newName)) {
         // In the unlikely event that this name already exists, it likely
         // indicates we are repeating previous work somehow.
@@ -740,9 +740,6 @@ private:
     }
     if (auto* is = curr->dynCast<RefIs>()) {
       return isSimple(is->value);
-    }
-    if (auto* as = curr->dynCast<RefAs>()) {
-      return isSimple(as->value);
     }
     return false;
   }
