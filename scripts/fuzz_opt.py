@@ -296,16 +296,16 @@ FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 
 
 # compare two strings, strictly
-def compare(x, y, context, diffonly=False):
+def compare(x, y, context, verbose=True):
     if x != y and x != IGNORE and y != IGNORE:
         message = ''.join([a + '\n' for a in difflib.unified_diff(x.splitlines(), y.splitlines(), fromfile='expected', tofile='actual')])
-        if diffonly:
-            raise Exception(context + "\nDiff:\n\n%s" % (message))
-        else:
+        if verbose:
             raise Exception(context + " comparison error, expected to have '%s' == '%s', diff:\n\n%s" % (
                 x, y,
                 message
             ))
+        else:
+            raise Exception(context + "\nDiff:\n\n%s" % (message))
 
 
 # converts a possibly-signed integer to an unsigned integer
@@ -723,7 +723,7 @@ class CheckDeterminism(TestCaseHandler):
             run([in_bin('wasm-dis'), 'b2.wasm', '-o', 'b2.wat'])
             t1 = open('b1.wat', 'r').read()
             t2 = open('b2.wat', 'r').read()
-            compare(t1, t2, 'Output must be deterministic.', diffonly=True)
+            compare(t1, t2, 'Output must be deterministic.', verbose=False)
 
 
 class Wasm2JS(TestCaseHandler):
