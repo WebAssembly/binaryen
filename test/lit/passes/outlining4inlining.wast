@@ -420,21 +420,7 @@
   )
 )
 
-;; CHECK:      (func $error-if-null$byn-outline-B (param $x anyref) (result anyref)
-;; CHECK-NEXT:  (block $block
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (unreachable)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
 ;; CHECK:      (func $maybe-work-hard$byn-outline-A (param $x i32)
-;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br $l)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $colliding-name$byn-outline-A_0 (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
@@ -459,5 +445,19 @@
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $colliding-name$byn-outline-A_0 (param $x i32)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $error-if-null$byn-outline-B (param $x anyref) (result anyref)
+;; CHECK-NEXT:  (block $block
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (unreachable)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
