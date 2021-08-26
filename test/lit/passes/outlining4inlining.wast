@@ -223,6 +223,30 @@
       (br $l)
     )
   )
+
+  ;; CHECK:      (func $if-else (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $l
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (br $l)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-else (param $x i32)
+    ;; An else in the if prevents us from recognizing the pattern we want.
+    (if
+      (local.get $x)
+      (return)
+      (nop)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
 )
 
 ;; CHECK:      (func $condition-ref.is$byn-outline (param $x anyref)
