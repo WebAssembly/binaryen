@@ -38,6 +38,7 @@
 #include "ir/element-utils.h"
 #include "ir/literal-utils.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "parsing.h"
@@ -675,12 +676,7 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>()) {
-      auto newName = func->name.str + std::string("$byn-outline");
-      if (module->getFunctionOrNull(newName)) {
-        // In the unlikely event that this name already exists, it likely
-        // indicates we are repeating previous work somehow.
-        return;
-      }
+      auto newName = Names::getValidFunctionName(*module, func->name.str + std::string("$byn-outline-A"));
 
       // TODO: we could avoid some of the copying here
       auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
@@ -700,17 +696,37 @@ private:
       //       function with the condition that calls the heavy work.
       auto& newList = heavyWork->body->cast<Block>()->list;
       newList.erase(newList.begin());
-    };
+    }
+
+    auto& list = body->cast<Block>()->list;
 
     // Represents a function whose entire body looks like
     //
     //  if (A) {
     //    ..heavy work..
     //  }
-    //  B; // optional, a value flowing out if there is a return value.
+    //  B; // a value flowing out, if there is a return value
     //
     // where A and B are very simple. The body of the if must be unreachable.
-    // TODO
+    if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
+        list.size() == 2 && isSimple(list[1])) {
+      auto newName = Names::getValidFunctionName(*module, func->name.str + std::string("$byn-outline-B"));
+
+      // TODO: we could avoid some of the copying here
+      auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
+
+      // The original function now only has the if, which will call the outlined
+      // heavy work, plus the content after the if.
+      std::vector<Expression*> args; // TODO helper
+      for (Index i = 0; i < func->getNumParams(); i++) {
+        args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
+      }
+      iff->ifTrue = builder.makeCall(newName, args, Type::none);
+
+      // The outlined function just contains the heavy work.
+      // TODO: see comment in the pattern above
+      heavyWork->body = getIf(heavyWork->body)->ifTrue;
+    }
   }
 
   static bool isBlockStartingWithIf(Expression* curr) {

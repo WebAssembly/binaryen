@@ -21,7 +21,7 @@
   ;; CHECK:      (func $maybe-work-hard (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (call $maybe-work-hard$byn-outline
+  ;; CHECK-NEXT:   (call $maybe-work-hard$byn-outline-A
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -44,7 +44,7 @@
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $condition-eqz$byn-outline
+  ;; CHECK-NEXT:   (call $condition-eqz$byn-outline-A
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -67,7 +67,7 @@
   ;; CHECK:      (func $condition-global
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $glob)
-  ;; CHECK-NEXT:   (call $condition-global$byn-outline)
+  ;; CHECK-NEXT:   (call $condition-global$byn-outline-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $condition-global
@@ -87,7 +87,7 @@
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $condition-ref.is$byn-outline
+  ;; CHECK-NEXT:   (call $condition-ref.is$byn-outline-A
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -269,30 +269,64 @@
       (br $l)
     )
   )
+
+  ;; CHECK:      (func $colliding-name (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (call $colliding-name$byn-outline-A_0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $colliding-name (param $x i32)
+    ;; When we outline this, the name should not collide with that of the
+    ;; function after us.
+    (if
+      (local.get $x)
+      (return)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
+
+  ;; CHECK:      (func $colliding-name$byn-outline-A
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $colliding-name$byn-outline-A
+  )
 )
 
-;; CHECK:      (func $condition-ref.is$byn-outline (param $x anyref)
+;; CHECK:      (func $maybe-work-hard$byn-outline-A (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $condition-global$byn-outline
+;; CHECK:      (func $colliding-name$byn-outline-A_0 (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $condition-eqz$byn-outline (param $x i32)
+;; CHECK:      (func $condition-eqz$byn-outline-A (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $maybe-work-hard$byn-outline (param $x i32)
+;; CHECK:      (func $condition-global$byn-outline-A
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $condition-ref.is$byn-outline-A (param $x anyref)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
