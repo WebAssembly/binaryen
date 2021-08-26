@@ -183,7 +183,29 @@
       (br $l)
     )
   )
+
+  ;; CHECK:      (func $inlineable
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $glob)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $inlineable
+    ;; This looks optimizable, but it is also inlineable - so we do not need to
+    ;; outline it.
+    (if
+      (global.get $glob)
+      (return)
+    )
+  )
 )
+
+;; CHECK:      (func $maybe-work-hard$byn-outline (param $x i32)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
 
 ;; CHECK:      (func $condition-ref.is$byn-outline (param $x anyref)
 ;; CHECK-NEXT:  (loop $l
@@ -200,13 +222,6 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $condition-eqz$byn-outline (param $x i32)
-;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br $l)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $maybe-work-hard$byn-outline (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
