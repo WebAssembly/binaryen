@@ -15,6 +15,9 @@
   ;; CHECK:      (global $glob i32 (i32.const 1))
   (global $glob i32 (i32.const 1))
 
+  ;; CHECK:      (start $start-used-globally)
+  (start $start-used-globally)
+
   ;; CHECK:      (func $maybe-work-hard (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -91,7 +94,7 @@
   ;; CHECK-NEXT: )
   (func $condition-ref.is (param $x anyref)
     (if
-      ;; A global read.
+      ;; A ref.is operation.
       (ref.is_null
         (local.get $x)
       )
@@ -149,6 +152,30 @@
       (i32.eqz
         (unreachable)
       )
+      (return)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
+
+  ;; CHECK:      (func $start-used-globally
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $glob)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $l
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (br $l)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $start-used-globally
+    ;; This looks optimizable, but it is the start function, which means it is
+    ;; used in more than the direct calls we can optimize, and so we do not
+    ;; optimize it (for now).
+    (if
+      (global.get $glob)
       (return)
     )
     (loop $l
