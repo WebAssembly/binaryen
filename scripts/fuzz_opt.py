@@ -1059,7 +1059,6 @@ opt_choices = [
     ['--merge-locals'],
     ["--optimize-instructions"],
     ["--optimize-stack-ir"],
-    ["--outlining-4-inlining"],
     ["--generate-stack-ir", "--optimize-stack-ir"],
     ["--pick-load-signs"],
     ["--precompute"],
