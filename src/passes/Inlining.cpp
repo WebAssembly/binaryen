@@ -720,6 +720,12 @@ struct Inlining : public Pass {
   void iteration(PassRunner* runner,
                  Module* module,
                  std::unordered_set<Function*>& inlinedInto) {
+    // When optimizing heavily for size, run the function splitter first to
+    // allow more inlining to happen.
+    if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
+      FunctionSplitter(module, runner->options, infos).run();
+    }
+
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
