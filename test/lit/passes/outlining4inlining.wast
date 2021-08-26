@@ -198,14 +198,32 @@
       (return)
     )
   )
-)
 
-;; CHECK:      (func $maybe-work-hard$byn-outline (param $x i32)
-;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br $l)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
+  ;; CHECK:      (func $if-not-first (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $l
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (br $l)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-not-first (param $x i32)
+    ;; Except for the initial nop, we should outline this. As the if is not
+    ;; first any more, we ignore it.
+    (nop)
+    (if
+      (local.get $x)
+      (return)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
+)
 
 ;; CHECK:      (func $condition-ref.is$byn-outline (param $x anyref)
 ;; CHECK-NEXT:  (loop $l
@@ -222,6 +240,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $condition-eqz$byn-outline (param $x i32)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $maybe-work-hard$byn-outline (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
