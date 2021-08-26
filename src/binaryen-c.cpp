@@ -3519,6 +3519,9 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
   if (((Module*)module)->features.hasReferenceTypes()) {
     validType = validType || type == Type::externref;
   }
+  if (((Module*)module)->features.hasGC()) {
+    validType = validType || type.isRef();
+  }
   if (!validType) {
     Fatal() << "invalid table type.";
   }
