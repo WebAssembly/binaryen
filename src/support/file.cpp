@@ -34,8 +34,22 @@ std::vector<char> wasm::read_stdin() {
   return input;
 }
 
+template<typename T> struct do_read_stdin { T operator()(); };
+
+template<> std::vector<char> do_read_stdin<std::vector<char>>::operator()() {
+  return wasm::read_stdin();
+}
+
+template<> std::string do_read_stdin<std::string>::operator()() {
+  auto vec = wasm::read_stdin();
+  return std::string(vec.begin(), vec.end());
+}
+
 template<typename T>
 T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
+  if (filename == "-") {
+    return do_read_stdin<T>{}();
+  }
   BYN_TRACE("Loading '" << filename << "'...\n");
   std::ifstream infile;
   std::ios_base::openmode flags = std::ifstream::in;
