@@ -130,6 +130,32 @@
       (br $l)
     )
   )
+
+  ;; CHECK:      (func $condition-disallow-unreachable (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $l
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (br $l)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $condition-disallow-unreachable (param $x i32)
+    (if
+      ;; Work we do *not* allow (at least for now), an unreachable.
+      (i32.eqz
+        (unreachable)
+      )
+      (return)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
 )
 
 ;; CHECK:      (func $condition-ref.is$byn-outline (param $x anyref)
