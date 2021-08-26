@@ -56,6 +56,10 @@ struct FunctionInfo {
   bool uninlineable;
 
   FunctionInfo() {
+    clear();
+  }
+
+  void clear() {
     refs = 0;
     size = 0;
     hasCalls = false;
@@ -63,6 +67,18 @@ struct FunctionInfo {
     hasTryDelegate = false;
     usedGlobally = false;
     uninlineable = false;
+  }
+
+  // Provide an explicit = operator as the |refs| field lacks one by default.
+  FunctionInfo& operator=(FunctionInfo& other) {
+    refs.store(other.refs.load());
+    size = other.size;
+    hasCalls = other.hasCalls;
+    hasLoops = other.hasLoops;
+    hasTryDelegate = other.hasTryDelegate;
+    usedGlobally = other.usedGlobally;
+    uninlineable = other.uninlineable;
+    return *this;
   }
 
   // See pass.h for how defaults for these options were chosen.
@@ -445,7 +461,7 @@ struct FunctionSplitter {
     std::vector<Function*> possibleFuncs;
     for (auto& func : module->functions) {
       auto& info = infos[func->name];
-      if (info.worthInlining(runner->options)) {
+      if (info.worthInlining(options)) {
         // If it's worth inlining, handle it that way - outlining is not needed.
         continue;
       }
@@ -590,7 +606,7 @@ private:
     return false;
   }
 
-  void updateInfo(Function* inlineable, Function* outlined) {
+  void updateInfos(Function* inlineable, Function* outlined) {
     // Copy the info from the original function, that is now the inlineable
     // function, into the outline one. Almost all the code went into there, and
     // we can ignore the minor removal of an if and a little simple code.
@@ -599,7 +615,7 @@ private:
     // Reset the inlineable function's info. This makes it inlineable. Note that
     // it still has a call, but we purposefully do not set hasCalls, because
     // that would inhibit inlining, but our goal is to actually inline these.
-    infos[inlineable->name] = FunctionInfo();
+    infos[inlineable->name].clear();
 
     // Verify that the proper function is inlineable, and not the other.
     assert(infos[inlineable->name].worthInlining(options));
