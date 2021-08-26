@@ -630,11 +630,11 @@ struct Outlining4InliningPass : public Pass {
     scanner.run(runner, module);
     scanner.scanGlobally(runner, module);
 
-    // Find functions that can benefit from outlining.
+    // Find functions that might benefit from outlining.
     // TODO: This could be done in parallel, but the checks here are very fast.
-    for (auto& kv : infos) {
-      Name name = kv.first;
-      auto& info = kv.second;
+    std::vector<Function*> possibleFuncs;
+    for (auto& func : module->functions) {
+      auto& info = infos[func->name];
       if (info.worthInlining(runner->options)) {
         // If it's worth inlining, handle it that way - outlining is not needed.
         continue;
@@ -644,7 +644,15 @@ struct Outlining4InliningPass : public Pass {
         //       obvious).
         continue;
       }
-      maybeOutline(module->getFunction(name), module);
+      possibleFuncs.push_back(func.get());
+    }
+
+    // Process the functions and outline those that we can.
+    // Note: this loop is separate from the one above it as we add more
+    // functions as we go, so we should not iterate on module->functions while
+    // doing so.
+    for (auto* func : possibleFuncs) {
+      maybeOutline(func, module);
     }
   }
 
