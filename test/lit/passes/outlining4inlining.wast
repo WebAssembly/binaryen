@@ -102,6 +102,34 @@
       (br $l)
     )
   )
+
+  ;; CHECK:      (func $condition-disallow-binary (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $l
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (br $l)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $condition-disallow-binary (param $x i32)
+    (if
+      ;; Work we do *not* allow (at least for now), a binary.
+      (i32.add
+        (local.get $x)
+        (local.get $x)
+      )
+      (return)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
 )
 
 ;; CHECK:      (func $condition-ref.is$byn-outline (param $x anyref)
