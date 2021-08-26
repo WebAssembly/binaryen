@@ -527,7 +527,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("dae-optimizing");
   }
   if (options.optimizeLevel >= 3) {
-    // TODO    addIfNoDWARFIssues("outlining-4-inlining");
+    addIfNoDWARFIssues("outlining-4-inlining");
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("inlining-optimizing");
