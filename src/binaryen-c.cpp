@@ -3513,7 +3513,8 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenIndex initial,
                                   BinaryenIndex maximum,
-                                  Type::BasicType type) {
+                                  BinaryenType tableType) {
+  Type type = Type(tableType);
   if (type != Type::funcref || type != Type::externref) {
     Fatal() << "invalid table type.";
   }
