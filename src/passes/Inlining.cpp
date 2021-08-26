@@ -669,7 +669,7 @@ private:
 
     Builder builder(*module);
 
-    // Check if the function begins with
+    // Pattern A: Check if the function begins with
     //
     //  if (simple) return;
     //
@@ -700,7 +700,7 @@ private:
 
     auto& list = body->cast<Block>()->list;
 
-    // Represents a function whose entire body looks like
+    // Pattern B: Represents a function whose entire body looks like
     //
     //  if (A) {
     //    ..heavy work..
@@ -721,7 +721,7 @@ private:
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
-      iff->ifTrue = builder.makeCall(newName, args, Type::none);
+      iff->ifTrue = builder.makeReturn(builder.makeCall(newName, args, func->getResults()));
 
       // The outlined function just contains the heavy work.
       // TODO: see comment in the pattern above

@@ -9,6 +9,8 @@
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
+  ;; CHECK:      (type $anyref_=>_anyref (func (param anyref) (result anyref)))
+
   ;; CHECK:      (import "out" "func" (func $import))
   (import "out" "func" (func $import))
 
@@ -17,6 +19,10 @@
 
   ;; CHECK:      (start $start-used-globally)
   (start $start-used-globally)
+
+  ;; Pattern A: functions beginning with
+  ;;
+  ;;   if (simple) return;
 
   ;; CHECK:      (func $maybe-work-hard (param $x i32)
   ;; CHECK-NEXT:  (if
@@ -296,7 +302,48 @@
   ;; CHECK-NEXT: )
   (func $colliding-name$byn-outline-A
   )
+
+  ;; Pattern B: functions containing
+  ;;
+  ;;   if (simple1) heavy-work-that-is-unreachable;
+  ;;   simple2
+
+  ;; CHECK:      (func $error-if-null (param $x anyref) (result anyref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (call $error-if-null$byn-outline-B
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $x)
+  ;; CHECK-NEXT: )
+  (func $error-if-null (param $x anyref) (result anyref)
+    ;; A "as non null" function: if the input is null, issue an error somehow
+    ;; (here, by calling an import, but could also be a throwing of an
+    ;; exception). If not null, return the value.
+    (if
+      (ref.is_null
+        (local.get $x)
+      )
+      (block
+        (call $import)
+        (unreachable)
+      )
+    )
+    (local.get $x)
+  )
 )
+
+;; CHECK:      (func $error-if-null$byn-outline-B (param $x anyref) (result anyref)
+;; CHECK-NEXT:  (block $block
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
 
 ;; CHECK:      (func $maybe-work-hard$byn-outline-A (param $x i32)
 ;; CHECK-NEXT:  (loop $l
