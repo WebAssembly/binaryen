@@ -683,11 +683,12 @@ private:
       auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
 
       // The original function now only has the if, which will call the outlined
-      // heavy work.
+      // heavy work with a flipped condition.
       std::vector<Expression*> args;
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
+      iff->condition = builder.makeUnary(EqZInt32, iff->condition);
       iff->ifTrue = builder.makeCall(newName, args, Type::none);
       func->body = iff;
 

@@ -26,7 +26,9 @@
 
   ;; CHECK:      (func $maybe-work-hard (param $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $maybe-work-hard$byn-outline-A
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
@@ -48,7 +50,9 @@
   ;; CHECK:      (func $condition-eqz (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (i32.eqz
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $condition-eqz$byn-outline-A
   ;; CHECK-NEXT:    (local.get $x)
@@ -72,7 +76,9 @@
 
   ;; CHECK:      (func $condition-global
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $glob)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (global.get $glob)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $condition-global$byn-outline-A)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -90,8 +96,10 @@
 
   ;; CHECK:      (func $condition-ref.is (param $x anyref)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $condition-ref.is$byn-outline-A
   ;; CHECK-NEXT:    (local.get $x)
@@ -278,7 +286,9 @@
 
   ;; CHECK:      (func $colliding-name (param $x i32)
   ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $colliding-name$byn-outline-A_0
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
