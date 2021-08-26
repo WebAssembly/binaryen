@@ -676,7 +676,8 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>()) {
-      auto newName = Names::getValidFunctionName(*module, func->name.str + std::string("$byn-outline-A"));
+      auto newName = Names::getValidFunctionName(
+        *module, func->name.str + std::string("$byn-outline-A"));
 
       // TODO: we could avoid some of the copying here
       auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
@@ -710,7 +711,8 @@ private:
     // where A and B are very simple. The body of the if must be unreachable.
     if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
         list.size() == 2 && isSimple(list[1])) {
-      auto newName = Names::getValidFunctionName(*module, func->name.str + std::string("$byn-outline-B"));
+      auto newName = Names::getValidFunctionName(
+        *module, func->name.str + std::string("$byn-outline-B"));
 
       // TODO: we could avoid some of the copying here
       auto* heavyWork = ModuleUtils::copyFunction(func, *module, newName);
@@ -721,7 +723,8 @@ private:
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
-      iff->ifTrue = builder.makeReturn(builder.makeCall(newName, args, func->getResults()));
+      iff->ifTrue =
+        builder.makeReturn(builder.makeCall(newName, args, func->getResults()));
 
       // The outlined function just contains the heavy work.
       // TODO: see comment in the pattern above

@@ -32,9 +32,8 @@ namespace ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied).
-inline Function* copyFunction(Function* func,
-                              Module& out,
-                              Name newName=Name()) {
+inline Function*
+copyFunction(Function* func, Module& out, Name newName = Name()) {
   auto* ret = new Function();
   ret->name = newName.is() ? newName : func->name;
   ret->type = func->type;
