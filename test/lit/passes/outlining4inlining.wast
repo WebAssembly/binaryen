@@ -3,8 +3,25 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --all-features -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
+
+  ;; CHECK:      (import "out" "func" (func $import))
   (import "out" "func" (func $import))
 
+  ;; CHECK:      (func $maybe-work-hard (param $x i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $l
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (br $l)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $maybe-work-hard (param $x i32)
     (if
       (i32.eqz
