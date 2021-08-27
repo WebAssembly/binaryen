@@ -2745,8 +2745,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
       // having type "func" and not a specialized type. However, if we have a
       // table with a specialized type then we must emit that type (as our type
       // must be a subtype of that type).
-      bool hasTableOfSpecializedType = curr->table.is() &&
-            currModule->getTable(curr->table)->type != Type::funcref;
+      bool hasTableOfSpecializedType =
+        curr->table.is() &&
+        currModule->getTable(curr->table)->type != Type::funcref;
       if (allElementsRefFunc && !hasTableOfSpecializedType) {
         o << "func";
       } else {

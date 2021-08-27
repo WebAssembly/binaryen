@@ -621,8 +621,8 @@ void WasmBinaryWriter::writeElementSegments() {
       // If this element segment has a table, and the table has a specialized
       // type, emit our type in full here (as our type must be a subtype of that
       // type). Otherwise, assume we are an MVP table and emit funcref.
-      bool hasTableOfSpecializedType = hasTableIndex &&
-            wasm->getTable(segment->table)->type != Type::funcref;
+      bool hasTableOfSpecializedType =
+        hasTableIndex && wasm->getTable(segment->table)->type != Type::funcref;
       if (usesExpressions || hasTableOfSpecializedType) {
         // elemType
         writeType(segment->type);
