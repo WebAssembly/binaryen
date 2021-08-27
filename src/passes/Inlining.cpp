@@ -630,7 +630,7 @@ struct Inlining : public Pass {
     // When optimizing heavily for size, we may potentially split functions in
     // order to inline parts of them.
     if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
-      functionSplitter = std::make_unique<FunctionSplitter>(module, runner->options, infos);
+      functionSplitter = std::make_unique<FunctionSplitter>(module, runner->options);
     }
 
     // No point to do more iterations than the number of functions, as it means
