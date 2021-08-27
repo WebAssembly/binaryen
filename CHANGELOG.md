@@ -19,6 +19,9 @@ Current Trunk
   IgnoreImplicitTraps, but can be used safely in more cases. IgnoreImplicitTraps
   is now deprecated.
 
+- Adds type argument for BinaryenAddTable method (#4107). For the binaryen.js api
+  this parameter is optional and by default set to anyfunc type.
+
 v101
 ----
 
