@@ -88,9 +88,6 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
     blockIndices[blocks[i].get()] = i;
   }
 
-  // Use a nonsense value to indicate what has yet to be initialized.
-  const Index nonsense = -1;
-
   // Initialize the iDoms array. The entry starts with its own index, which is
   // used as a guard value in effect (we will never process it, and we will fix
   // up this value at the very end). All other nodes start with a nonsense value
