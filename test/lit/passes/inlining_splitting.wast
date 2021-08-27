@@ -632,16 +632,6 @@
     (call $if-non-return (i32.const 1))
   )
 
-  ;; CHECK:      (func $colliding-name (param $x i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (loop $l
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (br $l)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $colliding-name (param $x i32)
     ;; When we outline this, the name should not collide with that of the
     ;; function after us.
@@ -655,10 +645,49 @@
     )
   )
 
-  ;; CHECK:      (func $colliding-name$byn-outline-A
+  ;; CHECK:      (func $call-colliding-name
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$colliding-name$byn-outline-A-inlineable
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $colliding-name$byn-outline-A-outlined_0
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$colliding-name$byn-outline-A-inlineable0
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $colliding-name$byn-outline-A-outlined_0
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-colliding-name
+    (call $colliding-name (i32.const 0))
+    (call $colliding-name (i32.const 1))
+  )
+
+  ;; CHECK:      (func $colliding-name$byn-outline-A-outlined
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $colliding-name$byn-outline-A
+  (func $colliding-name$byn-outline-A-outlined
   )
 
   ;; Pattern B: functions containing
@@ -796,6 +825,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $start-used-globally$byn-outline-A-outlined
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $colliding-name$byn-outline-A-outlined_0 (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
