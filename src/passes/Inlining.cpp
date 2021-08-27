@@ -55,9 +55,7 @@ struct FunctionInfo {
   bool usedGlobally; // in a table or export
   bool uninlineable;
 
-  FunctionInfo() {
-    clear();
-  }
+  FunctionInfo() { clear(); }
 
   void clear() {
     refs = 0;
@@ -361,28 +359,6 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
   return block;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 //
 // Function splitting.
 //
@@ -453,7 +429,8 @@ struct FunctionSplitter {
 
   // Receive the module and the info about function inlineability. We will
   // update that info if/when we split.
-  FunctionSplitter(Module* module, PassOptions& options, NameInfoMap& infos) : module(module), options(options), infos(infos) {}
+  FunctionSplitter(Module* module, PassOptions& options, NameInfoMap& infos)
+    : module(module), options(options), infos(infos) {}
 
   void run() {
     // Find functions that might benefit from outlining.
@@ -635,28 +612,6 @@ private:
     assert(!outlined.worthInlining(options));
   }
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 struct Inlining : public Pass {
   // This pass changes locals and parameters.
