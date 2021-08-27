@@ -703,11 +703,12 @@ struct Inlining : public Pass {
     for (auto& func : module->functions) {
       infos[func->name];
     }
-    PassRunner runner(module);
-    FunctionInfoScanner scanner(&infos);
-    scanner.run(&runner, module);
-    // fill in global uses
-    scanner.walkModuleCode(module);
+    {
+      PassRunner runner(module);
+      FunctionInfoScanner scanner(&infos);
+      scanner.run(&runner, module);
+      scanner.walkModuleCode(module);
+    }
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
         infos[ex->value].usedGlobally = true;
