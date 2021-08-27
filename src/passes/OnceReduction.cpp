@@ -55,9 +55,10 @@ struct OptInfo {
   // Maps global names to whether they are possible indicators of "once"
   // functions. A "once" global has these properties:
   //
-  //  * They begin as 0.
   //  * They are only ever written to with non-zero values.
-  //  * All writes to the global occur after a check for the global being 0.
+  //  * They are never read from except in the beginning of a "once" function
+  //    (otherwise, execution might be affected by the specific values of the
+  //    global, instead of just using it to guard the "once" function).
   //
   // Those properties ensure that the global is monotonic in the sense that it
   // begins at zero and, if they are written to, will only receive a non-zero
