@@ -530,7 +530,7 @@ std::cout << "  maybeSplit\n";
         builder.makeUnary(EqZInt32, inlineableIf->condition);
       inlineableIf->ifTrue =
         builder.makeCall(split.outlined->name, args, Type::none);
-      func->body = inlineableIf;
+      split.inlineable->body = inlineableIf;
 
       // The outlined heavy work no longer needs the initial if.
       // TODO: If we handle the case with indirect calls and other global uses
