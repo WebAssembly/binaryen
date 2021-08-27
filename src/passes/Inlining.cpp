@@ -508,13 +508,13 @@ private:
 
       // The inlineable function now only has the if, which will call the
       // outlined heavy work with a flipped condition.
-      auto* inlineableIf = getIf(inlineable->body);
+      auto* inlineableIf = getIf(split.inlineable->body);
       std::vector<Expression*> args;
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
       inlineableIf->condition = builder.makeUnary(EqZInt32, inlineableIf->condition);
-      inlineableIf->ifTrue = builder.makeCall(newName, args, Type::none);
+      inlineableIf->ifTrue = builder.makeCall(split.outlined->name, args, Type::none);
       func->body = inlineableIf;
 
       // The outlined heavy work no longer needs the initial if.
@@ -543,13 +543,13 @@ private:
 
       // The inlineable function now only has the if, which will call the
       // outlined heavy work, plus the content after the if.
-      auto* inlineableIf = getIf(inlineable->body);
+      auto* inlineableIf = getIf(split.inlineable->body);
       std::vector<Expression*> args; // TODO helper
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
       inlineableIf->ifTrue =
-        builder.makeReturn(builder.makeCall(newName, args, func->getResults()));
+        builder.makeReturn(builder.makeCall(split.outlined->name, args, func->getResults()));
 
       // The outlined function just contains the heavy work.
       // TODO: see comment in the pattern above
