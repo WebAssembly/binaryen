@@ -35,7 +35,7 @@
 //  ..stuff..
 //  foo(); // this call can be removed
 //
-// The latter call is can be removed since it has definitely run by then.
+// The latter call can be removed since it has definitely run by then.
 //
 
 #include <atomic>
