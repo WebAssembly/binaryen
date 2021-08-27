@@ -386,6 +386,19 @@
     )
   )
 
+  ;; CHECK:      (func $call-condition-disallow-binary
+  ;; CHECK-NEXT:  (call $condition-disallow-binary
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $condition-disallow-binary
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-condition-disallow-binary
+    (call $condition-disallow-binary (i32.const 0))
+    (call $condition-disallow-binary (i32.const 1))
+  )
+
   ;; CHECK:      (func $condition-disallow-unreachable (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
@@ -412,6 +425,19 @@
     )
   )
 
+  ;; CHECK:      (func $call-condition-disallow-unreachable
+  ;; CHECK-NEXT:  (call $condition-disallow-unreachable
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $condition-disallow-unreachable
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-condition-disallow-unreachable
+    (call $condition-disallow-unreachable (i32.const 0))
+    (call $condition-disallow-unreachable (i32.const 1))
+  )
+
   ;; CHECK:      (func $start-used-globally
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $glob)
@@ -434,6 +460,33 @@
       (call $import)
       (br $l)
     )
+  )
+
+  ;; CHECK:      (func $call-start-used-globally
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$start-used-globally$byn-outline-A-inlineable
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (global.get $glob)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $start-used-globally$byn-outline-A-outlined)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$start-used-globally$byn-outline-A-inlineable0
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (global.get $glob)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $start-used-globally$byn-outline-A-outlined)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-start-used-globally
+    (call $start-used-globally)
+    (call $start-used-globally)
   )
 
   ;; CHECK:      (func $inlineable
@@ -679,6 +732,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $condition-ref.is$byn-outline-A-outlined (param $x anyref)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $start-used-globally$byn-outline-A-outlined
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
