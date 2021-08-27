@@ -806,7 +806,7 @@ struct Inlining : public Pass {
     // function, must always be accurate.
     auto& originalInfo = infos[func->name];
     auto& inlineableInfo = infos[ret->name];
-    auto& outlinedInfo = infos[functionSplitter->getOutlinedSplitFunction(func);
+    auto& outlinedInfo = infos[functionSplitter->getOutlinedSplitFunction(func)->name];
 
     // There is a call from the function we are inlining into to the new
     // inlineable one, which replaces a call to the original function that we
@@ -823,7 +823,7 @@ struct Inlining : public Pass {
 
     // There is an additional call to the outlined function, from the inlineable
     // one (that will shortly be code inside the function we are inling into).
-    auto& outlinedInfo.refs++;
+    outlinedInfo.refs++;
 
     return ret;
   }
