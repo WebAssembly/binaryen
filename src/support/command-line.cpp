@@ -124,16 +124,18 @@ void Options::parse(int argc, const char* argv[]) {
   assert(argc > 0 && "expect at least program name as an argument");
   size_t positionalsSeen = 0;
   auto dashes = [](const std::string& s) {
-    for (size_t i = 0;; ++i) {
+    for (size_t i = 0; i < s.size(); ++i) {
       if (s[i] != '-') {
         return i;
       }
     }
+    return s.size();
   };
   for (size_t i = 1, e = argc; i != e; ++i) {
     std::string currentOption = argv[i];
 
-    if (dashes(currentOption) == 0) {
+    // "-" alone is a positional option
+    if (dashes(currentOption) == 0 || currentOption == "-") {
       // Positional.
       switch (positional) {
         case Arguments::Zero:

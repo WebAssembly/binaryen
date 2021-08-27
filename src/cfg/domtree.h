@@ -121,9 +121,9 @@ DomTree<BasicBlock>::DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks) {
           continue;
         }
 
-        // All of our predecessors must have been processed. The only exception
-        // is if they are unreachable from the entry, in which case, so are we,
-        // and both nodes will remain unprocessed forever.
+        // All of our predecessors will have been processed before us, except
+        // if they are unreachable from the entry, in which case, we can ignore
+        // them.
         if (iDoms[predIndex] == nonsense) {
           continue;
         }

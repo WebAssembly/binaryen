@@ -3512,8 +3512,9 @@ BinaryenExportRef BinaryenGetExportByIndex(BinaryenModuleRef module,
 BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   const char* name,
                                   BinaryenIndex initial,
-                                  BinaryenIndex maximum) {
-  auto table = Builder::makeTable(name, Type::funcref, initial, maximum);
+                                  BinaryenIndex maximum,
+                                  BinaryenType tableType) {
+  auto table = Builder::makeTable(name, Type(tableType), initial, maximum);
   table->hasExplicitName = true;
   return ((Module*)module)->addTable(std::move(table));
 }
