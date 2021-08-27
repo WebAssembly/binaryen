@@ -584,6 +584,19 @@
     )
   )
 
+  ;; CHECK:      (func $call-if-else
+  ;; CHECK-NEXT:  (call $if-else
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $if-else
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-if-else
+    (call $if-else (i32.const 0))
+    (call $if-else (i32.const 1))
+  )
+
   ;; CHECK:      (func $if-non-return (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
@@ -604,6 +617,19 @@
       (call $import)
       (br $l)
     )
+  )
+
+  ;; CHECK:      (func $call-if-non-return
+  ;; CHECK-NEXT:  (call $if-non-return
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $if-non-return
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-if-non-return
+    (call $if-non-return (i32.const 0))
+    (call $if-non-return (i32.const 1))
   )
 
   ;; CHECK:      (func $colliding-name (param $x i32)
