@@ -3378,7 +3378,6 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
   bool usesExpressions) {
 
   for (; i < s.size(); i++) {
-    std::cout << *(s[i]) << '\n';
     if (!s[i]->isList()) {
       // A function name appears here.
       auto func = getFunctionName(*s[i]);
