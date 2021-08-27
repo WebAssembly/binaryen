@@ -49,9 +49,7 @@ template<typename BasicBlock> struct DomTree {
 
   // Use a nonsense value to indicate what has yet to be initialized or what is
   // irrelevant.
-  enum {
-    nonsense = Index(-1)
-  };
+  enum { nonsense = Index(-1) };
 
   DomTree(std::vector<std::unique_ptr<BasicBlock>>& blocks);
 };
