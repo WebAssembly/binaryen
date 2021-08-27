@@ -9,6 +9,11 @@
 
   ;; CHECK:      (type $anyref_=>_anyref (func (param anyref) (result anyref)))
 
+  ;; CHECK:      (type $struct (struct ))
+  (type $struct (struct))
+
+  ;; CHECK:      (type $i32_rtt_$struct_=>_none (func (param i32 (rtt $struct))))
+
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
   ;; CHECK:      (import "out" "func" (func $import))
@@ -99,6 +104,39 @@
     (call $maybe-work-hard (i32.const 1))
     (call $maybe-work-hard (i32.const 2))
     (call $maybe-work-hard (i32.const 3))
+  )
+
+  ;; CHECK:      (func $nondefaultable-param (param $x i32) (param $y (rtt $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (loop $l
+  ;; CHECK-NEXT:   (call $import)
+  ;; CHECK-NEXT:   (br $l)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nondefaultable-param (param $x i32) (param $y (rtt $struct))
+    ;; The RTT param here prevents us from even being inlined, even with
+    ;; splitting.
+    (if
+      (local.get $x)
+      (return)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
+
+  ;; CHECK:      (func $call-nondefaultable-param
+  ;; CHECK-NEXT:  (call $nondefaultable-param
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (rtt.canon $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-nondefaultable-param
+    (call $nondefaultable-param (i32.const 0) (rtt.canon $struct))
   )
 
   ;; CHECK:      (func $condition-eqz (param $x i32)
