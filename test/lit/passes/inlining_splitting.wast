@@ -695,18 +695,6 @@
   ;;   if (simple1) heavy-work-that-is-unreachable;
   ;;   simple2
 
-  ;; CHECK:      (func $error-if-null (param $x anyref) (result anyref)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $block
-  ;; CHECK-NEXT:    (call $import)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $x)
-  ;; CHECK-NEXT: )
   (func $error-if-null (param $x anyref) (result anyref)
     ;; A "as non null" function: If the input is null, issue an error somehow
     ;; (here, by calling an import, but could also be a throwing of an
@@ -721,6 +709,59 @@
       )
     )
     (local.get $x)
+  )
+
+  ;; CHECK:      (func $call-error-if-null
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (local $1 anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$error-if-null$byn-outline-A-inlineable (result anyref)
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (br $__inlined_func$error-if-null$byn-outline-A-inlineable
+  ;; CHECK-NEXT:        (call $error-if-null$byn-outline-A-outlined
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result anyref)
+  ;; CHECK-NEXT:    (block $__inlined_func$error-if-null$byn-outline-A-inlineable0 (result anyref)
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (ref.null any)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result anyref)
+  ;; CHECK-NEXT:      (if
+  ;; CHECK-NEXT:       (ref.is_null
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (br $__inlined_func$error-if-null$byn-outline-A-inlineable0
+  ;; CHECK-NEXT:        (call $error-if-null$byn-outline-A-outlined
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-error-if-null
+    (drop (call $error-if-null (ref.null any)))
+    (drop (call $error-if-null (ref.null any)))
   )
 
   ;; CHECK:      (func $too-many (param $x anyref) (result anyref)
@@ -835,5 +876,12 @@
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $error-if-null$byn-outline-A-outlined (param $x anyref) (result anyref)
+;; CHECK-NEXT:  (block $block
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (unreachable)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
