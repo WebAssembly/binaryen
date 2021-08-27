@@ -869,6 +869,23 @@
     )
     (local.get $x)
   )
+
+  ;; CHECK:      (func $call-reachable-if-body
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $reachable-if-body
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $reachable-if-body
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-reachable-if-body
+    (drop (call $reachable-if-body (ref.null any)))
+    (drop (call $reachable-if-body (ref.null any)))
+  )
 )
 
 ;; CHECK:      (func $maybe-work-hard$byn-outline-A-outlined (param $x i32)
