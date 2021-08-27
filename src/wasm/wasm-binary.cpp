@@ -628,7 +628,7 @@ void WasmBinaryWriter::writeElementSegments() {
         writeType(segment->type);
       } else {
         // elemKind funcref
-        o << U32LEB(0);
+        writeType(Type::funcref);
       }
     }
     o << U32LEB(segment->data.size());
