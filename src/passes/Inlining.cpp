@@ -423,15 +423,13 @@ struct FunctionSplitter {
 
   // Check if an uninlineable function could be split in order to at least
   // inline part of it.
-  bool worthSplitting(Function* func, const FunctionInfo& info) {
-    assert(!info.worthInlining(options));
+  bool worthSplitting(Function* func) {
     return maybeSplit(func);
   }
 
   // Returns the function we can inline, after we split the function into
   // pieces.
-  Function* getInlineableSplitFunction(Function* func, const FunctionInfo& info) {
-    assert(!info.worthInlining(options));
+  Function* getInlineableSplitFunction(Function* func) {
     Function* inlineable = nullptr;
     auto success = maybeSplit(func, &inlineable);
     assert(success && inlineable);
@@ -701,7 +699,7 @@ struct Inlining : public Pass {
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
-      if (infos[func->name].worthInlining(runner->options)) {
+      if (worthInlining(func->name)) {
         state.worthInlining.insert(func->name);
       }
     });
@@ -727,7 +725,7 @@ struct Inlining : public Pass {
         continue;
       }
       for (auto& action : state.actionsForFunction[func->name]) {
-        auto* inlinedFunction = action.contents;
+        auto* inlinedFunction = getInlinedFunction(action.contents);
         // if we've inlined into a function, don't inline it in this iteration,
         // avoid risk of races
         // note that we do not risk stalling progress, as each iteration() will
@@ -762,6 +760,33 @@ struct Inlining : public Pass {
       return inlinedUses.count(name) && inlinedUses[name] == info.refs &&
              !info.usedGlobally;
     });
+  }
+
+  bool worthInlining(Name name) {
+    // Check if the function itself is worth inlining as it is.
+    if (infos[func->name].worthInlining(runner->options)) {
+      return true;
+    }
+
+    // Otherwise, check if we can at least inline part of it, if we are
+    // interested in such things.
+    if (functionSplitter && functionSplitter->worthSplitting(module->getFunction(name))) {
+      return true;
+    }
+
+    return false;
+  }
+
+  Function* getInlinedFunction(Function* func) {
+    // If we want to inline this function itself, do so.
+    if (infos[func->name].worthInlining(runner->options)) {
+      return func;
+    }
+
+    // Otherwise, this is a case where we want to inline part of it, after
+    // splitting.
+    assert(functionSplitter);
+    return functionSplitter->getInlineableSplitFunction(func);
   }
 
   // Checks if the combined size of the code after inlining is under the
