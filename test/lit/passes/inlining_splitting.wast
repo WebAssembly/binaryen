@@ -14,9 +14,9 @@
 
   ;; CHECK:      (type $i32_rtt_$struct_=>_none (func (param i32 (rtt $struct))))
 
-  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
-
   ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
+
+  ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
 
   ;; CHECK:      (import "out" "func" (func $import))
   (import "out" "func" (func $import))
@@ -301,18 +301,6 @@
     )
   )
 
-  ;; CHECK:      (func $condition-ref.is (param $x anyref)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (ref.is_null
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (loop $l
-  ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (br $l)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $condition-ref.is (param $x anyref)
     (if
       ;; A ref.is operation.
@@ -325,6 +313,49 @@
       (call $import)
       (br $l)
     )
+  )
+
+  ;; CHECK:      (func $call-condition-ref.is
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (local $1 anyref)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$condition-ref.is$byn-outline-A-inlineable
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (ref.is_null
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $condition-ref.is$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$condition-ref.is$byn-outline-A-inlineable0
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (ref.null any)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (ref.is_null
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $condition-ref.is$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-condition-ref.is
+    (call $condition-ref.is (ref.null any))
+    (call $condition-ref.is (ref.null any))
   )
 
   ;; CHECK:      (func $condition-disallow-binary (param $x i32)
@@ -641,6 +672,13 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $condition-eqz$byn-outline-A-outlined (param $x i32)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $condition-ref.is$byn-outline-A-outlined (param $x anyref)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
