@@ -3377,30 +3377,29 @@ ElementSegment* SExpressionWasmBuilder::parseElemFinish(
   Index i,
   bool usesExpressions) {
 
-  if (usesExpressions) {
-    for (; i < s.size(); i++) {
-      if (!s[i]->isList()) {
-        throw ParseException("expected a ref.* expression.");
-      }
-      auto& inner = *s[i];
-      if (elementStartsWith(inner, ITEM)) {
-        if (inner[1]->isList()) {
-          // (item (ref.func $f))
-          segment->data.push_back(parseExpression(inner[1]));
-        } else {
-          // (item ref.func $f)
-          inner.list().removeAt(0);
-          segment->data.push_back(parseExpression(inner));
-        }
-      } else {
-        segment->data.push_back(parseExpression(inner));
-      }
-    }
-  } else {
-    for (; i < s.size(); i++) {
+  for (; i < s.size(); i++) {
+    std::cout << *(s[i]) << '\n';
+    if (!s[i]->isList()) {
+      // A function name appears here.
       auto func = getFunctionName(*s[i]);
       segment->data.push_back(
         Builder(wasm).makeRefFunc(func, functionTypes[func]));
+      continue;
+    }
+
+    // An expression like (ref.func ..) appears here.
+    auto& inner = *s[i];
+    if (elementStartsWith(inner, ITEM)) {
+      if (inner[1]->isList()) {
+        // (item (ref.func $f))
+        segment->data.push_back(parseExpression(inner[1]));
+      } else {
+        // (item ref.func $f)
+        inner.list().removeAt(0);
+        segment->data.push_back(parseExpression(inner));
+      }
+    } else {
+      segment->data.push_back(parseExpression(inner));
     }
   }
   return wasm.addElementSegment(std::move(segment));

@@ -618,7 +618,12 @@ void WasmBinaryWriter::writeElementSegments() {
     }
 
     if (isPassive || hasTableIndex) {
-      if (usesExpressions) {
+      // If this element segment has a table, and the table has a specialized
+      // type, emit our type in full here (as our type must be a subtype of that
+      // type). Otherwise, assume we are an MVP table and emit funcref.
+      bool hasTableOfSpecializedType = hasTableIndex &&
+            wasm->getTable(segment->table)->type != Type::funcref;
+      if (usesExpressions || hasTableOfSpecializedType) {
         // elemType
         writeType(segment->type);
       } else {
@@ -2885,16 +2890,9 @@ void WasmBinaryBuilder::readElementSegments() {
     }
 
     if (isPassive || hasTableIdx) {
-      if (usesExpressions) {
-        segment->type = getType();
-        if (!segment->type.isFunction()) {
-          throwError("Invalid type for an element segment");
-        }
-      } else {
-        auto elemKind = getU32LEB();
-        if (elemKind != 0x0) {
-          throwError("Only funcref elem kinds are valid.");
-        }
+      segment->type = getType();
+      if (!segment->type.isFunction()) {
+        throwError("Invalid type for an element segment");
       }
     }
 

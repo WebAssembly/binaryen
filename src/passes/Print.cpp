@@ -2740,7 +2740,14 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
         return entry->is<RefFunc>();
       });
     auto printElemType = [&]() {
-      if (allElementsRefFunc) {
+      // If all elements are ref.func, then we may be a simple MVP table. We
+      // populate such tables with ref.func internally, but we print them as
+      // having type "func" and not a specialized type. However, if we have a
+      // table with a specialized type then we must emit that type (as our type
+      // must be a subtype of that type).
+      bool hasTableOfSpecializedType = curr->table.is() &&
+            currModule->getTable(curr->table)->type != Type::funcref;
+      if (allElementsRefFunc && !hasTableOfSpecializedType) {
         o << "func";
       } else {
         printType(o, curr->type, currModule);
