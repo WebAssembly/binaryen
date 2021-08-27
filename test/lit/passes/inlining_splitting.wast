@@ -3,20 +3,20 @@
 ;; RUN: foreach %s %t wasm-opt --inlining --optimize-level=3 --all-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $i32_=>_none (func (param i32)))
-
   ;; CHECK:      (type $none_=>_none (func))
+
+  ;; CHECK:      (type $i32_=>_none (func (param i32)))
 
   ;; CHECK:      (type $anyref_=>_anyref (func (param anyref) (result anyref)))
 
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
-  ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
-
   ;; CHECK:      (type $i32_rtt_$struct_=>_none (func (param i32 (rtt $struct))))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
+
+  ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
 
   ;; CHECK:      (import "out" "func" (func $import))
   (import "out" "func" (func $import))
@@ -595,34 +595,10 @@
   )
 )
 
-;; CHECK:      (func $maybe-work-hard$byn-outline-A-inlineable (param $x i32)
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (i32.eqz
-;; CHECK-NEXT:    (local.get $x)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (call $maybe-work-hard$byn-outline-A-outlined
-;; CHECK-NEXT:    (local.get $x)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
 ;; CHECK:      (func $maybe-work-hard$byn-outline-A-outlined (param $x i32)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $many-params$byn-outline-A-inlineable (param $x i64) (param $y i32) (param $z f64)
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (i32.eqz
-;; CHECK-NEXT:    (local.get $y)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (call $many-params$byn-outline-A-outlined
-;; CHECK-NEXT:    (local.get $x)
-;; CHECK-NEXT:    (local.get $y)
-;; CHECK-NEXT:    (local.get $z)
-;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 

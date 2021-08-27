@@ -446,6 +446,17 @@ struct FunctionSplitter {
     return splits[func].outlined;
   }
 
+  void finish() {
+    // When all work is complete, we no longer need the inlineable functions:
+    // they will have been inlined whereever we wanted to use them.
+    for (auto& kv : splits) {
+      auto* inlineable = kv.second.inlineable;
+      if (inlineable) {
+        module->removeFunction(inlineable->name);
+      }
+    }
+  }
+
 private:
   // The two pieces we get after splitting a function into two.
   struct Split {
@@ -685,12 +696,14 @@ struct Inlining : public Pass {
       std::cout << "inlining loop iter " << iterationNumber
                 << " (numFunctions: " << module->functions.size() << ")\n";
 #endif
+      iterationNumber++;
+
+      std::unordered_set<Function*> inlinedInto;
 
       prepare();
-
-      iterationNumber++;
-      std::unordered_set<Function*> inlinedInto;
       iteration(inlinedInto);
+      finish();
+
       if (inlinedInto.empty()) {
         return;
       }
@@ -810,6 +823,12 @@ struct Inlining : public Pass {
       return inlinedUses.count(name) && inlinedUses[name] == info.refs &&
              !info.usedGlobally;
     });
+  }
+
+  void finish() {
+    if (functionSplitter) {
+      functionSplitter->finish();
+    }
   }
 
   bool worthInlining(Name name) {
