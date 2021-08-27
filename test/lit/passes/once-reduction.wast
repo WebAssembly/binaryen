@@ -888,7 +888,7 @@
 )
 
 ;; Corner case: Optimization opportunties in unreachable code (which we can
-;; ignore, but should not error on.
+;; ignore, but should not error on).
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
