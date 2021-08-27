@@ -489,19 +489,37 @@
     (call $start-used-globally)
   )
 
-  ;; CHECK:      (func $inlineable
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $glob)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
   (func $inlineable
     ;; This looks optimizable, but it is also inlineable - so we do not need to
-    ;; outline it.
+    ;; split it. It will just be inlined directly, without any $outlined part
+    ;; that is split out.
     (if
       (global.get $glob)
       (return)
     )
+  )
+
+  ;; CHECK:      (func $call-inlineable
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$inlineable
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (global.get $glob)
+  ;; CHECK-NEXT:     (br $__inlined_func$inlineable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$inlineable0
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (global.get $glob)
+  ;; CHECK-NEXT:     (br $__inlined_func$inlineable0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-inlineable
+    (call $inlineable)
+    (call $inlineable)
   )
 
   ;; CHECK:      (func $if-not-first (param $x i32)
