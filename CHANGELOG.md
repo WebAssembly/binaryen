@@ -20,7 +20,7 @@ Current Trunk
   is now deprecated.
 
 - Adds type argument for BinaryenAddTable method (#4107). For the binaryen.js api
-  this parameter is optional and by default set to anyfunc type.
+  this parameter is optional and by default is set to funcref type.
 
 v101
 ----
