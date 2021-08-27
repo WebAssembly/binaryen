@@ -504,7 +504,7 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>()) {
-      startSplit(split);
+      startSplit(split, func);
 
       // The inlineable function now only has the if, which will call the
       // outlined heavy work with a flipped condition.
@@ -539,7 +539,7 @@ private:
     // where A and B are very simple. The body of the if must be unreachable.
     if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
         list.size() == 2 && isSimple(list[1])) {
-      startSplit(split);
+      startSplit(split, func);
 
       // The inlineable function now only has the if, which will call the
       // outlined heavy work, plus the content after the if.
@@ -561,7 +561,7 @@ private:
     return false;
   }
 
-  void startSplit(Split& split) {
+  void startSplit(Split& split, Function* func) {
     split.splittable = true;
 
     // TODO: we could avoid some of the copying here
@@ -620,7 +620,13 @@ struct Inlining : public Pass {
 
   std::unique_ptr<FunctionSplitter> functionSplitter;
 
-  void run(PassRunner* runner, Module* module) override {
+  PassRunner* runner = nullptr;
+  Module* module = nullptr;
+
+  void run(PassRunner* runner_, Module* module_) override {
+    runner = runner_;
+    module = module_;
+
     // When optimizing heavily for size, we may potentially split functions in
     // order to inline parts of them.
     if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
@@ -653,11 +659,11 @@ struct Inlining : public Pass {
                 << " (numFunctions: " << module->functions.size() << ")\n";
 #endif
 
-      calculateInfos(module);
+      calculateInfos();
 
       iterationNumber++;
       std::unordered_set<Function*> inlinedInto;
-      iteration(runner, module, inlinedInto);
+      iteration(inlinedInto);
       if (inlinedInto.empty()) {
         return;
       }
@@ -674,7 +680,7 @@ struct Inlining : public Pass {
     }
   }
 
-  void calculateInfos(Module* module) {
+  void calculateInfos() {
     infos.clear();
     // fill in info, as we operate on it in parallel (each function to its own
     // entry)
@@ -696,9 +702,7 @@ struct Inlining : public Pass {
     }
   }
 
-  void iteration(PassRunner* runner,
-                 Module* module,
-                 std::unordered_set<Function*>& inlinedInto) {
+  void iteration(std::unordered_set<Function*>& inlinedInto) {
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
@@ -767,7 +771,7 @@ struct Inlining : public Pass {
 
   bool worthInlining(Name name) {
     // Check if the function itself is worth inlining as it is.
-    if (infos[func->name].worthInlining(runner->options)) {
+    if (infos[name].worthInlining(runner->options)) {
       return true;
     }
 
