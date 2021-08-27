@@ -791,6 +791,23 @@
     (local.get $x)
   )
 
+  ;; CHECK:      (func $call-too-many
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $too-many
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $too-many
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-too-many
+    (drop (call $too-many (ref.null any)))
+    (drop (call $too-many (ref.null any)))
+  )
+
   ;; CHECK:      (func $tail-not-simple (param $x anyref) (result anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
