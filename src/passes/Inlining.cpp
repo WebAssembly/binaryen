@@ -45,6 +45,8 @@
 
 namespace wasm {
 
+namespace {
+
 // Useful into on a function, helping us decide if we can inline it
 struct FunctionInfo {
   std::atomic<Index> refs;
@@ -173,18 +175,6 @@ struct FunctionInfoScanner
     }
 
     info.size = Measurer::measure(curr->body);
-  }
-
-  void scanGlobally(PassRunner* runner, Module* module) {
-    walkModuleCode(module);
-    for (auto& ex : module->exports) {
-      if (ex->kind == ExternalKind::Function) {
-        (*infos)[ex->value].usedGlobally = true;
-      }
-    }
-    if (module->start.is()) {
-      (*infos)[module->start].usedGlobally = true;
-    }
   }
 
 private:
@@ -682,7 +672,15 @@ struct Inlining : public Pass {
     PassRunner runner(module);
     FunctionInfoScanner scanner(&infos);
     scanner.run(&runner, module);
-    scanner.scanGlobally(&runner, module);
+    scanner.walkModuleCode(module);
+    for (auto& ex : module->exports) {
+      if (ex->kind == ExternalKind::Function) {
+        infos[ex->value].usedGlobally = true;
+      }
+    }
+    if (module->start.is()) {
+      infos[module->start].usedGlobally = true;
+    }
   }
 
   void iteration(PassRunner* runner,
@@ -779,13 +777,7 @@ struct Inlining : public Pass {
   }
 };
 
-Pass* createInliningPass() { return new Inlining(); }
-
-Pass* createInliningOptimizingPass() {
-  auto* ret = new Inlining();
-  ret->optimize = true;
-  return ret;
-}
+} // anonymous namespace
 
 //
 // InlineMain
@@ -825,6 +817,14 @@ struct InlineMainPass : public Pass {
     doInlining(module, main, InliningAction(callSite, originalMain));
   }
 };
+
+Pass* createInliningPass() { return new Inlining(); }
+
+Pass* createInliningOptimizingPass() {
+  auto* ret = new Inlining();
+  ret->optimize = true;
+  return ret;
+}
 
 Pass* createInlineMainPass() { return new InlineMainPass(); }
 
