@@ -3514,18 +3514,7 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   BinaryenIndex initial,
                                   BinaryenIndex maximum,
                                   BinaryenType tableType) {
-  Type type = Type(tableType);
-  bool validType = type == Type::funcref;
-  if (((Module*)module)->features.hasReferenceTypes()) {
-    validType = validType || type == Type::externref;
-  }
-  if (((Module*)module)->features.hasGC()) {
-    validType = validType || type.isRef();
-  }
-  if (!validType) {
-    Fatal() << "invalid table type.";
-  }
-  auto table = Builder::makeTable(name, type, initial, maximum);
+  auto table = Builder::makeTable(name, Type(tableType), initial, maximum);
   table->hasExplicitName = true;
   return ((Module*)module)->addTable(std::move(table));
 }
