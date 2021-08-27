@@ -1269,7 +1269,7 @@ private:
     };
 
     RelevantLiveLocalsWalker walker;
-    if (!canRun(func)) {
+    if (!walker.canRun(func)) {
       // We can proceed without this optimization, which will cause more
       // spilling - assume all locals are relevant.
       for (Index i = 0; i < func->getNumLocals(); i++) {
