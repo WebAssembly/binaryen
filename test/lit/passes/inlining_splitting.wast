@@ -139,6 +139,55 @@
     (call $nondefaultable-param (i32.const 0) (rtt.canon $struct))
   )
 
+  (func $many-params (param $x i64) (param $y i32) (param $z f64)
+    ;; Test that we can optimize this function even though it has multiple
+    ;; parameters, and it is not the very first one that we use in the
+    ;; condition.
+    (if
+      (local.get $y)
+      (return)
+    )
+    (loop $l
+      (call $import)
+      (br $l)
+    )
+  )
+
+  ;; CHECK:      (func $call-many-params
+  ;; CHECK-NEXT:  (local $0 i64)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (block $__inlined_func$many-params
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (br $__inlined_func$many-params)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (loop $l
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:     (br $l)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (br $__inlined_func$many-params)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-many-params
+    ;; Call the above function to verify that we can in fact inline it after
+    ;; splitting. We should see each of these three calls replaced by inlined
+    ;; code performing the if from $maybe-work-hard, and depending on that
+    ;; result they each call the outlined code that must *not* be inlined.
+    (call $many-params (i64.const 0) (i32.const 1) (f64.const 3.14159))
+  )
+
   ;; CHECK:      (func $condition-eqz (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.eqz
