@@ -430,7 +430,6 @@ struct FunctionSplitter {
   Function* getInlineableSplitFunction(Function* func) {
     Function* inlineable = nullptr;
     auto success = maybeSplit(func, &inlineable);
-std::cout << "getISF " << func->name << " : " << success << " : " << inlineable << '\n';
     assert(success && inlineable);
     return inlineable;
   }
@@ -463,7 +462,6 @@ private:
   // is provided, also actually does the split, and returns the inlineable split
   // function in that out param.
   bool maybeSplit(Function* func, Function** inlineableOut = nullptr) {
-std::cout << "  maybeSplit\n";
     // Check if we've processed this input before.
     auto iter = splits.find(func);
     if (iter != splits.end()) {
@@ -584,7 +582,6 @@ std::cout << "  maybeSplit\n";
   }
 
   void startSplit(Split& split, Function* func) {
-std::cout << "  startSplt\n";
     split.splittable = true;
 
     // TODO: we could avoid some of the copying here
@@ -731,13 +728,11 @@ struct Inlining : public Pass {
   void iteration(std::unordered_set<Function*>& inlinedInto) {
     // decide which to inline
     InliningState state;
-std::cout << "loop1\n";
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
       if (worthInlining(func->name)) {
         state.worthInlining.insert(func->name);
       }
     });
-std::cout << "loop2\n";
     if (state.worthInlining.size() == 0) {
       return;
     }
@@ -777,13 +772,10 @@ std::cout << "loop2\n";
         }
 
         // Success - we can inline.
-std::cout << "inline1! " << func << " : " << func->name << " <= " << action.contents->name << '\n';
 #ifdef INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
         action.contents = getActuallyInlinedFunction(action.contents);
-std::cout << "inline2! " << func << " : " << func->name << '\n';
-std::cout <<"     <= " << action.contents->name << '\n';
         doInlining(module, func, action);
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func);
@@ -854,8 +846,6 @@ std::cout <<"     <= " << action.contents->name << '\n';
     // are splitting.
     originalInfo.refs--;
     inlineableInfo.refs++;
-
-std::cout << "get inlined " << ret->name << " : " << inlineableInfo.refs << '\n';
 
     // Note that as we are about to inline the inlineable function, we will
     // reduce its refs back to zero while doing so, so each time we get to this
