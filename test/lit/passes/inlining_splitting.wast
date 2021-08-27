@@ -41,7 +41,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller
+  ;; CHECK:      (func $call-maybe-work-hard
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -50,21 +50,14 @@
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (if
-  ;; CHECK-NEXT:      (i32.eqz
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $maybe-work-hard$byn-outline-A-outlined
-  ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (loop $l
-  ;; CHECK-NEXT:      (call $import)
-  ;; CHECK-NEXT:      (br $l)
+  ;; CHECK-NEXT:     (call $maybe-work-hard$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $0)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $__inlined_func$maybe-work-hard$byn-outline-A-inlineable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
@@ -72,43 +65,29 @@
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (if
-  ;; CHECK-NEXT:      (i32.eqz
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $maybe-work-hard$byn-outline-A-outlined
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (loop $l1
-  ;; CHECK-NEXT:      (call $import)
-  ;; CHECK-NEXT:      (br $l1)
+  ;; CHECK-NEXT:     (call $maybe-work-hard$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $__inlined_func$maybe-work-hard$byn-outline-A-inlineable0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$maybe-work-hard$byn-outline-A-inlineable2
+  ;; CHECK-NEXT:   (block $__inlined_func$maybe-work-hard$byn-outline-A-inlineable1
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (i32.const 3)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (if
-  ;; CHECK-NEXT:      (i32.eqz
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $maybe-work-hard$byn-outline-A-outlined
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (loop $l3
-  ;; CHECK-NEXT:      (call $import)
-  ;; CHECK-NEXT:      (br $l3)
+  ;; CHECK-NEXT:     (call $maybe-work-hard$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $__inlined_func$maybe-work-hard$byn-outline-A-inlineable2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -504,10 +483,6 @@
 ;; CHECK-NEXT:   (call $maybe-work-hard$byn-outline-A-outlined
 ;; CHECK-NEXT:    (local.get $x)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (loop $l
-;; CHECK-NEXT:   (call $import)
-;; CHECK-NEXT:   (br $l)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 

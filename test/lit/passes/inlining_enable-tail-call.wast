@@ -109,8 +109,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$multipass
-  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block $__inlined_func$multipass
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (block $__inlined_func$multipass2
   ;; CHECK-NEXT:       (drop
@@ -514,10 +514,10 @@
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (block $__inlined_func$1 (result i32)
- ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (br $__inlined_func$1
- ;; CHECK-NEXT:       (block (result i32)
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     (block $__inlined_func$1 (result i32)
+ ;; CHECK-NEXT:      (block
+ ;; CHECK-NEXT:       (br $__inlined_func$1
  ;; CHECK-NEXT:        (block $__inlined_func$2 (result i32)
  ;; CHECK-NEXT:         (i32.const 42)
  ;; CHECK-NEXT:        )
@@ -545,8 +545,11 @@
 
  ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (local $0 i32)
- ;; CHECK-NEXT:  (block $__inlined_func$1
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (block $__inlined_func$1
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (block
  ;; CHECK-NEXT:      (block $__inlined_func$2
@@ -557,11 +560,11 @@
  ;; CHECK-NEXT:        (local.get $0)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br $__inlined_func$1)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br $__inlined_func$1)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $__inlined_func$1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br $__inlined_func$1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
@@ -670,13 +673,13 @@
  )
  ;; CHECK:      (func $19
  ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block $__inlined_func$13
+ ;; CHECK-NEXT:   (block $__inlined_func$13
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (if
+ ;; CHECK-NEXT:      (global.get $global$0)
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (if
- ;; CHECK-NEXT:       (global.get $global$0)
- ;; CHECK-NEXT:       (unreachable)
- ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (block
  ;; CHECK-NEXT:       (block
  ;; CHECK-NEXT:        (block $__inlined_func$2
@@ -690,12 +693,12 @@
  ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (br $__inlined_func$13)
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (br $__inlined_func$13)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br $__inlined_func$13)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $__inlined_func$13)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
