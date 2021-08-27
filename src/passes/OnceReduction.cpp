@@ -53,7 +53,7 @@ namespace {
 
 struct OptInfo {
   // Maps global names to whether they are possible indicators of "once"
-  // functions. That means:
+  // functions. A "once" global has these properties:
   //
   //  * They begin as 0.
   //  * They are only ever written to with non-zero values.
@@ -64,13 +64,15 @@ struct OptInfo {
   // value - they never return to 0.
   std::unordered_map<Name, std::atomic<bool>> onceGlobals;
 
-  // Maps functions to whether they are run-once, by indicating the global that
-  // they use for that purpose. An empty name means they are not once.
+  // Maps functions to whether they are "once", by indicating the global that
+  // they use for that purpose. An empty name means they are not "once".
   std::unordered_map<Name, Name> onceFuncs;
 
   // For each function, the "once" globals that are definitely set after calling
   // it. If the function is "once" itself, that is included, but it also
-  // includes any other "once" functions we call, and so forth.
+  // includes any other "once" functions we definitely call, and so forth.
+  // The "new" version is written to in each iteration, and then swapped with
+  // the main one (to avoid reading and writing in parallel).
   std::unordered_map<Name, std::unordered_set<Name>> onceGlobalsSetInFuncs,
     newOnceGlobalsSetInFuncs;
 };
@@ -83,7 +85,9 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
   Scanner* create() override { return new Scanner(optInfo); }
 
   // All the globals we read from. Any read of a global prevents us from
-  // optimizing, unless it is the single read at the top of an "only" function.
+  // optimizing, unless it is the single read at the top of an "only" function
+  // (as other reads might be used to check for the value of the global in
+  // complex ways that we do not want to try to reason about).
   std::unordered_map<Name, Index> readGlobals;
 
   void visitGlobalGet(GlobalGet* curr) { readGlobals[curr->name]++; }
@@ -111,7 +115,9 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
     if (curr->getParams() == Type::none && curr->getResults() == Type::none) {
       auto global = getOnceGlobal(curr->body);
       if (global.is()) {
-        // This is a "once" function.
+        // This is a "once" function, as best we can tell for now. Further
+        // information may cause a problem, say, if the global is used in a bad
+        // way in another function, so we may undo this.
         optInfo.onceFuncs.at(curr->name) = global;
 
         // We can ignore the get in the "once" pattern at the top of the
@@ -124,11 +130,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
       auto global = kv.first;
       auto count = kv.second;
       if (count > 0) {
-        // This globals has reads we cannot reason about, so do not optimize it.
-        // Note that we may end up de-optimizing the very global that earlier
-        // above we saw as the "once" global of the function, but we will handle
-        // that later anyhow after we know enough about globals (which is only
-        // after we are done with all functions).
+        // This global has reads we cannot reason about, so do not optimize it.
         optInfo.onceGlobals.at(global) = false;
       }
     }
@@ -167,6 +169,7 @@ struct Scanner : public WalkerPass<PostWalker<Scanner>> {
       return Name();
     }
     auto* set = list[1]->dynCast<GlobalSet>();
+
     // Note that we have already checked the set's value earlier, but we do need
     // it to not be unreachable (so it is actually set).
     if (!set || set->name != get->name || set->type == Type::unreachable) {
@@ -179,7 +182,7 @@ private:
   OptInfo& optInfo;
 };
 
-// Information in a basic block. We track relevant expressions which are calls
+// Information in a basic block. We track relevant expressions, which are calls
 // calls to "once" functions, and writes to "once" globals.
 struct BlockInfo {
   std::vector<Expression*> exprs;
@@ -209,8 +212,7 @@ struct Optimizer
     using Parent =
       WalkerPass<CFGWalker<Optimizer, Visitor<Optimizer>, BlockInfo>>;
 
-    // Walk the function, which optimizes some calls and which also builds the
-    // CFG.
+    // Walk the function to builds the CFG.
     Parent::doWalkFunction(func);
 
     // Build a dominator tree, which then tells us what to remove: if a call
@@ -224,6 +226,9 @@ struct Optimizer
     if (numBlocks == 0) {
       return;
     }
+
+    // Each index in this vector is the set of "once" globals written to in the
+    // basic block with the same index.
     std::vector<std::unordered_set<Name>> onceGlobalsWrittenVec;
     onceGlobalsWrittenVec.resize(numBlocks);
 
@@ -231,29 +236,29 @@ struct Optimizer
       auto* block = basicBlocks[i].get();
 
       // Note that we take a reference here, which is how the data we accumulate
-      // ends up stored for blocks we dominate to see later.
+      // ends up stored. The blocks we dominate will see it later.
       auto& onceGlobalsWritten = onceGlobalsWrittenVec[i];
 
       // Note information from our immediate dominator.
       // TODO: we could also intersect information from all of our preds.
       auto parent = domTree.iDoms[i];
       if (parent == domTree.nonsense) {
-        // This is either the entry node, or an unreachable block.
+        // This is either the entry node (which we need to process), or an
+        // unreachable block (which we do not - leave that to DCE).
         if (i > 0) {
-          // We do not need to process unreachable blocks (leave that to DCE).
           continue;
         }
       } else {
         // This block has an immediate dominator, so we know that everything
-        // written to there can be assumed writte.
+        // written to there can be assumed written.
         onceGlobalsWritten = onceGlobalsWrittenVec[parent];
       }
 
       // Process the block's expressions.
       auto& exprs = block->contents.exprs;
       for (auto* expr : exprs) {
-        // Check if this is a "once" global or call to a "once" function, and
-        // optimize if so.
+        // Given the name of a "once" global that is written by this
+        // instruction, optimize.
         auto optimizeOnce = [&](Name globalName) {
           assert(optInfo.onceGlobals.at(globalName));
           if (onceGlobalsWritten.count(globalName)) {
@@ -264,7 +269,8 @@ struct Optimizer
             // we need to keep around, and so we can just nop the entire node.
             ExpressionManipulator::nop(expr);
           } else {
-            // From here on, this global is set.
+            // From here on, this global is set, hopefully allowing us to
+            // optimize away others.
             onceGlobalsWritten.insert(globalName);
           }
         };
@@ -317,28 +323,28 @@ struct OnceReduction : public Pass {
 
     // Fill out the initial data.
     for (auto& global : module->globals) {
-      // For a global to possible be "once", it must be initialized to a
-      // constant. Note that we don't check that the constant is zero - that is
-      // fine for us to optimize, though it does indicate that the once function
-      // will never ever run, which we could optimize further. TODO
-      // TODO: non-integer types?
+      // For a global to possibly be "once", it must be initialized to a
+      // constant. As we scan code we will turn this into false if we see
+      // anything that proves the global is not "once".
+      //   * Note that we don't check that the constant is zero - that is fine
+      //     for us to optimize, though it does indicate that the once function
+      //     will never ever run, which we could optimize further. TODO
+      //   * TODO: non-integer types?
       optInfo.onceGlobals[global->name] = global->type.isInteger() &&
                                           !global->imported() &&
                                           global->init->is<Const>();
     }
     for (auto& func : module->functions) {
-      // We'll look at functions when we can them. Fill in the map here so that
-      // it can be operated on in parallel.
+      // Fill in the map so that it can be operated on in parallel.
       optInfo.onceFuncs[func->name] = Name();
     }
 
     // Scan the module to find out which globals and functions are "once".
     Scanner(optInfo).run(runner, module);
 
-    // Combine the information. We found which globals are "once", but we need
-    // to do more work for functions: so far we just noted which functions
-    // appear to be in the form of a "once" function, but their global must also
-    // have that property.
+    // Combine the information. We found which globals appear to be "once", but
+    // other information may have proven they are not so, in fact. Specifically,
+    // for a function to be "once" we need its global to also be such.
     for (auto& kv : optInfo.onceFuncs) {
       Name& onceGlobal = kv.second;
       if (onceGlobal.is() && !optInfo.onceGlobals[onceGlobal]) {
@@ -350,19 +356,27 @@ struct OnceReduction : public Pass {
     // optimize, which we estimate using a counter of the total number of once
     // globals set by functions: as that increases, it means we are propagating
     // useful information.
-    // TODO: don't do even one iteration if we found nothing.
     // TODO: limit # of iterations?
     Index lastOnceGlobalsSet = 0;
 
     // First, initialize onceGlobalsSetInFuncs for the first iteration, by
     // ensuring each item is present, and adding the "once" global for "once"
     // funcs.
+    bool foundOnce = false;
     for (auto& func : module->functions) {
-      optInfo.onceGlobalsSetInFuncs[func->name];
+      // Either way, at least fill the data structure for parallel operation.
+      auto& set = optInfo.onceGlobalsSetInFuncs[func->name];
+
       auto global = optInfo.onceFuncs[func->name];
       if (global.is()) {
-        optInfo.onceGlobalsSetInFuncs[func->name].insert(global);
+        set.insert(global);
+        foundOnce = true;
       }
+    }
+
+    if (!foundOnce) {
+      // Nothing to optimize.
+      return;
     }
 
     while (1) {
