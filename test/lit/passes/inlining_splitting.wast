@@ -833,6 +833,23 @@
     (unreachable) ;; This prevents us from optimizing
   )
 
+  ;; CHECK:      (func $call-tail-not-simple
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $tail-not-simple
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $tail-not-simple
+  ;; CHECK-NEXT:    (ref.null any)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-tail-not-simple
+    (drop (call $tail-not-simple (ref.null any)))
+    (drop (call $tail-not-simple (ref.null any)))
+  )
+
   ;; CHECK:      (func $reachable-if-body (param $x anyref) (result anyref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (ref.is_null
