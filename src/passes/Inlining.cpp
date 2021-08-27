@@ -430,6 +430,7 @@ struct FunctionSplitter {
   Function* getInlineableSplitFunction(Function* func) {
     Function* inlineable = nullptr;
     auto success = maybeSplit(func, &inlineable);
+std::cout << "getISF " << func->name << " : " << success << " : " << inlineable << '\n';
     assert(success && inlineable);
     return inlineable;
   }
@@ -461,7 +462,8 @@ private:
   // Check if we can split a function. Returns whether we can. If the out param
   // is provided, also actually does the split, and returns the inlineable split
   // function in that out param.
-  bool maybeSplit(Function* func, Function** inlineable = nullptr) {
+  bool maybeSplit(Function* func, Function** inlineableOut = nullptr) {
+std::cout << "  maybeSplit\n";
     // Check if we've processed this input before.
     auto iter = splits.find(func);
     if (iter != splits.end()) {
@@ -469,7 +471,7 @@ private:
         return false;
       }
       if (iter->second.inlineable) {
-        *inlineable = iter->second.inlineable;
+        *inlineableOut = iter->second.inlineable;
         return true;
       }
       // Otherwise, we are splittable but have not performed the split yet;
@@ -507,6 +509,12 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>()) {
+      // If we were just checking, stop and report success.
+      if (!inlineableOut) {
+        split.splittable = true;
+        return true;
+      }
+
       startSplit(split, func);
 
       // The inlineable function now only has the if, which will call the
@@ -529,6 +537,7 @@ private:
       auto& outlinedList = split.outlined->body->cast<Block>()->list;
       outlinedList.erase(outlinedList.begin());
 
+      *inlineableOut = split.inlineable;
       return true;
     }
 
@@ -544,6 +553,11 @@ private:
     // where A and B are very simple. The body of the if must be unreachable.
     if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
         list.size() == 2 && isSimple(list[1])) {
+      if (!inlineableOut) {
+        split.splittable = true;
+        return true;
+      }
+
       startSplit(split, func);
 
       // The inlineable function now only has the if, which will call the
@@ -560,6 +574,7 @@ private:
       // TODO: see comment in the pattern above
       split.outlined->body = getIf(split.outlined->body)->ifTrue;
 
+      *inlineableOut = split.inlineable;
       return true;
     }
 
@@ -567,6 +582,7 @@ private:
   }
 
   void startSplit(Split& split, Function* func) {
+std::cout << "  startSplt\n";
     split.splittable = true;
 
     // TODO: we could avoid some of the copying here
@@ -713,11 +729,13 @@ struct Inlining : public Pass {
   void iteration(std::unordered_set<Function*>& inlinedInto) {
     // decide which to inline
     InliningState state;
+std::cout << "loop1\n";
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
       if (worthInlining(func->name)) {
         state.worthInlining.insert(func->name);
       }
     });
+std::cout << "loop2\n";
     if (state.worthInlining.size() == 0) {
       return;
     }
@@ -740,7 +758,7 @@ struct Inlining : public Pass {
         continue;
       }
       for (auto& action : state.actionsForFunction[func->name]) {
-        auto* inlinedFunction = getInlinedFunction(action.contents);
+        auto* inlinedFunction = action.contents;
         // if we've inlined into a function, don't inline it in this iteration,
         // avoid risk of races
         // note that we do not risk stalling progress, as each iteration() will
@@ -752,9 +770,12 @@ struct Inlining : public Pass {
         if (!isUnderSizeLimit(func->name, inlinedName)) {
           continue;
         }
+
+        // Success - we can inline.
 #ifdef INLINING_DEBUG
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
+        action.contents = getInlinedFunction(action.contents);
         doInlining(module, func.get(), action);
         inlinedUses[inlinedName]++;
         inlinedInto.insert(func.get());
@@ -793,6 +814,8 @@ struct Inlining : public Pass {
     return false;
   }
 
+  // Gets the function to be inlined. This is called right before actually
+  // performing the inlining, that is, we are guaranteed to inline after this.
   Function* getInlinedFunction(Function* func) {
     // If we want to inline this function itself, do so.
     if (infos[func->name].worthInlining(runner->options)) {
@@ -806,8 +829,9 @@ struct Inlining : public Pass {
 
     // As we are going to inline this function, and not the original one that
     // we are splitting, we need to update the FunctionInfo data accordingly -
-    // specifically, the |refs| field, which indicates how many alls exist to a
+    // specifically, the |refs| field, which indicates how many calls exist to a
     // function, must always be accurate.
+/*
     auto& originalInfo = infos[func->name];
     auto& inlineableInfo = infos[ret->name];
     auto& outlinedInfo =
@@ -819,6 +843,8 @@ struct Inlining : public Pass {
     originalInfo.refs--;
     inlineableInfo.refs++;
 
+std::cout << "get inlined " << ret->name << " : " << inlineableInfo.refs << '\n';
+
     // Note that as we are about to inline the inlineable function, we will
     // reduce its refs back to zero while doing so, so each time we get to this
     // location we will have incremented its refs from 0 to 1. This assertion
@@ -829,6 +855,7 @@ struct Inlining : public Pass {
     // There is an additional call to the outlined function, from the inlineable
     // one (that will shortly be code inside the function we are inling into).
     outlinedInfo.refs++;
+*/
 
     return ret;
   }
