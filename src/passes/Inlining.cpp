@@ -829,19 +829,15 @@ std::cout <<"     <= " << action.contents->name << '\n';
   // This is called right before actually performing the inlining, that is, we
   // are guaranteed to inline after this.
   Function* getActuallyInlinedFunction(Function* func) {
-std::cout << "getIF1 " << module->getFunction("call-to-maybe") << " : " << module->getFunction("call-to-maybe")->name << '\n';
-
     // If we want to inline this function itself, do so.
     if (infos[func->name].worthInlining(runner->options)) {
       return func;
     }
-std::cout << "getIF2 " << module->getFunction("call-to-maybe")->name << '\n';
 
     // Otherwise, this is a case where we want to inline part of it, after
     // splitting.
     assert(functionSplitter);
     auto* ret = functionSplitter->getInlineableSplitFunction(func);
-std::cout << "getIF3 " << module->getFunction("call-to-maybe")->name << '\n';
 
     // As we are going to inline this function, and not the original one that
     // we are splitting, we need to update the FunctionInfo data accordingly -
