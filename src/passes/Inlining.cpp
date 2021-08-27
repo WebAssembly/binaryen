@@ -466,7 +466,7 @@ private:
         return false;
       }
       if (iter->second.inlineable) {
-        inlineable = iter->second.inlineable;
+        *inlineable = iter->second.inlineable;
         return true;
       }
       // Otherwise, we are splittable but have not performed the split yet;
@@ -474,7 +474,8 @@ private:
     }
 
     // The default value of split.splittable is false, so if we fail we just
-    // need to return false from this function. On success, we update this info.
+    // need to return false from this function. On success, we update this info
+    // in startSplit().
     auto& split = splits[func];
 
     auto* body = func->body;
@@ -503,7 +504,7 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>()) {
-      createSplitFunctions(split);
+      startSplit(split);
 
       // The inlineable function now only has the if, which will call the
       // outlined heavy work with a flipped condition.
@@ -538,7 +539,7 @@ private:
     // where A and B are very simple. The body of the if must be unreachable.
     if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
         list.size() == 2 && isSimple(list[1])) {
-      createSplitFunctions(split);
+      startSplit(split);
 
       // The inlineable function now only has the if, which will call the
       // outlined heavy work, plus the content after the if.
@@ -560,7 +561,9 @@ private:
     return false;
   }
 
-  void createSplitFunctions(Split& split) {
+  void startSplit(Split& split) {
+    split.splittable = true;
+
     // TODO: we could avoid some of the copying here
     split.inlineable = ModuleUtils::copyFunction(func, *module,
       Names::getValidFunctionName(
