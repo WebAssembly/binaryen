@@ -415,42 +415,70 @@ doInlining(Module* module, Function* into, const InliningAction& action) {
 struct FunctionSplitter {
   Module* module;
   PassOptions& options;
-  NameInfoMap& infos;
 
   // Receive the module and the info about function inlineability. We will
   // update that info if/when we split.
-  FunctionSplitter(Module* module, PassOptions& options, NameInfoMap& infos)
-    : module(module), options(options), infos(infos) {}
+  FunctionSplitter(Module* module, PassOptions& options)
+    : module(module), options(options) {}
 
-  void run() {
-    // Find functions that might benefit from outlining.
-    // TODO: This could be done in parallel, but the checks here are very fast.
-    std::vector<Function*> possibleFuncs;
-    for (auto& func : module->functions) {
-      auto& info = infos[func->name];
-      if (info.worthInlining(options)) {
-        // If it's worth inlining, handle it that way - outlining is not needed.
-        continue;
-      }
-      if (info.usedGlobally) {
-        // TODO: Also optimize with global uses (where the tradeoffs are less
-        //       obvious).
-        continue;
-      }
-      possibleFuncs.push_back(func.get());
-    }
+  // Check if an uninlineable function could be split in order to at least
+  // inline part of it.
+  bool worthSplitting(Function* func, const FunctionInfo& info) {
+    assert(!info.worthInlining(options));
+    return maybeSplit(func);
+  }
 
-    // Process the functions and split those that we can.
-    // Note: this loop is separate from the one above it as we add more
-    // functions as we go, so we should not iterate on module->functions while
-    // doing so.
-    for (auto* func : possibleFuncs) {
-      maybeSplit(func, module);
-    }
+  // Returns the function we can inline, after we split the function into
+  // pieces.
+  Function* getInlineableSplitFunction(Function* func, const FunctionInfo& info) {
+    assert(!info.worthInlining(options));
+    Function* inlineable = nullptr;
+    auto success = maybeSplit(func, &inlineable);
+    assert(success && inlineable);
+    return inlineable;
   }
 
 private:
-  void maybeSplit(Function* func, Module* module) {
+  // The two pieces we get after splitting a function into two.
+  struct Split {
+    // Whether we can split the original function. If not, the other two fields
+    // here are null.
+    bool splittable = false;
+
+    // The inlineable function, that is, a lightweight condition we want to
+    // inline.
+    Function* inlineable = nullptr;
+
+    // The outlined function, that is, heavy code we do not want to inline.
+    Function* outlined = nullptr;
+  };
+
+  // All the split checks and actual splits we have already performed. This maps
+  // the original function to the two split pieces of it.
+  std::unordered_map<Function*, Split> splits;
+
+  // Check if we can split a function. Returns whether we can. If the out param
+  // is provided, also actually does the split, and returns the inlineable split
+  // function in that out param.
+  bool maybeSplit(Function* func, Function** inlineable=nullptr) {
+    // Check if we've processed this input before.
+    auto iter = splits.find(func);
+    if (iter != splits.end()) {
+      if (!iter->second.splittable) {
+        return false;
+      }
+      if (iter->second.inlineable) {
+        inlineable = iter->second.inlineable;
+        return true;
+      }
+      // Otherwise, we are splittable but have not performed the split yet;
+      // proceed to do so.
+    }
+
+    // The default value of split.splittable is false, so if we fail we just
+    // need to return false from this function. On success, we update this info.
+    auto& split = splits[func];
+
     auto* body = func->body;
 
     // All the patterns we look for atm start with an if at the very top of the
@@ -458,14 +486,14 @@ private:
     // then it seems promising to inling that if's condition (by outlining the
     // heavy work, as mentioned earlier).
     if (!isBlockStartingWithIf(body)) {
-      return;
+      return false;
     }
     auto* iff = getIf(body);
 
     // If the condition is not very simple, the benefits of this optimization
     // are not obvious.
     if (!isSimple(iff->condition)) {
-      return;
+      return false;
     }
 
     Builder builder(*module);
@@ -477,32 +505,27 @@ private:
     // TODO: support a return value
     if (!iff->ifFalse && func->getResults() == Type::none &&
         iff->ifTrue->is<Return>()) {
-      auto newName = Names::getValidFunctionName(
-        *module, func->name.str + std::string("$byn-outline-A"));
+      createSplitFunctions(split);
 
-      // TODO: we could avoid some of the copying here
-      auto* outlinedFunc = ModuleUtils::copyFunction(func, *module, newName);
-
-      // The original function now only has the if, which will call the outlined
-      // heavy work with a flipped condition.
+      // The inlineable function now only has the if, which will call the
+      // outlined heavy work with a flipped condition.
+      auto* inlineableIf = getIf(inlineable->body);
       std::vector<Expression*> args;
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
-      iff->condition = builder.makeUnary(EqZInt32, iff->condition);
-      iff->ifTrue = builder.makeCall(newName, args, Type::none);
-      func->body = iff;
+      inlineableIf->condition = builder.makeUnary(EqZInt32, inlineableIf->condition);
+      inlineableIf->ifTrue = builder.makeCall(newName, args, Type::none);
+      func->body = inlineableIf;
 
       // The outlined heavy work no longer needs the initial if.
       // TODO: If we handle the case with indirect calls and other global uses
       //       then we could not do this, as those calls would skip the first
       //       function with the condition that calls the heavy work.
-      auto& newList = outlinedFunc->body->cast<Block>()->list;
-      newList.erase(newList.begin());
+      auto& outlinedList = split.outlined->body->cast<Block>()->list;
+      outlinedList.erase(outlinedList.begin());
 
-      updateInfos(func, outlinedFunc);
-
-      return;
+      return true;
     }
 
     auto& list = body->cast<Block>()->list;
@@ -517,29 +540,38 @@ private:
     // where A and B are very simple. The body of the if must be unreachable.
     if (!iff->ifFalse && iff->ifTrue->type == Type::unreachable &&
         list.size() == 2 && isSimple(list[1])) {
-      auto newName = Names::getValidFunctionName(
-        *module, func->name.str + std::string("$byn-outline-B"));
+      createSplitFunctions(split);
 
-      // TODO: we could avoid some of the copying here
-      auto* outlinedFunc = ModuleUtils::copyFunction(func, *module, newName);
-
-      // The original function now only has the if, which will call the outlined
-      // heavy work, plus the content after the if.
+      // The inlineable function now only has the if, which will call the
+      // outlined heavy work, plus the content after the if.
+      auto* inlineableIf = getIf(inlineable->body);
       std::vector<Expression*> args; // TODO helper
       for (Index i = 0; i < func->getNumParams(); i++) {
         args.push_back(builder.makeLocalGet(i, func->getLocalType(i)));
       }
-      iff->ifTrue =
+      inlineableIf->ifTrue =
         builder.makeReturn(builder.makeCall(newName, args, func->getResults()));
 
       // The outlined function just contains the heavy work.
       // TODO: see comment in the pattern above
-      outlinedFunc->body = getIf(outlinedFunc->body)->ifTrue;
+      split.outlined->body = getIf(split.outlined->body)->ifTrue;
 
-      updateInfos(func, outlinedFunc);
-
-      return;
+      return true;
     }
+
+    return false;
+  }
+
+  void createSplitFunctions(Split& split) {
+    // TODO: we could avoid some of the copying here
+    split.inlineable = ModuleUtils::copyFunction(func, *module,
+      Names::getValidFunctionName(
+        *module, func->name.str + std::string("$byn-outline-A-inlineable"))
+    );
+    split.outlined = ModuleUtils::copyFunction(func, *module,
+      Names::getValidFunctionName(
+        *module, func->name.str + std::string("$byn-outline-A-outlined"))
+    );
   }
 
   static bool isBlockStartingWithIf(Expression* curr) {
@@ -572,35 +604,6 @@ private:
     }
     return false;
   }
-
-  void updateInfos(Function* inlineableFunc, Function* outlinedFunc) {
-    auto& inlineable = infos[inlineableFunc->name];
-    auto& outlined = infos[outlinedFunc->name];
-
-    // Copy the info from the original function, that is now the inlineable
-    // function, into the outline one. Almost all the code went into there, and
-    // we can ignore the minor removal of an if and a little simple code.
-    outlined = inlineable;
-
-    // Reset the inlineable function's info. This makes it inlineable. Note that
-    // it still has a call, but we purposefully do not set hasCalls, because
-    // that would inhibit inlining, but our goal is to actually inline these.
-    inlineable.clear();
-
-    // The only field whose info we need to update is the number of references
-    // to original function, which has not changed.
-    inlineable.refs.store(outlined.refs.load());
-
-    // The outlined function has just one reference - the inlineable function -
-    // which we can update now. Also mark it as uninlineable, as otherwise
-    // having a single reference would suggest otherwise.
-    outlined.refs = 1;
-    outlined.uninlineable = true;
-
-    // Verify that the proper function is inlineable, and not the other.
-    assert(inlineable.worthInlining(options));
-    assert(!outlined.worthInlining(options));
-  }
 };
 
 struct Inlining : public Pass {
@@ -614,7 +617,15 @@ struct Inlining : public Pass {
   // the information for each function. recomputed in each iteraction
   NameInfoMap infos;
 
+  std::unique_ptr<FunctionSplitter> functionSplitter;
+
   void run(PassRunner* runner, Module* module) override {
+    // When optimizing heavily for size, we may potentially split functions in
+    // order to inline parts of them.
+    if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
+      functionSplitter = std::make_unique<FunctionSplitter>(module, runner->options, infos);
+    }
+
     // No point to do more iterations than the number of functions, as it means
     // we are infinitely recursing (which should be very rare in practice, but
     // it is possible that a recursive call can look like it is worth inlining).
@@ -687,12 +698,6 @@ struct Inlining : public Pass {
   void iteration(PassRunner* runner,
                  Module* module,
                  std::unordered_set<Function*>& inlinedInto) {
-    // When optimizing heavily for size, run the function splitter first to
-    // allow more inlining to happen.
-    if (runner->options.optimizeLevel >= 3 && !runner->options.shrinkLevel) {
-      FunctionSplitter(module, runner->options, infos).run();
-    }
-
     // decide which to inline
     InliningState state;
     ModuleUtils::iterDefinedFunctions(*module, [&](Function* func) {
