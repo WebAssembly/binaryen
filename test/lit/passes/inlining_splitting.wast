@@ -12,6 +12,8 @@
   ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
+  ;; CHECK:      (type $i64_i32_f64_=>_none (func (param i64 i32 f64)))
+
   ;; CHECK:      (type $i32_rtt_$struct_=>_none (func (param i32 (rtt $struct))))
 
   ;; CHECK:      (type $anyref_=>_none (func (param anyref)))
@@ -101,6 +103,9 @@
     ;; splitting. We should see each of these three calls replaced by inlined
     ;; code performing the if from $maybe-work-hard, and depending on that
     ;; result they each call the outlined code that must *not* be inlined.
+    ;;
+    ;; Note that we must call more than once, otherwise given a single use we
+    ;; will always inline the entire thing.
     (call $maybe-work-hard (i32.const 1))
     (call $maybe-work-hard (i32.const 2))
     (call $maybe-work-hard (i32.const 3))
@@ -157,27 +162,54 @@
   ;; CHECK-NEXT:  (local $0 i64)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
-  ;; CHECK-NEXT:  (block $__inlined_func$many-params
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (i64.const 0)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $1
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (f64.const 3.14159)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:  (local $3 i64)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 f64)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$many-params$byn-outline-A-inlineable
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (f64.const 3.14159)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:     (br $__inlined_func$many-params)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (loop $l
-  ;; CHECK-NEXT:     (call $import)
-  ;; CHECK-NEXT:     (br $l)
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $many-params$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (br $__inlined_func$many-params)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (block $__inlined_func$many-params$byn-outline-A-inlineable0
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (f64.const 3.14159)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (local.get $4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $many-params$byn-outline-A-outlined
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:      (local.get $4)
+  ;; CHECK-NEXT:      (local.get $5)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-many-params
@@ -185,6 +217,7 @@
     ;; splitting. We should see each of these three calls replaced by inlined
     ;; code performing the if from $maybe-work-hard, and depending on that
     ;; result they each call the outlined code that must *not* be inlined.
+    (call $many-params (i64.const 0) (i32.const 1) (f64.const 3.14159))
     (call $many-params (i64.const 0) (i32.const 1) (f64.const 3.14159))
   )
 
@@ -574,6 +607,26 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $maybe-work-hard$byn-outline-A-outlined (param $x i32)
+;; CHECK-NEXT:  (loop $l
+;; CHECK-NEXT:   (call $import)
+;; CHECK-NEXT:   (br $l)
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $many-params$byn-outline-A-inlineable (param $x i64) (param $y i32) (param $z f64)
+;; CHECK-NEXT:  (if
+;; CHECK-NEXT:   (i32.eqz
+;; CHECK-NEXT:    (local.get $y)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (call $many-params$byn-outline-A-outlined
+;; CHECK-NEXT:    (local.get $x)
+;; CHECK-NEXT:    (local.get $y)
+;; CHECK-NEXT:    (local.get $z)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+
+;; CHECK:      (func $many-params$byn-outline-A-outlined (param $x i64) (param $y i32) (param $z f64)
 ;; CHECK-NEXT:  (loop $l
 ;; CHECK-NEXT:   (call $import)
 ;; CHECK-NEXT:   (br $l)
