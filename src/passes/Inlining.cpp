@@ -672,6 +672,7 @@ struct Inlining : public Pass {
     PassRunner runner(module);
     FunctionInfoScanner scanner(&infos);
     scanner.run(&runner, module);
+    // fill in global uses
     scanner.walkModuleCode(module);
     for (auto& ex : module->exports) {
       if (ex->kind == ExternalKind::Function) {
