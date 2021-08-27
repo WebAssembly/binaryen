@@ -31,7 +31,7 @@
   ;; CHECK-NEXT: )
   (func $caller
     ;; Call a once function more than once, in a way that we can optimize: the
-    ;; first dominates the second.
+    ;; first dominates the second. The second call will become a nop.
     (call $once)
     (call $once)
   )
@@ -233,7 +233,8 @@
   )
 )
 
-;; Corner case: function is not quite once, there is code before the if.
+;; Corner case: function is not quite once, there is code before the if, so no
+;; optimization will happen.
 (module
   ;; CHECK:      (type $none_=>_none (func))
 
