@@ -1269,6 +1269,7 @@ private:
     };
 
     RelevantLiveLocalsWalker walker;
+    walker.setFunction(func);
     if (!walker.canRun(func)) {
       // We can proceed without this optimization, which will cause more
       // spilling - assume all locals are relevant.
