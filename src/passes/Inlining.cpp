@@ -838,29 +838,33 @@ struct Inlining : public Pass {
     // we are splitting, we need to update the FunctionInfo data accordingly -
     // specifically, the |refs| field, which indicates how many calls exist to a
     // function, must always be accurate.
-/*
-    auto& originalInfo = infos[func->name];
-    auto& inlineableInfo = infos[ret->name];
-    auto& outlinedInfo =
-      infos[functionSplitter->getOutlinedSplitFunction(func)->name];
+    /*
+        auto& originalInfo = infos[func->name];
+        auto& inlineableInfo = infos[ret->name];
+        auto& outlinedInfo =
+          infos[functionSplitter->getOutlinedSplitFunction(func)->name];
 
-    // There is a call from the function we are inlining into to the new
-    // inlineable one, which replaces a call to the original function that we
-    // are splitting.
-    originalInfo.refs--;
-    inlineableInfo.refs++;
+        // There is a call from the function we are inlining into to the new
+        // inlineable one, which replaces a call to the original function that
+       we
+        // are splitting.
+        originalInfo.refs--;
+        inlineableInfo.refs++;
 
-    // Note that as we are about to inline the inlineable function, we will
-    // reduce its refs back to zero while doing so, so each time we get to this
-    // location we will have incremented its refs from 0 to 1. This assertion
-    // ensures that we never end up with a non-inlined appearance of the
-    // inlineable function, which we never want.
-    assert(inlineableInfo.refs == 1);
+        // Note that as we are about to inline the inlineable function, we will
+        // reduce its refs back to zero while doing so, so each time we get to
+       this
+        // location we will have incremented its refs from 0 to 1. This
+       assertion
+        // ensures that we never end up with a non-inlined appearance of the
+        // inlineable function, which we never want.
+        assert(inlineableInfo.refs == 1);
 
-    // There is an additional call to the outlined function, from the inlineable
-    // one (that will shortly be code inside the function we are inling into).
-    outlinedInfo.refs++;
-*/
+        // There is an additional call to the outlined function, from the
+       inlineable
+        // one (that will shortly be code inside the function we are inling
+       into). outlinedInfo.refs++;
+    */
 
     return ret;
   }
