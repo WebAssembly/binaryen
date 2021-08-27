@@ -711,7 +711,7 @@ function test_core() {
   module.addTagExport("a-tag", "a-tag-exp");
 
   // Tables
-  module.addTable("t1", 0, 2, binaryen.funcref);
+  module.addTable("t1", 0, 2);
   var tablePtr = module.getTable("t1");
   assert(tablePtr !== 0);
   assert(tablePtr === module.getTableByIndex(0));
@@ -726,7 +726,7 @@ function test_core() {
   module.removeTable("t1");
   assert(module.getNumTables() === 0);
 
-  module.addTable("t0", 1, 0xffffffff, binaryen.funcref);
+  module.addTable("t0", 1, 0xffffffff);
   module.addActiveElementSegment("t0", "e0", [ binaryen.getFunctionInfo(sinker).name ]);
   assert(module.getNumTables() === 1);
   assert(module.getNumElementSegments() === 1);
@@ -1119,7 +1119,7 @@ function test_for_each() {
     assert(expected_passive[i] === segment.passive);
   }
 
-  module.addTable("t0", 1, 0xffffffff, binaryen.funcref);
+  module.addTable("t0", 1, 0xffffffff);
   var ftable = module.getTable("t0");
   var constExprRef = module.i32.const(0);
   module.addActiveElementSegment("t0", "e0", funcNames, constExprRef);
